@@ -148,28 +148,16 @@ const registerPartials = (orgName, dir) => {
     console.log("dir", dir);
     const filenames = fs.readdirSync(dir);
     filenames.forEach(async (filename) => {
-        console.log("filename", filename);
         if (!filename.endsWith('.css') && !filename.endsWith('.DS_Store')) {
-            console.log("filename", filename.split(".hbs")[0]);
             var template = fs.readFileSync(path.join(dir, filename), 'utf8');
-
             const apiContetnUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + "NavigationAPI";
 
             if (filename == "api-content.hbs") {
-                console.log("api-content.hbs");
                 const additionalAPIContentResponse = await fetch(apiContetnUrl + "&fileName=api-content.hbs");
                 const additionalAPIContent = await additionalAPIContentResponse.text();
-                console.log("additionalAPIContent", additionalAPIContent);
-                // TODO: Remove file logic not working
-                if (additionalAPIContent != "") {
+                if (additionalAPIContent != "File not found") {
                     template = additionalAPIContent;
-                    fs.unlink(path.join(dir, filename), (err) => {
-                        if (err) {
-                          console.error('Error removing file:', err);
-                        } else {
-                          console.log('File removed successfully');
-                        }
-                      });
+                    hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
                 }
             }
             hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
@@ -178,11 +166,6 @@ const registerPartials = (orgName, dir) => {
                 hbs.handlebars.partials = {
                     ...hbs.handlebars.partials,
                     header: hbs.handlebars.compile(template)({ baseUrl: '/' + orgName }),
-                };
-            } else if (filename == "api-content.hbs") {
-                hbs.handlebars.partials = {
-                    ...hbs.handlebars.partials,
-                    "api-content": hbs.handlebars.compile(template)({}),
                 };
             }
         }
