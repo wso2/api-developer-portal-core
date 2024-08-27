@@ -58,7 +58,6 @@ const copyStyelSheet = () => {
 
     if (!fs.existsSync(path.join(__dirname, filePrefix + 'styles'))) {
         fs.mkdirSync(path.join(__dirname, filePrefix + 'styles'));
-
     }
     var styleDir = [];
     searchFile(path.join(__dirname, filePrefix + 'partials'), ".css", styleDir);
@@ -146,14 +145,9 @@ const loadMarkdown = (filename, dirName) => {
 const registerPartials = (baseUrl, dir) => {
     const filenames = fs.readdirSync(dir);
     filenames.forEach((filename) => {
-        const matches = /^([^.]+).hbs$/.exec(filename);
-        if (!matches) {
-            return;
-        }
-        const name = matches[1];
-        if (!name.endsWith('.css')) {
+        if (filename.endsWith('.hbs')) {
             const template = fs.readFileSync(path.join(dir, filename), 'utf8');
-            hbs.handlebars.registerPartial(name, template);
+            hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
 
             hbs.handlebars.partials = {
                 ...hbs.handlebars.partials,
@@ -241,14 +235,14 @@ app.get('/api/:apiName', ensureAuthenticated, (req, res) => {
 
     const mockAPIDataPath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + '/apiMetadata.json');
     const mockAPIData = JSON.parse(fs.readFileSync(mockAPIDataPath, 'utf-8'));
-    const filePath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + '/apiContent.hbs');
+    const filePath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + '/api-content.hbs');
+
+    registerPartials("http://localhost:3000", path.join(__dirname, filePrefix, 'pages', 'api-landing', 'partials'));
+    registerPartials("http://localhost:3000", path.join(__dirname, filePrefix, 'partials'));
 
     if (fs.existsSync(filePath)) {
         hbs.handlebars.registerPartial('api-content', fs.readFileSync(filePath, 'utf-8'));
     }
-    registerPartials("http://localhost:3000", path.join(__dirname, filePrefix, 'pages', 'api-landing', 'partials'));
-    registerPartials("http://localhost:3000", path.join(__dirname, filePrefix, 'partials'));
-
     var templateContent = {
         content: loadMarkdown('content.md', filePrefix + '../mock/' + req.params.apiName),
         apiMetadata: mockAPIData,
@@ -319,6 +313,7 @@ app.get('(?!styles)\/*', ensureAuthenticated, (req, res) => {
         });
     }
 
+    console.log(filePath);
     const html = renderTemplate(filePrefix + 'pages/' + filePath + '/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
     res.send(html);
 

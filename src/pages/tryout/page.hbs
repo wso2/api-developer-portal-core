@@ -1,7 +1,33 @@
+{{#if (eq apiType "REST")}}
+
 <head>
     <link rel="stylesheet" href="https://unpkg.com/@stoplight/elements/styles.min.css">
     <script src="https://unpkg.com/@stoplight/elements/web-components.min.js"></script>
 </head>
 <main>
-    <elements-api apiDescriptionDocument='{{{apiMetadata}}}' router="hash" layout="sidebar" />
+    <elements-api apiDescriptionUrl={{swaggerUrl}} router="hash" layout="sidebar" />
 </main>
+
+{{else if (eq apiType "ASYNC")}}
+
+<head>
+    <link rel="stylesheet" href="https://unpkg.com/@asyncapi/react-component@latest/styles/default.min.css">
+</head>
+<main>
+    <div id="asyncapi"></div>
+    <script src="https://unpkg.com/@asyncapi/react-component@latest/browser/standalone/index.js"></script>
+    <script>
+        AsyncApiStandalone.render({
+            schema: {
+                url: 'https://raw.githubusercontent.com/asyncapi/spec/master/examples/streetlights-kafka-asyncapi.yml',
+                options: { method: "GET", mode: "cors" },
+            },
+            config: {
+                show: {
+                    sidebar: true,
+                }
+            },
+        }, document.getElementById('asyncapi'));
+    </script>
+</main>
+{{/if}}
