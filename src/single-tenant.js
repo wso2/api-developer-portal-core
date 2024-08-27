@@ -18,9 +18,6 @@ const app = express();
 
 var filePrefix = '../../../src/';
 
-const authJsonPath = path.join(__dirname, filePrefix + '../mock', 'auth.json');
-const authJson = JSON.parse(fs.readFileSync(authJsonPath, 'utf-8'));
-
 const orgDetailsPath = path.join(__dirname, filePrefix + '../mock', 'orgDetails.json');
 const orgDetails = JSON.parse(fs.readFileSync(orgDetailsPath, 'utf-8'));
 
@@ -29,6 +26,11 @@ const hbs = exphbs.create({});
 app.engine('.hbs', engine({
     extname: '.hbs'
 }));
+
+Handlebars.registerHelper('eq', function (a, b) {
+    return (a == b);
+});
+
 app.set('view engine', 'hbs');
 app.use('/images', express.static(path.join(__dirname, filePrefix + 'images')));
 
@@ -40,21 +42,7 @@ app.use(session({
     cookie: { secure: false } // Set to true if using HTTPS
 }));
 
-// Configure the OpenID Connect strategy
-if (authJson.clientID) {
-    passport.use(new OAuth2Strategy({
-        issuer: authJson.issuer,
-        authorizationURL: authJson.authorizationURL,
-        tokenURL: authJson.tokenURL,
-        userInfoURL: authJson.userInfoURL,
-        clientID: authJson.clientID,
-        callbackURL: authJson.callbackURL,
-        scope: authJson.scope,
-    }, (accessToken, refreshToken, profile, done) => {
-        // Here you can handle the user's profile and tokens
-        return done(null, profile);
-    }));
-}
+
 const copyStyelSheet = () => {
 
     if (!fs.existsSync(path.join(__dirname, filePrefix + 'styles'))) {
@@ -261,6 +249,7 @@ app.get('/((?!favicon.ico)):orgName', ensureAuthenticated, (req, res) => {
 
     const html = renderTemplate(filePrefix + 'pages/home/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
     res.send(html);
+
 });
 
 // API Route
@@ -349,15 +338,17 @@ app.get('/((?!favicon.ico)):orgName/apis', ensureAuthenticated, async (req, res)
 // Tryout Route
 app.get('/((?!favicon.ico)):orgName/api/:apiName/tryout', ensureAuthenticated, async (req, res) => {
 
-    const apiMetaDataUrl = config.apiMetaDataAPI + "apiDefinition?orgName=" + req.params.orgName + "&apiID=" + req.params.apiName;
+    const apiMetaDataUrl = config.apiMetaDataAPI + "api?orgName=" + req.params.orgName + "&apiID=" + req.params.apiName;
     const metadataResponse = await fetch(apiMetaDataUrl);
-    const metaData = await metadataResponse.text();
+    const metaData = await metadataResponse.json();
 
     registerPartials(req.params.orgName, path.join(__dirname, filePrefix, 'partials'));
 
     var templateContent = {
         apiMetadata: metaData,
-        baseUrl: req.params.orgName
+        baseUrl: req.params.orgName,
+        apiType: metaData.apiInfo.apiType,
+        swaggerUrl: swaconfig.apiMetaDataAPI + "apiDefinition?orgName=" + req.params.orgName + "&apiID=" + req.params.apiNamegger
     }
     const html = renderTemplate('pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     res.send(html);
