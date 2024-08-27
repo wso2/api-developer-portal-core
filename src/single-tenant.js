@@ -145,23 +145,11 @@ const loadMarkdown = (filename, dirName) => {
 };
 
 const registerPartials = (orgName, dir) => {
-    console.log("dir", dir);
     const filenames = fs.readdirSync(dir);
     filenames.forEach(async (filename) => {
         if (!filename.endsWith('.css') && !filename.endsWith('.DS_Store')) {
             var template = fs.readFileSync(path.join(dir, filename), 'utf8');
-            const apiContetnUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + "NavigationAPI";
-
-            if (filename == "api-content.hbs") {
-                const additionalAPIContentResponse = await fetch(apiContetnUrl + "&fileName=api-content.hbs");
-                const additionalAPIContent = await additionalAPIContentResponse.text();
-                if (additionalAPIContent != "File not found") {
-                    template = additionalAPIContent;
-                    hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
-                }
-            }
             hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
-
             if (filename == "header.hbs") {
                 hbs.handlebars.partials = {
                     ...hbs.handlebars.partials,
@@ -171,7 +159,23 @@ const registerPartials = (orgName, dir) => {
         }
     });
 };
-
+const registerAPIPartials = (orgName, apiName, dir) => {
+    const filenames = fs.readdirSync(dir);
+    filenames.forEach(async (filename) => {
+        if (!filename.endsWith('.css') && !filename.endsWith('.DS_Store')) {
+            var template = fs.readFileSync(path.join(dir, filename), 'utf8');
+            const apiContetnUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
+            if (filename == "api-content.hbs") {
+                const additionalAPIContentResponse = await fetch(apiContetnUrl + "&fileName=api-content.hbs");
+                const additionalAPIContent = await additionalAPIContentResponse.text();
+                if (additionalAPIContent != "File not found") {
+                    template = additionalAPIContent;
+                }
+            }
+            hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
+        }
+    });
+};
 const renderTemplate = (templatePath, layoutPath, templateContent) => {
 
     const completeTemplatePath = path.join(__dirname, templatePath);
@@ -286,16 +290,14 @@ app.get('/((?!favicon.ico)):orgName/api/:apiName', ensureAuthenticated, async (r
         images[key] = modifiedApiImageURL;
     }
 
-    registerPartials(req.params.orgName, path.join(__dirname, filePrefix, 'pages', 'api-landing', 'partials'));
-    registerPartials(req.params.orgName, path.join(__dirname, filePrefix, 'partials'));
+    registerAPIPartials(orgName, apiName, path.join(__dirname, filePrefix, 'pages', 'api-landing', 'partials'));
+    registerPartials(orgName, path.join(__dirname, filePrefix, 'partials'));
 
     const apiContetnUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
 
     const markdownResponse = await fetch(apiContetnUrl + "&fileName=apiContent.md");
     const markdownContent = await markdownResponse.text();
     const markdownHtml = markdownContent ? markdown.parse(markdownContent) : '';
-
-    console.log("markdownHtml", markdownHtml);
 
     var templateContent = {
         content: markdownHtml,
@@ -314,14 +316,14 @@ app.get('/((?!favicon.ico)):orgName/apis', ensureAuthenticated, async (req, res)
     const orgName = req.params.orgName;
     const apiMetaDataUrl = config.apiMetaDataAPI + "apiList?orgName=" + orgName;
 
-    registerPartials(req.params.orgName, path.join(__dirname, filePrefix, 'pages', 'apis', 'partials'));
-    registerPartials(req.params.orgName, path.join(__dirname, filePrefix, 'partials'));
+    registerPartials(orgName, path.join(__dirname, filePrefix, 'pages', 'apis', 'partials'));
+    registerPartials(orgName, path.join(__dirname, filePrefix, 'partials'));
 
     const metadataResponse = await fetch(apiMetaDataUrl);
     const metaData = await metadataResponse.json();
 
     metaData.forEach(item => {
-        item.baseUrl = '/' + req.params.orgName;
+        item.baseUrl = '/' + orgName;
     });
 
     metaData.forEach(element => {
@@ -340,7 +342,7 @@ app.get('/((?!favicon.ico)):orgName/apis', ensureAuthenticated, async (req, res)
 
     var templateContent = {
         apiMetadata: metaData,
-        baseUrl: req.params.orgName
+        baseUrl: orgName
     }
     const html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     res.send(html);
@@ -367,15 +369,14 @@ app.get('/((?!favicon.ico)):orgName/api/:apiName/tryout', ensureAuthenticated, a
 app.get('/((?!favicon.ico|images):orgName/*)', ensureAuthenticated, (req, res) => {
 
     const filePath = req.originalUrl.split("/").pop();
-
+    const orgName = req.params.orgName;
     //read all files in partials folder
-    registerPartials(req.params.orgName, path.join(__dirname, filePrefix, 'partials'));
-    if (fs.existsSync(req.params.orgName, path.join(__dirname, filePrefix + 'pages', filePath, 'partials'))) {
-        registerPartials(req.params.orgName, path.join(__dirname, filePrefix + 'pages', filePath, 'partials'));
+    registerPartials(orgName, path.join(__dirname, filePrefix, 'partials'));
+    if (fs.existsSync(orgName, path.join(__dirname, filePrefix + 'pages', filePath, 'partials'))) {
+        registerPartials(orgName, path.join(__dirname, filePrefix + 'pages', filePath, 'partials'));
     }
 
     var templateContent = {};
-    //templateContent["authJson"] = authJson;
     templateContent["baseUrl"] = '/' + req.params.orgName;
 
     //read all markdown content
