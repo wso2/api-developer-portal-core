@@ -58,7 +58,6 @@ const copyStyelSheet = () => {
 
     if (!fs.existsSync(path.join(__dirname, filePrefix + 'styles'))) {
         fs.mkdirSync(path.join(__dirname, filePrefix + 'styles'));
-
     }
     var styleDir = [];
     searchFile(path.join(__dirname, filePrefix + 'partials'), ".css", styleDir);
