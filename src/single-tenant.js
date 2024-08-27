@@ -133,7 +133,6 @@ const loadMarkdown = (filename, dirName) => {
 };
 
 const registerPartials = (orgName, dir) => {
-    console.log("dir", dir);
     const filenames = fs.readdirSync(dir);
     filenames.forEach(async (filename) => {
         if (!filename.endsWith('.css') && !filename.endsWith('.DS_Store')) {
@@ -348,7 +347,7 @@ app.get('/((?!favicon.ico)):orgName/api/:apiName/tryout', ensureAuthenticated, a
         apiMetadata: metaData,
         baseUrl: req.params.orgName,
         apiType: metaData.apiInfo.apiType,
-        swaggerUrl: swaconfig.apiMetaDataAPI + "apiDefinition?orgName=" + req.params.orgName + "&apiID=" + req.params.apiNamegger
+        swaggerUrl: config.apiMetaDataAPI + "apiDefinition?orgName=" + req.params.orgName + "&apiID=" + req.params.apiNamegger
     }
     const html = renderTemplate('pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     res.send(html);
