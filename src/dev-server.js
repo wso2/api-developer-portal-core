@@ -314,6 +314,7 @@ app.get('(?!styles)\/*', ensureAuthenticated, (req, res) => {
         });
     }
 
+    console.log(filePath);
     const html = renderTemplate(filePrefix + 'pages/' + filePath + '/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
     res.send(html);
 
