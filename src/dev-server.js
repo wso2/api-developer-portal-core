@@ -28,6 +28,11 @@ const hbs = exphbs.create({});
 app.engine('.hbs', engine({
     extname: '.hbs'
 }));
+
+Handlebars.registerHelper('eq', function (a, b) {
+    return (a == b);
+});
+
 app.set('view engine', 'hbs');
 app.use('/images', express.static(path.join(__dirname, filePrefix + 'images')));
 
