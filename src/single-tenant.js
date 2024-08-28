@@ -343,6 +343,10 @@ app.get('/((?!favicon.ico)):orgName/api/:apiName/tryout', ensureAuthenticated, a
     const apiMetaDataUrl = config.apiMetaDataAPI + "api?orgName=" + req.params.orgName + "&apiID=" + req.params.apiName;
     const metadataResponse = await fetch(apiMetaDataUrl);
     const metaData = await metadataResponse.json();
+    
+    const apiDefinition = config.apiMetaDataAPI + "apiDefinition?orgName=" + req.params.orgName + "&apiID=" + req.params.apiName
+    const apiDefinitionResponse = await fetch(apiDefinition);
+    const apiDefinitionContent = await apiDefinitionResponse.text();
 
     registerPartials(req.params.orgName, path.join(__dirname, filePrefix, 'partials'));
 
@@ -350,7 +354,7 @@ app.get('/((?!favicon.ico)):orgName/api/:apiName/tryout', ensureAuthenticated, a
         apiMetadata: metaData,
         baseUrl: req.params.orgName,
         apiType: metaData.apiInfo.apiType,
-        swaggerUrl: config.apiMetaDataAPI + "apiDefinition?orgName=" + req.params.orgName + "&apiID=" + req.params.apiNamegger
+        swagger: apiDefinitionContent
     }
     const html = renderTemplate('pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     res.send(html);
