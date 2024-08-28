@@ -5,7 +5,7 @@
     <script src="https://unpkg.com/@stoplight/elements/web-components.min.js"></script>
 </head>
 <main>
-    <elements-api apiDescriptionUrl={{swaggerUrl}} router="hash" layout="sidebar" />
+    <elements-api apiDescriptionUrl={{swagger}} router="hash" layout="sidebar" />
 </main>
 
 {{else if (eq apiType "ASYNC")}}
@@ -18,10 +18,7 @@
     <script src="https://unpkg.com/@asyncapi/react-component@latest/browser/standalone/index.js"></script>
     <script>
         AsyncApiStandalone.render({
-            schema: {
-                url: 'https://raw.githubusercontent.com/asyncapi/spec/master/examples/streetlights-kafka-asyncapi.yml',
-                options: { method: "GET", mode: "cors" },
-            },
+            schema: {{{swagger}}},
             config: {
                 show: {
                     sidebar: true,
@@ -29,5 +26,29 @@
             },
         }, document.getElementById('asyncapi'));
     </script>
+</main>
+{{else if (eq apiType "GraphQL")}}
+<head>
+  <link rel="stylesheet" href="https://unpkg.com/graphiql@2.7.0/graphiql.min.css">
+  
+  <!-- Include React and ReactDOM -->
+    <script src="https://unpkg.com/react/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom/umd/react-dom.development.js"></script>
+
+    <!-- GraphiQL library -->
+    <script src="https://unpkg.com/graphiql/umd/graphiql.js"></script>
+
+</head>
+<main>
+  <div id="graphiql" style="height: 100vh;"></div>
+    <!-- Your JavaScript code -->
+    <script>
+    const fetcher = GraphiQL.createFetcher({ url: 'https://my.backend/graphql' });
+
+    ReactDOM.render(
+      React.createElement(GraphiQL, { fetcher: fetcher }),
+      document.getElementById('graphiql')
+    );
+  </script>
 </main>
 {{/if}}
