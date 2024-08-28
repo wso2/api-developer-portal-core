@@ -252,7 +252,7 @@ app.get('/api/:apiName', ensureAuthenticated, (req, res) => {
         content: loadMarkdown('content.md', filePrefix + '../mock/' + req.params.apiName),
         apiMetadata: mockAPIData,
         authJson: authJson,
-        baseUrl: "http://localhost:3000",
+        baseUrl: "http://localhost:3000"
     }
 
     const html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
@@ -288,6 +288,8 @@ app.get('/api/:apiName/tryout', ensureAuthenticated, (req, res) => {
     var templateContent = {
         apiMetadata: JSON.stringify(mockAPIData),
         authJson: authJson,
+        apiType: mockAPIData.apiInfo.apiType,
+        swagger: mockAPIData.apiInfo.openApiDefinition,
         baseUrl: "http://localhost:3000"
     }
     const html = renderTemplate('pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
