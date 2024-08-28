@@ -347,7 +347,6 @@ app.get('/((?!favicon.ico)):orgName/api/:apiName/tryout', ensureAuthenticated, a
     const apiDefinition = config.apiMetaDataAPI + "apiDefinition?orgName=" + req.params.orgName + "&apiID=" + req.params.apiName
     const apiDefinitionResponse = await fetch(apiDefinition);
     const apiDefinitionContent = await apiDefinitionResponse.text();
-
     registerPartials(req.params.orgName, path.join(__dirname, filePrefix, 'partials'));
 
     var templateContent = {
