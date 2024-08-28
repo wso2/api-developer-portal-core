@@ -28,6 +28,11 @@ const hbs = exphbs.create({});
 app.engine('.hbs', engine({
     extname: '.hbs'
 }));
+
+Handlebars.registerHelper('eq', function (a, b) {
+    return (a == b);
+});
+
 app.set('view engine', 'hbs');
 app.use('/images', express.static(path.join(__dirname, filePrefix + 'images')));
 
@@ -247,7 +252,7 @@ app.get('/api/:apiName', ensureAuthenticated, (req, res) => {
         content: loadMarkdown('content.md', filePrefix + '../mock/' + req.params.apiName),
         apiMetadata: mockAPIData,
         authJson: authJson,
-        baseUrl: "http://localhost:3000",
+        baseUrl: "http://localhost:3000"
     }
 
     const html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
@@ -276,13 +281,14 @@ app.get('/apis', ensureAuthenticated, (req, res) => {
 app.get('/api/:apiName/tryout', ensureAuthenticated, (req, res) => {
 
     const mockAPIDataPath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + '/apiMetadata.json');
-    const mockAPIData = JSON.parse(fs.readFileSync(mockAPIDataPath, 'utf-8')).apiInfo.openApiDefinition;
+    const apiMetaData = JSON.parse(fs.readFileSync(mockAPIDataPath, 'utf-8'));
 
-    registerPartials("http://localhost:3000", path.join(__dirname, filePrefix, 'partials'));
+    registerPartials("http://localhost:3000", path.join(__dirname,filePrefix, 'partials'));
 
     var templateContent = {
-        apiMetadata: JSON.stringify(mockAPIData),
         authJson: authJson,
+        apiType: apiMetaData.apiInfo.apiType,
+        swagger: JSON.stringify(apiMetaData.apiInfo.openApiDefinition),
         baseUrl: "http://localhost:3000"
     }
     const html = renderTemplate('pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
