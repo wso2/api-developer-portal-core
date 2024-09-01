@@ -248,6 +248,7 @@ app.get('/((?!favicon.ico)):orgName', ensureAuthenticated, (req, res) => {
     registerPartials(req.params.orgName, path.join(__dirname, filePrefix, 'partials'));
 
     var templateContent = {
+        userProfiles: mockProfileData,
         baseUrl: req.params.orgName
     };
 
