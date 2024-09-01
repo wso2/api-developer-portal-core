@@ -283,7 +283,7 @@ app.get('/api/:apiName/tryout', ensureAuthenticated, (req, res) => {
     const mockAPIDataPath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + '/apiMetadata.json');
     const apiMetaData = JSON.parse(fs.readFileSync(mockAPIDataPath, 'utf-8'));
 
-    registerPartials("http://localhost:3000", path.join(__dirname,filePrefix, 'partials'));
+    registerPartials("http://localhost:3000", path.join(__dirname, filePrefix, 'partials'));
 
     var templateContent = {
         authJson: authJson,
@@ -312,10 +312,10 @@ app.get('(?!styles)\/*', ensureAuthenticated, (req, res) => {
 
     //read all markdown content
     if (fs.existsSync(path.join(__dirname, filePrefix + 'pages', filePath, 'content'))) {
-        const markdDownFiles = fs.readdirSync(path.join(__dirname, 'pages/' + filePath + '/content'));
+        const markdDownFiles = fs.readdirSync(path.join(__dirname, filePrefix + 'pages/' + filePath + '/content'));
         markdDownFiles.forEach((filename) => {
             const tempKey = filename.split('.md')[0];
-            templateContent[tempKey] = loadMarkdown(filename, 'pages/' + filePath + '/content')
+            templateContent[tempKey] = loadMarkdown(filename, filePrefix + 'pages/' + filePath + '/content')
         });
     }
 
