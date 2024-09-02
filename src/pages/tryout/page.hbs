@@ -5,15 +5,16 @@
     <script src="https://unpkg.com/@stoplight/elements/web-components.min.js"></script>
 </head>
 <main>
-    <elements-api apiDescriptionUrl={{swagger}} router="hash" layout="sidebar" />
+    <elements-api apiDescriptionDocument='{{{swagger}}}' router="hash" layout="sidebar" />
 </main>
 
 {{else if (eq apiType "AsyncAPI")}}
 
 <head>
     <link rel="stylesheet" href="https://unpkg.com/@asyncapi/react-component@latest/styles/default.min.css">
+    <link rel="stylesheet" href="/styles/tryout.css">
 </head>
-<main>
+<main >
     <div id="asyncapi"></div>
     <script src="https://unpkg.com/@asyncapi/react-component@latest/browser/standalone/index.js"></script>
     <script>

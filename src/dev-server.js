@@ -28,6 +28,11 @@ const hbs = exphbs.create({});
 app.engine('.hbs', engine({
     extname: '.hbs'
 }));
+
+Handlebars.registerHelper('eq', function (a, b) {
+    return (a == b);
+});
+
 app.set('view engine', 'hbs');
 app.use('/images', express.static(path.join(__dirname, filePrefix + 'images')));
 
@@ -63,6 +68,7 @@ const copyStyelSheet = () => {
     searchFile(path.join(__dirname, filePrefix + 'partials'), ".css", styleDir);
     searchFile(path.join(__dirname, filePrefix + 'layout'), ".css", styleDir);
     searchFile(path.join(__dirname, filePrefix + 'pages'), ".css", styleDir);
+    searchFile(path.join(__dirname, 'pages', 'tryout'), ".css", []);
 }
 
 function searchFile(dir, fileName, styleDir) {
@@ -247,7 +253,7 @@ app.get('/api/:apiName', ensureAuthenticated, (req, res) => {
         content: loadMarkdown('content.md', filePrefix + '../mock/' + req.params.apiName),
         apiMetadata: mockAPIData,
         authJson: authJson,
-        baseUrl: "http://localhost:3000",
+        baseUrl: "http://localhost:3000"
     }
 
     const html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
@@ -276,13 +282,14 @@ app.get('/apis', ensureAuthenticated, (req, res) => {
 app.get('/api/:apiName/tryout', ensureAuthenticated, (req, res) => {
 
     const mockAPIDataPath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + '/apiMetadata.json');
-    const mockAPIData = JSON.parse(fs.readFileSync(mockAPIDataPath, 'utf-8')).apiInfo.openApiDefinition;
+    const apiMetaData = JSON.parse(fs.readFileSync(mockAPIDataPath, 'utf-8'));
 
     registerPartials("http://localhost:3000", path.join(__dirname, filePrefix, 'partials'));
 
     var templateContent = {
-        apiMetadata: JSON.stringify(mockAPIData),
         authJson: authJson,
+        apiType: apiMetaData.apiInfo.apiType,
+        swagger: JSON.stringify(apiMetaData.apiInfo.openApiDefinition),
         baseUrl: "http://localhost:3000"
     }
     const html = renderTemplate('pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
@@ -306,10 +313,10 @@ app.get('(?!styles)\/*', ensureAuthenticated, (req, res) => {
 
     //read all markdown content
     if (fs.existsSync(path.join(__dirname, filePrefix + 'pages', filePath, 'content'))) {
-        const markdDownFiles = fs.readdirSync(path.join(__dirname, 'pages/' + filePath + '/content'));
+        const markdDownFiles = fs.readdirSync(path.join(__dirname, filePrefix + 'pages/' + filePath + '/content'));
         markdDownFiles.forEach((filename) => {
             const tempKey = filename.split('.md')[0];
-            templateContent[tempKey] = loadMarkdown(filename, 'pages/' + filePath + '/content')
+            templateContent[tempKey] = loadMarkdown(filename, filePrefix + 'pages/' + filePath + '/content')
         });
     }
 
