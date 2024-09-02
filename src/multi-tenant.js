@@ -277,6 +277,7 @@ router.get('/((?!favicon.ico)):orgName/api/:apiName', ensureAuthenticated, async
         body: template({
             apiMetadata: metaData,
             baseUrl: '/' + req.params.orgName,
+            schemaUrl: config.apiMetaDataAPI + "apiDefinition?orgName=" + orgName + "&apiID=" + req.params.apiName
         }),
     });
     res.send(html);
@@ -285,9 +286,13 @@ router.get('/((?!favicon.ico)):orgName/api/:apiName', ensureAuthenticated, async
 router.get('/((?!favicon.ico)):orgName/api/:apiName/tryout', ensureAuthenticated, async (req, res) => {
     
     const orgName = req.params.orgName;
-    const apiMetaDataUrl = config.apiMetaDataAPI + "apiDefinition?orgName=" + req.params.orgName + "&apiID=" + req.params.apiName;
+    const apiMetaDataUrl = config.apiMetaDataAPI + "api?orgName=" + req.params.orgName + "&apiID=" + req.params.apiName;
     const metadataResponse = await fetch(apiMetaDataUrl);
-    const metaData = await metadataResponse.text();
+    const metaData = await metadataResponse.json();
+
+    const apiDefinition = config.apiMetaDataAPI + "apiDefinition?orgName=" + req.params.orgName + "&apiID=" + req.params.apiName
+    const apiDefinitionResponse = await fetch(apiDefinition);
+    const apiDefinitionContent = await apiDefinitionResponse.text();
 
     const templateURL = config.adminAPI + "orgFileType?orgName=" + orgName;
 
@@ -304,6 +309,7 @@ router.get('/((?!favicon.ico)):orgName/api/:apiName/tryout', ensureAuthenticated
         body: template({
             apiMetadata: metaData,
             baseUrl: '/' + req.params.orgName,
+            swagger: apiDefinitionContent,
         }),
     });
     res.send(html);
