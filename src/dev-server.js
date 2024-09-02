@@ -68,6 +68,7 @@ const copyStyelSheet = () => {
     searchFile(path.join(__dirname, filePrefix + 'partials'), ".css", styleDir);
     searchFile(path.join(__dirname, filePrefix + 'layout'), ".css", styleDir);
     searchFile(path.join(__dirname, filePrefix + 'pages'), ".css", styleDir);
+    searchFile(path.join(__dirname, 'pages', 'tryout'), ".css", []);
 }
 
 function searchFile(dir, fileName, styleDir) {

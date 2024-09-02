@@ -12,8 +12,9 @@
 
 <head>
     <link rel="stylesheet" href="https://unpkg.com/@asyncapi/react-component@latest/styles/default.min.css">
+    <link rel="stylesheet" href="/styles/tryout.css">
 </head>
-<main>
+<main >
     <div id="asyncapi"></div>
     <script src="https://unpkg.com/@asyncapi/react-component@latest/browser/standalone/index.js"></script>
     <script>
@@ -26,8 +27,6 @@
             },
         }, document.getElementById('asyncapi'));
     </script>
-    {{swagger}}
-
 </main>
 {{else if (eq apiType "GraphQL")}}
 <head>
