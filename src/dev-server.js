@@ -31,13 +31,18 @@ app.engine('.hbs', engine({
     extname: '.hbs'
 }));
 
+Handlebars.registerHelper('in', function (value, options) {
+    const validValues = options.hash.values.split(','); 
+    return validValues.includes(value) ? options.fn(this) : options.inverse(this);
+});
+
 Handlebars.registerHelper('eq', function (a, b) {
     return (a == b);
 });
 
 app.set('view engine', 'hbs');
 app.use('/images', express.static(path.join(__dirname, filePrefix + 'images')));
-
+app.use('/mock', express.static(path.join(__dirname, filePrefix + '../mock')));
 
 app.use(session({
     secret: secret,
@@ -255,7 +260,8 @@ app.get('/api/:apiName', ensureAuthenticated, (req, res) => {
         content: loadMarkdown('content.md', filePrefix + '../mock/' + req.params.apiName),
         apiMetadata: mockAPIData,
         authJson: authJson,
-        baseUrl: baseURL
+        baseUrl: baseURL,
+        schemaUrl: 'http://localhost:3000/mock/' + req.params.apiName + '/apiDefinition.xml'
     }
 
     const html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
