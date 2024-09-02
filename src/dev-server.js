@@ -17,7 +17,7 @@ const app = express();
 
 var filePrefix = '../../../src/';
 
-const baseURL = "http://localhost:"+config.port;
+const baseURL = "http://localhost:" + config.port;
 
 const authJsonPath = path.join(__dirname, filePrefix + '../mock', 'auth.json');
 const authJson = JSON.parse(fs.readFileSync(authJsonPath, 'utf-8'));
@@ -32,7 +32,7 @@ app.engine('.hbs', engine({
 }));
 
 Handlebars.registerHelper('in', function (value, options) {
-    const validValues = options.hash.values.split(','); 
+    const validValues = options.hash.values.split(',');
     return validValues.includes(value) ? options.fn(this) : options.inverse(this);
 });
 
@@ -231,8 +231,8 @@ app.get('/', ensureAuthenticated, (req, res) => {
     const mockProfileDataPath = path.join(__dirname, filePrefix + '../mock', '/userProfiles.json');
     const mockProfileData = JSON.parse(fs.readFileSync(mockProfileDataPath, 'utf-8'));
 
-    registerPartials( baseURL, path.join(__dirname, filePrefix, 'pages', 'home', 'partials'));
-    registerPartials( baseURL, path.join(__dirname, filePrefix, 'partials'));
+    registerPartials(baseURL, path.join(__dirname, filePrefix, 'pages', 'home', 'partials'));
+    registerPartials(baseURL, path.join(__dirname, filePrefix, 'partials'));
 
     var templateContent = {
         userProfiles: mockProfileData,
@@ -250,8 +250,8 @@ app.get('/api/:apiName', ensureAuthenticated, (req, res) => {
     const mockAPIData = JSON.parse(fs.readFileSync(mockAPIDataPath, 'utf-8'));
     const filePath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + '/api-content.hbs');
 
-    registerPartials( baseURL, path.join(__dirname, filePrefix, 'pages', 'api-landing', 'partials'));
-    registerPartials( baseURL, path.join(__dirname, filePrefix, 'partials'));
+    registerPartials(baseURL, path.join(__dirname, filePrefix, 'pages', 'api-landing', 'partials'));
+    registerPartials(baseURL, path.join(__dirname, filePrefix, 'partials'));
 
     if (fs.existsSync(filePath)) {
         hbs.handlebars.registerPartial('api-content', fs.readFileSync(filePath, 'utf-8'));
@@ -261,7 +261,7 @@ app.get('/api/:apiName', ensureAuthenticated, (req, res) => {
         apiMetadata: mockAPIData,
         authJson: authJson,
         baseUrl: baseURL,
-        schemaUrl: 'http://localhost:3000/mock/' + req.params.apiName + '/apiDefinition.xml'
+        schemaUrl: baseURL + '/mock/' + req.params.apiName + '/apiDefinition.xml'
     }
 
     const html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
