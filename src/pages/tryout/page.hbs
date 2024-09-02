@@ -8,7 +8,7 @@
     <elements-api apiDescriptionDocument='{{{swagger}}}' router="hash" layout="sidebar" />
 </main>
 
-{{else if (eq apiType "ASYNC")}}
+{{else if (eq apiType "AsyncAPI")}}
 
 <head>
     <link rel="stylesheet" href="https://unpkg.com/@asyncapi/react-component@latest/styles/default.min.css">
@@ -19,37 +19,36 @@
     <script src="https://unpkg.com/@asyncapi/react-component@latest/browser/standalone/index.js"></script>
     <script>
         AsyncApiStandalone.render({
-            schema: {{{swagger}}},
+            schema: {{{ swagger }}},
             config: {
-                show: {
-                    sidebar: true,
-                }
-            },
+            show: {
+                sidebar: true,
+            }
+        },
         }, document.getElementById('asyncapi'));
     </script>
 </main>
+
 {{else if (eq apiType "GraphQL")}}
+
 <head>
-  <link rel="stylesheet" href="https://unpkg.com/graphiql@2.7.0/graphiql.min.css">
-  
-  <!-- Include React and ReactDOM -->
-    <script src="https://unpkg.com/react/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom/umd/react-dom.development.js"></script>
-
-    <!-- GraphiQL library -->
-    <script src="https://unpkg.com/graphiql/umd/graphiql.js"></script>
-
+    <link rel="stylesheet" href="https://unpkg.com/graphiql@latest/graphiql.min.css">
+    <script src="https://unpkg.com/react@latest/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@latest/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/graphiql/graphiql.min.js"></script>
 </head>
 <main>
-  <div id="graphiql" style="height: 100vh;"></div>
-    <!-- Your JavaScript code -->
-    <script>
-    const fetcher = GraphiQL.createFetcher({ url: 'https://my.backend/graphql' });
+    <div id="root" style="height: 100vh;"></div>
 
-    ReactDOM.render(
-      React.createElement(GraphiQL, { fetcher: fetcher }),
-      document.getElementById('graphiql')
-    );
-  </script>
+    <script>
+        const fetcher = GraphiQL.createFetcher({ url: '{{ apiMetadata.serverUrl.sandboxUrl }}' });
+        const rootElement = document.getElementById('root');
+        const root = ReactDOM.createRoot(rootElement);
+        root.render(
+            React.createElement(GraphiQL, {
+                fetcher: fetcher,
+            })
+        );
+    </script>
 </main>
 {{/if}}

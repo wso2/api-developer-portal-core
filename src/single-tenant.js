@@ -31,6 +31,11 @@ Handlebars.registerHelper('eq', function (a, b) {
     return (a == b);
 });
 
+Handlebars.registerHelper('in', function (value, options) {
+    const validValues = options.hash.values.split(','); 
+    return validValues.includes(value) ? options.fn(this) : options.inverse(this);
+});
+
 app.set('view engine', 'hbs');
 app.use('/images', express.static(path.join(__dirname, filePrefix + 'images')));
 
@@ -293,6 +298,7 @@ app.get('/((?!favicon.ico)):orgName/api/:apiName', ensureAuthenticated, async (r
         content: markdownHtml,
         apiMetadata: metaData,
         baseUrl: '/' + req.params.orgName,
+        schemaUrl: config.apiMetaDataAPI + "apiDefinition?orgName=" + orgName + "&apiID=" + apiName
     }
 
     const html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
