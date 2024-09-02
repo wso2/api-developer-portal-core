@@ -359,8 +359,7 @@ app.get('/((?!favicon.ico)):orgName/api/:apiName/tryout', ensureAuthenticated, a
         apiMetadata: metaData,
         baseUrl: req.params.orgName,
         apiType: metaData.apiInfo.apiType,
-        swagger: apiDefinitionContent,
-        sandboxUrl: metaData.serverUrl.sandboxUrl
+        swagger: apiDefinitionContent
     }
     const html = renderTemplate('pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     res.send(html);
