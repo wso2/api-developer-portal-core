@@ -342,4 +342,4 @@ router.get('/((?!favicon.ico|images):orgName/*)', ensureAuthenticated, async (re
 
 app.use('/', router);
 
-app.listen(3000);
+app.listen(config.port);

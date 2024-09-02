@@ -270,12 +270,7 @@ app.get('/((?!favicon.ico)):orgName/api/:apiName', ensureAuthenticated, async (r
     const images = metaData.apiInfo.apiArtifacts.apiImages;
 
     for (var key in images) {
-        var apiImageUrl = '';
-        if (config.env == 'local') {
-            apiImageUrl = config.apiImageURL + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
-        } else {
-            apiImageUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
-        }
+        var apiImageUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
         const modifiedApiImageURL = apiImageUrl + "&fileName=" + images[key]
         images[key] = modifiedApiImageURL;
     }
@@ -387,4 +382,4 @@ app.get('/((?!favicon.ico|images):orgName/*)', ensureAuthenticated, (req, res) =
 
 });
 
-app.listen(3000);
+app.listen(config.port);
