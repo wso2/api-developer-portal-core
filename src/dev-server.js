@@ -29,6 +29,11 @@ app.engine('.hbs', engine({
     extname: '.hbs'
 }));
 
+Handlebars.registerHelper('in', function (value, options) {
+    const validValues = options.hash.values.split(','); 
+    return validValues.includes(value) ? options.fn(this) : options.inverse(this);
+});
+
 Handlebars.registerHelper('eq', function (a, b) {
     return (a == b);
 });

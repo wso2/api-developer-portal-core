@@ -31,6 +31,11 @@ Handlebars.registerHelper('eq', function (a, b) {
     return (a == b);
 });
 
+Handlebars.registerHelper('in', function (value, options) {
+    const validValues = options.hash.values.split(','); 
+    return validValues.includes(value) ? options.fn(this) : options.inverse(this);
+});
+
 app.set('view engine', 'hbs');
 app.use('/images', express.static(path.join(__dirname, filePrefix + 'images')));
 
