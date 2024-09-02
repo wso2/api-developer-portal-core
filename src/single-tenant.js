@@ -248,6 +248,7 @@ app.get('/((?!favicon.ico)):orgName', ensureAuthenticated, (req, res) => {
     registerPartials(req.params.orgName, path.join(__dirname, filePrefix, 'partials'));
 
     var templateContent = {
+        userProfiles: mockProfileData,
         baseUrl: req.params.orgName
     };
 
@@ -293,7 +294,7 @@ app.get('/((?!favicon.ico)):orgName/api/:apiName', ensureAuthenticated, async (r
         apiMetadata: metaData,
         baseUrl: '/' + req.params.orgName,
     }
-    
+
     const html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
     res.send(html);
 });
@@ -314,7 +315,6 @@ app.get('/((?!favicon.ico)):orgName/apis', ensureAuthenticated, async (req, res)
     metaData.forEach(item => {
         item.baseUrl = '/' + orgName;
     });
-
     metaData.forEach(element => {
         const images = element.apiInfo.apiArtifacts.apiImages;
         var apiImageUrl = '';
@@ -343,7 +343,7 @@ app.get('/((?!favicon.ico)):orgName/api/:apiName/tryout', ensureAuthenticated, a
     const apiMetaDataUrl = config.apiMetaDataAPI + "api?orgName=" + req.params.orgName + "&apiID=" + req.params.apiName;
     const metadataResponse = await fetch(apiMetaDataUrl);
     const metaData = await metadataResponse.json();
-    
+
     const apiDefinition = config.apiMetaDataAPI + "apiDefinition?orgName=" + req.params.orgName + "&apiID=" + req.params.apiName
     const apiDefinitionResponse = await fetch(apiDefinition);
     const apiDefinitionContent = await apiDefinitionResponse.text();
@@ -366,7 +366,7 @@ app.get('/((?!favicon.ico|images):orgName/*)', ensureAuthenticated, (req, res) =
     const orgName = req.params.orgName;
     //read all files in partials folder
     registerPartials(orgName, path.join(__dirname, filePrefix, 'partials'));
-    if (fs.existsSync(orgName, path.join(__dirname, filePrefix + 'pages', filePath, 'partials'))) {
+    if (fs.existsSync(path.join(__dirname, filePrefix + 'pages', filePath, 'partials'))) {
         registerPartials(orgName, path.join(__dirname, filePrefix + 'pages', filePath, 'partials'));
     }
 
@@ -375,10 +375,10 @@ app.get('/((?!favicon.ico|images):orgName/*)', ensureAuthenticated, (req, res) =
 
     //read all markdown content
     if (fs.existsSync(path.join(__dirname, filePrefix + 'pages', filePath, 'content'))) {
-        const markdDownFiles = fs.readdirSync(path.join(__dirname, 'pages/' + filePath + '/content'));
+        const markdDownFiles = fs.readdirSync(path.join(__dirname, filePrefix + 'pages/' + filePath + '/content'));
         markdDownFiles.forEach((filename) => {
             const tempKey = filename.split('.md')[0];
-            templateContent[tempKey] = loadMarkdown(filename, 'pages/' + filePath + '/content')
+            templateContent[tempKey] = loadMarkdown(filename, filePrefix + 'pages/' + filePath + '/content')
         });
     }
 
