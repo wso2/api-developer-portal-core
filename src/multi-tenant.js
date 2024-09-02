@@ -18,6 +18,15 @@ app.engine('hbs', exphbs.engine({ extname: '.hbs' }));
 app.use(express.static(path.join(__dirname, '../public')));
 const router = express.Router();
 
+Handlebars.registerHelper('eq', function (a, b) {
+    return (a == b);
+});
+
+Handlebars.registerHelper('in', function (value, options) {
+    const validValues = options.hash.values.split(','); 
+    return validValues.includes(value) ? options.fn(this) : options.inverse(this);
+});
+
 app.set('view engine', 'hbs');
 
 app.set('views', path.join(__dirname, '/views'));
