@@ -40,7 +40,7 @@ Handlebars.registerHelper('eq', function (a, b) {
 
 app.set('view engine', 'hbs');
 app.use('/images', express.static(path.join(__dirname, filePrefix + 'images')));
-
+app.use('/mock', express.static(path.join(__dirname, filePrefix + '../mock')));
 
 app.use(session({
     secret: secret,
@@ -258,7 +258,8 @@ app.get('/api/:apiName', ensureAuthenticated, (req, res) => {
         content: loadMarkdown('content.md', filePrefix + '../mock/' + req.params.apiName),
         apiMetadata: mockAPIData,
         authJson: authJson,
-        baseUrl: "http://localhost:3000"
+        baseUrl: "http://localhost:3000",
+        schemaUrl: 'http://localhost:3000/mock/' + req.params.apiName + '/apiDefinition.xml'
     }
 
     const html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
