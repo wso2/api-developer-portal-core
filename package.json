@@ -1,12 +1,12 @@
 {
   "name": "devportal-webapp",
-  "version": "1.0.43",
+  "version": "1.0.44",
   "description": "devportal-webapp",
   "main": "index.js",
   "scripts": {
     "design-mode": "npm run build-css --watch & nodemon src/dev-server.js",
     "single-tenant": "npm run build-css --watch & nodemon src/single-tenant.js",
-    "multi-tenant": "node src/multi-tenant.js",
+    "multi-tenant": "npm run build-css --watch & nodemon src/multi-tenant.js",
     "build-css": "node watcher.js"
   },
   "repository": {
