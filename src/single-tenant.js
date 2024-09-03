@@ -12,7 +12,7 @@ const markdown = require('marked');
 const Handlebars = require('handlebars');
 const crypto = require('crypto');
 var config = require('../config');
-const { copyStyelSheet }  = require('./util/util');
+const { copyStyelSheet } = require('./util/util');
 
 const secret = crypto.randomBytes(64).toString('hex');
 const app = express();
@@ -33,7 +33,7 @@ Handlebars.registerHelper('eq', function (a, b) {
 });
 
 Handlebars.registerHelper('in', function (value, options) {
-    const validValues = options.hash.values.split(','); 
+    const validValues = options.hash.values.split(',');
     return validValues.includes(value) ? options.fn(this) : options.inverse(this);
 });
 
@@ -48,7 +48,7 @@ app.use(session({
     cookie: { secure: false } // Set to true if using HTTPS
 }));
 
-copyStyelSheet('../../../../src/'); 
+copyStyelSheet('../../../../src/');
 app.use('/styles', express.static(path.join(__dirname, '../../../src/' + '/styles')));
 const folderToDelete = path.join(__dirname, '../../../src/' + '/styles');
 
@@ -105,23 +105,7 @@ const registerPartials = (orgName, dir) => {
         }
     });
 };
-const registerAPIPartials = (orgName, apiName, dir) => {
-    const filenames = fs.readdirSync(dir);
-    filenames.forEach(async (filename) => {
-        if (!filename.endsWith('.css') && !filename.endsWith('.DS_Store')) {
-            var template = fs.readFileSync(path.join(dir, filename), 'utf8');
-            const apiContetnUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
-            if (filename == "api-content.hbs") {
-                const additionalAPIContentResponse = await fetch(apiContetnUrl + "&fileName=api-content.hbs");                
-                const additionalAPIContent = await additionalAPIContentResponse.text();
-                if (additionalAPIContent != "File not found") {
-                    template = additionalAPIContent;
-                }
-            }
-            hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
-        }
-    });
-};
+
 const renderTemplate = (templatePath, layoutPath, templateContent) => {
 
     const completeTemplatePath = path.join(__dirname, templatePath);
@@ -233,7 +217,7 @@ app.get('/((?!favicon.ico)):orgName/api/:apiName', ensureAuthenticated, async (r
         images[key] = modifiedApiImageURL;
     }
 
-    registerAPIPartials(orgName, apiName, path.join(__dirname, filePrefix, 'pages', 'api-landing', 'partials'));
+    registerPartials(orgName, path.join(__dirname, filePrefix, 'pages', 'api-landing', 'partials'));
     registerPartials(orgName, path.join(__dirname, filePrefix, 'partials'));
 
     const apiContetnUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
@@ -241,6 +225,14 @@ app.get('/((?!favicon.ico)):orgName/api/:apiName', ensureAuthenticated, async (r
     const markdownResponse = await fetch(apiContetnUrl + "&fileName=apiContent.md");
     const markdownContent = await markdownResponse.text();
     const markdownHtml = markdownContent ? markdown.parse(markdownContent) : '';
+
+    const additionalAPIContentResponse = await fetch(apiContetnUrl + "&fileName=api-content.hbs");
+    const additionalAPIContent = await additionalAPIContentResponse.text();
+    
+    if (additionalAPIContent != "File not found") {
+        template = additionalAPIContent;
+        hbs.handlebars.registerPartial("api-content", template);
+    }
 
     var templateContent = {
         content: markdownHtml,
