@@ -257,7 +257,7 @@ app.get('/api/:apiName', ensureAuthenticated, (req, res) => {
         hbs.handlebars.registerPartial('api-content', fs.readFileSync(filePath, 'utf-8'));
     }
     var templateContent = {
-        content: loadMarkdown('content.md', filePrefix + '../mock/' + req.params.apiName),
+        content: loadMarkdown('apiContent.md', filePrefix + '../mock/' + req.params.apiName),
         apiMetadata: mockAPIData,
         authJson: authJson,
         baseUrl: baseURL,
