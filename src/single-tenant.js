@@ -12,6 +12,7 @@ const markdown = require('marked');
 const Handlebars = require('handlebars');
 const crypto = require('crypto');
 var config = require('../config');
+const { copyStyelSheet }  = require('./util/util');
 
 const secret = crypto.randomBytes(64).toString('hex');
 const app = express();
@@ -47,57 +48,9 @@ app.use(session({
     cookie: { secure: false } // Set to true if using HTTPS
 }));
 
-
-const copyStyelSheet = () => {
-
-    if (!fs.existsSync(path.join(__dirname, filePrefix + 'styles'))) {
-        fs.mkdirSync(path.join(__dirname, filePrefix + 'styles'));
-
-    }
-    var styleDir = [];
-    searchFile(path.join(__dirname, filePrefix + 'partials'), ".css", styleDir);
-    searchFile(path.join(__dirname, filePrefix + 'layout'), ".css", styleDir);
-    searchFile(path.join(__dirname, filePrefix + 'pages'), ".css", styleDir);
-}
-
-function searchFile(dir, fileName, styleDir) {
-    // read the contents of the directory
-    fs.readdir(dir, (err, files) => {
-        if (err) throw err;
-
-        // search through the files
-        for (const file of files) {
-            // build the full path of the file
-            const filePath = path.join(dir, file);
-
-            // get the file stats
-            fs.stat(filePath, (err, fileStat) => {
-                if (err) throw err;
-
-                // if the file is a directory, recursively search the directory
-                if (fileStat.isDirectory()) {
-                    searchFile(filePath, fileName, styleDir);
-                } else if (file.endsWith(fileName)) {
-                    // if the file is a match, print it
-                    if (!fs.existsSync(path.join(__dirname, filePrefix + 'styles/' + path.basename(filePath)))) {
-                        fs.copyFile(filePath, path.join(__dirname, filePrefix + 'styles/' + path.basename(filePath)),
-                            fs.constants.COPYFILE_EXCL, (err) => {
-                                if (err) {
-                                    console.log("Error Found:", err);
-                                }
-                            });
-                    }
-                }
-            });
-        }
-    });
-
-    return styleDir;
-}
-
-copyStyelSheet();
-app.use('/styles', express.static(path.join(__dirname, filePrefix + '/styles')));
-const folderToDelete = path.join(__dirname, filePrefix + '/styles');
+copyStyelSheet('../../../../src/'); 
+app.use('/styles', express.static(path.join(__dirname, '../../../src/' + '/styles')));
+const folderToDelete = path.join(__dirname, '../../../src/' + '/styles');
 
 process.on('SIGINT', () => {
     if (fs.existsSync(folderToDelete)) {
@@ -159,7 +112,7 @@ const registerAPIPartials = (orgName, apiName, dir) => {
             var template = fs.readFileSync(path.join(dir, filename), 'utf8');
             const apiContetnUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
             if (filename == "api-content.hbs") {
-                const additionalAPIContentResponse = await fetch(apiContetnUrl + "&fileName=api-content.hbs");
+                const additionalAPIContentResponse = await fetch(apiContetnUrl + "&fileName=api-content.hbs");                
                 const additionalAPIContent = await additionalAPIContentResponse.text();
                 if (additionalAPIContent != "File not found") {
                     template = additionalAPIContent;

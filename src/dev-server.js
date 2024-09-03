@@ -113,7 +113,7 @@ function searchFile(dir, fileName, styleDir) {
     return styleDir;
 }
 
-copyStyelSheet();
+copyStyelSheet(filePrefix);
 app.use('/styles', express.static(path.join(__dirname, filePrefix + '/styles')));
 const folderToDelete = path.join(__dirname, filePrefix + '/styles');
 

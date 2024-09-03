@@ -10,6 +10,7 @@ const passport = require('passport');
 const OAuth2Strategy = require('passport-oauth2').Strategy;
 const minimatch = require('minimatch');
 const crypto = require('crypto');
+const { copyStyelSheetMulti }  = require('./util/util');
 
 const secret = crypto.randomBytes(64).toString('hex');
 const app = express();
@@ -48,6 +49,22 @@ passport.serializeUser((user, done) => {
 // Deserialize user from the session
 passport.deserializeUser((user, done) => {
     done(null, user);
+});
+
+copyStyelSheetMulti('../../../../src/'); 
+app.use('/styles', express.static(path.join(__dirname, '/../../../src/' + '/styles')));
+const folderToDelete = path.join(__dirname, '/../../../src/' + '/styles');
+
+process.on('SIGINT', () => {
+    if (fs.existsSync(folderToDelete)) {
+        fs.rmSync(folderToDelete, { recursive: true, force: true });
+    }
+    process.exit();
+});
+process.on('exit', () => {
+    if (fs.existsSync(folderToDelete)) {
+        fs.rmSync(folderToDelete, { recursive: true, force: true });
+    }
 });
 
 // Route to start the authentication process
@@ -133,7 +150,7 @@ app.use(/\/((?!favicon.ico|images).*)/, async (req, res, next) => {
     });
 
 
-    const markdownResponse = await fetch(apiContetnUrl + "&fileName=content.md");
+    const markdownResponse = await fetch(apiContetnUrl + "&fileName=apiContent.md");
     const markdownContent = await markdownResponse.text();
     const markdownHtml = markdownContent ? markdown.parse(markdownContent) : '';
 
@@ -238,12 +255,8 @@ router.get('/((?!favicon.ico)):orgName/apis', ensureAuthenticated, async (req, r
 
 router.get('/((?!favicon.ico)):orgName/api/:apiName', ensureAuthenticated, async (req, res) => {
 
-
-    if (!req.hostname.match("localhost")) {
-        config.adminAPI = process.env.AdminURL;
-        config.apiMetaDataAPI = process.env.APIMetaDataURL;
-    }
     const orgName = req.params.orgName;
+    const apiName = req.params.apiName;
     const apiMetaDataUrl = config.apiMetaDataAPI + "api?orgName=" + orgName + "&apiID=" + req.params.apiName;
     const templateURL = config.adminAPI + "orgFileType?orgName=" + orgName;
 
@@ -261,12 +274,7 @@ router.get('/((?!favicon.ico)):orgName/api/:apiName', ensureAuthenticated, async
     const images = metaData.apiInfo.apiArtifacts.apiImages;
 
     for (var key in images) {
-        var apiImageUrl = '';
-        if (config.env == 'local') {
-            apiImageUrl = config.apiImageURL + "apiFiles?orgName=" + req.params.orgName + "&apiID=" + req.params.apiName;
-        } else {
-            apiImageUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + element.apiInfo.orgName + "&apiID=" + element.apiInfo.apiName;
-        }
+        var apiImageUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
         const modifiedApiImageURL = apiImageUrl + "&fileName=" + images[key]
         images[key] = modifiedApiImageURL;
     }
@@ -299,17 +307,18 @@ router.get('/((?!favicon.ico)):orgName/api/:apiName/tryout', ensureAuthenticated
     const layoutResponse = await fetch(templateURL + "&fileType=layout&filePath=main&fileName=main.hbs");
     var layoutContent = await layoutResponse.text();
 
-    const templateResponse = await fetch(templateURL + "&fileType=template&filePath=tryout&fileName=page.hbs");
-    var templateContent = await templateResponse.text();
+    const completeTemplatePath = path.join(__dirname, 'pages', 'tryout', 'page.hbs');
+    const templateResponse = fs.readFileSync(completeTemplatePath, 'utf-8')
 
-    const template = Handlebars.compile(templateContent.toString());
+    const template = Handlebars.compile(templateResponse.toString());
     const layout = Handlebars.compile(layoutContent.toString());
 
     var html = layout({
         body: template({
             apiMetadata: metaData,
-            baseUrl: '/' + req.params.orgName,
-            swagger: apiDefinitionContent,
+            baseUrl: req.params.orgName,
+            apiType: metaData.apiInfo.apiType,
+            swagger: apiDefinitionContent
         }),
     });
     res.send(html);
