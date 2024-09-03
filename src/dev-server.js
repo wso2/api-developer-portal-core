@@ -291,7 +291,7 @@ app.get('/api/:apiName/tryout', ensureAuthenticated, (req, res) => {
     const apiMetaData = JSON.parse(fs.readFileSync(mockAPIDataPath, 'utf-8'));
 
     const mockAPIContentPath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + '/apiDefinition.json');
-    const apiContent = JSON.stringify(fs.readFileSync(mockAPIContentPath, 'utf-8'));
+    const apiContent = fs.readFileSync(mockAPIContentPath, 'utf-8');
 
     registerPartials("http://localhost:3000", path.join(__dirname, filePrefix, 'partials'));
 
