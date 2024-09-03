@@ -291,7 +291,11 @@ app.get('/api/:apiName/tryout', ensureAuthenticated, (req, res) => {
     const apiMetaData = JSON.parse(fs.readFileSync(mockAPIDataPath, 'utf-8'));
 
     const mockAPIContentPath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + '/apiDefinition.json');
-    const apiContent = fs.readFileSync(mockAPIContentPath, 'utf-8');
+    var apiContent = '';
+    
+    if (fs.existsSync(mockAPIContentPath)) {
+        fs.readFileSync(mockAPIContentPath, 'utf-8');
+    }
 
     registerPartials("http://localhost:3000", path.join(__dirname, filePrefix, 'partials'));
 
@@ -299,7 +303,8 @@ app.get('/api/:apiName/tryout', ensureAuthenticated, (req, res) => {
         authJson: authJson,
         apiType: apiMetaData.apiInfo.apiType,
         swagger: apiContent,
-        baseUrl: "http://localhost:3000"
+        baseUrl: "http://localhost:3000",
+        apiMetadata: apiMetaData
     }
     const html = renderTemplate('pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     res.send(html);
