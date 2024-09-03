@@ -293,14 +293,20 @@ app.get('/api/:apiName/tryout', ensureAuthenticated, (req, res) => {
     const apiMetaData = JSON.parse(fs.readFileSync(mockAPIDataPath, 'utf-8'));
 
     const apiDefinition = path.join(__dirname, filePrefix + '../mock', req.params.apiName + '/apiDefinition.json');
-    const apiDefinitionResponse = fs.readFileSync(apiDefinition, 'utf-8');
+    var apiContent = '';
+    
+    if (fs.existsSync(mockAPIContentPath)) {
+        apiContent = fs.readFileSync(apiDefinition, 'utf-8');
+    }
+
     registerPartials(baseURL, path.join(__dirname, filePrefix, 'partials'));
 
     var templateContent = {
         authJson: authJson,
         apiType: apiMetaData.apiInfo.apiType,
-        swagger: apiDefinitionResponse,
-        baseUrl: baseURL
+        swagger: apiContent,
+        baseUrl: baseURL,
+        apiMetadata: apiMetaData
     }
     const html = renderTemplate('pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     res.send(html);
