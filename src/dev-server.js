@@ -294,7 +294,7 @@ app.get('/api/:apiName/tryout', ensureAuthenticated, (req, res) => {
     var apiContent = '';
     
     if (fs.existsSync(mockAPIContentPath)) {
-        fs.readFileSync(mockAPIContentPath, 'utf-8');
+        apiContent = fs.readFileSync(mockAPIContentPath, 'utf-8');
     }
 
     registerPartials("http://localhost:3000", path.join(__dirname, filePrefix, 'partials'));
