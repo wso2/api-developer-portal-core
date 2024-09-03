@@ -7,7 +7,7 @@ function copyStyelSheetMulti(filePrefix) {
     if (!fs.existsSync(path.join(__dirname, filePrefix + 'styles'))) {
         fs.mkdirSync(path.join(__dirname, filePrefix + 'styles'));
     }
-    searchFile(path.join('src', 'pages', 'tryout'), ".css", [], filePrefix);
+    searchFile(path.join(__dirname, '..', 'pages', 'tryout'), ".css", [], filePrefix);
 }
 
 
@@ -20,7 +20,7 @@ function copyStyelSheet(filePrefix) {
     searchFile(path.join(__dirname, filePrefix + 'partials'), ".css", styleDir, filePrefix);
     searchFile(path.join(__dirname, filePrefix + 'layout'), ".css", styleDir, filePrefix);
     searchFile(path.join(__dirname, filePrefix + 'pages'), ".css", styleDir, filePrefix);
-    searchFile(path.join(__dirname, '..', 'src', 'pages', 'tryout'), ".css", [], filePrefix);
+    searchFile(path.join(__dirname, '..', 'pages', 'tryout'), ".css", [], filePrefix);
 }
 
 function searchFile(dir, fileName, styleDir, filePrefix) {
