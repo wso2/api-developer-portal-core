@@ -65,6 +65,8 @@ process.on('exit', () => {
     }
 });
 
+const generateArray = (length) => Array.from({ length });
+
 // Initialize Passport
 app.use(passport.initialize());
 app.use(passport.session());
@@ -228,7 +230,7 @@ app.get('/((?!favicon.ico)):orgName/api/:apiName', ensureAuthenticated, async (r
 
     const additionalAPIContentResponse = await fetch(apiContetnUrl + "&fileName=api-content.hbs");
     const additionalAPIContent = await additionalAPIContentResponse.text();
-    
+
     if (additionalAPIContent != "File not found") {
         template = additionalAPIContent;
         hbs.handlebars.registerPartial("api-content", template);
@@ -262,6 +264,10 @@ app.get('/((?!favicon.ico)):orgName/apis', ensureAuthenticated, async (req, res)
         item.baseUrl = '/' + orgName;
     });
     metaData.forEach(element => {
+        let randomNumber = Math.floor(Math.random() * 5) + 1;
+        element.apiInfo.ratings = generateArray(randomNumber);
+        element.apiInfo.ratingsNoFill = generateArray(5 - randomNumber);
+
         const images = element.apiInfo.apiArtifacts.apiImages;
         var apiImageUrl = '';
         for (var key in images) {

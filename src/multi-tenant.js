@@ -28,6 +28,8 @@ Handlebars.registerHelper('in', function (value, options) {
     return validValues.includes(value) ? options.fn(this) : options.inverse(this);
 });
 
+const generateArray = (length) => Array.from({ length });
+
 app.set('view engine', 'hbs');
 
 app.set('views', path.join(__dirname, '/views'));
@@ -227,6 +229,10 @@ router.get('/((?!favicon.ico)):orgName/apis', ensureAuthenticated, async (req, r
     });
 
     metaData.forEach(element => {
+        let randomNumber = Math.floor(Math.random() * 5) + 1;
+        element.apiInfo.ratings = generateArray(randomNumber);
+        element.apiInfo.ratingsNoFill = generateArray(5 - randomNumber);
+
         const images = element.apiInfo.apiArtifacts.apiImages;
         var apiImageUrl = '';
         for (var key in images) {
