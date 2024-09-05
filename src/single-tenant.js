@@ -286,7 +286,7 @@ app.get('/((?!favicon.ico)):orgName/apis', ensureAuthenticated, async (req, res)
         item.baseUrl = '/' + orgName;
     });
     metaData.forEach(element => {
-        let randomNumber = Math.floor(Math.random() * 5) + 1;
+        let randomNumber = Math.floor(Math.random() * 3) + 3;
         element.apiInfo.ratings = generateArray(randomNumber);
         element.apiInfo.ratingsNoFill = generateArray(5 - randomNumber);
 
