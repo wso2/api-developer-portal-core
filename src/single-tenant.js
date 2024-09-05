@@ -95,10 +95,6 @@ const loadMarkdown = (filename, dirName) => {
 
 const registerPartials = (orgName, dir, profile) => {
     const filenames = fs.readdirSync(dir);
-    var profileName = '';
-    if (profile != null) {
-        profileName = profile.givenName;
-    }
     filenames.forEach(async (filename) => {
         if (!filename.endsWith('.css') && !filename.endsWith('.DS_Store')) {
             var template = fs.readFileSync(path.join(dir, filename), 'utf8');
@@ -106,7 +102,7 @@ const registerPartials = (orgName, dir, profile) => {
             if (filename == "header.hbs") {
                 hbs.handlebars.partials = {
                     ...hbs.handlebars.partials,
-                    header: hbs.handlebars.compile(template)({ baseUrl: '/' + orgName, profile: profileName }),
+                    header: hbs.handlebars.compile(template)({ baseUrl: '/' + orgName, profile: profile }),
                 };
             }
         }
@@ -146,9 +142,11 @@ app.get('/((?!favicon.ico)):orgName/login', async (req, res, next) => {
             scope: authJsonContent[0].scope ? authJsonContent[0].scope.split(" ") : "",
             passReqToCallback: true
         }, (req, accessToken, refreshToken, params, profile, done) => {
+            const decodedJWT = jwt.decode(params.id_token);
             profile = {
-                'givenName': jwt.decode(params.id_token)['given_name'],
-                'idToken': params.id_token
+                'name': decodedJWT['given_name'],
+                'idToken': params.id_token,
+                'email': decodedJWT['email']
             };
             // Here you can handle the user's profile and tokens
             return done(null, profile);

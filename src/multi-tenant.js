@@ -88,7 +88,8 @@ app.get('/((?!favicon.ico)):orgName/login', async (req, res, next) => {
             // Here you can handle the user's profile and tokens
             profile = {
                 'givenName': jwt.decode(params.id_token)['given_name'],
-                'idToken': params.id_token
+                'idToken': params.id_token,
+                'email': decodedJWT['email']
             };
             return done(null, profile);
         }));
@@ -134,10 +135,6 @@ const ensureAuthenticated = async (req, res, next) => {
 
 // Middleware to load partials from the database
 app.use(/\/((?!favicon.ico|images).*)/, async (req, res, next) => {
-    var profileName = '';
-    if (req.user != null) {
-        profileName = req.user.givenName;
-    }
 
     if (!req.hostname.match("localhost")) {
         config.adminAPI = process.env.AdminURL;
@@ -178,7 +175,7 @@ app.use(/\/((?!favicon.ico|images).*)/, async (req, res, next) => {
 
     hbs.handlebars.partials = {
         ...hbs.handlebars.partials,
-        header: hbs.handlebars.compile(partialObject['header'])({ baseUrl: '/' + req.originalUrl.split("/")[1], profile: profileName }),
+        header: hbs.handlebars.compile(partialObject['header'])({ baseUrl: '/' + req.originalUrl.split("/")[1], profile: profile }),
         "api-content": hbs.handlebars.compile(partialObject['api-content'])({ content: markdownHtml }),
         "hero": hbs.handlebars.compile(partialObject['hero'])({ baseUrl: '/' + req.originalUrl.split("/")[1] })
     };
@@ -188,7 +185,7 @@ app.use(/\/((?!favicon.ico|images).*)/, async (req, res, next) => {
 app.get('/((?!favicon.ico)):orgName/logout', async (req, res) => {
     const authJsonResponse = await fetch(config.adminAPI + "identityProvider?orgName=" + req.params.orgName);
     var authJsonContent = await authJsonResponse.json();
-    
+
     var idToken = ''
     if (req.user.idToken != null) {
         idToken = req.user.idToken;
