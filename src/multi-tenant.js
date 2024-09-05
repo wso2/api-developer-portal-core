@@ -87,7 +87,7 @@ app.get('/((?!favicon.ico)):orgName/login', async (req, res, next) => {
         }, (accessToken, refreshToken, profile, done) => {
             // Here you can handle the user's profile and tokens
             profile = {
-                'givenName': jwt.decode(params.id_token)['given_name'],
+                'name': jwt.decode(params.id_token)['given_name'],
                 'idToken': params.id_token,
                 'email': decodedJWT['email']
             };
