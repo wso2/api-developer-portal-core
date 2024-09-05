@@ -182,6 +182,13 @@ app.use(/\/((?!favicon.ico|images).*)/, async (req, res, next) => {
     next();
 });
 
+app.get('/((?!favicon.ico)):orgName/signup', async (req, res, next) => {
+    const authJsonResponse = await fetch(config.adminAPI + "identityProvider?orgName=" + req.params.orgName);
+    const authJsonContent = await authJsonResponse.json();
+
+    res.redirect(authJsonContent[0].signUpURL);
+});
+
 app.get('/((?!favicon.ico)):orgName/logout', async (req, res) => {
     const authJsonResponse = await fetch(config.adminAPI + "identityProvider?orgName=" + req.params.orgName);
     var authJsonContent = await authJsonResponse.json();
