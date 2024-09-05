@@ -186,6 +186,9 @@ app.use(/\/((?!favicon.ico|images).*)/, async (req, res, next) => {
 });
 
 app.get('/((?!favicon.ico)):orgName/logout', async (req, res) => {
+    const authJsonResponse = await fetch(config.adminAPI + "identityProvider?orgName=" + req.params.orgName);
+    var authJsonContent = await authJsonResponse.json();
+    
     var idToken = ''
     if (req.user.idToken != null) {
         idToken = req.user.idToken;
