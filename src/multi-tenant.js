@@ -135,7 +135,7 @@ const ensureAuthenticated = async (req, res, next) => {
 // Middleware to load partials from the database
 app.use(/\/((?!favicon.ico|images).*)/, async (req, res, next) => {
     var profileName = '';
-    if (req.user.givenName != null) {
+    if (req.user != null) {
         profileName = req.user.givenName;
     }
 
