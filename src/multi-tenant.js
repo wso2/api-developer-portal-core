@@ -10,7 +10,8 @@ const passport = require('passport');
 const OAuth2Strategy = require('passport-oauth2').Strategy;
 const minimatch = require('minimatch');
 const crypto = require('crypto');
-const { copyStyelSheetMulti }  = require('./util/util');
+const { copyStyelSheetMulti } = require('./util/util');
+const jwt = require('jsonwebtoken');
 
 const secret = crypto.randomBytes(64).toString('hex');
 const app = express();
@@ -24,7 +25,7 @@ Handlebars.registerHelper('eq', function (a, b) {
 });
 
 Handlebars.registerHelper('in', function (value, options) {
-    const validValues = options.hash.values.split(','); 
+    const validValues = options.hash.values.split(',');
     return validValues.includes(value) ? options.fn(this) : options.inverse(this);
 });
 
@@ -53,7 +54,7 @@ passport.deserializeUser((user, done) => {
     done(null, user);
 });
 
-copyStyelSheetMulti('../../../../src/'); 
+copyStyelSheetMulti('../../../../src/');
 app.use('/styles', express.static(path.join(__dirname, '/../../../src/' + '/styles')));
 const folderToDelete = path.join(__dirname, '/../../../src/' + '/styles');
 
@@ -85,6 +86,10 @@ app.get('/((?!favicon.ico)):orgName/login', async (req, res, next) => {
             scope: authJsonContent[0].scope ? authJsonContent[0].scope.split(" ") : "",
         }, (accessToken, refreshToken, profile, done) => {
             // Here you can handle the user's profile and tokens
+            profile = {
+                'givenName': jwt.decode(params.id_token)['given_name'],
+                'idToken': params.id_token
+            };
             return done(null, profile);
         }));
         next();
@@ -129,6 +134,10 @@ const ensureAuthenticated = async (req, res, next) => {
 
 // Middleware to load partials from the database
 app.use(/\/((?!favicon.ico|images).*)/, async (req, res, next) => {
+    var profileName = '';
+    if (req.user.givenName != null) {
+        profileName = req.user.givenName;
+    }
 
     if (!req.hostname.match("localhost")) {
         config.adminAPI = process.env.AdminURL;
@@ -169,13 +178,24 @@ app.use(/\/((?!favicon.ico|images).*)/, async (req, res, next) => {
 
     hbs.handlebars.partials = {
         ...hbs.handlebars.partials,
-        header: hbs.handlebars.compile(partialObject['header'])({ baseUrl: '/' + req.originalUrl.split("/")[1] }),
+        header: hbs.handlebars.compile(partialObject['header'])({ baseUrl: '/' + req.originalUrl.split("/")[1], profile: profileName }),
         "api-content": hbs.handlebars.compile(partialObject['api-content'])({ content: markdownHtml }),
         "hero": hbs.handlebars.compile(partialObject['hero'])({ baseUrl: '/' + req.originalUrl.split("/")[1] })
     };
     next();
 });
 
+app.get('/((?!favicon.ico)):orgName/logout', async (req, res) => {
+    var idToken = ''
+    if (req.user.idToken != null) {
+        idToken = req.user.idToken;
+    }
+
+    req.session.destroy();
+    req.logout(
+        () => res.redirect(authJsonContent[0].logoutURL + '?post_logout_redirect_uri=' + authJsonContent[0].logoutRedirectURI + '&id_token_hint=' + idToken)
+    );
+});
 
 // Route to render Handlebars templates fetched from the database
 router.get('/((?!favicon.ico)):orgName', ensureAuthenticated, async (req, res) => {
@@ -298,7 +318,7 @@ router.get('/((?!favicon.ico)):orgName/api/:apiName', ensureAuthenticated, async
 });
 
 router.get('/((?!favicon.ico)):orgName/api/:apiName/tryout', ensureAuthenticated, async (req, res) => {
-    
+
     const orgName = req.params.orgName;
     const apiMetaDataUrl = config.apiMetaDataAPI + "api?orgName=" + req.params.orgName + "&apiID=" + req.params.apiName;
     const metadataResponse = await fetch(apiMetaDataUrl);
