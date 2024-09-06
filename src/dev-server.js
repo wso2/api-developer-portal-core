@@ -155,17 +155,18 @@ const loadMarkdown = (filename, dirName) => {
     }
 };
 
-const registerPartials = (baseUrl, dir) => {
+const registerPartials = (orgName, dir) => {
     const filenames = fs.readdirSync(dir);
-    filenames.forEach((filename) => {
-        if (filename.endsWith('.hbs')) {
-            const template = fs.readFileSync(path.join(dir, filename), 'utf8');
+    filenames.forEach(async (filename) => {
+        if (!filename.endsWith('.css') && !filename.endsWith('.DS_Store')) {
+            var template = fs.readFileSync(path.join(dir, filename), 'utf8');
             hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
-
-            hbs.handlebars.partials = {
-                ...hbs.handlebars.partials,
-                header: hbs.handlebars.compile(template)({ baseUrl: baseUrl })
-            };
+            if (filename == "header.hbs") {
+                hbs.handlebars.partials = {
+                    ...hbs.handlebars.partials,
+                    header: hbs.handlebars.compile(template)({ baseUrl: '/' + orgName }),
+                };
+            }
         }
     });
 };
