@@ -85,11 +85,12 @@ app.get('/((?!favicon.ico)):orgName/login', async (req, res, next) => {
             callbackURL: authJsonContent[0].callbackURL,
             scope: authJsonContent[0].scope ? authJsonContent[0].scope.split(" ") : "",
         }, (accessToken, refreshToken, profile, done) => {
+            const decodedIDToken = jwt.decode(params.id_token);
             // Here you can handle the user's profile and tokens
             profile = {
-                'name': jwt.decode(params.id_token)['given_name'],
+                'name': decodedIDToken['given_name'],
                 'idToken': params.id_token,
-                'email': decodedJWT['email']
+                'email': decodedIDToken['email']
             };
             return done(null, profile);
         }));
