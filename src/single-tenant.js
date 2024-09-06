@@ -13,6 +13,7 @@ const Handlebars = require('handlebars');
 const crypto = require('crypto');
 var config = require('../config');
 const { copyStyelSheet } = require('./util/util');
+const jwt = require('jsonwebtoken');
 
 const secret = crypto.randomBytes(64).toString('hex');
 const app = express();
@@ -65,6 +66,8 @@ process.on('exit', () => {
     }
 });
 
+const generateArray = (length) => Array.from({ length });
+
 // Initialize Passport
 app.use(passport.initialize());
 app.use(passport.session());
@@ -90,7 +93,7 @@ const loadMarkdown = (filename, dirName) => {
     }
 };
 
-const registerPartials = (orgName, dir) => {
+const registerPartials = (orgName, dir, profile) => {
     const filenames = fs.readdirSync(dir);
     filenames.forEach((filename) => {
         if (filename.endsWith('.hbs')) {
@@ -99,7 +102,7 @@ const registerPartials = (orgName, dir) => {
             if (filename == "header.hbs") {
                 hbs.handlebars.partials = {
                     ...hbs.handlebars.partials,
-                    header: hbs.handlebars.compile(template)({ baseUrl: '/' + orgName }),
+                    header: hbs.handlebars.compile(template)({ baseUrl: '/' + orgName, profile: profile }),
                 };
             }
         }
@@ -137,7 +140,14 @@ app.get('/((?!favicon.ico)):orgName/login', async (req, res, next) => {
             clientID: authJsonContent[0].clientId,
             callbackURL: authJsonContent[0].callbackURL,
             scope: authJsonContent[0].scope ? authJsonContent[0].scope.split(" ") : "",
-        }, (accessToken, refreshToken, profile, done) => {
+            passReqToCallback: true
+        }, (req, accessToken, refreshToken, params, profile, done) => {
+            const decodedJWT = jwt.decode(params.id_token);
+            profile = {
+                'name': decodedJWT['given_name'],
+                'idToken': params.id_token,
+                'email': decodedJWT['email']
+            };
             // Here you can handle the user's profile and tokens
             return done(null, profile);
         }));
@@ -158,6 +168,27 @@ app.get('/((?!favicon.ico)):orgName/callback', (req, res, next) => {
     // Clear the returnTo variable from the session
     delete req.session.returnTo;
     res.redirect(returnTo);
+});
+
+app.get('/((?!favicon.ico)):orgName/signup', async (req, res, next) => {
+    const authJsonResponse = await fetch(config.adminAPI + "identityProvider?orgName=" + req.params.orgName);
+    const authJsonContent = await authJsonResponse.json();
+
+    res.redirect(authJsonContent[0].signUpURL);
+});
+
+app.get('/((?!favicon.ico)):orgName/logout', async (req, res) => {
+    const authJsonResponse = await fetch(config.adminAPI + "identityProvider?orgName=" + req.params.orgName);
+    var authJsonContent = await authJsonResponse.json();
+    var idToken = ''
+    if (idToken != null) {
+        idToken = req.user.idToken;
+    }
+
+    req.session.destroy();
+    req.logout(
+        () => res.redirect(authJsonContent[0].logoutURL + '?post_logout_redirect_uri=' + authJsonContent[0].logoutRedirectURI + '&id_token_hint=' + idToken)
+    );
 });
 
 // Middleware to check authentication
@@ -186,8 +217,8 @@ app.get('/((?!favicon.ico)):orgName', ensureAuthenticated, (req, res) => {
     const mockProfileDataPath = path.join(__dirname, filePrefix + '../mock', '/userProfiles.json');
     const mockProfileData = JSON.parse(fs.readFileSync(mockProfileDataPath, 'utf-8'));
 
-    registerPartials(req.params.orgName, path.join(__dirname, filePrefix, 'pages', 'home', 'partials'));
-    registerPartials(req.params.orgName, path.join(__dirname, filePrefix, 'partials'));
+    registerPartials(req.params.orgName, path.join(__dirname, filePrefix, 'pages', 'home', 'partials'), req.user);
+    registerPartials(req.params.orgName, path.join(__dirname, filePrefix, 'partials'), req.user);
 
     var templateContent = {
         userProfiles: mockProfileData,
@@ -217,8 +248,8 @@ app.get('/((?!favicon.ico)):orgName/api/:apiName', ensureAuthenticated, async (r
         images[key] = modifiedApiImageURL;
     }
 
-    registerPartials(orgName, path.join(__dirname, filePrefix, 'pages', 'api-landing', 'partials'));
-    registerPartials(orgName, path.join(__dirname, filePrefix, 'partials'));
+    registerPartials(orgName, path.join(__dirname, filePrefix, 'pages', 'api-landing', 'partials'), req.user);
+    registerPartials(orgName, path.join(__dirname, filePrefix, 'partials'), req.user);
 
     const apiContetnUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
 
@@ -228,7 +259,7 @@ app.get('/((?!favicon.ico)):orgName/api/:apiName', ensureAuthenticated, async (r
 
     const additionalAPIContentResponse = await fetch(apiContetnUrl + "&fileName=api-content.hbs");
     const additionalAPIContent = await additionalAPIContentResponse.text();
-    
+
     if (additionalAPIContent != "File not found") {
         template = additionalAPIContent;
         hbs.handlebars.registerPartial("api-content", template);
@@ -252,8 +283,8 @@ app.get('/((?!favicon.ico)):orgName/apis', ensureAuthenticated, async (req, res)
     const orgName = req.params.orgName;
     const apiMetaDataUrl = config.apiMetaDataAPI + "apiList?orgName=" + orgName;
 
-    registerPartials(orgName, path.join(__dirname, filePrefix, 'pages', 'apis', 'partials'));
-    registerPartials(orgName, path.join(__dirname, filePrefix, 'partials'));
+    registerPartials(orgName, path.join(__dirname, filePrefix, 'pages', 'apis', 'partials'), req.user);
+    registerPartials(orgName, path.join(__dirname, filePrefix, 'partials'), req.user);
 
     const metadataResponse = await fetch(apiMetaDataUrl);
     const metaData = await metadataResponse.json();
@@ -262,6 +293,10 @@ app.get('/((?!favicon.ico)):orgName/apis', ensureAuthenticated, async (req, res)
         item.baseUrl = '/' + orgName;
     });
     metaData.forEach(element => {
+        let randomNumber = Math.floor(Math.random() * 3) + 3;
+        element.apiInfo.ratings = generateArray(randomNumber);
+        element.apiInfo.ratingsNoFill = generateArray(5 - randomNumber);
+
         const images = element.apiInfo.apiArtifacts.apiImages;
         var apiImageUrl = '';
         for (var key in images) {
@@ -293,7 +328,7 @@ app.get('/((?!favicon.ico)):orgName/api/:apiName/tryout', ensureAuthenticated, a
     const apiDefinition = config.apiMetaDataAPI + "apiDefinition?orgName=" + req.params.orgName + "&apiID=" + req.params.apiName
     const apiDefinitionResponse = await fetch(apiDefinition);
     const apiDefinitionContent = await apiDefinitionResponse.text();
-    registerPartials(req.params.orgName, path.join(__dirname, filePrefix, 'partials'));
+    registerPartials(req.params.orgName, path.join(__dirname, filePrefix, 'partials'), req.user);
 
     var templateContent = {
         apiMetadata: metaData,
@@ -311,9 +346,9 @@ app.get('/((?!favicon.ico|images):orgName/*)', ensureAuthenticated, (req, res) =
     const filePath = req.originalUrl.split("/").pop();
     const orgName = req.params.orgName;
     //read all files in partials folder
-    registerPartials(orgName, path.join(__dirname, filePrefix, 'partials'));
+    registerPartials(orgName, path.join(__dirname, filePrefix, 'partials'), req.user);
     if (fs.existsSync(path.join(__dirname, filePrefix + 'pages', filePath, 'partials'))) {
-        registerPartials(orgName, path.join(__dirname, filePrefix + 'pages', filePath, 'partials'));
+        registerPartials(orgName, path.join(__dirname, filePrefix + 'pages', filePath, 'partials'), req.user);
     }
 
     var templateContent = {};

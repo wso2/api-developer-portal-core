@@ -44,6 +44,8 @@ app.set('view engine', 'hbs');
 app.use('/images', express.static(path.join(__dirname, filePrefix + 'images')));
 app.use('/mock', express.static(path.join(__dirname, filePrefix + '../mock')));
 
+const generateArray = (length) => Array.from({ length });
+
 app.use(session({
     secret: secret,
     resave: false,
@@ -277,6 +279,12 @@ app.get('/apis', ensureAuthenticated, (req, res) => {
 
     registerPartials(baseURL, path.join(__dirname, filePrefix, 'pages', 'apis', 'partials'));
     registerPartials(baseURL, path.join(__dirname, filePrefix, 'partials'));
+
+    mockAPIMetaData.forEach(element => {
+        let randomNumber = Math.floor(Math.random() * 3) + 3;
+        element.apiInfo.ratings = generateArray(randomNumber);
+        element.apiInfo.ratingsNoFill = generateArray(5 - randomNumber);
+    });
 
     var templateContent = {
         apiMetadata: mockAPIMetaData,
