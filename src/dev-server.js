@@ -157,17 +157,18 @@ const loadMarkdown = (filename, dirName) => {
     }
 };
 
-const registerPartials = (baseUrl, dir) => {
+const registerPartials = (baseURL, dir) => {
     const filenames = fs.readdirSync(dir);
     filenames.forEach((filename) => {
         if (filename.endsWith('.hbs')) {
-            const template = fs.readFileSync(path.join(dir, filename), 'utf8');
+            var template = fs.readFileSync(path.join(dir, filename), 'utf8');
             hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
-
-            hbs.handlebars.partials = {
-                ...hbs.handlebars.partials,
-                header: hbs.handlebars.compile(template)({ baseUrl: baseUrl })
-            };
+            if (filename == "header.hbs") {
+                hbs.handlebars.partials = {
+                    ...hbs.handlebars.partials,
+                    header: hbs.handlebars.compile(template)({ baseUrl: baseURL}),
+                };
+            }
         }
     });
 };

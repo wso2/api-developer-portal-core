@@ -95,8 +95,8 @@ const loadMarkdown = (filename, dirName) => {
 
 const registerPartials = (orgName, dir, profile) => {
     const filenames = fs.readdirSync(dir);
-    filenames.forEach(async (filename) => {
-        if (!filename.endsWith('.css') && !filename.endsWith('.DS_Store')) {
+    filenames.forEach((filename) => {
+        if (filename.endsWith('.hbs')) {
             var template = fs.readFileSync(path.join(dir, filename), 'utf8');
             hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
             if (filename == "header.hbs") {
