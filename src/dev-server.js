@@ -155,16 +155,16 @@ const loadMarkdown = (filename, dirName) => {
     }
 };
 
-const registerPartials = (orgName, dir) => {
+const registerPartials = (baseURL, dir) => {
     const filenames = fs.readdirSync(dir);
     filenames.forEach(async (filename) => {
-        if (!filename.endsWith('.css') && !filename.endsWith('.DS_Store')) {
+        if (filename.endsWith('.hbs') && !filename.endsWith('.DS_Store')) {
             var template = fs.readFileSync(path.join(dir, filename), 'utf8');
             hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
             if (filename == "header.hbs") {
                 hbs.handlebars.partials = {
                     ...hbs.handlebars.partials,
-                    header: hbs.handlebars.compile(template)({ baseUrl: '/' + orgName }),
+                    header: hbs.handlebars.compile(template)({ baseUrl: baseURL}),
                 };
             }
         }
