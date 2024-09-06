@@ -342,9 +342,9 @@ app.get('/((?!favicon.ico)):orgName/api/:apiName/tryout', ensureAuthenticated, a
 
 // Wildcard Route for other pages
 app.get('/((?!favicon.ico|images):orgName/*)', ensureAuthenticated, (req, res) => {
-
-    const filePath = req.originalUrl.split("/").pop();
+    
     const orgName = req.params.orgName;
+    const filePath = req.originalUrl.split("/" + orgName).pop();
     //read all files in partials folder
     registerPartials(orgName, path.join(__dirname, filePrefix, 'partials'), req.user);
     if (fs.existsSync(path.join(__dirname, filePrefix + 'pages', filePath, 'partials'))) {

@@ -324,7 +324,7 @@ app.get('/api/:apiName/tryout', ensureAuthenticated, (req, res) => {
 // Wildcard Route for other pages
 app.get('(?!styles)\/*', ensureAuthenticated, (req, res) => {
 
-    const filePath = req.originalUrl.split("/").pop();
+    const filePath = req.originalUrl.split(baseURL).pop();
 
     //read all files in partials folder
     registerPartials(baseURL, path.join(__dirname, filePrefix, 'partials'));
