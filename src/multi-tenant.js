@@ -365,7 +365,7 @@ router.get('/((?!favicon.ico|images):orgName/*)', ensureAuthenticated, async (re
         config.apiMetaDataAPI = process.env.APIMetaDataURL;
     }
     const orgName = req.params.orgName;
-    const filePath = req.originalUrl.split(orgName + "/")[1];
+    const filePath = req.originalUrl.split("/" + orgName).pop();
 
     const url = config.adminAPI + "orgFiles?orgName=" + orgName;
     const templateURL = config.adminAPI + "orgFileType?orgName=" + orgName + "&fileType=template&filePath=" + filePath + "&fileName=page.hbs";
