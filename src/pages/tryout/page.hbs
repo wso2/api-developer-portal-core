@@ -16,13 +16,6 @@
 <main>
   <div id="asyncapi"></div>
   <script src="https://unpkg.com/@asyncapi/react-component@latest/browser/standalone/index.js"></script>
-
-  {{!--
-  <script>
-    const config = { "show": { "sidebar": true }, "sidebar": { "showOperations": "byDefault" } };
-    AsyncApiStandalone.render({ {{{ swagger }}}, config }, document.getElementById("asyncapi"));
-  </script> --}}
-
   <script>
     const config = { "show": { "sidebar": false }, "sidebar": { "showOperations": "byDefault" } };
     AsyncApiStandalone.hydrate({
