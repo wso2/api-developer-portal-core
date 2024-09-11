@@ -140,7 +140,9 @@ app.get('/((?!favicon.ico)):orgName/login', async (req, res, next) => {
             clientID: authJsonContent[0].clientId,
             callbackURL: authJsonContent[0].callbackURL,
             scope: authJsonContent[0].scope ? authJsonContent[0].scope.split(" ") : "",
-            passReqToCallback: true
+            passReqToCallback: true,
+            state: true,
+            pkce: true
         }, (req, accessToken, refreshToken, params, profile, done) => {
             const decodedJWT = jwt.decode(params.id_token);
             profile = {
