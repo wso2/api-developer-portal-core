@@ -57,4 +57,48 @@ function searchFile(dir, fileName, styleDir, filePrefix) {
     return styleDir;
 }
 
+// Function to load and convert markdown file to HTML
+function loadMarkdown(filename, dirName) {
+    const filePath = path.join(__dirname, dirName, filename);
+    if (fs.existsSync(filePath)) {
+        const fileContent = fs.readFileSync(filePath, 'utf-8');
+        return marked.parse(fileContent);
+    } else {
+        return null;
+    }
+};
+
+function registerPartials(orgName, dir, profile) {
+    const filenames = fs.readdirSync(dir);
+    filenames.forEach((filename) => {
+        if (filename.endsWith('.hbs')) {
+            var template = fs.readFileSync(path.join(dir, filename), 'utf8');
+            hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
+            if (filename == "header.hbs") {
+                hbs.handlebars.partials = {
+                    ...hbs.handlebars.partials,
+                    header: hbs.handlebars.compile(template)({ baseUrl: '/' + orgName, profile: profile }),
+                };
+            }
+        }
+    });
+};
+
+function renderTemplate(templatePath, layoutPath, templateContent) {
+
+    const completeTemplatePath = path.join(__dirname, templatePath);
+    const templateResponse = fs.readFileSync(completeTemplatePath, 'utf-8')
+
+    const completeLayoutPath = path.join(__dirname, layoutPath);
+    const layoutResponse = fs.readFileSync(completeLayoutPath, 'utf-8')
+
+    const template = Handlebars.compile(templateResponse.toString());
+    const layout = Handlebars.compile(layoutResponse.toString());
+
+    const html = layout({
+        body: template(templateContent)
+    });
+    return html;
+}
+
 module.exports = { copyStyelSheet, copyStyelSheetMulti }
