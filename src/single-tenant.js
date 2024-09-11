@@ -20,9 +20,6 @@ const app = express();
 
 var filePrefix = '../../../src/';
 
-const orgDetailsPath = path.join(__dirname, filePrefix + '../mock', 'orgDetails.json');
-const orgDetails = JSON.parse(fs.readFileSync(orgDetailsPath, 'utf-8'));
-
 const hbs = exphbs.create({});
 
 app.engine('.hbs', engine({
