@@ -95,8 +95,8 @@ const loadMarkdown = (filename, dirName) => {
 
 const registerPartials = (orgName, dir, profile) => {
     const filenames = fs.readdirSync(dir);
-    filenames.forEach(async (filename) => {
-        if (!filename.endsWith('.css') && !filename.endsWith('.DS_Store')) {
+    filenames.forEach((filename) => {
+        if (filename.endsWith('.hbs')) {
             var template = fs.readFileSync(path.join(dir, filename), 'utf8');
             hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
             if (filename == "header.hbs") {
@@ -140,7 +140,9 @@ app.get('/((?!favicon.ico)):orgName/login', async (req, res, next) => {
             clientID: authJsonContent[0].clientId,
             callbackURL: authJsonContent[0].callbackURL,
             scope: authJsonContent[0].scope ? authJsonContent[0].scope.split(" ") : "",
-            passReqToCallback: true
+            passReqToCallback: true,
+            state: true,
+            pkce: true
         }, (req, accessToken, refreshToken, params, profile, done) => {
             const decodedJWT = jwt.decode(params.id_token);
             profile = {
