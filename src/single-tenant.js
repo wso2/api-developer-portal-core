@@ -11,8 +11,8 @@ const exphbs = require('express-handlebars');
 const markdown = require('marked');
 const Handlebars = require('handlebars');
 const crypto = require('crypto');
-var config = require('../config');
-const { copyStyelSheet } = require('./util/util');
+var config = require('./config/config');
+const { copyStyelSheet } = require('./utils/util');
 const jwt = require('jsonwebtoken');
 
 const secret = crypto.randomBytes(64).toString('hex');
