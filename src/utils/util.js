@@ -1,9 +1,11 @@
 const path = require('path');
 const fs = require('fs');
 const exphbs = require('express-handlebars');
+const Handlebars = require('handlebars');
 
+var filePrefix = '../../../../src/';
 
-function copyStyelSheetMulti(filePrefix) {
+function copyStyelSheetMulti() {
 
     if (!fs.existsSync(path.join(__dirname, filePrefix + 'styles'))) {
         fs.mkdirSync(path.join(__dirname, filePrefix + 'styles'));
@@ -11,7 +13,7 @@ function copyStyelSheetMulti(filePrefix) {
     searchFile(path.join(__dirname, '..', 'pages', 'tryout'), ".css", [], filePrefix);
 }
 
-function copyStyelSheet(filePrefix) {
+function copyStyelSheet() {
 
     if (!fs.existsSync(path.join(__dirname, filePrefix + 'styles'))) {
         fs.mkdirSync(path.join(__dirname, filePrefix + 'styles'));
@@ -23,7 +25,7 @@ function copyStyelSheet(filePrefix) {
     searchFile(path.join(__dirname, '..', 'pages', 'tryout'), ".css", [], filePrefix);
 }
 
-function searchFile(dir, fileName, styleDir, filePrefix) {
+function searchFile(dir, fileName, styleDir) {
 
     // read the contents of the directory
     fs.readdir(dir, (err, files) => {
