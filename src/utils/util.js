@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const exphbs = require('express-handlebars');
 
 
 function copyStyelSheetMulti(filePrefix) {
@@ -9,7 +10,6 @@ function copyStyelSheetMulti(filePrefix) {
     }
     searchFile(path.join(__dirname, '..', 'pages', 'tryout'), ".css", [], filePrefix);
 }
-
 
 function copyStyelSheet(filePrefix) {
 
@@ -24,6 +24,7 @@ function copyStyelSheet(filePrefix) {
 }
 
 function searchFile(dir, fileName, styleDir, filePrefix) {
+
     // read the contents of the directory
     fs.readdir(dir, (err, files) => {
         if (err) throw err;
@@ -59,6 +60,7 @@ function searchFile(dir, fileName, styleDir, filePrefix) {
 
 // Function to load and convert markdown file to HTML
 function loadMarkdown(filename, dirName) {
+
     const filePath = path.join(__dirname, dirName, filename);
     if (fs.existsSync(filePath)) {
         const fileContent = fs.readFileSync(filePath, 'utf-8');
@@ -69,6 +71,8 @@ function loadMarkdown(filename, dirName) {
 };
 
 function registerPartials(orgName, dir, profile) {
+
+    const hbs = exphbs.create({});
     const filenames = fs.readdirSync(dir);
     filenames.forEach((filename) => {
         if (filename.endsWith('.hbs')) {
@@ -101,4 +105,4 @@ function renderTemplate(templatePath, layoutPath, templateContent) {
     return html;
 }
 
-module.exports = { copyStyelSheet, copyStyelSheetMulti }
+module.exports = { copyStyelSheet, copyStyelSheetMulti, loadMarkdown, registerPartials, renderTemplate}
