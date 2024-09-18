@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "design-mode": "npm run build-css --watch & nodemon src/dev-server.js",
-    "single-tenant": "npm run build-css --watch & nodemon src/single-tenant.js",
+    "devportal": "npm run build-css --watch & nodemon src/app.js",
     "multi-tenant": "npm run build-css --watch & nodemon src/multi-tenant.js",
     "build-css": "node watcher.js"
   },
