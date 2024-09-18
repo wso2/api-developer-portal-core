@@ -4,7 +4,7 @@ const minimatch = require('minimatch');
 
 const ensureAuthenticated = async (req, res, next) => {
 
-    const orgDetailsResponse = await fetch(config.adminAPI + "organisation?orgName=" + req.params.orgName);
+    const orgDetailsResponse = await fetch(`${config.adminAPI}organisation?orgName=${req.params.orgName}`);
     var orgDetails = await orgDetailsResponse.json();
 
 
@@ -13,8 +13,8 @@ const ensureAuthenticated = async (req, res, next) => {
         if (req.isAuthenticated()) {
             return next();
         } else {
-            req.session.returnTo = req.originalUrl || '/' + req.params.orgName;
-            res.redirect("/" + req.params.orgName + '/login');
+            req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
+            res.redirect(`/${req.params.orgName}/login`);
         }
     } else {
         return next();
