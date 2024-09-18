@@ -1,25 +1,73 @@
 const configurePassport = require('../middlewares/passport');
-var config = require('../config/config');
+const passport = require('passport');
+const config = require('../config/config');
 
-const login = async (req, res, next) => {
+const fetchAuthJsonContent = async (orgName) => {
     try {
-        const authJsonResponse = await fetch(config.adminAPI + "identityProvider?orgName=" + req.params.orgName);
-        var authJsonContent = await authJsonResponse.json();
-
-        if (authJsonContent.length > 0) {
-            console.log("Identity provider found for the organization", authJsonContent[0]);
-            configurePassport(authJsonContent[0]);  // Configure passport dynamically
-            next();
-        } else {
-            res.status(400).send("No Identity Provider information found for the organization");
+        const response = await fetch(`${config.adminAPI}identityProvider?orgName=${orgName}`);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch identity provider details: ${response.statusText}`);
         }
-
+        return await response.json();
     } catch (error) {
         console.error("Error fetching identity provider:", error);
-        res.status(500).send("Server error");
+        throw new Error("Failed to fetch identity provider details");
     }
 };
 
+const login = async (req, res, next) => {
+    var authJsonContent = await fetchAuthJsonContent(req.params.orgName);
+    console.log("Fetching identity provider details for orgName:", authJsonContent);
+
+    if (authJsonContent.length > 0) {
+        configurePassport(authJsonContent[0]);  // Configure passport dynamically
+        passport.authenticate('oauth2')(req, res, next);
+        next();
+    } else {
+        res.status(400).send("No Identity Provider information found for the organization");
+    }
+};
+
+const handleCallback = (req, res, next) => {
+    passport.authenticate('oauth2', {
+        failureRedirect: '/login',
+        keepSessionInfo: true
+    }, (err, user, info) => {
+        if (err || !user) {
+            return next(err || new Error('Authentication failed'));
+        }
+        req.logIn(user, (err) => {
+            if (err) {
+                return next(err);
+            }
+            const returnTo = req.session.returnTo || `/${req.params.orgName}`;
+            delete req.session.returnTo;
+            res.redirect(returnTo);
+        });
+    })(req, res, next);
+};
+
+const handleSignUp = async (req, res, next) => {
+    var authJsonContent = await fetchAuthJsonContent(req.params.orgName);
+    res.redirect(authJsonContent[0].signUpURL);
+};
+
+const handleLogOut = async (req, res) => {
+    var authJsonContent = await fetchAuthJsonContent(req.params.orgName);
+    var idToken = ''
+    if (req.user != null) {
+        idToken = req.user.idToken;
+    }
+
+    req.session.destroy();
+    req.logout(
+        () => res.redirect(`${authJsonContent[0].logoutURL}?post_logout_redirect_uri=${authJsonContent[0].logoutRedirectURI}&id_token_hint=${idToken}`)
+    );
+};
+
 module.exports = {
-    login
+    login,
+    handleCallback,
+    handleSignUp,
+    handleLogOut
 };
