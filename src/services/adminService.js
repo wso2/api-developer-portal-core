@@ -29,7 +29,11 @@ const createOrganization = async (req, res) => {
         res.status(201).send(orgCreationResponse);
     } catch (error) {
         console.error('Error creating organization:', error);
-        throw error;
+        res.status(400).json({
+            "code": error.original.code,
+            "reason": error.original.detail,
+            "message": error.errors[0].message
+          });
     }
 
 };
