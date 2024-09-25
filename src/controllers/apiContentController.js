@@ -1,7 +1,8 @@
-const Handlebars = require('handlebars');
 const { renderTemplate, renderTemplateFromAPI, renderGivenTemplate, loadLayoutFromAPI } = require('../utils/util');
 const config = require('../config/config');
 const markdown = require('marked');
+const fs = require('fs');
+const path = require('path');
 const exphbs = require('express-handlebars');
 
 
@@ -24,7 +25,7 @@ const loadAPIs = async (req, res) => {
             apiMetadata: metaData,
             baseUrl: req.params.orgName,
         }
-        html = renderTemplateFromAPI(templateContent, orgName, "apis");
+        html = await renderTemplateFromAPI(templateContent, orgName, "apis");
     }
     res.send(html);
 }
@@ -68,13 +69,14 @@ const loadAPIContent = async (req, res) => {
             baseUrl: '/' + req.params.orgName,
             schemaUrl: config.apiMetaDataAPI + "apiDefinition?orgName=" + orgName + "&apiID=" + req.params.apiName
         }
-        html = renderTemplateFromAPI(templateContent, orgName, "api-landing");
+        html = await renderTemplateFromAPI(templateContent, orgName, "api-landing");
     }
     res.send(html);
 }
 
 const loadTryOutPage = async (req, res) => {
 
+    const orgName = req.params.orgName;
     const apiMetaDataUrl = config.apiMetaDataAPI + "api?orgName=" + req.params.orgName + "&apiID=" + req.params.apiName;
     const metadataResponse = await fetch(apiMetaDataUrl);
     const metaData = await metadataResponse.json();
@@ -92,10 +94,10 @@ const loadTryOutPage = async (req, res) => {
     if (config.mode == 'single') {
         html = renderTemplate('../pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     } else {
-        const completeTemplatePath = path.join(__dirname, 'pages', 'tryout', 'page.hbs');
+        const completeTemplatePath = path.join(__dirname, '..', 'pages', 'tryout', 'page.hbs');
         const templateResponse = fs.readFileSync(completeTemplatePath, 'utf-8');
         const layoutResponse = await loadLayoutFromAPI(orgName)
-        html = renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
 
     }
     res.send(html);

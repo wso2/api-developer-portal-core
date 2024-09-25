@@ -1,6 +1,6 @@
 const path = require('path');
 const fs = require('fs');
-const exphbs = require('express-handlebars');
+const marked = require('marked');
 const Handlebars = require('handlebars');
 const config = require('../config/config');
 
@@ -103,6 +103,7 @@ async function loadLayoutFromAPI(orgName) {
 async function loadTemplateFromAPI(orgName, templatePageName) {
 
     const templateURL = config.adminAPI + "orgFileType?orgName=" + orgName;
+    console.log(templateURL + "&fileType=template&fileName=page.hbs&filePath=" + templatePageName)
     const templateResponse = await fetch(templateURL + "&fileType=template&fileName=page.hbs&filePath=" + templatePageName);
     var templateContent = await templateResponse.text();
     return templateContent;
@@ -116,15 +117,21 @@ async function renderTemplateFromAPI(templateContent, orgName, templatePageName)
 
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutContent.toString());
-
-    html = layout({
-        body: template(templateContent),
-    });
+    var html;
+    if (Object.keys(templateContent).length === 0 && templateContent.constructor === Object) {
+        html = layout({
+            body: template
+        });
+    } else {
+        html = layout({
+            body: template(templateContent)
+        });
+    }
     return html;
 }
 
 async function renderGivenTemplate(templatePage, layoutPage, templateContent) {
-    
+
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutPage.toString());
 
@@ -142,5 +149,5 @@ module.exports = {
     loadLayoutFromAPI,
     loadTemplateFromAPI,
     renderTemplateFromAPI,
-    renderGivenTemplate
+    renderGivenTemplate,
 }

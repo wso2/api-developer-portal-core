@@ -8,12 +8,13 @@ filePrefix = '../../../../src/'
 
 const loadOrganizationContent = async (req, res) => {
 
+    var html = "";
     if (config.mode == 'single') {
-        loadOrgContentFromFile(req, res)
+        html = loadOrgContentFromFile(req, res)
     } else {
-        loadOrgContentFromAPI(req, res)
+        html = await loadOrgContentFromAPI(req, res)
     }
-
+    res.send(html);
 }
 
 const loadOrgContentFromFile = async (req, res) => {
@@ -26,18 +27,15 @@ const loadOrgContentFromFile = async (req, res) => {
         userProfiles: mockProfileData,
         baseUrl: req.params.orgName
     };
-    const html = renderTemplate(filePrefix + 'pages/home/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
-    res.send(html);
-
+    return renderTemplate(filePrefix + 'pages/home/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
 }
 
 const loadOrgContentFromAPI = async (req, res) => {
 
     var templateContent = {}
     const orgName = req.params.orgName;
-    const html = renderTemplateFromAPI(templateContent, orgName);
-    res.send(html);
-
+    const html = await renderTemplateFromAPI(templateContent, orgName, 'home');
+    return html
 }
 
 module.exports = {
