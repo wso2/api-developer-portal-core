@@ -2,12 +2,13 @@ const express = require('express');
 const { engine } = require('express-handlebars');
 const passport = require('passport');
 const authRoute = require('./routes/authRoute');
-const singleOrgContent = require('./routes/singleOrgContentRoute');
-const multiOrgContent = require('./routes/multipleOrgContentRoute');
+const orgContent = require('./routes/orgContetnRoute');
+const apiContent = require('./routes/apiContentRoute');
 const session = require('express-session');
 const crypto = require('crypto');
 const config = require('./config/config');
 const { copyStyelSheet, copyStyelSheetMulti } = require('./utils/util');
+const registerPartials = require('./middlewares/registerPartials');
 const path = require('path');
 const Handlebars = require('handlebars');
 
@@ -44,18 +45,17 @@ app.engine('.hbs', engine({
 app.set('view engine', 'hbs');
 
 app.use('/', authRoute);
+app.use('/', registerPartials);
+app.use('/', apiContent);
+app.use('/', orgContent);
 
 if (config.mode == 'single') {
     //register images and stylesheet folders for single tenante scenario
     app.use('/images', express.static(path.join(__dirname, filePrefix + 'images')));
-
     copyStyelSheet();
-    app.use('/', singleOrgContent);
 
 } else if (config.mode == 'multi') {
     copyStyelSheetMulti();
-    app.use('/', multiOrgContent);
-
 }
 app.use('/styles', express.static(path.join(__dirname, filePrefix + 'styles')));
 const folderToDelete = path.join(__dirname, '../../../src/' + '/styles');
