@@ -144,7 +144,7 @@ async function renderGivenTemplate(templatePage, layoutPage, templateContent) {
 
 function handleError(res, error) {
     if (error instanceof Sequelize.UniqueConstraintError) {
-        return res.status(404).json({
+        return res.status(409).json({
             code: "409",
             reason: "Conflict",
             "message": error.errors ? error.errors[0].message : error.message.replaceAll('"', ''),
@@ -161,17 +161,16 @@ function handleError(res, error) {
             reason: "Resource Not Found",
             message: error.message
         });
-    } else if (error instanceof Sequelize.DatabaseError) {
-        return res.status(500).json({
-            "code": "500",
-            "reason": "Internal Server Error",
-            "message": error.original.errors ? error.original.errors[0].message : error.message.replaceAll('"', ''),
-        });
+
     } else {
+        let errorMessage = error.message;
+        if (error instanceof Sequelize.DatabaseError) {
+            errorMessage = error.original.errors ? error.original.errors[0].message : error.message.replaceAll('"', '');
+        }
         return res.status(500).json({
             "code": "500",
             "reason": "Internal Server Error",
-            "message": error.message
+            "message": errorMessage
         });
     }
 };
