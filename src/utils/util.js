@@ -1,7 +1,9 @@
 const path = require('path');
 const fs = require('fs');
-const exphbs = require('express-handlebars');
+const marked = require('marked');
 const Handlebars = require('handlebars');
+const config = require('../config/config');
+
 const { Sequelize } = require('sequelize');
 
 var filePrefix = '../../../../src/';
@@ -73,23 +75,6 @@ function loadMarkdown(filename, dirName) {
     }
 };
 
-function registerPartials(orgName, dir, profile) {
-
-    const hbs = exphbs.create({});
-    const filenames = fs.readdirSync(dir);
-    filenames.forEach((filename) => {
-        if (filename.endsWith('.hbs')) {
-            var template = fs.readFileSync(path.join(dir, filename), 'utf8');
-            hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
-            if (filename == "header.hbs") {
-                hbs.handlebars.partials = {
-                    ...hbs.handlebars.partials,
-                    header: hbs.handlebars.compile(template)({ baseUrl: '/' + orgName, profile: profile }),
-                };
-            }
-        }
-    });
-};
 
 function renderTemplate(templatePath, layoutPath, templateContent) {
 
@@ -108,6 +93,65 @@ function renderTemplate(templatePath, layoutPath, templateContent) {
     return html;
 }
 
+async function loadLayoutFromAPI(orgName) {
+
+    const templateURL = config.adminAPI + "orgFileType?orgName=" + orgName;
+    const layoutResponse = await fetch(templateURL + "&fileType=layout&filePath=main&fileName=main.hbs");
+    var layoutContent = await layoutResponse.text();
+    return layoutContent;
+}
+
+async function loadTemplateFromAPI(orgName, templatePageName) {
+
+    const templateURL = config.adminAPI + "orgFileType?orgName=" + orgName;
+    console.log(templateURL + "&fileType=template&fileName=page.hbs&filePath=" + templatePageName)
+    const templateResponse = await fetch(templateURL + "&fileType=template&fileName=page.hbs&filePath=" + templatePageName);
+    var templateContent = await templateResponse.text();
+    return templateContent;
+
+}
+
+async function renderTemplateFromAPI(templateContent, orgName, templatePageName) {
+
+    var templatePage = await loadTemplateFromAPI(orgName, templatePageName);
+    var layoutContent = await loadLayoutFromAPI(orgName);
+
+    const template = Handlebars.compile(templatePage.toString());
+    const layout = Handlebars.compile(layoutContent.toString());
+    var html;
+    if (Object.keys(templateContent).length === 0 && templateContent.constructor === Object) {
+        html = layout({
+            body: template
+        });
+    } else {
+        html = layout({
+            body: template(templateContent)
+        });
+    }
+    return html;
+}
+
+async function renderGivenTemplate(templatePage, layoutPage, templateContent) {
+
+    const template = Handlebars.compile(templatePage.toString());
+    const layout = Handlebars.compile(layoutPage.toString());
+
+    html = layout({
+        body: template(templateContent),
+    });
+    return html;
+}
+
+module.exports = {
+    copyStyelSheet,
+    copyStyelSheetMulti,
+    loadMarkdown,
+    renderTemplate,
+    loadLayoutFromAPI,
+    loadTemplateFromAPI,
+    renderTemplateFromAPI,
+    renderGivenTemplate,
+}
 function handleError(res, error) {
     if (error instanceof Sequelize.UniqueConstraintError) {
         return res.status(404).json({
