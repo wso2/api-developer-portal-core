@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const exphbs = require('express-handlebars');
 const Handlebars = require('handlebars');
+const { Sequelize } = require('sequelize');
 
 var filePrefix = '../../../../src/';
 
@@ -107,4 +108,38 @@ function renderTemplate(templatePath, layoutPath, templateContent) {
     return html;
 }
 
-module.exports = { copyStyelSheet, copyStyelSheetMulti, loadMarkdown, registerPartials, renderTemplate}
+function handleError(res, error) {
+    if (error instanceof Sequelize.UniqueConstraintError) {
+        return res.status(404).json({
+            code: "409",
+            reason: "Conflict",
+            "message": error.errors ? error.errors[0].message : error.message.replaceAll('"', ''),
+        });
+    } else if (error instanceof Sequelize.ValidationError) {
+        return res.status(400).json({
+            code: "400",
+            reason: "Bad Request",
+            message: error.message
+        });
+    } else if (error instanceof Sequelize.EmptyResultError) {
+        return res.status(404).json({
+            code: "404",
+            reason: "Resource Not Found",
+            message: error.message
+        });
+    } else if (error instanceof Sequelize.DatabaseError) {
+        return res.status(500).json({
+            "code": "500",
+            "reason": "Internal Server Error",
+            "message": error.original.errors ? error.original.errors[0].message : error.message.replaceAll('"', ''),
+        });
+    } else {
+        return res.status(500).json({
+            "code": "500",
+            "reason": "Internal Server Error",
+            "message": error.message
+        });
+    }
+};
+
+module.exports = { copyStyelSheet, copyStyelSheetMulti, loadMarkdown, registerPartials, renderTemplate, handleError }

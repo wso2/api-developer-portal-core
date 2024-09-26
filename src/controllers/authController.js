@@ -10,8 +10,7 @@ const fetchAuthJsonContent = async (orgName) => {
         }
         return await response.json();
     } catch (error) {
-        console.error("Error fetching identity provider:", error);
-        throw new Error("Failed to fetch identity provider details");
+        throw new Error("Failed to fetch identity provider details", error);
     }
 };
 

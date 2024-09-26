@@ -13,7 +13,7 @@ const Organization = sequelize.define('Organization', {
         defaultValue: Sequelize.UUIDV4, // This ensures the id will be auto-generated
         primaryKey: true // Mark this field as the primary key
     },
-    organizationName: {
+    orgName: {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true
@@ -30,8 +30,8 @@ const Organization = sequelize.define('Organization', {
 
 // Organization response model
 class OrganizationResponse {
-    constructor(organizationName, orgId, authenticatedPages) {
-        this.organizationName = organizationName;
+    constructor(orgName, orgId, authenticatedPages) {
+        this.orgName = orgName;
         this.orgId = orgId;
         this.authenticatedPages = authenticatedPages;
     }
