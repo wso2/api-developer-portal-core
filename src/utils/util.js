@@ -142,16 +142,6 @@ async function renderGivenTemplate(templatePage, layoutPage, templateContent) {
     return html;
 }
 
-module.exports = {
-    copyStyelSheet,
-    copyStyelSheetMulti,
-    loadMarkdown,
-    renderTemplate,
-    loadLayoutFromAPI,
-    loadTemplateFromAPI,
-    renderTemplateFromAPI,
-    renderGivenTemplate,
-}
 function handleError(res, error) {
     if (error instanceof Sequelize.UniqueConstraintError) {
         return res.status(404).json({
@@ -186,4 +176,14 @@ function handleError(res, error) {
     }
 };
 
-module.exports = { copyStyelSheet, copyStyelSheetMulti, loadMarkdown, registerPartials, renderTemplate, handleError }
+module.exports = {
+    copyStyelSheet,
+    copyStyelSheetMulti,
+    loadMarkdown,
+    renderTemplate,
+    loadLayoutFromAPI,
+    loadTemplateFromAPI,
+    renderTemplateFromAPI,
+    renderGivenTemplate,
+    handleError
+}
