@@ -16,7 +16,7 @@ const createOrganization = async (req, res) => {
         
         const authenticatedPagesStr = authenticatedPages.join(' ');
         // Create organization in the database
-        const organization = await orgData.registerOrganization({
+        const organization = await orgData.createOrganization({
             orgName,
             authenticatedPages: authenticatedPagesStr
         });

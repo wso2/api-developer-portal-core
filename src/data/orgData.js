@@ -2,7 +2,7 @@ const orgEntities = require('../models/orgModels');
 const { validate } = require('uuid');
 const { Sequelize } = require('sequelize');
 
-const registerOrganization = async (orgData) => {
+const createOrganization = async (orgData) => {
     try {
         // Create an organization in the database without `isPublic`
         const organization = await orgEntities.Organization.create({
@@ -37,6 +37,6 @@ const getOrganization = async (param) => {
 };
 
 module.exports = {
-    registerOrganization,
+    createOrganization,
     getOrganization,
 };

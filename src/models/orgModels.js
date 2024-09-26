@@ -10,8 +10,8 @@ const sequelize = new Sequelize(config.db.database, config.db.username, config.d
 const Organization = sequelize.define('Organization', {
     orgId: {
         type: DataTypes.UUID,
-        defaultValue: Sequelize.UUIDV4, // This ensures the id will be auto-generated
-        primaryKey: true // Mark this field as the primary key
+        defaultValue: Sequelize.UUIDV4,
+        primaryKey: true
     },
     orgName: {
         type: DataTypes.STRING,
