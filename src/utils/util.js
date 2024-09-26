@@ -161,7 +161,6 @@ function handleError(res, error) {
             reason: "Resource Not Found",
             message: error.message
         });
-
     } else {
         let errorMessage = error.message;
         if (error instanceof Sequelize.DatabaseError) {
