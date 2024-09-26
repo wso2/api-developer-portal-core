@@ -1,28 +1,45 @@
 const path = require('path');
 const fs = require('fs');
-const { registerPartials, renderTemplate } = require('../utils/util');
+const { renderTemplate, renderTemplateFromAPI } = require('../utils/util');
+const config = require('../config/config');
+
 
 filePrefix = '../../../../src/'
 
-const loadOrgContent = (req, res, next) => {
+const loadOrganizationContent = async (req, res) => {
+
+    var html = "";
+    if (config.mode == 'single') {
+        html = loadOrgContentFromFile(req, res)
+    } else {
+        html = await loadOrgContentFromAPI(req, res)
+    }
+    res.send(html);
+}
+
+const loadOrgContentFromFile = async (req, res) => {
 
     //TODO fetch from DB
     const mockProfileDataPath = path.join(__dirname, filePrefix + '../mock', '/userProfiles.json');
     const mockProfileData = JSON.parse(fs.readFileSync(mockProfileDataPath, 'utf-8'));
 
-    registerPartials(req.params.orgName, path.join(__dirname, filePrefix, 'pages', 'home', 'partials'), req.user);
-    registerPartials(req.params.orgName, path.join(__dirname, filePrefix, 'partials'), req.user);
-
     var templateContent = {
         userProfiles: mockProfileData,
         baseUrl: req.params.orgName
     };
+    return renderTemplate(filePrefix + 'pages/home/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
+}
 
-    const html = renderTemplate(filePrefix + 'pages/home/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
-    res.send(html);
+const loadOrgContentFromAPI = async (req, res) => {
 
+    var templateContent = {}
+    const orgName = req.params.orgName;
+    const html = await renderTemplateFromAPI(templateContent, orgName, 'home');
+    return html
 }
 
 module.exports = {
-    loadOrgContent
+    loadOrgContentFromFile,
+    loadOrgContentFromAPI,
+    loadOrganizationContent
 };
