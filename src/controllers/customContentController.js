@@ -2,7 +2,6 @@ const Handlebars = require('handlebars');
 const { renderTemplate, renderTemplateFromAPI, loadMarkdown } = require('../utils/util');
 const config = require('../config/config');
 const markdown = require('marked');
-const exphbs = require('express-handlebars');
 const fs = require('fs');
 const path = require('path');
 
@@ -10,12 +9,18 @@ const path = require('path');
 const loadCustomContent = async (req, res) => {
 
     var html = "";
+    console.log("custommmmmm")
     const orgName = req.originalUrl.split("/")[1];
-    const filePath = req.originalUrl.split("/" + orgName + "/").pop();
-    if(config.mode == 'single') {
+    var filePath = req.originalUrl.split("/" + orgName + "/").pop();
+    var baseURL = orgName
+    if (config.mode == 'single' || config.mode == 'design') {
+
         var templateContent = {};
-        templateContent["baseUrl"] = '/' + req.params.orgName;
-    
+        if (config.mode == 'design') {
+            baseURL = "http://localhost:" + config.port;
+            filePath = req.originalUrl.split(baseURL).pop();
+        }
+        templateContent["baseUrl"] = baseURL
         //read all markdown content
         if (fs.existsSync(path.join(__dirname, filePrefix + 'pages', filePath, 'content'))) {
             const markdDownFiles = fs.readdirSync(path.join(__dirname, filePrefix + 'pages/' + filePath + '/content'));
@@ -25,6 +30,7 @@ const loadCustomContent = async (req, res) => {
             });
         }
         html = renderTemplate(filePrefix + 'pages/' + filePath + '/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
+
     } else {
         var content = {}
         const markdownResponse = await fetch(config.adminAPI + "orgFileType?orgName=" + orgName + "&fileType=markDown&filePath=" + filePath);

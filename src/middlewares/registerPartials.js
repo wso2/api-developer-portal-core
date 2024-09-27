@@ -9,14 +9,19 @@ var filePrefix = '../../../../src/';
 const registerPartials = async (req, res, next) => {
 
     const orgName = req.originalUrl.split("/")[1];
-    const filePath = req.originalUrl.split("/" + orgName).pop();
-    if (config.mode == 'single') {
-        registerPartialsFromFile(orgName, path.join(__dirname, filePrefix, 'partials'), req.user);
-        registerPartialsFromFile(orgName, path.join(__dirname, filePrefix, 'pages', 'home', 'partials'), req.user);
-        registerPartialsFromFile(orgName, path.join(__dirname, filePrefix, 'pages', 'api-landing', 'partials'), req.user);
-        registerPartialsFromFile(orgName, path.join(__dirname, filePrefix, 'pages', 'apis', 'partials'), req.user);
+    var baseURL = "/" + orgName;
+    var filePath = req.originalUrl.split("/" + orgName).pop();
+    if (config.mode == 'design') {
+        baseURL = "http://localhost:" + config.port;
+        filePath = req.originalUrl.split(baseURL).pop();
+    }
+    if (config.mode == 'single' || config.mode == 'design') {
+        registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, 'partials'), req.user);
+        registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, 'pages', 'home', 'partials'), req.user);
+        registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, 'pages', 'api-landing', 'partials'), req.user);
+        registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, 'pages', 'apis', 'partials'), req.user);
         if (fs.existsSync(path.join(__dirname, filePrefix + 'pages', filePath, 'partials'))) {
-            registerPartialsFromFile(orgName, path.join(__dirname, filePrefix + 'pages', filePath, 'partials'), req.user);
+            registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix + 'pages', filePath, 'partials'), req.user);
         }
     } else if (config.mode == 'multi') {
         await registerPartialsFromAPI(req)
@@ -67,7 +72,7 @@ const registerPartialsFromAPI = async (req) => {
     };
 }
 
-function registerPartialsFromFile(orgName, dir, profile) {
+function registerPartialsFromFile(baseURL, dir, profile) {
 
     const hbs = exphbs.create({});
     const filenames = fs.readdirSync(dir);
@@ -78,7 +83,7 @@ function registerPartialsFromFile(orgName, dir, profile) {
             if (filename == "header.hbs") {
                 hbs.handlebars.partials = {
                     ...hbs.handlebars.partials,
-                    header: hbs.handlebars.compile(template)({ baseUrl: '/' + orgName, profile: profile }),
+                    header: hbs.handlebars.compile(template)({ baseUrl: baseURL, profile: profile }),
                 };
             }
         }

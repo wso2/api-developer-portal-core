@@ -5,6 +5,7 @@ const authRoute = require('./routes/authRoute');
 const orgContent = require('./routes/orgContentRoute');
 const apiContent = require('./routes/apiContentRoute');
 const customContent = require('./routes/customPageRoute');
+const designRoute = require('./routes/designModeRoute');
 const session = require('express-session');
 const crypto = require('crypto');
 const config = require('./config/config');
@@ -46,7 +47,7 @@ app.engine('.hbs', engine({
 
 app.set('view engine', 'hbs');
 
-if (config.mode == 'single') {
+if (config.mode == 'single' || config.mode == 'design') {
     //register images and stylesheet folders for single tenante scenario
     app.use('/images', express.static(path.join(__dirname, filePrefix + 'images')));
     copyStyelSheet();
@@ -80,11 +81,16 @@ Handlebars.registerHelper('in', function (value, options) {
     return validValues.includes(value) ? options.fn(this) : options.inverse(this);
 });
 
-
-app.use('/', authRoute);
-app.use('/', registerPartials);
-app.use('/', apiContent);
-app.use('/', orgContent);
-app.use('/', customContent);
+if (config.mode == 'design') {
+    app.use('/mock', express.static(path.join(__dirname, filePrefix + 'mock')));
+    app.use('/', registerPartials);
+    app.use('/', designRoute);
+} else {
+    app.use('/', authRoute);
+    app.use('/', registerPartials);
+    app.use('/', apiContent);
+    app.use('/', orgContent);
+    app.use('/', customContent);
+}
 
 app.listen(config.port);
