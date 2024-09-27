@@ -8,3 +8,4 @@ router.get('/((?!favicon.ico)):orgName/logout', authController.handleLogOut);
 router.get('/((?!favicon.ico)):orgName/signup', authController.handleSignUp);
 
 module.exports = router;
+
