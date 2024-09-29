@@ -9,7 +9,6 @@ const path = require('path');
 const loadCustomContent = async (req, res) => {
 
     var html = "";
-    console.log("custommmmmm")
     const orgName = req.originalUrl.split("/")[1];
     var filePath = req.originalUrl.split("/" + orgName + "/").pop();
     var baseURL = orgName

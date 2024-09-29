@@ -40,7 +40,6 @@ const registerPartialsFromAPI = async (req) => {
     //attach partials
     const partialsResponse = await fetch(url);
     var partials = await partialsResponse.json();
-
     var partialObject = {}
     partials.forEach(file => {
         var fileName = file.pageName.split(".")[0];
@@ -48,7 +47,6 @@ const registerPartialsFromAPI = async (req) => {
         content = content.replaceAll("/images/", imageUrl + "&fileName=")
         partialObject[fileName] = content;
     });
-
     const markdownResponse = await fetch(apiContetnUrl + "&fileName=apiContent.md");
     const markdownContent = await markdownResponse.text();
     const markdownHtml = markdownContent ? markdown.parse(markdownContent) : '';

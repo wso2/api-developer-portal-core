@@ -12,7 +12,6 @@ var baseURL = "http://localhost:" + config.port;
 
 const loadAPIs = async (req, res) => {
 
-    console.log("apisssss")
     const orgName = req.params.orgName;
     var metaData = await loadAPIMetaDataList(orgName);
     var html;
@@ -146,16 +145,13 @@ async function loadAPIMetaDataList(orgName) {
         const apiMetaDataUrl = config.apiMetaDataAPI + "apiList?orgName=" + orgName;
         const metadataResponse = await fetch(apiMetaDataUrl);
         metaData = await metadataResponse.json();
-
         metaData.forEach(item => {
             item.baseUrl = '/' + orgName;
         });
-
         metaData.forEach(element => {
             let randomNumber = Math.floor(Math.random() * 3) + 3;
             element.apiInfo.ratings = generateArray(randomNumber);
             element.apiInfo.ratingsNoFill = generateArray(5 - randomNumber);
-
             const images = element.apiInfo.apiArtifacts.apiImages;
             var apiImageUrl = '';
             for (var key in images) {
