@@ -24,7 +24,7 @@ const fetchAuthJsonContent = async (orgName) => {
 };
 
 const login = async (req, res, next) => {
-    var authJsonContent = await fetchAuthJsonContent(req.params.orgName);
+    let authJsonContent = await fetchAuthJsonContent(req.params.orgName);
     console.log("Fetching identity provider details for orgName:", authJsonContent);
 
     if (authJsonContent.length > 0) {
@@ -56,13 +56,13 @@ const handleCallback = (req, res, next) => {
 };
 
 const handleSignUp = async (req, res, next) => {
-    var authJsonContent = await fetchAuthJsonContent(req.params.orgName);
+    let authJsonContent = await fetchAuthJsonContent(req.params.orgName);
     res.redirect(authJsonContent[0].signUpURL);
 };
 
 const handleLogOut = async (req, res) => {
-    var authJsonContent = await fetchAuthJsonContent(req.params.orgName);
-    var idToken = ''
+    let authJsonContent = await fetchAuthJsonContent(req.params.orgName);
+    let idToken = ''
     if (req.user != null) {
         idToken = req.user.idToken;
     }

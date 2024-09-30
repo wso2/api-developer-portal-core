@@ -264,7 +264,6 @@ app.get('/((?!favicon.ico)):orgName/api/:apiName', ensureAuthenticated, async (r
         hbs.handlebars.registerPartial("api-content", template);
     }
 
-    
     var templateContent = {
         content: markdownHtml,
         apiMetadata: metaData,

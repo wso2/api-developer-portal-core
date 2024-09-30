@@ -8,17 +8,17 @@ const exphbs = require('express-handlebars');
 
 filePrefix = '../../../../src/'
 const generateArray = (length) => Array.from({ length });
-var baseURL = "http://localhost:" + config.port;
+let baseURL = "http://localhost:" + config.port;
 
 const loadAPIs = async (req, res) => {
 
     const orgName = req.params.orgName;
-    var metaData = await loadAPIMetaDataList(orgName);
-    var html;
+    let metaData = await loadAPIMetaDataList(orgName);
+    let html;
     if (config.mode == 'design')
         baseURL = orgName;
 
-    var templateContent = {
+    let templateContent = {
         apiMetadata: metaData,
         baseUrl: baseURL
     }
@@ -32,7 +32,7 @@ const loadAPIs = async (req, res) => {
 
 const loadAPIContent = async (req, res) => {
 
-    var html;
+    let html;
     const hbs = exphbs.create({});
     const orgName = req.params.orgName;
     const apiName = req.params.apiName;
@@ -50,7 +50,7 @@ const loadAPIContent = async (req, res) => {
         if (additionalAPIContent != "File not found") {
             hbs.handlebars.registerPartial("api-content", additionalAPIContent);
         }
-        var templateContent = {
+        let templateContent = {
             content: markdownHtml,
             apiMetadata: metaData,
             baseUrl: '/' + req.params.orgName,
@@ -63,7 +63,7 @@ const loadAPIContent = async (req, res) => {
         if (fs.existsSync(filePath)) {
             hbs.handlebars.registerPartial('api-content', fs.readFileSync(filePath, 'utf-8'));
         }
-        var templateContent = {
+        let templateContent = {
             content: loadMarkdown('apiContent.md', filePrefix + '../mock/' + req.params.apiName),
             apiMetadata: metaData,
             baseUrl: baseURL,
@@ -71,7 +71,7 @@ const loadAPIContent = async (req, res) => {
         }
         html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
     } else {
-        var templateContent = {
+        let templateContent = {
             apiMetadata: metaData,
             baseUrl: '/' + req.params.orgName,
             schemaUrl: config.apiMetaDataAPI + "apiDefinition?orgName=" + orgName + "&apiID=" + req.params.apiName
@@ -86,11 +86,11 @@ const loadTryOutPage = async (req, res) => {
     const orgName = req.params.orgName;
     const apiName = req.params.apiName;
     const metaData = await loadAPIMetaData(orgName, apiName);
-    var html = "";
+    let html = "";
     const apiDefinition = config.apiMetaDataAPI + "apiDefinition?orgName=" + req.params.orgName + "&apiID=" + req.params.apiName
     const apiDefinitionResponse = await fetch(apiDefinition);
     const apiDefinitionContent = await apiDefinitionResponse.text();
-    var templateContent = {
+    let templateContent = {
         apiMetadata: metaData,
         baseUrl: req.params.orgName,
         apiType: metaData.apiInfo.apiType,
@@ -106,11 +106,11 @@ const loadTryOutPage = async (req, res) => {
         const apiMetaData = JSON.parse(fs.readFileSync(mockAPIDataPath, 'utf-8'));
 
         const apiDefinition = path.join(__dirname, filePrefix + '../mock', req.params.apiName + '/apiDefinition.json');
-        var apiContent = '';
+        let apiContent = '';
         if (fs.existsSync(apiDefinition)) {
             apiContent = fs.readFileSync(apiDefinition, 'utf-8');
         }
-        var templateContent = {
+        let templateContent = {
             apiType: apiMetaData.apiInfo.apiType,
             swagger: apiContent,
             baseUrl: baseURL,
@@ -131,7 +131,7 @@ const loadTryOutPage = async (req, res) => {
 
 async function loadAPIMetaDataList(orgName) {
 
-    var metaData = {};
+    let metaData = {};
     if (config.mode == 'design') {
         const mockAPIMetaDataPath = path.join(__dirname, filePrefix + '../mock', 'apiMetadata.json');
         const mockAPIMetaData = JSON.parse(fs.readFileSync(mockAPIMetaDataPath, 'utf-8'));
@@ -153,7 +153,7 @@ async function loadAPIMetaDataList(orgName) {
             element.apiInfo.ratings = generateArray(randomNumber);
             element.apiInfo.ratingsNoFill = generateArray(5 - randomNumber);
             const images = element.apiInfo.apiArtifacts.apiImages;
-            var apiImageUrl = '';
+            let apiImageUrl = '';
             for (var key in images) {
                 if (config.env == 'local') {
                     apiImageUrl = config.apiImageURL + "apiFiles?orgName=" + element.apiInfo.orgName + "&apiID=" + element.apiInfo.apiName;
@@ -171,7 +171,7 @@ async function loadAPIMetaDataList(orgName) {
 
 async function loadAPIMetaData(orgName, apiName) {
 
-    var metaData = {};
+    let metaData = {};
     if (config.mode == 'design') {
         const mockAPIDataPath = path.join(__dirname, filePrefix + '../mock', apiName + '/apiMetadata.json');
         const mockAPIData = JSON.parse(fs.readFileSync(mockAPIDataPath, 'utf-8'));
@@ -184,7 +184,7 @@ async function loadAPIMetaData(orgName, apiName) {
         //replace image urls
         const images = metaData.apiInfo.apiArtifacts.apiImages;
         for (var key in images) {
-            var apiImageUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
+            let apiImageUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
             const modifiedApiImageURL = apiImageUrl + "&fileName=" + images[key]
             images[key] = modifiedApiImageURL;
         }

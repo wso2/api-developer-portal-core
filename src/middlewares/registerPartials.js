@@ -4,13 +4,13 @@ const exphbs = require('express-handlebars');
 const config = require('../config/config');
 const markdown = require('marked');
 
-var filePrefix = '../../../../src/';
+let filePrefix = '../../../../src/';
 
 const registerPartials = async (req, res, next) => {
 
     const orgName = req.originalUrl.split("/")[1];
-    var baseURL = "/" + orgName;
-    var filePath = req.originalUrl.split("/" + orgName).pop();
+    let baseURL = "/" + orgName;
+    let filePath = req.originalUrl.split("/" + orgName).pop();
     if (config.mode == 'design') {
         baseURL = "http://localhost:" + config.port;
         filePath = req.originalUrl.split(baseURL).pop();
@@ -39,11 +39,11 @@ const registerPartialsFromAPI = async (req) => {
 
     //attach partials
     const partialsResponse = await fetch(url);
-    var partials = await partialsResponse.json();
-    var partialObject = {}
+    let partials = await partialsResponse.json();
+    let partialObject = {}
     partials.forEach(file => {
-        var fileName = file.pageName.split(".")[0];
-        var content = file.pageContent;
+        let fileName = file.pageName.split(".")[0];
+        let content = file.pageContent;
         content = content.replaceAll("/images/", imageUrl + "&fileName=")
         partialObject[fileName] = content;
     });
@@ -76,7 +76,7 @@ function registerPartialsFromFile(baseURL, dir, profile) {
     const filenames = fs.readdirSync(dir);
     filenames.forEach((filename) => {
         if (filename.endsWith('.hbs')) {
-            var template = fs.readFileSync(path.join(dir, filename), 'utf8');
+            let template = fs.readFileSync(path.join(dir, filename), 'utf8');
             hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
             if (filename == "header.hbs") {
                 hbs.handlebars.partials = {

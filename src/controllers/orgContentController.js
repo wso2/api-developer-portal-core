@@ -9,7 +9,7 @@ filePrefix = '../../../../src/'
 
 const loadOrganizationContent = async (req, res) => {
 
-    var html = "";
+    let html = "";
     if (config.mode == 'single' || config.mode == 'design') {
         html = await loadOrgContentFromFile(req, res)
     } else {
@@ -24,10 +24,10 @@ const loadOrgContentFromFile = async (req, res) => {
     const mockProfileDataPath = path.join(__dirname, filePrefix + '../mock', '/userProfiles.json');
     const mockProfileData = JSON.parse(fs.readFileSync(mockProfileDataPath, 'utf-8'));
 
-    var baseURL = "http://localhost:" + config.port;
+    let baseURL = "http://localhost:" + config.port;
     if (config.mode == 'single')
         baseURL = req.params.orgName
-    var templateContent = {
+    let templateContent = {
         userProfiles: mockProfileData,
         baseUrl: baseURL
     };
@@ -36,7 +36,7 @@ const loadOrgContentFromFile = async (req, res) => {
 
 const loadOrgContentFromAPI = async (req, res) => {
 
-    var templateContent = {}
+    let templateContent = {}
     const orgName = req.params.orgName;
     const html = await renderTemplateFromAPI(templateContent, orgName, 'home');
     return html

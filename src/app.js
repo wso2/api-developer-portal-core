@@ -58,7 +58,6 @@ passport.deserializeUser((user, done) => {
 });
 
 app.use('/styles', express.static(path.join(__dirname, filePrefix + 'styles')));
-app.use('/admin', adminRoute);
 
 app.set('view engine', 'hbs');
 
@@ -84,6 +83,9 @@ process.on('exit', () => {
         fs.rmSync(folderToDelete, { recursive: true, force: true });
     }
 });
+
+//backend routes
+app.use('/admin', adminRoute);
 
 if (config.mode == 'design') {
     app.use('/mock', express.static(path.join(__dirname, filePrefix + 'mock')));
