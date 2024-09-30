@@ -27,7 +27,7 @@ app.engine('.hbs', engine({
 app.set('view engine', 'hbs');
 
 Handlebars.registerHelper('eq', function (a, b) {
-    return (a == b);
+    return (a === b);
 });
 
 Handlebars.registerHelper('in', function (value, options) {
@@ -83,15 +83,6 @@ process.on('exit', () => {
     if (fs.existsSync(folderToDelete)) {
         fs.rmSync(folderToDelete, { recursive: true, force: true });
     }
-});
-
-Handlebars.registerHelper('eq', function (a, b) {
-    return (a == b);
-});
-
-Handlebars.registerHelper('in', function (value, options) {
-    const validValues = options.hash.values.split(',');
-    return validValues.includes(value) ? options.fn(this) : options.inverse(this);
 });
 
 if (config.mode == 'design') {

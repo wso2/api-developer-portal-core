@@ -1,8 +1,17 @@
 const configurePassport = require('../middlewares/passport');
 const passport = require('passport');
 const config = require('../config/config');
+const fs = require('fs');
+const path = require('path');
+
+const filePrefix = '../../../../src/'
 
 const fetchAuthJsonContent = async (orgName) => {
+    if (config.mode == 'design') {
+        const authJsonPath = path.join(__dirname, filePrefix + '../mock', 'auth.json');
+        const authJson = JSON.parse(fs.readFileSync(authJsonPath, 'utf-8'));
+        return authJson;
+    }
     try {
         const response = await fetch(`${config.adminAPI}identityProvider?orgName=${orgName}`);
         if (!response.ok) {
@@ -57,7 +66,6 @@ const handleLogOut = async (req, res) => {
     if (req.user != null) {
         idToken = req.user.idToken;
     }
-
     req.session.destroy();
     req.logout(
         () => res.redirect(`${authJsonContent[0].logoutURL}?post_logout_redirect_uri=${authJsonContent[0].logoutRedirectURI}&id_token_hint=${idToken}`)
