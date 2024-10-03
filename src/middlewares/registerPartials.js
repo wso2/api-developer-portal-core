@@ -4,19 +4,24 @@ const exphbs = require('express-handlebars');
 const config = require('../config/config');
 const markdown = require('marked');
 
-var filePrefix = '../../../../src/';
+let filePrefix = '../../../../src/';
 
 const registerPartials = async (req, res, next) => {
 
     const orgName = req.originalUrl.split("/")[1];
-    const filePath = req.originalUrl.split("/" + orgName).pop();
-    if (config.mode == 'single') {
-        registerPartialsFromFile(orgName, path.join(__dirname, filePrefix, 'partials'), req.user);
-        registerPartialsFromFile(orgName, path.join(__dirname, filePrefix, 'pages', 'home', 'partials'), req.user);
-        registerPartialsFromFile(orgName, path.join(__dirname, filePrefix, 'pages', 'api-landing', 'partials'), req.user);
-        registerPartialsFromFile(orgName, path.join(__dirname, filePrefix, 'pages', 'apis', 'partials'), req.user);
+    let baseURL = "/" + orgName;
+    let filePath = req.originalUrl.split("/" + orgName).pop();
+    if (config.mode == 'design') {
+        baseURL = "http://localhost:" + config.port;
+        filePath = req.originalUrl.split(baseURL).pop();
+    }
+    if (config.mode == 'single' || config.mode == 'design') {
+        registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, 'partials'), req.user);
+        registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, 'pages', 'home', 'partials'), req.user);
+        registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, 'pages', 'api-landing', 'partials'), req.user);
+        registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, 'pages', 'apis', 'partials'), req.user);
         if (fs.existsSync(path.join(__dirname, filePrefix + 'pages', filePath, 'partials'))) {
-            registerPartialsFromFile(orgName, path.join(__dirname, filePrefix + 'pages', filePath, 'partials'), req.user);
+            registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix + 'pages', filePath, 'partials'), req.user);
         }
     } else if (config.mode == 'multi') {
         await registerPartialsFromAPI(req)
@@ -34,16 +39,14 @@ const registerPartialsFromAPI = async (req) => {
 
     //attach partials
     const partialsResponse = await fetch(url);
-    var partials = await partialsResponse.json();
-
-    var partialObject = {}
+    let partials = await partialsResponse.json();
+    let partialObject = {}
     partials.forEach(file => {
-        var fileName = file.pageName.split(".")[0];
-        var content = file.pageContent;
+        let fileName = file.pageName.split(".")[0];
+        let content = file.pageContent;
         content = content.replaceAll("/images/", imageUrl + "&fileName=")
         partialObject[fileName] = content;
     });
-
     const markdownResponse = await fetch(apiContetnUrl + "&fileName=apiContent.md");
     const markdownContent = await markdownResponse.text();
     const markdownHtml = markdownContent ? markdown.parse(markdownContent) : '';
@@ -67,18 +70,18 @@ const registerPartialsFromAPI = async (req) => {
     };
 }
 
-function registerPartialsFromFile(orgName, dir, profile) {
+function registerPartialsFromFile(baseURL, dir, profile) {
 
     const hbs = exphbs.create({});
     const filenames = fs.readdirSync(dir);
     filenames.forEach((filename) => {
         if (filename.endsWith('.hbs')) {
-            var template = fs.readFileSync(path.join(dir, filename), 'utf8');
+            let template = fs.readFileSync(path.join(dir, filename), 'utf8');
             hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
             if (filename == "header.hbs") {
                 hbs.handlebars.partials = {
                     ...hbs.handlebars.partials,
-                    header: hbs.handlebars.compile(template)({ baseUrl: '/' + orgName, profile: profile }),
+                    header: hbs.handlebars.compile(template)({ baseUrl: baseURL, profile: profile }),
                 };
             }
         }
