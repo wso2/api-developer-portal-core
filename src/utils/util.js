@@ -146,30 +146,30 @@ function handleError(res, error) {
     if (error instanceof Sequelize.UniqueConstraintError) {
         return res.status(409).json({
             code: "409",
-            reason: "Conflict",
-            "message": error.errors ? error.errors[0].message : error.message.replaceAll('"', ''),
+            message: "Conflict",
+            description: error.errors ? error.errors[0].message : error.message.replaceAll('"', ''),
         });
     } else if (error instanceof Sequelize.ValidationError) {
         return res.status(400).json({
             code: "400",
-            reason: "Bad Request",
-            message: error.message
+            message: "Bad Request",
+            description: error.message
         });
     } else if (error instanceof Sequelize.EmptyResultError) {
         return res.status(404).json({
             code: "404",
-            reason: "Resource Not Found",
-            message: error.message
+            message: "Resource Not Found",
+            description: error.message
         });
     } else {
-        let errorMessage = error.message;
+        let errorDescription = error.message;
         if (error instanceof Sequelize.DatabaseError) {
-            errorMessage = error.original.errors ? error.original.errors[0].message : error.message.replaceAll('"', '');
+            errorDescription = error.original.errors ? error.original.errors[0].message : error.message.replaceAll('"', '');
         }
         return res.status(500).json({
             "code": "500",
-            "reason": "Internal Server Error",
-            "message": errorMessage
+            "message": "Internal Server Error",
+            "description": errorDescription
         });
     }
 };

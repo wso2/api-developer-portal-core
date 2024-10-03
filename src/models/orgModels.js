@@ -1,11 +1,5 @@
 const { Sequelize, DataTypes } = require('sequelize');
-const config = require('../config/config');
-
-// Organization model
-const sequelize = new Sequelize(config.db.database, config.db.username, config.db.password, {
-    host: config.db.host,
-    dialect: 'postgres'
-});
+const sequelize = require('../db/sequelize');
 
 const Organization = sequelize.define('Organization', {
     orgId: {
