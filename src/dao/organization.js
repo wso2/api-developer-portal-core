@@ -4,7 +4,6 @@ const { Sequelize } = require('sequelize');
 
 const createOrganization = async (orgData) => {
     try {
-        // Create an organization in the database without `isPublic`
         const organization = await orgEntities.Organization.create({
             orgName: orgData.orgName,
             authenticatedPages: orgData.authenticatedPages
