@@ -1,8 +1,17 @@
 const configurePassport = require('../middlewares/passport');
 const passport = require('passport');
 const config = require('../config/config');
+const fs = require('fs');
+const path = require('path');
+
+const filePrefix = '../../../../src/'
 
 const fetchAuthJsonContent = async (orgName) => {
+    if (config.mode == 'design') {
+        const authJsonPath = path.join(__dirname, filePrefix + '../mock', 'auth.json');
+        const authJson = JSON.parse(fs.readFileSync(authJsonPath, 'utf-8'));
+        return authJson;
+    }
     try {
         const response = await fetch(`${config.adminAPI}identityProvider?orgName=${orgName}`);
         if (!response.ok) {
@@ -15,7 +24,7 @@ const fetchAuthJsonContent = async (orgName) => {
 };
 
 const login = async (req, res, next) => {
-    var authJsonContent = await fetchAuthJsonContent(req.params.orgName);
+    let authJsonContent = await fetchAuthJsonContent(req.params.orgName);
     console.log("Fetching identity provider details for orgName:", authJsonContent);
 
     if (authJsonContent.length > 0) {
@@ -47,17 +56,16 @@ const handleCallback = (req, res, next) => {
 };
 
 const handleSignUp = async (req, res, next) => {
-    var authJsonContent = await fetchAuthJsonContent(req.params.orgName);
+    let authJsonContent = await fetchAuthJsonContent(req.params.orgName);
     res.redirect(authJsonContent[0].signUpURL);
 };
 
 const handleLogOut = async (req, res) => {
-    var authJsonContent = await fetchAuthJsonContent(req.params.orgName);
-    var idToken = ''
+    let authJsonContent = await fetchAuthJsonContent(req.params.orgName);
+    let idToken = ''
     if (req.user != null) {
         idToken = req.user.idToken;
     }
-
     req.session.destroy();
     req.logout(
         () => res.redirect(`${authJsonContent[0].logoutURL}?post_logout_redirect_uri=${authJsonContent[0].logoutRedirectURI}&id_token_hint=${idToken}`)

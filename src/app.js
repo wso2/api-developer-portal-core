@@ -10,6 +10,7 @@ const adminRoute = require('./routes/adminRoute');
 const orgContent = require('./routes/orgContentRoute');
 const apiContent = require('./routes/apiContentRoute');
 const customContent = require('./routes/customPageRoute');
+const designRoute = require('./routes/designModeRoute');
 const config = require('./config/config');
 const { copyStyelSheet, copyStyelSheetMulti } = require('./utils/util');
 const registerPartials = require('./middlewares/registerPartials');
@@ -26,7 +27,7 @@ app.engine('.hbs', engine({
 app.set('view engine', 'hbs');
 
 Handlebars.registerHelper('eq', function (a, b) {
-    return (a == b);
+    return (a === b);
 });
 
 Handlebars.registerHelper('in', function (value, options) {
@@ -57,10 +58,11 @@ passport.deserializeUser((user, done) => {
 });
 
 app.use('/styles', express.static(path.join(__dirname, filePrefix + 'styles')));
-app.use('/admin', adminRoute);
 
-if (config.mode === 'single') {
-    // Register images and stylesheet folders for single tenant scenario
+app.set('view engine', 'hbs');
+
+if (config.mode == 'single' || config.mode == 'design') {
+    //register images and stylesheet folders for single tenante scenario
     app.use('/images', express.static(path.join(__dirname, filePrefix + 'images')));
     copyStyelSheet();
 } else if (config.mode === 'multi') {
@@ -82,10 +84,19 @@ process.on('exit', () => {
     }
 });
 
-app.use('/', authRoute);
-app.use('/', registerPartials);
-app.use('/', apiContent);
-app.use('/', orgContent);
-app.use('/', customContent);
+//backend routes
+app.use('/admin', adminRoute);
+
+if (config.mode == 'design') {
+    app.use('/mock', express.static(path.join(__dirname, filePrefix + 'mock')));
+    app.use('/', registerPartials);
+    app.use('/', designRoute);
+} else {
+    app.use('/', authRoute);
+    app.use('/', registerPartials);
+    app.use('/', apiContent);
+    app.use('/', orgContent);
+    app.use('/', customContent);
+}
 
 app.listen(config.port);
