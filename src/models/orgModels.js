@@ -19,7 +19,7 @@ const Organization = sequelize.define('Organization', {
 }, {
     timestamps: false,
     tableName: 'Organization',
-    returning: false
+    returning: true
 });
 
 // Organization response model
@@ -31,8 +31,41 @@ class OrganizationResponse {
     }
 }
 
+const OrgContent = sequelize.define('OrganizationAssets', {
+    orgAssetId: {
+        type: DataTypes.UUID,
+        defaultValue: Sequelize.UUIDV4,
+        primaryKey: true
+    },
+    pageType: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
+    pageName: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
+    pageContent: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+    },
+    filePath: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
+    orgId: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        forignKey: true,
+    }
+}, {
+    timestamps: false,
+    tableName: 'OrganizationAssets'
+});
+
 // Export both models
 module.exports = {
     Organization,
-    OrganizationResponse
+    OrganizationResponse,
+    OrgContent
 };

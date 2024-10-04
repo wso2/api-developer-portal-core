@@ -3,6 +3,7 @@ const fs = require('fs');
 const marked = require('marked');
 const Handlebars = require('handlebars');
 const config = require('../config/config');
+const { CustomError } = require('../utils/errors/customErrors');
 
 const { Sequelize } = require('sequelize');
 
@@ -160,6 +161,13 @@ function handleError(res, error) {
             code: "404",
             message: "Resource Not Found",
             description: error.message
+        });
+    } else if (error instanceof CustomError) {
+        console.log("Custom Error:", error.statusCode);
+        return res.status(404).json({
+            code: error.statusCode,
+            message: error.message,
+            description: error.description
         });
     } else {
         let errorDescription = error.message;
