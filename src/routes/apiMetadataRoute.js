@@ -1,12 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const adminService = require('../services/adminService');
+const apiMetadataService = require('../services/apiMetadataService');
+const multer = require('multer');
+const storage = multer.memoryStorage()
+const upload = multer({ storage: storage })
 
-router.post('/api', adminService.createOrganization);
-router.get('/api', adminService.getOrganization);
-router.get('/apis', adminService.getOrganization);
-router.put('/api', adminService.getOrganization);
-router.delete('/api', adminService.getOrganization);
+router.post('/api', upload.single('apiDefinition'), apiMetadataService.createAPIMetadata);
+router.get('/api', apiMetadataService.getAPIMetadata);
+router.get('/apis', apiMetadataService.getAllAPIMetadata);
+router.put('/api', upload.single('apiDefinition'), apiMetadataService.updateAPIMetadata);
+router.delete('/api', apiMetadataService.deleteAPIMetadata);
 
 
 module.exports = router;

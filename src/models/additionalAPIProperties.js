@@ -1,29 +1,24 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize')
 
-const APIImages = sequelize.define('ApiImages', {
-    apiImageID: {
+const AdditionalProperties = sequelize.define('AdditionalProperties', {
+    propertyID: {
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true
     },
-    imageTag: {
+    key: {
         type: DataTypes.STRING,
         primaryKey: true
     },
-    imagePath: {
+    value: {
         type: DataTypes.STRING,
-        primaryKey: true
-    },
-    image: {
-        type: DataTypes.BLOB,
-        primaryKey: true
-    },
+        allowNull: false,
+    }
 }, {
     timestamps: false,
-    tableName: 'ApiImages',
+    tableName: 'AdditionalProperties',
     returning: false
 });
 
-// Export both models
-module.exports = APIImages;
+module.exports = AdditionalProperties;

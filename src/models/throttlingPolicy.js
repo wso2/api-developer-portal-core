@@ -1,29 +1,27 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize')
 
-const APIImages = sequelize.define('ApiImages', {
-    apiImageID: {
+const ThrottlingPolicy = sequelize.define('ThrottlingPolicy', {
+    policyId: {
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true
     },
-    imageTag: {
+    policyName: {
         type: DataTypes.STRING,
-        primaryKey: true
+        allowNull: false,
     },
-    imagePath: {
+    description: {
         type: DataTypes.STRING,
-        primaryKey: true
+        allowNull: false,
     },
-    image: {
-        type: DataTypes.BLOB,
-        primaryKey: true
-    },
+    category:{
+        type: DataTypes.STRING
+    }
 }, {
     timestamps: false,
-    tableName: 'ApiImages',
+    tableName: 'ThrottlingPolicy',
     returning: false
 });
 
-// Export both models
-module.exports = APIImages;
+module.exports = ThrottlingPolicy;
