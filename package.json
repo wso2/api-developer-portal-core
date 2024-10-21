@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/api-developer-portal-core#readme",
   "dependencies": {
-    "@asyncapi/react-component": "^2.2.2",
+    "@asyncapi/react-component": "^2.3.4",
     "bootstrap-icons": "^1.11.3",
     "chokidar": "^3.6.0",
     "crypto": "^1.0.1",

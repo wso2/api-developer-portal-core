@@ -80,9 +80,24 @@ const deleteOrganization = async (orgId) => {
     }
 }
 
+const createOrgContent = async (orgId) => {
+    try {
+        const organization = await orgEntities.OrgContent.create({
+            pageType: req.body.pageType,
+            pageName: req.body.pageName,
+            pageContent: req.body.pageContent,
+            filePath: req.file.path,
+            orgId: orgId
+        });
+        console.log(req.file);
+    } catch (error) {
+        console.log(error);
+    }
+}
 module.exports = {
     createOrganization,
     getOrganization,
     updateOrganization,
-    deleteOrganization
+    deleteOrganization,
+    createOrgContent
 };

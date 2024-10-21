@@ -16,6 +16,7 @@
 
 /src/styles
 
+/uploads
 # misc
 .DS_Store
 *.pem

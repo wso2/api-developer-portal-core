@@ -5,7 +5,6 @@ const util = require('../utils/util');
 const unzipper = require('unzipper');
 const fs = require('fs');
 const path = require('path');
-const multer = require('multer');
 
 const createOrganization = async (req, res) => {
 
@@ -115,7 +114,8 @@ const createOrgContent = async (req, res) => {
     // Unzip the file
     fs.createReadStream(zipPath)
         .pipe(unzipper.Extract({ path: extractPath }))
-        .on('close', () => {
+        .on('close', async () => {
+            const orgContent = await orgDao.createOrgContent(req.query.orgId);
             res.send('File unzipped successfully');
         })
         .on('error', (err) => {
