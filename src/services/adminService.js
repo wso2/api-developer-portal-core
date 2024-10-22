@@ -1,5 +1,5 @@
 const { CustomError } = require('../utils/errors/customErrors');
-const orgDao = require('../dao/organization');
+const adminDao = require('../dao/admin');
 const orgEntities = require('../models/orgModels');
 const util = require('../utils/util');
 const unzipper = require('unzipper');
@@ -16,7 +16,7 @@ const createOrganization = async (req, res) => {
         }
 
         const authenticatedPagesStr = authenticatedPages.join(' ');
-        const organization = await orgDao.createOrganization({
+        const organization = await adminDao.createOrganization({
             orgName,
             authenticatedPages: authenticatedPagesStr
         });
@@ -36,13 +36,13 @@ const createOrganization = async (req, res) => {
 
 const getOrganization = async (req, res) => {
     try {
-        let param = req.query.orgId || req.query.orgName;
+        let param = req.parm.orgId;
 
         if (!param) {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId' or 'orgName'");
         }
 
-        const organization = await orgDao.getOrganization(param);
+        const organization = await adminDao.getOrganization(param);
 
         res.status(200).json({
             orgId: organization.orgId,
@@ -56,7 +56,7 @@ const getOrganization = async (req, res) => {
 
 const updateOrganization = async (req, res) => {
     try {
-        let orgId = req.query.orgId;
+        let orgId = req.params.orgId;
         const { orgName, authenticatedPages } = req.body;
 
         if (!orgId) {
@@ -69,7 +69,7 @@ const updateOrganization = async (req, res) => {
 
         const authenticatedPagesStr = authenticatedPages.join(' ');
         // Create organization in the database
-        const [updatedRowsCount, updatedOrg] = await orgDao.updateOrganization({
+        const [updatedRowsCount, updatedOrg] = await adminDao.updateOrganization({
             orgName,
             authenticatedPages: authenticatedPagesStr,
             orgId
@@ -88,13 +88,13 @@ const updateOrganization = async (req, res) => {
 };
 const deleteOrganization = async (req, res) => {
     try {
-        let orgId = req.query.orgId;
+        let orgId = req.param.orgId;
 
         if (!orgId) {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
 
-        const deletedRowsCount = await orgDao.deleteOrganization(orgId);
+        const deletedRowsCount = await adminDao.deleteOrganization(orgId);
         if (deletedRowsCount > 0) {
             res.status(204).send();
         } else {
@@ -115,7 +115,7 @@ const createOrgContent = async (req, res) => {
     fs.createReadStream(zipPath)
         .pipe(unzipper.Extract({ path: extractPath }))
         .on('close', async () => {
-            const orgContent = await orgDao.createOrgContent(req.query.orgId);
+            const orgContent = await adminDao.createOrgContent(req.query.orgId);
             res.send('File unzipped successfully');
         })
         .on('error', (err) => {
@@ -123,10 +123,51 @@ const createOrgContent = async (req, res) => {
         });
 };
 
+const createSubscriptionPlan = async (req, res) => {
+    const { policyName, description } = req.body;
+    const orgId = req.params.orgId;
+
+    try {
+
+        const subscriptionPlan = await adminDao.createSubscriptionPlan({
+            policyName,
+            description,
+            orgId
+        });
+
+        res.status(201).send(subscriptionPlan);
+    } catch (error) {
+        util.handleError(res, error);
+    }
+
+};
+
+const getSubscriptionPlan = async (req, res) => {
+    try {
+        let param = req.parm.orgId;
+
+        if (!param) {
+            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId' or 'orgName'");
+        }
+
+        const organization = await adminDao.getOrganization(param);
+
+        res.status(200).json({
+            orgId: organization.orgId,
+            orgName: organization.orgName,
+            authenticatedPages: organization.authenticatedPages.split(' ').filter(Boolean) // Convert back to array
+        });
+    } catch (error) {
+        util.handleError(res, error);
+    }
+};
+
 module.exports = {
     createOrganization,
     getOrganization,
     updateOrganization,
     deleteOrganization,
-    createOrgContent
+    createOrgContent,
+    createSubscriptionPlan,
+    getSubscriptionPlan
 };

@@ -51,6 +51,7 @@ const loadAPIContent = async (req, res) => {
             hbs.handlebars.registerPartial("api-content", additionalAPIContent);
         }
         let templateContent = {
+            subscriptionPlans: metaData.apiInfo.subscriptionPlans,
             content: markdownHtml,
             apiMetadata: metaData,
             baseUrl: '/' + req.params.orgName,

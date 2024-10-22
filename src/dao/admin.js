@@ -1,4 +1,5 @@
 const orgEntities = require('../models/orgModels');
+const subEntities = require('../models/subscritionPlanModel');
 const { validate } = require('uuid');
 const { Sequelize } = require('sequelize');
 
@@ -94,10 +95,25 @@ const createOrgContent = async (orgId) => {
         console.log(error);
     }
 }
+
+const createSubscriptionPlan = async (subData) => {
+    try {
+        const subscriptionPlan = await subEntities.SubscriptionPlan.create({
+            policyName: subData.policyName,
+            description: subData.description,
+            orgId: subData.orgId,
+        });
+        return subscriptionPlan;
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 module.exports = {
     createOrganization,
     getOrganization,
     updateOrganization,
     deleteOrganization,
-    createOrgContent
+    createOrgContent,
+    createSubscriptionPlan
 };
