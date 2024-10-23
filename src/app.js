@@ -7,6 +7,7 @@ const path = require('path');
 const fs = require('fs');
 const authRoute = require('./routes/authRoute');
 const adminRoute = require('./routes/adminRoute');
+const apiMetaDataRoute = require('./routes/apiMetadataRoute');
 const orgContent = require('./routes/orgContentRoute');
 const apiContent = require('./routes/apiContentRoute');
 const customContent = require('./routes/customPageRoute');
@@ -86,6 +87,7 @@ process.on('exit', () => {
 
 //backend routes
 app.use('/admin', adminRoute);
+app.use('/apiMetadata', apiMetaDataRoute);
 
 if (config.mode == 'design') {
     app.use('/mock', express.static(path.join(__dirname, filePrefix + 'mock')));
