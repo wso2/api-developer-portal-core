@@ -36,14 +36,10 @@ const createOrganization = async (req, res) => {
 
 const getOrganization = async (req, res) => {
     try {
-        let param = req.parm.orgId;
 
-        if (!param) {
-            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId' or 'orgName'");
-        }
+        const organization = await adminDao.getOrganization(req.params.orgId);
 
-        const organization = await adminDao.getOrganization(param);
-
+        
         res.status(200).json({
             orgId: organization.orgId,
             orgName: organization.orgName,

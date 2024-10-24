@@ -53,11 +53,22 @@ const createAPIMetadata = async (req, res) => {
 };
 
 const getAPIMetadata = async (req, res) => {
-    
+    try {
+        const apiMetadata = await apiDao.getAPIMetadata(req.params.orgId, req.params.apiId);
+        res.status(200).json(apiMetadata);
+    } catch (error) {
+        util.handleError(res, error);
+    }
 };
 
 const getAllAPIMetadata = async (req, res) => {
-    
+
+    try {
+        const apiMetadata = await apiDao.getAllAPIMetadata(req.params.orgId);
+        res.status(200).json(apiMetadata);
+    } catch (error) {
+        util.handleError(res, error);
+    }
 };
 
 const updateAPIMetadata = async (req, res) => {

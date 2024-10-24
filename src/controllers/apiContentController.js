@@ -44,6 +44,7 @@ const loadAPIContent = async (req, res) => {
         const markdownContent = await markdownResponse.text();
         const markdownHtml = markdownContent ? markdown.parse(markdownContent) : '';
 
+        
         const additionalAPIContentResponse = await fetch(apiContentUrl + "&fileName=api-content.hbs");
         const additionalAPIContent = await additionalAPIContentResponse.text();
 

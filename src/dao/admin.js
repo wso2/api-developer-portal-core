@@ -1,11 +1,11 @@
-const orgEntities = require('../models/orgModels');
-const subEntities = require('../models/subscritionPlanModel');
+const { Organization } = require('../models/orgModels');
+const { SubscriptionPlan } = require('../models/subscritionPlan');
 const { validate } = require('uuid');
 const { Sequelize } = require('sequelize');
 
 const createOrganization = async (orgData) => {
     try {
-        const organization = await orgEntities.Organization.create({
+        const organization = await Organization.create({
             orgName: orgData.orgName,
             authenticatedPages: orgData.authenticatedPages
         });
@@ -18,10 +18,9 @@ const createOrganization = async (orgData) => {
     }
 };
 
-const getOrganization = async (param) => {
-    const whereCondition = validate(param) ? { orgId: param } : { orgName: param };
+const getOrganization = async (orgId) => {
     try {
-        const organization = await orgEntities.Organization.findOne({ where: whereCondition });
+        const organization = await Organization.findOne({ where: { orgId: orgId } });
 
         if (!organization) {
             throw new Sequelize.EmptyResultError('Organization not found');
@@ -65,7 +64,7 @@ const updateOrganization = async (orgData) => {
 
 const deleteOrganization = async (orgId) => {
     try {
-        const deletedRowsCount = await orgEntities.Organization.destroy({
+        const deletedRowsCount = await Organization.destroy({
             where: { orgId }
         });
         if (deletedRowsCount < 1) {
@@ -83,7 +82,7 @@ const deleteOrganization = async (orgId) => {
 
 const createOrgContent = async (orgId) => {
     try {
-        const organization = await orgEntities.OrgContent.create({
+        const organization = await OrgContent.create({
             pageType: req.body.pageType,
             pageName: req.body.pageName,
             pageContent: req.body.pageContent,
@@ -98,7 +97,7 @@ const createOrgContent = async (orgId) => {
 
 const createSubscriptionPlan = async (subData) => {
     try {
-        const subscriptionPlan = await subEntities.SubscriptionPlan.create({
+        const subscriptionPlan = await SubscriptionPlan.create({
             policyName: subData.policyName,
             description: subData.description,
             orgId: subData.orgId,

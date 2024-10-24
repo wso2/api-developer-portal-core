@@ -7,7 +7,7 @@ config.mode = 'single'
 config.db = {
     username: 'postgres',
     password: 'postgres',
-    database: 'devportal',
+    database: 'wip-devportal',
     host: 'localhost',
     dialect: 'postgres',
 };
