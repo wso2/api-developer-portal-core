@@ -51,8 +51,13 @@ const loadAPIContent = async (req, res) => {
         if (additionalAPIContent != "File not found") {
             hbs.handlebars.registerPartial("api-content", additionalAPIContent);
         }
+
+        metaData.subscriptionPlans.forEach(element => {
+            element.baseUrl = '/' + req.params.orgName;
+            element.apiName = apiName;
+        });
+
         let templateContent = {
-            subscriptionPlans: metaData.apiInfo.subscriptionPlans,
             content: markdownHtml,
             apiMetadata: metaData,
             baseUrl: '/' + req.params.orgName,
@@ -194,9 +199,59 @@ async function loadAPIMetaData(orgName, apiName) {
     return metaData;
 }
 
+const loadMyAPIs = async (req, res) => {
+
+    const orgName = req.params.orgName;
+    const { apiId, subPlan, userName } = req.query;
+    console.log(apiId);
+
+    if (apiId, subPlan, userName) {
+        try {
+            const response = await fetch(config.apiMetaDataAPI + 'organisations/' + orgName + "/" + apiId + "/subscriptions", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    subscriptionPlan: subPlan,
+                    userName: userName,
+                }),
+            });
+
+            const result = await response.json();
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    let metaData = await loadAPIMetaDataList(orgName);
+    let html;
+    let subscribedAPIs = [];
+
+    metaData.forEach(element => {
+        const hasSubscribedPlan = element.subscriptionPlans.some(subscriptionPlan => 
+            subscriptionPlan.status === "Subscribed"
+        );
+        
+        if (hasSubscribedPlan) {
+            subscribedAPIs.push(element);
+        }
+    });
+    let templateContent = {
+        apiMetadata: subscribedAPIs,
+        baseUrl: baseURL
+    }
+
+    html = renderTemplate(filePrefix + 'pages/myAPIs/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
+
+    res.send(html);
+
+}
+
 
 module.exports = {
     loadAPIs,
     loadAPIContent,
-    loadTryOutPage
+    loadTryOutPage,
+    loadMyAPIs
 };

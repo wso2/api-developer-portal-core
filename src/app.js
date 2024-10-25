@@ -36,6 +36,19 @@ Handlebars.registerHelper('in', function (value, options) {
     return validValues.includes(value) ? options.fn(this) : options.inverse(this);
 });
 
+Handlebars.registerHelper('isSubscribed', function(subscriptionPlans, options) {
+    const hasSubscribed = subscriptionPlans.some(plan => plan.status === "Subscribed");
+    return hasSubscribed ? options.fn(this) : "";
+});
+
+Handlebars.registerHelper('subscribedPlans', function(subscriptionPlans) {
+    const subscribedDisplayNames = subscriptionPlans
+        .filter(plan => plan.status === "Subscribed")
+        .map(plan => plan.displayName);
+    
+    return subscribedDisplayNames.join(', ');
+});
+
 app.use(express.json());
 
 app.use(session({
