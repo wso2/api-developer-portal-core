@@ -19,8 +19,11 @@ function configurePassport(authJsonContent) {
         profile = {
             'name': decodedJWT['given_name'],
             'idToken': params.id_token,
-            'email': decodedJWT['email']
+            'email': decodedJWT['email'],
+            'visibility':  decodedJWT['user_group']
         };
+        console.log("Logged In-----")
+        console.log(params.id_token)
         return done(null, profile);
     }));
 }

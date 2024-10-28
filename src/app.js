@@ -98,7 +98,7 @@ if (config.mode == 'design') {
     app.use('/', registerPartials);
     app.use('/', apiContent);
     app.use('/', orgContent);
-    app.use('/', customContent);
+    app.use('/((?!favicon.ico|images|styles|login):orgName/*)', customContent);
 }
 
 app.listen(config.port);

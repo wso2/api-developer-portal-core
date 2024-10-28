@@ -13,7 +13,11 @@ let baseURL = "http://localhost:" + config.port;
 const loadAPIs = async (req, res) => {
 
     const orgName = req.params.orgName;
-    let metaData = await loadAPIMetaDataList(orgName);
+    let groups = "";
+    if (req.user != null) {
+        groups = req.user.visibility;
+    }
+    let metaData = await loadAPIMetaDataList(orgName, groups);
     let html;
     if (config.mode == 'design')
         baseURL = orgName;
@@ -129,7 +133,7 @@ const loadTryOutPage = async (req, res) => {
     res.send(html);
 }
 
-async function loadAPIMetaDataList(orgName) {
+async function loadAPIMetaDataList(orgName, visibility) {
 
     let metaData = {};
     if (config.mode == 'design') {
@@ -142,7 +146,7 @@ async function loadAPIMetaDataList(orgName) {
         });
         metaData = mockAPIMetaData;
     } else {
-        const apiMetaDataUrl = config.apiMetaDataAPI + "apiList?orgName=" + orgName;
+        const apiMetaDataUrl = config.apiMetaDataAPI + "apiList?orgName=" + orgName + "&visibleGroups=" + visibility;
         const metadataResponse = await fetch(apiMetaDataUrl);
         metaData = await metadataResponse.json();
         metaData.forEach(item => {
