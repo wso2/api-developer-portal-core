@@ -13,6 +13,6 @@ router.get('/api/:apiName', apiController.loadAPIContent);
 
 router.get('/api/:apiName/tryout', apiController.loadTryOutPage);
 
-router.get('(?!favicon.ico|images|styles|/mock)\/*', contentController.loadCustomContent);
-
+router.get('((?!favicon.ico|images|styles)/mock)\/*', contentController.loadCustomContent);
+//'/((?!favicon.ico|images|styles):orgName/*)'
 module.exports = router;

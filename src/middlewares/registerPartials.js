@@ -11,11 +11,10 @@ const registerPartials = async (req, res, next) => {
     const orgName = req.originalUrl.split("/")[1];
     let baseURL = "/" + orgName;
     let filePath = req.originalUrl.split("/" + orgName).pop();
-    if (config.mode == 'design') {
-        baseURL = "http://localhost:" + config.port;
+    if (config.mode == 'development') {
         filePath = req.originalUrl.split(baseURL).pop();
     }
-    if (config.mode == 'single' || config.mode == 'design') {
+    if (config.mode == 'development') {
         registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, 'partials'), req.user);
         registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, 'pages', 'home', 'partials'), req.user);
         registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, 'pages', 'api-landing', 'partials'), req.user);
@@ -23,7 +22,7 @@ const registerPartials = async (req, res, next) => {
         if (fs.existsSync(path.join(__dirname, filePrefix + 'pages', filePath, 'partials'))) {
             registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix + 'pages', filePath, 'partials'), req.user);
         }
-    } else if (config.mode == 'multi') {
+    } else {
         await registerPartialsFromAPI(req)
     }
     next()
