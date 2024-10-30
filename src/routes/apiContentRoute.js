@@ -10,4 +10,7 @@ router.get('/((?!favicon.ico)):orgName/api/:apiName', apiController.loadAPIConte
 router.get('/((?!favicon.ico)):orgName/api/:apiName/tryout', apiController.loadTryOutPage);
 
 router.get('/((?!favicon.ico)):orgName/myAPIs', apiController.loadMyAPIs);
+
+router.post('/subscribe', apiController.subscribe);
+
 module.exports = router;
