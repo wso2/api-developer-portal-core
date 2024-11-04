@@ -1,5 +1,4 @@
 const { APIMetadata } = require('../models/apiMetadata');
-const { SubscriptionPlan } = require('../models/subscritionPlan');
 const APIImages = require('../models/apiImages');
 const ThrottlingPolicy = require('../models/throttlingPolicy');
 const AdditionalProperties = require('../models/additionalAPIProperties');

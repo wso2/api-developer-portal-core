@@ -5,6 +5,7 @@ const util = require('../utils/util');
 const unzipper = require('unzipper');
 const fs = require('fs');
 const path = require('path');
+const { concatAST } = require('graphql');
 
 const createOrganization = async (req, res) => {
 
@@ -39,7 +40,6 @@ const getOrganization = async (req, res) => {
 
         const organization = await adminDao.getOrganization(req.params.orgId);
 
-        
         res.status(200).json({
             orgId: organization.orgId,
             orgName: organization.orgName,
@@ -102,61 +102,98 @@ const deleteOrganization = async (req, res) => {
 };
 
 const createOrgContent = async (req, res) => {
-
     console.log(req.file);
-    const zipPath = req.file.path;  // Temporary path to the uploaded zip file
-    const extractPath = path.join(__dirname, 'extracted');  // Path to extract the files
+    let orgId = req.params.orgId;
+    const zipPath = req.file.path;
+    const extractPath = path.join(__dirname, '..', '.tmp', orgId);
 
-    // Unzip the file
     fs.createReadStream(zipPath)
-        .pipe(unzipper.Extract({ path: extractPath }))
-        .on('close', async () => {
-            const orgContent = await adminDao.createOrgContent(req.query.orgId);
-            res.send('File unzipped successfully');
+        .pipe(unzipper.Parse())
+        .on('entry', entry => {
+            const entryPath = entry.path;
+
+            if (!entryPath.includes('__MACOSX')) {
+                const filePath = path.join(extractPath, entryPath);
+
+                if (entry.type === 'Directory') {
+                    fs.mkdirSync(filePath, { recursive: true });
+                    entry.autodrain();
+                } else {
+                    entry.pipe(fs.createWriteStream(filePath));
+                }
+            } else {
+                entry.autodrain();
+            }
         })
-        .on('error', (err) => {
-            throw new CustomError(500, "Internal Server Error", "Failed to extract the zip file");
+        .on('close', async () => {
+            const files = await readFilesInDirectory(extractPath);
+            try {
+                for (const { filePath, pageName, pageContent } of files) {
+                    if (pageName != null && !pageName.startsWith('.')) {
+                        let pageType;
+                        if (pageName.endsWith(".css")) {
+                            pageType = "styles"
+                        } else if (pageName.endsWith(".hbs") && path.basename(filePath) == "layout") {
+                            pageType = "layout"
+                        } else if (pageName.endsWith(".hbs") && path.basename(filePath) == "partials") {
+                            pageType = "partials"
+                        } else if (pageName.endsWith(".md") && path.basename(filePath) == "content") {
+                            pageType = "markDown";
+                        } else if (pageName.endsWith(".hbs")) {
+                            pageType = "template";
+                        } else {
+                            await adminDao.createImageRecord({
+                                fileName: pageName,
+                                image: pageContent,
+                                orgId: orgId
+                            });
+                        }
+                        if (pageType) {
+                            const organization = await adminDao.getOrganization(req.params.orgId);
+
+                            const orgContent = await adminDao.createOrgContent({
+                                pageType: pageType,
+                                pageName: pageName,
+                                pageContent: pageContent,
+                                filePath: filePath,
+                                orgId: orgId,
+                                orgName: organization.orgName
+                            });
+                        }
+                    }
+                }
+                res.status(201).send({ "orgId": orgId, "file": req.file.originalname });
+            } catch (error) {
+                util.handleError(res, error);
+            }
         });
 };
 
-const createSubscriptionPlan = async (req, res) => {
-    const { policyName, description } = req.body;
-    const orgId = req.params.orgId;
+async function readFilesInDirectory(directory, baseDir = '') {
+    const files = await fs.promises.readdir(directory, { withFileTypes: true });
 
-    try {
+    let fileDetails = [];
 
-        const subscriptionPlan = await adminDao.createSubscriptionPlan({
-            policyName,
-            description,
-            orgId
-        });
+    for (const file of files) {
+        const filePath = path.join(directory, file.name);
+        const relativePath = path.join(baseDir, file.name);
 
-        res.status(201).send(subscriptionPlan);
-    } catch (error) {
-        util.handleError(res, error);
-    }
-
-};
-
-const getSubscriptionPlan = async (req, res) => {
-    try {
-        let param = req.parm.orgId;
-
-        if (!param) {
-            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId' or 'orgName'");
+        if (file.isDirectory()) {
+            const subDirContents = await readFilesInDirectory(filePath, relativePath);
+            fileDetails = fileDetails.concat(subDirContents);
+        } else {
+            console.log(filePath)
+            const content = await fs.promises.readFile(filePath, 'utf-8');
+            fileDetails.push({
+                filePath: baseDir || '/',
+                pageName: file.name,
+                pageContent: content
+            });
         }
-
-        const organization = await adminDao.getOrganization(param);
-
-        res.status(200).json({
-            orgId: organization.orgId,
-            orgName: organization.orgName,
-            authenticatedPages: organization.authenticatedPages.split(' ').filter(Boolean) // Convert back to array
-        });
-    } catch (error) {
-        util.handleError(res, error);
     }
-};
+    return fileDetails;
+}
+
 
 module.exports = {
     createOrganization,
@@ -164,6 +201,4 @@ module.exports = {
     updateOrganization,
     deleteOrganization,
     createOrgContent,
-    createSubscriptionPlan,
-    getSubscriptionPlan
 };

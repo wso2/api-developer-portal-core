@@ -1,5 +1,4 @@
-const { Organization } = require('../models/orgModels');
-const { SubscriptionPlan } = require('../models/subscritionPlan');
+const { Organization, OrgContent, OrgImage } = require('../models/orgModels');
 const { validate } = require('uuid');
 const { Sequelize } = require('sequelize');
 
@@ -38,7 +37,7 @@ const getOrganization = async (orgId) => {
 const updateOrganization = async (orgData) => {
 
     try {
-        const [updatedRowsCount, updatedOrg] = await orgEntities.Organization.update(
+        const [updatedRowsCount, updatedOrg] = await Organization.Organization.update(
             {
                 orgName: orgData.orgName,
                 authenticatedPages: orgData.authenticatedPages
@@ -80,31 +79,34 @@ const deleteOrganization = async (orgId) => {
     }
 }
 
-const createOrgContent = async (orgId) => {
+const createOrgContent = async (orgData) => {
     try {
+        console.log(orgData.orgId)
+        console.log(orgData.orgName)
         const organization = await OrgContent.create({
-            pageType: req.body.pageType,
-            pageName: req.body.pageName,
-            pageContent: req.body.pageContent,
-            filePath: req.file.path,
-            orgId: orgId
+            pageType: orgData.pageType,
+            pageName: orgData.pageName,
+            pageContent: orgData.pageContent,
+            filePath: orgData.filePath,
+            orgId: orgData.orgId,
+            orgName: orgData.orgName,
         });
-        console.log(req.file);
+        return organization;
     } catch (error) {
-        console.log(error);
+        throw new Sequelize.DatabaseError(error);
     }
 }
 
-const createSubscriptionPlan = async (subData) => {
+const createImageRecord = async (imgData) => {
     try {
-        const subscriptionPlan = await SubscriptionPlan.create({
-            policyName: subData.policyName,
-            description: subData.description,
-            orgId: subData.orgId,
+        const imageRecord = await OrgImage.create({
+            fileName: imgData.fileName,
+            image: imgData.image,
+            orgId: imgData.orgId
         });
-        return subscriptionPlan;
+        return imageRecord;
     } catch (error) {
-        console.log(error);
+        throw new Sequelize.DatabaseError(error);
     }
 }
 
@@ -114,5 +116,5 @@ module.exports = {
     updateOrganization,
     deleteOrganization,
     createOrgContent,
-    createSubscriptionPlan
+    createImageRecord
 };

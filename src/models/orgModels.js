@@ -57,15 +57,59 @@ const OrgContent = sequelize.define('OrganizationAssets', {
         type: DataTypes.UUID,
         allowNull: false,
         forignKey: true,
+    },
+    orgName: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        foreignKey: true,
     }
 }, {
     timestamps: false,
     tableName: 'OrganizationAssets'
+},{
+    indexes: [
+        {
+            unique: true,
+            fields: ['pageType', 'pageName', 'filePath'] 
+        }
+    ]
+});
+
+const OrgImage = sequelize.define('OrgImages', {
+    fileName: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        primaryKey: true
+    },
+    image: {
+        type: DataTypes.BLOB,
+        allowNull: false,
+    },
+    orgId: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        forignKey: true,
+        primaryKey: true
+    }
+}, {
+    timestamps: false,
+    tableName: 'OrgImages',
+    returning: true
+});
+
+OrgImage.belongsTo(Organization, {
+    foreignKey: 'orgId',
+});
+
+OrgContent.belongsTo(Organization, {
+    foreignKey: 'orgId',
+    foreignKey: 'orgName',
 });
 
 // Export both models
 module.exports = {
     Organization,
     OrganizationResponse,
-    OrgContent
+    OrgContent,
+    OrgImage
 };
