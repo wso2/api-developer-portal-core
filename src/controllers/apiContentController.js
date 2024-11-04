@@ -122,22 +122,16 @@ async function loadAPIMetaDataList(orgName) {
 async function loadAPIMetaData(orgName, apiName) {
 
     let metaData = {};
-    if (config.mode == 'development') {
-        const mockAPIDataPath = path.join(__dirname, filePrefix + '../mock', apiName + '/apiMetadata.json');
-        const mockAPIData = JSON.parse(fs.readFileSync(mockAPIDataPath, 'utf-8'));
-        metaData = mockAPIData;
-    } else {
-        const apiMetaDataUrl = config.apiMetaDataAPI + "api?orgName=" + orgName + "&apiID=" + apiName;
-        const metadataResponse = await fetch(apiMetaDataUrl);
-        metaData = await metadataResponse.json();
+    const apiMetaDataUrl = config.apiMetaDataAPI + "api?orgName=" + orgName + "&apiID=" + apiName;
+    const metadataResponse = await fetch(apiMetaDataUrl);
+    metaData = await metadataResponse.json();
 
-        //replace image urls
-        const images = metaData.apiInfo.apiArtifacts.apiImages;
-        for (var key in images) {
-            let apiImageUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
-            const modifiedApiImageURL = apiImageUrl + "&fileName=" + images[key]
-            images[key] = modifiedApiImageURL;
-        }
+    //replace image urls
+    const images = metaData.apiInfo.apiArtifacts.apiImages;
+    for (var key in images) {
+        let apiImageUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
+        const modifiedApiImageURL = apiImageUrl + "&fileName=" + images[key]
+        images[key] = modifiedApiImageURL;
     }
     return metaData;
 }

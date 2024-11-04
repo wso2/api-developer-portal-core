@@ -2,7 +2,7 @@ const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize')
 
 const ThrottlingPolicy = sequelize.define('ThrottlingPolicy', {
-    policyId: {
+    policyID: {
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true

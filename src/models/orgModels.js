@@ -2,7 +2,7 @@ const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize');
 
 const Organization = sequelize.define('Organization', {
-    orgId: {
+    orgID: {
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true

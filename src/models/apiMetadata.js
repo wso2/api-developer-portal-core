@@ -38,9 +38,14 @@ const APIMetadata = sequelize.define('ApiMetadata', {
     type: DataTypes.STRING,
     allowNull: false
   },
-  authorizedRoles: {
-    type: DataTypes.STRING,
+  visibility: {
+    type: DataTypes.ENUM,
+    values: ['PUBLIC', 'PRIVATE'],
     allowNull: false
+  },
+  visibleGroups: {
+    type: DataTypes.STRING,
+    allowNull: true
   },
   technicalOwner: {
     type: DataTypes.STRING,
@@ -59,7 +64,7 @@ const APIMetadata = sequelize.define('ApiMetadata', {
     allowNull: false
   },
   metadata: {
-    type: DataTypes.TEXT,
+    type: DataTypes.JSON,
     allowNull: false
   }
 }, {
@@ -69,20 +74,35 @@ const APIMetadata = sequelize.define('ApiMetadata', {
 });
 
 APIContent.belongsTo(APIMetadata, {
-  foreignKey: 'apiID',
+  foreignKey: 'apiID', 
+});
+APIContent.belongsTo(Organization, {
+  foreignKey: 'orgID', 
 });
 AdditionalProperties.belongsTo(APIMetadata, {
   foreignKey: 'apiID',
 });
+AdditionalProperties.belongsTo(Organization, {
+  foreignKey: 'orgID',
+});
 APIImages.belongsTo(APIMetadata, {
   foreignKey: 'apiID',
 });
+APIImages.belongsTo(Organization, {
+  foreignKey: 'orgID',
+});
 ThrottlingPolicy.belongsTo(APIMetadata, {
-  foreignKey: 'apiID',
+  foreignKey: 'apiID', 
+});
+ThrottlingPolicy.belongsTo(Organization, {
+  foreignKey: 'orgID', 
 });
 APIMetadata.belongsTo(Organization, {
   foreignKey: 'orgID'
 })
+APIMetadata.hasMany(AdditionalProperties, { foreignKey: 'apiID' });
+APIMetadata.hasMany(ThrottlingPolicy, { foreignKey: 'apiID' });
+APIMetadata.hasMany(APIImages, { foreignKey: 'apiID' });
 
 // Organization response model
 class APIResponse {

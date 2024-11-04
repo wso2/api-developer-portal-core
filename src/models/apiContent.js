@@ -8,7 +8,7 @@ const APIContent = sequelize.define('ApiContent', {
         primaryKey: true
     },
     apiFile: {
-        type: DataTypes.BLOB,
+        type: DataTypes.TEXT,
         allowNull: false,
     },
     fileName: {
