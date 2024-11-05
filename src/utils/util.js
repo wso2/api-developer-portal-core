@@ -4,6 +4,7 @@ const marked = require('marked');
 const Handlebars = require('handlebars');
 const config = require('../config/config');
 const { CustomError } = require('../utils/errors/customErrors');
+const unzipper = require('unzipper');
 
 const { Sequelize } = require('sequelize');
 
@@ -182,6 +183,29 @@ function handleError(res, error) {
     }
 };
 
+const unzipFile = (zipPath, extractPath) => {
+    fs.createReadStream(zipPath)
+        .pipe(unzipper.Parse())
+        .on('entry', entry => {
+            const entryPath = entry.path;
+
+            if (!entryPath.includes('__MACOSX')) {
+                const filePath = path.join(extractPath, entryPath);
+
+                if (entry.type === 'Directory') {
+                    fs.mkdirSync(filePath, { recursive: true });
+                    entry.autodrain();
+                } else {
+                    entry.pipe(fs.createWriteStream(filePath));
+                }
+            } else {
+                entry.autodrain();
+            }
+        })
+        .on('close', async () => {
+        });
+};
+
 module.exports = {
     copyStyelSheet,
     copyStyelSheetMulti,
@@ -191,5 +215,6 @@ module.exports = {
     loadTemplateFromAPI,
     renderTemplateFromAPI,
     renderGivenTemplate,
-    handleError
+    handleError,
+    unzipFile
 }

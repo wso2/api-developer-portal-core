@@ -2,7 +2,6 @@ const { CustomError } = require('../utils/errors/customErrors');
 const adminDao = require('../dao/admin');
 const orgEntities = require('../models/orgModels');
 const util = require('../utils/util');
-const unzipper = require('unzipper');
 const fs = require('fs');
 const path = require('path');
 const { concatAST } = require('graphql');
@@ -106,41 +105,47 @@ const createOrgContent = async (req, res) => {
     const zipPath = req.file.path;
     const extractPath = path.join(__dirname, '..', '.tmp', orgId);
 
-    unzipFile(zipPath, extractPath);
+    util.unzipFile(zipPath, extractPath);
 
-    const files = await readFilesInDirectory(extractPath);
-    for (const { filePath, pageName, pageContent, pageType } of files) {
-        try {
-            createContent(filePath, pageName, pageContent, pageType, orgId);
-        } catch (error) {
-            util.handleError(res, error);
+    try {
+        const files = await readFilesInDirectory(extractPath);
+        for (const { filePath, pageName, pageContent, pageType } of files) {
+            await createContent(filePath, pageName, pageContent, pageType, orgId);
         }
+        res.status(201).send({ "orgId": orgId, "file": req.file.originalname });
+
+    } catch (error) {
+        return util.handleError(res, error);
     }
-    res.status(201).send({ "orgId": orgId, "file": req.file.originalname });
 };
 
 const createContent = async (filePath, pageName, pageContent, pageType, orgId) => {
-    let orgContent;
-    if (pageName != null && !pageName.startsWith('.')) {
-        if (pageType) {
-            const organization = await adminDao.getOrganization(orgId);
-            orgContent = await adminDao.createOrgContent({
-                pageType: pageType,
-                pageName: pageName,
-                pageContent: pageContent,
-                filePath: filePath,
-                orgId: orgId,
-                orgName: organization.orgName
-            });
-        } else {
-            orgContent = await adminDao.createImageRecord({
-                fileName: pageName,
-                image: pageContent,
-                orgId: orgId
-            });
+    let content;
+    try {
+        if (pageName != null && !pageName.startsWith('.')) {
+            if (pageType) {
+                const organization = await adminDao.getOrganization(orgId);
+                content = await adminDao.createOrgContent({
+                    pageType: pageType,
+                    pageName: pageName,
+                    pageContent: pageContent,
+                    filePath: filePath,
+                    orgId: orgId,
+                    orgName: organization.orgName
+                });
+            } else {
+                content = await adminDao.createImageRecord({
+                    fileName: pageName,
+                    image: pageContent,
+                    orgId: orgId
+                });
+            }
         }
+    } catch (error) {
+        throw error;
     }
-    return orgContent;
+
+    return content;
 };
 
 const updateOrgContent = async (req, res) => {
@@ -148,7 +153,7 @@ const updateOrgContent = async (req, res) => {
     const zipPath = req.file.path;
     const extractPath = path.join(__dirname, '..', '.tmp', orgId);
 
-    unzipFile(zipPath, extractPath);
+    util.unzipFile(zipPath, extractPath);
 
     const files = await readFilesInDirectory(extractPath);
     try {
@@ -157,16 +162,9 @@ const updateOrgContent = async (req, res) => {
                 const organization = await adminDao.getOrganization(req.params.orgId);
                 let organizationContent;
                 if (pageType) {
-                    organizationContent = await adminDao.getOrgContent({
-                        pageType: pageType,
-                        pageName: pageName,
-                        filePath: filePath
-                    });
+                    organizationContent = getOrgContent(pageType, pageName, filePath);
                 }
-                const imgContent = await adminDao.getImgContent({
-                    orgId: orgId,
-                    fileName: pageName
-                });
+                const imgContent = getImgContent(orgId, pageName);
 
                 if (organizationContent || imgContent) {
                     if (pageType && organizationContent) {
@@ -186,7 +184,7 @@ const updateOrgContent = async (req, res) => {
                         });
                     }
                 } else {
-                    createContent(filePath, pageName, pageContent, pageType, orgId);
+                    await createContent(filePath, pageName, pageContent, pageType, orgId, res);
                 }
             }
         }
@@ -195,30 +193,24 @@ const updateOrgContent = async (req, res) => {
         util.handleError(res, error);
     }
 };
-const unzipFile = (zipPath, extractPath) => {
-    fs.createReadStream(zipPath)
-        .pipe(unzipper.Parse())
-        .on('entry', entry => {
-            const entryPath = entry.path;
 
-            if (!entryPath.includes('__MACOSX')) {
-                const filePath = path.join(extractPath, entryPath);
+const getOrgContent = async (pageType, pageName, filePath) => {
+    return await adminDao.getOrgContent({
+        pageType: pageType,
+        pageName: pageName,
+        filePath: filePath
+    });
+};
 
-                if (entry.type === 'Directory') {
-                    fs.mkdirSync(filePath, { recursive: true });
-                    entry.autodrain();
-                } else {
-                    entry.pipe(fs.createWriteStream(filePath));
-                }
-            } else {
-                entry.autodrain();
-            }
-        })
-        .on('close', async () => {
-        });
+const getImgContent = async (orgId, pageName) => {
+    return await adminDao.getImgContent({
+        orgId: orgId,
+        fileName: pageName
+    });
 };
 
 async function readFilesInDirectory(directory, baseDir = '') {
+    console.log(directory);
     const files = await fs.promises.readdir(directory, { withFileTypes: true });
 
     let fileDetails = [];
@@ -231,7 +223,7 @@ async function readFilesInDirectory(directory, baseDir = '') {
             const subDirContents = await readFilesInDirectory(filePath, relativePath);
             fileDetails = fileDetails.concat(subDirContents);
         } else {
-            const content = await fs.promises.readFile(filePath, 'utf-8');
+            let content = await fs.promises.readFile(filePath, 'utf-8');
             let pageType;
             if (file.name.endsWith(".css")) {
                 pageType = "styles"
@@ -243,9 +235,12 @@ async function readFilesInDirectory(directory, baseDir = '') {
                 pageType = "markDown";
             } else if (file.name.endsWith(".hbs")) {
                 pageType = "template";
+            } else if (!file.name.endsWith(".svg")) {
+                content = await fs.promises.readFile(filePath);
             }
+
             fileDetails.push({
-                filePath: baseDir || '/',
+                filePath: baseDir.replace(/^[^/]+\/?/, '') || '/',
                 pageName: file.name,
                 pageContent: content,
                 pageType: pageType
@@ -261,5 +256,7 @@ module.exports = {
     updateOrganization,
     deleteOrganization,
     createOrgContent,
-    updateOrgContent
+    updateOrgContent,
+    getOrgContent,
+    getImgContent
 };
