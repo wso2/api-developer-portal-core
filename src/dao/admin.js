@@ -37,7 +37,7 @@ const getOrganization = async (orgId) => {
 const updateOrganization = async (orgData) => {
 
     try {
-        const [updatedRowsCount, updatedOrg] = await Organization.Organization.update(
+        const [updatedRowsCount, updatedOrg] = await Organization.update(
             {
                 orgName: orgData.orgName,
                 authenticatedPages: orgData.authenticatedPages
@@ -81,9 +81,7 @@ const deleteOrganization = async (orgId) => {
 
 const createOrgContent = async (orgData) => {
     try {
-        console.log(orgData.orgId)
-        console.log(orgData.orgName)
-        const organization = await OrgContent.create({
+        const orgContent = await OrgContent.create({
             pageType: orgData.pageType,
             pageName: orgData.pageName,
             pageContent: orgData.pageContent,
@@ -91,7 +89,7 @@ const createOrgContent = async (orgData) => {
             orgId: orgData.orgId,
             orgName: orgData.orgName,
         });
-        return organization;
+        return orgContent;
     } catch (error) {
         throw new Sequelize.DatabaseError(error);
     }
@@ -110,11 +108,81 @@ const createImageRecord = async (imgData) => {
     }
 }
 
+const updateOrgContent = async (orgData) => {
+    try {
+        const [updatedRowsCount, updatedOrgContent] = await OrgContent.update({
+            pageType: orgData.pageType,
+            pageName: orgData.pageName,
+            pageContent: orgData.pageContent,
+            filePath: orgData.filePath,
+            orgName: orgData.orgName,
+        },
+        {
+            where: { pageType: orgData.pageType, pageName: orgData.pageName, filePath: orgData.filePath },
+            returning: true
+        });
+        if (updatedRowsCount < 1) {
+            throw new Sequelize.EmptyResultError('Organization Content not found');
+        } else {
+            return [updatedRowsCount, updatedOrgContent];
+        }
+    } catch (error) {
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getOrgContent = async (orgData) => {
+    try {
+        const organization = await OrgContent.findOne({ where: { pageType: orgData.pageType, pageName: orgData.pageName, filePath: orgData.filePath } });
+        return organization;
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
+const updateImageRecord = async (imgData) => {
+    try {
+        const [updatedRowsCount, updatedOrgImages] =  await OrgImage.update({
+            image: imgData.image,
+        },
+        {
+            where: { orgId: imgData.orgId, fileName: imgData.fileName },
+            returning: true
+        });
+        if (updatedRowsCount < 1) {
+            throw new Sequelize.EmptyResultError('Organization Image not found');
+        } else {
+            return [updatedRowsCount, updatedOrgImages];
+        }
+    } catch (error) {
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
+const getImgContent = async (orgData) => {
+    try {
+        const orgImage = await OrgImage.findOne({ where: { orgId: orgData.orgId, fileName: orgData.fileName } });
+        return orgImage;
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
 module.exports = {
     createOrganization,
     getOrganization,
     updateOrganization,
     deleteOrganization,
     createOrgContent,
-    createImageRecord
+    createImageRecord,
+    updateOrgContent,
+    updateImageRecord,
+    getOrgContent,
+    getImgContent
 };

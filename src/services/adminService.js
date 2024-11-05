@@ -102,11 +102,100 @@ const deleteOrganization = async (req, res) => {
 };
 
 const createOrgContent = async (req, res) => {
-    console.log(req.file);
     let orgId = req.params.orgId;
     const zipPath = req.file.path;
     const extractPath = path.join(__dirname, '..', '.tmp', orgId);
 
+    unzipFile(zipPath, extractPath);
+
+    const files = await readFilesInDirectory(extractPath);
+    for (const { filePath, pageName, pageContent, pageType } of files) {
+        try {
+            createContent(filePath, pageName, pageContent, pageType, orgId);
+        } catch (error) {
+            util.handleError(res, error);
+        }
+    }
+    res.status(201).send({ "orgId": orgId, "file": req.file.originalname });
+};
+
+const createContent = async (filePath, pageName, pageContent, pageType, orgId) => {
+    let orgContent;
+    if (pageName != null && !pageName.startsWith('.')) {
+        if (pageType) {
+            const organization = await adminDao.getOrganization(orgId);
+            orgContent = await adminDao.createOrgContent({
+                pageType: pageType,
+                pageName: pageName,
+                pageContent: pageContent,
+                filePath: filePath,
+                orgId: orgId,
+                orgName: organization.orgName
+            });
+        } else {
+            orgContent = await adminDao.createImageRecord({
+                fileName: pageName,
+                image: pageContent,
+                orgId: orgId
+            });
+        }
+    }
+    return orgContent;
+};
+
+const updateOrgContent = async (req, res) => {
+    let orgId = req.params.orgId;
+    const zipPath = req.file.path;
+    const extractPath = path.join(__dirname, '..', '.tmp', orgId);
+
+    unzipFile(zipPath, extractPath);
+
+    const files = await readFilesInDirectory(extractPath);
+    try {
+        for (const { filePath, pageName, pageContent, pageType } of files) {
+            if (pageName != null && !pageName.startsWith('.')) {
+                const organization = await adminDao.getOrganization(req.params.orgId);
+                let organizationContent;
+                if (pageType) {
+                    organizationContent = await adminDao.getOrgContent({
+                        pageType: pageType,
+                        pageName: pageName,
+                        filePath: filePath
+                    });
+                }
+                const imgContent = await adminDao.getImgContent({
+                    orgId: orgId,
+                    fileName: pageName
+                });
+
+                if (organizationContent || imgContent) {
+                    if (pageType && organizationContent) {
+                        const orgContent = await adminDao.updateOrgContent({
+                            pageType: pageType,
+                            pageName: pageName,
+                            pageContent: pageContent,
+                            filePath: filePath,
+                            orgId: orgId,
+                            orgName: organization.orgName
+                        });
+                    } else {
+                        await adminDao.updateImageRecord({
+                            fileName: pageName,
+                            image: pageContent,
+                            orgId: orgId
+                        });
+                    }
+                } else {
+                    createContent(filePath, pageName, pageContent, pageType, orgId);
+                }
+            }
+        }
+        res.status(201).send({ "orgId": orgId, "file": req.file.originalname });
+    } catch (error) {
+        util.handleError(res, error);
+    }
+};
+const unzipFile = (zipPath, extractPath) => {
     fs.createReadStream(zipPath)
         .pipe(unzipper.Parse())
         .on('entry', entry => {
@@ -126,46 +215,6 @@ const createOrgContent = async (req, res) => {
             }
         })
         .on('close', async () => {
-            const files = await readFilesInDirectory(extractPath);
-            try {
-                for (const { filePath, pageName, pageContent } of files) {
-                    if (pageName != null && !pageName.startsWith('.')) {
-                        let pageType;
-                        if (pageName.endsWith(".css")) {
-                            pageType = "styles"
-                        } else if (pageName.endsWith(".hbs") && path.basename(filePath) == "layout") {
-                            pageType = "layout"
-                        } else if (pageName.endsWith(".hbs") && path.basename(filePath) == "partials") {
-                            pageType = "partials"
-                        } else if (pageName.endsWith(".md") && path.basename(filePath) == "content") {
-                            pageType = "markDown";
-                        } else if (pageName.endsWith(".hbs")) {
-                            pageType = "template";
-                        } else {
-                            await adminDao.createImageRecord({
-                                fileName: pageName,
-                                image: pageContent,
-                                orgId: orgId
-                            });
-                        }
-                        if (pageType) {
-                            const organization = await adminDao.getOrganization(req.params.orgId);
-
-                            const orgContent = await adminDao.createOrgContent({
-                                pageType: pageType,
-                                pageName: pageName,
-                                pageContent: pageContent,
-                                filePath: filePath,
-                                orgId: orgId,
-                                orgName: organization.orgName
-                            });
-                        }
-                    }
-                }
-                res.status(201).send({ "orgId": orgId, "file": req.file.originalname });
-            } catch (error) {
-                util.handleError(res, error);
-            }
         });
 };
 
@@ -182,18 +231,29 @@ async function readFilesInDirectory(directory, baseDir = '') {
             const subDirContents = await readFilesInDirectory(filePath, relativePath);
             fileDetails = fileDetails.concat(subDirContents);
         } else {
-            console.log(filePath)
             const content = await fs.promises.readFile(filePath, 'utf-8');
+            let pageType;
+            if (file.name.endsWith(".css")) {
+                pageType = "styles"
+            } else if (file.name.endsWith(".hbs") && path.basename(filePath) == "layout") {
+                pageType = "layout"
+            } else if (file.name.endsWith(".hbs") && path.basename(filePath) == "partials") {
+                pageType = "partials"
+            } else if (file.name.endsWith(".md") && path.basename(filePath) == "content") {
+                pageType = "markDown";
+            } else if (file.name.endsWith(".hbs")) {
+                pageType = "template";
+            }
             fileDetails.push({
                 filePath: baseDir || '/',
                 pageName: file.name,
-                pageContent: content
+                pageContent: content,
+                pageType: pageType
             });
         }
     }
     return fileDetails;
 }
-
 
 module.exports = {
     createOrganization,
@@ -201,4 +261,5 @@ module.exports = {
     updateOrganization,
     deleteOrganization,
     createOrgContent,
+    updateOrgContent
 };
