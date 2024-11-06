@@ -3,8 +3,15 @@ const adminService = require('../services/adminService');
 
 const getOrgContent = async (req, res) => {
     try {
-        let asset = await adminService.getOrgContent(req.query.pageType, req.query.pageName, req.query.filePath);
-        res.status(200).send(asset.pageContent);
+        let asset;
+        if (req.query.pageType && req.query.pageName) {
+            asset = await adminService.getOrgContent(req.query.pageType, req.query.pageName, req.query.filePath);
+            return res.status(200).send(asset.pageContent);
+        } else if (req.params.pageType) {
+            asset = await adminService.getOrgContent(req.params.pageType);
+            const resp = asset.map(({ pageName, pageContent }) => ({ pageName, pageContent }));
+            return res.status(200).send(resp);
+        } 
     } catch (error) {
         res.status(404).send(error.message);
     }

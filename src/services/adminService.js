@@ -5,6 +5,7 @@ const util = require('../utils/util');
 const fs = require('fs');
 const path = require('path');
 const { concatAST } = require('graphql');
+const config = require('../config/config');
 
 const createOrganization = async (req, res) => {
 
@@ -108,7 +109,7 @@ const createOrgContent = async (req, res) => {
     util.unzipFile(zipPath, extractPath);
 
     try {
-        const files = await readFilesInDirectory(extractPath);
+        const files = await readFilesInDirectory(extractPath, orgId);
         for (const { filePath, pageName, pageContent, pageType } of files) {
             await createContent(filePath, pageName, pageContent, pageType, orgId);
         }
@@ -155,7 +156,7 @@ const updateOrgContent = async (req, res) => {
 
     util.unzipFile(zipPath, extractPath);
 
-    const files = await readFilesInDirectory(extractPath);
+    const files = await readFilesInDirectory(extractPath, orgId);
     try {
         for (const { filePath, pageName, pageContent, pageType } of files) {
             if (pageName != null && !pageName.startsWith('.')) {
@@ -209,7 +210,7 @@ const getImgContent = async (orgId, pageName) => {
     });
 };
 
-async function readFilesInDirectory(directory, baseDir = '') {
+async function readFilesInDirectory(directory, orgId,  baseDir = '') {
     console.log(directory);
     const files = await fs.promises.readdir(directory, { withFileTypes: true });
 
@@ -220,18 +221,22 @@ async function readFilesInDirectory(directory, baseDir = '') {
         const relativePath = path.join(baseDir, file.name);
 
         if (file.isDirectory()) {
-            const subDirContents = await readFilesInDirectory(filePath, relativePath);
+            const subDirContents = await readFilesInDirectory(filePath, orgId, relativePath);
             fileDetails = fileDetails.concat(subDirContents);
         } else {
             let content = await fs.promises.readFile(filePath, 'utf-8');
+            let dir = baseDir.replace(/^[^/]+\/[^/]+\/?/, '') || '/';
             let pageType;
             if (file.name.endsWith(".css")) {
                 pageType = "styles"
-            } else if (file.name.endsWith(".hbs") && path.basename(filePath) == "layout") {
+                if (file.name == "main.css") {
+                    content = content.replace(/@import\s*'\/styles\/([^']+)';/g, `@import '${config.devportalAPI}organizations/${orgId}/layout?pageType=styles&pageName=$1';`);
+                }
+            } else if (file.name.endsWith(".hbs") && path.basename(dir) == "layout") {
                 pageType = "layout"
-            } else if (file.name.endsWith(".hbs") && path.basename(filePath) == "partials") {
+            } else if (file.name.endsWith(".hbs") && path.basename(dir) == "partials") {
                 pageType = "partials"
-            } else if (file.name.endsWith(".md") && path.basename(filePath) == "content") {
+            } else if (file.name.endsWith(".md") && path.basename(dir) == "content") {
                 pageType = "markDown";
             } else if (file.name.endsWith(".hbs")) {
                 pageType = "template";
@@ -240,7 +245,7 @@ async function readFilesInDirectory(directory, baseDir = '') {
             }
 
             fileDetails.push({
-                filePath: baseDir.replace(/^[^/]+\/?/, '') || '/',
+                filePath: dir,
                 pageName: file.name,
                 pageContent: content,
                 pageType: pageType

@@ -122,19 +122,31 @@ const updateOrgContent = async (orgData) => {
             returning: true
         });
         if (updatedRowsCount < 1) {
-            throw new Sequelize.EmptyResultError('Organization Content not found');
+            throw new Sequelize.EmptyResultError('No new resources found');
         } else {
             return [updatedRowsCount, updatedOrgContent];
         }
     } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
         throw new Sequelize.DatabaseError(error);
     }
 }
 
 const getOrgContent = async (orgData) => {
     try {
-        const organization = await OrgContent.findOne({ where: { pageType: orgData.pageType, pageName: orgData.pageName, filePath: orgData.filePath } });
+        let organization;
+
+        if (orgData.pageType && orgData.pageName && orgData.filePath) {
+            organization = await OrgContent.findOne({ where: { pageType: orgData.pageType, pageName: orgData.pageName, filePath: orgData.filePath } });
+        } else if (orgData.pageType && orgData.pageName) {
+            organization = await OrgContent.findOne({ where: { pageType: orgData.pageType, pageName: orgData.pageName } });
+        } else if (orgData.pageType) {
+            organization = await OrgContent.findAll({ where: { pageType: orgData.pageType } });
+        }             
         return organization;
+
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
