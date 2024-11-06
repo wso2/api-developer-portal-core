@@ -30,20 +30,17 @@ const registerPartials = async (req, res, next) => {
 }
 
 const registerPartialsFromAPI = async (req) => {
-
     const orgName = req.originalUrl.split("/")[1];
     const apiName = req.originalUrl.split("/").pop();
     const orgUrl = `${config.adminAPI}organizations/${orgName}`;
-    const imageUrl = config.adminAPI + "orgFiles?orgName=" + orgName;
-    // const apiContetnUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
 
-    //attach partials
     const orgResponse = await fetch(orgUrl);
     const orgData = await orgResponse.json();
 
+    const imageUrl =`${config.devportalAPI}organizations/${orgData.orgId}/image?`;
+    // const apiContetnUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
 
     const devportalUrl = `${config.devportalAPI}organizations/${orgData.orgId}/layout/partials`;
-    console.log("devportalUrl", devportalUrl);
     const partialsResponse = await fetch(devportalUrl);
     let partials = await partialsResponse.json();
 
@@ -51,7 +48,7 @@ const registerPartialsFromAPI = async (req) => {
     partials.forEach(file => {
         let fileName = file.pageName.split(".")[0];
         let content = file.pageContent;
-        content = content.replaceAll("/images/", imageUrl + "&fileName=")
+        content = content.replaceAll("/images/", imageUrl + "fileName=")
         partialObject[fileName] = content;
     });
     // const markdownResponse = await fetch(apiContetnUrl + "&fileName=apiContent.md");
