@@ -17,9 +17,12 @@ const createOrganization = async (orgData) => {
     }
 };
 
-const getOrganization = async (orgId) => {
+const getOrganization = async (param) => {
+    const isUUID = validate(param);
+    const condition = isUUID ? { orgId: param } : { orgName: param };
+
     try {
-        const organization = await Organization.findOne({ where: { orgId: orgId } });
+        const organization = await Organization.findOne({ where: condition });
 
         if (!organization) {
             throw new Sequelize.EmptyResultError('Organization not found');
@@ -87,7 +90,6 @@ const createOrgContent = async (orgData) => {
             pageContent: orgData.pageContent,
             filePath: orgData.filePath,
             orgId: orgData.orgId,
-            orgName: orgData.orgName,
         });
         return orgContent;
     } catch (error) {
@@ -115,7 +117,6 @@ const updateOrgContent = async (orgData) => {
             pageName: orgData.pageName,
             pageContent: orgData.pageContent,
             filePath: orgData.filePath,
-            orgName: orgData.orgName,
         },
         {
             where: { pageType: orgData.pageType, pageName: orgData.pageName, filePath: orgData.filePath },

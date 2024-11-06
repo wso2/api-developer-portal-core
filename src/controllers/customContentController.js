@@ -32,8 +32,12 @@ const loadCustomContent = async (req, res) => {
 
     } else {
         let content = {}
-        const markdownResponse = await fetch(config.adminAPI + "orgFileType?orgName=" + orgName + "&fileType=markDown&filePath=" + filePath);
+        const orgResponse = await fetch(`${config.adminAPI}organizations/${orgName}`);
+        const orgData = await orgResponse.json();
+
+        const markdownResponse = await fetch(`${config.devportalAPI}organizations${orgData.orgId}filePath${filePath}`);
         let markDownFiles = await markdownResponse.json();
+
         if (markDownFiles.length > 0) {
             markDownFiles.forEach((item) => {
                 const tempKey = item.pageName.split('.md')[0];

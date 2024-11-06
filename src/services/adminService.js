@@ -125,14 +125,12 @@ const createContent = async (filePath, pageName, pageContent, pageType, orgId) =
     try {
         if (pageName != null && !pageName.startsWith('.')) {
             if (pageType) {
-                const organization = await adminDao.getOrganization(orgId);
                 content = await adminDao.createOrgContent({
                     pageType: pageType,
                     pageName: pageName,
                     pageContent: pageContent,
                     filePath: filePath,
-                    orgId: orgId,
-                    orgName: organization.orgName
+                    orgId: orgId
                 });
             } else {
                 content = await adminDao.createImageRecord({
@@ -163,9 +161,9 @@ const updateOrgContent = async (req, res) => {
                 const organization = await adminDao.getOrganization(req.params.orgId);
                 let organizationContent;
                 if (pageType) {
-                    organizationContent = getOrgContent(pageType, pageName, filePath);
+                    organizationContent = await getOrgContent(pageType, pageName, filePath);
                 }
-                const imgContent = getImgContent(orgId, pageName);
+                const imgContent = await getImgContent(orgId, pageName);
 
                 if (organizationContent || imgContent) {
                     if (pageType && organizationContent) {
@@ -174,8 +172,7 @@ const updateOrgContent = async (req, res) => {
                             pageName: pageName,
                             pageContent: pageContent,
                             filePath: filePath,
-                            orgId: orgId,
-                            orgName: organization.orgName
+                            orgId: orgId
                         });
                     } else {
                         await adminDao.updateImageRecord({
@@ -185,7 +182,8 @@ const updateOrgContent = async (req, res) => {
                         });
                     }
                 } else {
-                    await createContent(filePath, pageName, pageContent, pageType, orgId, res);
+                    console.log("Creating new content@@@@@@@@@@@@@@@@@@@@\n");
+                    await createContent(filePath, pageName, pageContent, pageType, orgId);
                 }
             }
         }
@@ -225,18 +223,22 @@ async function readFilesInDirectory(directory, orgId,  baseDir = '') {
             fileDetails = fileDetails.concat(subDirContents);
         } else {
             let content = await fs.promises.readFile(filePath, 'utf-8');
-            let dir = baseDir.replace(/^[^/]+\/[^/]+\/?/, '') || '/';
+            let dir = baseDir.replace(/^[^/]+\/?/, '') || '/';
             let pageType;
+
             if (file.name.endsWith(".css")) {
                 pageType = "styles"
                 if (file.name == "main.css") {
-                    content = content.replace(/@import\s*'\/styles\/([^']+)';/g, `@import '${config.devportalAPI}organizations/${orgId}/layout?pageType=styles&pageName=$1';`);
+                    content = content.replace(/@import\s*'\/styles\/([^']+)';/g, `@import url("${config.devportalAPI}organizations/${orgId}/layout?pageType=styles&pageName=$1");`);
                 }
-            } else if (file.name.endsWith(".hbs") && path.basename(dir) == "layout") {
+            } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                 pageType = "layout"
-            } else if (file.name.endsWith(".hbs") && path.basename(dir) == "partials") {
+                if (file.name == "main.hbs") {
+                    content = content.replace(/\/styles\//g, `${config.devportalAPI}organizations/${orgId}/layout?pageType=styles&pageName=`);
+                }
+            } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
                 pageType = "partials"
-            } else if (file.name.endsWith(".md") && path.basename(dir) == "content") {
+            } else if (file.name.endsWith(".md") && dir.endsWith("content")) {
                 pageType = "markDown";
             } else if (file.name.endsWith(".hbs")) {
                 pageType = "template";

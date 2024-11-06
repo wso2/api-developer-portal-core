@@ -97,26 +97,38 @@ function renderTemplate(templatePath, layoutPath, templateContent) {
 
 async function loadLayoutFromAPI(orgName) {
 
-    const templateURL = config.adminAPI + "orgFileType?orgName=" + orgName;
-    const layoutResponse = await fetch(templateURL + "&fileType=layout&filePath=main&fileName=main.hbs");
-    var layoutContent = await layoutResponse.text();
+    const orgResponse = await fetch(`${config.adminAPI}organizations/${orgName}`);
+    const orgData = await orgResponse.json();
+
+    const templateURL = `${config.devportalAPI}organizations/${orgData.orgId}/layout?pageType=layout&pageName=main.hbs`;
+    const templateResponse = await fetch(templateURL);
+    console.log("Template URL:", templateURL);
+    console.log("Template URL:", templateResponse);
+
+    var layoutContent = await templateResponse.text();
     return layoutContent;
 }
 
-async function loadTemplateFromAPI(orgName, templatePageName) {
+async function loadTemplateFromAPI(orgName, filePath) {
+    const orgResponse = await fetch(`${config.adminAPI}organizations/${orgName}`);
+    const orgData = await orgResponse.json();
 
-    const templateURL = config.adminAPI + "orgFileType?orgName=" + orgName;
-    console.log(templateURL + "&fileType=template&fileName=page.hbs&filePath=" + templatePageName)
-    const templateResponse = await fetch(templateURL + "&fileType=template&fileName=page.hbs&filePath=" + templatePageName);
+    const templateURL = `${config.devportalAPI}organizations/${orgData.orgId}/layout?pageType=template&pageName=page.hbs&filePath=${filePath}`;
+    const templateResponse = await fetch(templateURL);
+    console.log("Template URL:", templateURL);
+    console.log("Template URL:", templateResponse);
     var templateContent = await templateResponse.text();
     return templateContent;
 
 }
 
-async function renderTemplateFromAPI(templateContent, orgName, templatePageName) {
+async function renderTemplateFromAPI(templateContent, orgName, filePath) {
 
-    var templatePage = await loadTemplateFromAPI(orgName, templatePageName);
+    var templatePage = await loadTemplateFromAPI(orgName, filePath);
     var layoutContent = await loadLayoutFromAPI(orgName);
+
+    console.log("Template Page:", templatePage);
+    console.log("Layout Content:", layoutContent);
 
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutContent.toString());
@@ -130,6 +142,7 @@ async function renderTemplateFromAPI(templateContent, orgName, templatePageName)
             body: template(templateContent)
         });
     }
+    console.log("HTML:", html);
     return html;
 }
 

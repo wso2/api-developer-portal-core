@@ -6,6 +6,9 @@ const getOrgContent = async (req, res) => {
         let asset;
         if (req.query.pageType && req.query.pageName) {
             asset = await adminService.getOrgContent(req.query.pageType, req.query.pageName, req.query.filePath);
+            if (asset.pageName.endsWith('.css')) {
+                res.set('Content-Type', "text/css");
+            }
             return res.status(200).send(asset.pageContent);
         } else if (req.params.pageType) {
             asset = await adminService.getOrgContent(req.params.pageType);

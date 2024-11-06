@@ -33,13 +33,20 @@ const registerPartialsFromAPI = async (req) => {
 
     const orgName = req.originalUrl.split("/")[1];
     const apiName = req.originalUrl.split("/").pop();
-    const url = config.adminAPI + "orgFileType?orgName=" + orgName + "&fileType=partials";
+    const orgUrl = `${config.adminAPI}organizations/${orgName}`;
     const imageUrl = config.adminAPI + "orgFiles?orgName=" + orgName;
-    const apiContetnUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
+    // const apiContetnUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
 
     //attach partials
-    const partialsResponse = await fetch(url);
+    const orgResponse = await fetch(orgUrl);
+    const orgData = await orgResponse.json();
+
+
+    const devportalUrl = `${config.devportalAPI}organizations/${orgData.orgId}/layout/partials`;
+    console.log("devportalUrl", devportalUrl);
+    const partialsResponse = await fetch(devportalUrl);
     let partials = await partialsResponse.json();
+
     let partialObject = {}
     partials.forEach(file => {
         let fileName = file.pageName.split(".")[0];
@@ -47,13 +54,13 @@ const registerPartialsFromAPI = async (req) => {
         content = content.replaceAll("/images/", imageUrl + "&fileName=")
         partialObject[fileName] = content;
     });
-    const markdownResponse = await fetch(apiContetnUrl + "&fileName=apiContent.md");
-    const markdownContent = await markdownResponse.text();
-    const markdownHtml = markdownContent ? markdown.parse(markdownContent) : '';
+    // const markdownResponse = await fetch(apiContetnUrl + "&fileName=apiContent.md");
+    // const markdownContent = await markdownResponse.text();
+    // const markdownHtml = markdownContent ? markdown.parse(markdownContent) : '';
 
-    const additionalAPIContentResponse = await fetch(apiContetnUrl + "&fileName=api-content.hbs");
-    const additionalAPIContent = await additionalAPIContentResponse.text();
-    partialObject["api-content"] = additionalAPIContent;
+    // const additionalAPIContentResponse = await fetch(apiContetnUrl + "&fileName=api-content.hbs");
+    // const additionalAPIContent = await additionalAPIContentResponse.text();
+    // partialObject["api-content"] = additionalAPIContent;
 
     const hbs = exphbs.create({});
     hbs.handlebars.partials = partialObject;
@@ -65,7 +72,7 @@ const registerPartialsFromAPI = async (req) => {
     hbs.handlebars.partials = {
         ...hbs.handlebars.partials,
         header: hbs.handlebars.compile(partialObject['header'])({ baseUrl: '/' + req.originalUrl.split("/")[1], profile: req.user }),
-        "api-content": hbs.handlebars.compile(partialObject['api-content'])({ content: markdownHtml }),
+        // "api-content": hbs.handlebars.compile(partialObject['api-content'])({ content: markdownHtml }),
         "hero": hbs.handlebars.compile(partialObject['hero'])({ baseUrl: '/' + req.originalUrl.split("/")[1] })
     };
 }

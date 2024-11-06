@@ -9,12 +9,14 @@ filePrefix = '../../../../src/'
 
 const loadOrganizationContent = async (req, res) => {
 
+    console.log("Loading content from Landing@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
     let html = "";
     if (config.mode == 'single' || config.mode == 'design') {
         html = await loadOrgContentFromFile(req, res)
     } else {
         html = await loadOrgContentFromAPI(req, res)
     }
+    console.log("HTML:", html);
     res.send(html);
 }
 
@@ -36,9 +38,10 @@ const loadOrgContentFromFile = async (req, res) => {
 
 const loadOrgContentFromAPI = async (req, res) => {
 
+    console.log("Loading content from API@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
     let templateContent = {}
     const orgName = req.params.orgName;
-    const html = await renderTemplateFromAPI(templateContent, orgName, 'home');
+    const html = await renderTemplateFromAPI(templateContent, orgName, 'pages/home');
     return html
 }
 

@@ -57,11 +57,6 @@ const OrgContent = sequelize.define('OrganizationAssets', {
         type: DataTypes.UUID,
         allowNull: false,
         forignKey: true,
-    },
-    orgName: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        foreignKey: true,
     }
 }, {
     timestamps: false,
@@ -103,7 +98,6 @@ OrgImage.belongsTo(Organization, {
 
 OrgContent.belongsTo(Organization, {
     foreignKey: 'orgId',
-    foreignKey: 'orgName',
 });
 
 // Export both models
