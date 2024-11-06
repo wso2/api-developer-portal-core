@@ -157,24 +157,37 @@ const createAPITemplate = async (req, res) => {
     try {
         let apiId = req.params.apiId;
         let orgId = req.params.orgId;
-        const filePath = req.file.path; // Full path to the stored file
-        const directory = await unzipper.Open.file(filePath);
-        let extractPath = path.join('/tmp', req.params.orgId + '/' + req.params.apiId + '/');
-        fs.mkdirSync(extractPath, { recursive: true });
+        let extractPath = path.join('/tmp', req.params.orgId + '/' + req.params.apiId);
+        await fs.mkdir(extractPath, { recursive: true });
         console.log(`Extracting to: ${extractPath}`);
         const zipFilePath = req.file.path;
-        util.unzipFile(zipFilePath, extractPath);
+        await util.unzipFile(zipFilePath, extractPath);
         let apiContentFileName = req.file.originalname.split('.zip')[0];
 
-        let apiContent = util.getAPIFileContent(extractPath + '/' + apiContentFileName + '/' + 'content');
-        let apiImages = util.getAPIFileContent(extractPath + '/' + apiContentFileName + '/' + 'images');
+        // Build complete paths
+        const contentPath = path.join(extractPath, apiContentFileName, 'content');
+        const imagesPath = path.join(extractPath, apiContentFileName, 'images');
 
-        const result = await sequelize.transaction(async t => {
-            const fileResponse = await apiDao.storeAPIFiles(apiContent, apiId, orgId, t);
-            const imageResponse = await apiDao.updateAPIImages(apiImages, apiId, orgId, t);
+        // Verify directories exist
+        try {
+            await fs.access(contentPath);
+            await fs.access(imagesPath);
+        } catch (err) {
+            throw new Error(`Required directories not found after extraction. Content path: ${contentPath}, Images path: ${imagesPath}`);
+        }
+
+        //get api files
+        let apiContent = await util.getAPIFileContent(contentPath);
+        //get api images
+        let apiImages = await util.getAPIImages(imagesPath);
+
+        await sequelize.transaction(async t => {
+            await apiDao.storeAPIFiles(apiContent, apiId, orgId, t);
+            await apiDao.updateAPIImages(apiImages, apiId, orgId, t);
         });
-        await fs.rmSync(extractPath, { recursive: true, force: true });
-        res.status(201).type('application/json').send({ message: 'API Template created successfully' });
+        await fs.rm(extractPath, { recursive: true, force: true });
+
+        res.status(201).type('application/json').send({ message: 'API Template updated successfully' });
     } catch (error) {
         console.error('Error processing file:', error);
         util.handleError(res, error);
@@ -205,8 +218,10 @@ const updateAPITemplate = async (req, res) => {
             throw new Error(`Required directories not found after extraction. Content path: ${contentPath}, Images path: ${imagesPath}`);
         }
 
-        let apiContent = util.getAPIFileContent(contentPath);
-        let apiImages = util.getAPIFileContent(imagesPath);
+        //get api files
+        let apiContent = await util.getAPIFileContent(contentPath);
+        //get api images
+        let apiImages = await util.getAPIImages(imagesPath);
 
         await sequelize.transaction(async t => {
             await apiDao.updateOrCreateAPIFiles(apiContent, apiId, orgId, t);
@@ -223,10 +238,97 @@ const updateAPITemplate = async (req, res) => {
 
 const getAPIFile = async (req, res) => {
 
+    let orgID = req.params.orgId;
+    let apiID = req.params.apiId;
+    let apiFileName = req.query.fileName;
+    if (!orgID || !apiID || !apiFileName) {
+        throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
+    }
+    let apiFileResponse = '';
+    let apiFile;
+    let contentType = '';
+    try {
+        const fileExtension = path.extname(apiFileName).toLowerCase();
+        if (fileExtension == '.html' || fileExtension == '.hbs' || fileExtension == '.md' ||
+            fileExtension == '.json' || fileExtension == '.yaml' || fileExtension == '.yml') {
+            apiFileResponse = await apiDao.getAPIFile(apiFileName, orgID, apiID);
+            apiFile = apiFileResponse.apiFile;
+            if (fileExtension == '.json') {
+                contentType = 'application/json';
+            } else if (fileExtension == '.yaml' || fileExtension == '.yml') {
+                contentType = 'application/yaml';
+            } else {
+                contentType = '"text/plain"';
+            }
+            res.set({
+                'Content-Type': contentType,
+                'Content-Disposition': `inline; filename="${apiFileName}"`,
+                'Cache-Control': 'no-cache'
+            });
+        } else {
+            apiFileResponse = await apiDao.getAPIImageFile(apiFileName, orgID, apiID);
+            apiFile = apiFileResponse.image;
+            console.log(apiFile);
+            if (fileExtension == '.svg') {
+                contentType = 'image/svg+xml';
+            } else if (fileExtension == '.jpg' || fileExtension == '.jpeg') {
+                contentType = 'image/jpeg';
+            } else if (fileExtension == '.png') {
+                contentType = 'image/png';
+            } else if (fileExtension == '.gif') {
+                contentType = 'image/gif';
+            } else {
+                contentType = 'application/octet-stream';
+            }
+            res.set({
+                'Content-Type': contentType,
+                'Content-Disposition': `inline; filename="${apiFileName}"`,
+                'Transfer-Encoding': "chunked",
+                'Cache-Control': 'no-cache'
+            });
+        }
+        if (apiFileResponse) {
+            // Send file content as text
+            res.status(200).send(Buffer.isBuffer(apiFile) ? apiFile : Buffer.from(apiFile, 'binary'));
+        } else {
+            res.status(404).send("API File not found");
+        }
+    } catch (error) {
+        console.log(error)
+        util.handleError(res, error);
+    }
 }
 
 const deleteAPIFile = async (req, res) => {
 
+    let orgID = req.params.orgId;
+    let apiID = req.params.apiId;
+    let apiFileName = req.query.fileName;
+    let apiFileResponse = '';
+    if (!orgID || !apiID || !apiFileName) {
+        throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
+    }
+    try {
+        const fileExtension = path.extname(apiFileName).toLowerCase();
+        console.log(fileExtension);
+        if (fileExtension == '.html' || fileExtension == '.hbs' || fileExtension == '.md' ||
+            fileExtension == '.json' || fileExtension == '.yaml' || fileExtension == '.yml') {
+            apiFileResponse = await apiDao.deleteAPIFile(apiFileName, orgID, apiID);
+            console.log("Delete file: " + apiFileResponse);
+        } else {
+            apiFileResponse = await apiDao.deleteAPIImage(apiFileName, orgID, apiID);
+            console.log("Delete image: " + apiFileResponse);
+        }
+        if (apiFileResponse) {
+            // Send file content as text
+            res.status(204).send();
+        } else {
+            res.status(404).send("API File not found");
+        }
+    } catch (error) {
+        console.log(error)
+        util.handleError(res, error);
+    }
 }
 module.exports = {
     createAPIMetadata,

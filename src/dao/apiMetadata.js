@@ -118,7 +118,6 @@ const updateAPIImages = async (apiImages, apiID, orgID, t) => {
                 }
             }
         );
-        console.log("Update Response: " + updateResponse);
     }
 }
 
@@ -171,7 +170,7 @@ const updateOrCreateAPIFiles = async (files, apiID, orgID, t) => {
     try {
         for (const file of files) {
             const apiFileResponse = await getAPIFile(file.fileName, orgID, apiID, t);
-            if (apiFileResponse == 0) {
+            if (apiFileResponse == null || apiFileResponse == undefined) {
                 filesToCreate.push({
                     apiFile: file.content,
                     fileName: file.fileName,
@@ -195,7 +194,7 @@ const updateOrCreateAPIFiles = async (files, apiID, orgID, t) => {
             }
         };
         if (filesToCreate.length > 0) {
-            const apiContentResponse = await APIContent.bulkCreate(filesToCreate, { transaction: t });
+            await APIContent.bulkCreate(filesToCreate, { transaction: t });
         }
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -301,8 +300,6 @@ const getAllAPIMetadata = async (orgID, t) => {
                 }
             }],
         }, { transaction: t });
-        console.log("API LIST: ")
-        console.log(apiMetadataResponse)
         return apiMetadataResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -378,7 +375,6 @@ async function updateThrottlingPolicy(orgID, apiID, throttlingPolicies, t) {
                 }
             }
         );
-        console.log("Update Response: " + updateResponse);
     }
 }
 
@@ -451,6 +447,44 @@ const updateAPIFile = async (apiFile, fileName, apiID, orgID, t) => {
     }
 }
 
+const deleteAPIFile = async (fileName, orgID, apiID, t) => {
+
+    try {
+        const apiFileResponse = await APIContent.destroy({
+            where: {
+                apiID: apiID,
+                orgID: orgID,
+                fileName: fileName
+            }
+        }, { transaction: t });
+        return apiFileResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const deleteAPIImage = async (fileName, orgID, apiID, t) => {
+    
+        try {
+            const apiImageResponse = await APIImages.destroy({
+                where: {
+                    apiID: apiID,
+                    orgID: orgID,
+                    imagePath: fileName
+                }
+            }, { transaction: t });
+            return apiImageResponse;
+        } catch (error) {
+            if (error instanceof Sequelize.UniqueConstraintError) {
+                throw error;
+            }
+            throw new Sequelize.DatabaseError(error);
+        }
+}
+
 module.exports = {
     createAPIMetadata,
     createThrottlingPolicy,
@@ -468,5 +502,8 @@ module.exports = {
     storeAPIFiles,
     updateAPIImages,
     updateOrCreateAPIFiles,
-    getAPIImageFile
+    getAPIImageFile,
+    getAPIFile,
+    deleteAPIFile,
+    deleteAPIImage
 };

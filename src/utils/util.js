@@ -254,6 +254,18 @@ const getAPIFileContent = (directory) => {
     return files;
 };
 
+const getAPIImages = async (directory) => {
+    let files = [];
+    const filenames = await fs.promises.readdir(directory, { withFileTypes: true});
+    for (const filename of filenames) {
+        if (!(filename == '.DS_Store')) {
+            let fileContent = await fs.promises.readFile(path.join(directory, filename.name));
+            files.push({ fileName: filename.name, content: fileContent });
+        }
+    }
+    return files;
+};
+
 module.exports = {
     copyStyelSheet,
     copyStyelSheetMulti,
@@ -266,5 +278,6 @@ module.exports = {
     handleError,
     deleteDirectory,
     getAPIFileContent,
-    unzipFile
+    unzipFile,
+    getAPIImages
 }

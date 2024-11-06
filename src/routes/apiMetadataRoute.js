@@ -33,7 +33,7 @@ router.post('/organizations/:orgId/apis', upload.single('apiDefinition'), apiMet
 router.get('/organizations/:orgId/apis/:apiId', apiMetadataService.getAPIMetadata);
 router.get('/organizations/:orgId/apis', apiMetadataService.getAllAPIMetadata);
 router.put('/organizations/:orgId/apis/:apiId', upload.single('apiDefinition'), apiMetadataService.updateAPIMetadata);
-router.delete('organizations/:orgId/apis/:apiId', apiMetadataService.deleteAPIMetadata);
+router.delete('/organizations/:orgId/apis/:apiId', apiMetadataService.deleteAPIMetadata);
 router.post('/organizations/:orgId/apis/:apiId/template', uploadZip.single('apiContent'), apiMetadataService.createAPITemplate);
 router.put('/organizations/:orgId/apis/:apiId/template', uploadZip.single('apiContent'), apiMetadataService.updateAPITemplate);
 router.get('/organizations/:orgId/apis/:apiId/template', apiMetadataService.getAPIFile);
