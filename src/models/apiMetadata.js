@@ -74,10 +74,10 @@ const APIMetadata = sequelize.define('ApiMetadata', {
 });
 
 APIContent.belongsTo(APIMetadata, {
-  foreignKey: 'apiID', 
+  foreignKey: 'apiID',
 });
 APIContent.belongsTo(Organization, {
-  foreignKey: 'orgID', 
+  foreignKey: 'orgID',
 });
 AdditionalProperties.belongsTo(APIMetadata, {
   foreignKey: 'apiID',
@@ -92,35 +92,29 @@ APIImages.belongsTo(Organization, {
   foreignKey: 'orgID',
 });
 ThrottlingPolicy.belongsTo(APIMetadata, {
-  foreignKey: 'apiID', 
+  foreignKey: 'apiID',
 });
 ThrottlingPolicy.belongsTo(Organization, {
-  foreignKey: 'orgID', 
+  foreignKey: 'orgID',
 });
 APIMetadata.belongsTo(Organization, {
   foreignKey: 'orgID'
 })
-APIMetadata.hasMany(AdditionalProperties, { foreignKey: 'apiID' });
-APIMetadata.hasMany(ThrottlingPolicy, { foreignKey: 'apiID' });
-APIMetadata.hasMany(APIImages, { foreignKey: 'apiID' });
+APIMetadata.hasMany(AdditionalProperties, { 
+  foreignKey: 'apiID', 
+  onDelete: 'CASCADE' 
+});
+APIMetadata.hasMany(ThrottlingPolicy, { 
+  foreignKey: 'apiID',
+  onDelete: 'CASCADE'
+});
+APIMetadata.hasMany(APIImages, { 
+  foreignKey: 'apiID',
+  onDelete: 'CASCADE'
+});
 
-// Organization response model
-class APIResponse {
-
-  set throttlingPolicies(throttlingPolicies) {
-      this.throttlingPolicies = throttlingPolicies;
-  }
-  set endPoints(endPoints) {
-    this.endPoints = endPoints;
-}
-  constructor(createdAPI) {
-    this.apiId = createdAPI.apiId;
-    this.apiInfo = createdAPI.apiInfo;
-  }
-}
 
 // Export both models
 module.exports = {
-  APIMetadata,
-  APIResponse
+  APIMetadata
 };

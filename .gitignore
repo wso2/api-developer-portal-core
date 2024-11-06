@@ -16,6 +16,7 @@
 
 /src/styles
 
+/src/config/config.js
 # misc
 .DS_Store
 *.pem
@@ -86,3 +87,5 @@ hs_err_pid*
 replay_pid*
 
 .vscode
+
+src/config/config.js

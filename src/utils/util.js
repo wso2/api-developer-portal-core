@@ -3,6 +3,7 @@ const fs = require('fs');
 const marked = require('marked');
 const Handlebars = require('handlebars');
 const config = require('../config/config');
+const unzipper = require('unzipper');
 
 const { Sequelize } = require('sequelize');
 
@@ -164,7 +165,7 @@ function handleError(res, error) {
     } else {
         let errorDescription = error.message;
         if (error instanceof Sequelize.DatabaseError) {
-            errorDescription = error.original.errors ? error.original.errors[0].message : error.message.replaceAll('"', '');
+            errorDescription = "Internal Server Error";
         }
         return res.status(500).json({
             "code": "500",
@@ -172,6 +173,85 @@ function handleError(res, error) {
             "description": errorDescription
         });
     }
+};
+
+function deleteDirectory(dirPath) {
+    return new Promise((resolve, reject) => {
+        fs.rm(dirPath, { recursive: true, force: true }, (error) => {
+            if (error) {
+                return reject(error);
+            }
+            resolve();
+        });
+    });
+}
+
+const unzipFile = async (zipPath, extractPath) => {
+    return new Promise((resolve, reject) => {
+        const stream = fs.createReadStream(zipPath)
+            .pipe(unzipper.Parse());
+
+        const promises = [];
+
+        stream.on('entry', async (entry) => {
+            const entryPath = entry.path;
+
+            if (!entryPath.includes('__MACOSX')) {
+                const filePath = path.join(extractPath, entryPath);
+
+                try {
+                    if (entry.type === 'Directory') {
+                        await fs.mkdir(filePath, { recursive: true }, (err) => {
+                            if (err) {
+                                console.error('Error creating directory:', err);
+                            }
+                        });
+                        entry.autodrain();
+                    } else {
+                        await fs.mkdir(path.dirname(filePath), { recursive: true }, (err) => {
+                            if (err) {
+                                console.error('Error creating directory:', err);
+                            }
+                        });
+                        const writeStream = fs.createWriteStream(filePath);
+                        entry.pipe(writeStream);
+                        promises.push(
+                            new Promise((res, rej) => {
+                                writeStream.on('finish', res);
+                                writeStream.on('error', rej);
+                            })
+                        );
+                    }
+                } catch (error) {
+                    reject(error);
+                }
+            } else {
+                entry.autodrain();
+            }
+        });
+        stream.on('close', async () => {
+            try {
+                await Promise.all(promises);
+                resolve();
+            } catch (error) {
+                reject(error);
+            }
+        });
+        stream.on('error', reject);
+    });
+};
+
+
+const getAPIFileContent = (directory) => {
+    let files = [];
+    const filenames = fs.readdirSync(directory);
+    filenames.forEach((filename) => {
+        if (!(filename == '.DS_Store')) {
+            let fileContent = fs.readFileSync(path.join(directory, filename), 'utf8');
+            files.push({ fileName: filename, content: fileContent });
+        }
+    });
+    return files;
 };
 
 module.exports = {
@@ -183,5 +263,8 @@ module.exports = {
     loadTemplateFromAPI,
     renderTemplateFromAPI,
     renderGivenTemplate,
-    handleError
+    handleError,
+    deleteDirectory,
+    getAPIFileContent,
+    unzipFile
 }
