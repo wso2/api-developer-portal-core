@@ -52,11 +52,6 @@ const loadAPIContent = async (req, res) => {
             hbs.handlebars.registerPartial("api-content", additionalAPIContent);
         }
 
-        metaData.subscriptionPlans.forEach(element => {
-            element.baseUrl = '/' + req.params.orgName;
-            element.apiName = apiName;
-        });
-
         let templateContent = {
             content: markdownHtml,
             apiMetadata: metaData,
@@ -199,83 +194,8 @@ async function loadAPIMetaData(orgName, apiName) {
     return metaData;
 }
 
-const loadMyAPIs = async (req, res) => {
-    const orgName = req.params.orgName;
-    let metaData = await loadAPIMetaDataList(orgName);
-    let html;
-    let subscribedAPIs = [];
-
-    metaData.forEach(element => {
-        const hasSubscribedPlan = element.subscriptionPlans.some(subscriptionPlan =>
-            subscriptionPlan.status === "Subscribed"
-        );
-
-        if (hasSubscribedPlan) {
-            subscribedAPIs.push(element);
-        }
-    });
-    let templateContent = {
-        apiMetadata: subscribedAPIs,
-        baseUrl: baseURL,
-        subscriptionStatus: req.session.subscriptionStatus
-    }
-
-    html = renderTemplate(filePrefix + 'pages/myAPIs/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
-    req.session.subscriptionStatus = "";
-    res.send(html);
-}
-
-const subscribe = async (req, res) =>  {
-    const { apiId, subID, userName, action, subPlan } = req.body;
-    const orgName = req.get('referer').split('/')[3];
-
-    if (apiId, userName) {
-        if (action === "subscribe") {
-            try {
-                const response = await fetch(config.apiMetaDataAPI + 'organisations/' + orgName + "/" + apiId + "/subscriptions", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        subscriptionPlan: subPlan,
-                        userName: userName,
-                    }),
-                });
-
-                const result = await response.json();
-                console.log(response.status)
-                if (response.status === 201) {
-                    req.session.subscriptionStatus = "subscribed";
-                }
-            } catch (error) {
-                console.error('Error:', error);
-            }
-        } else if (action === "unsubscribe") {
-            try {
-                const response = await fetch(config.apiMetaDataAPI + 'organisations/' + orgName + "/" + apiId + "/subscriptions/" + subID, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-                const result = await response;
-                if (response.status === 204) {
-                    req.session.subscriptionStatus = "unsubscribed";
-                }
-            } catch (error) {
-                console.error('Error:', error);
-            }
-        }
-    }
-
-    res.redirect(req.get('referer').replace(/\/api\/[^/]+/, '/myAPIs'));
-}
-
 module.exports = {
     loadAPIs,
     loadAPIContent,
     loadTryOutPage,
-    loadMyAPIs,
-    subscribe
 };
