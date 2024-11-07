@@ -4,7 +4,8 @@ const markdown = require('marked');
 const fs = require('fs');
 const path = require('path');
 const exphbs = require('express-handlebars');
-
+const orgDao = require('../dao/organization');
+const apiDao = require('../dao/apiMetadata');
 
 filePrefix = '../../../../src/'
 const generateArray = (length) => Array.from({ length });
@@ -12,11 +13,12 @@ const generateArray = (length) => Array.from({ length });
 const loadAPIs = async (req, res) => {
 
     const orgName = req.params.orgName;
-    let metaData = await loadAPIMetaDataList(orgName);
+    let organization = await orgDao.getOrgID(orgName);
+    let metaData = await loadAPIMetaDataList(organization.orgID, orgName);
     let html;
     let templateContent = {
         apiMetadata: metaData,
-        baseUrl: '/'+ orgName
+        baseUrl: '/' + orgName
     }
     if (config.mode == 'development') {
         html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
@@ -31,9 +33,11 @@ const loadAPIContent = async (req, res) => {
     let html;
     const hbs = exphbs.create({});
     const orgName = req.params.orgName;
+    let organization = await orgDao.getOrgID(orgName);
+    let orgID = organization.orgID;
     const apiName = req.params.apiName;
-    const metaData = await loadAPIMetaData(orgName, apiName);
-    const apiContentUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
+    let apiID = await apiDao.getAPIId(apiName);
+    const metaData = await loadAPIMetaData(orgID, apiID);
 
     if (config.mode == 'development') {
         const filePath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + '/api-content.hbs');
@@ -52,7 +56,7 @@ const loadAPIContent = async (req, res) => {
         let templateContent = {
             apiMetadata: metaData,
             baseUrl: '/' + orgName,
-            schemaUrl: config.apiMetaDataAPI + "apiDefinition?orgName=" + orgName + "&apiID=" + req.params.apiName
+            schemaUrl: config.apiMetaDataAPI + orgID + "/apis/" + apiID 
         }
         html = await renderTemplateFromAPI(templateContent, orgName, "api-landing");
     }
@@ -62,10 +66,13 @@ const loadAPIContent = async (req, res) => {
 const loadTryOutPage = async (req, res) => {
 
     let orgName = req.params.orgName;
+    let organization = await orgDao.getOrgID(orgName);
+    let orgID = organization.orgID;
     const apiName = req.params.apiName;
-    const metaData = await loadAPIMetaData(orgName, apiName);
+    let apiID = await apiDao.getAPIId(apiName);
+    const metaData = await loadAPIMetaData(orgID, apiID);
     let html = "";
-    const apiDefinition = config.apiMetaDataAPI + "apiDefinition?orgName=" + orgName + "&apiID=" + req.params.apiName
+    const apiDefinition = config.apiMetaDataAPI + orgID + "/apis/" + apiID + "/template?fileName=apiDefinition.json"
     const apiDefinitionResponse = await fetch(apiDefinition);
     const apiDefinitionContent = await apiDefinitionResponse.text();
     let templateContent = {
@@ -74,14 +81,9 @@ const loadTryOutPage = async (req, res) => {
         apiType: metaData.apiInfo.apiType,
         swagger: apiDefinitionContent
     }
-    if (config.mode == 'single') {
-
-        html = renderTemplate('../pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
-
-    } else if (config.mode == 'development') {
+    if (config.mode == 'development') {
         html = renderTemplate('../pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     } else {
-
         const completeTemplatePath = path.join(__dirname, '..', 'pages', 'tryout', 'page.hbs');
         const templateResponse = fs.readFileSync(completeTemplatePath, 'utf-8');
         const layoutResponse = await loadLayoutFromAPI(orgName)
@@ -91,10 +93,10 @@ const loadTryOutPage = async (req, res) => {
     res.send(html);
 }
 
-async function loadAPIMetaDataList(orgName) {
+async function loadAPIMetaDataList(orgID, orgName) {
 
     let metaData = {};
-    const apiMetaDataUrl = config.apiMetaDataAPI + "apiList?orgName=" + orgName;
+    const apiMetaDataUrl = config.apiMetaDataAPI + orgID + "/apis";
     const metadataResponse = await fetch(apiMetaDataUrl);
     metaData = await metadataResponse.json();
     metaData.forEach(item => {
@@ -107,30 +109,26 @@ async function loadAPIMetaDataList(orgName) {
         const images = element.apiInfo.apiArtifacts.apiImages;
         let apiImageUrl = '';
         for (var key in images) {
-            if (config.env == 'local') {
-                apiImageUrl = config.apiImageURL + "apiFiles?orgName=" + element.apiInfo.orgName + "&apiID=" + element.apiInfo.apiName;
-            } else {
-                apiImageUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + element.apiInfo.orgName + "&apiID=" + element.apiInfo.apiName;
-            }
-            const modifiedApiImageURL = apiImageUrl + "&fileName=" + images[key]
+            apiImageUrl = config.apiMetaDataAPI + orgID + "/apis/" + element.apiID + "/template?fileName="
+            const modifiedApiImageURL = apiImageUrl + images[key]
             element.apiInfo.apiArtifacts.apiImages[key] = modifiedApiImageURL;
         }
     });
     return metaData;
 }
 
-async function loadAPIMetaData(orgName, apiName) {
+async function loadAPIMetaData(orgID, apiID) {
 
     let metaData = {};
-    const apiMetaDataUrl = config.apiMetaDataAPI + "api?orgName=" + orgName + "&apiID=" + apiName;
+    const apiMetaDataUrl = config.apiMetaDataAPI + orgID + "/apis/" + apiID;
     const metadataResponse = await fetch(apiMetaDataUrl);
     metaData = await metadataResponse.json();
 
     //replace image urls
     const images = metaData.apiInfo.apiArtifacts.apiImages;
     for (var key in images) {
-        let apiImageUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
-        const modifiedApiImageURL = apiImageUrl + "&fileName=" + images[key]
+        let apiImageUrl = config.apiMetaDataAPI + orgID + "/apis/" + apiID + "/template?fileName="
+        const modifiedApiImageURL = apiImageUrl + images[key]
         images[key] = modifiedApiImageURL;
     }
     return metaData;

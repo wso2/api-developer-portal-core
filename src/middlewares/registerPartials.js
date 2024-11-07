@@ -3,6 +3,8 @@ const fs = require('fs');
 const exphbs = require('express-handlebars');
 const config = require('../config/config');
 const markdown = require('marked');
+const orgDao = require('../dao/organization');
+const apiDao = require('../dao/apiMetadata');
 
 let filePrefix = '../../../../src/';
 
@@ -30,11 +32,18 @@ const registerPartials = async (req, res, next) => {
 
 const registerPartialsFromAPI = async (req) => {
 
-    const orgName = req.originalUrl.split("/")[1];
-    const apiName = req.originalUrl.split("/").pop();
+
+    const orgName = req.params.orgName;
+    let organization = await orgDao.getOrgID(orgName);
+    let orgID = organization.orgID;
+    let apiID = ''
+    const apiName = req.params.apiName;
+    if (apiName) {
+        apiID = await apiDao.getAPIId(apiName);
+    }
     const url = config.adminAPI + "orgFileType?orgName=" + orgName + "&fileType=partials";
     const imageUrl = config.adminAPI + "orgFiles?orgName=" + orgName;
-    const apiContetnUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
+    const apiContetnUrl = config.apiMetaDataAPI + orgID + "/apis/" + apiID + "/template?fileName=";
 
     //attach partials
     const partialsResponse = await fetch(url);
@@ -46,14 +55,6 @@ const registerPartialsFromAPI = async (req) => {
         content = content.replaceAll("/images/", imageUrl + "&fileName=")
         partialObject[fileName] = content;
     });
-    const markdownResponse = await fetch(apiContetnUrl + "&fileName=apiContent.md");
-    const markdownContent = await markdownResponse.text();
-    const markdownHtml = markdownContent ? markdown.parse(markdownContent) : '';
-
-    const additionalAPIContentResponse = await fetch(apiContetnUrl + "&fileName=api-content.hbs");
-    const additionalAPIContent = await additionalAPIContentResponse.text();
-    partialObject["api-content"] = additionalAPIContent;
-
     const hbs = exphbs.create({});
     hbs.handlebars.partials = partialObject;
 
@@ -63,10 +64,21 @@ const registerPartialsFromAPI = async (req) => {
 
     hbs.handlebars.partials = {
         ...hbs.handlebars.partials,
-        header: hbs.handlebars.compile(partialObject['header'])({ baseUrl: '/' + req.originalUrl.split("/")[1], profile: req.user }),
-        "api-content": hbs.handlebars.compile(partialObject['api-content'])({ content: markdownHtml }),
-        "hero": hbs.handlebars.compile(partialObject['hero'])({ baseUrl: '/' + req.originalUrl.split("/")[1] })
+        header: hbs.handlebars.compile(partialObject['header'])({ baseUrl: '/' + orgName, profile: req.user }),
+        "hero": hbs.handlebars.compile(partialObject['hero'])({ baseUrl: '/' + orgName })
     };
+    if (req.originalUrl.includes("api")) {
+        //fetch markdown content for API if exists
+        const markdownResponse = await fetch(apiContetnUrl + "apiContent.md");
+        const markdownContent = await markdownResponse.text();
+        const markdownHtml = markdownContent ? markdown.parse(markdownContent) : '';
+
+        //if hbs content available for API, render the hbs page
+        const additionalAPIContentResponse = await fetch(apiContetnUrl + "api-content.hbs");
+        const additionalAPIContent = await additionalAPIContentResponse.text();
+        partialObject["api-content"] = additionalAPIContent;
+        hbs.handlebars.partials["api-content"] = hbs.handlebars.compile(partialObject['api-content'])({ content: markdownHtml });
+    }
 }
 
 function registerPartialsFromFile(baseURL, dir, profile) {

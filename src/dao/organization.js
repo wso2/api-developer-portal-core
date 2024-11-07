@@ -80,9 +80,27 @@ const deleteOrganization = async (orgId) => {
     }
 }
 
+const getOrgID = async (orgName) => {
+    try {
+        const organization = await orgEntities.Organization.findOne({
+            attributes: ['orgID'],
+            where: {
+                orgName: orgName
+            }
+          })
+        return organization;
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
 module.exports = {
     createOrganization,
     getOrganization,
     updateOrganization,
-    deleteOrganization
+    deleteOrganization,
+    getOrgID
 };

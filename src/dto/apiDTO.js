@@ -37,7 +37,7 @@ class APIInfo {
             this.additionalProperties = getAdditionalProperties(apiInfo.AdditionalProperties);
         }
         if (apiInfo.ApiImages) {
-            this.apiImages = new APIArtifacts(apiInfo.ApiImages);
+            this.apiArtifacts = new APIArtifacts(apiInfo.ApiImages);
         }
     }
 }

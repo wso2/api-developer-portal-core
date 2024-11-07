@@ -93,7 +93,6 @@ if (config.mode == 'development') {
     app.use('/mock', express.static(path.join(__dirname, filePrefix + 'mock')));
 }
 app.use('/', authRoute);
-app.use('/', registerPartials);
 app.use('/', apiContent);
 app.use('/', orgContent);
 app.use('/', customContent);

@@ -485,6 +485,23 @@ const deleteAPIImage = async (fileName, orgID, apiID, t) => {
         }
 }
 
+const getAPIId = async (apiName) => {
+    try {
+        const api = await APIMetadata.findOne({
+            attributes: ['apiID'],
+            where: {
+                apiName: apiName
+            }
+          })
+        return api.apiID;
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
 module.exports = {
     createAPIMetadata,
     createThrottlingPolicy,
@@ -505,5 +522,6 @@ module.exports = {
     getAPIImageFile,
     getAPIFile,
     deleteAPIFile,
-    deleteAPIImage
+    deleteAPIImage,
+    getAPIId
 };
