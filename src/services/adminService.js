@@ -113,7 +113,7 @@ const createOrgContent = async (req, res) => {
         for (const { filePath, pageName, pageContent, pageType } of files) {
             await createContent(filePath, pageName, pageContent, pageType, orgId);
         }
-        res.status(201).send({ "orgId": orgId, "file": req.file.originalname });
+        res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
 
     } catch (error) {
         return util.handleError(res, error);
@@ -182,12 +182,11 @@ const updateOrgContent = async (req, res) => {
                         });
                     }
                 } else {
-                    console.log("Creating new content@@@@@@@@@@@@@@@@@@@@\n");
                     await createContent(filePath, pageName, pageContent, pageType, orgId);
                 }
             }
         }
-        res.status(201).send({ "orgId": orgId, "file": req.file.originalname });
+        res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
     } catch (error) {
         util.handleError(res, error);
     }
