@@ -41,7 +41,6 @@ const loadAPIContent = async (req, res) => {
 
     if (config.mode == 'development') {
         const filePath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + '/api-content.hbs');
-
         if (fs.existsSync(filePath)) {
             hbs.handlebars.registerPartial('api-content', fs.readFileSync(filePath, 'utf-8'));
         }
