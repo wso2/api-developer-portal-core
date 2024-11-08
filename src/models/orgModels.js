@@ -1,109 +1,81 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize');
 
-const Organization = sequelize.define('Organization', {
-    orgId: {
+const Organization = sequelize.define('DP_ORGANIZATION', {
+    ORG_ID: {
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true
     },
-    orgName: {
+    ORG_NAME: {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true
     },
-    authenticatedPages: {
+    BUSINESS_OWNER: {
         type: DataTypes.STRING,
-        defaultValue: ''
-    }
+        allowNull: false,
+        unique: true
+    }, 
+    BUSINESS_OWNER_CONTACT: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    BUSINESS_OWNER_EMAIL: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
 }, {
     timestamps: false,
-    tableName: 'Organization',
+    tableName: 'DP_ORGANIZATION',
     returning: true
 });
 
-// Organization response model
-class OrganizationResponse {
-    constructor(orgName, orgId, authenticatedPages) {
-        this.orgName = orgName;
-        this.orgId = orgId;
-        this.authenticatedPages = authenticatedPages;
-    }
-}
-
-const OrgContent = sequelize.define('OrganizationAssets', {
-    orgAssetId: {
+const OrgContent = sequelize.define('DP_ORGANIZATION_ASSETS', {
+    ASSERT_ID: {
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true
     },
-    pageType: {
+    PAGE_NAME: {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    pageName: {
+    PAGE_CONTENT: {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    pageContent: {
-        type: DataTypes.TEXT,
+    PAGE_TYPE: {
+        type: DataTypes.BLOB,
         allowNull: false,
     },
-    filePath: {
+    FILE_PATH: {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    orgId: {
+    ORG_ID: {
         type: DataTypes.UUID,
         allowNull: false,
         forignKey: true,
     }
 }, {
     timestamps: false,
-    tableName: 'OrganizationAssets'
+    tableName: 'DP_ORGANIZATION_ASSETS'
 },{
     indexes: [
         {
             unique: true,
-            fields: ['pageType', 'pageName', 'filePath'] 
+            fields: ['PAGE_TYPE', 'PAGE_NAME', 'FILE_PATH'] 
         }
     ]
 });
 
-const OrgImage = sequelize.define('OrgImages', {
-    fileName: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        primaryKey: true
-    },
-    image: {
-        type: DataTypes.BLOB,
-        allowNull: false,
-    },
-    orgId: {
-        type: DataTypes.UUID,
-        allowNull: false,
-        forignKey: true,
-        primaryKey: true
-    }
-}, {
-    timestamps: false,
-    tableName: 'OrgImages',
-    returning: true
-});
-
-OrgImage.belongsTo(Organization, {
-    foreignKey: 'orgId',
-});
-
 OrgContent.belongsTo(Organization, {
-    foreignKey: 'orgId',
+    foreignKey: 'ORG_ID',
 });
 
 // Export both models
 module.exports = {
     Organization,
-    OrganizationResponse,
-    OrgContent,
-    OrgImage
+    OrgContent
 };

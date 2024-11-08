@@ -37,7 +37,7 @@ const registerPartialsFromAPI = async (req) => {
     const orgResponse = await fetch(orgUrl);
     const orgData = await orgResponse.json();
 
-    const imageUrl =`${config.devportalAPI}organizations/${orgData.orgId}/image?`;
+    const imageUrl =`${config.devportalAPI}organizations/${orgData.orgId}/layout?`;
     // const apiContetnUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
 
     const devportalUrl = `${config.devportalAPI}organizations/${orgData.orgId}/layout/partials`;
@@ -48,7 +48,7 @@ const registerPartialsFromAPI = async (req) => {
     partials.forEach(file => {
         let fileName = file.pageName.split(".")[0];
         let content = file.pageContent;
-        content = content.replaceAll("/images/", imageUrl + "fileName=")
+        content = content.replaceAll("/images/", `${imageUrl}?pageType=image&pageName="`)
         partialObject[fileName] = content;
     });
     // const markdownResponse = await fetch(apiContetnUrl + "&fileName=apiContent.md");

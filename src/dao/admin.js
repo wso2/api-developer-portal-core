@@ -5,8 +5,10 @@ const { Sequelize } = require('sequelize');
 const createOrganization = async (orgData) => {
     try {
         const organization = await Organization.create({
-            orgName: orgData.orgName,
-            authenticatedPages: orgData.authenticatedPages
+            ORG_NAME: orgData.orgName,
+            BUSINESS_OWNER: orgData.businessOwner,
+            BUSINESS_OWNER_CONTACT: orgData.businessOwnerContact,
+            BUSINESS_OWNER_EMAIL: orgData.businessOwnerEmail
         });
         return organization;
     } catch (error) {
@@ -19,7 +21,7 @@ const createOrganization = async (orgData) => {
 
 const getOrganization = async (param) => {
     const isUUID = validate(param);
-    const condition = isUUID ? { orgId: param } : { orgName: param };
+    const condition = isUUID ? { ORG_ID: param } : { ORG_NAME: param };
 
     try {
         const organization = await Organization.findOne({ where: condition });
@@ -39,14 +41,18 @@ const getOrganization = async (param) => {
 
 const updateOrganization = async (orgData) => {
 
+    console.log("orgData", orgData);
+
     try {
         const [updatedRowsCount, updatedOrg] = await Organization.update(
             {
-                orgName: orgData.orgName,
-                authenticatedPages: orgData.authenticatedPages
+                ORG_NAME: orgData.orgName,
+                BUSINESS_OWNER: orgData.businessOwner,
+                BUSINESS_OWNER_CONTACT: orgData.businessOwnerContact,
+                BUSINESS_OWNER_EMAIL: orgData.businessOwnerEmail
             },
             {
-                where: { orgId: orgData.orgId },
+                where: { ORG_ID: orgData.orgId },
                 returning: true
             }
         );
@@ -67,7 +73,7 @@ const updateOrganization = async (orgData) => {
 const deleteOrganization = async (orgId) => {
     try {
         const deletedRowsCount = await Organization.destroy({
-            where: { orgId }
+            where: { ORG_ID: orgId }
         });
         if (deletedRowsCount < 1) {
             throw Object.assign(new Sequelize.EmptyResultError('Organization not found'));
@@ -92,19 +98,6 @@ const createOrgContent = async (orgData) => {
             orgId: orgData.orgId,
         });
         return orgContent;
-    } catch (error) {
-        throw new Sequelize.DatabaseError(error);
-    }
-}
-
-const createImageRecord = async (imgData) => {
-    try {
-        const imageRecord = await OrgImage.create({
-            fileName: imgData.fileName,
-            image: imgData.image,
-            orgId: imgData.orgId
-        });
-        return imageRecord;
     } catch (error) {
         throw new Sequelize.DatabaseError(error);
     }
@@ -156,25 +149,6 @@ const getOrgContent = async (orgData) => {
     }
 };
 
-const updateImageRecord = async (imgData) => {
-    try {
-        const [updatedRowsCount, updatedOrgImages] =  await OrgImage.update({
-            image: imgData.image,
-        },
-        {
-            where: { orgId: imgData.orgId, fileName: imgData.fileName },
-            returning: true
-        });
-        if (updatedRowsCount < 1) {
-            throw new Sequelize.EmptyResultError('Organization Image not found');
-        } else {
-            return [updatedRowsCount, updatedOrgImages];
-        }
-    } catch (error) {
-        throw new Sequelize.DatabaseError(error);
-    }
-};
-
 const getImgContent = async (orgData) => {
     try {
         const orgImage = await OrgImage.findOne({ where: { orgId: orgData.orgId, fileName: orgData.fileName } });
@@ -193,9 +167,7 @@ module.exports = {
     updateOrganization,
     deleteOrganization,
     createOrgContent,
-    createImageRecord,
     updateOrgContent,
-    updateImageRecord,
     getOrgContent,
     getImgContent
 };

@@ -1,6 +1,5 @@
 const { CustomError } = require('../utils/errors/customErrors');
 const adminDao = require('../dao/admin');
-const orgEntities = require('../models/orgModels');
 const util = require('../utils/util');
 const fs = require('fs');
 const path = require('path');
@@ -9,24 +8,27 @@ const config = require('../config/config');
 
 const createOrganization = async (req, res) => {
 
-    const { orgName, authenticatedPages } = req.body;
+    const { orgName, businessOwner, businessOwnerContact, businessOwnerEmail} = req.body;
 
     try {
-        if (!orgName || !authenticatedPages || !Array.isArray(authenticatedPages)) {
+        if (!orgName || !businessOwner) {
             throw new CustomError(400, "Bad Request", "Missing or Invalid fields in the request payload");
         }
 
-        const authenticatedPagesStr = authenticatedPages.join(' ');
         const organization = await adminDao.createOrganization({
             orgName,
-            authenticatedPages: authenticatedPagesStr
+            businessOwner,
+            businessOwnerContact,
+            businessOwnerEmail
         });
 
-        const orgCreationResponse = new orgEntities.OrganizationResponse(
-            organization.orgName,
-            organization.orgId,
-            organization.authenticatedPages.split(' ').filter(Boolean)
-        );
+        const orgCreationResponse = {
+            orgId: organization.ORG_ID,
+            orgName: organization.ORG_NAME,
+            businessOwner: organization.BUSINESS_OWNER,
+            businessOwnerContact: organization.BUSINESS_OWNER_CONTACT,
+            businessOwnerEmail: organization.BUSINESS_OWNER_EMAIL
+        };
 
         res.status(201).send(orgCreationResponse);
     } catch (error) {
@@ -35,45 +37,34 @@ const createOrganization = async (req, res) => {
 
 };
 
-const getOrganization = async (req, res) => {
-    try {
-
-        const organization = await adminDao.getOrganization(req.params.orgId);
-
-        res.status(200).json({
-            orgId: organization.orgId,
-            orgName: organization.orgName,
-            authenticatedPages: organization.authenticatedPages.split(' ').filter(Boolean) // Convert back to array
-        });
-    } catch (error) {
-        util.handleError(res, error);
-    }
-};
-
 const updateOrganization = async (req, res) => {
     try {
         let orgId = req.params.orgId;
-        const { orgName, authenticatedPages } = req.body;
+        const { orgName, businessOwner, businessOwnerContact, businessOwnerEmail } = req.body;
 
         if (!orgId) {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
 
-        if (!orgName || !authenticatedPages || !Array.isArray(authenticatedPages)) {
+        if (!orgName || !businessOwner) {
             throw new CustomError("Missing or Invalid fields in the request payload");
         }
 
-        const authenticatedPagesStr = authenticatedPages.join(' ');
         // Create organization in the database
         const [updatedRowsCount, updatedOrg] = await adminDao.updateOrganization({
-            orgName,
-            authenticatedPages: authenticatedPagesStr,
-            orgId
+            orgId,
+            orgName, 
+            businessOwner, 
+            businessOwnerContact, 
+            businessOwnerEmail
         });
+
         res.status(200).json({
-            orgId: updatedOrg[0].dataValues.orgId,
-            orgName: updatedOrg[0].dataValues.orgName,
-            authenticatedPages: updatedOrg[0].dataValues.authenticatedPages.split(' ').filter(Boolean)
+            orgId: updatedOrg[0].dataValues.ORG_ID,
+            orgName: updatedOrg[0].dataValues.ORG_NAME,
+            businessOwner: updatedOrg[0].dataValues.BUSINESS_OWNER,
+            businessOwnerContact: updatedOrg[0].dataValues.BUSINESS_OWNER_CONTACT,
+            businessOwnerEmail: updatedOrg[0].dataValues.BUSINESS_OWNER_EMAIL
         });
 
     } catch (error) {
@@ -84,7 +75,7 @@ const updateOrganization = async (req, res) => {
 };
 const deleteOrganization = async (req, res) => {
     try {
-        let orgId = req.param.orgId;
+        let orgId = req.params.orgId;
 
         if (!orgId) {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
@@ -124,21 +115,15 @@ const createContent = async (filePath, pageName, pageContent, pageType, orgId) =
     let content;
     try {
         if (pageName != null && !pageName.startsWith('.')) {
-            if (pageType) {
-                content = await adminDao.createOrgContent({
-                    pageType: pageType,
-                    pageName: pageName,
-                    pageContent: pageContent,
-                    filePath: filePath,
-                    orgId: orgId
-                });
-            } else {
-                content = await adminDao.createImageRecord({
-                    fileName: pageName,
-                    image: pageContent,
-                    orgId: orgId
-                });
-            }
+
+            content = await adminDao.createOrgContent({
+                pageType: pageType,
+                pageName: pageName,
+                pageContent: pageContent,
+                filePath: filePath,
+                orgId: orgId
+            });
+
         }
     } catch (error) {
         throw error;
@@ -158,29 +143,17 @@ const updateOrgContent = async (req, res) => {
     try {
         for (const { filePath, pageName, pageContent, pageType } of files) {
             if (pageName != null && !pageName.startsWith('.')) {
-                const organization = await adminDao.getOrganization(req.params.orgId);
-                let organizationContent;
-                if (pageType) {
-                    organizationContent = await getOrgContent(pageType, pageName, filePath);
-                }
-                const imgContent = await getImgContent(orgId, pageName);
+                let organizationContent = await getOrgContent(pageType, pageName, filePath);
 
-                if (organizationContent || imgContent) {
-                    if (pageType && organizationContent) {
-                        const orgContent = await adminDao.updateOrgContent({
-                            pageType: pageType,
-                            pageName: pageName,
-                            pageContent: pageContent,
-                            filePath: filePath,
-                            orgId: orgId
-                        });
-                    } else {
-                        await adminDao.updateImageRecord({
-                            fileName: pageName,
-                            image: pageContent,
-                            orgId: orgId
-                        });
-                    }
+                if (organizationContent) {
+                    const orgContent = await adminDao.updateOrgContent({
+                        pageType: pageType,
+                        pageName: pageName,
+                        pageContent: pageContent,
+                        filePath: filePath,
+                        orgId: orgId
+                    });
+
                 } else {
                     await createContent(filePath, pageName, pageContent, pageType, orgId);
                 }
@@ -200,14 +173,7 @@ const getOrgContent = async (pageType, pageName, filePath) => {
     });
 };
 
-const getImgContent = async (orgId, pageName) => {
-    return await adminDao.getImgContent({
-        orgId: orgId,
-        fileName: pageName
-    });
-};
-
-async function readFilesInDirectory(directory, orgId,  baseDir = '') {
+async function readFilesInDirectory(directory, orgId, baseDir = '') {
     console.log(directory);
     const files = await fs.promises.readdir(directory, { withFileTypes: true });
 
@@ -221,19 +187,22 @@ async function readFilesInDirectory(directory, orgId,  baseDir = '') {
             const subDirContents = await readFilesInDirectory(filePath, orgId, relativePath);
             fileDetails = fileDetails.concat(subDirContents);
         } else {
-            let content = await fs.promises.readFile(filePath, 'utf-8');
+            let content = await fs.promises.readFile(filePath);
+            let strContent = await fs.promises.readFile(filePath, 'utf-8');
             let dir = baseDir.replace(/^[^/]+\/?/, '') || '/';
             let pageType;
 
             if (file.name.endsWith(".css")) {
                 pageType = "styles"
                 if (file.name == "main.css") {
-                    content = content.replace(/@import\s*'\/styles\/([^']+)';/g, `@import url("${config.devportalAPI}organizations/${orgId}/layout?pageType=styles&pageName=$1");`);
+                    strContent = strContent.replace(/@import\s*'\/styles\/([^']+)';/g, `@import url("${config.devportalAPI}organizations/${orgId}/layout?pageType=styles&pageName=$1");`);
+                    content = Buffer.from(strContent, 'utf-8');
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                 pageType = "layout"
                 if (file.name == "main.hbs") {
-                    content = content.replace(/\/styles\//g, `${config.devportalAPI}organizations/${orgId}/layout?pageType=styles&pageName=`);
+                    strContent = strContent.replace(/\/styles\//g, `${config.devportalAPI}organizations/${orgId}/layout?pageType=styles&pageName=`);
+                    content = Buffer.from(strContent, 'utf-8');
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
                 pageType = "partials"
@@ -241,8 +210,8 @@ async function readFilesInDirectory(directory, orgId,  baseDir = '') {
                 pageType = "markDown";
             } else if (file.name.endsWith(".hbs")) {
                 pageType = "template";
-            } else if (!file.name.endsWith(".svg")) {
-                content = await fs.promises.readFile(filePath);
+            } else {
+                pageType = "image";
             }
 
             fileDetails.push({
@@ -258,11 +227,9 @@ async function readFilesInDirectory(directory, orgId,  baseDir = '') {
 
 module.exports = {
     createOrganization,
-    getOrganization,
     updateOrganization,
     deleteOrganization,
     createOrgContent,
     updateOrgContent,
     getOrgContent,
-    getImgContent
 };

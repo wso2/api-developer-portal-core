@@ -1,5 +1,23 @@
 const adminService = require('../services/adminService');
+const adminDao = require('../dao/admin');
+const util = require('../utils/util');
 
+const getOrganization = async (req, res) => {
+        try {
+    
+            const organization = await adminDao.getOrganization(req.params.orgId);
+    
+            res.status(200).json({
+                orgId: organization.ORG_ID,
+                orgName: organization.ORG_NAME,
+                businessOwner: organization.BUSINESS_OWNER,
+                businessOwnerContact: organization.BUSINESS_OWNER_CONTACT,
+                businessOwnerEmail: organization.BUSINESS_OWNER_EMAIL
+            });
+        } catch (error) {
+            util.handleError(res, error);
+        }
+};
 
 const getOrgContent = async (req, res) => {
     try {
@@ -9,10 +27,14 @@ const getOrgContent = async (req, res) => {
             if (asset.pageName.endsWith('.css')) {
                 res.set('Content-Type', "text/css");
             }
-            return res.status(200).send(asset.pageContent);
+            contentText = asset.pageContent.toString('utf-8')
+            return res.status(200).send(contentText);
         } else if (req.params.pageType) {
             asset = await adminService.getOrgContent(req.params.pageType);
-            const resp = asset.map(({ pageName, pageContent }) => ({ pageName, pageContent }));
+            const resp = asset.map(({ pageName, pageContent }) => ({
+                pageName,
+                pageContent: pageContent ? pageContent.toString('utf-8') : null
+            }));            
             return res.status(200).send(resp);
         } 
     } catch (error) {
@@ -44,5 +66,6 @@ const getImgContent = async (req, res) => {
 
 module.exports = {
     getOrgContent,
-    getImgContent
+    getImgContent,
+    getOrganization
 };

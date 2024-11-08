@@ -4,7 +4,6 @@ const adminService = require('../services/adminService');
 const multer = require('multer');
 
 router.post('/organizations', adminService.createOrganization);
-router.get('/organizations/:orgId', adminService.getOrganization);
 router.put('/organizations/:orgId', adminService.updateOrganization);
 router.delete('/organizations/:orgId', adminService.deleteOrganization);
 
