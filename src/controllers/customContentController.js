@@ -40,8 +40,8 @@ const loadCustomContent = async (req, res) => {
 
         if (markDownFiles.length > 0) {
             markDownFiles.forEach((item) => {
-                const tempKey = item.pageName.split('.md')[0];
-                content[tempKey] = markdown.parse(item.pageContent);
+                const tempKey = item.fileName.split('.md')[0];
+                content[tempKey] = markdown.parse(item.fileContent);
             });
         }
         content["baseUrl"] = "/" + orgName;

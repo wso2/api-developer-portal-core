@@ -21,37 +21,37 @@ const getOrganization = async (req, res) => {
 
 const getOrgContent = async (req, res) => {
     try {
-        if (req.query.pageType && req.query.pageName) {
-           const asset = await adminService.getOrgContent(req.params.orgId, req.query.pageType, req.query.pageName, req.query.filePath);
-           console.log("Asset:", asset.PAGE_TYPE);
+        if (req.query.fileType && req.query.fileName) {
+           const asset = await adminService.getOrgContent(req.params.orgId, req.query.fileType, req.query.fileName, req.query.filePath);
+           console.log("Asset:", asset.FILE_TYPE);
 
-            if (asset.PAGE_TYPE === 'imege') {
-                if (asset.PAGE_NAME.endsWith('.svg')) {
+            if (asset.FILE_TYPE === 'imege') {
+                if (asset.FILE_NAME.endsWith('.svg')) {
                     contentType = 'image/svg+xml';
-                } else if (asset.PAGE_NAME.endsWith('.jpg') || asset.PAGE_NAME.endsWith('.jpeg')) {
+                } else if (asset.FILE_NAME.endsWith('.jpg') || asset.FILE_NAME.endsWith('.jpeg')) {
                     contentType = 'image/jpeg';
-                } else if (asset.PAGE_NAME.endsWith('.png')) {
+                } else if (asset.FILE_NAME.endsWith('.png')) {
                     contentType = 'image/png';
-                } else if (asset.PAGE_NAME.endsWith('.gif')) {
+                } else if (asset.FILE_NAME.endsWith('.gif')) {
                     contentType = 'image/gif';
                 } else {
                     contentType = 'application/octet-stream';
                 }
                 res.set('Content-Type', contentType);
                 res.status(200).send(Buffer.isBuffer(image.image) ? image.image : Buffer.from(image.image, 'binary'));
-            } else if (asset.PAGE_NAME.endsWith('.css')) {
+            } else if (asset.FILE_NAME.endsWith('.css')) {
                 res.set('Content-Type', "text/css");
             }
-            contentText = asset.PAGE_CONTENT.toString('utf-8')
+            contentText = asset.FILE_CONTENT.toString('utf-8')
             return res.status(200).send(contentText);
-        } else if (req.params.pageType) {
-            const assets = await adminService.getOrgContent(req.params.orgId, req.params.pageType);
+        } else if (req.params.fileType) {
+            const assets = await adminService.getOrgContent(req.params.orgId, req.params.fileType);
             const results = [];
             for (const asset of assets) {
                 const resp = {
                     orgId: asset.ORG_ID,
-                    pageName: asset.PAGE_NAME,
-                    pageContent: asset.PAGE_CONTENT ? asset.PAGE_CONTENT.toString('utf-8') : null
+                    fileName: asset.FILE_NAME,
+                    fileContent: asset.FILE_CONTENT ? asset.FILE_CONTENT.toString('utf-8') : null
                 };
                 results.push(resp);
             }

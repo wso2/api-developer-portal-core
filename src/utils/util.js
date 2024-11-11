@@ -100,10 +100,8 @@ async function loadLayoutFromAPI(orgName) {
     const orgResponse = await fetch(`${config.adminAPI}organizations/${orgName}`);
     const orgData = await orgResponse.json();
 
-    const templateURL = `${config.devportalAPI}organizations/${orgData.orgId}/layout?pageType=layout&pageName=main.hbs`;
+    const templateURL = `${config.devportalAPI}organizations/${orgData.orgId}/layout?fileType=layout&fileName=main.hbs`;
     const templateResponse = await fetch(templateURL);
-    console.log("Template URL:", templateURL);
-    console.log("Template URL:", templateResponse);
 
     var layoutContent = await templateResponse.text();
     return layoutContent;
@@ -113,7 +111,7 @@ async function loadTemplateFromAPI(orgName, filePath) {
     const orgResponse = await fetch(`${config.adminAPI}organizations/${orgName}`);
     const orgData = await orgResponse.json();
 
-    const templateURL = `${config.devportalAPI}organizations/${orgData.orgId}/layout?pageType=template&pageName=page.hbs&filePath=${filePath}`;
+    const templateURL = `${config.devportalAPI}organizations/${orgData.orgId}/layout?fileType=template&fileName=page.hbs&filePath=${filePath}`;
     const templateResponse = await fetch(templateURL);
     console.log("Template URL:", templateURL);
     console.log("Template URL:", templateResponse);

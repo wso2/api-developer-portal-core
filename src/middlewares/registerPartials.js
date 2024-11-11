@@ -46,9 +46,9 @@ const registerPartialsFromAPI = async (req) => {
 
     let partialObject = {}
     partials.forEach(file => {
-        let fileName = file.pageName.split(".")[0];
-        let content = file.pageContent;
-        content = content.replaceAll("/images/", `${imageUrl}?pageType=image&pageName="`)
+        let fileName = file.fileName.split(".")[0];
+        let content = file.fileContent;
+        content = content.replaceAll("/images/", `${imageUrl}?fileType=image&fileName="`)
         partialObject[fileName] = content;
     });
     // const markdownResponse = await fetch(apiContetnUrl + "&fileName=apiContent.md");

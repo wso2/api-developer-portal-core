@@ -101,8 +101,8 @@ const createOrgContent = async (req, res) => {
 
     try {
             const files = await readFilesInDirectory(extractPath, orgId);
-            for (const { filePath, pageName, pageContent, pageType } of files) {
-                await createContent(filePath, pageName, pageContent, pageType, orgId);
+            for (const { filePath, fileName, fileContent, fileType } of files) {
+                await createContent(filePath, fileName, fileContent, fileType, orgId);
             }
             res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
             fs.rmSync(extractPath, { recursive: true, force: true });
@@ -111,16 +111,16 @@ const createOrgContent = async (req, res) => {
     }
 };
 
-const createContent = async (filePath, pageName, pageContent, pageType, orgId) => {
-    console.log("Create Content:", filePath, pageName, pageType, orgId);
+const createContent = async (filePath, fileName, fileContent, fileType, orgId) => {
+    console.log("Create Content:", filePath, fileName, fileType, orgId);
     let content;
     try {
-        if (pageName != null && !pageName.startsWith('.')) {
+        if (fileName != null && !fileName.startsWith('.')) {
 
             content = await adminDao.createOrgContent({
-                pageType: pageType,
-                pageName: pageName,
-                pageContent: pageContent,
+                fileType: fileType,
+                fileName: fileName,
+                fileContent: fileContent,
                 filePath: filePath,
                 orgId: orgId
             });
@@ -142,25 +142,25 @@ const updateOrgContent = async (req, res) => {
 
     const files = await readFilesInDirectory(extractPath, orgId);
     try {
-        for (const { filePath, pageName, pageContent, pageType } of files) {
-            if (pageName != null && !pageName.startsWith('.')) {
-                console.log("Organization Content:", orgId, pageType, pageName, filePath);
-                let organizationContent = await getOrgContent(orgId, pageType, pageName, filePath);
+        for (const { filePath, fileName, fileContent, fileType } of files) {
+            if (fileName != null && !fileName.startsWith('.')) {
+                console.log("Organization Content:", orgId, fileType, fileName, filePath);
+                let organizationContent = await getOrgContent(orgId, fileType, fileName, filePath);
                 console.log("Organization Content:", organizationContent);
 
                 if (organizationContent) {
                     console.log("Update Content: exists");
                     const orgContent = await adminDao.updateOrgContent({
-                        pageType: pageType,
-                        pageName: pageName,
-                        pageContent: pageContent,
+                        fileType: fileType,
+                        fileName: fileName,
+                        fileContent: fileContent,
                         filePath: filePath,
                         orgId: orgId
                     });
 
                 } else {
                     console.log("Update Content not exists");
-                    await createContent(filePath, pageName, pageContent, pageType, orgId);
+                    await createContent(filePath, fileName, fileContent, fileType, orgId);
                 }
             }
         }
@@ -170,12 +170,12 @@ const updateOrgContent = async (req, res) => {
     }
 };
 
-const getOrgContent = async (orgId, pageType, pageName, filePath) => {
-    console.log("Get Content:", orgId, pageType, pageName, filePath);
+const getOrgContent = async (orgId, fileType, fileName, filePath) => {
+    console.log("Get Content:", orgId, fileType, fileName, filePath);
     return await adminDao.getOrgContent({
         orgId: orgId,
-        pageType: pageType,
-        pageName: pageName,
+        fileType: fileType,
+        fileName: fileName,
         filePath: filePath
     });
 };
@@ -183,13 +183,13 @@ const getOrgContent = async (orgId, pageType, pageName, filePath) => {
 const deleteOrgContent = async (req, res) => {
     console.log("Delete Content:", req.query);
     try {
-        let pageName = req.query.pageName;
+        let fileName = req.query.fileName;
 
-        if (!req.query.pageName) {
-            throw new CustomError(400, "Bad Request", "Missing required parameter: 'pageName'");
+        if (!req.query.fileName) {
+            throw new CustomError(400, "Bad Request", "Missing required parameter: 'fileName'");
         }
 
-        const deletedRowsCount = await adminDao.deleteOrgContent(req.params.orgId, pageName);
+        const deletedRowsCount = await adminDao.deleteOrgContent(req.params.orgId, fileName);
         if (deletedRowsCount > 0) {
             res.status(204).send();
         } else {
@@ -217,38 +217,38 @@ async function readFilesInDirectory(directory, orgId, baseDir = '') {
             let content = await fs.promises.readFile(filePath);
             let strContent = await fs.promises.readFile(filePath, 'utf-8');
             let dir = baseDir.replace(/^[^/]+\/?/, '') || '/';
-            let pageType;
+            let fileType;
 
             console.log("File:", file.name);
 
             if (file.name.endsWith(".css")) {
-                pageType = "styles"
+                fileType = "styles"
                 if (file.name == "main.css") {
-                    strContent = strContent.replace(/@import\s*'\/styles\/([^']+)';/g, `@import url("${config.devportalAPI}organizations/${orgId}/layout?pageType=styles&pageName=$1");`);
+                    strContent = strContent.replace(/@import\s*'\/styles\/([^']+)';/g, `@import url("${config.devportalAPI}organizations/${orgId}/layout?fileType=styles&fileName=$1");`);
                     content = Buffer.from(strContent, 'utf-8');
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
-                pageType = "layout"
+                fileType = "layout"
                 if (file.name == "main.hbs") {
-                    strContent = strContent.replace(/\/styles\//g, `${config.devportalAPI}organizations/${orgId}/layout?pageType=styles&pageName=`);
+                    strContent = strContent.replace(/\/styles\//g, `${config.devportalAPI}organizations/${orgId}/layout?fileType=styles&fileName=`);
                     content = Buffer.from(strContent, 'utf-8');
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
-                pageType = "partial"
+                fileType = "partial"
             } else if (file.name.endsWith(".md") && dir.endsWith("content")) {
-                pageType = "markDown";
+                fileType = "markDown";
             } else if (file.name.endsWith(".hbs")) {
-                pageType = "template";
+                fileType = "template";
             } else {
-                pageType = "image";
+                fileType = "image";
             }
-            console.log("PageType:", pageType);
+            console.log("fileType:", fileType);
 
             fileDetails.push({
                 filePath: dir,
-                pageName: file.name,
-                pageContent: content,
-                pageType: pageType
+                fileName: file.name,
+                fileContent: content,
+                fileType: fileType
             });
         }
     }

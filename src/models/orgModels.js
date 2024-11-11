@@ -37,15 +37,15 @@ const OrgContent = sequelize.define('DP_ORGANIZATION_ASSETS', {
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true
     },
-    PAGE_NAME: {
+    FILE_NAME: {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    PAGE_CONTENT: {
+    FILE_CONTENT: {
         type: DataTypes.BLOB,
         allowNull: false,
     },
-    PAGE_TYPE: {
+    FILE_TYPE: {
         type: DataTypes.STRING,
         allowNull: false,
     },
@@ -65,7 +65,7 @@ const OrgContent = sequelize.define('DP_ORGANIZATION_ASSETS', {
     indexes: [
         {
             unique: true,
-            fields: ['PAGE_TYPE', 'PAGE_NAME', 'FILE_PATH', 'ORG_ID'] 
+            fields: ['FILE_TYPE', 'FILE_NAME', 'FILE_PATH', 'ORG_ID'] 
         }
     ]
 });
