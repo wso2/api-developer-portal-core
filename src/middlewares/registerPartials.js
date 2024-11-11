@@ -38,7 +38,7 @@ const registerPartialsFromAPI = async (req) => {
     const orgData = await adminDao.getOrganization(orgName);
     
     const imageUrl =`${config.devportalAPI}organizations/${orgData.ORG_ID}/layout?fileType=image&fileName=`;
-    // const apiContetnUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
+    const apiContetnUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
 
     const devportalUrl = `${config.devportalAPI}organizations/${orgData.ORG_ID}/layout/partial`;
     const partialsResponse = await fetch(devportalUrl);
@@ -51,13 +51,13 @@ const registerPartialsFromAPI = async (req) => {
         content = content.replaceAll("/images/", `${imageUrl}`)
         partialObject[fileName] = content;
     });
-    // const markdownResponse = await fetch(apiContetnUrl + "&fileName=apiContent.md");
-    // const markdownContent = await markdownResponse.text();
-    // const markdownHtml = markdownContent ? markdown.parse(markdownContent) : '';
+    const markdownResponse = await fetch(apiContetnUrl + "&fileName=apiContent.md");
+    const markdownContent = await markdownResponse.text();
+    const markdownHtml = markdownContent ? markdown.parse(markdownContent) : '';
 
-    // const additionalAPIContentResponse = await fetch(apiContetnUrl + "&fileName=api-content.hbs");
-    // const additionalAPIContent = await additionalAPIContentResponse.text();
-    // partialObject["api-content"] = additionalAPIContent;
+    const additionalAPIContentResponse = await fetch(apiContetnUrl + "&fileName=api-content.hbs");
+    const additionalAPIContent = await additionalAPIContentResponse.text();
+    partialObject["api-content"] = additionalAPIContent;
 
     const hbs = exphbs.create({});
     hbs.handlebars.partials = partialObject;
