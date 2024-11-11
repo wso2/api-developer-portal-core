@@ -97,7 +97,6 @@ const storeAPIDefinition = async (apiDefinition, fileName, apiID, t) => {
         throw new Sequelize.DatabaseError(error);
     }
 }
-
 module.exports = {
     createAPIMetadata,
     createThrottlingPolicy,

@@ -81,7 +81,7 @@ ThrottlingPolicy.belongsTo(APIMetadata, {
   foreignKey: 'apiID',
 });
 APIMetadata.belongsTo(Organization, {
-  foreignKey: 'orgId'
+  foreignKey: 'orgID'
 })
 
 // Organization response model
@@ -94,7 +94,7 @@ class APIResponse {
     this.endPoints = endPoints;
 }
   constructor(createdAPI) {
-    this.apiID = createdAPI.apiID;
+    this.apiId = createdAPI.apiId;
     this.apiInfo = createdAPI.apiInfo;
   }
 }
