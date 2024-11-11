@@ -7,7 +7,7 @@ const ThrottlingPolicy = require('./throttlingPolicy')
 const { Organization } = require('./orgModels')
 
 const APIMetadata = sequelize.define('ApiMetadata', {
-  apiId: {
+  apiID: {
     type: DataTypes.UUID,
     defaultValue: Sequelize.UUIDV4,
     primaryKey: true
@@ -69,16 +69,16 @@ const APIMetadata = sequelize.define('ApiMetadata', {
 });
 
 APIContent.belongsTo(APIMetadata, {
-  foreignKey: 'apiId',
+  foreignKey: 'apiID',
 });
 AdditionalProperties.belongsTo(APIMetadata, {
-  foreignKey: 'apiId',
+  foreignKey: 'apiID',
 });
 APIImages.belongsTo(APIMetadata, {
-  foreignKey: 'apiId',
+  foreignKey: 'apiID',
 });
 ThrottlingPolicy.belongsTo(APIMetadata, {
-  foreignKey: 'apiId',
+  foreignKey: 'apiID',
 });
 APIMetadata.belongsTo(Organization, {
   foreignKey: 'orgId'
@@ -94,7 +94,7 @@ class APIResponse {
     this.endPoints = endPoints;
 }
   constructor(createdAPI) {
-    this.apiId = createdAPI.apiId;
+    this.apiID = createdAPI.apiID;
     this.apiInfo = createdAPI.apiInfo;
   }
 }

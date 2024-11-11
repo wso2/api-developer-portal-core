@@ -98,60 +98,9 @@ const storeAPIDefinition = async (apiDefinition, fileName, apiID, t) => {
     }
 }
 
-const getAPIMetadata = async (orgId, apiId) => {
-    try {
-        const apiMetadata = await APIMetadata.findOne({ where: { apiId: apiId } });
-        const apiImages = await APIImages.findOne({ where: { apiId: apiId } });
-        const subscriptionPlan = await SubscriptionPlan.findOne({ where: { apiId: apiId } });
-
-        if (!apiMetadata) {
-            throw new Sequelize.EmptyResultError('No API Metadata not found');
-        }
-        let apiMetadataElement = {};
-        apiMetadataElement.apiInfo = apiMetadata.toJSON();
-        apiMetadataElement.apiInfo.apiArtifacts = {};
-        apiMetadataElement.apiInfo.apiArtifacts.apiImages = apiImages
-
-        return apiMetadataElement;
-    } catch (error) {
-        if (error instanceof Sequelize.EmptyResultError) {
-            throw error;
-        }
-        throw new Sequelize.DatabaseError(error);
-    }
-}
-
-const getAllAPIMetadata = async (orgId) => {
-    try {
-        const apiMetadatas = await APIMetadata.findAll({ where: { orgId: orgId } });
-        const apiImages = await APIImages.findOne({ where: { orgId: orgId } });
-
-        if (!apiMetadatas) {
-            throw new Sequelize.EmptyResultError('No API Metadata not found');
-        }
-    
-        let apiMetadataList = [];
-        apiMetadatas.forEach(element => {
-            let apiMetadata = {};
-            apiMetadata.apiInfo = element.toJSON();
-            apiMetadata.apiInfo.apiArtifacts = {};
-            apiMetadata.apiInfo.apiArtifacts.apiImages = apiImages
-            apiMetadataList.push(apiMetadata);
-        });
-        return apiMetadataList;
-    } catch (error) {
-        if (error instanceof Sequelize.EmptyResultError) {
-            throw error;
-        }
-        throw new Sequelize.DatabaseError(error);
-    }
-}
-
 module.exports = {
     createAPIMetadata,
     createThrottlingPolicy,
     storeAdditionalProperties,
-    storeAPIDefinition,
-    getAPIMetadata,
-    getAllAPIMetadata
+    storeAPIDefinition
 };

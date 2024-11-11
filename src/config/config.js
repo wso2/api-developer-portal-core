@@ -8,7 +8,7 @@ config.mode = 'multi'
 config.db = {
     username: 'postgres',
     password: 'postgres',
-    database: 'devportal',
+    database: 'dev',
     host: 'localhost',
     dialect: 'postgres',
 };
