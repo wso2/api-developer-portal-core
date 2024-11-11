@@ -98,7 +98,7 @@ if (config.mode == 'design') {
     app.use('/', designRoute);
 } else {
     app.use('/', authRoute);
-    app.use('/', registerPartials);
+    app.use(/^((?!\/favicon\.ico).)*$/, registerPartials);
     app.use('/', apiContent);
     app.use('/', orgContent);
     app.use('/', customContent);

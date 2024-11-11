@@ -20,6 +20,8 @@ const createOrganization = async (orgData) => {
 };
 
 const getOrganization = async (param) => {
+    console.log('param', param);
+    
     const isUUID = validate(param);
     const condition = isUUID ? { ORG_ID: param } : { ORG_NAME: param };
 
@@ -40,9 +42,6 @@ const getOrganization = async (param) => {
 };
 
 const updateOrganization = async (orgData) => {
-
-    console.log("orgData", orgData);
-
     try {
         const [updatedRowsCount, updatedOrg] = await Organization.update(
             {
@@ -89,7 +88,6 @@ const deleteOrganization = async (orgId) => {
 }
 
 const createOrgContent = async (orgData) => {
-    console.log("orgData", orgData);
     try {
         const orgContent = await OrgContent.create({
             FILE_TYPE: orgData.fileType,
@@ -105,7 +103,6 @@ const createOrgContent = async (orgData) => {
 }
 
 const updateOrgContent = async (orgData) => {
-    console.log("orgData", orgData);
     try {
         const [updatedRowsCount, updatedOrgContent] = await OrgContent.update({
             FILE_TYPE: orgData.fileType,
@@ -141,9 +138,7 @@ const getOrgContent = async (orgData) => {
         } else if (orgData.fileType) {
             organization = await OrgContent.findAll({ where: { ORG_ID: orgData.orgId, FILE_TYPE: orgData.fileType } });
         }  
-        console.log("organization", organization);           
         return organization;
-
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;

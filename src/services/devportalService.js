@@ -23,9 +23,8 @@ const getOrgContent = async (req, res) => {
     try {
         if (req.query.fileType && req.query.fileName) {
            const asset = await adminService.getOrgContent(req.params.orgId, req.query.fileType, req.query.fileName, req.query.filePath);
-           console.log("Asset:", asset.FILE_TYPE);
 
-            if (asset.FILE_TYPE === 'imege') {
+            if (asset.FILE_TYPE === 'image') {
                 if (asset.FILE_NAME.endsWith('.svg')) {
                     contentType = 'image/svg+xml';
                 } else if (asset.FILE_NAME.endsWith('.jpg') || asset.FILE_NAME.endsWith('.jpeg')) {
@@ -38,12 +37,11 @@ const getOrgContent = async (req, res) => {
                     contentType = 'application/octet-stream';
                 }
                 res.set('Content-Type', contentType);
-                res.status(200).send(Buffer.isBuffer(image.image) ? image.image : Buffer.from(image.image, 'binary'));
+                return res.status(200).send(Buffer.isBuffer(asset.FILE_CONTENT) ? asset.FILE_CONTENT : asset.FILE_CONTENT.toString('utf-8'));
             } else if (asset.FILE_NAME.endsWith('.css')) {
                 res.set('Content-Type', "text/css");
             }
-            contentText = asset.FILE_CONTENT.toString('utf-8')
-            return res.status(200).send(contentText);
+            return res.status(200).send(asset.FILE_CONTENT.toString('utf-8'));
         } else if (req.params.fileType) {
             const assets = await adminService.getOrgContent(req.params.orgId, req.params.fileType);
             const results = [];
@@ -56,8 +54,6 @@ const getOrgContent = async (req, res) => {
                 results.push(resp);
             }
             
-            // At this point, `results` will contain the processed asset data
-            console.log(results);
             return res.status(200).send(results);
         }
     } catch (error) {

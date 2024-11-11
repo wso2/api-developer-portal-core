@@ -3,6 +3,7 @@ const fs = require('fs');
 const exphbs = require('express-handlebars');
 const config = require('../config/config');
 const markdown = require('marked');
+const adminDao = require('../dao/admin');
 
 let filePrefix = '../../../../src/';
 
@@ -32,15 +33,14 @@ const registerPartials = async (req, res, next) => {
 const registerPartialsFromAPI = async (req) => {
     const orgName = req.originalUrl.split("/")[1];
     const apiName = req.originalUrl.split("/").pop();
-    const orgUrl = `${config.adminAPI}organizations/${orgName}`;
 
-    const orgResponse = await fetch(orgUrl);
-    const orgData = await orgResponse.json();
-
-    const imageUrl =`${config.devportalAPI}organizations/${orgData.orgId}/layout?`;
+    console.log("registerPartialsFromAPI orgName", orgName);
+    const orgData = await adminDao.getOrganization(orgName);
+    
+    const imageUrl =`${config.devportalAPI}organizations/${orgData.ORG_ID}/layout?fileType=image&fileName=`;
     // const apiContetnUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
 
-    const devportalUrl = `${config.devportalAPI}organizations/${orgData.orgId}/layout/partials`;
+    const devportalUrl = `${config.devportalAPI}organizations/${orgData.ORG_ID}/layout/partial`;
     const partialsResponse = await fetch(devportalUrl);
     let partials = await partialsResponse.json();
 
@@ -48,7 +48,7 @@ const registerPartialsFromAPI = async (req) => {
     partials.forEach(file => {
         let fileName = file.fileName.split(".")[0];
         let content = file.fileContent;
-        content = content.replaceAll("/images/", `${imageUrl}?fileType=image&fileName="`)
+        content = content.replaceAll("/images/", `${imageUrl}`)
         partialObject[fileName] = content;
     });
     // const markdownResponse = await fetch(apiContetnUrl + "&fileName=apiContent.md");

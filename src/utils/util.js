@@ -5,6 +5,8 @@ const Handlebars = require('handlebars');
 const config = require('../config/config');
 const { CustomError } = require('../utils/errors/customErrors');
 const unzipper = require('unzipper');
+const adminDao = require('../dao/admin');
+
 
 const { Sequelize } = require('sequelize');
 
@@ -96,11 +98,9 @@ function renderTemplate(templatePath, layoutPath, templateContent) {
 }
 
 async function loadLayoutFromAPI(orgName) {
+    const orgData = await adminDao.getOrganization(orgName);
 
-    const orgResponse = await fetch(`${config.adminAPI}organizations/${orgName}`);
-    const orgData = await orgResponse.json();
-
-    const templateURL = `${config.devportalAPI}organizations/${orgData.orgId}/layout?fileType=layout&fileName=main.hbs`;
+    const templateURL = `${config.devportalAPI}organizations/${orgData.ORG_ID}/layout?fileType=layout&fileName=main.hbs`;
     const templateResponse = await fetch(templateURL);
 
     var layoutContent = await templateResponse.text();
@@ -108,13 +108,10 @@ async function loadLayoutFromAPI(orgName) {
 }
 
 async function loadTemplateFromAPI(orgName, filePath) {
-    const orgResponse = await fetch(`${config.adminAPI}organizations/${orgName}`);
-    const orgData = await orgResponse.json();
+    const orgData = await adminDao.getOrganization(orgName);
 
-    const templateURL = `${config.devportalAPI}organizations/${orgData.orgId}/layout?fileType=template&fileName=page.hbs&filePath=${filePath}`;
+    const templateURL = `${config.devportalAPI}organizations/${orgData.ORG_ID}/layout?fileType=template&fileName=page.hbs&filePath=${filePath}`;
     const templateResponse = await fetch(templateURL);
-    console.log("Template URL:", templateURL);
-    console.log("Template URL:", templateResponse);
     var templateContent = await templateResponse.text();
     return templateContent;
 
@@ -124,9 +121,6 @@ async function renderTemplateFromAPI(templateContent, orgName, filePath) {
 
     var templatePage = await loadTemplateFromAPI(orgName, filePath);
     var layoutContent = await loadLayoutFromAPI(orgName);
-
-    console.log("Template Page:", templatePage);
-    console.log("Layout Content:", layoutContent);
 
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutContent.toString());
@@ -140,7 +134,6 @@ async function renderTemplateFromAPI(templateContent, orgName, filePath) {
             body: template(templateContent)
         });
     }
-    console.log("HTML:", html);
     return html;
 }
 

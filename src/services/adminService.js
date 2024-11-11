@@ -112,7 +112,6 @@ const createOrgContent = async (req, res) => {
 };
 
 const createContent = async (filePath, fileName, fileContent, fileType, orgId) => {
-    console.log("Create Content:", filePath, fileName, fileType, orgId);
     let content;
     try {
         if (fileName != null && !fileName.startsWith('.')) {
@@ -144,12 +143,9 @@ const updateOrgContent = async (req, res) => {
     try {
         for (const { filePath, fileName, fileContent, fileType } of files) {
             if (fileName != null && !fileName.startsWith('.')) {
-                console.log("Organization Content:", orgId, fileType, fileName, filePath);
                 let organizationContent = await getOrgContent(orgId, fileType, fileName, filePath);
-                console.log("Organization Content:", organizationContent);
 
                 if (organizationContent) {
-                    console.log("Update Content: exists");
                     const orgContent = await adminDao.updateOrgContent({
                         fileType: fileType,
                         fileName: fileName,
@@ -159,7 +155,7 @@ const updateOrgContent = async (req, res) => {
                     });
 
                 } else {
-                    console.log("Update Content not exists");
+                    console.log("Update Content not exists, hense creating new content");
                     await createContent(filePath, fileName, fileContent, fileType, orgId);
                 }
             }
@@ -171,7 +167,6 @@ const updateOrgContent = async (req, res) => {
 };
 
 const getOrgContent = async (orgId, fileType, fileName, filePath) => {
-    console.log("Get Content:", orgId, fileType, fileName, filePath);
     return await adminDao.getOrgContent({
         orgId: orgId,
         fileType: fileType,
@@ -201,7 +196,6 @@ const deleteOrgContent = async (req, res) => {
 };
 
 async function readFilesInDirectory(directory, orgId, baseDir = '') {
-    console.log(directory);
     const files = await fs.promises.readdir(directory, { withFileTypes: true });
 
     let fileDetails = [];
@@ -219,18 +213,16 @@ async function readFilesInDirectory(directory, orgId, baseDir = '') {
             let dir = baseDir.replace(/^[^/]+\/?/, '') || '/';
             let fileType;
 
-            console.log("File:", file.name);
-
             if (file.name.endsWith(".css")) {
-                fileType = "styles"
+                fileType = "style"
                 if (file.name == "main.css") {
-                    strContent = strContent.replace(/@import\s*'\/styles\/([^']+)';/g, `@import url("${config.devportalAPI}organizations/${orgId}/layout?fileType=styles&fileName=$1");`);
+                    strContent = strContent.replace(/@import\s*'\/styles\/([^']+)';/g, `@import url("${config.devportalAPI}organizations/${orgId}/layout?fileType=style&fileName=$1");`);
                     content = Buffer.from(strContent, 'utf-8');
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                 fileType = "layout"
                 if (file.name == "main.hbs") {
-                    strContent = strContent.replace(/\/styles\//g, `${config.devportalAPI}organizations/${orgId}/layout?fileType=styles&fileName=`);
+                    strContent = strContent.replace(/\/styles\//g, `${config.devportalAPI}organizations/${orgId}/layout?fileType=style&fileName=`);
                     content = Buffer.from(strContent, 'utf-8');
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
@@ -242,7 +234,6 @@ async function readFilesInDirectory(directory, orgId, baseDir = '') {
             } else {
                 fileType = "image";
             }
-            console.log("fileType:", fileType);
 
             fileDetails.push({
                 filePath: dir,
