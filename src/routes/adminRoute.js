@@ -10,4 +10,6 @@ router.delete('/organizations/:orgId', adminService.deleteOrganization);
 const upload = multer({ dest: '../.tmp/' }); 
 router.post('/organizations/:orgId/layout', upload.single('file'), adminService.createOrgContent);
 router.put('/organizations/:orgId/layout', upload.single('file'), adminService.updateOrgContent);
+router.delete('/organizations/:orgId/layout', adminService.deleteOrgContent);
+
 module.exports = router;

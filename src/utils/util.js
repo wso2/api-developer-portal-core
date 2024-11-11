@@ -196,8 +196,10 @@ function handleError(res, error) {
     }
 };
 
-const unzipFile = (zipPath, extractPath) => {
-    fs.createReadStream(zipPath)
+const unzipFile = async (zipPath, extractPath) => {
+    const extractedFiles = [];
+    await new Promise((resolve, reject) => { 
+        fs.createReadStream(zipPath)
         .pipe(unzipper.Parse())
         .on('entry', entry => {
             const entryPath = entry.path;
@@ -209,6 +211,7 @@ const unzipFile = (zipPath, extractPath) => {
                     fs.mkdirSync(filePath, { recursive: true });
                     entry.autodrain();
                 } else {
+                    extractedFiles.push(filePath);
                     entry.pipe(fs.createWriteStream(filePath));
                 }
             } else {
@@ -216,7 +219,12 @@ const unzipFile = (zipPath, extractPath) => {
             }
         })
         .on('close', async () => {
+            extractedFiles.length > 0 ? resolve() : reject(new Error('No files were extracted'));
+        })
+        .on('error', err => {
+            reject(new Error(`Unzip failed: ${err.message}`));
         });
+    });
 };
 
 module.exports = {

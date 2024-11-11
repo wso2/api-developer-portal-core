@@ -42,11 +42,11 @@ const OrgContent = sequelize.define('DP_ORGANIZATION_ASSETS', {
         allowNull: false,
     },
     PAGE_CONTENT: {
-        type: DataTypes.STRING,
+        type: DataTypes.BLOB,
         allowNull: false,
     },
     PAGE_TYPE: {
-        type: DataTypes.BLOB,
+        type: DataTypes.STRING,
         allowNull: false,
     },
     FILE_PATH: {
@@ -65,13 +65,18 @@ const OrgContent = sequelize.define('DP_ORGANIZATION_ASSETS', {
     indexes: [
         {
             unique: true,
-            fields: ['PAGE_TYPE', 'PAGE_NAME', 'FILE_PATH'] 
+            fields: ['PAGE_TYPE', 'PAGE_NAME', 'FILE_PATH', 'ORG_ID'] 
         }
     ]
 });
 
 OrgContent.belongsTo(Organization, {
     foreignKey: 'ORG_ID',
+});
+
+Organization.hasMany(OrgContent, {
+    foreignKey: 'ORG_ID',
+    onDelete: 'CASCADE',
 });
 
 // Export both models

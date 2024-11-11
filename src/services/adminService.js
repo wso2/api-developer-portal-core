@@ -8,7 +8,7 @@ const config = require('../config/config');
 
 const createOrganization = async (req, res) => {
 
-    const { orgName, businessOwner, businessOwnerContact, businessOwnerEmail} = req.body;
+    const { orgName, businessOwner, businessOwnerContact, businessOwnerEmail } = req.body;
 
     try {
         if (!orgName || !businessOwner) {
@@ -53,9 +53,9 @@ const updateOrganization = async (req, res) => {
         // Create organization in the database
         const [updatedRowsCount, updatedOrg] = await adminDao.updateOrganization({
             orgId,
-            orgName, 
-            businessOwner, 
-            businessOwnerContact, 
+            orgName,
+            businessOwner,
+            businessOwnerContact,
             businessOwnerEmail
         });
 
@@ -97,21 +97,22 @@ const createOrgContent = async (req, res) => {
     const zipPath = req.file.path;
     const extractPath = path.join(__dirname, '..', '.tmp', orgId);
 
-    util.unzipFile(zipPath, extractPath);
+    await util.unzipFile(zipPath, extractPath);
 
     try {
-        const files = await readFilesInDirectory(extractPath, orgId);
-        for (const { filePath, pageName, pageContent, pageType } of files) {
-            await createContent(filePath, pageName, pageContent, pageType, orgId);
-        }
-        res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
-
-    } catch (error) {
+            const files = await readFilesInDirectory(extractPath, orgId);
+            for (const { filePath, pageName, pageContent, pageType } of files) {
+                await createContent(filePath, pageName, pageContent, pageType, orgId);
+            }
+            res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
+            fs.rmSync(extractPath, { recursive: true, force: true });
+        } catch (error) {
         return util.handleError(res, error);
     }
 };
 
 const createContent = async (filePath, pageName, pageContent, pageType, orgId) => {
+    console.log("Create Content:", filePath, pageName, pageType, orgId);
     let content;
     try {
         if (pageName != null && !pageName.startsWith('.')) {
@@ -137,15 +138,18 @@ const updateOrgContent = async (req, res) => {
     const zipPath = req.file.path;
     const extractPath = path.join(__dirname, '..', '.tmp', orgId);
 
-    util.unzipFile(zipPath, extractPath);
+    await util.unzipFile(zipPath, extractPath);
 
     const files = await readFilesInDirectory(extractPath, orgId);
     try {
         for (const { filePath, pageName, pageContent, pageType } of files) {
             if (pageName != null && !pageName.startsWith('.')) {
-                let organizationContent = await getOrgContent(pageType, pageName, filePath);
+                console.log("Organization Content:", orgId, pageType, pageName, filePath);
+                let organizationContent = await getOrgContent(orgId, pageType, pageName, filePath);
+                console.log("Organization Content:", organizationContent);
 
                 if (organizationContent) {
+                    console.log("Update Content: exists");
                     const orgContent = await adminDao.updateOrgContent({
                         pageType: pageType,
                         pageName: pageName,
@@ -155,6 +159,7 @@ const updateOrgContent = async (req, res) => {
                     });
 
                 } else {
+                    console.log("Update Content not exists");
                     await createContent(filePath, pageName, pageContent, pageType, orgId);
                 }
             }
@@ -165,12 +170,34 @@ const updateOrgContent = async (req, res) => {
     }
 };
 
-const getOrgContent = async (pageType, pageName, filePath) => {
+const getOrgContent = async (orgId, pageType, pageName, filePath) => {
+    console.log("Get Content:", orgId, pageType, pageName, filePath);
     return await adminDao.getOrgContent({
+        orgId: orgId,
         pageType: pageType,
         pageName: pageName,
         filePath: filePath
     });
+};
+
+const deleteOrgContent = async (req, res) => {
+    console.log("Delete Content:", req.query);
+    try {
+        let pageName = req.query.pageName;
+
+        if (!req.query.pageName) {
+            throw new CustomError(400, "Bad Request", "Missing required parameter: 'pageName'");
+        }
+
+        const deletedRowsCount = await adminDao.deleteOrgContent(req.params.orgId, pageName);
+        if (deletedRowsCount > 0) {
+            res.status(204).send();
+        } else {
+            throw new CustomError(404, "Records Not Found", 'Organization not found');
+        }
+    } catch (error) {
+        util.handleError(res, error);
+    }
 };
 
 async function readFilesInDirectory(directory, orgId, baseDir = '') {
@@ -192,6 +219,8 @@ async function readFilesInDirectory(directory, orgId, baseDir = '') {
             let dir = baseDir.replace(/^[^/]+\/?/, '') || '/';
             let pageType;
 
+            console.log("File:", file.name);
+
             if (file.name.endsWith(".css")) {
                 pageType = "styles"
                 if (file.name == "main.css") {
@@ -205,7 +234,7 @@ async function readFilesInDirectory(directory, orgId, baseDir = '') {
                     content = Buffer.from(strContent, 'utf-8');
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
-                pageType = "partials"
+                pageType = "partial"
             } else if (file.name.endsWith(".md") && dir.endsWith("content")) {
                 pageType = "markDown";
             } else if (file.name.endsWith(".hbs")) {
@@ -213,6 +242,7 @@ async function readFilesInDirectory(directory, orgId, baseDir = '') {
             } else {
                 pageType = "image";
             }
+            console.log("PageType:", pageType);
 
             fileDetails.push({
                 filePath: dir,
@@ -232,4 +262,5 @@ module.exports = {
     createOrgContent,
     updateOrgContent,
     getOrgContent,
+    deleteOrgContent
 };

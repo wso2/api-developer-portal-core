@@ -89,13 +89,14 @@ const deleteOrganization = async (orgId) => {
 }
 
 const createOrgContent = async (orgData) => {
+    console.log("orgData", orgData);
     try {
         const orgContent = await OrgContent.create({
-            pageType: orgData.pageType,
-            pageName: orgData.pageName,
-            pageContent: orgData.pageContent,
-            filePath: orgData.filePath,
-            orgId: orgData.orgId,
+            PAGE_TYPE: orgData.pageType,
+            PAGE_NAME: orgData.pageName,
+            PAGE_CONTENT: orgData.pageContent,
+            FILE_PATH: orgData.filePath,
+            ORG_ID: orgData.orgId,
         });
         return orgContent;
     } catch (error) {
@@ -104,15 +105,16 @@ const createOrgContent = async (orgData) => {
 }
 
 const updateOrgContent = async (orgData) => {
+    console.log("orgData", orgData);
     try {
         const [updatedRowsCount, updatedOrgContent] = await OrgContent.update({
-            pageType: orgData.pageType,
-            pageName: orgData.pageName,
-            pageContent: orgData.pageContent,
-            filePath: orgData.filePath,
+            PAGE_TYPE: orgData.pageType,
+            PAGE_NAME: orgData.pageName,
+            PAGE_CONTENT: orgData.pageContent,
+            FILE_PATH: orgData.filePath,
         },
         {
-            where: { pageType: orgData.pageType, pageName: orgData.pageName, filePath: orgData.filePath },
+            where: { PAGE_TYPE: orgData.pageType, PAGE_NAME: orgData.pageName, FILE_PATH: orgData.filePath, ORG_ID: orgData.orgId },
             returning: true
         });
         if (updatedRowsCount < 1) {
@@ -133,12 +135,13 @@ const getOrgContent = async (orgData) => {
         let organization;
 
         if (orgData.pageType && orgData.pageName && orgData.filePath) {
-            organization = await OrgContent.findOne({ where: { pageType: orgData.pageType, pageName: orgData.pageName, filePath: orgData.filePath } });
+            organization = await OrgContent.findOne({ where: { ORG_ID: orgData.orgId, PAGE_TYPE: orgData.pageType, PAGE_NAME: orgData.pageName, FILE_PATH: orgData.filePath } });
         } else if (orgData.pageType && orgData.pageName) {
-            organization = await OrgContent.findOne({ where: { pageType: orgData.pageType, pageName: orgData.pageName } });
+            organization = await OrgContent.findOne({ where: { ORG_ID: orgData.orgId, PAGE_TYPE: orgData.pageType, PAGE_NAME: orgData.pageName } });
         } else if (orgData.pageType) {
-            organization = await OrgContent.findAll({ where: { pageType: orgData.pageType } });
-        }             
+            organization = await OrgContent.findAll({ where: { ORG_ID: orgData.orgId, PAGE_TYPE: orgData.pageType } });
+        }  
+        console.log("organization", organization);           
         return organization;
 
     } catch (error) {
@@ -149,10 +152,16 @@ const getOrgContent = async (orgData) => {
     }
 };
 
-const getImgContent = async (orgData) => {
+const deleteOrgContent = async (orgId, pageName) => {
     try {
-        const orgImage = await OrgImage.findOne({ where: { orgId: orgData.orgId, fileName: orgData.fileName } });
-        return orgImage;
+        const deletedRowsCount = await OrgContent.destroy({
+            where: { ORG_ID: orgId, PAGE_NAME: pageName }
+        });
+        if (deletedRowsCount < 1) {
+            throw Object.assign(new Sequelize.EmptyResultError('Organization content not found'));
+        } else {
+            return deletedRowsCount;
+        }
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -169,5 +178,5 @@ module.exports = {
     createOrgContent,
     updateOrgContent,
     getOrgContent,
-    getImgContent
+    deleteOrgContent
 };
