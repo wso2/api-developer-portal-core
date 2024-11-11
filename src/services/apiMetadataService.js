@@ -53,18 +53,29 @@ const getAPIMetadata = async (req, res) => {
         throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
     }
     try {
-        const result = await sequelize.transaction(async t => {
+        let retrievedAPI = await getMetadataFromDB(orgID, apiID);
+        // Create response object
+        res.status(200).send(retrievedAPI);
+    } catch (error) {
+        console.log(error)
+        util.handleError(res, error);
+    }
+};
+
+const getMetadataFromDB = async (orgID, apiID) => {
+
+    try {
+        return await sequelize.transaction(async t => {
             const retrievedAPI = await apiDao.getAPIMetadata(orgID, apiID, t);
-            // Create response object
-            const apiCreationResponse = new APIDTO(retrievedAPI[0]);
-            res.status(200).send(apiCreationResponse);
+            if (retrievedAPI.length > 0) {
+                return new APIDTO(retrievedAPI[0]);
+            } else return {};
         });
     } catch (error) {
         console.log(error)
         util.handleError(res, error);
     }
-
-};
+}
 
 const getAllAPIMetadata = async (req, res) => {
 
@@ -73,17 +84,27 @@ const getAllAPIMetadata = async (req, res) => {
         throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
     }
     try {
-        const result = await sequelize.transaction(async t => {
-            const retrievedAPIs = await apiDao.getAllAPIMetadata(orgID, t);
-            // Create response object
-            const apiCreationResponse = retrievedAPIs.map(api => new APIDTO(api));
-            res.status(200).send(apiCreationResponse);
-        });
+        let retrievedAPIs = await getMetadataListFromDB(orgID);
+        res.status(200).send(retrievedAPIs);
     } catch (error) {
         console.log(error)
         util.handleError(res, error);
     }
 };
+
+const getMetadataListFromDB = async (orgID) => {
+    try {
+        return await sequelize.transaction(async t => {
+            const retrievedAPIs = await apiDao.getAllAPIMetadata(orgID, t);
+            // Create response object
+            const apiCreationResponse = retrievedAPIs.map(api => new APIDTO(api));
+            return apiCreationResponse;
+        });
+    } catch (error) {
+        console.log(error)
+        util.handleError(res, error);
+    }
+}
 
 const updateAPIMetadata = async (req, res) => {
 
@@ -321,5 +342,7 @@ module.exports = {
     createAPITemplate,
     updateAPITemplate,
     getAPIFile,
-    deleteAPIFile
+    deleteAPIFile,
+    getMetadataListFromDB,
+    getMetadataFromDB
 };

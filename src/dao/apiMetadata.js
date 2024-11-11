@@ -105,23 +105,7 @@ const storeAPIImageMetadata = async (apiImages, apiID, orgID, t) => {
     }
 }
 
-const updateAPIImages = async (apiImages, apiID, orgID, t) => {
 
-    for (const image of apiImages) {
-        const updateResponse = await APIImageMetadata.update(
-            {
-                image: image.content
-            },
-            {
-                where: {
-                    apiID: apiID,
-                    orgID: orgID,
-                    imagePath: image.fileName
-                }
-            }
-        );
-    }
-}
 
 
 const storeAPIFile = async (apiDefinition, fileName, apiID, orgID, t) => {
@@ -211,25 +195,6 @@ const getAPIFile = async (fileName, orgID, apiID, t) => {
             }
         }, { transaction: t });
         return apiFileResponse;
-    } catch (error) {
-        if (error instanceof Sequelize.UniqueConstraintError) {
-            throw error;
-        }
-        throw new Sequelize.DatabaseError(error);
-    }
-}
-
-const getAPIImageFile = async (fileName, orgID, apiID, t) => {
-
-    try {
-        const apiImageResponse = await APIImageMetadata.findOne({
-            where: {
-                imagePath: fileName,
-                orgID: orgID,
-                apiID: apiID
-            }
-        }, { transaction: t });
-        return apiImageResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
@@ -352,9 +317,6 @@ async function updateSubscriptionPolicy(orgID, apiID, subscriptionPolicies, t) {
     policiesToCreate = [];
     for (const policy of subscriptionPolicies) {
         const subscriptionResponse = await getSubscriptionPolicy(policy.policyName, apiID, t);
-        console.log(policy.policyName);
-
-        console.log(subscriptionResponse);
         if (subscriptionResponse == null || subscriptionResponse == undefined) {
             policiesToCreate.push({
                 POLICY_NAME: policy.policyName,
@@ -386,28 +348,6 @@ const getSubscriptionPolicy = async (policyName, apiID, t) => {
             }
         }, { transaction: t });
         return subscriptionPolicyResponse;
-    } catch (error) {
-        if (error instanceof Sequelize.UniqueConstraintError) {
-            throw error;
-        }
-        throw new Sequelize.DatabaseError(error);
-    }
-}
-
-const updateAdditionalProperties = async (orgID, apiID, additionalProperties, t) => {
-
-    try {
-        for (var propertyKey in additionalProperties) {
-            const additionalProperty = await AdditionalProperties.update({
-                value: additionalProperties[propertyKey]
-            }, {
-                where: {
-                    apiID: apiID,
-                    orgID: orgID,
-                    key: propertyKey
-                }
-            }, { transaction: t });
-        }
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
@@ -517,7 +457,6 @@ const deleteAPIFile = async (fileName, orgID, apiID, t) => {
     }
 }
 
-
 const getAPIId = async (apiName) => {
     try {
         const api = await APIMetadata.findOne({
@@ -538,7 +477,6 @@ const getAPIId = async (apiName) => {
 module.exports = {
     createAPIMetadata,
     createSubscriptionPolicy,
-    storeAdditionalProperties,
     storeAPIFile,
     getAPIMetadata,
     getAllAPIMetadata,
@@ -546,13 +484,10 @@ module.exports = {
     deleteAPIMetadata,
     updateAPIMetadata,
     updateSubscriptionPolicy,
-    updateAdditionalProperties,
     updateAPIImageMetadata,
     updateAPIFile,
     storeAPIFiles,
-    updateAPIImages,
     updateOrCreateAPIFiles,
-    getAPIImageFile,
     getAPIFile,
     deleteAPIFile,
     getAPIId

@@ -69,7 +69,6 @@ const registerPartialsFromAPI = async (req) => {
     };
     if (req.originalUrl.includes("/api/")) {
         //fetch markdown content for API if exists
-        console.log(apiContetnUrl)
         let markdownResponse = await apiDao.getAPIFile("apiContent.md", orgID, apiID);
         let markdownContent = markdownResponse.API_FILE.toString('utf8');
         const markdownHtml = markdownContent ? markdown.parse(markdownContent) : '';
