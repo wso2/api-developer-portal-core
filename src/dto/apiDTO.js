@@ -1,11 +1,11 @@
 
 class APIDTO {
     constructor(api) {
-        this.apiID = api.apiID;
+        this.apiID = api.API_ID;
         this.apiInfo = new APIInfo(api);
         this.endPoints = new Endpoints(api);
-        if (api.ThrottlingPolicies) {
-            this.throttlingPolicies = api.ThrottlingPolicies.map(policy => new ThrottlingPolicy(policy));
+        if (api.dp_api_subscription_policies) {
+            this.subscriptionPolicies = api.dp_api_subscription_policies.map(policy => new SubscriptionPolicy(policy));
         }
     }
 
@@ -20,24 +20,19 @@ class APIDTO {
 
 class APIInfo {
     constructor(apiInfo) {
-        this.apiName = apiInfo.apiName;
-        this.apiVersion = apiInfo.apiVersion;
-        this.apiDescription = apiInfo.apiDescription;
-        this.apiType = apiInfo.apiType;
-        this.apiCategory = apiInfo.apiCategory;
-        this.tags = apiInfo.tags.split(" ");
-        this.visibility = apiInfo.visibility;
-        if (apiInfo.visibleGroups) {
-            this.visibleGroups = apiInfo.visibleGroups.split(" ");
+        this.apiName = apiInfo.API_NAME;
+        this.apiVersion = apiInfo.API_VERSION;
+        this.apiDescription = apiInfo.API_DESCRIPTION;
+        this.apiType = apiInfo.API_TYPE;
+        this.visibility = apiInfo.VISIBILITY;
+        if (apiInfo.VISIBLE_GROUPS) {
+            this.visibleGroups = apiInfo.VISIBLE_GROUPS.split(" ");
         }
-        if (apiInfo.businessOwner || apiInfo.technicalOwner) {
+        if (apiInfo.BUSINESS_OWNER || apiInfo.TECHNICAL_OWNER) {
             this.owners = new Owner(apiInfo);
         }
-        if (apiInfo.AdditionalProperties) {
-            this.additionalProperties = getAdditionalProperties(apiInfo.AdditionalProperties);
-        }
-        if (apiInfo.ApiImages) {
-            this.apiArtifacts = new APIArtifacts(apiInfo.ApiImages);
+        if(apiInfo.dp_api_imagedata) {
+           this.apiImageMetadata = getAPIImages(apiInfo.dp_api_imagedata);
         }
     }
 }
@@ -56,25 +51,29 @@ const getAdditionalProperties = (additionalAPIProperties) => {
     return new AdditionalProperties(additionalProperties);
 }
 
-class ThrottlingPolicy {
-    constructor(throttlingPolicy) {
-        this.policyName = throttlingPolicy.policyName;
-        this.description = throttlingPolicy.description;
-        this.category = throttlingPolicy.category;
+class SubscriptionPolicy {
+    constructor(subscriptionPolicy) {
+        this.policyName = subscriptionPolicy.POLICY_NAME;
     }
 }
 
 class Owner {
     constructor(api) {
-        this.technicalOwner = api.technicalOwner;
-        this.businessOwner = api.businessOwner;
+        this.technicalOwner = api.TECHNICAL_OWNER;
+        this.businessOwner = api.BUSINESS_OWNER;
+        if (api.BUSINESS_OWNER_EMAIL) {
+            this.businessOwnerEmail = api.BUSINESS_OWNER_EMAIL;
+        }
+        if (api.TECHNICAL_OWNER_EMAIL) {
+            this.technicalOwnerEmail = api.TECHNICAL_OWNER_EMAIL;
+        }
     }
 }
 
 class Endpoints {
     constructor(api) {
-        this.sandboxUrl = api.sandboxUrl;
-        this.productionUrl = api.productionUrl;
+        this.sandboxUrl = api.SANDBOX_URL;
+        this.productionUrl = api.PRODUCTION_URL;
     }
 }
 
@@ -84,16 +83,10 @@ class APIImages {
     }
 }
 
-class APIArtifacts {
-    constructor(apiImages) {
-        this.apiImages = getAPIImages(apiImages);
-    }
-}
-
 const getAPIImages = (apiImages) => {
     let images = {}
     apiImages.forEach(element => {
-        images[element.imageTag] = element.imagePath;
+        images[element.IMAGE_TAG] = element.IMAGE_NAME;
     });
     return new APIImages(images);
 }

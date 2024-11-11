@@ -83,7 +83,7 @@ const deleteOrganization = async (orgId) => {
 const getOrgID = async (orgName) => {
     try {
         const organization = await orgEntities.Organization.findOne({
-            attributes: ['orgID'],
+            attributes: ['ORG_ID'],
             where: {
                 orgName: orgName
             }

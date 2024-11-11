@@ -14,7 +14,7 @@ const loadAPIs = async (req, res) => {
 
     const orgName = req.params.orgName;
     let organization = await orgDao.getOrgID(orgName);
-    let metaData = await loadAPIMetaDataList(organization.orgID, orgName);
+    let metaData = await loadAPIMetaDataList(organization.ORG_ID, orgName);
     let html;
     let templateContent = {
         apiMetadata: metaData,
@@ -105,12 +105,12 @@ async function loadAPIMetaDataList(orgID, orgName) {
         let randomNumber = Math.floor(Math.random() * 3) + 3;
         element.apiInfo.ratings = generateArray(randomNumber);
         element.apiInfo.ratingsNoFill = generateArray(5 - randomNumber);
-        const images = element.apiInfo.apiArtifacts.apiImages;
+        const images = element.apiInfo.apiImageMetadata;
         let apiImageUrl = '';
         for (var key in images) {
             apiImageUrl = config.apiMetaDataAPI + orgID + "/apis/" + element.apiID + "/template?fileName="
             const modifiedApiImageURL = apiImageUrl + images[key]
-            element.apiInfo.apiArtifacts.apiImages[key] = modifiedApiImageURL;
+            element.apiInfo.apiImageMetadata[key] = modifiedApiImageURL;
         }
     });
     return metaData;
@@ -124,7 +124,7 @@ async function loadAPIMetaData(orgID, apiID) {
     metaData = await metadataResponse.json();
 
     //replace image urls
-    const images = metaData.apiInfo.apiArtifacts.apiImages;
+    const images = metaData.apiInfo.apiImageMetadata;
     for (var key in images) {
         let apiImageUrl = config.apiMetaDataAPI + orgID + "/apis/" + apiID + "/template?fileName="
         const modifiedApiImageURL = apiImageUrl + images[key]

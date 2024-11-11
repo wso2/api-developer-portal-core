@@ -3,113 +3,104 @@ const sequelize = require('../db/sequelize')
 const APIContent = require('../models/apiContent')
 const AdditionalProperties = require('./additionalAPIProperties')
 const APIImages = require('./apiImages')
-const ThrottlingPolicy = require('./throttlingPolicy')
+const SubscriptionPolicy = require('./subscriptionPolicy')
 const { Organization } = require('./orgModels')
 
-const APIMetadata = sequelize.define('ApiMetadata', {
-  apiID: {
+const APIMetadata = sequelize.define('dp_api_metadata', {
+  API_ID: {
     type: DataTypes.UUID,
     defaultValue: Sequelize.UUIDV4,
     primaryKey: true
   },
-  apiName: {
+  REFERENCE_ID : {
+    type: DataTypes.UUID,
+    allowNull: false,
+    unique: true
+  },
+  API_NAME: {
     type: DataTypes.STRING,
     allowNull: false,
     unique: true
   },
-  apiDescription: {
+  API_DESCRIPTION: {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  apiVersion: {
+  API_VERSION: {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
-  apiType: {
+  API_TYPE: {
     type: DataTypes.ENUM,
     values: ['REST', 'AsyncAPI', 'GraphQL', 'SOAP'],
     allowNull: false
   },
-  apiCategory: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  tags: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  visibility: {
+  VISIBILITY: {
     type: DataTypes.ENUM,
     values: ['PUBLIC', 'PRIVATE'],
     allowNull: false
   },
-  visibleGroups: {
+  VISIBLE_GROUPS: {
     type: DataTypes.STRING,
     allowNull: true
   },
-  technicalOwner: {
+  TECHNICAL_OWNER: {
     type: DataTypes.STRING,
     allowNull: false
   },
-  businessOwner: {
+  TECHNICAL_OWNER_EMAIL: {
     type: DataTypes.STRING,
     allowNull: false
   },
-  sandboxUrl: {
+  BUSINESS_OWNER: {
     type: DataTypes.STRING,
     allowNull: false
   },
-  productionUrl: {
+  BUSINESS_OWNER_EMAIL: {
     type: DataTypes.STRING,
     allowNull: false
   },
-  metadata: {
+  SANDBOX_URL: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  PRODUCTION_URL: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  METADATA_SEARCH: {
     type: DataTypes.JSON,
     allowNull: false
   }
 }, {
   timestamps: false,
-  tableName: 'ApiMetadata',
+  tableName: 'dp_api_metadata',
   returning: false
 });
 
 APIContent.belongsTo(APIMetadata, {
-  foreignKey: 'apiID',
-});
-APIContent.belongsTo(Organization, {
-  foreignKey: 'orgID',
-});
-AdditionalProperties.belongsTo(APIMetadata, {
-  foreignKey: 'apiID',
-});
-AdditionalProperties.belongsTo(Organization, {
-  foreignKey: 'orgID',
+  foreignKey: 'API_ID',
 });
 APIImages.belongsTo(APIMetadata, {
-  foreignKey: 'apiID',
+  foreignKey: 'API_ID',
 });
-APIImages.belongsTo(Organization, {
-  foreignKey: 'orgID',
-});
-ThrottlingPolicy.belongsTo(APIMetadata, {
-  foreignKey: 'apiID',
-});
-ThrottlingPolicy.belongsTo(Organization, {
-  foreignKey: 'orgID',
+SubscriptionPolicy.belongsTo(APIMetadata, {
+  foreignKey: 'API_ID',
 });
 APIMetadata.belongsTo(Organization, {
-  foreignKey: 'orgID'
+  foreignKey: 'ORG_ID'
 })
-APIMetadata.hasMany(AdditionalProperties, { 
-  foreignKey: 'apiID', 
-  onDelete: 'CASCADE' 
-});
-APIMetadata.hasMany(ThrottlingPolicy, { 
-  foreignKey: 'apiID',
+
+APIMetadata.hasMany(SubscriptionPolicy, { 
+  foreignKey: 'API_ID',
   onDelete: 'CASCADE'
 });
 APIMetadata.hasMany(APIImages, { 
-  foreignKey: 'apiID',
+  foreignKey: 'API_ID',
+  onDelete: 'CASCADE'
+});
+APIMetadata.hasMany(APIContent, { 
+  foreignKey: 'API_ID',
   onDelete: 'CASCADE'
 });
 

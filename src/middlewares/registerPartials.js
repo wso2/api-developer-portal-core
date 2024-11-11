@@ -35,7 +35,7 @@ const registerPartialsFromAPI = async (req) => {
 
     const orgName = req.params.orgName;
     let organization = await orgDao.getOrgID(orgName);
-    let orgID = organization.orgID;
+    let orgID = organization.ORG_ID;
     let apiID = ''
     const apiName = req.params.apiName;
     if (apiName) {
@@ -67,16 +67,17 @@ const registerPartialsFromAPI = async (req) => {
         header: hbs.handlebars.compile(partialObject['header'])({ baseUrl: '/' + orgName, profile: req.user }),
         "hero": hbs.handlebars.compile(partialObject['hero'])({ baseUrl: '/' + orgName })
     };
-    if (req.originalUrl.includes("api")) {
+    if (req.originalUrl.includes("/api/")) {
         //fetch markdown content for API if exists
-        const markdownResponse = await fetch(apiContetnUrl + "apiContent.md");
-        const markdownContent = await markdownResponse.text();
+        console.log(apiContetnUrl)
+        let markdownResponse = await apiDao.getAPIFile("apiContent.md", orgID, apiID);
+        let markdownContent = markdownResponse.API_FILE.toString('utf8');
         const markdownHtml = markdownContent ? markdown.parse(markdownContent) : '';
-
+     
         //if hbs content available for API, render the hbs page
-        const additionalAPIContentResponse = await fetch(apiContetnUrl + "api-content.hbs");
-        const additionalAPIContent = await additionalAPIContentResponse.text();
-        partialObject["api-content"] = additionalAPIContent;
+        let additionalAPIContentResponse = await apiDao.getAPIFile("api-content.hbs", orgID, apiID);
+        let additionalAPIContent = additionalAPIContentResponse.API_FILE.toString('utf8');
+        partialObject["api-content"] = additionalAPIContent ? additionalAPIContent : '';
         hbs.handlebars.partials["api-content"] = hbs.handlebars.compile(partialObject['api-content'])({ content: markdownHtml });
     }
 }

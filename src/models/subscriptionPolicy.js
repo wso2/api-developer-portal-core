@@ -1,27 +1,21 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize')
 
-const ThrottlingPolicy = sequelize.define('ThrottlingPolicy', {
-    policyID: {
+const SubscriptionPolicy = sequelize.define('dp_api_subscription_policy', {
+    API_ID: {
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true
     },
-    policyName: {
+    POLICY_NAME: {
         type: DataTypes.STRING,
         allowNull: false,
-    },
-    description: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    category:{
-        type: DataTypes.STRING
+        primaryKey: true
     }
 }, {
     timestamps: false,
-    tableName: 'ThrottlingPolicy',
+    tableName: 'dp_api_subscription_policy',
     returning: false
 });
 
-module.exports = ThrottlingPolicy;
+module.exports = SubscriptionPolicy;
