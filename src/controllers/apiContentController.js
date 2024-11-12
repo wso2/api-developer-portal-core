@@ -88,7 +88,6 @@ const loadTryOutPage = async (req, res) => {
         const templateResponse = fs.readFileSync(completeTemplatePath, 'utf-8');
         const layoutResponse = await loadLayoutFromAPI(orgName)
         html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
-
     }
     res.send(html);
 }

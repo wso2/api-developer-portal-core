@@ -195,8 +195,8 @@ const createAPITemplate = async (req, res) => {
 
         await sequelize.transaction(async t => {
             // Store image metadata
-            await apiDao.storeAPIImageMetadata(imageMetadata, apiID, orgId, t);
-            await apiDao.storeAPIFiles(apiContent, apiID, orgId, t);
+            await apiDao.storeAPIImageMetadata(imageMetadata, apiID, t);
+            await apiDao.storeAPIFiles(apiContent, apiID, t);
         });
         await fs.rm(extractPath, { recursive: true, force: true });
 

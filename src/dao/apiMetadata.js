@@ -62,29 +62,7 @@ const createSubscriptionPolicy = async (subscriptionPolicies, apiID, orgID, t) =
     }
 }
 
-const storeAdditionalProperties = async (additionalProperties, apiID, orgID, t) => {
-
-    let additonalPropertyList = [];
-    try {
-        for (var propertyKey in additionalProperties) {
-            additonalPropertyList.push({
-                key: propertyKey,
-                value: additionalProperties[propertyKey],
-                apiID: apiID,
-                orgID: orgID
-            })
-        }
-        const additionalAPIPropertiesResponse = await AdditionalProperties.bulkCreate(additonalPropertyList, { transaction: t });
-        return additionalAPIPropertiesResponse;
-    } catch (error) {
-        if (error instanceof Sequelize.UniqueConstraintError) {
-            throw error;
-        }
-        throw new Sequelize.DatabaseError(error);
-    }
-}
-
-const storeAPIImageMetadata = async (apiImages, apiID, orgID, t) => {
+const storeAPIImageMetadata = async (apiImages, apiID, t) => {
 
     let apiImagesList = [];
     try {
@@ -105,9 +83,6 @@ const storeAPIImageMetadata = async (apiImages, apiID, orgID, t) => {
     }
 }
 
-
-
-
 const storeAPIFile = async (apiDefinition, fileName, apiID, orgID, t) => {
 
     try {
@@ -126,7 +101,7 @@ const storeAPIFile = async (apiDefinition, fileName, apiID, orgID, t) => {
     }
 }
 
-const storeAPIFiles = async (files, apiID, orgID, t) => {
+const storeAPIFiles = async (files, apiID, t) => {
 
     let apiContent = []
     try {
@@ -163,13 +138,20 @@ const updateOrCreateAPIFiles = async (files, apiID, orgID, t) => {
                 const updateResponse = await APIContent.update(
                     {
                         API_FILE: file.content,
-                        FILE_NAME: file.fileName
                     },
                     {
                         where: {
                             API_ID: apiID,
                             FILE_NAME: apiFileResponse.FILE_NAME,
-                        }
+                        },
+                        include: [
+                            {
+                                model: APIMetadata,
+                                where: {
+                                    ORG_ID: orgID
+                                }
+                            }
+                        ]
                     }
                 );
             }
@@ -192,7 +174,15 @@ const getAPIFile = async (fileName, orgID, apiID, t) => {
             where: {
                 FILE_NAME: fileName,
                 API_ID: apiID
-            }
+            },
+            include: [
+                {
+                    model: APIMetadata,
+                    where: {
+                        ORG_ID: orgID
+                    }
+                }
+            ]
         }, { transaction: t });
         return apiFileResponse;
     } catch (error) {
@@ -221,6 +211,10 @@ const getAPIMetadata = async (orgID, apiID, t) => {
                 required: false
             }
             ],
+            where: {
+                ORG_ID: orgID,
+                API_ID: apiID
+            }
         }, { transaction: t });
         return apiMetadataResponse;
     } catch (error) {
@@ -236,7 +230,7 @@ const getAllAPIMetadata = async (orgID, t) => {
     try {
         const apiMetadataResponse = await APIMetadata.findAll({
             where: {
-                ORG_ID: orgID 
+                ORG_ID: orgID
             },
             include: [{
                 model: APIImageMetadata,
@@ -315,37 +309,43 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
 async function updateSubscriptionPolicy(orgID, apiID, subscriptionPolicies, t) {
 
     policiesToCreate = [];
-    for (const policy of subscriptionPolicies) {
-        const subscriptionResponse = await getSubscriptionPolicy(policy.policyName, apiID, t);
-        if (subscriptionResponse == null || subscriptionResponse == undefined) {
-            policiesToCreate.push({
-                POLICY_NAME: policy.policyName,
-                API_ID: apiID
-            })
-        } else {
-            const apiImageDataUpdate = await SubscriptionPolicy.update({
-                POLICY_NAME: policy.policyName
-            }, {
-                where: {
-                    POLICY_NAME: subscriptionResponse.POLICY_NAME,
+    try {
+        for (const policy of subscriptionPolicies) {
+            const subscriptionResponse = await getSubscriptionPolicy(policy.policyName, apiID, orgID, t);
+            if (subscriptionResponse == null || subscriptionResponse == undefined) {
+                policiesToCreate.push({
+                    POLICY_NAME: policy.policyName,
                     API_ID: apiID
-                }
-            }, { transaction: t });
+                })
+            }
         }
-    }
-    if (policiesToCreate.length > 0) {
-        await SubscriptionPolicy.bulkCreate(policiesToCreate, { transaction: t });
+        if (policiesToCreate.length > 0) {
+            await SubscriptionPolicy.bulkCreate(policiesToCreate, { transaction: t });
+        }
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
     }
 }
 
-const getSubscriptionPolicy = async (policyName, apiID, t) => {
+const getSubscriptionPolicy = async (policyName, apiID, orgID, t) => {
 
     try {
         const subscriptionPolicyResponse = await SubscriptionPolicy.findOne({
             where: {
                 API_ID: apiID,
                 POLICY_NAME: policyName
-            }
+            },
+            include: [
+                {
+                    model: APIMetadata,
+                    where: {
+                        ORG_ID: orgID
+                    }
+                }
+            ]
         }, { transaction: t });
         return subscriptionPolicyResponse;
     } catch (error) {
@@ -379,7 +379,15 @@ const updateAPIImageMetadata = async (apiImages, orgID, apiID, t) => {
                             { IMAGE_NAME: apiImageResponse.IMAGE_NAME }
                         ],
                         API_ID: apiID
-                    }
+                    },
+                    include: [
+                        {
+                            model: APIMetadata,
+                            where: {
+                                ORG_ID: orgID
+                            }
+                        }
+                    ]
                 }, { transaction: t });
             }
             if (imageCreateList.length > 0) {
@@ -404,7 +412,15 @@ const getImageMetadata = async (imageTag, imageName, orgID, apiID, t) => {
                     { IMAGE_NAME: imageName }
                 ],
                 API_ID: apiID
-            }
+            },
+            include: [
+                {
+                    model: APIMetadata,
+                    where: {
+                        ORG_ID: orgID
+                    }
+                }
+            ]
         }, { transaction: t });
         return apiImageData;
     } catch (error) {
@@ -427,8 +443,17 @@ const updateAPIFile = async (apiFile, fileName, apiID, orgID, t) => {
                 where: {
                     API_ID: apiID,
                     FILE_NAME: fileName,
-                }
-            }, { transaction: t }
+                },
+                include: [
+                    {
+                        model: APIMetadata,
+                        where: {
+                            ORG_ID: orgID
+                        }
+                    }
+                ]
+            },
+            { transaction: t }
         );
         return apiFileResponse;
     } catch (error) {
@@ -446,7 +471,15 @@ const deleteAPIFile = async (fileName, orgID, apiID, t) => {
             where: {
                 FILE_NAME: fileName,
                 API_ID: apiID,
-            }
+            },
+            include: [
+                {
+                    model: APIMetadata,
+                    where: {
+                        ORG_ID: orgID
+                    }
+                }
+            ]
         }, { transaction: t });
         return apiFileResponse;
     } catch (error) {
