@@ -106,7 +106,8 @@ const createOrgContent = async (req, res) => {
             res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
             fs.rmSync(extractPath, { recursive: true, force: true });
         } catch (error) {
-        return util.handleError(res, error);
+            fs.rmSync(extractPath, { recursive: true, force: true });
+            return util.handleError(res, error);
     }
 };
 
@@ -160,8 +161,10 @@ const updateOrgContent = async (req, res) => {
                 }
             }
         }
+        fs.rmSync(extractPath, { recursive: true, force: true });
         res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
     } catch (error) {
+        fs.rmSync(extractPath, { recursive: true, force: true });
         util.handleError(res, error);
     }
 };
