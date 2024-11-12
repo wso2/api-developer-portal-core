@@ -50,7 +50,6 @@ const updateOrganization = async (req, res) => {
             throw new CustomError("Missing or Invalid fields in the request payload");
         }
 
-        // Create organization in the database
         const [updatedRowsCount, updatedOrg] = await adminDao.updateOrganization({
             orgId,
             orgName,
@@ -73,6 +72,7 @@ const updateOrganization = async (req, res) => {
         util.handleError(res, error);
     }
 };
+
 const deleteOrganization = async (req, res) => {
     try {
         let orgId = req.params.orgId;
@@ -216,7 +216,8 @@ async function readFilesInDirectory(directory, orgId, baseDir = '') {
             if (file.name.endsWith(".css")) {
                 fileType = "style"
                 if (file.name == "main.css") {
-                    strContent = strContent.replace(/@import\s*'\/styles\/([^']+)';/g, `@import url("${config.devportalAPI}organizations/${orgId}/layout?fileType=style&fileName=$1");`);
+                    strContent = strContent.replace(/@import\s*'\/styles\/([^']+)';/g, 
+                        `@import url("${config.devportalAPI}organizations/${orgId}/layout?fileType=style&fileName=$1");`);
                     content = Buffer.from(strContent, 'utf-8');
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {

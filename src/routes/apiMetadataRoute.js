@@ -10,5 +10,4 @@ router.get('/api', apiMetadataService.getAPIMetadata);
 router.get('/apis', apiMetadataService.getAllAPIMetadata);
 router.put('/api', upload.single('apiDefinition'), apiMetadataService.updateAPIMetadata);
 router.delete('/api', apiMetadataService.deleteAPIMetadata);
-
 module.exports = router;

@@ -20,8 +20,7 @@ const createOrganization = async (orgData) => {
 };
 
 const getOrganization = async (param) => {
-    console.log('param', param);
-    
+
     const isUUID = validate(param);
     const condition = isUUID ? { ORG_ID: param } : { ORG_NAME: param };
 
@@ -98,6 +97,9 @@ const createOrgContent = async (orgData) => {
         });
         return orgContent;
     } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
         throw new Sequelize.DatabaseError(error);
     }
 }
@@ -110,10 +112,10 @@ const updateOrgContent = async (orgData) => {
             FILE_CONTENT: orgData.fileContent,
             FILE_PATH: orgData.filePath,
         },
-        {
-            where: { FILE_TYPE: orgData.fileType, FILE_NAME: orgData.fileName, FILE_PATH: orgData.filePath, ORG_ID: orgData.orgId },
-            returning: true
-        });
+            {
+                where: { FILE_TYPE: orgData.fileType, FILE_NAME: orgData.fileName, FILE_PATH: orgData.filePath, ORG_ID: orgData.orgId },
+                returning: true
+            });
         if (updatedRowsCount < 1) {
             throw new Sequelize.EmptyResultError('No new resources found');
         } else {
@@ -132,12 +134,14 @@ const getOrgContent = async (orgData) => {
         let organization;
 
         if (orgData.fileType && orgData.fileName && orgData.filePath) {
-            organization = await OrgContent.findOne({ where: { ORG_ID: orgData.orgId, FILE_TYPE: orgData.fileType, FILE_NAME: orgData.fileName, FILE_PATH: orgData.filePath } });
+            organization = await OrgContent.findOne({ where: { ORG_ID: orgData.orgId, FILE_TYPE: orgData.fileType, 
+                FILE_NAME: orgData.fileName, FILE_PATH: orgData.filePath } });
         } else if (orgData.fileType && orgData.fileName) {
-            organization = await OrgContent.findOne({ where: { ORG_ID: orgData.orgId, FILE_TYPE: orgData.fileType, FILE_NAME: orgData.fileName } });
+            organization = await OrgContent.findOne({ where: { ORG_ID: orgData.orgId, FILE_TYPE: orgData.fileType, 
+                FILE_NAME: orgData.fileName } });
         } else if (orgData.fileType) {
             organization = await OrgContent.findAll({ where: { ORG_ID: orgData.orgId, FILE_TYPE: orgData.fileType } });
-        }  
+        }
         return organization;
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
@@ -149,9 +153,8 @@ const getOrgContent = async (orgData) => {
 
 const deleteOrgContent = async (orgId, fileName) => {
     try {
-        const deletedRowsCount = await OrgContent.destroy({
-            where: { ORG_ID: orgId, FILE_NAME: fileName }
-        });
+        const deletedRowsCount = await OrgContent.destroy({ where: { ORG_ID: orgId, FILE_NAME: fileName }});
+        
         if (deletedRowsCount < 1) {
             throw Object.assign(new Sequelize.EmptyResultError('Organization content not found'));
         } else {

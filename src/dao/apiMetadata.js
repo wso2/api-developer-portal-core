@@ -1,5 +1,4 @@
 const { APIMetadata } = require('../models/apiMetadata');
-const APIImages = require('../models/apiImages');
 const ThrottlingPolicy = require('../models/throttlingPolicy');
 const AdditionalProperties = require('../models/additionalAPIProperties');
 const APIContent = require('../models/apiContent');
@@ -97,6 +96,9 @@ const storeAPIDefinition = async (apiDefinition, fileName, apiID, t) => {
         throw new Sequelize.DatabaseError(error);
     }
 }
+
+
+
 module.exports = {
     createAPIMetadata,
     createThrottlingPolicy,

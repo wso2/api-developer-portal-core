@@ -15,7 +15,6 @@ const loadOrganizationContent = async (req, res) => {
     } else {
         html = await loadOrgContentFromAPI(req, res)
     }
-    console.log("HTML:", html);
     res.send(html);
 }
 
