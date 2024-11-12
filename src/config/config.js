@@ -1,6 +1,5 @@
 var config = {};
 
-config.adminAPI = "http://localhost:3000/admin/";
 config.apiMetaDataAPI = "http://localhost:9090/apiMetadata/"
 config.devportalAPI = "http://localhost:3000/devportal/"
 config.port = 3000

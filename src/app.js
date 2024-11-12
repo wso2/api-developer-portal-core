@@ -6,7 +6,6 @@ const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const authRoute = require('./routes/authRoute');
-const adminRoute = require('./routes/adminRoute');
 const apiMetaDataRoute = require('./routes/apiMetadataRoute');
 const devportalRoute = require('./routes/devportalRoute');
 const orgContent = require('./routes/orgContentRoute');
@@ -88,7 +87,6 @@ process.on('exit', () => {
 });
 
 //backend routes
-app.use('/admin', adminRoute);
 app.use('/apiMetadata', apiMetaDataRoute);
 app.use('/devportal', devportalRoute);
 

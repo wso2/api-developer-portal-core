@@ -32,7 +32,7 @@ const loadCustomContent = async (req, res) => {
 
     } else {
         let content = {}
-        const orgResponse = await fetch(`${config.adminAPI}organizations/${orgName}`);
+        const orgResponse = await fetch(`${config.devportalAPI}organizations/${orgName}`);
         const orgData = await orgResponse.json();
 
         const markdownResponse = await fetch(`${config.devportalAPI}organizations${orgData.orgId}filePath${filePath}`);

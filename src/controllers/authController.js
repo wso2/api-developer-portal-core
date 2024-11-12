@@ -13,7 +13,7 @@ const fetchAuthJsonContent = async (orgName) => {
         return authJson;
     }
     try {
-        const response = await fetch(`${config.adminAPI}identityProvider?orgName=${orgName}`);
+        const response = await fetch(`${config.devportalAPI}identityProvider?orgName=${orgName}`);
         if (!response.ok) {
             throw new Error(`Failed to fetch identity provider details: ${response.statusText}`);
         }
