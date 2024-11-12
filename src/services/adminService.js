@@ -143,10 +143,10 @@ const updateOrgContent = async (req, res) => {
     try {
         for (const { filePath, fileName, fileContent, fileType } of files) {
             if (fileName != null && !fileName.startsWith('.')) {
-                let organizationContent = await getOrgContent(orgId, fileType, fileName, filePath);
+                const organizationContent = await getOrgContent(orgId, fileType, fileName, filePath);
 
                 if (organizationContent) {
-                    const orgContent = await adminDao.updateOrgContent({
+                    await adminDao.updateOrgContent({
                         fileType: fileType,
                         fileName: fileName,
                         fileContent: fileContent,

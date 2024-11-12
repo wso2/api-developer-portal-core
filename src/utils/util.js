@@ -169,7 +169,7 @@ function handleError(res, error) {
         });
     } else if (error instanceof CustomError) {
         console.log("Custom Error:", error.statusCode);
-        return res.status(404).json({
+        return res.status(error.statusCode).json({
             code: error.statusCode,
             message: error.message,
             description: error.description
