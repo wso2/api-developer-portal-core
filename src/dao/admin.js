@@ -1,4 +1,4 @@
-const { Organization, OrgContent, OrgImage } = require('../models/orgModels');
+const { Organization, OrgContent } = require('../models/orgModels');
 const { validate } = require('uuid');
 const { Sequelize } = require('sequelize');
 
@@ -154,7 +154,7 @@ const getOrgContent = async (orgData) => {
 const deleteOrgContent = async (orgId, fileName) => {
     try {
         const deletedRowsCount = await OrgContent.destroy({ where: { ORG_ID: orgId, FILE_NAME: fileName }});
-        
+
         if (deletedRowsCount < 1) {
             throw Object.assign(new Sequelize.EmptyResultError('Organization content not found'));
         } else {

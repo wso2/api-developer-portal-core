@@ -64,7 +64,7 @@ app.use('/styles', express.static(path.join(__dirname, filePrefix + 'styles')));
 
 app.set('view engine', 'hbs');
 
-if (config.mode == 'single' || config.mode == 'design') {
+if (config.mode === 'single' || config.mode === 'design') {
     //register images and stylesheet folders for single tenante scenario
     app.use('/images', express.static(path.join(__dirname, filePrefix + 'images')));
     copyStyelSheet();
@@ -92,7 +92,7 @@ app.use('/admin', adminRoute);
 app.use('/apiMetadata', apiMetaDataRoute);
 app.use('/devportal', devportalRoute);
 
-if (config.mode == 'design') {
+if (config.mode === 'design') {
     app.use('/mock', express.static(path.join(__dirname, filePrefix + 'mock')));
     app.use('/', registerPartials);
     app.use('/', designRoute);

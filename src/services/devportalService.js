@@ -23,7 +23,8 @@ const getOrgContent = async (req, res) => {
     try {
         if (req.query.fileType && req.query.fileName) {
            const asset = await adminService.getOrgContent(req.params.orgId, req.query.fileType, req.query.fileName, req.query.filePath);
-
+           let contentType;
+           
             if (asset.FILE_TYPE === 'image') {
                 if (asset.FILE_NAME.endsWith('.svg')) {
                     contentType = 'image/svg+xml';

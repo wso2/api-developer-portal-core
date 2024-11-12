@@ -6,7 +6,7 @@ const path = require('path');
 const exphbs = require('express-handlebars');
 
 
-filePrefix = '../../../../src/'
+let filePrefix = '../../../../src/'
 const generateArray = (length) => Array.from({ length });
 let baseURL = "http://localhost:" + config.port;
 
@@ -15,14 +15,14 @@ const loadAPIs = async (req, res) => {
     const orgName = req.params.orgName;
     let metaData = await loadAPIMetaDataList(orgName);
     let html;
-    if (config.mode == 'design')
+    if (config.mode === 'design')
         baseURL = orgName;
 
     let templateContent = {
         apiMetadata: metaData,
         baseUrl: baseURL
     }
-    if (config.mode == 'single' || config.mode == 'design') {
+    if (config.mode === 'single' || config.mode === 'design') {
         html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     } else {
         html = await renderTemplateFromAPI(templateContent, orgName, "apis");
@@ -39,7 +39,7 @@ const loadAPIContent = async (req, res) => {
     const metaData = await loadAPIMetaData(orgName, apiName);
     const apiContentUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
 
-    if (config.mode == 'single') {
+    if (config.mode === 'single') {
         const markdownResponse = await fetch(apiContentUrl + "&fileName=apiContent.md");
         const markdownContent = await markdownResponse.text();
         const markdownHtml = markdownContent ? markdown.parse(markdownContent) : '';
@@ -59,7 +59,7 @@ const loadAPIContent = async (req, res) => {
             schemaUrl: config.apiMetaDataAPI + "apiDefinition?orgName=" + orgName + "&apiID=" + apiName
         }
         html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
-    } else if (config.mode == 'design') {
+    } else if (config.mode === 'design') {
         const filePath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + '/api-content.hbs');
 
         if (fs.existsSync(filePath)) {
@@ -98,11 +98,11 @@ const loadTryOutPage = async (req, res) => {
         apiType: metaData.apiInfo.apiType,
         swagger: apiDefinitionContent
     }
-    if (config.mode == 'single') {
+    if (config.mode === 'single') {
 
         html = renderTemplate('../pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
 
-    } else if (config.mode == 'design') {
+    } else if (config.mode === 'design') {
 
         const mockAPIDataPath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + '/apiMetadata.json');
         const apiMetaData = JSON.parse(fs.readFileSync(mockAPIDataPath, 'utf-8'));
@@ -134,7 +134,7 @@ const loadTryOutPage = async (req, res) => {
 async function loadAPIMetaDataList(orgName) {
 
     let metaData = {};
-    if (config.mode == 'design') {
+    if (config.mode === 'design') {
         const mockAPIMetaDataPath = path.join(__dirname, filePrefix + '../mock', 'apiMetadata.json');
         const mockAPIMetaData = JSON.parse(fs.readFileSync(mockAPIMetaDataPath, 'utf-8'));
         mockAPIMetaData.forEach(element => {
@@ -157,7 +157,7 @@ async function loadAPIMetaDataList(orgName) {
             const images = element.apiInfo.apiArtifacts.apiImages;
             let apiImageUrl = '';
             for (var key in images) {
-                if (config.env == 'local') {
+                if (config.env === 'local') {
                     apiImageUrl = config.apiImageURL + "apiFiles?orgName=" + element.apiInfo.orgName + "&apiID=" + element.apiInfo.apiName;
                 } else {
                     apiImageUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + element.apiInfo.orgName + "&apiID=" + element.apiInfo.apiName;
@@ -174,7 +174,7 @@ async function loadAPIMetaDataList(orgName) {
 async function loadAPIMetaData(orgName, apiName) {
 
     let metaData = {};
-    if (config.mode == 'design') {
+    if (config.mode === 'design') {
         const mockAPIDataPath = path.join(__dirname, filePrefix + '../mock', apiName + '/apiMetadata.json');
         const mockAPIData = JSON.parse(fs.readFileSync(mockAPIDataPath, 'utf-8'));
         metaData = mockAPIData;

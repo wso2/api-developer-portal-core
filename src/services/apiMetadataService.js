@@ -16,19 +16,19 @@ const createAPIMetadata = async (req, res) => {
         if (!apiMetadata.endPoints || !apiMetadata.apiInfo || !apiDefinitionFile) {
             throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
         }
-        const result = await sequelize.transaction(async t => {
+        await sequelize.transaction(async t => {
             // Create apimetadata record
             const createdAPI = await apiDao.createAPIMetadata(apiMetadata, t);
             const apiID = createdAPI.dataValues.apiID;
             // Create response object
-            const apiCreationResponse = new APIResponse(createdAPI);
+            new APIResponse(createdAPI);
 
             if (apiMetadata.throttlingPolicies) {
                 let throttlingPolicies = apiMetadata.throttlingPolicies;
                 if (!Array.isArray(throttlingPolicies)) {
                     throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
                 }
-                const throttlingPolicyResponse = await apiDao.createThrottlingPolicy(throttlingPolicies, apiID, t);
+                await apiDao.createThrottlingPolicy(throttlingPolicies, apiID, t);
                 APIResponse.throttlingPolicies = throttlingPolicies;
             }
             if (apiMetadata.apiInfo.additionalProperties) {
@@ -36,7 +36,7 @@ const createAPIMetadata = async (req, res) => {
                 if (!Array.isArray(additionalProperties)) {
                     throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
                 }
-                const additionalPropertyResponse = await apiDao.storeAdditionalProperties(additionalProperties, apiID, t);
+                await apiDao.storeAdditionalProperties(additionalProperties, apiID, t);
                 //apiCreationResponse.apiInfo.additionalProperties = additionalPropertyResponse;
             }
             const storeAPIDefinition = await apiDao.storeAPIDefinition(apiDefinitionFile, apiFileName, apiID, t)
@@ -52,18 +52,18 @@ const createAPIMetadata = async (req, res) => {
     }
 };
 
-const getAPIMetadata = async (req, res) => {
+const getAPIMetadata = async () => {
 
 };
 
-const getAllAPIMetadata = async (req, res) => {
-    
-};
-
-const updateAPIMetadata = async (req, res) => {
+const getAllAPIMetadata = async () => {
 
 };
-const deleteAPIMetadata = async (req, res) => {
+
+const updateAPIMetadata = async () => {
+
+};
+const deleteAPIMetadata = async () => {
    
 };
 

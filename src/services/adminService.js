@@ -3,7 +3,6 @@ const adminDao = require('../dao/admin');
 const util = require('../utils/util');
 const fs = require('fs');
 const path = require('path');
-const { concatAST } = require('graphql');
 const config = require('../config/config');
 
 const createOrganization = async (req, res) => {
@@ -50,7 +49,7 @@ const updateOrganization = async (req, res) => {
             throw new CustomError("Missing or Invalid fields in the request payload");
         }
 
-        const [updatedRowsCount, updatedOrg] = await adminDao.updateOrganization({
+        const [, updatedOrg] = await adminDao.updateOrganization({
             orgId,
             orgName,
             businessOwner,
@@ -113,6 +112,7 @@ const createOrgContent = async (req, res) => {
 
 const createContent = async (filePath, fileName, fileContent, fileType, orgId) => {
     let content;
+    // eslint-disable-next-line no-useless-catch
     try {
         if (fileName != null && !fileName.startsWith('.')) {
 
@@ -215,14 +215,14 @@ async function readFilesInDirectory(directory, orgId, baseDir = '') {
 
             if (file.name.endsWith(".css")) {
                 fileType = "style"
-                if (file.name == "main.css") {
+                if (file.name === "main.css") {
                     strContent = strContent.replace(/@import\s*'\/styles\/([^']+)';/g, 
                         `@import url("${config.devportalAPI}organizations/${orgId}/layout?fileType=style&fileName=$1");`);
                     content = Buffer.from(strContent, 'utf-8');
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                 fileType = "layout"
-                if (file.name == "main.hbs") {
+                if (file.name === "main.hbs") {
                     strContent = strContent.replace(/\/styles\//g, `${config.devportalAPI}organizations/${orgId}/layout?fileType=style&fileName=`);
                     content = Buffer.from(strContent, 'utf-8');
                 }

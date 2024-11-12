@@ -142,7 +142,7 @@ async function renderGivenTemplate(templatePage, layoutPage, templateContent) {
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutPage.toString());
 
-    html = layout({
+    const html = layout({
         body: template(templateContent),
     });
     return html;
