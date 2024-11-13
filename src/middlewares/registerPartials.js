@@ -4,8 +4,9 @@ const exphbs = require('express-handlebars');
 const config = require('../config/config');
 const markdown = require('marked');
 const adminDao = require('../dao/admin');
+const constants = require('../utils/constants');
 
-let filePrefix = '../../../../src/';
+let filePrefix = constants.FILE_PREFIX;
 
 const registerPartials = async (req, res, next) => {
 

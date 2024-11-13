@@ -19,7 +19,7 @@ const constants = require('./utils/constants');
 
 const app = express();
 const secret = crypto.randomBytes(64).toString('hex');
-const filePrefix = '../../../src/';
+const filePrefix = constants.FILE_PREFIX;
 
 app.engine('.hbs', engine({
     extname: '.hbs'

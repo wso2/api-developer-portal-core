@@ -6,7 +6,7 @@ const path = require('path');
 const exphbs = require('express-handlebars');
 const constants = require('../utils/constants');
 
-let filePrefix = '../../../../src/'
+let filePrefix = constants.FILE_PREFIX;
 const generateArray = (length) => Array.from({ length });
 let baseURL = "http://localhost:" + config.port;
 

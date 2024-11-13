@@ -10,7 +10,7 @@ const constants = require('../utils/constants');
 
 const { Sequelize } = require('sequelize');
 
-var filePrefix = '../../../../src/';
+const filePrefix = constants.FILE_PREFIX;
 
 function copyStyelSheetMulti() {
 

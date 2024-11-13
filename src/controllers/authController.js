@@ -3,11 +3,12 @@ const passport = require('passport');
 const config = require('../config/config');
 const fs = require('fs');
 const path = require('path');
+const constants = require('../utils/constants');
 
-const filePrefix = '../../../../src/'
+const filePrefix = constants.FILE_PREFIX
 
 const fetchAuthJsonContent = async (orgName) => {
-    if (config.mode === 'design') {
+    if (config.mode === constants.DEV_MODE) {
         const authJsonPath = path.join(__dirname, filePrefix + '../mock', 'auth.json');
         const authJson = JSON.parse(fs.readFileSync(authJsonPath, 'utf-8'));
         return authJson;

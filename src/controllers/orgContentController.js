@@ -2,15 +2,16 @@ const path = require('path');
 const fs = require('fs');
 const { renderTemplate, renderTemplateFromAPI } = require('../utils/util');
 const config = require('../config/config');
+const constants = require('../utils/constants');
 
 
-let filePrefix = '../../../../src/'
+let filePrefix = constants.FILE_PREFIX;
 
 
 const loadOrganizationContent = async (req, res) => {
 
     let html = "";
-    if (config.mode === 'single' || config.mode === 'design') {
+    if (constants.DEV_MODE) {
         html = await loadOrgContentFromFile(req, res)
     } else {
         html = await loadOrgContentFromAPI(req, res)
