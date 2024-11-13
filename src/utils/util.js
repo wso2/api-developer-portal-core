@@ -127,11 +127,15 @@ async function renderTemplateFromAPI(templateContent, orgName, filePath) {
     var html;
     if (Object.keys(templateContent).length === 0 && templateContent.constructor === Object) {
         html = layout({
-            body: template
+            body: template({
+                baseUrl: '/' + orgName
+            }),
         });
     } else {
         html = layout({
-            body: template(templateContent)
+            body: template({
+                baseUrl: '/' + orgName
+            }),
         });
     }
     return html;
@@ -189,32 +193,32 @@ function handleError(res, error) {
 
 const unzipFile = async (zipPath, extractPath) => {
     const extractedFiles = [];
-    await new Promise((resolve, reject) => { 
+    await new Promise((resolve, reject) => {
         fs.createReadStream(zipPath)
-        .pipe(unzipper.Parse())
-        .on('entry', entry => {
-            const entryPath = entry.path;
+            .pipe(unzipper.Parse())
+            .on('entry', entry => {
+                const entryPath = entry.path;
 
-            if (!entryPath.includes('__MACOSX')) {
-                const filePath = path.join(extractPath, entryPath);
+                if (!entryPath.includes('__MACOSX')) {
+                    const filePath = path.join(extractPath, entryPath);
 
-                if (entry.type === 'Directory') {
-                    fs.mkdirSync(filePath, { recursive: true });
-                    entry.autodrain();
+                    if (entry.type === 'Directory') {
+                        fs.mkdirSync(filePath, { recursive: true });
+                        entry.autodrain();
+                    } else {
+                        extractedFiles.push(filePath);
+                        entry.pipe(fs.createWriteStream(filePath));
+                    }
                 } else {
-                    extractedFiles.push(filePath);
-                    entry.pipe(fs.createWriteStream(filePath));
+                    entry.autodrain();
                 }
-            } else {
-                entry.autodrain();
-            }
-        })
-        .on('close', async () => {
-            extractedFiles.length > 0 ? resolve() : reject(new Error('No files were extracted'));
-        })
-        .on('error', err => {
-            reject(new Error(`Unzip failed: ${err.message}`));
-        });
+            })
+            .on('close', async () => {
+                extractedFiles.length > 0 ? resolve() : reject(new Error('No files were extracted'));
+            })
+            .on('error', err => {
+                reject(new Error(`Unzip failed: ${err.message}`));
+            });
     });
 };
 

@@ -67,8 +67,7 @@ const registerPartialsFromAPI = async (req) => {
     hbs.handlebars.partials = {
         ...hbs.handlebars.partials,
         header: hbs.handlebars.compile(partialObject['header'])({ baseUrl: '/' + req.originalUrl.split("/")[1], profile: req.user }),
-        "api-content": hbs.handlebars.compile(partialObject['api-content'])({ content: markdownHtml }),
-        "hero": hbs.handlebars.compile(partialObject['hero'])({ baseUrl: '/' + req.originalUrl.split("/")[1] })
+        "api-content": hbs.handlebars.compile(partialObject['api-content'])({ content: markdownHtml })
     };
 }
 
