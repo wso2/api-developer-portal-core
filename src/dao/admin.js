@@ -129,20 +129,30 @@ const updateOrgContent = async (orgData) => {
     }
 }
 
+
+
 const getOrgContent = async (orgData) => {
     try {
-        let organization;
-
-        if (orgData.fileType && orgData.fileName && orgData.filePath) {
-            organization = await OrgContent.findOne({ where: { ORG_ID: orgData.orgId, FILE_TYPE: orgData.fileType, 
-                FILE_NAME: orgData.fileName, FILE_PATH: orgData.filePath } });
-        } else if (orgData.fileType && orgData.fileName) {
-            organization = await OrgContent.findOne({ where: { ORG_ID: orgData.orgId, FILE_TYPE: orgData.fileType, 
-                FILE_NAME: orgData.fileName } });
-        } else if (orgData.fileType) {
-            organization = await OrgContent.findAll({ where: { ORG_ID: orgData.orgId, FILE_TYPE: orgData.fileType } });
+        if (orgData.fileName || orgData.filePath) {
+            return await OrgContent.findOne(
+                {
+                    where: {
+                        ORG_ID: orgData.orgId,
+                        FILE_TYPE: orgData.fileType,
+                        ...(orgData.fileName && { FILE_NAME: orgData.fileName }),
+                        ...(orgData.filePath && { FILE_PATH: orgData.filePath })
+                    }
+                });
+        } else {
+            return await OrgContent.findAll(
+                {
+                    where: {
+                        ORG_ID: orgData.orgId,
+                        FILE_TYPE: orgData.fileType,
+                    }
+                });
         }
-        return organization;
+
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -153,7 +163,7 @@ const getOrgContent = async (orgData) => {
 
 const deleteOrgContent = async (orgId, fileName) => {
     try {
-        const deletedRowsCount = await OrgContent.destroy({ where: { ORG_ID: orgId, FILE_NAME: fileName }});
+        const deletedRowsCount = await OrgContent.destroy({ where: { ORG_ID: orgId, FILE_NAME: fileName } });
 
         if (deletedRowsCount < 1) {
             throw Object.assign(new Sequelize.EmptyResultError('Organization content not found'));

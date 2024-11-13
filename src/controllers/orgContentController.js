@@ -11,7 +11,7 @@ let filePrefix = constants.FILE_PREFIX;
 const loadOrganizationContent = async (req, res) => {
 
     let html = "";
-    if (constants.DEV_MODE) {
+    if (config.mode === constants.DEV_MODE) {
         html = await loadOrgContentFromFile(req, res)
     } else {
         html = await loadOrgContentFromAPI(req, res)

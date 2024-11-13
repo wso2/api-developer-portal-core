@@ -2,6 +2,7 @@ module.exports = {
     DEV_MODE: 'development',
     FILE_PREFIX: '../../../../src/',
     IMAGE: 'image',
+    STYLE: 'style',
     CHARSET_UTF8: 'utf-8',
 
     MIME_TYPES: {
@@ -41,6 +42,16 @@ module.exports = {
       IMAGES: '/images',
       DEFAULT: '/',
       MOCK: '/mock'
+    },
+
+    FILE_TYPE: {
+        LAYOUT: 'layout',
+        TEMPLATE: 'template',
+    },
+
+    FILE_NAME: {
+        MAIN: 'main.hbs',
+        PAGE: 'page.hbs',
     }
 }
 

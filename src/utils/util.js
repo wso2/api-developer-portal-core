@@ -2,7 +2,6 @@ const path = require('path');
 const fs = require('fs');
 const marked = require('marked');
 const Handlebars = require('handlebars');
-const config = require('../config/config');
 const { CustomError } = require('../utils/errors/customErrors');
 const unzipper = require('unzipper');
 const adminDao = require('../dao/admin');
@@ -99,22 +98,25 @@ function renderTemplate(templatePath, layoutPath, templateContent) {
 
 async function loadLayoutFromAPI(orgName) {
     const orgData = await adminDao.getOrganization(orgName);
+    var layoutContent =  await adminDao.getOrgContent({
+        orgId: orgData.ORG_ID,
+        fileType: constants.FILE_TYPE.LAYOUT,
+        fileName: constants.FILE_NAME.MAIN
+    });
 
-    const templateURL = `${config.devportalAPI}organizations/${orgData.ORG_ID}/layout?fileType=layout&fileName=main.hbs`;
-    const templateResponse = await fetch(templateURL);
-
-    var layoutContent = await templateResponse.text();
-    return layoutContent;
+    return layoutContent.FILE_CONTENT.toString(constants.CHARSET_UTF8);
 }
 
 async function loadTemplateFromAPI(orgName, filePath) {
     const orgData = await adminDao.getOrganization(orgName);
+    var templateContent = await adminDao.getOrgContent({
+        orgId: orgData.ORG_ID,
+        filePath: filePath,
+        fileType: constants.FILE_TYPE.TEMPLATE,
+        fileName: constants.FILE_NAME.PAGE
+    });
 
-    const templateURL = `${config.devportalAPI}organizations/${orgData.ORG_ID}/layout?fileType=template&fileName=page.hbs&filePath=${filePath}`;
-    const templateResponse = await fetch(templateURL);
-    var templateContent = await templateResponse.text();
-    return templateContent;
-
+    return templateContent.FILE_CONTENT.toString(constants.CHARSET_UTF8);
 }
 
 async function renderTemplateFromAPI(templateContent, orgName, filePath) {
@@ -124,6 +126,8 @@ async function renderTemplateFromAPI(templateContent, orgName, filePath) {
 
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutContent.toString());
+
+    console.log("Template Content:", template);
     var html;
     if (Object.keys(templateContent).length === 0 && templateContent.constructor === Object) {
         html = layout({
@@ -138,6 +142,7 @@ async function renderTemplateFromAPI(templateContent, orgName, filePath) {
             }),
         });
     }
+    console.log("HTML:", html);
     return html;
 }
 
@@ -223,8 +228,9 @@ const unzipFile = async (zipPath, extractPath) => {
 };
 
 const retrieveContentType = (fileName, fileType) => {
+    console.log("File Name:", fileName, fileType);
     let contentType;
-    if (fileType === constants.FILE_TYPE.IMAGE) {
+    if (fileType === constants.IMAGE) {
         if (fileName.endsWith(constants.FILE_EXTENSIONS.SVG)) {
             contentType = constants.MIME_TYPES.SVG;
         } else if (fileName.endsWith(constants.FILE_EXTENSIONS.JPG) || constants.FILE_EXTENSIONS.JPEG) {
@@ -236,7 +242,7 @@ const retrieveContentType = (fileName, fileType) => {
         } else {
             contentType = constants.MIME_TYPES.CONYEMT_TYPE_OCT;
         }
-    } else if (fileName.endsWith(constants.FILE_EXTENSIONS.CSS)) {
+    } else if (fileType === constants.STYLE) {
         contentType = constants.MIME_TYPES.CSS;
     } else {
         contentType = constants.MIME_TYPES.TEXT;

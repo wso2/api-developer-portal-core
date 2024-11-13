@@ -39,14 +39,15 @@ const registerPartialsFromAPI = async (req) => {
     const imageUrl =`${config.devportalAPI}organizations/${orgData.ORG_ID}/layout?fileType=image&fileName=`;
     const apiContetnUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
 
-    const devportalUrl = `${config.devportalAPI}organizations/${orgData.ORG_ID}/layout/partial`;
-    const partialsResponse = await fetch(devportalUrl);
-    let partials = await partialsResponse.json();
+    let partials =  await adminDao.getOrgContent({
+        orgId: orgData.ORG_ID,
+        fileType: 'partial',
+    });
 
     let partialObject = {}
     partials.forEach(file => {
-        let fileName = file.fileName.split(".")[0];
-        let content = file.fileContent;
+        let fileName = file.FILE_NAME.split(".")[0];
+        let content = file.FILE_CONTENT.toString(constants.CHARSET_UTF8);
         content = content.replaceAll("/images/", `${imageUrl}`)
         partialObject[fileName] = content;
     });
