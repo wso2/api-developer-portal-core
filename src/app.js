@@ -59,8 +59,6 @@ passport.deserializeUser((user, done) => {
     done(null, user);
 });
 
-console.log("Server started at port: " + path.join(__dirname, filePrefix + 'styles'));
-
 app.use(constants.ROUTE.STYLES, express.static(path.join(__dirname, filePrefix + 'styles')));
 
 if (config.mode === constants.DEV_MODE) {
