@@ -33,6 +33,14 @@ module.exports = {
         GIF: '.gif',
         YAML: '.yaml',
         YML: '.yml',
+    },
+
+    ROUTE: {
+      DEV_PORTAL:  '/devportal',
+      STYLES: '/styles',
+      IMAGES: '/images',
+      DEFAULT: '/',
+      MOCK: '/mock'
     }
 }
 

@@ -6,7 +6,6 @@ const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const authRoute = require('./routes/authRoute');
-const apiMetaDataRoute = require('./routes/apiMetadataRoute');
 const devportalRoute = require('./routes/devportalRoute');
 const orgContent = require('./routes/orgContentRoute');
 const apiContent = require('./routes/apiContentRoute');
@@ -60,15 +59,13 @@ passport.deserializeUser((user, done) => {
     done(null, user);
 });
 
-app.use('/styles', express.static(path.join(__dirname, filePrefix + 'styles')));
-
-app.set('view engine', 'hbs');
+app.use(constants.ROUTE.STYLES, express.static(path.join(__dirname, filePrefix + 'styles')));
 
 if (config.mode === constants.DEV_MODE) {
     //register images and stylesheet folders for single tenante scenario
-    app.use('/images', express.static(path.join(__dirname, filePrefix + 'images')));
+    app.use(constants.ROUTE.IMAGES, express.static(path.join(__dirname, filePrefix + 'images')));
     copyStyelSheet();
-} else if (config.mode === 'multi') {
+} else {
     copyStyelSheetMulti();
 }
 
@@ -88,18 +85,17 @@ process.on('exit', () => {
 });
 
 //backend routes
-app.use('/apiMetadata', apiMetaDataRoute);
-app.use('/devportal', devportalRoute);
+app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
 
-if (config.mode === 'design') {
-    app.use('/mock', express.static(path.join(__dirname, filePrefix + 'mock')));
-    app.use('/', registerPartials);
-    app.use('/', designRoute);
+if (config.mode === constants.DEV_MODE) {
+    app.use(constants.ROUTE.MOCK, express.static(path.join(__dirname, filePrefix + 'mock')));
+    app.use(constants.ROUTE.DEFAULT, registerPartials);
+    app.use(constants.ROUTE.DEFAULT, designRoute);
 } else {
-    app.use('/', authRoute);
-    app.use('/', apiContent);
-    app.use('/', orgContent);
-    app.use('/', customContent);
+    app.use(constants.ROUTE.DEFAULT, authRoute);
+    app.use(constants.ROUTE.DEFAULT, apiContent);
+    app.use(constants.ROUTE.DEFAULT, orgContent);
+    app.use(constants.ROUTE.DEFAULT, customContent);
 }
 
 app.listen(config.port);
