@@ -3,12 +3,12 @@ const config = require('../config/config');
 const fs = require('fs');
 const path = require('path');
 const exphbs = require('express-handlebars');
+const constants = require('../utils/constants');
 const orgDao = require('../dao/organization');
 const apiDao = require('../dao/apiMetadata');
 const apiMetadataService = require('../services/apiMetadataService');
-const constants = require('../utils/contstants');
 
-const filePrefix = '../../../../src/'
+let filePrefix = constants.FILE_PREFIX;
 const generateArray = (length) => Array.from({ length });
 
 const loadAPIs = async (req, res) => {
@@ -169,5 +169,5 @@ function loadAPIMetaDataFromFile(apiName) {
 module.exports = {
     loadAPIs,
     loadAPIContent,
-    loadTryOutPage
+    loadTryOutPage,
 };

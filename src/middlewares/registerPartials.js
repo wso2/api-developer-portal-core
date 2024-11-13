@@ -1,13 +1,14 @@
-const path = require("path");
-const fs = require("fs");
-const exphbs = require("express-handlebars");
-const config = require("../config/config");
-const markdown = require("marked");
-const orgDao = require("../dao/organization");
-const apiDao = require("../dao/apiMetadata");
-const constants = require("../utils/contstants");
+const path = require('path');
+const fs = require('fs');
+const exphbs = require('express-handlebars');
+const config = require('../config/config');
+const markdown = require('marked');
+const adminDao = require('../dao/admin');
+const apiDao = require('../dao/apiMetadata');
 
-let filePrefix = "../../../../src/";
+const constants = require('../utils/constants');
+
+let filePrefix = constants.FILE_PREFIX;
 
 const registerPartials = async (req, res, next) => {
 
@@ -29,30 +30,34 @@ const registerPartials = async (req, res, next) => {
 };
 
 const registerPartialsFromAPI = async (req) => {
-
   const orgName = req.params.orgName;
-  let organization = await orgDao.getOrgID(orgName);
-  let orgID = organization.ORG_ID;
+  const orgData = await adminDao.getOrganization(orgName);
+
+  let orgID = orgData.ORG_ID;
   let apiID = "";
   const apiName = req.params.apiName;
   if (apiName) {
     apiID = await apiDao.getAPIId(apiName);
   }
-  const url = config.adminAPI + "orgFileType?orgName=" + orgName + "&fileType=partials";
-  const imageUrl = config.adminAPI + "orgFiles?orgName=" + orgName;
 
-  //attach partials
-  const partialsResponse = await fetch(url);
-  let partials = await partialsResponse.json();
-  let partialObject = {};
-  partials.forEach((file) => {
-    let fileName = file.pageName.split(".")[0];
-    let content = file.pageContent;
-    content = content.replaceAll(constants.IMAGES_PATH, imageUrl + constants.FILE_NAME_PARAM);
-    partialObject[fileName] = content;
-  });
-  const hbs = exphbs.create({});
-  hbs.handlebars.partials = partialObject;
+  const imageUrl =`${config.devportalAPI}organizations/${orgData.ORG_ID}/layout?fileType=image&fileName=`;
+
+    let partials =  await adminDao.getOrgContent({
+        orgId: orgData.ORG_ID,
+        fileType: 'partial',
+    });
+
+    let partialObject = {}
+    partials.forEach(file => {
+        let fileName = file.FILE_NAME.split(".")[0];
+        let content = file.FILE_CONTENT.toString(constants.CHARSET_UTF8);
+        content = content.replaceAll("/images/", `${imageUrl}`)
+        partialObject[fileName] = content;
+    });
+  
+
+    const hbs = exphbs.create({});
+    hbs.handlebars.partials = partialObject;
 
   Object.keys(partialObject).forEach((partialName) => {
     hbs.handlebars.registerPartial(partialName, partialObject[partialName]);

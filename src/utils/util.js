@@ -2,12 +2,13 @@ const path = require('path');
 const fs = require('fs');
 const marked = require('marked');
 const Handlebars = require('handlebars');
-const config = require('../config/config');
-const unzipper = require('unzipper');
+const { CustomError } = require('../utils/errors/customErrors');
+const adminDao = require('../dao/admin');
+const constants = require('../utils/constants');
 
 const { Sequelize } = require('sequelize');
 
-var filePrefix = '../../../../src/';
+const filePrefix = constants.FILE_PREFIX;
 
 function copyStyelSheetMulti() {
 
@@ -99,26 +100,31 @@ function renderTemplate(templatePath, layoutPath, templateContent) {
 }
 
 async function loadLayoutFromAPI(orgName) {
+    const orgData = await adminDao.getOrganization(orgName);
+    var layoutContent =  await adminDao.getOrgContent({
+        orgId: orgData.ORG_ID,
+        fileType: constants.FILE_TYPE.LAYOUT,
+        fileName: constants.FILE_NAME.MAIN
+    });
 
-    const templateURL = config.adminAPI + "orgFileType?orgName=" + orgName;
-    const layoutResponse = await fetch(templateURL + "&fileType=layout&filePath=main&fileName=main.hbs");
-    var layoutContent = await layoutResponse.text();
-    return layoutContent;
+    return layoutContent.FILE_CONTENT.toString(constants.CHARSET_UTF8);
 }
 
-async function loadTemplateFromAPI(orgName, templatePageName) {
+async function loadTemplateFromAPI(orgName, filePath) {
+    const orgData = await adminDao.getOrganization(orgName);
+    var templateContent = await adminDao.getOrgContent({
+        orgId: orgData.ORG_ID,
+        filePath: filePath,
+        fileType: constants.FILE_TYPE.TEMPLATE,
+        fileName: constants.FILE_NAME.PAGE
+    });
 
-    const templateURL = config.adminAPI + "orgFileType?orgName=" + orgName;
-    console.log(templateURL + "&fileType=template&fileName=page.hbs&filePath=" + templatePageName)
-    const templateResponse = await fetch(templateURL + "&fileType=template&fileName=page.hbs&filePath=" + templatePageName);
-    var templateContent = await templateResponse.text();
-    return templateContent;
-
+    return templateContent.FILE_CONTENT.toString(constants.CHARSET_UTF8);
 }
 
-async function renderTemplateFromAPI(templateContent, orgName, templatePageName) {
+async function renderTemplateFromAPI(templateContent, orgName, filePath) {
 
-    var templatePage = await loadTemplateFromAPI(orgName, templatePageName);
+    var templatePage = await loadTemplateFromAPI(orgName, filePath);
     var layoutContent = await loadLayoutFromAPI(orgName);
 
     const template = Handlebars.compile(templatePage.toString());
@@ -126,14 +132,17 @@ async function renderTemplateFromAPI(templateContent, orgName, templatePageName)
     let html = '';
     if (Object.keys(templateContent).length === 0 && templateContent.constructor === Object) {
         html = layout({
-            body: template
+            body: template({
+                baseUrl: '/' + orgName
+            }),
         });
     } else {
         html = layout({
-            body: template(templateContent)
+            body: template({
+                baseUrl: '/' + orgName
+            }),
         });
     }
-    console.log("html", html);
     return html;
 }
 
@@ -142,7 +151,7 @@ async function renderGivenTemplate(templatePage, layoutPage, templateContent) {
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutPage.toString());
 
-    let html = layout({
+    const html = layout({
         body: template(templateContent),
     });
     return html;
@@ -167,6 +176,13 @@ function handleError(res, error) {
             message: "Resource Not Found",
             description: error.message
         });
+    } else if (error instanceof CustomError) {
+        console.log("Custom Error:", error.statusCode);
+        return res.status(error.statusCode).json({
+            code: error.statusCode,
+            message: error.message,
+            description: error.description
+        });
     } else {
         let errorDescription = error.message;
         if (error instanceof Sequelize.DatabaseError) {
@@ -181,55 +197,109 @@ function handleError(res, error) {
 };
 
 const unzipFile = async (zipPath, extractPath) => {
-    return new Promise((resolve, reject) => {
-        const stream = fs.createReadStream(zipPath)
-            .pipe(unzipper.Parse());
-        const promises = [];
-        stream.on('entry', async (entry) => {
-            const entryPath = entry.path;
-            if (!entryPath.includes('__MACOSX')) {
-                const filePath = path.join(extractPath, entryPath);
-                try {
+    const extractedFiles = [];
+    await new Promise((resolve, reject) => {
+        fs.createReadStream(zipPath)
+            .pipe(unzipper.Parse())
+            .on('entry', entry => {
+                const entryPath = entry.path;
+
+                if (!entryPath.includes('__MACOSX')) {
+                    const filePath = path.join(extractPath, entryPath);
+
                     if (entry.type === 'Directory') {
-                        await fs.mkdir(filePath, { recursive: true }, (err) => {
-                            if (err) {
-                                console.error('Error creating directory:', err);
-                            }
-                        });
+                        fs.mkdirSync(filePath, { recursive: true });
                         entry.autodrain();
                     } else {
-                        await fs.mkdir(path.dirname(filePath), { recursive: true }, (err) => {
-                            if (err) {
-                                console.error('Error creating directory:', err);
-                            }
-                        });
-                        const writeStream = fs.createWriteStream(filePath);
-                        entry.pipe(writeStream);
-                        promises.push(
-                            new Promise((res, rej) => {
-                                writeStream.on('finish', res);
-                                writeStream.on('error', rej);
-                            })
-                        );
+                        extractedFiles.push(filePath);
+                        entry.pipe(fs.createWriteStream(filePath));
                     }
-                } catch (error) {
-                    reject(error);
+                } else {
+                    entry.autodrain();
                 }
-            } else {
-                entry.autodrain();
-            }
-        });
-        stream.on('close', async () => {
-            try {
-                await Promise.all(promises);
-                resolve();
-            } catch (error) {
-                reject(error);
-            }
-        });
-        stream.on('error', reject);
+            })
+            .on('close', async () => {
+                extractedFiles.length > 0 ? resolve() : reject(new Error('No files were extracted'));
+            })
+            .on('error', err => {
+                reject(new Error(`Unzip failed: ${err.message}`));
+            });
     });
 };
+
+const retrieveContentType = (fileName, fileType) => {
+    console.log("File Name:", fileName, fileType);
+    let contentType;
+    if (fileType === constants.IMAGE) {
+        if (fileName.endsWith(constants.FILE_EXTENSIONS.SVG)) {
+            contentType = constants.MIME_TYPES.SVG;
+        } else if (fileName.endsWith(constants.FILE_EXTENSIONS.JPG) || constants.FILE_EXTENSIONS.JPEG) {
+            contentType = constants.MIME_TYPES.JPEG;
+        } else if (fileName.endsWith(constants.FILE_EXTENSIONS.PNG)) {
+            contentType = constants.MIME_TYPES.PNG;
+        } else if (fileName.endsWith(constants.FILE_EXTENSIONS.GIF)) {
+            contentType = constants.MIME_TYPES.GIF;
+        } else {
+            contentType = constants.MIME_TYPES.CONYEMT_TYPE_OCT;
+        }
+    } else if (fileType === constants.STYLE) {
+        contentType = constants.MIME_TYPES.CSS;
+    } else {
+        contentType = constants.MIME_TYPES.TEXT;
+    }
+    return contentType;
+};
+
+// const unzipFile = async (zipPath, extractPath) => {
+//     return new Promise((resolve, reject) => {
+//         const stream = fs.createReadStream(zipPath)
+//             .pipe(unzipper.Parse());
+//         const promises = [];
+//         stream.on('entry', async (entry) => {
+//             const entryPath = entry.path;
+//             if (!entryPath.includes('__MACOSX')) {
+//                 const filePath = path.join(extractPath, entryPath);
+//                 try {
+//                     if (entry.type === 'Directory') {
+//                         await fs.mkdir(filePath, { recursive: true }, (err) => {
+//                             if (err) {
+//                                 console.error('Error creating directory:', err);
+//                             }
+//                         });
+//                         entry.autodrain();
+//                     } else {
+//                         await fs.mkdir(path.dirname(filePath), { recursive: true }, (err) => {
+//                             if (err) {
+//                                 console.error('Error creating directory:', err);
+//                             }
+//                         });
+//                         const writeStream = fs.createWriteStream(filePath);
+//                         entry.pipe(writeStream);
+//                         promises.push(
+//                             new Promise((res, rej) => {
+//                                 writeStream.on('finish', res);
+//                                 writeStream.on('error', rej);
+//                             })
+//                         );
+//                     }
+//                 } catch (error) {
+//                     reject(error);
+//                 }
+//             } else {
+//                 entry.autodrain();
+//             }
+//         });
+//         stream.on('close', async () => {
+//             try {
+//                 await Promise.all(promises);
+//                 resolve();
+//             } catch (error) {
+//                 reject(error);
+//             }
+//         });
+//         stream.on('error', reject);
+//     });
+// };
 
 
 const getAPIFileContent = (directory) => {
@@ -266,7 +336,8 @@ module.exports = {
     renderTemplateFromAPI,
     renderGivenTemplate,
     handleError,
-    getAPIFileContent,
     unzipFile,
+    retrieveContentType,
+    getAPIFileContent,
     getAPIImages
 }

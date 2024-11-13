@@ -3,8 +3,10 @@ const config = require('../config/config');
 const markdown = require('marked');
 const fs = require('fs');
 const path = require('path');
-const constants = require('../utils/contstants');
-const filePrefix = '../../../../src/'
+const adminDao = require('../services/adminService');
+const constants = require('../utils/constants');
+
+const filePrefix = constants.FILE_PREFIX
 
 const loadCustomContent = async (req, res) => {
 
@@ -28,12 +30,15 @@ const loadCustomContent = async (req, res) => {
 
     } else {
         let content = {}
-        const markdownResponse = await fetch(config.adminAPI + "orgFileType?orgName=" + orgName + "&fileType=markDown&filePath=" + filePath);
+        const orgData = await adminDao.getOrganization(orgName);
+
+        const markdownResponse = await fetch(`${config.devportalAPI}organizations${orgData.ORG_ID}filePath${filePath}`);
         let markDownFiles = await markdownResponse.json();
+
         if (markDownFiles.length > 0) {
             markDownFiles.forEach((item) => {
-                const tempKey = item.pageName.split('.md')[0];
-                content[tempKey] = markdown.parse(item.pageContent);
+                const tempKey = item.fileName.split('.md')[0];
+                content[tempKey] = markdown.parse(item.fileContent);
             });
         }
         content["baseUrl"] = "/" + orgName;

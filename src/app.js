@@ -6,8 +6,7 @@ const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const authRoute = require('./routes/authRoute');
-const adminRoute = require('./routes/adminRoute');
-const apiMetaDataRoute = require('./routes/apiMetadataRoute');
+const devportalRoute = require('./routes/devportalRoute');
 const orgContent = require('./routes/orgContentRoute');
 const apiContent = require('./routes/apiContentRoute');
 const customContent = require('./routes/customPageRoute');
@@ -19,7 +18,7 @@ const designRoute = require('./routes/designModeRoute');
 
 const app = express();
 const secret = crypto.randomBytes(64).toString('hex');
-const filePrefix = '../../../src/';
+const filePrefix = constants.FILE_PREFIX_APP;
 
 app.engine('.hbs', engine({
     extname: '.hbs'
@@ -37,6 +36,7 @@ Handlebars.registerHelper('in', function (value, options) {
 });
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use(session({
     secret: secret,
@@ -58,40 +58,22 @@ passport.deserializeUser((user, done) => {
     done(null, user);
 });
 
-app.use('/styles', express.static(path.join(path.dirname(require.main.filename), filePrefix + 'styles')));
-
-app.set('view engine', 'hbs');
+app.use(constants.ROUTE.STYLES, express.static(path.join(__dirname, filePrefix + 'styles')));
 
 if (config.mode === constants.DEV_MODE) {
     //register images and stylesheet folders for single tenante scenario
-    app.use('/images', express.static(path.join(__dirname, filePrefix + 'images')));
+    app.use(constants.ROUTE.IMAGES, express.static(path.join(__dirname, filePrefix + 'images')));
     copyStyelSheet();
-} else if (config.mode === 'multi') {
+} else {
     copyStyelSheetMulti();
 }
 
-const folderToDelete = path.join(__dirname, '../../../src/styles');
-
-process.on('SIGINT', () => {
-    if (fs.existsSync(folderToDelete)) {
-        fs.rmSync(folderToDelete, { recursive: true, force: true });
-    }
-    process.exit();
-});
-
-process.on('exit', () => {
-    if (fs.existsSync(folderToDelete)) {
-        fs.rmSync(folderToDelete, { recursive: true, force: true });
-    }
-});
-
 //backend routes
-app.use('/admin', adminRoute);
-app.use('/apiMetadata', apiMetaDataRoute);
+app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
 
 if (config.mode === constants.DEV_MODE) {
-    app.use('/mock', express.static(path.join(__dirname, filePrefix + 'mock')));
-    app.use('/', designRoute);
+    app.use(constants.ROUTE.MOCK, express.static(path.join(__dirname, filePrefix + 'mock')));
+    app.use(constants.ROUTE.DEFAULT, designRoute);
 } else {
     app.use('/', authRoute);
     app.use('/', apiContent);
