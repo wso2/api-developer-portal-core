@@ -19,7 +19,7 @@ const constants = require('./utils/constants');
 
 const app = express();
 const secret = crypto.randomBytes(64).toString('hex');
-const filePrefix = constants.FILE_PREFIX;
+const filePrefix = constants.FILE_PREFIX_APP;
 
 app.engine('.hbs', engine({
     extname: '.hbs'
@@ -59,6 +59,8 @@ passport.deserializeUser((user, done) => {
     done(null, user);
 });
 
+console.log("Server started at port: " + path.join(__dirname, filePrefix + 'styles'));
+
 app.use(constants.ROUTE.STYLES, express.static(path.join(__dirname, filePrefix + 'styles')));
 
 if (config.mode === constants.DEV_MODE) {
@@ -68,21 +70,6 @@ if (config.mode === constants.DEV_MODE) {
 } else {
     copyStyelSheetMulti();
 }
-
-const folderToDelete = path.join(__dirname, '../../../src/styles');
-
-process.on('SIGINT', () => {
-    if (fs.existsSync(folderToDelete)) {
-        fs.rmSync(folderToDelete, { recursive: true, force: true });
-    }
-    process.exit();
-});
-
-process.on('exit', () => {
-    if (fs.existsSync(folderToDelete)) {
-        fs.rmSync(folderToDelete, { recursive: true, force: true });
-    }
-});
 
 //backend routes
 app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);

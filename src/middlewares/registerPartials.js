@@ -13,11 +13,10 @@ const registerPartials = async (req, res, next) => {
     const orgName = req.originalUrl.split("/")[1];
     let baseURL = "/" + orgName;
     let filePath = req.originalUrl.split("/" + orgName).pop();
-    if (config.mode === 'design') {
+    if (config.mode === constants.DEV_MODE) {
         baseURL = "http://localhost:" + config.port;
         filePath = req.originalUrl.split(baseURL).pop();
-    }
-    if (config.mode === 'single' || config.mode === 'design') {
+
         registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, 'partials'), req.user);
         registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, 'pages', 'home', 'partials'), req.user);
         registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, 'pages', 'api-landing', 'partials'), req.user);

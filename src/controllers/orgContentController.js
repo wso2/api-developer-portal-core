@@ -26,8 +26,6 @@ const loadOrgContentFromFile = async (req) => {
     const mockProfileData = JSON.parse(fs.readFileSync(mockProfileDataPath, 'utf-8'));
 
     let baseURL = "http://localhost:" + config.port;
-    if (config.mode === 'single')
-        baseURL = req.params.orgName
     let templateContent = {
         userProfiles: mockProfileData,
         baseUrl: baseURL
