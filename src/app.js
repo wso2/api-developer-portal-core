@@ -74,10 +74,10 @@ if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.MOCK, express.static(path.join(__dirname, filePrefix + 'mock')));
     app.use(constants.ROUTE.DEFAULT, designRoute);
 } else {
-    app.use('/', authRoute);
-    app.use('/', apiContent);
-    app.use('/', orgContent);
-    app.use('/', customContent);
+    app.use(constants.ROUTE.DEFAULT, authRoute);
+    app.use(constants.ROUTE.DEFAULT, apiContent);
+    app.use(constants.ROUTE.DEFAULT, orgContent);
+    app.use(constants.ROUTE.DEFAULT, customContent);
 }
 
 app.listen(config.port);
