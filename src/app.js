@@ -11,10 +11,8 @@ const apiMetaDataRoute = require('./routes/apiMetadataRoute');
 const orgContent = require('./routes/orgContentRoute');
 const apiContent = require('./routes/apiContentRoute');
 const customContent = require('./routes/customPageRoute');
-const designRoute = require('./routes/designModeRoute');
 const config = require('./config/config');
 const { copyStyelSheet, copyStyelSheetMulti } = require('./utils/util');
-const registerPartials = require('./middlewares/registerPartials');
 const Handlebars = require('handlebars');
 
 const app = express();
@@ -58,7 +56,7 @@ passport.deserializeUser((user, done) => {
     done(null, user);
 });
 
-app.use('/styles', express.static(path.join(__dirname, filePrefix + 'styles')));
+app.use('/styles', express.static(path.join(path.dirname(require.main.filename), filePrefix + 'styles')));
 
 app.set('view engine', 'hbs');
 

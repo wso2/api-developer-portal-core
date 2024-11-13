@@ -1,6 +1,5 @@
 const { renderTemplate, renderTemplateFromAPI, renderGivenTemplate, loadLayoutFromAPI, loadMarkdown } = require('../utils/util');
 const config = require('../config/config');
-const markdown = require('marked');
 const fs = require('fs');
 const path = require('path');
 const exphbs = require('express-handlebars');
@@ -9,7 +8,7 @@ const apiDao = require('../dao/apiMetadata');
 const apiMetadataService = require('../services/apiMetadataService');
 
 
-filePrefix = '../../../../src/'
+const filePrefix = '../../../../src/'
 const generateArray = (length) => Array.from({ length });
 
 const loadAPIs = async (req, res) => {
@@ -36,7 +35,9 @@ const loadAPIContent = async (req, res) => {
     const hbs = exphbs.create({});
     const orgName = req.params.orgName;
     let organization = await orgDao.getOrgID(orgName);
-    let orgID = organization.orgID;
+    console.log("organization");
+    console.log(organization);
+    let orgID = organization.ORG_ID;
     const apiName = req.params.apiName;
     let apiID = await apiDao.getAPIId(apiName);
     const metaData = await loadAPIMetaData(orgID, apiID);
@@ -68,7 +69,7 @@ const loadTryOutPage = async (req, res) => {
 
     let orgName = req.params.orgName;
     let organization = await orgDao.getOrgID(orgName);
-    let orgID = organization.orgID;
+    let orgID = organization.ORG_ID;
     const apiName = req.params.apiName;
     let apiID = await apiDao.getAPIId(apiName);
     const metaData = await loadAPIMetaData(orgID, apiID);

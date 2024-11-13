@@ -19,7 +19,7 @@ const APIImageMetadata = sequelize.define('dp_api_imagedata', {
 }, {
     timestamps: false,
     tableName: 'dp_api_imagedata',
-    returning: false
+    returning: true
 });
 
 // Export both models

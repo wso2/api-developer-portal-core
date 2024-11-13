@@ -15,7 +15,7 @@ const SubscriptionPolicy = sequelize.define('dp_api_subscription_policy', {
 }, {
     timestamps: false,
     tableName: 'dp_api_subscription_policy',
-    returning: false
+    returning: true
 });
 
 module.exports = SubscriptionPolicy;

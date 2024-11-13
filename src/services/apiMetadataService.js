@@ -1,12 +1,11 @@
-const { Sequelize, Utils } = require('sequelize');
-const sequelize = require('../db/sequelize')
-const apiDao = require('../dao/apiMetadata');
-const util = require('../utils/util');
-const path = require('path');
-const fs = require('fs').promises;
-const unzipper = require('unzipper');
-const APIDTO = require('../dto/apiDTO');
-
+const { Sequelize } = require("sequelize");
+const sequelize = require("../db/sequelize");
+const apiDao = require("../dao/apiMetadata");
+const util = require("../utils/util");
+const path = require("path");
+const fs = require("fs").promises;
+const APIDTO = require("../dto/apiDTO");
+const constants = require("../utils/contstants");
 
 const createAPIMetadata = async (req, res) => {
 
@@ -19,9 +18,11 @@ const createAPIMetadata = async (req, res) => {
     try {
         // Validate input
         if (!apiMetadata.endPoints || !apiMetadata.apiInfo || !apiDefinitionFile) {
-            throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
+            throw new Sequelize.ValidationError(
+                "Missing or Invalid fields in the request payload"
+            );
         }
-        const result = await sequelize.transaction(async t => {
+        await sequelize.transaction(async (t) => {
             // Create apimetadata record
             const createdAPI = await apiDao.createAPIMetadata(orgId, apiMetadata, t);
             const apiID = createdAPI.dataValues.API_ID;
@@ -29,17 +30,19 @@ const createAPIMetadata = async (req, res) => {
             if (apiMetadata.subscriptionPolicies) {
                 let subscriptionPolicies = apiMetadata.subscriptionPolicies;
                 if (!Array.isArray(subscriptionPolicies)) {
-                    throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
+                    throw new Sequelize.ValidationError(
+                        "Missing or Invalid fields in the request payload"
+                    );
                 }
                 await apiDao.createSubscriptionPolicy(subscriptionPolicies, apiID, orgId, t);
             }
             // store api definition file
-            const storeAPIDefinition = await apiDao.storeAPIFile(apiDefinitionFile, apiFileName, apiID, orgId, t)
+            await apiDao.storeAPIFile(apiDefinitionFile, apiFileName, apiID, orgId, t);
             apiMetadata.apiID = apiID;
-            res.status(201).send(apiMetadata);
         });
+        res.status(201).send(apiMetadata);
     } catch (error) {
-        console.log(error)
+        console.log(error);
         util.handleError(res, error);
     }
 };
@@ -50,32 +53,29 @@ const getAPIMetadata = async (req, res) => {
     let apiID = req.params.apiId;
 
     if (!orgID || !apiID) {
-        throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
+        throw new Sequelize.ValidationError(
+            "Missing or Invalid fields in the request payload"
+        );
     }
     try {
         let retrievedAPI = await getMetadataFromDB(orgID, apiID);
         // Create response object
         res.status(200).send(retrievedAPI);
     } catch (error) {
-        console.log(error)
+        console.log(error);
         util.handleError(res, error);
     }
 };
 
 const getMetadataFromDB = async (orgID, apiID) => {
 
-    try {
-        return await sequelize.transaction(async t => {
-            const retrievedAPI = await apiDao.getAPIMetadata(orgID, apiID, t);
-            if (retrievedAPI.length > 0) {
-                return new APIDTO(retrievedAPI[0]);
-            } else return {};
-        });
-    } catch (error) {
-        console.log(error)
-        util.handleError(res, error);
-    }
-}
+    return await sequelize.transaction(async (t) => {
+        const retrievedAPI = await apiDao.getAPIMetadata(orgID, apiID, t);
+        if (retrievedAPI.length > 0) {
+            return new APIDTO(retrievedAPI[0]);
+        } else return {};
+    });
+};
 
 const getAllAPIMetadata = async (req, res) => {
 
@@ -87,24 +87,20 @@ const getAllAPIMetadata = async (req, res) => {
         let retrievedAPIs = await getMetadataListFromDB(orgID);
         res.status(200).send(retrievedAPIs);
     } catch (error) {
-        console.log(error)
+        console.log(error);
         util.handleError(res, error);
     }
 };
 
 const getMetadataListFromDB = async (orgID) => {
-    try {
-        return await sequelize.transaction(async t => {
-            const retrievedAPIs = await apiDao.getAllAPIMetadata(orgID, t);
-            // Create response object
-            const apiCreationResponse = retrievedAPIs.map(api => new APIDTO(api));
-            return apiCreationResponse;
-        });
-    } catch (error) {
-        console.log(error)
-        util.handleError(res, error);
-    }
-}
+
+    return await sequelize.transaction(async (t) => {
+        const retrievedAPIs = await apiDao.getAllAPIMetadata(orgID, t);
+        // Create response object
+        const apiCreationResponse = retrievedAPIs.map((api) => new APIDTO(api));
+        return apiCreationResponse;
+    });
+};
 
 const updateAPIMetadata = async (req, res) => {
 
@@ -118,25 +114,38 @@ const updateAPIMetadata = async (req, res) => {
     try {
         // Validate input
         if (!apiMetadata.endPoints || !apiMetadata.apiInfo || !apiDefinitionFile) {
-            throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
+            throw new Sequelize.ValidationError(
+                "Missing or Invalid fields in the request payload"
+            );
         }
-        const result = await sequelize.transaction(async t => {
+        await sequelize.transaction(async (t) => {
             // Create apimetadata record
-            const updatedAPI = await apiDao.updateAPIMetadata(orgId, apiID, apiMetadata, t);
+            const [updatedRows, updatedAPI] = await apiDao.updateAPIMetadata(orgId, apiID, apiMetadata, t);
+            if (!updatedRows) {
+                throw new Sequelize.EmptyResultError("No record found to update");
+            }
             if (apiMetadata.subscriptionPolicies) {
                 let subscriptionPolicies = apiMetadata.subscriptionPolicies;
                 if (!Array.isArray(subscriptionPolicies)) {
-                    throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
+                    throw new Sequelize.ValidationError(
+                        "Missing or Invalid fields in the request payload"
+                    );
                 }
-                const subscriptionPolicyResponse = await apiDao.updateSubscriptionPolicy(orgId, apiID, subscriptionPolicies, t);
+                const [updatedSubscription, subscriptionPolicyResponse] = await apiDao.updateSubscriptionPolicy(orgId, apiID, subscriptionPolicies, t);
+                if (!updatedSubscription) {
+                    throw new Sequelize.EmptyResultError("No record found to update");
+                }
+                updatedAPI.dp_api_subscription_policies = subscriptionPolicyResponse;
             }
             // update api definition file
-            const storeAPIDefinition = await apiDao.updateAPIFile(apiDefinitionFile, apiFileName, apiID, orgId, t)
-            apiMetadata.apiID = apiID;
-            res.status(200).send(apiMetadata);
+            const updatedFileCount = await apiDao.updateAPIFile(apiDefinitionFile, apiFileName, apiID, orgId, t);
+            if (!updatedFileCount) {
+                throw new Sequelize.EmptyResultError("No record found to update");
+            }
+            res.status(200).send(new APIDTO(updatedAPI));
         });
     } catch (error) {
-        console.log(error)
+        console.log(error);
         util.handleError(res, error);
     }
 };
@@ -145,21 +154,23 @@ const deleteAPIMetadata = async (req, res) => {
     let orgID = req.params.orgId;
     let apiID = req.params.apiId;
     if (!orgID || !apiID) {
-        throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
+        throw new Sequelize.ValidationError(
+            "Missing or Invalid fields in the request payload"
+        );
     }
-    const result = await sequelize.transaction(async t => {
+    await sequelize.transaction(async (t) => {
         try {
             const apiDeleteResponse = await apiDao.deleteAPIMetadata(orgID, apiID, t);
             if (apiDeleteResponse === 0) {
-                throw new Sequelize.ValidationError("API not found");
+                throw new Sequelize.EmptyResultError("Resource not found to delete");
             } else {
                 res.status(200).send("Resouce Deleted Successfully");
             }
         } catch (error) {
-            console.log(error)
+            console.log(error);
             util.handleError(res, error);
         }
-    })
+    });
 };
 
 const createAPITemplate = async (req, res) => {
@@ -168,44 +179,51 @@ const createAPITemplate = async (req, res) => {
         let apiID = req.params.apiId;
         let orgId = req.params.orgId;
         let imageMetadata = JSON.parse(req.body.imageMetadata);
-        let extractPath = path.join('/tmp', req.params.orgId + '/' + req.params.apiId);
+        let extractPath = path.join("/tmp", req.params.orgId + "/" + req.params.apiId);
         await fs.mkdir(extractPath, { recursive: true });
         console.log(`Extracting to: ${extractPath}`);
         const zipFilePath = req.file.path;
         await util.unzipFile(zipFilePath, extractPath);
-        let apiContentFileName = req.file.originalname.split('.zip')[0];
+        let apiContentFileName = req.file.originalname.split(".zip")[0];
 
         // Build complete paths
-        const contentPath = path.join(extractPath, apiContentFileName, 'content');
-        const imagesPath = path.join(extractPath, apiContentFileName, 'images');
+        const contentPath = path.join(extractPath, apiContentFileName, "content");
+        const imagesPath = path.join(extractPath, apiContentFileName, "images");
 
         // Verify directories exist
         try {
             await fs.access(contentPath);
             await fs.access(imagesPath);
         } catch (err) {
-            throw new Error(`Required directories not found after extraction. Content path: ${contentPath}, Images path: ${imagesPath}`);
+            console.error(err);
+            throw new Error(
+                `Required directories not found after extraction. Content path: ${contentPath}, Images path: ${imagesPath}`
+            );
         }
-
         //get api files
         let apiContent = await util.getAPIFileContent(contentPath);
         //get api images
         let apiImages = await util.getAPIImages(imagesPath);
         apiContent.push(...apiImages);
 
-        await sequelize.transaction(async t => {
-            // Store image metadata
-            await apiDao.storeAPIImageMetadata(imageMetadata, apiID, t);
-            await apiDao.storeAPIFiles(apiContent, apiID, t);
+        await sequelize.transaction(async (t) => {
+            //check whether api belongs to given org
+            let apiMetadata = await apiDao.getAPIMetadata(orgId, apiID, t);
+            if (apiMetadata) {
+                // Store image metadata
+                await apiDao.storeAPIImageMetadata(imageMetadata, apiID, t);
+                await apiDao.storeAPIFiles(apiContent, apiID, t);
+            } else {
+                throw new Sequelize.ValidationError("API does not belong to given organization");
+            }
         });
         await fs.rm(extractPath, { recursive: true, force: true });
-
-        res.status(201).type('application/json').send({ message: 'API Template updated successfully' });
+        res.status(201).type("application/json").send({ message: "API Template updated successfully" });
     } catch (error) {
-        console.error('Error processing file:', error);
+        console.error("Error processing file:", error);
         util.handleError(res, error);
     }
-}
+};
 
 const updateAPITemplate = async (req, res) => {
 
@@ -213,23 +231,27 @@ const updateAPITemplate = async (req, res) => {
         let apiId = req.params.apiId;
         let orgId = req.params.orgId;
         let imageMetadata = JSON.parse(req.body.imageMetadata);
-        let extractPath = path.join('/tmp', req.params.orgId + '/' + req.params.apiId);
+        let extractPath = path.join("/tmp", req.params.orgId + "/" + req.params.apiId);
         await fs.mkdir(extractPath, { recursive: true });
+
         console.log(`Extracting to: ${extractPath}`);
         const zipFilePath = req.file.path;
         await util.unzipFile(zipFilePath, extractPath);
-        let apiContentFileName = req.file.originalname.split('.zip')[0];
+        let apiContentFileName = req.file.originalname.split(".zip")[0];
 
         // Build complete paths
-        const contentPath = path.join(extractPath, apiContentFileName, 'content');
-        const imagesPath = path.join(extractPath, apiContentFileName, 'images');
+        const contentPath = path.join(extractPath, apiContentFileName, "content");
+        const imagesPath = path.join(extractPath, apiContentFileName, "images");
 
         // Verify directories exist
         try {
             await fs.access(contentPath);
             await fs.access(imagesPath);
         } catch (err) {
-            throw new Error(`Required directories not found after extraction. Content path: ${contentPath}, Images path: ${imagesPath}`);
+            console.error(err);
+            throw new Error(
+                `Required directories not found after extraction. Content path: ${contentPath}, Images path: ${imagesPath}`
+            );
         }
 
         //get api files
@@ -237,21 +259,25 @@ const updateAPITemplate = async (req, res) => {
         //get api images
         let apiImages = await util.getAPIImages(imagesPath);
         apiContent.push(...apiImages);
-
-        await sequelize.transaction(async t => {
-            // Update image metadata
-            await apiDao.updateAPIImageMetadata(imageMetadata, orgId, apiId, t);
-            // Update API files
-            await apiDao.updateOrCreateAPIFiles(apiContent, apiId, orgId, t);
+        await sequelize.transaction(async (t) => {
+            //check whether api belongs to given org
+            let apiMetadata = await apiDao.getAPIMetadata(orgId, apiId, t);
+            if (apiMetadata) {
+                // Update image metadata
+                await apiDao.updateAPIImageMetadata(imageMetadata, orgId, apiId, t);
+                // Update API files
+                await apiDao.updateOrCreateAPIFiles(apiContent, apiId, orgId, t);
+            } else {
+                throw new Sequelize.ValidationError("API does not belong to given organization");
+            }
         });
         await fs.rm(extractPath, { recursive: true, force: true });
-
-        res.status(201).type('application/json').send({ message: 'API Files updated successfully' });
+        res.status(201).send({ message: "API Files updated successfully" });
     } catch (error) {
-        console.error('Error processing file:', error);
+        console.error("Error processing file:", error);
         util.handleError(res, error);
     }
-}
+};
 
 const getAPIFile = async (req, res) => {
 
@@ -261,64 +287,66 @@ const getAPIFile = async (req, res) => {
     if (!orgID || !apiID || !apiFileName) {
         throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
     }
-    let apiFileResponse = '';
+    let apiFileResponse = "";
     let apiFile;
-    let contentType = '';
+    let contentType = "";
     try {
         const fileExtension = path.extname(apiFileName).toLowerCase();
         apiFileResponse = await apiDao.getAPIFile(apiFileName, orgID, apiID);
-        console.log(apiFileResponse)
-        if (fileExtension == '.html' || fileExtension == '.hbs' || fileExtension == '.md' ||
-            fileExtension == '.json' || fileExtension == '.yaml' || fileExtension == '.yml' ||
-            fileExtension == '.svg') {
-            apiFile = apiFileResponse.API_FILE.toString('utf8');
-            console.log(apiFile)
-            if (fileExtension == '.json') {
-                contentType = 'application/json';
-            } else if (fileExtension == '.yaml' || fileExtension == '.yml') {
-                contentType = 'application/yaml';
+        console.log(apiFileResponse);
+        if (fileExtension === constants.FILE_EXTENSIONS.HTML || fileExtension === constants.FILE_EXTENSIONS.HBS ||
+            fileExtension === constants.FILE_EXTENSIONS.MD || fileExtension === constants.FILE_EXTENSIONS.JSON ||
+            fileExtension === constants.FILE_EXTENSIONS.YAML || fileExtension === constants.FILE_EXTENSIONS.YML ||
+            fileExtension === constants.FILE_EXTENSIONS.SVG) {
+            apiFile = apiFileResponse.API_FILE.toString(constants.CHARSET_UTF8);
+            if (fileExtension === constants.FILE_EXTENSIONS.JSON) {
+                contentType = constants.MIME_TYPES.JSON;
+            } else if (fileExtension === constants.FILE_EXTENSIONS.YAML || fileExtension === constants.FILE_EXTENSIONS.YML) {
+                contentType = constants.MIME_TYPES.YAML;
             } else {
-                contentType = '"text/plain"';
+                contentType = constants.MIME_TYPES.TEXT;
             }
         } else {
             apiFile = apiFileResponse.API_FILE;
-            if (fileExtension == '.svg') {
-                contentType = 'image/svg+xml';
-            } else if (fileExtension == '.jpg' || fileExtension == '.jpeg') {
-                contentType = 'image/jpeg';
-            } else if (fileExtension == '.png') {
-                contentType = 'image/png';
-            } else if (fileExtension == '.gif') {
-                contentType = 'image/gif';
+            if (fileExtension === constants.FILE_EXTENSIONS.SVG) {
+                contentType = constants.MIME_TYPES.SVG;
+            } else if (fileExtension === constants.FILE_EXTENSIONS.JPG || fileExtension === constants.FILE_EXTENSIONS.JPEG) {
+                contentType = constants.MIME_TYPES.JPEG;
+            } else if (fileExtension === constants.FILE_EXTENSIONS.PNG) {
+                contentType = constants.MIME_TYPES.PNG;
+            } else if (fileExtension === constants.FILE_EXTENSIONS.GIF) {
+                contentType = constants.MIME_TYPES.GIF;
             } else {
-                contentType = 'application/octet-stream';
+                contentType = constants.MIME_TYPES.OCTETSTREAM;
             }
         }
         res.set({
-            'Content-Type': contentType,
-            'Content-Disposition': `inline; filename="${apiFileName}"`,
-            'Cache-Control': 'no-cache'
+            [constants.MIME_TYPES.CONTENT_TYPE]: contentType,
+            [constants.MIME_TYPES.CONTENT_DISPOSITION]: `inline; filename="${apiFileName}"`,
+            [[constants.MIME_TYPES.Cache_Control]]: "no-cache",
         });
         if (apiFileResponse) {
             // Send file content as text
-            res.status(200).send(Buffer.isBuffer(apiFile) ? apiFile : Buffer.from(apiFile, 'binary'));
+            res.status(200).send(Buffer.isBuffer(apiFile) ? apiFile : Buffer.from(apiFile, "binary"));
         } else {
             res.status(404).send("API File not found");
         }
     } catch (error) {
-        console.log(error)
+        console.log(error);
         util.handleError(res, error);
     }
-}
+};
 
 const deleteAPIFile = async (req, res) => {
 
     let orgID = req.params.orgId;
     let apiID = req.params.apiId;
     let apiFileName = req.query.fileName;
-    let apiFileResponse = '';
+    let apiFileResponse = "";
     if (!orgID || !apiID || !apiFileName) {
-        throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
+        throw new Sequelize.ValidationError(
+            "Missing or Invalid fields in the request payload"
+        );
     }
     try {
         apiFileResponse = await apiDao.deleteAPIFile(apiFileName, orgID, apiID);
@@ -329,10 +357,10 @@ const deleteAPIFile = async (req, res) => {
             res.status(404).send("API File not found");
         }
     } catch (error) {
-        console.log(error)
+        console.log(error);
         util.handleError(res, error);
     }
-}
+};
 module.exports = {
     createAPIMetadata,
     getAPIMetadata,
@@ -344,5 +372,5 @@ module.exports = {
     getAPIFile,
     deleteAPIFile,
     getMetadataListFromDB,
-    getMetadataFromDB
+    getMetadataFromDB,
 };

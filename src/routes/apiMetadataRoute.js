@@ -4,8 +4,6 @@ const apiMetadataService = require('../services/apiMetadataService');
 const multer = require('multer');
 const storage = multer.memoryStorage()
 const upload = multer({ storage: storage })
-const fs = require('fs');
-const path = require('path');
 
 const uploadZip = multer({ dest: '/tmp' });
 

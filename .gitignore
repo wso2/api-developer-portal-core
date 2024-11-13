@@ -88,4 +88,6 @@ replay_pid*
 
 .vscode
 
-src/config/config.js
+eslint.config.mjs
+
+.prettierrc

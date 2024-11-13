@@ -119,7 +119,7 @@ async function renderTemplateFromAPI(templateContent, orgName, templatePageName)
 
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutContent.toString());
-    var html;
+    let html = '';
     if (Object.keys(templateContent).length === 0 && templateContent.constructor === Object) {
         html = layout({
             body: template
@@ -137,7 +137,7 @@ async function renderGivenTemplate(templatePage, layoutPage, templateContent) {
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutPage.toString());
 
-    html = layout({
+    let html = layout({
         body: template(templateContent),
     });
     return html;

@@ -1,7 +1,6 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize')
 const APIContent = require('../models/apiContent')
-const AdditionalProperties = require('./additionalAPIProperties')
 const APIImages = require('./apiImages')
 const SubscriptionPolicy = require('./subscriptionPolicy')
 const { Organization } = require('./orgModels')
@@ -75,7 +74,7 @@ const APIMetadata = sequelize.define('dp_api_metadata', {
 }, {
   timestamps: false,
   tableName: 'dp_api_metadata',
-  returning: false
+  returning: true
 });
 
 APIContent.belongsTo(APIMetadata, {

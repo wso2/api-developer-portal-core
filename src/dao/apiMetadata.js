@@ -1,6 +1,5 @@
 const { APIMetadata } = require('../models/apiMetadata');
 const SubscriptionPolicy = require('../models/subscriptionPolicy');
-const AdditionalProperties = require('../models/additionalAPIProperties');
 const APIContent = require('../models/apiContent');
 const APIImageMetadata = require('../models/apiImages');
 const { Sequelize } = require('sequelize');
@@ -112,7 +111,7 @@ const storeAPIFiles = async (files, apiID, t) => {
                 API_ID: apiID
             })
         });
-        const apiContentResponse = await APIContent.bulkCreate(apiContent, { transaction: t });
+        const apiContentResponse = await APIContent.bulkCreate(apiContent,{ transaction: t });
         return apiContentResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -154,6 +153,9 @@ const updateOrCreateAPIFiles = async (files, apiID, orgID, t) => {
                         ]
                     }
                 );
+                if(!updateResponse) {
+                    throw new Sequelize.DatabaseError('Error while updating API files');
+                }
             }
         };
         if (filesToCreate.length > 0) {
@@ -308,7 +310,7 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
 
 async function updateSubscriptionPolicy(orgID, apiID, subscriptionPolicies, t) {
 
-    policiesToCreate = [];
+    let policiesToCreate = [];
     try {
         for (const policy of subscriptionPolicies) {
             const subscriptionResponse = await getSubscriptionPolicy(policy.policyName, apiID, orgID, t);
@@ -358,7 +360,7 @@ const getSubscriptionPolicy = async (policyName, apiID, orgID, t) => {
 
 const updateAPIImageMetadata = async (apiImages, orgID, apiID, t) => {
 
-    imageCreateList = [];
+    let imageCreateList = [];
     try {
         for (var propertyKey in apiImages) {
             let apiImageResponse = await getImageMetadata(propertyKey, apiImages[propertyKey], orgID, apiID, t);
@@ -389,6 +391,9 @@ const updateAPIImageMetadata = async (apiImages, orgID, apiID, t) => {
                         }
                     ]
                 }, { transaction: t });
+                if (apiImageDataUpdate) {
+                    throw new Sequelize.DatabaseError("Error updating API Image Metadata");
+                }
             }
             if (imageCreateList.length > 0) {
                 await APIImageMetadata.bulkCreate(imageCreateList, { transaction: t });

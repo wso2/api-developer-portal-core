@@ -2,7 +2,6 @@ const { Sequelize } = require('sequelize');
 const orgDao = require('../dao/organization');
 const orgEntities = require('../models/orgModels');
 const util = require('../utils/util');
-const e = require('express');
 
 const createOrganization = async (req, res) => {
 
@@ -63,7 +62,6 @@ const updateOrganization = async (req, res) => {
         if (!orgId) {
             throw new Sequelize.ValidationError("Missing required parameter: 'orgId'");
         }
-
         if (!orgName || !authenticatedPages || !Array.isArray(authenticatedPages)) {
             throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
         }
