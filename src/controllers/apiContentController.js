@@ -4,7 +4,7 @@ const markdown = require('marked');
 const fs = require('fs');
 const path = require('path');
 const exphbs = require('express-handlebars');
-
+const constants = require('../utils/constants');
 
 let filePrefix = '../../../../src/'
 const generateArray = (length) => Array.from({ length });
@@ -22,7 +22,7 @@ const loadAPIs = async (req, res) => {
         apiMetadata: metaData,
         baseUrl: baseURL
     }
-    if (config.mode === 'single' || config.mode === 'design') {
+    if (constants.DEV_MODE) {
         html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     } else {
         html = await renderTemplateFromAPI(templateContent, orgName, "apis");
@@ -39,7 +39,7 @@ const loadAPIContent = async (req, res) => {
     const metaData = await loadAPIMetaData(orgName, apiName);
     const apiContentUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
 
-    if (config.mode === 'single') {
+    if (constants.DEV_MODE) {
         const markdownResponse = await fetch(apiContentUrl + "&fileName=apiContent.md");
         const markdownContent = await markdownResponse.text();
         const markdownHtml = markdownContent ? markdown.parse(markdownContent) : '';
@@ -98,7 +98,7 @@ const loadTryOutPage = async (req, res) => {
         apiType: metaData.apiInfo.apiType,
         swagger: apiDefinitionContent
     }
-    if (config.mode === 'single') {
+    if (constants.DEV_MODE) {
 
         html = renderTemplate('../pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
 
@@ -134,7 +134,7 @@ const loadTryOutPage = async (req, res) => {
 async function loadAPIMetaDataList(orgName) {
 
     let metaData = {};
-    if (config.mode === 'design') {
+    if (constants.DEV_MODE) {
         const mockAPIMetaDataPath = path.join(__dirname, filePrefix + '../mock', 'apiMetadata.json');
         const mockAPIMetaData = JSON.parse(fs.readFileSync(mockAPIMetaDataPath, 'utf-8'));
         mockAPIMetaData.forEach(element => {
@@ -174,7 +174,7 @@ async function loadAPIMetaDataList(orgName) {
 async function loadAPIMetaData(orgName, apiName) {
 
     let metaData = {};
-    if (config.mode === 'design') {
+    if (constants.DEV_MODE) {
         const mockAPIDataPath = path.join(__dirname, filePrefix + '../mock', apiName + '/apiMetadata.json');
         const mockAPIData = JSON.parse(fs.readFileSync(mockAPIDataPath, 'utf-8'));
         metaData = mockAPIData;

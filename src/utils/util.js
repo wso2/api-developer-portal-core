@@ -6,7 +6,7 @@ const config = require('../config/config');
 const { CustomError } = require('../utils/errors/customErrors');
 const unzipper = require('unzipper');
 const adminDao = require('../dao/admin');
-
+const constants = require('../utils/constants');
 
 const { Sequelize } = require('sequelize');
 
@@ -222,6 +222,28 @@ const unzipFile = async (zipPath, extractPath) => {
     });
 };
 
+const retrieveContentType = (fileName, fileType) => {
+    let contentType;
+    if (fileType === constants.FILE_TYPE.IMAGE) {
+        if (fileName.endsWith(constants.FILE_EXTENSIONS.SVG)) {
+            contentType = constants.MIME_TYPES.SVG;
+        } else if (fileName.endsWith(constants.FILE_EXTENSIONS.JPG) || constants.FILE_EXTENSIONS.JPEG) {
+            contentType = constants.MIME_TYPES.JPEG;
+        } else if (fileName.endsWith(constants.FILE_EXTENSIONS.PNG)) {
+            contentType = constants.MIME_TYPES.PNG;
+        } else if (fileName.endsWith(constants.FILE_EXTENSIONS.GIF)) {
+            contentType = constants.MIME_TYPES.GIF;
+        } else {
+            contentType = constants.MIME_TYPES.CONYEMT_TYPE_OCT;
+        }
+    } else if (fileName.endsWith(constants.FILE_EXTENSIONS.CSS)) {
+        contentType = constants.MIME_TYPES.CSS;
+    } else {
+        contentType = constants.MIME_TYPES.TEXT;
+    }
+    return contentType;
+};
+
 module.exports = {
     copyStyelSheet,
     copyStyelSheetMulti,
@@ -232,5 +254,6 @@ module.exports = {
     renderTemplateFromAPI,
     renderGivenTemplate,
     handleError,
-    unzipFile
+    unzipFile,
+    retrieveContentType
 }

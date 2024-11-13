@@ -16,6 +16,7 @@ const config = require('./config/config');
 const { copyStyelSheet, copyStyelSheetMulti } = require('./utils/util');
 const registerPartials = require('./middlewares/registerPartials');
 const Handlebars = require('handlebars');
+const constants = require('./utils/constants');
 
 const app = express();
 const secret = crypto.randomBytes(64).toString('hex');
@@ -63,7 +64,7 @@ app.use('/styles', express.static(path.join(__dirname, filePrefix + 'styles')));
 
 app.set('view engine', 'hbs');
 
-if (config.mode === 'single' || config.mode === 'design') {
+if (config.mode === constants.DEV_MODE) {
     //register images and stylesheet folders for single tenante scenario
     app.use('/images', express.static(path.join(__dirname, filePrefix + 'images')));
     copyStyelSheet();

@@ -4,6 +4,7 @@ const markdown = require('marked');
 const fs = require('fs');
 const path = require('path');
 const adminDao = require('../services/adminService');
+const constants = require('../utils/constants');
 
 const filePrefix = '../../../../src/'
 
@@ -13,7 +14,7 @@ const loadCustomContent = async (req, res) => {
     const orgName = req.originalUrl.split("/")[1];
     let filePath = req.originalUrl.split("/" + orgName + "/").pop();
     let baseURL = orgName
-    if (config.mode === 'single' || config.mode === 'design') {
+    if (constants.DEV_MODE) {
 
         let templateContent = {};
         if (config.mode === 'design') {

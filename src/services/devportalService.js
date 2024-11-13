@@ -1,7 +1,8 @@
 const adminService = require('../services/adminService');
 const adminDao = require('../dao/admin');
 const util = require('../utils/util');
-
+const constants = require('../utils/constants');
+const { retrieveContentType } = require('../utils/util');
 const getOrganization = async (req, res) => {
     try {
 
@@ -22,27 +23,11 @@ const getOrganization = async (req, res) => {
 const getOrgContent = async (req, res) => {
     try {
         if (req.query.fileType && req.query.fileName) {
-           const asset = await adminService.getOrgContent(req.params.orgId, req.query.fileType, req.query.fileName, req.query.filePath);
-           let contentType;
-           
-            if (asset.FILE_TYPE === 'image') {
-                if (asset.FILE_NAME.endsWith('.svg')) {
-                    contentType = 'image/svg+xml';
-                } else if (asset.FILE_NAME.endsWith('.jpg') || asset.FILE_NAME.endsWith('.jpeg')) {
-                    contentType = 'image/jpeg';
-                } else if (asset.FILE_NAME.endsWith('.png')) {
-                    contentType = 'image/png';
-                } else if (asset.FILE_NAME.endsWith('.gif')) {
-                    contentType = 'image/gif';
-                } else {
-                    contentType = 'application/octet-stream';
-                }
-                res.set('Content-Type', contentType);
-                return res.status(200).send(Buffer.isBuffer(asset.FILE_CONTENT) ? asset.FILE_CONTENT : asset.FILE_CONTENT.toString('utf-8'));
-            } else if (asset.FILE_NAME.endsWith('.css')) {
-                res.set('Content-Type', "text/css");
-            }
-            return res.status(200).send(asset.FILE_CONTENT.toString('utf-8'));
+            const asset = await adminService.getOrgContent(req.params.orgId, req.query.fileType, req.query.fileName, req.query.filePath);
+            let contentType = retrieveContentType(asset.FILE_NAME, asset.FILE_TYPE);
+            res.set(constants.MIME_TYPES.CONYEMT_TYPE, contentType);
+            return res.status(200).send(Buffer.isBuffer(asset.FILE_CONTENT) ? asset.FILE_CONTENT : constants.CHARSET_UTF8);
+
         } else if (req.params.fileType) {
             const assets = await adminService.getOrgContent(req.params.orgId, req.params.fileType);
             const results = [];
@@ -50,11 +35,11 @@ const getOrgContent = async (req, res) => {
                 const resp = {
                     orgId: asset.ORG_ID,
                     fileName: asset.FILE_NAME,
-                    fileContent: asset.FILE_CONTENT ? asset.FILE_CONTENT.toString('utf-8') : null
+                    fileContent: asset.FILE_CONTENT ? asset.FILE_CONTENT.toString(constants.CHARSET_UTF8) : null
                 };
                 results.push(resp);
             }
-            
+
             return res.status(200).send(results);
         }
     } catch (error) {
