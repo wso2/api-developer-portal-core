@@ -175,30 +175,15 @@ function handleError(res, error) {
     }
 };
 
-function deleteDirectory(dirPath) {
-    return new Promise((resolve, reject) => {
-        fs.rm(dirPath, { recursive: true, force: true }, (error) => {
-            if (error) {
-                return reject(error);
-            }
-            resolve();
-        });
-    });
-}
-
 const unzipFile = async (zipPath, extractPath) => {
     return new Promise((resolve, reject) => {
         const stream = fs.createReadStream(zipPath)
             .pipe(unzipper.Parse());
-
         const promises = [];
-
         stream.on('entry', async (entry) => {
             const entryPath = entry.path;
-
             if (!entryPath.includes('__MACOSX')) {
                 const filePath = path.join(extractPath, entryPath);
-
                 try {
                     if (entry.type === 'Directory') {
                         await fs.mkdir(filePath, { recursive: true }, (err) => {
@@ -246,7 +231,7 @@ const getAPIFileContent = (directory) => {
     let files = [];
     const filenames = fs.readdirSync(directory);
     filenames.forEach((filename) => {
-        if (!(filename == '.DS_Store')) {
+        if (!(filename === '.DS_Store')) {
             let fileContent = fs.readFileSync(path.join(directory, filename), 'utf8');
             files.push({ fileName: filename, content: fileContent });
         }
@@ -258,7 +243,7 @@ const getAPIImages = async (directory) => {
     let files = [];
     const filenames = await fs.promises.readdir(directory, { withFileTypes: true});
     for (const filename of filenames) {
-        if (!(filename == '.DS_Store')) {
+        if (!(filename === '.DS_Store')) {
             let fileContent = await fs.promises.readFile(path.join(directory, filename.name));
             files.push({ fileName: filename.name, content: fileContent });
         }
@@ -276,7 +261,6 @@ module.exports = {
     renderTemplateFromAPI,
     renderGivenTemplate,
     handleError,
-    deleteDirectory,
     getAPIFileContent,
     unzipFile,
     getAPIImages

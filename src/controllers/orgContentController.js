@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const { renderTemplate, renderTemplateFromAPI } = require('../utils/util');
 const config = require('../config/config');
+const constants = require('../utils/contstants');
 
 
 const filePrefix = '../../../../src/'
@@ -10,7 +11,7 @@ const filePrefix = '../../../../src/'
 const loadOrganizationContent = async (req, res) => {
 
     let html = "";
-    if (config.mode == 'development') {
+    if (config.mode === constants.DEV_MODE) {
         html = await loadOrgContentFromFile(req, res)
     } else {
         html = await loadOrgContentFromAPI(req, res)

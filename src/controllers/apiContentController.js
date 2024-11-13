@@ -6,7 +6,7 @@ const exphbs = require('express-handlebars');
 const orgDao = require('../dao/organization');
 const apiDao = require('../dao/apiMetadata');
 const apiMetadataService = require('../services/apiMetadataService');
-
+const constants = require('../utils/contstants');
 
 const filePrefix = '../../../../src/'
 const generateArray = (length) => Array.from({ length });
@@ -21,7 +21,7 @@ const loadAPIs = async (req, res) => {
         apiMetadata: metaData,
         baseUrl: '/' + orgName
     }
-    if (config.mode == 'development') {
+    if (config.mode === constants.DEV_MODE) {
         html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     } else {
         html = await renderTemplateFromAPI(templateContent, orgName, "apis");
@@ -35,20 +35,18 @@ const loadAPIContent = async (req, res) => {
     const hbs = exphbs.create({});
     const orgName = req.params.orgName;
     let organization = await orgDao.getOrgID(orgName);
-    console.log("organization");
-    console.log(organization);
     let orgID = organization.ORG_ID;
     const apiName = req.params.apiName;
     let apiID = await apiDao.getAPIId(apiName);
     const metaData = await loadAPIMetaData(orgID, apiID);
 
-    if (config.mode == 'development') {
-        const filePath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + '/api-content.hbs');
+    if (config.mode === constants.DEV_MODE) {
+        const filePath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + "/" +constants.API_HBS_CONTENT_FILE_NAME);
         if (fs.existsSync(filePath)) {
-            hbs.handlebars.registerPartial('api-content', fs.readFileSync(filePath, 'utf-8'));
+            hbs.handlebars.registerPartial('api-content', fs.readFileSync(filePath, constants.CHARSET_UTF8));
         }
         let templateContent = {
-            content: loadMarkdown('apiContent.md', filePrefix + '../mock/' + req.params.apiName),
+            content: loadMarkdown(constants.API_MD_CONTENT_FILE_NAME, filePrefix + '../mock/' + req.params.apiName),
             apiMetadata: metaData,
             baseUrl: '/' + orgName,
             schemaUrl: orgName + '/mock/' + apiName + '/apiDefinition.xml'
@@ -74,15 +72,15 @@ const loadTryOutPage = async (req, res) => {
     let apiID = await apiDao.getAPIId(apiName);
     const metaData = await loadAPIMetaData(orgID, apiID);
     let html = "";
-    let apiDefinition = await apiDao.getAPIFile("apiDefinition.json", orgID, apiID)
-    apiDefinition = apiDefinition.API_FILE.toString('utf8')
+    let apiDefinition = await apiDao.getAPIFile(constants.API_DEFINITION_FILE_NAME, orgID, apiID)
+    apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8)
     let templateContent = {
         apiMetadata: metaData,
         baseUrl: req.params.orgName,
         apiType: metaData.apiInfo.apiType,
         swagger: apiDefinition
     }
-    if (config.mode == 'development') {
+    if (config.mode === constants.DEV_MODE) {
         html = renderTemplate('../pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     } else {
         const completeTemplatePath = path.join(__dirname, '..', 'pages', 'tryout', 'page.hbs');
@@ -107,7 +105,7 @@ async function loadAPIMetaDataList(orgID, orgName) {
         const images = element.apiInfo.apiImageMetadata;
         let apiImageUrl = '';
         for (var key in images) {
-            apiImageUrl = config.apiMetaDataAPI + orgID + "/apis/" + element.apiID + "/template?fileName="
+            apiImageUrl = config.apiMetaDataAPI + orgID + constants.API_FILE_PATH + element.apiID + constants.API_TEMPLATE_FILE_NAME
             const modifiedApiImageURL = apiImageUrl + images[key]
             element.apiInfo.apiImageMetadata[key] = modifiedApiImageURL;
         }
@@ -123,7 +121,7 @@ async function loadAPIMetaData(orgID, apiID) {
     //replace image urls
     let images = metaData ? metaData.apiInfo.apiImageMetadata : {};
     for (var key in images) {
-        let apiImageUrl = config.apiMetaDataAPI + orgID + "/apis/" + apiID + "/template?fileName="
+        let apiImageUrl = config.apiMetaDataAPI + orgID + constants.API_FILE_PATH + apiID + constants.API_TEMPLATE_FILE_NAME
         const modifiedApiImageURL = apiImageUrl + images[key]
         images[key] = modifiedApiImageURL;
     }

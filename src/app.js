@@ -14,6 +14,7 @@ const customContent = require('./routes/customPageRoute');
 const config = require('./config/config');
 const { copyStyelSheet, copyStyelSheetMulti } = require('./utils/util');
 const Handlebars = require('handlebars');
+const constants = require("./utils/contstants");
 
 const app = express();
 const secret = crypto.randomBytes(64).toString('hex');
@@ -60,7 +61,7 @@ app.use('/styles', express.static(path.join(path.dirname(require.main.filename),
 
 app.set('view engine', 'hbs');
 
-if (config.mode == 'development') {
+if (config.mode === constants.DEV_MODE) {
     //register images and stylesheet folders for single tenante scenario
     app.use('/images', express.static(path.join(__dirname, filePrefix + 'images')));
     copyStyelSheet();
@@ -87,7 +88,7 @@ process.on('exit', () => {
 app.use('/admin', adminRoute);
 app.use('/apiMetadata', apiMetaDataRoute);
 
-if (config.mode == 'development') {
+if (config.mode === constants.DEV_MODE) {
     app.use('/mock', express.static(path.join(__dirname, filePrefix + 'mock')));
 }
 app.use('/', authRoute);
