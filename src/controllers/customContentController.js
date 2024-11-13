@@ -13,15 +13,11 @@ const loadCustomContent = async (req, res) => {
     let html = "";
     const orgName = req.originalUrl.split("/")[1];
     let filePath = req.originalUrl.split("/" + orgName + "/").pop();
-    let baseURL = orgName
-    if (constants.DEV_MODE) {
+    if (config.mode === constants.DEV_MODE) {
 
         let templateContent = {};
-        if (config.mode === 'design') {
-            baseURL = "http://localhost:" + config.port;
-            filePath = req.originalUrl.split(baseURL).pop();
-        }
-        templateContent["baseUrl"] = baseURL
+        templateContent["baseUrl"] = constants.BASE_URL + config.port
+
         //read all markdown content
         if (fs.existsSync(path.join(__dirname, filePrefix + 'pages', filePath, 'content'))) {
             const markdDownFiles = fs.readdirSync(path.join(__dirname, filePrefix + 'pages/' + filePath + '/content'));

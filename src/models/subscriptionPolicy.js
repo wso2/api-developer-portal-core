@@ -1,24 +1,21 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize')
 
-const AdditionalProperties = sequelize.define('AdditionalProperties', {
-    propertyID: {
+const SubscriptionPolicy = sequelize.define('dp_api_subscription_policy', {
+    API_ID: {
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true
     },
-    key: {
-        type: DataTypes.STRING,
-        primaryKey: true
-    },
-    value: {
+    POLICY_NAME: {
         type: DataTypes.STRING,
         allowNull: false,
+        primaryKey: true
     }
 }, {
     timestamps: false,
-    tableName: 'AdditionalProperties',
-    returning: false
+    tableName: 'dp_api_subscription_policy',
+    returning: true
 });
 
-module.exports = AdditionalProperties;
+module.exports = SubscriptionPolicy;

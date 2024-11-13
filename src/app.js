@@ -4,18 +4,16 @@ const passport = require('passport');
 const session = require('express-session');
 const crypto = require('crypto');
 const path = require('path');
-const fs = require('fs');
 const authRoute = require('./routes/authRoute');
 const devportalRoute = require('./routes/devportalRoute');
 const orgContent = require('./routes/orgContentRoute');
 const apiContent = require('./routes/apiContentRoute');
 const customContent = require('./routes/customPageRoute');
-const designRoute = require('./routes/designModeRoute');
 const config = require('./config/config');
 const { copyStyelSheet, copyStyelSheetMulti } = require('./utils/util');
-const registerPartials = require('./middlewares/registerPartials');
 const Handlebars = require('handlebars');
-const constants = require('./utils/constants');
+const constants = require("./utils/constants");
+const designRoute = require('./routes/designModeRoute');
 
 const app = express();
 const secret = crypto.randomBytes(64).toString('hex');
@@ -74,7 +72,6 @@ app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
 
 if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.MOCK, express.static(path.join(__dirname, filePrefix + 'mock')));
-    app.use(constants.ROUTE.DEFAULT, registerPartials);
     app.use(constants.ROUTE.DEFAULT, designRoute);
 } else {
     app.use(constants.ROUTE.DEFAULT, authRoute);
