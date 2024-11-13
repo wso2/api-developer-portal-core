@@ -83,8 +83,6 @@ function loadMarkdown(filename, dirName) {
 
 function renderTemplate(templatePath, layoutPath, templateContent) {
 
-    console.log("templatePath", templatePath);
-    
     const completeTemplatePath = path.join(__dirname, templatePath);
     const templateResponse = fs.readFileSync(completeTemplatePath, 'utf-8')
 

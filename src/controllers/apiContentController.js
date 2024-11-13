@@ -44,12 +44,12 @@ const loadAPIContent = async (req, res) => {
 
     if (config.mode === constants.DEV_MODE) {
         let metaData = loadAPIMetaDataFromFile(apiName)
-        const filePath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + "/" + constants.API_HBS_CONTENT_FILE_NAME);
+        const filePath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + "/" + constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME);
         if (fs.existsSync(filePath)) {
             hbs.handlebars.registerPartial('api-content', fs.readFileSync(filePath, constants.CHARSET_UTF8));
         }
         let templateContent = {
-            apiContent: await loadMarkdown(constants.API_MD_CONTENT_FILE_NAME, filePrefix + '../mock/' + req.params.apiName),
+            apiContent: await loadMarkdown(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, filePrefix + '../mock/' + req.params.apiName),
             apiMetadata: metaData,
             baseUrl: constants.BASE_URL + config.port,
             schemaUrl: orgName + '/mock/' + apiName + '/apiDefinition.xml'
