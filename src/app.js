@@ -6,8 +6,7 @@ const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const authRoute = require('./routes/authRoute');
-const adminRoute = require('./routes/adminRoute');
-const apiMetaDataRoute = require('./routes/apiMetadataRoute');
+const devportalRoute = require('./routes/devportalRoute');
 const orgContent = require('./routes/orgContentRoute');
 const apiContent = require('./routes/apiContentRoute');
 const customContent = require('./routes/customPageRoute');
@@ -16,10 +15,11 @@ const config = require('./config/config');
 const { copyStyelSheet, copyStyelSheetMulti } = require('./utils/util');
 const registerPartials = require('./middlewares/registerPartials');
 const Handlebars = require('handlebars');
+const constants = require('./utils/constants');
 
 const app = express();
 const secret = crypto.randomBytes(64).toString('hex');
-const filePrefix = '../../../src/';
+const filePrefix = constants.FILE_PREFIX_APP;
 
 app.engine('.hbs', engine({
     extname: '.hbs'
@@ -37,6 +37,7 @@ Handlebars.registerHelper('in', function (value, options) {
 });
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use(session({
     secret: secret,
@@ -58,47 +59,28 @@ passport.deserializeUser((user, done) => {
     done(null, user);
 });
 
-app.use('/styles', express.static(path.join(__dirname, filePrefix + 'styles')));
+app.use(constants.ROUTE.STYLES, express.static(path.join(__dirname, filePrefix + 'styles')));
 
-app.set('view engine', 'hbs');
-
-if (config.mode == 'single' || config.mode == 'design') {
+if (config.mode === constants.DEV_MODE) {
     //register images and stylesheet folders for single tenante scenario
-    app.use('/images', express.static(path.join(__dirname, filePrefix + 'images')));
+    app.use(constants.ROUTE.IMAGES, express.static(path.join(__dirname, filePrefix + 'images')));
     copyStyelSheet();
-} else if (config.mode === 'multi') {
+} else {
     copyStyelSheetMulti();
 }
 
-const folderToDelete = path.join(__dirname, '../../../src/styles');
-
-process.on('SIGINT', () => {
-    if (fs.existsSync(folderToDelete)) {
-        fs.rmSync(folderToDelete, { recursive: true, force: true });
-    }
-    process.exit();
-});
-
-process.on('exit', () => {
-    if (fs.existsSync(folderToDelete)) {
-        fs.rmSync(folderToDelete, { recursive: true, force: true });
-    }
-});
-
 //backend routes
-app.use('/admin', adminRoute);
-app.use('/apiMetadata', apiMetaDataRoute);
+app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
 
-if (config.mode == 'design') {
-    app.use('/mock', express.static(path.join(__dirname, filePrefix + 'mock')));
-    app.use('/', registerPartials);
-    app.use('/', designRoute);
+if (config.mode === constants.DEV_MODE) {
+    app.use(constants.ROUTE.MOCK, express.static(path.join(__dirname, filePrefix + 'mock')));
+    app.use(constants.ROUTE.DEFAULT, registerPartials);
+    app.use(constants.ROUTE.DEFAULT, designRoute);
 } else {
-    app.use('/', authRoute);
-    app.use('/', registerPartials);
-    app.use('/', apiContent);
-    app.use('/', orgContent);
-    app.use('/', customContent);
+    app.use(constants.ROUTE.DEFAULT, authRoute);
+    app.use(constants.ROUTE.DEFAULT, apiContent);
+    app.use(constants.ROUTE.DEFAULT, orgContent);
+    app.use(constants.ROUTE.DEFAULT, customContent);
 }
 
 app.listen(config.port);

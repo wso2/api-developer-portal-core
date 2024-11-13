@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/api-developer-portal-core#readme",
   "dependencies": {
-    "@asyncapi/react-component": "^2.2.2",
+    "@asyncapi/react-component": "^2.3.4",
     "bootstrap-icons": "^1.11.3",
     "chokidar": "^3.6.0",
     "crypto": "^1.0.1",
@@ -53,6 +53,13 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "sequelize": "^6.37.3",
-    "shelljs": "^0.8.5"
+    "shelljs": "^0.8.5",
+    "unzipper": "^0.12.3",
+    "uuid": "^11.0.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.14.0",
+    "eslint": "^9.14.0",
+    "globals": "^15.12.0"
   }
 }

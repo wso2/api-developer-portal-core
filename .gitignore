@@ -15,7 +15,9 @@
 /build
 
 /src/styles
+/src/.tmp
 
+/uploads
 # misc
 .DS_Store
 *.pem

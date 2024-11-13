@@ -3,17 +3,18 @@ const passport = require('passport');
 const config = require('../config/config');
 const fs = require('fs');
 const path = require('path');
+const constants = require('../utils/constants');
 
-const filePrefix = '../../../../src/'
+const filePrefix = constants.FILE_PREFIX
 
 const fetchAuthJsonContent = async (orgName) => {
-    if (config.mode == 'design') {
+    if (config.mode === constants.DEV_MODE) {
         const authJsonPath = path.join(__dirname, filePrefix + '../mock', 'auth.json');
         const authJson = JSON.parse(fs.readFileSync(authJsonPath, 'utf-8'));
         return authJson;
     }
     try {
-        const response = await fetch(`${config.adminAPI}identityProvider?orgName=${orgName}`);
+        const response = await fetch(`${config.devportalAPI}identityProvider?orgName=${orgName}`);
         if (!response.ok) {
             throw new Error(`Failed to fetch identity provider details: ${response.statusText}`);
         }
@@ -40,7 +41,7 @@ const handleCallback = (req, res, next) => {
     passport.authenticate('oauth2', {
         failureRedirect: '/login',
         keepSessionInfo: true
-    }, (err, user, info) => {
+    }, (err, user) => {
         if (err || !user) {
             return next(err || new Error('Authentication failed'));
         }
@@ -55,7 +56,7 @@ const handleCallback = (req, res, next) => {
     })(req, res, next);
 };
 
-const handleSignUp = async (req, res, next) => {
+const handleSignUp = async (req, res) => {
     let authJsonContent = await fetchAuthJsonContent(req.params.orgName);
     res.redirect(authJsonContent[0].signUpURL);
 };

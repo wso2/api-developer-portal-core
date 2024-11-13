@@ -1,10 +1,12 @@
-const Handlebars = require('handlebars');
 const { renderTemplate, renderTemplateFromAPI, loadMarkdown } = require('../utils/util');
 const config = require('../config/config');
 const markdown = require('marked');
 const fs = require('fs');
 const path = require('path');
+const adminDao = require('../services/adminService');
+const constants = require('../utils/constants');
 
+const filePrefix = constants.FILE_PREFIX
 
 const loadCustomContent = async (req, res) => {
 
@@ -12,10 +14,10 @@ const loadCustomContent = async (req, res) => {
     const orgName = req.originalUrl.split("/")[1];
     let filePath = req.originalUrl.split("/" + orgName + "/").pop();
     let baseURL = orgName
-    if (config.mode == 'single' || config.mode == 'design') {
+    if (constants.DEV_MODE) {
 
         let templateContent = {};
-        if (config.mode == 'design') {
+        if (config.mode === 'design') {
             baseURL = "http://localhost:" + config.port;
             filePath = req.originalUrl.split(baseURL).pop();
         }
@@ -32,12 +34,15 @@ const loadCustomContent = async (req, res) => {
 
     } else {
         let content = {}
-        const markdownResponse = await fetch(config.adminAPI + "orgFileType?orgName=" + orgName + "&fileType=markDown&filePath=" + filePath);
+        const orgData = await adminDao.getOrganization(orgName);
+
+        const markdownResponse = await fetch(`${config.devportalAPI}organizations${orgData.ORG_ID}filePath${filePath}`);
         let markDownFiles = await markdownResponse.json();
+
         if (markDownFiles.length > 0) {
             markDownFiles.forEach((item) => {
-                const tempKey = item.pageName.split('.md')[0];
-                content[tempKey] = markdown.parse(item.pageContent);
+                const tempKey = item.fileName.split('.md')[0];
+                content[tempKey] = markdown.parse(item.fileContent);
             });
         }
         content["baseUrl"] = "/" + orgName;
