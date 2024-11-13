@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const exphbs = require('express-handlebars');
 const constants = require('../utils/constants');
-const orgDao = require('../dao/organization');
+const orgDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const apiMetadataService = require('../services/apiMetadataService');
 

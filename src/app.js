@@ -4,7 +4,6 @@ const passport = require('passport');
 const session = require('express-session');
 const crypto = require('crypto');
 const path = require('path');
-const fs = require('fs');
 const authRoute = require('./routes/authRoute');
 const devportalRoute = require('./routes/devportalRoute');
 const orgContent = require('./routes/orgContentRoute');
@@ -13,7 +12,7 @@ const customContent = require('./routes/customPageRoute');
 const config = require('./config/config');
 const { copyStyelSheet, copyStyelSheetMulti } = require('./utils/util');
 const Handlebars = require('handlebars');
-const constants = require("./utils/contstants");
+const constants = require("./utils/constants");
 const designRoute = require('./routes/designModeRoute');
 
 const app = express();

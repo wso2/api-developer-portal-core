@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const { renderTemplate, renderTemplateFromAPI } = require('../utils/util');
 const config = require('../config/config');
-
+const constants = require('../utils/constants');
 
 const filePrefix = constants.FILE_PREFIX;
 

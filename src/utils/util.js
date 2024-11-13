@@ -5,6 +5,7 @@ const Handlebars = require('handlebars');
 const { CustomError } = require('../utils/errors/customErrors');
 const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
+const unzipper = require('unzipper');
 
 const { Sequelize } = require('sequelize');
 

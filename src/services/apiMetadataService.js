@@ -5,7 +5,7 @@ const util = require("../utils/util");
 const path = require("path");
 const fs = require("fs").promises;
 const APIDTO = require("../dto/apiDTO");
-const constants = require("../utils/contstants");
+const constants = require("../utils/constants");
 
 const createAPIMetadata = async (req, res) => {
 
