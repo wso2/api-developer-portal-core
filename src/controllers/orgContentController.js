@@ -12,14 +12,14 @@ const loadOrganizationContent = async (req, res) => {
 
     let html = "";
     if (config.mode === constants.DEV_MODE) {
-        html = await loadOrgContentFromFile(req, res)
+        html = await loadOrgContentFromFile()
     } else {
         html = await loadOrgContentFromAPI(req, res)
     }
     res.send(html);
 }
 
-const loadOrgContentFromFile = async (req) => {
+const loadOrgContentFromFile = async () => {
 
     //TODO fetch from DB
     const mockProfileDataPath = path.join(__dirname, filePrefix + '../mock', '/userProfiles.json');
@@ -27,7 +27,7 @@ const loadOrgContentFromFile = async (req) => {
 
     let templateContent = {
         userProfiles: mockProfileData,
-        baseUrl: req.params.orgName
+        baseUrl: constants.BASE_URL + config.port
     };
     return renderTemplate(filePrefix + 'pages/home/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
 }

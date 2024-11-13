@@ -15,6 +15,7 @@ const config = require('./config/config');
 const { copyStyelSheet, copyStyelSheetMulti } = require('./utils/util');
 const Handlebars = require('handlebars');
 const constants = require("./utils/contstants");
+const designRoute = require('./routes/designModeRoute');
 
 const app = express();
 const secret = crypto.randomBytes(64).toString('hex');
@@ -90,10 +91,12 @@ app.use('/apiMetadata', apiMetaDataRoute);
 
 if (config.mode === constants.DEV_MODE) {
     app.use('/mock', express.static(path.join(__dirname, filePrefix + 'mock')));
+    app.use('/', designRoute);
+} else {
+    app.use('/', authRoute);
+    app.use('/', apiContent);
+    app.use('/', orgContent);
+    app.use('/', customContent);
 }
-app.use('/', authRoute);
-app.use('/', apiContent);
-app.use('/', orgContent);
-app.use('/', customContent);
 
 app.listen(config.port);

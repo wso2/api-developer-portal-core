@@ -11,13 +11,10 @@ let filePrefix = "../../../../src/";
 
 const registerPartials = async (req, res, next) => {
 
-  const orgName = req.originalUrl.split("/")[1];
-  let baseURL = "/" + orgName;
-  let filePath = req.originalUrl.split("/" + orgName).pop();
   if (config.mode === constants.DEV_MODE) {
-    filePath = req.originalUrl.split(baseURL).pop();
-  }
-  if (config.mode === constants.DEV_MODE) {
+    console.log("Loading partials from file");
+    let baseURL = constants.BASE_URL + config.port
+    const filePath = req.originalUrl.split(baseURL).pop();
     registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, "partials"), req.user);
     registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, "pages", "home", "partials"), req.user);
     registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, "pages", "api-landing", "partials"), req.user);

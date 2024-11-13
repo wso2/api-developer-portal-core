@@ -68,8 +68,10 @@ function searchFile(dir, fileName, styleDir) {
 function loadMarkdown(filename, dirName) {
 
     const filePath = path.join(__dirname, dirName, filename);
+    console.log("filePath", filePath);
     if (fs.existsSync(filePath)) {
         const fileContent = fs.readFileSync(filePath, 'utf-8');
+        console.log("fileContent", fileContent);
         return marked.parse(fileContent);
     } else {
         return null;
@@ -79,6 +81,8 @@ function loadMarkdown(filename, dirName) {
 
 function renderTemplate(templatePath, layoutPath, templateContent) {
 
+    console.log("templatePath", templatePath);
+    
     const completeTemplatePath = path.join(__dirname, templatePath);
     const templateResponse = fs.readFileSync(completeTemplatePath, 'utf-8')
 
@@ -129,6 +133,7 @@ async function renderTemplateFromAPI(templateContent, orgName, templatePageName)
             body: template(templateContent)
         });
     }
+    console.log("html", html);
     return html;
 }
 

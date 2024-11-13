@@ -14,4 +14,5 @@ router.get('/api/:apiName', registerPartials, apiController.loadAPIContent);
 router.get('/api/:apiName/tryout', registerPartials, apiController.loadTryOutPage);
 
 router.get('((?!favicon.ico|images|styles)/mock)\/*', registerPartials,  contentController.loadCustomContent);
+
 module.exports = router;

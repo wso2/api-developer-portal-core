@@ -14,16 +14,22 @@ const generateArray = (length) => Array.from({ length });
 const loadAPIs = async (req, res) => {
 
     const orgName = req.params.orgName;
-    let organization = await orgDao.getOrgID(orgName);
-    let metaData = await loadAPIMetaDataList(organization.ORG_ID, orgName);
     let html;
-    let templateContent = {
-        apiMetadata: metaData,
-        baseUrl: '/' + orgName
-    }
     if (config.mode === constants.DEV_MODE) {
+        let metaData = await loadAPIMetaDataList()
+        let templateContent = {
+            apiMetadata: metaData,
+            baseUrl: constants.BASE_URL + config.port
+        }
         html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     } else {
+        let organization = await orgDao.getOrgID(orgName);
+        let metaData = await loadAPIMetaDataListFromAPI(organization.ORG_ID, orgName);
+        let templateContent = {
+            apiMetadata: metaData,
+            baseUrl: '/' + orgName
+        }
+        console.log(templateContent)
         html = await renderTemplateFromAPI(templateContent, orgName, "apis");
     }
     res.send(html);
@@ -34,29 +40,31 @@ const loadAPIContent = async (req, res) => {
     let html;
     const hbs = exphbs.create({});
     const orgName = req.params.orgName;
-    let organization = await orgDao.getOrgID(orgName);
-    let orgID = organization.ORG_ID;
     const apiName = req.params.apiName;
-    let apiID = await apiDao.getAPIId(apiName);
-    const metaData = await loadAPIMetaData(orgID, apiID);
 
     if (config.mode === constants.DEV_MODE) {
-        const filePath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + "/" +constants.API_HBS_CONTENT_FILE_NAME);
+        let metaData = loadAPIMetaDataFromFile(apiName)
+        const filePath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + "/" + constants.API_HBS_CONTENT_FILE_NAME);
         if (fs.existsSync(filePath)) {
             hbs.handlebars.registerPartial('api-content', fs.readFileSync(filePath, constants.CHARSET_UTF8));
         }
         let templateContent = {
-            content: loadMarkdown(constants.API_MD_CONTENT_FILE_NAME, filePrefix + '../mock/' + req.params.apiName),
+            apiContent: await loadMarkdown(constants.API_MD_CONTENT_FILE_NAME, filePrefix + '../mock/' + req.params.apiName),
             apiMetadata: metaData,
-            baseUrl: '/' + orgName,
+            baseUrl: constants.BASE_URL + config.port,
             schemaUrl: orgName + '/mock/' + apiName + '/apiDefinition.xml'
         }
         html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
     } else {
+        let organization = await orgDao.getOrgID(orgName);
+        let orgID = organization.ORG_ID;
+        let apiID = await apiDao.getAPIId(apiName);
+        let metaData = await loadAPIMetaData(orgID, apiID);
+
         let templateContent = {
             apiMetadata: metaData,
             baseUrl: '/' + orgName,
-            schemaUrl: config.apiMetaDataAPI + orgID + "/apis/" + apiID 
+            schemaUrl: config.apiMetaDataAPI + orgID + "/apis/" + apiID
         }
         html = await renderTemplateFromAPI(templateContent, orgName, "api-landing");
     }
@@ -66,23 +74,34 @@ const loadAPIContent = async (req, res) => {
 const loadTryOutPage = async (req, res) => {
 
     let orgName = req.params.orgName;
-    let organization = await orgDao.getOrgID(orgName);
-    let orgID = organization.ORG_ID;
-    const apiName = req.params.apiName;
-    let apiID = await apiDao.getAPIId(apiName);
-    const metaData = await loadAPIMetaData(orgID, apiID);
+    let apiName = req.params.apiName;
     let html = "";
-    let apiDefinition = await apiDao.getAPIFile(constants.API_DEFINITION_FILE_NAME, orgID, apiID)
-    apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8)
-    let templateContent = {
-        apiMetadata: metaData,
-        baseUrl: req.params.orgName,
-        apiType: metaData.apiInfo.apiType,
-        swagger: apiDefinition
-    }
     if (config.mode === constants.DEV_MODE) {
+        const metaData = loadAPIMetaDataFromFile(apiName)
+        let apiDefinition = path.join(__dirname, filePrefix + '../mock', req.params.apiName + '/apiDefinition.json');
+        if (fs.existsSync(apiDefinition)) {
+            apiDefinition = await fs.readFileSync(apiDefinition, 'utf-8');
+        }
+        let templateContent = {
+            apiMetadata: metaData,
+            baseUrl: constants.BASE_URL + config.port,
+            apiType: metaData.apiInfo.apiType,
+            swagger: apiDefinition
+        }
         html = renderTemplate('../pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     } else {
+        let organization = await orgDao.getOrgID(orgName);
+        let orgID = organization.ORG_ID;
+        let apiID = await apiDao.getAPIId(apiName);
+        const metaData = loadAPIMetaData(orgID, apiID);
+        let apiDefinition = await apiDao.getAPIFile(constants.API_DEFINITION_FILE_NAME, orgID, apiID)
+        apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8)
+        let templateContent = {
+            apiMetadata: metaData,
+            baseUrl: req.params.orgName,
+            apiType: metaData.apiInfo.apiType,
+            swagger: apiDefinition
+        }
         const completeTemplatePath = path.join(__dirname, '..', 'pages', 'tryout', 'page.hbs');
         const templateResponse = fs.readFileSync(completeTemplatePath, 'utf-8');
         const layoutResponse = await loadLayoutFromAPI(orgName)
@@ -91,10 +110,23 @@ const loadTryOutPage = async (req, res) => {
     res.send(html);
 }
 
-async function loadAPIMetaDataList(orgID, orgName) {
+async function loadAPIMetaDataList() {
 
-    let metaData = {};
-    metaData =  await apiMetadataService.getMetadataListFromDB(orgID);
+    const mockAPIMetaDataPath = path.join(__dirname, filePrefix + '../mock', 'apiMetadata.json');
+    const mockAPIMetaData = JSON.parse(fs.readFileSync(mockAPIMetaDataPath, 'utf-8'));
+    mockAPIMetaData.forEach(element => {
+        let randomNumber = Math.floor(Math.random() * 3) + 3;
+        element.apiInfo.ratings = generateArray(randomNumber);
+        element.apiInfo.ratingsNoFill = generateArray(5 - randomNumber);
+    });
+    return mockAPIMetaData;
+}
+
+
+
+async function loadAPIMetaDataListFromAPI(orgID, orgName) {
+
+    let metaData = await apiMetadataService.getMetadataListFromDB(orgID);
     metaData.forEach(item => {
         item.baseUrl = '/' + orgName;
     });
@@ -110,7 +142,6 @@ async function loadAPIMetaDataList(orgID, orgName) {
             element.apiInfo.apiImageMetadata[key] = modifiedApiImageURL;
         }
     });
-    return metaData;
 }
 
 async function loadAPIMetaData(orgID, apiID) {
@@ -126,6 +157,12 @@ async function loadAPIMetaData(orgID, apiID) {
         images[key] = modifiedApiImageURL;
     }
     return metaData;
+}
+
+function loadAPIMetaDataFromFile(apiName) {
+
+    const mockAPIDataPath = path.join(__dirname, filePrefix + '../mock', apiName + '/apiMetadata.json');
+    return JSON.parse(fs.readFileSync(mockAPIDataPath, 'utf-8'));
 }
 
 

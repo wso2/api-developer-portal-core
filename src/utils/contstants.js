@@ -1,4 +1,3 @@
-const { partials } = require("handlebars");
 
 module.exports = {
 
@@ -17,6 +16,7 @@ API_CONTENT_PARTIAL_NAME: "api-content",
 API_DEFINITION_FILE_NAME: 'apiDefinition.json',
 PARTIAL_HEADER_FILE_NAME: 'header.hbs',
 CHARSET_UTF8: "utf8",
+BASE_URL: 'http://localhost:',
 
 MIME_TYPES: {
     HTML: 'text/html',
