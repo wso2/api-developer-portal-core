@@ -21,7 +21,7 @@ const loadOrganizationContent = async (req, res) => {
 const loadOrgContentFromFile = async () => {
 
     //TODO fetch from DB
-    const mockProfileDataPath = path.join(__dirname, filePrefix + '../mock', '/userProfiles.json');
+    const mockProfileDataPath = path.join(process.cwd(), filePrefix + '/mock', '/userProfiles.json');
     const mockProfileData = JSON.parse(fs.readFileSync(mockProfileDataPath, 'utf-8'));
 
     let templateContent = {

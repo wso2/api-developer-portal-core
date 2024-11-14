@@ -13,22 +13,22 @@ const filePrefix = constants.FILE_PREFIX;
 
 function copyStyelSheetMulti() {
 
-    if (!fs.existsSync(path.join(__dirname, filePrefix + 'styles'))) {
-        fs.mkdirSync(path.join(__dirname, filePrefix + 'styles'));
+    if (!fs.existsSync(path.join(process.cwd(), filePrefix + 'styles'))) {
+        fs.mkdirSync(path.join(process.cwd(), filePrefix + 'styles'));
     }
-    searchFile(path.join(__dirname, '..', 'pages', 'tryout'), ".css", [], filePrefix);
+    searchFile(path.join(require.main.filename, '..', 'pages', 'tryout'), ".css", [], filePrefix);
 }
 
 function copyStyelSheet() {
 
-    if (!fs.existsSync(path.join(__dirname, filePrefix + 'styles'))) {
-        fs.mkdirSync(path.join(__dirname, filePrefix + 'styles'));
+    if (!fs.existsSync(path.join(process.cwd(), filePrefix + 'styles'))) {
+        fs.mkdirSync(path.join(process.cwd(), filePrefix + 'styles'));
     }
     var styleDir = [];
-    searchFile(path.join(__dirname, filePrefix + 'partials'), ".css", styleDir, filePrefix);
-    searchFile(path.join(__dirname, filePrefix + 'layout'), ".css", styleDir, filePrefix);
-    searchFile(path.join(__dirname, filePrefix + 'pages'), ".css", styleDir, filePrefix);
-    searchFile(path.join(__dirname, '..', 'pages', 'tryout'), ".css", [], filePrefix);
+    searchFile(path.join(process.cwd(), filePrefix + 'partials'), ".css", styleDir, filePrefix);
+    searchFile(path.join(process.cwd(), filePrefix + 'layout'), ".css", styleDir, filePrefix);
+    searchFile(path.join(process.cwd(), filePrefix + 'pages'), ".css", styleDir, filePrefix);
+    searchFile(path.join(require.main.filename, '..', 'pages', 'tryout'), ".css", [], filePrefix);
 }
 
 function searchFile(dir, fileName, styleDir) {
@@ -50,8 +50,8 @@ function searchFile(dir, fileName, styleDir) {
                 if (fileStat.isDirectory()) {
                     searchFile(filePath, fileName, styleDir, filePrefix);
                 } else if (file.endsWith(fileName)) {
-                    if (!fs.existsSync(path.join(__dirname, filePrefix + 'styles/' + path.basename(filePath)))) {
-                        fs.copyFile(filePath, path.join(__dirname, filePrefix + 'styles/' + path.basename(filePath)),
+                    if (!fs.existsSync(path.join(process.cwd(), filePrefix + 'styles/' + path.basename(filePath)))) {
+                        fs.copyFile(filePath, path.join(process.cwd(), filePrefix + 'styles/' + path.basename(filePath)),
                             fs.constants.COPYFILE_EXCL, (err) => {
                                 if (err) {
                                     console.log("Error Found:", err);
@@ -69,7 +69,7 @@ function searchFile(dir, fileName, styleDir) {
 // Function to load and convert markdown file to HTML
 function loadMarkdown(filename, dirName) {
 
-    const filePath = path.join(__dirname, dirName, filename);
+    const filePath = path.join(process.cwd(), dirName, filename);
     console.log("filePath", filePath);
     if (fs.existsSync(filePath)) {
         const fileContent = fs.readFileSync(filePath, 'utf-8');
@@ -83,10 +83,12 @@ function loadMarkdown(filename, dirName) {
 
 function renderTemplate(templatePath, layoutPath, templateContent) {
 
-    const completeTemplatePath = path.join(__dirname, templatePath);
+    console.log("templatePath", templatePath);
+    
+    const completeTemplatePath = path.join(process.cwd(), templatePath);
     const templateResponse = fs.readFileSync(completeTemplatePath, 'utf-8')
 
-    const completeLayoutPath = path.join(__dirname, layoutPath);
+    const completeLayoutPath = path.join(process.cwd(), layoutPath);
     const layoutResponse = fs.readFileSync(completeLayoutPath, 'utf-8')
 
     const template = Handlebars.compile(templateResponse.toString());

@@ -9,7 +9,7 @@ const filePrefix = constants.FILE_PREFIX
 
 const fetchAuthJsonContent = async (orgName) => {
     if (config.mode === constants.DEV_MODE) {
-        const authJsonPath = path.join(__dirname, filePrefix + '../mock', 'auth.json');
+        const authJsonPath = path.join(process.cwd(), filePrefix + '../mock', 'auth.json');
         const authJson = JSON.parse(fs.readFileSync(authJsonPath, 'utf-8'));
         return authJson;
     }

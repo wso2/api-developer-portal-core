@@ -94,7 +94,7 @@ const deleteOrganization = async (req, res) => {
 const createOrgContent = async (req, res) => {
     let orgId = req.params.orgId;
     const zipPath = req.file.path;
-    const extractPath = path.join(__dirname, '..', '.tmp', orgId);
+    const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
 
     await util.unzipFile(zipPath, extractPath);
 
@@ -136,7 +136,7 @@ const createContent = async (filePath, fileName, fileContent, fileType, orgId) =
 const updateOrgContent = async (req, res) => {
     let orgId = req.params.orgId;
     const zipPath = req.file.path;
-    const extractPath = path.join(__dirname, '..', '.tmp', orgId);
+    const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
 
     await util.unzipFile(zipPath, extractPath);
 

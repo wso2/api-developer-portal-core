@@ -19,8 +19,8 @@ const loadCustomContent = async (req, res) => {
         templateContent["baseUrl"] = constants.BASE_URL + config.port
 
         //read all markdown content
-        if (fs.existsSync(path.join(__dirname, filePrefix + 'pages', filePath, 'content'))) {
-            const markdDownFiles = fs.readdirSync(path.join(__dirname, filePrefix + 'pages/' + filePath + '/content'));
+        if (fs.existsSync(path.join(process.cwd(), filePrefix + 'pages', filePath, 'content'))) {
+            const markdDownFiles = fs.readdirSync(path.join(process.cwd(), filePrefix + 'pages/' + filePath + '/content'));
             markdDownFiles.forEach((filename) => {
                 const tempKey = filename.split('.md')[0];
                 templateContent[tempKey] = loadMarkdown(filename, filePrefix + 'pages/' + filePath + '/content')
