@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const constants = require('../utils/constants');
 
-const filePrefix = constants.FILE_PREFIX
+const filePrefix = config.pathToContent;
 
 const fetchAuthJsonContent = async (orgName) => {
     if (config.mode === constants.DEV_MODE) {

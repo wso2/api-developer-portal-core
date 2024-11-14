@@ -17,7 +17,7 @@ const designRoute = require('./routes/designModeRoute');
 
 const app = express();
 const secret = crypto.randomBytes(64).toString('hex');
-const filePrefix = constants.FILE_PREFIX;
+const filePrefix = config.pathToContent;
 
 app.engine('.hbs', engine({
     extname: '.hbs'

@@ -1,6 +1,5 @@
 module.exports = {
     DEV_MODE: 'development',
-    FILE_PREFIX: '../src/',
     IMAGE: 'image',
     STYLE: 'style',
     CHARSET_UTF8: 'utf-8',

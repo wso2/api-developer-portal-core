@@ -8,7 +8,7 @@ const orgDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const apiMetadataService = require('../services/apiMetadataService');
 
-let filePrefix = constants.FILE_PREFIX;
+const filePrefix = config.pathToContent;
 const generateArray = (length) => Array.from({ length });
 
 const loadAPIs = async (req, res) => {

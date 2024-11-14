@@ -6,7 +6,7 @@ const path = require('path');
 const adminDao = require('../services/adminService');
 const constants = require('../utils/constants');
 
-const filePrefix = constants.FILE_PREFIX
+const filePrefix = config.pathToContent;
 
 const loadCustomContent = async (req, res) => {
 

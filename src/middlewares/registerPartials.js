@@ -8,7 +8,7 @@ const apiDao = require('../dao/apiMetadata');
 
 const constants = require('../utils/constants');
 
-let filePrefix = constants.FILE_PREFIX;
+const filePrefix = config.pathToContent;
 
 const registerPartials = async (req, res, next) => {
   
