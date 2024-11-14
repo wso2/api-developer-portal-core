@@ -5,7 +5,7 @@ const APIImages = require('./apiImages')
 const SubscriptionPolicy = require('./subscriptionPolicy')
 const { Organization } = require('./orgModels')
 
-const APIMetadata = sequelize.define('dp_api_metadata', {
+const APIMetadata = sequelize.define('DP_API_METADATA', {
   API_ID: {
     type: DataTypes.UUID,
     defaultValue: Sequelize.UUIDV4,
@@ -73,7 +73,7 @@ const APIMetadata = sequelize.define('dp_api_metadata', {
   }
 }, {
   timestamps: false,
-  tableName: 'dp_api_metadata',
+  tableName: 'DP_API_METADATA',
   returning: true
 });
 

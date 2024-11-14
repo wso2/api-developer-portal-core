@@ -1,7 +1,7 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize')
 
-const SubscriptionPolicy = sequelize.define('dp_api_subscription_policy', {
+const SubscriptionPolicy = sequelize.define('DP_API_SUBSCRIPTION_POLICY', {
     API_ID: {
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -14,7 +14,7 @@ const SubscriptionPolicy = sequelize.define('dp_api_subscription_policy', {
     }
 }, {
     timestamps: false,
-    tableName: 'dp_api_subscription_policy',
+    tableName: 'DP_API_SUBSCRIPTION_POLICY',
     returning: true
 });
 
