@@ -76,7 +76,7 @@ const registerPartialsFromAPI = async (req) => {
   if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
     //fetch markdown content for API if exists
     let markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, orgID, apiID);
-    let markdownContent = markdownResponse.API_FILE.toString("utf8");
+    let markdownContent = markdownResponse? markdownResponse.API_FILE.toString("utf8"): "";
     const markdownHtml = markdownContent ? markdown.parse(markdownContent) : "";
 
     //if hbs content available for API, render the hbs page
