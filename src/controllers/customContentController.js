@@ -1,30 +1,26 @@
 const { renderTemplate, renderTemplateFromAPI, loadMarkdown } = require('../utils/util');
-const config = require('../config/config');
+const config = require(process.cwd() + '/config');
 const markdown = require('marked');
 const fs = require('fs');
 const path = require('path');
-const adminDao = require('../services/adminService');
+const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 
-const filePrefix = constants.FILE_PREFIX
+const filePrefix = config.pathToContent;
 
 const loadCustomContent = async (req, res) => {
 
     let html = "";
     const orgName = req.originalUrl.split("/")[1];
     let filePath = req.originalUrl.split("/" + orgName + "/").pop();
-    let baseURL = orgName
-    if (constants.DEV_MODE) {
+    if (config.mode === constants.DEV_MODE) {
 
         let templateContent = {};
-        if (config.mode === 'design') {
-            baseURL = "http://localhost:" + config.port;
-            filePath = req.originalUrl.split(baseURL).pop();
-        }
-        templateContent["baseUrl"] = baseURL
+        templateContent["baseUrl"] = constants.BASE_URL + config.port
+
         //read all markdown content
-        if (fs.existsSync(path.join(__dirname, filePrefix + 'pages', filePath, 'content'))) {
-            const markdDownFiles = fs.readdirSync(path.join(__dirname, filePrefix + 'pages/' + filePath + '/content'));
+        if (fs.existsSync(path.join(process.cwd(), filePrefix + 'pages', filePath, 'content'))) {
+            const markdDownFiles = fs.readdirSync(path.join(process.cwd(), filePrefix + 'pages/' + filePath + '/content'));
             markdDownFiles.forEach((filename) => {
                 const tempKey = filename.split('.md')[0];
                 templateContent[tempKey] = loadMarkdown(filename, filePrefix + 'pages/' + filePath + '/content')
@@ -36,7 +32,7 @@ const loadCustomContent = async (req, res) => {
         let content = {}
         const orgData = await adminDao.getOrganization(orgName);
 
-        const markdownResponse = await fetch(`${config.devportalAPI}organizations${orgData.ORG_ID}filePath${filePath}`);
+        const markdownResponse = await fetch(`${config.devportalAPI}organizations/${orgData.ORG_ID}/filePath=${filePath}`);
         let markDownFiles = await markdownResponse.json();
 
         if (markDownFiles.length > 0) {
@@ -49,6 +45,7 @@ const loadCustomContent = async (req, res) => {
         html = await renderTemplateFromAPI(content, orgName, filePath);
     }
     res.send(html);
+
 }
 
 
