@@ -43,7 +43,7 @@ const loadAPIContent = async (req, res) => {
 
     if (config.mode === constants.DEV_MODE) {
         let metaData = loadAPIMetaDataFromFile(apiName)
-        const filePath = path.join(process.cwd(), filePrefix + '../mock', req.params.apiName + "/" + constants.API_HBS_CONTENT_FILE_NAME);
+        const filePath = path.join(process.cwd(), filePrefix + '../mock', req.params.apiName + "/" + constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME);
         if (fs.existsSync(filePath)) {
             hbs.handlebars.registerPartial('api-content', fs.readFileSync(filePath, constants.CHARSET_UTF8));
         }

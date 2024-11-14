@@ -71,7 +71,6 @@ function searchFile(dir, fileName, styleDir) {
 function loadMarkdown(filename, dirName) {
 
     const filePath = path.join(process.cwd(), dirName, filename);
-    console.log("filePath", filePath);
     if (fs.existsSync(filePath)) {
         const fileContent = fs.readFileSync(filePath, 'utf-8');
         console.log("fileContent", fileContent);
@@ -83,11 +82,15 @@ function loadMarkdown(filename, dirName) {
 
 
 function renderTemplate(templatePath, layoutPath, templateContent) {
-
-    console.log("templatePath", templatePath);
     
-    const completeTemplatePath = path.join(process.cwd(), templatePath);
-    const templateResponse = fs.readFileSync(completeTemplatePath, 'utf-8')
+    let completeTemplatePath;
+    if (templatePath.includes('tryout')) {
+        completeTemplatePath = path.join(require.main.filename, templatePath);
+    } else {
+        completeTemplatePath = path.join(process.cwd(), templatePath);
+    }
+
+    const templateResponse = fs.readFileSync(completeTemplatePath, 'utf-8');
 
     const completeLayoutPath = path.join(process.cwd(), layoutPath);
     const layoutResponse = fs.readFileSync(completeLayoutPath, 'utf-8')
