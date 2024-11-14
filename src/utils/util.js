@@ -81,7 +81,13 @@ function loadMarkdown(filename, dirName) {
 
 function renderTemplate(templatePath, layoutPath, templateContent) {
 
-    const completeTemplatePath = path.join(__dirname, templatePath);
+    let completeTemplatePath;
+    if (templatePath.includes('tryout')) {
+        completeTemplatePath = path.join(require.main.filename, templatePath);
+    } else {
+        completeTemplatePath = path.join(process.cwd(), templatePath);
+    }
+
     const templateResponse = fs.readFileSync(completeTemplatePath, 'utf-8')
 
     const completeLayoutPath = path.join(__dirname, layoutPath);
@@ -98,7 +104,7 @@ function renderTemplate(templatePath, layoutPath, templateContent) {
 
 async function loadLayoutFromAPI(orgName) {
     const orgData = await adminDao.getOrganization(orgName);
-    var layoutContent =  await adminDao.getOrgContent({
+    var layoutContent = await adminDao.getOrgContent({
         orgId: orgData.ORG_ID,
         fileType: constants.FILE_TYPE.LAYOUT,
         fileName: constants.FILE_NAME.MAIN
@@ -228,7 +234,6 @@ const unzipFile = async (zipPath, extractPath) => {
 };
 
 const retrieveContentType = (fileName, fileType) => {
-    console.log("File Name:", fileName, fileType);
     let contentType;
     if (fileType === constants.IMAGE) {
         if (fileName.endsWith(constants.FILE_EXTENSIONS.SVG)) {
