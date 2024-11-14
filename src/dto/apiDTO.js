@@ -4,8 +4,8 @@ class APIDTO {
         this.apiID = api.API_ID;
         this.apiInfo = new APIInfo(api);
         this.endPoints = new Endpoints(api);
-        if (api.dp_api_subscription_policies) {
-            this.subscriptionPolicies = api.dp_api_subscription_policies.map(policy => new SubscriptionPolicy(policy));
+        if (api.DP_API_SUBSCRIPTION_POLICies) {
+            this.subscriptionPolicies = api.DP_API_SUBSCRIPTION_POLICies.map(policy => new SubscriptionPolicy(policy));
         }
     }
 
@@ -31,24 +31,10 @@ class APIInfo {
         if (apiInfo.BUSINESS_OWNER || apiInfo.TECHNICAL_OWNER) {
             this.owners = new Owner(apiInfo);
         }
-        if(apiInfo.dp_api_imagedata) {
-           this.apiImageMetadata = getAPIImages(apiInfo.dp_api_imagedata);
+        if(apiInfo.DP_API_IMAGEDATA) {
+           this.apiImageMetadata = getAPIImages(apiInfo.DP_API_IMAGEDATA);
         }
     }
-}
-
-class AdditionalProperties {
-    constructor(data = {}) {
-        Object.assign(this, data);
-    }
-}
-
-const getAdditionalProperties = (additionalAPIProperties) => {
-    let additionalProperties = {}
-    additionalAPIProperties.forEach(element => {
-        additionalProperties[element.key] = element.value;
-    });
-    return new AdditionalProperties(additionalProperties);
 }
 
 class SubscriptionPolicy {

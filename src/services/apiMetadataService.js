@@ -118,6 +118,7 @@ const updateAPIMetadata = async (req, res) => {
                 "Missing or Invalid fields in the request payload"
             );
         }
+        
         await sequelize.transaction(async (t) => {
             // Create apimetadata record
             const [updatedRows, updatedAPI] = await apiDao.updateAPIMetadata(orgId, apiID, apiMetadata, t);

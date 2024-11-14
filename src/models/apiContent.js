@@ -1,7 +1,7 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize')
 
-const APIContent = sequelize.define('dp_api_content', { 
+const APIContent = sequelize.define('DP_API_CONTENT', { 
     API_ID: {
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -18,7 +18,7 @@ const APIContent = sequelize.define('dp_api_content', {
     
 }, {
     timestamps: false,
-    tableName: 'dp_api_content',
+    tableName: 'DP_API_CONTENT',
     returning: false,
     primaryKey: true
 });
