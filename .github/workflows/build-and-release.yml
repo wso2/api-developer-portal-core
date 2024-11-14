@@ -50,9 +50,9 @@ jobs:
       - name: Zip each file in dist-output
         run: |
           mkdir -p zipped-output
-          for file in ./dist-output/*; do
-            filename=$(basename "$file")
-            zip -r "zipped-output/$filename.zip" "$file"
+          cd dist-output
+          for file in *; do
+            zip -r "../zipped-output/$file.zip" "$file"
           done
 
       - name: Debug zipped artifact contents
