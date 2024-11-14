@@ -69,7 +69,9 @@
       "src/pages/**/*"
     ],
     "targets": [
-      "node18-macos-x64"
+      "node18-macos-x64",
+      "node18-linux-x64",
+      "node18-win-x64"
     ],
     "outputPath": "dist"
   },
