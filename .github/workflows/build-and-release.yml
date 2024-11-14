@@ -62,8 +62,8 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}  
-          name: WSO2 API Developer Portal ${{ github.ref_name }}
-          body: "WSO2 API Developer Portal serves as a development portal offering fundamental layout and structural components."
+          name: WSO2 API Developer Portal Core ${{ github.ref_name }}
+          body: "WSO2 API Developer Portal Core serves as a development portal offering fundamental layout and structural components."
           draft: false
           prerelease: false
           artifacts: "./zipped-output/*"  
