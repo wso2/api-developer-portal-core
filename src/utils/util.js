@@ -73,7 +73,6 @@ function loadMarkdown(filename, dirName) {
     const filePath = path.join(process.cwd(), dirName, filename);
     if (fs.existsSync(filePath)) {
         const fileContent = fs.readFileSync(filePath, 'utf-8');
-        console.log("fileContent", fileContent);
         return marked.parse(fileContent);
     } else {
         return null;
