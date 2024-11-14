@@ -1,28 +1,26 @@
 const path = require('path');
 const fs = require('fs');
 const exphbs = require('express-handlebars');
-const config = require('../config/config');
+const config = require(process.cwd() + '/config');
 const markdown = require('marked');
 const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 
 const constants = require('../utils/constants');
 
-let filePrefix = constants.FILE_PREFIX;
+const filePrefix = config.pathToContent;
 
 const registerPartials = async (req, res, next) => {
-
-  console.log("Registering partials");
-  console.log("Original URL: " + req.originalUrl);
+  
   if (config.mode === constants.DEV_MODE) {
     let baseURL = constants.BASE_URL + config.port
     const filePath = req.originalUrl.split(baseURL).pop();
-    registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, "partials"), req.user);
-    registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, "pages", "home", "partials"), req.user);
-    registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, "pages", "api-landing", "partials"), req.user);
-    registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, "pages", "apis", "partials"), req.user);
-    if (fs.existsSync(path.join(__dirname, filePrefix + "pages", filePath, "partials"))) {
-      registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix + "pages", filePath, "partials"), req.user);
+    registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "partials"), req.user);
+    registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "home", "partials"), req.user);
+    registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req.user);
+    registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "apis", "partials"), req.user);
+    if (fs.existsSync(path.join(process.cwd(), filePrefix + "pages", filePath, "partials"))) {
+      registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix + "pages", filePath, "partials"), req.user);
     }
   } else {
     await registerPartialsFromAPI(req);

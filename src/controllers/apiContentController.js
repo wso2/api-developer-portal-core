@@ -1,5 +1,5 @@
 const { renderTemplate, renderTemplateFromAPI, renderGivenTemplate, loadLayoutFromAPI, loadMarkdown } = require('../utils/util');
-const config = require('../config/config');
+const config = require(process.cwd() + '/config');
 const fs = require('fs');
 const path = require('path');
 const exphbs = require('express-handlebars');
@@ -8,7 +8,7 @@ const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const apiMetadataService = require('../services/apiMetadataService');
 
-let filePrefix = constants.FILE_PREFIX;
+const filePrefix = config.pathToContent;
 const generateArray = (length) => Array.from({ length });
 
 const loadAPIs = async (req, res) => {
@@ -44,7 +44,7 @@ const loadAPIContent = async (req, res) => {
 
     if (config.mode === constants.DEV_MODE) {
         let metaData = loadAPIMetaDataFromFile(apiName)
-        const filePath = path.join(__dirname, filePrefix + '../mock', req.params.apiName + "/" + constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME);
+        const filePath = path.join(process.cwd(), filePrefix + '../mock', req.params.apiName + "/" + constants.API_HBS_CONTENT_FILE_NAME);
         if (fs.existsSync(filePath)) {
             hbs.handlebars.registerPartial('api-content', fs.readFileSync(filePath, constants.CHARSET_UTF8));
         }
@@ -79,7 +79,7 @@ const loadTryOutPage = async (req, res) => {
     let html = "";
     if (config.mode === constants.DEV_MODE) {
         const metaData = loadAPIMetaDataFromFile(apiName)
-        let apiDefinition = path.join(__dirname, filePrefix + '../mock', req.params.apiName + '/apiDefinition.json');
+        let apiDefinition = path.join(process.cwd(), filePrefix + '../mock', req.params.apiName + '/apiDefinition.json');
         if (fs.existsSync(apiDefinition)) {
             apiDefinition = await fs.readFileSync(apiDefinition, 'utf-8');
         }
@@ -103,7 +103,7 @@ const loadTryOutPage = async (req, res) => {
             apiType: metaData.apiInfo.apiType,
             swagger: apiDefinition
         }
-        const completeTemplatePath = path.join(__dirname, '..', 'pages', 'tryout', 'page.hbs');
+        const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'tryout', 'page.hbs');
         const templateResponse = fs.readFileSync(completeTemplatePath, 'utf-8');
         const layoutResponse = await loadLayoutFromAPI(orgName)
         html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
@@ -113,7 +113,7 @@ const loadTryOutPage = async (req, res) => {
 
 async function loadAPIMetaDataList() {
 
-    const mockAPIMetaDataPath = path.join(__dirname, filePrefix + '../mock', 'apiMetadata.json');
+    const mockAPIMetaDataPath = path.join(process.cwd(), filePrefix + '../mock', 'apiMetadata.json');
     const mockAPIMetaData = JSON.parse(fs.readFileSync(mockAPIMetaDataPath, 'utf-8'));
     mockAPIMetaData.forEach(element => {
         let randomNumber = Math.floor(Math.random() * 3) + 3;
@@ -166,7 +166,7 @@ async function loadAPIMetaData(orgID, apiID) {
 
 function loadAPIMetaDataFromFile(apiName) {
 
-    const mockAPIDataPath = path.join(__dirname, filePrefix + '../mock', apiName + '/apiMetadata.json');
+    const mockAPIDataPath = path.join(process.cwd(), filePrefix + '../mock', apiName + '/apiMetadata.json');
     return JSON.parse(fs.readFileSync(mockAPIDataPath, 'utf-8'));
 }
 
