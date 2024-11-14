@@ -1,13 +1,12 @@
-name: Build and Prepare Release Assets
+name: Build and Release on Tag Push
 
 on:
   push:
     tags:
-      - 'v*'  # Trigger on tag creation
+      - 'v*'  
 
 permissions:
-  contents: write
-  id-token: write
+  contents: write  
 
 jobs:
   build:
@@ -17,65 +16,47 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Get the latest release from the API Developer Portal Core repo
-        id: get_latest_release
-        run: |
-          latest_release=$(curl -s https://api.github.com/repos/piyumaldk/api-developer-portal-core/releases/latest)
-          echo "Latest release tag: $(echo $latest_release | jq -r .tag_name)"
-          echo "Latest release assets: $(echo $latest_release | jq -r .assets[].name)"
-          echo "latest_release_tag=$(echo $latest_release | jq -r .tag_name)" >> $GITHUB_ENV
-          echo "assets=$(echo $latest_release | jq -r '.assets[].name' | tr '\n' ' ')" >> $GITHUB_ENV
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-      - name: Download assets from the latest release
-        run: |
-          for asset in ${{ env.assets }}; do
-            echo "Downloading asset: $asset"
-            curl -L -o $asset https://github.com/piyumaldk/api-developer-portal-core/releases/download/${{ env.latest_release_tag }}/$asset
-          done
+      - name: Install dependencies
+        run: npm install
 
-      - name: Prepare and Zip Files for Each Asset
-        run: |
-          # Create a temporary directory for the zips
-          mkdir -p temp_zips
+      - name: Build project
+        run: npm run build
 
-          # Loop through each asset and package it with required files
-          for asset in ${{ env.assets }}; do
-            # Skip if the asset is a source code tar.gz or zip
-            if [[ "$asset" == *source* ]]; then
-              continue
-            fi
+      - name: Upload dist folder as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-output
+          path: dist/
 
-            echo "Processing asset: $asset"
+  release:
+    runs-on: ubuntu-latest
+    needs: build
 
-            # Create a temporary directory for each zip content
-            mkdir -p temp_copy_dir
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            # Copy required files and directories
-            cp -r src temp_copy_dir/
-            cp -r artifacts temp_copy_dir/
-            cp config.js temp_copy_dir/
-            cp README.md temp_copy_dir/
-            cp "$asset" temp_copy_dir/  # Add the specific asset file
+      - name: Download dist folder artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-output
+          path: ./dist-output  
 
-            # Create a zip file with the asset name
-            zip_name="temp_zips/$asset.zip"
-            echo "Creating zip file: $zip_name"
-            zip -r "$zip_name" temp_copy_dir/*
+      - name: Debug dist-output contents
+        run: ls -R ./dist-output  
 
-            # Clean up the temporary directory for the next asset
-            rm -rf temp_copy_dir
-          done
-
-      - name: List Created Zip Files
-        run: ls -R temp_zips
-
-      - name: Upload Zips to GitHub Release
+      - name: Create or Update GitHub Release
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ env.latest_release_tag }}
-          name: WSO2 API Developer Portal Core ${{ env.latest_release_tag }}
-          body: "Automated release with custom assets including necessary scripts and files."
+          tag: ${{ github.ref_name }}  
+          name: WSO2 API Developer Portal Core ${{ github.ref_name }}
+          body: "WSO2 API Developer Portal Core serves as a development portal offering fundamental layout and structural components."
           draft: false
           prerelease: false
-          artifacts: "./temp_zips/*"  # Upload all zips in the temp_zips folder
-          allowUpdates: true
+          artifacts: "./dist-output/*"  
+          allowUpdates: true 
