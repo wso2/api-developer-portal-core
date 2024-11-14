@@ -8,7 +8,7 @@ module.exports = {
     FILE_NAME_PARAM : '&fileName=',
     API_TEMPLATE_FILE_NAME: '/template?fileName=',
     HEADER_PARTIAL_NAME: 'header',
-    HERO_PARTIAL_NAME: "hero",
+    HERO_PARTIAL_NAME: 'hero',
     BASE_URL: 'http://localhost:',
 
     MIME_TYPES: {

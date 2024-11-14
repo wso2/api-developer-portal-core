@@ -41,6 +41,8 @@ const getOrgContent = async (req, res) => {
             }
 
             return res.status(200).send(results);
+        } else {        
+            res.status(400).send('Invalid request');
         }
     } catch (error) {
         res.status(404).send(error.message);

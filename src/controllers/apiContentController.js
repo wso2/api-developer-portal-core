@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const exphbs = require('express-handlebars');
 const constants = require('../utils/constants');
-const orgDao = require('../dao/admin');
+const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const apiMetadataService = require('../services/apiMetadataService');
 
@@ -23,13 +23,14 @@ const loadAPIs = async (req, res) => {
         }
         html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     } else {
-        let organization = await orgDao.getOrgID(orgName);
+        let organization = await adminDao.getOrganization(orgName);
+        (orgName);
         let metaData = await loadAPIMetaDataListFromAPI(organization.ORG_ID, orgName);
         let templateContent = {
             apiMetadata: metaData,
             baseUrl: '/' + orgName
         }
-        html = await renderTemplateFromAPI(templateContent, orgName, "apis");
+        html = await renderTemplateFromAPI(templateContent, orgName, "pages/apis");
     }
     res.send(html);
 }
@@ -55,7 +56,7 @@ const loadAPIContent = async (req, res) => {
         }
         html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
     } else {
-        let organization = await orgDao.getOrgID(orgName);
+        let organization = await adminDao.getOrganization(orgName);
         let orgID = organization.ORG_ID;
         let apiID = await apiDao.getAPIId(apiName);
         let metaData = await loadAPIMetaData(orgID, apiID);
@@ -65,7 +66,8 @@ const loadAPIContent = async (req, res) => {
             baseUrl: '/' + orgName,
             schemaUrl: config.apiMetaDataAPI + orgID + "/apis/" + apiID
         }
-        html = await renderTemplateFromAPI(templateContent, orgName, "api-landing");
+        html = await renderTemplateFromAPI(templateContent, orgName, "pages/api-landing");
+        console.log(html);
     }
     res.send(html);
 }
@@ -89,11 +91,11 @@ const loadTryOutPage = async (req, res) => {
         }
         html = renderTemplate('../pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     } else {
-        let organization = await orgDao.getOrgID(orgName);
+        let organization = await adminDao.getOrganization(orgName);
         let orgID = organization.ORG_ID;
         let apiID = await apiDao.getAPIId(apiName);
-        const metaData = loadAPIMetaData(orgID, apiID);
-        let apiDefinition = await apiDao.getAPIFile(constants.API_DEFINITION_FILE_NAME, orgID, apiID)
+        const metaData = await loadAPIMetaData(orgID, apiID);
+        let apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, orgID, apiID)
         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8)
         let templateContent = {
             apiMetadata: metaData,
@@ -130,28 +132,32 @@ async function loadAPIMetaDataListFromAPI(orgID, orgName) {
         item.baseUrl = '/' + orgName;
     });
     metaData.forEach(element => {
+        console.log(element.apiInfo)
         let randomNumber = Math.floor(Math.random() * 3) + 3;
         element.apiInfo.ratings = generateArray(randomNumber);
         element.apiInfo.ratingsNoFill = generateArray(5 - randomNumber);
         const images = element.apiInfo.apiImageMetadata;
         let apiImageUrl = '';
         for (var key in images) {
-            apiImageUrl = config.apiMetaDataAPI + orgID + constants.API_FILE_PATH + element.apiID + constants.API_TEMPLATE_FILE_NAME
+            apiImageUrl = config.apiMetaDataAPI + orgID + constants.ROUTE.API_FILE_PATH + element.apiID + constants.API_TEMPLATE_FILE_NAME
             const modifiedApiImageURL = apiImageUrl + images[key]
-            element.apiInfo.apiImageMetadata[key] = modifiedApiImageURL;
+            element.apiInfo.apiImageMetadata[key] = modifiedApiImageURL
         }
     });
+    let data = JSON.stringify(metaData);
+    return JSON.parse(data);
 }
 
 async function loadAPIMetaData(orgID, apiID) {
 
     let metaData = {};
     metaData = await apiMetadataService.getMetadataFromDB(orgID, apiID);
-
+    let data = metaData ? JSON.stringify(metaData) : {};
+    metaData  = JSON.parse(data)
     //replace image urls
-    let images = metaData ? metaData.apiInfo.apiImageMetadata : {};
+    let images = metaData.apiInfo.apiImageMetadata;
     for (var key in images) {
-        let apiImageUrl = config.apiMetaDataAPI + orgID + constants.API_FILE_PATH + apiID + constants.API_TEMPLATE_FILE_NAME
+        let apiImageUrl = config.apiMetaDataAPI + orgID + constants.ROUTE.API_FILE_PATH + apiID + constants.API_TEMPLATE_FILE_NAME
         const modifiedApiImageURL = apiImageUrl + images[key]
         images[key] = modifiedApiImageURL;
     }

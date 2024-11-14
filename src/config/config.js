@@ -1,9 +1,9 @@
 var config = {};
 
-config.apiMetaDataAPI = "http://localhost:9090/apiMetadata/"
+config.apiMetaDataAPI = "http://localhost:3000/devportal/organizations/"
 config.devportalAPI = "http://localhost:3000/devportal/"
 config.port = 3000
-config.mode = 'development'
+config.mode = 'production'
 config.db = {
     username: 'postgres',
     password: 'postgres',

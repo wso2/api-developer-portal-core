@@ -137,9 +137,7 @@ async function renderTemplateFromAPI(templateContent, orgName, filePath) {
         });
     } else {
         html = layout({
-            body: template({
-                baseUrl: '/' + orgName
-            }),
+            body: template(templateContent),
         });
     }
     return html;

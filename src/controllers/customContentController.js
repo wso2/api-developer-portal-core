@@ -3,7 +3,7 @@ const config = require('../config/config');
 const markdown = require('marked');
 const fs = require('fs');
 const path = require('path');
-const adminDao = require('../services/adminService');
+const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 
 const filePrefix = constants.FILE_PREFIX
@@ -32,7 +32,7 @@ const loadCustomContent = async (req, res) => {
         let content = {}
         const orgData = await adminDao.getOrganization(orgName);
 
-        const markdownResponse = await fetch(`${config.devportalAPI}organizations${orgData.ORG_ID}filePath${filePath}`);
+        const markdownResponse = await fetch(`${config.devportalAPI}organizations/${orgData.ORG_ID}/filePath=${filePath}`);
         let markDownFiles = await markdownResponse.json();
 
         if (markDownFiles.length > 0) {
@@ -45,6 +45,7 @@ const loadCustomContent = async (req, res) => {
         html = await renderTemplateFromAPI(content, orgName, filePath);
     }
     res.send(html);
+
 }
 
 

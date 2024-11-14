@@ -1,7 +1,7 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize')
 
-const APIImageMetadata = sequelize.define('dp_api_imagedata', {
+const APIImageMetadata = sequelize.define('DP_API_IMAGEDATA', {
     API_ID: {
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -18,7 +18,7 @@ const APIImageMetadata = sequelize.define('dp_api_imagedata', {
     }
 }, {
     timestamps: false,
-    tableName: 'dp_api_imagedata',
+    tableName: 'DP_API_IMAGEDATA',
     returning: true
 });
 
