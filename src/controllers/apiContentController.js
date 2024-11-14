@@ -29,7 +29,6 @@ const loadAPIs = async (req, res) => {
             apiMetadata: metaData,
             baseUrl: '/' + orgName
         }
-        console.log(templateContent)
         html = await renderTemplateFromAPI(templateContent, orgName, "apis");
     }
     res.send(html);

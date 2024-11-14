@@ -13,7 +13,6 @@ let filePrefix = constants.FILE_PREFIX;
 const registerPartials = async (req, res, next) => {
 
   if (config.mode === constants.DEV_MODE) {
-    console.log("Loading partials from file");
     let baseURL = constants.BASE_URL + config.port
     const filePath = req.originalUrl.split(baseURL).pop();
     registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, "partials"), req.user);
