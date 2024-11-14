@@ -47,16 +47,8 @@ jobs:
           name: dist-output
           path: ./dist-output  
 
-      - name: Zip each file in dist-output
-        run: |
-          mkdir -p zipped-output
-          cd dist-output
-          for file in *; do
-            zip -r "../zipped-output/$file.zip" "$file"
-          done
-
-      - name: Debug zipped artifact contents
-        run: ls -R ./zipped-output  
+      - name: Debug dist-output contents
+        run: ls -R ./dist-output  
 
       - name: Create or Update GitHub Release
         uses: ncipollo/release-action@v1
@@ -66,5 +58,5 @@ jobs:
           body: "WSO2 API Developer Portal Core serves as a development portal offering fundamental layout and structural components."
           draft: false
           prerelease: false
-          artifacts: "./zipped-output/*"  
+          artifacts: "./dist-output/*"  
           allowUpdates: true 
