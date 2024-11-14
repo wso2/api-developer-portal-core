@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const exphbs = require('express-handlebars');
-const config = require('../config/config');
+const config = require(process.cwd() + '/config');
 const markdown = require('marked');
 const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');

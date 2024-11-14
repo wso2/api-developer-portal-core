@@ -3,7 +3,7 @@ const adminDao = require('../dao/admin');
 const util = require('../utils/util');
 const fs = require('fs');
 const path = require('path');
-const config = require('../config/config');
+const config = require(process.cwd() + '/config');
 
 const createOrganization = async (req, res) => {
 

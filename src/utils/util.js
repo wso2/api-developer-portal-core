@@ -6,7 +6,7 @@ const { CustomError } = require('../utils/errors/customErrors');
 const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 const unzipper = require('unzipper');
-const config = require('../config/config');
+const config = require(process.cwd() + '/config');
 
 const { Sequelize } = require('sequelize');
 

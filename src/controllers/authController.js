@@ -1,6 +1,6 @@
 const configurePassport = require('../middlewares/passport');
 const passport = require('passport');
-const config = require('../config/config');
+const config = require(process.cwd() + '/config');
 const fs = require('fs');
 const path = require('path');
 const constants = require('../utils/constants');

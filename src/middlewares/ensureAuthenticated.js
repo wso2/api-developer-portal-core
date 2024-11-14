@@ -1,5 +1,5 @@
 const fetch = require('node-fetch');
-const config = require('../config/config');
+const config = require(process.cwd() + '/config');
 const minimatch = require('minimatch');
 
 const ensureAuthenticated = async (req, res, next) => {
