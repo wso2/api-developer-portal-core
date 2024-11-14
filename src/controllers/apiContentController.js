@@ -24,7 +24,6 @@ const loadAPIs = async (req, res) => {
         html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     } else {
         let organization = await adminDao.getOrganization(orgName);
-        (orgName);
         let metaData = await loadAPIMetaDataListFromAPI(organization.ORG_ID, orgName);
         let templateContent = {
             apiMetadata: metaData,
