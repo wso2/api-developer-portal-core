@@ -118,10 +118,9 @@ const updateAPIMetadata = async (req, res) => {
                 "Missing or Invalid fields in the request payload"
             );
         }
-        
         await sequelize.transaction(async (t) => {
             // Create apimetadata record
-            const [updatedRows, updatedAPI] = await apiDao.updateAPIMetadata(orgId, apiID, apiMetadata, t);
+            let [updatedRows, updatedAPI] = await apiDao.updateAPIMetadata(orgId, apiID, apiMetadata, t);
             if (!updatedRows) {
                 throw new Sequelize.EmptyResultError("No record found to update");
             }
@@ -132,18 +131,15 @@ const updateAPIMetadata = async (req, res) => {
                         "Missing or Invalid fields in the request payload"
                     );
                 }
-                const [updatedSubscription, subscriptionPolicyResponse] = await apiDao.updateSubscriptionPolicy(orgId, apiID, subscriptionPolicies, t);
-                if (!updatedSubscription) {
-                    throw new Sequelize.EmptyResultError("No record found to update");
-                }
-                updatedAPI.dp_api_subscription_policies = subscriptionPolicyResponse;
+                const subscriptionPolicyResponse = await apiDao.updateSubscriptionPolicy(orgId, apiID, subscriptionPolicies, t);
+                updatedAPI[0].dataValues["DP_API_SUBSCRIPTION_POLICies"] = subscriptionPolicyResponse;
             }
             // update api definition file
             const updatedFileCount = await apiDao.updateAPIFile(apiDefinitionFile, apiFileName, apiID, orgId, t);
             if (!updatedFileCount) {
                 throw new Sequelize.EmptyResultError("No record found to update");
             }
-            res.status(200).send(new APIDTO(updatedAPI));
+            res.status(200).send(new APIDTO(updatedAPI[0].dataValues));
         });
     } catch (error) {
         console.log(error);

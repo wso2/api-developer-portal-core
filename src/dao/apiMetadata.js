@@ -278,7 +278,7 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
         owners = apiInfo.owners;
     }
     try {
-        const apiMetadataResponse = await APIMetadata.update({
+        const [updateCount , apiMetadataResponse] = await APIMetadata.update({
             REFERENCE_ID: apiInfo.referenceID,
             API_NAME: apiInfo.apiName,
             API_DESCRIPTION: apiInfo.apiDescription,
@@ -296,10 +296,11 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
         }, {
             where: {
                 API_ID: apiID,
-                ORG_ID: orgID
-            }
+                ORG_ID: orgID,
+            },
+            returning: true,
         }, { transaction: t });
-        return apiMetadataResponse;
+        return [updateCount , apiMetadataResponse];
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
@@ -311,6 +312,7 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
 async function updateSubscriptionPolicy(orgID, apiID, subscriptionPolicies, t) {
 
     let policiesToCreate = [];
+    let existingPolicies = [];  
     try {
         for (const policy of subscriptionPolicies) {
             const subscriptionResponse = await getSubscriptionPolicy(policy.policyName, apiID, orgID, t);
@@ -319,10 +321,14 @@ async function updateSubscriptionPolicy(orgID, apiID, subscriptionPolicies, t) {
                     POLICY_NAME: policy.policyName,
                     API_ID: apiID
                 })
+            } else {
+                existingPolicies.push(subscriptionResponse.dataValues);
             }
         }
         if (policiesToCreate.length > 0) {
-            await SubscriptionPolicy.bulkCreate(policiesToCreate, { transaction: t });
+            return await SubscriptionPolicy.bulkCreate(policiesToCreate, { transaction: t });
+        } else {
+            return existingPolicies;
         }
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -391,8 +397,8 @@ const updateAPIImageMetadata = async (apiImages, orgID, apiID, t) => {
                         }
                     ]
                 }, { transaction: t });
-                if (apiImageDataUpdate) {
-                    throw new Sequelize.DatabaseError("Error updating API Image Metadata");
+                if (!apiImageDataUpdate) {
+                    throw new Sequelize.EmptyResultError("Error updating API Image Metadata");
                 }
             }
             if (imageCreateList.length > 0) {
