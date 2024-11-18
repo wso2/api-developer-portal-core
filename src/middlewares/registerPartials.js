@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const path = require('path');
 const fs = require('fs');
 const exphbs = require('express-handlebars');
@@ -30,7 +31,6 @@ const registerPartials = async (req, res, next) => {
 
 const registerPartialsFromAPI = async (req) => {
   const orgName = req.params.orgName;
-  console.log("Orgname " + orgName);
   const orgData = await adminDao.getOrganization(orgName);
 
   let orgID = orgData.ORG_ID;
@@ -97,7 +97,7 @@ function registerPartialsFromFile(baseURL, dir, profile) {
     if (filename.endsWith(".hbs")) {
       let template = fs.readFileSync(path.join(dir, filename), constants.CHARSET_UTF8);
       hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
-      if (filename === constants.PARTIAL_HEADER_FILE_NAME) {
+      if (filename === constants.FILE_NAME.PARTIAL_HEADER_FILE_NAME) {
         hbs.handlebars.partials = {
           ...hbs.handlebars.partials,
           header: hbs.handlebars.compile(template)({

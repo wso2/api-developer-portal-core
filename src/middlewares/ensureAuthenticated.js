@@ -1,4 +1,5 @@
 const fetch = require('node-fetch');
+// eslint-disable-next-line no-undef
 const config = require(process.cwd() + '/config');
 const minimatch = require('minimatch');
 

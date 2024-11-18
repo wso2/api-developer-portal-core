@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const { Sequelize } = require("sequelize");
 const sequelize = require("../db/sequelize");
 const apiDao = require("../dao/apiMetadata");
@@ -290,7 +291,6 @@ const getAPIFile = async (req, res) => {
     try {
         const fileExtension = path.extname(apiFileName).toLowerCase();
         apiFileResponse = await apiDao.getAPIFile(apiFileName, orgID, apiID);
-        console.log(apiFileResponse);
         if (fileExtension === constants.FILE_EXTENSIONS.HTML || fileExtension === constants.FILE_EXTENSIONS.HBS ||
             fileExtension === constants.FILE_EXTENSIONS.MD || fileExtension === constants.FILE_EXTENSIONS.JSON ||
             fileExtension === constants.FILE_EXTENSIONS.YAML || fileExtension === constants.FILE_EXTENSIONS.YML ||

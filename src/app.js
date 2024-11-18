@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const express = require('express');
 const { engine } = require('express-handlebars');
 const passport = require('passport');

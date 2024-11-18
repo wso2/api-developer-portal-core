@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const { Sequelize } = require('sequelize');
 const config = require(process.cwd() + '/config');
 

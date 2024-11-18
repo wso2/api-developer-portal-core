@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const { renderTemplate, renderTemplateFromAPI, renderGivenTemplate, loadLayoutFromAPI, loadMarkdown } = require('../utils/util');
 const config = require(process.cwd() + '/config');
 const fs = require('fs');
@@ -28,7 +29,7 @@ const loadAPIs = async (req, res) => {
         let templateContent = {
             apiMetadata: metaData,
             baseUrl: '/' + orgName
-        }
+        }        
         html = await renderTemplateFromAPI(templateContent, orgName, "pages/apis");
     }
     res.send(html);
@@ -66,7 +67,6 @@ const loadAPIContent = async (req, res) => {
             schemaUrl: config.apiMetaDataAPI + orgID + "/apis/" + apiID
         }
         html = await renderTemplateFromAPI(templateContent, orgName, "pages/api-landing");
-        console.log(html);
     }
     res.send(html);
 }
@@ -131,7 +131,6 @@ async function loadAPIMetaDataListFromAPI(orgID, orgName) {
         item.baseUrl = '/' + orgName;
     });
     metaData.forEach(element => {
-        console.log(element.apiInfo)
         let randomNumber = Math.floor(Math.random() * 3) + 3;
         element.apiInfo.ratings = generateArray(randomNumber);
         element.apiInfo.ratingsNoFill = generateArray(5 - randomNumber);

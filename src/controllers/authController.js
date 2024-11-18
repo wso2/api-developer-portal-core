@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const configurePassport = require('../middlewares/passport');
 const passport = require('passport');
 const config = require(process.cwd() + '/config');

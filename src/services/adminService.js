@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const { CustomError } = require('../utils/errors/customErrors');
 const adminDao = require('../dao/admin');
 const util = require('../utils/util');
@@ -179,7 +180,6 @@ const getOrgContent = async (orgId, fileType, fileName, filePath) => {
 };
 
 const deleteOrgContent = async (req, res) => {
-    console.log("Delete Content:", req.query);
     try {
         let fileName = req.query.fileName;
 

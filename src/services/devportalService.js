@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const adminService = require('../services/adminService');
 const adminDao = require('../dao/admin');
 const util = require('../utils/util');
