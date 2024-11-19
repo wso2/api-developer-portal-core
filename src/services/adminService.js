@@ -5,6 +5,7 @@ const util = require('../utils/util');
 const fs = require('fs');
 const path = require('path');
 const config = require(process.cwd() + '/config');
+const IdentityProviderDTO = require("../dto/identityProvider");
 
 const createOrganization = async (req, res) => {
 
@@ -92,6 +93,90 @@ const deleteOrganization = async (req, res) => {
     }
 };
 
+const createIdentityProvider = async (req, res) => {
+    try {
+        let idpData = req.body;
+        let orgId = req.params.orgId;
+        if (!orgId) {
+            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+        }
+        if (!idpData.name || !idpData.issuer || !idpData.authorizationURL || !idpData.tokenURL ||
+            !idpData.clientId || !idpData.callbackURL || !idpData.scope || !idpData.logoutURL || !idpData.logoutRedirectURI) {
+            throw new CustomError(400, "Bad Request", "Missing required parameters'");
+        }
+        const idpResponse = await adminDao.createIdentityProvider(orgId, idpData);
+        res.status(201).send(new IdentityProviderDTO(idpResponse.dataValues));
+
+    } catch (error) {
+        console.log(error)
+        util.handleError(res, error);
+    }
+};
+
+const updateIdentityProvider = async (req, res) => {
+    try {
+        let orgId = req.params.orgId;
+        let idpData = req.body;
+        if (!idpData.name || !idpData.issuer || !idpData.authorizationURL || !idpData.tokenURL ||
+            !idpData.clientId || !idpData.callbackURL || !idpData.scope || !idpData.logoutURL || !idpData.logoutRedirectURI) {
+            throw new CustomError(400, "Bad Request", "Missing or Invalid fields in the request payload");
+        }
+        if (!orgId) {
+            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+        }
+        const [updatedRows, updatedIDP] = await adminDao.updateIdentityProvider(orgId, idpData);
+        if (!updatedRows) {
+            throw new Sequelize.EmptyResultError("No record found to update");
+        }
+        res.status(200).send(new IdentityProviderDTO(updatedIDP[0].dataValues));
+    } catch (error) {
+        console.log(error);
+
+        util.handleError(res, error);
+    }
+};
+
+const getIdentityProvider = async (req, res) => {
+
+    let orgID = req.params.orgId;
+
+    if (!orgID) {
+        throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+    }
+    try {
+        let retrievedIDP = await adminDao.getIdentityProvider(orgID);
+        // Create response object
+        if (retrievedIDP.length > 0) {
+            res.status(200).send(new IdentityProviderDTO(retrievedIDP[0]));
+        } else {
+            res.status(404).send();
+        }
+    } catch (error) {
+        console.log(error);
+        util.handleError(res, error);
+    }
+}
+
+const deleteIdentityProvider = async (req, res) => {
+
+    let orgID = req.params.orgId;
+    if (!orgID) {
+        throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+
+    }
+    try {
+        const idpDeleteResponse = await adminDao.deleteIdentityProvider(orgID);
+        if (idpDeleteResponse === 0) {
+            throw new Sequelize.EmptyResultError("Resource not found to delete");
+        } else {
+            res.status(200).send("Resouce Deleted Successfully");
+        }
+    } catch (error) {
+        console.log(error);
+        util.handleError(res, error);
+    }
+};
+
 const createOrgContent = async (req, res) => {
     let orgId = req.params.orgId;
     const zipPath = req.file.path;
@@ -100,15 +185,15 @@ const createOrgContent = async (req, res) => {
     await util.unzipFile(zipPath, extractPath);
 
     try {
-            const files = await readFilesInDirectory(extractPath, orgId);
-            for (const { filePath, fileName, fileContent, fileType } of files) {
-                await createContent(filePath, fileName, fileContent, fileType, orgId);
-            }
-            res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
-            fs.rmSync(extractPath, { recursive: true, force: true });
-        } catch (error) {
-            fs.rmSync(extractPath, { recursive: true, force: true });
-            return util.handleError(res, error);
+        const files = await readFilesInDirectory(extractPath, orgId);
+        for (const { filePath, fileName, fileContent, fileType } of files) {
+            await createContent(filePath, fileName, fileContent, fileType, orgId);
+        }
+        res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
+        fs.rmSync(extractPath, { recursive: true, force: true });
+    } catch (error) {
+        fs.rmSync(extractPath, { recursive: true, force: true });
+        return util.handleError(res, error);
     }
 };
 
@@ -219,14 +304,14 @@ async function readFilesInDirectory(directory, orgId, baseDir = '') {
             if (file.name.endsWith(".css")) {
                 fileType = "style"
                 if (file.name === "main.css") {
-                    strContent = strContent.replace(/@import\s*'\/styles\/([^']+)';/g, 
-                        `@import url("${config.devportalAPI}organizations/${orgId}/layout?fileType=style&fileName=$1");`);
+                    strContent = strContent.replace(/@import\s*'\/styles\/([^']+)';/g,
+                        `@import url("${config.devportalAPI}${orgId}/layout?fileType=style&fileName=$1");`);
                     content = Buffer.from(strContent, 'utf-8');
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                 fileType = "layout"
                 if (file.name === "main.hbs") {
-                    strContent = strContent.replace(/\/styles\//g, `${config.devportalAPI}organizations/${orgId}/layout?fileType=style&fileName=`);
+                    strContent = strContent.replace(/\/styles\//g, `${config.devportalAPI}${orgId}/layout?fileType=style&fileName=`);
                     content = Buffer.from(strContent, 'utf-8');
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
@@ -257,5 +342,9 @@ module.exports = {
     createOrgContent,
     updateOrgContent,
     getOrgContent,
-    deleteOrgContent
+    deleteOrgContent,
+    createIdentityProvider,
+    updateIdentityProvider,
+    getIdentityProvider,
+    deleteIdentityProvider
 };

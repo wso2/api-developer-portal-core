@@ -14,7 +14,9 @@ const loadCustomContent = async (req, res) => {
     let html = "";
     const orgName = req.originalUrl.split("/")[1];
     let filePath = req.originalUrl.split("/" + orgName + "/").pop();
-    filePath = 'pages/' + filePath;
+    console.log("CUSTOM")
+
+    console.log(req.originalUrl)
     if (config.mode === constants.DEV_MODE) {
 
         let templateContent = {};
@@ -33,6 +35,7 @@ const loadCustomContent = async (req, res) => {
     } else {
         let content = {}
         const orgData = await adminDao.getOrganization(orgName);
+        filePath = 'pages/' + filePath;
 
         let markDownFiles = await adminDao.getOrgContent({
             orgId: orgData.ORG_ID,

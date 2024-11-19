@@ -64,7 +64,7 @@ const loadAPIContent = async (req, res) => {
         let templateContent = {
             apiMetadata: metaData,
             baseUrl: '/' + orgName,
-            schemaUrl: config.apiMetaDataAPI + orgID + "/apis/" + apiID
+            schemaUrl: config.dev + orgID + "/apis/" + apiID
         }
         html = await renderTemplateFromAPI(templateContent, orgName, "pages/api-landing");
     }
@@ -137,7 +137,7 @@ async function loadAPIMetaDataListFromAPI(orgID, orgName) {
         const images = element.apiInfo.apiImageMetadata;
         let apiImageUrl = '';
         for (var key in images) {
-            apiImageUrl = config.apiMetaDataAPI + orgID + constants.ROUTE.API_FILE_PATH + element.apiID + constants.API_TEMPLATE_FILE_NAME
+            apiImageUrl = config.devportalAPI + orgID + constants.ROUTE.API_FILE_PATH + element.apiID + constants.API_TEMPLATE_FILE_NAME
             const modifiedApiImageURL = apiImageUrl + images[key]
             element.apiInfo.apiImageMetadata[key] = modifiedApiImageURL
         }
@@ -155,7 +155,7 @@ async function loadAPIMetaData(orgID, apiID) {
     //replace image urls
     let images = metaData.apiInfo.apiImageMetadata;
     for (var key in images) {
-        let apiImageUrl = config.apiMetaDataAPI + orgID + constants.ROUTE.API_FILE_PATH + apiID + constants.API_TEMPLATE_FILE_NAME
+        let apiImageUrl = config.devportalAPI + orgID + constants.ROUTE.API_FILE_PATH + apiID + constants.API_TEMPLATE_FILE_NAME
         const modifiedApiImageURL = apiImageUrl + images[key]
         images[key] = modifiedApiImageURL;
     }
