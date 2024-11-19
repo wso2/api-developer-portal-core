@@ -1,0 +1,71 @@
+const { Sequelize, DataTypes } = require('sequelize');
+const sequelize = require('../db/sequelize')
+const { Organization } = require('./orgModels')
+
+const IdentityProvider = sequelize.define('DP_IDENTITY_PROVIDER', {
+    ORG_ID: {
+        type: DataTypes.UUID,
+        defaultValue: Sequelize.UUIDV4,
+        primaryKey: true
+    },
+    NAME: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    ISSUER: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    AUTHORIZATION_URL: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    TOKEN_URL: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    USER_INFOR_URL: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    CLIENT_ID: {
+        type: DataTypes.UUID,
+        allowNull: false
+    },
+    CALLBACK_URL: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    SCOPE: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    SIGNUP_URL: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    LOGOUT_URL: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    LOGOUT_REDIRECT_URL: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+},{
+        timestamps: false,
+        tableName: 'DP_IDENTITY_PROVIDER',
+        returning: true
+});
+
+IdentityProvider.belongsTo(Organization, {
+    foreignKey: 'ORG_ID'
+})
+Organization.hasMany(IdentityProvider, {
+    foreignKey: 'ORG_ID',
+    onDelete: 'CASCADE',
+});
+
+module.exports = {
+    IdentityProvider
+};

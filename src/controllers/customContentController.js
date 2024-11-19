@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const { renderTemplate, renderTemplateFromAPI, loadMarkdown } = require('../utils/util');
 const config = require(process.cwd() + '/config');
 const markdown = require('marked');
@@ -9,10 +10,13 @@ const constants = require('../utils/constants');
 const filePrefix = config.pathToContent;
 
 const loadCustomContent = async (req, res) => {
-
+    
     let html = "";
     const orgName = req.originalUrl.split("/")[1];
     let filePath = req.originalUrl.split("/" + orgName + "/").pop();
+    console.log("CUSTOM")
+
+    console.log(req.originalUrl)
     if (config.mode === constants.DEV_MODE) {
 
         let templateContent = {};
@@ -31,14 +35,17 @@ const loadCustomContent = async (req, res) => {
     } else {
         let content = {}
         const orgData = await adminDao.getOrganization(orgName);
+        filePath = 'pages/' + filePath;
 
-        const markdownResponse = await fetch(`${config.devportalAPI}organizations/${orgData.ORG_ID}/filePath=${filePath}`);
-        let markDownFiles = await markdownResponse.json();
+        let markDownFiles = await adminDao.getOrgContent({
+            orgId: orgData.ORG_ID,
+            fileType: 'markDown',
 
+        });
         if (markDownFiles.length > 0) {
             markDownFiles.forEach((item) => {
-                const tempKey = item.fileName.split('.md')[0];
-                content[tempKey] = markdown.parse(item.fileContent);
+                const tempKey = item.FILE_NAME.split('.md')[0];
+                content[tempKey] = markdown.parse(item.FILE_CONTENT.toString(constants.CHARSET_UTF8));
             });
         }
         content["baseUrl"] = "/" + orgName;

@@ -1,15 +1,16 @@
 const fetch = require('node-fetch');
+// eslint-disable-next-line no-undef
 const config = require(process.cwd() + '/config');
 const minimatch = require('minimatch');
+const adminDao = require('../dao/admin');
 
 const ensureAuthenticated = async (req, res, next) => {
 
-    const orgDetailsResponse = await fetch(`${config.adminAPI}organisation?orgName=${req.params.orgName}`);
-    var orgDetails = await orgDetailsResponse.json();
+    const orgName = req.params.orgName;
+    const orgData = await adminDao.getOrganization(orgName);
 
-
-    if ((req.originalUrl != '/favicon.ico' | req.originalUrl != '/images') && orgDetails.authenticatedPages != null
-        && orgDetails.authenticatedPages.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
+    if ((req.originalUrl != '/favicon.ico' | req.originalUrl != '/images') && orgData.authenticatedPages != null
+        && orgData.authenticatedPages.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
         if (req.isAuthenticated()) {
             return next();
         } else {

@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const path = require('path');
 const fs = require('fs');
 const marked = require('marked');
@@ -123,7 +124,7 @@ async function loadTemplateFromAPI(orgName, filePath) {
         fileName: constants.FILE_NAME.PAGE
     });
 
-    return templateContent.FILE_CONTENT.toString(constants.CHARSET_UTF8);
+    return templateContent? templateContent.FILE_CONTENT.toString(constants.CHARSET_UTF8): "";
 }
 
 async function renderTemplateFromAPI(templateContent, orgName, filePath) {
@@ -230,7 +231,6 @@ const unzipFile = async (zipPath, extractPath) => {
 };
 
 const retrieveContentType = (fileName, fileType) => {
-    console.log("File Name:", fileName, fileType);
     let contentType;
     if (fileType === constants.IMAGE) {
         if (fileName.endsWith(constants.FILE_EXTENSIONS.SVG)) {

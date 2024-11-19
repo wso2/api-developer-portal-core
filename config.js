@@ -1,10 +1,9 @@
 var config = {};
 
-config.apiMetaDataAPI = "http://localhost:3000/devportal/organizations/"
-config.devportalAPI = "http://localhost:3000/devportal/"
+config.devportalAPI = "http://localhost:3000/devportal/organizations/"
 config.port = 3000
 config.pathToContent = "../src/"
-config.mode = 'production'
+config.mode = 'development'
 config.db = {
     username: 'postgres',
     password: 'postgres',

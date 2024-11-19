@@ -1,6 +1,7 @@
 const { Organization, OrgContent } = require('../models/orgModels');
 const { validate } = require('uuid');
 const { Sequelize } = require('sequelize');
+const { IdentityProvider } = require('../models/identityProvider');
 
 const createOrganization = async (orgData) => {
     try {
@@ -80,6 +81,105 @@ const deleteOrganization = async (orgId) => {
         }
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const createIdentityProvider = async (orgId, idpData) => {
+
+    try {
+        const idpResponse = await IdentityProvider.create({
+            ORG_ID: orgId,
+            NAME: idpData.name,
+            ISSUER: idpData.issuer,
+            AUTHORIZATION_URL: idpData.authorizationURL,
+            TOKEN_URL: idpData.tokenURL,
+            USER_INFOR_URL: idpData.userInfoURL,
+            CLIENT_ID: idpData.clientId,
+            CALLBACK_URL: idpData.callbackURL,
+            SIGNUP_URL: idpData.signUpURL,
+            LOGOUT_URL: idpData.logoutURL,
+            LOGOUT_REDIRECT_URL: idpData.logoutRedirectURI,
+            SCOPE: idpData.scope
+        });
+        return idpResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const updateIdentityProvider = async (orgID, idpData) => {
+
+    try {
+        const [updatedRowsCount, idpContent,] = await IdentityProvider.update(
+            {
+                ORG_ID: idpData.orgId,
+                ISSUER: idpData.issuer,
+                NAME: idpData.name,
+                AUTHORIZATION_URL: idpData.authorizationURL,
+                TOKEN_URL: idpData.tokenURL,
+                USER_INFOR_URL: idpData.userInfoURL,
+                CLIENT_ID: idpData.clientId,
+                CALLBACK_URL: idpData.callbackURL,
+                SIGNUP_URL: idpData.signUpURL,
+                LOGOUT_URL: idpData.logoutURL,
+                LOGOUT_REDIRECT_URI: idpData.logoutRedirectURI,
+                SCOPE: idpData.scope
+            },
+            {
+                where: {
+                    ORG_ID: orgID
+                },
+                returning: true
+            }
+        );
+        if (updatedRowsCount < 1) {
+            throw new Sequelize.EmptyResultError('IdentityProvider not found');
+        } else {
+            return [updatedRowsCount, idpContent];
+        }
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getIdentityProvider = async (orgID) => {
+
+    try {
+        const idpResponse = await IdentityProvider.findAll({
+            where: {
+                ORG_ID: orgID,
+            }
+        }
+        );
+        return idpResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
+const deleteIdentityProvider = async (orgID) => {
+
+    try {
+        const idpResponse = await IdentityProvider.destroy({
+            where: {
+                ORG_ID: orgID
+            }
+        });
+        return idpResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
         }
         throw new Sequelize.DatabaseError(error);
@@ -186,5 +286,9 @@ module.exports = {
     createOrgContent,
     updateOrgContent,
     getOrgContent,
-    deleteOrgContent
+    deleteOrgContent,
+    createIdentityProvider,
+    updateIdentityProvider,
+    getIdentityProvider,
+    deleteIdentityProvider
 };

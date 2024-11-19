@@ -13,6 +13,11 @@ router.put('/organizations/:orgId', adminService.updateOrganization);
 router.get('/organizations/:orgId', devportalService.getOrganization);
 router.delete('/organizations/:orgId', adminService.deleteOrganization);
 
+router.post('/organizations/:orgId/identityProvider', adminService.createIdentityProvider);
+router.put('/organizations/:orgId/identityProvider', adminService.updateIdentityProvider);
+router.get('/organizations/:orgId/identityProvider', adminService.getIdentityProvider);
+router.delete('/organizations/:orgId/identityProvider', adminService.deleteIdentityProvider);
+
 const upload = multer({ dest: '../.tmp/' }); 
 router.post('/organizations/:orgId/layout', upload.single('file'), adminService.createOrgContent);
 router.put('/organizations/:orgId/layout', upload.single('file'), adminService.updateOrgContent);

@@ -1,9 +1,12 @@
+/* eslint-disable no-undef */
 const configurePassport = require('../middlewares/passport');
 const passport = require('passport');
 const config = require(process.cwd() + '/config');
 const fs = require('fs');
 const path = require('path');
 const constants = require('../utils/constants');
+const adminDao = require('../dao/admin');
+
 
 const filePrefix = config.pathToContent;
 
@@ -14,7 +17,9 @@ const fetchAuthJsonContent = async (orgName) => {
         return authJson;
     }
     try {
-        const response = await fetch(`${config.devportalAPI}identityProvider?orgName=${orgName}`);
+        let organization = await adminDao.getOrganization(orgName);
+        console.log(organization)
+        const response = await fetch(`${config.devportalAPI}${organization.ORG_ID}/identityProvider`);
         if (!response.ok) {
             throw new Error(`Failed to fetch identity provider details: ${response.statusText}`);
         }
@@ -25,11 +30,12 @@ const fetchAuthJsonContent = async (orgName) => {
 };
 
 const login = async (req, res, next) => {
+
     let authJsonContent = await fetchAuthJsonContent(req.params.orgName);
     console.log("Fetching identity provider details for orgName:", authJsonContent);
 
-    if (authJsonContent.length > 0) {
-        configurePassport(authJsonContent[0]);  // Configure passport dynamically
+    if (authJsonContent.clientId) {
+        configurePassport(authJsonContent);  // Configure passport dynamically
         passport.authenticate('oauth2')(req, res, next);
         next();
     } else {
@@ -43,22 +49,43 @@ const handleCallback = (req, res, next) => {
         keepSessionInfo: true
     }, (err, user) => {
         if (err || !user) {
+            console.log("Faileddddddd")
+            console.log(err)
             return next(err || new Error('Authentication failed'));
         }
         req.logIn(user, (err) => {
             if (err) {
                 return next(err);
             }
-            const returnTo = req.session.returnTo || `/${req.params.orgName}`;
-            delete req.session.returnTo;
-            res.redirect(returnTo);
+            if (config.mode === constants.DEV_MODE) {
+                const returnTo = req.session.returnTo || constants.BASE_URL + config.port;
+                delete req.session.returnTo;
+                res.redirect(returnTo);
+            } else {
+                console.log("callbackkkkkkk")
+                const returnTo = req.session.returnTo || `/${req.params.orgName}`;
+                delete req.session.returnTo;
+                res.redirect(returnTo);
+            }
+          
         });
     })(req, res, next);
 };
 
 const handleSignUp = async (req, res) => {
     let authJsonContent = await fetchAuthJsonContent(req.params.orgName);
-    res.redirect(authJsonContent[0].signUpURL);
+    if (authJsonContent.signUpURL) {
+        res.redirect(authJsonContent.signUpURL);
+    } else {
+        if (config.mode === constants.DEV_MODE) {
+            const returnTo = req.session.returnTo || constants.BASE_URL + config.port;
+            delete req.session.returnTo;
+            res.redirect(returnTo);
+        } else {
+            const returnTo = req.session.returnTo || `/${req.params.orgName}`;
+            res.redirect(returnTo);
+        }
+    }
 };
 
 const handleLogOut = async (req, res) => {
@@ -69,7 +96,7 @@ const handleLogOut = async (req, res) => {
     }
     req.session.destroy();
     req.logout(
-        () => res.redirect(`${authJsonContent[0].logoutURL}?post_logout_redirect_uri=${authJsonContent[0].logoutRedirectURI}&id_token_hint=${idToken}`)
+        () => res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${authJsonContent.logoutRedirectURI}&id_token_hint=${idToken}`)
     );
 };
 

@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const { renderTemplate, renderTemplateFromAPI, renderGivenTemplate, loadLayoutFromAPI, loadMarkdown } = require('../utils/util');
 const config = require(process.cwd() + '/config');
 const fs = require('fs');
@@ -28,7 +29,7 @@ const loadAPIs = async (req, res) => {
         let templateContent = {
             apiMetadata: metaData,
             baseUrl: '/' + orgName
-        }
+        }        
         html = await renderTemplateFromAPI(templateContent, orgName, "pages/apis");
     }
     res.send(html);
@@ -63,10 +64,9 @@ const loadAPIContent = async (req, res) => {
         let templateContent = {
             apiMetadata: metaData,
             baseUrl: '/' + orgName,
-            schemaUrl: config.apiMetaDataAPI + orgID + "/apis/" + apiID
+            schemaUrl: config.dev + orgID + "/apis/" + apiID
         }
         html = await renderTemplateFromAPI(templateContent, orgName, "pages/api-landing");
-        console.log(html);
     }
     res.send(html);
 }
@@ -131,14 +131,13 @@ async function loadAPIMetaDataListFromAPI(orgID, orgName) {
         item.baseUrl = '/' + orgName;
     });
     metaData.forEach(element => {
-        console.log(element.apiInfo)
         let randomNumber = Math.floor(Math.random() * 3) + 3;
         element.apiInfo.ratings = generateArray(randomNumber);
         element.apiInfo.ratingsNoFill = generateArray(5 - randomNumber);
         const images = element.apiInfo.apiImageMetadata;
         let apiImageUrl = '';
         for (var key in images) {
-            apiImageUrl = config.apiMetaDataAPI + orgID + constants.ROUTE.API_FILE_PATH + element.apiID + constants.API_TEMPLATE_FILE_NAME
+            apiImageUrl = config.devportalAPI + orgID + constants.ROUTE.API_FILE_PATH + element.apiID + constants.API_TEMPLATE_FILE_NAME
             const modifiedApiImageURL = apiImageUrl + images[key]
             element.apiInfo.apiImageMetadata[key] = modifiedApiImageURL
         }
@@ -156,7 +155,7 @@ async function loadAPIMetaData(orgID, apiID) {
     //replace image urls
     let images = metaData.apiInfo.apiImageMetadata;
     for (var key in images) {
-        let apiImageUrl = config.apiMetaDataAPI + orgID + constants.ROUTE.API_FILE_PATH + apiID + constants.API_TEMPLATE_FILE_NAME
+        let apiImageUrl = config.devportalAPI + orgID + constants.ROUTE.API_FILE_PATH + apiID + constants.API_TEMPLATE_FILE_NAME
         const modifiedApiImageURL = apiImageUrl + images[key]
         images[key] = modifiedApiImageURL;
     }
