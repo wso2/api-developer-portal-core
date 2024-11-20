@@ -4,7 +4,6 @@ const adminDao = require('../dao/admin');
 const util = require('../utils/util');
 const fs = require('fs');
 const path = require('path');
-const config = require(process.cwd() + '/config.json');
 const IdentityProviderDTO = require("../dto/identityProvider");
 const constants = require('../utils/constants');
 
