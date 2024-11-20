@@ -2,7 +2,7 @@
 const path = require('path');
 const fs = require('fs');
 const { renderTemplate, renderTemplateFromAPI } = require('../utils/util');
-const config = require(process.cwd() + '/config');
+const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
 
