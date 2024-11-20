@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 const { renderTemplate, renderTemplateFromAPI, renderGivenTemplate, loadLayoutFromAPI, loadMarkdown } = require('../utils/util');
-const config = require(process.cwd() + '/config');
+const config = require(process.cwd() + '/config.json');
 const fs = require('fs');
 const path = require('path');
 const exphbs = require('express-handlebars');

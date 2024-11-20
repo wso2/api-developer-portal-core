@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 const { Sequelize } = require('sequelize');
-const config = require(process.cwd() + '/config');
+const config = require(process.cwd() + '/config.json');
 
 const sequelize = new Sequelize(
     config.db.database,
