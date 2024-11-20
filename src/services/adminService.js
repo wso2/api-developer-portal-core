@@ -4,8 +4,8 @@ const adminDao = require('../dao/admin');
 const util = require('../utils/util');
 const fs = require('fs');
 const path = require('path');
-const config = require(process.cwd() + '/config.json');
 const IdentityProviderDTO = require("../dto/identityProvider");
+const constants = require('../utils/constants');
 
 const createOrganization = async (req, res) => {
 
@@ -308,13 +308,13 @@ async function readFilesInDirectory(directory, orgId, baseDir = '') {
                 fileType = "style"
                 if (file.name === "main.css") {
                     strContent = strContent.replace(/@import\s*'\/styles\/([^']+)';/g,
-                        `@import url("${config.devportalAPI}${orgId}/layout?fileType=style&fileName=$1");`);
+                        `@import url("${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/layout?fileType=style&fileName=$1");`);
                     content = Buffer.from(strContent, 'utf-8');
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                 fileType = "layout"
                 if (file.name === "main.hbs") {
-                    strContent = strContent.replace(/\/styles\//g, `${config.devportalAPI}${orgId}/layout?fileType=style&fileName=`);
+                    strContent = strContent.replace(/\/styles\//g, `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/layout?fileType=style&fileName=`);
                     content = Buffer.from(strContent, 'utf-8');
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {

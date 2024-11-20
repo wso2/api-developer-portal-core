@@ -25,15 +25,15 @@ const loadAPIs = async (req, res) => {
         html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     } else {
         let organization = await adminDao.getOrganization(orgName);
-        if(!organization){
+        if (!organization) {
             res.send("Organization not found")
         }
         let orgID = organization.ORG_ID;
-        let metaData = await loadAPIMetaDataListFromAPI(organization.ORG_ID, orgName);
+        let metaData = await loadAPIMetaDataListFromAPI(req, organization.ORG_ID, orgName);
         let templateContent = {
             apiMetadata: metaData,
             baseUrl: '/' + orgName
-        }        
+        }
         html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis");
     }
     res.send(html);
@@ -61,18 +61,17 @@ const loadAPIContent = async (req, res) => {
         html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
     } else {
         let organization = await adminDao.getOrganization(orgName);
-        if(!organization){
+        if (!organization) {
             res.send("Organization not found")
         }
         let orgID = organization.ORG_ID;
         let apiID = await apiDao.getAPIId(apiName);
-        let metaData = await loadAPIMetaData(orgID, apiID);
+        let metaData = await loadAPIMetaData(req, orgID, apiID);
 
         let templateContent = {
             apiMetadata: metaData,
             baseUrl: '/' + orgName,
-            schemaUrl: config.devportalAPI + orgID + constants.ROUTE.API_FILE_PATH + apiID 
-            + constants.API_TEMPLATE_FILE_NAME + constants.FILE_NAME.API_DEFINITION_XML
+            schemaUrl: `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${constants.FILE_NAME.API_DEFINITION_XML}`
         }
         html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing");
     }
@@ -100,14 +99,14 @@ const loadTryOutPage = async (req, res) => {
     } else {
         let organization = await adminDao.getOrganization(orgName);
         let orgID = organization.ORG_ID;
-        if(!organization){
+        if (!organization) {
             res.send("Organization not found")
         }
         let apiID = await apiDao.getAPIId(apiName);
-        if(!apiID){
+        if (!apiID) {
             res.send("API not found")
         }
-        const metaData = await loadAPIMetaData(orgID, apiID);
+        const metaData = await loadAPIMetaData(req, orgID, apiID);
         let apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, orgID, apiID)
         apiDefinition = apiDefinition ? apiDefinition.API_FILE.toString(constants.CHARSET_UTF8) : "";
         let templateContent = {
@@ -138,7 +137,7 @@ async function loadAPIMetaDataList() {
 
 
 
-async function loadAPIMetaDataListFromAPI(orgID, orgName) {
+async function loadAPIMetaDataListFromAPI(req, orgID, orgName) {
 
     let metaData = await apiMetadataService.getMetadataListFromDB(orgID);
     metaData.forEach(item => {
@@ -151,7 +150,8 @@ async function loadAPIMetaDataListFromAPI(orgID, orgName) {
         const images = element.apiInfo.apiImageMetadata;
         let apiImageUrl = '';
         for (var key in images) {
-            apiImageUrl = config.devportalAPI + orgID + constants.ROUTE.API_FILE_PATH + element.apiID + constants.API_TEMPLATE_FILE_NAME
+            apiImageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${element.apiID}${constants.API_TEMPLATE_FILE_NAME}`
+            console.log(apiImageUrl)
             const modifiedApiImageURL = apiImageUrl + images[key]
             element.apiInfo.apiImageMetadata[key] = modifiedApiImageURL
         }
@@ -160,16 +160,16 @@ async function loadAPIMetaDataListFromAPI(orgID, orgName) {
     return JSON.parse(data);
 }
 
-async function loadAPIMetaData(orgID, apiID) {
+async function loadAPIMetaData(req, orgID, apiID) {
 
     let metaData = {};
     metaData = await apiMetadataService.getMetadataFromDB(orgID, apiID);
     let data = metaData ? JSON.stringify(metaData) : {};
-    metaData  = JSON.parse(data)
+    metaData = JSON.parse(data)
     //replace image urls
     let images = metaData.apiInfo.apiImageMetadata;
     for (var key in images) {
-        let apiImageUrl = config.devportalAPI + orgID + constants.ROUTE.API_FILE_PATH + apiID + constants.API_TEMPLATE_FILE_NAME
+        let apiImageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}`
         const modifiedApiImageURL = apiImageUrl + images[key]
         images[key] = modifiedApiImageURL;
     }
