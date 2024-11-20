@@ -16,8 +16,9 @@ function configurePassport(authJsonContent) {
         pkce: true
     }, (req, accessToken, refreshToken, params, profile, done) => {
         const decodedJWT = jwt.decode(params.id_token);
+        let name = decodedJWT['given_name']? decodedJWT['given_name'] : decodedJWT['nickname'];
         profile = {
-            'name': decodedJWT['given_name'],
+            'name': name,
             'idToken': params.id_token,
             'email': decodedJWT['email']
         };
