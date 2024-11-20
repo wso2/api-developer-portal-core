@@ -21,7 +21,7 @@ const fetchAuthJsonContent = async (orgName) => {
         if(!organization){
             res.send("Organization not found")
         }
-        const response = await fetch(`${config.devportalAPI}${organization.ORG_ID}/identityProvider`);
+        const response = await adminDao.getIdentityProvider(organization.ORG_ID);
         if (!response.ok) {
             throw new Error(`Failed to fetch identity provider details: ${response.statusText}`);
         }
