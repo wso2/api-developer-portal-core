@@ -104,10 +104,10 @@ function renderTemplate(templatePath, layoutPath, templateContent) {
     return html;
 }
 
-async function loadLayoutFromAPI(orgName) {
-    const orgData = await adminDao.getOrganization(orgName);
+async function loadLayoutFromAPI(orgID) {
+
     var layoutContent =  await adminDao.getOrgContent({
-        orgId: orgData.ORG_ID,
+        orgId: orgID,
         fileType: constants.FILE_TYPE.LAYOUT,
         fileName: constants.FILE_NAME.MAIN
     });
@@ -115,10 +115,10 @@ async function loadLayoutFromAPI(orgName) {
     return layoutContent.FILE_CONTENT.toString(constants.CHARSET_UTF8);
 }
 
-async function loadTemplateFromAPI(orgName, filePath) {
-    const orgData = await adminDao.getOrganization(orgName);
+async function loadTemplateFromAPI(orgID, filePath) {
+
     var templateContent = await adminDao.getOrgContent({
-        orgId: orgData.ORG_ID,
+        orgId: orgID,
         filePath: filePath,
         fileType: constants.FILE_TYPE.TEMPLATE,
         fileName: constants.FILE_NAME.PAGE
@@ -127,10 +127,10 @@ async function loadTemplateFromAPI(orgName, filePath) {
     return templateContent? templateContent.FILE_CONTENT.toString(constants.CHARSET_UTF8): "";
 }
 
-async function renderTemplateFromAPI(templateContent, orgName, filePath) {
+async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath) {
 
-    var templatePage = await loadTemplateFromAPI(orgName, filePath);
-    var layoutContent = await loadLayoutFromAPI(orgName);
+    var templatePage = await loadTemplateFromAPI(orgID, filePath);
+    var layoutContent = await loadLayoutFromAPI(orgID);
 
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutContent.toString());

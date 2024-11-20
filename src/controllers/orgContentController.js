@@ -4,6 +4,7 @@ const fs = require('fs');
 const { renderTemplate, renderTemplateFromAPI } = require('../utils/util');
 const config = require(process.cwd() + '/config');
 const constants = require('../utils/constants');
+const adminDao = require('../dao/admin');
 
 const filePrefix = config.pathToContent;
 
@@ -36,7 +37,11 @@ const loadOrgContentFromAPI = async (req) => {
 
     let templateContent = {}
     const orgName = req.params.orgName;
-    const html = await renderTemplateFromAPI(templateContent, orgName, 'pages/home');
+    let organization = await adminDao.getOrganization(orgName);
+    if (!organization) {
+        res.send("Organization not found")
+    }
+    const html = await renderTemplateFromAPI(templateContent, organization.ORG_ID, orgName, 'pages/home');
     return html
 }
 

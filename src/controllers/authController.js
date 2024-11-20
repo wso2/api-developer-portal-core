@@ -51,8 +51,6 @@ const handleCallback = (req, res, next) => {
         keepSessionInfo: true
     }, (err, user) => {
         if (err || !user) {
-            console.log("Faileddddddd")
-            console.log(err)
             return next(err || new Error('Authentication failed'));
         }
         req.logIn(user, (err) => {
@@ -64,7 +62,6 @@ const handleCallback = (req, res, next) => {
                 delete req.session.returnTo;
                 res.redirect(returnTo);
             } else {
-                console.log("callbackkkkkkk")
                 const returnTo = req.session.returnTo || `/${req.params.orgName}`;
                 delete req.session.returnTo;
                 res.redirect(returnTo);

@@ -35,10 +35,13 @@ const loadCustomContent = async (req, res) => {
     } else {
         let content = {}
         const orgData = await adminDao.getOrganization(orgName);
+        if(!orgData){
+            res.send("Organization not found")
+        }
         filePath = 'pages/' + filePath;
-
+        let orgId = orgData.ORG_ID;
         let markDownFiles = await adminDao.getOrgContent({
-            orgId: orgData.ORG_ID,
+            orgId: orgId,
             fileType: 'markDown',
 
         });
@@ -49,7 +52,7 @@ const loadCustomContent = async (req, res) => {
             });
         }
         content["baseUrl"] = "/" + orgName;
-        html = await renderTemplateFromAPI(content, orgName, filePath);
+        html = await renderTemplateFromAPI(content, orgId, orgName, filePath);
     }
     res.send(html);
 
