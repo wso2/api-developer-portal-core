@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
+const IdentityProviderDTO = require("../dto/identityProvider");
 
 
 const filePrefix = config.pathToContent;
@@ -22,11 +23,13 @@ const fetchAuthJsonContent = async (orgName) => {
             res.send("Organization not found")
         }
         const response = await adminDao.getIdentityProvider(organization.ORG_ID);
-        if (!response.ok) {
+        console.log("Identity Provider details fetched from DB:", response[0].dataValues);
+        if (response.length === 0) {
             throw new Error(`Failed to fetch identity provider details: ${response.statusText}`);
         }
-        return await response.json();
+        return new IdentityProviderDTO(response[0].dataValues);
     } catch (error) {
+        console.log("Failed to fetch identity provider details", error);
         throw new Error("Failed to fetch identity provider details", error);
     }
 };

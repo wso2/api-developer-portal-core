@@ -1,12 +1,11 @@
 {
-  "devportalAPI": "http://localhost:3000/devportal/organizations/",
   "port": 3000,
   "pathToContent": "../api-developer-portal/src/",
-  "mode": "development",
+  "mode": "production",
   "db": {
     "username": "postgres",
     "password": "postgres",
-    "database": "devportal",
+    "database": "DEVPORTAL_NEWSCHEMA",
     "host": "localhost",
     "dialect": "postgres"
   }
