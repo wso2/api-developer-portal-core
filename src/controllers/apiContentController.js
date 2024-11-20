@@ -25,6 +25,9 @@ const loadAPIs = async (req, res) => {
         html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     } else {
         let organization = await adminDao.getOrganization(orgName);
+        if(!organization){
+            res.send("Organization not found")
+        }
         let metaData = await loadAPIMetaDataListFromAPI(organization.ORG_ID, orgName);
         let templateContent = {
             apiMetadata: metaData,
@@ -57,6 +60,9 @@ const loadAPIContent = async (req, res) => {
         html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
     } else {
         let organization = await adminDao.getOrganization(orgName);
+        if(!organization){
+            res.send("Organization not found")
+        }
         let orgID = organization.ORG_ID;
         let apiID = await apiDao.getAPIId(apiName);
         let metaData = await loadAPIMetaData(orgID, apiID);
@@ -92,7 +98,13 @@ const loadTryOutPage = async (req, res) => {
     } else {
         let organization = await adminDao.getOrganization(orgName);
         let orgID = organization.ORG_ID;
+        if(!organization){
+            res.send("Organization not found")
+        }
         let apiID = await apiDao.getAPIId(apiName);
+        if(!apiID){
+            res.send("API not found")
+        }
         const metaData = await loadAPIMetaData(orgID, apiID);
         let apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, orgID, apiID)
         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8)
