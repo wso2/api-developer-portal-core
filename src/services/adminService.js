@@ -33,6 +33,7 @@ const createOrganization = async (req, res) => {
 
         res.status(201).send(orgCreationResponse);
     } catch (error) {
+        console.log(error);
         util.handleError(res, error);
     }
 
@@ -69,7 +70,6 @@ const updateOrganization = async (req, res) => {
 
     } catch (error) {
         console.log(error);
-
         util.handleError(res, error);
     }
 };
@@ -89,6 +89,7 @@ const deleteOrganization = async (req, res) => {
             throw new CustomError(404, "Records Not Found", 'Organization not found');
         }
     } catch (error) {
+        console.log(error);
         util.handleError(res, error);
     }
 };
@@ -131,7 +132,6 @@ const updateIdentityProvider = async (req, res) => {
         res.status(200).send(new IdentityProviderDTO(updatedIDP[0].dataValues));
     } catch (error) {
         console.log(error);
-
         util.handleError(res, error);
     }
 };
@@ -192,6 +192,7 @@ const createOrgContent = async (req, res) => {
         res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
         fs.rmSync(extractPath, { recursive: true, force: true });
     } catch (error) {
+        console.log(error);
         fs.rmSync(extractPath, { recursive: true, force: true });
         return util.handleError(res, error);
     }
@@ -250,6 +251,7 @@ const updateOrgContent = async (req, res) => {
         fs.rmSync(extractPath, { recursive: true, force: true });
         res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
     } catch (error) {
+        console.log(error);
         fs.rmSync(extractPath, { recursive: true, force: true });
         util.handleError(res, error);
     }
@@ -279,6 +281,7 @@ const deleteOrgContent = async (req, res) => {
             throw new CustomError(404, "Records Not Found", 'Organization not found');
         }
     } catch (error) {
+        console.log(error);
         util.handleError(res, error);
     }
 };

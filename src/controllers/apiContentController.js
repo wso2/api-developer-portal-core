@@ -25,12 +25,16 @@ const loadAPIs = async (req, res) => {
         html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     } else {
         let organization = await adminDao.getOrganization(orgName);
+        if(!organization){
+            res.send("Organization not found")
+        }
+        let orgID = organization.ORG_ID;
         let metaData = await loadAPIMetaDataListFromAPI(organization.ORG_ID, orgName);
         let templateContent = {
             apiMetadata: metaData,
             baseUrl: '/' + orgName
         }        
-        html = await renderTemplateFromAPI(templateContent, orgName, "pages/apis");
+        html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis");
     }
     res.send(html);
 }
@@ -57,6 +61,9 @@ const loadAPIContent = async (req, res) => {
         html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
     } else {
         let organization = await adminDao.getOrganization(orgName);
+        if(!organization){
+            res.send("Organization not found")
+        }
         let orgID = organization.ORG_ID;
         let apiID = await apiDao.getAPIId(apiName);
         let metaData = await loadAPIMetaData(orgID, apiID);
@@ -64,9 +71,10 @@ const loadAPIContent = async (req, res) => {
         let templateContent = {
             apiMetadata: metaData,
             baseUrl: '/' + orgName,
-            schemaUrl: config.dev + orgID + "/apis/" + apiID
+            schemaUrl: config.devportalAPI + orgID + constants.ROUTE.API_FILE_PATH + apiID 
+            + constants.API_TEMPLATE_FILE_NAME + constants.FILE_NAME.API_DEFINITION_XML
         }
-        html = await renderTemplateFromAPI(templateContent, orgName, "pages/api-landing");
+        html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing");
     }
     res.send(html);
 }
@@ -92,10 +100,16 @@ const loadTryOutPage = async (req, res) => {
     } else {
         let organization = await adminDao.getOrganization(orgName);
         let orgID = organization.ORG_ID;
+        if(!organization){
+            res.send("Organization not found")
+        }
         let apiID = await apiDao.getAPIId(apiName);
+        if(!apiID){
+            res.send("API not found")
+        }
         const metaData = await loadAPIMetaData(orgID, apiID);
         let apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, orgID, apiID)
-        apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8)
+        apiDefinition = apiDefinition ? apiDefinition.API_FILE.toString(constants.CHARSET_UTF8) : "";
         let templateContent = {
             apiMetadata: metaData,
             baseUrl: req.params.orgName,
@@ -104,7 +118,7 @@ const loadTryOutPage = async (req, res) => {
         }
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'tryout', 'page.hbs');
         const templateResponse = fs.readFileSync(completeTemplatePath, 'utf-8');
-        const layoutResponse = await loadLayoutFromAPI(orgName)
+        const layoutResponse = await loadLayoutFromAPI(orgID)
         html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
     }
     res.send(html);

@@ -12,7 +12,7 @@ const constants = require('../utils/constants');
 const filePrefix = config.pathToContent;
 
 const registerPartials = async (req, res, next) => {
-  
+
   if (config.mode === constants.DEV_MODE) {
     let baseURL = constants.BASE_URL + config.port
     const filePath = req.originalUrl.split(baseURL).pop();
@@ -32,7 +32,9 @@ const registerPartials = async (req, res, next) => {
 const registerPartialsFromAPI = async (req) => {
   const orgName = req.params.orgName;
   const orgData = await adminDao.getOrganization(orgName);
-
+  if(!orgData){
+    return
+  }
   let orgID = orgData.ORG_ID;
   let apiID = "";
   const apiName = req.params.apiName;
@@ -51,7 +53,7 @@ const registerPartialsFromAPI = async (req) => {
   partials.forEach(file => {
     let fileName = file.FILE_NAME.split(".")[0];
     let content = file.FILE_CONTENT.toString(constants.CHARSET_UTF8);
-    content = content.replaceAll("/images/", `${imageUrl}`)
+    content = content.replaceAll(constants.ROUTE.IMAGES_PATH, `${imageUrl}`)
     partialObject[fileName] = content;
   });
 
@@ -76,7 +78,7 @@ const registerPartialsFromAPI = async (req) => {
   if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
     //fetch markdown content for API if exists
     let markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, orgID, apiID);
-    let markdownContent = markdownResponse? markdownResponse.API_FILE.toString("utf8"): "";
+    let markdownContent = markdownResponse ? markdownResponse.API_FILE.toString("utf8") : "";
     const markdownHtml = markdownContent ? markdown.parse(markdownContent) : "";
 
     //if hbs content available for API, render the hbs page

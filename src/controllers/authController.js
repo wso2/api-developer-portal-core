@@ -18,7 +18,9 @@ const fetchAuthJsonContent = async (orgName) => {
     }
     try {
         let organization = await adminDao.getOrganization(orgName);
-        console.log(organization)
+        if(!organization){
+            res.send("Organization not found")
+        }
         const response = await fetch(`${config.devportalAPI}${organization.ORG_ID}/identityProvider`);
         if (!response.ok) {
             throw new Error(`Failed to fetch identity provider details: ${response.statusText}`);
@@ -49,8 +51,6 @@ const handleCallback = (req, res, next) => {
         keepSessionInfo: true
     }, (err, user) => {
         if (err || !user) {
-            console.log("Faileddddddd")
-            console.log(err)
             return next(err || new Error('Authentication failed'));
         }
         req.logIn(user, (err) => {
@@ -62,7 +62,6 @@ const handleCallback = (req, res, next) => {
                 delete req.session.returnTo;
                 res.redirect(returnTo);
             } else {
-                console.log("callbackkkkkkk")
                 const returnTo = req.session.returnTo || `/${req.params.orgName}`;
                 delete req.session.returnTo;
                 res.redirect(returnTo);
