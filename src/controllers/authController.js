@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 const configurePassport = require('../middlewares/passport');
 const passport = require('passport');
-const config = require(process.cwd() + '/config');
+const config = require(process.cwd() + '/config.json');
 const fs = require('fs');
 const path = require('path');
 const constants = require('../utils/constants');
