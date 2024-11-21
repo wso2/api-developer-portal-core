@@ -1,11 +1,11 @@
 {
   "port": 3000,
-  "pathToContent": "../src/",
+  "pathToContent": "../api-developer-portal/src/",
   "mode": "development",
   "db": {
     "username": "postgres",
     "password": "postgres",
-    "database": "DEVPORTAL_NEWSCHEMA",
+    "database": "devportal",
     "host": "localhost",
     "dialect": "postgres"
   }

@@ -4,5 +4,6 @@ const applicationsController = require('../controllers/applicationsContentContro
 const registerPartials = require('../middlewares/registerPartials');
 
 router.get('/((?!favicon.ico)):orgName/applications', registerPartials, applicationsController.loadApplications);
+router.get('/((?!favicon.ico)):orgName/applications/:applicationid', registerPartials, applicationsController.loadApplication);
 
 module.exports = router;

@@ -36,6 +36,36 @@ async function loadApplicationsMetaDataList() {
     return mockApplicationsMetaData.list;
 }
 
+const loadApplication = async (req, res) => {
+
+    // const orgName = req.params.orgName;
+    let html;
+    if (config.mode === constants.DEV_MODE) {
+        let metaData = await loadApplicationMetaData()
+        let templateContent = {
+            applicationMetadata: metaData,
+            baseUrl: constants.BASE_URL + config.port
+        }
+        html = renderTemplate(filePrefix + 'pages/applications/application/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
+    } else {
+        // let organization = await adminDao.getOrganization(orgName);
+        // let metaData = await loadAPIMetaDataListFromAPI(organization.ORG_ID, orgName);
+        // let templateContent = {
+        //     apiMetadata: metaData,
+        //     baseUrl: '/' + orgName
+        // }
+        // html = await renderTemplateFromAPI(templateContent, orgName, "pages/apis");
+    }
+    res.send(html);
+}
+
+async function loadApplicationMetaData() {
+    const mockApplicationMetaDataPath = path.join(process.cwd(), filePrefix + '../mock/Applications/DefaultApplication', 'DefaultApplication.json');
+    const mockApplicationMetaData = JSON.parse(fs.readFileSync(mockApplicationMetaDataPath, 'utf-8'));
+    return mockApplicationMetaData;
+}
+
 module.exports = {
-    loadApplications
+    loadApplications,
+    loadApplication
 };
