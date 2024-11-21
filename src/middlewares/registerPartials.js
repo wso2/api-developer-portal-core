@@ -50,6 +50,8 @@ const registerAllPartialsFromFile = async (baseURL, req) => {
   registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "home", "partials"), req.user);
   registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req.user);
   registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "apis", "partials"), req.user);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "applications", "partials"), req.user);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "application", "partials"), req.user);
   if (fs.existsSync(path.join(process.cwd(), filePrefix + "pages", filePath, "partials"))) {
     registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix + "pages", filePath, "partials"), req.user);
   }
