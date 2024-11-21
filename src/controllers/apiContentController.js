@@ -151,7 +151,6 @@ async function loadAPIMetaDataListFromAPI(req, orgID, orgName) {
         let apiImageUrl = '';
         for (var key in images) {
             apiImageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${element.apiID}${constants.API_TEMPLATE_FILE_NAME}`
-            console.log(apiImageUrl)
             const modifiedApiImageURL = apiImageUrl + images[key]
             element.apiInfo.apiImageMetadata[key] = modifiedApiImageURL
         }

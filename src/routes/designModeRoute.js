@@ -21,6 +21,6 @@ router.get('/logout', registerPartials, authController.handleLogOut);
 router.get('/signup', registerPartials, authController.handleSignUp);
 
 // eslint-disable-next-line no-useless-escape
-router.get('((?!favicon.ico|images|styles|\/login))/*', registerPartials,  contentController.loadCustomContent);
+router.get('(^(?!\/(favicon\.ico|images\/|styles\/|*login*|devportal\/)))/*', registerPartials,  contentController.loadCustomContent);
 
 module.exports = router;

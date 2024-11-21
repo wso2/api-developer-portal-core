@@ -14,9 +14,6 @@ const loadCustomContent = async (req, res) => {
     let html = "";
     const orgName = req.originalUrl.split("/")[1];
     let filePath = req.originalUrl.split("/" + orgName + "/").pop();
-    console.log("CUSTOM")
-
-    console.log(req.originalUrl)
     if (config.mode === constants.DEV_MODE) {
 
         let templateContent = {};
