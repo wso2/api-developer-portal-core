@@ -36,12 +36,21 @@ const loadOrgContentFromFile = async () => {
 const loadOrgContentFromAPI = async (req) => {
 
     let templateContent = {}
+    let html;
     const orgName = req.params.orgName;
-    let organization = await adminDao.getOrganization(orgName);
-    if (!organization) {
-        res.send("Organization not found")
+    let organization;
+    try {
+        organization = await adminDao.getOrganization(orgName);
+        html = await renderTemplateFromAPI(templateContent, organization.ORG_ID, orgName, 'pages/home');
+    } catch (error) {
+        console.log("Rendering default organization landing page from file");
+        let templateContent = {
+            baseUrl: '/' + orgName
+        }
+        html = await renderTemplate(filePrefix + 'pages/home/page.hbs', filePrefix + 'layout/main.hbs', templateContent)
+
     }
-    const html = await renderTemplateFromAPI(templateContent, organization.ORG_ID, orgName, 'pages/home');
+
     return html
 }
 

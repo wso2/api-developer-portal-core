@@ -11,7 +11,6 @@ const orgContent = require('./routes/orgContentRoute');
 const apiContent = require('./routes/apiContentRoute');
 const customContent = require('./routes/customPageRoute');
 const config = require(process.cwd() + '/config.json');
-const { copyStyelSheet, copyStyelSheetMulti } = require('./utils/util');
 const Handlebars = require('handlebars');
 const constants = require("./utils/constants");
 const designRoute = require('./routes/designModeRoute');
@@ -59,14 +58,7 @@ passport.deserializeUser((user, done) => {
 });
 
 app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), filePrefix + 'styles')));
-
-if (config.mode === constants.DEV_MODE) {
-    //register images and stylesheet folders for single tenante scenario
-    app.use(constants.ROUTE.IMAGES, express.static(path.join(process.cwd(), filePrefix + 'images')));
-    copyStyelSheet();
-} else {
-    copyStyelSheetMulti();
-}
+app.use(constants.ROUTE.IMAGES, express.static(path.join(process.cwd(), filePrefix + 'images')));
 
 //backend routes
 app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
