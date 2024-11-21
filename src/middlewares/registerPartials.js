@@ -14,26 +14,36 @@ const filePrefix = config.pathToContent;
 const registerPartials = async (req, res, next) => {
 
   if (config.mode === constants.DEV_MODE) {
-    let baseURL = constants.BASE_URL + config.port
-    const filePath = req.originalUrl.split(baseURL).pop();
-    registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "partials"), req.user);
-    registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "home", "partials"), req.user);
-    registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req.user);
-    registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "apis", "partials"), req.user);
-    if (fs.existsSync(path.join(process.cwd(), filePrefix + "pages", filePath, "partials"))) {
-      registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix + "pages", filePath, "partials"), req.user);
-    }
+
+    registerAllPartialsFromFile(constants.BASE_URL + config.port, req);
   } else {
-    await registerPartialsFromAPI(req);
+    try {
+      await registerPartialsFromAPI(req);
+    } catch (error) {
+      console.log("Registering default partiasl from file");
+      registerAllPartialsFromFile('/' + req.params.orgName, req);
+    }
   }
   next();
 };
 
+const registerAllPartialsFromFile = async (baseURL, req) => {
+
+  const filePath = req.originalUrl.split(baseURL).pop();
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "partials"), req.user);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "home", "partials"), req.user);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req.user);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "apis", "partials"), req.user);
+  if (fs.existsSync(path.join(process.cwd(), filePrefix + "pages", filePath, "partials"))) {
+    registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix + "pages", filePath, "partials"), req.user);
+  }
+}
+
 const registerPartialsFromAPI = async (req) => {
   const orgName = req.params.orgName;
   const orgData = await adminDao.getOrganization(orgName);
-  if(!orgData){
-    return
+  if (!orgData) {
+    return orgData;
   }
   let orgID = orgData.ORG_ID;
   let apiID = "";

@@ -24,17 +24,22 @@ const loadAPIs = async (req, res) => {
         }
         html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     } else {
-        let organization = await adminDao.getOrganization(orgName);
-        if (!organization) {
-            res.send("Organization not found")
+        try {
+            organization = await adminDao.getOrganization(orgName);
+            let orgID = organization.ORG_ID;
+            let metaData = await loadAPIMetaDataListFromAPI(req, organization.ORG_ID, orgName);
+            let templateContent = {
+                apiMetadata: metaData,
+                baseUrl: '/' + orgName
+            }
+            html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis");
+        } catch (error) {
+            console.log("Rendering default api landing page from file");
+            let templateContent = {
+                baseUrl: constants.BASE_URL + config.port
+            }
+            html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
         }
-        let orgID = organization.ORG_ID;
-        let metaData = await loadAPIMetaDataListFromAPI(req, organization.ORG_ID, orgName);
-        let templateContent = {
-            apiMetadata: metaData,
-            baseUrl: '/' + orgName
-        }
-        html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis");
     }
     res.send(html);
 }
@@ -108,7 +113,7 @@ const loadTryOutPage = async (req, res) => {
         }
         const metaData = await loadAPIMetaData(req, orgID, apiID);
         let apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, orgID, apiID)
-        apiDefinition = apiDefinition ? apiDefinition.API_FILE.toString(constants.CHARSET_UTF8) : "";
+        apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
         let templateContent = {
             apiMetadata: metaData,
             baseUrl: req.params.orgName,

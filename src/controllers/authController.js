@@ -19,18 +19,16 @@ const fetchAuthJsonContent = async (orgName) => {
     }
     try {
         let organization = await adminDao.getOrganization(orgName);
-        if(!organization){
-            res.send("Organization not found")
-        }
         const response = await adminDao.getIdentityProvider(organization.ORG_ID);
         console.log("Identity Provider details fetched from DB:", response[0].dataValues);
         if (response.length === 0) {
             throw new Error(`Failed to fetch identity provider details: ${response.statusText}`);
         }
         return new IdentityProviderDTO(response[0].dataValues);
+
     } catch (error) {
         console.log("Failed to fetch identity provider details", error);
-        throw new Error("Failed to fetch identity provider details", error);
+        return {};
     }
 };
 
@@ -69,7 +67,7 @@ const handleCallback = (req, res, next) => {
                 delete req.session.returnTo;
                 res.redirect(returnTo);
             }
-          
+
         });
     })(req, res, next);
 };
