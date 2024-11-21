@@ -46,7 +46,7 @@ const loadApplication = async (req, res) => {
             applicationMetadata: metaData,
             baseUrl: constants.BASE_URL + config.port
         }
-        html = renderTemplate(filePrefix + 'pages/applications/application/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
+        html = renderTemplate(filePrefix + 'pages/application/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     } else {
         // let organization = await adminDao.getOrganization(orgName);
         // let metaData = await loadAPIMetaDataListFromAPI(organization.ORG_ID, orgName);
