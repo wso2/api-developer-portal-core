@@ -1,1 +1,42 @@
-<p>Hello overview</p>
+<head>
+  <link rel='stylesheet' href='/technical-styles/overview.css' />
+</head>
+
+<section>
+  {{#applicationMetadata}}
+    <div class='app-header'>
+      <h1 class='app-title'>{{name}}</h1>
+      <div class='action-buttons'>
+        <button class='btn btn-sm' title='Edit'>
+          <i class='bi bi-pencil-square'></i>
+        </button>
+        <button class='btn btn-sm' title='Delete'>
+          <i class='bi bi-trash'></i>
+        </button>
+      </div>
+    </div>
+    <div class='app-details'>
+      <div class='details-section'>
+        <h2>Details</h2>
+        <p><strong>Description:</strong> {{description}}</p>
+        <p><strong>Business Plan:</strong> {{throttlingPolicy}}</p>
+        <div class='business-plan-actions'>
+          <button class='btn btn-sm reset-btn' title='Reset'>
+            <i class='bi bi-arrow-clockwise mb-1'></i>
+            <p2>Reset</p2>
+          </button>
+          <button class='btn btn-sm info-btn' title='Info'>
+            <i class='bi bi-info-circle mb-1'></i>
+            <p2>Info</p2>
+          </button>
+        </div>
+      </div>
+      <div class='status-section'>
+        <h2>Status</h2>
+        <p><strong>Workflow Status:</strong>
+          <span>{{status}}</span></p>
+        <p><strong>Application Owner:</strong> {{owner}}</p>
+      </div>
+    </div>
+  {{/applicationMetadata}}
+</section>
