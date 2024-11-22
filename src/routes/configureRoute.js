@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const orgController = require('../controllers/orgContentController');
+const settingsController = require('../controllers//settingsController');
 const registerPartials = require('../middlewares/registerPartials');
 
-router.get('/(((?!favicon.ico|images)):orgName/configure)', registerPartials, orgController.loadOrganizationContent);
+router.get('/(((?!favicon.ico|images)):orgName/configure)', registerPartials, settingsController.loadSettingPage);
 
 
 module.exports = router;

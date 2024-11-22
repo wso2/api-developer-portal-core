@@ -45,6 +45,7 @@ module.exports = {
     ROUTE: {
       DEV_PORTAL:  '/devportal',
       STYLES: '/styles',
+      PORTAL: '/portal',
       IMAGES: '/images',
       IMAGES_PATH: '/images/',
       DEFAULT: '/',
