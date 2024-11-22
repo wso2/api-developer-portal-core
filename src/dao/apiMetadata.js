@@ -7,7 +7,7 @@ const { Op } = require('sequelize');
 
 const createAPIMetadata = async (orgID, apiMetadata, t) => {
 
-    let apiInfo = apiMetadata.apiInfo;
+    const apiInfo = apiMetadata.apiInfo;
     let owners = {};
     if (apiInfo.owners) {
         owners = apiInfo.owners;
@@ -272,7 +272,7 @@ const deleteAPIMetadata = async (orgID, apiID, t) => {
 
 const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
 
-    let apiInfo = apiMetadata.apiInfo;
+    const apiInfo = apiMetadata.apiInfo;
     let owners = {};
     if (apiInfo.owners) {
         owners = apiInfo.owners;
@@ -368,7 +368,7 @@ const updateAPIImageMetadata = async (apiImages, orgID, apiID, t) => {
 
     let imageCreateList = [];
     try {
-        for (var propertyKey in apiImages) {
+        for (const propertyKey in apiImages) {
             let apiImageResponse = await getImageMetadata(propertyKey, apiImages[propertyKey], orgID, apiID, t);
             if (apiImageResponse == null || apiImageResponse == undefined) {
                 imageCreateList.push({
@@ -502,6 +502,7 @@ const deleteAPIFile = async (fileName, orgID, apiID, t) => {
 }
 
 const getAPIId = async (apiName) => {
+    
     try {
         const api = await APIMetadata.findOne({
             attributes: ['API_ID'],

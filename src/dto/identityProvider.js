@@ -15,7 +15,6 @@ class IdentityProviderDTO {
         if (idp.SIGNUP_URL) {
             this.signUpURL = idp.SIGNUP_URL
         }
-
     }
 
     setResponseData(data) {

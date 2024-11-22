@@ -12,31 +12,27 @@ const IdentityProviderDTO = require("../dto/identityProvider");
 const filePrefix = config.pathToContent;
 
 const fetchAuthJsonContent = async (orgName) => {
+
     if (config.mode === constants.DEV_MODE) {
         const authJsonPath = path.join(process.cwd(), filePrefix + '../mock', 'auth.json');
-        const authJson = JSON.parse(fs.readFileSync(authJsonPath, 'utf-8'));
-        return authJson;
+        return JSON.parse(fs.readFileSync(authJsonPath, constants.CHARSET_UTF8));
     }
     try {
-        let organization = await adminDao.getOrganization(orgName);
+        const organization = await adminDao.getOrganization(orgName);
         const response = await adminDao.getIdentityProvider(organization.ORG_ID);
-        console.log("Identity Provider details fetched from DB:", response[0].dataValues);
         if (response.length === 0) {
             throw new Error(`Failed to fetch identity provider details: ${response.statusText}`);
         }
         return new IdentityProviderDTO(response[0].dataValues);
-
     } catch (error) {
-        console.log("Failed to fetch identity provider details", error);
+        console.error("Failed to fetch identity provider details", error);
         return {};
     }
 };
 
 const login = async (req, res, next) => {
 
-    let authJsonContent = await fetchAuthJsonContent(req.params.orgName);
-    console.log("Fetching identity provider details for orgName:", authJsonContent);
-
+    const authJsonContent = await fetchAuthJsonContent(req.params.orgName);
     if (authJsonContent.clientId) {
         configurePassport(authJsonContent);  // Configure passport dynamically
         passport.authenticate('oauth2')(req, res, next);
@@ -47,6 +43,7 @@ const login = async (req, res, next) => {
 };
 
 const handleCallback = (req, res, next) => {
+
     passport.authenticate('oauth2', {
         failureRedirect: '/login',
         keepSessionInfo: true
@@ -73,7 +70,8 @@ const handleCallback = (req, res, next) => {
 };
 
 const handleSignUp = async (req, res) => {
-    let authJsonContent = await fetchAuthJsonContent(req.params.orgName);
+
+    const authJsonContent = await fetchAuthJsonContent(req.params.orgName);
     if (authJsonContent.signUpURL) {
         res.redirect(authJsonContent.signUpURL);
     } else {
@@ -89,7 +87,8 @@ const handleSignUp = async (req, res) => {
 };
 
 const handleLogOut = async (req, res) => {
-    let authJsonContent = await fetchAuthJsonContent(req.params.orgName);
+
+    const authJsonContent = await fetchAuthJsonContent(req.params.orgName);
     let idToken = ''
     if (req.user != null) {
         idToken = req.user.idToken;
