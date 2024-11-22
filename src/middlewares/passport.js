@@ -3,6 +3,7 @@ const OAuth2Strategy = require('passport-oauth2');
 const jwt = require('jsonwebtoken');
 
 function configurePassport(authJsonContent) {
+    
     passport.use(new OAuth2Strategy({
         issuer: authJsonContent.issuer,
         authorizationURL: authJsonContent.authorizationURL,
@@ -16,7 +17,7 @@ function configurePassport(authJsonContent) {
         pkce: true
     }, (req, accessToken, refreshToken, params, profile, done) => {
         const decodedJWT = jwt.decode(params.id_token);
-        let name = decodedJWT['given_name']? decodedJWT['given_name'] : decodedJWT['nickname'];
+        const name = decodedJWT['given_name']? decodedJWT['given_name'] : decodedJWT['nickname'];
         profile = {
             'name': name,
             'idToken': params.id_token,

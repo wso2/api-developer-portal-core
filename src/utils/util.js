@@ -7,73 +7,15 @@ const { CustomError } = require('../utils/errors/customErrors');
 const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 const unzipper = require('unzipper');
-const config = require(process.cwd() + '/config.json');
 
 const { Sequelize } = require('sequelize');
-
-const filePrefix = config.pathToContent;
-
-function copyStyelSheetMulti() {
-
-    if (!fs.existsSync(path.join(process.cwd(), filePrefix + 'styles'))) {
-        fs.mkdirSync(path.join(process.cwd(), filePrefix + 'styles'));
-    }
-    searchFile(path.join(require.main.filename, '..', 'pages', 'tryout'), ".css", [], filePrefix);
-}
-
-function copyStyelSheet() {
-
-    if (!fs.existsSync(path.join(process.cwd(), filePrefix + 'styles'))) {
-        fs.mkdirSync(path.join(process.cwd(), filePrefix + 'styles'));
-    }
-    var styleDir = [];
-    searchFile(path.join(process.cwd(), filePrefix + 'partials'), ".css", styleDir, filePrefix);
-    searchFile(path.join(process.cwd(), filePrefix + 'layout'), ".css", styleDir, filePrefix);
-    searchFile(path.join(process.cwd(), filePrefix + 'pages'), ".css", styleDir, filePrefix);
-    searchFile(path.join(require.main.filename, '..', 'pages', 'tryout'), ".css", [], filePrefix);
-}
-
-function searchFile(dir, fileName, styleDir) {
-
-    // read the contents of the directory
-    fs.readdir(dir, (err, files) => {
-        if (err) throw err;
-
-        // search through the files
-        for (const file of files) {
-            // build the full path of the file
-            const filePath = path.join(dir, file);
-
-            // get the file stats
-            fs.stat(filePath, (err, fileStat) => {
-                if (err) throw err;
-
-                // if the file is a directory, recursively search the directory
-                if (fileStat.isDirectory()) {
-                    searchFile(filePath, fileName, styleDir, filePrefix);
-                } else if (file.endsWith(fileName)) {
-                    if (!fs.existsSync(path.join(process.cwd(), filePrefix + 'styles/' + path.basename(filePath)))) {
-                        fs.copyFile(filePath, path.join(process.cwd(), filePrefix + 'styles/' + path.basename(filePath)),
-                            fs.constants.COPYFILE_EXCL, (err) => {
-                                if (err) {
-                                    console.log("Error Found:", err);
-                                }
-                            });
-                    }
-                }
-            });
-        }
-    });
-
-    return styleDir;
-}
 
 // Function to load and convert markdown file to HTML
 function loadMarkdown(filename, dirName) {
 
     const filePath = path.join(process.cwd(), dirName, filename);
     if (fs.existsSync(filePath)) {
-        const fileContent = fs.readFileSync(filePath, 'utf-8');
+        const fileContent = fs.readFileSync(filePath, constants.CHARSET_UTF8);
         return marked.parse(fileContent);
     } else {
         return null;
@@ -82,7 +24,7 @@ function loadMarkdown(filename, dirName) {
 
 
 function renderTemplate(templatePath, layoutPath, templateContent) {
-    
+
     let completeTemplatePath;
     if (templatePath.includes('tryout')) {
         completeTemplatePath = path.join(require.main.filename, templatePath);
@@ -90,23 +32,22 @@ function renderTemplate(templatePath, layoutPath, templateContent) {
         completeTemplatePath = path.join(process.cwd(), templatePath);
     }
 
-    const templateResponse = fs.readFileSync(completeTemplatePath, 'utf-8');
+    const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
 
     const completeLayoutPath = path.join(process.cwd(), layoutPath);
-    const layoutResponse = fs.readFileSync(completeLayoutPath, 'utf-8')
+    const layoutResponse = fs.readFileSync(completeLayoutPath, constants.CHARSET_UTF8)
 
     const template = Handlebars.compile(templateResponse.toString());
     const layout = Handlebars.compile(layoutResponse.toString());
 
-    const html = layout({
+    return layout({
         body: template(templateContent)
     });
-    return html;
 }
 
 async function loadLayoutFromAPI(orgID) {
 
-    var layoutContent =  await adminDao.getOrgContent({
+    var layoutContent = await adminDao.getOrgContent({
         orgId: orgID,
         fileType: constants.FILE_TYPE.LAYOUT,
         fileName: constants.FILE_NAME.MAIN
@@ -123,8 +64,7 @@ async function loadTemplateFromAPI(orgID, filePath) {
         fileType: constants.FILE_TYPE.TEMPLATE,
         fileName: constants.FILE_NAME.PAGE
     });
-
-    return templateContent? templateContent.FILE_CONTENT.toString(constants.CHARSET_UTF8): "";
+    return templateContent ? templateContent.FILE_CONTENT.toString(constants.CHARSET_UTF8) : "";
 }
 
 async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath) {
@@ -134,30 +74,26 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath) 
 
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutContent.toString());
-    let html = '';
     if (Object.keys(templateContent).length === 0 && templateContent.constructor === Object) {
-        html = layout({
+        return layout({
             body: template({
                 baseUrl: '/' + orgName
             }),
         });
     } else {
-        html = layout({
+        return layout({
             body: template(templateContent),
         });
     }
-    return html;
 }
 
 async function renderGivenTemplate(templatePage, layoutPage, templateContent) {
 
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutPage.toString());
-
-    const html = layout({
+    return layout({
         body: template(templateContent),
     });
-    return html;
 }
 
 function handleError(res, error) {
@@ -180,7 +116,6 @@ function handleError(res, error) {
             description: error.message
         });
     } else if (error instanceof CustomError) {
-        console.log("Custom Error:", error.statusCode);
         return res.status(error.statusCode).json({
             code: error.statusCode,
             message: error.message,
@@ -230,79 +165,44 @@ const unzipFile = async (zipPath, extractPath) => {
     });
 };
 
-const retrieveContentType = (fileName, fileType) => {
-    let contentType;
-    if (fileType === constants.IMAGE) {
-        if (fileName.endsWith(constants.FILE_EXTENSIONS.SVG)) {
-            contentType = constants.MIME_TYPES.SVG;
-        } else if (fileName.endsWith(constants.FILE_EXTENSIONS.JPG) || constants.FILE_EXTENSIONS.JPEG) {
-            contentType = constants.MIME_TYPES.JPEG;
-        } else if (fileName.endsWith(constants.FILE_EXTENSIONS.PNG)) {
-            contentType = constants.MIME_TYPES.PNG;
-        } else if (fileName.endsWith(constants.FILE_EXTENSIONS.GIF)) {
-            contentType = constants.MIME_TYPES.GIF;
-        } else {
-            contentType = constants.MIME_TYPES.CONYEMT_TYPE_OCT;
-        }
-    } else if (fileType === constants.STYLE) {
-        contentType = constants.MIME_TYPES.CSS;
-    } else {
-        contentType = constants.MIME_TYPES.TEXT;
-    }
-    return contentType;
+const imageMapping = {
+    [constants.FILE_EXTENSIONS.SVG]: constants.MIME_TYPES.SVG,
+    [constants.FILE_EXTENSIONS.JPG]: constants.MIME_TYPES.JPEG,
+    [constants.FILE_EXTENSIONS.JPEG]: constants.MIME_TYPES.JPEG,
+    [constants.FILE_EXTENSIONS.PNG]: constants.MIME_TYPES.PNG,
+    [constants.FILE_EXTENSIONS.GIF]: constants.MIME_TYPES.GIF,
 };
+const fileMapping = {
+    [constants.FILE_EXTENSIONS.JSON]: constants.MIME_TYPES.JSON,
+    [constants.FILE_EXTENSIONS.YAML]: constants.MIME_TYPES.YAML,
+    [constants.FILE_EXTENSIONS.YML]: constants.MIME_TYPES.YAML,
+    [constants.FILE_EXTENSIONS.XML]: constants.MIME_TYPES.XML
+}
 
-// const unzipFile = async (zipPath, extractPath) => {
-//     return new Promise((resolve, reject) => {
-//         const stream = fs.createReadStream(zipPath)
-//             .pipe(unzipper.Parse());
-//         const promises = [];
-//         stream.on('entry', async (entry) => {
-//             const entryPath = entry.path;
-//             if (!entryPath.includes('__MACOSX')) {
-//                 const filePath = path.join(extractPath, entryPath);
-//                 try {
-//                     if (entry.type === 'Directory') {
-//                         await fs.mkdir(filePath, { recursive: true }, (err) => {
-//                             if (err) {
-//                                 console.error('Error creating directory:', err);
-//                             }
-//                         });
-//                         entry.autodrain();
-//                     } else {
-//                         await fs.mkdir(path.dirname(filePath), { recursive: true }, (err) => {
-//                             if (err) {
-//                                 console.error('Error creating directory:', err);
-//                             }
-//                         });
-//                         const writeStream = fs.createWriteStream(filePath);
-//                         entry.pipe(writeStream);
-//                         promises.push(
-//                             new Promise((res, rej) => {
-//                                 writeStream.on('finish', res);
-//                                 writeStream.on('error', rej);
-//                             })
-//                         );
-//                     }
-//                 } catch (error) {
-//                     reject(error);
-//                 }
-//             } else {
-//                 entry.autodrain();
-//             }
-//         });
-//         stream.on('close', async () => {
-//             try {
-//                 await Promise.all(promises);
-//                 resolve();
-//             } catch (error) {
-//                 reject(error);
-//             }
-//         });
-//         stream.on('error', reject);
-//     });
-// };
+const textFiles = [
+    constants.FILE_EXTENSIONS.HTML , constants.FILE_EXTENSIONS.HBS, constants.FILE_EXTENSIONS.MD,
+    constants.FILE_EXTENSIONS.JSON, constants.FILE_EXTENSIONS.YAML, constants.FILE_EXTENSIONS.YML, 
+    constants.FILE_EXTENSIONS.SVG
+]
 
+const isTextFile = (fileExtension) => {
+    return textFiles.includes(fileExtension)
+}
+
+const retrieveContentType = (fileName, fileType) => {
+
+    if (fileType === constants.STYLE)
+        return constants.MIME_TYPES.CSS;
+    const filenameParts = fileName.split('.');
+    const extension = filenameParts.length > 1 ? filenameParts.pop() : '';
+    if (fileType === constants.IMAGE) {
+        return imageMapping[extension] || constants.MIME_TYPES.CONYEMT_TYPE_OCT;
+    }
+    if (fileType === constants.TEXT) {
+        return fileMapping[extension] || constants.MIME_TYPES.TEXT;
+    }
+    return constants.MIME_TYPES.TEXT;
+};
 
 const getAPIFileContent = (directory) => {
     let files = [];
@@ -318,7 +218,7 @@ const getAPIFileContent = (directory) => {
 
 const getAPIImages = async (directory) => {
     let files = [];
-    const filenames = await fs.promises.readdir(directory, { withFileTypes: true});
+    const filenames = await fs.promises.readdir(directory, { withFileTypes: true });
     for (const filename of filenames) {
         if (!(filename === '.DS_Store')) {
             let fileContent = await fs.promises.readFile(path.join(directory, filename.name));
@@ -329,8 +229,6 @@ const getAPIImages = async (directory) => {
 };
 
 module.exports = {
-    copyStyelSheet,
-    copyStyelSheetMulti,
     loadMarkdown,
     renderTemplate,
     loadLayoutFromAPI,
@@ -341,5 +239,6 @@ module.exports = {
     unzipFile,
     retrieveContentType,
     getAPIFileContent,
-    getAPIImages
+    getAPIImages,
+    isTextFile
 }

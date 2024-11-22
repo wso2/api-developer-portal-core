@@ -2,17 +2,21 @@ module.exports = {
     DEV_MODE: 'development',
     IMAGE: 'image',
     STYLE: 'style',
+    TEXT: 'text',
     CHARSET_UTF8: 'utf-8',
     FILE_NAME_PARAM : '&fileName=',
     API_TEMPLATE_FILE_NAME: '/template?fileName=',
     HEADER_PARTIAL_NAME: 'header',
     HERO_PARTIAL_NAME: 'hero',
     BASE_URL: 'http://localhost:',
+    BASE_URL_NAME: 'baseUrl',
 
     MIME_TYPES: {
         HTML: 'text/html',
         TEXT: 'text/plain',
         JSON: 'application/json',
+        YAML: 'application/x-yaml',
+        XML: 'application/xml',
         CSS: 'text/css',
         JAVASCRIPT: 'application/javascript',
         PNG: 'image/png',
@@ -40,6 +44,7 @@ module.exports = {
         GIF: '.gif',
         YAML: '.yaml',
         YML: '.yml',
+        XML: '.xml'
     },
 
     ROUTE: {
@@ -69,6 +74,29 @@ module.exports = {
         API_DEFINITION_FILE_NAME: 'apiDefinition.json',
         API_DEFINITION_XML: 'apiDefinition.xml',
         PARTIAL_HEADER_FILE_NAME: 'header.hbs',
+    },
+
+    ERROR_MESSAGE: {
+        ORG_NOT_FOUND: "Failed to load organization",
+        ORG_CREATE_ERROR: "Error while creating organization",
+        ORG_UPDATE_ERROR: "Error while updating organization",
+        ORG_DELETE_ERROR: "Erro while deleting organization",
+        ORG_CONTENT_NOT_FOUND: "Organization content not found",
+        ORG_CONTENT_UPDATE_ERROR: "Error while updating organization content",
+        ORG_CONTENT_DELETE_ERROR: "Error while deleting organization content",
+        ORG_CONTENT_CREATE_ERROR: "Error while creating organization content",
+        API_NOT_FOUND: "Failed to load API",
+        API_CREATE_ERROR: "Error while creating API",
+        API_UPDATE_ERROR: "Error while updating API",
+        API_DELETE_ERROR: "Error while deleting API",
+        API_CONTENT_NOT_FOUND: "API content not found",
+        API_CONTENT_UPDATE_ERROR: "Error while updating API content",
+        API_CONTENT_DELETE_ERROR: "Error while deleting API content",
+        API_CONTENT_CREATE_ERROR: "Error while creating API content",
+        IDP_NOT_FOUND: "Failed to load IDP",
+        IDP_CREATE_ERROR: "Error while creating IDP",
+        IDP_UPDATE_ERROR: "Error while updating IDP",
+        IDP_DELETE_ERROR: "Error while deleting IDP",
+        API_NOT_IN_ORG: "API does not belong to given organization"
     }
 }
-
