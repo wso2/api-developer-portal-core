@@ -51,6 +51,7 @@ const loadOrgContentFromFile = async () => {
 const loadOrgContentFromAPI = async (req) => {
 
     let html;
+    const orgName = req.params.orgName;
     try {
         const organization = await adminDao.getOrganization(orgName);
         html = await renderTemplateFromAPI({}, organization.ORG_ID, req.params.orgName, 'pages/home');
