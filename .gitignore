@@ -16,7 +16,6 @@
 # production
 /build
 
-/src/styles
 /src/.tmp
 
 /src/config/config.js
