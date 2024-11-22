@@ -33,7 +33,6 @@ const fetchAuthJsonContent = async (orgName) => {
 const login = async (req, res, next) => {
 
     const authJsonContent = await fetchAuthJsonContent(req.params.orgName);
-    console.log("Fetching identity provider details for orgName:", authJsonContent);
     if (authJsonContent.clientId) {
         configurePassport(authJsonContent);  // Configure passport dynamically
         passport.authenticate('oauth2')(req, res, next);
