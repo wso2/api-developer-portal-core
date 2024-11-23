@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 const { APIMetadata } = require('../models/apiMetadata');
 const SubscriptionPolicy = require('../models/subscriptionPolicy');
 const APIContent = require('../models/apiContent');
@@ -7,7 +24,7 @@ const { Op } = require('sequelize');
 
 const createAPIMetadata = async (orgID, apiMetadata, t) => {
 
-    let apiInfo = apiMetadata.apiInfo;
+    const apiInfo = apiMetadata.apiInfo;
     let owners = {};
     if (apiInfo.owners) {
         owners = apiInfo.owners;
@@ -272,7 +289,7 @@ const deleteAPIMetadata = async (orgID, apiID, t) => {
 
 const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
 
-    let apiInfo = apiMetadata.apiInfo;
+    const apiInfo = apiMetadata.apiInfo;
     let owners = {};
     if (apiInfo.owners) {
         owners = apiInfo.owners;
@@ -368,7 +385,7 @@ const updateAPIImageMetadata = async (apiImages, orgID, apiID, t) => {
 
     let imageCreateList = [];
     try {
-        for (var propertyKey in apiImages) {
+        for (const propertyKey in apiImages) {
             let apiImageResponse = await getImageMetadata(propertyKey, apiImages[propertyKey], orgID, apiID, t);
             if (apiImageResponse == null || apiImageResponse == undefined) {
                 imageCreateList.push({
@@ -502,6 +519,7 @@ const deleteAPIFile = async (fileName, orgID, apiID, t) => {
 }
 
 const getAPIId = async (apiName) => {
+    
     try {
         const api = await APIMetadata.findOne({
             attributes: ['API_ID'],
