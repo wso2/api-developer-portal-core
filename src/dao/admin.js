@@ -1,8 +1,27 @@
+/*
+ * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 const { Organization, OrgContent } = require('../models/orgModels');
 const { validate } = require('uuid');
 const { Sequelize } = require('sequelize');
+const { IdentityProvider } = require('../models/identityProvider');
 
 const createOrganization = async (orgData) => {
+
     try {
         const organization = await Organization.create({
             ORG_NAME: orgData.orgName,
@@ -23,14 +42,11 @@ const getOrganization = async (param) => {
 
     const isUUID = validate(param);
     const condition = isUUID ? { ORG_ID: param } : { ORG_NAME: param };
-
     try {
         const organization = await Organization.findOne({ where: condition });
-
         if (!organization) {
             throw new Sequelize.EmptyResultError('Organization not found');
         }
-
         return organization;
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
@@ -41,6 +57,7 @@ const getOrganization = async (param) => {
 };
 
 const updateOrganization = async (orgData) => {
+
     try {
         const [updatedRowsCount, updatedOrg] = await Organization.update(
             {
@@ -54,12 +71,11 @@ const updateOrganization = async (orgData) => {
                 returning: true
             }
         );
-
         if (updatedRowsCount < 1) {
             throw new Sequelize.EmptyResultError('Organization not found');
-        } else {
-            return [updatedRowsCount, updatedOrg];
         }
+        return [updatedRowsCount, updatedOrg];
+
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -69,6 +85,7 @@ const updateOrganization = async (orgData) => {
 };
 
 const deleteOrganization = async (orgId) => {
+
     try {
         const deletedRowsCount = await Organization.destroy({
             where: { ORG_ID: orgId }
@@ -86,7 +103,107 @@ const deleteOrganization = async (orgId) => {
     }
 }
 
+const createIdentityProvider = async (orgId, idpData) => {
+
+    try {
+        const idpResponse = await IdentityProvider.create({
+            ORG_ID: orgId,
+            NAME: idpData.name,
+            ISSUER: idpData.issuer,
+            AUTHORIZATION_URL: idpData.authorizationURL,
+            TOKEN_URL: idpData.tokenURL,
+            USER_INFOR_URL: idpData.userInfoURL,
+            CLIENT_ID: idpData.clientId,
+            CALLBACK_URL: idpData.callbackURL,
+            SIGNUP_URL: idpData.signUpURL,
+            LOGOUT_URL: idpData.logoutURL,
+            LOGOUT_REDIRECT_URL: idpData.logoutRedirectURI,
+            SCOPE: idpData.scope
+        });
+        return idpResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const updateIdentityProvider = async (orgID, idpData) => {
+
+    try {
+        const [updatedRowsCount, idpContent,] = await IdentityProvider.update(
+            {
+                ORG_ID: idpData.orgId,
+                ISSUER: idpData.issuer,
+                NAME: idpData.name,
+                AUTHORIZATION_URL: idpData.authorizationURL,
+                TOKEN_URL: idpData.tokenURL,
+                USER_INFOR_URL: idpData.userInfoURL,
+                CLIENT_ID: idpData.clientId,
+                CALLBACK_URL: idpData.callbackURL,
+                SIGNUP_URL: idpData.signUpURL,
+                LOGOUT_URL: idpData.logoutURL,
+                LOGOUT_REDIRECT_URI: idpData.logoutRedirectURI,
+                SCOPE: idpData.scope
+            },
+            {
+                where: {
+                    ORG_ID: orgID
+                },
+                returning: true
+            }
+        );
+        if (updatedRowsCount < 1) {
+            throw new Sequelize.EmptyResultError('IdentityProvider not found');
+        }
+        return [updatedRowsCount, idpContent];
+
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getIdentityProvider = async (orgID) => {
+
+    try {
+        const idpResponse = await IdentityProvider.findAll({
+            where: {
+                ORG_ID: orgID,
+            }
+        }
+        );
+        return idpResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
+const deleteIdentityProvider = async (orgID) => {
+
+    try {
+        const idpResponse = await IdentityProvider.destroy({
+            where: {
+                ORG_ID: orgID
+            }
+        });
+        return idpResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
 const createOrgContent = async (orgData) => {
+
     try {
         const orgContent = await OrgContent.create({
             FILE_TYPE: orgData.fileType,
@@ -105,6 +222,7 @@ const createOrgContent = async (orgData) => {
 }
 
 const updateOrgContent = async (orgData) => {
+
     try {
         const [updatedRowsCount, updatedOrgContent] = await OrgContent.update({
             FILE_TYPE: orgData.fileType,
@@ -118,9 +236,9 @@ const updateOrgContent = async (orgData) => {
             });
         if (updatedRowsCount < 1) {
             throw new Sequelize.EmptyResultError('No new resources found');
-        } else {
-            return [updatedRowsCount, updatedOrgContent];
         }
+        return [updatedRowsCount, updatedOrgContent];
+
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -132,6 +250,7 @@ const updateOrgContent = async (orgData) => {
 
 
 const getOrgContent = async (orgData) => {
+
     try {
         if (orgData.fileName || orgData.filePath) {
             return await OrgContent.findOne(
@@ -152,7 +271,6 @@ const getOrgContent = async (orgData) => {
                     }
                 });
         }
-
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -162,6 +280,7 @@ const getOrgContent = async (orgData) => {
 };
 
 const deleteOrgContent = async (orgId, fileName) => {
+
     try {
         const deletedRowsCount = await OrgContent.destroy({ where: { ORG_ID: orgId, FILE_NAME: fileName } });
 
@@ -186,5 +305,9 @@ module.exports = {
     createOrgContent,
     updateOrgContent,
     getOrgContent,
-    deleteOrgContent
+    deleteOrgContent,
+    createIdentityProvider,
+    updateIdentityProvider,
+    getIdentityProvider,
+    deleteIdentityProvider
 };
