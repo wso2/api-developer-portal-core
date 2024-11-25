@@ -190,7 +190,7 @@ const createOrgContent = async (req, res) => {
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
     await util.unzipFile(zipPath, extractPath);
     try {
-        const files = await readFilesInDirectory(extractPath, orgId);
+        const files = await readFilesInDirectory(extractPath, orgId, req);
         for (const { filePath, fileName, fileContent, fileType } of files) {
             await createContent(filePath, fileName, fileContent, fileType, orgId);
         }
@@ -229,7 +229,7 @@ const updateOrgContent = async (req, res) => {
     const zipPath = req.file.path;
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
     await util.unzipFile(zipPath, extractPath);
-    const files = await readFilesInDirectory(extractPath, orgId);
+    const files = await readFilesInDirectory(extractPath, orgId, req);
     try {
         for (const { filePath, fileName, fileContent, fileType } of files) {
             if (fileName != null && !fileName.startsWith('.')) {
@@ -286,7 +286,7 @@ const deleteOrgContent = async (req, res) => {
     }
 };
 
-async function readFilesInDirectory(directory, orgId, baseDir = '') {
+async function readFilesInDirectory(directory, orgId, req, baseDir = '') {
 
     const files = await fs.promises.readdir(directory, { withFileTypes: true });
     let fileDetails = [];
@@ -294,7 +294,7 @@ async function readFilesInDirectory(directory, orgId, baseDir = '') {
         const filePath = path.join(directory, file.name);
         const relativePath = path.join(baseDir, file.name);
         if (file.isDirectory()) {
-            const subDirContents = await readFilesInDirectory(filePath, orgId, relativePath);
+            const subDirContents = await readFilesInDirectory(filePath, orgId, req, relativePath);
             fileDetails = fileDetails.concat(subDirContents);
         } else {
             let content = await fs.promises.readFile(filePath);
