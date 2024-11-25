@@ -15,12 +15,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-const express = require('express');
-const router = express.Router();
-const orgController = require('../controllers/orgContentController');
-const registerPartials = require('../middlewares/registerPartials');
+const { Sequelize, DataTypes } = require('sequelize');
+const sequelize = require('../db/sequelize')
 
-router.get('/(((?!favicon.ico|images)):orgName)', registerPartials, orgController.loadOrganizationContent);
+const SubscriptionPolicy = sequelize.define('DP_API_SUBSCRIPTION_POLICY', {
+    API_ID: {
+        type: DataTypes.UUID,
+        defaultValue: Sequelize.UUIDV4,
+        primaryKey: true
+    },
+    POLICY_NAME: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        primaryKey: true
+    }
+}, {
+    timestamps: false,
+    tableName: 'DP_API_SUBSCRIPTION_POLICY',
+    returning: true
+});
 
-
-module.exports = router;
+module.exports = SubscriptionPolicy;

@@ -1,5 +1,7 @@
 # dependencies
 /node_modules
+/dist
+
 /.pnp
 .pnp.js
 .yarn/install-state.gz
@@ -15,7 +17,9 @@
 /build
 
 /src/styles
+/src/.tmp
 
+/src/config/config.js
 # misc
 .DS_Store
 *.pem
@@ -84,3 +88,9 @@ replay_pid*
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+.vscode
+
+eslint.config.mjs
+
+.prettierrc

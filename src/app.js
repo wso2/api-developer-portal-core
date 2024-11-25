@@ -1,25 +1,40 @@
+/*
+ * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+/* eslint-disable no-undef */
 const express = require('express');
 const { engine } = require('express-handlebars');
 const passport = require('passport');
 const session = require('express-session');
 const crypto = require('crypto');
 const path = require('path');
-const fs = require('fs');
 const authRoute = require('./routes/authRoute');
-const adminRoute = require('./routes/adminRoute');
-const apiMetaDataRoute = require('./routes/apiMetadataRoute');
+const devportalRoute = require('./routes/devportalRoute');
 const orgContent = require('./routes/orgContentRoute');
 const apiContent = require('./routes/apiContentRoute');
 const customContent = require('./routes/customPageRoute');
-const designRoute = require('./routes/designModeRoute');
-const config = require('./config/config');
-const { copyStyelSheet, copyStyelSheetMulti } = require('./utils/util');
-const registerPartials = require('./middlewares/registerPartials');
+const config = require(process.cwd() + '/config.json');
 const Handlebars = require('handlebars');
+const constants = require("./utils/constants");
+const designRoute = require('./routes/designModeRoute');
 
 const app = express();
 const secret = crypto.randomBytes(64).toString('hex');
-const filePrefix = '../../../src/';
+const filePrefix = config.pathToContent;
 
 app.engine('.hbs', engine({
     extname: '.hbs'
@@ -37,6 +52,7 @@ Handlebars.registerHelper('in', function (value, options) {
 });
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use(session({
     secret: secret,
@@ -58,47 +74,20 @@ passport.deserializeUser((user, done) => {
     done(null, user);
 });
 
-app.use('/styles', express.static(path.join(__dirname, filePrefix + 'styles')));
-
-app.set('view engine', 'hbs');
-
-if (config.mode == 'single' || config.mode == 'design') {
-    //register images and stylesheet folders for single tenante scenario
-    app.use('/images', express.static(path.join(__dirname, filePrefix + 'images')));
-    copyStyelSheet();
-} else if (config.mode === 'multi') {
-    copyStyelSheetMulti();
-}
-
-const folderToDelete = path.join(__dirname, '../../../src/styles');
-
-process.on('SIGINT', () => {
-    if (fs.existsSync(folderToDelete)) {
-        fs.rmSync(folderToDelete, { recursive: true, force: true });
-    }
-    process.exit();
-});
-
-process.on('exit', () => {
-    if (fs.existsSync(folderToDelete)) {
-        fs.rmSync(folderToDelete, { recursive: true, force: true });
-    }
-});
+app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), filePrefix + 'styles')));
+app.use(constants.ROUTE.IMAGES, express.static(path.join(process.cwd(), filePrefix + 'images')));
 
 //backend routes
-app.use('/admin', adminRoute);
-app.use('/apiMetadata', apiMetaDataRoute);
+app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
 
-if (config.mode == 'design') {
-    app.use('/mock', express.static(path.join(__dirname, filePrefix + 'mock')));
-    app.use('/', registerPartials);
-    app.use('/', designRoute);
+if (config.mode === constants.DEV_MODE) {
+    app.use(constants.ROUTE.MOCK, express.static(path.join(process.cwd(), filePrefix + 'mock')));
+    app.use(constants.ROUTE.DEFAULT, designRoute);
 } else {
-    app.use('/', authRoute);
-    app.use('/', registerPartials);
-    app.use('/', apiContent);
-    app.use('/', orgContent);
-    app.use('/', customContent);
+    app.use(constants.ROUTE.DEFAULT, authRoute);
+    app.use(constants.ROUTE.DEFAULT, apiContent);
+    app.use(constants.ROUTE.DEFAULT, orgContent);
+    app.use(constants.ROUTE.DEFAULT, customContent);  
 }
 
 app.listen(config.port);

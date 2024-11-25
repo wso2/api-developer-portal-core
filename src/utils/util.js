@@ -1,74 +1,38 @@
+/*
+ * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+/* eslint-disable no-undef */
 const path = require('path');
 const fs = require('fs');
 const marked = require('marked');
 const Handlebars = require('handlebars');
-const config = require('../config/config');
+const { CustomError } = require('../utils/errors/customErrors');
+const adminDao = require('../dao/admin');
+const constants = require('../utils/constants');
+const unzipper = require('unzipper');
 
 const { Sequelize } = require('sequelize');
-
-var filePrefix = '../../../../src/';
-
-function copyStyelSheetMulti() {
-
-    if (!fs.existsSync(path.join(__dirname, filePrefix + 'styles'))) {
-        fs.mkdirSync(path.join(__dirname, filePrefix + 'styles'));
-    }
-    searchFile(path.join(__dirname, '..', 'pages', 'tryout'), ".css", [], filePrefix);
-}
-
-function copyStyelSheet() {
-
-    if (!fs.existsSync(path.join(__dirname, filePrefix + 'styles'))) {
-        fs.mkdirSync(path.join(__dirname, filePrefix + 'styles'));
-    }
-    var styleDir = [];
-    searchFile(path.join(__dirname, filePrefix + 'partials'), ".css", styleDir, filePrefix);
-    searchFile(path.join(__dirname, filePrefix + 'layout'), ".css", styleDir, filePrefix);
-    searchFile(path.join(__dirname, filePrefix + 'pages'), ".css", styleDir, filePrefix);
-    searchFile(path.join(__dirname, '..', 'pages', 'tryout'), ".css", [], filePrefix);
-}
-
-function searchFile(dir, fileName, styleDir) {
-
-    // read the contents of the directory
-    fs.readdir(dir, (err, files) => {
-        if (err) throw err;
-
-        // search through the files
-        for (const file of files) {
-            // build the full path of the file
-            const filePath = path.join(dir, file);
-
-            // get the file stats
-            fs.stat(filePath, (err, fileStat) => {
-                if (err) throw err;
-
-                // if the file is a directory, recursively search the directory
-                if (fileStat.isDirectory()) {
-                    searchFile(filePath, fileName, styleDir, filePrefix);
-                } else if (file.endsWith(fileName)) {
-                    if (!fs.existsSync(path.join(__dirname, filePrefix + 'styles/' + path.basename(filePath)))) {
-                        fs.copyFile(filePath, path.join(__dirname, filePrefix + 'styles/' + path.basename(filePath)),
-                            fs.constants.COPYFILE_EXCL, (err) => {
-                                if (err) {
-                                    console.log("Error Found:", err);
-                                }
-                            });
-                    }
-                }
-            });
-        }
-    });
-
-    return styleDir;
-}
 
 // Function to load and convert markdown file to HTML
 function loadMarkdown(filename, dirName) {
 
-    const filePath = path.join(__dirname, dirName, filename);
+    const filePath = path.join(process.cwd(), dirName, filename);
     if (fs.existsSync(filePath)) {
-        const fileContent = fs.readFileSync(filePath, 'utf-8');
+        const fileContent = fs.readFileSync(filePath, constants.CHARSET_UTF8);
         return marked.parse(fileContent);
     } else {
         return null;
@@ -78,68 +42,75 @@ function loadMarkdown(filename, dirName) {
 
 function renderTemplate(templatePath, layoutPath, templateContent) {
 
-    const completeTemplatePath = path.join(__dirname, templatePath);
-    const templateResponse = fs.readFileSync(completeTemplatePath, 'utf-8')
+    let completeTemplatePath;
+    if (templatePath.includes('tryout')) {
+        completeTemplatePath = path.join(require.main.filename, templatePath);
+    } else {
+        completeTemplatePath = path.join(process.cwd(), templatePath);
+    }
 
-    const completeLayoutPath = path.join(__dirname, layoutPath);
-    const layoutResponse = fs.readFileSync(completeLayoutPath, 'utf-8')
+    const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
+
+    const completeLayoutPath = path.join(process.cwd(), layoutPath);
+    const layoutResponse = fs.readFileSync(completeLayoutPath, constants.CHARSET_UTF8)
 
     const template = Handlebars.compile(templateResponse.toString());
     const layout = Handlebars.compile(layoutResponse.toString());
 
-    const html = layout({
+    return layout({
         body: template(templateContent)
     });
-    return html;
 }
 
-async function loadLayoutFromAPI(orgName) {
+async function loadLayoutFromAPI(orgID) {
 
-    const templateURL = config.adminAPI + "orgFileType?orgName=" + orgName;
-    const layoutResponse = await fetch(templateURL + "&fileType=layout&filePath=main&fileName=main.hbs");
-    var layoutContent = await layoutResponse.text();
-    return layoutContent;
+    var layoutContent = await adminDao.getOrgContent({
+        orgId: orgID,
+        fileType: constants.FILE_TYPE.LAYOUT,
+        fileName: constants.FILE_NAME.MAIN
+    });
+
+    return layoutContent.FILE_CONTENT.toString(constants.CHARSET_UTF8);
 }
 
-async function loadTemplateFromAPI(orgName, templatePageName) {
+async function loadTemplateFromAPI(orgID, filePath) {
 
-    const templateURL = config.adminAPI + "orgFileType?orgName=" + orgName;
-    console.log(templateURL + "&fileType=template&fileName=page.hbs&filePath=" + templatePageName)
-    const templateResponse = await fetch(templateURL + "&fileType=template&fileName=page.hbs&filePath=" + templatePageName);
-    var templateContent = await templateResponse.text();
-    return templateContent;
-
+    var templateContent = await adminDao.getOrgContent({
+        orgId: orgID,
+        filePath: filePath,
+        fileType: constants.FILE_TYPE.TEMPLATE,
+        fileName: constants.FILE_NAME.PAGE
+    });
+    return templateContent ? templateContent.FILE_CONTENT.toString(constants.CHARSET_UTF8) : "";
 }
 
-async function renderTemplateFromAPI(templateContent, orgName, templatePageName) {
+async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath) {
 
-    var templatePage = await loadTemplateFromAPI(orgName, templatePageName);
-    var layoutContent = await loadLayoutFromAPI(orgName);
+    var templatePage = await loadTemplateFromAPI(orgID, filePath);
+    var layoutContent = await loadLayoutFromAPI(orgID);
 
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutContent.toString());
-    var html;
     if (Object.keys(templateContent).length === 0 && templateContent.constructor === Object) {
-        html = layout({
-            body: template
+        return layout({
+            body: template({
+                baseUrl: '/' + orgName
+            }),
         });
     } else {
-        html = layout({
-            body: template(templateContent)
+        return layout({
+            body: template(templateContent),
         });
     }
-    return html;
 }
 
 async function renderGivenTemplate(templatePage, layoutPage, templateContent) {
 
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutPage.toString());
-
-    html = layout({
+    return layout({
         body: template(templateContent),
     });
-    return html;
 }
 
 function handleError(res, error) {
@@ -161,10 +132,16 @@ function handleError(res, error) {
             message: "Resource Not Found",
             description: error.message
         });
+    } else if (error instanceof CustomError) {
+        return res.status(error.statusCode).json({
+            code: error.statusCode,
+            message: error.message,
+            description: error.description
+        });
     } else {
         let errorDescription = error.message;
         if (error instanceof Sequelize.DatabaseError) {
-            errorDescription = error.original.errors ? error.original.errors[0].message : error.message.replaceAll('"', '');
+            errorDescription = "Internal Server Error";
         }
         return res.status(500).json({
             "code": "500",
@@ -174,14 +151,111 @@ function handleError(res, error) {
     }
 };
 
+const unzipFile = async (zipPath, extractPath) => {
+    const extractedFiles = [];
+    await new Promise((resolve, reject) => {
+        fs.createReadStream(zipPath)
+            .pipe(unzipper.Parse())
+            .on('entry', entry => {
+                const entryPath = entry.path;
+
+                if (!entryPath.includes('__MACOSX')) {
+                    const filePath = path.join(extractPath, entryPath);
+
+                    if (entry.type === 'Directory') {
+                        fs.mkdirSync(filePath, { recursive: true });
+                        entry.autodrain();
+                    } else {
+                        extractedFiles.push(filePath);
+                        entry.pipe(fs.createWriteStream(filePath));
+                    }
+                } else {
+                    entry.autodrain();
+                }
+            })
+            .on('close', async () => {
+                extractedFiles.length > 0 ? resolve() : reject(new Error('No files were extracted'));
+            })
+            .on('error', err => {
+                reject(new Error(`Unzip failed: ${err.message}`));
+            });
+    });
+};
+
+const imageMapping = {
+    [constants.FILE_EXTENSIONS.SVG]: constants.MIME_TYPES.SVG,
+    [constants.FILE_EXTENSIONS.JPG]: constants.MIME_TYPES.JPEG,
+    [constants.FILE_EXTENSIONS.JPEG]: constants.MIME_TYPES.JPEG,
+    [constants.FILE_EXTENSIONS.PNG]: constants.MIME_TYPES.PNG,
+    [constants.FILE_EXTENSIONS.GIF]: constants.MIME_TYPES.GIF,
+};
+const fileMapping = {
+    [constants.FILE_EXTENSIONS.JSON]: constants.MIME_TYPES.JSON,
+    [constants.FILE_EXTENSIONS.YAML]: constants.MIME_TYPES.YAML,
+    [constants.FILE_EXTENSIONS.YML]: constants.MIME_TYPES.YAML,
+    [constants.FILE_EXTENSIONS.XML]: constants.MIME_TYPES.XML
+}
+
+const textFiles = [
+    constants.FILE_EXTENSIONS.HTML , constants.FILE_EXTENSIONS.HBS, constants.FILE_EXTENSIONS.MD,
+    constants.FILE_EXTENSIONS.JSON, constants.FILE_EXTENSIONS.YAML, constants.FILE_EXTENSIONS.YML, 
+    constants.FILE_EXTENSIONS.SVG
+]
+
+const isTextFile = (fileExtension) => {
+    return textFiles.includes(fileExtension)
+}
+
+const retrieveContentType = (fileName, fileType) => {
+
+    if (fileType === constants.STYLE)
+        return constants.MIME_TYPES.CSS;
+    const filenameParts = fileName.split('.');
+    const extension = filenameParts.length > 1 ? filenameParts.pop() : '';
+    if (fileType === constants.IMAGE) {
+        return imageMapping[extension] || constants.MIME_TYPES.CONYEMT_TYPE_OCT;
+    }
+    if (fileType === constants.TEXT) {
+        return fileMapping[extension] || constants.MIME_TYPES.TEXT;
+    }
+    return constants.MIME_TYPES.TEXT;
+};
+
+const getAPIFileContent = (directory) => {
+    let files = [];
+    const filenames = fs.readdirSync(directory);
+    filenames.forEach((filename) => {
+        if (!(filename === '.DS_Store')) {
+            let fileContent = fs.readFileSync(path.join(directory, filename), 'utf8');
+            files.push({ fileName: filename, content: fileContent });
+        }
+    });
+    return files;
+};
+
+const getAPIImages = async (directory) => {
+    let files = [];
+    const filenames = await fs.promises.readdir(directory, { withFileTypes: true });
+    for (const filename of filenames) {
+        if (!(filename === '.DS_Store')) {
+            let fileContent = await fs.promises.readFile(path.join(directory, filename.name));
+            files.push({ fileName: filename.name, content: fileContent });
+        }
+    }
+    return files;
+};
+
 module.exports = {
-    copyStyelSheet,
-    copyStyelSheetMulti,
     loadMarkdown,
     renderTemplate,
     loadLayoutFromAPI,
     loadTemplateFromAPI,
     renderTemplateFromAPI,
     renderGivenTemplate,
-    handleError
+    handleError,
+    unzipFile,
+    retrieveContentType,
+    getAPIFileContent,
+    getAPIImages,
+    isTextFile
 }

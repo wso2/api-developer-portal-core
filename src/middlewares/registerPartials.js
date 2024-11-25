@@ -1,91 +1,130 @@
+/*
+ * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+/* eslint-disable no-undef */
 const path = require('path');
 const fs = require('fs');
 const exphbs = require('express-handlebars');
-const config = require('../config/config');
+const config = require(process.cwd() + '/config.json');
 const markdown = require('marked');
+const adminDao = require('../dao/admin');
+const apiDao = require('../dao/apiMetadata');
+const constants = require('../utils/constants');
 
-let filePrefix = '../../../../src/';
+const filePrefix = config.pathToContent;
 
 const registerPartials = async (req, res, next) => {
 
-    const orgName = req.originalUrl.split("/")[1];
-    let baseURL = "/" + orgName;
-    let filePath = req.originalUrl.split("/" + orgName).pop();
-    if (config.mode == 'design') {
-        baseURL = "http://localhost:" + config.port;
-        filePath = req.originalUrl.split(baseURL).pop();
+  if (config.mode === constants.DEV_MODE) {
+    registerAllPartialsFromFile(constants.BASE_URL + config.port, req);
+  } else {
+    try {
+      await registerPartialsFromAPI(req);
+    } catch (error) {
+      console.error(`Error while loading organization :,${error}`)
+      console.log("Registering default partiasl from file");
+      registerAllPartialsFromFile('/' + req.params.orgName, req);
     }
-    if (config.mode == 'single' || config.mode == 'design') {
-        registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, 'partials'), req.user);
-        registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, 'pages', 'home', 'partials'), req.user);
-        registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, 'pages', 'api-landing', 'partials'), req.user);
-        registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix, 'pages', 'apis', 'partials'), req.user);
-        if (fs.existsSync(path.join(__dirname, filePrefix + 'pages', filePath, 'partials'))) {
-            registerPartialsFromFile(baseURL, path.join(__dirname, filePrefix + 'pages', filePath, 'partials'), req.user);
-        }
-    } else if (config.mode == 'multi') {
-        await registerPartialsFromAPI(req)
-    }
-    next()
+  }
+  next();
+};
+
+const registerAllPartialsFromFile = async (baseURL, req) => {
+
+  const filePath = req.originalUrl.split(baseURL).pop();
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "partials"), req.user);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "home", "partials"), req.user);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req.user);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "apis", "partials"), req.user);
+  if (fs.existsSync(path.join(process.cwd(), filePrefix + "pages", filePath, "partials"))) {
+    registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix + "pages", filePath, "partials"), req.user);
+  }
 }
 
 const registerPartialsFromAPI = async (req) => {
+  
+  const { orgName, apiName }  = req.params;
+  const orgData = await adminDao.getOrganization(orgName);
+  const orgID = orgData.ORG_ID;
+  const apiID = await apiDao.getAPIId(apiName);
+  const imageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/layout?fileType=image&fileName=`;
+  let partials = await adminDao.getOrgContent({
+    orgId: orgData.ORG_ID,
+    fileType: 'partial',
+  });
 
-    const orgName = req.originalUrl.split("/")[1];
-    const apiName = req.originalUrl.split("/").pop();
-    const url = config.adminAPI + "orgFileType?orgName=" + orgName + "&fileType=partials";
-    const imageUrl = config.adminAPI + "orgFiles?orgName=" + orgName;
-    const apiContetnUrl = config.apiMetaDataAPI + "apiFiles?orgName=" + orgName + "&apiID=" + apiName;
+  let partialObject = {}
+  partials.forEach(file => {
+    let fileName = file.FILE_NAME.split(".")[0];
+    let content = file.FILE_CONTENT.toString(constants.CHARSET_UTF8);
+    content = content.replaceAll(constants.ROUTE.IMAGES_PATH, `${imageUrl}`)
+    partialObject[fileName] = content;
+  });
+  const hbs = exphbs.create({});
+  hbs.handlebars.partials = partialObject;
+  Object.keys(partialObject).forEach((partialName) => {
+    hbs.handlebars.registerPartial(partialName, partialObject[partialName]);
+  });
+  hbs.handlebars.partials = {
+    ...hbs.handlebars.partials,
+    header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
+      baseUrl: "/" + orgName,
+      profile: req.user,
+    }),
+    [constants.HERO_PARTIAL_NAME]: hbs.handlebars.compile(partialObject[constants.HERO_PARTIAL_NAME])(
+      { baseUrl: "/" + orgName }
+    ),
+  };
+  if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
+    //fetch markdown content for API if exists
+    const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, orgID, apiID);
+    const markdownContent = markdownResponse ? markdownResponse.API_FILE.toString("utf8") : "";
+    const markdownHtml = markdownContent ? markdown.parse(markdownContent) : "";
 
-    //attach partials
-    const partialsResponse = await fetch(url);
-    let partials = await partialsResponse.json();
-    let partialObject = {}
-    partials.forEach(file => {
-        let fileName = file.pageName.split(".")[0];
-        let content = file.pageContent;
-        content = content.replaceAll("/images/", imageUrl + "&fileName=")
-        partialObject[fileName] = content;
-    });
-    const markdownResponse = await fetch(apiContetnUrl + "&fileName=apiContent.md");
-    const markdownContent = await markdownResponse.text();
-    const markdownHtml = markdownContent ? markdown.parse(markdownContent) : '';
-
-    const additionalAPIContentResponse = await fetch(apiContetnUrl + "&fileName=api-content.hbs");
-    const additionalAPIContent = await additionalAPIContentResponse.text();
-    partialObject["api-content"] = additionalAPIContent;
-
-    const hbs = exphbs.create({});
-    hbs.handlebars.partials = partialObject;
-
-    Object.keys(partialObject).forEach(partialName => {
-        hbs.handlebars.registerPartial(partialName, partialObject[partialName]);
-    });
-
-    hbs.handlebars.partials = {
-        ...hbs.handlebars.partials,
-        header: hbs.handlebars.compile(partialObject['header'])({ baseUrl: '/' + req.originalUrl.split("/")[1], profile: req.user }),
-        "api-content": hbs.handlebars.compile(partialObject['api-content'])({ content: markdownHtml }),
-        "hero": hbs.handlebars.compile(partialObject['hero'])({ baseUrl: '/' + req.originalUrl.split("/")[1] })
-    };
-}
+    //if hbs content available for API, render the hbs page
+    let additionalAPIContentResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME, orgID, apiID);
+    if (additionalAPIContentResponse !== null) {
+      let additionalAPIContent = additionalAPIContentResponse.API_FILE.toString("utf8");
+      partialObject[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME] = additionalAPIContent ? additionalAPIContent : "";
+    }
+    hbs.handlebars.partials[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME] = hbs.handlebars.compile(
+      partialObject[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME])({ apiContent: markdownHtml });
+  }
+};
 
 function registerPartialsFromFile(baseURL, dir, profile) {
 
-    const hbs = exphbs.create({});
-    const filenames = fs.readdirSync(dir);
-    filenames.forEach((filename) => {
-        if (filename.endsWith('.hbs')) {
-            let template = fs.readFileSync(path.join(dir, filename), 'utf8');
-            hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
-            if (filename == "header.hbs") {
-                hbs.handlebars.partials = {
-                    ...hbs.handlebars.partials,
-                    header: hbs.handlebars.compile(template)({ baseUrl: baseURL, profile: profile }),
-                };
-            }
-        }
-    });
-};
+  const hbs = exphbs.create({});
+  const filenames = fs.readdirSync(dir);
+  filenames.forEach((filename) => {
+    if (filename.endsWith(".hbs")) {
+      const template = fs.readFileSync(path.join(dir, filename), constants.CHARSET_UTF8);
+      hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
+      if (filename === constants.FILE_NAME.PARTIAL_HEADER_FILE_NAME) {
+        hbs.handlebars.partials = {
+          ...hbs.handlebars.partials,
+          header: hbs.handlebars.compile(template)({
+            baseUrl: baseURL,
+            profile: profile,
+          }),
+        };
+      }
+    }
+  });
+}
 
 module.exports = registerPartials;

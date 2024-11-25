@@ -15,12 +15,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-const express = require('express');
-const router = express.Router();
-const orgController = require('../controllers/orgContentController');
-const registerPartials = require('../middlewares/registerPartials');
+class CustomError extends Error {
+    constructor(statusCode, message, description) {
+        super(message);
+        this.statusCode = statusCode;
+        this.name = 'CustomError';
+        this.code = statusCode;
+        this.message = message; 
+        this.description = description; 
+        Error.captureStackTrace(this, this.constructor); // Capture the stack trace
+    }
+}
 
-router.get('/(((?!favicon.ico|images)):orgName)', registerPartials, orgController.loadOrganizationContent);
-
-
-module.exports = router;
+module.exports = {
+    CustomError
+};

@@ -16,88 +16,73 @@
  * under the License.
  */
 const { Sequelize, DataTypes } = require('sequelize');
-const sequelize = require('../db/sequelize');
+const sequelize = require('../db/sequelize')
+const { Organization } = require('./orgModels')
 
-const Organization = sequelize.define('DP_ORGANIZATION', {
+const IdentityProvider = sequelize.define('DP_IDENTITY_PROVIDER', {
     ORG_ID: {
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true
     },
-    ORG_NAME: {
+    NAME: {
         type: DataTypes.STRING,
-        allowNull: false,
-        unique: true
+        allowNull: false
     },
-    BUSINESS_OWNER: {
+    ISSUER: {
         type: DataTypes.STRING,
-        allowNull: false,
-        unique: true
-    }, 
-    BUSINESS_OWNER_CONTACT: {
+        allowNull: false
+    },
+    AUTHORIZATION_URL: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    TOKEN_URL: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    USER_INFOR_URL: {
         type: DataTypes.STRING,
         allowNull: true
     },
-    BUSINESS_OWNER_EMAIL: {
+    CLIENT_ID: {
+        type: DataTypes.UUID,
+        allowNull: false
+    },
+    CALLBACK_URL: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    SCOPE: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    SIGNUP_URL: {
         type: DataTypes.STRING,
         allowNull: true
     },
-}, {
-    timestamps: false,
-    tableName: 'DP_ORGANIZATION',
-    returning: true
-});
-
-const OrgContent = sequelize.define('DP_ORGANIZATION_ASSETS', {
-    ASSERT_ID: {
-        type: DataTypes.UUID,
-        defaultValue: Sequelize.UUIDV4,
-        primaryKey: true
-    },
-    FILE_NAME: {
+    LOGOUT_URL: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: false
     },
-    FILE_CONTENT: {
-        type: DataTypes.BLOB,
-        allowNull: false,
-    },
-    FILE_TYPE: {
+    LOGOUT_REDIRECT_URL: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: false
     },
-    FILE_PATH: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    ORG_ID: {
-        type: DataTypes.UUID,
-        allowNull: false,
-        forignKey: true,
-    }
-}, {
-    timestamps: false,
-    tableName: 'DP_ORGANIZATION_ASSETS'
 },{
-    indexes: [
-        {
-            unique: true,
-            fields: ['FILE_TYPE', 'FILE_NAME', 'FILE_PATH', 'ORG_ID'] 
-        }
-    ]
+        timestamps: false,
+        tableName: 'DP_IDENTITY_PROVIDER',
+        returning: true
 });
 
-OrgContent.belongsTo(Organization, {
-    foreignKey: 'ORG_ID',
-});
-
-Organization.hasMany(OrgContent, {
+IdentityProvider.belongsTo(Organization, {
+    foreignKey: 'ORG_ID'
+})
+Organization.hasMany(IdentityProvider, {
     foreignKey: 'ORG_ID',
     onDelete: 'CASCADE',
 });
 
-// Export both models
 module.exports = {
-    Organization,
-    OrgContent
+    IdentityProvider
 };
