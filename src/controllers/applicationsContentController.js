@@ -5,22 +5,34 @@ const constants = require('../utils/constants');
 const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
+const https = require('https');
 
 const filePrefix = config.pathToContent;
 const controlPlaneUrl = config.controlPlaneUrl;
 const token = cpToken.token;
 
+// Create an HTTPS agent that bypasses certificate verification
+// Will remove in production
+const httpsAgent = new https.Agent({
+    rejectUnauthorized: false,
+});
+
 const loadApplications = async (req, res) => {
-    let html, metaData;
+    const orgName = req.params.orgName;
+    let html, metaData, templateContent;
     if (config.mode === constants.DEV_MODE) {
         metaData = await getMockApplications();
+        templateContent = {
+            applicationsMetadata: metaData,
+            baseUrl: constants.BASE_URL + config.port
+        }
     }
     else {
         metaData = await getAPIMApplications();
-    }
-    let templateContent = {
-        applicationsMetadata: metaData,
-        baseUrl: constants.BASE_URL + config.port
+        templateContent = {
+            applicationsMetadata: metaData,
+            baseUrl: '/' + orgName
+        }
     }
     html = renderTemplate('../pages/applications/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     res.send(html);
@@ -33,6 +45,7 @@ async function getMockApplications() {
 }
 
 async function getAPIMApplications() {
+    console.log(controlPlaneUrl + '/applications');
     try {
       const response = await axios({
         method: 'GET',
@@ -40,8 +53,11 @@ async function getAPIMApplications() {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        httpsAgent
     });
-    return response.data;
+    console.log('Applications fetched successfully');
+    console.log(response.data);
+    return response.data.list;
     } catch (error) {
       console.error('Error fetching applications:', error.message);
     }

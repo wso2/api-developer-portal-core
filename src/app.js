@@ -26,6 +26,7 @@ const authRoute = require('./routes/authRoute');
 const devportalRoute = require('./routes/devportalRoute');
 const orgContent = require('./routes/orgContentRoute');
 const apiContent = require('./routes/apiContentRoute');
+const applicationContent = require('./routes/applicationsContentRoute');
 const customContent = require('./routes/customPageRoute');
 const config = require(process.cwd() + '/config.json');
 const Handlebars = require('handlebars');
@@ -88,6 +89,7 @@ if (config.mode === constants.DEV_MODE) {
 } else {
     app.use(constants.ROUTE.DEFAULT, authRoute);
     app.use(constants.ROUTE.DEFAULT, apiContent);
+    app.use(constants.ROUTE.DEFAULT, applicationContent);
     app.use(constants.ROUTE.DEFAULT, orgContent);
     app.use(constants.ROUTE.DEFAULT, customContent);  
 }
