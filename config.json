@@ -1,12 +1,13 @@
 {
   "port": 3000,
   "pathToContent": "../api-developer-portal/src/",
-  "mode": "development",
+  "mode": "production",
   "db": {
     "username": "postgres",
     "password": "postgres",
     "database": "devportal",
     "host": "localhost",
     "dialect": "postgres"
-  }
+  },
+  "controlPlaneUrl": "https://localhost:9443/api/am/publisher/v3"
 }
