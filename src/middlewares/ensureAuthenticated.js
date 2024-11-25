@@ -16,18 +16,24 @@
  * under the License.
  */
 const minimatch = require('minimatch');
-const adminDao = require('../dao/admin');
+const constants = require('../utils/constants');
+
+const authenticatedPages = [
+   constants.ROUTE.DEVPORTAL_CONFIGURE,
+]
 
 const ensureAuthenticated = async (req, res, next) => {
 
-    const orgName = req.params.orgName;
-    const orgData = await adminDao.getOrganization(orgName);
-
-    if ((req.originalUrl != '/favicon.ico' | req.originalUrl != '/images') && orgData.authenticatedPages != null
-        && orgData.authenticatedPages.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
+    console.log('Checking if user is authenticated');
+    console.log(req.originalUrl);
+    if ((req.originalUrl != '/favicon.ico' | req.originalUrl != '/images') && 
+        authenticatedPages.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
+            
         if (req.isAuthenticated()) {
+            console.log('User is authenticated');
             return next();
         } else {
+            console.log('User is not authenticated');
             req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
             res.redirect(`/${req.params.orgName}/login`);
         }

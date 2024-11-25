@@ -8,5 +8,18 @@
     "database": "DEVPORTAL_NEWSCHEMA",
     "host": "localhost",
     "dialect": "postgres"
-  }
+  },
+  "identityProvider" : {
+    "name": "IS",
+    "issuer": "https://localhost:9443/oauth2/token",
+    "authorizationURL": "https://localhost:9443/oauth2/authorize",
+    "tokenURL": "https://localhost:9443/oauth2/token",
+    "userInfoURL": "https://localhost:9443/oauth2/userinfo",
+    "clientId": "y0fAbdXYpdYjNlTfCIj_eUDJYoUa",
+    "callbackURL": "http://localhost:3000/ACME/callback",
+    "scope": "openid email groups",
+    "signUpURL": "",
+    "logoutURL": "https://localhost:9443/oidc/logout",
+    "logoutRedirectURI": "http://localhost:3000/ACME"
+}
 }

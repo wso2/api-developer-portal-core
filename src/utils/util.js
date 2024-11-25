@@ -24,7 +24,7 @@ const { CustomError } = require('../utils/errors/customErrors');
 const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 const unzipper = require('unzipper');
-
+const { body } = require('express-validator');
 const { Sequelize } = require('sequelize');
 
 // Function to load and convert markdown file to HTML
@@ -197,8 +197,8 @@ const fileMapping = {
 }
 
 const textFiles = [
-    constants.FILE_EXTENSIONS.HTML , constants.FILE_EXTENSIONS.HBS, constants.FILE_EXTENSIONS.MD,
-    constants.FILE_EXTENSIONS.JSON, constants.FILE_EXTENSIONS.YAML, constants.FILE_EXTENSIONS.YML, 
+    constants.FILE_EXTENSIONS.HTML, constants.FILE_EXTENSIONS.HBS, constants.FILE_EXTENSIONS.MD,
+    constants.FILE_EXTENSIONS.JSON, constants.FILE_EXTENSIONS.YAML, constants.FILE_EXTENSIONS.YML,
     constants.FILE_EXTENSIONS.SVG
 ]
 
@@ -245,6 +245,53 @@ const getAPIImages = async (directory) => {
     return files;
 };
 
+const validateIDP = () => {
+
+    const validations = [
+   
+        body('authorizationURL')
+            .notEmpty()
+            .isURL().withMessage('authorizationURL must be a valid URL'),
+        body('tokenURL')
+            .notEmpty()
+            .isURL().withMessage('tokenURL must be a valid URL'),
+        body('clientId')
+            .notEmpty()
+            .escape(),
+        body('userInfoURL')
+            .optional()
+            .isURL().withMessage('userInfoURL must be a valid URL'),
+        body('callbackURL')
+            .notEmpty()
+            .isURL({
+                protocols: ['http', 'https'], // Allow both http and https
+                require_tld: false
+            }).withMessage('callbackURL must be a valid URL'),
+        body('logoutURL')
+            .notEmpty()
+            .isURL().withMessage('logoutURL must be a valid URL'),
+        body('logoutRedirectURI')
+            .notEmpty()
+            .isURL({
+                protocols: ['http', 'https'], // Allow both http and https
+                require_tld: false
+            }).withMessage('logoutRedirectURI must be a valid URL'),
+        body('scope')
+            .notEmpty()
+            .escape(),
+        body('signUpURL')
+            .optional()
+            .isURL().withMessage('signUpURL must be a valid URL'),
+        body('name')
+            .notEmpty()
+            .escape(),
+        body('*')
+            .if(body('*').isString())
+            .trim()
+];
+    return validations;
+}
+
 module.exports = {
     loadMarkdown,
     renderTemplate,
@@ -257,5 +304,6 @@ module.exports = {
     retrieveContentType,
     getAPIFileContent,
     getAPIImages,
-    isTextFile
+    isTextFile,
+    validateIDP
 }

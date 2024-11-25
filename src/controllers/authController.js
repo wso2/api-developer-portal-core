@@ -24,6 +24,7 @@ const path = require('path');
 const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
 const IdentityProviderDTO = require("../dto/identityProvider");
+const minimatch = require('minimatch');
 
 
 const filePrefix = config.pathToContent;
@@ -49,9 +50,15 @@ const fetchAuthJsonContent = async (orgName) => {
 
 const login = async (req, res, next) => {
 
-    const authJsonContent = await fetchAuthJsonContent(req.params.orgName);
-    if (authJsonContent.clientId) {
-        configurePassport(authJsonContent);  // Configure passport dynamically
+    let IDP = {};
+    if (minimatch.minimatch(req.session.returnTo, constants.ROUTE.DEVPORTAL_CONFIGURE)) {
+        IDP = config.identityProvider;
+        console.log("Using root IDP");
+    } else {
+        IDP = await fetchAuthJsonContent(req.params.orgName);
+    }
+    if (IDP.clientId) {
+        configurePassport(IDP);  // Configure passport dynamically
         passport.authenticate('oauth2')(req, res, next);
         next();
     } else {
@@ -70,6 +77,8 @@ const handleCallback = (req, res, next) => {
         }
         req.logIn(user, (err) => {
             if (err) {
+                console.log("Callback");
+                console.error(err);
                 return next(err);
             }
             if (config.mode === constants.DEV_MODE) {

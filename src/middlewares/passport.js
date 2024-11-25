@@ -18,10 +18,15 @@
 const passport = require('passport');
 const OAuth2Strategy = require('passport-oauth2');
 const jwt = require('jsonwebtoken');
+const https = require('https');
+
 
 function configurePassport(authJsonContent) {
-    
-    passport.use(new OAuth2Strategy({
+
+    const agent = new https.Agent({
+        rejectUnauthorized: false
+    });
+    const strategy = new OAuth2Strategy({
         issuer: authJsonContent.issuer,
         authorizationURL: authJsonContent.authorizationURL,
         tokenURL: authJsonContent.tokenURL,
@@ -33,15 +38,36 @@ function configurePassport(authJsonContent) {
         state: true,
         pkce: true
     }, (req, accessToken, refreshToken, params, profile, done) => {
+        if (!accessToken) {
+            console.error('No access token received');
+            return done(new Error('Access token missing'));
+        }
         const decodedJWT = jwt.decode(params.id_token);
-        const name = decodedJWT['given_name']? decodedJWT['given_name'] : decodedJWT['nickname'];
+        const name = decodedJWT['given_name'] ? decodedJWT['given_name'] : decodedJWT['nickname'];
         profile = {
             'name': name,
             'idToken': params.id_token,
             'email': decodedJWT['email']
         };
         return done(null, profile);
-    }));
+    });
+    strategy._oauth2.setAgent(agent);
+
+    const originalGetOAuthAccessToken = strategy._oauth2.getOAuthAccessToken;
+    strategy._oauth2.getOAuthAccessToken = function (code, params, callback) {
+        originalGetOAuthAccessToken.call(this, code, params, (err, accessToken, refreshToken, results) => {
+
+            if (err) {
+                console.error('Error during token exchange:', err);
+                if (results) {
+                    console.error('Token endpoint error response:', results);
+                }
+            }
+            console.log('OAuth Token Response:', { accessToken, refreshToken, results });
+            callback(err, accessToken, refreshToken, results);
+        });
+    };
+    passport.use(strategy);
 }
 
 module.exports = configurePassport;

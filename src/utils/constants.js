@@ -76,6 +76,7 @@ module.exports = {
       API_FILE_PATH: '/apis/',
       API_LANDING_PAGE_PATH: '/api/',
       DEVPORTAL_ASSETS_BASE_PATH: '/devportal/organizations/',
+      DEVPORTAL_CONFIGURE: '/*/configure',
     },
 
     FILE_TYPE: {
