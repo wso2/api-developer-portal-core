@@ -8,5 +8,6 @@
     "database": "devportal",
     "host": "localhost",
     "dialect": "postgres"
-  }
+  },
+  "controlPlaneUrl": "https://localhost:9443/api/am/publisher/v3"
 }

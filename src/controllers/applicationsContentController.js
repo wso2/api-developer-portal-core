@@ -1,47 +1,56 @@
 const { renderTemplate } = require('../utils/util');
 const config = require(process.cwd() + '/config');
+const cpToken = require(process.cwd() + '/cpToken');
 const constants = require('../utils/constants');
 const path = require('path');
-// const adminDao = require('../dao/admin');
 const fs = require('fs');
+const axios = require('axios');
 
 const filePrefix = config.pathToContent;
+const controlPlaneUrl = config.controlPlaneUrl;
+const token = cpToken.token;
 
 const loadApplications = async (req, res) => {
-
-    // const orgName = req.params.orgName;
-    let html;
+    let html, metaData;
     if (config.mode === constants.DEV_MODE) {
-        let metaData = await loadApplicationsMetaDataList()
-        let templateContent = {
-            applicationsMetadata: metaData,
-            baseUrl: constants.BASE_URL + config.port
-        }
-        html = renderTemplate('../pages/applications/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
-    } else {
-        // let organization = await adminDao.getOrganization(orgName);
-        // let metaData = await loadAPIMetaDataListFromAPI(organization.ORG_ID, orgName);
-        // let templateContent = {
-        //     apiMetadata: metaData,
-        //     baseUrl: '/' + orgName
-        // }
-        // html = await renderTemplateFromAPI(templateContent, orgName, "pages/apis");
+        metaData = await getMockApplications();
     }
+    else {
+        metaData = await getAPIMApplications();
+    }
+    let templateContent = {
+        applicationsMetadata: metaData,
+        baseUrl: constants.BASE_URL + config.port
+    }
+    html = renderTemplate('../pages/applications/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     res.send(html);
 }
 
-async function loadApplicationsMetaDataList() {
+async function getMockApplications() {
     const mockApplicationsMetaDataPath = path.join(process.cwd(), filePrefix + '../mock/Applications', 'applications.json');
     const mockApplicationsMetaData = JSON.parse(fs.readFileSync(mockApplicationsMetaDataPath, 'utf-8'));
     return mockApplicationsMetaData.list;
 }
 
-const loadApplication = async (req, res) => {
+async function getAPIMApplications() {
+    try {
+      const response = await axios({
+        method: 'GET',
+        url: controlPlaneUrl + '/applications',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+    });
+    return response.data;
+    } catch (error) {
+      console.error('Error fetching applications:', error.message);
+    }
+}
 
-    // const orgName = req.params.orgName;
+const loadApplication = async (req, res) => {
     let html;
     if (config.mode === constants.DEV_MODE) {
-        let metaData = await loadApplicationMetaData()
+        let metaData = await getMockApplication()
         let templateContent = {
             applicationMetadata: metaData,
             baseUrl: constants.BASE_URL + config.port
@@ -59,7 +68,7 @@ const loadApplication = async (req, res) => {
     res.send(html);
 }
 
-async function loadApplicationMetaData() {
+async function getMockApplication() {
     const mockApplicationMetaDataPath = path.join(process.cwd(), filePrefix + '../mock/Applications/DefaultApplication', 'DefaultApplication.json');
     const mockApplicationMetaData = JSON.parse(fs.readFileSync(mockApplicationMetaDataPath, 'utf-8'));
     return mockApplicationMetaData;

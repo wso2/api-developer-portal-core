@@ -1,6 +1,8 @@
 # dependencies
 /node_modules
+
 /dist
+cpToken.json
 
 /.pnp
 .pnp.js
