@@ -34,6 +34,7 @@ router.get('/api/:apiName', registerPartials, apiController.loadAPIContent);
 router.get('/api/:apiName/tryout', registerPartials, apiController.loadTryOutPage);
 
 router.get('/applications', registerPartials, applicationController.loadApplications);
+router.get('/applications/create', registerPartials, applicationController.loadThrottlingPolicies);
 router.get('/applications/:applicationid', registerPartials, applicationController.loadApplication);
 
 router.get('/login', registerPartials, authController.login);
