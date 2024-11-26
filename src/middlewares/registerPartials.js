@@ -53,6 +53,7 @@ const registerAllPartialsFromFile = async (baseURL, req) => {
   registerPartialsFromFile(baseURL, path.join(require.main.filename, "..", "pages", "applications", "partials"), req.user);
   registerPartialsFromFile(baseURL, path.join(require.main.filename, "..", "pages", "add-application", "partials"), req.user);
   registerPartialsFromFile(baseURL, path.join(require.main.filename, "..", "pages", "application", "partials"), req.user);
+  registerPartialsFromFile(baseURL, path.join(require.main.filename, "..", "utils", "partials"), req.user);
   if (fs.existsSync(path.join(process.cwd(), filePrefix + "pages", filePath, "partials"))) {
     registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix + "pages", filePath, "partials"), req.user);
   }
