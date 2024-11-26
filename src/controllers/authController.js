@@ -77,7 +77,6 @@ const handleCallback = (req, res, next) => {
         }
         req.logIn(user, (err) => {
             if (err) {
-                console.log("Callback");
                 console.error(err);
                 return next(err);
             }
@@ -87,6 +86,7 @@ const handleCallback = (req, res, next) => {
                 res.redirect(returnTo);
             } else {
                 const returnTo = req.session.returnTo || `/${req.params.orgName}`;
+                console.log("Redirecting to: ", req.session);
                 delete req.session.returnTo;
                 res.redirect(returnTo);
             }

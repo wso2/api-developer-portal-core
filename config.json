@@ -17,7 +17,7 @@
     "userInfoURL": "https://localhost:9443/oauth2/userinfo",
     "clientId": "y0fAbdXYpdYjNlTfCIj_eUDJYoUa",
     "callbackURL": "http://localhost:3000/ACME/callback",
-    "scope": "openid email groups",
+    "scope": "openid email groups profile",
     "signUpURL": "",
     "logoutURL": "https://localhost:9443/oidc/logout",
     "logoutRedirectURI": "http://localhost:3000/ACME"

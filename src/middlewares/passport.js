@@ -56,12 +56,8 @@ function configurePassport(authJsonContent) {
     const originalGetOAuthAccessToken = strategy._oauth2.getOAuthAccessToken;
     strategy._oauth2.getOAuthAccessToken = function (code, params, callback) {
         originalGetOAuthAccessToken.call(this, code, params, (err, accessToken, refreshToken, results) => {
-
             if (err) {
                 console.error('Error during token exchange:', err);
-                if (results) {
-                    console.error('Token endpoint error response:', results);
-                }
             }
             console.log('OAuth Token Response:', { accessToken, refreshToken, results });
             callback(err, accessToken, refreshToken, results);

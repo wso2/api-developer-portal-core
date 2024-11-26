@@ -24,7 +24,6 @@ const authenticatedPages = [
 
 const ensureAuthenticated = async (req, res, next) => {
 
-    console.log('Checking if user is authenticated');
     console.log(req.originalUrl);
     if ((req.originalUrl != '/favicon.ico' | req.originalUrl != '/images') && 
         authenticatedPages.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
@@ -35,6 +34,8 @@ const ensureAuthenticated = async (req, res, next) => {
         } else {
             console.log('User is not authenticated');
             req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
+            console.log("Return TO")
+            console.log(req.session.returnTo);
             res.redirect(`/${req.params.orgName}/login`);
         }
     } else {
