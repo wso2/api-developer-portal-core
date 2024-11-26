@@ -1,0 +1,13 @@
+.modal-header.success {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.modal-header.error {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.modal-footer .btn-secondary {
+  border-color: transparent;
+}
