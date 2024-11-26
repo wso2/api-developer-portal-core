@@ -1,0 +1,43 @@
+.form-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-colour-secondary);
+  border-radius: 12px;
+  background-color: var(--light-bg-color);
+  padding: 20px;
+  height: 100%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  font-size: 24px;
+  margin: 0;
+  color: var(--primary-color);
+}
+
+.button i {
+  margin-right: 5px;
+}
+
+.form-label {
+  font-size: 14px;
+  color: var(--dark-text-color);
+  margin: 5px 0;
+}
+
+.form-control,
+.form-select {
+  font-size: 14px;
+  color: var(--light-text-color);
+}
+
+.custom-cancel-btn,
+.custom-save-btn {
+  color: var(--font-colour-primary);
+  border-radius: 20px;
+  padding: 10px 20px;
+  border: 0px;
+  font-size: 14px;
+  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+  text-decoration: none;
+}
