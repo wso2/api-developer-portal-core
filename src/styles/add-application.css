@@ -41,3 +41,7 @@
   transition: background-color 0.3s, color 0.3s, border-color 0.3s;
   text-decoration: none;
 }
+
+.error-msg {
+  font-size: 14px;
+}
