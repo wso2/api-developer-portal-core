@@ -1,7 +1,8 @@
 {
   "port": 3000,
   "pathToContent": "../src/",
-  "mode": "development",
+  "controlPlanAPI": "https://localhost:9443/api/am/devportal/v3",
+  "mode": "production",
   "db": {
     "username": "postgres",
     "password": "postgres",

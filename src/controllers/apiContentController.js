@@ -21,6 +21,7 @@ const config = require(process.cwd() + '/config.json');
 const fs = require('fs');
 const path = require('path');
 const exphbs = require('express-handlebars');
+const util = require('../utils/util');
 const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
@@ -86,9 +87,19 @@ const loadAPIContent = async (req, res) => {
             const orgID = organization.ORG_ID;
             const apiID = await apiDao.getAPIId(apiName);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
+            let subscriptionPlans = [];
+            for (const policy of metaData.subscriptionPolicies) {
+                const subscriptionPlan = await loadSubscriptionPlans(policy.policyName);
+                subscriptionPlans.push({
+                    name: subscriptionPlan.name,
+                    description: subscriptionPlan.description,
+                    tierPlan: subscriptionPlan.tierPlan,
+                });
+            };
 
             const templateContent = {
                 apiMetadata: metaData,
+                subscriptionPlans: subscriptionPlans,
                 baseUrl: '/' + orgName,
                 schemaUrl: `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${constants.FILE_NAME.API_DEFINITION_XML}`
             };
@@ -99,6 +110,10 @@ const loadAPIContent = async (req, res) => {
         }
     }
     res.send(html);
+}
+
+const loadSubscriptionPlans = async (policyId) => {
+    return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/throttling-policies/subscription/${policyId}`, { Authorization: '' });
 }
 
 const loadTryOutPage = async (req, res) => {
