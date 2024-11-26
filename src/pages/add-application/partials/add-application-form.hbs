@@ -12,7 +12,7 @@
           Create an application providing name and quota parameters. Description
           is optional. Required fields are marked with an asterisk (<span class="text-danger">*</span>).
         </p>
-        <form id="createApplicationForm">
+        <form id="applicationForm">
           <!-- Application Name -->
           <div class="mb-3">
             <label for="applicationName" class="form-label">Application Name <span class="text-danger">*</span></label>
@@ -29,8 +29,8 @@
 
           <!-- Shared Quota -->   
           <div class="mb-3">
-            <label for="sharedQuota" class="form-label">Shared Quota for Application Tokens <span class="text-danger">*</span></label>
-            <select id="sharedQuota" class="form-select">
+            <label for="throttlingPolicy" class="form-label">Shared Quota for Application Tokens <span class="text-danger">*</span></label>
+            <select id="throttlingPolicy" class="form-select">
               {{#throttlingPoliciesMetadata}}
               <option>{{name}}</option>
               {{/throttlingPoliciesMetadata}}
