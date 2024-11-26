@@ -17,6 +17,8 @@ const httpsAgent = new https.Agent({
     rejectUnauthorized: false,
 });
 
+// ***** Load Applications *****
+
 const loadApplications = async (req, res) => {
     const orgName = req.params.orgName;
     let html, metaData, templateContent;
@@ -45,7 +47,6 @@ async function getMockApplications() {
 }
 
 async function getAPIMApplications() {
-    console.log(controlPlaneUrl + '/applications');
     try {
       const response = await axios({
         method: 'GET',
@@ -55,13 +56,58 @@ async function getAPIMApplications() {
         },
         httpsAgent
     });
-    console.log('Applications fetched successfully');
-    console.log(response.data);
     return response.data.list;
     } catch (error) {
       console.error('Error fetching applications:', error.message);
     }
 }
+
+// ***** Load Throttling Policies *****
+
+const loadThrottlingPolicies = async (req, res) => {
+    const orgName = req.params.orgName;
+    let html, metaData, templateContent;
+    if (config.mode === constants.DEV_MODE) {
+        metaData = await getMockThrottlingPolicies();
+        templateContent = {
+            throttlingPoliciesMetadata: metaData,
+            baseUrl: constants.BASE_URL + config.port
+        }
+    }
+    else {
+        metaData = await getAPIMThrottlingPolicies();
+        templateContent = {
+            throttlingPoliciesMetadata: metaData,
+            baseUrl: '/' + orgName
+        }
+    }
+    html = renderTemplate('../pages/add-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
+    res.send(html);
+}
+
+async function getMockThrottlingPolicies() {
+    const mockThrottlingPoliciesMetaDataPath = path.join(process.cwd(), filePrefix + '../mock/Applications', 'throttlingPolicies.json');
+    const mockThrottlingPoliciesMetaData = JSON.parse(fs.readFileSync(mockThrottlingPoliciesMetaDataPath, 'utf-8'));
+    return mockThrottlingPoliciesMetaData.list;
+}
+
+async function getAPIMThrottlingPolicies() {
+    try {
+      const response = await axios({
+        method: 'GET',
+        url: controlPlaneUrl + '/throttling-policies/application',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        httpsAgent
+    });
+    return response.data.list;
+    } catch (error) {
+      console.error('Error fetching throttling policies:', error.message);
+    }
+}
+
+// ***** Load Application *****
 
 const loadApplication = async (req, res) => {
     let html;
@@ -92,5 +138,6 @@ async function getMockApplication() {
 
 module.exports = {
     loadApplications,
+    loadThrottlingPolicies,
     loadApplication
 };
