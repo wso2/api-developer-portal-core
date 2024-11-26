@@ -1,13 +1,44 @@
-.modal-header.success {
-  background-color: #d4edda;
-  color: #155724;
+.custom-alert .modal-dialog {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: auto;
+    max-width: 500px; 
+    animation: fadeIn 0.5s;
+    z-index: 1055;
 }
 
-.modal-header.error {
-  background-color: #f8d7da;
-  color: #721c24;
+.custom-alert .modal-content {
+    border-radius: 12px; 
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+    overflow: hidden; 
+    padding: 0; 
 }
 
-.modal-footer .btn-secondary {
-  border-color: transparent;
+.custom-alert .modal-body {
+    font-size: 14px; 
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+custom-alert .modal-body.success {
+    background-color: #95d5b2; 
+    color: #ffffff;    
+}
+
+.custom-alert .modal-body.error {
+    background-color: #ff8585; 
+    color: #ffffff;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

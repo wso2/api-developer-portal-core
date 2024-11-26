@@ -1,16 +1,22 @@
-function showAlert(title, message, type) {
+function showAlert(message, type) {
     const modalElement = document.getElementById('alertModal');
-    const modalTitle = modalElement.querySelector('.modal-title');
+    const modalMessage = modalElement.querySelector('.modal-message');
     const modalBody = modalElement.querySelector('.modal-body');
-    const modalHeader = modalElement.querySelector('.modal-header');
 
-    modalTitle.textContent = title;
-    modalBody.textContent = message;
+    modalMessage.textContent = message;
 
-    modalHeader.classList.remove('success', 'error');
+    modalBody.classList.remove('success', 'error');
 
-    modalHeader.classList.add(type);
+    modalBody.classList.add(type);
 
-    const bootstrapModal = new bootstrap.Modal(modalElement);
+    const bootstrapModal = new bootstrap.Modal(modalElement, { backdrop: false });
     bootstrapModal.show();
+
+    setTimeout(() => {
+        modalElement.classList.add('fade-out');
+        setTimeout(() => {
+            bootstrapModal.hide();
+            modalElement.classList.remove('fade-out');
+        }, 500);
+    }, 2300); // 2.3 seconds
 }
