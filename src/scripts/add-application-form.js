@@ -90,11 +90,11 @@ form.addEventListener('submit', async (e) => {
         }
 
         const responseData = await response.json();
-        showAlert('Success', responseData.message || 'Application saved successfully!', 'success');
+        showAlert(responseData.message || 'Application saved successfully!', 'success');
         form.reset();
         window.history.back();
     } catch (error) {
         console.error('Error saving application:', error);
-        showAlert('Error', 'Failed to save application.', 'error');
+        showAlert('Failed to save application.', 'error');
     }
 });
