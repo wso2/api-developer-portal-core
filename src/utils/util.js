@@ -249,6 +249,9 @@ const getAPIImages = async (directory) => {
 
 const invokeApiRequest = async (method, url, headers, body) => {
 
+    headers = headers || {}; 
+    headers.Authorization = `Bearer `; 
+
     const httpsAgent = new https.Agent({
         rejectUnauthorized: false, 
     });
@@ -263,7 +266,8 @@ const invokeApiRequest = async (method, url, headers, body) => {
         if (body) {
             options.data = body;
         }
-        
+
+        console.log(options);
         const response = await axios(url, options);
         return response.data;
     } catch (error) {

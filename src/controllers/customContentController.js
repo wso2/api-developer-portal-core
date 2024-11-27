@@ -46,9 +46,8 @@ const loadCustomContent = async (req, res) => {
     } else {
         let content = {};
         try {
-            const orgData = await adminDao.getOrganization(orgName);
             filePath = 'pages/' + filePath;
-            let orgId = orgData.ORG_ID;
+            let orgId =  await adminDao.getOrgId(orgName);
             let markDownFiles = await adminDao.getOrgContent({
                 orgId: orgId,
                 fileType: 'markDown',

@@ -42,8 +42,7 @@ const loadAPIs = async (req, res) => {
         html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     } else {
         try {
-            const organization = await adminDao.getOrganization(orgName);
-            const orgID = organization.ORG_ID;
+            const orgID = await adminDao.getOrgId(orgName);
             const metaData = await loadAPIMetaDataListFromAPI(req, orgID, orgName);
             const templateContent = {
                 apiMetadata: metaData,
@@ -74,20 +73,33 @@ const loadAPIContent = async (req, res) => {
         if (fs.existsSync(filePath)) {
             hbs.handlebars.registerPartial('api-content', fs.readFileSync(filePath, constants.CHARSET_UTF8));
         }
+
+        let subscriptionPlans = [];
+        metaData.subscriptionPolicies.forEach(policy => {
+            const subscriptionPlan = {
+                name: policy.policyName,
+                description: "Sample description",
+                tierPlan: "Sample tier"
+            };
+            subscriptionPlans.push(subscriptionPlan);
+        });
+
         const templateContent = {
             apiContent: await loadMarkdown(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, filePrefix + '../mock/' + req.params.apiName),
             apiMetadata: metaData,
+            subscriptionPlans: subscriptionPlans,
             baseUrl: constants.BASE_URL + config.port,
             schemaUrl: orgName + '/mock/' + apiName + '/apiDefinition.xml'
         };
         html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     } else {
         try {
-            const organization = await adminDao.getOrganization(orgName);
-            const orgID = organization.ORG_ID;
+            const orgID = await adminDao.getOrgId(orgName);
             const apiID = await apiDao.getAPIId(apiName);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
             let subscriptionPlans = [];
+            let applications = [];
+            let subscriptions = [];
             for (const policy of metaData.subscriptionPolicies) {
                 const subscriptionPlan = await loadSubscriptionPlans(policy.policyName);
                 subscriptionPlans.push({
@@ -97,9 +109,33 @@ const loadAPIContent = async (req, res) => {
                 });
             };
 
+            console.log(metaData.apiReferenceID);
+            const subs = await loadSubscriptions(metaData.apiReferenceID);
+            
+            for (const sub of subs.list) {
+                subscriptions.push({
+                    applicationName: sub.applicationInfo.name,
+                    throttlingTier: sub.throttlingPolicy,
+                    appStatus: sub.status,
+                });
+            }
+
+            const apps = await loadApplications();
+            const subAppIds = new Set(subs.list.map(sub => sub.applicationInfo.applicationId));
+            for (const app of apps.list) {
+                if (!subAppIds.has(app.applicationId)) {
+                    applications.push({
+                        name: app.name,
+                        id: app.applicationId,
+                    });
+                }
+            }
+
             const templateContent = {
                 apiMetadata: metaData,
                 subscriptionPlans: subscriptionPlans,
+                subscriptions: subscriptions,
+                applications: applications,
                 baseUrl: '/' + orgName,
                 schemaUrl: `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${constants.FILE_NAME.API_DEFINITION_XML}`
             };
@@ -113,9 +149,17 @@ const loadAPIContent = async (req, res) => {
 }
 
 const loadSubscriptionPlans = async (policyId) => {
-    return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/throttling-policies/subscription/${policyId}`, { Authorization: '' });
+    return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/throttling-policies/subscription/${policyId}`);
 }
 
+const loadApplications = async () => {
+    return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/applications?sortBy=name&sortOrder=asc`);
+}
+
+const loadSubscriptions = async (apiId) => {
+    console.log(`${config.controlPlanAPI}/subscriptions?apiId=${apiId}`);
+    return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/subscriptions?apiId=${apiId}`);
+}
 const loadTryOutPage = async (req, res) => {
 
     const { orgName, apiName } = req.params;
@@ -135,8 +179,7 @@ const loadTryOutPage = async (req, res) => {
         html = renderTemplate('../pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
     } else {
         try {
-            const organization = await adminDao.getOrganization(orgName);
-            const orgID = organization.ORG_ID;
+            const orgID = await adminDao.getOrgId(orgName);
             const apiID = await apiDao.getAPIId(apiName);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
             let apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, orgID, apiID);
@@ -216,9 +259,27 @@ function loadAPIMetaDataFromFile(apiName) {
     return JSON.parse(fs.readFileSync(mockAPIDataPath, constants.CHARSET_UTF8));
 }
 
+async function subscribeAPI(req, res, next) {
+    const { application: appId, businessPlan: policyId } = req.body;
+    const apiId = await apiDao.getAPIId(req.params.apiName);
+    const orgId = await adminDao.getOrgId(req.params.orgName);
+    const metaData = await loadAPIMetaData(req, orgId, apiId);
+
+    console.log(appId, policyId, metaData.apiReferenceID);
+    const body = {
+        applicationId: appId,
+        apiId: metaData.apiReferenceID,
+        throttlingPolicy: policyId
+    };
+
+    await util.invokeApiRequest('POST', `${config.controlPlanAPI}/subscriptions`, {}, body);
+    res.redirect(req.get('referer'));
+
+}
 
 module.exports = {
     loadAPIs,
     loadAPIContent,
     loadTryOutPage,
+    subscribeAPI
 };

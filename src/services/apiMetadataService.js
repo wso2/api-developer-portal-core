@@ -67,7 +67,7 @@ const createAPIMetadata = async (req, res) => {
 
 const getAPIMetadata = async (req, res) => {
 
-    const { orgId, apiId }  = dreq.params;
+    const { orgId, apiId }  = req.params;
     if (!orgId || !apiId) {
         throw new Sequelize.ValidationError(
             "Missing or Invalid fields in the request payload"

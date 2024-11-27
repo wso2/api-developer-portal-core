@@ -58,12 +58,11 @@ const registerAllPartialsFromFile = async (baseURL, req) => {
 const registerPartialsFromAPI = async (req) => {
   
   const { orgName, apiName }  = req.params;
-  const orgData = await adminDao.getOrganization(orgName);
-  const orgID = orgData.ORG_ID;
+  const orgID = await adminDao.getOrgId(orgName);
   const apiID = await apiDao.getAPIId(apiName);
   const imageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/layout?fileType=image&fileName=`;
   let partials = await adminDao.getOrgContent({
-    orgId: orgData.ORG_ID,
+    orgId: orgID,
     fileType: 'partial',
   });
 

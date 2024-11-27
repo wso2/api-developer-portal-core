@@ -26,6 +26,8 @@ router.get('/((?!favicon.ico)):orgName/apis', registerPartials, apiController.lo
 
 router.get('/((?!favicon.ico)):orgName/api/:apiName', registerPartials, apiController.loadAPIContent);
 
+router.post('/((?!favicon.ico)):orgName/api/:apiName', apiController.subscribeAPI);
+
 router.get('/((?!favicon.ico)):orgName/api/:apiName/tryout', registerPartials, apiController.loadTryOutPage);
 
 module.exports = router;
