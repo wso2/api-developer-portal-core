@@ -111,9 +111,10 @@ const loadAPIContent = async (req, res) => {
 
             console.log(metaData.apiReferenceID);
             const subs = await loadSubscriptions(metaData.apiReferenceID);
-            
+
             for (const sub of subs.list) {
                 subscriptions.push({
+                    id: sub.subscriptionId,
                     applicationName: sub.applicationInfo.name,
                     throttlingTier: sub.throttlingPolicy,
                     appStatus: sub.status,
@@ -259,21 +260,27 @@ function loadAPIMetaDataFromFile(apiName) {
     return JSON.parse(fs.readFileSync(mockAPIDataPath, constants.CHARSET_UTF8));
 }
 
-async function subscribeAPI(req, res, next) {
-    const { application: appId, businessPlan: policyId } = req.body;
-    const apiId = await apiDao.getAPIId(req.params.apiName);
-    const orgId = await adminDao.getOrgId(req.params.orgName);
-    const metaData = await loadAPIMetaData(req, orgId, apiId);
+async function subscribeAPI(req, res,) {
+    if (req.body.method === 'DELETE') {
+        const subscriptionId = req.body.subscriptionId;
+        await util.invokeApiRequest('DELETE', `${config.controlPlanAPI}/subscriptions/${subscriptionId}`, {}, {});
+        res.redirect(req.get('referer'));
+    } else {
+        const { application: appId, businessPlan: policyId } = req.body;
+        const apiId = await apiDao.getAPIId(req.params.apiName);
+        const orgId = await adminDao.getOrgId(req.params.orgName);
+        const metaData = await loadAPIMetaData(req, orgId, apiId);
 
-    console.log(appId, policyId, metaData.apiReferenceID);
-    const body = {
-        applicationId: appId,
-        apiId: metaData.apiReferenceID,
-        throttlingPolicy: policyId
-    };
+        console.log(appId, policyId, metaData.apiReferenceID);
+        const body = {
+            applicationId: appId,
+            apiId: metaData.apiReferenceID,
+            throttlingPolicy: policyId
+        };
 
-    await util.invokeApiRequest('POST', `${config.controlPlanAPI}/subscriptions`, {}, body);
-    res.redirect(req.get('referer'));
+        await util.invokeApiRequest('POST', `${config.controlPlanAPI}/subscriptions`, {}, body);
+        res.redirect(req.get('referer'));
+    }
 
 }
 
