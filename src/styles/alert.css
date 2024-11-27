@@ -22,7 +22,7 @@
     align-items: center;
 }
 
-custom-alert .modal-body.success {
+.custom-alert .modal-body.success {
     background-color: #95d5b2; 
     color: #ffffff;    
 }
