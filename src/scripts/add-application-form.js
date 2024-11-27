@@ -92,7 +92,7 @@ form.addEventListener('submit', async (e) => {
         const responseData = await response.json();
         await showAlert(responseData.message || 'Application saved successfully!', 'success');
         form.reset();
-        window.history.back();
+        window.location.href = document.referrer || '/applications';
     } catch (error) {
         console.error('Error saving application:', error);
         await showAlert('Failed to save application.', 'error');
