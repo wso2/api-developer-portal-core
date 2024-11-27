@@ -110,23 +110,23 @@ async function getAPIMThrottlingPolicies() {
 // ***** Load Application *****
 
 const loadApplication = async (req, res) => {
-    let html;
+    const orgName = req.params.orgName;
+    const applicationId = req.params.applicationid;
+    let html, templateContent, metaData;
     if (config.mode === constants.DEV_MODE) {
-        let metaData = await getMockApplication()
-        let templateContent = {
+        metaData = await getMockApplication();
+        templateContent = {
             applicationMetadata: metaData,
             baseUrl: constants.BASE_URL + config.port
         }
-        html = renderTemplate('../pages/application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     } else {
-        // let organization = await adminDao.getOrganization(orgName);
-        // let metaData = await loadAPIMetaDataListFromAPI(organization.ORG_ID, orgName);
-        // let templateContent = {
-        //     apiMetadata: metaData,
-        //     baseUrl: '/' + orgName
-        // }
-        // html = await renderTemplateFromAPI(templateContent, orgName, "pages/apis");
+        metaData = await getAPIMApplication(applicationId);
+        templateContent = {
+            applicationMetadata: metaData,
+            baseUrl: '/' + orgName + '/applications'
+        }
     }
+    html = renderTemplate('../pages/application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     res.send(html);
 }
 
@@ -136,6 +136,22 @@ async function getMockApplication() {
     return mockApplicationMetaData;
 }
 
+async function getAPIMApplication(applicationId) {
+    try {
+        const response = await axios({
+            method: 'GET',
+            url: controlPlaneUrl + '/applications/' + applicationId,
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            httpsAgent
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching application:', error.message);
+    }
+}
+
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
 
 // ***** Save Application *****
@@ -143,7 +159,6 @@ async function getMockApplication() {
 const saveApplication = async (req, res) => {
     try {
         const { name, throttlingPolicy, description } = req.body;
-        console.log('Received data:', { name, throttlingPolicy, description });
         const response = await axios.post(
             `${controlPlaneUrl}/applications`,
             {
@@ -163,7 +178,6 @@ const saveApplication = async (req, res) => {
                 httpsAgent,
             }
         );
-        console.log(response);
         res.status(200).json({ message: response.data.message });
     } catch (error) {
         console.error('Error saving application:', error.message);
