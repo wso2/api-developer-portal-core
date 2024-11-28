@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document
-        .getElementById('createApplicationForm')
+        .getElementById('applicationForm')
         .addEventListener('submit', (event) => {
             validateForm();
             if (saveButton.disabled) {

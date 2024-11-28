@@ -13,29 +13,29 @@
           is optional. Required fields are marked with an asterisk (<span class="text-danger">*</span>).
         </p>
         {{#applicationMetadata}}
-        <form id="applicationForm">
+        <form id="editApplicationForm" data-application-id="{{applicationId}}">
           <!-- Application Name -->
           <div class="mb-3">
             <label for="applicationName" class="form-label">Application Name <span class="text-danger">*</span></label>
             <input
               type="text"
-              id="applicationName"
+              id="editApplicationName"
               class="form-control"
               placeholder="My Application"
               value="{{name}}"
               required
             />
             <div class="form-text">Enter a name to identify the application. You will be able to pick this application when subscribing to APIs.</div>
-            <div id="nameError" class="error-msg text-danger mt-1" style="display: none;">Application name cannot be empty.</div>
+            <div id="editApplicationNameError" class="error-msg text-danger mt-1" style="display: none;">Application name cannot be empty.</div>
           </div>
 
           <!-- Shared Quota -->   
           <div class="mb-3">
             <label for="throttlingPolicy" class="form-label">Shared Quota for Application Tokens <span class="text-danger">*</span></label>
-            <select id="throttlingPolicy" class="form-select">
-              <option selected disabled value="">{{throttlingPolicy}}</option>
+            <select id="editApplicationThrottlingPolicy" class="form-select">
+              <option selected disabled value="{{throttlingPolicy}}">{{throttlingPolicy}}</option>
               {{#../throttlingPoliciesMetadata}}
-              <option>{{name}}</option>
+              <option value="{{name}}">{{name}}</option>
               {{/../throttlingPoliciesMetadata}}
             </select>
             <div class="form-text">Assign API request quota per access token. Allocated quota will be shared among all the subscribed APIs of the application.</div>
@@ -45,24 +45,24 @@
           <div class="mb-3">
             <label for="applicationDescription" class="form-label">Application Description</label>
             <textarea
-              id="applicationDescription"
+              id="editApplicationDescription"
               class="form-control"
               rows="4"
               placeholder="Provide a brief description of the application"
               maxlength="512"
             >{{description}}</textarea>
             <div class="form-text">
-              <span id="remainingCharacters">512</span> characters remaining
+              <span id="editApplicationRemainingCharacters">512</span> characters remaining
             </div>
-            <div id="descriptionError" class="text-danger mt-1" style="display: none;">Description exceeds the character limit.</div>
+            <div id="editApplicationDescriptionError" class="text-danger mt-1" style="display: none;">Description exceeds the character limit.</div>
           </div>
 
           <!-- Buttons -->
           <div class="d-flex justify-content-end gap-3">
-            <button type="button" class="btn btn-secondary custom-cancel-btn" id="cancelButton">
+            <button type="button" class="btn btn-secondary custom-cancel-btn" id="editApplicationCancelButton">
               Cancel
             </button>
-            <button type="submit" class="btn btn-primary custom-save-btn" id="editButton">
+            <button type="submit" class="btn btn-primary custom-save-btn" id="editApplicationEditButton">
               Update
             </button>
           </div>
