@@ -21,5 +21,5 @@ async function deleteApplication() {
     console.error('Error deleting application:', error);
     await showAlert('An error occurred while deleting the application. Please try again.', 'error');
   }
-  window.location.reload();
+  window.location.reload(true);
 }
