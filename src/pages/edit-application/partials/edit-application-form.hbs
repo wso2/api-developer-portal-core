@@ -12,6 +12,7 @@
           Edit this application. Name and quota are mandatory parameters and description
           is optional. Required fields are marked with an asterisk (<span class="text-danger">*</span>).
         </p>
+        {{#applicationMetadata}}
         <form id="applicationForm">
           <!-- Application Name -->
           <div class="mb-3">
@@ -21,6 +22,7 @@
               id="applicationName"
               class="form-control"
               placeholder="My Application"
+              value="{{name}}"
               required
             />
             <div class="form-text">Enter a name to identify the application. You will be able to pick this application when subscribing to APIs.</div>
@@ -31,9 +33,10 @@
           <div class="mb-3">
             <label for="throttlingPolicy" class="form-label">Shared Quota for Application Tokens <span class="text-danger">*</span></label>
             <select id="throttlingPolicy" class="form-select">
-              {{#throttlingPoliciesMetadata}}
+              <option selected disabled value="">{{throttlingPolicy}}</option>
+              {{#../throttlingPoliciesMetadata}}
               <option>{{name}}</option>
-              {{/throttlingPoliciesMetadata}}
+              {{/../throttlingPoliciesMetadata}}
             </select>
             <div class="form-text">Assign API request quota per access token. Allocated quota will be shared among all the subscribed APIs of the application.</div>
           </div>
@@ -47,6 +50,7 @@
               rows="4"
               placeholder="Provide a brief description of the application"
               maxlength="512"
+              value="{{description}}"
             ></textarea>
             <div class="form-text">
               <span id="remainingCharacters">512</span> characters remaining
@@ -59,11 +63,12 @@
             <button type="button" class="btn btn-secondary custom-cancel-btn" id="cancelButton">
               Cancel
             </button>
-            <button type="submit" class="btn btn-primary custom-save-btn" id="saveButton" disabled>
-              Save
+            <button type="submit" class="btn btn-primary custom-save-btn" id="editButton">
+              Update
             </button>
           </div>
         </form>
+        {{/applicationMetadata}}
       </div>
     </div>
   </section>
