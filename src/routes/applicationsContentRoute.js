@@ -9,6 +9,7 @@ router.get('/((?!favicon.ico)):orgName/applications/:applicationid', registerPar
 router.get('/((?!favicon.ico)):orgName/applications/:applicationid/edit', registerPartials, applicationsController.loadApplicationForEdit);
 
 router.post('/applications', applicationsController.saveApplication);
+router.put('/applications/:applicationid', applicationsController.updateApplication);
 router.delete('/applications/:applicationid', applicationsController.deleteApplication);
 
 module.exports = router;
