@@ -36,6 +36,7 @@ router.get('/api/:apiName/tryout', registerPartials, apiController.loadTryOutPag
 router.get('/applications', registerPartials, applicationController.loadApplications);
 router.get('/applications/create', registerPartials, applicationController.loadThrottlingPolicies);
 router.get('/applications/:applicationid', registerPartials, applicationController.loadApplication);
+router.get('/applications/:applicationid/edit', registerPartials, applicationController.loadApplicationForEdit);
 
 router.get('/login', registerPartials, authController.login);
 router.get('/callback', registerPartials, authController.handleCallback);

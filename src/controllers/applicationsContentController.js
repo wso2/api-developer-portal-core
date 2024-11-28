@@ -131,6 +131,31 @@ const loadApplication = async (req, res) => {
     res.send(html);
 }
 
+const loadApplicationForEdit = async (req, res) => {
+    const orgName = req.params.orgName;
+    const applicationId = req.params.applicationid;
+    let html, templateContent, metaData;
+    if (config.mode === constants.DEV_MODE) {
+        metaData = await getMockApplication();
+        throttlingMetaData = await getMockThrottlingPolicies();
+        templateContent = {
+            applicationMetadata: metaData,
+            throttlingPoliciesMetadata: throttlingMetaData,
+            baseUrl: constants.BASE_URL + config.port
+        }
+    } else {
+        metaData = await getAPIMApplication(applicationId);
+        throttlingMetaData = await getAPIMThrottlingPolicies();
+        templateContent = {
+            applicationMetadata: metaData,
+            throttlingPoliciesMetadata: throttlingMetaData,
+            baseUrl: '/' + orgName
+        }
+    }
+    html = renderTemplate('../pages/edit-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
+    res.send(html);
+}
+
 async function getMockApplication() {
     const mockApplicationMetaDataPath = path.join(process.cwd(), filePrefix + '../mock/Applications/DefaultApplication', 'DefaultApplication.json');
     const mockApplicationMetaData = JSON.parse(fs.readFileSync(mockApplicationMetaDataPath, 'utf-8'));
@@ -211,6 +236,7 @@ module.exports = {
     loadApplications,
     loadThrottlingPolicies,
     loadApplication,
+    loadApplicationForEdit,
     saveApplication,
     deleteApplication
 };
