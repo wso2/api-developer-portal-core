@@ -211,6 +211,38 @@ const saveApplication = async (req, res) => {
     }
 };
 
+// ***** Update Application *****
+
+const updateApplication = async (req, res) => {
+    try {
+        const { name, throttlingPolicy, description } = req.body;
+        const applicationId = req.params.applicationid;
+        const response = await axios.put(
+            `${controlPlaneUrl}/applications/${applicationId}`,
+            {
+                name,
+                throttlingPolicy,
+                description,
+                tokenType: 'JWT',
+                groups: [],
+                attributes: {},
+                subscriptionScopes: []
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                httpsAgent,
+            }
+        );
+        res.status(200).json({ message: response.data.message });
+    } catch (error) {
+        console.error('Error updating application:', error.message);
+        res.status(500).json({ error: 'Failed to update application' });
+    }
+};
+
 // ***** Delete Application *****
 
 const deleteApplication = async (req, res) => {
@@ -238,5 +270,6 @@ module.exports = {
     loadApplication,
     loadApplicationForEdit,
     saveApplication,
+    updateApplication,
     deleteApplication
 };
