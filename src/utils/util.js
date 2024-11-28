@@ -45,7 +45,7 @@ function loadMarkdown(filename, dirName) {
 function renderTemplate(templatePath, layoutPath, templateContent) {
 
     let completeTemplatePath;
-    if (templatePath.includes('tryout')) {
+    if (templatePath.includes('tryout') || templatePath.includes('myAPIs')) {
         completeTemplatePath = path.join(require.main.filename, templatePath);
     } else {
         completeTemplatePath = path.join(process.cwd(), templatePath);
@@ -212,8 +212,9 @@ const retrieveContentType = (fileName, fileType) => {
 
     if (fileType === constants.STYLE)
         return constants.MIME_TYPES.CSS;
-    const filenameParts = fileName.split('.');
-    const extension = filenameParts.length > 1 ? filenameParts.pop() : '';
+
+    const extension = path.extname(fileName).toLowerCase();
+
     if (fileType === constants.IMAGE) {
         return imageMapping[extension] || constants.MIME_TYPES.CONYEMT_TYPE_OCT;
     }

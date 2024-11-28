@@ -1,0 +1,52 @@
+<main>
+  <div class="container my-5">
+    <div class="col-lg-12 dev-header" style="padding-top: 5%;">
+      <h2>My APIs</h2>
+    </div>
+    <table class="table table-bordered table-hover">
+      <thead class="table-primary">
+        <tr>
+          <th>API Name</th>
+          <th>Application Name</th>
+          <th>Throttling Tier</th>
+          <th>Application Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each subscriptions}}
+        <tr>
+          <td>{{this.apiName}}</td>
+          <td>{{this.applicationName}}</td>
+          <td>{{this.throttlingTier}}</td>
+          <td>{{this.appStatus}}</td>
+          <td> <a href="#" onclick="unsubscribe('{{this.id}}')">Unsubscribe</a></td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</main>
+<script>
+  async function unsubscribe(subscriptionId) {
+    try {
+      const response = await fetch(`/api/subscriptions/${subscriptionId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        alert('Unsubscribed successfully!');
+        location.reload(); // Reloads the page to reflect the changes
+      } else {
+        console.error('Failed to unsubscribe:', response);
+        alert('Failed to unsubscribe.');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred.');
+    }
+  }
+</script>
