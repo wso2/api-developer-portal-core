@@ -9,5 +9,8 @@
     "database": "dev",
     "host": "localhost",
     "dialect": "postgres"
+  },
+  "providerURL": {
+    "AWS": "https://aws.amazon.com"
   }
 }

@@ -132,7 +132,16 @@ const loadAPIContent = async (req, res) => {
                 }
             }
 
+            let providerUrl;
+            if (metaData.provider === "WSO2") {
+                providerUrl = '#subscriptionPlans';
+            } else {   
+                providerUrl = config.providerURL[metaData.provider];
+            }
+            
             const templateContent = {
+                provider: metaData.provider,
+                providerUrl: providerUrl,
                 apiMetadata: metaData,
                 subscriptionPlans: subscriptionPlans,
                 subscriptions: subscriptions,
