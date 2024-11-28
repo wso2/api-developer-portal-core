@@ -1,28 +1,30 @@
 // Validation of the form
 
 document.addEventListener('DOMContentLoaded', () => {
-    const applicationNameInput = document.getElementById('applicationName');
-    const descriptionTextarea = document.getElementById('applicationDescription');
-    const remainingCharactersSpan = document.getElementById(
-        'remainingCharacters'
+    const applicationNameInput = document.getElementById('editApplicationName');
+    const descriptionTextarea = document.getElementById(
+        'editApplicationDescription'
     );
-    const nameError = document.getElementById('nameError');
-    const descriptionError = document.getElementById('descriptionError');
-    const editButton = document.getElementById('editButton');
-    const cancelButton = document.getElementById('cancelButton');
+    const remainingCharactersSpan = document.getElementById(
+        'editApplicationRemainingCharacters'
+    );
+    const nameError = document.getElementById('editApplicationNameError');
+    const descriptionError = document.getElementById(
+        'editApplicationDescriptionError'
+    );
+    const editButton = document.getElementById('editApplicationEditButton');
+    const cancelButton = document.getElementById('editApplicationCancelButton');
 
     const MAX_CHARACTERS = 512;
 
     const validateForm = () => {
         let hasError = false;
-
         if (!applicationNameInput.value.trim()) {
             nameError.style.display = 'block';
             hasError = true;
         } else {
             nameError.style.display = 'none';
         }
-
         const remaining = MAX_CHARACTERS - descriptionTextarea.value.length;
         if (remaining < 0) {
             descriptionError.style.display = 'block';
@@ -30,10 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             descriptionError.style.display = 'none';
         }
-
         editButton.disabled = hasError;
     };
-
     descriptionTextarea.addEventListener('input', () => {
         const remaining = Math.max(
             0,
@@ -42,15 +42,12 @@ document.addEventListener('DOMContentLoaded', () => {
         remainingCharactersSpan.textContent = remaining;
         validateForm();
     });
-
     applicationNameInput.addEventListener('input', validateForm);
-
     cancelButton.addEventListener('click', () => {
         window.history.back();
     });
-
     document
-        .getElementById('createApplicationForm')
+        .getElementById('editApplicationForm')
         .addEventListener('submit', (event) => {
             validateForm();
             if (editButton.disabled) {
@@ -61,20 +58,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Submittion of the form
 
-const form = document.getElementById('applicationForm');
+const form = document.getElementById('editApplicationForm');
+const applicationId = form.dataset.applicationId;
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
-
-    const name = document.getElementById('applicationName').value;
-    const throttlingPolicy = document.getElementById('throttlingPolicy').value;
-    const description = document.getElementById(
-        'applicationDescription'
+    const name = document.getElementById('editApplicationName').value;
+    const throttlingPolicy = document.getElementById(
+        'editApplicationThrottlingPolicy'
     ).value;
-
+    const description = document.getElementById(
+        'editApplicationDescription'
+    ).value;
     try {
-        const response = await fetch('/applications', {
-            method: 'POST',
+        const response = await fetch(`/applications/${applicationId}`, {
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -84,13 +82,14 @@ form.addEventListener('submit', async (e) => {
                 description,
             }),
         });
-
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
-
         const responseData = await response.json();
-        await showAlert(responseData.message || 'Application updated successfully!', 'success');
+        await showAlert(
+            responseData.message || 'Application updated successfully!',
+            'success'
+        );
         form.reset();
         window.location.href = document.referrer || '/applications';
     } catch (error) {
