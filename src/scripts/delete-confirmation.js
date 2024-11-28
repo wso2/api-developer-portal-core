@@ -5,17 +5,21 @@ function openDeleteModal(applicationId) {
   bootstrapModal.show();
 }
 
-function deleteApplication(baseUrl) {
+async function deleteApplication() {
   const modal = document.getElementById('deleteConfirmation');
   const applicationId = modal.dataset.applicationId;
-  fetch(`/applications/${applicationId}`, { method: 'DELETE' })
-    .then((response) => {
-      if (response.ok) {
-        console.log('Application deleted successfully.');
-      } else {
-        console.error('Failed to delete application.');
-      }
-    })
-    .catch((error) => console.error('Error deleting application:', error));
-    window.location.reload(true);
+  try {
+    const response = await fetch(`/applications/${applicationId}`, { method: 'DELETE' });
+    if (response.ok) {
+      console.log('Application deleted successfully.');
+      await showAlert('Application deleted successfully!', 'success');
+    } else {
+      console.error('Failed to delete application.');
+      await showAlert('Failed to delete application. Please try again.', 'error');
+    }
+  } catch (error) {
+    console.error('Error deleting application:', error);
+    await showAlert('An error occurred while deleting the application. Please try again.', 'error');
+  }
+  window.location.reload();
 }
