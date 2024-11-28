@@ -30,6 +30,7 @@ const loadApplications = async (req, res) => {
         }
     }
     else {
+        console.log('/' + orgName);
         metaData = await getAPIMApplications();
         templateContent = {
             applicationsMetadata: metaData,
@@ -123,7 +124,7 @@ const loadApplication = async (req, res) => {
         metaData = await getAPIMApplication(applicationId);
         templateContent = {
             applicationMetadata: metaData,
-            baseUrl: '/' + orgName + '/applications'
+            baseUrl: '/' + orgName
         }
     }
     html = renderTemplate('../pages/application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
