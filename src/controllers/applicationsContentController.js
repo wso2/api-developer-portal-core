@@ -186,9 +186,31 @@ const saveApplication = async (req, res) => {
     }
 };
 
+// ***** Delete Application *****
+
+const deleteApplication = async (req, res) => {
+    try {
+        const applicationId = req.params.applicationid;
+        const response = await axios.delete(
+            `${controlPlaneUrl}/applications/${applicationId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                httpsAgent,
+            }
+        );
+        res.status(200).json({ message: response.data.message });
+    } catch (error) {
+        console.error('Error deleting application:', error.message);
+        res.status(500).json({ error: 'Failed to delete application' });
+    }
+}
+
 module.exports = {
     loadApplications,
     loadThrottlingPolicies,
     loadApplication,
-    saveApplication
+    saveApplication,
+    deleteApplication
 };

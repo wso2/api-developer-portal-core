@@ -5,21 +5,17 @@ function openDeleteModal(applicationId) {
   bootstrapModal.show();
 }
 
-function deleteApplication() {
-  console.log('Deleting application...');
+function deleteApplication(baseUrl) {
   const modal = document.getElementById('deleteConfirmation');
   const applicationId = modal.dataset.applicationId;
-  console.log(`Deleting application with ID: ${applicationId}`);
-
-  // fetch(`/applications/${applicationId}`, { method: 'DELETE' })
-  //   .then((response) => {
-  //     if (response.ok) {
-  //       console.log('Application deleted successfully.');
-  //       document.getElementById(applicationId).remove();
-  //     } else {
-  //       console.error('Failed to delete application.');
-  //     }
-  //   })
-  //   .catch((error) => console.error('Error deleting application:', error));
-  window.location.href = document.referrer || '/applications';
+  fetch(`/applications/${applicationId}`, { method: 'DELETE' })
+    .then((response) => {
+      if (response.ok) {
+        console.log('Application deleted successfully.');
+      } else {
+        console.error('Failed to delete application.');
+      }
+    })
+    .catch((error) => console.error('Error deleting application:', error));
+    window.location.reload(true);
 }

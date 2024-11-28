@@ -8,5 +8,6 @@ router.get('/((?!favicon.ico)):orgName/applications/create', registerPartials, a
 router.get('/((?!favicon.ico)):orgName/applications/:applicationid', registerPartials, applicationsController.loadApplication);
 
 router.post('/applications', applicationsController.saveApplication);
+router.delete('/applications/:applicationid', applicationsController.deleteApplication);
 
 module.exports = router;
