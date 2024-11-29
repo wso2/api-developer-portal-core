@@ -11,5 +11,6 @@ router.get('/((?!favicon.ico)):orgName/applications/:applicationid/edit', regist
 router.post('/applications', applicationsController.saveApplication);
 router.put('/applications/:applicationid', applicationsController.updateApplication);
 router.delete('/applications/:applicationid', applicationsController.deleteApplication);
+router.post('/applications/:applicationid/reset-throttle-policy', applicationsController.resetThrottlingPolicy);
 
 module.exports = router;
