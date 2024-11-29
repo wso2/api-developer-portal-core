@@ -61,9 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Submittion of the form
 
-const form = document.getElementById('applicationForm');
+const applicationForm = document.getElementById('applicationForm');
 
-form.addEventListener('submit', async (e) => {
+applicationForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const name = document.getElementById('applicationName').value;
@@ -91,7 +91,7 @@ form.addEventListener('submit', async (e) => {
 
         const responseData = await response.json();
         await showAlert(responseData.message || 'Application saved successfully!', 'success');
-        form.reset();
+        applicationForm.reset();
         window.location.href = document.referrer || '/applications';
     } catch (error) {
         console.error('Error saving application:', error);
