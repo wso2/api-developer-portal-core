@@ -21,26 +21,26 @@
           <div class='modal-body'>
             <p class='modal-message'>Reset the Application Throttle Policy for a
               Specific User</p>
+            <div class='mb-3'>
+              <label for='userName' class='form-label'>User Name
+                <span class='text-danger'>*</span></label>
+              <input
+                type='text'
+                id='userName'
+                class='form-control'
+                placeholder='User Name'
+                required
+              />
+              <div class='form-text'>Enter the user name you Specificaly need to
+                reset the throttle policy for.</div>
+              <div
+                id='userNameError'
+                class='error-msg text-danger mt-1'
+                style='display: none;'
+              >User Name cannot be empty.</div>
+            </div>
           </div>
-          <!-- Application Name -->
-          <div class='mb-3'>
-            <label for='userName' class='form-label'>Application Name
-              <span class='text-danger'>*</span></label>
-            <input
-              type='text'
-              id='userName'
-              class='form-control'
-              placeholder='User Name'
-              required
-            />
-            <div class='form-text'>Enter the user name you Specificaly need to
-              reset the throttle policy for.</div>
-            <div
-              id='userNameError'
-              class='error-msg text-danger mt-1'
-              style='display: none;'
-            >User Name cannot be empty.</div>
-          </div>
+
           <div class='modal-footer'>
             <button
               type='button'
