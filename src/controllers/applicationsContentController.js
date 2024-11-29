@@ -283,6 +283,7 @@ const resetThrottlingPolicy = async (req, res) => {
                 httpsAgent,
             }
         );
+        console.log('Throttling policy reset successfully.');
         res.status(200).json({ message: response.data.message });
     } catch (error) {
         console.error('Error reseting throttling policy:', error.message);
