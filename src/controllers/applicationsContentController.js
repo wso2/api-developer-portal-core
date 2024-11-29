@@ -264,6 +264,32 @@ const deleteApplication = async (req, res) => {
     }
 }
 
+// ***** Save Application *****
+
+const resetThrottlingPolicy = async (req, res) => {
+    try {
+        const applicationId = req.params.applicationid;
+        const { userName } = req.body;
+        const response = await axios.post(
+            `${controlPlaneUrl}/applications/${applicationId}/reset-throttle-policy`,
+            {
+                userName
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                httpsAgent,
+            }
+        );
+        res.status(200).json({ message: response.data.message });
+    } catch (error) {
+        console.error('Error reseting throttling policy:', error.message);
+        res.status(500).json({ error: 'Failed to reset the throttling policy' });
+    }
+};
+
 module.exports = {
     loadApplications,
     loadThrottlingPolicies,
@@ -271,5 +297,6 @@ module.exports = {
     loadApplicationForEdit,
     saveApplication,
     updateApplication,
-    deleteApplication
+    deleteApplication,
+    resetThrottlingPolicy
 };
