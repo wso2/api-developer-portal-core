@@ -1,5 +1,6 @@
 <head>
   <link rel='stylesheet' href='/technical-styles/applications.css' />
+  <script src='/technical-scripts/application-listing.js' defer></script>
 </head>
 
 <main>
@@ -19,13 +20,20 @@
           <div class='col-lg-10 search-container'>
             <div class='search-input'>
               <i class='bi bi-search'></i>
-              <input type='text' id='query' placeholder='Search Applications' />
+              <input
+                type='text'
+                id='query'
+                placeholder='Search Applications'
+              />
             </div>
           </div>
         </div>
       </div>
     </div>
-    <div class='container-fluid col-lg-12 applicationspage-container'>
+    <div
+      class='container-fluid col-lg-12 applicationspage-container'
+      id='applicationsContainer'
+    >
       <div class='row list-items'>
         <div class='col-lg-2'>
           <div class='applicationsbtn-container mt-3'>
@@ -43,21 +51,23 @@
         <div class='col-lg-10'>
           <div class='row list-items'>
             <div class='col'>
-              <div class='applicationlist-container row list-items'>
+              <div
+                class='applicationlist-container row list-items'
+                id='applicationCardsContainer'
+              >
                 {{#applicationsMetadata}}
                   <div
-                    id='{{applicationId}}'
+                    id='app-card-{{applicationId}}'
                     class='card application-card col-lg-3 col-md-10 col-sm-10 m-2'
                     data-name='{{name}}'
                   >
-                    <div class='application-card-body'>              
+                    <div class='application-card-body'>
                       <h5 class='application-card-title'>
                         <a
                           href='{{../baseUrl}}/applications/{{applicationId}}'
                           class='application-name-link'
                         >{{name}}</a>
                       </h5>
-
                       <div class='row list-items'>
                         <div class='apilisting-tags'>
                           <span class='badge badge-custom1'>{{status}}</span>
@@ -65,7 +75,6 @@
                             {{owner}}</span>
                         </div>
                       </div>
-
                       <div class='application-card-meta'>
                         <p>
                           <i class='bi bi-grid'></i>
@@ -77,7 +86,6 @@
                           Throttling Policy:
                           {{throttlingPolicy}}
                         </p>
-
                       </div>
                       <div class='application-card-actions'>
                         <button
@@ -107,5 +115,4 @@
       </div>
     </div>
   </section>
-
 </main>
