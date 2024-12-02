@@ -1,6 +1,9 @@
 {
   "port": 3000,
   "pathToContent": "../api-developer-portal/src/",
+  "certificate": {
+    "path": "../api-developer-portal/conf/security/client-truststore.pem"
+  },
   "mode": "production",
   "db": {
     "username": "postgres",
