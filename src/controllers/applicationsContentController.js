@@ -8,13 +8,14 @@ const axios = require('axios');
 const https = require('https');
 
 const filePrefix = config.pathToContent;
+const certPath = path.join(process.cwd(), config.certificate.path);
+const certPassword = config.certificate.password;
 const controlPlaneUrl = config.controlPlaneUrl;
 const token = cpToken.token;
 
-// Create an HTTPS agent that bypasses certificate verification
-// Will remove in production
 const httpsAgent = new https.Agent({
-    rejectUnauthorized: false,
+    ca: fs.readFileSync(certPath),  
+    rejectUnauthorized: true,
 });
 
 // ***** Load Applications *****
