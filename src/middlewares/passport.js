@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /*
  * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
@@ -19,13 +20,17 @@ const passport = require('passport');
 const OAuth2Strategy = require('passport-oauth2');
 const jwt = require('jsonwebtoken');
 const https = require('https');
-
+const config = require(process.cwd() + '/config.json');
 
 function configurePassport(authJsonContent) {
 
     const agent = new https.Agent({
         rejectUnauthorized: false
-    });
+    });    
+    //set scopes to call API Manager REST apis
+    const requestedScopes = "openid profile email groups roles apim:subscribe";
+    let scope = requestedScopes.split(" ");
+    scope.push(...(authJsonContent.scope ? authJsonContent.scope.split(" ") : ""));
     const strategy = new OAuth2Strategy({
         issuer: authJsonContent.issuer,
         authorizationURL: authJsonContent.authorizationURL,
@@ -33,7 +38,7 @@ function configurePassport(authJsonContent) {
         userInfoURL: authJsonContent.userInfoURL,
         clientID: authJsonContent.clientId,
         callbackURL: authJsonContent.callbackURL,
-        scope: authJsonContent.scope ? authJsonContent.scope.split(" ") : "",
+        scope: requestedScopes,
         passReqToCallback: true,
         state: true,
         pkce: true
@@ -44,11 +49,17 @@ function configurePassport(authJsonContent) {
         }
         const decodedJWT = jwt.decode(params.id_token);
         const name = decodedJWT['given_name'] ? decodedJWT['given_name'] : decodedJWT['nickname'];
+        const organizationID = decodedJWT[config.orgID_claim_name] ? decodedJWT[config.orgID_claim_name] : '';
         profile = {
             'name': name,
             'idToken': params.id_token,
-            'email': decodedJWT['email']
+            'email': decodedJWT['email'],
+            [config.orgID_claim_name]: organizationID,
+            'returnTo': req.session.returnTo,
+            accessToken,
+            [config.role_claim_name]: decodedJWT[config.role_claim_name]
         };
+       // console.log('Profile:', profile);
         return done(null, profile);
     });
     strategy._oauth2.setAgent(agent);
@@ -64,6 +75,31 @@ function configurePassport(authJsonContent) {
         });
     };
     passport.use(strategy);
+
+    // passport.use(new OAuth2Strategy({
+    //     issuer: authJsonContent.issuer,
+    //     authorizationURL: authJsonContent.authorizationURL,
+    //     tokenURL: authJsonContent.tokenURL,
+    //     userInfoURL: authJsonContent.userInfoURL,
+    //     clientID: authJsonContent.clientId,
+    //     callbackURL: authJsonContent.callbackURL,
+    //     scope: "openid profile email groups apim:subscribe",
+    //     passReqToCallback: true,
+    //     state: true,
+    //     pkce: true
+    // }, (req, accessToken, refreshToken, params, profile, done) => {
+    //     console.log('Access token:', accessToken);  
+    //     console.log('session:', req.session);
+    //     const decodedJWT = jwt.decode(params.id_token);
+    //     const name = decodedJWT['given_name']? decodedJWT['given_name'] : decodedJWT['nickname'];
+    //     profile = {
+    //         'name': name,
+    //         'idToken': params.id_token,
+    //         'email': decodedJWT['email'],
+    //         'returnTo': req.session.returnTo
+    //     };
+    //     return done(null, profile);
+    // }));
 }
 
 module.exports = configurePassport;

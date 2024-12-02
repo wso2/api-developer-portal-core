@@ -118,7 +118,7 @@ const createIdentityProvider = async (orgId, idpData) => {
             SIGNUP_URL: idpData.signUpURL,
             LOGOUT_URL: idpData.logoutURL,
             LOGOUT_REDIRECT_URL: idpData.logoutRedirectURI,
-            SCOPE: idpData.scope
+            SCOPE: ""
         });
         return idpResponse;
     } catch (error) {

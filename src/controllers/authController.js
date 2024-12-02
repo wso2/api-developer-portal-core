@@ -29,9 +29,22 @@ const minimatch = require('minimatch');
 
 const filePrefix = config.pathToContent;
 
-const fetchAuthJsonContent = async (orgName) => {
+const fetchAuthJsonContent = async (req, orgName) => {
 
-    if (config.mode === constants.DEV_MODE) {
+    if (req.session.returnTo) {
+        if (minimatch.minimatch(req.session.returnTo, constants.ROUTE.DEVPORTAL_CONFIGURE)) {
+            return config.identityProvider;
+        }
+    } 
+    if (req.user && req.user[config.role_claim_name]) {
+        const regex = /^Internal\/everyone.*/;
+        const role = req.user[config.role_claim_name];
+        if(regex.test(role) && role.split(',').includes(constants.ROLES.ADMIN_ROLE)) {
+            return config.identityProvider
+        } else if (role === constants.ROLES.ADMIN_ROLE) {
+        return config.identityProvider
+        }
+    } else if (config.mode === constants.DEV_MODE) {
         const authJsonPath = path.join(process.cwd(), filePrefix + '../mock', 'auth.json');
         return JSON.parse(fs.readFileSync(authJsonPath, constants.CHARSET_UTF8));
     }
@@ -50,16 +63,12 @@ const fetchAuthJsonContent = async (orgName) => {
 
 const login = async (req, res, next) => {
 
-    let IDP = {};
-    if (minimatch.minimatch(req.session.returnTo, constants.ROUTE.DEVPORTAL_CONFIGURE)) {
-        IDP = config.identityProvider;
-        console.log("Using root IDP");
-    } else {
-        IDP = await fetchAuthJsonContent(req.params.orgName);
-    }
+    const IDP = await fetchAuthJsonContent(req, req.params.orgName);
     if (IDP.clientId) {
+        console.log('Session before config:', req.session);
         configurePassport(IDP);  // Configure passport dynamically
         passport.authenticate('oauth2')(req, res, next);
+        console.log('Session after config:', req.session);
         next();
     } else {
         res.status(400).send("No Identity Provider information found for the organization");
@@ -76,21 +85,19 @@ const handleCallback = (req, res, next) => {
             return next(err || new Error('Authentication failed'));
         }
         req.logIn(user, (err) => {
+            console.log('Session after callback:', req.session);
             if (err) {
-                console.error(err);
                 return next(err);
             }
             if (config.mode === constants.DEV_MODE) {
-                const returnTo = req.session.returnTo || constants.BASE_URL + config.port;
+                const returnTo = req.user.returnTo || constants.BASE_URL + config.port;
                 delete req.session.returnTo;
                 res.redirect(returnTo);
             } else {
-                const returnTo = req.session.returnTo || `/${req.params.orgName}`;
-                console.log("Redirecting to: ", req.session);
+                const returnTo = req.user.returnTo || `/${req.params.orgName}`;
                 delete req.session.returnTo;
                 res.redirect(returnTo);
             }
-
         });
     })(req, res, next);
 };
@@ -114,7 +121,7 @@ const handleSignUp = async (req, res) => {
 
 const handleLogOut = async (req, res) => {
 
-    const authJsonContent = await fetchAuthJsonContent(req.params.orgName);
+    const authJsonContent = await fetchAuthJsonContent(req, req.params.orgName);
     let idToken = ''
     if (req.user != null) {
         idToken = req.user.idToken;

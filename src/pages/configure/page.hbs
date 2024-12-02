@@ -1,0 +1,15 @@
+<head>
+    <link rel="stylesheet" href="/portal/settings.css">
+</head>
+<main>
+    <div class="container mt-5">
+        {{> upload-zip }}
+        {{> list-files }}
+        {{#if idp}}
+        {{> list-idp}}
+        {{/if}}
+        {{#if create}}
+        {{> create-idp}}
+        {{/if}}
+    </div>
+</main>

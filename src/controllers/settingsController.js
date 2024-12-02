@@ -1,33 +1,70 @@
-const { renderTemplate, renderTemplateFromAPI, renderGivenTemplate, loadLayoutFromAPI, validateIDP } = require('../utils/util');
+/*
+ * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+/* eslint-disable no-undef */
+const { renderTemplate, renderGivenTemplate, loadLayoutFromAPI, validateIDP } = require('../utils/util');
 const fs = require('fs');
 const { validationResult } = require('express-validator');
 const path = require('path');
 const adminDao = require('../dao/admin');
 const IdentityProviderDTO = require("../dto/identityProvider");
+const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
+const adminService = require('../services/adminService');
 
 const loadSettingPage = async (req, res) => {
 
+    //retrieve orgID from the user object
+    const orgID = req.user[config.orgID_claim_name];
     let templateContent = {
         baseUrl: req.params.orgName,
+        orgID: orgID
     }
-    const orgName = req.params.orgName;
-    const organization = await adminDao.getOrganization(orgName);
-    const orgID = organization.ORG_ID;
-    const retrievedIDP = await adminDao.getIdentityProvider(orgID);
-    if (retrievedIDP.length > 0) {
-        templateContent.idp = new IdentityProviderDTO(retrievedIDP[0]);
-    } else {
-        templateContent.create = true;
+    const completeTemplatePath = path.join('src', 'pages', 'configure', 'page.hbs');
+    try {
+        const retrievedIDP = await adminDao.getIdentityProvider(orgID);
+        if (retrievedIDP.length > 0) {
+            templateContent.idp = new IdentityProviderDTO(retrievedIDP[0]);
+        } else {
+            templateContent.create = true;
+        }
+        const layoutResponse = await loadLayoutFromAPI(orgID)
+        const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
+        console.log('Loading content from API')
+        //TODO: fetch view names from DB
+        const views = [{
+            'name': 'Default'
+        }]
+        templateContent.views = views;
+        let html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        res.send(html);
+    } catch (error) {
+        console.error(`Error while loading content from DB: ${error}`);
+        // loading main template from file since no org content uploaded
+        const layoutPath = path.join('src', 'pages', 'layout', 'main.hbs');
+        html = renderTemplate(completeTemplatePath, layoutPath, templateContent);
+        res.send(html);
+        console.error(`Error while loading setting page: ${error}`);
     }
-    const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'configure', 'configureDevportal.hbs');
-    const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8); 
-    const layoutResponse = await loadLayoutFromAPI(orgID)
-    let html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
-    res.send(html);
+
+
 }
 
-const storePortalSettings = async (req, res) => {
+const identityprovider = async (req, res) => {
 
     try {
         const rules = validateIDP();
@@ -35,10 +72,9 @@ const storePortalSettings = async (req, res) => {
             await validation.run(req);
         }
         const errors = validationResult(req);
-        let orgName = req.body.orgName;
-        let organization = await adminDao.getOrganization(orgName);
-        let orgID = organization.ORG_ID;
-        const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'configure', 'configureDevportal.hbs');
+        //let orgName = req.body.orgName;
+        let orgID = req.user[config.orgID_claim_name];
+        const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'configure', 'page.hbs');
         const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
         const layoutResponse = await loadLayoutFromAPI(orgID)
         if (!errors.isEmpty()) {
@@ -50,7 +86,6 @@ const storePortalSettings = async (req, res) => {
             });
             res.send(html);
         } else {
-            console.log(req.body);
             const idpCreateResponse = await adminDao.createIdentityProvider(orgID, req.body);
             if (idpCreateResponse.dataValues) {
                 console.log("IDP stored");
@@ -67,8 +102,23 @@ const storePortalSettings = async (req, res) => {
     }
 }
 
+const storeOrgContent = async (req, res) => {
+    try {
+        console.log("Access", req.user);
+        console.log("Org ID: ", req.user[config.orgID_claim_name]);
+        req.params.orgId = req.user[config.orgID_claim_name];
+        const response = await adminService.createOrgContent(req, res);
+        console.log("Response: ", response);
+        res.redirect(`/${req.params.orgName}/configure`);
+    } catch (error) {
+        console.error(`Error while storing org content: ${error}`);
+        res.send("Error while storing org content");
+    }
+}
+
 
 module.exports = {
     loadSettingPage,
-    storePortalSettings
+    identityprovider,
+    storeOrgContent
 };

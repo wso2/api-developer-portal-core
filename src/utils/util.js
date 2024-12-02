@@ -69,7 +69,6 @@ async function loadLayoutFromAPI(orgID) {
         fileType: constants.FILE_TYPE.LAYOUT,
         fileName: constants.FILE_NAME.MAIN
     });
-
     return layoutContent.FILE_CONTENT.toString(constants.CHARSET_UTF8);
 }
 
@@ -251,16 +250,25 @@ const validateIDP = () => {
    
         body('authorizationURL')
             .notEmpty()
-            .isURL().withMessage('authorizationURL must be a valid URL'),
+            .isURL({
+                protocols: ['http', 'https'], // Allow both http and https
+                require_tld: false
+            }).withMessage('authorizationURL must be a valid URL'),
         body('tokenURL')
             .notEmpty()
-            .isURL().withMessage('tokenURL must be a valid URL'),
+            .isURL({
+                protocols: ['http', 'https'], // Allow both http and https
+                require_tld: false
+            }).withMessage('tokenURL must be a valid URL'),
         body('clientId')
             .notEmpty()
             .escape(),
         body('userInfoURL')
             .optional()
-            .isURL().withMessage('userInfoURL must be a valid URL'),
+            .isURL({
+                protocols: ['http', 'https'], // Allow both http and https
+                require_tld: false
+            }).withMessage('userInfoURL must be a valid URL'),
         body('callbackURL')
             .notEmpty()
             .isURL({
@@ -269,19 +277,22 @@ const validateIDP = () => {
             }).withMessage('callbackURL must be a valid URL'),
         body('logoutURL')
             .notEmpty()
-            .isURL().withMessage('logoutURL must be a valid URL'),
+            .isURL({
+                protocols: ['http', 'https'], // Allow both http and https
+                require_tld: false
+            }).withMessage('logoutURL must be a valid URL'),
         body('logoutRedirectURI')
             .notEmpty()
             .isURL({
                 protocols: ['http', 'https'], // Allow both http and https
                 require_tld: false
             }).withMessage('logoutRedirectURI must be a valid URL'),
-        body('scope')
-            .notEmpty()
-            .escape(),
         body('signUpURL')
             .optional()
-            .isURL().withMessage('signUpURL must be a valid URL'),
+            .isURL({
+                protocols: ['http', 'https'], // Allow both http and https
+                require_tld: false
+            }).withMessage('signUpURL must be a valid URL'),
         body('name')
             .notEmpty()
             .escape(),

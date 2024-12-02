@@ -17,9 +17,11 @@
     "userInfoURL": "https://localhost:9443/oauth2/userinfo",
     "clientId": "y0fAbdXYpdYjNlTfCIj_eUDJYoUa",
     "callbackURL": "http://localhost:3000/ACME/callback",
-    "scope": "openid email groups profile",
+    "scope": "openid email profile apim:subscribe role",
     "signUpURL": "",
     "logoutURL": "https://localhost:9443/oidc/logout",
     "logoutRedirectURI": "http://localhost:3000/ACME"
-}
+},
+"role_claim_name": "sub", 
+"orgID_claim_name": "organizationID"
 }

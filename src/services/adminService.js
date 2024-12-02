@@ -23,6 +23,7 @@ const fs = require('fs');
 const path = require('path');
 const IdentityProviderDTO = require("../dto/identityProvider");
 const constants = require('../utils/constants');
+const e = require('express');
 
 const createOrganization = async (req, res) => {
 
@@ -194,10 +195,18 @@ const createOrgContent = async (req, res) => {
         for (const { filePath, fileName, fileContent, fileType } of files) {
             await createContent(filePath, fileName, fileContent, fileType, orgId);
         }
-        res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
-        fs.rmSync(extractPath, { recursive: true, force: true });
+        if (req.body.redirect) {
+            console.log("Redirecting to: ", req.body.redirect);
+            const organization = await adminDao.getOrganization(orgId);
+
+            res.redirect(`/${organization.ORG_NAME}/configure`);
+        } else {
+            res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
+            fs.rmSync(extractPath, { recursive: true, force: true });
+        }
+
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.ORG_CONTENT_CREATE_ERROR}, ${error}`);
+        console.log(`${constants.ERROR_MESSAGE.ORG_CONTENT_CREATE_ERROR}, ${error}`);
         fs.rmSync(extractPath, { recursive: true, force: true });
         return util.handleError(res, error);
     }
@@ -225,6 +234,7 @@ const createContent = async (filePath, fileName, fileContent, fileType, orgId) =
 
 const updateOrgContent = async (req, res) => {
 
+    console.log("Updating Organization Content");
     const orgId = req.params.orgId;
     const zipPath = req.file.path;
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
@@ -249,7 +259,13 @@ const updateOrgContent = async (req, res) => {
             }
         }
         fs.rmSync(extractPath, { recursive: true, force: true });
-        res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
+        if (req.body.redirect) {
+            console.log("Redirecting to: ", req.body.redirect);
+            const organization = await adminDao.getOrganization(orgId);
+            res.redirect(`/${organization.ORG_NAME}/configure`);
+        } else {
+            res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
+        }
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.ORG_CONTENT_UPDATE_ERROR}, ${error}`);
         fs.rmSync(extractPath, { recursive: true, force: true });

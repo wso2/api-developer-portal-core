@@ -18,12 +18,12 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const registerPartials = require('../middlewares/registerPartials');
+//const registerPartials = require('../middlewares/registerPartials');
 
-router.get('/:orgName/login', registerPartials, authController.login);
-router.get('/:orgName/callback', registerPartials, authController.handleCallback);
-router.get('/:orgName/logout', registerPartials, authController.handleLogOut);
-router.get('/:orgName/signup', registerPartials, authController.handleSignUp);
+router.get('/:orgName/login', authController.login);
+router.get('/:orgName/callback', authController.handleCallback);
+router.get('/:orgName/logout', authController.handleLogOut);
+router.get('/:orgName/signup', authController.handleSignUp);
 
 module.exports = router;
 

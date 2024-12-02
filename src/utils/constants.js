@@ -27,7 +27,6 @@ module.exports = {
     HERO_PARTIAL_NAME: 'hero',
     BASE_URL: 'http://localhost:',
     BASE_URL_NAME: 'baseUrl',
-
     MIME_TYPES: {
         HTML: 'text/html',
         TEXT: 'text/plain',
@@ -77,8 +76,14 @@ module.exports = {
       API_LANDING_PAGE_PATH: '/api/',
       DEVPORTAL_ASSETS_BASE_PATH: '/devportal/organizations/',
       DEVPORTAL_CONFIGURE: '/*/configure',
+      DEVPORTAL_API_LISTING: '/*/apis',
+      DEVPORTAL_TECHNICAL_PAGES: ['*/application']
     },
-
+    ROLES: {
+        ADMIN_ROLE: 'admin',
+        SUBSCRIBER_ROLE_INTERNAL: 'Internal/subscriber',
+        SUBSCRIBER_ROLE: 'subscriber'
+    },
     FILE_TYPE: {
         LAYOUT: 'layout',
         TEMPLATE: 'template',
