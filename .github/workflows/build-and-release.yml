@@ -3,10 +3,10 @@ name: Build and Release on Tag Push
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*'  
 
 permissions:
-  contents: write
+  contents: write  
 
 jobs:
   build:
@@ -50,31 +50,13 @@ jobs:
       - name: Debug dist-output contents
         run: ls -R ./dist-output  
 
-      - name: Prepare ZIP files for each distribution
-        run: |
-          mkdir -p ./release-artifacts
-          for folder in ./dist-output/*; do
-            if [ -d "$folder" ]; then
-              dist_name=$(basename "$folder")
-              mkdir -p "./release-temp/$dist_name"
-              cp -r "$folder" "./release-temp/$dist_name/dist"
-              cp config.json startup.sh startup.bat "./release-temp/$dist_name/"
-              cp -r ./artifacts "./release-temp/$dist_name/"
-              zip -r "./release-artifacts/${dist_name}.zip" "./release-temp/$dist_name"
-            fi
-          done
-        shell: bash
-
-      - name: Debug ZIP files
-        run: ls -R ./release-artifacts
-
       - name: Create or Update GitHub Release
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ github.ref_name }}
+          tag: ${{ github.ref_name }}  
           name: WSO2 API Developer Portal Core ${{ github.ref_name }}
           body: "WSO2 API Developer Portal Core serves as a development portal offering fundamental layout and structural components."
           draft: false
           prerelease: false
-          artifacts: "./release-artifacts/*"
-          allowUpdates: true
+          artifacts: "./dist-output/*"  
+          allowUpdates: true 
