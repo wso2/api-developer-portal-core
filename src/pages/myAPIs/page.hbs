@@ -8,8 +8,7 @@
         <tr>
           <th>API Name</th>
           <th>Application Name</th>
-          <th>Throttling Tier</th>
-          <th>Application Status</th>
+          <th>Subscription Plan</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -19,7 +18,6 @@
           <td>{{this.apiName}}</td>
           <td>{{this.applicationName}}</td>
           <td>{{this.throttlingTier}}</td>
-          <td>{{this.appStatus}}</td>
           <td> <a href="#" onclick="unsubscribe('{{this.id}}')">Unsubscribe</a></td>
         </tr>
         {{/each}}
@@ -30,7 +28,7 @@
 <script>
   async function unsubscribe(subscriptionId) {
     try {
-      const response = await fetch(`/api/subscriptions/${subscriptionId}`, {
+      const response = await fetch(`/devportal/subscriptions/${subscriptionId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

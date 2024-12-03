@@ -26,13 +26,14 @@ const apiDao = require('../dao/apiMetadata');
 const constants = require('../utils/constants');
 
 const filePrefix = config.pathToContent;
-
+const hbs = exphbs.create({});
 const registerPartials = async (req, res, next) => {
 
   if (config.mode === constants.DEV_MODE) {
     registerAllPartialsFromFile(constants.BASE_URL + config.port, req);
   } else {
     try {
+      registerInternalPartials();
       await registerPartialsFromAPI(req);
     } catch (error) {
       console.error(`Error while loading organization :,${error}`)
@@ -42,6 +43,17 @@ const registerPartials = async (req, res, next) => {
   }
   next();
 };
+
+const registerInternalPartials = () => {
+
+  const partialsDir = path.join(process.cwd(), 'src/pages/partials');
+
+  fs.readdirSync(partialsDir).forEach(file => {
+    const partialName = path.basename(file, '.hbs');
+    const partialContent = fs.readFileSync(path.join(partialsDir, file), 'utf8');
+    hbs.handlebars.registerPartial(partialName, partialContent);
+  });
+}
 
 const registerAllPartialsFromFile = async (baseURL, req) => {
 
@@ -73,8 +85,6 @@ const registerPartialsFromAPI = async (req) => {
     partialObject[fileName] = content;
   });
 
-  const hbs = exphbs.create({});
-  hbs.handlebars.partials = partialObject;
   Object.keys(partialObject).forEach((partialName) => {
     hbs.handlebars.registerPartial(partialName, partialObject[partialName]);
   });
@@ -88,10 +98,7 @@ const registerPartialsFromAPI = async (req) => {
       { baseUrl: "/" + orgName }
     ),
   };
-  console.log("@@@@@@@@@@@@@@@@@@@@@@");
   if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
-
-    console.log("@@@@@@@@@@@######################@");
 
     const apiName = req.params.apiName;
     const apiID = await apiDao.getAPIId(apiName);
@@ -113,7 +120,6 @@ const registerPartialsFromAPI = async (req) => {
 
 function registerPartialsFromFile(baseURL, dir, profile) {
 
-  const hbs = exphbs.create({});
   const filenames = fs.readdirSync(dir);
   filenames.forEach((filename) => {
     if (filename.endsWith(".hbs")) {

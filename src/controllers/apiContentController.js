@@ -100,24 +100,32 @@ const loadAPIContent = async (req, res) => {
             let subscriptionPlans = [];
             let applications = [];
             let subscriptions = [];
+            let appThrottlingPolicies = [];
             for (const policy of metaData.subscriptionPolicies) {
                 const subscriptionPlan = await loadSubscriptionPlans(policy.policyName);
                 subscriptionPlans.push({
+                    apiId: metaData.apiReferenceID,
                     name: subscriptionPlan.name,
                     description: subscriptionPlan.description,
                     tierPlan: subscriptionPlan.tierPlan,
                 });
             };
 
-            console.log(metaData.apiReferenceID);
             const subs = await loadSubscriptions(metaData.apiReferenceID);
-
+            
             for (const sub of subs.list) {
                 subscriptions.push({
                     id: sub.subscriptionId,
                     applicationName: sub.applicationInfo.name,
                     throttlingTier: sub.throttlingPolicy,
                     appStatus: sub.status,
+                });
+            }
+
+            const throttlingPolicies = await loadAppThrottlingPolicies();
+            for (const throttlingPolicie of throttlingPolicies.list) {
+                appThrottlingPolicies.push({
+                    name: throttlingPolicie.name,
                 });
             }
 
@@ -140,6 +148,7 @@ const loadAPIContent = async (req, res) => {
             }
             
             const templateContent = {
+                appThrottlingPolicies: appThrottlingPolicies,
                 provider: metaData.provider,
                 providerUrl: providerUrl,
                 apiMetadata: metaData,
@@ -156,6 +165,10 @@ const loadAPIContent = async (req, res) => {
         }
     }
     res.send(html);
+}
+
+const loadAppThrottlingPolicies = async () => {
+    return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/throttling-policies/application`);
 }
 
 const loadSubscriptionPlans = async (policyId) => {
@@ -269,33 +282,8 @@ function loadAPIMetaDataFromFile(apiName) {
     return JSON.parse(fs.readFileSync(mockAPIDataPath, constants.CHARSET_UTF8));
 }
 
-async function subscribeAPI(req, res,) {
-    if (req.body.method === 'DELETE') {
-        const subscriptionId = req.body.subscriptionId;
-        await util.invokeApiRequest('DELETE', `${config.controlPlanAPI}/subscriptions/${subscriptionId}`, {}, {});
-        res.redirect(req.get('referer'));
-    } else {
-        const { application: appId, businessPlan: policyId } = req.body;
-        const apiId = await apiDao.getAPIId(req.params.apiName);
-        const orgId = await adminDao.getOrgId(req.params.orgName);
-        const metaData = await loadAPIMetaData(req, orgId, apiId);
-
-        console.log(appId, policyId, metaData.apiReferenceID);
-        const body = {
-            applicationId: appId,
-            apiId: metaData.apiReferenceID,
-            throttlingPolicy: policyId
-        };
-
-        await util.invokeApiRequest('POST', `${config.controlPlanAPI}/subscriptions`, {}, body);
-        res.redirect(req.get('referer'));
-    }
-
-}
-
 module.exports = {
     loadAPIs,
     loadAPIContent,
     loadTryOutPage,
-    subscribeAPI
 };

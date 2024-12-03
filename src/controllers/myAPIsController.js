@@ -60,17 +60,9 @@ const loadMyAPIs = async (req, res) => {
 }
 
 const loadSubscriptions = async (apiId) => {
-    console.log(`${config.controlPlanAPI}/subscriptions?apiId=${apiId}`);
     return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/subscriptions?apiId=${apiId}`);
-}
-
-const unsubscribeAPI = async (req, res) => {
-    const subscriptionId = req.params.subscriptionId;
-    await util.invokeApiRequest('DELETE', `${config.controlPlanAPI}/subscriptions/${subscriptionId}`, {}, {});
-    res.send("Unsubscribed successfully");
 }
 
 module.exports = {
     loadMyAPIs,
-    unsubscribeAPI
 };

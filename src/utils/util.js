@@ -26,6 +26,7 @@ const constants = require('../utils/constants');
 const unzipper = require('unzipper');
 const axios = require('axios');
 const https = require('https');
+const config = require('../../config.json');
 
 const { Sequelize } = require('sequelize');
 
@@ -251,12 +252,12 @@ const getAPIImages = async (directory) => {
 const invokeApiRequest = async (method, url, headers, body) => {
 
     headers = headers || {}; 
-    headers.Authorization = `Bearer `; 
+    headers.Authorization = `Bearer ${config.accessToken}`; 
 
     const httpsAgent = new https.Agent({
         rejectUnauthorized: false, 
     });
-
+    
     try {
         const options = {
             method,
@@ -268,11 +269,14 @@ const invokeApiRequest = async (method, url, headers, body) => {
             options.data = body;
         }
 
-        console.log(options);
         const response = await axios(url, options);
         return response.data;
     } catch (error) {
-        console.log(`Error during ${error}`);
+        let message = error.message;
+        if (error.response) {
+            message = error.response.data.message;
+        }
+        throw new CustomError(error.status, 'Request failed', message);
     }
 };
 

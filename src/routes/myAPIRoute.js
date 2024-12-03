@@ -22,8 +22,4 @@ const myAPIsController = require('../controllers/myAPIsController');
 
 router.get('/((?!favicon.ico)):orgName/myAPIs', registerPartials, myAPIsController.loadMyAPIs);
 
-router.post('/((?!favicon.ico)):orgName/myAPIs', registerPartials, myAPIsController.loadMyAPIs);
-
-router.delete('/((?!favicon.ico))api/subscriptions/:subscriptionId', myAPIsController.unsubscribeAPI);
-
 module.exports = router;

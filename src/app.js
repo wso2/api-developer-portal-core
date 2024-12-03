@@ -52,6 +52,10 @@ Handlebars.registerHelper('in', function (value, options) {
     return validValues.includes(value) ? options.fn(this) : options.inverse(this);
 });
 
+Handlebars.registerHelper('json', function (context) {
+    return JSON.stringify(context);
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -77,6 +81,7 @@ passport.deserializeUser((user, done) => {
 
 app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), filePrefix + 'styles')));
 app.use(constants.ROUTE.IMAGES, express.static(path.join(process.cwd(), filePrefix + 'images')));
+app.use(constants.ROUTE.INTERNAL_STYLES, express.static(path.join(process.cwd() + '/src/pages/internal-styles')));
 
 //backend routes
 app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
