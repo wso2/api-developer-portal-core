@@ -33,4 +33,4 @@ Each of the api landing and tryout pages are available at the following URLs:
 Local Setup
 --------------
 
-To try the setup locally please follow https://github.com/wso2/api-developer-portal
+To try the setup locally please refer https://github.com/wso2/api-developer-portal
