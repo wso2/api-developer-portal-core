@@ -1,11 +1,11 @@
 {
   "port": 3000,
   "pathToContent": "../src/",
-  "mode": "production",
+  "mode": "development",
   "db": {
     "username": "postgres",
     "password": "postgres",
-    "database": "devportal-new",
+    "database": "devportal",
     "host": "localhost",
     "dialect": "postgres"
   }
