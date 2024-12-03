@@ -8,7 +8,7 @@ Follow the steps given in InstallationGuide.md, to create database.
 
 3.  Execute the data-dump.sql script in the artifacts folder to populate the database with mock data.
     ```bash
-    psql -q -U "{db_username}" -d “test”_dump -h "{hostname}" -p "{port}" -f {path to data-dump.sql}
+    psql -q -U "{db_username}" -d "{db_name}" -h "{hostname}" -p "{port}" -f "{path to data-dump.sql}"
     ```
     
 4.  Execute the startup script on the root, based on the OS:
