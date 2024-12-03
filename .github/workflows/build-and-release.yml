@@ -58,7 +58,8 @@ jobs:
               dist_name=$(basename "$folder")
               mkdir -p "./release-temp/$dist_name"
               cp -r "$folder" "./release-temp/$dist_name/dist"
-              cp config.json startup.sh "./release-temp/$dist_name/"
+              cp config.json startup.sh startup.bat "./release-temp/$dist_name/"
+              cp -r ./artifacts "./release-temp/$dist_name/"
               zip -r "./release-artifacts/${dist_name}.zip" "./release-temp/$dist_name"
             fi
           done
