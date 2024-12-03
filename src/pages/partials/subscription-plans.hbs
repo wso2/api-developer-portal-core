@@ -117,14 +117,6 @@
     window.onclick = function (event) {
         const modal = document.getElementById('planModal');
         if (event.target === modal) {
-            const modal = document.getElementById('applicationFormSection');
-            modal.style.display = 'none';
-
-            const appInput = document.getElementById('appName');
-            appInput.value = '';
-
-            const throttlingTier = document.getElementById('throttlingPolicies');
-            throttlingTier.selectedIndex  = 0;
             closeModal();
         }
     };
