@@ -35,16 +35,17 @@
         },
       });
 
+      const responseData = await response.json();
       if (response.ok) {
-        alert('Unsubscribed successfully!');
+        alert(`Unsubscribed successfully!`);
         location.reload(); // Reloads the page to reflect the changes
       } else {
-        console.error('Failed to unsubscribe:', response);
-        alert('Failed to unsubscribe.');
+        console.error('Failed to unsubscribe:', responseData);
+        alert(`Failed to unsubscribe.\n${responseData.description}`);
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('An error occurred.');
+      alert(`An error occurred.\n${error.message}`);
     }
   }
 </script>

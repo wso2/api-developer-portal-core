@@ -170,21 +170,41 @@ const loadAPIContent = async (req, res) => {
 }
 
 const loadAppThrottlingPolicies = async () => {
-    return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/throttling-policies/application`);
+    try {
+        return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/throttling-policies/application`);
+    } catch (error) {
+        console.error("Error occurred while loading application throttling policies", error);
+        util.handleError(res, error);
+    }
 }
 
 const loadSubscriptionPlans = async (policyId) => {
-    return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/throttling-policies/subscription/${policyId}`);
+    try {
+        return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/throttling-policies/subscription/${policyId}`);
+    } catch (error) {
+        console.error("Error occurred while loading subscription plans", error);
+        util.handleError(res, error);
+    }
 }
 
 const loadApplications = async () => {
-    return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/applications?sortBy=name&sortOrder=asc`);
+    try {
+        return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/applications?sortBy=name&sortOrder=asc`);
+    } catch (error) {
+        console.error("Error occurred while loading applications", error);
+        util.handleError(res, error);
+    }
 }
 
 const loadSubscriptions = async (apiId) => {
-    console.log(`${config.controlPlanAPI}/subscriptions?apiId=${apiId}`);
-    return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/subscriptions?apiId=${apiId}`);
+    try {
+        return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/subscriptions?apiId=${apiId}`);
+    } catch (error) {
+        console.error("Error occurred while loading subscriptions", error);
+        util.handleError(res, error);
+    }
 }
+
 const loadTryOutPage = async (req, res) => {
 
     const { orgName, apiName } = req.params;

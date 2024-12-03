@@ -35,7 +35,7 @@ const loadMyAPIs = async (req, res) => {
 
     let subscriptions = [];
     for (const apiRefId of apiRefIds) {
-        const subs = await loadSubscriptions(apiRefId);
+        const subs = await loadSubscriptions(req, res, apiRefId);
         if (subs) {
             for (const sub of subs.list) {
                 subscriptions.push({
@@ -58,8 +58,13 @@ const loadMyAPIs = async (req, res) => {
     res.send(html);
 }
 
-const loadSubscriptions = async (apiId) => {
-    return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/subscriptions?apiId=${apiId}`);
+const loadSubscriptions = async (req, res, apiId) => {
+    try {
+        return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/subscriptions?apiId=${apiId}`);
+    } catch (error) {
+        console.error("Error occurred while loading subscriptions", error);
+        util.handleError(res, error);
+    }
 }
 
 const loadDefaultContent = async (req, res) => {

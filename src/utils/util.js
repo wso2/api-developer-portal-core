@@ -274,7 +274,7 @@ const invokeApiRequest = async (method, url, headers, body) => {
     } catch (error) {
         let message = error.message;
         if (error.response) {
-            message = error.response.data.message;
+            message = error.response.data.description;
         }
         throw new CustomError(error.status, 'Request failed', message);
     }
