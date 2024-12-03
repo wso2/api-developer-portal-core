@@ -252,7 +252,7 @@ const getAPIImages = async (directory) => {
 const invokeApiRequest = async (method, url, headers, body) => {
 
     headers = headers || {}; 
-    headers.Authorization = `Bearer ${config.accessToken}`; 
+    headers.Authorization = `${config.accessToken}`; 
 
     const httpsAgent = new https.Agent({
         rejectUnauthorized: false, 

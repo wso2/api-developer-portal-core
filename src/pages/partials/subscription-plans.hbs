@@ -19,7 +19,6 @@
             {{/each}}
         </div>
     </div>
-
     <div id="planModal" class="custom-api-card modal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -44,9 +43,12 @@
                             Application</button>`
                         {{/if}}
                     </div>
-                    <div class="modal-body">
-                        <div id="applicationFormSection" class="app-selection">
-                            <h5 class="modal-header dev-header h5">Create a New Application</h5>
+
+                    <div id="applicationFormSection" class="app-selection">
+                        <div class="modal-header">
+                            <h5 class="dev-header h5">Create a New Application</h5>
+                        </div>
+                        <div class="modal-body">
                             <div>
                                 <h6 for="newAppName" class="dev-header h6">Application Name</h6>
                                 <input type="text" id="appName" class="form-control input-content"
@@ -71,7 +73,7 @@
                         onclick="handleSubscribe()">Subscribe</button>
                     {{else}}
                     <button type="button" class="btn apilistbtn-primary" id="createSubButton"
-                        onclick="handleCreateSubscribe()">Create & Subscribe</button>
+                        onclick="handleCreateSubscribe()" {{#if devMode}}disabled{{/if}}>Create & Subscribe</button>
                     {{/if}}
                 </div>
             </div>
@@ -104,6 +106,12 @@
         const appSelection = document.getElementById('applicationFormSection');
         appSelection.style.display = 'none';
 
+        const appInput = document.getElementById('appName');
+        appInput.value = '';
+
+        const throttlingTier = document.getElementById('throttlingPolicies');
+        throttlingTier.selectedIndex  = 0;
+
     }
 
     window.onclick = function (event) {
@@ -111,6 +119,12 @@
         if (event.target === modal) {
             const modal = document.getElementById('applicationFormSection');
             modal.style.display = 'none';
+
+            const appInput = document.getElementById('appName');
+            appInput.value = '';
+
+            const throttlingTier = document.getElementById('throttlingPolicies');
+            throttlingTier.selectedIndex  = 0;
             closeModal();
         }
     };

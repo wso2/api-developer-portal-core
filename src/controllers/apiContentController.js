@@ -85,6 +85,8 @@ const loadAPIContent = async (req, res) => {
         });
 
         const templateContent = {
+            devMode: true,
+            providerUrl: '#subscriptionPlans',
             apiContent: await loadMarkdown(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, filePrefix + '../mock/' + req.params.apiName),
             apiMetadata: metaData,
             subscriptionPlans: subscriptionPlans,

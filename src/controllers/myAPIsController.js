@@ -18,7 +18,7 @@
 /* eslint-disable no-undef */
 const path = require('path');
 const fs = require('fs');
-const { renderGivenTemplate, loadLayoutFromAPI } = require('../utils/util');
+const { renderGivenTemplate, loadLayoutFromAPI,  renderTemplate} = require('../utils/util');
 const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
@@ -26,7 +26,6 @@ const apiMetadataService = require('../services/apiMetadataService');
 const util = require('../utils/util');
 
 const loadMyAPIs = async (req, res) => {
-
     const orgId = await adminDao.getOrgId(req.params.orgName);
     const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'myAPIs', 'page.hbs');
     const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
@@ -63,6 +62,13 @@ const loadSubscriptions = async (apiId) => {
     return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/subscriptions?apiId=${apiId}`);
 }
 
+const loadDefaultContent = async (req, res) => {
+    const filePrefix = config.pathToContent;
+    html = renderTemplate('../pages/myAPIs/page.hbs', filePrefix + 'layout/main.hbs', {});
+    res.send(html);
+}
+
 module.exports = {
     loadMyAPIs,
+    loadDefaultContent
 };

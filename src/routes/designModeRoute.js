@@ -22,6 +22,7 @@ const apiController = require('../controllers/apiContentController');
 const contentController = require('../controllers/customContentController');
 const registerPartials = require('../middlewares/registerPartials');
 const authController = require('../controllers/authController');
+const myAPIsController = require('../controllers/myAPIsController');
 
 
 router.get('/', registerPartials, orgController.loadOrganizationContent);
@@ -31,6 +32,8 @@ router.get('/apis', registerPartials, apiController.loadAPIs);
 router.get('/api/:apiName', registerPartials, apiController.loadAPIContent);
 
 router.get('/api/:apiName/tryout', registerPartials, apiController.loadTryOutPage);
+
+router.get('/myAPIs', registerPartials, myAPIsController.loadDefaultContent);
 
 router.get('/login', registerPartials, authController.login);
 router.get('/callback', registerPartials, authController.handleCallback);

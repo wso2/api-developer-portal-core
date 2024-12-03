@@ -29,11 +29,11 @@ const filePrefix = config.pathToContent;
 const hbs = exphbs.create({});
 const registerPartials = async (req, res, next) => {
 
+  registerInternalPartials();
   if (config.mode === constants.DEV_MODE) {
     registerAllPartialsFromFile(constants.BASE_URL + config.port, req);
   } else {
     try {
-      registerInternalPartials();
       await registerPartialsFromAPI(req);
     } catch (error) {
       console.error(`Error while loading organization :,${error}`)
