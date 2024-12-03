@@ -59,16 +59,14 @@ const registerAllPartialsFromFile = async (baseURL, req) => {
 
 const registerPartialsFromAPI = async (req) => {
   
-  const { orgName, apiName }  = req.params;
+  const orgName  = req.params.orgName;
   const orgData = await adminDao.getOrganization(orgName);
   const orgID = orgData.ORG_ID;
-  const apiID = await apiDao.getAPIId(apiName);
   const imageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/layout?fileType=image&fileName=`;
   let partials = await adminDao.getOrgContent({
-    orgId: orgData.ORG_ID,
+    orgId: orgID,
     fileType: 'partial',
   });
-
   let partialObject = {}
   partials.forEach(file => {
     let fileName = file.FILE_NAME.split(".")[0];
@@ -77,7 +75,6 @@ const registerPartialsFromAPI = async (req) => {
     partialObject[fileName] = content;
   });
   const hbs = exphbs.create({});
-  hbs.handlebars.partials = partialObject;
   Object.keys(partialObject).forEach((partialName) => {
     hbs.handlebars.registerPartial(partialName, partialObject[partialName]);
   });
@@ -92,6 +89,9 @@ const registerPartialsFromAPI = async (req) => {
     ),
   };
   if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
+
+    const apiName = req.params.apiName;
+    const apiID = await apiDao.getAPIId(apiName);
     //fetch markdown content for API if exists
     const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, orgID, apiID);
     const markdownContent = markdownResponse ? markdownResponse.API_FILE.toString("utf8") : "";
@@ -135,7 +135,7 @@ const registerInternalPartials = () => {
   console.log("Register internal partials");
   fs.readdirSync(partialsDir).forEach(file => {
     const partialName = path.basename(file, '.hbs');
-    const partialContent = fs.readFileSync(path.join(partialsDir, file), 'utf8');
+    const partialContent = fs.readFileSync(path.join(partialsDir, file), 'utf8'); 
     hbs.handlebars.registerPartial(partialName, partialContent);
   });
 }

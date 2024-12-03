@@ -26,6 +26,7 @@ const apiDefinition = multer({ storage: storage })
 
 
 router.post('/organizations', adminService.createOrganization);
+router.get('/organizations', adminService.getOrganizations);
 router.put('/organizations/:orgId', adminService.updateOrganization);
 router.get('/organizations/:orgId', devportalService.getOrganization);
 router.delete('/organizations/:orgId', adminService.deleteOrganization);

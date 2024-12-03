@@ -49,7 +49,10 @@ const loadSettingPage = async (req, res) => {
         const views = [{
             'name': 'Default'
         }]
-        templateContent.views = views;
+        if (views.length > 0) {
+            templateContent.content = true;
+            templateContent.views = views;
+        }
         let html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         res.send(html);
     } catch (error) {
@@ -60,8 +63,6 @@ const loadSettingPage = async (req, res) => {
         res.send(html);
         console.error(`Error while loading setting page: ${error}`);
     }
-
-
 }
 
 const identityprovider = async (req, res) => {
@@ -102,23 +103,30 @@ const identityprovider = async (req, res) => {
     }
 }
 
-const storeOrgContent = async (req, res) => {
-    try {
-        console.log("Access", req.user);
-        console.log("Org ID: ", req.user[config.orgID_claim_name]);
-        req.params.orgId = req.user[config.orgID_claim_name];
-        const response = await adminService.createOrgContent(req, res);
-        console.log("Response: ", response);
-        res.redirect(`/${req.params.orgName}/configure`);
-    } catch (error) {
-        console.error(`Error while storing org content: ${error}`);
-        res.send("Error while storing org content");
-    }
-}
+const createorganization = async (req, res) => {
 
+    try {
+        const completeTemplatePath = path.join('src', 'pages', 'createOrg', 'page.hbs');
+        const layoutPath = path.join('src', 'pages', 'layout', 'main.hbs');
+        const templateContent = {
+            'orgID': req.user[config.orgID_claim_name],
+        }
+        //fetch all created organizations
+        const organizations = await adminService.getAllOrganizations();
+        if(organizations.length !== 0){
+            console.log("Organizations retrieved");
+            templateContent.organizations = organizations;
+        }
+        const html = await renderTemplate(completeTemplatePath, layoutPath, templateContent);
+        res.send(html);
+    } catch (error) {
+        console.error(`Error while loading setting page: ${error}`);
+    }
+
+}
 
 module.exports = {
     loadSettingPage,
     identityprovider,
-    storeOrgContent
+    createorganization
 };

@@ -31,33 +31,33 @@ const filePrefix = config.pathToContent;
 
 const fetchAuthJsonContent = async (req, orgName) => {
 
+    //use super admin for org creation page login
     if (req.session.returnTo) {
-        if (minimatch.minimatch(req.session.returnTo, constants.ROUTE.DEVPORTAL_CONFIGURE)) {
+        if (minimatch.minimatch(req.session.returnTo, constants.ROUTE.DEVPORTAL_CONFIGURE) ||
+            minimatch.minimatch(req.session.returnTo, constants.ROUTE.DEVPORTAL_ROOT)) {
             return config.identityProvider;
         }
-    } 
-    if (req.user && req.user[config.role_claim_name]) {
-        const regex = /^Internal\/everyone.*/;
-        const role = req.user[config.role_claim_name];
-        if(regex.test(role) && role.split(',').includes(constants.ROLES.ADMIN_ROLE)) {
-            return config.identityProvider
-        } else if (role === constants.ROLES.ADMIN_ROLE) {
-        return config.identityProvider
-        }
-    } else if (config.mode === constants.DEV_MODE) {
+    }
+    if (config.mode === constants.DEV_MODE) {
         const authJsonPath = path.join(process.cwd(), filePrefix + '../mock', 'auth.json');
         return JSON.parse(fs.readFileSync(authJsonPath, constants.CHARSET_UTF8));
+    }
+    //if no idp per org, use super IDP
+    if(orgName === 'undefined') {
+        console.log('No org name');
+        return config.identityProvider;
     }
     try {
         const organization = await adminDao.getOrganization(orgName);
         const response = await adminDao.getIdentityProvider(organization.ORG_ID);
         if (response.length === 0) {
-            throw new Error(`Failed to fetch identity provider details: ${response.statusText}`);
+            //login from super IDP
+            return config.identityProvider;
         }
         return new IdentityProviderDTO(response[0].dataValues);
     } catch (error) {
         console.error("Failed to fetch identity provider details", error);
-        return {};
+        return config.identityProvider;
     }
 };
 

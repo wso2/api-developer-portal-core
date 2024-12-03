@@ -3,7 +3,9 @@
 </head>
 <main>
     <div class="container mt-5">
+        {{#if content}}
         {{> upload-zip }}
+        {{/if}}
         {{> list-files }}
         {{#if idp}}
         {{> list-idp}}

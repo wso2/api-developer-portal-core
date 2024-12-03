@@ -23,11 +23,24 @@ const fs = require('fs');
 const path = require('path');
 const IdentityProviderDTO = require("../dto/identityProvider");
 const constants = require('../utils/constants');
-const e = require('express');
+const { validationResult } = require('express-validator');
 
 const createOrganization = async (req, res) => {
 
+    console.log('Creating Organization Content');
+    console.log('Access token:', req.user);
+    console.log('Body:', req.body);
+    const rules = util.validateOrganization();
+    for (let validation of rules) {
+        await validation.run(req);
+    }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     const { orgName, businessOwner, businessOwnerContact, businessOwnerEmail } = req.body;
+
     try {
         if (!orgName || !businessOwner) {
             throw new CustomError(400, "Bad Request", "Missing or Invalid fields in the request payload");
@@ -52,12 +65,41 @@ const createOrganization = async (req, res) => {
     }
 };
 
+const getOrganizations = async (req, res) => {
+
+    try {
+        const orgList = await getAllOrganizations();
+        res.status(200).send(orgList);
+    } catch (error) {
+        util.handleError(res, error);
+    }
+};
+
+const getAllOrganizations = async () => {
+    const organizations = await adminDao.getOrganizations();
+    const orgList = [];
+    if (organizations.length > 0) {
+        for (const organization of organizations) {
+            orgList.push({
+                orgName: organization.dataValues.ORG_NAME,
+                orgID: organization.dataValues.ORG_ID,
+                businessOwner: organization.dataValues.BUSINESS_OWNER,
+                businessOwnerContact: organization.dataValues.BUSINESS_OWNER_CONTACT,
+                businessOwnerEmail: organization.dataValues.BUSINESS_OWNER_EMAIL
+            });
+        }
+    }
+    console.log("Organizations retrieved: ", orgList);
+    return orgList;
+}
+
 const updateOrganization = async (req, res) => {
 
     try {
         const orgId = req.params.orgId;
         const { orgName, businessOwner, businessOwnerContact, businessOwnerEmail } = req.body;
         if (!orgId) {
+            console.log("Missing required parameter: 'orgId'");
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
         if (!orgName || !businessOwner) {
@@ -127,6 +169,7 @@ const updateIdentityProvider = async (req, res) => {
     try {
         const orgId = req.params.orgId;
         const idpData = req.body;
+        console.log("Updating IDP: ", idpData);
         if (!idpData.name || !idpData.issuer || !idpData.authorizationURL || !idpData.tokenURL ||
             !idpData.clientId || !idpData.callbackURL || !idpData.scope || !idpData.logoutURL || !idpData.logoutRedirectURI) {
             throw new CustomError(400, "Bad Request", "Missing or Invalid fields in the request payload");
@@ -234,7 +277,6 @@ const createContent = async (filePath, fileName, fileContent, fileType, orgId) =
 
 const updateOrgContent = async (req, res) => {
 
-    console.log("Updating Organization Content");
     const orgId = req.params.orgId;
     const zipPath = req.file.path;
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
@@ -259,13 +301,7 @@ const updateOrgContent = async (req, res) => {
             }
         }
         fs.rmSync(extractPath, { recursive: true, force: true });
-        if (req.body.redirect) {
-            console.log("Redirecting to: ", req.body.redirect);
-            const organization = await adminDao.getOrganization(orgId);
-            res.redirect(`/${organization.ORG_NAME}/configure`);
-        } else {
-            res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
-        }
+        res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.ORG_CONTENT_UPDATE_ERROR}, ${error}`);
         fs.rmSync(extractPath, { recursive: true, force: true });
@@ -362,5 +398,7 @@ module.exports = {
     createIdentityProvider,
     updateIdentityProvider,
     getIdentityProvider,
-    deleteIdentityProvider
+    deleteIdentityProvider,
+    getOrganizations,
+    getAllOrganizations
 };

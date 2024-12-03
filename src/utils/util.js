@@ -50,7 +50,6 @@ function renderTemplate(templatePath, layoutPath, templateContent) {
     }
 
     const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
-
     const completeLayoutPath = path.join(process.cwd(), layoutPath);
     const layoutResponse = fs.readFileSync(completeLayoutPath, constants.CHARSET_UTF8)
 
@@ -303,6 +302,20 @@ const validateIDP = () => {
     return validations;
 }
 
+const validateOrganization = () => {
+
+    const validations = [
+        body('*')
+            .if(body('*').isString())
+            .escape()
+            .trim(),
+        body('businessOwnerEmail')
+            .notEmpty()
+            .isEmail()
+    ];
+    return validations;
+}
+
 module.exports = {
     loadMarkdown,
     renderTemplate,
@@ -316,5 +329,6 @@ module.exports = {
     getAPIFileContent,
     getAPIImages,
     isTextFile,
-    validateIDP
+    validateIDP,
+    validateOrganization
 }

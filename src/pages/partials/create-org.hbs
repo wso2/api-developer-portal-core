@@ -1,0 +1,62 @@
+<section>
+<div class="card mb-4">
+    <div class="card-header">
+        <h3 class="card-title">Organization configuration </h3>
+        <p class="card-subtitle">Create organization</p>
+    </div>
+    <div class="card-body">
+        <form id="createOrg">
+            <div class="mb-3">
+                <label for="orgName" class="form-label">Name</label>
+                <input type="text" class="form-control" id="orgName" name="orgName" placeholder="Enter organization name">
+            </div>
+            <div class="mb-3">
+                <label for="business-owner" class="form-label">Business Owner</label>
+                <input type="text" class="form-control" id="businessOwner" name="businessOwner" placeholder="Enter Business Owner">
+            </div>
+            <div class="mb-3">
+                <label for="business-owner-contact" class="form-label">Business Owner Contact</label>
+                <input type="text" class="form-control" id="businessOwnerContact" name="businessOwnerContact"
+                    placeholder="Enter Business Owner Contact">
+            </div>
+            <div class="mb-3">
+                <label for="business-owner-email" class="form-label">Business Owner Email</label>
+                <input type="text" class="form-control" id="businessOwnerEmail" name="businessOwnerEmail" 
+                placeholder="Enter Business Owner Email">
+            </div>
+            <div class="text-end">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const createOrg = document.getElementById('createOrg');
+            createOrg.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const orgName = document.getElementById('orgName').value;
+                const businessOwner = document.getElementById('businessOwner').value;
+                const businessOwnerContact = document.getElementById('businessOwnerContact').value;
+                const businessOwnerEmail = document.getElementById('businessOwnerEmail').value;
+                const response = await fetch('/devportal/organizations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        orgName,
+                        businessOwner,
+                        businessOwnerContact,
+                        businessOwnerEmail
+                    })
+                });
+                if (response.ok) {
+                    window.location.href = '/portal/';
+                } else {
+                    alert(`Field validation failed`);
+                }
+            });
+        });
+    </script>
+</div>
+</section>

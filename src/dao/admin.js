@@ -56,6 +56,22 @@ const getOrganization = async (param) => {
     }
 };
 
+const getOrganizations = async () => {
+
+    try {
+        const organizations = await Organization.findAll();
+        if (organizations.length === 0) {
+            return [];
+        }
+        return organizations;
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
 const updateOrganization = async (orgData) => {
 
     try {
@@ -309,5 +325,6 @@ module.exports = {
     createIdentityProvider,
     updateIdentityProvider,
     getIdentityProvider,
-    deleteIdentityProvider
+    deleteIdentityProvider,
+    getOrganizations
 };

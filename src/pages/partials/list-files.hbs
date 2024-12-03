@@ -1,6 +1,3 @@
-<head>
-  <script src='/scripts/update-zip.js' defer></script>
-</head>
 <section>
     <div class="card mb-4">
         <div class="card-header">
@@ -25,6 +22,7 @@
                         </form>
                     </div>
                     {{/views}}
+                    </div>
             </ul>
         </div>
         <div class="modal fade" id="editFileModal" tabindex="-1" aria-labelledby="editFileModalLabel"
@@ -37,7 +35,7 @@
                     </div>
                     <div class="modal-body">
                         <input type="hidden" id="editFileId" name="fileId">
-                        <form id="editForm" enctype="multipart/form-data"> 
+                        <form id="editForm" enctype="multipart/form-data">
                             {{!-- <input type="hidden" class="form-control" name="redirect" value="true"> --}}
                             <div class="mb-3">
                                 <label for="editZipFile" class="form-label">Upload New Zip File</label>
@@ -67,37 +65,10 @@
         </div>
     </div>
 
-    {{!-- <script>
+    <script>
         document.addEventListener('DOMContentLoaded', function () {
 
-            const uploadArea = document.getElementById('uploadArea');
-            const zipFile = document.getElementById('file');
-            const redirect = document.getElementById('redirect');
-            const fileName = document.getElementById('fileName');
             const uploadForm = document.getElementById('editForm');
-
-            uploadArea.addEventListener('click', () => zipFile.click());
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.style.borderColor = '#007bff';
-            });
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.style.borderColor = '#ccc';
-            });
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.style.borderColor = '#ccc';
-                if (e.dataTransfer.files.length) {
-                    zipFile.files = e.dataTransfer.files;
-                    updateFileName();
-                }
-            });
-            zipFile.addEventListener('change', updateFileName);
-
-            function updateFileName() {
-                fileName.textContent = zipFile.files[0] ? `Selected file: ${zipFile.files[0].name}` : '';
-            }
-
             const editFileModal = new bootstrap.Modal(document.getElementById('editFileModal'));
 
             // Edit file functionality
@@ -110,6 +81,7 @@
                 });
 
             });
+
             uploadForm.addEventListener('submit', async (e) => {
 
                 console.log('Inside submit')
@@ -149,8 +121,7 @@
                     console.error('Error uploading file:', error);
                     alert('An unexpected error occurred while uploading the file.');
                 }
-
             });
         });
-    </script> --}}
+    </script>
 </section>

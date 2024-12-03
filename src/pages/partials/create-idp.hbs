@@ -15,7 +15,7 @@
     {{/if}}
     <!-- Display Success Message -->
     <div class="card-body">
-        <form id="settingsForm" action="identityprovider" method="POST">
+        <form id="createIDP">
             <div class="mb-3">
                 <label for="IDPName" class="form-label">Name</label>
                 <input type="text" class="form-control" id="name" name="name" placeholder="Enter IDP name">
@@ -60,9 +60,38 @@
                 <input type="text" class="form-control" id="logoutRedirectURI" name="logoutRedirectURI"
                     placeholder="Enter logout redirect URI">
             </div>
+            <input type="hidden" id="orgId" class="orgId" name="orgId" value={{orgID}}>
             <div class="text-end">
                 <button type="submit" class="btn btn-primary">Save Changes</button>
             </div>
         </form>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const editIDP = document.getElementById('createIDP');
+            const orgID = document.getElementById('orgId').value;
+            editIDP.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(editIDP);
+                const data = {};
+                formData.forEach((value, key) => {
+                    data[key] = value;
+                });
+                data['scope'] = 'openid';
+                console.log(JSON.stringify(data));
+                const response = await fetch(`/devportal/organizations/${orgID}/identityProvider`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    window.location.href = 'configure';
+                } else {
+                    alert(`Field validation failed`);
+                }
+            });
+        });
+    </script>
 </div>

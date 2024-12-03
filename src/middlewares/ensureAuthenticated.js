@@ -22,6 +22,7 @@ const config = require(process.cwd() + '/config.json');
 
 const authenticatedPages = [
     constants.ROUTE.DEVPORTAL_CONFIGURE,
+    constants.ROUTE.DEVPORTAL_ROOT,
     constants.ROUTE.DEVPORTAL_API_LISTING
 ]
 
@@ -30,9 +31,11 @@ const ensurePermission = (currentPage, role) => {
     console.log('EnsurePermission');
     console.log('Current Page: ' + currentPage);
     if (constants.ROUTE.DEVPORTAL_TECHNICAL_PAGES.some(pattern => minimatch.minimatch(currentPage, pattern))) {
-        return constants.ROLES.SUBSCRIBER_ROLE === role;
+        return constants.ROLES.SUBSCRIBER_ROLE === role 
+        || constants.ROLES.ADMIN_ROLE === role;
     }
-    if (minimatch.minimatch(currentPage, constants.ROUTE.DEVPORTAL_CONFIGURE)) {
+    if (minimatch.minimatch(currentPage, constants.ROUTE.DEVPORTAL_CONFIGURE) ||
+        minimatch.minimatch(currentPage, constants.ROUTE.DEVPORTAL_ROOT)) {
         console.log('Admin role');
         console.log('Role is: ' + role);
         const regex = /^Internal\/everyone.*/;
@@ -61,14 +64,13 @@ const ensureAuthenticated = async (req, res, next) => {
         }
         console.log('Logged in Role is: ' + role);
         if (req.isAuthenticated()) {
-            if(ensurePermission(req.originalUrl, role)) {
+            if (ensurePermission(req.originalUrl, role)) {
                 console.log('User is authenticated');
                 return next();
             } else {
                 console.log('User is not authorized');
                 res.redirect(`/${req.params.orgName}`);
             }
-            
         } else {
             console.log('User is not authenticated');
             req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;

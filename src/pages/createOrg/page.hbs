@@ -1,0 +1,11 @@
+<head>
+    <link rel="stylesheet" href="/portal/settings.css">
+</head>
+<main>
+    <div class="container mt-5">
+         {{> create-org }}
+         {{#if organizations}}
+         {{> list-org }}
+         {{/if}}
+    </div>
+</main>
