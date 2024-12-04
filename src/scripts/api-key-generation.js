@@ -27,14 +27,30 @@ function updateSandboxSections() {
 }
 
 function validateGenerateButton(isProduction) {
-  let ipValuesInput = document.getElementById('ip-values-' + (isProduction ? 'production' : 'sandbox')).value;
-  let httpValuesInput = document.getElementById('http-values-' + (isProduction ? 'production' : 'sandbox')).value;
-  let generateButton = document.getElementById('apiKeyGenerateButton-' + (isProduction ? 'production' : 'sandbox'));
+  let ipValuesInput = document.getElementById(
+    'ip-values-' + (isProduction ? 'production' : 'sandbox')
+  ).value;
+  let httpValuesInput = document.getElementById(
+    'http-values-' + (isProduction ? 'production' : 'sandbox')
+  ).value;
+  let generateButton = document.getElementById(
+    'apiKeyGenerateButton-' + (isProduction ? 'production' : 'sandbox')
+  );
 
-  if ((isProduction && document.getElementById('ipCheck-production').checked && !ipValuesInput) ||
-      (isProduction && document.getElementById('httpCheck-production').checked && !httpValuesInput) ||
-      (!isProduction && document.getElementById('ipCheck-sandbox').checked && !ipValuesInput) ||
-      (!isProduction && document.getElementById('httpCheck-sandbox').checked && !httpValuesInput)) {
+  if (
+    (isProduction &&
+      document.getElementById('ipCheck-production').checked &&
+      !ipValuesInput) ||
+    (isProduction &&
+      document.getElementById('httpCheck-production').checked &&
+      !httpValuesInput) ||
+    (!isProduction &&
+      document.getElementById('ipCheck-sandbox').checked &&
+      !ipValuesInput) ||
+    (!isProduction &&
+      document.getElementById('httpCheck-sandbox').checked &&
+      !httpValuesInput)
+  ) {
     generateButton.disabled = true;
   } else {
     generateButton.disabled = false;
@@ -45,9 +61,15 @@ function validateGenerateButton(isProduction) {
   const ipLists = { production: [], sandbox: [] };
 
   window.addIp = function (event, isProduction) {
-    const ipContainer = document.getElementById('ip-container-' + (isProduction ? 'production' : 'sandbox'));
-    const ipInput = document.getElementById('ip-input-' + (isProduction ? 'production' : 'sandbox'));
-    const ipValuesInput = document.getElementById('ip-values-' + (isProduction ? 'production' : 'sandbox'));
+    const ipContainer = document.getElementById(
+      'ip-container-' + (isProduction ? 'production' : 'sandbox')
+    );
+    const ipInput = document.getElementById(
+      'ip-input-' + (isProduction ? 'production' : 'sandbox')
+    );
+    const ipValuesInput = document.getElementById(
+      'ip-values-' + (isProduction ? 'production' : 'sandbox')
+    );
 
     const ipList = ipLists[isProduction ? 'production' : 'sandbox'];
 
@@ -74,7 +96,7 @@ function validateGenerateButton(isProduction) {
         }
 
         ipValuesInput.value = ipList.join(',');
-        validateGenerateButton(isProduction);  
+        validateGenerateButton(isProduction);
       };
 
       chip.appendChild(removeButton);
@@ -90,9 +112,15 @@ function validateGenerateButton(isProduction) {
   const referrerLists = { production: [], sandbox: [] };
 
   window.addHttpReferrer = function (event, isProduction) {
-    const referrerContainer = document.getElementById('http-container-' + (isProduction ? 'production' : 'sandbox'));
-    const referrerInput = document.getElementById('http-input-' + (isProduction ? 'production' : 'sandbox'));
-    const referrerValuesInput = document.getElementById('http-values-' + (isProduction ? 'production' : 'sandbox'));
+    const referrerContainer = document.getElementById(
+      'http-container-' + (isProduction ? 'production' : 'sandbox')
+    );
+    const referrerInput = document.getElementById(
+      'http-input-' + (isProduction ? 'production' : 'sandbox')
+    );
+    const referrerValuesInput = document.getElementById(
+      'http-values-' + (isProduction ? 'production' : 'sandbox')
+    );
 
     const referrerList = referrerLists[isProduction ? 'production' : 'sandbox'];
 
@@ -119,7 +147,7 @@ function validateGenerateButton(isProduction) {
         }
 
         referrerValuesInput.value = referrerList.join(',');
-        validateGenerateButton(isProduction);  
+        validateGenerateButton(isProduction);
       };
 
       chip.appendChild(removeButton);
@@ -131,23 +159,70 @@ function validateGenerateButton(isProduction) {
   };
 })();
 
-function generateAPIKey(applicationID, isProduction) {
-  const ipValuesInput = document.getElementById('ip-values-' + (isProduction ? 'production' : 'sandbox'));
-  const httpValuesInput = document.getElementById('http-values-' + (isProduction ? 'production' : 'sandbox'));
-  const validityInput = document.getElementById('validity-' + (isProduction ? 'production' : 'sandbox'));
+async function generateAPIKey(applicationID, isProduction) {
+  const ipValuesInput = document.getElementById(
+    'ip-values-' + (isProduction ? 'production' : 'sandbox')
+  );
+  const httpValuesInput = document.getElementById(
+    'http-values-' + (isProduction ? 'production' : 'sandbox')
+  );
+  const validityInput = document.getElementById(
+    'validity-' + (isProduction ? 'production' : 'sandbox')
+  );
 
-  const noneRadio = document.getElementById('noneCheck-' + (isProduction ? 'production' : 'sandbox'));
-  const ipRadio = document.getElementById('ipCheck-' + (isProduction ? 'production' : 'sandbox'));
-  const httpRadio = document.getElementById('httpCheck-' + (isProduction ? 'production' : 'sandbox'));
-  
-  const validity = validityInput.value;
+  const noneRadio = document.getElementById(
+    'noneCheck-' + (isProduction ? 'production' : 'sandbox')
+  );
+  const ipRadio = document.getElementById(
+    'ipCheck-' + (isProduction ? 'production' : 'sandbox')
+  );
+  const httpRadio = document.getElementById(
+    'httpCheck-' + (isProduction ? 'production' : 'sandbox')
+  );
+
+  const validityPeriod = validityInput.value;
+  let JSONbody;
+  const environment = isProduction ? 'PRODUCTION' : 'SANDBOX';
+  const uri = `/applications/${applicationID}/api-keys/${environment}/generate`;
 
   if (noneRadio.checked) {
-    console.log('none');
+    JSONbody = JSON.stringify({
+      validityPeriod,
+      additionalProperties: { permittedIP: '', permittedReferer: '' },
+    });
   } else if (ipRadio.checked) {
     const ipValues = ipValuesInput.value;
+    JSONbody = JSON.stringify({
+      validityPeriod,
+      additionalProperties: { permittedIP: ipValues, permittedReferer: '' },
+    });
   } else if (httpRadio.checked) {
     const httpValues = httpValuesInput.value;
-  
+    JSONbody = JSON.stringify({
+      validityPeriod,
+      additionalProperties: { permittedIP: '', permittedReferer: httpValues },
+    });
+  }
+
+  try {
+    const response = await fetch(uri, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSONbody,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const responseData = await response.json();
+    console.log(responseData.apikey); 
+    await showAlert('API Key generated successfully!', 'success');
+    // KEY POP UP AND COPY TO CLIPBOARD
+    // CLEAN RELATED FORM
+  } catch (error) {
+    console.error('Error:', error);
   }
 }

@@ -14,7 +14,7 @@ const controlPlaneUrl = config.controlPlaneUrl;
 const token = cpToken.token;
 
 const httpsAgent = new https.Agent({
-    ca: fs.readFileSync(certPath),  
+    ca: fs.readFileSync(certPath),
     rejectUnauthorized: true,
 });
 
@@ -292,6 +292,36 @@ const resetThrottlingPolicy = async (req, res) => {
     }
 };
 
+// ***** Generate API Keys *****
+
+const generateAPIKeys = async (req, res) => {
+    try {
+        const applicationId = req.params.applicationid;
+        const environment = req.params.env;
+        const { validityPeriod, additionalProperties } = req.body;
+
+        const response = await axios.post(
+            `${controlPlaneUrl}/applications/${applicationId}/api-keys/${environment}/generate`,
+            {
+                validityPeriod, additionalProperties
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                httpsAgent,
+            }
+        );
+        console.log('API Key generated successfully.');
+        console.log(response.data);
+        res.status(200).json(response.data);
+    } catch (error) {
+        console.error('Error generating API Key:', error.message);
+        res.status(500).json({ error: 'Failed to generate API key' });
+    }
+};
+
 module.exports = {
     loadApplications,
     loadThrottlingPolicies,
@@ -300,5 +330,6 @@ module.exports = {
     saveApplication,
     updateApplication,
     deleteApplication,
-    resetThrottlingPolicy
+    resetThrottlingPolicy,
+    generateAPIKeys
 };

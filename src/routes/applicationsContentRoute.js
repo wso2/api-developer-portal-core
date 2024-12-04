@@ -12,5 +12,6 @@ router.post('/applications', applicationsController.saveApplication);
 router.put('/applications/:applicationid', applicationsController.updateApplication);
 router.delete('/applications/:applicationid', applicationsController.deleteApplication);
 router.post('/applications/:applicationid/reset-throttle-policy', applicationsController.resetThrottlingPolicy);
+router.post('/applications/:applicationid/api-keys/:env/generate', applicationsController.generateAPIKeys);
 
 module.exports = router;
