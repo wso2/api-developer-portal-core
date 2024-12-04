@@ -128,7 +128,7 @@ const storeAPIFiles = async (files, apiID, t) => {
                 API_ID: apiID
             })
         });
-        const apiContentResponse = await APIContent.bulkCreate(apiContent,{ transaction: t });
+        const apiContentResponse = await APIContent.bulkCreate(apiContent, { transaction: t });
         return apiContentResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -170,7 +170,7 @@ const updateOrCreateAPIFiles = async (files, apiID, orgID, t) => {
                         ]
                     }
                 );
-                if(!updateResponse) {
+                if (!updateResponse) {
                     throw new Sequelize.DatabaseError('Error while updating API files');
                 }
             }
@@ -295,7 +295,7 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
         owners = apiInfo.owners;
     }
     try {
-        const [updateCount , apiMetadataResponse] = await APIMetadata.update({
+        const [updateCount, apiMetadataResponse] = await APIMetadata.update({
             REFERENCE_ID: apiInfo.referenceID,
             API_NAME: apiInfo.apiName,
             API_DESCRIPTION: apiInfo.apiDescription,
@@ -317,7 +317,7 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
             },
             returning: true,
         }, { transaction: t });
-        return [updateCount , apiMetadataResponse];
+        return [updateCount, apiMetadataResponse];
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
@@ -329,7 +329,7 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
 async function updateSubscriptionPolicy(orgID, apiID, subscriptionPolicies, t) {
 
     let policiesToCreate = [];
-    let existingPolicies = [];  
+    let existingPolicies = [];
     try {
         for (const policy of subscriptionPolicies) {
             const subscriptionResponse = await getSubscriptionPolicy(policy.policyName, apiID, orgID, t);
@@ -462,28 +462,38 @@ const getImageMetadata = async (imageTag, imageName, orgID, apiID, t) => {
 const updateAPIFile = async (apiFile, fileName, apiID, orgID, t) => {
 
     try {
-        const apiFileResponse = await APIContent.update({
-            API_FILE: apiFile,
-            API_ID: apiID,
-            FILE_NAME: fileName
-        },
-            {
-                where: {
-                    API_ID: apiID,
-                    FILE_NAME: fileName,
-                },
-                include: [
-                    {
-                        model: APIMetadata,
-                        where: {
-                            ORG_ID: orgID
-                        }
-                    }
-                ]
+        const apiFileResponse = await getAPIFile(fileName, orgID, apiID, t);
+        let fileUpdateResponse;
+        if (apiFileResponse == null || apiFileResponse == undefined) {
+            fileUpdateResponse = await APIContent.create({
+                API_FILE: apiFile,
+                FILE_NAME: fileName,
+                API_ID: apiID
+            }, { transaction: t });
+        } else {
+            fileUpdateResponse = await APIContent.update({
+                API_FILE: apiFile,
+                API_ID: apiID,
+                FILE_NAME: fileName
             },
-            { transaction: t }
-        );
-        return apiFileResponse;
+                {
+                    where: {
+                        API_ID: apiID,
+                        FILE_NAME: fileName,
+                    },
+                    include: [
+                        {
+                            model: APIMetadata,
+                            where: {
+                                ORG_ID: orgID
+                            }
+                        }
+                    ]
+                },
+                { transaction: t }
+            );
+        }
+        return fileUpdateResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
@@ -519,7 +529,7 @@ const deleteAPIFile = async (fileName, orgID, apiID, t) => {
 }
 
 const getAPIId = async (apiName) => {
-    
+
     try {
         const api = await APIMetadata.findOne({
             attributes: ['API_ID'],
