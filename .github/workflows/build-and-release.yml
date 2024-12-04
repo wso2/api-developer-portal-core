@@ -57,7 +57,7 @@ jobs:
             filename=$(basename "$file")
             zipname="${filename}.zip"
             
-            # Clear temp-dir and recreate it for the current file
+            # Clear temp-dir and recreate the developer-portal structure
             rm -rf ./temp-dir/*
             mkdir -p ./temp-dir/developer-portal
             
@@ -67,8 +67,8 @@ jobs:
             # Move the current dist file into developer-portal
             mv "$file" ./temp-dir/developer-portal/
             
-            # Create a zip with the output file and additional files inside developer-portal
-            zip -r "./release-artifacts/$zipname" -j ./temp-dir/developer-portal/* > /dev/null
+            # Zip everything inside developer-portal with its structure
+            (cd ./temp-dir && zip -r "../release-artifacts/$zipname" developer-portal > /dev/null)
           done
 
       - name: Debug release-artifacts contents
