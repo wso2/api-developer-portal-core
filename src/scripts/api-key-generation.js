@@ -159,6 +159,33 @@ function validateGenerateButton(isProduction) {
   };
 })();
 
+function openApiKeyModal(apiKey) {
+  const apiKeyInput = document.getElementById('apiKeyModalField');
+  apiKeyInput.value = apiKey;
+  const modal = document.getElementById('apiKeyModal');
+  const bootstrapModal = new bootstrap.Modal(modal);
+  bootstrapModal.show();
+}
+
+async function apiKeyCopyToClipboard() {
+  const apiKeyInput = document.getElementById('apiKeyModalField');
+  apiKeyInput.select();
+  apiKeyInput.setSelectionRange(0, 99999);
+
+  try {
+    const success = document.execCommand('copy');
+    if (success) {
+      await showAlert('API Key copied to clipboard!', 'success');
+    } else {
+      await showAlert('Failed to copy API key!', 'error');
+    }
+  } catch (err) {
+    await showAlert('Failed to copy API key!', 'error');
+  }
+  window.getSelection().removeAllRanges();
+}
+
+
 async function generateAPIKey(applicationID, isProduction) {
   const ipValuesInput = document.getElementById(
     'ip-values-' + (isProduction ? 'production' : 'sandbox')
@@ -218,7 +245,8 @@ async function generateAPIKey(applicationID, isProduction) {
     }
 
     const responseData = await response.json();
-    console.log(responseData.apikey); 
+    console.log(responseData.apikey);
+    openApiKeyModal(responseData.apikey);
     await showAlert('API Key generated successfully!', 'success');
     // KEY POP UP AND COPY TO CLIPBOARD
     // CLEAN RELATED FORM

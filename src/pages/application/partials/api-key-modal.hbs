@@ -7,32 +7,31 @@
   <section>
 
     <div
-      class='modal fade throttling-reset-alert'
-      id='throttlingPolicyResetModal'
+      class='modal fade apikey-reset-alert'
+      id='apiKeyModal'
       tabindex='-1'
       aria-hidden='true'
     >
       <div class='modal-dialog'>
         <div class='modal-content'>
           <div class='modal-header'>
-            <h5 class='modal-title'>Reset Throttling Policy</h5>
+            <h5 class='modal-title'>Generated API Key</h5>
           </div>
 
           <div class='modal-body'>
-            <p class='modal-message'>Reset the Application Throttle Policy for a
-              Specific User</p>
             <div class='mb-3'>
-              <label for='userName' class='form-label'>User Name
+              <label for='userName' class='form-label'>API Key
                 <span class='text-danger'>*</span></label>
               <input
                 type='text'
-                id='userName'
+                id='apiKeyModalField'
                 class='form-control'
-                placeholder='User Name'
-                required
+                placeholder='API Key'
+                readonly
               />
-              <div class='form-text'>Enter the user name you Specificaly need to
-                reset the throttle policy for.</div>
+              <div class='form-text'>Please copy this generated token value as
+                it will be displayed only for the current browser session. (The
+                token will not be visible in the UI after the page is refreshed)</div>
               <div
                 id='userNameError'
                 class='error-msg text-danger mt-1'
@@ -51,14 +50,13 @@
               Cancel
             </button>
             <button
-              type='submit'
+              type='button'
               class='btn'
               data-bs-dismiss='modal'
-              disabled
-              id='resetButton'
-              onclick='resetThrottlingPolicy(`{{applicationMetadata.applicationId}}`)'
+              id='copyButton'
+              onclick='apiKeyCopyToClipboard()'
             >
-              Reset
+              Copy
             </button>
           </div>
         </div>
