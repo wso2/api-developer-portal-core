@@ -31,7 +31,6 @@ const loadApplications = async (req, res) => {
         }
     }
     else {
-        console.log('/' + orgName);
         metaData = await getAPIMApplications();
         templateContent = {
             applicationsMetadata: metaData,
@@ -284,7 +283,6 @@ const resetThrottlingPolicy = async (req, res) => {
                 httpsAgent,
             }
         );
-        console.log('Throttling policy reset successfully.');
         res.status(200).json({ message: response.data.message });
     } catch (error) {
         console.error('Error reseting throttling policy:', error.message);
@@ -313,8 +311,6 @@ const generateAPIKeys = async (req, res) => {
                 httpsAgent,
             }
         );
-        console.log('API Key generated successfully.');
-        console.log(response.data);
         res.status(200).json(response.data);
     } catch (error) {
         console.error('Error generating API Key:', error.message);

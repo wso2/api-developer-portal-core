@@ -2,7 +2,6 @@ function updateProductionSections() {
   document.getElementById('section-ip-production').style.display = 'none';
   document.getElementById('section-http-production').style.display = 'none';
 
-  console.log('production');
   if (document.getElementById('ipCheck-production').checked) {
     document.getElementById('section-ip-production').style.display = 'block';
   } else if (document.getElementById('httpCheck-production').checked) {
@@ -16,7 +15,6 @@ function updateSandboxSections() {
   document.getElementById('section-ip-sandbox').style.display = 'none';
   document.getElementById('section-http-sandbox').style.display = 'none';
 
-  console.log('sandbox');
   if (document.getElementById('ipCheck-sandbox').checked) {
     document.getElementById('section-ip-sandbox').style.display = 'block';
   } else if (document.getElementById('httpCheck-sandbox').checked) {
@@ -245,10 +243,8 @@ async function generateAPIKey(applicationID, isProduction) {
     }
 
     const responseData = await response.json();
-    console.log(responseData.apikey);
     openApiKeyModal(responseData.apikey);
     await showAlert('API Key generated successfully!', 'success');
-    // KEY POP UP AND COPY TO CLIPBOARD
     // CLEAN RELATED FORM
   } catch (error) {
     console.error('Error:', error);
