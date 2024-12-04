@@ -49,14 +49,26 @@ jobs:
 
       - name: Add required files and folders to each zip
         run: |
-          mkdir -p ./release-artifacts
+          # Create directories
+          mkdir -p ./release-artifacts ./temp-dir
+          
+          # Process each file in dist-output
           for file in ./dist-output/*; do
             filename=$(basename "$file")
             zipname="${filename}.zip"
-            cp -r bin artifacts InstallationGuide.md QuickStart.md README.md config.json ./temp-dir/
-            mv "$file" ./temp-dir/
-            zip -r "./release-artifacts/$zipname" ./temp-dir/*
+            
+            # Clear temp-dir and recreate it for the current file
             rm -rf ./temp-dir/*
+            mkdir -p ./temp-dir
+            
+            # Copy the additional files and folders
+            cp -r bin artifacts InstallationGuide.md QuickStart.md README.md config.json ./temp-dir/
+            
+            # Move the current dist file into temp-dir
+            mv "$file" ./temp-dir/
+            
+            # Create a zip with the output file and additional files
+            zip -r "./release-artifacts/$zipname" ./temp-dir/* > /dev/null
           done
 
       - name: Debug release-artifacts contents
