@@ -18,7 +18,7 @@
 /* eslint-disable no-undef */
 const path = require('path');
 const fs = require('fs');
-const { renderGivenTemplate, loadLayoutFromAPI,  renderTemplate} = require('../utils/util');
+const { renderGivenTemplate, loadLayoutFromAPI, renderTemplate } = require('../utils/util');
 const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
@@ -34,8 +34,12 @@ const loadMyAPIs = async (req, res) => {
     const apiRefIds = new Set(metaData.map(api => api.apiReferenceID));
 
     let subscriptions = [];
+    let applications = [];
+    let subscribedApps = [];
+
     for (const apiRefId of apiRefIds) {
-        const subs = await loadSubscriptions(req, res, apiRefId);
+        const subs = await loadSubscriptions(res, apiRefId);
+
         if (subs) {
             for (const sub of subs.list) {
                 subscriptions.push({
@@ -50,26 +54,59 @@ const loadMyAPIs = async (req, res) => {
         }
     }
 
+    if (req.query.apiId) {
+        const apps = await loadApplications();
+        const apiSubs = await loadSubscriptions(res, req.query.apiId);
+        const subAppIds = new Set(apiSubs.list.map(sub => sub.applicationInfo.applicationId));
+
+        for (const app of apps.list) {
+            if (!subAppIds.has(app.applicationId)) {
+                applications.push({
+                    name: app.name,
+                    id: app.applicationId,
+                });
+            } else {
+                subscribedApps.push({
+                    name: app.name,
+                    id: app.applicationId,
+                    subscribed: true,
+                });
+            }
+        }
+    }
+
     const templateContent = {
-        subscriptions: subscriptions
+        subscriptions: subscriptions,
+        applications: applications,
+        subscribedApps: subscribedApps,
     };
 
-    html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+    const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
     res.send(html);
 }
 
-const loadSubscriptions = async (req, res, apiId) => {
+const loadSubscriptions = async (res, apiId) => {
     try {
         return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/subscriptions?apiId=${apiId}`);
     } catch (error) {
         console.error("Error occurred while loading subscriptions", error);
+        util.handleError(res, error);
+        return null;
+    }
+}
+
+const loadApplications = async () => {
+    try {
+        return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/applications?sortBy=name&sortOrder=asc`);
+    } catch (error) {
+        console.error("Error occurred while loading applications", error);
         util.handleError(res, error);
     }
 }
 
 const loadDefaultContent = async (req, res) => {
     const filePrefix = config.pathToContent;
-    html = renderTemplate('../pages/myAPIs/page.hbs', filePrefix + 'layout/main.hbs', {});
+    let html = renderTemplate('../pages/myAPIs/page.hbs', filePrefix + 'layout/main.hbs', {});
     res.send(html);
 }
 

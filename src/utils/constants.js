@@ -70,6 +70,7 @@ module.exports = {
       INTERNAL_STYLES: '/internal-styles',
       IMAGES: '/images',
       IMAGES_PATH: '/images/',
+      TECHNICAL_SCRIPTS: '/technical-scripts',
       DEFAULT: '/',
       MOCK: '/mock',
       API_LISTING_PAGE: '/apis',  

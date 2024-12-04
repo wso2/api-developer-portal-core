@@ -60,6 +60,7 @@ const getOrgId = async (orgName) => {
         try {
             const organization = await Organization.findOne({ where: { ORG_NAME: orgName } });
             if (!organization) {
+                console.log('orgName', orgName);
                 throw new Sequelize.EmptyResultError('Organization not found');
             }
             return organization.ORG_ID;

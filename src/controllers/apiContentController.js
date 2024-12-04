@@ -100,11 +100,9 @@ const loadAPIContent = async (req, res) => {
             const apiID = await apiDao.getAPIId(apiName);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
             let subscriptionPlans = [];
-            let applications = [];
-            let subscriptions = [];
-            let appThrottlingPolicies = [];
+            
             for (const policy of metaData.subscriptionPolicies) {
-                const subscriptionPlan = await loadSubscriptionPlans(policy.policyName);
+                const subscriptionPlan = await loadSubscriptionPlans(req, res, policy.policyName);
                 subscriptionPlans.push({
                     apiId: metaData.apiReferenceID,
                     name: subscriptionPlan.name,
@@ -112,35 +110,6 @@ const loadAPIContent = async (req, res) => {
                     tierPlan: subscriptionPlan.tierPlan,
                 });
             };
-
-            const subs = await loadSubscriptions(metaData.apiReferenceID);
-            
-            for (const sub of subs.list) {
-                subscriptions.push({
-                    id: sub.subscriptionId,
-                    applicationName: sub.applicationInfo.name,
-                    throttlingTier: sub.throttlingPolicy,
-                    appStatus: sub.status,
-                });
-            }
-
-            const throttlingPolicies = await loadAppThrottlingPolicies();
-            for (const throttlingPolicie of throttlingPolicies.list) {
-                appThrottlingPolicies.push({
-                    name: throttlingPolicie.name,
-                });
-            }
-
-            const apps = await loadApplications();
-            const subAppIds = new Set(subs.list.map(sub => sub.applicationInfo.applicationId));
-            for (const app of apps.list) {
-                if (!subAppIds.has(app.applicationId)) {
-                    applications.push({
-                        name: app.name,
-                        id: app.applicationId,
-                    });
-                }
-            }
 
             let providerUrl;
             if (metaData.provider === "WSO2") {
@@ -150,57 +119,27 @@ const loadAPIContent = async (req, res) => {
             }
             
             const templateContent = {
-                appThrottlingPolicies: appThrottlingPolicies,
                 provider: metaData.provider,
                 providerUrl: providerUrl,
                 apiMetadata: metaData,
                 subscriptionPlans: subscriptionPlans,
-                subscriptions: subscriptions,
-                applications: applications,
                 baseUrl: '/' + orgName,
                 schemaUrl: `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${constants.FILE_NAME.API_DEFINITION_XML}`
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing");
+            res.send(html);
         } catch (error) {
             console.error(`Failed to load api content: ,${error}`);
             html = "An error occurred while loading the API content.";
         }
     }
-    res.send(html);
 }
 
-const loadAppThrottlingPolicies = async () => {
-    try {
-        return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/throttling-policies/application`);
-    } catch (error) {
-        console.error("Error occurred while loading application throttling policies", error);
-        util.handleError(res, error);
-    }
-}
-
-const loadSubscriptionPlans = async (policyId) => {
+const loadSubscriptionPlans = async (req, res, policyId) => {
     try {
         return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/throttling-policies/subscription/${policyId}`);
     } catch (error) {
         console.error("Error occurred while loading subscription plans", error);
-        util.handleError(res, error);
-    }
-}
-
-const loadApplications = async () => {
-    try {
-        return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/applications?sortBy=name&sortOrder=asc`);
-    } catch (error) {
-        console.error("Error occurred while loading applications", error);
-        util.handleError(res, error);
-    }
-}
-
-const loadSubscriptions = async (apiId) => {
-    try {
-        return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/subscriptions?apiId=${apiId}`);
-    } catch (error) {
-        console.error("Error occurred while loading subscriptions", error);
         util.handleError(res, error);
     }
 }

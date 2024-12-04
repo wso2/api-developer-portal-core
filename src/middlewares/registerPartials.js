@@ -36,6 +36,7 @@ const registerPartials = async (req, res, next) => {
     try {
       await registerPartialsFromAPI(req);
     } catch (error) {
+      console.error(error);
       console.error(`Error while loading organization :,${error}`)
       console.log("Registering default partiasl from file");
       registerAllPartialsFromFile('/' + req.params.orgName, req);
@@ -47,11 +48,23 @@ const registerPartials = async (req, res, next) => {
 const registerInternalPartials = () => {
 
   const partialsDir = path.join(process.cwd(), 'src/pages/partials');
+  const getDirectories = source =>
+    fs.readdirSync(source, { withFileTypes: true })
+      .filter(dirent => dirent.isDirectory())
+      .map(dirent => path.join(source, dirent.name));
 
-  fs.readdirSync(partialsDir).forEach(file => {
-    const partialName = path.basename(file, '.hbs');
-    const partialContent = fs.readFileSync(path.join(partialsDir, file), 'utf8');
-    hbs.handlebars.registerPartial(partialName, partialContent);
+  const partialsDirs = [partialsDir, ...getDirectories(path.join(process.cwd(), 'src/pages')).map(dir => path.join(dir, 'partials'))];
+
+  partialsDirs.forEach(dir => {
+    if (fs.existsSync(dir)) {
+      fs.readdirSync(dir).forEach(file => {
+        if (file.endsWith('.hbs')) {
+          const partialName = path.basename(file, '.hbs');
+          const partialContent = fs.readFileSync(path.join(dir, file), 'utf8');
+          hbs.handlebars.registerPartial(partialName, partialContent);
+        }
+      });
+    }
   });
 }
 
@@ -84,7 +97,7 @@ const registerPartialsFromAPI = async (req) => {
     content = content.replaceAll(constants.ROUTE.IMAGES_PATH, `${imageUrl}`)
     partialObject[fileName] = content;
   });
-
+  
   Object.keys(partialObject).forEach((partialName) => {
     hbs.handlebars.registerPartial(partialName, partialObject[partialName]);
   });
