@@ -1,6 +1,8 @@
 # dependencies
 /node_modules
+
 /dist
+cpToken.json
 
 /.pnp
 .pnp.js
@@ -16,7 +18,6 @@
 # production
 /build
 
-/src/styles
 /src/.tmp
 
 /src/config/config.js

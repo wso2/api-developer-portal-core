@@ -42,7 +42,8 @@ const loadCustomContent = async (req, res) => {
                 templateContent[tempKey] = loadMarkdown(filename, filePrefix + 'pages/' + filePath + '/content')
             });
         }
-        html = renderTemplate(filePrefix + 'pages/' + filePath + '/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
+        html = renderTemplate(filePrefix + 'pages/' + filePath + '/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false)
+
     } else {
         let content = {};
         try {
