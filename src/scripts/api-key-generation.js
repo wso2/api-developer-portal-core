@@ -22,79 +22,89 @@ function updateSandboxSections() {
   }
 }
 
-function addIp(event) {
-  const ipContainer = document.getElementById('ip-container');
-  const ipInput = document.getElementById('ip-input');
-  const ipValuesInput = document.getElementById('ip-values');
-  const ipList = [];
+(function () {
+  const ipLists = { production: [], sandbox: [] };
 
-  if (event.key === 'Enter' && ipInput.value.trim() !== '') {
-    event.preventDefault();
-    const ipValue = ipInput.value.trim();
-    ipList.push(ipValue);
-    ipValuesInput.value = ipList.join(',');
+  window.addIp = function (event, isProduction) {
+    const ipContainer = document.getElementById('ip-container-' + (isProduction ? 'production' : 'sandbox'));
+    const ipInput = document.getElementById('ip-input-' + (isProduction ? 'production' : 'sandbox'));
+    const ipValuesInput = document.getElementById('ip-values-' + (isProduction ? 'production' : 'sandbox'));
 
-    const chip = document.createElement('span');
-    chip.className = 'badge bg-primary me-2';
-    chip.textContent = ipValue;
+    const ipList = ipLists[isProduction ? 'production' : 'sandbox'];
 
-    const removeButton = document.createElement('button');
-    removeButton.type = 'button';
-    removeButton.className = 'btn-close btn-close-white btn-sm ms-2';
-    removeButton.ariaLabel = 'Remove';
-    removeButton.onclick = function () {
-      ipContainer.removeChild(chip);
-
-      const index = ipList.indexOf(ipValue);
-      if (index > -1) {
-        ipList.splice(index, 1);
-      }
-
+    if (event.key === 'Enter' && ipInput.value.trim() !== '') {
+      event.preventDefault();
+      const ipValue = ipInput.value.trim();
+      ipList.push(ipValue);
       ipValuesInput.value = ipList.join(',');
-    };
 
-    chip.appendChild(removeButton);
-    ipContainer.insertBefore(chip, ipInput);
-    ipInput.value = '';
-  }
-}
+      const chip = document.createElement('span');
+      chip.className = 'badge bg-primary me-2';
+      chip.textContent = ipValue;
 
-function addHttpReferrer(event) {
-  const httpContainer = document.getElementById('http-container');
-  const httpInput = document.getElementById('http-input');
-  const httpValuesInput = document.getElementById('http-values');
-  const httpList = [];
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.className = 'btn-close btn-close-white btn-sm ms-2';
+      removeButton.ariaLabel = 'Remove';
+      removeButton.onclick = function () {
+        ipContainer.removeChild(chip);
 
-  if (event.key === 'Enter' && httpInput.value.trim() !== '') {
-    event.preventDefault();
-    const httpValue = httpInput.value.trim();
-    httpList.push(httpValue);
-    httpValuesInput.value = httpList.join(',');
+        const index = ipList.indexOf(ipValue);
+        if (index > -1) {
+          ipList.splice(index, 1);
+        }
 
-    const chip2 = document.createElement('span');
-    chip2.className = 'badge bg-primary me-2';
-    chip2.textContent = httpValue;
+        ipValuesInput.value = ipList.join(',');
+      };
 
-    const removeButton2 = document.createElement('button');
-    removeButton2.type = 'button';
-    removeButton2.className = 'btn-close btn-close-white btn-sm ms-2';
-    removeButton2.ariaLabel = 'Remove';
-    removeButton2.onclick = function () {
-      httpContainer.removeChild(chip2);
+      chip.appendChild(removeButton);
+      ipContainer.insertBefore(chip, ipInput);
+      ipInput.value = '';
+    }
+  };
+})();
 
-      const index = httpList.indexOf(httpValue);
-      if (index > -1) {
-        httpList.splice(index, 1);
-      }
+(function () {
+  const referrerLists = { production: [], sandbox: [] };
 
-      httpValuesInput.value = httpList.join(',');
-    };
+  window.addHttpReferrer = function (event, isProduction) {
+    const referrerContainer = document.getElementById('http-container-' + (isProduction ? 'production' : 'sandbox'));
+    const referrerInput = document.getElementById('http-input-' + (isProduction ? 'production' : 'sandbox'));
+    const referrerValuesInput = document.getElementById('http-values-' + (isProduction ? 'production' : 'sandbox'));
 
-    chip2.appendChild(removeButton2);
-    httpContainer.insertBefore(chip2, httpInput);
-    httpInput.value = '';
-  }
-}
+    const referrerList = referrerLists[isProduction ? 'production' : 'sandbox'];
+
+    if (event.key === 'Enter' && referrerInput.value.trim() !== '') {
+      event.preventDefault();
+      const referrerValue = referrerInput.value.trim();
+      referrerList.push(referrerValue);
+      referrerValuesInput.value = referrerList.join(',');
+
+      const chip = document.createElement('span');
+      chip.className = 'badge bg-primary me-2';
+      chip.textContent = referrerValue;
+
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.className = 'btn-close btn-close-white btn-sm ms-2';
+      removeButton.ariaLabel = 'Remove';
+      removeButton.onclick = function () {
+        referrerContainer.removeChild(chip);
+
+        const index = referrerList.indexOf(referrerValue);
+        if (index > -1) {
+          referrerList.splice(index, 1);
+        }
+
+        referrerValuesInput.value = referrerList.join(',');
+      };
+
+      chip.appendChild(removeButton);
+      referrerContainer.insertBefore(chip, referrerInput);
+      referrerInput.value = '';
+    }
+  };
+})();
 
 // Submittion of the form
 
@@ -118,4 +128,9 @@ function generateAPIKey(applicationId, isProduction) {
 
   console.log(applicationId);
   console.log(isProduction);
+
+  console.log(document.getElementById('ip-values-production').value);
+  console.log(document.getElementById('http-values-production').value);
+  console.log(document.getElementById('ip-values-sandbox').value);
+  console.log(document.getElementById('http-values-sandbox').value);
 }

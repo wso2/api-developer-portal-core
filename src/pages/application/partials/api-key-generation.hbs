@@ -52,17 +52,17 @@
             {{! IP Section }}
             <div id='section-ip-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' style='display: none;'>
               <div class='mb-3'>
-                <label for='ip-input' class='form-label'>
+                <label for='ip-input-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' class='form-label'>
                   IP Addresses
                   <span class='text-danger'>*</span>
                 </label>
-                <div id='ip-container' class='form-control d-flex flex-wrap'>
+                <div id='ip-container-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' class='form-control d-flex flex-wrap'>
                   <input
                     type='text'
-                    id='ip-input'
+                    id='ip-input-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
                     class='border-0 flex-grow-1'
                     placeholder='Enter IP Address'
-                    onkeydown='addIp(event)'
+                    onkeydown='addIp(event, {{../isProduction}})'
                   />
                 </div>
               </div>
@@ -70,7 +70,7 @@
                 <span class='text-danger'>Enter</span>. Specify one IPv4 or IPv6
                 or a subnet using CIDR notation. Examples: 192.168.1.2,
                 152.12.0.0/13, 2002:eb8::2 or 1001:ab8::/44</div>
-              <input type='hidden' id='ip-values' name='ip-values' />
+              <input type='hidden' id='ip-values-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' name='ip-values' />
             </div>
             {{! IP Section ends }}
 
@@ -93,17 +93,17 @@
             {{! HTTP Section }}
             <div id='section-http-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' style='display: none;'>
               <div class='mb-3'>
-                <label for='http-input' class='form-label'>
+                <label for='http-input-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' class='form-label'>
                   HTTP Referrers
                   <span class='text-danger'>*</span>
                 </label>
-                <div id='http-container' class='form-control d-flex flex-wrap'>
+                <div id='http-container-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' class='form-control d-flex flex-wrap'>
                   <input
                     type='text'
-                    id='http-input'
+                    id='http-input-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
                     class='border-0 flex-grow-1'
                     placeholder='Enter HTTP Referrer'
-                    onkeydown='addHttpReferrer(event)'
+                    onkeydown='addHttpReferrer(event, {{../isProduction}})'
                   />
                 </div>
               </div>
@@ -113,7 +113,7 @@
                 using a wildcard asterisk (*): sub.example.com/* Any subdomain
                 or path URLs in a single domain, using wildcard asterisks (*):
                 *.example.com/*</div>
-              <input type='hidden' id='http-values' name='http-values' />
+              <input type='hidden' id='http-values-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' name='http-values' />
             </div>
             {{! HTTP Section ends }}
 
