@@ -128,6 +128,7 @@
                 class='form-control'
                 placeholder='Enter Validity Period'
                 value='-1'
+                oninput="validateGenerateButton({{../isProduction}})"
               />
             </div>
             <div class='form-text mb-3'>You can set an expiration period to determine the validity period of the token after generation. 

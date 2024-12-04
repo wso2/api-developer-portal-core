@@ -34,6 +34,7 @@ function validateGenerateButton(isProduction) {
   let generateButton = document.getElementById(
     'apiKeyGenerateButton-' + (isProduction ? 'production' : 'sandbox')
   );
+  const validity = document.getElementById('validity-' + (isProduction ? 'production' : 'sandbox')).value;
 
   if (
     (isProduction &&
@@ -47,7 +48,8 @@ function validateGenerateButton(isProduction) {
       !ipValuesInput) ||
     (!isProduction &&
       document.getElementById('httpCheck-sandbox').checked &&
-      !httpValuesInput)
+      !httpValuesInput) ||
+    validity === ''
   ) {
     generateButton.disabled = true;
   } else {
