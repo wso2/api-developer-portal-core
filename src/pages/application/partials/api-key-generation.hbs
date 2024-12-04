@@ -121,7 +121,7 @@
             <div class='d-flex justify-content-end gap-3'>
               <button
                 class='btn btn-primary custom-save-btn'
-                id='apiKeyGenerateButton'
+                id='apiKeyGenerateButton-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' name='http-values'
                 type='button'
                 onClick="generateAPIKey('{{applicationId}}', '{{../isProduction}}')"
               >

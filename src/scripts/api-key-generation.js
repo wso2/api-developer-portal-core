@@ -8,6 +8,8 @@ function updateProductionSections() {
   } else if (document.getElementById('httpCheck-production').checked) {
     document.getElementById('section-http-production').style.display = 'block';
   }
+
+  validateGenerateButton(true);
 }
 
 function updateSandboxSections() {
@@ -19,6 +21,23 @@ function updateSandboxSections() {
     document.getElementById('section-ip-sandbox').style.display = 'block';
   } else if (document.getElementById('httpCheck-sandbox').checked) {
     document.getElementById('section-http-sandbox').style.display = 'block';
+  }
+
+  validateGenerateButton(false);
+}
+
+function validateGenerateButton(isProduction) {
+  let ipValuesInput = document.getElementById('ip-values-' + (isProduction ? 'production' : 'sandbox')).value;
+  let httpValuesInput = document.getElementById('http-values-' + (isProduction ? 'production' : 'sandbox')).value;
+  let generateButton = document.getElementById('apiKeyGenerateButton-' + (isProduction ? 'production' : 'sandbox'));
+
+  if ((isProduction && document.getElementById('ipCheck-production').checked && !ipValuesInput) ||
+      (isProduction && document.getElementById('httpCheck-production').checked && !httpValuesInput) ||
+      (!isProduction && document.getElementById('ipCheck-sandbox').checked && !ipValuesInput) ||
+      (!isProduction && document.getElementById('httpCheck-sandbox').checked && !httpValuesInput)) {
+    generateButton.disabled = true;
+  } else {
+    generateButton.disabled = false;
   }
 }
 
@@ -55,11 +74,14 @@ function updateSandboxSections() {
         }
 
         ipValuesInput.value = ipList.join(',');
+        validateGenerateButton(isProduction);  
       };
 
       chip.appendChild(removeButton);
       ipContainer.insertBefore(chip, ipInput);
       ipInput.value = '';
+
+      validateGenerateButton(isProduction);
     }
   };
 })();
@@ -97,40 +119,14 @@ function updateSandboxSections() {
         }
 
         referrerValuesInput.value = referrerList.join(',');
+        validateGenerateButton(isProduction);  
       };
 
       chip.appendChild(removeButton);
       referrerContainer.insertBefore(chip, referrerInput);
       referrerInput.value = '';
+
+      validateGenerateButton(isProduction);
     }
   };
 })();
-
-// Submittion of the form
-
-function generateAPIKey(applicationId, isProduction) {
-
-  let isNoneChecked, isIPChecked, isHTTPChecked;
-
-  if (isProduction) {
-    isNoneChecked = document.getElementById('noneCheck-production').checked;
-    isIPChecked = document.getElementById('ipCheck-production').checked;
-    isHTTPChecked = document.getElementById('httpCheck-production').checked;
-  } else {
-    isNoneChecked = document.getElementById('noneCheck-sandbox').checked;
-    isIPChecked = document.getElementById('ipCheck-sandbox').checked;
-    isHTTPChecked = document.getElementById('httpCheck-sandbox').checked;
-  }
-
-  console.log(isNoneChecked);
-  console.log(isIPChecked);
-  console.log(isHTTPChecked);
-
-  console.log(applicationId);
-  console.log(isProduction);
-
-  console.log(document.getElementById('ip-values-production').value);
-  console.log(document.getElementById('http-values-production').value);
-  console.log(document.getElementById('ip-values-sandbox').value);
-  console.log(document.getElementById('http-values-sandbox').value);
-}
