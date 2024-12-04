@@ -59,16 +59,16 @@ jobs:
             
             # Clear temp-dir and recreate it for the current file
             rm -rf ./temp-dir/*
-            mkdir -p ./temp-dir
+            mkdir -p ./temp-dir/developer-portal
             
-            # Copy the additional files and folders
-            cp -r bin artifacts InstallationGuide.md QuickStart.md README.md config.json ./temp-dir/
+            # Copy the additional files and folders into developer-portal
+            cp -r bin artifacts InstallationGuide.md QuickStart.md README.md config.json ./temp-dir/developer-portal/
             
-            # Move the current dist file into temp-dir
-            mv "$file" ./temp-dir/
+            # Move the current dist file into developer-portal
+            mv "$file" ./temp-dir/developer-portal/
             
-            # Create a zip with the output file and additional files
-            zip -r "./release-artifacts/$zipname" ./temp-dir/* > /dev/null
+            # Create a zip with the output file and additional files inside developer-portal
+            zip -r "./release-artifacts/$zipname" -j ./temp-dir/developer-portal/* > /dev/null
           done
 
       - name: Debug release-artifacts contents
