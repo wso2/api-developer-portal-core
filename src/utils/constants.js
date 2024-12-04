@@ -68,6 +68,7 @@ module.exports = {
       DEV_PORTAL:  '/devportal',
       STYLES: '/styles',
       IMAGES: '/images',
+      INTERNAL_STYLES: '/internalStyles',
       IMAGES_PATH: '/images/',
       DEFAULT: '/',
       MOCK: '/mock',

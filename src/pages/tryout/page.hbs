@@ -11,7 +11,7 @@
 {{else if (eq apiType "AsyncAPI")}}
 
 <head>
-  <link rel="stylesheet" href="/styles/async-tryout.css">
+  <link rel="stylesheet" href="/internalStyles/async-tryout.css">
 </head>
 <main>
   <div id="asyncapi"></div>
@@ -37,7 +37,7 @@
   <div id="root" style="height: 100vh;"></div>
 
   <script>
-    const fetcher = GraphiQL.createFetcher({ url: '{{ apiMetadata.serverUrl.sandboxUrl }}' });
+    const fetcher = GraphiQL.createFetcher({ url: '{{ apiMetadata.endPoints.productionUrl }}' });
     const rootElement = document.getElementById('root');
     const root = ReactDOM.createRoot(rootElement);
     root.render(
