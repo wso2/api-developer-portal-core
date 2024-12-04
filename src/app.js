@@ -76,7 +76,6 @@ passport.deserializeUser((user, done) => {
 
 app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), filePrefix + 'styles')));
 app.use(constants.ROUTE.IMAGES, express.static(path.join(process.cwd(), filePrefix + 'images')));
-app.use(constants.ROUTE.INTERNAL_STYLES, express.static(path.join(process.cwd(),  'src/pages/styles')));
 
 //backend routes
 app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);

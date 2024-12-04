@@ -26,7 +26,6 @@ const sequelize = new Sequelize(
     {
         host: config.db.host,
         dialect: config.db.dialect,
-        logging: false,
         pool: {
             max: 5,
             min: 0,
