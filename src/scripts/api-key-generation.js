@@ -130,3 +130,24 @@ function validateGenerateButton(isProduction) {
     }
   };
 })();
+
+function generateAPIKey(applicationID, isProduction) {
+  const ipValuesInput = document.getElementById('ip-values-' + (isProduction ? 'production' : 'sandbox'));
+  const httpValuesInput = document.getElementById('http-values-' + (isProduction ? 'production' : 'sandbox'));
+  const validityInput = document.getElementById('validity-' + (isProduction ? 'production' : 'sandbox'));
+
+  const noneRadio = document.getElementById('noneCheck-' + (isProduction ? 'production' : 'sandbox'));
+  const ipRadio = document.getElementById('ipCheck-' + (isProduction ? 'production' : 'sandbox'));
+  const httpRadio = document.getElementById('httpCheck-' + (isProduction ? 'production' : 'sandbox'));
+  
+  const validity = validityInput.value;
+
+  if (noneRadio.checked) {
+    console.log('none');
+  } else if (ipRadio.checked) {
+    const ipValues = ipValuesInput.value;
+  } else if (httpRadio.checked) {
+    const httpValues = httpValuesInput.value;
+  
+  }
+}

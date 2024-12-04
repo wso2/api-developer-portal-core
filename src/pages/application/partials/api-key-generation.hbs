@@ -117,13 +117,29 @@
             </div>
             {{! HTTP Section ends }}
 
+            <div class='mb-3'>
+              <label for='validity-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' class='form-label'>
+                validity Period
+                <span class='text-danger'>*</span>
+              </label>
+              <input
+                type='number'
+                id='validity-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                class='form-control'
+                placeholder='Enter Validity Period'
+                value='-1'
+              />
+            </div>
+            <div class='form-text mb-3'>You can set an expiration period to determine the validity period of the token after generation. 
+              Set this as <span class='text-danger'>-1</span> to ensure that the apikey never expires.</div>
+
             <!-- Buttons -->
             <div class='d-flex justify-content-end gap-3'>
               <button
                 class='btn btn-primary custom-save-btn'
                 id='apiKeyGenerateButton-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' name='http-values'
                 type='button'
-                onClick="generateAPIKey('{{applicationId}}', '{{../isProduction}}')"
+                onClick="generateAPIKey('{{applicationId}}', {{../isProduction}})"
               >
                 Generate Key
               </button>
