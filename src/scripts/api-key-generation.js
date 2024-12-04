@@ -183,6 +183,61 @@ async function apiKeyCopyToClipboard() {
   window.getSelection().removeAllRanges();
 }
 
+function cleanForms(isProduction) {
+  const ipValuesInput = document.getElementById(
+    'ip-values-' + (isProduction ? 'production' : 'sandbox')
+  );
+  const ipInput = document.getElementById(
+    'ip-input-' + (isProduction ? 'production' : 'sandbox')
+  );
+  const httpValuesInput = document.getElementById(
+    'http-values-' + (isProduction ? 'production' : 'sandbox')
+  );
+  const httpInput = document.getElementById(
+    'http-input-' + (isProduction ? 'production' : 'sandbox')
+  );
+  const validityInput = document.getElementById(
+    'validity-' + (isProduction ? 'production' : 'sandbox')
+  );
+
+  ipValuesInput.value = '';
+  httpValuesInput.value = '';
+  validityInput.value = '-1';
+
+  const ipContainer = document.getElementById(
+    'ip-container-' + (isProduction ? 'production' : 'sandbox')
+  );
+  const httpContainer = document.getElementById(
+    'http-container-' + (isProduction ? 'production' : 'sandbox')
+  );
+
+  const iPchips = Array.from(ipContainer.children);
+
+  iPchips.forEach(child => {
+    if (child !== ipInput) {
+      ipContainer.removeChild(child);
+    }
+  });
+
+  const httpChips = Array.from(httpContainer.children);
+
+  httpChips.forEach((child) => {
+    if (child !== httpInput) {
+      httpContainer.removeChild(child);
+    }
+  });
+
+  const noneRadio = document.getElementById(
+    'noneCheck-' + (isProduction ? 'production' : 'sandbox')
+  );
+  noneRadio.checked = true;
+
+  if (isProduction) {
+    updateProductionSections();
+  } else {
+    updateSandboxSections();
+  }
+}
 
 async function generateAPIKey(applicationID, isProduction) {
   const ipValuesInput = document.getElementById(
@@ -243,9 +298,9 @@ async function generateAPIKey(applicationID, isProduction) {
     }
 
     const responseData = await response.json();
+    cleanForms(isProduction);
     openApiKeyModal(responseData.apikey);
     await showAlert('API Key generated successfully!', 'success');
-    // CLEAN RELATED FORM
   } catch (error) {
     console.error('Error:', error);
   }
