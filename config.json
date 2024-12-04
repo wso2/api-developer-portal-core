@@ -5,7 +5,7 @@
   "db": {
     "username": "postgres",
     "password": "postgres",
-    "database": "DEVPORTAL_NEWSCHEMA",
+    "database": "devportal",
     "host": "localhost",
     "dialect": "postgres"
   },
