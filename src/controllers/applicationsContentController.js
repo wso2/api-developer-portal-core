@@ -1,4 +1,4 @@
-const { renderTemplate } = require('../utils/util');
+const { renderTemplate, renderGivenTemplate, loadLayoutFromAPI } = require('../utils/util');
 const config = require(process.cwd() + '/config');
 const cpToken = require(process.cwd() + '/cpToken');
 const constants = require('../utils/constants');
@@ -6,10 +6,10 @@ const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
 const https = require('https');
+const adminDao = require('../dao/admin');
 
 const filePrefix = config.pathToContent;
 const certPath = path.join(process.cwd(), config.certificate.path);
-const certPassword = config.certificate.password;
 const controlPlaneUrl = config.controlPlaneUrl;
 const token = cpToken.token;
 
@@ -18,10 +18,19 @@ const httpsAgent = new https.Agent({
     rejectUnauthorized: true,
 });
 
+const orgIDValue = async (orgName) => {
+    const organization = await adminDao.getOrganization(orgName);
+    return organization.ORG_ID;
+}
+
+const templateResponseValue = async (pageName) => {
+    const completeTemplatePath = path.join(require.main.filename, '..', 'pages', pageName, 'page.hbs');
+    return fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
+}
+
 // ***** Load Applications *****
 
 const loadApplications = async (req, res) => {
-    const orgName = req.params.orgName;
     let html, metaData, templateContent;
     if (config.mode === constants.DEV_MODE) {
         metaData = await getMockApplications();
@@ -29,15 +38,24 @@ const loadApplications = async (req, res) => {
             applicationsMetadata: metaData,
             baseUrl: constants.BASE_URL + config.port
         }
+        html = renderTemplate('../pages/applications/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     }
     else {
+        const orgName = req.params.orgName;
+        const orgID = await orgIDValue(orgName);
         metaData = await getAPIMApplications();
         templateContent = {
             applicationsMetadata: metaData,
             baseUrl: '/' + orgName
         }
+        const templateResponse = await templateResponseValue('applications');
+        const layoutResponse = await loadLayoutFromAPI(orgID);
+        console.log('layoutResponse:', layoutResponse);
+        console.log('templateResponse:', templateResponse);
+        console.log('orgID:', orgID);
+        console.log('orgName:', orgName);
+        html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
     }
-    html = renderTemplate('../pages/applications/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     res.send(html);
 }
 
@@ -66,7 +84,6 @@ async function getAPIMApplications() {
 // ***** Load Throttling Policies *****
 
 const loadThrottlingPolicies = async (req, res) => {
-    const orgName = req.params.orgName;
     let html, metaData, templateContent;
     if (config.mode === constants.DEV_MODE) {
         metaData = await getMockThrottlingPolicies();
@@ -74,15 +91,21 @@ const loadThrottlingPolicies = async (req, res) => {
             throttlingPoliciesMetadata: metaData,
             baseUrl: constants.BASE_URL + config.port
         }
+        html = renderTemplate('../pages/add-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     }
     else {
+        const orgName = req.params.orgName;
+        const orgID = await orgIDValue(orgName);
         metaData = await getAPIMThrottlingPolicies();
         templateContent = {
             throttlingPoliciesMetadata: metaData,
             baseUrl: '/' + orgName
         }
+        const templateResponse = await templateResponseValue('add-application');
+        const layoutResponse = await loadLayoutFromAPI(orgID);
+        html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
     }
-    html = renderTemplate('../pages/add-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
+    
     res.send(html);
 }
 
@@ -111,7 +134,6 @@ async function getAPIMThrottlingPolicies() {
 // ***** Load Application *****
 
 const loadApplication = async (req, res) => {
-    const orgName = req.params.orgName;
     const applicationId = req.params.applicationid;
     let html, templateContent, metaData;
     if (config.mode === constants.DEV_MODE) {
@@ -120,14 +142,20 @@ const loadApplication = async (req, res) => {
             applicationMetadata: metaData,
             baseUrl: constants.BASE_URL + config.port
         }
+        html = renderTemplate('../pages/application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     } else {
+        const orgName = req.params.orgName;
+        const orgID = await orgIDValue(orgName);
         metaData = await getAPIMApplication(applicationId);
         templateContent = {
             applicationMetadata: metaData,
             baseUrl: '/' + orgName
         }
+        const templateResponse = await templateResponseValue('application');
+        const layoutResponse = await loadLayoutFromAPI(orgID);
+        html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
     }
-    html = renderTemplate('../pages/application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
+    
     res.send(html);
 }
 
@@ -143,7 +171,10 @@ const loadApplicationForEdit = async (req, res) => {
             throttlingPoliciesMetadata: throttlingMetaData,
             baseUrl: constants.BASE_URL + config.port
         }
+        html = renderTemplate('../pages/edit-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     } else {
+        const orgName = req.params.orgName;
+        const orgID = await orgIDValue(orgName);
         metaData = await getAPIMApplication(applicationId);
         throttlingMetaData = await getAPIMThrottlingPolicies();
         templateContent = {
@@ -151,8 +182,11 @@ const loadApplicationForEdit = async (req, res) => {
             throttlingPoliciesMetadata: throttlingMetaData,
             baseUrl: '/' + orgName
         }
+        const templateResponse = await templateResponseValue('edit-application');
+        const layoutResponse = await loadLayoutFromAPI(orgID);
+        html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+
     }
-    html = renderTemplate('../pages/edit-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     res.send(html);
 }
 
