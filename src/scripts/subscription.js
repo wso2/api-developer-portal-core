@@ -80,15 +80,19 @@ function showApplicationForm() {
 async function handleCreateSubscribe() {
     const urlParams = new URLSearchParams(window.location.search);
     try {
+        // Sanitize the application name
+        const appName = document.getElementById('appName').value.trim().replace(/[^a-zA-Z0-9\s]/g, '');
+        if (!appName) {
+            alert('Application name cannot be empty.');
+            return;
+        }
+
         const response = await fetch(`/devportal/application`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+            'Content-Type': 'application/json',
             },
-            body: JSON.stringify
-                ({
-                    name: document.getElementById('appName').value,
-                }),
+            body: JSON.stringify({ name: sanitize(appName) }),
         });
 
         const responseData = await response.json();
@@ -103,6 +107,12 @@ async function handleCreateSubscribe() {
         console.error('Error:', error);
         alert(`An error occurred while subscribing: \n${error.message}`);
     }
+}
+
+function sanitize(input) {
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(input));
+    return div.innerHTML;
 }
 
 async function handleSubscribe(appId) {
@@ -129,7 +139,6 @@ async function handleSubscribe(appId) {
         });
 
         const responseData = await response.json();
-
         if (response.ok) {
             alert('Subscribed successfully!');
             const url = new URL(window.location.origin + window.location.pathname);

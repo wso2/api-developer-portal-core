@@ -26,7 +26,7 @@ const apiMetadataService = require('../services/apiMetadataService');
 const util = require('../utils/util');
 
 const loadMyAPIs = async (req, res) => {
-    const orgName = req.originalUrl.split("/")[1];
+    const orgName = req.params.orgName;
     const orgId = await adminDao.getOrgId(orgName);
     const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'myAPIs', 'page.hbs');
     const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
@@ -56,6 +56,7 @@ const loadMyAPIs = async (req, res) => {
         }
     }
 
+    // Load modal content with subscribed applications and applications that are not subscribed
     if (req.query.apiId) {
         const apps = await loadApplications();
         const apiSubs = await loadSubscriptions(res, req.query.apiId);
@@ -107,6 +108,7 @@ const loadApplications = async () => {
     }
 }
 
+// Load default content for the dev mode
 const loadDefaultContent = async (req, res) => {
     const filePrefix = config.pathToContent;
     let html = renderTemplate('../pages/myAPIs/page.hbs', filePrefix + 'layout/main.hbs', {});
