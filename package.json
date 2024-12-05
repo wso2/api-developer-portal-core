@@ -1,6 +1,6 @@
 {
   "name": "devportal-webapp",
-  "version": "1.0.62",
+  "version": "1.0.65",
   "description": "devportal-webapp",
   "main": "index.js",
   "scripts": {
@@ -74,7 +74,10 @@
     "targets": [
       "node18-macos-x64",
       "node18-linux-x64",
-      "node18-win-x64"
+      "node18-win-x64",
+      "node18-macos-x86",
+      "node18-linux-x86",
+      "node18-win-x86"
     ],
     "outputPath": "dist"
   },
