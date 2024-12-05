@@ -26,7 +26,8 @@ const apiMetadataService = require('../services/apiMetadataService');
 const util = require('../utils/util');
 
 const loadMyAPIs = async (req, res) => {
-    const orgId = await adminDao.getOrgId(req.params.orgName);
+    const orgName = req.originalUrl.split("/")[1];
+    const orgId = await adminDao.getOrgId(orgName);
     const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'myAPIs', 'page.hbs');
     const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
     const layoutResponse = await loadLayoutFromAPI(orgId);
@@ -79,6 +80,7 @@ const loadMyAPIs = async (req, res) => {
         subscriptions: subscriptions,
         applications: applications,
         subscribedApps: subscribedApps,
+        baseUrl: '/' + orgName
     };
 
     const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
