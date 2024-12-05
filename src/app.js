@@ -53,10 +53,6 @@ Handlebars.registerHelper('in', function (value, options) {
     return validValues.includes(value) ? options.fn(this) : options.inverse(this);
 });
 
-Handlebars.registerHelper('json', function (context) {
-    return JSON.stringify(context);
-});
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
