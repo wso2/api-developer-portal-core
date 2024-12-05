@@ -15,7 +15,7 @@
       {{#each subscriptions}}
       <tr>
         <td> <a href="{{../baseUrl}}/api/{{this.apiName}}">{{this.apiName}}</a></td>
-        <td> <a href="{{baseUrl}}/{{this.apiName}}">{{this.applicationName}}</a></td>
+        <td> <a href="{{../baseUrl}}/applications/{{this.applicationId}}">{{this.applicationName}}</a></td>
         <td>{{this.throttlingTier}}</td>
         <td> <a href="#" onclick="unsubscribe('{{this.id}}')">Unsubscribe</a></td>
       </tr>
