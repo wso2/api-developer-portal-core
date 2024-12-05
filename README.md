@@ -1,4 +1,4 @@
-Pre-requisites
+Setup Guidelines
 --------------
 Follow the steps given in InstallationGuide.md, to create database.
 
@@ -29,3 +29,8 @@ The ‘[http://localhost:3000/ACME](http://localhost:3000/{orgName})/apis’ wil
 Each of the api landing and tryout pages are available at the following URLs:
   'http://localhost:3000/ACME/api/{apiName}'
   'http://localhost:3000/ACME/api/{apiName}/tryout'
+
+Local Setup
+--------------
+
+To try the setup locally, please refer to the [API Developer Portal repository](https://github.com/wso2/api-developer-portal).
