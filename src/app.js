@@ -27,7 +27,6 @@ const devportalRoute = require('./routes/devportalRoute');
 const orgContent = require('./routes/orgContentRoute');
 const apiContent = require('./routes/apiContentRoute');
 const applicationContent = require('./routes/applicationsContentRoute');
-const applicationContent = require('./routes/applicationsContentRoute');
 const customContent = require('./routes/customPageRoute');
 const config = require(process.cwd() + '/config.json');
 const Handlebars = require('handlebars');
