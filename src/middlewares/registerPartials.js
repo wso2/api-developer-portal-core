@@ -26,9 +26,10 @@ const apiDao = require('../dao/apiMetadata');
 const constants = require('../utils/constants');
 
 const filePrefix = config.pathToContent;
-
+const hbs = exphbs.create({});
 const registerPartials = async (req, res, next) => {
 
+  registerInternalPartials();
   if (config.mode === constants.DEV_MODE) {
     registerAllPartialsFromFile(constants.BASE_URL + config.port, req);
   } else {
@@ -42,6 +43,29 @@ const registerPartials = async (req, res, next) => {
   }
   next();
 };
+
+const registerInternalPartials = () => {
+
+  const partialsDir = path.join(process.cwd(), 'src/pages/partials');
+  const getDirectories = source =>
+    fs.readdirSync(source, { withFileTypes: true })
+      .filter(dirent => dirent.isDirectory())
+      .map(dirent => path.join(source, dirent.name));
+
+  const partialsDirs = [partialsDir, ...getDirectories(path.join(process.cwd(), 'src/pages')).map(dir => path.join(dir, 'partials'))];
+
+  partialsDirs.forEach(dir => {
+    if (fs.existsSync(dir)) {
+      fs.readdirSync(dir).forEach(file => {
+        if (file.endsWith('.hbs')) {
+          const partialName = path.basename(file, '.hbs');
+          const partialContent = fs.readFileSync(path.join(dir, file), 'utf8');
+          hbs.handlebars.registerPartial(partialName, partialContent);
+        }
+      });
+    }
+  });
+}
 
 const registerAllPartialsFromFile = async (baseURL, req) => {
 
@@ -75,13 +99,11 @@ const registerAllPartialsFromFile = async (baseURL, req) => {
 
 const registerPartialsFromAPI = async (req) => {
   
-  const { orgName, apiName }  = req.params;
-  const orgData = await adminDao.getOrganization(orgName);
-  const orgID = orgData.ORG_ID;
-  const apiID = await apiDao.getAPIId(apiName);
+  const orgName  = req.params.orgName;
+  const orgID = await adminDao.getOrgId(orgName);
   const imageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/layout?fileType=image&fileName=`;
   let partials = await adminDao.getOrgContent({
-    orgId: orgData.ORG_ID,
+    orgId: orgID,
     fileType: 'partial',
   });
 
@@ -92,8 +114,7 @@ const registerPartialsFromAPI = async (req) => {
     content = content.replaceAll(constants.ROUTE.IMAGES_PATH, `${imageUrl}`)
     partialObject[fileName] = content;
   });
-  const hbs = exphbs.create({});
-  hbs.handlebars.partials = partialObject;
+  
   Object.keys(partialObject).forEach((partialName) => {
     hbs.handlebars.registerPartial(partialName, partialObject[partialName]);
   });
@@ -108,6 +129,9 @@ const registerPartialsFromAPI = async (req) => {
     ),
   };
   if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
+
+    const apiName = req.params.apiName;
+    const apiID = await apiDao.getAPIId(apiName);
     //fetch markdown content for API if exists
     const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, orgID, apiID);
     const markdownContent = markdownResponse ? markdownResponse.API_FILE.toString("utf8") : "";
@@ -126,7 +150,6 @@ const registerPartialsFromAPI = async (req) => {
 
 function registerPartialsFromFile(baseURL, dir, profile) {
 
-  const hbs = exphbs.create({});
   const filenames = fs.readdirSync(dir);
   filenames.forEach((filename) => {
     if (filename.endsWith(".hbs")) {

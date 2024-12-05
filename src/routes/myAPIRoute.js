@@ -17,9 +17,9 @@
  */
 const express = require('express');
 const router = express.Router();
-const contentController = require('../controllers/customContentController');
 const registerPartials = require('../middlewares/registerPartials');
+const myAPIsController = require('../controllers/myAPIsController');
 
-// eslint-disable-next-line no-useless-escape
-router.get('(^(?!\/(favicon\.ico|images\/|technical-styles\/|styles\/|*login*|devportal\/))/:orgName/*)', registerPartials, contentController.loadCustomContent);
+router.get('/((?!favicon.ico)):orgName/myAPIs', registerPartials, myAPIsController.loadMyAPIs);
+
 module.exports = router;

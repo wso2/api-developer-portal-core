@@ -1,0 +1,66 @@
+<section>
+    <div id="planModal" class="custom-api-card modal custom-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog custom-modal-dialog" role="document">
+            <div class="modal-content custom-modal-content">
+                <div id="modal-content">
+                    <div class="modal-header custom-modal-header">
+                        <h5 class="dev-header h5" id="modalTitle">Subscription Plan Details</h5>
+                    </div>
+                    <div class="modal-body">
+                        <h6 class="dev-header h6">Subcription Plan: <span id="planName"></h6>
+                        <div id="subscribedAppsSection">
+                            {{#if subscribedApps.length}}
+                            <h6 class="dev-header h6">Subscribed Applications:</h6>
+                            <ul class="items-label">
+                                {{#each subscribedApps}}
+                                <li>{{this.name}}</li>
+                                {{/each}}
+                            </ul>
+                            {{else}}
+                            <p>No subscribed applications.</p>
+                            {{/if}}
+                        </div>
+                        {{#if applications}}
+                        <div id="form-group">
+                            <label class="dev-header h6" for="applicationSelect">Select an Application</label>
+                            <select id="applicationSelect" class="form-control items-label">
+                                {{#each applications}}
+                                <option value="{{id}}">{{name}}</option>
+                                {{/each}}
+                            </select>
+                        </div>
+                        {{else}}
+                        <p>No applications available. Please create a new application.</p>
+                        <button class="btn apilistbtn-primary" onclick="showApplicationForm()">Create
+                            Application</button>`
+                        {{/if}}
+                    </div>
+
+                    <div id="applicationFormSection" class="app-selection">
+                        <div class="modal-header custom-modal-header">
+                            <h5 class="dev-header h5">Create a New Application</h5>
+                        </div>
+                        <div class="modal-body">
+                            <div>
+                                <h6 for="newAppName" class="dev-header h6">Application Name</h6>
+                                <input type="text" id="appName" pattern="[a-zA-Z0-9]+"
+                                    class="form-control input-content" placeholder="Enter application name" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer custom-modal-footer">
+                    <button type="button" class="btn apilistbtn-secondary" data-dismiss="modal"
+                        onclick="closeModal()">Close</button>
+                    {{#if applications}}
+                    <button type="submit" class="btn apilistbtn-primary" id="subButton"
+                        onclick="handleSubscribe()">Subscribe</button>
+                    {{else}}
+                    <button type="submit" class="btn apilistbtn-primary" id="createSubButton"
+                        onclick="handleCreateSubscribe()" {{#if devMode}}disabled{{/if}}>Create & Subscribe</button>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

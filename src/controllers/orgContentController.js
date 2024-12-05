@@ -53,8 +53,8 @@ const loadOrgContentFromAPI = async (req) => {
     let html;
     const orgName = req.params.orgName;
     try {
-        const organization = await adminDao.getOrganization(orgName);
-        html = await renderTemplateFromAPI({}, organization.ORG_ID, req.params.orgName, 'pages/home');
+        const orgId = await adminDao.getOrgId(orgName);
+        html = await renderTemplateFromAPI({}, orgId, req.params.orgName, 'pages/home');
     } catch (error) {
         console.error(`Failed to load organization :, ${error}`);
         console.log(`Rendering default organization landing page from file`);
