@@ -45,7 +45,7 @@ const loadOrgContentFromFile = async () => {
         userProfiles: mockProfileData,
         baseUrl: constants.BASE_URL + config.port
     };
-    return renderTemplate(filePrefix + 'pages/home/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
+    return renderTemplate(filePrefix + 'pages/home/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false)
 }
 
 const loadOrgContentFromAPI = async (req) => {
@@ -60,8 +60,9 @@ const loadOrgContentFromAPI = async (req) => {
         console.log(`Rendering default organization landing page from file`);
         let templateContent = {
             baseUrl: '/' + orgName
-        };
-        html = await renderTemplate(filePrefix + 'pages/home/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
+        }
+        html = await renderTemplate(filePrefix + 'pages/home/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false)
+
     }
     return html;
 }

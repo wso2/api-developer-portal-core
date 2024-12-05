@@ -27,6 +27,7 @@ const devportalRoute = require('./routes/devportalRoute');
 const orgContent = require('./routes/orgContentRoute');
 const apiContent = require('./routes/apiContentRoute');
 const myAPIs = require('./routes/myAPIRoute');
+const applicationContent = require('./routes/applicationsContentRoute');
 const customContent = require('./routes/customPageRoute');
 const config = require(process.cwd() + '/config.json');
 const Handlebars = require('handlebars');
@@ -81,6 +82,8 @@ passport.deserializeUser((user, done) => {
 
 app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), filePrefix + 'styles')));
 app.use(constants.ROUTE.IMAGES, express.static(path.join(process.cwd(), filePrefix + 'images')));
+app.use(constants.ROUTE.INTERNAL_STYLES, express.static(path.join(process.cwd(), 'src/pages/styles')));
+app.use(constants.ROUTE.TECHNICAL_STYLES, express.static(path.join(require.main.filename, '../styles')));
 app.use(constants.ROUTE.TECHNICAL_SCRIPTS, express.static(path.join(require.main.filename, '../scripts')));
 
 //backend routes
@@ -92,6 +95,7 @@ if (config.mode === constants.DEV_MODE) {
 } else {
     app.use(constants.ROUTE.DEFAULT, authRoute);
     app.use(constants.ROUTE.DEFAULT, apiContent);
+    app.use(constants.ROUTE.DEFAULT, applicationContent);
     app.use(constants.ROUTE.DEFAULT, orgContent);
     app.use(constants.ROUTE.DEFAULT, myAPIs);
     app.use(constants.ROUTE.DEFAULT, customContent);  

@@ -11,7 +11,7 @@ Follow the steps given in InstallationGuide.md, to create database.
     psql -q -U "{db_username}" -d "{db_name}" -h "{hostname}" -p "{port}" -f "{path to data-dump.sql}"
     ```
     
-4.  Execute the startup script on the root, based on the OS:
+4.  Execute the startup script <DEVPORTAL_HOME>/bin folder, based on the OS:
     
     ```bash
     For Linux or MacOS

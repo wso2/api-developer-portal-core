@@ -75,6 +75,24 @@ const registerAllPartialsFromFile = async (baseURL, req) => {
   registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "home", "partials"), req.user);
   registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req.user);
   registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "apis", "partials"), req.user);
+
+  const applicationPartialPaths = [
+    "applications",
+    "add-application",
+    "application",
+    "edit-application",
+  ];
+  
+  applicationPartialPaths.forEach((page) => {
+    registerPartialsFromFile(
+      baseURL,
+      path.join(require.main.filename, "..", "pages", page, "partials"),
+      req.user
+    );
+  });
+
+  registerPartialsFromFile(baseURL, path.join(require.main.filename, "..", "utils", "partials"), req.user);
+
   if (fs.existsSync(path.join(process.cwd(), filePrefix + "pages", filePath, "partials"))) {
     registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix + "pages", filePath, "partials"), req.user);
   }

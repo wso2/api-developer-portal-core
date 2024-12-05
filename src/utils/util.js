@@ -43,10 +43,10 @@ function loadMarkdown(filename, dirName) {
 };
 
 
-function renderTemplate(templatePath, layoutPath, templateContent) {
-
+function renderTemplate(templatePath, layoutPath, templateContent, isTechnical) {
+    
     let completeTemplatePath;
-    if (templatePath.includes('tryout') || templatePath.includes('myAPIs')) {
+    if (isTechnical) {
         completeTemplatePath = path.join(require.main.filename, templatePath);
     } else {
         completeTemplatePath = path.join(process.cwd(), templatePath);

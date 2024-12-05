@@ -38,8 +38,8 @@ const loadAPIs = async (req, res) => {
         const templateContent = {
             apiMetadata: await loadAPIMetaDataList(),
             baseUrl: constants.BASE_URL + config.port
-        };
-        html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
+        }
+        html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
     } else {
         try {
             const orgID = await adminDao.getOrgId(orgName);
@@ -54,8 +54,8 @@ const loadAPIs = async (req, res) => {
             console.log("Rendering default api listing page from file");
             const templateContent = {
                 baseUrl: constants.BASE_URL + config.port
-            };
-            html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
+            }
+            html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
         }
     }
     res.send(html);
@@ -92,8 +92,8 @@ const loadAPIContent = async (req, res) => {
             subscriptionPlans: subscriptionPlans,
             baseUrl: constants.BASE_URL + config.port,
             schemaUrl: orgName + '/mock/' + apiName + '/apiDefinition.xml'
-        };
-        html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
+        }
+        html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false)
     } else {
         try {
             const orgID = await adminDao.getOrgId(orgName);
@@ -137,7 +137,7 @@ const loadAPIContent = async (req, res) => {
 
 const loadSubscriptionPlans = async (req, res, policyId) => {
     try {
-        return await util.invokeApiRequest('GET', `${config.controlPlanAPI}/throttling-policies/subscription/${policyId}`);
+        return await util.invokeApiRequest('GET', `${config.controlPlaneUrl}/throttling-policies/subscription/${policyId}`);
     } catch (error) {
         console.error("Error occurred while loading subscription plans", error);
         util.handleError(res, error);
@@ -159,8 +159,8 @@ const loadTryOutPage = async (req, res) => {
             baseUrl: constants.BASE_URL + config.port,
             apiType: metaData.apiInfo.apiType,
             swagger: apiDefinition
-        };
-        html = renderTemplate('../pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
+        }
+        html = renderTemplate('../pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     } else {
         try {
             const orgID = await adminDao.getOrgId(orgName);

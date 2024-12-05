@@ -1,9 +1,9 @@
 <section>
-    <div id="planModal" class="custom-api-card modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
+    <div id="planModal" class="custom-api-card modal custom-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog custom-modal-dialog" role="document">
+            <div class="modal-content custom-modal-content">
                 <div id="modal-content">
-                    <div class="modal-header">
+                    <div class="modal-header custom-modal-header">
                         <h5 class="dev-header h5" id="modalTitle">Subscription Plan Details</h5>
                     </div>
                     <div class="modal-body">
@@ -37,7 +37,7 @@
                     </div>
 
                     <div id="applicationFormSection" class="app-selection">
-                        <div class="modal-header">
+                        <div class="modal-header custom-modal-header">
                             <h5 class="dev-header h5">Create a New Application</h5>
                         </div>
                         <div class="modal-body">
@@ -49,7 +49,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer custom-modal-footer">
                     <button type="button" class="btn apilistbtn-secondary" data-dismiss="modal"
                         onclick="closeModal()">Close</button>
                     {{#if applications}}

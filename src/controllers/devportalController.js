@@ -21,7 +21,7 @@ const config = require('../../config.json');
 const unsubscribeAPI = async (req, res) => {
     try {
         const subscriptionId = req.params.subscriptionId;
-        res.send(await util.invokeApiRequest('DELETE', `${config.controlPlanAPI}/subscriptions/${subscriptionId}`, {}, {}));
+        res.send(await util.invokeApiRequest('DELETE', `${config.controlPlaneUrl}/subscriptions/${subscriptionId}`, {}, {}));
     } catch (error) {
         console.error("Error occurred while unsubscribing from API", error);
         util.handleError(res, error);
@@ -30,7 +30,7 @@ const unsubscribeAPI = async (req, res) => {
 
 const subscribeAPI = async (req, res) => {
     try {
-        res.send(await util.invokeApiRequest('POST', `${config.controlPlanAPI}/subscriptions`, {}, req.body));
+        res.send(await util.invokeApiRequest('POST', `${config.controlPlaneUrl}/subscriptions`, {}, req.body));
     } catch (error) {
         console.error("Error occurred while subscribing to API", error);
         util.handleError(res, error);
@@ -43,7 +43,7 @@ const createApplication = async (req, res) => {
             ...req.body,
             throttlingPolicy: 'Unlimited'
         };
-        res.send(await util.invokeApiRequest('POST', `${config.controlPlanAPI}/applications`, {}, payload));
+        res.send(await util.invokeApiRequest('POST', `${config.controlPlaneUrl}/applications`, {}, payload));
     } catch (error) {
         console.error("Error occurred while creating application", error);
         util.handleError(res, error);
