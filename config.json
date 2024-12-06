@@ -4,7 +4,7 @@
   "mode": "production",
   "controlPlane" : {
     "url": "https://localhost:9443/api/am/devportal/v3",
-    "accessToken" :"Bearer <control-planr-access-token>",
+    "accessToken" :"Bearer <control-plane-access-token>",
     "rejectUnauthorized": true,
     "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
   },
