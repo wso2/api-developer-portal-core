@@ -89,13 +89,18 @@
 
                             <!-- Additional Configuration Fields -->
                             {{#each applicationConfiguration}}
-                            <div class="mb-3">
+                            <div class="mb-3">                         
                                 <label for="{{name}}-{{id}}" class="form-label">
                                     {{label}}
                                     {{#if required}}<span class="text-danger">*</span>{{/if}}
                                 </label>
 
                                 {{#if (eq type 'input')}}
+                                <input type="text" id="{{name}}-{{id}}" class="form-control" value="{{default}}" {{#if
+                                    required}}required{{/if}} />
+                                {{/if}}
+
+                                {{#if (eq type 'text')}}
                                 <input type="text" id="{{name}}-{{id}}" class="form-control" value="{{default}}" {{#if
                                     required}}required{{/if}} />
                                 {{/if}}
@@ -119,6 +124,7 @@
                                 </div>
                                 {{/if}}
 
+                                <div class='form-text mb-3'>{{tooltip}}</div>
                             </div>
                             {{/each}}
 
