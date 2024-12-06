@@ -31,6 +31,7 @@ const createOrganization = async (orgData) => {
         });
         return organization;
     } catch (error) {
+        console.log(error)
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
         }

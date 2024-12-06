@@ -38,12 +38,12 @@ const ensurePermission = (currentPage, role) => {
         minimatch.minimatch(currentPage, constants.ROUTE.DEVPORTAL_ROOT)) {
         console.log('Admin role');
         console.log('Role is: ' + role);
-        const regex = /^Internal\/everyone.*/;
-        if (regex.test(role)) {
-            console.log('Role is everyone');
-            return role.split(',').includes(constants.ROLES.ADMIN_ROLE);
-        }
-        return constants.ROLES.ADMIN_ROLE === role;
+        // const regex = /^Internal\/everyone.*/;
+        // if (regex.test(role)) {
+        //     console.log('Role is everyone');
+        //     return role.split(',').includes(constants.ROLES.ADMIN_ROLE);
+        // }
+        return role.includes(constants.ROLES.ADMIN_ROLE);
     }
     return false;
 }

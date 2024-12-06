@@ -42,6 +42,38 @@ const Organization = sequelize.define('DP_ORGANIZATION', {
         type: DataTypes.STRING,
         allowNull: true
     },
+    DEV_PORTAL_URL_IDENTIFIER: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    ROLE_CLAIM_NAME: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    GROUPS_CLAIM_NAME: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    ORGANIZATION_CLAIM_NAME: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    ORGANIZATION_IDENTIFIER: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    ADMIN_ROLE: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    SUBSCRIBER_ROLE: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    GROUP_CLAIM_NAME: {
+        type: DataTypes.STRING,
+        allowNull: false
+    }
 }, {
     timestamps: false,
     tableName: 'DP_ORGANIZATION',

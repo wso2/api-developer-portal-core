@@ -67,6 +67,7 @@ module.exports = {
       DEV_PORTAL:  '/devportal',
       STYLES: '/styles',
       PORTAL: '/portal',
+      SCRIPTS: '/scripts',
       IMAGES: '/images',
       INTERNAL_STYLES: '/internalStyles',
       IMAGES_PATH: '/images/',

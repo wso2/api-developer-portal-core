@@ -38,25 +38,26 @@ const createOrganization = async (req, res) => {
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
-
-    const { orgName, businessOwner, businessOwnerContact, businessOwnerEmail } = req.body;
-
+    const payload = req.body;
     try {
         if (!orgName || !businessOwner) {
             throw new CustomError(400, "Bad Request", "Missing or Invalid fields in the request payload");
         }
-        const organization = await adminDao.createOrganization({
-            orgName,
-            businessOwner,
-            businessOwnerContact,
-            businessOwnerEmail
-        });
+        const organization = await adminDao.createOrganization(payload);
         const orgCreationResponse = {
             orgId: organization.ORG_ID,
             orgName: organization.ORG_NAME,
             businessOwner: organization.BUSINESS_OWNER,
             businessOwnerContact: organization.BUSINESS_OWNER_CONTACT,
-            businessOwnerEmail: organization.BUSINESS_OWNER_EMAIL
+            businessOwnerEmail: organization.BUSINESS_OWNER_EMAIL,
+            devPortalURLIdentifier: organization.DEV_PORTAL_URL_IDENTIFIER,
+            roleClaimName: organization.ROLE_CLAIM_NAME,
+            groupsClaimName: organization.GROUPS_CLAIM_NAME,
+            organizationClaimName: organization.ORGANIZATION_CLAIM_NAME,
+            organizationIdentifier: organization.ORGANIZATION_IDENTIFIER,
+            adminRole: organization.ADMIN_ROLE,
+            subscriberRole: organization.SUBSCRIBER_ROLE,
+            groupClaimName: organization.GROUP_CLAIM_NAME
         };
         res.status(201).send(orgCreationResponse);
     } catch (error) {
