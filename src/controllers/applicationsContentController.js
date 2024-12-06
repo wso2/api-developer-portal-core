@@ -98,11 +98,13 @@ async function getAPIMThrottlingPolicies() {
 
 const loadApplication = async (req, res) => {
     const applicationId = req.params.applicationid;
-    let html, templateContent, metaData;
+    let html, templateContent, metaData, kMmetaData;
     if (config.mode === constants.DEV_MODE) {
         metaData = await getMockApplication();
+        kMmetaData = await getMockKeyManagers();
         templateContent = {
             applicationMetadata: metaData,
+            keyManagersMetadata: kMmetaData,
             baseUrl: constants.BASE_URL + config.port
         }
         html = renderTemplate('../pages/application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
@@ -110,8 +112,10 @@ const loadApplication = async (req, res) => {
         const orgName = req.params.orgName;
         const orgID = await orgIDValue(orgName);
         metaData = await getAPIMApplication(applicationId);
+        kMmetaData = await getAPIMKeyManagers();
         templateContent = {
             applicationMetadata: metaData,
+            keyManagersMetadata: kMmetaData,
             baseUrl: '/' + orgName
         }
         const templateResponse = await templateResponseValue('application');
@@ -159,9 +163,20 @@ async function getMockApplication() {
     return mockApplicationMetaData;
 }
 
+async function getMockKeyManagers() {
+    const mockKeyManagersMetaDataPath = path.join(process.cwd(), filePrefix + '../mock/Applications/DefaultApplication', 'AllKeyManagers.json');
+    const mockKeyManagersMetaData = JSON.parse(fs.readFileSync(mockKeyManagersMetaDataPath, 'utf-8'));
+    return mockKeyManagersMetaData.list;
+}
+
 async function getAPIMApplication(applicationId) {
     const responseData = await invokeApiRequest('GET', controlPlaneUrl + '/applications/' + applicationId, null, null);
     return responseData;
+}
+
+async function getAPIMKeyManagers() {
+    const responseData = await invokeApiRequest('GET', controlPlaneUrl + '/key-managers', null, null);
+    return responseData.list;
 }
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
