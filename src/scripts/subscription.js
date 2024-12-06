@@ -132,9 +132,9 @@ async function handleSubscribe(appId) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                applicationId: applicationId,
-                apiId: urlParams.get('apiId'),
-                throttlingPolicy: urlParams.get('tierPlan'),
+                applicationId: applicationId.replace(/[^a-zA-Z0-9\s]/g, ''),
+                apiId: urlParams.get('apiId').replace(/[^a-zA-Z0-9\s]/g, ''),
+                throttlingPolicy: urlParams.get('tierPlan').replace(/[^a-zA-Z0-9\s]/g, ''),
             }),
         });
 

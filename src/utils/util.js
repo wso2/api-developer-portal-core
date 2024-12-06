@@ -251,8 +251,11 @@ const getAPIImages = async (directory) => {
 
 const invokeApiRequest = async (method, url, headers, body) => {
 
+    const cpToken = require(process.cwd() + '/cpToken');
+    const token = cpToken.token;
+
     headers = headers || {}; 
-    headers.Authorization = `${config.accessToken}`; 
+    headers.Authorization = `Bearer ${token}`; 
 
     const httpsAgent = new https.Agent({
         rejectUnauthorized: false, 
