@@ -8,8 +8,8 @@
         <ul class="nav nav-tabs" id="keyManagerTabs" role="tablist">
             {{#each keyManagersMetadata}}
             <li class="nav-item" role="presentation">
-                <a class="nav-link {{#if @first}}active{{/if}}" id="tab-{{id}}" data-bs-toggle="tab"
-                    href="#tab-content-{{id}}" role="tab" aria-controls="tab-content-{{id}}"
+                <a class="nav-link {{#if @first}}active{{/if}}" id="tab-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" data-bs-toggle="tab"
+                    href="#tab-content-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" role="tab" aria-controls="tab-content-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
                     aria-selected="{{#if @first}}true{{else}}false{{/if}}">
                     {{name}}
                 </a>
@@ -20,8 +20,8 @@
         <!-- KM Content -->
         <div class="tab-content" id="keyManagerTabsContent">
             {{#each keyManagersMetadata}}
-            <div class="tab-pane fade {{#if @first}}show active{{/if}}" id="tab-content-{{id}}" role="tabpanel"
-                aria-labelledby="tab-{{id}}">
+            <div class="tab-pane fade {{#if @first}}show active{{/if}}" id="tab-content-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" role="tabpanel"
+                aria-labelledby="tab-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}">
                 <div class='container my-5'>
                     <div class='form-card p-5'>
                         <h2 class='title mb-4'>{{name}}</h2>
@@ -29,31 +29,31 @@
                         <p class='text-muted mb-4'>
                             Key Configuration for {{name}}
                         </p>
-                        <form id='oauth2KeyGenerateForm-{{id}}'>
+                        <form id='oauth2KeyGenerateForm-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'>
 
                             {{!-- Token Endpoint --}}
                             <div class='mb-3'>
-                                <label for='token-endpoint-{{id}}' class='form-label'>
+                                <label for='token-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' class='form-label'>
                                     Token Endpoint
                                     <span class='text-danger'>*</span>
                                 </label>
-                                <input type='url' id='token-endpoint-{{id}}' class='form-control'
+                                <input type='url' id='token-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' class='form-control'
                                     value='{{tokenEndpoint}}' disabled />
                             </div>
 
                             {{!-- Revoke Endpoint --}}
                             <div class='mb-3'>
-                                <label for='revoke-endpoint-{{id}}' class='form-label'>
+                                <label for='revoke-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' class='form-label'>
                                     Revoke Endpoint
                                     <span class='text-danger'>*</span>
                                 </label>
-                                <input type='url' id='revoke-endpoint-{{id}}' class='form-control'
+                                <input type='url' id='revoke-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' class='form-control'
                                     value='{{revokeEndpoint}}' disabled />
                             </div>
 
                             {{!-- Grant Types --}}
                             <div class="mb-3">
-                                <label for="available-grant-types-{{id}}" class="form-label">
+                                <label for="available-grant-types-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" class="form-label">
                                     Available Grant Types
                                     <span class="text-danger">*</span>
                                 </label>
@@ -62,10 +62,10 @@
                                     <div class="col-md-4 mb-2">
                                         <div class="form-check">
                                             <input type="checkbox" class="form-check-input"
-                                                id="grant-type-{{this}}-{{id}}" name="availableGrantTypes"
+                                                id="grant-type-{{this}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" name="availableGrantTypes"
                                                 value="{{this}}" {{#if (eq this ../default)}}checked{{/if}}
                                             />
-                                            <label class="form-check-label" for="grant-type-{{this}}-{{id}}">
+                                            <label class="form-check-label" for="grant-type-{{this}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}">
                                                 {{this}}
                                             </label>
                                         </div>
@@ -75,38 +75,35 @@
                             </div>
 
                             {{!-- Callback URL --}}
-                            {{!-- This needs to be further investigate --}}
                             <div class='mb-3'>
-                                <label for='callback-url-{{id}}' class='form-label'>
+                                <label for='callback-url-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' class='form-label'>
                                     Callback URL
                                     <span class='text-danger'>*</span>
                                 </label>
-                                <input type='url' id='callback-url-{{id}}' class='form-control'
+                                <input type='url' id='callback-url-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' class='form-control'
                                     value='http://sample.com/callback/url' disabled />
                             </div>
-
-
 
                             <!-- Additional Configuration Fields -->
                             {{#each applicationConfiguration}}
                             <div class="mb-3">                         
-                                <label for="{{name}}-{{id}}" class="form-label">
+                                <label for="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" class="form-label">
                                     {{label}}
                                     {{#if required}}<span class="text-danger">*</span>{{/if}}
                                 </label>
 
                                 {{#if (eq type 'input')}}
-                                <input type="text" id="{{name}}-{{id}}" class="form-control" value="{{default}}" {{#if
+                                <input type="text" id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" class="form-control" value="{{default}}" {{#if
                                     required}}required{{/if}} />
                                 {{/if}}
 
                                 {{#if (eq type 'text')}}
-                                <input type="text" id="{{name}}-{{id}}" class="form-control" value="{{default}}" {{#if
+                                <input type="text" id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" class="form-control" value="{{default}}" {{#if
                                     required}}required{{/if}} />
                                 {{/if}}
 
                                 {{#if (eq type 'select')}}
-                                <select id="{{name}}-{{id}}" class="form-control" {{#if required}}required{{/if}}>
+                                <select id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" class="form-control" {{#if required}}required{{/if}}>
                                     {{#each values}}
                                     <option value="{{this}}" {{#if (eq this ../default)}}selected{{/if}}>{{this}}
                                     </option>
@@ -116,9 +113,9 @@
 
                                 {{#if (eq type 'checkbox')}}
                                 <div class="form-check">
-                                    <input type="checkbox" id="{{name}}-{{id}}" class="form-check-input" {{#if
+                                    <input type="checkbox" id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" class="form-check-input" {{#if
                                         default}}checked{{/if}} />
-                                    <label class="form-check-label" for="{{name}}-{{id}}">
+                                    <label class="form-check-label" for="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}">
                                         {{label}}
                                     </label>
                                 </div>
@@ -129,9 +126,9 @@
                             {{/each}}
 
                             <div class="d-flex justify-content-end gap-3">
-                                <button class="btn btn-primary custom-save-btn" id="oauth2KeyGenerateButton-{{id}}"
+                                <button class="btn btn-primary custom-save-btn" id="oauth2KeyGenerateButton-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
                                     name="http-values" type="button"
-                                    onClick="generateOauth2Key('{{id}}', {{../../isProduction}})">
+                                    onClick="generateOauth2Key('{{id}}', {{../isProduction}})">
                                     Generate Keys
                                 </button>
                             </div>
