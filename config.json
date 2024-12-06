@@ -2,15 +2,18 @@
   "port": 3000,
   "pathToContent": "../src/",
   "certificate": {
-    "path": "../api-developer-portal/conf/security/client-truststore.pem"
+    "path": "../api-developer-portal-core/conf/security/client-truststore.pem"
   },
   "mode": "production",
+  "controlPlaneUrl": "https://localhost:9443/api/am/devportal/v3",
   "db": {
     "username": "postgres",
     "password": "postgres",
-    "database": "devportal",
+    "database": "dev",
     "host": "localhost",
     "dialect": "postgres"
   },
-  "controlPlaneUrl": "https://localhost:9443/api/am/devportal/v3.1"
+  "providerURL": {
+    "AWS": "https://aws.amazon.com"
+  }
 }

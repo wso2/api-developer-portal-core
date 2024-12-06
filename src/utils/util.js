@@ -24,6 +24,9 @@ const { CustomError } = require('../utils/errors/customErrors');
 const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 const unzipper = require('unzipper');
+const axios = require('axios');
+const https = require('https');
+const config = require('../../config.json');
 
 const { Sequelize } = require('sequelize');
 
@@ -197,8 +200,8 @@ const fileMapping = {
 }
 
 const textFiles = [
-    constants.FILE_EXTENSIONS.HTML , constants.FILE_EXTENSIONS.HBS, constants.FILE_EXTENSIONS.MD,
-    constants.FILE_EXTENSIONS.JSON, constants.FILE_EXTENSIONS.YAML, constants.FILE_EXTENSIONS.YML, 
+    constants.FILE_EXTENSIONS.HTML, constants.FILE_EXTENSIONS.HBS, constants.FILE_EXTENSIONS.MD,
+    constants.FILE_EXTENSIONS.JSON, constants.FILE_EXTENSIONS.YAML, constants.FILE_EXTENSIONS.YML,
     constants.FILE_EXTENSIONS.SVG
 ]
 
@@ -210,8 +213,9 @@ const retrieveContentType = (fileName, fileType) => {
 
     if (fileType === constants.STYLE)
         return constants.MIME_TYPES.CSS;
-    const filenameParts = fileName.split('.');
-    const extension = filenameParts.length > 1 ? filenameParts.pop() : '';
+
+    const extension = path.extname(fileName).toLowerCase();
+
     if (fileType === constants.IMAGE) {
         return imageMapping[extension] || constants.MIME_TYPES.CONYEMT_TYPE_OCT;
     }
@@ -245,6 +249,38 @@ const getAPIImages = async (directory) => {
     return files;
 };
 
+const invokeApiRequest = async (method, url, headers, body) => {
+
+    headers = headers || {}; 
+    headers.Authorization = `${config.accessToken}`; 
+
+    const httpsAgent = new https.Agent({
+        rejectUnauthorized: false, 
+    });
+    
+    try {
+        const options = {
+            method,
+            headers,
+            httpsAgent,
+        };
+
+        if (body) {
+            options.data = body;
+        }
+
+        const response = await axios(url, options);
+        return response.data;
+    } catch (error) {
+        let message = error.message;
+        if (error.response) {
+            message = error.response.data.description;
+        }
+        throw new CustomError(error.status, 'Request failed', message);
+    }
+};
+
+
 module.exports = {
     loadMarkdown,
     renderTemplate,
@@ -257,5 +293,6 @@ module.exports = {
     retrieveContentType,
     getAPIFileContent,
     getAPIImages,
-    isTextFile
+    isTextFile,
+    invokeApiRequest
 }

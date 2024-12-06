@@ -56,6 +56,21 @@ const getOrganization = async (param) => {
     }
 };
 
+const getOrgId = async (orgName) => {
+        try {
+            const organization = await Organization.findOne({ where: { ORG_NAME: orgName } });
+            if (!organization) {
+                throw new Sequelize.EmptyResultError('Organization not found');
+            }
+            return organization.ORG_ID;
+        } catch (error) {
+            if (error instanceof Sequelize.EmptyResultError) {
+                throw error;
+            }
+            throw new Sequelize.DatabaseError(error);
+        }
+};
+
 const updateOrganization = async (orgData) => {
 
     try {
@@ -309,5 +324,6 @@ module.exports = {
     createIdentityProvider,
     updateIdentityProvider,
     getIdentityProvider,
-    deleteIdentityProvider
+    deleteIdentityProvider,
+    getOrgId
 };
