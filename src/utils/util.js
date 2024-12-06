@@ -44,7 +44,7 @@ function loadMarkdown(filename, dirName) {
 
 
 function renderTemplate(templatePath, layoutPath, templateContent, isTechnical) {
-    
+
     let completeTemplatePath;
     if (isTechnical) {
         completeTemplatePath = path.join(require.main.filename, templatePath);
@@ -251,13 +251,22 @@ const getAPIImages = async (directory) => {
 
 const invokeApiRequest = async (method, url, headers, body) => {
 
-    headers = headers || {}; 
-    headers.Authorization = `${config.accessToken}`; 
+    headers = headers || {};
+    headers.Authorization = `${config.controlPlane.accessToken}`;
 
-    const httpsAgent = new https.Agent({
-        rejectUnauthorized: false, 
-    });
-    
+    const certPath = path.join(process.cwd(), config.controlPlane.pathToCertificate);
+
+    let httpsAgent;
+    if (config.controlPlane.rejectUnauthorized) {
+        httpsAgent = new https.Agent({
+            ca: fs.readFileSync(certPath),
+            rejectUnauthorized: true,
+        });
+    } else {
+        httpsAgent = new https.Agent({
+            rejectUnauthorized: false,
+        });
+    }
     try {
         const options = {
             method,

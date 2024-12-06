@@ -1,22 +1,11 @@
-const { renderTemplate, renderGivenTemplate, loadLayoutFromAPI } = require('../utils/util');
+const { renderTemplate, renderGivenTemplate, loadLayoutFromAPI, invokeApiRequest } = require('../utils/util');
 const config = require(process.cwd() + '/config');
-const cpToken = require(process.cwd() + '/cpToken');
 const constants = require('../utils/constants');
 const path = require('path');
 const fs = require('fs');
-const axios = require('axios');
-const https = require('https');
 const adminDao = require('../dao/admin');
-
 const filePrefix = config.pathToContent;
-const certPath = path.join(process.cwd(), config.certificate.path);
-const controlPlaneUrl = config.controlPlaneUrl;
-const token = cpToken.token;
-
-const httpsAgent = new https.Agent({
-    ca: fs.readFileSync(certPath),
-    rejectUnauthorized: true,
-});
+const controlPlaneUrl = config.controlPlane.url;
 
 const orgIDValue = async (orgName) => {
     const organization = await adminDao.getOrganization(orgName);
@@ -62,19 +51,8 @@ async function getMockApplications() {
 }
 
 async function getAPIMApplications() {
-    try {
-        const response = await axios({
-            method: 'GET',
-            url: controlPlaneUrl + '/applications',
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-            httpsAgent
-        });
-        return response.data.list;
-    } catch (error) {
-        console.error('Error fetching applications:', error.message);
-    }
+    const responseData = await invokeApiRequest('GET', controlPlaneUrl + '/applications', null, null);
+    return responseData.list;
 }
 
 // ***** Load Throttling Policies *****
@@ -101,7 +79,7 @@ const loadThrottlingPolicies = async (req, res) => {
         const layoutResponse = await loadLayoutFromAPI(orgID);
         html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
     }
-    
+
     res.send(html);
 }
 
@@ -112,19 +90,8 @@ async function getMockThrottlingPolicies() {
 }
 
 async function getAPIMThrottlingPolicies() {
-    try {
-        const response = await axios({
-            method: 'GET',
-            url: controlPlaneUrl + '/throttling-policies/application',
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-            httpsAgent
-        });
-        return response.data.list;
-    } catch (error) {
-        console.error('Error fetching throttling policies:', error.message);
-    }
+    const responseData = await invokeApiRequest('GET', controlPlaneUrl + '/throttling-policies/application', null, null);
+    return responseData.list;
 }
 
 // ***** Load Application *****
@@ -151,7 +118,7 @@ const loadApplication = async (req, res) => {
         const layoutResponse = await loadLayoutFromAPI(orgID);
         html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
     }
-    
+
     res.send(html);
 }
 
@@ -193,19 +160,8 @@ async function getMockApplication() {
 }
 
 async function getAPIMApplication(applicationId) {
-    try {
-        const response = await axios({
-            method: 'GET',
-            url: controlPlaneUrl + '/applications/' + applicationId,
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-            httpsAgent
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching application:', error.message);
-    }
+    const responseData = await invokeApiRequest('GET', controlPlaneUrl + '/applications/' + applicationId, null, null);
+    return responseData;
 }
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
@@ -213,139 +169,73 @@ async function getAPIMApplication(applicationId) {
 // ***** Save Application *****
 
 const saveApplication = async (req, res) => {
-    try {
-        const { name, throttlingPolicy, description } = req.body;
-        const response = await axios.post(
-            `${controlPlaneUrl}/applications`,
-            {
-                name,
-                throttlingPolicy,
-                description,
-                tokenType: 'JWT',
-                groups: [],
-                attributes: {},
-                subscriptionScopes: []
-            },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                httpsAgent,
-            }
-        );
-        res.status(200).json({ message: response.data.message });
-    } catch (error) {
-        console.error('Error saving application:', error.message);
-        res.status(500).json({ error: 'Failed to save application' });
-    }
+    const { name, throttlingPolicy, description } = req.body;
+    const responseData = await invokeApiRequest('POST', `${controlPlaneUrl}/applications`, {
+        'Content-Type': 'application/json'
+    }, {
+        name,
+        throttlingPolicy,
+        description,
+        tokenType: 'JWT',
+        groups: [],
+        attributes: {},
+        subscriptionScopes: []
+    });
+    res.status(200).json({ message: responseData.message });
 };
 
 // ***** Update Application *****
 
 const updateApplication = async (req, res) => {
-    try {
-        const { name, throttlingPolicy, description } = req.body;
-        const applicationId = req.params.applicationid;
-        const response = await axios.put(
-            `${controlPlaneUrl}/applications/${applicationId}`,
-            {
-                name,
-                throttlingPolicy,
-                description,
-                tokenType: 'JWT',
-                groups: [],
-                attributes: {},
-                subscriptionScopes: []
-            },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                httpsAgent,
-            }
-        );
-        res.status(200).json({ message: response.data.message });
-    } catch (error) {
-        console.error('Error updating application:', error.message);
-        res.status(500).json({ error: 'Failed to update application' });
-    }
+    const { name, throttlingPolicy, description } = req.body;
+    const applicationId = req.params.applicationid;
+    const responseData = await invokeApiRequest('PUT', `${controlPlaneUrl}/applications/${applicationId}`, {
+        'Content-Type': 'application/json',
+    }, {
+        name,
+        throttlingPolicy,
+        description,
+        tokenType: 'JWT',
+        groups: [],
+        attributes: {},
+        subscriptionScopes: []
+    });
+    res.status(200).json({ message: responseData.message });
 };
 
 // ***** Delete Application *****
 
 const deleteApplication = async (req, res) => {
-    try {
-        const applicationId = req.params.applicationid;
-        const response = await axios.delete(
-            `${controlPlaneUrl}/applications/${applicationId}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-                httpsAgent,
-            }
-        );
-        res.status(200).json({ message: response.data.message });
-    } catch (error) {
-        console.error('Error deleting application:', error.message);
-        res.status(500).json({ error: 'Failed to delete application' });
-    }
+    const applicationId = req.params.applicationid;
+    const responseData = await invokeApiRequest('DELETE', `${controlPlaneUrl}/applications/${applicationId}`, null, null);
+    res.status(200).json({ message: responseData.message });
 }
 
 // ***** Save Application *****
 
 const resetThrottlingPolicy = async (req, res) => {
-    try {
-        const applicationId = req.params.applicationid;
-        const { userName } = req.body;
-        const response = await axios.post(
-            `${controlPlaneUrl}/applications/${applicationId}/reset-throttle-policy`,
-            {
-                userName
-            },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                httpsAgent,
-            }
-        );
-        res.status(200).json({ message: response.data.message });
-    } catch (error) {
-        console.error('Error reseting throttling policy:', error.message);
-        res.status(500).json({ error: 'Failed to reset the throttling policy' });
-    }
+    const applicationId = req.params.applicationid;
+    const { userName } = req.body;
+    const responseData = await invokeApiRequest('POST', `${controlPlaneUrl}/applications/${applicationId}/reset-throttle-policy`, {
+        'Content-Type': 'application/json'
+    }, {
+        userName
+    });
+    res.status(200).json({ message: responseData.message });
 };
 
 // ***** Generate API Keys *****
 
 const generateAPIKeys = async (req, res) => {
-    try {
-        const applicationId = req.params.applicationid;
-        const environment = req.params.env;
-        const { validityPeriod, additionalProperties } = req.body;
-
-        const response = await axios.post(
-            `${controlPlaneUrl}/applications/${applicationId}/api-keys/${environment}/generate`,
-            {
-                validityPeriod, additionalProperties
-            },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                httpsAgent,
-            }
-        );
-        res.status(200).json(response.data);
-    } catch (error) {
-        console.error('Error generating API Key:', error.message);
-        res.status(500).json({ error: 'Failed to generate API key' });
-    }
+    const applicationId = req.params.applicationid;
+    const environment = req.params.env;
+    const { validityPeriod, additionalProperties } = req.body;
+    const responseData = await invokeApiRequest('POST', `${controlPlaneUrl}/applications/${applicationId}/api-keys/${environment}/generate`, {
+        'Content-Type': 'application/json'
+    }, {
+        validityPeriod, additionalProperties
+    });
+    res.status(200).json(responseData);
 };
 
 module.exports = {
