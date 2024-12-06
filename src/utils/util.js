@@ -257,14 +257,14 @@ const invokeApiRequest = async (method, url, headers, body) => {
     const certPath = path.join(process.cwd(), config.controlPlane.pathToCertificate);
 
     let httpsAgent;
-    if (config.controlPlane.rejectUnauthorized) {
+    if (config.controlPlane.disableCertValidation) {
         httpsAgent = new https.Agent({
-            ca: fs.readFileSync(certPath),
-            rejectUnauthorized: true,
+            rejectUnauthorized: false,
         });
     } else {
         httpsAgent = new https.Agent({
-            rejectUnauthorized: false,
+            ca: fs.readFileSync(certPath),
+            rejectUnauthorized: true,
         });
     }
     try {
