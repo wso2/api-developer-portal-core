@@ -58,11 +58,10 @@ const loadMyAPIs = async (req, res) => {
         }
 
         // Load modal content with subscribed applications and applications that are not subscribed
-        let apiId = req.query.apiId.replace(/[^a-zA-Z0-9\s]/g, '');
+        let apiId = req.query.apiId;
         if (apiId) {
             const apps = await loadApplications();
-            const apiSubs = await loadSubscriptions(apiId);
-            console.log(apiSubs);
+            const apiSubs = await loadSubscriptions(apiId.replace(/[^a-zA-Z0-9\s-]/g, ''));
             if (Array.isArray(apiSubs.list)) {
 
 
@@ -83,17 +82,16 @@ const loadMyAPIs = async (req, res) => {
                     }
                 }
             }
-
-            const templateContent = {
-                subscriptions: subscriptions,
-                applications: applications,
-                subscribedApps: subscribedApps,
-                baseUrl: '/' + orgName
-            };
-
-            const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
-            res.send(html);
         }
+        const templateContent = {
+            subscriptions: subscriptions,
+            applications: applications,
+            subscribedApps: subscribedApps,
+            baseUrl: '/' + orgName
+        };
+
+        const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        res.send(html);
     } catch (error) {
         console.error("Error occurred while loading My APIs", error);
         util.handleError(res, error);
