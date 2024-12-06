@@ -50,10 +50,6 @@ const loadApplications = async (req, res) => {
         }
         const templateResponse = await templateResponseValue('applications');
         const layoutResponse = await loadLayoutFromAPI(orgID);
-        console.log('layoutResponse:', layoutResponse);
-        console.log('templateResponse:', templateResponse);
-        console.log('orgID:', orgID);
-        console.log('orgName:', orgName);
         html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
     }
     res.send(html);
