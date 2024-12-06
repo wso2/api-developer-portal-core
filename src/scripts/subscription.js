@@ -24,17 +24,17 @@ async function unsubscribe(subscriptionId) {
         });
 
         if (response.ok) {
-            alert(`Unsubscribed successfully!`);
+            await showAlert(`Unsubscribed successfully!`, 'success');
             const url = new URL(window.location.origin + window.location.pathname);
             window.location.href = url.toString();
         } else {
             const responseData = await response.json();
             console.error('Failed to unsubscribe:', responseData);
-            alert(`Failed to unsubscribe.\n${responseData.description}`);
+            await showAlert(`Failed to unsubscribe.\n${responseData.description}`, 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert(`An error occurred.\n${error.message}`);
+        await showAlert(`An error occurred.\n${error.message}`, 'error');
     }
 }
 
@@ -83,7 +83,7 @@ async function handleCreateSubscribe() {
         // Sanitize the application name
         const appName = document.getElementById('appName').value.trim().replace(/[^a-zA-Z0-9\s]/g, '');
         if (!appName) {
-            alert('Application name cannot be empty.');
+            await showAlert('Application name cannot be empty.', 'error');
             return;
         }
 
@@ -101,11 +101,11 @@ async function handleCreateSubscribe() {
             handleSubscribe(responseData.applicationId, urlParams.get('tierPlan'));
         } else {
             console.error('Failed to create application:', responseData);
-            alert(`Failed to create application. Please try again.\n${responseData.description}`);
+            await showAlert(`Failed to create application. Please try again.\n${responseData.description}`, 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert(`An error occurred while subscribing: \n${error.message}`);
+        await showAlert(`An error occurred while subscribing: \n${error.message}`, 'error');
     }
 }
 
@@ -120,7 +120,7 @@ async function handleSubscribe(appId) {
     const applicationId = appId || document.getElementById('applicationSelect').value;
 
     if (!applicationId) {
-        alert('Please select an application.');
+        await showAlert('Please select an application.', 'error');
         return;
     }
 
@@ -132,23 +132,23 @@ async function handleSubscribe(appId) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                applicationId: applicationId.replace(/[^a-zA-Z0-9\s]/g, ''),
-                apiId: urlParams.get('apiId').replace(/[^a-zA-Z0-9\s]/g, ''),
-                throttlingPolicy: urlParams.get('tierPlan').replace(/[^a-zA-Z0-9\s]/g, ''),
+                applicationId: applicationId.replace(/[^a-zA-Z0-9\s-]/g, ''),
+                apiId: urlParams.get('apiId').replace(/[^a-zA-Z0-9\s-]/g, ''),
+                throttlingPolicy: urlParams.get('tierPlan').replace(/[^a-zA-Z0-9\s-]/g, ''),
             }),
         });
 
         const responseData = await response.json();
         if (response.ok) {
-            alert('Subscribed successfully!');
+            await showAlert('Subscribed successfully!', 'success');
             const url = new URL(window.location.origin + window.location.pathname);
             window.location.href = url.toString();
         } else {
             console.error('Failed to subscribe:', responseData);
-            alert(`Failed to subscribe. Please try again.\n${responseData.description}`);
+            await showAlert(`Failed to subscribe. Please try again.\n${responseData.description}`, 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert(`An error occurred while subscribing: \n${error.message}`);
+        await showAlert(`An error occurred while subscribing: \n${error.message}`, 'error');
     }
 }
