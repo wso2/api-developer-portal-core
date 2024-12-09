@@ -1,28 +1,26 @@
-const { renderTemplate } = require('../utils/util');
+const { renderTemplate, renderGivenTemplate, loadLayoutFromAPI, invokeApiRequest } = require('../utils/util');
 const config = require(process.cwd() + '/config');
-const cpToken = require(process.cwd() + '/cpToken');
 const constants = require('../utils/constants');
 const path = require('path');
 const fs = require('fs');
-const axios = require('axios');
-const https = require('https');
+const adminDao = require('../dao/admin');
 const util = require('../utils/util');
-
 const filePrefix = config.pathToContent;
-const certPath = path.join(process.cwd(), config.certificate.path);
-const certPassword = config.certificate.password;
-const controlPlaneUrl = config.controlPlaneUrl;
-const token = cpToken.token;
+const controlPlaneUrl = config.controlPlane.url;
 
-const httpsAgent = new https.Agent({
-    ca: fs.readFileSync(certPath),
-    rejectUnauthorized: true,
-});
+const orgIDValue = async (orgName) => {
+    const organization = await adminDao.getOrganization(orgName);
+    return organization.ORG_ID;
+}
+
+const templateResponseValue = async (pageName) => {
+    const completeTemplatePath = path.join(require.main.filename, '..', 'pages', pageName, 'page.hbs');
+    return fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
+}
 
 // ***** Load Applications *****
 
 const loadApplications = async (req, res) => {
-    const orgName = req.params.orgName;
     let html, metaData, templateContent;
     if (config.mode === constants.DEV_MODE) {
         metaData = await getMockApplications();
@@ -30,16 +28,20 @@ const loadApplications = async (req, res) => {
             applicationsMetadata: metaData,
             baseUrl: constants.BASE_URL + config.port
         }
+        html = renderTemplate('../pages/applications/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     }
     else {
-        console.log('/' + orgName);
+        const orgName = req.params.orgName;
+        const orgID = await orgIDValue(orgName);
         metaData = await getAPIMApplications();
         templateContent = {
             applicationsMetadata: metaData,
             baseUrl: '/' + orgName
         }
+        const templateResponse = await templateResponseValue('applications');
+        const layoutResponse = await loadLayoutFromAPI(orgID);
+        html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
     }
-    html = renderTemplate('../pages/applications/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     res.send(html);
 }
 
@@ -50,25 +52,13 @@ async function getMockApplications() {
 }
 
 async function getAPIMApplications() {
-    try {
-        const response = await axios({
-            method: 'GET',
-            url: controlPlaneUrl + '/applications',
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-            httpsAgent
-        });
-        return response.data.list;
-    } catch (error) {
-        console.error('Error fetching applications:', error.message);
-    }
+    const responseData = await invokeApiRequest('GET', controlPlaneUrl + '/applications', null, null);
+    return responseData.list;
 }
 
 // ***** Load Throttling Policies *****
 
 const loadThrottlingPolicies = async (req, res) => {
-    const orgName = req.params.orgName;
     let html, metaData, templateContent;
     if (config.mode === constants.DEV_MODE) {
         metaData = await getMockThrottlingPolicies();
@@ -76,15 +66,21 @@ const loadThrottlingPolicies = async (req, res) => {
             throttlingPoliciesMetadata: metaData,
             baseUrl: constants.BASE_URL + config.port
         }
+        html = renderTemplate('../pages/add-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     }
     else {
+        const orgName = req.params.orgName;
+        const orgID = await orgIDValue(orgName);
         metaData = await getAPIMThrottlingPolicies();
         templateContent = {
             throttlingPoliciesMetadata: metaData,
             baseUrl: '/' + orgName
         }
+        const templateResponse = await templateResponseValue('add-application');
+        const layoutResponse = await loadLayoutFromAPI(orgID);
+        html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
     }
-    html = renderTemplate('../pages/add-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
+
     res.send(html);
 }
 
@@ -95,35 +91,28 @@ async function getMockThrottlingPolicies() {
 }
 
 async function getAPIMThrottlingPolicies() {
-    try {
-        const response = await axios({
-            method: 'GET',
-            url: controlPlaneUrl + '/throttling-policies/application',
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-            httpsAgent
-        });
-        return response.data.list;
-    } catch (error) {
-        console.error('Error fetching throttling policies:', error.message);
-    }
+    const responseData = await invokeApiRequest('GET', controlPlaneUrl + '/throttling-policies/application', null, null);
+    return responseData.list;
 }
 
 // ***** Load Application *****
 
 const loadApplication = async (req, res) => {
     try {
-        const orgName = req.params.orgName;
         const applicationId = req.params.applicationid;
-        let html, templateContent, metaData;
+        let html, templateContent, metaData, kMmetaData;
         if (config.mode === constants.DEV_MODE) {
             metaData = await getMockApplication();
+            kMmetaData = await getMockKeyManagers();
             templateContent = {
                 applicationMetadata: metaData,
+                keyManagersMetadata: kMmetaData,
                 baseUrl: constants.BASE_URL + config.port
             }
+            html = renderTemplate('../pages/application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
         } else {
+            const orgName = req.params.orgName;
+            const orgID = await orgIDValue(orgName);
             metaData = await getAPIMApplication(applicationId);
             const allApis = await getAllAPIs();
             const subApis = await getSubscribedApis(applicationId);
@@ -153,13 +142,18 @@ const loadApplication = async (req, res) => {
 
             });
 
+            kMmetaData = await getAPIMKeyManagers();
             templateContent = {
                 applicationMetadata: metaData,
+                keyManagersMetadata: kMmetaData,
                 baseUrl: '/' + orgName,
                 apis: apiList
             }
+            const templateResponse = await templateResponseValue('application');
+            const layoutResponse = await loadLayoutFromAPI(orgID);
+            html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         }
-        html = renderTemplate('../pages/application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
+
         res.send(html);
     } catch (error) {
         console.error("Error occurred while loading application", error);
@@ -198,7 +192,10 @@ const loadApplicationForEdit = async (req, res) => {
             throttlingPoliciesMetadata: throttlingMetaData,
             baseUrl: constants.BASE_URL + config.port
         }
+        html = renderTemplate('../pages/edit-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     } else {
+        const orgName = req.params.orgName;
+        const orgID = await orgIDValue(orgName);
         metaData = await getAPIMApplication(applicationId);
         throttlingMetaData = await getAPIMThrottlingPolicies();
         templateContent = {
@@ -206,8 +203,11 @@ const loadApplicationForEdit = async (req, res) => {
             throttlingPoliciesMetadata: throttlingMetaData,
             baseUrl: '/' + orgName
         }
+        const templateResponse = await templateResponseValue('edit-application');
+        const layoutResponse = await loadLayoutFromAPI(orgID);
+        html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+
     }
-    html = renderTemplate('../pages/edit-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     res.send(html);
 }
 
@@ -217,20 +217,20 @@ async function getMockApplication() {
     return mockApplicationMetaData;
 }
 
+async function getMockKeyManagers() {
+    const mockKeyManagersMetaDataPath = path.join(process.cwd(), filePrefix + '../mock/Applications/DefaultApplication', 'AllKeyManagers.json');
+    const mockKeyManagersMetaData = JSON.parse(fs.readFileSync(mockKeyManagersMetaDataPath, 'utf-8'));
+    return mockKeyManagersMetaData.list;
+}
+
 async function getAPIMApplication(applicationId) {
-    try {
-        const response = await axios({
-            method: 'GET',
-            url: controlPlaneUrl + '/applications/' + applicationId,
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-            httpsAgent
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching application:', error.message);
-    }
+    const responseData = await invokeApiRequest('GET', controlPlaneUrl + '/applications/' + applicationId, null, null);
+    return responseData;
+}
+
+async function getAPIMKeyManagers() {
+    const responseData = await invokeApiRequest('GET', controlPlaneUrl + '/key-managers', null, null);
+    return responseData.list;
 }
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
@@ -238,112 +238,73 @@ async function getAPIMApplication(applicationId) {
 // ***** Save Application *****
 
 const saveApplication = async (req, res) => {
-    try {
-        const { name, throttlingPolicy, description } = req.body;
-        const response = await axios.post(
-            `${controlPlaneUrl}/applications`,
-            {
-                name,
-                throttlingPolicy,
-                description,
-                tokenType: 'JWT',
-                groups: [],
-                attributes: {},
-                subscriptionScopes: []
-            },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                httpsAgent,
-            }
-        );
-        res.status(200).json({ message: response.data.message });
-    } catch (error) {
-        console.error('Error saving application:', error.message);
-        res.status(500).json({ error: 'Failed to save application' });
-    }
+    const { name, throttlingPolicy, description } = req.body;
+    const responseData = await invokeApiRequest('POST', `${controlPlaneUrl}/applications`, {
+        'Content-Type': 'application/json'
+    }, {
+        name,
+        throttlingPolicy,
+        description,
+        tokenType: 'JWT',
+        groups: [],
+        attributes: {},
+        subscriptionScopes: []
+    });
+    res.status(200).json({ message: responseData.message });
 };
 
 // ***** Update Application *****
 
 const updateApplication = async (req, res) => {
-    try {
-        const { name, throttlingPolicy, description } = req.body;
-        const applicationId = req.params.applicationid;
-        const response = await axios.put(
-            `${controlPlaneUrl}/applications/${applicationId}`,
-            {
-                name,
-                throttlingPolicy,
-                description,
-                tokenType: 'JWT',
-                groups: [],
-                attributes: {},
-                subscriptionScopes: []
-            },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                httpsAgent,
-            }
-        );
-        res.status(200).json({ message: response.data.message });
-    } catch (error) {
-        console.error('Error updating application:', error.message);
-        res.status(500).json({ error: 'Failed to update application' });
-    }
+    const { name, throttlingPolicy, description } = req.body;
+    const applicationId = req.params.applicationid;
+    const responseData = await invokeApiRequest('PUT', `${controlPlaneUrl}/applications/${applicationId}`, {
+        'Content-Type': 'application/json',
+    }, {
+        name,
+        throttlingPolicy,
+        description,
+        tokenType: 'JWT',
+        groups: [],
+        attributes: {},
+        subscriptionScopes: []
+    });
+    res.status(200).json({ message: responseData.message });
 };
 
 // ***** Delete Application *****
 
 const deleteApplication = async (req, res) => {
-    try {
-        const applicationId = req.params.applicationid;
-        const response = await axios.delete(
-            `${controlPlaneUrl}/applications/${applicationId}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-                httpsAgent,
-            }
-        );
-        res.status(200).json({ message: response.data.message });
-    } catch (error) {
-        console.error('Error deleting application:', error.message);
-        res.status(500).json({ error: 'Failed to delete application' });
-    }
+    const applicationId = req.params.applicationid;
+    const responseData = await invokeApiRequest('DELETE', `${controlPlaneUrl}/applications/${applicationId}`, null, null);
+    res.status(200).json({ message: responseData.message });
 }
 
 // ***** Save Application *****
 
 const resetThrottlingPolicy = async (req, res) => {
-    try {
-        const applicationId = req.params.applicationid;
-        const { userName } = req.body;
-        const response = await axios.post(
-            `${controlPlaneUrl}/applications/${applicationId}/reset-throttle-policy`,
-            {
-                userName
-            },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                httpsAgent,
-            }
-        );
-        console.log('Throttling policy reset successfully.');
-        res.status(200).json({ message: response.data.message });
-    } catch (error) {
-        console.error('Error reseting throttling policy:', error.message);
-        res.status(500).json({ error: 'Failed to reset the throttling policy' });
-    }
+    const applicationId = req.params.applicationid;
+    const { userName } = req.body;
+    const responseData = await invokeApiRequest('POST', `${controlPlaneUrl}/applications/${applicationId}/reset-throttle-policy`, {
+        'Content-Type': 'application/json'
+    }, {
+        userName
+    });
+    res.status(200).json({ message: responseData.message });
+};
+
+// ***** Generate API Keys *****
+
+const generateAPIKeys = async (req, res) => {
+    const applicationId = req.params.applicationid;
+    const environment = req.params.env;
+    const { validityPeriod, additionalProperties } = req.body;
+    const responseData = await invokeApiRequest('POST', `${controlPlaneUrl}/applications/${applicationId}/api-keys/${environment}/generate`, {
+        'Content-Type': 'application/json'
+    }, {
+        validityPeriod, additionalProperties
+    });
+    res.status(200).json(responseData);
 };
 
 module.exports = {
@@ -354,5 +315,6 @@ module.exports = {
     saveApplication,
     updateApplication,
     deleteApplication,
-    resetThrottlingPolicy
+    resetThrottlingPolicy,
+    generateAPIKeys
 };

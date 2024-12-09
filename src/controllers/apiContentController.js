@@ -137,7 +137,7 @@ const loadAPIContent = async (req, res) => {
 
 const loadSubscriptionPlan = async (req, res, policyId) => {
     try {
-        return await util.invokeApiRequest('GET', `${config.controlPlaneUrl}/throttling-policies/subscription/${policyId}`);
+        return await util.invokeApiRequest('GET', `${config.controlPlane.url}/throttling-policies/subscription/${policyId}`);
     } catch (error) {
         console.error("Error occurred while loading subscription plans", error);
         util.handleError(res, error);

@@ -100,7 +100,7 @@ const loadMyAPIs = async (req, res) => {
 
 const loadSubscriptions = async (apiId) => {
     try {
-        return await util.invokeApiRequest('GET', `${config.controlPlaneUrl}/subscriptions?apiId=${apiId}`);
+        return await util.invokeApiRequest('GET', `${config.controlPlane.url}/subscriptions?apiId=${apiId}`);
     } catch (error) {
         console.error("Error occurred while loading subscriptions", error);
         throw error;
@@ -109,7 +109,7 @@ const loadSubscriptions = async (apiId) => {
 
 const loadApplications = async () => {
     try {
-        return await util.invokeApiRequest('GET', `${config.controlPlaneUrl}/applications?sortBy=name&sortOrder=asc`);
+        return await util.invokeApiRequest('GET', `${config.controlPlane.url}/applications?sortBy=name&sortOrder=asc`);
     } catch (error) {
         console.error("Error occurred while loading applications", error);
         throw error;
