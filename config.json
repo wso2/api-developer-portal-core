@@ -1,11 +1,13 @@
 {
   "port": 3000,
   "pathToContent": "../src/",
-  "certificate": {
-    "path": "../api-developer-portal-core/conf/security/client-truststore.pem"
-  },
   "mode": "production",
-  "controlPlaneUrl": "https://localhost:9443/api/am/devportal/v3",
+  "controlPlane" : {
+    "url": "https://localhost:9443/api/am/devportal/v3",
+    "accessToken" :"Bearer <control-plane-access-token>",
+    "disableCertValidation": false,
+    "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
+  },
   "db": {
     "username": "postgres",
     "password": "postgres",
