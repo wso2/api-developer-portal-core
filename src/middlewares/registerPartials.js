@@ -134,8 +134,6 @@ const registerPartialsFromAPI = async (req) => {
     const apiName = req.params.apiName;
     const apiID = await apiDao.getAPIId(apiName);
 
-    const apiName = req.params.apiName;
-    const apiID = await apiDao.getAPIId(apiName);
     //fetch markdown content for API if exists
     const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, orgID, apiID);
     const markdownContent = markdownResponse ? markdownResponse.API_FILE.toString("utf8") : "";
@@ -169,17 +167,6 @@ function registerPartialsFromFile(baseURL, dir, profile) {
         };
       }
     }
-  });
-}
-
-const registerInternalPartials = () => {
-  const hbs = exphbs.create({});
-  const partialsDir = path.join(process.cwd(), 'src/pages/partials');
-  console.log("Register internal partials");
-  fs.readdirSync(partialsDir).forEach(file => {
-    const partialName = path.basename(file, '.hbs');
-    const partialContent = fs.readFileSync(path.join(partialsDir, file), 'utf8'); 
-    hbs.handlebars.registerPartial(partialName, partialContent);
   });
 }
 
