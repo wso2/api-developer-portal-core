@@ -26,7 +26,6 @@ const constants = require('../utils/constants');
 const unzipper = require('unzipper');
 const axios = require('axios');
 const https = require('https');
-const config = require('../../config.json');
 
 const { Sequelize } = require('sequelize');
 
@@ -260,10 +259,11 @@ const getAPIImages = async (directory) => {
     return files;
 };
 
-const invokeApiRequest = async (method, url, headers, body) => {
+const invokeApiRequest = async (req, method, url, headers, body) => {
 
     headers = headers || {}; 
-    headers.Authorization = `${config.accessToken}`; 
+    headers.Authorization = req.user.accessToken; 
+    console.log('sending accesss token', req.user.accessToken)
 
     const httpsAgent = new https.Agent({
         rejectUnauthorized: false, 
