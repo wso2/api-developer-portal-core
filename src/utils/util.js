@@ -111,6 +111,19 @@ async function renderGivenTemplate(templatePage, layoutPage, templateContent) {
     });
 }
 
+function getErrors(errors) {
+
+    const errorList = [];
+    errors.errors.forEach(element => {
+        errorList.push({
+            code: '400',
+            message: 'input validation failed',
+            description: element.msg
+        })        
+    });
+    return errorList;
+}
+
 function handleError(res, error) {
     if (error instanceof Sequelize.UniqueConstraintError) {
         return res.status(409).json({
@@ -246,7 +259,7 @@ const getAPIImages = async (directory) => {
 const validateIDP = () => {
 
     const validations = [
-   
+
         body('authorizationURL')
             .notEmpty()
             .isURL({
@@ -298,7 +311,7 @@ const validateIDP = () => {
         body('*')
             .if(body('*').isString())
             .trim()
-];
+    ];
     return validations;
 }
 
@@ -311,8 +324,13 @@ const validateOrganization = () => {
             .trim(),
         body('businessOwnerEmail')
             .notEmpty()
-            .isEmail()
-    ];
+            .isEmail(),
+        body('*')
+            .if(body('*').not().equals('devPortalURLIdentifier'))
+            .escape()
+            .trim()
+            .notEmpty()
+    ]
     return validations;
 }
 
@@ -330,5 +348,6 @@ module.exports = {
     getAPIImages,
     isTextFile,
     validateIDP,
-    validateOrganization
+    validateOrganization,
+    getErrors
 }

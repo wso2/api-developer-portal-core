@@ -29,7 +29,7 @@ const adminService = require('../services/adminService');
 const loadSettingPage = async (req, res) => {
 
     //retrieve orgID from the user object
-    const orgID = req.user[config.orgID_claim_name];
+    const orgID = req.user[constants.ORG_ID];
     let templateContent = {
         baseUrl: req.params.orgName,
         orgID: orgID
@@ -44,22 +44,28 @@ const loadSettingPage = async (req, res) => {
         }
         const layoutResponse = await loadLayoutFromAPI(orgID)
         const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
-        console.log('Loading content from API')
         //TODO: fetch view names from DB
-        const views = [{
-            'name': 'Default'
-        }]
+        const file = await adminService.getOrgContent(orgID, 'layout', 'main.hbs', 'layout');
+        let views;
+        if (file !== null) {
+            views = [{
+                'name': 'Default'
+            }]
+        }
         if (views.length > 0) {
             templateContent.content = true;
             templateContent.views = views;
         }
         let html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        console.log("Settings")
+        console.log(templateContent)
         res.send(html);
     } catch (error) {
         console.error(`Error while loading content from DB: ${error}`);
         // loading main template from file since no org content uploaded
         const layoutPath = path.join('src', 'pages', 'layout', 'main.hbs');
         html = renderTemplate(completeTemplatePath, layoutPath, templateContent);
+        console.log(templateContent)
         res.send(html);
         console.error(`Error while loading setting page: ${error}`);
     }

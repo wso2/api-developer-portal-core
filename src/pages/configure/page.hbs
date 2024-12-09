@@ -1,12 +1,13 @@
 <head>
     <link rel="stylesheet" href="/internalStyles/settings.css">
+    <script src="/scripts/upload-zip.js" defer></script>
 </head>
 <main>
     <div class="container mt-5">
-        {{#if content}}
         {{> upload-zip }}
-        {{/if}}
+        {{#if content}}
         {{> list-files }}
+        {{/if}}
         {{#if idp}}
         {{> list-idp}}
         {{/if}}

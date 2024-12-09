@@ -43,7 +43,7 @@ const fetchAuthJsonContent = async (req, orgName) => {
         return JSON.parse(fs.readFileSync(authJsonPath, constants.CHARSET_UTF8));
     }
     //if no idp per org, use super IDP
-    if(orgName === 'undefined') {
+    if (orgName === 'undefined') {
         console.log('No org name');
         return config.identityProvider;
     }
@@ -66,7 +66,25 @@ const login = async (req, res, next) => {
     const IDP = await fetchAuthJsonContent(req, req.params.orgName);
     if (IDP.clientId) {
         console.log('Session before config:', req.session);
-        configurePassport(IDP);  // Configure passport dynamically
+        //fetch claim names from DB
+        const orgName = req.params.orgName;
+        console.log("OrgName", orgName)
+        let claimNames = {};
+        if (!(orgName === "undefined")) {
+            const orgDetails = await adminDao.getOrganization(orgName);
+            if (orgDetails) {
+                claimNames[config.roleClaim] = orgDetails.ROLE_CLAIM_NAME;
+                claimNames[config.groupsClaim] = orgDetails.GROUPS_CLAIM_NAME;
+                claimNames[config.orgIDClaim] = orgDetails.ORGANIZATION_CLAIM_NAME;
+            }
+        }
+        if(Object.keys(claimNames).length === 0) {
+            console.log('claim names');
+            claimNames[config.roleClaim] = config.roleClaim;
+            claimNames[config.groupsClaim] = config.groupsClaim;
+            claimNames[config.orgIDClaim] = config.orgIDClaim;
+        }
+        configurePassport(IDP, claimNames);  // Configure passport dynamically
         passport.authenticate('oauth2')(req, res, next);
         console.log('Session after config:', req.session);
         next();

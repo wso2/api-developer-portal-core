@@ -22,6 +22,19 @@
     "logoutURL": "https://localhost:9443/oidc/logout",
     "logoutRedirectURI": "http://localhost:3000/ACME"
 },
-"role_claim_name": "roles", 
-"orgID_claim_name": "organizationID"
+"roleClaim": "roles", 
+"orgIDClaim": "organizationID",
+"groupsClaim": "groups",
+"adminRole": "admin",
+"subscriberRole": "Interna/subscriber",
+"superAdminRole": "superAdmin",
+ "authenticatedPages": [
+    "/*/configure",
+    "/portal/"
+  ],
+  "authorizedPages": [
+    "*/application",
+    "/*/configure",
+    "/portal/"
+  ]
 }

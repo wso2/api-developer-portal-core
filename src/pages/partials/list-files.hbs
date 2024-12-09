@@ -44,6 +44,7 @@
                                 {{!-- <input type="file" id="editZipFile" name="file" accept=".zip" class="hidden"
                                     required> --}}
                                 <input type="hidden" class="form-control" id="redirect" value="true">
+                                <input type="hidden" id="orgId" name="orgId" value={{orgID}}>
                             </div>
                             <button type="submit" class="btn btn-primary">Update File</button>
                         </form>
@@ -65,7 +66,7 @@
         </div>
     </div>
 
-    <script>
+    {{!-- <script>
         document.addEventListener('DOMContentLoaded', function () {
 
             const uploadForm = document.getElementById('editForm');
@@ -123,5 +124,5 @@
                 }
             });
         });
-    </script>
+    </script> --}}
 </section>

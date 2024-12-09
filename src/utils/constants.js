@@ -27,6 +27,7 @@ module.exports = {
     HERO_PARTIAL_NAME: 'hero',
     BASE_URL: 'http://localhost:',
     BASE_URL_NAME: 'baseUrl',
+    ORG_ID: 'orgID',
     MIME_TYPES: {
         HTML: 'text/html',
         TEXT: 'text/plain',

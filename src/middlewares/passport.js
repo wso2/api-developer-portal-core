@@ -22,7 +22,7 @@ const jwt = require('jsonwebtoken');
 const https = require('https');
 const config = require(process.cwd() + '/config.json');
 
-function configurePassport(authJsonContent) {
+function configurePassport(authJsonContent, claimNames) {
 
     const agent = new https.Agent({
         rejectUnauthorized: false
@@ -49,17 +49,19 @@ function configurePassport(authJsonContent) {
         }
         const decodedJWT = jwt.decode(params.id_token);
         const name = decodedJWT['given_name'] ? decodedJWT['given_name'] : decodedJWT['nickname'];
-        const organizationID = decodedJWT[config.orgID_claim_name] ? decodedJWT[config.orgID_claim_name] : '';
+        const organizationID = decodedJWT[claimNames[config.orgIDClaim]] ? decodedJWT[config.orgIDClaim] : '';
+        const roles = decodedJWT[claimNames[config.roleClaim]] ? decodedJWT[config.roleClaim] : '';
+        const groups = decodedJWT[claimNames[config.groupsClaim]] ? decodedJWT[config.groupsClaim] : '';
         profile = {
             'name': name,
             'idToken': params.id_token,
             'email': decodedJWT['email'],
-            [config.orgID_claim_name]: organizationID,
+            [config.orgIDClaim]: organizationID,
             'returnTo': req.session.returnTo,
             accessToken,
-            [config.role_claim_name]: decodedJWT[config.role_claim_name]
+            [config.roleClaim]: roles,
+            [config.groupsClaim]: groups
         };
-       // console.log('Profile:', profile);
         return done(null, profile);
     });
     strategy._oauth2.setAgent(agent);
@@ -76,30 +78,6 @@ function configurePassport(authJsonContent) {
     };
     passport.use(strategy);
 
-    // passport.use(new OAuth2Strategy({
-    //     issuer: authJsonContent.issuer,
-    //     authorizationURL: authJsonContent.authorizationURL,
-    //     tokenURL: authJsonContent.tokenURL,
-    //     userInfoURL: authJsonContent.userInfoURL,
-    //     clientID: authJsonContent.clientId,
-    //     callbackURL: authJsonContent.callbackURL,
-    //     scope: "openid profile email groups apim:subscribe",
-    //     passReqToCallback: true,
-    //     state: true,
-    //     pkce: true
-    // }, (req, accessToken, refreshToken, params, profile, done) => {
-    //     console.log('Access token:', accessToken);  
-    //     console.log('session:', req.session);
-    //     const decodedJWT = jwt.decode(params.id_token);
-    //     const name = decodedJWT['given_name']? decodedJWT['given_name'] : decodedJWT['nickname'];
-    //     profile = {
-    //         'name': name,
-    //         'idToken': params.id_token,
-    //         'email': decodedJWT['email'],
-    //         'returnTo': req.session.returnTo
-    //     };
-    //     return done(null, profile);
-    // }));
 }
 
 module.exports = configurePassport;

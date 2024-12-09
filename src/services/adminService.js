@@ -27,22 +27,17 @@ const { validationResult } = require('express-validator');
 
 const createOrganization = async (req, res) => {
 
-    console.log('Creating Organization Content');
-    console.log('Access token:', req.user);
-    console.log('Body:', req.body);
     const rules = util.validateOrganization();
     for (let validation of rules) {
         await validation.run(req);
     }
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        return res.status(400).json(util.getErrors(errors));
     }
     const payload = req.body;
     try {
-        if (!orgName || !businessOwner) {
-            throw new CustomError(400, "Bad Request", "Missing or Invalid fields in the request payload");
-        }
+
         const organization = await adminDao.createOrganization(payload);
         const orgCreationResponse = {
             orgId: organization.ORG_ID,
@@ -86,7 +81,15 @@ const getAllOrganizations = async () => {
                 orgID: organization.dataValues.ORG_ID,
                 businessOwner: organization.dataValues.BUSINESS_OWNER,
                 businessOwnerContact: organization.dataValues.BUSINESS_OWNER_CONTACT,
-                businessOwnerEmail: organization.dataValues.BUSINESS_OWNER_EMAIL
+                businessOwnerEmail: organization.dataValues.BUSINESS_OWNER_EMAIL,
+                devPortalURLIdentifier: organization.DEV_PORTAL_URL_IDENTIFIER,
+                roleClaimName: organization.ROLE_CLAIM_NAME,
+                groupsClaimName: organization.GROUPS_CLAIM_NAME,
+                organizationClaimName: organization.ORGANIZATION_CLAIM_NAME,
+                organizationIdentifier: organization.ORGANIZATION_IDENTIFIER,
+                adminRole: organization.ADMIN_ROLE,
+                subscriberRole: organization.SUBSCRIBER_ROLE,
+                groupClaimName: organization.GROUP_CLAIM_NAME
             });
         }
     }
@@ -98,27 +101,35 @@ const updateOrganization = async (req, res) => {
 
     try {
         const orgId = req.params.orgId;
-        const { orgName, businessOwner, businessOwnerContact, businessOwnerEmail } = req.body;
+        // const { orgName, businessOwner, businessOwnerContact, businessOwnerEmail } = req.body;
         if (!orgId) {
             console.log("Missing required parameter: 'orgId'");
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
-        if (!orgName || !businessOwner) {
-            throw new CustomError("Missing or Invalid fields in the request payload");
+        const rules = util.validateOrganization();
+        for (let validation of rules) {
+            await validation.run(req);
         }
-        const [, updatedOrg] = await adminDao.updateOrganization({
-            orgId,
-            orgName,
-            businessOwner,
-            businessOwnerContact,
-            businessOwnerEmail
-        });
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json(util.getErrors(errors));
+        }
+        const payload = req.body;
+        const [, updatedOrg] = await adminDao.updateOrganization(payload);
         res.status(200).json({
             orgId: updatedOrg[0].dataValues.ORG_ID,
             orgName: updatedOrg[0].dataValues.ORG_NAME,
             businessOwner: updatedOrg[0].dataValues.BUSINESS_OWNER,
             businessOwnerContact: updatedOrg[0].dataValues.BUSINESS_OWNER_CONTACT,
-            businessOwnerEmail: updatedOrg[0].dataValues.BUSINESS_OWNER_EMAIL
+            businessOwnerEmail: updatedOrg[0].dataValues.BUSINESS_OWNER_EMAIL,
+            devPortalURLIdentifier: updatedOrg[0].dataValues.DEV_PORTAL_URL_IDENTIFIER,
+            roleClaimName: updatedOrg[0].dataValues.ROLE_CLAIM_NAME,
+            groupsClaimName: updatedOrg[0].dataValues.GROUPS_CLAIM_NAME,
+            organizationClaimName: updatedOrg[0].dataValues.ORGANIZATION_CLAIM_NAME,
+            organizationIdentifier: updatedOrg[0].dataValues.ORGANIZATION_IDENTIFIER,
+            adminRole: updatedOrg[0].dataValues.ADMIN_ROLE,
+            subscriberRole: updatedOrg[0].dataValues.SUBSCRIBER_ROLE,
+            groupClaimName: updatedOrg[0].dataValues.GROUP_CLAIM_NAME
         });
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.ORG_UPDATE_ERROR}, ${error}`);
@@ -153,9 +164,13 @@ const createIdentityProvider = async (req, res) => {
         if (!orgId) {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
-        if (!idpData.name || !idpData.issuer || !idpData.authorizationURL || !idpData.tokenURL ||
-            !idpData.clientId || !idpData.callbackURL || !idpData.scope || !idpData.logoutURL || !idpData.logoutRedirectURI) {
-            throw new CustomError(400, "Bad Request", "Missing required parameters'");
+        const rules = util.validateIDP();
+        for (let validation of rules) {
+            await validation.run(req);
+        }
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json(util.getErrors(errors));
         }
         const idpResponse = await adminDao.createIdentityProvider(orgId, idpData);
         res.status(201).send(new IdentityProviderDTO(idpResponse.dataValues));
@@ -170,13 +185,16 @@ const updateIdentityProvider = async (req, res) => {
     try {
         const orgId = req.params.orgId;
         const idpData = req.body;
-        console.log("Updating IDP: ", idpData);
-        if (!idpData.name || !idpData.issuer || !idpData.authorizationURL || !idpData.tokenURL ||
-            !idpData.clientId || !idpData.callbackURL || !idpData.scope || !idpData.logoutURL || !idpData.logoutRedirectURI) {
-            throw new CustomError(400, "Bad Request", "Missing or Invalid fields in the request payload");
-        }
         if (!orgId) {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+        }
+        const rules = util.validateIDP();
+        for (let validation of rules) {
+            await validation.run(req);
+        }
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json(util.getErrors(errors));
         }
         const [updatedRows, updatedIDP] = await adminDao.updateIdentityProvider(orgId, idpData);
         if (!updatedRows) {
@@ -239,15 +257,8 @@ const createOrgContent = async (req, res) => {
         for (const { filePath, fileName, fileContent, fileType } of files) {
             await createContent(filePath, fileName, fileContent, fileType, orgId);
         }
-        if (req.body.redirect) {
-            console.log("Redirecting to: ", req.body.redirect);
-            const organization = await adminDao.getOrganization(orgId);
-
-            res.redirect(`/${organization.ORG_NAME}/configure`);
-        } else {
-            res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
-            fs.rmSync(extractPath, { recursive: true, force: true });
-        }
+        res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
+        fs.rmSync(extractPath, { recursive: true, force: true });
 
     } catch (error) {
         console.log(`${constants.ERROR_MESSAGE.ORG_CONTENT_CREATE_ERROR}, ${error}`);

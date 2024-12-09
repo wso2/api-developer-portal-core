@@ -33,7 +33,7 @@ const Organization = sequelize.define('DP_ORGANIZATION', {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true
-    }, 
+    },
     BUSINESS_OWNER_CONTACT: {
         type: DataTypes.STRING,
         allowNull: true
@@ -50,10 +50,6 @@ const Organization = sequelize.define('DP_ORGANIZATION', {
         type: DataTypes.STRING,
         allowNull: false
     },
-    GROUPS_CLAIM_NAME: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
     ORGANIZATION_CLAIM_NAME: {
         type: DataTypes.STRING,
         allowNull: false
@@ -66,11 +62,15 @@ const Organization = sequelize.define('DP_ORGANIZATION', {
         type: DataTypes.STRING,
         allowNull: false
     },
+    SUPER_ADMIN_ROLE: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
     SUBSCRIBER_ROLE: {
         type: DataTypes.STRING,
         allowNull: false
     },
-    GROUP_CLAIM_NAME: {
+    GROUPS_CLAIM_NAME: {
         type: DataTypes.STRING,
         allowNull: false
     }
@@ -110,11 +110,11 @@ const OrgContent = sequelize.define('DP_ORGANIZATION_ASSETS', {
 }, {
     timestamps: false,
     tableName: 'DP_ORGANIZATION_ASSETS'
-},{
+}, {
     indexes: [
         {
             unique: true,
-            fields: ['FILE_TYPE', 'FILE_NAME', 'FILE_PATH', 'ORG_ID'] 
+            fields: ['FILE_TYPE', 'FILE_NAME', 'FILE_PATH', 'ORG_ID']
         }
     ]
 });

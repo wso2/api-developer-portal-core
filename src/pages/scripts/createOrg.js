@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     const editOrgs = document.querySelectorAll('.editOrg');
     const deleteForms = document.querySelectorAll('.delete-org');
+    console.log(deleteForms)
     deleteForms.forEach(form => {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
