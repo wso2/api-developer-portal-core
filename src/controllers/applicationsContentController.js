@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
 const https = require('https');
+const util = require('../utils/util');
 
 const filePrefix = config.pathToContent;
 const certPath = path.join(process.cwd(), config.certificate.path);
@@ -14,7 +15,7 @@ const controlPlaneUrl = config.controlPlaneUrl;
 const token = cpToken.token;
 
 const httpsAgent = new https.Agent({
-    ca: fs.readFileSync(certPath),  
+    ca: fs.readFileSync(certPath),
     rejectUnauthorized: true,
 });
 
@@ -112,24 +113,77 @@ async function getAPIMThrottlingPolicies() {
 // ***** Load Application *****
 
 const loadApplication = async (req, res) => {
-    const orgName = req.params.orgName;
-    const applicationId = req.params.applicationid;
-    let html, templateContent, metaData;
-    if (config.mode === constants.DEV_MODE) {
-        metaData = await getMockApplication();
-        templateContent = {
-            applicationMetadata: metaData,
-            baseUrl: constants.BASE_URL + config.port
+    try {
+        const orgName = req.params.orgName;
+        const applicationId = req.params.applicationid;
+        let html, templateContent, metaData;
+        if (config.mode === constants.DEV_MODE) {
+            metaData = await getMockApplication();
+            templateContent = {
+                applicationMetadata: metaData,
+                baseUrl: constants.BASE_URL + config.port
+            }
+        } else {
+            metaData = await getAPIMApplication(applicationId);
+            const allApis = await getAllAPIs();
+            const subApis = await getSubscribedApis(applicationId);
+            const subApiMap = new Map();
+            subApis.list.forEach(subApi => subApiMap.set(subApi.apiId, { policy: subApi.throttlingPolicy, id: subApi.subscriptionId }));
+            const apiList = [];
+
+            allApis.list.forEach(api => {
+                let subscriptionPolicies = [];
+                let subscribedPolicy;
+
+                if (subApiMap.has(api.id)) {
+                    subscribedPolicy = subApiMap.get(api.id)
+                } else {
+                    api.throttlingPolicies.forEach(policy => {
+                        subscriptionPolicies.push(policy);
+                    });
+                }
+
+                apiList.push({
+                    name: api.name,
+                    id: api.id,
+                    isSubAvailable: api.isSubscriptionAvailable,
+                    subscriptionPolicies: subscriptionPolicies,
+                    subscribedPolicy: subscribedPolicy
+                });
+
+            });
+
+            templateContent = {
+                applicationMetadata: metaData,
+                baseUrl: '/' + orgName,
+                apis: apiList
+            }
         }
-    } else {
-        metaData = await getAPIMApplication(applicationId);
-        templateContent = {
-            applicationMetadata: metaData,
-            baseUrl: '/' + orgName
-        }
+        html = renderTemplate('../pages/application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
+        res.send(html);
+    } catch (error) {
+        console.error("Error occurred while loading application", error);
+        util.handleError(res, error);
     }
-    html = renderTemplate('../pages/application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
-    res.send(html);
+}
+
+
+async function getAllAPIs() {
+    try {
+        return await util.invokeApiRequest('GET', `${config.controlPlaneUrl}/apis`);
+    } catch (error) {
+        console.error("Error occurred while loading APIs", error);
+        throw error;
+    }
+}
+
+const getSubscribedApis = async (appId) => {
+    try {
+        return await util.invokeApiRequest('GET', `${config.controlPlaneUrl}/subscriptions?applicationId=${appId}`);
+    } catch (error) {
+        console.error("Error occurred while loading subscriptions", error);
+        throw error;
+    }
 }
 
 const loadApplicationForEdit = async (req, res) => {

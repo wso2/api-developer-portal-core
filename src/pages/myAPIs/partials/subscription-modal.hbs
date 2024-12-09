@@ -54,7 +54,7 @@
                         onclick="closeModal()">Close</button>
                     {{#if applications}}
                     <button type="submit" class="btn apilistbtn-primary" id="subButton"
-                        onclick="handleSubscribe()">Subscribe</button>
+                        onclick="handleSubscribe(null,null)">Subscribe</button>
                     {{else}}
                     <button type="submit" class="btn apilistbtn-primary" id="createSubButton"
                         onclick="handleCreateSubscribe()" {{#if devMode}}disabled{{/if}}>Create & Subscribe</button>

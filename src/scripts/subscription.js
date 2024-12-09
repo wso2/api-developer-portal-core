@@ -90,7 +90,7 @@ async function handleCreateSubscribe() {
         const response = await fetch(`/devportal/application`, {
             method: 'POST',
             headers: {
-            'Content-Type': 'application/json',
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify({ name: sanitize(appName) }),
         });
@@ -98,7 +98,7 @@ async function handleCreateSubscribe() {
         const responseData = await response.json();
 
         if (response.ok) {
-            handleSubscribe(responseData.applicationId, urlParams.get('tierPlan'));
+            handleSubscribe(responseData.applicationId);
         } else {
             console.error('Failed to create application:', responseData);
             await showAlert(`Failed to create application. Please try again.\n${responseData.description}`, 'error');
@@ -115,9 +115,14 @@ function sanitize(input) {
     return div.innerHTML;
 }
 
-async function handleSubscribe(appId) {
+async function handleSubscribe(appId, apiId) {
+    const applicationSelect = document.getElementById('applicationSelect');
+    let tierPlan;
 
-    const applicationId = appId || document.getElementById('applicationSelect').value;
+    const applicationId = appId !== null 
+        ? appId 
+        : (applicationSelect ? applicationSelect.value : window.location.pathname.split('/').pop());
+
 
     if (!applicationId) {
         await showAlert('Please select an application.', 'error');
@@ -126,6 +131,14 @@ async function handleSubscribe(appId) {
 
     try {
         const urlParams = new URLSearchParams(window.location.search);
+
+        if (urlParams.has('apiId') && urlParams.has('tierPlan')) {
+            apiId = urlParams.get('apiId');
+            tierPlan = urlParams.get('tierPlan');
+        } else {
+            tierPlan = document.getElementById('subscriptionPlan').value;
+        }
+
         const response = await fetch(`/devportal/subscriptions`, {
             method: 'POST',
             headers: {
@@ -133,8 +146,8 @@ async function handleSubscribe(appId) {
             },
             body: JSON.stringify({
                 applicationId: applicationId.replace(/[^a-zA-Z0-9\s-]/g, ''),
-                apiId: urlParams.get('apiId').replace(/[^a-zA-Z0-9\s-]/g, ''),
-                throttlingPolicy: urlParams.get('tierPlan').replace(/[^a-zA-Z0-9\s-]/g, ''),
+                apiId: apiId.replace(/[^a-zA-Z0-9\s-]/g, ''),
+                throttlingPolicy: tierPlan.replace(/[^a-zA-Z0-9\s-]/g, ''),
             }),
         });
 

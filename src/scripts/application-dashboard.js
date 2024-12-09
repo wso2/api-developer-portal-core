@@ -57,7 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
 async function resetThrottlingPolicy(applicationId) {
   const userName = document.getElementById('userName').value;
 
-  console.log('Resetting throttling policy...');
   try {
     const response = await fetch(
       `/applications/${applicationId}/reset-throttle-policy`,
