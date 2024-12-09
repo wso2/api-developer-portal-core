@@ -48,8 +48,8 @@ const fetchAuthJsonContent = async (req, orgName) => {
         return config.identityProvider;
     }
     try {
-        const organization = await adminDao.getOrganization(orgName);
-        const response = await adminDao.getIdentityProvider(organization.ORG_ID);
+        const orgId = await adminDao.getOrgId(orgName);
+        const response = await adminDao.getIdentityProvider(orgId);
         if (response.length === 0) {
             //login from super IDP
             return config.identityProvider;

@@ -21,6 +21,7 @@ const config = require(process.cwd() + '/config.json');
 const fs = require('fs');
 const path = require('path');
 const exphbs = require('express-handlebars');
+const util = require('../utils/util');
 const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
@@ -37,12 +38,11 @@ const loadAPIs = async (req, res) => {
         const templateContent = {
             apiMetadata: await loadAPIMetaDataList(),
             baseUrl: constants.BASE_URL + config.port
-        };
-        html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
+        }
+        html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
     } else {
         try {
-            const organization = await adminDao.getOrganization(orgName);
-            const orgID = organization.ORG_ID;
+            const orgID = await adminDao.getOrgId(orgName);
             const metaData = await loadAPIMetaDataListFromAPI(req, orgID, orgName);
             const templateContent = {
                 apiMetadata: metaData,
@@ -54,8 +54,8 @@ const loadAPIs = async (req, res) => {
             console.log("Rendering default api listing page from file");
             const templateContent = {
                 baseUrl: constants.BASE_URL + config.port
-            };
-            html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
+            }
+            html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
         }
     }
     res.send(html);
@@ -73,32 +73,75 @@ const loadAPIContent = async (req, res) => {
         if (fs.existsSync(filePath)) {
             hbs.handlebars.registerPartial('api-content', fs.readFileSync(filePath, constants.CHARSET_UTF8));
         }
+
+        let subscriptionPlans = [];
+        metaData.subscriptionPolicies.forEach(policy => {
+            const subscriptionPlan = {
+                name: policy.policyName,
+                description: "Sample description",
+                tierPlan: "Sample tier"
+            };
+            subscriptionPlans.push(subscriptionPlan);
+        });
+
         const templateContent = {
+            devMode: true,
+            providerUrl: '#subscriptionPlans',
             apiContent: await loadMarkdown(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, filePrefix + '../mock/' + req.params.apiName),
             apiMetadata: metaData,
+            subscriptionPlans: subscriptionPlans,
             baseUrl: constants.BASE_URL + config.port,
             schemaUrl: orgName + '/mock/' + apiName + '/apiDefinition.xml'
-        };
-        html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
+        }
+        html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false)
     } else {
         try {
-            const organization = await adminDao.getOrganization(orgName);
-            const orgID = organization.ORG_ID;
+            const orgID = await adminDao.getOrgId(orgName);
             const apiID = await apiDao.getAPIId(apiName);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
+            let subscriptionPlans = [];
+            
+            for (const policy of metaData.subscriptionPolicies) {
+                const subscriptionPlan = await loadSubscriptionPlans(req, res, policy.policyName);
+                subscriptionPlans.push({
+                    apiId: metaData.apiReferenceID,
+                    name: subscriptionPlan.name,
+                    description: subscriptionPlan.description,
+                    tierPlan: subscriptionPlan.tierPlan,
+                });
+            };
 
+            let providerUrl;
+            if (metaData.provider === "WSO2") {
+                providerUrl = '#subscriptionPlans';
+            } else {   
+                providerUrl = config.providerURL[metaData.provider];
+            }
+            
             const templateContent = {
+                provider: metaData.provider,
+                providerUrl: providerUrl,
                 apiMetadata: metaData,
+                subscriptionPlans: subscriptionPlans,
                 baseUrl: '/' + orgName,
                 schemaUrl: `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${constants.FILE_NAME.API_DEFINITION_XML}`
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing");
+            res.send(html);
         } catch (error) {
             console.error(`Failed to load api content: ,${error}`);
             html = "An error occurred while loading the API content.";
         }
     }
-    res.send(html);
+}
+
+const loadSubscriptionPlans = async (req, res, policyId) => {
+    try {
+        return await util.invokeApiRequest('GET', `${config.controlPlaneUrl}/throttling-policies/subscription/${policyId}`);
+    } catch (error) {
+        console.error("Error occurred while loading subscription plans", error);
+        util.handleError(res, error);
+    }
 }
 
 const loadTryOutPage = async (req, res) => {
@@ -116,12 +159,11 @@ const loadTryOutPage = async (req, res) => {
             baseUrl: constants.BASE_URL + config.port,
             apiType: metaData.apiInfo.apiType,
             swagger: apiDefinition
-        };
-        html = renderTemplate('../pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
+        }
+        html = renderTemplate('../pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     } else {
         try {
-            const organization = await adminDao.getOrganization(orgName);
-            const orgID = organization.ORG_ID;
+            const orgID = await adminDao.getOrgId(orgName);
             const apiID = await apiDao.getAPIId(apiName);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
             let apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, orgID, apiID);
@@ -200,7 +242,6 @@ function loadAPIMetaDataFromFile(apiName) {
     const mockAPIDataPath = path.join(process.cwd(), filePrefix + '../mock', apiName + '/apiMetadata.json');
     return JSON.parse(fs.readFileSync(mockAPIDataPath, constants.CHARSET_UTF8));
 }
-
 
 module.exports = {
     loadAPIs,
