@@ -7,8 +7,6 @@ const ensureAuthenticated = require('../middlewares/ensureAuthenticated');
 
 router.get('/(((?!favicon.ico|images)):orgName/configure)', ensureAuthenticated, registerPartials, settingsController.loadSettingPage);
 
-
-
-router.get('/(((?!favicon.ico|images))portal/)', registerPartials, ensureAuthenticated, settingsController.createorganization);
+router.get('/(((?!favicon.ico|images))portal)', registerPartials, ensureAuthenticated, settingsController.createorganization);
 
 module.exports = router;

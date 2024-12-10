@@ -78,7 +78,7 @@ module.exports = {
       API_LANDING_PAGE_PATH: '/api/',
       DEVPORTAL_ASSETS_BASE_PATH: '/devportal/organizations/',
       DEVPORTAL_CONFIGURE: '/*/configure',
-      DEVPORTAL_ROOT: '/portal/',
+      DEVPORTAL_ROOT: '/portal',
       DEVPORTAL_API_LISTING: '/*/apis',
       DEVPORTAL_TECHNICAL_PAGES: ['*/application']
     },
@@ -99,6 +99,7 @@ module.exports = {
         API_HBS_CONTENT_FILE_NAME: 'api-content.hbs',
         API_CONTENT_PARTIAL_NAME: "api-content",
         API_DEFINITION_FILE_NAME: 'apiDefinition.json',
+        API_DEFINITION_GRAPHQL: 'apiDefinition.graphql',
         API_DEFINITION_XML: 'apiDefinition.xml',
         PARTIAL_HEADER_FILE_NAME: 'header.hbs',
     },

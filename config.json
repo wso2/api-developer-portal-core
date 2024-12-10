@@ -5,7 +5,7 @@
   "controlPlane" : {
     "url": "https://localhost:9443/api/am/devportal/v3",
     "accessToken" :"Bearer <control-plane-access-token>",
-    "disableCertValidation": false,
+    "disableCertValidation": true,
     "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
   },
   "db": {
@@ -39,11 +39,16 @@
 "superAdminRole": "superAdmin",
  "authenticatedPages": [
     "/*/configure",
-    "/portal/"
+    "/portal",
+    "/*/applications",
+     "/*/applications/*",
+     "/*/api/*"
   ],
   "authorizedPages": [
-    "*/application",
+    "/*/applications",
     "/*/configure",
-    "/portal/"
+    "/portal",
+    "/*/api/*"
+
   ]
 }

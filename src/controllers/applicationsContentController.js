@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const { renderTemplate, renderGivenTemplate, loadLayoutFromAPI, invokeApiRequest } = require('../utils/util');
 const config = require(process.cwd() + '/config');
 const constants = require('../utils/constants');
@@ -32,7 +33,7 @@ const loadApplications = async (req, res) => {
     else {
         const orgName = req.params.orgName;
         const orgID = await orgIDValue(orgName);
-        metaData = await getAPIMApplications();
+        metaData = await getAPIMApplications(req);
         templateContent = {
             applicationsMetadata: metaData,
             baseUrl: '/' + orgName
@@ -50,8 +51,8 @@ async function getMockApplications() {
     return mockApplicationsMetaData.list;
 }
 
-async function getAPIMApplications() {
-    const responseData = await invokeApiRequest('GET', controlPlaneUrl + '/applications', null, null);
+async function getAPIMApplications(req) {
+    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/applications', null, null);
     return responseData.list;
 }
 
@@ -70,7 +71,7 @@ const loadThrottlingPolicies = async (req, res) => {
     else {
         const orgName = req.params.orgName;
         const orgID = await orgIDValue(orgName);
-        metaData = await getAPIMThrottlingPolicies();
+        metaData = await getAPIMThrottlingPolicies(req);
         templateContent = {
             throttlingPoliciesMetadata: metaData,
             baseUrl: '/' + orgName
@@ -89,8 +90,8 @@ async function getMockThrottlingPolicies() {
     return mockThrottlingPoliciesMetaData.list;
 }
 
-async function getAPIMThrottlingPolicies() {
-    const responseData = await invokeApiRequest('GET', controlPlaneUrl + '/throttling-policies/application', null, null);
+async function getAPIMThrottlingPolicies(req) {
+    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/throttling-policies/application', null, null);
     return responseData.list;
 }
 
@@ -111,8 +112,8 @@ const loadApplication = async (req, res) => {
     } else {
         const orgName = req.params.orgName;
         const orgID = await orgIDValue(orgName);
-        metaData = await getAPIMApplication(applicationId);
-        kMmetaData = await getAPIMKeyManagers();
+        metaData = await getAPIMApplication(req, applicationId);
+        kMmetaData = await getAPIMKeyManagers(req);
         templateContent = {
             applicationMetadata: metaData,
             keyManagersMetadata: kMmetaData,
@@ -127,9 +128,9 @@ const loadApplication = async (req, res) => {
 }
 
 const loadApplicationForEdit = async (req, res) => {
-    const orgName = req.params.orgName;
+
     const applicationId = req.params.applicationid;
-    let html, templateContent, metaData;
+    let html, templateContent, metaData, throttlingMetaData;
     if (config.mode === constants.DEV_MODE) {
         metaData = await getMockApplication();
         throttlingMetaData = await getMockThrottlingPolicies();
@@ -142,8 +143,8 @@ const loadApplicationForEdit = async (req, res) => {
     } else {
         const orgName = req.params.orgName;
         const orgID = await orgIDValue(orgName);
-        metaData = await getAPIMApplication(applicationId);
-        throttlingMetaData = await getAPIMThrottlingPolicies();
+        metaData = await getAPIMApplication(req, applicationId);
+        throttlingMetaData = await getAPIMThrottlingPolicies(req);
         templateContent = {
             applicationMetadata: metaData,
             throttlingPoliciesMetadata: throttlingMetaData,
@@ -169,13 +170,13 @@ async function getMockKeyManagers() {
     return mockKeyManagersMetaData.list;
 }
 
-async function getAPIMApplication(applicationId) {
-    const responseData = await invokeApiRequest('GET', controlPlaneUrl + '/applications/' + applicationId, null, null);
+async function getAPIMApplication(req, applicationId) {
+    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/applications/' + applicationId, null, null);
     return responseData;
 }
 
-async function getAPIMKeyManagers() {
-    const responseData = await invokeApiRequest('GET', controlPlaneUrl + '/key-managers', null, null);
+async function getAPIMKeyManagers(req) {
+    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers', null, null);
     return responseData.list;
 }
 
@@ -185,7 +186,7 @@ async function getAPIMKeyManagers() {
 
 const saveApplication = async (req, res) => {
     const { name, throttlingPolicy, description } = req.body;
-    const responseData = await invokeApiRequest('POST', `${controlPlaneUrl}/applications`, {
+    const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications`, {
         'Content-Type': 'application/json'
     }, {
         name,
@@ -204,7 +205,7 @@ const saveApplication = async (req, res) => {
 const updateApplication = async (req, res) => {
     const { name, throttlingPolicy, description } = req.body;
     const applicationId = req.params.applicationid;
-    const responseData = await invokeApiRequest('PUT', `${controlPlaneUrl}/applications/${applicationId}`, {
+    const responseData = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/applications/${applicationId}`, {
         'Content-Type': 'application/json',
     }, {
         name,
@@ -222,7 +223,7 @@ const updateApplication = async (req, res) => {
 
 const deleteApplication = async (req, res) => {
     const applicationId = req.params.applicationid;
-    const responseData = await invokeApiRequest('DELETE', `${controlPlaneUrl}/applications/${applicationId}`, null, null);
+    const responseData = await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${applicationId}`, null, null);
     res.status(200).json({ message: responseData.message });
 }
 
@@ -231,7 +232,7 @@ const deleteApplication = async (req, res) => {
 const resetThrottlingPolicy = async (req, res) => {
     const applicationId = req.params.applicationid;
     const { userName } = req.body;
-    const responseData = await invokeApiRequest('POST', `${controlPlaneUrl}/applications/${applicationId}/reset-throttle-policy`, {
+    const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/reset-throttle-policy`, {
         'Content-Type': 'application/json'
     }, {
         userName
@@ -245,7 +246,7 @@ const generateAPIKeys = async (req, res) => {
     const applicationId = req.params.applicationid;
     const environment = req.params.env;
     const { validityPeriod, additionalProperties } = req.body;
-    const responseData = await invokeApiRequest('POST', `${controlPlaneUrl}/applications/${applicationId}/api-keys/${environment}/generate`, {
+    const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/api-keys/${environment}/generate`, {
         'Content-Type': 'application/json'
     }, {
         validityPeriod, additionalProperties

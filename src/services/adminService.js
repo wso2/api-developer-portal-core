@@ -106,15 +106,19 @@ const updateOrganization = async (req, res) => {
             console.log("Missing required parameter: 'orgId'");
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
+        console.log('Before validation')
         const rules = util.validateOrganization();
+
         for (let validation of rules) {
             await validation.run(req);
+            console.log('After validation')
         }
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json(util.getErrors(errors));
         }
         const payload = req.body;
+        console.log('updating org', payload)
         const [, updatedOrg] = await adminDao.updateOrganization(payload);
         res.status(200).json({
             orgId: updatedOrg[0].dataValues.ORG_ID,

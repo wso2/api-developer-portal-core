@@ -26,7 +26,8 @@ const constants = require('../utils/constants');
 const unzipper = require('unzipper');
 const axios = require('axios');
 const https = require('https');
-
+const config = require('../../config.json');
+const { body } = require('express-validator');
 const { Sequelize } = require('sequelize');
 
 // Function to load and convert markdown file to HTML
@@ -121,7 +122,7 @@ function getErrors(errors) {
             code: '400',
             message: 'input validation failed',
             description: element.msg
-        })        
+        })
     });
     return errorList;
 }
@@ -262,18 +263,18 @@ const getAPIImages = async (directory) => {
 const invokeApiRequest = async (req, method, url, headers, body) => {
 
     headers = headers || {};
-    headers.Authorization = req.user.accessToken; 
-    console.log('sending accesss token', req.user.accessToken)
-
-
-    const certPath = path.join(process.cwd(), config.controlPlane.pathToCertificate);
-
+    if (req.user) {
+        headers.Authorization = "Bearer " + req.user.accessToken;
+        console.log('sending accesss token', req.user.accessToken)
+    }
     let httpsAgent;
+
     if (config.controlPlane.disableCertValidation) {
         httpsAgent = new https.Agent({
             rejectUnauthorized: false,
         });
     } else {
+        const certPath = path.join(process.cwd(), config.controlPlane.pathToCertificate);
         httpsAgent = new https.Agent({
             ca: fs.readFileSync(certPath),
             rejectUnauthorized: true,

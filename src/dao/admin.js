@@ -39,7 +39,8 @@ const createOrganization = async (orgData) => {
         ORGANIZATION_CLAIM_NAME: orgData.organizationClaimName,
         ORGANIZATION_IDENTIFIER: orgData.organizationIdentifier,
         ADMIN_ROLE: orgData.adminRole,
-        SUBSCRIBER_ROLE: orgData.subscriberRole
+        SUBSCRIBER_ROLE: orgData.subscriberRole,
+        SUPER_ADMIN_ROLE: orgData.superAdminRole
     };
     try {
         const organization = await Organization.create(createOrgData);

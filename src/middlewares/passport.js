@@ -31,6 +31,7 @@ function configurePassport(authJsonContent, claimNames) {
     const requestedScopes = "openid profile email groups roles apim:subscribe";
     let scope = requestedScopes.split(" ");
     scope.push(...(authJsonContent.scope ? authJsonContent.scope.split(" ") : ""));
+    console.log("Scopes requested", scope)
     const strategy = new OAuth2Strategy({
         issuer: authJsonContent.issuer,
         authorizationURL: authJsonContent.authorizationURL,

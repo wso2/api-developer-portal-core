@@ -28,8 +28,12 @@ const adminService = require('../services/adminService');
 
 const loadSettingPage = async (req, res) => {
 
+    let orgID;
     //retrieve orgID from the user object
-    const orgID = req.user[constants.ORG_ID];
+    if (req.user) {
+        orgID = req.user[constants.ORG_ID];
+    }
+
     let templateContent = {
         baseUrl: req.params.orgName,
         orgID: orgID
@@ -119,7 +123,7 @@ const createorganization = async (req, res) => {
         }
         //fetch all created organizations
         const organizations = await adminService.getAllOrganizations();
-        if(organizations.length !== 0){
+        if (organizations.length !== 0) {
             console.log("Organizations retrieved");
             templateContent.organizations = organizations;
         }
