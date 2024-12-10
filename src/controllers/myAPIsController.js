@@ -26,76 +26,84 @@ const apiMetadataService = require('../services/apiMetadataService');
 const util = require('../utils/util');
 
 const loadMyAPIs = async (req, res) => {
-    const orgName = req.params.orgName;
-    const orgId = await adminDao.getOrgId(orgName);
-    const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'myAPIs', 'page.hbs');
-    const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
-    const layoutResponse = await loadLayoutFromAPI(orgId);
-    let metaData = await apiMetadataService.getMetadataListFromDB(orgId);
-    const apiRefIds = new Set(metaData.map(api => api.apiReferenceID));
+    try {
+        const orgName = req.params.orgName;
+        const orgId = await adminDao.getOrgId(orgName);
+        const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'myAPIs', 'page.hbs');
+        const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
+        const layoutResponse = await loadLayoutFromAPI(orgId);
+        let metaData = await apiMetadataService.getMetadataListFromDB(orgId);
+        const apiRefIds = new Set(metaData.map(api => api.apiReferenceID));
 
-    let subscriptions = [];
-    let applications = [];
-    let subscribedApps = [];
+        let subscriptions = [];
+        let applications = [];
+        let subscribedApps = [];
 
-    for (const apiRefId of apiRefIds) {
-        const subs = await loadSubscriptions(res, apiRefId);
+        for (const apiRefId of apiRefIds) {
+            const subs = await loadSubscriptions(apiRefId);
 
-        if (subs) {
-            for (const sub of subs.list) {
-                subscriptions.push({
-                    id: sub.subscriptionId,
-                    apiName: sub.apiInfo.name,
-                    applicationName: sub.applicationInfo.name,
-                    applicationId: sub.applicationInfo.applicationId,
-                    throttlingTier: sub.throttlingPolicy,
-                    appStatus: sub.status,
-                });
+            if (subs) {
+                for (const sub of subs.list) {
+                    subscriptions.push({
+                        id: sub.subscriptionId,
+                        apiName: sub.apiInfo.name,
+                        applicationName: sub.applicationInfo.name,
+                        applicationId: sub.applicationInfo.applicationId,
+                        throttlingTier: sub.throttlingPolicy,
+                        appStatus: sub.status,
+                    });
 
+                }
             }
         }
-    }
 
-    // Load modal content with subscribed applications and applications that are not subscribed
-    if (req.query.apiId) {
-        const apps = await loadApplications();
-        const apiSubs = await loadSubscriptions(res, req.query.apiId);
-        const subAppIds = new Set(apiSubs.list.map(sub => sub.applicationInfo.applicationId));
+        // Load modal content with subscribed applications and applications that are not subscribed
+        let apiId = req.query.apiId;
+        if (apiId) {
+            const apps = await loadApplications();
+            const apiSubs = await loadSubscriptions(apiId.replace(/[^a-zA-Z0-9\s-]/g, ''));
+            if (Array.isArray(apiSubs.list)) {
 
-        for (const app of apps.list) {
-            if (!subAppIds.has(app.applicationId)) {
-                applications.push({
-                    name: app.name,
-                    id: app.applicationId,
-                });
-            } else {
-                subscribedApps.push({
-                    name: app.name,
-                    id: app.applicationId,
-                    subscribed: true,
-                });
+
+                const subAppIds = new Set(apiSubs.list.map(sub => sub.applicationInfo.applicationId));
+
+                for (const app of apps.list) {
+                    if (!subAppIds.has(app.applicationId)) {
+                        applications.push({
+                            name: app.name,
+                            id: app.applicationId,
+                        });
+                    } else {
+                        subscribedApps.push({
+                            name: app.name,
+                            id: app.applicationId,
+                            subscribed: true,
+                        });
+                    }
+                }
             }
         }
+        const templateContent = {
+            subscriptions: subscriptions,
+            applications: applications,
+            subscribedApps: subscribedApps,
+            baseUrl: '/' + orgName
+        };
+
+        const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        res.send(html);
+    } catch (error) {
+        console.error("Error occurred while loading My APIs", error);
+        util.handleError(res, error);
     }
-
-    const templateContent = {
-        subscriptions: subscriptions,
-        applications: applications,
-        subscribedApps: subscribedApps,
-        baseUrl: '/' + orgName
-    };
-
-    const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
-    res.send(html);
 }
 
-const loadSubscriptions = async (res, apiId) => {
+const loadSubscriptions = async (apiId) => {
     try {
         return await util.invokeApiRequest(req, 'GET', `${config.controlPlaneUrl}/subscriptions?apiId=${apiId}`);
     } catch (error) {
         console.error("Error occurred while loading subscriptions", error);
-        util.handleError(res, error);
-        return null;
+        throw error;
     }
 }
 
@@ -104,7 +112,7 @@ const loadApplications = async () => {
         return await util.invokeApiRequest(req, 'GET', `${config.controlPlaneUrl}/applications?sortBy=name&sortOrder=asc`);
     } catch (error) {
         console.error("Error occurred while loading applications", error);
-        util.handleError(res, error);
+        throw error;
     }
 }
 

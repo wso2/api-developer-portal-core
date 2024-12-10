@@ -47,3 +47,16 @@
 .content {
     padding: 2rem;
 }
+
+.sub-api-card {
+    width: 350px;
+}
+
+.sub-api-card-item{
+    margin: 20px 0px;
+}
+
+.policy-label {
+    font-size: 0.9rem;
+    margin: 10px;
+}
