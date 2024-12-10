@@ -73,7 +73,7 @@ applicationForm.addEventListener('submit', async (e) => {
     ).value;
 
     try {
-        const response = await fetch('/applications', {
+        const response = await fetch('/devportal/applications', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

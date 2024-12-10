@@ -9,7 +9,7 @@ async function deleteApplication() {
   const modal = document.getElementById('deleteConfirmation');
   const applicationId = modal.dataset.applicationId;
   try {
-    const response = await fetch(`/applications/${applicationId}`, { method: 'DELETE' });
+    const response = await fetch(`/devportal/applications/${applicationId}`, { method: 'DELETE' });
     if (response.ok) {
       console.log('Application deleted successfully.');
       await showAlert('Application deleted successfully!', 'success');
