@@ -4,14 +4,13 @@
   "mode": "production",
   "controlPlane" : {
     "url": "https://localhost:9443/api/am/devportal/v3",
-    "accessToken" :"Bearer <control-plane-access-token>",
     "disableCertValidation": true,
     "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
   },
   "db": {
     "username": "postgres",
     "password": "postgres",
-    "database": "DEVPORTAL_NEWSCHEMA",
+    "database": "devportal",
     "host": "localhost",
     "dialect": "postgres"
   },
@@ -24,7 +23,7 @@
     "authorizationURL": "https://localhost:9443/oauth2/authorize",
     "tokenURL": "https://localhost:9443/oauth2/token",
     "userInfoURL": "https://localhost:9443/oauth2/userinfo",
-    "clientId": "meVRlVAkUoVufXXjN3aUk72PVF8a",
+    "clientId": "",
     "callbackURL": "http://localhost:3000/ACME/callback",
     "scope": "openid email profile apim:subscribe role",
     "signUpURL": "",
