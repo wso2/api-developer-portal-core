@@ -71,7 +71,7 @@ form.addEventListener('submit', async (e) => {
         'editApplicationDescription'
     ).value;
     try {
-        const response = await fetch(`/applications/${applicationId}`, {
+        const response = await fetch(`/devportal/applications/${applicationId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',

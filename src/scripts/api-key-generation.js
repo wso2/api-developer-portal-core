@@ -265,7 +265,7 @@ async function generateAPIKey(applicationID, isProduction) {
   const validityPeriod = validityInput.value;
   let JSONbody;
   const environment = isProduction ? 'PRODUCTION' : 'SANDBOX';
-  const uri = `/applications/${applicationID}/api-keys/${environment}/generate`;
+  const uri = `/devportal/applications/${applicationID}/api-keys/${environment}/generate`;
 
   if (noneRadio.checked) {
     JSONbody = JSON.stringify({

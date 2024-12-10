@@ -87,7 +87,7 @@ async function handleCreateSubscribe() {
             return;
         }
 
-        const response = await fetch(`/devportal/application`, {
+        const response = await fetch(`/devportal/applications`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

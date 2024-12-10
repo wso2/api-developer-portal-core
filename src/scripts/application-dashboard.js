@@ -59,7 +59,7 @@ async function resetThrottlingPolicy(applicationId) {
 
   try {
     const response = await fetch(
-      `/applications/${applicationId}/reset-throttle-policy`,
+      `/devportal/applications/${applicationId}/reset-throttle-policy`,
       {
         method: 'POST',
         headers: {

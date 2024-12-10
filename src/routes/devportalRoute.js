@@ -59,6 +59,10 @@ router.delete('/organizations/:orgId/apis/:apiId/template', apiMetadataService.d
 router.post('/subscriptions', devportalController.subscribeAPI);
 router.delete('/subscriptions/:subscriptionId', devportalController.unsubscribeAPI);
 
-router.post('/application', devportalController.createApplication);
+router.post('/applications', devportalController.saveApplication);
+router.put('/applications/:applicationid', devportalController.updateApplication);
+router.delete('/applications/:applicationid', devportalController.deleteApplication);
+router.post('/applications/:applicationid/reset-throttle-policy', devportalController.resetThrottlingPolicy);
+router.post('/applications/:applicationid/api-keys/:env/generate', devportalController.generateAPIKeys);
 
 module.exports = router;
