@@ -234,88 +234,9 @@ async function getAPIMKeyManagers(req) {
     return responseData.list;
 }
 
-// ***** POST / DELETE / PUT Functions ***** (Only work in production)
-
-// ***** Save Application *****
-
-const saveApplication = async (req, res) => {
-    const { name, throttlingPolicy, description } = req.body;
-    const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications`, {
-        'Content-Type': 'application/json'
-    }, {
-        name,
-        throttlingPolicy,
-        description,
-        tokenType: 'JWT',
-        groups: [],
-        attributes: {},
-        subscriptionScopes: []
-    });
-    res.status(200).json({ message: responseData.message });
-};
-
-// ***** Update Application *****
-
-const updateApplication = async (req, res) => {
-    const { name, throttlingPolicy, description } = req.body;
-    const applicationId = req.params.applicationid;
-    const responseData = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/applications/${applicationId}`, {
-        'Content-Type': 'application/json',
-    }, {
-        name,
-        throttlingPolicy,
-        description,
-        tokenType: 'JWT',
-        groups: [],
-        attributes: {},
-        subscriptionScopes: []
-    });
-    res.status(200).json({ message: responseData.message });
-};
-
-// ***** Delete Application *****
-
-const deleteApplication = async (req, res) => {
-    const applicationId = req.params.applicationid;
-    const responseData = await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${applicationId}`, null, null);
-    res.status(200).json({ message: responseData.message });
-}
-
-// ***** Save Application *****
-
-const resetThrottlingPolicy = async (req, res) => {
-    const applicationId = req.params.applicationid;
-    const { userName } = req.body;
-    const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/reset-throttle-policy`, {
-        'Content-Type': 'application/json'
-    }, {
-        userName
-    });
-    res.status(200).json({ message: responseData.message });
-};
-
-// ***** Generate API Keys *****
-
-const generateAPIKeys = async (req, res) => {
-    const applicationId = req.params.applicationid;
-    const environment = req.params.env;
-    const { validityPeriod, additionalProperties } = req.body;
-    const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/api-keys/${environment}/generate`, {
-        'Content-Type': 'application/json'
-    }, {
-        validityPeriod, additionalProperties
-    });
-    res.status(200).json(responseData);
-};
-
 module.exports = {
     loadApplications,
     loadThrottlingPolicies,
     loadApplication,
-    loadApplicationForEdit,
-    saveApplication,
-    updateApplication,
-    deleteApplication,
-    resetThrottlingPolicy,
-    generateAPIKeys
+    loadApplicationForEdit
 };

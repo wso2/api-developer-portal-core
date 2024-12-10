@@ -15,43 +15,140 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-const util = require('../utils/util');
+const { invokeApiRequest } = require('../utils/util');
 const config = require('../../config.json');
+const controlPlaneUrl = config.controlPlane.url;
 
 const unsubscribeAPI = async (req, res) => {
     try {
         const subscriptionId = req.params.subscriptionId;
-        res.send(await util.invokeApiRequest(req, 'DELETE', `${config.controlPlaneUrl}/subscriptions/${subscriptionId}`, {}, {}));
+        res.send(await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${subscriptionId}`, {}, {}));
     } catch (error) {
         console.error("Error occurred while unsubscribing from API", error);
-        util.handleError(res, error);
+        handleError(res, error);
     }
 }
 
 const subscribeAPI = async (req, res) => {
     try {
-        res.send(await util.invokeApiRequest(req, 'POST', `${config.controlPlaneUrl}/subscriptions`, {}, req.body));
+        res.send(await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, req.body));
     } catch (error) {
         console.error("Error occurred while subscribing to API", error);
-        util.handleError(res, error);
+        handleError(res, error);
     }
 }
 
-const createApplication = async (req, res) => {
+// ***** POST / DELETE / PUT Functions ***** (Only work in production)
+
+// ***** Save Application *****
+
+const saveApplication = async (req, res) => {
     try {
-        const payload = {
-            ...req.body,
-            throttlingPolicy: 'Unlimited'
-        };
-        res.send(await util.invokeApiRequest(req, 'POST', `${config.controlPlaneUrl}/applications`, {}, payload));
+        let { name, throttlingPolicy, description } = req.body;
+
+        if (!throttlingPolicy) {
+            throttlingPolicy = 'Unlimited';
+        }
+
+        const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications`, {
+            'Content-Type': 'application/json'
+        }, {
+            name,
+            throttlingPolicy,
+            description,
+            tokenType: 'JWT',
+            groups: [],
+            attributes: {},
+            subscriptionScopes: []
+        });
+        res.status(200).json(responseData);
+
     } catch (error) {
-        console.error("Error occurred while creating application", error);
-        util.handleError(res, error);
+        console.error("Error occurred while creating the application", error);
+        handleError(res, error);
+    }
+};
+
+// ***** Update Application *****
+
+const updateApplication = async (req, res) => {
+    try {
+        const { name, throttlingPolicy, description } = req.body;
+        const applicationId = req.params.applicationid;
+        const responseData = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/applications/${applicationId}`, {
+            'Content-Type': 'application/json',
+        }, {
+            name,
+            throttlingPolicy,
+            description,
+            tokenType: 'JWT',
+            groups: [],
+            attributes: {},
+            subscriptionScopes: []
+        });
+        res.status(200).json({ message: responseData.message });
+    } catch (error) {
+        console.error("Error occurred while updating the application", error);
+        handleError(res, error);
+    }
+};
+
+// ***** Delete Application *****
+
+const deleteApplication = async (req, res) => {
+    try {
+        const applicationId = req.params.applicationid;
+        const responseData = await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${applicationId}`, null, null);
+        res.status(200).json({ message: responseData.message });
+    } catch (error) {
+        console.error("Error occurred while deleting the application", error);
+        handleError(res, error);
     }
 }
+
+// ***** Save Application *****
+
+const resetThrottlingPolicy = async (req, res) => {
+    try {
+        const applicationId = req.params.applicationid;
+        const { userName } = req.body;
+        const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/reset-throttle-policy`, {
+            'Content-Type': 'application/json'
+        }, {
+            userName
+        });
+        res.status(200).json({ message: responseData.message });
+    } catch (error) {
+        console.error("Error occurred while resetting the application", error);
+        handleError(res, error);
+    }
+};
+
+// ***** Generate API Keys *****
+
+const generateAPIKeys = async (req, res) => {
+    try {
+        const applicationId = req.params.applicationid;
+        const environment = req.params.env;
+        const { validityPeriod, additionalProperties } = req.body;
+        const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/api-keys/${environment}/generate`, {
+            'Content-Type': 'application/json'
+        }, {
+            validityPeriod, additionalProperties
+        });
+        res.status(200).json(responseData);
+    } catch (error) {
+        console.error("Error occurred while deleting the application", error);
+        handleError(res, error);
+    }
+};
 
 module.exports = {
     unsubscribeAPI,
     subscribeAPI,
-    createApplication
+    saveApplication,
+    updateApplication,
+    deleteApplication,
+    resetThrottlingPolicy,
+    generateAPIKeys
 };
