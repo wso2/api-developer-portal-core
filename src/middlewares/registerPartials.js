@@ -46,13 +46,13 @@ const registerPartials = async (req, res, next) => {
 
 const registerInternalPartials = () => {
 
-  const partialsDir = path.join(process.cwd(), 'src/pages/partials');
+  const partialsDir = path.join(path.join(require.main.filename, '..', '/pages/partials'));
   const getDirectories = source =>
     fs.readdirSync(source, { withFileTypes: true })
       .filter(dirent => dirent.isDirectory())
       .map(dirent => path.join(source, dirent.name));
 
-  const partialsDirs = [partialsDir, ...getDirectories(path.join(process.cwd(), 'src/pages')).map(dir => path.join(dir, 'partials'))];
+  const partialsDirs = [partialsDir, ...getDirectories(path.join(require.main.filename, '..', '/pages')).map(dir => path.join(dir, 'partials'))];
 
   partialsDirs.forEach(dir => {
     if (fs.existsSync(dir)) {
