@@ -18,6 +18,8 @@
 const { invokeApiRequest } = require('../utils/util');
 const config = require('../../config.json');
 const controlPlaneUrl = config.controlPlane.url;
+const util = require('../utils/util');
+
 
 const unsubscribeAPI = async (req, res) => {
     try {
@@ -25,7 +27,7 @@ const unsubscribeAPI = async (req, res) => {
         res.send(await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${subscriptionId}`, {}, {}));
     } catch (error) {
         console.error("Error occurred while unsubscribing from API", error);
-        handleError(res, error);
+        util.handleError(res, error);
     }
 }
 
@@ -34,7 +36,7 @@ const subscribeAPI = async (req, res) => {
         res.send(await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, req.body));
     } catch (error) {
         console.error("Error occurred while subscribing to API", error);
-        handleError(res, error);
+        util.handleError(res, error);
     }
 }
 
@@ -65,7 +67,7 @@ const saveApplication = async (req, res) => {
 
     } catch (error) {
         console.error("Error occurred while creating the application", error);
-        handleError(res, error);
+        util.handleError(res, error);
     }
 };
 
@@ -89,7 +91,7 @@ const updateApplication = async (req, res) => {
         res.status(200).json({ message: responseData.message });
     } catch (error) {
         console.error("Error occurred while updating the application", error);
-        handleError(res, error);
+        util.handleError(res, error);
     }
 };
 
@@ -102,7 +104,7 @@ const deleteApplication = async (req, res) => {
         res.status(200).json({ message: responseData.message });
     } catch (error) {
         console.error("Error occurred while deleting the application", error);
-        handleError(res, error);
+        util.handleError(res, error);
     }
 }
 
@@ -120,7 +122,7 @@ const resetThrottlingPolicy = async (req, res) => {
         res.status(200).json({ message: responseData.message });
     } catch (error) {
         console.error("Error occurred while resetting the application", error);
-        handleError(res, error);
+        util.handleError(res, error);
     }
 };
 
@@ -139,7 +141,7 @@ const generateAPIKeys = async (req, res) => {
         res.status(200).json(responseData);
     } catch (error) {
         console.error("Error occurred while deleting the application", error);
-        handleError(res, error);
+        util.handleError(res, error);
     }
 };
 
