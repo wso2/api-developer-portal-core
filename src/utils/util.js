@@ -282,6 +282,7 @@ const invokeApiRequest = async (method, url, headers, body) => {
         return response.data;
     } catch (error) {
         console.log(`Error while invoking API: ${error}`);
+        console.log(error)
         let message = error.message;
         if (error.response) {
             message = error.response.data.description;
