@@ -60,7 +60,7 @@ const loadMyAPIs = async (req, res) => {
         // Load modal content with subscribed applications and applications that are not subscribed
         let apiId = req.query.apiId;
         if (apiId) {
-            const apps = await loadApplications();
+            const apps = await loadApplications(req);
             const apiSubs = await loadSubscriptions(apiId.replace(/[^a-zA-Z0-9\s-]/g, ''));
             if (Array.isArray(apiSubs.list)) {
 
@@ -98,18 +98,18 @@ const loadMyAPIs = async (req, res) => {
     }
 }
 
-const loadSubscriptions = async (apiId) => {
+const loadSubscriptions = async (req, apiId) => {
     try {
-        return await util.invokeApiRequest('GET', `${config.controlPlane.url}/subscriptions?apiId=${apiId}`);
+        return await util.invokeApiRequest(req, 'GET', `${config.controlPlaneUrl}/subscriptions?apiId=${apiId}`);
     } catch (error) {
         console.error("Error occurred while loading subscriptions", error);
         throw error;
     }
 }
 
-const loadApplications = async () => {
+const loadApplications = async (req) => {
     try {
-        return await util.invokeApiRequest('GET', `${config.controlPlane.url}/applications?sortBy=name&sortOrder=asc`);
+        return await util.invokeApiRequest(req, 'GET', `${config.controlPlaneUrl}/applications?sortBy=name&sortOrder=asc`);
     } catch (error) {
         console.error("Error occurred while loading applications", error);
         throw error;

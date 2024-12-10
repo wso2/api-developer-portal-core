@@ -34,10 +34,11 @@ const registerPartials = async (req, res, next) => {
     registerAllPartialsFromFile(constants.BASE_URL + config.port, req);
   } else {
     try {
+      await registerInternalPartials();
       await registerPartialsFromAPI(req);
     } catch (error) {
       console.error(`Error while loading organization :,${error}`)
-      console.log("Registering default partiasl from file");
+      console.log("Registering default partials from file");
       registerAllPartialsFromFile('/' + req.params.orgName, req);
     }
   }
@@ -106,7 +107,6 @@ const registerPartialsFromAPI = async (req) => {
     orgId: orgID,
     fileType: 'partial',
   });
-
   let partialObject = {}
   partials.forEach(file => {
     let fileName = file.FILE_NAME.split(".")[0];
@@ -114,7 +114,7 @@ const registerPartialsFromAPI = async (req) => {
     content = content.replaceAll(constants.ROUTE.IMAGES_PATH, `${imageUrl}`)
     partialObject[fileName] = content;
   });
-  
+  const hbs = exphbs.create({});
   Object.keys(partialObject).forEach((partialName) => {
     hbs.handlebars.registerPartial(partialName, partialObject[partialName]);
   });
@@ -132,6 +132,7 @@ const registerPartialsFromAPI = async (req) => {
 
     const apiName = req.params.apiName;
     const apiID = await apiDao.getAPIId(apiName);
+
     //fetch markdown content for API if exists
     const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, orgID, apiID);
     const markdownContent = markdownResponse ? markdownResponse.API_FILE.toString("utf8") : "";

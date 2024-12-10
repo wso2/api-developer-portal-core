@@ -19,13 +19,13 @@ const express = require('express');
 const router = express.Router();
 const apiController = require('../controllers/apiContentController');
 const registerPartials = require('../middlewares/registerPartials');
+const ensureAuthenticated = require('../middlewares/ensureAuthenticated');
 
 
+router.get('/((?!favicon.ico)):orgName/apis', ensureAuthenticated, registerPartials, apiController.loadAPIs);
 
-router.get('/((?!favicon.ico)):orgName/apis', registerPartials, apiController.loadAPIs);
+router.get('/((?!favicon.ico)):orgName/api/:apiName', ensureAuthenticated, registerPartials, apiController.loadAPIContent);
 
-router.get('/((?!favicon.ico)):orgName/api/:apiName', registerPartials, apiController.loadAPIContent);
-
-router.get('/((?!favicon.ico)):orgName/api/:apiName/tryout', registerPartials, apiController.loadTryOutPage);
+router.get('/((?!favicon.ico)):orgName/api/:apiName/tryout', ensureAuthenticated, registerPartials, apiController.loadTryOutPage);
 
 module.exports = router;

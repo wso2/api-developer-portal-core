@@ -4,8 +4,7 @@
   "mode": "production",
   "controlPlane" : {
     "url": "https://localhost:9443/api/am/devportal/v3",
-    "accessToken" :"Bearer <control-plane-access-token>",
-    "disableCertValidation": false,
+    "disableCertValidation": true,
     "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
   },
   "db": {
@@ -17,5 +16,38 @@
   },
   "providerURL": {
     "AWS": "https://aws.amazon.com"
-  }
+  },
+  "identityProvider" : {
+    "name": "IS",
+    "issuer": "https://localhost:9443/oauth2/token",
+    "authorizationURL": "https://localhost:9443/oauth2/authorize",
+    "tokenURL": "https://localhost:9443/oauth2/token",
+    "userInfoURL": "https://localhost:9443/oauth2/userinfo",
+    "clientId": "",
+    "callbackURL": "http://localhost:3000/ACME/callback",
+    "scope": "openid email profile apim:subscribe role",
+    "signUpURL": "",
+    "logoutURL": "https://localhost:9443/oidc/logout",
+    "logoutRedirectURI": "http://localhost:3000/ACME"
+},
+"roleClaim": "roles", 
+"orgIDClaim": "organizationID",
+"groupsClaim": "groups",
+"adminRole": "admin",
+"subscriberRole": "Interna/subscriber",
+"superAdminRole": "superAdmin",
+ "authenticatedPages": [
+    "/*/configure",
+    "/portal",
+    "/*/applications",
+     "/*/applications/*",
+     "/*/api/*"
+  ],
+  "authorizedPages": [
+    "/*/applications",
+    "/*/configure",
+    "/portal",
+    "/*/api/*"
+
+  ]
 }

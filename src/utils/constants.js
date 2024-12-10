@@ -27,7 +27,7 @@ module.exports = {
     HERO_PARTIAL_NAME: 'hero',
     BASE_URL: 'http://localhost:',
     BASE_URL_NAME: 'baseUrl',
-
+    ORG_ID: 'orgID',
     MIME_TYPES: {
         HTML: 'text/html',
         TEXT: 'text/plain',
@@ -71,15 +71,22 @@ module.exports = {
       TECHNICAL_SCRIPTS: '/technical-scripts',
       IMAGES: '/images',
       IMAGES_PATH: '/images/',
-      TECHNICAL_SCRIPTS: '/technical-scripts',
       DEFAULT: '/',
       MOCK: '/mock',
       API_LISTING_PAGE: '/apis',  
       API_FILE_PATH: '/apis/',
       API_LANDING_PAGE_PATH: '/api/',
       DEVPORTAL_ASSETS_BASE_PATH: '/devportal/organizations/',
+      DEVPORTAL_CONFIGURE: '/*/configure',
+      DEVPORTAL_ROOT: '/portal',
+      DEVPORTAL_API_LISTING: '/*/apis',
+      DEVPORTAL_TECHNICAL_PAGES: ['*/application']
     },
-
+    ROLES: {
+        ADMIN_ROLE: 'admin',
+        SUBSCRIBER_ROLE_INTERNAL: 'Internal/subscriber',
+        SUBSCRIBER_ROLE: 'subscriber'
+    },
     FILE_TYPE: {
         LAYOUT: 'layout',
         TEMPLATE: 'template',
@@ -92,6 +99,7 @@ module.exports = {
         API_HBS_CONTENT_FILE_NAME: 'api-content.hbs',
         API_CONTENT_PARTIAL_NAME: "api-content",
         API_DEFINITION_FILE_NAME: 'apiDefinition.json',
+        API_DEFINITION_GRAPHQL: 'apiDefinition.graphql',
         API_DEFINITION_XML: 'apiDefinition.xml',
         PARTIAL_HEADER_FILE_NAME: 'header.hbs',
     },

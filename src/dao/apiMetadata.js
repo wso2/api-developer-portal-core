@@ -295,7 +295,6 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
     if (apiInfo.owners) {
         owners = apiInfo.owners;
     }
-    console.log(apiInfo);
     try {
         const [updateCount, apiMetadataResponse] = await APIMetadata.update({
             REFERENCE_ID: apiInfo.referenceID,
