@@ -16,7 +16,7 @@
  * under the License.
  */
 const { invokeApiRequest } = require('../utils/util');
-const config = require('../../config.json');
+const config = require(process.cwd() + '/config');
 const controlPlaneUrl = config.controlPlane.url;
 
 const unsubscribeAPI = async (req, res) => {

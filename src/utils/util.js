@@ -26,7 +26,7 @@ const constants = require('../utils/constants');
 const unzipper = require('unzipper');
 const axios = require('axios');
 const https = require('https');
-const config = require('../../config.json');
+const config = require(process.cwd() + '/config.json');
 
 const { Sequelize } = require('sequelize');
 
