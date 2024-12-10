@@ -71,7 +71,11 @@ async function loadLayoutFromAPI(orgID) {
         fileType: constants.FILE_TYPE.LAYOUT,
         fileName: constants.FILE_NAME.MAIN
     });
-    return layoutContent.FILE_CONTENT.toString(constants.CHARSET_UTF8);
+    if (layoutContent) {
+        return layoutContent.FILE_CONTENT.toString(constants.CHARSET_UTF8);
+    } else {
+        return "";
+    }
 }
 
 async function loadTemplateFromAPI(orgID, filePath) {

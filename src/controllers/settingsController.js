@@ -16,9 +16,8 @@
  * under the License.
  */
 /* eslint-disable no-undef */
-const { renderTemplate, renderGivenTemplate, loadLayoutFromAPI, validateIDP } = require('../utils/util');
+const { renderGivenTemplate, loadLayoutFromAPI } = require('../utils/util');
 const fs = require('fs');
-const { validationResult } = require('express-validator');
 const path = require('path');
 const adminDao = require('../dao/admin');
 const IdentityProviderDTO = require("../dto/identityProvider");
@@ -29,6 +28,8 @@ const adminService = require('../services/adminService');
 const loadSettingPage = async (req, res) => {
 
     let orgID;
+    const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'configure', 'page.hbs');
+    const layoutPath = path.join(require.main.filename, '..', 'pages', 'layout', 'main.hbs');
     //retrieve orgID from the user object
     if (req.user) {
         orgID = req.user[constants.ORG_ID];
@@ -38,7 +39,6 @@ const loadSettingPage = async (req, res) => {
         baseUrl: req.params.orgName,
         orgID: orgID
     }
-    const completeTemplatePath = path.join('src', 'pages', 'configure', 'page.hbs');
     try {
         const retrievedIDP = await adminDao.getIdentityProvider(orgID);
         if (retrievedIDP.length > 0) {
@@ -46,7 +46,10 @@ const loadSettingPage = async (req, res) => {
         } else {
             templateContent.create = true;
         }
-        const layoutResponse = await loadLayoutFromAPI(orgID)
+        let layoutResponse = await loadLayoutFromAPI(orgID)
+        if (layoutResponse === "") {
+            layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
+        }
         const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
         //TODO: fetch view names from DB
         const file = await adminService.getOrgContent(orgID, 'layout', 'main.hbs', 'layout');
@@ -64,71 +67,32 @@ const loadSettingPage = async (req, res) => {
         res.send(html);
     } catch (error) {
         console.error(`Error while loading content from DB: ${error}`);
-        // loading main template from file since no org content uploaded
-        const layoutPath = path.join('src', 'pages', 'layout', 'main.hbs');
-        html = renderTemplate(completeTemplatePath, layoutPath, templateContent);
-        res.send(html);
-        console.error(`Error while loading setting page: ${error}`);
-    }
-}
-
-const identityprovider = async (req, res) => {
-
-    try {
-        const rules = validateIDP();
-        for (let validation of rules) {
-            await validation.run(req);
-        }
-        const errors = validationResult(req);
-        //let orgName = req.body.orgName;
-        let orgID = req.user[config.orgID_claim_name];
-        const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'configure', 'page.hbs');
-        const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
-        const layoutResponse = await loadLayoutFromAPI(orgID)
-        if (!errors.isEmpty()) {
-            let html = await renderGivenTemplate(templateResponse, layoutResponse, {
-                create: true,
-                errors: errors.array(),
-                data: req.body // Pre-fill form with previous inputs
-            });
-            res.send(html);
-        } else {
-            const idpCreateResponse = await adminDao.createIdentityProvider(orgID, req.body);
-            let html = await renderGivenTemplate(templateResponse, layoutResponse, {
-                baseUrl: req.params.orgName,
-                idp: new IdentityProviderDTO(idpCreateResponse.dataValues)
-            });
-            res.send(html);
-        }
-    } catch (error) {
-        console.error(`Error while storing IDP settings: ${error}`);
-        res.send("Error while storing IDP settings");
     }
 }
 
 const createorganization = async (req, res) => {
 
     try {
-        const completeTemplatePath = path.join('src', 'pages', 'createOrg', 'page.hbs');
-        const layoutPath = path.join('src', 'pages', 'layout', 'main.hbs');
         const templateContent = {
-            'orgID': req.user[config.orgID_claim_name],
+            'orgID': req.user[config.orgID_claim_name]
         }
         //fetch all created organizations
         const organizations = await adminService.getAllOrganizations();
         if (organizations.length !== 0) {
             templateContent.organizations = organizations;
         }
-        const html = await renderTemplate(completeTemplatePath, layoutPath, templateContent);
+        const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'portal', 'page.hbs');
+        const layoutPath = path.join(require.main.filename, '..', 'pages', 'layout', 'main.hbs');
+        const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
+        const layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
+        const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         res.send(html);
     } catch (error) {
         console.error(`Error while loading setting page: ${error}`);
     }
-
 }
 
 module.exports = {
     loadSettingPage,
-    identityprovider,
     createorganization
 };

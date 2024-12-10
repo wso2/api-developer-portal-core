@@ -38,8 +38,6 @@ const registerPartials = async (req, res, next) => {
       await registerPartialsFromAPI(req);
     } catch (error) {
       console.error(`Error while loading organization :,${error}`)
-      console.log("Registering default partials from file");
-      registerAllPartialsFromFile('/' + req.params.orgName, req);
     }
   }
   next();

@@ -51,11 +51,7 @@ const loadAPIs = async (req, res) => {
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis");
         } catch (error) {
             console.error(`Error while loading organization content ,${error}`);
-            console.log("Rendering default api listing page from file");
-            const templateContent = {
-                baseUrl: constants.BASE_URL + config.port
-            }
-            html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
+            return res.redirect('configure');
         }
     }
     res.send(html);
