@@ -265,7 +265,6 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
     headers = headers || {};
     if (req.user) {
         headers.Authorization = "Bearer " + req.user.accessToken;
-        console.log('sending accesss token', req.user.accessToken)
     }
     let httpsAgent;
 

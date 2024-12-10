@@ -44,7 +44,6 @@ const fetchAuthJsonContent = async (req, orgName) => {
     }
     //if no idp per org, use super IDP
     if (orgName === 'undefined') {
-        console.log('No org name');
         return config.identityProvider;
     }
     try {
@@ -65,10 +64,8 @@ const login = async (req, res, next) => {
 
     const IDP = await fetchAuthJsonContent(req, req.params.orgName);
     if (IDP.clientId) {
-        console.log('Session before config:', req.session);
         //fetch claim names from DB
         const orgName = req.params.orgName;
-        console.log("OrgName", orgName)
         let claimNames = {};
         if (!(orgName === "undefined")) {
             const orgDetails = await adminDao.getOrganization(orgName);
@@ -79,14 +76,12 @@ const login = async (req, res, next) => {
             }
         }
         if(Object.keys(claimNames).length === 0) {
-            console.log('claim names');
             claimNames[config.roleClaim] = config.roleClaim;
             claimNames[config.groupsClaim] = config.groupsClaim;
             claimNames[config.orgIDClaim] = config.orgIDClaim;
         }
         configurePassport(IDP, claimNames);  // Configure passport dynamically
         passport.authenticate('oauth2')(req, res, next);
-        console.log('Session after config:', req.session);
         next();
     } else {
         res.status(400).send("No Identity Provider information found for the organization");
@@ -103,7 +98,6 @@ const handleCallback = (req, res, next) => {
             return next(err || new Error('Authentication failed'));
         }
         req.logIn(user, (err) => {
-            console.log('Session after callback:', req.session);
             if (err) {
                 return next(err);
             }

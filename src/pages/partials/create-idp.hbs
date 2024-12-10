@@ -66,32 +66,4 @@
             </div>
         </form>
     </div>
-    {{!-- <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const editIDP = document.getElementById('createIDP');
-            const orgID = document.getElementById('orgId').value;
-            editIDP.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(editIDP);
-                const data = {};
-                formData.forEach((value, key) => {
-                    data[key] = value;
-                });
-                data['scope'] = 'openid';
-                console.log(JSON.stringify(data));
-                const response = await fetch(`/devportal/organizations/${orgID}/identityProvider`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-                if (response.ok) {
-                    window.location.href = 'configure';
-                } else {
-                    alert(`Field validation failed`);
-                }
-            });
-        });
-    </script> --}}
 </div>

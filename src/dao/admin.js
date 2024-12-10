@@ -22,8 +22,6 @@ const { IdentityProvider } = require('../models/identityProvider');
 
 const createOrganization = async (orgData) => {
 
-    console.log('orgData DB')
-    console.log(orgData)
     let devPortalID = "";
     if (orgData.devPortalURLIdentifier) {
         devPortalID = orgData.devPortalURLIdentifier

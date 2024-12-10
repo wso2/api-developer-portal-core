@@ -42,14 +42,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     const editOrgs = document.querySelectorAll('.editOrg');
     const deleteForms = document.querySelectorAll('.delete-org');
-    console.log(deleteForms)
     deleteForms.forEach(form => {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            console.log('Delete org')
             let orgID = form.querySelector('#orgId').value;
             orgID = sanitizeInput(orgID);
-            console.log(orgID)
             const response = await fetch(`/devportal/organizations/${orgID}`, {
                 method: 'DELETE'
             });
@@ -68,9 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
             formData.forEach((value, key) => {
                 data[key] = sanitizeInput(value);
             });
-            //const orgID = form.querySelector('#orgId').value;
             const orgID = data['orgId'];
-            console.log(orgID);
             const response = await fetch(`/devportal/organizations/${orgID}`, {
                 method: 'PUT',
                 headers: {

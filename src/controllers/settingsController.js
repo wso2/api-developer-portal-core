@@ -61,15 +61,12 @@ const loadSettingPage = async (req, res) => {
             templateContent.views = views;
         }
         let html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
-        console.log("Settings")
-        console.log(templateContent)
         res.send(html);
     } catch (error) {
         console.error(`Error while loading content from DB: ${error}`);
         // loading main template from file since no org content uploaded
         const layoutPath = path.join('src', 'pages', 'layout', 'main.hbs');
         html = renderTemplate(completeTemplatePath, layoutPath, templateContent);
-        console.log(templateContent)
         res.send(html);
         console.error(`Error while loading setting page: ${error}`);
     }
@@ -89,7 +86,6 @@ const identityprovider = async (req, res) => {
         const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
         const layoutResponse = await loadLayoutFromAPI(orgID)
         if (!errors.isEmpty()) {
-            console.log("Validation errors: ", errors.array());
             let html = await renderGivenTemplate(templateResponse, layoutResponse, {
                 create: true,
                 errors: errors.array(),
@@ -98,9 +94,6 @@ const identityprovider = async (req, res) => {
             res.send(html);
         } else {
             const idpCreateResponse = await adminDao.createIdentityProvider(orgID, req.body);
-            if (idpCreateResponse.dataValues) {
-                console.log("IDP stored");
-            }
             let html = await renderGivenTemplate(templateResponse, layoutResponse, {
                 baseUrl: req.params.orgName,
                 idp: new IdentityProviderDTO(idpCreateResponse.dataValues)
@@ -124,7 +117,6 @@ const createorganization = async (req, res) => {
         //fetch all created organizations
         const organizations = await adminService.getAllOrganizations();
         if (organizations.length !== 0) {
-            console.log("Organizations retrieved");
             templateContent.organizations = organizations;
         }
         const html = await renderTemplate(completeTemplatePath, layoutPath, templateContent);

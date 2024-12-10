@@ -34,7 +34,6 @@ const registerPartials = async (req, res, next) => {
     registerAllPartialsFromFile(constants.BASE_URL + config.port, req);
   } else {
     try {
-      console.log("Registering partials from API");
       await registerInternalPartials();
       await registerPartialsFromAPI(req);
     } catch (error) {

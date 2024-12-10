@@ -23,13 +23,6 @@ const adminDao = require('../dao/admin');
 
 const ensurePermission = (currentPage, role, subscriberRole, adminRole, superAdminRole) => {
 
-    console.log('EnsurePermission');
-    console.log('Current Page: ' + currentPage);
-    console.log('Roles:', role)
-    console.log(subscriberRole)
-    console.log(adminRole)
-    console.log(superAdminRole)
-
     if (minimatch.minimatch(currentPage, constants.ROUTE.DEVPORTAL_CONFIGURE)) {
         return role.includes(superAdminRole) || role.includes(adminRole);
     } else if (minimatch.minimatch(currentPage, constants.ROUTE.DEVPORTAL_ROOT)) {
@@ -50,12 +43,10 @@ const ensureAuthenticated = async (req, res, next) => {
     let subscriberRole = config.subscriberRole;
     if ((req.originalUrl != '/favicon.ico' | req.originalUrl != '/images') &&
         config.authenticatedPages.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
-        console.log('authenticate page')
         //fetch role details from DB
         const orgName = req.params.orgName;
         let orgDetails;
         if (orgName !== undefined) {
-            console.log('reading org name when not defined')
             orgDetails = await adminDao.getOrganization(orgName);
             adminRole = orgDetails.ADMIN_ROLE;
             superAdminRole = orgDetails.SUPER_ADMIN_ROLE;
@@ -94,8 +85,7 @@ const ensureAuthenticated = async (req, res, next) => {
         } else {
             console.log('User is not authenticated');
             req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
-            console.log("Return TO")
-            console.log(req.session.returnTo);
+            console.log("Return To: ", req.session.returnTo)
             res.redirect(`/${req.params.orgName}/login`);
         }
     } else {
