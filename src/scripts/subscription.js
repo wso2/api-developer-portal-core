@@ -24,17 +24,17 @@ async function unsubscribe(subscriptionId) {
         });
 
         if (response.ok) {
-            alert(`Unsubscribed successfully!`);
+            await showAlert(`Unsubscribed successfully!`, 'success');
             const url = new URL(window.location.origin + window.location.pathname);
             window.location.href = url.toString();
         } else {
             const responseData = await response.json();
             console.error('Failed to unsubscribe:', responseData);
-            alert(`Failed to unsubscribe.\n${responseData.description}`);
+            await showAlert(`Failed to unsubscribe.\n${responseData.description}`, 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert(`An error occurred.\n${error.message}`);
+        await showAlert(`An error occurred.\n${error.message}`, 'error');
     }
 }
 
@@ -83,14 +83,14 @@ async function handleCreateSubscribe() {
         // Sanitize the application name
         const appName = document.getElementById('appName').value.trim().replace(/[^a-zA-Z0-9\s]/g, '');
         if (!appName) {
-            alert('Application name cannot be empty.');
+            await showAlert('Application name cannot be empty.', 'error');
             return;
         }
 
         const response = await fetch(`/devportal/application`, {
             method: 'POST',
             headers: {
-            'Content-Type': 'application/json',
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify({ name: sanitize(appName) }),
         });
@@ -98,14 +98,14 @@ async function handleCreateSubscribe() {
         const responseData = await response.json();
 
         if (response.ok) {
-            handleSubscribe(responseData.applicationId, urlParams.get('tierPlan'));
+            handleSubscribe(responseData.applicationId);
         } else {
             console.error('Failed to create application:', responseData);
-            alert(`Failed to create application. Please try again.\n${responseData.description}`);
+            await showAlert(`Failed to create application. Please try again.\n${responseData.description}`, 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert(`An error occurred while subscribing: \n${error.message}`);
+        await showAlert(`An error occurred while subscribing: \n${error.message}`, 'error');
     }
 }
 
@@ -115,40 +115,53 @@ function sanitize(input) {
     return div.innerHTML;
 }
 
-async function handleSubscribe(appId) {
+async function handleSubscribe(appId, apiId) {
+    const applicationSelect = document.getElementById('applicationSelect');
+    let tierPlan;
 
-    const applicationId = appId || document.getElementById('applicationSelect').value;
+    const applicationId = appId !== null 
+        ? appId 
+        : (applicationSelect ? applicationSelect.value : window.location.pathname.split('/').pop());
+
 
     if (!applicationId) {
-        alert('Please select an application.');
+        await showAlert('Please select an application.', 'error');
         return;
     }
 
     try {
         const urlParams = new URLSearchParams(window.location.search);
+
+        if (urlParams.has('apiId') && urlParams.has('tierPlan')) {
+            apiId = urlParams.get('apiId');
+            tierPlan = urlParams.get('tierPlan');
+        } else {
+            tierPlan = document.getElementById('subscriptionPlan').value;
+        }
+
         const response = await fetch(`/devportal/subscriptions`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                applicationId: applicationId,
-                apiId: urlParams.get('apiId'),
-                throttlingPolicy: urlParams.get('tierPlan'),
+                applicationId: applicationId.replace(/[^a-zA-Z0-9\s-]/g, ''),
+                apiId: apiId.replace(/[^a-zA-Z0-9\s-]/g, ''),
+                throttlingPolicy: tierPlan.replace(/[^a-zA-Z0-9\s-]/g, ''),
             }),
         });
 
         const responseData = await response.json();
         if (response.ok) {
-            alert('Subscribed successfully!');
+            await showAlert('Subscribed successfully!', 'success');
             const url = new URL(window.location.origin + window.location.pathname);
             window.location.href = url.toString();
         } else {
             console.error('Failed to subscribe:', responseData);
-            alert(`Failed to subscribe. Please try again.\n${responseData.description}`);
+            await showAlert(`Failed to subscribe. Please try again.\n${responseData.description}`, 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert(`An error occurred while subscribing: \n${error.message}`);
+        await showAlert(`An error occurred while subscribing: \n${error.message}`, 'error');
     }
 }

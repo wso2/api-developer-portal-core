@@ -102,7 +102,7 @@ const loadAPIContent = async (req, res) => {
             let subscriptionPlans = [];
             
             for (const policy of metaData.subscriptionPolicies) {
-                const subscriptionPlan = await loadSubscriptionPlans(req, res, policy.policyName);
+                const subscriptionPlan = await loadSubscriptionPlan(req, res, policy.policyName);
                 subscriptionPlans.push({
                     apiId: metaData.apiReferenceID,
                     name: subscriptionPlan.name,
@@ -135,7 +135,7 @@ const loadAPIContent = async (req, res) => {
     }
 }
 
-const loadSubscriptionPlans = async (req, res, policyId) => {
+const loadSubscriptionPlan = async (req, res, policyId) => {
     try {
         return await util.invokeApiRequest('GET', `${config.controlPlane.url}/throttling-policies/subscription/${policyId}`);
     } catch (error) {
