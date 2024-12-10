@@ -250,7 +250,7 @@ const getAPIImages = async (directory) => {
 };
 
 const invokeApiRequest = async (method, url, headers, body) => {
-
+    console.log(`Invoking API: ${url}`);
     headers = headers || {};
     headers.Authorization = `${config.controlPlane.accessToken}`;
 
@@ -281,6 +281,7 @@ const invokeApiRequest = async (method, url, headers, body) => {
         const response = await axios(url, options);
         return response.data;
     } catch (error) {
+        console.log(`Error while invoking API: ${error}`);
         let message = error.message;
         if (error.response) {
             message = error.response.data.description;
