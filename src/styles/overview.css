@@ -1,0 +1,80 @@
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 10px;
+}
+
+.app-title {
+  font-size: 24px;
+  margin: 0;
+  color: var(--primary-color);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.app-details {
+  margin-top: 20px;
+}
+
+.details-section,
+.status-section {
+  margin-bottom: 20px;
+}
+
+h2 {
+  font-size: 18px;
+  color: var(--primary-color);
+  margin-bottom: 10px;
+}
+
+p {
+  font-size: 14px;
+  color: var(--light-text-color);
+  margin: 5px 0;
+}
+
+p2 {
+    font-size: 10px;
+}
+
+.business-plan-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.reset-btn,
+.info-btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: var(--font-colour-primary);
+  color: var(--light-text-color);
+  display: flex; 
+  align-items: center; 
+  gap: 5px; 
+}
+
+.reset-btn:hover,
+.info-btn:hover {
+  background-color: var(--light-color);
+}
+
+
+@media (max-width: 600px) {
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .action-buttons {
+    margin-top: 10px;
+  }
+}

@@ -67,14 +67,14 @@ const createAPIMetadata = async (req, res) => {
 
 const getAPIMetadata = async (req, res) => {
 
-    const { orgID, apiID }  = req.params;
-    if (!orgID || !apiID) {
+    const { orgId, apiId }  = req.params;
+    if (!orgId || !apiId) {
         throw new Sequelize.ValidationError(
             "Missing or Invalid fields in the request payload"
         );
     }
     try {
-        const retrievedAPI = await getMetadataFromDB(orgID, apiID);
+        const retrievedAPI = await getMetadataFromDB(orgId, apiId);
         // Create response object
         res.status(200).send(retrievedAPI);
     } catch (error) {

@@ -67,8 +67,11 @@ module.exports = {
     ROUTE: {
       DEV_PORTAL:  '/devportal',
       STYLES: '/styles',
+      TECHNICAL_STYLES: '/technical-styles',
+      TECHNICAL_SCRIPTS: '/technical-scripts',
       IMAGES: '/images',
       IMAGES_PATH: '/images/',
+      TECHNICAL_SCRIPTS: '/technical-scripts',
       DEFAULT: '/',
       MOCK: '/mock',
       API_LISTING_PAGE: '/apis',  

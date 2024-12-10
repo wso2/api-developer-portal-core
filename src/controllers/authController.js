@@ -35,8 +35,8 @@ const fetchAuthJsonContent = async (orgName) => {
         return JSON.parse(fs.readFileSync(authJsonPath, constants.CHARSET_UTF8));
     }
     try {
-        const organization = await adminDao.getOrganization(orgName);
-        const response = await adminDao.getIdentityProvider(organization.ORG_ID);
+        const orgId = await adminDao.getOrgId(orgName);
+        const response = await adminDao.getIdentityProvider(orgId);
         if (response.length === 0) {
             throw new Error(`Failed to fetch identity provider details: ${response.statusText}`);
         }

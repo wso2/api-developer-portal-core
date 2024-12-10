@@ -84,6 +84,10 @@ const APIMetadata = sequelize.define('DP_API_METADATA', {
     type: DataTypes.STRING,
     allowNull: false
   },
+  PROVIDER: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
   METADATA_SEARCH: {
     type: DataTypes.JSON,
     allowNull: false

@@ -20,6 +20,7 @@ const router = express.Router();
 const devportalService = require('../services/devportalService');
 const apiMetadataService = require('../services/apiMetadataService');
 const adminService = require('../services/adminService');
+const devportalController = require('../controllers/devportalController');  
 const multer = require('multer');
 const storage = multer.memoryStorage()
 const apiDefinition = multer({ storage: storage })
@@ -53,5 +54,15 @@ router.post('/organizations/:orgId/apis/:apiId/template', apiZip.single('apiCont
 router.put('/organizations/:orgId/apis/:apiId/template', apiZip.single('apiContent'), apiMetadataService.updateAPITemplate);
 router.get('/organizations/:orgId/apis/:apiId/template', apiMetadataService.getAPIFile);
 router.delete('/organizations/:orgId/apis/:apiId/template', apiMetadataService.deleteAPIFile);
+
+
+router.post('/subscriptions', devportalController.subscribeAPI);
+router.delete('/subscriptions/:subscriptionId', devportalController.unsubscribeAPI);
+
+router.post('/applications', devportalController.saveApplication);
+router.put('/applications/:applicationid', devportalController.updateApplication);
+router.delete('/applications/:applicationid', devportalController.deleteApplication);
+router.post('/applications/:applicationid/reset-throttle-policy', devportalController.resetThrottlingPolicy);
+router.post('/applications/:applicationid/api-keys/:env/generate', devportalController.generateAPIKeys);
 
 module.exports = router;

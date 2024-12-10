@@ -20,6 +20,8 @@
 class APIDTO {
     constructor(api) {
         this.apiID = api.API_ID;
+        this.apiReferenceID = api.REFERENCE_ID;
+        this.provider = api.PROVIDER;
         this.apiInfo = new APIInfo(api);
         this.endPoints = new Endpoints(api);
         if (api.DP_API_SUBSCRIPTION_POLICies) {
