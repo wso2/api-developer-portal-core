@@ -114,9 +114,9 @@ const loadApplication = async (req, res) => {
         } else {
             const orgName = req.params.orgName;
             const orgID = await orgIDValue(orgName);
-            metaData = await getAPIMApplication(applicationId);
-            const allApis = await getAllAPIs();
-            const subApis = await getSubscribedApis(applicationId);
+            metaData = await getAPIMApplication(req, applicationId);
+            const allApis = await getAllAPIs(req);
+            const subApis = await getSubscribedApis(req, applicationId);
             const subApiMap = new Map();
             subApis.list.forEach(subApi => subApiMap.set(subApi.apiId, { policy: subApi.throttlingPolicy, id: subApi.subscriptionId }));
             const apiList = [];
@@ -143,7 +143,7 @@ const loadApplication = async (req, res) => {
 
             });
 
-            kMmetaData = await getAPIMKeyManagers();
+            kMmetaData = await getAPIMKeyManagers(req);
             templateContent = {
                 applicationMetadata: metaData,
                 keyManagersMetadata: kMmetaData,
@@ -163,18 +163,18 @@ const loadApplication = async (req, res) => {
 }
 
 
-async function getAllAPIs() {
+async function getAllAPIs(req) {
     try {
-        return await util.invokeApiRequest('GET', `${controlPlaneUrl}/apis`);
+        return await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis`);
     } catch (error) {
         console.error("Error occurred while loading APIs", error);
         throw error;
     }
 }
 
-const getSubscribedApis = async (appId) => {
+const getSubscribedApis = async (req, appId) => {
     try {
-        return await util.invokeApiRequest('GET', `${controlPlaneUrl}/subscriptions?applicationId=${appId}`);
+        return await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?applicationId=${appId}`);
     } catch (error) {
         console.error("Error occurred while loading subscriptions", error);
         throw error;
