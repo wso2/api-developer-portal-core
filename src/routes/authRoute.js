@@ -18,7 +18,6 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-//const registerPartials = require('../middlewares/registerPartials');
 
 
 router.get('/portal/login', authController.login);
