@@ -73,12 +73,7 @@
       "src/styles/**/*"
     ],
     "targets": [
-      "node18-macos-x64",
-      "node18-linux-x64",
-      "node18-win-x64",
-      "node18-macos-x86",
-      "node18-linux-x86",
-      "node18-win-x86"
+      "node18-macos-x64"
     ],
     "outputPath": "dist"
   },

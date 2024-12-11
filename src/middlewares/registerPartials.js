@@ -45,13 +45,13 @@ const registerPartials = async (req, res, next) => {
 
 const registerInternalPartials = () => {
 
-  const partialsDir = path.join(process.cwd(), 'src/pages/partials');
+  const partialsDir = path.join(path.join(require.main.filename, '..', '/pages/partials'));
   const getDirectories = source =>
     fs.readdirSync(source, { withFileTypes: true })
       .filter(dirent => dirent.isDirectory())
       .map(dirent => path.join(source, dirent.name));
 
-  const partialsDirs = [partialsDir, ...getDirectories(path.join(process.cwd(), 'src/pages')).map(dir => path.join(dir, 'partials'))];
+  const partialsDirs = [partialsDir, ...getDirectories(path.join(require.main.filename, '..', '/pages')).map(dir => path.join(dir, 'partials'))];
 
   partialsDirs.forEach(dir => {
     if (fs.existsSync(dir)) {
@@ -80,8 +80,8 @@ const registerAllPartialsFromFile = async (baseURL, req) => {
 }
 
 const registerPartialsFromAPI = async (req) => {
-  
-  const orgName  = req.params.orgName;
+
+  const orgName = req.params.orgName;
   const orgID = await adminDao.getOrgId(orgName);
   const imageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/layout?fileType=image&fileName=`;
   let partials = await adminDao.getOrgContent({

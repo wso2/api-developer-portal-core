@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /*
  * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
@@ -16,7 +17,7 @@
  * under the License.
  */
 const { invokeApiRequest } = require('../utils/util');
-const config = require('../../config.json');
+const config = require(process.cwd() + '/config');
 const controlPlaneUrl = config.controlPlane.url;
 const util = require('../utils/util');
 

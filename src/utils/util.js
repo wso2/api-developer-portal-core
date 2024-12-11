@@ -26,7 +26,7 @@ const constants = require('../utils/constants');
 const unzipper = require('unzipper');
 const axios = require('axios');
 const https = require('https');
-const config = require('../../config.json');
+const config = require(process.cwd() + '/config.json');
 const { body } = require('express-validator');
 const { Sequelize } = require('sequelize');
 
@@ -266,6 +266,7 @@ const getAPIImages = async (directory) => {
 
 const invokeApiRequest = async (req, method, url, headers, body) => {
 
+    console.log(`Invoking API: ${url}`);
     headers = headers || {};
     if (req.user) {
         headers.Authorization = "Bearer " + req.user.accessToken;
@@ -297,6 +298,9 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         const response = await axios(url, options);
         return response.data;
     } catch (error) {
+
+        console.log(`Error while invoking API: ${error}`);
+        console.log(error)
         let message = error.message;
         if (error.response) {
             message = error.response.data.description;
