@@ -70,7 +70,8 @@
     ],
     "assets": [
       "src/pages/**/*",
-      "src/styles/**/*"
+      "src/styles/**/*",
+      "node_modules/axios/**/*"
     ],
     "targets": [
       "node18-macos-x64"
