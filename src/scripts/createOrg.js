@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (response.ok) {
             window.location.href = '/portal/';
         } else {
-            alert(`Field validation failed`);
+            showAlert(`Field validation failed`, `error`);
         }
     });
 
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (response.ok) {
                 window.location.href = '/portal/';
             } else {
-                alert(`Field validation failed`);
+                showAlert(`Field validation failed`, `error`);
             }
         });
     });
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (response.ok) {
                 window.location.href = '/portal/';
             } else {
-                alert(`Field validation failed`);
+                showAlert(`Field validation failed`, `error`);
             }
         });
     });
