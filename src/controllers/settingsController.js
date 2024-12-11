@@ -59,7 +59,7 @@ const loadSettingPage = async (req, res) => {
                 'name': 'Default'
             }]
         }
-        if (views.length > 0) {
+        if (views && views.length > 0) {
             templateContent.content = true;
             templateContent.views = views;
         }
