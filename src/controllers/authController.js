@@ -24,34 +24,63 @@ const path = require('path');
 const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
 const IdentityProviderDTO = require("../dto/identityProvider");
+const minimatch = require('minimatch');
 
 
 const filePrefix = config.pathToContent;
 
-const fetchAuthJsonContent = async (orgName) => {
+const fetchAuthJsonContent = async (req, orgName) => {
 
+    //use super admin for org creation page login
+    if (req.session.returnTo) {
+        if (minimatch.minimatch(req.session.returnTo, constants.ROUTE.DEVPORTAL_ROOT)) {
+            return config.identityProvider;
+        }
+    }
     if (config.mode === constants.DEV_MODE) {
         const authJsonPath = path.join(process.cwd(), filePrefix + '../mock', 'auth.json');
         return JSON.parse(fs.readFileSync(authJsonPath, constants.CHARSET_UTF8));
     }
+    //if no idp per org, use super IDP
     try {
         const orgId = await adminDao.getOrgId(orgName);
         const response = await adminDao.getIdentityProvider(orgId);
         if (response.length === 0) {
-            throw new Error(`Failed to fetch identity provider details: ${response.statusText}`);
+            //login from super IDP
+            return config.identityProvider;
         }
         return new IdentityProviderDTO(response[0].dataValues);
     } catch (error) {
         console.error("Failed to fetch identity provider details", error);
-        return {};
+        return config.identityProvider;
     }
 };
 
 const login = async (req, res, next) => {
 
-    const authJsonContent = await fetchAuthJsonContent(req.params.orgName);
-    if (authJsonContent.clientId) {
-        configurePassport(authJsonContent);  // Configure passport dynamically
+    let orgName, IDP;
+    let claimNames = {};
+    if (req.params.orgName) {
+        orgName = req.params.orgName;
+        console.log(orgName)
+        if(orgName !== 'portal') {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        if (orgDetails) {
+            claimNames[constants.ROLES.ROLE_CLAIM] = orgDetails.ROLE_CLAIM_NAME;
+            claimNames[constants.ROLES.GROUP_CLAIM] = orgDetails.GROUPS_CLAIM_NAME;
+            claimNames[constants.ROLES.ORGANIZATION_CLAIM] = orgDetails.ORGANIZATION_CLAIM_NAME;
+        }
+    }
+    }
+    IDP = await fetchAuthJsonContent(req, orgName);
+    if (IDP.clientId) {
+        //fetch claim names from DB
+        if (Object.keys(claimNames).length === 0) {
+            claimNames[constants.ROLES.ROLE_CLAIM] = config.roleClaim;
+            claimNames[constants.ROLES.GROUP_CLAIM] = config.groupsClaim;
+            claimNames[constants.ROLES.ORGANIZATION_CLAIM] = config.orgIDClaim;
+        }
+        configurePassport(IDP, claimNames);  // Configure passport dynamically
         passport.authenticate('oauth2')(req, res, next);
         next();
     } else {
@@ -73,15 +102,14 @@ const handleCallback = (req, res, next) => {
                 return next(err);
             }
             if (config.mode === constants.DEV_MODE) {
-                const returnTo = req.session.returnTo || constants.BASE_URL + config.port;
+                const returnTo = req.user.returnTo || constants.BASE_URL + config.port;
                 delete req.session.returnTo;
                 res.redirect(returnTo);
             } else {
-                const returnTo = req.session.returnTo || `/${req.params.orgName}`;
+                const returnTo = req.user.returnTo || `/${req.params.orgName}`;
                 delete req.session.returnTo;
                 res.redirect(returnTo);
             }
-
         });
     })(req, res, next);
 };
@@ -105,7 +133,7 @@ const handleSignUp = async (req, res) => {
 
 const handleLogOut = async (req, res) => {
 
-    const authJsonContent = await fetchAuthJsonContent(req.params.orgName);
+    const authJsonContent = await fetchAuthJsonContent(req, req.params.orgName);
     let idToken = ''
     if (req.user != null) {
         idToken = req.user.idToken;

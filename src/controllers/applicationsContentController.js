@@ -1,3 +1,21 @@
+/*
+ * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+/* eslint-disable no-undef */
 const { renderTemplate, renderGivenTemplate, loadLayoutFromAPI, invokeApiRequest } = require('../utils/util');
 const config = require(process.cwd() + '/config');
 const constants = require('../utils/constants');
@@ -33,7 +51,7 @@ const loadApplications = async (req, res) => {
     else {
         const orgName = req.params.orgName;
         const orgID = await orgIDValue(orgName);
-        metaData = await getAPIMApplications();
+        metaData = await getAPIMApplications(req);
         templateContent = {
             applicationsMetadata: metaData,
             baseUrl: '/' + orgName
@@ -51,8 +69,8 @@ async function getMockApplications() {
     return mockApplicationsMetaData.list;
 }
 
-async function getAPIMApplications() {
-    const responseData = await invokeApiRequest('GET', controlPlaneUrl + '/applications', null, null);
+async function getAPIMApplications(req) {
+    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/applications', null, null);
     return responseData.list;
 }
 
@@ -71,7 +89,7 @@ const loadThrottlingPolicies = async (req, res) => {
     else {
         const orgName = req.params.orgName;
         const orgID = await orgIDValue(orgName);
-        metaData = await getAPIMThrottlingPolicies();
+        metaData = await getAPIMThrottlingPolicies(req);
         templateContent = {
             throttlingPoliciesMetadata: metaData,
             baseUrl: '/' + orgName
@@ -90,8 +108,8 @@ async function getMockThrottlingPolicies() {
     return mockThrottlingPoliciesMetaData.list;
 }
 
-async function getAPIMThrottlingPolicies() {
-    const responseData = await invokeApiRequest('GET', controlPlaneUrl + '/throttling-policies/application', null, null);
+async function getAPIMThrottlingPolicies(req) {
+    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/throttling-policies/application', null, null);
     return responseData.list;
 }
 
@@ -113,9 +131,9 @@ const loadApplication = async (req, res) => {
         } else {
             const orgName = req.params.orgName;
             const orgID = await orgIDValue(orgName);
-            metaData = await getAPIMApplication(applicationId);
-            const allApis = await getAllAPIs();
-            const subApis = await getSubscribedApis(applicationId);
+            metaData = await getAPIMApplication(req, applicationId);
+            const allApis = await getAllAPIs(req);
+            const subApis = await getSubscribedApis(req, applicationId);
             const subApiMap = new Map();
             subApis.list.forEach(subApi => subApiMap.set(subApi.apiId, { policy: subApi.throttlingPolicy, id: subApi.subscriptionId }));
             const apiList = [];
@@ -142,7 +160,7 @@ const loadApplication = async (req, res) => {
 
             });
 
-            kMmetaData = await getAPIMKeyManagers();
+            kMmetaData = await getAPIMKeyManagers(req);
             templateContent = {
                 applicationMetadata: metaData,
                 keyManagersMetadata: kMmetaData,
@@ -162,18 +180,18 @@ const loadApplication = async (req, res) => {
 }
 
 
-async function getAllAPIs() {
+async function getAllAPIs(req) {
     try {
-        return await util.invokeApiRequest('GET', `${controlPlaneUrl}/apis`);
+        return await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis`);
     } catch (error) {
         console.error("Error occurred while loading APIs", error);
         throw error;
     }
 }
 
-const getSubscribedApis = async (appId) => {
+const getSubscribedApis = async (req, appId) => {
     try {
-        return await util.invokeApiRequest('GET', `${controlPlaneUrl}/subscriptions?applicationId=${appId}`);
+        return await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?applicationId=${appId}`);
     } catch (error) {
         console.error("Error occurred while loading subscriptions", error);
         throw error;
@@ -181,9 +199,9 @@ const getSubscribedApis = async (appId) => {
 }
 
 const loadApplicationForEdit = async (req, res) => {
-    const orgName = req.params.orgName;
+
     const applicationId = req.params.applicationid;
-    let html, templateContent, metaData;
+    let html, templateContent, metaData, throttlingMetaData;
     if (config.mode === constants.DEV_MODE) {
         metaData = await getMockApplication();
         throttlingMetaData = await getMockThrottlingPolicies();
@@ -196,8 +214,8 @@ const loadApplicationForEdit = async (req, res) => {
     } else {
         const orgName = req.params.orgName;
         const orgID = await orgIDValue(orgName);
-        metaData = await getAPIMApplication(applicationId);
-        throttlingMetaData = await getAPIMThrottlingPolicies();
+        metaData = await getAPIMApplication(req, applicationId);
+        throttlingMetaData = await getAPIMThrottlingPolicies(req);
         templateContent = {
             applicationMetadata: metaData,
             throttlingPoliciesMetadata: throttlingMetaData,
@@ -223,13 +241,13 @@ async function getMockKeyManagers() {
     return mockKeyManagersMetaData.list;
 }
 
-async function getAPIMApplication(applicationId) {
-    const responseData = await invokeApiRequest('GET', controlPlaneUrl + '/applications/' + applicationId, null, null);
+async function getAPIMApplication(req, applicationId) {
+    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/applications/' + applicationId, null, null);
     return responseData;
 }
 
-async function getAPIMKeyManagers() {
-    const responseData = await invokeApiRequest('GET', controlPlaneUrl + '/key-managers', null, null);
+async function getAPIMKeyManagers(req) {
+    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers', null, null);
     return responseData.list;
 }
 

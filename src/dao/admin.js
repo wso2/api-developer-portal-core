@@ -22,15 +22,29 @@ const { IdentityProvider } = require('../models/identityProvider');
 
 const createOrganization = async (orgData) => {
 
+    let devPortalID = "";
+    if (orgData.devPortalURLIdentifier) {
+        devPortalID = orgData.devPortalURLIdentifier
+    }
+    const createOrgData = {
+        ORG_NAME: orgData.orgName,
+        BUSINESS_OWNER: orgData.businessOwner,
+        BUSINESS_OWNER_CONTACT: orgData.businessOwnerContact,
+        BUSINESS_OWNER_EMAIL: orgData.businessOwnerEmail,
+        DEV_PORTAL_URL_IDENTIFIER: devPortalID,
+        ROLE_CLAIM_NAME: orgData.roleClaimName,
+        GROUPS_CLAIM_NAME: orgData.groupsClaimName,
+        ORGANIZATION_CLAIM_NAME: orgData.organizationClaimName,
+        ORGANIZATION_IDENTIFIER: orgData.organizationIdentifier,
+        ADMIN_ROLE: orgData.adminRole,
+        SUBSCRIBER_ROLE: orgData.subscriberRole,
+        SUPER_ADMIN_ROLE: orgData.superAdminRole
+    };
     try {
-        const organization = await Organization.create({
-            ORG_NAME: orgData.orgName,
-            BUSINESS_OWNER: orgData.businessOwner,
-            BUSINESS_OWNER_CONTACT: orgData.businessOwnerContact,
-            BUSINESS_OWNER_EMAIL: orgData.businessOwnerEmail
-        });
+        const organization = await Organization.create(createOrgData);
         return organization;
     } catch (error) {
+        console.log(error)
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
         }
@@ -69,6 +83,22 @@ const getOrgId = async (orgName) => {
             }
             throw new Sequelize.DatabaseError(error);
         }
+};
+
+const getOrganizations = async () => {
+
+    try {
+        const organizations = await Organization.findAll();
+        if (organizations.length === 0) {
+            return [];
+        }
+        return organizations;
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
 };
 
 const updateOrganization = async (orgData) => {
@@ -133,7 +163,7 @@ const createIdentityProvider = async (orgId, idpData) => {
             SIGNUP_URL: idpData.signUpURL,
             LOGOUT_URL: idpData.logoutURL,
             LOGOUT_REDIRECT_URL: idpData.logoutRedirectURI,
-            SCOPE: idpData.scope
+            SCOPE: ""
         });
         return idpResponse;
     } catch (error) {
@@ -325,5 +355,6 @@ module.exports = {
     updateIdentityProvider,
     getIdentityProvider,
     deleteIdentityProvider,
-    getOrgId
+    getOrgId,
+    getOrganizations
 };

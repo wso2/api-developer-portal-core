@@ -33,6 +33,7 @@ const config = require(process.cwd() + '/config.json');
 const Handlebars = require('handlebars');
 const constants = require("./utils/constants");
 const designRoute = require('./routes/designModeRoute');
+const settingsRoute = require('./routes/configureRoute');
 
 const app = express();
 const secret = crypto.randomBytes(64).toString('hex');
@@ -93,6 +94,7 @@ if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.DEFAULT, applicationContent);
     app.use(constants.ROUTE.DEFAULT, orgContent);
     app.use(constants.ROUTE.DEFAULT, myAPIs);
+    app.use(constants.ROUTE.DEFAULT, settingsRoute);
     app.use(constants.ROUTE.DEFAULT, customContent);  
 }
 

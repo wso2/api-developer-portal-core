@@ -51,11 +51,7 @@ const loadAPIs = async (req, res) => {
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis");
         } catch (error) {
             console.error(`Error while loading organization content ,${error}`);
-            console.log("Rendering default api listing page from file");
-            const templateContent = {
-                baseUrl: constants.BASE_URL + config.port
-            }
-            html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
+            return res.redirect('/configure');
         }
     }
     res.send(html);
@@ -137,7 +133,7 @@ const loadAPIContent = async (req, res) => {
 
 const loadSubscriptionPlan = async (req, res, policyId) => {
     try {
-        return await util.invokeApiRequest('GET', `${config.controlPlane.url}/throttling-policies/subscription/${policyId}`);
+        return await util.invokeApiRequest(req, 'GET', `${config.controlPlane.url}/throttling-policies/subscription/${policyId}`);
     } catch (error) {
         console.error("Error occurred while loading subscription plans", error);
         util.handleError(res, error);
@@ -166,7 +162,12 @@ const loadTryOutPage = async (req, res) => {
             const orgID = await adminDao.getOrgId(orgName);
             const apiID = await apiDao.getAPIId(apiName);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
-            let apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, orgID, apiID);
+            let apiDefinition;
+            if (metaData.apiType === "GraphQL") {
+                apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_GRAPHQL, orgID, apiID);
+            } else {
+                apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, orgID, apiID);
+            }
             apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
             const templateContent = {
                 apiMetadata: metaData,
