@@ -28,7 +28,6 @@ const ensurePermission = (currentPage, role, req) => {
         adminRole = req.user[config.adminRole];
         superAdminRole = req.user[config.superAdminRole];
         subscriberRole = req.user[config.subscriberRole];
-        console.log("Super Admin rolwe", superAdminRole)
 
         if (minimatch.minimatch(currentPage, constants.ROUTE.DEVPORTAL_CONFIGURE)) {
             return role.includes(superAdminRole) || role.includes(adminRole);
