@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 document.addEventListener('DOMContentLoaded', function () {
     function sanitizeInput(input) {
         const div = document.createElement('div');

@@ -36,31 +36,16 @@
                     <div class="modal-body">
                         <input type="hidden" id="editFileId" name="fileId">
                         <form id="editForm" enctype="multipart/form-data">
-                            {{!-- <input type="hidden" class="form-control" name="redirect" value="true"> --}}
                             <div class="mb-3">
                                 <label for="editZipFile" class="form-label">Upload New Zip File</label>
                                 <input type="file" class="form-control" id="editZipFile" name="file" accept=".zip"
                                     required>
-                                {{!-- <input type="file" id="editZipFile" name="file" accept=".zip" class="hidden"
-                                    required> --}}
                                 <input type="hidden" class="form-control" id="redirect" value="true">
                                 <input type="hidden" id="orgId" name="orgId" value={{orgID}}>
                             </div>
                             <button type="submit" class="btn btn-primary">Update File</button>
                         </form>
-                        {{!-- <form id="uploadForm" action='/devportal/organizations/{{orgID}}/layout' method="POST"
-                            enctype="multipart/form-data">
-                            <input type="hidden" id="editFileId" name="fileId">
-                            <div class="upload-area" id="uploadArea">
-                                <p>Drag & Drop your zip file here or click to select</p>
-                                <input type="file" id="file" name="file" accept=".zip" class="hidden">
-                                <input type="hidden" class="form-control" name="redirect" value="true">
-                            </div>
-                            <div id="fileName" class="mt-2"></div>
-                            <button type="submit" class="btn btn-primary">Upload</button>
-                        </form> --}}
                     </div>
-
                 </div>
             </div>
         </div>
