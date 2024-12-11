@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /*
  * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
@@ -16,25 +17,27 @@
  * under the License.
  */
 const { invokeApiRequest } = require('../utils/util');
-const config = require('../../config.json');
+const config = require(process.cwd() + '/config');
 const controlPlaneUrl = config.controlPlane.url;
+const util = require('../utils/util');
+
 
 const unsubscribeAPI = async (req, res) => {
     try {
         const subscriptionId = req.params.subscriptionId;
-        res.send(await invokeApiRequest('DELETE', `${controlPlaneUrl}/subscriptions/${subscriptionId}`, {}, {}));
+        res.send(await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${subscriptionId}`, {}, {}));
     } catch (error) {
         console.error("Error occurred while unsubscribing from API", error);
-        handleError(res, error);
+        util.handleError(res, error);
     }
 }
 
 const subscribeAPI = async (req, res) => {
     try {
-        res.send(await invokeApiRequest('POST', `${controlPlaneUrl}/subscriptions`, {}, req.body));
+        res.send(await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, req.body));
     } catch (error) {
         console.error("Error occurred while subscribing to API", error);
-        handleError(res, error);
+        util.handleError(res, error);
     }
 }
 
@@ -50,7 +53,7 @@ const saveApplication = async (req, res) => {
             throttlingPolicy = 'Unlimited';
         }
 
-        const responseData = await invokeApiRequest('POST', `${controlPlaneUrl}/applications`, {
+        const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications`, {
             'Content-Type': 'application/json'
         }, {
             name,
@@ -65,7 +68,7 @@ const saveApplication = async (req, res) => {
 
     } catch (error) {
         console.error("Error occurred while creating the application", error);
-        handleError(res, error);
+        util.handleError(res, error);
     }
 };
 
@@ -75,7 +78,7 @@ const updateApplication = async (req, res) => {
     try {
         const { name, throttlingPolicy, description } = req.body;
         const applicationId = req.params.applicationid;
-        const responseData = await invokeApiRequest('PUT', `${controlPlaneUrl}/applications/${applicationId}`, {
+        const responseData = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/applications/${applicationId}`, {
             'Content-Type': 'application/json',
         }, {
             name,
@@ -89,7 +92,7 @@ const updateApplication = async (req, res) => {
         res.status(200).json({ message: responseData.message });
     } catch (error) {
         console.error("Error occurred while updating the application", error);
-        handleError(res, error);
+        util.handleError(res, error);
     }
 };
 
@@ -98,11 +101,11 @@ const updateApplication = async (req, res) => {
 const deleteApplication = async (req, res) => {
     try {
         const applicationId = req.params.applicationid;
-        const responseData = await invokeApiRequest('DELETE', `${controlPlaneUrl}/applications/${applicationId}`, null, null);
+        const responseData = await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${applicationId}`, null, null);
         res.status(200).json({ message: responseData.message });
     } catch (error) {
         console.error("Error occurred while deleting the application", error);
-        handleError(res, error);
+        util.handleError(res, error);
     }
 }
 
@@ -112,7 +115,7 @@ const resetThrottlingPolicy = async (req, res) => {
     try {
         const applicationId = req.params.applicationid;
         const { userName } = req.body;
-        const responseData = await invokeApiRequest('POST', `${controlPlaneUrl}/applications/${applicationId}/reset-throttle-policy`, {
+        const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/reset-throttle-policy`, {
             'Content-Type': 'application/json'
         }, {
             userName
@@ -120,7 +123,7 @@ const resetThrottlingPolicy = async (req, res) => {
         res.status(200).json({ message: responseData.message });
     } catch (error) {
         console.error("Error occurred while resetting the application", error);
-        handleError(res, error);
+        util.handleError(res, error);
     }
 };
 
@@ -131,7 +134,7 @@ const generateAPIKeys = async (req, res) => {
         const applicationId = req.params.applicationid;
         const environment = req.params.env;
         const { validityPeriod, additionalProperties } = req.body;
-        const responseData = await invokeApiRequest('POST', `${controlPlaneUrl}/applications/${applicationId}/api-keys/${environment}/generate`, {
+        const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/api-keys/${environment}/generate`, {
             'Content-Type': 'application/json'
         }, {
             validityPeriod, additionalProperties
@@ -139,7 +142,7 @@ const generateAPIKeys = async (req, res) => {
         res.status(200).json(responseData);
     } catch (error) {
         console.error("Error occurred while deleting the application", error);
-        handleError(res, error);
+        util.handleError(res, error);
     }
 };
 
