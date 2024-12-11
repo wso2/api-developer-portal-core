@@ -28,6 +28,7 @@ module.exports = {
     BASE_URL: 'http://localhost:',
     BASE_URL_NAME: 'baseUrl',
     ORG_ID: 'orgID',
+    ORG_IDENTIFIER: 'organizationIdentifier',
     MIME_TYPES: {
         HTML: 'text/html',
         TEXT: 'text/plain',

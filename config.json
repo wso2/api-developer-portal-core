@@ -3,7 +3,7 @@
   "pathToContent": "../src/",
   "mode": "production",
   "controlPlane" : {
-    "url": "https://localhost:9443/api/am/devportal/v3",
+    "url": "https://127.0.0.1:9443/api/am/devportal/v3",
     "disableCertValidation": true,
     "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
   },
@@ -19,9 +19,9 @@
   },
   "identityProvider" : {
     "name": "IS",
-    "issuer": "https://localhost:9443/oauth2/token",
+    "issuer": "https://127.0.0.1:9443/oauth2/token",
     "authorizationURL": "https://localhost:9443/oauth2/authorize",
-    "tokenURL": "https://localhost:9443/oauth2/token",
+    "tokenURL": "https://127.0.0.1:9443/oauth2/token",
     "userInfoURL": "https://localhost:9443/oauth2/userinfo",
     "clientId": "",
     "callbackURL": "http://localhost:3000/ACME/callback",
@@ -41,13 +41,18 @@
     "/portal",
     "/*/applications",
      "/*/applications/*",
-     "/*/api/*"
+     "/*/api/*",
+     "/*/myAPIs",
+     "/*/myAPIs/*"
+
   ],
   "authorizedPages": [
     "/*/applications",
+    "/*/applications/*",
     "/*/configure",
     "/portal",
-    "/*/api/*"
-
+    "/*/api/*",
+    "/*/myAPIs",
+    "/*/myAPIs/*"
   ]
 }

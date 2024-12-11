@@ -21,14 +21,22 @@ const constants = require('../utils/constants');
 const config = require(process.cwd() + '/config.json');
 const adminDao = require('../dao/admin');
 
-const ensurePermission = (currentPage, role, subscriberRole, adminRole, superAdminRole) => {
+const ensurePermission = (currentPage, role, req) => {
 
-    if (minimatch.minimatch(currentPage, constants.ROUTE.DEVPORTAL_CONFIGURE)) {
-        return role.includes(superAdminRole) || role.includes(adminRole);
-    } else if (minimatch.minimatch(currentPage, constants.ROUTE.DEVPORTAL_ROOT)) {
-        return role.includes(superAdminRole);
-    } else if (config.authorizedPages.some(pattern => minimatch.minimatch(currentPage, pattern))) {
-        return role.includes(subscriberRole) || role.includes(adminRole) || role.includes(superAdminRole);
+    let adminRole, superAdminRole, subscriberRole;
+    if (req.user) {
+        adminRole = req.user[config.adminRole];
+        superAdminRole = req.user[config.superAdminRole];
+        subscriberRole = req.user[config.subscriberRole];
+        console.log("Super Admin rolwe", superAdminRole)
+
+        if (minimatch.minimatch(currentPage, constants.ROUTE.DEVPORTAL_CONFIGURE)) {
+            return role.includes(superAdminRole) || role.includes(adminRole);
+        } else if (minimatch.minimatch(currentPage, constants.ROUTE.DEVPORTAL_ROOT)) {
+            return role.includes(superAdminRole);
+        } else if (config.authorizedPages.some(pattern => minimatch.minimatch(currentPage, pattern))) {
+            return role.includes(subscriberRole) || role.includes(adminRole) || role.includes(superAdminRole);
+        }
     }
     return false;
 }
@@ -45,12 +53,16 @@ const ensureAuthenticated = async (req, res, next) => {
         config.authenticatedPages.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
         //fetch role details from DB
         const orgName = req.params.orgName;
+        console.log("Org Name in ensure", orgName)
         let orgDetails;
-        if (orgName !== undefined) {
+
+        if (!(orgName === undefined)) {
             orgDetails = await adminDao.getOrganization(orgName);
+            console.log("Org Name in ensure", orgDetails)
             adminRole = orgDetails.ADMIN_ROLE;
             superAdminRole = orgDetails.SUPER_ADMIN_ROLE;
             subscriberRole = orgDetails.SUBSCRIBER_ROLE;
+
         }
         let role;
         if (req.isAuthenticated()) {
@@ -59,16 +71,21 @@ const ensureAuthenticated = async (req, res, next) => {
                 console.log('Logged in Role is: ' + role);
                 //add organization ID to request
                 if (req.user && orgDetails) {
+                    //add details to session
+                    req.user[config.adminRole] = adminRole;
+                    req.user[config.superAdminRole] = superAdminRole;
+                    req.user[config.subscriberRole] = subscriberRole;
                     req.user[constants.ORG_ID] = orgDetails.ORG_ID;
+                    req.user[constants.ORG_IDENTIFIER] = orgDetails.ORGANIZATION_IDENTIFIER
                 }
-                //verify organization ID
+                //verify user belongs to organization
                 if (!minimatch.minimatch(req.originalUrl, constants.ROUTE.DEVPORTAL_ROOT)) {
-                    if (req.user[config.orgIDClaim] !== orgDetails.ORGANIZATION_IDENTIFIER) {
+                    if (req.user && req.user[config.orgIDClaim] !== req.user[constants.ORG_IDENTIFIER]) {
                         console.log('User is not authorized to access organization');
                         return res.send("User not authorized to access organization");
                     }
                 }
-                if (ensurePermission(req.originalUrl, role, subscriberRole, adminRole, superAdminRole)) {
+                if (ensurePermission(req.originalUrl, role, req)) {
                     console.log('User is authorized');
                     return next();
                 } else {
