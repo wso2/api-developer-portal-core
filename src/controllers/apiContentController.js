@@ -51,7 +51,7 @@ const loadAPIs = async (req, res) => {
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis");
         } catch (error) {
             console.error(`Error while loading organization content ,${error}`);
-            return res.redirect('configure');
+            return res.redirect('/configure');
         }
     }
     res.send(html);

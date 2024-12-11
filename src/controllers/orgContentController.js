@@ -57,7 +57,7 @@ const loadOrgContentFromAPI = async (req) => {
         html = await renderTemplateFromAPI({}, orgId, req.params.orgName, 'pages/home');
     } catch (error) {
         console.error(`Failed to load organization :, ${error}`);
-        return res/isRedirect('configure');
+        return res/isRedirect('/configure');
     }
     return html;
 }
