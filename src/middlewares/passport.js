@@ -53,6 +53,7 @@ function configurePassport(authJsonContent, claimNames) {
         const organizationID = decodedJWT[claimNames[constants.ROLES.ORGANIZATION_CLAIM]] ? decodedJWT[config.orgIDClaim] : '';
         const roles = decodedJWT[claimNames[constants.ROLES.ROLE_CLAIM]] ? decodedJWT[config.roleClaim] : '';
         const groups = decodedJWT[claimNames[constants.ROLES.GROUP_CLAIM]] ? decodedJWT[config.groupsClaim] : '';
+        console.log('Decoded JWT:', decodedJWT);
         profile = {
             'name': name,
             'idToken': params.id_token,
