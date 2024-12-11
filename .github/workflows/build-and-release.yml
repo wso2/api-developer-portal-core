@@ -62,7 +62,7 @@ jobs:
             mkdir -p ./temp-dir/developer-portal
             
             # Copy the additional files and folders into developer-portal
-            cp -r bin/startup.sh artifacts InstallationGuide.md QuickStart.md README.md config.json ./temp-dir/developer-portal/
+            cp -r bin/startup.sh bin/startup.bat artifacts InstallationGuide.md QuickStart.md README.md config.json ./temp-dir/developer-portal/
             
             # Move the current dist file into developer-portal
             mv "$file" ./temp-dir/developer-portal/
