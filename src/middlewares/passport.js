@@ -20,6 +20,7 @@ const passport = require('passport');
 const OAuth2Strategy = require('passport-oauth2');
 const jwt = require('jsonwebtoken');
 const https = require('https');
+const constants = require('../utils/constants');
 const config = require(process.cwd() + '/config.json');
 
 function configurePassport(authJsonContent, claimNames) {
@@ -38,7 +39,7 @@ function configurePassport(authJsonContent, claimNames) {
         userInfoURL: authJsonContent.userInfoURL,
         clientID: authJsonContent.clientId,
         callbackURL: authJsonContent.callbackURL,
-        scope: requestedScopes,
+        scope: scope,
         passReqToCallback: true,
         state: true,
         pkce: true
@@ -49,18 +50,18 @@ function configurePassport(authJsonContent, claimNames) {
         }
         const decodedJWT = jwt.decode(params.id_token);
         const name = decodedJWT['given_name'] ? decodedJWT['given_name'] : decodedJWT['nickname'];
-        const organizationID = decodedJWT[claimNames[config.orgIDClaim]] ? decodedJWT[config.orgIDClaim] : '';
-        const roles = decodedJWT[claimNames[config.roleClaim]] ? decodedJWT[config.roleClaim] : '';
-        const groups = decodedJWT[claimNames[config.groupsClaim]] ? decodedJWT[config.groupsClaim] : '';
+        const organizationID = decodedJWT[claimNames[constants.ROLES.ORGANIZATION_CLAIM]] ? decodedJWT[config.orgIDClaim] : '';
+        const roles = decodedJWT[claimNames[constants.ROLES.ROLE_CLAIM]] ? decodedJWT[config.roleClaim] : '';
+        const groups = decodedJWT[claimNames[constants.ROLES.GROUP_CLAIM]] ? decodedJWT[config.groupsClaim] : '';
         profile = {
             'name': name,
             'idToken': params.id_token,
             'email': decodedJWT['email'],
-            [config.orgIDClaim]: organizationID,
+            [constants.ROLES.ORGANIZATION_CLAIM]: organizationID,
             'returnTo': req.session.returnTo,
             accessToken,
-            [config.roleClaim]: roles,
-            [config.groupsClaim]: groups
+            [constants.ROLES.ROLE_CLAIM]: roles,
+            [constants.ROLES.GROUP_CLAIM]: groups
         };
         return done(null, profile);
     });

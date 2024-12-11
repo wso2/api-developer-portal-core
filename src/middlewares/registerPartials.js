@@ -29,12 +29,11 @@ const filePrefix = config.pathToContent;
 const hbs = exphbs.create({});
 const registerPartials = async (req, res, next) => {
 
-  registerInternalPartials();
+  registerInternalPartials(req);
   if (config.mode === constants.DEV_MODE) {
     registerAllPartialsFromFile(constants.BASE_URL + config.port, req);
   } else {
     try {
-      await registerInternalPartials();
       await registerPartialsFromAPI(req);
     } catch (error) {
       console.error(`Error while loading organization :,${error}`)
@@ -43,7 +42,7 @@ const registerPartials = async (req, res, next) => {
   next();
 };
 
-const registerInternalPartials = () => {
+const registerInternalPartials = (req) => {
 
   const partialsDir = path.join(path.join(require.main.filename, '..', '/pages/partials'));
   const getDirectories = source =>
@@ -60,6 +59,16 @@ const registerInternalPartials = () => {
           const partialName = path.basename(file, '.hbs');
           const partialContent = fs.readFileSync(path.join(dir, file), 'utf8');
           hbs.handlebars.registerPartial(partialName, partialContent);
+
+          if(partialName === constants.HEADER_PARTIAL_NAME) {
+            hbs.handlebars.partials = {
+              ...hbs.handlebars.partials,
+              header: hbs.handlebars.compile(partialContent)({
+                profile: req.user,
+              })
+            };
+          }
+          
         }
       });
     }

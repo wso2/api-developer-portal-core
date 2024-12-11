@@ -70,11 +70,12 @@ const loadSettingPage = async (req, res) => {
     }
 }
 
-const createorganization = async (req, res) => {
+const createOrganization = async (req, res) => {
 
     try {
         const templateContent = {
-            'orgID': req.user[config.orgID_claim_name]
+            'orgID': req.user[constants.ORG_ID],
+            'profile': req.user
         }
         //fetch all created organizations
         const organizations = await adminService.getAllOrganizations();
@@ -94,5 +95,5 @@ const createorganization = async (req, res) => {
 
 module.exports = {
     loadSettingPage,
-    createorganization
+    createorganization: createOrganization
 };

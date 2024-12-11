@@ -25,11 +25,9 @@ const ensurePermission = (currentPage, role, req) => {
 
     let adminRole, superAdminRole, subscriberRole;
     if (req.user) {
-        adminRole = req.user[config.adminRole];
-        superAdminRole = req.user[config.superAdminRole];
-        subscriberRole = req.user[config.subscriberRole];
-        console.log("Super Admin rolwe", superAdminRole)
-
+        adminRole = req.user[constants.ROLES.ADMIN];
+        superAdminRole = req.user[constants.ROLES.SUPER_ADMIN];
+        subscriberRole = req.user[constants.ROLES.SUBSCRIBER];
         if (minimatch.minimatch(currentPage, constants.ROUTE.DEVPORTAL_CONFIGURE)) {
             return role.includes(superAdminRole) || role.includes(adminRole);
         } else if (minimatch.minimatch(currentPage, constants.ROUTE.DEVPORTAL_ROOT)) {
@@ -53,34 +51,32 @@ const ensureAuthenticated = async (req, res, next) => {
         config.authenticatedPages.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
         //fetch role details from DB
         const orgName = req.params.orgName;
-        console.log("Org Name in ensure", orgName)
         let orgDetails;
-
         if (!(orgName === undefined)) {
             orgDetails = await adminDao.getOrganization(orgName);
-            console.log("Org Name in ensure", orgDetails)
             adminRole = orgDetails.ADMIN_ROLE;
             superAdminRole = orgDetails.SUPER_ADMIN_ROLE;
             subscriberRole = orgDetails.SUBSCRIBER_ROLE;
-
         }
         let role;
         if (req.isAuthenticated()) {
             if (config.authorizedPages.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
-                role = req.user[config.roleClaim];
+                role = req.user[constants.ROLES.ROLE_CLAIM];
                 console.log('Logged in Role is: ' + role);
                 //add organization ID to request
-                if (req.user && orgDetails) {
+                if (req.user) {
                     //add details to session
-                    req.user[config.adminRole] = adminRole;
-                    req.user[config.superAdminRole] = superAdminRole;
-                    req.user[config.subscriberRole] = subscriberRole;
-                    req.user[constants.ORG_ID] = orgDetails.ORG_ID;
-                    req.user[constants.ORG_IDENTIFIER] = orgDetails.ORGANIZATION_IDENTIFIER
+                    req.user[constants.ROLES.ADMIN] = adminRole;
+                    req.user[constants.ROLES.SUPER_ADMIN] = superAdminRole;
+                    req.user[constants.ROLES.SUBSCRIBER] = subscriberRole;
+                    if (orgDetails) {
+                        req.user[constants.ORG_ID] = orgDetails.ORG_ID;
+                        req.user[constants.ORG_IDENTIFIER] = orgDetails.ORGANIZATION_IDENTIFIER
+                    }
                 }
                 //verify user belongs to organization
                 if (!minimatch.minimatch(req.originalUrl, constants.ROUTE.DEVPORTAL_ROOT)) {
-                    if (req.user && req.user[config.orgIDClaim] !== req.user[constants.ORG_IDENTIFIER]) {
+                    if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
                         console.log('User is not authorized to access organization');
                         return res.send("User not authorized to access organization");
                     }
@@ -103,7 +99,12 @@ const ensureAuthenticated = async (req, res, next) => {
             console.log('User is not authenticated');
             req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
             console.log("Return To: ", req.session.returnTo)
-            res.redirect(`/${req.params.orgName}/login`);
+            if (req.params.orgName) {
+                res.redirect(`/${req.params.orgName}/login`);
+            } else {
+                res.redirect(`/portal/login`);
+
+            }
         }
     } else {
         return next();

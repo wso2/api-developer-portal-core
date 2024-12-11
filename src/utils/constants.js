@@ -84,9 +84,12 @@ module.exports = {
       DEVPORTAL_TECHNICAL_PAGES: ['*/application']
     },
     ROLES: {
-        ADMIN_ROLE: 'admin',
-        SUBSCRIBER_ROLE_INTERNAL: 'Internal/subscriber',
-        SUBSCRIBER_ROLE: 'subscriber'
+        ADMIN: 'admin',
+        SUBSCRIBER: 'subscriber',
+        SUPER_ADMIN: 'superAdmin',
+        ROLE_CLAIM: 'roles',
+        GROUP_CLAIM: 'groups',
+        ORGANIZATION_CLAIM: 'orgClaimName'
     },
     FILE_TYPE: {
         LAYOUT: 'layout',

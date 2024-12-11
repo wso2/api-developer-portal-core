@@ -33,8 +33,7 @@ const fetchAuthJsonContent = async (req, orgName) => {
 
     //use super admin for org creation page login
     if (req.session.returnTo) {
-        if (minimatch.minimatch(req.session.returnTo, constants.ROUTE.DEVPORTAL_CONFIGURE) ||
-            minimatch.minimatch(req.session.returnTo, constants.ROUTE.DEVPORTAL_ROOT)) {
+        if (minimatch.minimatch(req.session.returnTo, constants.ROUTE.DEVPORTAL_ROOT)) {
             return config.identityProvider;
         }
     }
@@ -43,9 +42,6 @@ const fetchAuthJsonContent = async (req, orgName) => {
         return JSON.parse(fs.readFileSync(authJsonPath, constants.CHARSET_UTF8));
     }
     //if no idp per org, use super IDP
-    if (orgName === 'undefined') {
-        return config.identityProvider;
-    }
     try {
         const orgId = await adminDao.getOrgId(orgName);
         const response = await adminDao.getIdentityProvider(orgId);
@@ -62,23 +58,27 @@ const fetchAuthJsonContent = async (req, orgName) => {
 
 const login = async (req, res, next) => {
 
-    const IDP = await fetchAuthJsonContent(req, req.params.orgName);
+    let orgName, IDP;
+    let claimNames = {};
+    if (req.params.orgName) {
+        orgName = req.params.orgName;
+        console.log(orgName)
+        if(orgName !== 'portal') {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        if (orgDetails) {
+            claimNames[constants.ROLES.ROLE_CLAIM] = orgDetails.ROLE_CLAIM_NAME;
+            claimNames[constants.ROLES.GROUP_CLAIM] = orgDetails.GROUPS_CLAIM_NAME;
+            claimNames[constants.ROLES.ORGANIZATION_CLAIM] = orgDetails.ORGANIZATION_CLAIM_NAME;
+        }
+    }
+    }
+    IDP = await fetchAuthJsonContent(req, orgName);
     if (IDP.clientId) {
         //fetch claim names from DB
-        const orgName = req.params.orgName;
-        let claimNames = {};
-        if (!(orgName === "undefined")) {
-            const orgDetails = await adminDao.getOrganization(orgName);
-            if (orgDetails) {
-                claimNames[config.roleClaim] = orgDetails.ROLE_CLAIM_NAME;
-                claimNames[config.groupsClaim] = orgDetails.GROUPS_CLAIM_NAME;
-                claimNames[config.orgIDClaim] = orgDetails.ORGANIZATION_CLAIM_NAME;
-            }
-        }
-        if(Object.keys(claimNames).length === 0) {
-            claimNames[config.roleClaim] = config.roleClaim;
-            claimNames[config.groupsClaim] = config.groupsClaim;
-            claimNames[config.orgIDClaim] = config.orgIDClaim;
+        if (Object.keys(claimNames).length === 0) {
+            claimNames[constants.ROLES.ROLE_CLAIM] = config.roleClaim;
+            claimNames[constants.ROLES.GROUP_CLAIM] = config.groupsClaim;
+            claimNames[constants.ROLES.ORGANIZATION_CLAIM] = config.orgIDClaim;
         }
         configurePassport(IDP, claimNames);  // Configure passport dynamically
         passport.authenticate('oauth2')(req, res, next);

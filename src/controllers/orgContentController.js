@@ -48,7 +48,7 @@ const loadOrgContentFromFile = async () => {
     return renderTemplate(filePrefix + 'pages/home/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false)
 }
 
-const loadOrgContentFromAPI = async (req) => {
+const loadOrgContentFromAPI = async (req, res) => {
 
     let html;
     const orgName = req.params.orgName;
@@ -57,7 +57,7 @@ const loadOrgContentFromAPI = async (req) => {
         html = await renderTemplateFromAPI({}, orgId, req.params.orgName, 'pages/home');
     } catch (error) {
         console.error(`Failed to load organization :, ${error}`);
-        return res/isRedirect('/configure');
+        return res.redirect('/configure');
     }
     return html;
 }
