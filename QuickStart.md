@@ -8,7 +8,7 @@ Follow the steps given in InstallationGuide.md, to create database.
 
 3.  Execute the data-dump.sql script in the artifacts folder to populate the database with mock data.
     ```bash
-    psql -q -U "{db_username}" -d “test”_dump -h "{hostname}" -p "{port}" -f {path to data-dump.sql}
+    psql -q -U "{db_username}" -d “devportal" -h "{hostname}" -p "{port}" -f {path to data-dump.sql}
     ```
     
 4.  Execute the startup script on the <DEVPORTAL_HOME>/bin folder, based on the OS:
@@ -248,9 +248,135 @@ After customizing the content, run “sh compress.sh {nameOfOrg}”, to create a
 
 Follow the instructions in the [installation guide](https://docs.google.com/document/d/10bIEggNZmHy0oMLGBi_fsszXYYfcztaSt_p2i_3VcPo/edit?pli=1&tab=t.3roll6bfs18k) to setup the database and connect the devportal to it.
 
+6. Create the IDP for devportal login
+
+**WSO2 as the control plane**
+
+**Add claim mappings**  
+Go to claims->Add->Add new external claim  
+Dialect URI as http://wso2.org/oidc/claim.  
+External Clam URI : organizationID  
+Mapped Local Claim: http://wso2.org/claims/organization
+
+Go to claims -> List ->  http://wso2.org/oidc/claim.  
+Select roles and press edit.  
+For the Mapped Local Claim, select http://wso2.org/claims/role
+
+**Add users and roles**
+
+Create super admin role
+Got Users and Roles -> Add -> Add new role.  
+Give a role name (superAdmin).  
+Select all permissions.  
+Click finish
+
+Got Users and Roles -> Add -> Add user
+
+Create a new user and assign superAdmin and admin role.  
+Create another user with Internal/subscriber permissions.
+
+**Add claims to OIDC scopes**
+
+Goto OIDC scopes->List.  
+Click on Add claims for openid.  
+Click Add OIDC claim  
+Select organizationID and roles as the claim uri
+
+
+**Add Service Provider**
+
+Goto Service Providers - > Add.  
+Give a name and click register.  
+Click on claim configuration and select Add claim URI  
+Add the following claims
+
+|Service Provider Claim | Local Claim                         | Requested claim  |
+|:-------------         |:------------:                       |-------------:    |
+| OrganizationID        | http://wso2.org/claims/organization | true             |
+| Roles                 | http://wso2.org/claims/role         | true             |
+| Username              | http://wso2.org/claims/username     |                  |
+
+Select Username as the Subject Claim URI.
+
+Under inbound authentication configuration, select Oauth and click configure.  
+Select code as the grant type.  
+Enter the following as the redirect URL:  
+regexp=(https://localhost:9443/devportal/services/auth/callback/login|https://localhost:9443/devportal/services/auth/callback/logout|http://localhost:3000/{ORGNAME}/callback|http://localhost:3000/{ORGNAME})
+
+Select PKCE mandatory, Support PKCE 'Plain' Transform Algorithm, Renew Refresh Token and  Allow authentication without the client secret.
+
+Select JWT as the token issuer.
+
+Click update.
+
+**Update the config json**
+
+```bash
+ "identityProvider" : {
+    "name": "IS",
+    "issuer": "https://127.0.0.1:9443/oauth2/token",
+    "authorizationURL": "https://localhost:9443/oauth2/authorize",
+    "tokenURL": "https://127.0.0.1:9443/oauth2/token",
+    "userInfoURL": "https://localhost:9443/oauth2/userinfo",
+    "clientId": "meVRlVAkUoVufXXjN3aUk72PVF8a",
+    "callbackURL": "http://localhost:3000/ACME/callback",
+    "scope": "openid email profile apim:subscribe role",
+    "signUpURL": "",
+    "logoutURL": "https://localhost:9443/oidc/logout",
+    "logoutRedirectURI": "http://localhost:3000/ACME"
+},
+"roleClaim": "roles", 
+"orgIDClaim": "organizationID",
+"groupsClaim": "groups",
+"adminRole": "admin",
+"subscriberRole": "Interna/subscriber",
+"superAdminRole": "superAdmin",
+````
+API request for creating IDP in developer portal
+``` bash
+curl --location --request POST 'http://localhost:3000/devportal/organizations/{organizationID}/identityProvider' \
+--header 'Content-Type: application/json' \
+--header 'Cookie: connect.sid=s%3AhKQhm7b2bCe4RkJuFknvUsxVqgG_iueA.ddy6vv265vp0cRrpRoJMnYZWs11tRTNsT0MKtTyIQ4o' \
+--data '{
+    "name": "Asgardeo",
+    "issuer": "https://api.asgardeo.io/t/sachinisiriwardene/oauth2/token",
+    "authorizationURL": "https://api.asgardeo.io/t/sachinisiriwardene/oauth2/authorize",
+    "tokenURL": "https://api.asgardeo.io/t/sachinisiriwardene/oauth2/token",
+    "userInfoURL": "https://api.asgardeo.io/t/sachinisiriwardene/oauth2/userinfo",
+    "clientId": "",
+    "callbackURL": "http://localhost:3000/ACME/callback",
+    "scope": "openid email groups",
+    "signUpURL": "https://accounts.asgardeo.io/t/choreotestorganization/accountrecoveryendpoint/register.do",
+    "logoutURL": "https://api.asgardeo.io/t/sachinisiriwardene/oidc/logout",
+    "logoutRedirectURI": "http://localhost:3000/ACME"
+
+}'
+```
+
+
 Follow the steps below to populate the organization’s content in the developer portal.
 
 1.  Create an organization in the developer portal.
+
+Login to the developer portal using the credentials of the user with superAdmin role.
+Navigate to 'http://localhost:3000/portal' and create the organization.
+
+Enter the following information:
+```bash
+       "orgName": "ACME",
+       "businessOwner": "John Doe",
+       "businessOwnerContact": "+94-76-123-456",
+       "businessOwnerEmail": "john.doe@example.com",
+       "devPortalURLIdentifier": "myPortal", //customize URL for the devportal.  
+       "roleClaimName": <claim name for the user roles>.  
+       "groupsClaimName": <claim name for the user groups>.  
+       "organizationClaimName": <claim name for the organization identifier>.  
+       "organizationIdentifier": <value for the organization identifier>.  
+       "adminRole": <admin role name>. 
+       "subscriberRole": <subscriber role name>.  
+       "superAdminRole": <super admin role name>
+```
+
     
 ``` bash
 curl --location --request POST 'http://localhost:3000/devportal/organizations' 
@@ -266,16 +392,23 @@ curl --location --request POST 'http://localhost:3000/devportal/organizations'
 
 2.  Upload the generated zip with the organization content.
     
+Login to the developer portal using the credentials of the user with superAdmin role.  
+Navigate to 'http://localhost:3000/{orgName}/configure' and upload the zip.
+
 ``` bash
-curl --location --request PUT 'http://localhost:3000/devportal/organizations/{orgID}/layout' 
+curl --location --request POST 'http://localhost:3000/devportal/organizations/{orgID}/layout' 
 --form 'file=@{pathToZipFile}
 ```
-3.  Navigate to [http://localhost:3000/{orgName](http://localhost:3000/{orgName)}.
+
+3. Click on configure IDP and add IDP details for the organization.
+
+
+4.  Navigate to [http://localhost:3000/{orgName](http://localhost:3000/{orgName)}.
     
 The organization landing page will include the uploaded content.
 The /apis page will render the page with no apis, since no API content is uploaded yet.Follow the steps below to populate the api details in the developer portal.
 
-4.  Create an API in the developer portal:
+5.  Create an API in the developer portal:
     
 The apiType values include REST, AsyncAPI, GraphQL or SOAP
 
@@ -317,7 +450,7 @@ This is a multi part request containing a json with metadata related to the API 
    --form 'apiDefinition=@"{apiDefinition.json}"'
 ```
 
-5. Upload the api landing page content. 
+6. Upload the api landing page content. 
 
 To upload the content to be displayed on the api-landing page, create a zip file with the folder structure as follows:
 ``` bash
@@ -344,26 +477,4 @@ curl --location --request POST 'http://localhost:3000/devportal/organizations/{o
                \\"api-icon\\" : \\"navigation.jpeg\\",
                \\"api-hero\\": \\"api.svg\\"
             }"
-```
-
-6. Create the IDP for devportal login
-
-``` bash
-curl --location --request POST 'http://localhost:3000/devportal/organizations/{organizationID}/identityProvider' \
---header 'Content-Type: application/json' \
---header 'Cookie: connect.sid=s%3AhKQhm7b2bCe4RkJuFknvUsxVqgG_iueA.ddy6vv265vp0cRrpRoJMnYZWs11tRTNsT0MKtTyIQ4o' \
---data '{
-    "name": "Asgardeo",
-    "issuer": "https://api.asgardeo.io/t/sachinisiriwardene/oauth2/token",
-    "authorizationURL": "https://api.asgardeo.io/t/sachinisiriwardene/oauth2/authorize",
-    "tokenURL": "https://api.asgardeo.io/t/sachinisiriwardene/oauth2/token",
-    "userInfoURL": "https://api.asgardeo.io/t/sachinisiriwardene/oauth2/userinfo",
-    "clientId": "",
-    "callbackURL": "http://localhost:3000/ACME/callback",
-    "scope": "openid email groups",
-    "signUpURL": "https://accounts.asgardeo.io/t/choreotestorganization/accountrecoveryendpoint/register.do",
-    "logoutURL": "https://api.asgardeo.io/t/sachinisiriwardene/oidc/logout",
-    "logoutRedirectURI": "http://localhost:3000/ACME"
-
-}'
 ```
