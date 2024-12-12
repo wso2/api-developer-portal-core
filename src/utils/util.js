@@ -24,7 +24,10 @@ const { CustomError } = require('../utils/errors/customErrors');
 const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 const unzipper = require('unzipper');
-
+const axios = require('axios');
+const https = require('https');
+const config = require(process.cwd() + '/config.json');
+const { body } = require('express-validator');
 const { Sequelize } = require('sequelize');
 
 // Function to load and convert markdown file to HTML
@@ -40,17 +43,16 @@ function loadMarkdown(filename, dirName) {
 };
 
 
-function renderTemplate(templatePath, layoutPath, templateContent) {
+function renderTemplate(templatePath, layoutPath, templateContent, isTechnical) {
 
     let completeTemplatePath;
-    if (templatePath.includes('tryout')) {
+    if (isTechnical) {
         completeTemplatePath = path.join(require.main.filename, templatePath);
     } else {
         completeTemplatePath = path.join(process.cwd(), templatePath);
     }
 
     const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
-
     const completeLayoutPath = path.join(process.cwd(), layoutPath);
     const layoutResponse = fs.readFileSync(completeLayoutPath, constants.CHARSET_UTF8)
 
@@ -69,8 +71,11 @@ async function loadLayoutFromAPI(orgID) {
         fileType: constants.FILE_TYPE.LAYOUT,
         fileName: constants.FILE_NAME.MAIN
     });
-
-    return layoutContent.FILE_CONTENT.toString(constants.CHARSET_UTF8);
+    if (layoutContent) {
+        return layoutContent.FILE_CONTENT.toString(constants.CHARSET_UTF8);
+    } else {
+        return "";
+    }
 }
 
 async function loadTemplateFromAPI(orgID, filePath) {
@@ -111,6 +116,19 @@ async function renderGivenTemplate(templatePage, layoutPage, templateContent) {
     return layout({
         body: template(templateContent),
     });
+}
+
+function getErrors(errors) {
+
+    const errorList = [];
+    errors.errors.forEach(element => {
+        errorList.push({
+            code: '400',
+            message: 'input validation failed',
+            description: element.msg
+        })
+    });
+    return errorList;
 }
 
 function handleError(res, error) {
@@ -197,8 +215,8 @@ const fileMapping = {
 }
 
 const textFiles = [
-    constants.FILE_EXTENSIONS.HTML , constants.FILE_EXTENSIONS.HBS, constants.FILE_EXTENSIONS.MD,
-    constants.FILE_EXTENSIONS.JSON, constants.FILE_EXTENSIONS.YAML, constants.FILE_EXTENSIONS.YML, 
+    constants.FILE_EXTENSIONS.HTML, constants.FILE_EXTENSIONS.HBS, constants.FILE_EXTENSIONS.MD,
+    constants.FILE_EXTENSIONS.JSON, constants.FILE_EXTENSIONS.YAML, constants.FILE_EXTENSIONS.YML,
     constants.FILE_EXTENSIONS.SVG
 ]
 
@@ -210,8 +228,9 @@ const retrieveContentType = (fileName, fileType) => {
 
     if (fileType === constants.STYLE)
         return constants.MIME_TYPES.CSS;
-    const filenameParts = fileName.split('.');
-    const extension = filenameParts.length > 1 ? filenameParts.pop() : '';
+
+    const extension = path.extname(fileName).toLowerCase();
+
     if (fileType === constants.IMAGE) {
         return imageMapping[extension] || constants.MIME_TYPES.CONYEMT_TYPE_OCT;
     }
@@ -245,6 +264,125 @@ const getAPIImages = async (directory) => {
     return files;
 };
 
+const invokeApiRequest = async (req, method, url, headers, body) => {
+
+    console.log(`Invoking API: ${url}`);
+    headers = headers || {};
+    if (req.user) {
+        headers.Authorization = "Bearer " + req.user.accessToken;
+    }
+    let httpsAgent;
+
+    if (config.controlPlane.disableCertValidation) {
+        httpsAgent = new https.Agent({
+            rejectUnauthorized: false,
+        });
+    } else {
+        const certPath = path.join(process.cwd(), config.controlPlane.pathToCertificate);
+        httpsAgent = new https.Agent({
+            ca: fs.readFileSync(certPath),
+            rejectUnauthorized: true,
+        });
+    }
+    try {
+        const options = {
+            method,
+            headers,
+            httpsAgent,
+        };
+
+        if (body) {
+            options.data = body;
+        }
+
+        const response = await axios(url, options);
+        return response.data;
+    } catch (error) {
+
+        console.log(`Error while invoking API: ${error}`);
+        let message = error.message;
+        if (error.response) {
+            message = error.response.data.description;
+        }
+        throw new CustomError(error.status, 'Request failed', message);
+    }
+};
+
+
+const validateIDP = () => {
+
+    const validations = [
+
+        body('authorizationURL')
+            .notEmpty()
+            .isURL({
+                protocols: ['http', 'https'], // Allow both http and https
+                require_tld: false
+            }).withMessage('authorizationURL must be a valid URL'),
+        body('tokenURL')
+            .notEmpty()
+            .isURL({
+                protocols: ['http', 'https'], // Allow both http and https
+                require_tld: false
+            }).withMessage('tokenURL must be a valid URL'),
+        body('clientId')
+            .notEmpty()
+            .escape(),
+        body('userInfoURL')
+            .optional()
+            .isURL({
+                protocols: ['http', 'https'], // Allow both http and https
+                require_tld: false
+            }).withMessage('userInfoURL must be a valid URL'),
+        body('callbackURL')
+            .notEmpty()
+            .isURL({
+                protocols: ['http', 'https'], // Allow both http and https
+                require_tld: false
+            }).withMessage('callbackURL must be a valid URL'),
+        body('logoutURL')
+            .notEmpty()
+            .isURL({
+                protocols: ['http', 'https'], // Allow both http and https
+                require_tld: false
+            }).withMessage('logoutURL must be a valid URL'),
+        body('logoutRedirectURI')
+            .notEmpty()
+            .isURL({
+                protocols: ['http', 'https'], // Allow both http and https
+                require_tld: false
+            }).withMessage('logoutRedirectURI must be a valid URL'),
+        body('signUpURL')
+            .optional()
+            .isURL({
+                protocols: ['http', 'https'], // Allow both http and https
+                require_tld: false
+            }).withMessage('signUpURL must be a valid URL'),
+        body('name')
+            .notEmpty()
+            .escape(),
+        body('*')
+            .if(body('*').isString())
+            .trim()
+    ];
+    return validations;
+}
+
+const validateOrganization = () => {
+
+    const validations = [
+        body('businessOwnerEmail')
+            .notEmpty()
+            .isEmail(),
+        body('*')
+            .if(body('*').not().equals('devPortalURLIdentifier'))
+            .customSanitizer(value => value.replace(/[<>"'&]/g, ''))
+            .trim()
+            .notEmpty()
+    ]
+    return validations;
+}
+
 module.exports = {
     loadMarkdown,
     renderTemplate,
@@ -257,5 +395,9 @@ module.exports = {
     retrieveContentType,
     getAPIFileContent,
     getAPIImages,
-    isTextFile
+    isTextFile,
+    invokeApiRequest,
+    validateIDP,
+    validateOrganization,
+    getErrors
 }

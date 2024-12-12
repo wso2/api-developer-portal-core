@@ -20,12 +20,15 @@ const router = express.Router();
 const devportalService = require('../services/devportalService');
 const apiMetadataService = require('../services/apiMetadataService');
 const adminService = require('../services/adminService');
+const devportalController = require('../controllers/devportalController');  
 const multer = require('multer');
 const storage = multer.memoryStorage()
 const apiDefinition = multer({ storage: storage })
+const ensureAuthenticated = require('../middlewares/ensureAuthenticated');
 
 
 router.post('/organizations', adminService.createOrganization);
+router.get('/organizations', adminService.getOrganizations);
 router.put('/organizations/:orgId', adminService.updateOrganization);
 router.get('/organizations/:orgId', devportalService.getOrganization);
 router.delete('/organizations/:orgId', adminService.deleteOrganization);
@@ -53,5 +56,15 @@ router.post('/organizations/:orgId/apis/:apiId/template', apiZip.single('apiCont
 router.put('/organizations/:orgId/apis/:apiId/template', apiZip.single('apiContent'), apiMetadataService.updateAPITemplate);
 router.get('/organizations/:orgId/apis/:apiId/template', apiMetadataService.getAPIFile);
 router.delete('/organizations/:orgId/apis/:apiId/template', apiMetadataService.deleteAPIFile);
+
+
+router.post('/subscriptions', ensureAuthenticated, devportalController.subscribeAPI);
+router.delete('/subscriptions/:subscriptionId', ensureAuthenticated, devportalController.unsubscribeAPI);
+
+router.post('/applications', ensureAuthenticated, devportalController.saveApplication);
+router.put('/applications/:applicationid', ensureAuthenticated, devportalController.updateApplication);
+router.delete('/applications/:applicationid', ensureAuthenticated, devportalController.deleteApplication);
+router.post('/applications/:applicationid/reset-throttle-policy', ensureAuthenticated, devportalController.resetThrottlingPolicy);
+router.post('/applications/:applicationid/api-keys/:env/generate', ensureAuthenticated, devportalController.generateAPIKeys);
 
 module.exports = router;

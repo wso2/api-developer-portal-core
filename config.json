@@ -2,11 +2,40 @@
   "port": 3000,
   "pathToContent": "../src/",
   "mode": "production",
+  "controlPlane": {
+    "url": "https://127.0.0.1:9443/api/am/devportal/v3",
+    "disableCertValidation": true,
+    "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
+  },
   "db": {
     "username": "postgres",
     "password": "postgres",
     "database": "devportal",
     "host": "localhost",
     "dialect": "postgres"
-  }
+  },
+  "providerURL": {
+    "AWS": "https://aws.amazon.com"
+  },
+  "identityProvider": {
+    "name": "IS",
+    "issuer": "https://127.0.0.1:9443/oauth2/token",
+    "authorizationURL": "https://localhost:9443/oauth2/authorize",
+    "tokenURL": "https://127.0.0.1:9443/oauth2/token",
+    "userInfoURL": "https://localhost:9443/oauth2/userinfo",
+    "clientId": "<client-id>",
+    "callbackURL": "http://localhost:3000/ACME/callback",
+    "scope": "openid email profile apim:subscribe role",
+    "signUpURL": "",
+    "logoutURL": "https://localhost:9443/oidc/logout",
+    "logoutRedirectURI": "http://localhost:3000/ACME"
+  },
+  "roleClaim": "roles",
+  "orgIDClaim": "organizationID",
+  "groupsClaim": "groups",
+  "adminRole": "admin",
+  "subscriberRole": "Internal/subscriber",
+  "superAdminRole": "superAdmin",
+  "authenticatedPages": [],
+  "authorizedPages": []
 }

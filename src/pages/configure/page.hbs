@@ -1,0 +1,20 @@
+<head>
+    <link rel="stylesheet" href="/technical-styles/settings.css">
+    <script src="/technical-scripts/upload-zip.js" defer></script>
+</head>
+<main>
+    <div class="container mt-5">
+        {{#if orgContent}}
+        {{> upload-zip }}
+        {{/if}}
+        {{#if content}}
+        {{> list-files }}
+        {{/if}}
+        {{#if idp}}
+        {{> list-idp}}
+        {{/if}}
+        {{#if create}}
+        {{> create-idp}}
+        {{/if}}
+    </div>
+</main>

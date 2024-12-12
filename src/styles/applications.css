@@ -1,0 +1,182 @@
+body {
+  background-color: var(--main-bg-color);
+}
+
+.search-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.search-input {
+  display: flex;
+  align-items: center;
+  background-color: transparent;
+  border: 1px solid var(--border-colour-secondary);
+  padding: 10px 15px;
+  border-radius: 25px;
+  width: 100%;
+  height: 40px;
+}
+
+.search-input input {
+  border: none;
+  outline: none;
+  width: 100%;
+  margin-left: 10px;
+  font-size: 14px;
+  background-color: transparent;
+  color: var(--main-bg-color);
+}
+
+#query::placeholder {
+  color: var(--main-bg-color);
+  opacity: 0.6;
+}
+
+.bi-search {
+  color: var(--main-bg-color);
+  font-size: 20px;
+  position: relative;
+  top: -2px;
+}
+
+.applicationspage-container {
+  padding: 10px 65px;
+  margin-top: 45px;
+  margin-bottom: 20px;
+}
+
+.applicationlist-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: left;
+}
+
+.application-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-colour-secondary);
+  border-radius: 12px;
+  background-color: var(--light-bg-color);
+  padding: 20px;
+  height: 100%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.application-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+.application-card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.application-card-title {
+  font-size: 18px;
+  color: var(--main-text-color);
+  margin-bottom: 10px;
+}
+
+.application-name-link {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.application-name-link:hover {
+  color: var(--warning-color);
+}
+
+.application-card-description {
+  font-size: 14px;
+  color: var(--secondary-text-color);
+  margin-bottom: 15px;
+}
+
+.application-card-meta p {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: var(--secondary-text-color);
+  margin: 5px 0;
+}
+
+.application-card-meta i {
+  margin-right: 8px;
+  color: var(--primary-color);
+}
+
+.badge-custom1 {
+  padding: 5px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.application-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background-color: transparent;
+  color: var(--primary-color);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.btn-icon:hover {
+  color: var(--warning-color);
+}
+
+.applicationsbtn-container {
+  margin: 20px;
+  width: 100%;
+}
+
+.applicationsaddbtn-primary {
+  padding: 5px 30px;
+  border-radius: 20px;
+  font-size: 14px;
+  background-color: transparent;
+  color: var(--border-colour-primary);
+  border: 1px solid var(--border-colour-primary);
+}
+
+.applicationsaddbtn-primary:hover {
+  background-color: var(--primary-color);
+  color: var(--font-colour-primary);
+}
+
+@media (max-width: 1200px) {
+  .col-lg-2 {
+    flex: 0 0 33.3333%;
+    max-width: 33.3333%;
+  }
+}
+
+@media (max-width: 768px) {
+  .col-lg-2,
+  .col-md-4 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+}
+
+@media (max-width: 576px) {
+  .col-lg-2,
+  .col-md-4,
+  .col-sm-6 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}

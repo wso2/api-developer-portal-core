@@ -45,23 +45,19 @@ const loadOrgContentFromFile = async () => {
         userProfiles: mockProfileData,
         baseUrl: constants.BASE_URL + config.port
     };
-    return renderTemplate(filePrefix + 'pages/home/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
+    return renderTemplate(filePrefix + 'pages/home/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false)
 }
 
-const loadOrgContentFromAPI = async (req) => {
+const loadOrgContentFromAPI = async (req, res) => {
 
     let html;
     const orgName = req.params.orgName;
     try {
-        const organization = await adminDao.getOrganization(orgName);
-        html = await renderTemplateFromAPI({}, organization.ORG_ID, req.params.orgName, 'pages/home');
+        const orgId = await adminDao.getOrgId(orgName);
+        html = await renderTemplateFromAPI({}, orgId, req.params.orgName, 'pages/home');
     } catch (error) {
         console.error(`Failed to load organization :, ${error}`);
-        console.log(`Rendering default organization landing page from file`);
-        let templateContent = {
-            baseUrl: '/' + orgName
-        };
-        html = await renderTemplate(filePrefix + 'pages/home/page.hbs', filePrefix + 'layout/main.hbs', templateContent);
+        return res.redirect('/configure');
     }
     return html;
 }

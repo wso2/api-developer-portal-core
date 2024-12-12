@@ -20,8 +20,11 @@ const router = express.Router();
 const orgController = require('../controllers/orgContentController');
 const apiController = require('../controllers/apiContentController');
 const contentController = require('../controllers/customContentController');
+const applicationController = require('../controllers/applicationsContentController');
 const registerPartials = require('../middlewares/registerPartials');
 const authController = require('../controllers/authController');
+const myAPIsController = require('../controllers/myAPIsController');
+const settingsController = require('../controllers//settingsController');
 
 
 router.get('/', registerPartials, orgController.loadOrganizationContent);
@@ -31,6 +34,15 @@ router.get('/apis', registerPartials, apiController.loadAPIs);
 router.get('/api/:apiName', registerPartials, apiController.loadAPIContent);
 
 router.get('/api/:apiName/tryout', registerPartials, apiController.loadTryOutPage);
+
+router.get('/applications', registerPartials, applicationController.loadApplications);
+router.get('/applications/create', registerPartials, applicationController.loadThrottlingPolicies);
+router.get('/applications/:applicationid', registerPartials, applicationController.loadApplication);
+router.get('/applications/:applicationid/edit', registerPartials, applicationController.loadApplicationForEdit);
+router.get('/myAPIs', registerPartials, myAPIsController.loadDefaultContent);
+
+router.get('/configure', registerPartials, settingsController.loadSettingPage);
+router.get('/portal', registerPartials, settingsController.createorganization);
 
 router.get('/login', registerPartials, authController.login);
 router.get('/callback', registerPartials, authController.handleCallback);
