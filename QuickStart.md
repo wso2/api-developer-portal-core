@@ -331,6 +331,22 @@ Click update.
 "adminRole": "admin",
 "subscriberRole": "Interna/subscriber",
 "superAdminRole": "superAdmin",
+"authenticatedPages": [
+    "/*/configure",
+    "/portal",
+    "/*/applications",
+     "/*/applications/*",
+     "/*/myAPIs",
+     "/*/myAPIs/*"
+  ],
+"authorizedPages": [
+    "/*/applications",
+    "/*/applications/*",
+    "/*/configure",
+    "/portal",
+    "/*/myAPIs",
+    "/*/myAPIs/*"
+  ]
 ````
 API request for creating IDP in developer portal
 ``` bash
