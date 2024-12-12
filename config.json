@@ -2,7 +2,7 @@
   "port": 3000,
   "pathToContent": "../src/",
   "mode": "production",
-  "controlPlane" : {
+  "controlPlane": {
     "url": "https://127.0.0.1:9443/api/am/devportal/v3",
     "disableCertValidation": true,
     "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
@@ -17,7 +17,7 @@
   "providerURL": {
     "AWS": "https://aws.amazon.com"
   },
-  "identityProvider" : {
+  "identityProvider": {
     "name": "IS",
     "issuer": "https://127.0.0.1:9443/oauth2/token",
     "authorizationURL": "https://localhost:9443/oauth2/authorize",
@@ -29,27 +29,13 @@
     "signUpURL": "",
     "logoutURL": "https://localhost:9443/oidc/logout",
     "logoutRedirectURI": "http://localhost:3000/ACME"
-},
-"roleClaim": "roles", 
-"orgIDClaim": "organizationID",
-"groupsClaim": "groups",
-"adminRole": "admin",
-"subscriberRole": "Internal/subscriber",
-"superAdminRole": "superAdmin",
- "authenticatedPages": [
-    "/*/configure",
-    "/portal",
-    "/*/applications",
-     "/*/applications/*",
-     "/*/myAPIs",
-     "/*/myAPIs/*"
-  ],
-  "authorizedPages": [
-    "/*/applications",
-    "/*/applications/*",
-    "/*/configure",
-    "/portal",
-    "/*/myAPIs",
-    "/*/myAPIs/*"
-  ]
+  },
+  "roleClaim": "roles",
+  "orgIDClaim": "organizationID",
+  "groupsClaim": "groups",
+  "adminRole": "admin",
+  "subscriberRole": "Internal/subscriber",
+  "superAdminRole": "superAdmin",
+  "authenticatedPages": [],
+  "authorizedPages": []
 }
