@@ -34,7 +34,7 @@
 "orgIDClaim": "organizationID",
 "groupsClaim": "groups",
 "adminRole": "admin",
-"subscriberRole": "Interna/subscriber",
+"subscriberRole": "Internal/subscriber",
 "superAdminRole": "superAdmin",
  "authenticatedPages": [
     "/*/configure",

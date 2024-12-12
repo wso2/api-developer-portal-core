@@ -89,7 +89,8 @@ const loadAPIContent = async (req, res) => {
             baseUrl: constants.BASE_URL + config.port,
             schemaUrl: orgName + '/mock/' + apiName + '/apiDefinition.xml'
         }
-        html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false)
+        html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
+        res.send(html);
     } else {
         try {
             const orgID = await adminDao.getOrgId(orgName);
