@@ -56,14 +56,12 @@ const loadSettingPage = async (req, res) => {
         if (config.mode === constants.DEV_MODE) {
             const retrievedIDP = await getMockIdentityProvider();
             templateContent.idp = retrievedIDP;
-            let views;
             views = [{
                 'name': 'Default'
             }]
             templateContent.content = true;
             templateContent.orgContent = false;
             templateContent.views = views;
-
         } else {
             const retrievedIDP = await adminDao.getIdentityProvider(orgID);
             if (retrievedIDP.length > 0) {
