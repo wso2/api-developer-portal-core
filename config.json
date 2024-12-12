@@ -41,17 +41,14 @@
     "/portal",
     "/*/applications",
      "/*/applications/*",
-     "/*/api/*",
      "/*/myAPIs",
      "/*/myAPIs/*"
-
   ],
   "authorizedPages": [
     "/*/applications",
     "/*/applications/*",
     "/*/configure",
     "/portal",
-    "/*/api/*",
     "/*/myAPIs",
     "/*/myAPIs/*"
   ]

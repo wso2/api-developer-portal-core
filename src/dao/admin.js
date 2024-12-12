@@ -71,18 +71,18 @@ const getOrganization = async (param) => {
 };
 
 const getOrgId = async (orgName) => {
-        try {
-            const organization = await Organization.findOne({ where: { ORG_NAME: orgName } });
-            if (!organization) {
-                throw new Sequelize.EmptyResultError('Organization not found');
-            }
-            return organization.ORG_ID;
-        } catch (error) {
-            if (error instanceof Sequelize.EmptyResultError) {
-                throw error;
-            }
-            throw new Sequelize.DatabaseError(error);
+    try {
+        const organization = await Organization.findOne({ where: { ORG_NAME: orgName } });
+        if (!organization) {
+            throw new Sequelize.EmptyResultError('Organization not found');
         }
+        return organization.ORG_ID;
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
 };
 
 const getOrganizations = async () => {
@@ -103,13 +103,25 @@ const getOrganizations = async () => {
 
 const updateOrganization = async (orgData) => {
 
+    let devPortalID = "";
+    if (orgData.devPortalURLIdentifier) {
+        devPortalID = orgData.devPortalURLIdentifier
+    }
     try {
         const [updatedRowsCount, updatedOrg] = await Organization.update(
             {
                 ORG_NAME: orgData.orgName,
                 BUSINESS_OWNER: orgData.businessOwner,
                 BUSINESS_OWNER_CONTACT: orgData.businessOwnerContact,
-                BUSINESS_OWNER_EMAIL: orgData.businessOwnerEmail
+                BUSINESS_OWNER_EMAIL: orgData.businessOwnerEmail,
+                DEV_PORTAL_URL_IDENTIFIER: devPortalID,
+                ROLE_CLAIM_NAME: orgData.roleClaimName,
+                GROUPS_CLAIM_NAME: orgData.groupsClaimName,
+                ORGANIZATION_CLAIM_NAME: orgData.organizationClaimName,
+                ORGANIZATION_IDENTIFIER: orgData.organizationIdentifier,
+                ADMIN_ROLE: orgData.adminRole,
+                SUBSCRIBER_ROLE: orgData.subscriberRole,
+                SUPER_ADMIN_ROLE: orgData.superAdminRole
             },
             {
                 where: { ORG_ID: orgData.orgId },

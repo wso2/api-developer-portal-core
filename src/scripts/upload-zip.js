@@ -11,47 +11,49 @@ document.addEventListener('DOMContentLoaded', function () {
     const fileName = document.getElementById('fileName');
     const orgContent = document.getElementById('uploadOrgContent');
 
-    uploadArea.addEventListener('click', () => zipFile.click());
-    uploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadArea.style.borderColor = '#007bff';
-    });
-    uploadArea.addEventListener('dragleave', () => {
-        uploadArea.style.borderColor = '#ccc';
-    });
-    uploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadArea.style.borderColor = '#ccc';
-        if (e.dataTransfer.files.length) {
-            zipFile.files = e.dataTransfer.files;
-            updateFileName();
-        }
-    });
-    zipFile.addEventListener('change', updateFileName);
-
-    //upload organization content
-    orgContent.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        let orgID = document.getElementById('orgId').value;
-        orgID = sanitizeInput(orgID);
-        const zipFile = document.getElementById('file');
-        const formData = new FormData();
-        formData.append('file', zipFile.files[0]);
-        const response = await fetch(`/devportal/organizations/${orgID}/layout`, {
-            method: 'POST',
-            body: formData,
-            credentials: 'same-origin' // Include cookies if needed
+    if (uploadArea) {
+        uploadArea.addEventListener('click', () => zipFile.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#007bff';
         });
-        if (response.ok) {
-            window.location.href = 'configure';
-        } else {
-            alert("Uploading organization content failed");
-        }
-    });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = '#ccc';
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#ccc';
+            if (e.dataTransfer.files.length) {
+                zipFile.files = e.dataTransfer.files;
+                updateFileName();
+            }
+        });
+        zipFile.addEventListener('change', updateFileName);
+        //upload organization content
+        orgContent.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            let orgID = document.getElementById('orgId').value;
+            orgID = sanitizeInput(orgID);
+            const zipFile = document.getElementById('file');
+            const formData = new FormData();
+            formData.append('file', zipFile.files[0]);
+            const response = await fetch(`/devportal/organizations/${orgID}/layout`, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin' // Include cookies if needed
+            });
+            if (response.ok) {
+                window.location.href = 'configure';
+            } else {
+                alert("Uploading organization content failed");
+            }
+        });
 
-    function updateFileName() {
-        fileName.textContent = zipFile.files[0] ? `Selected file: ${zipFile.files[0].name}` : '';
+        function updateFileName() {
+            fileName.textContent = zipFile.files[0] ? `Selected file: ${zipFile.files[0].name}` : '';
+        }
     }
+
     //update organization content
     const updateZip = document.getElementById('editForm');
     // eslint-disable-next-line no-undef

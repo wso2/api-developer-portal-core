@@ -4,7 +4,9 @@
 </head>
 <main>
     <div class="container mt-5">
+        {{#if orgContent}}
         {{> upload-zip }}
+        {{/if}}
         {{#if content}}
         {{> list-files }}
         {{/if}}
