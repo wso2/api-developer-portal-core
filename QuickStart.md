@@ -248,9 +248,9 @@ After customizing the content, run “sh compress.sh {nameOfOrg}”, to create a
 
 Follow the instructions in the [installation guide](https://docs.google.com/document/d/10bIEggNZmHy0oMLGBi_fsszXYYfcztaSt_p2i_3VcPo/edit?pli=1&tab=t.3roll6bfs18k) to setup the database and connect the devportal to it.
 
-6. Create the IDP for devportal login
+**Configure WSO2 as the control plane**
 
-**WSO2 as the control plane**
+1. Create the IDP for devportal login
 
 **Add claim mappings**  
 Go to claims->Add->Add new external claim  
@@ -313,16 +313,16 @@ Click update.
 
 ```bash
  "identityProvider" : {
-    "name": "IS",
-    "issuer": "https://127.0.0.1:9443/oauth2/token",
-    "authorizationURL": "https://localhost:9443/oauth2/authorize",
-    "tokenURL": "https://127.0.0.1:9443/oauth2/token",
-    "userInfoURL": "https://localhost:9443/oauth2/userinfo",
-    "clientId": "meVRlVAkUoVufXXjN3aUk72PVF8a",
+    "name": "<IDP_Name>",
+    "issuer": "<IDP_Issuer>,
+    "authorizationURL": "https://<IDP_DOMAIN>/oauth2/authorize",
+    "tokenURL": "https://<IDP_DOMAIN>/oauth2/token",
+    "userInfoURL": "https://<IDP_DOMAIN>/oauth2/userinfo",
+    "clientId": "<Clinet_ID>",
     "callbackURL": "http://localhost:3000/ACME/callback",
-    "scope": "openid email profile apim:subscribe role",
-    "signUpURL": "",
-    "logoutURL": "https://localhost:9443/oidc/logout",
+    "scope": "openid email groups",
+    "signUpURL": "<IDP_SignUP_URL>",
+    "logoutURL": "https://<IDP_DOMAIN>/oidc/logout",
     "logoutRedirectURI": "http://localhost:3000/ACME"
 },
 "roleClaim": "roles", 
@@ -338,20 +338,30 @@ curl --location --request POST 'http://localhost:3000/devportal/organizations/{o
 --header 'Content-Type: application/json' \
 --header 'Cookie: connect.sid=s%3AhKQhm7b2bCe4RkJuFknvUsxVqgG_iueA.ddy6vv265vp0cRrpRoJMnYZWs11tRTNsT0MKtTyIQ4o' \
 --data '{
-    "name": "Asgardeo",
-    "issuer": "https://api.asgardeo.io/t/sachinisiriwardene/oauth2/token",
-    "authorizationURL": "https://api.asgardeo.io/t/sachinisiriwardene/oauth2/authorize",
-    "tokenURL": "https://api.asgardeo.io/t/sachinisiriwardene/oauth2/token",
-    "userInfoURL": "https://api.asgardeo.io/t/sachinisiriwardene/oauth2/userinfo",
-    "clientId": "",
+    "name": "<IDP_Name>",
+    "issuer": "<IDP_Issuer>",
+    "authorizationURL": "https://<IDP_DOMAIN>/oauth2/authorize",
+    "tokenURL": "https://<IDP_DOMAIN>/oauth2/token",
+    "userInfoURL": "https://<IDP_DOMAIN>/oauth2/userinfo",
+    "clientId": "<Clinet_ID>",
     "callbackURL": "http://localhost:3000/ACME/callback",
     "scope": "openid email groups",
-    "signUpURL": "https://accounts.asgardeo.io/t/choreotestorganization/accountrecoveryendpoint/register.do",
-    "logoutURL": "https://api.asgardeo.io/t/sachinisiriwardene/oidc/logout",
+    "signUpURL": "<IDP_SignUP_URL>",
+    "logoutURL": "https://<IDP_DOMAIN>/oidc/logout",
     "logoutRedirectURI": "http://localhost:3000/ACME"
-
 }'
 ```
+
+2.  Configure APIM CP URL.  
+
+```bash
+controlPlane : {
+    "url": "https://127.0.0.1:9443/api/am/devportal/v3"
+  }
+```
+3.  Go to APIM publisher adn publish an API (https://localhost:9443/publisher)
+
+4.  Store the created API metadata in developer portal side, as mentioned in step 5 of the below section.  
 
 
 Follow the steps below to populate the organization’s content in the developer portal.
@@ -418,7 +428,7 @@ This is a multi part request containing a json with metadata related to the API 
 
    --form 'api-metadata="{
                   "apiInfo": { 
-                     "referenceID": "12344",
+                     "referenceID": "<UUID for the API created in WSO2 publisher>",
                      "apiName": "NavigationAPI",
                      "orgName": "ACME",
                      "apiCategory": "Travel",
