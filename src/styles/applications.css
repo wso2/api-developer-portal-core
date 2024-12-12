@@ -2,55 +2,6 @@ body {
   background-color: var(--main-bg-color);
 }
 
-.hero-section-applicationlisting {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 10px 0;
-  background-color: var(--primary-color);
-  height: auto;
-}
-
-.applicationlist-hero-container {
-  width: 100%;
-  max-width: 1000px;
-  text-align: center;
-  margin-top: 30px;
-}
-
-.applicationlist-hero-content h1,
-.applicationlist-hero-content p,
-.applicationlist-hero-content span {
-  color: var(--font-colour-primary);
-}
-
-.applicationlist-hero-content h1 {
-  font-size: 35px;
-}
-
-.applicationlist-hero-content p {
-  font-size: 14px;
-  line-height: 24px;
-}
-
-.applicationlist-hero-header {
-  max-width: 800px;
-}
-.applicationlist-hero-content span {
-  font-size: 35px;
-  margin-bottom: 20px;
-  color: var(--light-color);
-}
-
-.applicationlist-hero-content {
-  margin: 40px 0;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
 .search-container {
   display: flex;
   justify-content: center;
