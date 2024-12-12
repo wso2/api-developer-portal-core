@@ -48,8 +48,7 @@ const loadApplications = async (req, res) => {
                 baseUrl: constants.BASE_URL + config.port
             }
             html = renderTemplate('../pages/applications/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
-        }
-        else {
+        } else {
             const orgName = req.params.orgName;
             const orgID = await orgIDValue(orgName);
             metaData = await getAPIMApplications(req);
