@@ -109,7 +109,6 @@ const loadSubscriptions = async (req, apiId) => {
         return await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?apiId=${apiId}`);
     } catch (error) {
         console.error("Error occurred while loading subscriptions", error);
-        throw error;
     }
 }
 
