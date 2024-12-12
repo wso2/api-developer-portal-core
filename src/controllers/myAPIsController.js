@@ -27,9 +27,10 @@ const util = require('../utils/util');
 const controlPlaneUrl = config.controlPlane.url;
 
 const loadMyAPIs = async (req, res) => {
+    const orgName = req.params.orgName;
+    const orgId = await adminDao.getOrgId(orgName);
+
     try {
-        const orgName = req.params.orgName;
-        const orgId = await adminDao.getOrgId(orgName);
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'myAPIs', 'page.hbs');
         const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
         const layoutResponse = await loadLayoutFromAPI(orgId);
@@ -95,7 +96,11 @@ const loadMyAPIs = async (req, res) => {
         res.send(html);
     } catch (error) {
         console.error("Error occurred while loading My APIs", error);
-        util.handleError(res, error);
+        const templatePath = path.join(require.main.filename, '..', 'pages', 'error-page', 'page.hbs');
+        const templateResponse = fs.readFileSync(templatePath, constants.CHARSET_UTF8);
+        const layoutResponse = await loadLayoutFromAPI(orgId);
+        let html = await renderGivenTemplate(templateResponse, layoutResponse, {});
+        res.send(html);
     }
 }
 
@@ -104,7 +109,6 @@ const loadSubscriptions = async (req, apiId) => {
         return await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?apiId=${apiId}`);
     } catch (error) {
         console.error("Error occurred while loading subscriptions", error);
-        throw error;
     }
 }
 
@@ -120,7 +124,19 @@ const loadApplications = async (req) => {
 // Load default content for the dev mode
 const loadDefaultContent = async (req, res) => {
     const filePrefix = config.pathToContent;
-    let html = renderTemplate('../pages/myAPIs/page.hbs', filePrefix + 'layout/main.hbs', {});
+    const subscriptionPath = path.join(process.cwd(), filePrefix + '../mock', 'subscriptions.json');
+    const subscriptionResponse = JSON.parse(fs.readFileSync(subscriptionPath, constants.CHARSET_UTF8));
+    const templateContent = {
+        subscriptions: subscriptionResponse,
+    };
+
+    const templatePath = path.join(require.main.filename, '..', 'pages', 'myAPIs', 'page.hbs');
+    const templateResponse = fs.readFileSync(templatePath, constants.CHARSET_UTF8);
+
+    const layoutPath = path.join(require.main.filename, '..', 'pages', 'layout', 'main.hbs');
+    const layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
+
+    let html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
     res.send(html);
 }
 

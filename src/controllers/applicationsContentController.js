@@ -39,28 +39,39 @@ const templateResponseValue = async (pageName) => {
 // ***** Load Applications *****
 
 const loadApplications = async (req, res) => {
-    let html, metaData, templateContent;
-    if (config.mode === constants.DEV_MODE) {
-        metaData = await getMockApplications();
-        templateContent = {
-            applicationsMetadata: metaData,
-            baseUrl: constants.BASE_URL + config.port
+    try {
+        let html, metaData, templateContent;
+        if (config.mode === constants.DEV_MODE) {
+            metaData = await getMockApplications();
+            templateContent = {
+                applicationsMetadata: metaData,
+                baseUrl: constants.BASE_URL + config.port
+            }
+            html = renderTemplate('../pages/applications/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
+        } else {
+            const orgName = req.params.orgName;
+            const orgID = await orgIDValue(orgName);
+            metaData = await getAPIMApplications(req);
+            templateContent = {
+                applicationsMetadata: metaData,
+                baseUrl: '/' + orgName
+            }
+            const templateResponse = await templateResponseValue('applications');
+            const layoutResponse = await loadLayoutFromAPI(orgID);
+            html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         }
-        html = renderTemplate('../pages/applications/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
-    }
-    else {
+        res.send(html);
+    } catch (error) {
+        console.error("Error occurred while loading Applications", error);
         const orgName = req.params.orgName;
-        const orgID = await orgIDValue(orgName);
-        metaData = await getAPIMApplications(req);
-        templateContent = {
-            applicationsMetadata: metaData,
-            baseUrl: '/' + orgName
-        }
-        const templateResponse = await templateResponseValue('applications');
-        const layoutResponse = await loadLayoutFromAPI(orgID);
-        html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        const orgId = await orgIDValue(orgName);
+        
+        const templatePath = path.join(require.main.filename, '..', 'pages', 'error-page', 'page.hbs');
+        const templateResponse = fs.readFileSync(templatePath, constants.CHARSET_UTF8);
+        const layoutResponse = await loadLayoutFromAPI(orgId);
+        let html = await renderGivenTemplate(templateResponse, layoutResponse, {});
+        res.send(html);
     }
-    res.send(html);
 }
 
 async function getMockApplications() {
