@@ -24,6 +24,8 @@ const IdentityProviderDTO = require("../dto/identityProvider");
 const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
 const adminService = require('../services/adminService');
+const filePrefix = config.pathToContent;
+
 
 const loadSettingPage = async (req, res) => {
 
@@ -37,32 +39,44 @@ const loadSettingPage = async (req, res) => {
 
     let templateContent = {
         baseUrl: req.params.orgName,
-        orgID: orgID
+        orgID: orgID,
+        orgContent: true
     }
+    let layoutResponse = "";
     try {
-        const retrievedIDP = await adminDao.getIdentityProvider(orgID);
-        if (retrievedIDP.length > 0) {
-            templateContent.idp = new IdentityProviderDTO(retrievedIDP[0]);
+        if (config.mode === constants.DEV_MODE) {
+            const retrievedIDP = await getMockIdentityProvider();
+            templateContent.idp = retrievedIDP;
+            views = [{
+                'name': 'Default'
+            }]
+            templateContent.content = true;
+            templateContent.orgContent = false;
+            templateContent.views = views;
         } else {
-            templateContent.create = true;
+            const retrievedIDP = await adminDao.getIdentityProvider(orgID);
+            if (retrievedIDP.length > 0) {
+                templateContent.idp = new IdentityProviderDTO(retrievedIDP[0]);
+            } else {
+                templateContent.create = true;
+            }
+            //TODO: fetch view names from DB
+            const file = await adminService.getOrgContent(orgID, 'layout', 'main.hbs', 'layout');
+            let views;
+            if (file !== null) {
+                views = [{
+                    'name': 'Default'
+                }]
+                templateContent.content = true;
+                templateContent.views = views;
+                templateContent.orgContent = false;
+            }
+            layoutResponse = await loadLayoutFromAPI(orgID);
         }
-        let layoutResponse = await loadLayoutFromAPI(orgID)
         if (layoutResponse === "") {
             layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
         }
         const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
-        //TODO: fetch view names from DB
-        const file = await adminService.getOrgContent(orgID, 'layout', 'main.hbs', 'layout');
-        let views;
-        if (file !== null) {
-            views = [{
-                'name': 'Default'
-            }]
-        }
-        if (views.length > 0) {
-            templateContent.content = true;
-            templateContent.views = views;
-        }
         let html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         res.send(html);
     } catch (error) {
@@ -70,17 +84,31 @@ const loadSettingPage = async (req, res) => {
     }
 }
 
+async function getMockIdentityProvider() {
+
+    const mockIdentityProviderDataPath = path.join(process.cwd(), filePrefix + '../mock/IdentityProvider/identityProvider.json');
+    const mockIDPaData = JSON.parse(fs.readFileSync(mockIdentityProviderDataPath, 'utf-8'));
+    return mockIDPaData;
+}
+
 const createOrganization = async (req, res) => {
 
+    let templateContent = {};
     try {
-        const templateContent = {
-            'orgID': req.user[constants.ORG_ID],
-            'profile': req.user
-        }
-        //fetch all created organizations
-        const organizations = await adminService.getAllOrganizations();
-        if (organizations.length !== 0) {
+        if (config.mode === constants.DEV_MODE) {
+            const organizations = await getMockOrganizations();
             templateContent.organizations = organizations;
+        } else {
+            templateContent = {
+                'orgID': req.user[constants.ORG_ID],
+                'profile': req.user
+            }
+            //fetch all created organizations
+            const organizations = await adminService.getAllOrganizations();
+            let orgs = organizations.length;
+            if (orgs !== 0) {
+                templateContent.organizations = organizations;
+            }
         }
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'portal', 'page.hbs');
         const layoutPath = path.join(require.main.filename, '..', 'pages', 'layout', 'main.hbs');
@@ -88,9 +116,18 @@ const createOrganization = async (req, res) => {
         const layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
         const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         res.send(html);
+
     } catch (error) {
         console.error(`Error while loading setting page: ${error}`);
     }
+}
+
+async function getMockOrganizations() {
+
+    const mockOrganizationPath = path.join(process.cwd(), filePrefix + '../mock/Organization',
+        '/organizations.json');
+    const mockOrgData = JSON.parse(fs.readFileSync(mockOrganizationPath, 'utf-8'));
+    return mockOrgData;
 }
 
 module.exports = {

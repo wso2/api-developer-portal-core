@@ -24,6 +24,7 @@ const applicationController = require('../controllers/applicationsContentControl
 const registerPartials = require('../middlewares/registerPartials');
 const authController = require('../controllers/authController');
 const myAPIsController = require('../controllers/myAPIsController');
+const settingsController = require('../controllers//settingsController');
 
 
 router.get('/', registerPartials, orgController.loadOrganizationContent);
@@ -39,6 +40,9 @@ router.get('/applications/create', registerPartials, applicationController.loadT
 router.get('/applications/:applicationid', registerPartials, applicationController.loadApplication);
 router.get('/applications/:applicationid/edit', registerPartials, applicationController.loadApplicationForEdit);
 router.get('/myAPIs', registerPartials, myAPIsController.loadDefaultContent);
+
+router.get('/configure', registerPartials, settingsController.loadSettingPage);
+router.get('/portal', registerPartials, settingsController.createorganization);
 
 router.get('/login', registerPartials, authController.login);
 router.get('/callback', registerPartials, authController.handleCallback);

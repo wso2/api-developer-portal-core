@@ -89,7 +89,7 @@ const getAllOrganizations = async () => {
                 organizationIdentifier: organization.ORGANIZATION_IDENTIFIER,
                 adminRole: organization.ADMIN_ROLE,
                 subscriberRole: organization.SUBSCRIBER_ROLE,
-                groupClaimName: organization.GROUP_CLAIM_NAME
+                superAdminRole: organization.SUPER_ADMIN_ROLE
             });
         }
     }
@@ -99,8 +99,8 @@ const getAllOrganizations = async () => {
 const updateOrganization = async (req, res) => {
 
     try {
+        console.log("Update orggg")
         const orgId = req.params.orgId;
-        // const { orgName, businessOwner, businessOwnerContact, businessOwnerEmail } = req.body;
         if (!orgId) {
             console.log("Missing required parameter: 'orgId'");
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
@@ -129,7 +129,7 @@ const updateOrganization = async (req, res) => {
             organizationIdentifier: updatedOrg[0].dataValues.ORGANIZATION_IDENTIFIER,
             adminRole: updatedOrg[0].dataValues.ADMIN_ROLE,
             subscriberRole: updatedOrg[0].dataValues.SUBSCRIBER_ROLE,
-            groupClaimName: updatedOrg[0].dataValues.GROUP_CLAIM_NAME
+            superAdminRole: updatedOrg[0].dataValues.SUPER_ADMIN_ROLE
         });
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.ORG_UPDATE_ERROR}, ${error}`);
