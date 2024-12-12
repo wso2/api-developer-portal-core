@@ -100,7 +100,6 @@ const loadMyAPIs = async (req, res) => {
         const templateResponse = fs.readFileSync(templatePath, constants.CHARSET_UTF8);
         const layoutResponse = await loadLayoutFromAPI(orgId);
         let html = await renderGivenTemplate(templateResponse, layoutResponse, {});
-        console.error("Error occurred while loading My APIs", templatePath, layoutResponse);
         res.send(html);
     }
 }
@@ -138,7 +137,6 @@ const loadDefaultContent = async (req, res) => {
     const layoutPath = path.join(require.main.filename, '..', 'pages', 'layout', 'main.hbs');
     const layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
 
-    console.error("Error occurred while loading My APIs", templateResponse, layoutResponse);
     let html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
     res.send(html);
 }
