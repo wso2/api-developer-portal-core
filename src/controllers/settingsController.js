@@ -35,6 +35,14 @@ const loadSettingPage = async (req, res) => {
     //retrieve orgID from the user object
     if (req.user) {
         orgID = req.user[constants.ORG_ID];
+    } else {
+        let orgName = req.params.orgName;
+        orgID = await adminDao.getOrgId(orgName);
+        const templatePath = path.join(require.main.filename, '..', 'pages', 'error-page', 'page.hbs');
+        const templateResponse = fs.readFileSync(templatePath, constants.CHARSET_UTF8);
+        const layoutResponse = await loadLayoutFromAPI(orgID);
+        let html = await renderGivenTemplate(templateResponse, layoutResponse, {});
+        return res.send(html);
     }
 
     let templateContent = {
@@ -43,6 +51,7 @@ const loadSettingPage = async (req, res) => {
         orgContent: true
     }
     let layoutResponse = "";
+    let views;
     try {
         if (config.mode === constants.DEV_MODE) {
             const retrievedIDP = await getMockIdentityProvider();
@@ -64,7 +73,6 @@ const loadSettingPage = async (req, res) => {
             }
             //TODO: fetch view names from DB
             const file = await adminService.getOrgContent(orgID, 'layout', 'main.hbs', 'layout');
-            let views;
             if (file !== null) {
                 views = [{
                     'name': 'Default'
