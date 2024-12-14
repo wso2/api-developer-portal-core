@@ -97,24 +97,27 @@ const loadAPIContent = async (req, res) => {
             const apiID = await apiDao.getAPIId(apiName);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
             let subscriptionPlans = [];
-            
-            for (const policy of metaData.subscriptionPolicies) {
-                const subscriptionPlan = await loadSubscriptionPlan(req, res, policy.policyName);
-                subscriptionPlans.push({
-                    apiId: metaData.apiReferenceID,
-                    name: subscriptionPlan.name,
-                    description: subscriptionPlan.description,
-                    tierPlan: subscriptionPlan.tierPlan,
-                });
-            };
+
+            //load subscription plans for authenticated users
+            if (req.user) {
+                for (const policy of metaData.subscriptionPolicies) {
+                    const subscriptionPlan = await loadSubscriptionPlan(req, res, policy.policyName);
+                    subscriptionPlans.push({
+                        apiId: metaData.apiReferenceID,
+                        name: subscriptionPlan.name,
+                        description: subscriptionPlan.description,
+                        tierPlan: subscriptionPlan.tierPlan,
+                    });
+                };
+            }
 
             let providerUrl;
             if (metaData.provider === "WSO2") {
                 providerUrl = '#subscriptionPlans';
-            } else {   
+            } else {
                 providerUrl = config.providerURL[metaData.provider];
             }
-            
+
             const templateContent = {
                 provider: metaData.provider,
                 providerUrl: providerUrl,
@@ -133,6 +136,7 @@ const loadAPIContent = async (req, res) => {
 }
 
 const loadSubscriptionPlan = async (req, res, policyId) => {
+
     try {
         return await util.invokeApiRequest(req, 'GET', `${config.controlPlane.url}/throttling-policies/subscription/${policyId}`);
     } catch (error) {
