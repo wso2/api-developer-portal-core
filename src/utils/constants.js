@@ -95,7 +95,10 @@ module.exports = {
         LAYOUT: 'layout',
         TEMPLATE: 'template',
     },
-
+    KEY_TYPE: {
+        PRODUCTION: 'PRODUCTION',
+        SANDBOX: 'SANDBOX',
+    },
     FILE_NAME: {
         MAIN: 'main.hbs',
         PAGE: 'page.hbs',
