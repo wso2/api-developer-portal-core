@@ -1,5 +1,6 @@
-async function generateApplicationKey(appId, keyType) {
+async function generateApplicationKey(appId, keyType, formData) {
     try {
+        console.log('formData:', formData);
         const response = await fetch(`/devportal/applications/${appId}/generate-keys`, {
             method: 'POST',
             headers: {
@@ -10,7 +11,7 @@ async function generateApplicationKey(appId, keyType) {
                     "password",
                     "client_credentials"
                 ],
-                "keyType": keyType,
+                "keyType": "Prod",
                 "keyManager": "Resident Key Manager",
                 "callbackUrl": "http://sample.com/callback/url",
                 "scopes": [

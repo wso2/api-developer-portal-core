@@ -58,13 +58,13 @@ router.get('/organizations/:orgId/apis/:apiId/template', apiMetadataService.getA
 router.delete('/organizations/:orgId/apis/:apiId/template', apiMetadataService.deleteAPIFile);
 
 
-router.post('/subscriptions',validateToken , devportalController.subscribeAPI);
-router.delete('/subscriptions/:subscriptionId', validateToken, devportalController.unsubscribeAPI);
+router.post('/subscriptions' , devportalController.subscribeAPI);
+router.delete('/subscriptions/:subscriptionId', devportalController.unsubscribeAPI);
 
-router.post('/applications', validateToken, devportalController.saveApplication);
-router.put('/applications/:applicationid', validateToken, devportalController.updateApplication);
-router.delete('/applications/:applicationid', validateToken, devportalController.deleteApplication);
-router.post('/applications/:applicationid/reset-throttle-policy', validateToken, devportalController.resetThrottlingPolicy);
-router.post('/applications/:applicationid/api-keys/:env/generate', validateToken, devportalController.generateAPIKeys);
+router.post('/applications', devportalController.saveApplication);
+router.put('/applications/:applicationid', devportalController.updateApplication);
+router.delete('/applications/:applicationid', devportalController.deleteApplication);
+router.post('/applications/:applicationid/reset-throttle-policy', devportalController.resetThrottlingPolicy);
+router.post('/applications/:applicationid/api-keys/:env/generate', devportalController.generateAPIKeys);
 
 module.exports = router;
