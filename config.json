@@ -36,20 +36,6 @@
 "adminRole": "admin",
 "subscriberRole": "Internal/subscriber",
 "superAdminRole": "superAdmin",
- "authenticatedPages": [
-    "/*/configure",
-    "/portal",
-    "/*/applications",
-     "/*/applications/*",
-     "/*/myAPIs",
-     "/*/myAPIs/*"
-  ],
-  "authorizedPages": [
-    "/*/applications",
-    "/*/applications/*",
-    "/*/configure",
-    "/portal",
-    "/*/myAPIs",
-    "/*/myAPIs/*"
-  ]
+ "authenticatedPages": [],
+  "authorizedPages": []
 }
