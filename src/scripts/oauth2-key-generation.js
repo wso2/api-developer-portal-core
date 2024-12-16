@@ -1,6 +1,7 @@
-async function generateApplicationKey(appId, keyType, formData) {
+/* eslint-disable no-undef */
+/* eslint-disable no-unused-vars */
+async function generateApplicationKey(appId, keyType) {
     try {
-        console.log('formData:', formData);
         const response = await fetch(`/devportal/applications/${appId}/generate-keys`, {
             method: 'POST',
             headers: {
@@ -11,7 +12,7 @@ async function generateApplicationKey(appId, keyType, formData) {
                     "password",
                     "client_credentials"
                 ],
-                "keyType": "Prod",
+                "keyType":  keyType,
                 "keyManager": "Resident Key Manager",
                 "callbackUrl": "http://sample.com/callback/url",
                 "scopes": [

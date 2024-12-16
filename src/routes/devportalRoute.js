@@ -66,5 +66,7 @@ router.put('/applications/:applicationid', devportalController.updateApplication
 router.delete('/applications/:applicationid', devportalController.deleteApplication);
 router.post('/applications/:applicationid/reset-throttle-policy', devportalController.resetThrottlingPolicy);
 router.post('/applications/:applicationid/api-keys/:env/generate', devportalController.generateAPIKeys);
+router.post('/applications/:applicationid/generate-keys', devportalController.generateApplicationKeys);
+router.post('/applications/:applicationid/oauth-keys/:keyMappingId/generate-token', devportalController.generateOAuthKeys);
 
 module.exports = router;
