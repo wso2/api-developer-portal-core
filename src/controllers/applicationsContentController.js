@@ -172,12 +172,13 @@ const loadApplication = async (req, res) => {
             });
 
             kMmetaData = await getAPIMKeyManagers(req);
-            let applicationKeyList = await generateApplicationKeys(req, applicationId);
-            let productionKeys = {};
-            let sandboxKeys = {};
+            let applicationKeyList = await getApplicationKeys(req, applicationId); //keyMappingId
+            let productionKeys = [];
+            let sandboxKeys = [];
 
             applicationKeyList?.list?.map(key => {
                 let keyData = {
+                    keyManager: key.keyManager,
                     consumerKey: key.consumerKey,
                     consumerSecret: key.consumerSecret,
                     keyMappingId: key.keyMappingId,
@@ -191,14 +192,19 @@ const loadApplication = async (req, res) => {
                 return keyData;
             }) || [];
 
+            let oauthKeys = await getOAuthKeys(req, applicationId);
+
             templateContent = {
                 applicationMetadata: metaData,
                 keyManagersMetadata: kMmetaData,
                 baseUrl: '/' + orgName,
                 apis: apiList,
                 productionKeys: productionKeys,
-                sandboxKeys: sandboxKeys
+                sandboxKeys: sandboxKeys,
+                oauthKeys: oauthKeys
             }
+
+            console.log(templateContent);
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID);
             html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
@@ -211,11 +217,20 @@ const loadApplication = async (req, res) => {
     }
 }
 
-async function generateApplicationKeys(req, applicationId) {
+async function getApplicationKeys(req, applicationId) {
     try {
         return await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${applicationId}/keys`, {}, {});
     } catch (error) {
         console.error("Error occurred while generating application keys", error);
+        return null;
+    }
+}
+
+async function getOAuthKeys(req, applicationId) {
+    try {
+        return await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys`, {}, {});
+    } catch (error) {
+        console.error("Error occurred while getting OAuth keys", error);
         return null;
     }
 }

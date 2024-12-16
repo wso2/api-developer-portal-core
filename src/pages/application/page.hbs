@@ -1,9 +1,15 @@
 <head>
   <script src='/technical-scripts/subscription.js' defer></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.serializeJSON/3.2.1/jquery.serializejson.min.js"></script>
+
 </head>
 <main>
     {{> application-dashboard }}
     {{> alert }}
     {{> throttling-reset-modal}}
     {{> api-key-modal}}
+    {{> delete-confirmation modalTitle="Do you really want to remove keys?" modalMessage="This will remove the key entries stored in devportal, 
+    gateway as well as in the service provider." modalFunction="removeApplicationKey()" }}
+
 </main>

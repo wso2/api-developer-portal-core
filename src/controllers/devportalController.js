@@ -171,7 +171,6 @@ const generateOAuthKeys = async (req, res) => {
 };
 
 const revokeOAuthKeys = async (req, res) => {
-    console.log("revokeOAuthKeys");
     try {
         const applicationId = req.params.applicationId;
         const keyMappingId = req.params.keyMappingId;

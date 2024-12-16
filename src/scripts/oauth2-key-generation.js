@@ -1,4 +1,32 @@
-async function generateApplicationKey(appId, keyType) {
+async function generateApplicationKey(formId, appId, keyType, keyManager) {
+    const form = document.getElementById(formId);
+    const formData = new FormData(form);
+    const jsonObject = {
+        additionalProperties: {},
+    };
+
+    formData.forEach((value, key) => {
+        if (key.startsWith("additionalProperties.")) {
+            // If the key is part of additionalProperties, add it to that object
+            const propName = key.replace("additionalProperties.", ""); // Remove the prefix
+            jsonObject.additionalProperties[propName] = value;
+          } else {
+            // Handle multiple checkbox values
+            if (jsonObject[key]) {
+                if (Array.isArray(jsonObject[key])) {
+                    jsonObject[key].push(value);
+                } else {
+                    jsonObject[key] = [jsonObject[key], value];
+                }
+            } else {
+                jsonObject[key] = value;
+            }
+        }
+    });
+
+    // Log the resulting object
+    console.log(jsonObject);
+
     try {
         const response = await fetch(`/devportal/applications/${appId}/generate-keys`, {
             method: 'POST',
@@ -6,19 +34,15 @@ async function generateApplicationKey(appId, keyType) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                "grantTypesToBeSupported": [
-                    "password",
-                    "client_credentials"
-                ],
+                "grantTypesToBeSupported": jsonObject.grantTypes,
                 "keyType": keyType,
-                "keyManager": "Resident Key Manager",
-                "callbackUrl": "http://sample.com/callback/url",
+                "keyManager": keyManager,
+                "callbackUrl": jsonObject.callbackURL,
                 "scopes": [
-                    "am_application_scope",
                     "default"
                 ],
-                "validityTime": "3600",
-                "additionalProperties": {}
+                "validityTime": 3600,
+                "additionalProperties": jsonObject.additionalProperties
             }),
         });
 
@@ -26,7 +50,7 @@ async function generateApplicationKey(appId, keyType) {
         if (response.ok) {
             await showAlert('Application keys generated successfully!', 'success');
             const url = new URL(window.location.origin + window.location.pathname);
-            window.location.href = url.toString();
+            // window.location.href = url.toString();
         } else {
             console.error('Failed to generate keys:', responseData);
             await showAlert(`Failed to generate application keys. Please try again.\n${responseData.description}`, 'error');
@@ -65,7 +89,35 @@ async function removeApplicationKey() {
     }
 }
 
-async function generateOauthKey(appId, keyMappingId) {
+async function generateOauthKey(formId, appId, keyMappingId) {
+    const form = document.getElementById(formId);
+    const formData = new FormData(form);
+    const jsonObject = {
+        additionalProperties: {
+            "pkceSupportPlain": false
+        },
+    };
+
+    formData.forEach((value, key) => {
+        if (key.startsWith("additionalProperties.")) {
+            // If the key is part of additionalProperties, add it to that object
+            const propName = key.replace("additionalProperties.", ""); // Remove the prefix
+            jsonObject.additionalProperties[propName] = value;
+          } else {
+            // Handle multiple checkbox values
+            if (jsonObject[key]) {
+                if (Array.isArray(jsonObject[key])) {
+                    jsonObject[key].push(value);
+                } else {
+                    jsonObject[key] = [jsonObject[key], value];
+                }
+            } else {
+                jsonObject[key] = value;
+            }
+        }
+    });
+
+    console.log("Form Data: ", jsonObject);
     try {
         const response = await fetch(`/devportal/applications/${appId}/oauth-keys/${keyMappingId}/generate-token`, {
             method: 'POST',
@@ -73,12 +125,11 @@ async function generateOauthKey(appId, keyMappingId) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                "additionalProperties": {
-                    "pkceSupportPlain": false
-                },
-                "consumerSecret": "",
+                "additionalProperties": jsonObject.additionalProperties,
+                "consumerSecret": jsonObject.consumerSecret,
                 "revokeToken": null,
                 "scopes": [
+                    "default"
                 ],
                 "validityPeriod": 3600
             }),
