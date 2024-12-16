@@ -20,6 +20,12 @@ const minimatch = require('minimatch');
 const constants = require('../utils/constants');
 const config = require(process.cwd() + '/config.json');
 const adminDao = require('../dao/admin');
+const { jwtVerify, createRemoteJWKSet, importX509 } = require('jose');
+const util = require('../utils/util');
+const { CustomError } = require('../utils/errors/customErrors');
+const fs = require('fs');
+const e = require('express');
+
 
 const ensurePermission = (currentPage, role, req) => {
 
@@ -110,4 +116,60 @@ const ensureAuthenticated = async (req, res, next) => {
     };
 };
 
+const validateToken = async (req, res, next) => {
+
+    let accessToken;
+    if (req.isAuthenticated() && req.user) {
+        accessToken = req.user[constants.ACCESS_TOKEN];
+        return next();
+    } else {
+        accessToken = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    }
+    const pemKey = fs.readFileSync('/Users/sachini/APIM/is.cer', 'utf8');
+    console.log("PEM Key:", pemKey);
+    const publicKey = await importX509(pemKey, 'RS256');
+    const valid = await validateWithCert(accessToken, publicKey);
+    //const valid = await validateWithJWKS(accessToken, 'https://localhost:9443/oauth2/jwks');
+    if (valid) {
+        return next();
+    } else {
+        if (req.user) {
+            return res.redirect('login');
+        } else {
+            return util.handleError(res, new CustomError(401, constants.ERROR_CODE[401], constants.ERROR_MESSAGE.UNAUTHENTICATED));
+        }
+    }
+}
+
+const validateWithCert = async (token, publicKey) => {
+
+    try {
+        console.log("Public key:", publicKey);
+        const { payload } = await jwtVerify(token, publicKey);
+        console.log("Token is valid:", payload);
+        return true
+    } catch (err) {
+        console.log(err);
+        console.error("Invalid token:", err.message);
+        return false;
+    }
+}
+
+const validateWithJWKS = async (token, jwksURL) => {
+
+    try {
+        const jwks = await createRemoteJWKSet(new URL(jwksURL));
+        const { payload } = await jwtVerify(token, jwks);
+        return true;
+    } catch (err) {
+        console.error("Invalid token:", err.message);
+        return false;
+    }
+}
+
 module.exports = ensureAuthenticated;
+
+module.exports = {
+    ensureAuthenticated,
+    validateToken
+}

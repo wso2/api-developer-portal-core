@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const applicationsController = require('../controllers/applicationsContentController');
 const registerPartials = require('../middlewares/registerPartials');
-const ensureAuthenticated = require('../middlewares/ensureAuthenticated');
+const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
 
 
 
