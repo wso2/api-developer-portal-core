@@ -228,26 +228,47 @@
                                 <div class='form-text mb-3'>{{tooltip}}</div>
                             </div>
                             {{/each}}
-                            {{#if ../productionKeys.consumerKey}}
-                            <div class="d-flex justify-content-end gap-3">
-                                <button class="btn btn-primary custom-save-btn"
-                                    id="oauth2KeyGenerateButton-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
-                                    name="http-values" type="button" {{!-- TODO: cannot update applicatuon meaning new
-                                    sp won't be created just update oauth token --}}
-                                    onClick="updateApplicationKey('{{../applicationMetadata.applicationId}}')">
-                                    Update
-                                </button>
-                            </div>
+                            {{#if ../isProduction}}
+                                {{#if ../productionKeys.consumerKey}}
+                                <div class="d-flex justify-content-end gap-3">
+                                    <button class="btn btn-primary custom-save-btn"
+                                        id="oauth2KeyGenerateButton-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
+                                        name="http-values" type="button" {{!-- TODO: cannot update applicatuon meaning new
+                                        sp won't be created just update oauth token --}}
+                                        onClick="updateApplicationKey('{{../applicationMetadata.applicationId}}')">
+                                        Update
+                                    </button>
+                                </div>
+                                {{else}}
+                                <a class="d-flex justify-content-end gap-3">
+                                    <button class="btn btn-primary custom-save-btn"
+                                        id="oauth2KeyGenerateButton-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
+                                        name="http-values" type="button"
+                                        onClick="generateApplicationKey('{{../applicationMetadata.applicationId}}', {{#if ../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}})">
+                                        Generate Keys
+                                    </button>
+                                {{/if}}
                             {{else}}
-                            <a class="d-flex justify-content-end gap-3">
-                                <button class="btn btn-primary custom-save-btn"
-                                    id="oauth2KeyGenerateButton-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
-                                    name="http-values" type="button"
-                                    onClick="generateApplicationKey('{{../applicationMetadata.applicationId}}')">
-                                    Generate Keys
-                                </button>
-                    </div>
-                    {{/if}}
+                                {{#if ../sandboxKeys.consumerKey}}
+                                <div class="d-flex justify-content-end gap-3">
+                                    <button class="btn btn-primary custom-save-btn"
+                                        id="oauth2KeyGenerateButton-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
+                                        name="http-values" type="button" {{!-- TODO: cannot update applicatuon meaning new
+                                        sp won't be created just update oauth token --}}
+                                        onClick="updateApplicationKey('{{../applicationMetadata.applicationId}}')">
+                                        Update
+                                    </button>
+                                </div>
+                                {{else}}
+                                <a class="d-flex justify-content-end gap-3">
+                                    <button class="btn btn-primary custom-save-btn"
+                                        id="oauth2KeyGenerateButton-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
+                                        name="http-values" type="button"
+                                        onClick="generateApplicationKey('{{../applicationMetadata.applicationId}}', {{#if ../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}})">
+                                        Generate Keys
+                                    </button>
+                                {{/if}}                   
+                            {{/if}}
                     </form>
                 </div>
             </div>

@@ -1,4 +1,4 @@
-async function generateApplicationKey(appId) {
+async function generateApplicationKey(appId, keyType) {
     try {
         const response = await fetch(`/devportal/applications/${appId}/generate-keys`, {
             method: 'POST',
@@ -10,7 +10,7 @@ async function generateApplicationKey(appId) {
                     "password",
                     "client_credentials"
                 ],
-                "keyType": "PRODUCTION",
+                "keyType": keyType,
                 "keyManager": "Resident Key Manager",
                 "callbackUrl": "http://sample.com/callback/url",
                 "scopes": [
@@ -23,8 +23,7 @@ async function generateApplicationKey(appId) {
         });
 
         const responseData = await response.json();
-        console.log(responseData);
-        openApiKeyModal(responseData, "Generated API Key", "API Key");
+        openApiKeyModal(responseData.token.accessToken, "Generated API Key", "API Key");
         if (response.ok) {
             await showAlert('Application keys generated successfully!', 'success');
             const url = new URL(window.location.origin + window.location.pathname);
@@ -36,6 +35,30 @@ async function generateApplicationKey(appId) {
     } catch (error) {
         console.error('Error:', error);
         await showAlert(`An error occurred generating application keys: \n${error.message}`, 'error');
+    }
+}
+
+async function removeApplicationKey(applicationId, keyMappingId) {
+    try {
+        const response = await fetch(`/applications/${applicationId}/oauth-keys/${keyMappingId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const responseData = await response.json();
+        if (response.ok) {
+            await showAlert('Application keys removed successfully!', 'success');
+            const url = new URL(window.location.origin + window.location.pathname);
+            window.location.href = url.toString();
+        } else {
+            console.error('Failed to removed keys:', responseData);
+            await showAlert(`Failed to removed application keys. Please try again.\n${responseData.description}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        await showAlert(`An error occurred removing application keys: \n${error.message}`, 'error');
     }
 }
 
