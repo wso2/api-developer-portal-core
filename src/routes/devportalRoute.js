@@ -62,11 +62,12 @@ router.post('/subscriptions', ensureAuthenticated, devportalController.subscribe
 router.delete('/subscriptions/:subscriptionId', ensureAuthenticated, devportalController.unsubscribeAPI);
 
 router.post('/applications', ensureAuthenticated, devportalController.saveApplication);
-router.put('/applications/:applicationid', ensureAuthenticated, devportalController.updateApplication);
-router.delete('/applications/:applicationid', ensureAuthenticated, devportalController.deleteApplication);
-router.post('/applications/:applicationid/reset-throttle-policy', ensureAuthenticated, devportalController.resetThrottlingPolicy);
-router.post('/applications/:applicationid/api-keys/:env/generate', ensureAuthenticated, devportalController.generateAPIKeys);
-router.post('/applications/:applicationid/generate-keys', ensureAuthenticated, devportalController.generateApplicationKeys);
-router.post('/applications/:applicationid/oauth-keys/:keyMappingId/generate-token', ensureAuthenticated, devportalController.generateOAuthKeys);
+router.put('/applications/:applicationId', ensureAuthenticated, devportalController.updateApplication);
+router.delete('/applications/:applicationId', ensureAuthenticated, devportalController.deleteApplication);
+router.post('/applications/:applicationId/reset-throttle-policy', ensureAuthenticated, devportalController.resetThrottlingPolicy);
+router.post('/applications/:applicationId/api-keys/:env/generate', ensureAuthenticated, devportalController.generateAPIKeys);
+router.post('/applications/:applicationId/generate-keys', ensureAuthenticated, devportalController.generateApplicationKeys);
+router.post('/applications/:applicationId/oauth-keys/:keyMappingId/generate-token', ensureAuthenticated, devportalController.generateOAuthKeys);
+router.delete('/applications/:applicationId/oauth-keys/:keyMappingId', ensureAuthenticated, devportalController.revokeOAuthKeys);
 
 module.exports = router;

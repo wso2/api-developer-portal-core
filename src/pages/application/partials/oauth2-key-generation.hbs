@@ -61,10 +61,11 @@
                                         onClick="generateOauthKey('{{../applicationMetadata.applicationId}}', '{{../productionKeys.keyMappingId}}')">
                                         Generate Key
                                     </button>
+                                    {{> delete-confirmation modalTitle="Do you really want to remove keys?" modalMessage="This will remove the key entries stored in devportal, gateway as well as in the service provider." modalFunction="removeApplicationKey()" }}
                                     <button class='btn btn-secondary custom-save-btn'
                                         id='apiKeyRevokeButton-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
                                         name='http-values' type='button'
-                                        onClick="revokeOauthKey('{{applicationId}}', {{../isProduction}})">
+                                        onClick="openDeleteModal('{{../applicationMetadata.applicationId}}', '{{../productionKeys.keyMappingId}}')">
                                         Revoke Key
                                     </button>
                                 </div>

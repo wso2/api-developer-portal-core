@@ -38,9 +38,13 @@ async function generateApplicationKey(appId, keyType) {
     }
 }
 
-async function removeApplicationKey(applicationId, keyMappingId) {
+async function removeApplicationKey() {
+    const modal = document.getElementById('deleteConfirmation');
+    const applicationId = modal.dataset.applicationId;
+    const keyMappingId = modal.dataset.mappingId;
+
     try {
-        const response = await fetch(`/applications/${applicationId}/oauth-keys/${keyMappingId}`, {
+        const response = await fetch(`/devportal/applications/${applicationId}/oauth-keys/${keyMappingId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
