@@ -23,7 +23,6 @@ async function generateApplicationKey(appId, keyType) {
         });
 
         const responseData = await response.json();
-        openApiKeyModal(responseData.token.accessToken, "Generated API Key", "API Key");
         if (response.ok) {
             await showAlert('Application keys generated successfully!', 'success');
             const url = new URL(window.location.origin + window.location.pathname);
