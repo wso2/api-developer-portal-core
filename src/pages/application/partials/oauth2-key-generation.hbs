@@ -8,8 +8,10 @@
         <ul class="nav nav-tabs" id="keyManagerTabs" role="tablist">
             {{#each keyManagersMetadata}}
             <li class="nav-item" role="presentation">
-                <a class="nav-link {{#if @first}}active{{/if}}" id="tab-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" data-bs-toggle="tab"
-                    href="#tab-content-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" role="tab" aria-controls="tab-content-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
+                <a class="nav-link {{#if @first}}active{{/if}}"
+                    id="tab-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" data-bs-toggle="tab"
+                    href="#tab-content-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" role="tab"
+                    aria-controls="tab-content-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
                     aria-selected="{{#if @first}}true{{else}}false{{/if}}">
                     {{name}}
                 </a>
@@ -20,15 +22,100 @@
         <!-- KM Content -->
         <div class="tab-content" id="keyManagerTabsContent">
             {{#each keyManagersMetadata}}
-            <div class="tab-pane fade {{#if @first}}show active{{/if}}" id="tab-content-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" role="tabpanel"
+            <div class="tab-pane fade {{#if @first}}show active{{/if}}"
+                id="tab-content-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" role="tabpanel"
                 aria-labelledby="tab-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}">
                 <div class='container my-5'>
                     <div class='form-card p-5'>
                         <h2 class='title mb-4'>{{name}}</h2>
+                        <h3 class='h6'> Key and Secret </h3>
+                        {{#if ../isProduction}}
+                            {{#if ../productionKeys.consumerKey}}
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label for='token-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                            class='form-label'>
+                                            Consumer Key
+                                            <span class='text-danger'>*</span>
+                                        </label>
+                                        <input type='url'
+                                        id='token-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                        class='form-control' value='{{../productionKeys.consumerKey}}' disabled />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for='token-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                            class='form-label'>
+                                            Consumer Key
+                                            <span class='text-danger'>*</span>
+                                        </label>
+                                        <input type='url'
+                                        id='token-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                        class='form-control' value='{{../productionKeys.consumerSecret}}' disabled />
+                                    </div>
+                                </div>
 
-                        <p class='text-muted mb-4'>
-                            Key Configuration for {{name}}
-                        </p>
+                                <div class="d-flex justify-content-between  mb-4">
+                                    <button class='btn btn-primary custom-save-btn'
+                                        id='apiKeyGenerateButton-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                        name='http-values' type='button'
+                                        onClick="generateOauthKey('{{../applicationMetadata.applicationId}}', '{{../productionKeys.keyMappingId}}')">
+                                        Generate Key
+                                    </button>
+                                    <button class='btn btn-secondary custom-save-btn'
+                                        id='apiKeyRevokeButton-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                        name='http-values' type='button'
+                                        onClick="revokeOauthKey('{{applicationId}}', {{../isProduction}})">
+                                        Revoke Key
+                                    </button>
+                                </div>
+                            {{else}}
+                                <p class="mb-4"> Production Key and Secret is not generated for this application</p>
+                            {{/if}}
+                        {{else}}
+                            {{#if ../sandboxKeys.consumerKey}}
+                               <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label for='token-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                            class='form-label'>
+                                            Consumer Key
+                                            <span class='text-danger'>*</span>
+                                        </label>
+                                        <input type='url'
+                                        id='token-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                        class='form-control' value='{{../sandboxKeys.consumerKey}}' disabled />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for='token-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                            class='form-label'>
+                                            Consumer Key
+                                            <span class='text-danger'>*</span>
+                                        </label>
+                                        <input type='url'
+                                        id='token-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                        class='form-control' value='{{../sandboxKeys.consumerSecret}}' disabled />
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between  mb-4">
+                                    <button class='btn btn-primary custom-save-btn'
+                                        id='apiKeyGenerateButton-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                        name='http-values' type='button'
+                                        onClick="generateOauthKey('{{applicationId}}', {{../isProduction}})">
+                                        Generate Key
+                                    </button>
+                                    <button class='btn btn-secondary custom-save-btn'
+                                        id='apiKeyRevokeButton-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                        name='http-values' type='button'
+                                        onClick="revokeOauthKey('{{applicationId}}', {{../isProduction}})">
+                                        Revoke Key
+                                    </button>
+                                </div>
+                            {{else}}
+                                <p class="mb-4"> Sandbox Key and Secret is not generated for this application</p>
+                            {{/if}}
+                        {{/if}}
+
+                        <h3 class='h6 mb-4'> Key Configuration for {{name}} </h3>
                         <form id='oauth2KeyGenerateForm-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'>
 
                             {{!-- Token Endpoint --}}
@@ -141,20 +228,52 @@
                                 <div class='form-text mb-3'>{{tooltip}}</div>
                             </div>
                             {{/each}}
-
-                            <div class="d-flex justify-content-end gap-3">
-                                <button class="btn btn-primary custom-save-btn"
-                                    id="oauth2KeyGenerateButton-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
-                                    name="http-values" type="button"
-                                    onClick="generateOauth2Key('{{id}}', {{../isProduction}})">
-                                    Generate Keys
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                            {{#if ../isProduction}}
+                                {{#if ../productionKeys.consumerKey}}
+                                <div class="d-flex justify-content-end gap-3">
+                                    <button class="btn btn-primary custom-save-btn"
+                                        id="oauth2KeyGenerateButton-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
+                                        name="http-values" type="button" {{!-- TODO: cannot update applicatuon meaning new
+                                        sp won't be created just update oauth token --}}
+                                        onClick="updateApplicationKey('{{../applicationMetadata.applicationId}}')">
+                                        Update
+                                    </button>
+                                </div>
+                                {{else}}
+                                <a class="d-flex justify-content-end gap-3">
+                                    <button class="btn btn-primary custom-save-btn"
+                                        id="oauth2KeyGenerateButton-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
+                                        name="http-values" type="button"
+                                        onClick="generateApplicationKey('{{../applicationMetadata.applicationId}}', {{#if ../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}})">
+                                        Generate Keys
+                                    </button>
+                                {{/if}}
+                            {{else}}
+                                {{#if ../sandboxKeys.consumerKey}}
+                                <div class="d-flex justify-content-end gap-3">
+                                    <button class="btn btn-primary custom-save-btn"
+                                        id="oauth2KeyGenerateButton-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
+                                        name="http-values" type="button" {{!-- TODO: cannot update applicatuon meaning new
+                                        sp won't be created just update oauth token --}}
+                                        onClick="updateApplicationKey('{{../applicationMetadata.applicationId}}')">
+                                        Update
+                                    </button>
+                                </div>
+                                {{else}}
+                                <a class="d-flex justify-content-end gap-3">
+                                    <button class="btn btn-primary custom-save-btn"
+                                        id="oauth2KeyGenerateButton-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
+                                        name="http-values" type="button"
+                                        onClick="generateApplicationKey('{{../applicationMetadata.applicationId}}', {{#if ../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}})">
+                                        Generate Keys
+                                    </button>
+                                {{/if}}                   
+                            {{/if}}
+                    </form>
                 </div>
             </div>
-            {{/each}}
+        </div>
+        {{/each}}
         </div>
     </section>
 </body>

@@ -172,11 +172,32 @@ const loadApplication = async (req, res) => {
             });
 
             kMmetaData = await getAPIMKeyManagers(req);
+            let applicationKeyList = await generateApplicationKeys(req, applicationId);
+            let productionKeys = {};
+            let sandboxKeys = {};
+
+            applicationKeyList?.list?.map(key => {
+                let keyData = {
+                    consumerKey: key.consumerKey,
+                    consumerSecret: key.consumerSecret,
+                    keyMappingId: key.keyMappingId,
+                    keyType: key.keyType
+                };
+                if (key.keyType === constants.KEY_TYPE.PRODUCTION) {
+                    productionKeys = keyData;
+                } else {
+                    sandboxKeys = keyData;
+                }
+                return keyData;
+            }) || [];
+
             templateContent = {
                 applicationMetadata: metaData,
                 keyManagersMetadata: kMmetaData,
                 baseUrl: '/' + orgName,
-                apis: apiList
+                apis: apiList,
+                productionKeys: productionKeys,
+                sandboxKeys: sandboxKeys
             }
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID);
@@ -190,6 +211,14 @@ const loadApplication = async (req, res) => {
     }
 }
 
+async function generateApplicationKeys(req, applicationId) {
+    try {
+        return await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${applicationId}/keys`, {}, {});
+    } catch (error) {
+        console.error("Error occurred while generating application keys", error);
+        return null;
+    }
+}
 
 async function getAllAPIs(req) {
     try {
@@ -226,7 +255,7 @@ const loadApplicationForEdit = async (req, res) => {
         const orgName = req.params.orgName;
         const orgID = await orgIDValue(orgName);
         metaData = await getAPIMApplication(req, applicationId);
-        throttlingMetaData = await getAPIMThrottlingPolicies(req);
+        throttlingMetaData = await getAPIMThrottlingPolicies(req);        
         templateContent = {
             applicationMetadata: metaData,
             throttlingPoliciesMetadata: throttlingMetaData,
