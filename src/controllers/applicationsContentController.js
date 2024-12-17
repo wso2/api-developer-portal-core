@@ -182,17 +182,32 @@ const loadApplication = async (req, res) => {
                     consumerKey: key.consumerKey,
                     consumerSecret: key.consumerSecret,
                     keyMappingId: key.keyMappingId,
-                    keyType: key.keyType
+                    keyType: key.keyType,
+                    supportedGrantTypes: key.supportedGrantTypes
                 };
                 if (key.keyType === constants.KEY_TYPE.PRODUCTION) {
-                    productionKeys = keyData;
+                    productionKeys.push(keyData);
                 } else {
-                    sandboxKeys = keyData;
+                    sandboxKeys.push(keyData);
                 }
                 return keyData;
             }) || [];
 
-            let oauthKeys = await getOAuthKeys(req, applicationId);
+
+            kMmetaData.forEach(keyManager => {
+                productionKeys.forEach(productionKey => {
+                    if (productionKey.keyManager === keyManager.name) {
+                        keyManager.productionKeys = productionKey;
+                    }
+                });
+                sandboxKeys.forEach(sandboxKey => {
+                    if (sandboxKey.keyManager === keyManager.name) {
+                        keyManager.sandboxKeys = sandboxKey;
+                    }
+                });
+            });
+
+            console.log("kMmetaData", kMmetaData);
 
             templateContent = {
                 applicationMetadata: metaData,
@@ -200,11 +215,9 @@ const loadApplication = async (req, res) => {
                 baseUrl: '/' + orgName,
                 apis: apiList,
                 productionKeys: productionKeys,
-                sandboxKeys: sandboxKeys,
-                oauthKeys: oauthKeys
+                sandboxKeys: sandboxKeys
             }
 
-            console.log(templateContent);
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID);
             html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
@@ -222,15 +235,6 @@ async function getApplicationKeys(req, applicationId) {
         return await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${applicationId}/keys`, {}, {});
     } catch (error) {
         console.error("Error occurred while generating application keys", error);
-        return null;
-    }
-}
-
-async function getOAuthKeys(req, applicationId) {
-    try {
-        return await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys`, {}, {});
-    } catch (error) {
-        console.error("Error occurred while getting OAuth keys", error);
         return null;
     }
 }

@@ -54,6 +54,21 @@ Handlebars.registerHelper('in', function (value, options) {
     return validValues.includes(value) ? options.fn(this) : options.inverse(this);
 });
 
+Handlebars.registerHelper('conditionalIf', function (condition, value1, value2) {
+    return condition ? value1 : value2;
+});
+
+Handlebars.registerHelper('contains', function (array, value) {
+    return array && array.includes(value);
+});
+
+
+Handlebars.registerHelper('let', function (name, value, options) {
+    const data = Handlebars.createFrame(options.data);
+    data[name] = value;
+    return options.fn({ ...options.hash, ...data });
+});
+  
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
