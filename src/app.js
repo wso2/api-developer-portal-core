@@ -62,13 +62,22 @@ Handlebars.registerHelper('contains', function (array, value) {
     return array && array.includes(value);
 });
 
-
 Handlebars.registerHelper('let', function (name, value, options) {
     const data = Handlebars.createFrame(options.data);
     data[name] = value;
     return options.fn({ ...options.hash, ...data });
 });
+
+Handlebars.registerHelper('and', function () {
+    const args = Array.prototype.slice.call(arguments);
+    const lastArg = args.pop();
+    return args.every(Boolean) ? lastArg.fn(this) : lastArg.inverse(this);
+});
   
+Handlebars.registerHelper('getValue', function (obj, key) {
+    return obj[key];
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

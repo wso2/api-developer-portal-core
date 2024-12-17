@@ -148,40 +148,55 @@
                             </div>
 
                             <!-- Additional Configuration Fields -->
-                            {{#each applicationConfiguration}}
+                            {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
+                            {{#let "additionalProperties" (conditionalIf keys.additionalProperties keys.additionalProperties [])}}
+                            {{#each ../../applicationConfiguration}}
+                            {{#let "propValue" (conditionalIf (getValue ../additionalProperties name) (getValue ../additionalProperties name) default)}}
                             <div class="mb-3">
                                 <label for="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
                                     class="form-label">
-                                    {{label}}
+                                    {{../label}}
                                     {{#if required}}<span class="text-danger">*</span>{{/if}}
                                 </label>
 
-                                {{#if (eq type 'input')}}
-                                <input type="text" name="additionalProperties.{{{name}}}"
+                                {{#if (eq ../type 'input')}}
+                                <input type="text" name="additionalProperties.{{{../name}}}"
                                     id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
-                                    class="form-control" value="{{default}}" {{#if required}}required{{/if}} />
+                                    class="form-control" value="{{propValue}}" {{#if required}}required{{/if}} />
                                 {{/if}}
 
-                                {{#if (eq type 'text')}}
-                                <input type="text" name="additionalProperties.{{name}}"
+                                {{#if (eq ../type 'text')}}
+                                <input type="text" name="additionalProperties.{{../name}}"
                                     id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
-                                    class="form-control" value="{{default}}" {{#if required}}required{{/if}} />
+                                    class="form-control" value="{{propValue}}" {{#if required}}required{{/if}} />
                                 {{/if}}
 
-                                {{#if (eq type 'select')}}
+                                {{#and (eq ../type 'select') (eq ../multiple false)}}
                                 <select id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
                                     class="form-control" {{#if required}}required{{/if}}
-                                    name="additionalProperties.{{name}}">
-                                    {{#each values}}
-                                    <option value="{{this}}" {{#if (eq this ../default)}}selected{{/if}}>{{this}}
+                                    name="additionalProperties.{{../name}}" >
+                                    {{#each ../values}}
+                                    <option value="{{this}}" {{#if (eq this ../propValue)}}selected{{/if}}>{{this}}
                                     </option>
                                     {{/each}}
                                 </select>
-                                {{/if}}
+                                {{/and}}
 
-                                {{#if (eq type 'checkbox')}}
+                                {{#and (eq ../type 'select') (eq ../multiple true)}}                        
+                                <select id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
+                                        class="form-control" 
+                                        name="additionalProperties.{{../name}}"
+                                        >
+                                    {{#each ../values}}
+                                        <option {{#if (eq this ../propValue)}}selected{{/if}}>{{this}}
+                                        </option>
+                                    {{/each}}
+                                </select>
+                                {{/and}}
+
+                                {{#if (eq ../type 'checkbox')}}
                                 <div class="form-check">
-                                    <input type="checkbox" name="additionalProperties.{{name}}"
+                                    <input type="checkbox" name="additionalProperties.{{../name}}"
                                         id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
                                         class="form-check-input" value="{{#if default}}true{{else}}false{{/if}}" {{#if
                                         default}}checked{{/if}} />
@@ -194,44 +209,28 @@
 
                                 <div class='form-text mb-3'>{{tooltip}}</div>
                             </div>
+                            {{/let}}
                             {{/each}}
-                            {{#if ../isProduction}}
-                            {{#if productionKeys.consumerKey}}
+                            {{/let}}
+                            {{/let}}
+                            {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
+                            {{#if keys.consumerKey}}
                             <div class="d-flex justify-content-end gap-3">
                                 <button class="btn btn-primary custom-save-btn" id="applicationKeyUpdateButton"
                                     name="http-values" type="button" {{!-- TODO: cannot update applicatuon meaning new
                                     sp won't be created just update oauth token --}}
-                                    onClick="updateApplicationKey('{{../applicationMetadata.applicationId}}', '{{name}}')">
+                                    onClick="updateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.applicationId}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{keys.keyMappingId}}')">
                                     Update
                                 </button>
                             </div>
                             {{else}}
                             <button class="btn btn-primary custom-save-btn" id="applicationKeyGenerateButton"
                                 name="http-values" type="button"
-                                onClick="generateApplicationKey('applicationKeyGenerateForm-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}', '{{../applicationMetadata.applicationId}}', {{#if ../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{name}}')">
+                                onClick="generateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.applicationId}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}')">
                                 Generate Token
                             </button>
                             {{/if}}
-                            {{else}}
-                            {{#if sandboxKeys.consumerKey}}
-                            <div class="d-flex justify-content-end gap-3">
-                                <button class="btn btn-primary custom-save-btn"
-                                    id="oauth2KeyGenerateButton-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}, '{{name}}'"
-                                    name="http-values" type="button" {{!-- TODO: cannot update applicatuon meaning new
-                                    sp won't be created just update oauth token --}}
-                                    onClick="updateApplicationKey('{{../applicationMetadata.applicationId}}')">
-                                    Update
-                                </button>
-                            </div>
-                            {{else}}
-                            <button class="btn btn-primary custom-save-btn"
-                                id="applicationKeyGenerateButton-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
-                                name="http-values" type="button"
-                                onClick="generateApplicationKey('applicationKeyGenerateForm-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}', '{{../applicationMetadata.applicationId}}', {{#if ../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{name}}')">
-                                Generate Token
-                            </button>
-                            {{/if}}
-                            {{/if}}
+                            {{/let}}
                         </div>
                     </form>
                 </div>

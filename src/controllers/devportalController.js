@@ -182,6 +182,18 @@ const revokeOAuthKeys = async (req, res) => {
     }
 };
 
+const updateOAuthKeys = async (req, res) => {
+    try {
+        const applicationId = req.params.applicationId;
+        const keyMappingId = req.params.keyMappingId;
+        const responseData = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}`, {}, req.body);
+        res.status(200).json(responseData);
+    } catch (error) {
+        console.error("Error occurred while generating the OAuth keys", error);
+        util.handleError(res, error);
+    }
+};
+
 module.exports = {
     unsubscribeAPI,
     subscribeAPI,
@@ -192,5 +204,6 @@ module.exports = {
     generateAPIKeys,
     generateApplicationKeys,
     generateOAuthKeys,
-    revokeOAuthKeys
+    revokeOAuthKeys,
+    updateOAuthKeys
 };

@@ -1,28 +1,7 @@
 async function generateApplicationKey(formId, appId, keyType, keyManager) {
     const form = document.getElementById(formId);
     const formData = new FormData(form);
-    const jsonObject = {
-        additionalProperties: {},
-    };
-
-    formData.forEach((value, key) => {
-        if (key.startsWith("additionalProperties.")) {
-            // If the key is part of additionalProperties, add it to that object
-            const propName = key.replace("additionalProperties.", ""); // Remove the prefix
-            jsonObject.additionalProperties[propName] = value;
-          } else {
-            // Handle multiple checkbox values
-            if (jsonObject[key]) {
-                if (Array.isArray(jsonObject[key])) {
-                    jsonObject[key].push(value);
-                } else {
-                    jsonObject[key] = [jsonObject[key], value];
-                }
-            } else {
-                jsonObject[key] = value;
-            }
-        }
-    });
+    const jsonObject = getFormData(formData, keyManager);
 
     // Log the resulting object
     console.log(jsonObject);
@@ -50,7 +29,86 @@ async function generateApplicationKey(formId, appId, keyType, keyManager) {
         if (response.ok) {
             await showAlert('Application keys generated successfully!', 'success');
             const url = new URL(window.location.origin + window.location.pathname);
-            // window.location.href = url.toString();
+            window.location.href = url.toString();
+        } else {
+            console.error('Failed to generate keys:', responseData);
+            await showAlert(`Failed to generate application keys. Please try again.\n${responseData.description}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        await showAlert(`An error occurred generating application keys: \n${error.message}`, 'error');
+    }
+}
+
+function getFormData(formData, keyManager) {
+    let jsonObject = {
+        additionalProperties: {},
+    };
+
+    if (keyManager !== 'ResidentformData Key Manager') {
+        additionalProperties = {
+            "client_id": formData.get('consumerKey'),
+            "client_name": "adminMyApp_PRODUCTION",
+            "redirect_uris": [formData.get('callbackURL')],
+            "grant_types": formData.getAll('grantTypes')
+        }
+        jsonObject.additionalProperties = additionalProperties;
+    }
+
+    formData.forEach((value, key) => {
+        console.log("Key: ", key);
+        console.log("Value: ", value);
+
+        if (key.startsWith("additionalProperties.")) {
+            // If the key is part of additionalProperties, add it to that object
+            const propName = key.replace("additionalProperties.", ""); // Remove the prefix
+            jsonObject.additionalProperties[propName] = value;
+          } else {
+            // Handle multiple checkbox values
+            if (jsonObject[key]) {
+                if (Array.isArray(jsonObject[key])) {
+                    jsonObject[key].push(value);
+                } else {
+                    jsonObject[key] = [jsonObject[key], value];
+                }
+            } else {
+                jsonObject[key] = value;
+            }
+        }
+    });
+
+    return jsonObject;
+};
+
+async function updateApplicationKey(formId, appId, keyType, keyManager, keyManagerId) {
+    console.log("Key Manager ID: ", keyManagerId);
+    const form = document.getElementById(formId);
+    const formData = new FormData(form);
+    const jsonObject = getFormData(formData, keyManager);
+
+    try {
+        const response = await fetch(`/devportal/applications/${appId}/oauth-keys/${keyManagerId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                "supportedGrantTypes": jsonObject.grantTypes,
+                "keyType": keyType,
+                "keyManager": keyManager,
+                "callbackUrl": jsonObject.callbackURL,
+                "consumerKey": jsonObject.consumerKey,
+                "consumerSecret": null,
+                "keyMappingId": keyManagerId,
+                "additionalProperties": jsonObject.additionalProperties
+            }),
+        });
+
+        const responseData = await response.json();
+        if (response.ok) {
+            await showAlert('Application keys generated successfully!', 'success');
+            const url = new URL(window.location.origin + window.location.pathname);
+            window.location.href = url.toString();
         } else {
             console.error('Failed to generate keys:', responseData);
             await showAlert(`Failed to generate application keys. Please try again.\n${responseData.description}`, 'error');

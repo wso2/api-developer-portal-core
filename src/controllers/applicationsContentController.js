@@ -183,7 +183,8 @@ const loadApplication = async (req, res) => {
                     consumerSecret: key.consumerSecret,
                     keyMappingId: key.keyMappingId,
                     keyType: key.keyType,
-                    supportedGrantTypes: key.supportedGrantTypes
+                    supportedGrantTypes: key.supportedGrantTypes,
+                    additionalProperties: key.additionalProperties
                 };
                 if (key.keyType === constants.KEY_TYPE.PRODUCTION) {
                     productionKeys.push(keyData);
