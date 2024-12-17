@@ -3,9 +3,6 @@ async function generateApplicationKey(formId, appId, keyType, keyManager) {
     const formData = new FormData(form);
     const jsonObject = getFormData(formData, keyManager);
 
-    // Log the resulting object
-    console.log(jsonObject);
-
     try {
         const response = await fetch(`/devportal/applications/${appId}/generate-keys`, {
             method: 'POST',
@@ -56,9 +53,6 @@ function getFormData(formData, keyManager) {
     }
 
     formData.forEach((value, key) => {
-        console.log("Key: ", key);
-        console.log("Value: ", value);
-
         if (key.startsWith("additionalProperties.")) {
             // If the key is part of additionalProperties, add it to that object
             const propName = key.replace("additionalProperties.", ""); // Remove the prefix
@@ -81,7 +75,6 @@ function getFormData(formData, keyManager) {
 };
 
 async function updateApplicationKey(formId, appId, keyType, keyManager, keyManagerId) {
-    console.log("Key Manager ID: ", keyManagerId);
     const form = document.getElementById(formId);
     const formData = new FormData(form);
     const jsonObject = getFormData(formData, keyManager);
@@ -147,35 +140,11 @@ async function removeApplicationKey() {
     }
 }
 
-async function generateOauthKey(formId, appId, keyMappingId) {
+async function generateOauthKey(formId, appId, keyMappingId, keyManager) {
     const form = document.getElementById(formId);
     const formData = new FormData(form);
-    const jsonObject = {
-        additionalProperties: {
-            "pkceSupportPlain": false
-        },
-    };
+    const jsonObject = getFormData(formData, keyManager);
 
-    formData.forEach((value, key) => {
-        if (key.startsWith("additionalProperties.")) {
-            // If the key is part of additionalProperties, add it to that object
-            const propName = key.replace("additionalProperties.", ""); // Remove the prefix
-            jsonObject.additionalProperties[propName] = value;
-          } else {
-            // Handle multiple checkbox values
-            if (jsonObject[key]) {
-                if (Array.isArray(jsonObject[key])) {
-                    jsonObject[key].push(value);
-                } else {
-                    jsonObject[key] = [jsonObject[key], value];
-                }
-            } else {
-                jsonObject[key] = value;
-            }
-        }
-    });
-
-    console.log("Form Data: ", jsonObject);
     try {
         const response = await fetch(`/devportal/applications/${appId}/oauth-keys/${keyMappingId}/generate-token`, {
             method: 'POST',
@@ -186,9 +155,7 @@ async function generateOauthKey(formId, appId, keyMappingId) {
                 "additionalProperties": jsonObject.additionalProperties,
                 "consumerSecret": jsonObject.consumerSecret,
                 "revokeToken": null,
-                "scopes": [
-                    "default"
-                ],
+                "scopes": [],
                 "validityPeriod": 3600
             }),
         });

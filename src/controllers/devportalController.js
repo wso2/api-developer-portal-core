@@ -150,7 +150,6 @@ const generateApplicationKeys = async (req, res) => {
     try {
         const applicationId = req.params.applicationId;
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/generate-keys`, {}, req.body);
-        console.log(responseData);
         res.status(200).json(responseData);
     } catch (error) {
         console.error("Error occurred while generating the application keys", error);

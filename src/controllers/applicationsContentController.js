@@ -208,8 +208,6 @@ const loadApplication = async (req, res) => {
                 });
             });
 
-            console.log("kMmetaData", kMmetaData);
-
             templateContent = {
                 applicationMetadata: metaData,
                 keyManagersMetadata: kMmetaData,
