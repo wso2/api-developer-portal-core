@@ -367,9 +367,9 @@ async function readFilesInDirectory(directory, orgId, req, baseDir = '') {
             if (file.name.endsWith(".css")) {
                 fileType = "style"
                 if (file.name === "main.css") {
-                    strContent = strContent.replace(/@import\s*'\/styles\/([^']+)';/g,
+                    strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g,
                         `@import url("${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/layout?fileType=style&fileName=$1");`);
-                    content = Buffer.from(strContent, constants.CHARSET_UTF8);
+                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                 fileType = "layout"
