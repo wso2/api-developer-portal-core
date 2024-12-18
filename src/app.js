@@ -39,15 +39,6 @@ const app = express();
 const secret = crypto.randomBytes(64).toString('hex');
 const filePrefix = config.pathToContent;
 
-const dns = require('dns');
-
-process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
-
-dns.lookup('localhost', (err, address, family) => {
-    console.log(`localhost resolves to: ${address} (IPv${family})`);
-});
-
-
 app.engine('.hbs', engine({
     extname: '.hbs'
 }));
