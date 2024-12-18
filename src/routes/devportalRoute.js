@@ -24,10 +24,10 @@ const devportalController = require('../controllers/devportalController');
 const multer = require('multer');
 const storage = multer.memoryStorage()
 const apiDefinition = multer({ storage: storage })
-const { validateToken } = require('../middlewares/ensureAuthenticated');
+const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
 
 
-router.post('/organizations', validateToken, adminService.createOrganization);
+router.post('/organizations', adminService.createOrganization);
 router.get('/organizations', adminService.getOrganizations);
 router.put('/organizations/:orgId', adminService.updateOrganization);
 router.get('/organizations/:orgId', devportalService.getOrganization);
