@@ -19,7 +19,7 @@ const express = require('express');
 const router = express.Router();
 const contentController = require('../controllers/customContentController');
 const registerPartials = require('../middlewares/registerPartials');
-const ensureAuthenticated = require('../middlewares/ensureAuthenticated');
+const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
 
 // eslint-disable-next-line no-useless-escape
 router.get('(^(?!\/(favicon\.ico|images\/|technical-styles\/|styles\/|*login*|*portal*|devportal\/))/:orgName/*)', ensureAuthenticated, registerPartials, contentController.loadCustomContent);

@@ -99,7 +99,6 @@ const getAllOrganizations = async () => {
 const updateOrganization = async (req, res) => {
 
     try {
-        console.log("Update orggg")
         const orgId = req.params.orgId;
         if (!orgId) {
             console.log("Missing required parameter: 'orgId'");
@@ -399,6 +398,153 @@ async function readFilesInDirectory(directory, orgId, req, baseDir = '') {
     return fileDetails;
 }
 
+const createProvider = async (req, res) => {
+
+    const orgID = req.params.orgId;
+    const payload = req.body;
+    const rules = util.validateProvider();
+
+    for (let validation of rules) {
+        await validation.run(req);
+    }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json(util.getErrors(errors));
+    }
+    const extraKeys = util.rejectExtraProperties(['name', 'providerURL'], payload)
+    if (extraKeys.length > 0) {
+        return res.status(400).json(new CustomError(400, "Bad Request", `Unexpected properties: ${extraKeys.join(', ')}`));
+    }
+    try {
+        const provider = await adminDao.createProvider(orgID, payload);
+        let providerData = {
+            orgId: provider[0].dataValues.ORG_ID,
+            name: provider[0].dataValues.NAME,
+        };
+        for (const prop of provider) {
+            providerData[prop.dataValues.PROPERTY] = prop.dataValues.VALUE;
+        }
+        res.status(201).send(providerData);
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.PROVIDER_CREATE_ERROR}, ${error}`);
+        util.handleError(res, error);
+    }
+}
+
+const updateProvider = async (req, res) => {
+
+    try {
+        const orgId = req.params.orgId;
+        const payload = req.body;
+        if (!orgId) {
+            console.log("Missing required parameter: 'orgId'");
+            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+        }
+        const rules = util.validateProvider();
+
+        for (let validation of rules) {
+            await validation.run(req);
+        }
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json(util.getErrors(errors));
+        }
+        const extraKeys = util.rejectExtraProperties(['name', 'providerURL'], payload)
+        if (extraKeys.length > 0) {
+            return res.status(400).json(new CustomError(400, "Bad Request", `Unexpected properties: ${extraKeys.join(', ')}`));
+        }
+        const provider = await adminDao.updateProvider(orgId, payload);
+        let providerData = {
+            orgId: provider[0][0].dataValues.ORG_ID,
+            name: provider[0][0].dataValues.NAME,
+        };
+        for (const prop of provider) {
+            providerData[prop[0].dataValues.PROPERTY] = prop[0].dataValues.VALUE;
+        }
+        res.status(200).json(providerData);
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.PROVIDER_UPDATE_ERROR}, ${error}`);
+        util.handleError(res, error);
+    }
+
+}
+
+const getProviders = async (req, res) => {
+
+    try {
+        const orgID = req.params.orgId;
+        if (req.query.name) {
+            const providerName = req.query.name;
+            return res.status(200).send(await getProvidetByName(orgID, providerName));
+        } else {
+            const providerList = await getAllProviders(orgID);
+            return res.status(200).send(providerList);
+        }
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.PROVIDER_FETCH_ERROR}, ${error}`);
+        util.handleError(res, error);
+    }
+}
+
+const getProvidetByName = async (orgID, name) => {
+
+    const providerData = await adminDao.getProvider(orgID, name);
+    if (providerData.length > 0) {
+        const providerResponse = {
+            name: providerData[0].dataValues.NAME,
+        };
+        for (const provider of providerData) {
+            providerResponse[provider.dataValues.PROPERTY] = provider.dataValues.VALUE;
+        }
+        return providerResponse;
+    }
+
+}
+
+const getAllProviders = async (orgID) => {
+
+    const providers = await adminDao.getProviders(orgID);
+    const providerList = [];
+    if (providers.length > 0) {
+        for (const provider of providers) {
+            const providerData = {
+                name: provider.dataValues.NAME,
+            };
+            for (const [key, value] of Object.entries(provider.dataValues.properties)) {
+                providerData[key] = value;
+            }
+            providerList.push(providerData);
+        }
+    }
+    return providerList;
+}
+
+const deleteProvider = async (req, res) => {
+
+    try {
+        const orgId = req.params.orgId;
+        const providerName = req.query.name;
+        let property, deletedRowsCount;
+        if (req.query.property) {
+            property = req.query.property;
+            deletedRowsCount = await adminDao.deleteProviderProperty(orgId, property, providerName);
+        } else {
+            deletedRowsCount = await adminDao.deleteProvider(orgId, providerName);
+        }
+        if (!orgId || !providerName) {
+            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+        }
+        if (deletedRowsCount > 0) {
+            res.status(204).send();
+        } else {
+            throw new CustomError(404, "Records Not Found", 'Provider property not found');
+        }
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.PROVIDER_DELETE_ERROR}, ${error}`);
+        util.handleError(res, error);
+    }
+}
+
 module.exports = {
     createOrganization,
     updateOrganization,
@@ -412,5 +558,11 @@ module.exports = {
     getIdentityProvider,
     deleteIdentityProvider,
     getOrganizations,
-    getAllOrganizations
+    getAllOrganizations,
+    createProvider,
+    updateProvider,
+    getProviders,
+    getAllProviders,
+    deleteProvider,
+
 };

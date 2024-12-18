@@ -19,7 +19,7 @@ const express = require('express');
 const router = express.Router();
 const apiController = require('../controllers/apiContentController');
 const registerPartials = require('../middlewares/registerPartials');
-const ensureAuthenticated = require('../middlewares/ensureAuthenticated');
+const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
 
 
 router.get('/((?!favicon.ico)):orgName/apis', ensureAuthenticated, registerPartials, apiController.loadAPIs);

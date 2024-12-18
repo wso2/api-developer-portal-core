@@ -383,6 +383,32 @@ const validateOrganization = () => {
     return validations;
 }
 
+const validateProvider = () => {
+
+    const validations = [
+        body('name')
+            .notEmpty()
+            .escape()
+            .trim(),
+        body('providerURL')
+            .notEmpty()
+            .isURL({
+                protocols: ['http', 'https'], // Allow both http and https
+                require_tld: false
+            }).withMessage('providerUrl must be a valid URL')
+    ]
+    return validations;
+}
+
+const rejectExtraProperties = (allowedKeys, payload) => {
+
+    const extraKeys = Object.keys(payload).filter(
+        (key) => !allowedKeys.includes(key)
+    );
+    return extraKeys;
+};
+
+
 module.exports = {
     loadMarkdown,
     renderTemplate,
@@ -399,5 +425,7 @@ module.exports = {
     invokeApiRequest,
     validateIDP,
     validateOrganization,
-    getErrors
+    getErrors,
+    validateProvider,
+    rejectExtraProperties
 }
