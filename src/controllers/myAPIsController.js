@@ -133,7 +133,7 @@ const loadDefaultContent = async (req, res) => {
     const templatePath = path.join(require.main.filename, '..', 'pages', 'myAPIs', 'page.hbs');
     const templateResponse = fs.readFileSync(templatePath, constants.CHARSET_UTF8);
 
-    const layoutPath = path.join(require.main.filename, '..', 'pages', 'layout', 'main.hbs');
+    const layoutPath = path.join(process.cwd(), filePrefix, 'layout', 'main.hbs');
     const layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
 
     let html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
