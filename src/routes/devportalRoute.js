@@ -24,10 +24,10 @@ const devportalController = require('../controllers/devportalController');
 const multer = require('multer');
 const storage = multer.memoryStorage()
 const apiDefinition = multer({ storage: storage })
-const { validateToken } = require('../middlewares/ensureAuthenticated');
+const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
 
 
-router.post('/organizations', validateToken, adminService.createOrganization);
+router.post('/organizations', adminService.createOrganization);
 router.get('/organizations', adminService.getOrganizations);
 router.put('/organizations/:orgId', adminService.updateOrganization);
 router.get('/organizations/:orgId', devportalService.getOrganization);
@@ -66,12 +66,14 @@ router.delete('/organizations/:orgId/apis/:apiId/template', apiMetadataService.d
 router.post('/subscriptions' , devportalController.subscribeAPI);
 router.delete('/subscriptions/:subscriptionId', devportalController.unsubscribeAPI);
 
-router.post('/applications', devportalController.saveApplication);
-router.put('/applications/:applicationid', devportalController.updateApplication);
-router.delete('/applications/:applicationid', devportalController.deleteApplication);
-router.post('/applications/:applicationid/reset-throttle-policy', devportalController.resetThrottlingPolicy);
-router.post('/applications/:applicationid/api-keys/:env/generate', devportalController.generateAPIKeys);
-router.post('/applications/:applicationid/generate-keys', devportalController.generateApplicationKeys);
-router.post('/applications/:applicationid/oauth-keys/:keyMappingId/generate-token', devportalController.generateOAuthKeys);
+router.post('/applications', ensureAuthenticated, devportalController.saveApplication);
+router.put('/applications/:applicationId', ensureAuthenticated, devportalController.updateApplication);
+router.delete('/applications/:applicationId', ensureAuthenticated, devportalController.deleteApplication);
+router.post('/applications/:applicationId/reset-throttle-policy', ensureAuthenticated, devportalController.resetThrottlingPolicy);
+router.post('/applications/:applicationId/api-keys/:env/generate', ensureAuthenticated, devportalController.generateAPIKeys);
+router.post('/applications/:applicationId/generate-keys', ensureAuthenticated, devportalController.generateApplicationKeys);
+router.post('/applications/:applicationId/oauth-keys/:keyMappingId/generate-token', ensureAuthenticated, devportalController.generateOAuthKeys);
+router.delete('/applications/:applicationId/oauth-keys/:keyMappingId', ensureAuthenticated, devportalController.revokeOAuthKeys);
+router.put('/applications/:applicationId/oauth-keys/:keyMappingId', ensureAuthenticated, devportalController.updateOAuthKeys);
 
 module.exports = router;

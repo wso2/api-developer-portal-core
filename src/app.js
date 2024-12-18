@@ -39,15 +39,6 @@ const app = express();
 const secret = crypto.randomBytes(64).toString('hex');
 const filePrefix = config.pathToContent;
 
-const dns = require('dns');
-
-process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
-
-dns.lookup('localhost', (err, address, family) => {
-    console.log(`localhost resolves to: ${address} (IPv${family})`);
-});
-
-
 app.engine('.hbs', engine({
     extname: '.hbs'
 }));
@@ -61,6 +52,30 @@ Handlebars.registerHelper('eq', function (a, b) {
 Handlebars.registerHelper('in', function (value, options) {
     const validValues = options.hash.values.split(',');
     return validValues.includes(value) ? options.fn(this) : options.inverse(this);
+});
+
+Handlebars.registerHelper('conditionalIf', function (condition, value1, value2) {
+    return condition ? value1 : value2;
+});
+
+Handlebars.registerHelper('contains', function (array, value) {
+    return array && array.includes(value);
+});
+
+Handlebars.registerHelper('let', function (name, value, options) {
+    const data = Handlebars.createFrame(options.data);
+    data[name] = value;
+    return options.fn({ ...options.hash, ...data });
+});
+
+Handlebars.registerHelper('and', function () {
+    const args = Array.prototype.slice.call(arguments);
+    const lastArg = args.pop();
+    return args.every(Boolean) ? lastArg.fn(this) : lastArg.inverse(this);
+});
+  
+Handlebars.registerHelper('getValue', function (obj, key) {
+    return obj[key];
 });
 
 app.use(express.json());
