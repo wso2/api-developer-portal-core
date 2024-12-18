@@ -1,7 +1,7 @@
-async function generateApplicationKey(formId, appId, keyType, keyManager) {
+async function generateApplicationKey(formId, appId, keyType, keyManager, clientName) {
     const form = document.getElementById(formId);
     const formData = new FormData(form);
-    const jsonObject = getFormData(formData, keyManager);
+    const jsonObject = getFormData(formData, keyManager, clientName);
 
     try {
         const response = await fetch(`/devportal/applications/${appId}/generate-keys`, {
@@ -37,7 +37,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager) {
     }
 }
 
-function getFormData(formData, keyManager) {
+function getFormData(formData, keyManager, clientName) {
     let jsonObject = {
         additionalProperties: {},
     };
@@ -45,7 +45,7 @@ function getFormData(formData, keyManager) {
     if (keyManager !== 'ResidentformData Key Manager') {
         additionalProperties = {
             "client_id": formData.get('consumerKey'),
-            "client_name": "adminMyApp_PRODUCTION",
+            "client_name": clientName,
             "redirect_uris": [formData.get('callbackURL')],
             "grant_types": formData.getAll('grantTypes')
         }
@@ -74,10 +74,10 @@ function getFormData(formData, keyManager) {
     return jsonObject;
 };
 
-async function updateApplicationKey(formId, appId, keyType, keyManager, keyManagerId) {
+async function updateApplicationKey(formId, appId, keyType, keyManager, keyManagerId, clientName) {
     const form = document.getElementById(formId);
     const formData = new FormData(form);
-    const jsonObject = getFormData(formData, keyManager);
+    const jsonObject = getFormData(formData, keyManager, clientName);
 
     try {
         const response = await fetch(`/devportal/applications/${appId}/oauth-keys/${keyManagerId}`, {
@@ -140,10 +140,10 @@ async function removeApplicationKey() {
     }
 }
 
-async function generateOauthKey(formId, appId, keyMappingId, keyManager) {
+async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName) {
     const form = document.getElementById(formId);
     const formData = new FormData(form);
-    const jsonObject = getFormData(formData, keyManager);
+    const jsonObject = getFormData(formData, keyManager, clientName);
 
     try {
         const response = await fetch(`/devportal/applications/${appId}/oauth-keys/${keyMappingId}/generate-token`, {

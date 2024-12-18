@@ -1,6 +1,6 @@
 <head>
-    <link rel='stylesheet' href='/technical-styles/oauth2-key-generation.css' />
-    <script src='/technical-scripts/oauth2-key-generation.js' defer></script>
+    <link rel="stylesheet" href="/technical-styles/oauth2-key-generation.css" />
+    <script src="/technical-scripts/oauth2-key-generation.js" defer></script>
 </head>
 
 <body>
@@ -9,7 +9,9 @@
             {{#each keyManagersMetadata}}
             <li class="nav-item" role="presentation">
                 <a class="nav-link {{#if @first}}active{{/if}}"
-                    id="tab-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" data-bs-toggle="tab"
+                    id="tab-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
+                    href="#tab-content-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" 
+                    role="tab"
                     href="#tab-content-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" role="tab"
                     aria-controls="tab-content-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
                     aria-selected="{{#if @first}}true{{else}}false{{/if}}">
@@ -63,7 +65,7 @@
                                 <button class='btn btn-primary custom-save-btn'
                                     id='apiKeyGenerateButton-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
                                     name='http-values' type='button'
-                                    onClick="generateOauthKey('applicationKeyGenerateForm-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}', '{{../applicationMetadata.applicationId}}', '{{keys.keyMappingId}}')">
+                                    onClick="generateOauthKey('applicationKeyGenerateForm-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}', '{{../applicationMetadata.applicationId}}', '{{keys.keyMappingId}}', '{{keys.clientName}}')">
                                     Generate Token
                                 </button>
 
@@ -219,14 +221,14 @@
                                 <button class="btn btn-primary custom-save-btn" id="applicationKeyUpdateButton"
                                     name="http-values" type="button" {{!-- TODO: cannot update applicatuon meaning new
                                     sp won't be created just update oauth token --}}
-                                    onClick="updateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.applicationId}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{keys.keyMappingId}}')">
+                                    onClick="updateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.applicationId}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{keys.keyMappingId}}', '{{keys.clientName}}')">
                                     Update
                                 </button>
                             </div>
                             {{else}}
                             <button class="btn btn-primary custom-save-btn" id="applicationKeyGenerateButton"
                                 name="http-values" type="button"
-                                onClick="generateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.applicationId}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}')">
+                                onClick="generateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.applicationId}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{keys.clientName}}')">
                                 Generate Token
                             </button>
                             {{/if}}

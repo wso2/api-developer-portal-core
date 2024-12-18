@@ -172,11 +172,15 @@ const loadApplication = async (req, res) => {
             });
 
             kMmetaData = await getAPIMKeyManagers(req);
-            let applicationKeyList = await getApplicationKeys(req, applicationId); //keyMappingId
+            let applicationKeyList = await getApplicationKeys(req, applicationId);
             let productionKeys = [];
             let sandboxKeys = [];
 
             applicationKeyList?.list?.map(key => {
+                let client_name;
+                if (key?.additionalProperties?.client_name) {
+                    client_name = key.additionalProperties.client_name;
+                }
                 let keyData = {
                     keyManager: key.keyManager,
                     consumerKey: key.consumerKey,
@@ -184,7 +188,8 @@ const loadApplication = async (req, res) => {
                     keyMappingId: key.keyMappingId,
                     keyType: key.keyType,
                     supportedGrantTypes: key.supportedGrantTypes,
-                    additionalProperties: key.additionalProperties
+                    additionalProperties: key.additionalProperties,
+                    clientName: client_name
                 };
                 if (key.keyType === constants.KEY_TYPE.PRODUCTION) {
                     productionKeys.push(keyData);
