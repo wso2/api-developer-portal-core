@@ -40,6 +40,7 @@
     "handlebars": "^4.7.8",
     "hbs": "^4.2.0",
     "https": "^1.0.0",
+    "jose": "^5.9.6",
     "js-yaml": "^4.1.0",
     "jsonwebtoken": "^9.0.2",
     "marked": "^13.0.3",

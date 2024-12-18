@@ -1,5 +1,6 @@
 <head>
     <link rel="stylesheet" href="/technical-styles/settings.css">
+    <link rel="stylesheet" href="/technical-styles/add-provider.css">
     <script src="/technical-scripts/upload-zip.js" defer></script>
 </head>
 <main>
@@ -9,11 +10,12 @@
         {{/if}}
         {{#if content}}
         {{> list-files }}
+        {{> add-provider}}
         {{/if}}
         {{#if idp}}
         {{> list-idp}}
         {{/if}}
-        {{#if create}}
+        {{#if createIDP}}
         {{> create-idp}}
         {{/if}}
     </div>

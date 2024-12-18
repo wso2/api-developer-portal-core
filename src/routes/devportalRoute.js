@@ -24,10 +24,10 @@ const devportalController = require('../controllers/devportalController');
 const multer = require('multer');
 const storage = multer.memoryStorage()
 const apiDefinition = multer({ storage: storage })
-const ensureAuthenticated = require('../middlewares/ensureAuthenticated');
+const { validateToken } = require('../middlewares/ensureAuthenticated');
 
 
-router.post('/organizations', adminService.createOrganization);
+router.post('/organizations', validateToken, adminService.createOrganization);
 router.get('/organizations', adminService.getOrganizations);
 router.put('/organizations/:orgId', adminService.updateOrganization);
 router.get('/organizations/:orgId', devportalService.getOrganization);
@@ -45,6 +45,11 @@ router.get('/organizations/:orgId/layout', devportalService.getOrgContent);
 router.get('/organizations/:orgId/layout/:fileType', devportalService.getOrgContent);
 router.delete('/organizations/:orgId/layout', adminService.deleteOrgContent);
 
+router.post('/organizations/:orgId/provider', adminService.createProvider);
+router.put('/organizations/:orgId/provider',  adminService.updateProvider);
+router.get('/organizations/:orgId/provider', adminService.getProviders);
+router.delete('/organizations/:orgId/provider', adminService.deleteProvider);
+
 router.post('/organizations/:orgId/apis', apiDefinition.single('apiDefinition'), apiMetadataService.createAPIMetadata);
 router.get('/organizations/:orgId/apis/:apiId', apiMetadataService.getAPIMetadata);
 router.get('/organizations/:orgId/apis', apiMetadataService.getAllAPIMetadata);
@@ -58,15 +63,15 @@ router.get('/organizations/:orgId/apis/:apiId/template', apiMetadataService.getA
 router.delete('/organizations/:orgId/apis/:apiId/template', apiMetadataService.deleteAPIFile);
 
 
-router.post('/subscriptions', ensureAuthenticated, devportalController.subscribeAPI);
-router.delete('/subscriptions/:subscriptionId', ensureAuthenticated, devportalController.unsubscribeAPI);
+router.post('/subscriptions' , devportalController.subscribeAPI);
+router.delete('/subscriptions/:subscriptionId', devportalController.unsubscribeAPI);
 
-router.post('/applications', ensureAuthenticated, devportalController.saveApplication);
-router.put('/applications/:applicationid', ensureAuthenticated, devportalController.updateApplication);
-router.delete('/applications/:applicationid', ensureAuthenticated, devportalController.deleteApplication);
-router.post('/applications/:applicationid/reset-throttle-policy', ensureAuthenticated, devportalController.resetThrottlingPolicy);
-router.post('/applications/:applicationid/api-keys/:env/generate', ensureAuthenticated, devportalController.generateAPIKeys);
-router.post('/applications/:applicationid/generate-keys', ensureAuthenticated, devportalController.generateApplicationKeys);
-router.post('/applications/:applicationid/oauth-keys/:keyMappingId/generate-token', ensureAuthenticated, devportalController.generateOAuthKeys);
+router.post('/applications', devportalController.saveApplication);
+router.put('/applications/:applicationid', devportalController.updateApplication);
+router.delete('/applications/:applicationid', devportalController.deleteApplication);
+router.post('/applications/:applicationid/reset-throttle-policy', devportalController.resetThrottlingPolicy);
+router.post('/applications/:applicationid/api-keys/:env/generate', devportalController.generateAPIKeys);
+router.post('/applications/:applicationid/generate-keys', devportalController.generateApplicationKeys);
+router.post('/applications/:applicationid/oauth-keys/:keyMappingId/generate-token', devportalController.generateOAuthKeys);
 
 module.exports = router;

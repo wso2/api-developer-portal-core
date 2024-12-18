@@ -17,6 +17,8 @@
  */
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize');
+const Provider = require('../models/provider');
+
 
 const Organization = sequelize.define('DP_ORGANIZATION', {
     ORG_ID: {
@@ -124,6 +126,15 @@ OrgContent.belongsTo(Organization, {
 });
 
 Organization.hasMany(OrgContent, {
+    foreignKey: 'ORG_ID',
+    onDelete: 'CASCADE',
+});
+
+Provider.belongsTo(Organization, {
+    foreignKey: 'ORG_ID',
+});
+
+Organization.hasMany(Provider, {
     foreignKey: 'ORG_ID',
     onDelete: 'CASCADE',
 });
