@@ -42,7 +42,7 @@ function getFormData(formData, keyManager, clientName) {
         additionalProperties: {},
     };
 
-    if (keyManager !== 'ResidentformData Key Manager') {
+    if (keyManager !== 'Resident Key Manager') {
         additionalProperties = {
             "client_id": formData.get('consumerKey'),
             "client_name": clientName,
