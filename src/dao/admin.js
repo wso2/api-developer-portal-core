@@ -19,7 +19,7 @@ const { Organization, OrgContent } = require('../models/orgModels');
 const { validate } = require('uuid');
 const { Sequelize } = require('sequelize');
 const { IdentityProvider } = require('../models/identityProvider');
-
+const Provider = require('../models/provider');
 const createOrganization = async (orgData) => {
 
     let devPortalID = "";
@@ -354,6 +354,165 @@ const deleteOrgContent = async (orgId, fileName) => {
     }
 };
 
+const createProvider = async (orgID, provider) => {
+
+
+    let providerDataList = [];
+    for (const [key, value] of Object.entries(provider)) {
+        if (key !== 'name') {
+            console.log(key, value)
+            const providerData = {
+                ORG_ID: orgID,
+                NAME: provider.name,
+                PROPERTY: key,
+                VALUE: value
+            };
+            providerDataList.push(providerData);
+        }
+    }
+    try {
+        const provider = await Provider.bulkCreate(providerDataList);
+        console.log(provider)
+        return provider;
+    } catch (error) {
+        console.log(error)
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const updateProvider = async (orgID, provider) => {
+
+    try {
+        let updatedProviders = [];
+        for (const [key, value] of Object.entries(provider)) {
+            if (key !== 'name') {
+                const [updatedRowsCount, providerContent] = await Provider.update(
+                    {
+                        VALUE: value
+                    },
+                    {
+                        where: {
+                            ORG_ID: orgID,
+                            PROPERTY: key,
+                            NAME: provider.name
+                        },
+                        returning: true
+                    }
+                );
+                updatedProviders.push(providerContent)
+                if (updatedRowsCount < 1) {
+                    throw new Sequelize.EmptyResultError('API Provider not found');
+                }
+            }
+        }
+        return updatedProviders;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const deleteProviderProperty = async (orgID, property, name) => {
+
+    try {
+        const deletedRowsCount = await Provider.destroy({
+            where: {
+                ORG_ID: orgID,
+                PROPERTY: property,
+                NAME: name
+            }
+        });
+        if (deletedRowsCount < 1) {
+            throw Object.assign(new Sequelize.EmptyResultError('Organization not found'));
+        } else {
+            return deletedRowsCount;
+        }
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const deleteProvider = async (orgID, name) => {
+
+    try {
+        const deletedRowsCount = await Provider.destroy({
+            where: {
+                ORG_ID: orgID,
+                NAME: name
+            }
+        });
+        if (deletedRowsCount < 1) {
+            throw Object.assign(new Sequelize.EmptyResultError('Organization not found'));
+        } else {
+            return deletedRowsCount;
+        }
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getProviders = async (orgID) => {
+
+    try {
+        const providers = await Provider.findAll(
+            {
+                attributes: [
+                    'NAME',
+                    [
+                        Sequelize.fn(
+                            'JSON_OBJECT_AGG',
+                            Sequelize.col('PROPERTY'),
+                            Sequelize.col('VALUE')
+                        ),
+                        'properties'
+                    ]
+                ],
+                where: { ORG_ID: orgID },
+                group: ['NAME']
+            }
+        );
+        if (providers.length === 0) {
+            return [];
+        }
+        return providers;
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
+const getProvider = async (orgID, name) => {
+
+    try {
+        return await Provider.findAll(
+            {
+                where: {
+                    ORG_ID: orgID,
+                    NAME: name
+                }
+            });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+
+}
+
 module.exports = {
     createOrganization,
     getOrganization,
@@ -368,5 +527,11 @@ module.exports = {
     getIdentityProvider,
     deleteIdentityProvider,
     getOrgId,
-    getOrganizations
+    getOrganizations,
+    createProvider,
+    deleteProviderProperty,
+    deleteProvider,
+    updateProvider,
+    getProviders,
+    getProvider
 };

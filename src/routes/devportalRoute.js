@@ -45,6 +45,11 @@ router.get('/organizations/:orgId/layout', devportalService.getOrgContent);
 router.get('/organizations/:orgId/layout/:fileType', devportalService.getOrgContent);
 router.delete('/organizations/:orgId/layout', adminService.deleteOrgContent);
 
+router.post('/organizations/:orgId/provider', adminService.createProvider);
+router.put('/organizations/:orgId/provider',  adminService.updateProvider);
+router.get('/organizations/:orgId/provider', adminService.getProviders);
+router.delete('/organizations/:orgId/provider', adminService.deleteProvider);
+
 router.post('/organizations/:orgId/apis', apiDefinition.single('apiDefinition'), apiMetadataService.createAPIMetadata);
 router.get('/organizations/:orgId/apis/:apiId', apiMetadataService.getAPIMetadata);
 router.get('/organizations/:orgId/apis', apiMetadataService.getAllAPIMetadata);

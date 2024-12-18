@@ -26,6 +26,8 @@ const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const apiMetadataService = require('../services/apiMetadataService');
+const adminService = require('../services/adminService');
+
 
 const filePrefix = config.pathToContent;
 const generateArray = (length) => Array.from({ length });
@@ -115,7 +117,8 @@ const loadAPIContent = async (req, res) => {
             if (metaData.provider === "WSO2") {
                 providerUrl = '#subscriptionPlans';
             } else {
-                providerUrl = config.providerURL[metaData.provider];
+                const providerList = await adminService.getAllProviders(orgID);
+                providerUrl = providerList.find(provider => provider.name === metaData.provider)?.providerURL || '#subscriptionPlans';
             }
 
             const templateContent = {

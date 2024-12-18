@@ -79,6 +79,11 @@ const loadSettingPage = async (req, res) => {
                 templateContent.views = views;
                 templateContent.orgContent = false;
             }
+            //get api providers
+            const apiProviders = await getAPIProviders(orgID);
+            if (apiProviders.length > 0) {
+                templateContent.apiProviders = apiProviders;
+            }
             layoutResponse = await loadLayoutFromAPI(orgID);
         }
         if (layoutResponse === "") {
@@ -90,6 +95,19 @@ const loadSettingPage = async (req, res) => {
     } catch (error) {
         console.error(`Error while loading content from DB: ${error}`);
     }
+}
+
+async function getMockAPIProviders(orgID) {
+
+    const mockAPIProvidersDataPath = path.join(process.cwd(), filePrefix + '../mock/APIProviders/APIProviders.json');
+    const mockAPIProvidersData = JSON.parse(fs.readFileSync(mockAPIProvidersDataPath, 'utf-8'));
+    return mockAPIProvidersData;
+}
+
+async function getAPIProviders(orgID) {
+
+    const apiProviders = await adminService.getAllProviders(orgID);
+    return apiProviders;
 }
 
 async function getMockIdentityProvider() {
