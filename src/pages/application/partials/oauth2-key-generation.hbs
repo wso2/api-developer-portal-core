@@ -9,9 +9,7 @@
             {{#each keyManagersMetadata}}
             <li class="nav-item" role="presentation">
                 <a class="nav-link {{#if @first}}active{{/if}}"
-                    id="tab-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
-                    href="#tab-content-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" 
-                    role="tab"
+                    id="tab-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" data-bs-toggle="tab"
                     href="#tab-content-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" role="tab"
                     aria-controls="tab-content-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
                     aria-selected="{{#if @first}}true{{else}}false{{/if}}">
@@ -65,7 +63,7 @@
                                 <button class='btn btn-primary custom-save-btn'
                                     id='apiKeyGenerateButton-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
                                     name='http-values' type='button'
-                                    onClick="generateOauthKey('applicationKeyGenerateForm-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}', '{{../applicationMetadata.applicationId}}', '{{keys.keyMappingId}}', '{{keys.clientName}}')">
+                                    onClick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.applicationId}}', '{{keys.keyMappingId}}', '{{keys.clientName}}')">
                                     Generate Token
                                 </button>
 
