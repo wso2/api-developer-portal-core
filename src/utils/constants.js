@@ -134,12 +134,14 @@ module.exports = {
         IDP_DELETE_ERROR: "Error while deleting IDP",
         API_NOT_IN_ORG: "API does not belong to given organization",
         UNAUTHENTICATED: "User is not authenticated",
+        FORBIDDEN: "You do not have permission to access this resource",
         PROVIDER_CREATE_ERROR: "Error while creating provider",
         PROVIDER_UPDATE_ERROR: "Error while updating provider",
         PROVIDER_DELETE_ERROR: "Error while deleting provider",
         PROVIDER_FETCH_ERROR: "Error while fetching providers"
     },
     ERROR_CODE: {
-        401: "Unauthenticated"
+        401: "Unauthenticated",
+        403: "Forbidden"
     }
 }

@@ -39,6 +39,10 @@ const app = express();
 const secret = crypto.randomBytes(64).toString('hex');
 const filePrefix = config.pathToContent;
 
+if (config.disableTLS) {
+    process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+}
+
 app.engine('.hbs', engine({
     extname: '.hbs'
 }));
@@ -73,7 +77,7 @@ Handlebars.registerHelper('and', function () {
     const lastArg = args.pop();
     return args.every(Boolean) ? lastArg.fn(this) : lastArg.inverse(this);
 });
-  
+
 Handlebars.registerHelper('getValue', function (obj, key) {
     return obj[key];
 });
@@ -119,7 +123,7 @@ if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.DEFAULT, orgContent);
     app.use(constants.ROUTE.DEFAULT, myAPIs);
     app.use(constants.ROUTE.DEFAULT, settingsRoute);
-    app.use(constants.ROUTE.DEFAULT, customContent);  
+    app.use(constants.ROUTE.DEFAULT, customContent);
 }
 
 app.listen(config.port);

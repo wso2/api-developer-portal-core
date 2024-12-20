@@ -60,6 +60,15 @@
                 <input type="text" class="form-control" id="logoutRedirectURI" name="logoutRedirectURI"
                     placeholder="Enter logout redirect URI">
             </div>
+            <div class="mb-3">
+                <label for="logoutRedirectURI" class="form-label">JWKS URL</label>
+                <input type="text" class="form-control" id="jwksURL" name="jwksURL" placeholder="Enter JWKS URL">
+            </div>
+            <div class="mb-3">
+                <label for="certificate" class="form-label">Certificate</label>
+                <textarea class="form-control" id="certificate" name="certificate" rows="4"
+                    placeholder="Enter certificate"></textarea>
+            </div>
             <input type="hidden" id="orgId" class="orgId" name="orgId" value={{orgID}}>
             <div class="text-end">
                 <button type="submit" class="btn btn-primary">Save Changes</button>

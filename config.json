@@ -1,8 +1,8 @@
 {
   "port": 3000,
-  "pathToContent": "../src/",
+  "pathToContent": "/src/",
   "mode": "production",
-  "controlPlane" : {
+  "controlPlane": {
     "url": "https://127.0.0.1:9443/api/am/devportal/v3",
     "disableCertValidation": true,
     "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
@@ -17,7 +17,7 @@
   "providerURL": {
     "AWS": "https://aws.amazon.com"
   },
-  "identityProvider" : {
+  "identityProvider": {
     "name": "IS",
     "issuer": "https://127.0.0.1:9443/oauth2/token",
     "authorizationURL": "https://localhost:9443/oauth2/authorize",
@@ -28,8 +28,11 @@
     "scope": "openid email profile apim:subscribe role",
     "signUpURL": "",
     "logoutURL": "https://localhost:9443/oidc/logout",
-    "logoutRedirectURI": "http://localhost:3000/ACME"
+    "logoutRedirectURI": "http://localhost:3000/ACME",
+    "certificate": "",
+    "jwksURL": "https://localhost:9443/oauth2/jwks"
   },
+  "disableTLS": false,
   "roleClaim": "roles",
   "orgIDClaim": "organizationID",
   "groupsClaim": "groups",

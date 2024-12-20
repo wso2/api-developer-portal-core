@@ -20,51 +20,51 @@ const router = express.Router();
 const devportalService = require('../services/devportalService');
 const apiMetadataService = require('../services/apiMetadataService');
 const adminService = require('../services/adminService');
-const devportalController = require('../controllers/devportalController');  
+const devportalController = require('../controllers/devportalController');
 const multer = require('multer');
 const storage = multer.memoryStorage()
 const apiDefinition = multer({ storage: storage })
-const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
+const { ensureAuthenticated, validateToken } = require('../middlewares/ensureAuthenticated');
 
 
-router.post('/organizations', adminService.createOrganization);
-router.get('/organizations', adminService.getOrganizations);
-router.put('/organizations/:orgId', adminService.updateOrganization);
-router.get('/organizations/:orgId', devportalService.getOrganization);
-router.delete('/organizations/:orgId', adminService.deleteOrganization);
+router.post('/organizations', validateToken("admin"), adminService.createOrganization);
+router.get('/organizations', validateToken("admin"), adminService.getOrganizations);
+router.put('/organizations/:orgId', validateToken("admin"), adminService.updateOrganization);
+router.get('/organizations/:orgId', validateToken("admin"), devportalService.getOrganization);
+router.delete('/organizations/:orgId', validateToken("admin"), adminService.deleteOrganization);
 
-router.post('/organizations/:orgId/identityProvider', adminService.createIdentityProvider);
-router.put('/organizations/:orgId/identityProvider', adminService.updateIdentityProvider);
-router.get('/organizations/:orgId/identityProvider', adminService.getIdentityProvider);
-router.delete('/organizations/:orgId/identityProvider', adminService.deleteIdentityProvider);
+router.post('/organizations/:orgId/identityProvider', validateToken("admin"), adminService.createIdentityProvider);
+router.put('/organizations/:orgId/identityProvider', validateToken("admin"), adminService.updateIdentityProvider);
+router.get('/organizations/:orgId/identityProvider', validateToken("admin"), adminService.getIdentityProvider);
+router.delete('/organizations/:orgId/identityProvider', validateToken("admin"), adminService.deleteIdentityProvider);
 
-const upload = multer({ dest: '../.tmp/' }); 
-router.post('/organizations/:orgId/layout', upload.single('file'), adminService.createOrgContent);
-router.put('/organizations/:orgId/layout', upload.single('file'), adminService.updateOrgContent);
+const upload = multer({ dest: '../.tmp/' });
+router.post('/organizations/:orgId/layout', validateToken("admin"), upload.single('file'), adminService.createOrgContent);
+router.put('/organizations/:orgId/layout', validateToken("admin"), upload.single('file'), adminService.updateOrgContent);
 router.get('/organizations/:orgId/layout', devportalService.getOrgContent);
 router.get('/organizations/:orgId/layout/:fileType', devportalService.getOrgContent);
-router.delete('/organizations/:orgId/layout', adminService.deleteOrgContent);
+router.delete('/organizations/:orgId/layout', validateToken("admin"), adminService.deleteOrgContent);
 
-router.post('/organizations/:orgId/provider', adminService.createProvider);
-router.put('/organizations/:orgId/provider',  adminService.updateProvider);
-router.get('/organizations/:orgId/provider', adminService.getProviders);
-router.delete('/organizations/:orgId/provider', adminService.deleteProvider);
+router.post('/organizations/:orgId/provider', validateToken("admin"), adminService.createProvider);
+router.put('/organizations/:orgId/provider', validateToken("admin"), adminService.updateProvider);
+router.get('/organizations/:orgId/provider', validateToken("admin"), adminService.getProviders);
+router.delete('/organizations/:orgId/provider', validateToken("admin"), adminService.deleteProvider);
 
-router.post('/organizations/:orgId/apis', apiDefinition.single('apiDefinition'), apiMetadataService.createAPIMetadata);
-router.get('/organizations/:orgId/apis/:apiId', apiMetadataService.getAPIMetadata);
-router.get('/organizations/:orgId/apis', apiMetadataService.getAllAPIMetadata);
-router.put('/organizations/:orgId/apis/:apiId', apiDefinition.single('apiDefinition'), apiMetadataService.updateAPIMetadata);
+router.post('/organizations/:orgId/apis', validateToken("dev"), apiDefinition.single('apiDefinition'), apiMetadataService.createAPIMetadata);
+router.get('/organizations/:orgId/apis/:apiId', validateToken("dev"), apiMetadataService.getAPIMetadata);
+router.get('/organizations/:orgId/apis', validateToken("dev"), apiMetadataService.getAllAPIMetadata);
+router.put('/organizations/:orgId/apis/:apiId', validateToken("dev"), apiDefinition.single('apiDefinition'), apiMetadataService.updateAPIMetadata);
 
 const apiZip = multer({ dest: '/tmp' });
-router.delete('/organizations/:orgId/apis/:apiId', apiMetadataService.deleteAPIMetadata);
-router.post('/organizations/:orgId/apis/:apiId/template', apiZip.single('apiContent'), apiMetadataService.createAPITemplate);
-router.put('/organizations/:orgId/apis/:apiId/template', apiZip.single('apiContent'), apiMetadataService.updateAPITemplate);
-router.get('/organizations/:orgId/apis/:apiId/template', apiMetadataService.getAPIFile);
-router.delete('/organizations/:orgId/apis/:apiId/template', apiMetadataService.deleteAPIFile);
+router.delete('/organizations/:orgId/apis/:apiId', validateToken("dev"), apiMetadataService.deleteAPIMetadata);
+router.post('/organizations/:orgId/apis/:apiId/template', validateToken("dev"), apiZip.single('apiContent'), apiMetadataService.createAPITemplate);
+router.put('/organizations/:orgId/apis/:apiId/template', validateToken("dev"), apiZip.single('apiContent'), apiMetadataService.updateAPITemplate);
+router.get('/organizations/:orgId/apis/:apiId/template', validateToken("dev"), apiMetadataService.getAPIFile);
+router.delete('/organizations/:orgId/apis/:apiId/template', validateToken("dev"), apiMetadataService.deleteAPIFile);
 
 
-router.post('/subscriptions' , devportalController.subscribeAPI);
-router.delete('/subscriptions/:subscriptionId', devportalController.unsubscribeAPI);
+router.post('/subscriptions', ensureAuthenticated, devportalController.subscribeAPI);
+router.delete('/subscriptions/:subscriptionId', ensureAuthenticated, devportalController.unsubscribeAPI);
 
 router.post('/applications', ensureAuthenticated, devportalController.saveApplication);
 router.put('/applications/:applicationId', ensureAuthenticated, devportalController.updateApplication);
