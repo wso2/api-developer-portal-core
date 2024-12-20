@@ -10,7 +10,7 @@
   "db": {
     "username": "postgres",
     "password": "postgres",
-    "database": "testM1",
+    "database": "devportal",
     "host": "localhost",
     "dialect": "postgres"
   },

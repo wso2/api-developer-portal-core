@@ -48,6 +48,11 @@ module.exports = {
         Cache_Control: 'Cache-Control',
     },
 
+    SCOPES: {
+        ADMIN: 'admin',
+        DEVELOPER: 'dev',
+    },
+
     FILE_EXTENSIONS: {
         HTML: '.html',
         JSON: '.json',
