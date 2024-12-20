@@ -42,7 +42,7 @@ function getFormData(formData, keyManager, clientName) {
         additionalProperties: {},
     };
 
-    if (keyManager !== 'ResidentformData Key Manager') {
+    if (keyManager !== 'Resident Key Manager') {
         additionalProperties = {
             "client_id": formData.get('consumerKey'),
             "client_name": clientName,
@@ -54,10 +54,22 @@ function getFormData(formData, keyManager, clientName) {
 
     formData.forEach((value, key) => {
         if (key.startsWith("additionalProperties.")) {
-            // If the key is part of additionalProperties, add it to that object
-            const propName = key.replace("additionalProperties.", ""); // Remove the prefix
-            jsonObject.additionalProperties[propName] = value;
-          } else {
+            const propName = key.replace("additionalProperties.", "");
+            // Handle multiple optional value selection
+            if (jsonObject.additionalProperties[propName]) {
+                if (Array.isArray(jsonObject.additionalProperties[propName])) {
+                    jsonObject.additionalProperties[propName].push(value);
+                } else {
+                    jsonObject.additionalProperties[propName] = [jsonObject.additionalProperties[propName], value];
+                }
+            } else {
+                if (propName === 'response_types') {
+                    jsonObject.additionalProperties[propName] = [value];
+                } else {
+                    jsonObject.additionalProperties[propName] = value;
+                }
+            }
+        } else {
             // Handle multiple checkbox values
             if (jsonObject[key]) {
                 if (Array.isArray(jsonObject[key])) {
@@ -66,7 +78,11 @@ function getFormData(formData, keyManager, clientName) {
                     jsonObject[key] = [jsonObject[key], value];
                 }
             } else {
-                jsonObject[key] = value;
+                if (key === 'grantTypes') {
+                    jsonObject[key] = [value];
+                } else {
+                    jsonObject[key] = value;
+                }
             }
         }
     });
@@ -91,7 +107,7 @@ async function updateApplicationKey(formId, appId, keyType, keyManager, keyManag
                 "keyManager": keyManager,
                 "callbackUrl": jsonObject.callbackURL,
                 "consumerKey": jsonObject.consumerKey,
-                "consumerSecret": null,
+                "consumerSecret": jsonObject.consumerSecret,
                 "keyMappingId": keyManagerId,
                 "additionalProperties": jsonObject.additionalProperties
             }),
