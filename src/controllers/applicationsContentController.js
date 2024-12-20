@@ -172,6 +172,7 @@ const loadApplication = async (req, res) => {
             });
 
             kMmetaData = await getAPIMKeyManagers(req);
+            kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
             let applicationKeyList = await getApplicationKeys(req, applicationId);
             let productionKeys = [];
             let sandboxKeys = [];
