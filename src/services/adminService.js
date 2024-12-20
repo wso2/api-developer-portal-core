@@ -164,7 +164,7 @@ const createIdentityProvider = async (req, res) => {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
         const rules = util.validateIDP();
-        for (let validation of rules) {
+        for (let validation of rules) {        
             await validation.run(req);
         }
         const errors = validationResult(req);

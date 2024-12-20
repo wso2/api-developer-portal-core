@@ -69,6 +69,14 @@ const IdentityProvider = sequelize.define('DP_IDENTITY_PROVIDER', {
         type: DataTypes.STRING,
         allowNull: false
     },
+    JWKS_URL: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    CERTIFICATE: {
+        type: DataTypes.STRING,
+        allowNull: true
+    }
 },{
         timestamps: false,
         tableName: 'DP_IDENTITY_PROVIDER',

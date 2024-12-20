@@ -9,7 +9,10 @@
                     {{#views}}
                     <div>
                         <h6>{{name}}</h6>
+
                     </div>
+                                        {{/views}}
+
                     <div>
                         <button class="btn btn-sm btn-outline-primary me-2 edit-file">
                             <i class="bi bi-pencil"></i> Edit
@@ -21,7 +24,6 @@
                             </button>
                         </form>
                     </div>
-                    {{/views}}
                     </div>
             </ul>
         </div>
@@ -40,7 +42,7 @@
                                 <label for="editZipFile" class="form-label">Upload New Zip File</label>
                                 <input type="file" class="form-control" id="editZipFile" name="file" accept=".zip"
                                     required>
-                                <input type="hidden" class="form-control" id="redirect" value="true">
+                                <p>orgID: {{../orgID}}</p>
                                 <input type="hidden" id="orgId" name="orgId" value={{orgID}}>
                             </div>
                             <button type="submit" class="btn btn-primary">Update File</button>

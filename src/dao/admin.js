@@ -165,17 +165,19 @@ const createIdentityProvider = async (orgId, idpData) => {
     try {
         const idpResponse = await IdentityProvider.create({
             ORG_ID: orgId,
-            NAME: idpData.name,
             ISSUER: idpData.issuer,
+            NAME: idpData.name,
             AUTHORIZATION_URL: idpData.authorizationURL,
             TOKEN_URL: idpData.tokenURL,
-            USER_INFOR_URL: idpData.userInfoURL,
+            ...(idpData.userInfoURL && { USER_INFOR_URL: idpData.userInfoURL }),
             CLIENT_ID: idpData.clientId,
             CALLBACK_URL: idpData.callbackURL,
-            SIGNUP_URL: idpData.signUpURL,
+            ...(idpData.signUpURL && { SIGNUP_URL: idpData.signUpURL }),
             LOGOUT_URL: idpData.logoutURL,
             LOGOUT_REDIRECT_URL: idpData.logoutRedirectURI,
-            SCOPE: ""
+            ...(idpData.scope && { SCOPE: idpData.scope }),
+            ...(idpData.jwksURL && { JWKS_URL: idpData.jwksURL }),
+            ...(idpData.certificate && { CERTIFICATE: idpData.certificate })
         });
         return idpResponse;
     } catch (error) {
@@ -189,20 +191,22 @@ const createIdentityProvider = async (orgId, idpData) => {
 const updateIdentityProvider = async (orgID, idpData) => {
 
     try {
-        const [updatedRowsCount, idpContent,] = await IdentityProvider.update(
+        const [updatedRowsCount, idpContent] = await IdentityProvider.update(
             {
                 ORG_ID: idpData.orgId,
                 ISSUER: idpData.issuer,
                 NAME: idpData.name,
                 AUTHORIZATION_URL: idpData.authorizationURL,
                 TOKEN_URL: idpData.tokenURL,
-                USER_INFOR_URL: idpData.userInfoURL,
+                ...(idpData.userInfoURL && { USER_INFOR_URL: idpData.userInfoURL }),
                 CLIENT_ID: idpData.clientId,
                 CALLBACK_URL: idpData.callbackURL,
-                SIGNUP_URL: idpData.signUpURL,
+                ...(idpData.signUpURL && { SIGNUP_URL: idpData.signUpURL }),
                 LOGOUT_URL: idpData.logoutURL,
                 LOGOUT_REDIRECT_URI: idpData.logoutRedirectURI,
-                SCOPE: idpData.scope
+                SCOPE: idpData.scope,
+                ...(idpData.jwksURL && { JWKS_URL: idpData.jwksURL }),
+                ...(idpData.certificate && { CERTIFICATE: idpData.certificate })
             },
             {
                 where: {

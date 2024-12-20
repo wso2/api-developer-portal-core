@@ -23,9 +23,7 @@ const adminDao = require('../dao/admin');
 const { jwtVerify, createRemoteJWKSet, importX509 } = require('jose');
 const util = require('../utils/util');
 const { CustomError } = require('../utils/errors/customErrors');
-const fs = require('fs');
-const e = require('express');
-
+const IdentityProviderDTO = require("../dto/identityProvider");
 
 const ensurePermission = (currentPage, role, req) => {
 
@@ -116,27 +114,55 @@ const ensureAuthenticated = async (req, res, next) => {
     };
 };
 
-const validateToken = async (req, res, next) => {
-
-    let accessToken;
-    if (req.isAuthenticated() && req.user) {
-        accessToken = req.user[constants.ACCESS_TOKEN];
-        return next();
-    } else {
-        accessToken = req.headers.authorization && req.headers.authorization.split(' ')[1];
-    }
-    const pemKey = fs.readFileSync('/Users/sachini/APIM/is.cer', 'utf8');
-    console.log("PEM Key:", pemKey);
-    const publicKey = await importX509(pemKey, 'RS256');
-    const valid = await validateWithCert(accessToken, publicKey);
-    //const valid = await validateWithJWKS(accessToken, 'https://localhost:9443/oauth2/jwks');
-    if (valid) {
-        return next();
-    } else {
-        if (req.user) {
-            return res.redirect('login');
+function validateToken(scope) {
+    return async function (req, res, next) {
+        let accessToken;
+        if (req.isAuthenticated() && req.user) {
+            accessToken = req.user[constants.ACCESS_TOKEN];
         } else {
-            return util.handleError(res, new CustomError(401, constants.ERROR_CODE[401], constants.ERROR_MESSAGE.UNAUTHENTICATED));
+            accessToken = req.headers.authorization && req.headers.authorization.split(' ')[1];
+        }
+        //fetch certificate or JWKS URL
+        let IDP, valid, scopes, orgId;
+        if (req.params.orgName0) {
+            orgId = await adminDao.getOrgId(orgName);
+        } else {
+            orgId = req.params.orgId;
+        }
+        const response = await adminDao.getIdentityProvider(orgId);
+        if (response.length === 0) {
+            //login from super IDP
+            IDP = config.identityProvider;
+        } else {
+            IDP = new IdentityProviderDTO(response[0].dataValues);
+        }
+        if (IDP.certificate) {
+            const pemKey = IDP.certificate;
+            const publicKey = await importX509(pemKey, 'RS256');
+            [valid, scopes] = await validateWithCert(accessToken, publicKey);
+        } else {
+            if (IDP.jwksURL) {
+                [valid, scopes] = await validateWithJWKS(accessToken, IDP.jwksURL);
+            } else {
+                valid = false;
+            }
+        }
+        if (valid) {
+            if (scopes.split(" ").includes(scope)) {
+                return next();
+            } else {
+                if (req.user) {
+                    return res.redirect('login');
+                } else {
+                    return util.handleError(res, new CustomError(403, constants.ERROR_CODE[403], constants.ERROR_MESSAGE.FORBIDDEN));
+                }
+            }
+        } else {
+            if (req.user) {
+                return res.redirect('login');
+            } else {
+                return util.handleError(res, new CustomError(401, constants.ERROR_CODE[401], constants.ERROR_MESSAGE.UNAUTHENTICATED));
+            }
         }
     }
 }
@@ -144,14 +170,12 @@ const validateToken = async (req, res, next) => {
 const validateWithCert = async (token, publicKey) => {
 
     try {
-        console.log("Public key:", publicKey);
         const { payload } = await jwtVerify(token, publicKey);
-        console.log("Token is valid:", payload);
-        return true
+        return [true, payload.scope];
     } catch (err) {
         console.log(err);
         console.error("Invalid token:", err.message);
-        return false;
+        return [false, ""];
     }
 }
 
@@ -160,10 +184,10 @@ const validateWithJWKS = async (token, jwksURL) => {
     try {
         const jwks = await createRemoteJWKSet(new URL(jwksURL));
         const { payload } = await jwtVerify(token, jwks);
-        return true;
+        return [true, payload.scope];
     } catch (err) {
         console.error("Invalid token:", err.message);
-        return false;
+        return [false, ""];
     }
 }
 
