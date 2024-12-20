@@ -7,6 +7,7 @@
     <section>
         <ul class="nav nav-tabs" id="keyManagerTabs" role="tablist">
             {{#each keyManagersMetadata}}
+            {{#if enabled}}
             <li class="nav-item" role="presentation">
                 <a class="nav-link {{#if @first}}active{{/if}}"
                     id="tab-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" data-bs-toggle="tab"
@@ -16,12 +17,14 @@
                     {{name}}
                 </a>
             </li>
+            {{/if}}
             {{/each}}
         </ul>
 
         <!-- KM Content -->
         <div class="tab-content" id="keyManagerTabsContent">
             {{#each keyManagersMetadata}}
+            {{#if enabled}}
             <div class="tab-pane fade {{#if @first}}show active{{/if}}"
                 id="tab-content-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" role="tabpanel"
                 aria-labelledby="tab-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}">
@@ -182,13 +185,13 @@
                                 </select>
                                 {{/and}}
 
-                                {{#and (eq ../type 'select') (eq ../multiple true)}}                        
+                                {{#and (eq ../type 'select') (eq ../multiple true)}}    
                                 <select id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
                                         class="form-control" 
                                         name="additionalProperties.{{../name}}"
-                                        >
+                                        multiple>
                                     {{#each ../values}}
-                                        <option {{#if (eq this ../propValue)}}selected{{/if}}>{{this}}
+                                        <option {{#in this values=../propValue}}selected{{/in}}>{{this}}
                                         </option>
                                     {{/each}}
                                 </select>
@@ -235,6 +238,7 @@
                     </form>
                 </div>
             </div>
+            {{/if}}
             {{/each}}
         </div>
     </section>
