@@ -56,7 +56,6 @@ function getFormData(formData, keyManager, clientName) {
         if (key.startsWith("additionalProperties.")) {
             const propName = key.replace("additionalProperties.", "");
             // Handle multiple optional value selection
-            console.log(propName);
             if (jsonObject.additionalProperties[propName]) {
                 if (Array.isArray(jsonObject.additionalProperties[propName])) {
                     jsonObject.additionalProperties[propName].push(value);
