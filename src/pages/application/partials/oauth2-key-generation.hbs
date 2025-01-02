@@ -27,216 +27,214 @@
             {{#if enabled}}
             <div class="tab-pane fade {{#if @first}}show active{{/if}}"
                 id="tab-content-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}" role="tabpanel"
-                aria-labelledby="tab-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}">
-                <div class='container my-5'>
-                    <form
-                        id='applicationKeyGenerateForm-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'>
-                        <div class='form-card p-5'>
-                            <h2 class='title mb-4'>{{name}}</h2>
-                            <h3 class='h6'> Key and Secret </h3>
-                            {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
-                            {{#if keys.consumerKey}}
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <label
-                                        for='consumer-key-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
-                                        class='form-label'>
-                                        Consumer Key
-                                        <span class='text-danger'>*</span>
-                                    </label>
-                                    <input type='text'
-                                        id='consumer-key-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
-                                        class='form-control' name="consumerKey" value='{{keys.consumerKey}}' readonly />
+                aria-labelledby="tab-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}">           
+            {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
+                {{#if (eq keys.consumerKey null)}}
+                    <p class="mb-4 pt-4">You have partially-created keys. Please click `Clean Up` button and regenerate keys.</p>
+                    <button class='btn btn-primary custom-save-btn' type="button">CleanUp</button>
+                {{else}}
+                    <div class='container my-5'>
+                        <form
+                            id='applicationKeyGenerateForm-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'>
+                            <div class='form-card p-5'>
+                                <h2 class='title mb-4'>{{name}}</h2>
+                                <h3 class='h6'> Key and Secret </h3>
+                                {{#if keys.consumerKey}}
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label
+                                            for='consumer-key-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                            class='form-label'>
+                                            Consumer Key
+                                            <span class='text-danger'>*</span>
+                                        </label>
+                                        <input type='text'
+                                            id='consumer-key-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                            class='form-control' name="consumerKey" value='{{keys.consumerKey}}' readonly />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label
+                                            for='consumer-key-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                            class='form-label'>
+                                            Consumer Secret
+                                            <span class='text-danger'>*</span>
+                                        </label>
+                                        <input type='text'
+                                            id='consumer-key-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                            class='form-control' name="consumerSecret" value='{{keys.consumerSecret}}'
+                                            readonly />
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label
-                                        for='consumer-key-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
-                                        class='form-label'>
-                                        Consumer Secret
-                                        <span class='text-danger'>*</span>
-                                    </label>
-                                    <input type='text'
-                                        id='consumer-key-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
-                                        class='form-control' name="consumerSecret" value='{{keys.consumerSecret}}'
-                                        readonly />
-                                </div>
-                            </div>
 
-                            <div class="d-flex justify-content-between  mb-4">
-                                <button class='btn btn-primary custom-save-btn'
-                                    id='apiKeyGenerateButton-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
-                                    name='http-values' type='button'
-                                    onClick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.applicationId}}', '{{keys.keyMappingId}}', '{{keys.clientName}}')">
+                                <div class="d-flex justify-content-between  mb-4">
+                                    <button class='btn btn-primary custom-save-btn'
+                                        id='apiKeyGenerateButton-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                        name='http-values' type='button'
+                                        onClick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.applicationId}}', '{{keys.keyMappingId}}', '{{keys.clientName}}')">
+                                        Generate Token
+                                    </button>
+
+                                    <button class='btn btn-secondary custom-save-btn'
+                                        id='apiKeyRevokeButton-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                        name='http-values' type='button'
+                                        onClick="openDeleteModal('{{../../applicationMetadata.applicationId}}', '{{keys.keyMappingId}}')">
+                                        Revoke Key
+                                    </button>
+                                </div>
+                                {{else}}
+                                <p class="mb-4"> {{#if ../isProduction}}Production{{else}}Sandbox{{/if}} Key and Secret is not generated for this application</p>
+                                {{/if}}
+
+                                <h3 class='h6 mb-4'> Key Configuration for {{name}} </h3>
+                                {{!-- Token Endpoint --}}
+                                <div class='mb-3'>
+                                    <label
+                                        for='token-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                        class='form-label'>
+                                        Token Endpoint
+                                        <span class='text-danger'>*</span>
+                                    </label>
+                                    <input type='url' name="tokenURL"
+                                        id='token-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                        class='form-control' value='{{../tokenEndpoint}}' readonly />
+                                </div>
+                            
+                                {{!-- Revoke Endpoint --}}
+                                <div class='mb-3'>
+                                    <label
+                                        for='revoke-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                        class='form-label'>
+                                        Revoke Endpoint
+                                        <span class='text-danger'>*</span>
+                                    </label>
+                                    <input type='url' name="revokeURL"
+                                        id='revoke-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                        class='form-control' value='{{../revokeEndpoint}}' readonly />
+                                </div>
+
+                                {{!-- Grant Types --}}
+                                <div class="mb-3">
+                                    <label
+                                        for="available-grant-types-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
+                                        class="form-label">
+                                        Available Grant Types
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="row">
+                                        {{#let "supportedGrantTypes" keys.supportedGrantTypes }}
+                                        {{#each ../../availableGrantTypes}}
+                                        <div class="col-md-4 mb-2">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input"
+                                                    id="grant-type-{{this}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
+                                                    name="grantTypes" value="{{this}}"{{#if (contains ../supportedGrantTypes this)}}checked{{/if}} />
+                                                <label class="form-check-label"
+                                                    for="grant-type-{{this}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}">
+                                                    {{this}}
+                                                </label>
+                                            </div>
+                                        </div>
+                                        {{/each}}
+                                        {{/let}}
+                                    </div>
+                                </div>
+
+                                {{!-- Callback URL --}}
+                                <div class='mb-3'>
+                                    <label for='callback-url-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                        class='form-label'>
+                                        Callback URL
+                                        <span class='text-danger'>*</span>
+                                    </label>
+                                    <input type='url' name="callbackURL"
+                                        id='callback-url-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
+                                        class='form-control' value='http://sample.com/callback/url' readonly />
+                                </div>
+
+                                <!-- Additional Configuration Fields -->
+                                {{#let "additionalProperties" (conditionalIf keys.additionalProperties keys.additionalProperties [])}}
+                                {{#each ../../applicationConfiguration}}
+                                {{#let "propValue" (conditionalIf (getValue ../additionalProperties name) (getValue ../additionalProperties name) default)}}
+                                <div class="mb-3">
+                                    <label for="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
+                                        class="form-label">
+                                        {{../label}}
+                                        {{#if required}}<span class="text-danger">*</span>{{/if}}
+                                    </label>
+
+                                    {{#if (eq ../type 'input')}}
+                                    <input type="text" name="additionalProperties.{{{../name}}}"
+                                        id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
+                                        class="form-control" value="{{propValue}}" {{#if required}}required{{/if}} />
+                                    {{/if}}
+
+                                    {{#if (eq ../type 'text')}}
+                                    <input type="text" name="additionalProperties.{{../name}}"
+                                        id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
+                                        class="form-control" value="{{propValue}}" {{#if required}}required{{/if}} />
+                                    {{/if}}
+
+                                    {{#and (eq ../type 'select') (eq ../multiple false)}}
+                                    <select id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
+                                        class="form-control" {{#if required}}required{{/if}}
+                                        name="additionalProperties.{{../name}}" >
+                                        {{#each ../values}}
+                                        <option value="{{this}}" {{#if (eq this ../propValue)}}selected{{/if}}>{{this}}
+                                        </option>
+                                        {{/each}}
+                                    </select>
+                                    {{/and}}
+
+                                    {{#and (eq ../type 'select') (eq ../multiple true)}}    
+                                    <select id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
+                                            class="form-control" 
+                                            name="additionalProperties.{{../name}}"
+                                            multiple>
+                                        {{#each ../values}}
+                                            <option {{#in this values=../propValue}}selected{{/in}}>{{this}}
+                                            </option>
+                                        {{/each}}
+                                    </select>
+                                    {{/and}}
+
+                                    {{#if (eq ../type 'checkbox')}}
+                                    <div class="form-check">
+                                        <input type="checkbox" name="additionalProperties.{{../name}}"
+                                            id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
+                                            class="form-check-input" value="{{propValue}}"{{#if (eq propValue true)}} checked{{/if}} />
+                                        <label class="form-check-label"
+                                            for="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}">
+                                            {{label}}
+                                        </label>
+                                    </div>
+                                    {{/if}}
+
+                                    <div class='form-text mb-3'>{{tooltip}}</div>
+                                </div>
+                                {{/let}}
+                                {{/each}}
+                                {{/let}}
+                                {{#if keys.consumerKey}}
+                                <div class="d-flex justify-content-end gap-3">
+                                    <button class="btn btn-primary custom-save-btn" id="applicationKeyUpdateButton"
+                                        name="http-values" type="button" {{!-- TODO: cannot update applicatuon meaning new
+                                        sp won't be created just update oauth token --}}
+                                        onClick="updateApplicationKey('applicationKeyGenerateForm-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.applicationId}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{keys.keyMappingId}}', '{{keys.clientName}}')">
+                                        Update
+                                    </button>
+                                </div>
+                                {{else}}
+                                <button class="btn btn-primary custom-save-btn" id="applicationKeyGenerateButton"
+                                    name="http-values" type="button"
+                                    onClick="generateApplicationKey('applicationKeyGenerateForm-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.applicationId}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{keys.clientName}}')">
                                     Generate Token
                                 </button>
-
-                                <button class='btn btn-secondary custom-save-btn'
-                                    id='apiKeyRevokeButton-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
-                                    name='http-values' type='button'
-                                    onClick="openDeleteModal('{{../../applicationMetadata.applicationId}}', '{{keys.keyMappingId}}')">
-                                    Revoke Key
-                                </button>
-                            </div>
-                            {{else}}
-                            <p class="mb-4"> Production Key and Secret is not generated for this application</p>
-                            {{/if}}
-                            {{/let}}
-
-                            <h3 class='h6 mb-4'> Key Configuration for {{name}} </h3>
-                            {{!-- Token Endpoint --}}
-                            <div class='mb-3'>
-                                <label
-                                    for='token-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
-                                    class='form-label'>
-                                    Token Endpoint
-                                    <span class='text-danger'>*</span>
-                                </label>
-                                <input type='url' name="tokenURL"
-                                    id='token-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
-                                    class='form-control' value='{{tokenEndpoint}}' readonly />
-                            </div>
-                        
-                            {{!-- Revoke Endpoint --}}
-                            <div class='mb-3'>
-                                <label
-                                    for='revoke-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
-                                    class='form-label'>
-                                    Revoke Endpoint
-                                    <span class='text-danger'>*</span>
-                                </label>
-                                <input type='url' name="revokeURL"
-                                    id='revoke-endpoint-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
-                                    class='form-control' value='{{revokeEndpoint}}' readonly />
-                            </div>
-
-                            {{!-- Grant Types --}}
-                            <div class="mb-3">
-                                <label
-                                    for="available-grant-types-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
-                                    class="form-label">
-                                    Available Grant Types
-                                    <span class="text-danger">*</span>
-                                </label>
-                                <div class="row">
-                                    {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
-                                    {{#let "supportedGrantTypes" keys.supportedGrantTypes }}
-                                    {{#each ../../availableGrantTypes}}
-                                    <div class="col-md-4 mb-2">
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input"
-                                                id="grant-type-{{this}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
-                                                name="grantTypes" value="{{this}}"{{#if (contains ../supportedGrantTypes this)}}checked{{/if}} />
-                                            <label class="form-check-label"
-                                                for="grant-type-{{this}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}">
-                                                {{this}}
-                                            </label>
-                                        </div>
-                                    </div>
-                                    {{/each}}
-                                    {{/let}}
-                                    {{/let}}
-                                </div>
-                            </div>
-
-                            {{!-- Callback URL --}}
-                            <div class='mb-3'>
-                                <label for='callback-url-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
-                                    class='form-label'>
-                                    Callback URL
-                                    <span class='text-danger'>*</span>
-                                </label>
-                                <input type='url' name="callbackURL"
-                                    id='callback-url-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
-                                    class='form-control' value='http://sample.com/callback/url' readonly />
-                            </div>
-
-                            <!-- Additional Configuration Fields -->
-                            {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
-                            {{#let "additionalProperties" (conditionalIf keys.additionalProperties keys.additionalProperties [])}}
-                            {{#each ../../applicationConfiguration}}
-                            {{#let "propValue" (conditionalIf (getValue ../additionalProperties name) (getValue ../additionalProperties name) default)}}
-                            <div class="mb-3">
-                                <label for="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
-                                    class="form-label">
-                                    {{../label}}
-                                    {{#if required}}<span class="text-danger">*</span>{{/if}}
-                                </label>
-
-                                {{#if (eq ../type 'input')}}
-                                <input type="text" name="additionalProperties.{{{../name}}}"
-                                    id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
-                                    class="form-control" value="{{propValue}}" {{#if required}}required{{/if}} />
                                 {{/if}}
-
-                                {{#if (eq ../type 'text')}}
-                                <input type="text" name="additionalProperties.{{../name}}"
-                                    id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
-                                    class="form-control" value="{{propValue}}" {{#if required}}required{{/if}} />
-                                {{/if}}
-
-                                {{#and (eq ../type 'select') (eq ../multiple false)}}
-                                <select id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
-                                    class="form-control" {{#if required}}required{{/if}}
-                                    name="additionalProperties.{{../name}}" >
-                                    {{#each ../values}}
-                                    <option value="{{this}}" {{#if (eq this ../propValue)}}selected{{/if}}>{{this}}
-                                    </option>
-                                    {{/each}}
-                                </select>
-                                {{/and}}
-
-                                {{#and (eq ../type 'select') (eq ../multiple true)}}    
-                                <select id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
-                                        class="form-control" 
-                                        name="additionalProperties.{{../name}}"
-                                        multiple>
-                                    {{#each ../values}}
-                                        <option {{#in this values=../propValue}}selected{{/in}}>{{this}}
-                                        </option>
-                                    {{/each}}
-                                </select>
-                                {{/and}}
-
-                                {{#if (eq ../type 'checkbox')}}
-                                <div class="form-check">
-                                    <input type="checkbox" name="additionalProperties.{{../name}}"
-                                        id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
-                                        class="form-check-input" value="{{#if default}}true{{else}}false{{/if}}" {{#if
-                                        default}}checked{{/if}} />
-                                    <label class="form-check-label"
-                                        for="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}">
-                                        {{label}}
-                                    </label>
-                                </div>
-                                {{/if}}
-
-                                <div class='form-text mb-3'>{{tooltip}}</div>
                             </div>
-                            {{/let}}
-                            {{/each}}
-                            {{/let}}
-                            {{/let}}
-                            {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
-                            {{#if keys.consumerKey}}
-                            <div class="d-flex justify-content-end gap-3">
-                                <button class="btn btn-primary custom-save-btn" id="applicationKeyUpdateButton"
-                                    name="http-values" type="button" {{!-- TODO: cannot update applicatuon meaning new
-                                    sp won't be created just update oauth token --}}
-                                    onClick="updateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.applicationId}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{keys.keyMappingId}}', '{{keys.clientName}}')">
-                                    Update
-                                </button>
-                            </div>
-                            {{else}}
-                            <button class="btn btn-primary custom-save-btn" id="applicationKeyGenerateButton"
-                                name="http-values" type="button"
-                                onClick="generateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.applicationId}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{keys.clientName}}')">
-                                Generate Token
-                            </button>
-                            {{/if}}
-                            {{/let}}
-                        </div>
-                    </form>
-                </div>
+                        </form>
+                    </div>
+                {{/if}}
+            {{/let}}
             </div>
             {{/if}}
             {{/each}}
