@@ -57,7 +57,6 @@ async function editProvider(orgID, formID) {
 
 async function deleteProvider(orgID, name, property) {
 
-        console.log(`/devportal/organizations/${orgID}/provider/?name=${name}&property${property}`);
         const response = await fetch(`/devportal/organizations/${orgID}/provider/?name=${name}&property${property}`, {
             method: 'DELETE',
         });

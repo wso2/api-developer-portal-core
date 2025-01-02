@@ -59,7 +59,7 @@ const apiZip = multer({ dest: '/tmp' });
 router.delete('/organizations/:orgId/apis/:apiId', validateToken(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIMetadata);
 router.post('/organizations/:orgId/apis/:apiId/template', validateToken(constants.SCOPES.DEVELOPER), apiZip.single('apiContent'), apiMetadataService.createAPITemplate);
 router.put('/organizations/:orgId/apis/:apiId/template', validateToken(constants.SCOPES.DEVELOPER), apiZip.single('apiContent'), apiMetadataService.updateAPITemplate);
-router.get('/organizations/:orgId/apis/:apiId/template', validateToken(constants.SCOPES.DEVELOPER), apiMetadataService.getAPIFile);
+router.get('/organizations/:orgId/apis/:apiId/template', apiMetadataService.getAPIFile);
 router.delete('/organizations/:orgId/apis/:apiId/template', validateToken(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIFile);
 
 
