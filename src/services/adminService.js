@@ -169,6 +169,7 @@ const createIdentityProvider = async (req, res) => {
         }
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
+            console.log(util.getErrors(errors));
             return res.status(400).json(util.getErrors(errors));
         }
         const idpResponse = await adminDao.createIdentityProvider(orgId, idpData);

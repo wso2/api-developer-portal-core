@@ -123,18 +123,22 @@ function validateToken(scope) {
             accessToken = req.headers.authorization && req.headers.authorization.split(' ')[1];
         }
         //fetch certificate or JWKS URL
-        let IDP, valid, scopes, orgId;
-        if (req.params.orgName0) {
+        let IDP, valid, scopes, orgId, response;
+        if (req.params.orgName) {
             orgId = await adminDao.getOrgId(orgName);
         } else {
             orgId = req.params.orgId;
         }
-        const response = await adminDao.getIdentityProvider(orgId);
-        if (response.length === 0) {
-            //login from super IDP
-            IDP = config.identityProvider;
+        if (orgId) {
+            response = await adminDao.getIdentityProvider(orgId);
+            if (response.length !== 0) {
+                //login from super IDP
+                IDP = new IdentityProviderDTO(response[0].dataValues);
+            } else {
+                IDP = config.identityProvider;
+            }
         } else {
-            IDP = new IdentityProviderDTO(response[0].dataValues);
+            IDP = config.identityProvider;
         }
         if (IDP.certificate) {
             const pemKey = IDP.certificate;

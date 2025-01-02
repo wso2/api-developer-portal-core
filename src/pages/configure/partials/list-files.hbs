@@ -9,10 +9,8 @@
                     {{#views}}
                     <div>
                         <h6>{{name}}</h6>
-
                     </div>
-                                        {{/views}}
-
+                    {{/views}}
                     <div>
                         <button class="btn btn-sm btn-outline-primary me-2 edit-file">
                             <i class="bi bi-pencil"></i> Edit
@@ -24,7 +22,7 @@
                             </button>
                         </form>
                     </div>
-                    </div>
+                </div>
             </ul>
         </div>
         <div class="modal fade" id="editFileModal" tabindex="-1" aria-labelledby="editFileModalLabel"
@@ -42,10 +40,8 @@
                                 <label for="editZipFile" class="form-label">Upload New Zip File</label>
                                 <input type="file" class="form-control" id="editZipFile" name="file" accept=".zip"
                                     required>
-                                <p>orgID: {{../orgID}}</p>
-                                <input type="hidden" id="orgId" name="orgId" value={{orgID}}>
                             </div>
-                            <button type="submit" class="btn btn-primary">Update File</button>
+                            <button type="button" class="btn btn-primary" onclick="updateOrgContent('{{orgID}}')">Update File</button>
                         </form>
                     </div>
                 </div>
