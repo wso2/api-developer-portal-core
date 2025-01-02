@@ -37,6 +37,30 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
     }
 }
 
+async function cleanUp(applicationId, keyMappingId) {
+    try {
+        const response = await fetch(`/devportal/applications/${applicationId}/oauth-keys/${keyMappingId}/clean-up`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const responseData = await response.json();
+        if (response.ok) {
+            await showAlert('Application keys cleaned up successfully!', 'success');
+            const url = new URL(window.location.origin + window.location.pathname);
+            window.location.href = url.toString();
+        } else {
+            console.error('Failed to clean up keys:', responseData);
+            await showAlert(`Failed to clean up application keys. Please try again.\n${responseData.description}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        await showAlert(`An error occurred cleaning up application keys: \n${error.message}`, 'error');
+    }
+}
+
 function getFormData(formData, keyManager, clientName) {
     let jsonObject = {
         additionalProperties: {},

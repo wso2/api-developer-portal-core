@@ -5,6 +5,9 @@
 
 <body>
     <section>
+        <div class="app-header mb-4 pt-4">
+            <h3 class="app-title">{{applicationMetadata.name}}</h3>
+        </div>
         <ul class="nav nav-tabs" id="keyManagerTabs" role="tablist">
             {{#each keyManagersMetadata}}
             {{#if enabled}}
@@ -31,7 +34,7 @@
             {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
                 {{#if (eq keys.consumerKey null)}}
                     <p class="mb-4 pt-4">You have partially-created keys. Please click `Clean Up` button and regenerate keys.</p>
-                    <button class='btn btn-primary custom-save-btn' type="button">CleanUp</button>
+                    <button class='btn btn-primary custom-save-btn' onClick="cleanUp('{{../../applicationMetadata.applicationId}}', '{{keys.keyMappingId}}')" type="button">CleanUp</button>
                 {{else}}
                     <div class='container my-5'>
                         <form
@@ -201,7 +204,7 @@
                                     <div class="form-check">
                                         <input type="checkbox" name="additionalProperties.{{../name}}"
                                             id="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}"
-                                            class="form-check-input" value="{{propValue}}"{{#if (eq propValue true)}} checked{{/if}} />
+                                            class="form-check-input" value="true"{{#if (eq propValue true)}} checked{{/if}} />
                                         <label class="form-check-label"
                                             for="{{name}}-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}">
                                             {{label}}
