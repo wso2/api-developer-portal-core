@@ -56,11 +56,11 @@
                   IP Addresses
                   <span class='text-danger'>*</span>
                 </label>
-                <div id='ip-container-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' class='form-control d-flex flex-wrap'>
+                <div id='ip-container-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'>
                   <input
                     type='text'
                     id='ip-input-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
-                    class='border-0 flex-grow-1'
+                    class='form-control'
                     placeholder='Enter IP Address'
                     onkeydown='addIp(event, {{../isProduction}})'
                   />
@@ -97,14 +97,12 @@
                   HTTP Referrers
                   <span class='text-danger'>*</span>
                 </label>
-                <div id='http-container-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' class='form-control d-flex flex-wrap'>
-                  <input
-                    type='text'
-                    id='http-input-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
-                    class='border-0 flex-grow-1'
-                    placeholder='Enter HTTP Referrer'
+                <div id='http-container-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'>
+                  <input type="text" 
+                    class="form-control" 
+                    id='http-input-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' 
                     onkeydown='addHttpReferrer(event, {{../isProduction}})'
-                  />
+                    placeholder="Enter HTTP Referrerl">
                 </div>
               </div>
               <div class='form-text mb-3'>Once you add an HTTP Referrer, press
@@ -119,7 +117,7 @@
 
             <div class='mb-3'>
               <label for='validity-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' class='form-label'>
-                validity Period
+                Validity Period
                 <span class='text-danger'>*</span>
               </label>
               <input
@@ -135,9 +133,9 @@
               Set this as <span class='text-danger'>-1</span> to ensure that the apikey never expires.</div>
 
             <!-- Buttons -->
-            <div class='d-flex justify-content-end gap-3'>
+            <div class='d-flex gap-3'>
               <button
-                class='btn btn-primary custom-save-btn'
+                class='common-btn-primary'
                 id='apiKeyGenerateButton-{{#if ../isProduction}}production{{else}}sandbox{{/if}}' name='http-values'
                 type='button'
                 onClick="generateAPIKey('{{applicationId}}', {{../isProduction}})"

@@ -59,15 +59,15 @@
                                 </div>
                             </div>
 
-                            <div class="d-flex justify-content-between  mb-4">
-                                <button class='btn btn-primary custom-save-btn'
+                            <div class="d-flex mb-4">
+                                <button class='common-btn-primary me-3'
                                     id='apiKeyGenerateButton-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
                                     name='http-values' type='button'
                                     onClick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.applicationId}}', '{{keys.keyMappingId}}', '{{keys.clientName}}')">
                                     Generate Token
                                 </button>
 
-                                <button class='btn btn-secondary custom-save-btn'
+                                <button class='common-btn-outlined'
                                     id='apiKeyRevokeButton-{{id}}-{{#if ../isProduction}}production{{else}}sandbox{{/if}}'
                                     name='http-values' type='button'
                                     onClick="openDeleteModal('{{../../applicationMetadata.applicationId}}', '{{keys.keyMappingId}}')">
@@ -206,7 +206,6 @@
                                     </label>
                                 </div>
                                 {{/if}}
-
                                 <div class='form-text mb-3'>{{tooltip}}</div>
                             </div>
                             {{/let}}
@@ -215,8 +214,8 @@
                             {{/let}}
                             {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
                             {{#if keys.consumerKey}}
-                            <div class="d-flex justify-content-end gap-3">
-                                <button class="btn btn-primary custom-save-btn" id="applicationKeyUpdateButton"
+                            <div class="d-flex gap-3">
+                                <button class="common-btn-primary" id="applicationKeyUpdateButton"
                                     name="http-values" type="button" {{!-- TODO: cannot update applicatuon meaning new
                                     sp won't be created just update oauth token --}}
                                     onClick="updateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.applicationId}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{keys.keyMappingId}}', '{{keys.clientName}}')">
@@ -224,11 +223,13 @@
                                 </button>
                             </div>
                             {{else}}
-                            <button class="btn btn-primary custom-save-btn" id="applicationKeyGenerateButton"
+                            <div class="d-flex gap-3">
+                            <button class="common-btn-primary" id="applicationKeyGenerateButton"
                                 name="http-values" type="button"
                                 onClick="generateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.applicationId}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{keys.clientName}}')">
                                 Generate Token
                             </button>
+                            </div>
                             {{/if}}
                             {{/let}}
                         </div>
