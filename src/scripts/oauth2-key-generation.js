@@ -180,6 +180,17 @@ async function removeApplicationKey() {
     }
 }
 
+
+async function generateCurl(formId) {
+    const form = document.getElementById(formId);
+    const formData = new FormData(form);
+    const tokenURL = formData.get('tokenURL');
+    const auth = btoa(`${formData.get('consumerKey')}:${formData.get('consumerSecret')}`);
+    const curl = `curl -k -X POST ${tokenURL} -d "grant_type=password&username=Username&password=Password" -H "Authorization: Basic ${auth}"`;
+    
+    openApiKeyModal(curl, "CURL to Generate Access Token", "The following cURL command shows how to generate an access token using the Password Grant type.");
+}
+
 async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName) {
     const form = document.getElementById(formId);
     const formData = new FormData(form);
