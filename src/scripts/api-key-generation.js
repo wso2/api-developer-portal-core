@@ -167,6 +167,10 @@ function openApiKeyModal(apiKey, title, subTitle) {
   modalTitle.textContent = title;
   const modaSublTitle = document.getElementById('keyModalSubTitle');
   modaSublTitle.textContent = subTitle;
+  if (title.includes('CURL')) {
+    const modalDescription = document.getElementById('modalDescription');
+    modalDescription.textContent = '';
+  }
   const bootstrapModal = new bootstrap.Modal(modal);
   bootstrapModal.show();
 }

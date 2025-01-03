@@ -37,6 +37,30 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
     }
 }
 
+async function cleanUp(applicationId, keyMappingId) {
+    try {
+        const response = await fetch(`/devportal/applications/${applicationId}/oauth-keys/${keyMappingId}/clean-up`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const responseData = await response.json();
+        if (response.ok) {
+            await showAlert('Application keys cleaned up successfully!', 'success');
+            const url = new URL(window.location.origin + window.location.pathname);
+            window.location.href = url.toString();
+        } else {
+            console.error('Failed to clean up keys:', responseData);
+            await showAlert(`Failed to clean up application keys. Please try again.\n${responseData.description}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        await showAlert(`An error occurred cleaning up application keys: \n${error.message}`, 'error');
+    }
+}
+
 function getFormData(formData, keyManager, clientName) {
     let jsonObject = {
         additionalProperties: {},
@@ -154,6 +178,17 @@ async function removeApplicationKey() {
         console.error('Error:', error);
         await showAlert(`An error occurred removing application keys: \n${error.message}`, 'error');
     }
+}
+
+
+async function generateCurl(formId) {
+    const form = document.getElementById(formId);
+    const formData = new FormData(form);
+    const tokenURL = formData.get('tokenURL');
+    const auth = btoa(`${formData.get('consumerKey')}:${formData.get('consumerSecret')}`);
+    const curl = `curl -k -X POST ${tokenURL} -d "grant_type=password&username=Username&password=Password" -H "Authorization: Basic ${auth}"`;
+    
+    openApiKeyModal(curl, "CURL to Generate Access Token", "The following cURL command shows how to generate an access token using the Password Grant type.");
 }
 
 async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName) {
