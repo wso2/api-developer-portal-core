@@ -50,7 +50,7 @@ app.engine('.hbs', engine({
 app.set('view engine', 'hbs');
 
 Handlebars.registerHelper('eq', function (a, b) {
-    return (a === b);
+    return (a === b || (a != null && b != null && (a === b.toString() || a.toString() === b)));
 });
 
 Handlebars.registerHelper('in', function (value, options) {
