@@ -1,7 +1,8 @@
-<div class="container my-5">
-  <div class="col-lg-12 dev-header" style="padding-top: 5%;">
-    <h2>My APIs</h2>
-  </div>
+<section class="subscription-list-section">
+<div class="myapis-container my-5">
+    <div class="common-header">
+      <h2>My APIs</h2>
+    </div>
   <table class="table table-bordered table-hover">
     <thead class="table-primary">
       <tr>
@@ -14,12 +15,13 @@
     <tbody>
       {{#each subscriptions}}
       <tr>
-        <td> <a href="{{../baseUrl}}/api/{{this.apiName}}">{{this.apiName}}</a></td>
-        <td> <a href="{{../baseUrl}}/applications/{{this.applicationId}}">{{this.applicationName}}</a></td>
-        <td>{{this.throttlingTier}}</td>
-        <td> <a href="#" onclick="unsubscribe('{{this.id}}')">Unsubscribe</a></td>
+        <td> <a class="table-links" href="{{../baseUrl}}/api/{{this.apiName}}">{{this.apiName}}</a></td>
+        <td> <a class="table-links" href="{{../baseUrl}}/applications/{{this.applicationId}}">{{this.applicationName}}</a></td>
+        <td><span class="plane-badge">{{this.throttlingTier}}</span></td>
+        <td> <a href="#" type="button" class="common-btn-outlined" onclick="unsubscribe('{{this.id}}')">Unsubscribe</a></td>
       </tr>
       {{/each}}
     </tbody>
   </table>
 </div>
+</section>

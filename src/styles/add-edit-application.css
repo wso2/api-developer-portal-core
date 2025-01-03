@@ -31,17 +31,6 @@
   color: var(--light-text-color);
 }
 
-.custom-cancel-btn,
-.custom-save-btn {
-  color: var(--font-colour-primary);
-  border-radius: 20px;
-  padding: 10px 20px;
-  border: 0px;
-  font-size: 14px;
-  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
-  text-decoration: none;
-}
-
 .error-msg {
   font-size: 14px;
 }

@@ -33,6 +33,12 @@ class IdentityProviderDTO {
         if (idp.SIGNUP_URL) {
             this.signUpURL = idp.SIGNUP_URL
         }
+        if (idp.JWKS_URL) {
+            this.jwksURL = idp.JWKS_URL;
+        }
+        if (idp.CERTIFICATE) {
+            this.certificate = idp.CERTIFICATE;
+        }
     }
 
     setResponseData(data) {

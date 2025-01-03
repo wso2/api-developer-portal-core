@@ -29,7 +29,7 @@ function configurePassport(authJsonContent, claimNames) {
         rejectUnauthorized: false
     });    
     //set scopes to call API Manager REST apis
-    const requestedScopes = "openid profile email groups roles apim:subscribe";
+    const requestedScopes = "openid profile email groups roles apim:subscribe admin dev";
     let scope = requestedScopes.split(" ");
     scope.push(...(authJsonContent.scope ? authJsonContent.scope.split(" ") : ""));
     const strategy = new OAuth2Strategy({

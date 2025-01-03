@@ -35,7 +35,6 @@ const loadSettingPage = async (req, res) => {
 
     let templateContent = {
         baseUrl: req.params.orgName,
-        orgID: orgID,
         orgContent: true
     }
     let layoutResponse = "";
@@ -65,7 +64,7 @@ const loadSettingPage = async (req, res) => {
                 let html = await renderGivenTemplate(templateResponse, layoutResponse, {});
                 return res.send(html);
             }
-
+            templateContent.orgID = orgID;
             const retrievedIDP = await adminDao.getIdentityProvider(orgID);
             if (retrievedIDP.length > 0) {
                 templateContent.idp = new IdentityProviderDTO(retrievedIDP[0]);
