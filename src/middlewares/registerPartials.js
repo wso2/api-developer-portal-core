@@ -60,15 +60,14 @@ const registerInternalPartials = (req) => {
           const partialContent = fs.readFileSync(path.join(dir, file), 'utf8');
           hbs.handlebars.registerPartial(partialName, partialContent);
 
-          if(partialName === constants.HEADER_PARTIAL_NAME) {
+          if (partialName === constants.HEADER_PARTIAL_NAME) {
             hbs.handlebars.partials = {
               ...hbs.handlebars.partials,
               header: hbs.handlebars.compile(partialContent)({
-                profile: req.user,
+                profile: req.user
               })
             };
           }
-          
         }
       });
     }
@@ -108,11 +107,21 @@ const registerPartialsFromAPI = async (req) => {
   Object.keys(partialObject).forEach((partialName) => {
     hbs.handlebars.registerPartial(partialName, partialObject[partialName]);
   });
+  let isAdmin, isSuperAdmin = false;
+  if (req.user) {
+    console.log("req.user", req.user);
+    console.log("isAdmin", isAdmin);
+    isAdmin = req.user["isAdmin"];
+    isSuperAdmin = req.user["isSuperAdmin"];
+  }
+  console.log("isAdmin", isAdmin);
   hbs.handlebars.partials = {
     ...hbs.handlebars.partials,
     header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
       baseUrl: "/" + orgName,
       profile: req.user,
+      isAdmin: isAdmin,
+      isSuperAdmin: isSuperAdmin
     }),
     [constants.HERO_PARTIAL_NAME]: hbs.handlebars.compile(partialObject[constants.HERO_PARTIAL_NAME])(
       { baseUrl: "/" + orgName }
