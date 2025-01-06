@@ -1,4 +1,4 @@
-<head>
+{{!-- <head>
     <link rel="stylesheet" href="/technical-styles/settings.css">
 </head>
 <main>
@@ -9,4 +9,33 @@
          {{> alert }}
          {{/if}}
     </div>
-</main>
+</main> --}}
+
+<head>
+    <link rel="stylesheet" href="/technical-styles/settings.css">
+</head>
+<section>
+    <div class="container mt-5">
+        {{#if organizations}}
+            {{> list-org }}
+            <div class="text-end mt-3">
+                <button class="btn btn-primary" onclick="showCreateOrg()">Create New Organization</button>
+            </div>
+            <div id="createOrgContainer" class="mt-4" style="display: none;">
+                {{> create-org }}
+            </div>
+        {{else}}
+            {{> create-org }}
+        {{/if}}
+    </div>
+</section>
+
+<script>
+    function showCreateOrg() {
+        const createOrgContainer = document.getElementById('createOrgContainer');
+        if (createOrgContainer) {
+            createOrgContainer.style.display = 'block'; 
+            window.scrollTo({ top: createOrgContainer.offsetTop, behavior: 'smooth' });
+        }
+    }
+</script>
