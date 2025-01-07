@@ -114,15 +114,9 @@ const ensureAuthenticated = async (req, res, next) => {
     };
 };
 
-function validateToken(scope) {
+function validateAuthentication(scope) {
     return async function (req, res, next) {
-        let accessToken;
-        if (req.isAuthenticated() && req.user) {
-            accessToken = req.user[constants.ACCESS_TOKEN];
-        } else {
-            accessToken = req.headers.authorization && req.headers.authorization.split(' ')[1];
-        }
-        //fetch certificate or JWKS URL
+
         let IDP, valid, scopes, orgId, response;
         if (req.params.orgName) {
             orgId = await adminDao.getOrgId(orgName);
@@ -140,32 +134,60 @@ function validateToken(scope) {
         } else {
             IDP = config.identityProvider;
         }
-        if (IDP.certificate) {
-            const pemKey = IDP.certificate;
-            const publicKey = await importX509(pemKey, 'RS256');
-            [valid, scopes] = await validateWithCert(accessToken, publicKey);
-        } else {
-            if (IDP.jwksURL) {
-                [valid, scopes] = await validateWithJWKS(accessToken, IDP.jwksURL);
+
+        let accessToken, basicHeader;
+        //if IDP present, fetch bearer token else use basic header
+        if (IDP.clientId !== "") {
+            console.log('Client ID:', IDP.clientId);
+            if (req.isAuthenticated() && req.user) {
+                accessToken = req.user[constants.ACCESS_TOKEN];
             } else {
-                valid = false;
+                accessToken = req.headers.authorization && req.headers.authorization.split(' ')[1];
             }
-        }
-        if (valid) {
-            if (scopes.split(" ").includes(scope)) {
+            //fetch certificate or JWKS URL
+            if (IDP.certificate) {
+                const pemKey = IDP.certificate;
+                const publicKey = await importX509(pemKey, 'RS256');
+                [valid, scopes] = await validateWithCert(accessToken, publicKey);
+            } else {
+                if (IDP.jwksURL) {
+                    [valid, scopes] = await validateWithJWKS(accessToken, IDP.jwksURL);
+                } else {
+                    valid = false;
+                }
+            }
+            if (valid) {
+                if (scopes.split(" ").includes(scope)) {
+                    return next();
+                } else {
+                    if (req.user) {
+                        return res.redirect('login');
+                    } else {
+                        return util.handleError(res, new CustomError(403, constants.ERROR_CODE[403], constants.ERROR_MESSAGE.FORBIDDEN));
+                    }
+                }
+            } else {
+                if (req.user) {
+                    return res.redirect('login');
+                } else {
+                    return util.handleError(res, new CustomError(401, constants.ERROR_CODE[401], constants.ERROR_MESSAGE.UNAUTHENTICATED));
+                }
+            }
+        } else {
+            if (req.isAuthenticated() && req.user) {
+                basicHeader = req.user[constants.BASIC_HEADER];
+            } else {
+                basicHeader = req.headers.authorization && req.headers.authorization.split(' ')[1];
+            }
+            valid = await validateBasicAuth(basicHeader);
+            if (valid) {
                 return next();
             } else {
                 if (req.user) {
                     return res.redirect('login');
                 } else {
-                    return util.handleError(res, new CustomError(403, constants.ERROR_CODE[403], constants.ERROR_MESSAGE.FORBIDDEN));
+                    return util.handleError(res, new CustomError(401, constants.ERROR_CODE[401], constants.ERROR_MESSAGE.UNAUTHENTICATED));
                 }
-            }
-        } else {
-            if (req.user) {
-                return res.redirect('login');
-            } else {
-                return util.handleError(res, new CustomError(401, constants.ERROR_CODE[401], constants.ERROR_MESSAGE.UNAUTHENTICATED));
             }
         }
     }
@@ -195,9 +217,25 @@ const validateWithJWKS = async (token, jwksURL) => {
     }
 }
 
+const validateBasicAuth = async (basicHeader) => {
+
+    let valid = false;
+    const base64Decoded = Buffer.from(basicHeader, 'base64').toString('utf-8');
+    const [username, password] = base64Decoded.split(':');
+    const users = config.defaultAuth.users;
+    for (let user of users) {
+        if (username === user.username && password === user.password) {
+            valid = true;
+            break;
+        }
+    }
+    return valid;
+}
+
 module.exports = ensureAuthenticated;
 
 module.exports = {
     ensureAuthenticated,
-    validateToken
+    validateAuthentication
+
 }

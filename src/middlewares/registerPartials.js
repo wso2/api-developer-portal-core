@@ -36,7 +36,7 @@ const registerPartials = async (req, res, next) => {
     try {
       await registerPartialsFromAPI(req);
     } catch (error) {
-      console.error(`Error while loading organization :,${error}`)
+      console.error('Error while loading organization :', error);
     }
   }
   next();
@@ -110,23 +110,23 @@ const registerPartialsFromAPI = async (req) => {
   let isAdmin, isSuperAdmin = false;
   if (req.user) {
     console.log("req.user", req.user);
-    console.log("isAdmin", isAdmin);
     isAdmin = req.user["isAdmin"];
     isSuperAdmin = req.user["isSuperAdmin"];
   }
-  console.log("isAdmin", isAdmin);
-  hbs.handlebars.partials = {
-    ...hbs.handlebars.partials,
-    header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
-      baseUrl: "/" + orgName,
-      profile: req.user,
-      isAdmin: isAdmin,
-      isSuperAdmin: isSuperAdmin
-    }),
-    [constants.HERO_PARTIAL_NAME]: hbs.handlebars.compile(partialObject[constants.HERO_PARTIAL_NAME])(
-      { baseUrl: "/" + orgName }
-    ),
-  };
+  if (partialObject[constants.HEADER_PARTIAL_NAME]) {
+    hbs.handlebars.partials = {
+      ...hbs.handlebars.partials,
+      header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
+        baseUrl: "/" + orgName,
+        profile: req.user,
+        isAdmin: isAdmin,
+        isSuperAdmin: isSuperAdmin
+      }),
+      [constants.HERO_PARTIAL_NAME]: hbs.handlebars.compile(partialObject[constants.HERO_PARTIAL_NAME])(
+        { baseUrl: "/" + orgName }
+      ),
+    };
+  }
   if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
 
     const apiName = req.params.apiName;

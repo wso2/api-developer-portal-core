@@ -17,6 +17,17 @@
   "providerURL": {
     "AWS": "https://aws.amazon.com"
   },
+  "defaultAuth": {
+    "users": [
+      {
+        "username": "admin",
+        "password": "admin",
+        "roles": [
+          "admin"
+        ]
+      }
+    ]
+  },
   "identityProvider": {
     "name": "IS",
     "issuer": "https://127.0.0.1:9443/oauth2/token",
@@ -25,7 +36,7 @@
     "userInfoURL": "https://localhost:9443/oauth2/userinfo",
     "clientId": "<client_id>",
     "callbackURL": "http://localhost:3000/ACME/callback",
-    "scope": "openid email profile apim:subscribe role",
+    "scope": "openid profile",
     "signUpURL": "",
     "logoutURL": "https://localhost:9443/oidc/logout",
     "logoutRedirectURI": "http://localhost:3000/ACME",
