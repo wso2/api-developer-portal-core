@@ -1,6 +1,6 @@
 <head>
-  <link rel="stylesheet" href="/technical-styles/main.css">
-  <link rel="stylesheet" href="/technical-styles/subscription-modal.css">
+    <link rel="stylesheet" href="/technical-styles/main.css">
+    <link rel="stylesheet" href="/technical-styles/subscription-modal.css">
 </head>
 <section>
     <div id="planModal" class="modal custom-modal" tabindex="-1" role="dialog">
@@ -36,31 +36,32 @@
                         {{else}}
                         <div class="create-application-content">
                             <p>
-                                No applications available. Please 
-                                <a href="#" class="create-application-link" onclick="showApplicationForm()">Create a new application</a>.
+                                No applications available. Please
+                                <a href="#" class="create-application-link" onclick="showApplicationForm()">Create a new
+                                    application</a>.
                             </p>
                             {{/if}}
                         </div>
                     </div>
                     <div id="applicationFormSection" class="app-selection">
-                            <div class="application-creation-body">
-                                <h5 class="dev-header h5">Create a New Application</h5>
-                                <h6 for="newAppName" class="dev-header h6">Application Name</h6>
-                                <input type="text" id="appName" pattern="[a-zA-Z0-9]+"
-                                    class="form-control input-content" placeholder="Enter application name" required>
-                            </div>
+                        <div class="application-creation-body">
+                            <h5 class="dev-header h5">Create a New Application</h5>
+                            <h6 for="newAppName" class="dev-header h6">Application Name</h6>
+                            <input type="text" id="appName" pattern="[a-zA-Z0-9]+" class="form-control input-content"
+                                placeholder="Enter application name" required>
+                        </div>
                     </div>
-                </div>
-                <div class="custom-modal-btn-section">
-                    <button type="button" class="common-btn-outlined" style="margin-right: 0.5rem;" data-dismiss="modal"
-                        onclick="closeModal()">Close</button>
-                    {{#if applications}}
-                    <button type="submit" class="common-btn-primary" id="subButton"
-                        onclick="handleSubscribe(null,null)">Subscribe</button>
-                    {{else}}
-                    <button type="submit" class="common-btn-primary" id="createSubButton"
-                        onclick="handleCreateSubscribe()" {{#if devMode}}disabled{{/if}}>Create & Subscribe</button>
-                    {{/if}}
+                    <div class="custom-modal-btn-section">
+                        <button type="button" class="common-btn-outlined" style="margin-right: 0.5rem;"
+                            data-dismiss="modal" onclick="closeModal()">Close</button>
+                        {{#if applications}}
+                        <button type="submit" class="common-btn-primary" id="subButton"
+                            onclick="handleSubscribe(null,null)">Subscribe</button>
+                        {{else}}
+                        <button type="submit" class="common-btn-primary" id="createSubButton"
+                            onclick="handleCreateSubscribe()" {{#if devMode}}disabled{{/if}}>Create & Subscribe</button>
+                        {{/if}}
+                    </div>
                 </div>
             </div>
         </div>
