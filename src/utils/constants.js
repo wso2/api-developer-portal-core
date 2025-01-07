@@ -30,6 +30,7 @@ module.exports = {
     ORG_ID: 'orgID',
     ORG_IDENTIFIER: 'organizationIdentifier',
     ACCESS_TOKEN: 'accessToken',
+    BASIC_HEADER: 'basicAuthHeader',
     MIME_TYPES: {
         HTML: 'text/html',
         TEXT: 'text/plain',
