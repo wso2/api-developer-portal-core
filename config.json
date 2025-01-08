@@ -24,7 +24,9 @@
         "password": "admin",
         "roles": [
           "admin"
-        ]
+        ],
+        "orgClaimName": "ACME",
+        "organizationIdentifier": "ACME"
       }
     ]
   },

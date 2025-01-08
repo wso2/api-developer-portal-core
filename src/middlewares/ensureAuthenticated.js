@@ -79,6 +79,7 @@ const ensureAuthenticated = async (req, res, next) => {
                 }
                 //verify user belongs to organization
                 if (!minimatch.minimatch(req.originalUrl, constants.ROUTE.DEVPORTAL_ROOT)) {
+                    console.log('Checking organization claim', req.user[constants.ROLES.ORGANIZATION_CLAIM]);
                     if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
                         console.log('User is not authorized to access organization');
                         return res.send("User not authorized to access organization");

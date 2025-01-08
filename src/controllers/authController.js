@@ -26,6 +26,7 @@ const adminDao = require('../dao/admin');
 const IdentityProviderDTO = require("../dto/identityProvider");
 const minimatch = require('minimatch');
 const { renderGivenTemplate } = require('../utils/util');
+const { profile } = require('console');
 
 const filePrefix = config.pathToContent;
 

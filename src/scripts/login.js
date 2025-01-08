@@ -8,10 +8,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const password = document.getElementById('password').value.trim();
 
         try {
-            console.log({
-                username: username,
-                password: password,
-            });
             const response = await fetch(`/devportal/login`, {
                 method: 'POST',
                 headers: {
@@ -30,11 +26,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 window.location.href = document.referrer || newUrl;
             } else {
                 console.error('Login failed:', responseData);
-                await showAlert(`Failed to login. ${responseData.message}`, 'error');
+                await showAlert(`Login failed. ${responseData.message}`, 'error');
             }
         } catch (error) {
-            console.error('Error saving application:', error);
-            await showAlert('Failed to update application.', 'error');
+            console.error('Login failed:', error);
+            await showAlert('Login failed', 'error');
         }
     });
 });

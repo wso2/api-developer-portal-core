@@ -52,6 +52,7 @@ const registerInternalPartials = (req) => {
 
   const partialsDirs = [partialsDir, ...getDirectories(path.join(require.main.filename, '..', '/pages')).map(dir => path.join(dir, 'partials'))];
 
+  console.log("req.user", req.user);
   partialsDirs.forEach(dir => {
     if (fs.existsSync(dir)) {
       fs.readdirSync(dir).forEach(file => {
