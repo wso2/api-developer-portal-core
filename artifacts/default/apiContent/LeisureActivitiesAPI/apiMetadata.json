@@ -1,0 +1,39 @@
+{
+  "apiInfo": {
+    "provider": "WSO2",
+    "apiName": "LeisureActivitiesAPI",
+    "orgName": "ACME",
+    "apiCategory": "Transportation",
+    "tags": [
+      "leisure",
+      "activities",
+      "reservations"
+    ],
+    "apiDescription": "API for retrieving information about leisure activities and managing reservations",
+    "apiVersion": "2.1.0",
+    "apiType": "SOAP",
+    "additionalProperties": {
+      "documentationUrl": "https://globaldata.com/docs/countries-api"
+    },
+    "visibility" : "PRIVATE",
+    "visibleGroups": ["HR"]
+  },
+  "subscriptionPolicies": [
+    {
+      "policyName": "Gold"
+    },
+    {
+      "policyName": "Silver"
+    },
+    {
+      "policyName": "Bronze"
+    },
+    {
+      "policyName": "Unlimited"
+    }
+  ],
+  "endPoints": {
+    "sandboxURL": "https://leisure.api.sandbox.abc.com",
+    "productionURL": "https://leisure.api.abc.com"
+  }
+}

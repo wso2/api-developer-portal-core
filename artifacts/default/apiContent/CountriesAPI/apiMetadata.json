@@ -1,0 +1,35 @@
+{
+  "apiInfo": {
+    "provider": "WSO2",
+    "apiName": "CountriesAPI",
+    "orgName": "ACME",
+    "apiCategory": "Geography",
+    "tags": ["countries", "capitals", "population", "continents"],
+    "apiDescription": "API for retrieving information about countries, their capitals, population, and other geographical data.",
+    "apiVersion": "2.5.0",
+    "apiType": "GraphQL",
+    "additionalProperties": {
+      "documentationUrl": "https://globaldata.com/docs/countries-api"
+    },
+   "visibility" : "PRIVATE",
+    "visibleGroups": ["HR"]
+  },
+  "subscriptionPolicies": [
+    {
+      "policyName": "Gold"
+    },
+    {
+      "policyName": "Silver"
+    },
+    {
+      "policyName": "Bronze"
+    },
+    {
+      "policyName": "Unlimited"
+    }
+  ],
+  "endPoints": {
+    "sandboxURL": "https://countries.trevorblades.com/graphql",
+    "productionURL": "https://countries.trevorblades.com/graphql"
+  }
+}

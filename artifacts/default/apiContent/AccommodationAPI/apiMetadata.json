@@ -1,0 +1,39 @@
+{
+  "apiInfo": {
+    "provider": "WSO2",
+    "apiName": "AccommodationAPI",
+    "orgName": "ACME",
+    "apiCategory": "Transportation",
+    "tags": [
+      "leisure",
+      "activities",
+      "reservations"
+    ],
+    "apiDescription": "API for managing accommodations and reservations in a specified city",
+    "apiVersion": "1.1.0",
+    "apiType": "REST",
+    "additionalProperties": {
+      "documentationUrl": "https://globaldata.com/docs/countries-api"
+    },
+   "visibility" : "PRIVATE",
+    "visibleGroups": ["HR"]
+  },
+  "subscriptionPolicies": [
+    {
+      "policyName": "Gold"
+    },
+    {
+      "policyName": "Silver"
+    },
+    {
+      "policyName": "Bronze"
+    },
+    {
+      "policyName": "Unlimited"
+    }
+  ],
+  "endPoints": {
+    "sandboxURL": "https://accommodation.api.sandbox.abc.com",
+    "productionURL": "https://accommodation.api.abc.com"
+  }
+}

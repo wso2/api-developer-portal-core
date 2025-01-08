@@ -253,7 +253,7 @@ const createOrgContent = async (req, res) => {
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
     await util.unzipFile(zipPath, extractPath);
     try {
-        const files = await readFilesInDirectory(extractPath, orgId, req);
+        const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'));
         for (const { filePath, fileName, fileContent, fileType } of files) {
             await createContent(filePath, fileName, fileContent, fileType, orgId);
         }
@@ -293,7 +293,7 @@ const updateOrgContent = async (req, res) => {
     const zipPath = req.file.path;
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
     await util.unzipFile(zipPath, extractPath);
-    const files = await readFilesInDirectory(extractPath, orgId, req);
+    const files = await readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'));
     try {
         for (const { filePath, fileName, fileContent, fileType } of files) {
             if (fileName != null && !fileName.startsWith('.')) {
@@ -350,54 +350,7 @@ const deleteOrgContent = async (req, res) => {
     }
 };
 
-async function readFilesInDirectory(directory, orgId, req, baseDir = '') {
 
-    const files = await fs.promises.readdir(directory, { withFileTypes: true });
-    let fileDetails = [];
-    for (const file of files) {
-        const filePath = path.join(directory, file.name);
-        const relativePath = path.join(baseDir, file.name);
-        if (file.isDirectory()) {
-            const subDirContents = await readFilesInDirectory(filePath, orgId, req, relativePath);
-            fileDetails = fileDetails.concat(subDirContents);
-        } else {
-            let content = await fs.promises.readFile(filePath);
-            let strContent = await fs.promises.readFile(filePath, constants.CHARSET_UTF8);
-            let dir = baseDir.replace(/^[^/]+\/?/, '') || '/';
-            let fileType;
-            if (file.name.endsWith(".css")) {
-                fileType = "style"
-                if (file.name === "main.css") {
-                    strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g,
-                        `@import url("${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/layout?fileType=style&fileName=$1");`);
-                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
-                }
-            } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
-                fileType = "layout"
-                if (file.name === "main.hbs") {
-                    strContent = strContent.replace(/\/styles\//g, `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/layout?fileType=style&fileName=`);
-                    content = Buffer.from(strContent, constants.CHARSET_UTF8);
-                }
-            } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
-                fileType = "partial"
-            } else if (file.name.endsWith(".md") && dir.endsWith("content")) {
-                fileType = "markDown";
-            } else if (file.name.endsWith(".hbs")) {
-                fileType = "template";
-            } else {
-                fileType = "image";
-            }
-
-            fileDetails.push({
-                filePath: dir,
-                fileName: file.name,
-                fileContent: content,
-                fileType: fileType
-            });
-        }
-    }
-    return fileDetails;
-}
 
 const createProvider = async (req, res) => {
 
