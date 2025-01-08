@@ -1,6 +1,6 @@
 .custom-navbar {
-  background-color: var(--primary-color);
-  padding: 10px 40px;
+  background-color: var(--white-color);
+  padding: 0.5rem 3.75rem;
   height: 64px;
 }
 
@@ -33,13 +33,13 @@
 }
 
 .navbar-nav .nav-link {
-  white-space: nowrap; 
+  white-space: nowrap;
   color: var(--font-colour-primary);
   margin-right: 20px;
   font-size: 14px;
-  text-align: center; 
+  text-align: center;
   display: flex;
-  align-items: center; 
+  align-items: center;
 }
 
 .navbar-nav .nav-link:hover,
@@ -112,7 +112,7 @@
 }
 
 .dropdown-menu {
-  background-color: var(--font-colour-primary);
+  background-color: var(--white-color);
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   padding: 10px;
@@ -197,7 +197,7 @@
 
 .dropdown-item i {
   margin-right: 10px;
-  color:  var(--primary-color);
+  color: var(--primary-color);
   font-size: 16px;
   min-width: 20px;
   text-align: center;

@@ -36,7 +36,7 @@ const registerPartials = async (req, res, next) => {
     try {
       await registerPartialsFromAPI(req);
     } catch (error) {
-      console.error(`Error while loading organization :,${error}`)
+      console.error('Error while loading organization :', error);
     }
   }
   next();
@@ -60,15 +60,14 @@ const registerInternalPartials = (req) => {
           const partialContent = fs.readFileSync(path.join(dir, file), 'utf8');
           hbs.handlebars.registerPartial(partialName, partialContent);
 
-          if(partialName === constants.HEADER_PARTIAL_NAME) {
+          if (partialName === constants.HEADER_PARTIAL_NAME) {
             hbs.handlebars.partials = {
               ...hbs.handlebars.partials,
               header: hbs.handlebars.compile(partialContent)({
-                profile: req.user,
+                profile: req.user
               })
             };
           }
-          
         }
       });
     }
@@ -108,16 +107,26 @@ const registerPartialsFromAPI = async (req) => {
   Object.keys(partialObject).forEach((partialName) => {
     hbs.handlebars.registerPartial(partialName, partialObject[partialName]);
   });
-  hbs.handlebars.partials = {
-    ...hbs.handlebars.partials,
-    header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
-      baseUrl: "/" + orgName,
-      profile: req.user,
-    }),
-    [constants.HERO_PARTIAL_NAME]: hbs.handlebars.compile(partialObject[constants.HERO_PARTIAL_NAME])(
-      { baseUrl: "/" + orgName }
-    ),
-  };
+  let isAdmin, isSuperAdmin = false;
+  if (req.user) {
+    console.log("req.user", req.user);
+    isAdmin = req.user["isAdmin"];
+    isSuperAdmin = req.user["isSuperAdmin"];
+  }
+  if (partialObject[constants.HEADER_PARTIAL_NAME]) {
+    hbs.handlebars.partials = {
+      ...hbs.handlebars.partials,
+      header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
+        baseUrl: "/" + orgName,
+        profile: req.user,
+        isAdmin: isAdmin,
+        isSuperAdmin: isSuperAdmin
+      }),
+      [constants.HERO_PARTIAL_NAME]: hbs.handlebars.compile(partialObject[constants.HERO_PARTIAL_NAME])(
+        { baseUrl: "/" + orgName }
+      ),
+    };
+  }
   if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
 
     const apiName = req.params.apiName;

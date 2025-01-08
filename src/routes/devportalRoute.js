@@ -24,43 +24,43 @@ const devportalController = require('../controllers/devportalController');
 const multer = require('multer');
 const storage = multer.memoryStorage()
 const apiDefinition = multer({ storage: storage })
-const { ensureAuthenticated, validateToken } = require('../middlewares/ensureAuthenticated');
+const { ensureAuthenticated, validateAuthentication } = require('../middlewares/ensureAuthenticated');
 const constants = require('../utils/constants');
 
-router.post('/organizations', validateToken(constants.SCOPES.ADMIN), adminService.createOrganization);
-router.get('/organizations', validateToken(constants.SCOPES.ADMIN), adminService.getOrganizations);
-router.put('/organizations/:orgId', validateToken(constants.SCOPES.ADMIN), adminService.updateOrganization);
-router.get('/organizations/:orgId', validateToken(constants.SCOPES.ADMIN), devportalService.getOrganization);
-router.delete('/organizations/:orgId', validateToken(constants.SCOPES.ADMIN), adminService.deleteOrganization);
+router.post('/organizations', validateAuthentication(constants.SCOPES.ADMIN), adminService.createOrganization);
+router.get('/organizations', validateAuthentication(constants.SCOPES.ADMIN), adminService.getOrganizations);
+router.put('/organizations/:orgId', validateAuthentication(constants.SCOPES.ADMIN), adminService.updateOrganization);
+router.get('/organizations/:orgId', validateAuthentication(constants.SCOPES.ADMIN), devportalService.getOrganization);
+router.delete('/organizations/:orgId', validateAuthentication(constants.SCOPES.ADMIN), adminService.deleteOrganization);
 
-router.post('/organizations/:orgId/identityProvider', validateToken(constants.SCOPES.ADMIN), adminService.createIdentityProvider);
-router.put('/organizations/:orgId/identityProvider', validateToken(constants.SCOPES.ADMIN), adminService.updateIdentityProvider);
-router.get('/organizations/:orgId/identityProvider', validateToken(constants.SCOPES.ADMIN), adminService.getIdentityProvider);
-router.delete('/organizations/:orgId/identityProvider', validateToken(constants.SCOPES.ADMIN), adminService.deleteIdentityProvider);
+router.post('/organizations/:orgId/identityProvider', validateAuthentication(constants.SCOPES.ADMIN), adminService.createIdentityProvider);
+router.put('/organizations/:orgId/identityProvider', validateAuthentication(constants.SCOPES.ADMIN), adminService.updateIdentityProvider);
+router.get('/organizations/:orgId/identityProvider', validateAuthentication(constants.SCOPES.ADMIN), adminService.getIdentityProvider);
+router.delete('/organizations/:orgId/identityProvider', validateAuthentication(constants.SCOPES.ADMIN), adminService.deleteIdentityProvider);
 
 const upload = multer({ dest: '../.tmp/' });
-router.post('/organizations/:orgId/layout', validateToken(constants.SCOPES.ADMIN), upload.single('file'), adminService.createOrgContent);
-router.put('/organizations/:orgId/layout', validateToken(constants.SCOPES.ADMIN), upload.single('file'), adminService.updateOrgContent);
+router.post('/organizations/:orgId/layout', validateAuthentication(constants.SCOPES.ADMIN), upload.single('file'), adminService.createOrgContent);
+router.put('/organizations/:orgId/layout', validateAuthentication(constants.SCOPES.ADMIN), upload.single('file'), adminService.updateOrgContent);
 router.get('/organizations/:orgId/layout', devportalService.getOrgContent);
 router.get('/organizations/:orgId/layout/:fileType', devportalService.getOrgContent);
-router.delete('/organizations/:orgId/layout', validateToken(constants.SCOPES.ADMIN), adminService.deleteOrgContent);
+router.delete('/organizations/:orgId/layout', validateAuthentication(constants.SCOPES.ADMIN), adminService.deleteOrgContent);
 
-router.post('/organizations/:orgId/provider', validateToken(constants.SCOPES.ADMIN), adminService.createProvider);
-router.put('/organizations/:orgId/provider', validateToken(constants.SCOPES.ADMIN), adminService.updateProvider);
-router.get('/organizations/:orgId/provider', validateToken(constants.SCOPES.ADMIN), adminService.getProviders);
-router.delete('/organizations/:orgId/provider', validateToken(constants.SCOPES.ADMIN), adminService.deleteProvider);
+router.post('/organizations/:orgId/provider', validateAuthentication(constants.SCOPES.ADMIN), adminService.createProvider);
+router.put('/organizations/:orgId/provider', validateAuthentication(constants.SCOPES.ADMIN), adminService.updateProvider);
+router.get('/organizations/:orgId/provider', validateAuthentication(constants.SCOPES.ADMIN), adminService.getProviders);
+router.delete('/organizations/:orgId/provider', validateAuthentication(constants.SCOPES.ADMIN), adminService.deleteProvider);
 
-router.post('/organizations/:orgId/apis', validateToken(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.createAPIMetadata);
-router.get('/organizations/:orgId/apis/:apiId', validateToken(constants.SCOPES.DEVELOPER), apiMetadataService.getAPIMetadata);
-router.get('/organizations/:orgId/apis', validateToken(constants.SCOPES.DEVELOPER), apiMetadataService.getAllAPIMetadata);
-router.put('/organizations/:orgId/apis/:apiId', validateToken(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.updateAPIMetadata);
+router.post('/organizations/:orgId/apis', validateAuthentication(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.createAPIMetadata);
+router.get('/organizations/:orgId/apis/:apiId', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.getAPIMetadata);
+router.get('/organizations/:orgId/apis', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.getAllAPIMetadata);
+router.put('/organizations/:orgId/apis/:apiId', validateAuthentication(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.updateAPIMetadata);
 
 const apiZip = multer({ dest: '/tmp' });
-router.delete('/organizations/:orgId/apis/:apiId', validateToken(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIMetadata);
-router.post('/organizations/:orgId/apis/:apiId/template', validateToken(constants.SCOPES.DEVELOPER), apiZip.single('apiContent'), apiMetadataService.createAPITemplate);
-router.put('/organizations/:orgId/apis/:apiId/template', validateToken(constants.SCOPES.DEVELOPER), apiZip.single('apiContent'), apiMetadataService.updateAPITemplate);
+router.delete('/organizations/:orgId/apis/:apiId', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIMetadata);
+router.post('/organizations/:orgId/apis/:apiId/template', validateAuthentication(constants.SCOPES.DEVELOPER), apiZip.single('apiContent'), apiMetadataService.createAPITemplate);
+router.put('/organizations/:orgId/apis/:apiId/template', validateAuthentication(constants.SCOPES.DEVELOPER), apiZip.single('apiContent'), apiMetadataService.updateAPITemplate);
 router.get('/organizations/:orgId/apis/:apiId/template', apiMetadataService.getAPIFile);
-router.delete('/organizations/:orgId/apis/:apiId/template', validateToken(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIFile);
+router.delete('/organizations/:orgId/apis/:apiId/template', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIFile);
 
 
 router.post('/subscriptions', ensureAuthenticated, devportalController.subscribeAPI);

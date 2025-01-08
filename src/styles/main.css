@@ -30,16 +30,25 @@
   --font-family-serif: "Sofia Sans", serif;
   --font-family-mono: "Roboto", monospace;
 }
-
-html {
-  overflow: hidden;
+html,
+body {
+  margin: 0;
   height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 body {
-  padding-top: 3.75rem;
-  overflow: auto;
-  height: 100%;
+  padding-top: 3rem;
+}
+
+footer {
+  margin-top: auto;
+  width: 100%;
+}
+
+.technical-footer {
+  padding: 0 3.75rem;
 }
 
 .common-btn-primary {
@@ -243,7 +252,7 @@ h6 {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
-.custom-modal-btn-section{
-  padding: 0 1rem 1rem 1rem ;
+.custom-modal-btn-section {
+  padding: 0 1rem 1rem 1rem;
   display: flex;
 }

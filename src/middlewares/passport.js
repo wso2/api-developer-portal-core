@@ -29,7 +29,7 @@ function configurePassport(authJsonContent, claimNames) {
         rejectUnauthorized: false
     });    
     //set scopes to call API Manager REST apis
-    const requestedScopes = "openid profile email groups roles apim:subscribe admin dev";
+    const requestedScopes = "openid profile apim:subscribe admin dev";
     let scope = requestedScopes.split(" ");
     scope.push(...(authJsonContent.scope ? authJsonContent.scope.split(" ") : ""));
     const strategy = new OAuth2Strategy({
@@ -53,7 +53,13 @@ function configurePassport(authJsonContent, claimNames) {
         const organizationID = decodedJWT[claimNames[constants.ROLES.ORGANIZATION_CLAIM]] ? decodedJWT[config.orgIDClaim] : '';
         const roles = decodedJWT[claimNames[constants.ROLES.ROLE_CLAIM]] ? decodedJWT[config.roleClaim] : '';
         const groups = decodedJWT[claimNames[constants.ROLES.GROUP_CLAIM]] ? decodedJWT[config.groupsClaim] : '';
-
+        let isAdmin, isSuperAdmin = false;
+        if (roles.includes(constants.ROLES.SUPER_ADMIN) || roles.includes(constants.ROLES.ADMIN)) {
+            isAdmin = true;
+        }
+        if (roles.includes(constants.ROLES.SUPER_ADMIN)) {
+            isSuperAdmin = true;
+        }
         profile = {
             'name': name,
             'idToken': params.id_token,
@@ -62,7 +68,9 @@ function configurePassport(authJsonContent, claimNames) {
             'returnTo': req.session.returnTo,
             accessToken,
             [constants.ROLES.ROLE_CLAIM]: roles,
-            [constants.ROLES.GROUP_CLAIM]: groups
+            [constants.ROLES.GROUP_CLAIM]: groups,
+            'isAdmin': isAdmin,
+            'isSuperAdmin': isSuperAdmin
         };
         return done(null, profile);
     });
