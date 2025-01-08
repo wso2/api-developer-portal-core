@@ -52,7 +52,6 @@ const registerInternalPartials = (req) => {
 
   const partialsDirs = [partialsDir, ...getDirectories(path.join(require.main.filename, '..', '/pages')).map(dir => path.join(dir, 'partials'))];
 
-  console.log("req.user", req.user);
   partialsDirs.forEach(dir => {
     if (fs.existsSync(dir)) {
       fs.readdirSync(dir).forEach(file => {
@@ -110,7 +109,6 @@ const registerPartialsFromAPI = async (req) => {
   });
   let isAdmin, isSuperAdmin = false;
   if (req.user) {
-    console.log("req.user", req.user);
     isAdmin = req.user["isAdmin"];
     isSuperAdmin = req.user["isSuperAdmin"];
   }
