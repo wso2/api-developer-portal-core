@@ -6,9 +6,9 @@ Follow the steps given in InstallationGuide.md, to create database.
     
 2.  Extract the downloaded zip.
 
-3.  Execute the data-dump.sql script in the artifacts folder to populate the database with mock data.
+3.  Run the following command to create a default organization and populate the organization content and mock API data.
     ```bash
-    psql -q -U "{db_username}" -d “devportal" -h "{hostname}" -p "{port}" -f {path to data-dump.sql}
+    node artifacts/data_dump.js
     ```
     
 4.  Execute the startup script on the <DEVPORTAL_HOME>/bin folder, based on the OS:
