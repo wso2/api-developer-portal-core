@@ -210,7 +210,8 @@ const login = async (req, res) => {
         const username = req.body.username;
         const password = req.body.password;
 
-        if (config.defaultAuth.username === username && config.defaultAuth.password === password) {
+        const user = config.defaultAuth.users.find(user => user.username === username && user.password === password);
+        if (user) {
             res.status(200).json({ message: 'Login successful' });
         } else {
             res.status(401).json({ message: 'Invalid credentials' });
