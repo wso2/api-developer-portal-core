@@ -17,6 +17,10 @@
   "providerURL": {
     "AWS": "https://aws.amazon.com"
   },
+  "defaultAuth": {
+    "username": "admin",
+    "password": "admin"
+  },
   "identityProvider": {
     "name": "IS",
     "issuer": "https://127.0.0.1:9443/oauth2/token",

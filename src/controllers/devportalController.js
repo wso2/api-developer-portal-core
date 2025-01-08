@@ -205,6 +205,22 @@ const updateOAuthKeys = async (req, res) => {
     }
 };
 
+const login = async (req, res) => {
+    try {
+        const username = req.body.username;
+        const password = req.body.password;
+
+        if (config.defaultAuth.username === username && config.defaultAuth.password === password) {
+            res.status(200).json({ message: 'Login successful' });
+        } else {
+            res.status(401).json({ message: 'Invalid credentials' });
+        }
+    } catch (error) {
+        console.error("Error occurred while logging in", error);
+        util.handleError(res, error);
+    }
+};
+
 module.exports = {
     unsubscribeAPI,
     subscribeAPI,
@@ -217,5 +233,6 @@ module.exports = {
     generateOAuthKeys,
     revokeOAuthKeys,
     updateOAuthKeys,
-    cleanUp
+    cleanUp,
+    login
 };
