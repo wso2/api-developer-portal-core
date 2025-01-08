@@ -109,6 +109,7 @@ const registerPartialsFromAPI = async (req) => {
   });
   let isAdmin, isSuperAdmin = false;
   if (req.user) {
+    console.log("req.user", req.user);
     isAdmin = req.user["isAdmin"];
     isSuperAdmin = req.user["isSuperAdmin"];
   }
