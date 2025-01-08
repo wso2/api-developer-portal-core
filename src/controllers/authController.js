@@ -74,7 +74,7 @@ const login = async (req, res, next) => {
     }
     }
     IDP = await fetchAuthJsonContent(req, orgName);
-    if (IDP.clientId && (IDP.clientId !== '<client_id>')) {
+    if (IDP.clientId) {
         //fetch claim names from DB
         if (Object.keys(claimNames).length === 0) {
             claimNames[constants.ROLES.ROLE_CLAIM] = config.roleClaim;
