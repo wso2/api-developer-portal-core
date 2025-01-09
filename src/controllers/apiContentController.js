@@ -52,8 +52,9 @@ const loadAPIs = async (req, res) => {
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis");
         } catch (error) {
-            console.error(`Error while loading organization content ,${error}`);
-            return res.redirect('/configure');
+            console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
+            html = constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR;
+
         }
     }
     res.send(html);
@@ -172,9 +173,8 @@ const loadTryOutPage = async (req, res) => {
             const apiID = await apiDao.getAPIId(apiName);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
             let apiDefinition;
-            if (metaData.apiType === "GraphQL") {
-                apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_GRAPHQL, orgID, apiID);
-            } else {
+            if (metaData.apiInfo.apiType === "GraphQL") {
+                apiDefinition = "";
                 apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, orgID, apiID);
             }
             apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
@@ -189,7 +189,7 @@ const loadTryOutPage = async (req, res) => {
             const layoutResponse = await loadLayoutFromAPI(orgID);
             html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         } catch (error) {
-            console.error(`Failed to load api tryout : ,${error}`);
+            console.error(`Failed to load api tryout :` , error);
         }
     }
     res.send(html);
@@ -207,11 +207,12 @@ async function loadAPIMetaDataList() {
     return mockAPIMetaData;
 }
 
-
-
 async function loadAPIMetaDataListFromAPI(req, orgID, orgName) {
 
-    const groups = req.user ? req.user[constants.ROLES.GROUP_CLAIM] : "";
+    let groups = "";
+    if (req.user && req.user[constants.ROLES.GROUP_CLAIM]) {
+        groups = req.user[constants.ROLES.GROUP_CLAIM];
+    }
     const groupList = groups.split(" ");
     let metaData = await apiMetadataService.getMetadataListFromDB(orgID, groupList);
     metaData.forEach(item => {
