@@ -1,11 +1,16 @@
 {
   "port": 3000,
-  "pathToContent": "/src/",
+  "pathToContent": "../api-developer-portal/src/",
   "mode": "production",
   "controlPlane": {
     "url": "https://127.0.0.1:9443/api/am/devportal/v3",
     "disableCertValidation": true,
     "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
+  },
+  "serverCerts": {
+    "pathToCert": "../api-developer-portal/conf/security/client-truststore.pem",
+    "pathToPK": "../api-developer-portal/conf/security/private-key.pem",
+    "pathToCA": "../api-developer-portal/conf/security/client-truststore.pem"
   },
   "db": {
     "username": "postgres",

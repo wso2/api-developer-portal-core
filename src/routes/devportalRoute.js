@@ -27,6 +27,15 @@ const apiDefinition = multer({ storage: storage })
 const { ensureAuthenticated, validateAuthentication } = require('../middlewares/ensureAuthenticated');
 const constants = require('../utils/constants');
 
+const enforceMTLS = (req, res, next) => {
+    const clientCert = req.connection.getPeerCertificate();
+    if (!clientCert || !clientCert.subject) {
+        return res.status(403).send('Client certificate required');
+    }
+    return next();
+};
+router.get('/mtls/organizations/:orgId', enforceMTLS, devportalService.getOrganization);
+
 router.post('/organizations', validateAuthentication(constants.SCOPES.ADMIN), adminService.createOrganization);
 router.get('/organizations', validateAuthentication(constants.SCOPES.ADMIN), adminService.getOrganizations);
 router.put('/organizations/:orgId', validateAuthentication(constants.SCOPES.ADMIN), adminService.updateOrganization);

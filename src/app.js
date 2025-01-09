@@ -22,6 +22,8 @@ const passport = require('passport');
 const session = require('express-session');
 const crypto = require('crypto');
 const path = require('path');
+const https = require('https'); // Import https for mTLS
+const fs = require('fs'); // To read certs
 const authRoute = require('./routes/authRoute');
 const devportalRoute = require('./routes/devportalRoute');
 const orgContent = require('./routes/orgContentRoute');
@@ -128,4 +130,19 @@ if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.DEFAULT, customContent);
 }
 
-app.listen(config.port);
+const certPath = path.join(process.cwd(), config.serverCerts.pathToCert);
+const keyPath = path.join(process.cwd(), config.serverCerts.pathToPK);
+const caPath = path.join(process.cwd(), config.serverCerts.pathToCA);
+const serverCert = fs.readFileSync(certPath);
+const serverKey = fs.readFileSync(keyPath);
+const caCert = fs.readFileSync(caPath);
+
+https.createServer({
+    key: serverKey,
+    cert: serverCert,
+    ca: caCert, 
+    requestCert: true,  
+    rejectUnauthorized: false  
+}, app).listen(config.port, () => {
+    console.log(`HTTPS server running on port ${config.port}`);
+});
