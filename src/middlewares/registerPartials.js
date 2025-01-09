@@ -154,7 +154,6 @@ async function checkWSO2APIAvailability() {
   const condition = {
     PROVIDER: "WSO2"
   }
-  console.log(await apiDao.getAPIMetadataByCondition(condition).then(apis => apis.length > 0));
   return await apiDao.getAPIMetadataByCondition(condition).then(apis => apis.length > 0);
 }
 
