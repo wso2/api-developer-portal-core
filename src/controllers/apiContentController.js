@@ -211,7 +211,9 @@ async function loadAPIMetaDataList() {
 
 async function loadAPIMetaDataListFromAPI(req, orgID, orgName) {
 
-    let metaData = await apiMetadataService.getMetadataListFromDB(orgID);
+    const groups = req.user ? req.user[constants.ROLES.GROUP_CLAIM] : "";
+    const groupList = groups.split(" ");
+    let metaData = await apiMetadataService.getMetadataListFromDB(orgID, groupList);
     metaData.forEach(item => {
         item.baseUrl = '/' + orgName;
     });

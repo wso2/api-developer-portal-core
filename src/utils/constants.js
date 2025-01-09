@@ -31,6 +31,10 @@ module.exports = {
     ORG_IDENTIFIER: 'organizationIdentifier',
     ACCESS_TOKEN: 'accessToken',
     BASIC_HEADER: 'basicAuthHeader',
+    API_VISIBILITY: {
+        PUBLIC: 'PUBLIC',
+        PRIVATE: 'PRIVATE'    
+    },
     MIME_TYPES: {
         HTML: 'text/html',
         TEXT: 'text/plain',
