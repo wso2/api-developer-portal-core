@@ -1,9 +1,9 @@
 <section class="subscription-list-section">
-  {{#if subscriptions.length}}
   <div class="myapis-container my-5">
     <div class="common-header">
       <h2>My APIs</h2>
     </div>
+    {{#if subscriptions.length}}
     <table class="table table-bordered table-hover">
       <thead class="table-primary">
         <tr>
@@ -26,6 +26,8 @@
         {{/each}}
       </tbody>
     </table>
+    {{else}}
+    <p>No subscriptions available.</p>
+    {{/if}}
   </div>
-  {{/if}}
 </section>
