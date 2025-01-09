@@ -21,6 +21,7 @@ const APIContent = require('../models/apiContent');
 const APIImageMetadata = require('../models/apiImages');
 const { Sequelize } = require('sequelize');
 const { Op } = require('sequelize');
+const constants = require('../utils/constants');
 
 const createAPIMetadata = async (orgID, apiMetadata, t) => {
 
@@ -257,12 +258,44 @@ const getAPIMetadata = async (orgID, apiID, t) => {
     }
 };
 
-const getAllAPIMetadata = async (orgID, t) => {
+const getAllAPIMetadata = async (orgID, groups, t) => {
 
+    let apiList = [];
+    for (const group of groups) {
+        try {
+            const apiMetadataResponse = await APIMetadata.findAll({
+                where: {
+                    ORG_ID: orgID,
+                    VISIBLE_GROUPS: {
+                        [Op.like]: `%${group}%`
+                    }
+                },
+                include: [{
+                    model: APIImageMetadata,
+                    required: false
+                }, {
+                    model: SubscriptionPolicy,
+                    required: false
+                }],
+            }, { transaction: t });
+            if (apiMetadataResponse) {
+                apiList.push(...apiMetadataResponse);
+            }
+        } catch (error) {
+            {
+                if (error instanceof Sequelize.UniqueConstraintError) {
+                    throw error;
+                }
+                throw new Sequelize.DatabaseError(error);
+            }
+        }
+    }
+    // add all public apis
     try {
-        const apiMetadataResponse = await APIMetadata.findAll({
+        const publicAPIS = await APIMetadata.findAll({
             where: {
-                ORG_ID: orgID
+                ORG_ID: orgID,
+                VISIBILITY: constants.API_VISIBILITY.PUBLIC
             },
             include: [{
                 model: APIImageMetadata,
@@ -270,16 +303,18 @@ const getAllAPIMetadata = async (orgID, t) => {
             }, {
                 model: SubscriptionPolicy,
                 required: false
-            }
-            ],
+            }],
         }, { transaction: t });
-        return apiMetadataResponse;
+        apiList.push(...publicAPIS);
     } catch (error) {
-        if (error instanceof Sequelize.UniqueConstraintError) {
-            throw error;
+        {
+            if (error instanceof Sequelize.UniqueConstraintError) {
+                throw error;
+            }
+            throw new Sequelize.DatabaseError(error);
         }
-        throw new Sequelize.DatabaseError(error);
     }
+    return apiList;
 };
 
 const deleteAPIMetadata = async (orgID, apiID, t) => {

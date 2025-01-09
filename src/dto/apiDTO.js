@@ -78,8 +78,8 @@ class Owner {
 
 class Endpoints {
     constructor(api) {
-        this.sandboxUrl = api.SANDBOX_URL;
-        this.productionUrl = api.PRODUCTION_URL;
+        this.sandboxURL = api.SANDBOX_URL;
+        this.productionURL = api.PRODUCTION_URL;
     }
 }
 
