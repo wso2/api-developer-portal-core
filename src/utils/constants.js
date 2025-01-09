@@ -138,6 +138,7 @@ module.exports = {
         API_CONTENT_UPDATE_ERROR: "Error while updating API content",
         API_CONTENT_DELETE_ERROR: "Error while deleting API content",
         API_CONTENT_CREATE_ERROR: "Error while creating API content",
+        API_LISTING_LOAD_ERROR: "Error while loading API listing",
         IDP_NOT_FOUND: "Failed to load IDP",
         IDP_CREATE_ERROR: "Error while creating IDP",
         IDP_UPDATE_ERROR: "Error while updating IDP",
