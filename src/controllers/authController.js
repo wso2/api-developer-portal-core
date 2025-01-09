@@ -150,9 +150,13 @@ const handleLogOut = async (req, res) => {
         idToken = req.user.idToken;
     }
     req.session.destroy();
+    if (req.user && req.user.accessToken) {
     req.logout(
         () => res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${authJsonContent.logoutRedirectURI}&id_token_hint=${idToken}`)
     );
+    } else {
+        res.redirect(req.originalUrl.replace('/logout', ''));
+    }
 };
 
 module.exports = {

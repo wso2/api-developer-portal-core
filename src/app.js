@@ -54,7 +54,7 @@ Handlebars.registerHelper('eq', function (a, b) {
 });
 
 Handlebars.registerHelper('in', function (value, options) {
-    const validValues = options.hash.values || [];
+    const validValues = Array.isArray(options.hash.values) ? options.hash.values : options.hash.values.split(',');
     return Array.isArray(validValues) && validValues.includes(value)
         ? options.fn(this)
         : options.inverse(this);
