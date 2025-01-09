@@ -188,7 +188,7 @@ const loadTryOutPage = async (req, res) => {
             const layoutResponse = await loadLayoutFromAPI(orgID);
             html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         } catch (error) {
-            console.error(`Failed to load api tryout :` , error);
+            console.error(`Failed to load api tryout :`, error);
         }
     }
     res.send(html);
@@ -209,10 +209,13 @@ async function loadAPIMetaDataList() {
 async function loadAPIMetaDataListFromAPI(req, orgID, orgName) {
 
     let groups = "";
+    let groupList = [];
     if (req.user && req.user[constants.ROLES.GROUP_CLAIM]) {
         groups = req.user[constants.ROLES.GROUP_CLAIM];
     }
-    const groupList = groups.split(" ");
+    if (groups !== "") {
+        groupList = groups.split(" ");
+    }
     let metaData = await apiMetadataService.getMetadataListFromDB(orgID, groupList);
     metaData.forEach(item => {
         item.baseUrl = '/' + orgName;
