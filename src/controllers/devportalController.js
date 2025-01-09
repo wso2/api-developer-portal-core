@@ -20,6 +20,8 @@ const { invokeApiRequest } = require('../utils/util');
 const config = require(process.cwd() + '/config');
 const controlPlaneUrl = config.controlPlane.url;
 const util = require('../utils/util');
+const passport = require('passport');
+const { Strategy: CustomStrategy } = require('passport-custom');
 
 
 const unsubscribeAPI = async (req, res) => {
@@ -205,6 +207,41 @@ const updateOAuthKeys = async (req, res) => {
     }
 };
 
+const login = async (req, res) => {
+    const username = req.body.username;
+    const password = req.body.password;
+
+    const defaultUser = config.defaultAuth.users.find(user => user.username === username && user.password === password);
+    passport.use(
+        'default-auth',
+        new CustomStrategy((req, done) => {
+            if (defaultUser) {
+                const user = { ...defaultUser };
+                return done(null, user);
+            } else {
+                return done(null, false, { message: 'Invalid credentials' });
+            }
+        })
+    );
+
+    passport.authenticate('default-auth', (err, user, info) => {
+        if (err) {
+            console.error("Error occurred while logging in", err);
+            return util.handleError(res, err);
+        }
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+        req.logIn(user, (err) => {
+            if (err) {
+                return util.handleError(res, err);
+            }
+            console.log("Login successful", req.user);
+            res.status(200).json({ message: 'Login successful' });
+        });
+    })(req, res);
+};
+
 module.exports = {
     unsubscribeAPI,
     subscribeAPI,
@@ -217,5 +254,6 @@ module.exports = {
     generateOAuthKeys,
     revokeOAuthKeys,
     updateOAuthKeys,
-    cleanUp
+    cleanUp,
+    login
 };
