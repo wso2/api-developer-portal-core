@@ -266,7 +266,6 @@ const getAllAPIMetadata = async (orgID, groups, t) => {
                     required: false
                 }],
             }, { transaction: t });
-            console.log(apiMetadataResponse);
             if (apiMetadataResponse) {
                 apiList.push(...apiMetadataResponse);
             }
