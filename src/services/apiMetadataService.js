@@ -31,13 +31,17 @@ const createAPIMetadata = async (req, res) => {
     const apiDefinitionFile = req.file.buffer;
     const apiFileName = req.file.originalname;
 
-    //TODO: Get orgId from the orgName
     const orgId = req.params.orgId;
     try {
         // Validate input
         if (!apiMetadata.endPoints || !apiMetadata.apiInfo || !apiDefinitionFile) {
             throw new Sequelize.ValidationError(
                 "Missing or Invalid fields in the request payload"
+            );
+        }
+        if (apiMetadata.apiInfo.visibility === constants.API_VISIBILITY.PUBLIC && apiMetadata.apiInfo.visibleGroups) {
+            throw new Sequelize.ValidationError(
+                "Visible groups cannot be specified for a public API"
             );
         }
         await sequelize.transaction(async (t) => {
@@ -67,7 +71,7 @@ const createAPIMetadata = async (req, res) => {
 
 const getAPIMetadata = async (req, res) => {
 
-    const { orgId, apiId }  = req.params;
+    const { orgId, apiId } = req.params;
     if (!orgId || !apiId) {
         throw new Sequelize.ValidationError(
             "Missing or Invalid fields in the request payload"
@@ -96,11 +100,15 @@ const getMetadataFromDB = async (orgID, apiID) => {
 const getAllAPIMetadata = async (req, res) => {
 
     const orgID = req.params.orgId;
+    let groupList = [];
+    if (req.query.groups) {
+        groupList.push(req.query.groups.split(" "));
+    }
     if (!orgID) {
         throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
     }
     try {
-        const retrievedAPIs = await getMetadataListFromDB(orgID);
+        const retrievedAPIs = await getMetadataListFromDB(orgID, groupList);
         res.status(200).send(retrievedAPIs);
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.API_NOT_FOUND}, ${error}`);
@@ -108,10 +116,10 @@ const getAllAPIMetadata = async (req, res) => {
     }
 };
 
-const getMetadataListFromDB = async (orgID) => {
+const getMetadataListFromDB = async (orgID, groups) => {
 
     return await sequelize.transaction(async (t) => {
-        const retrievedAPIs = await apiDao.getAllAPIMetadata(orgID, t);
+        const retrievedAPIs = await apiDao.getAllAPIMetadata(orgID, groups, t);
         // Create response object
         const apiCreationResponse = retrievedAPIs.map((api) => new APIDTO(api));
         return apiCreationResponse;
@@ -125,7 +133,7 @@ const updateAPIMetadata = async (req, res) => {
     const apiFileName = req.file.originalname;
 
     //TODO: Get orgId from the orgName
-    const { orgId, apiId }  = req.params;
+    const { orgId, apiId } = req.params;
 
     try {
         // Validate input
@@ -164,7 +172,7 @@ const updateAPIMetadata = async (req, res) => {
 };
 const deleteAPIMetadata = async (req, res) => {
 
-    const { orgId, apiId }  = req.params;
+    const { orgId, apiId } = req.params;
     if (!orgId || !apiId) {
         throw new Sequelize.ValidationError(
             "Missing or Invalid fields in the request payload"
@@ -188,7 +196,7 @@ const deleteAPIMetadata = async (req, res) => {
 const createAPITemplate = async (req, res) => {
 
     try {
-        const { orgId, apiId }  = req.params;
+        const { orgId, apiId } = req.params;
         let imageMetadata = JSON.parse(req.body.imageMetadata);
         const extractPath = path.join("/tmp", orgId + "/" + apiId);
         await fs.mkdir(extractPath, { recursive: true });
@@ -238,7 +246,7 @@ const createAPITemplate = async (req, res) => {
 const updateAPITemplate = async (req, res) => {
 
     try {
-        const { orgId, apiId }  = req.params;
+        const { orgId, apiId } = req.params;
         const imageMetadata = JSON.parse(req.body.imageMetadata);
         const extractPath = path.join("/tmp", orgId + "/" + apiId);
         await fs.mkdir(extractPath, { recursive: true });
@@ -286,7 +294,7 @@ const updateAPITemplate = async (req, res) => {
 
 const getAPIFile = async (req, res) => {
 
-    const { orgId, apiId }  = req.params;
+    const { orgId, apiId } = req.params;
     const apiFileName = req.query.fileName;
     if (!orgId || !apiId || !apiFileName) {
         throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
@@ -323,7 +331,7 @@ const getAPIFile = async (req, res) => {
 
 const deleteAPIFile = async (req, res) => {
 
-    const { orgId, apiId }  = req.params;
+    const { orgId, apiId } = req.params;
     const apiFileName = req.query.fileName;
     if (!orgId || !apiId || !apiFileName) {
         throw new Sequelize.ValidationError(
