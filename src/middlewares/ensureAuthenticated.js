@@ -229,10 +229,18 @@ const validateBasicAuth = async (basicHeader) => {
     return valid;
 }
 
+const enforceMTLS = (req, res, next) => {
+    const clientCert = req.connection.getPeerCertificate();
+    if (!clientCert || !clientCert.subject) {
+        return res.status(403).send('Client certificate required');
+    }
+    return next();
+};
+
 module.exports = ensureAuthenticated;
 
 module.exports = {
     ensureAuthenticated,
-    validateAuthentication
-
+    validateAuthentication,
+    enforceMTLS
 }
