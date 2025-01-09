@@ -77,4 +77,5 @@ router.delete('/applications/:applicationId/oauth-keys/:keyMappingId', ensureAut
 router.put('/applications/:applicationId/oauth-keys/:keyMappingId', ensureAuthenticated, devportalController.updateOAuthKeys);
 router.post('/applications/:applicationId/oauth-keys/:keyMappingId/clean-up', ensureAuthenticated, devportalController.cleanUp);
 
+router.post('/login', devportalController.login);
 module.exports = router;

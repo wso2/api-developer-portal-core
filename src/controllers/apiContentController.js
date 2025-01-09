@@ -101,7 +101,7 @@ const loadAPIContent = async (req, res) => {
             let subscriptionPlans = [];
 
             //load subscription plans for authenticated users
-            if (req.user) {
+            if (req.user && req.user.accessToken) {
                 for (const policy of metaData.subscriptionPolicies) {
                     const subscriptionPlan = await loadSubscriptionPlan(req, res, policy.policyName);
                     subscriptionPlans.push({

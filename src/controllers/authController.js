@@ -25,7 +25,8 @@ const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
 const IdentityProviderDTO = require("../dto/identityProvider");
 const minimatch = require('minimatch');
-
+const { renderGivenTemplate } = require('../utils/util');
+const { profile } = require('console');
 
 const filePrefix = config.pathToContent;
 
@@ -84,7 +85,17 @@ const login = async (req, res, next) => {
         passport.authenticate('oauth2')(req, res, next);
         next();
     } else {
-        res.status(400).send("No Identity Provider information found for the organization");
+        orgName = req.params.orgName;
+        const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'login', 'page.hbs');
+        const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
+        const layoutResponse = "";
+
+        const templateContent = {
+            baseUrl: '/' + orgName
+        };
+
+        const html = await renderGivenTemplate(layoutResponse, templateResponse, templateContent);
+        res.send(html);
     }
 };
 
