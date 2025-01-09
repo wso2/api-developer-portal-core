@@ -213,6 +213,18 @@ const getAPIFile = async (fileName, orgID, apiID, t) => {
     }
 }
 
+const getAPIMetadataByCondition = async (condition, t) => {
+    try {
+        const apiMetadataResponse = await APIMetadata.findAll({ where: condition }, { transaction: t });
+        return apiMetadataResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
 const getAPIMetadata = async (orgID, apiID, t) => {
 
     try {
@@ -564,5 +576,6 @@ module.exports = {
     updateOrCreateAPIFiles,
     getAPIFile,
     deleteAPIFile,
-    getAPIId
+    getAPIId,
+    getAPIMetadataByCondition
 };

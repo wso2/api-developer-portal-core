@@ -114,15 +114,17 @@ const registerPartialsFromAPI = async (req) => {
     isSuperAdmin = req.user["isSuperAdmin"];
   }
   if (partialObject[constants.HEADER_PARTIAL_NAME]) {
+    let partialContent = partialObject[constants.HEADER_PARTIAL_NAME];
     hbs.handlebars.partials = {
       ...hbs.handlebars.partials,
-      header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
+      header: hbs.handlebars.compile(partialContent)({
         baseUrl: "/" + orgName,
         profile: req.user,
         isAdmin: isAdmin,
-        isSuperAdmin: isSuperAdmin
+        isSuperAdmin: isSuperAdmin,
+        hasWSO2APIs: checkWSO2APIAvailability()
       }),
-      [constants.HERO_PARTIAL_NAME]: hbs.handlebars.compile(partialObject[constants.HERO_PARTIAL_NAME])(
+      [constants.HERO_PARTIAL_NAME]: hbs.handlebars.compile(partialContent)(
         { baseUrl: "/" + orgName }
       ),
     };
@@ -147,6 +149,14 @@ const registerPartialsFromAPI = async (req) => {
       partialObject[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME])({ apiContent: markdownHtml });
   }
 };
+
+async function checkWSO2APIAvailability() {
+
+  const condition = {
+    PROVIDER: "WSO2"
+  }
+  return apiDao.getAPIMetadataByCondition(condition).then(apis => apis.length > 0);
+}
 
 function registerPartialsFromFile(baseURL, dir, profile) {
 
