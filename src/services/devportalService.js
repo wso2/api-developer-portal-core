@@ -44,8 +44,6 @@ const getOrgContent = async (req, res) => {
         if (req.query.fileType && req.query.fileName) {
             const asset = await adminService.getOrgContent(req.params.orgId, req.query.fileType, req.query.fileName, req.query.filePath);
             const contentType = retrieveContentType(asset.FILE_NAME, asset.FILE_TYPE);
-            console.log('contentType', contentType);
-            console.log('asset',asset.FILE_CONTENT);
             res.set(constants.MIME_TYPES.CONYEMT_TYPE, contentType);
             return res.status(200).send(Buffer.isBuffer(asset.FILE_CONTENT) ? asset.FILE_CONTENT : constants.CHARSET_UTF8);
         } else if (req.params.fileType) {
