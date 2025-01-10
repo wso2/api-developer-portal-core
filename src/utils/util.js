@@ -216,8 +216,7 @@ const fileMapping = {
 
 const textFiles = [
     constants.FILE_EXTENSIONS.HTML, constants.FILE_EXTENSIONS.HBS, constants.FILE_EXTENSIONS.MD,
-    constants.FILE_EXTENSIONS.JSON, constants.FILE_EXTENSIONS.YAML, constants.FILE_EXTENSIONS.YML,
-    constants.FILE_EXTENSIONS.SVG
+    constants.FILE_EXTENSIONS.JSON, constants.FILE_EXTENSIONS.YAML, constants.FILE_EXTENSIONS.YML
 ]
 
 const isTextFile = (fileExtension) => {

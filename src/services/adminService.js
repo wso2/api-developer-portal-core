@@ -293,7 +293,7 @@ const updateOrgContent = async (req, res) => {
     const zipPath = req.file.path;
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
     await util.unzipFile(zipPath, extractPath);
-    const files = await readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'));
+    const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'));
     try {
         for (const { filePath, fileName, fileContent, fileType } of files) {
             if (fileName != null && !fileName.startsWith('.')) {
