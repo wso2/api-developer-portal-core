@@ -30,11 +30,20 @@ const loadMyAPIs = async (req, res) => {
     const orgName = req.params.orgName;
     const orgId = await adminDao.getOrgId(orgName);
 
+    let groups = "";
+    let groupList = [];
+    if (req.user && req.user[constants.ROLES.GROUP_CLAIM]) {
+        groups = req.user[constants.ROLES.GROUP_CLAIM];
+    }
+    if (groups !== "") {
+        groupList = groups.split(" ");
+    }
+
     try {
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'myAPIs', 'page.hbs');
         const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
         const layoutResponse = await loadLayoutFromAPI(orgId);
-        let metaData = await apiMetadataService.getMetadataListFromDB(orgId);
+        let metaData = await apiMetadataService.getMetadataListFromDB(orgId, groupList);
         const apiRefIds = new Set(metaData.map(api => api.apiReferenceID));
 
         let subscriptions = [];
