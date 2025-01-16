@@ -24,6 +24,7 @@ const markdown = require('marked');
 const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const constants = require('../utils/constants');
+const apiMetadataService = require('../services/apiMetadataService');
 
 const filePrefix = config.pathToContent;
 const hbs = exphbs.create({});
@@ -144,8 +145,21 @@ const registerPartialsFromAPI = async (req) => {
       let additionalAPIContent = additionalAPIContentResponse.API_FILE.toString("utf8");
       partialObject[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME] = additionalAPIContent ? additionalAPIContent : "";
     }
+    metaData = await apiMetadataService.getMetadataFromDB(orgID, apiID);
+    const data = metaData ? JSON.stringify(metaData) : {};
+    metaData = JSON.parse(data);
+    //replace image urls
+    let images = metaData.apiInfo.apiImageMetadata;
+    for (const key in images) {
+        let apiImageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}`
+        const modifiedApiImageURL = apiImageUrl + images[key]
+        images[key] = modifiedApiImageURL;
+    }
     hbs.handlebars.partials[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME] = hbs.handlebars.compile(
-      partialObject[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME])({ apiContent: markdownHtml });
+      partialObject[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME])({ 
+        apiContent: markdownHtml,
+        apiMetadata: metaData
+    });
   }
 };
 

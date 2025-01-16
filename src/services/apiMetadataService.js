@@ -306,20 +306,17 @@ const getAPIFile = async (req, res) => {
         const fileExtension = path.extname(apiFileName).toLowerCase();
         apiFileResponse = await apiDao.getAPIFile(apiFileName, orgId, apiId);
         if (util.isTextFile(fileExtension)) {
-            apiFile = apiFileResponse.API_FILE.toString(constants.CHARSET_UTF8);
+            apiFile = apiFileResponse.API_FILE;
             contentType = util.retrieveContentType(apiFileName, constants.TEXT)
         } else {
             apiFile = apiFileResponse.API_FILE;
             contentType = util.retrieveContentType(apiFileName, constants.IMAGE);
         }
-        res.set({
-            [constants.MIME_TYPES.CONTENT_TYPE]: contentType,
-            [constants.MIME_TYPES.CONTENT_DISPOSITION]: `inline; filename="${apiFileName}"`,
-            [constants.MIME_TYPES.Cache_Control]: "no-cache",
-        });
+        res.set(constants.MIME_TYPES.CONYEMT_TYPE, contentType);
+
         if (apiFileResponse) {
             // Send file content as text
-            res.status(200).send(Buffer.isBuffer(apiFile) ? apiFile : Buffer.from(apiFile, "binary"));
+            return res.status(200).send(Buffer.isBuffer(apiFile) ? apiFile : constants.CHARSET_UTF8);
         } else {
             res.status(404).send("API File not found");
         }

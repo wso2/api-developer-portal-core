@@ -20,6 +20,7 @@ const { validate } = require('uuid');
 const { Sequelize } = require('sequelize');
 const { IdentityProvider } = require('../models/identityProvider');
 const Provider = require('../models/provider');
+
 const createOrganization = async (orgData) => {
 
     let devPortalID = "";

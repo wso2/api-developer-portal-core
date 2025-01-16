@@ -172,11 +172,11 @@ const loadTryOutPage = async (req, res) => {
             const apiID = await apiDao.getAPIId(apiName);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
             let apiDefinition;
-            if (metaData.apiInfo.apiType === "GraphQL") {
+            if (metaData.apiInfo.apiType !== "GraphQL") {
                 apiDefinition = "";
                 apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, orgID, apiID);
+                apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
             }
-            apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
             const templateContent = {
                 apiMetadata: metaData,
                 baseUrl: req.params.orgName,

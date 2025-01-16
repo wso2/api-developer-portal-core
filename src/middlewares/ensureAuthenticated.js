@@ -138,7 +138,6 @@ function validateAuthentication(scope) {
         let accessToken, basicHeader;
         //if IDP present, fetch bearer token else use basic header
         if (IDP.clientId !== "") {
-            console.log('Client ID:', IDP.clientId);
             if (req.isAuthenticated() && req.user) {
                 accessToken = req.user[constants.ACCESS_TOKEN];
             } else {
