@@ -114,6 +114,7 @@ const updateOrganization = async (req, res) => {
             return res.status(400).json(util.getErrors(errors));
         }
         const payload = req.body;
+        payload.orgId = orgId;
         const [, updatedOrg] = await adminDao.updateOrganization(payload);
         res.status(200).json({
             orgId: updatedOrg[0].dataValues.ORG_ID,
