@@ -170,6 +170,7 @@ function registerPartialsFromFile(baseURL, dir, profile) {
           header: hbs.handlebars.compile(template)({
             baseUrl: baseURL,
             profile: profile,
+            hasWSO2APIs: true
           }),
         };
       }
