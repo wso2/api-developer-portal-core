@@ -54,9 +54,9 @@ router.post('/organizations/:orgId/apis', validateAuthentication(constants.SCOPE
 router.get('/organizations/:orgId/apis/:apiId', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.getAPIMetadata);
 router.get('/organizations/:orgId/apis', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.getAllAPIMetadata);
 router.put('/organizations/:orgId/apis/:apiId', validateAuthentication(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.updateAPIMetadata);
+router.delete('/organizations/:orgId/apis/:apiId', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIMetadata);
 
 const apiZip = multer({ dest: '/tmp' });
-router.delete('/organizations/:orgId/apis/:apiId', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIMetadata);
 router.post('/organizations/:orgId/apis/:apiId/template', validateAuthentication(constants.SCOPES.DEVELOPER), apiZip.single('apiContent'), apiMetadataService.createAPITemplate);
 router.put('/organizations/:orgId/apis/:apiId/template', validateAuthentication(constants.SCOPES.DEVELOPER), apiZip.single('apiContent'), apiMetadataService.updateAPITemplate);
 router.get('/organizations/:orgId/apis/:apiId/template', apiMetadataService.getAPIFile);

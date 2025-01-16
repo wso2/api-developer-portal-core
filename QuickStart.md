@@ -1,17 +1,27 @@
 Pre-requisites
 --------------
-Follow the steps given in InstallationGuide.md, to create database.
+Follow the steps given in InstallationGuide.md, to create database and tables.
 
 1.  Download the developer portal.
     
 2.  Extract the downloaded zip.
 
-3.  Run the following command to create a default organization and populate the organization content and mock API data.
+3.  Run the following command to create a default organization and populate the developer portal landing page content.
     ```bash
-    node artifacts/data_dump.js
+    ./artifacts/org_data.sh
     ```
-    
-4.  Execute the startup script on the <DEVPORTAL_HOME>/bin folder, based on the OS:
+
+4.  Run the following command to create mock APIs and populate api landing page content.
+
+    ```bash
+    ./artifacts/api_data.sh
+    ```
+    To delete the mock APIs, run the following command.
+    ```bash
+    ./artifacts/delete_api_data.sh
+    ```
+
+5.  Execute the startup script on the <DEVPORTAL_HOME>/bin folder, based on the OS:
      
     ```bash
     For Linux or MacOS
@@ -19,30 +29,31 @@ Follow the steps given in InstallationGuide.md, to create database.
     For Windows
        startup.bat 
     ```
-The default organization name is ACME.
-This will start the webapp in the following URL : ‘[http://localhost:3000/ACME](http://localhost:3000/{orgName})’
 
-This will direct you to the organization landing page.
+    The default organization name is ACME.
+    This will start the webapp in the following URL : ‘[http://localhost:3000/ACME](http://localhost:3000/{orgName})’
 
-The ‘[http://localhost:3000/ACME](http://localhost:3000/{orgName})/apis’ will direct you to the api listing page.
+    This will direct you to the organization landing page.
 
-Each of the api landing and tryout pages are available at the following URLs:
-  'http://localhost:3000/ACME/api/{apiName}'
-  'http://localhost:3000/ACME/api/{apiName}/tryout'
+    The ‘[http://localhost:3000/ACME](http://localhost:3000/{orgName})/apis’ will direct you to the api listing page.
 
-4. The extracted folder contains the following:
+    Each of the api landing and tryout pages are available at the following URLs:
+      'http://localhost:3000/ACME/api/{apiName}'
+      'http://localhost:3000/ACME/api/{apiName}/tryout'
 
-  **bin** 
-   - **startup.sh, startup.bat**  
-     Script to start the developer-portal  
-    **config.json**  
-     Configuration file for the developer portal.  
-    **artifacts**  
-      - script.sql file to create database tables.
-      - data-dump.sql file to populate the database with mock data during startup.
+6. The extracted folder contains the following:
+
+   - **startup.sh, startup.bat** Script to start the developer-portal  
+   - **config.json**  Configuration file for the developer portal.  
+   - **artifacts**  
+       - script.sql file to create database tables.
+       - org_data.sh file to create default organization and content.
+       - api_data.sh file to create mock APIs and content.
+       - default/orgContent , default/apiContent default content for developer portal.
 
 
 **To customize and theme the developer portal, follow the steps below:**
+--------------
 
 1. Fork and clone the github repository: https://github.com/wso2/api-developer-portal 
 
@@ -70,18 +81,18 @@ Each of the api landing and tryout pages are available at the following URLs:
 
 7. The project structure is explained below:
   
-  **src**
-  - The src folder contains the page layout and content including  the html, images and style sheets.
-  - The /src/layout folder includes the main layout of the dev portal. Other pages inherit this layout.
-  - The /src/pages folder holds the content for the pages. The html content of each page is in the src/pages directory.
-  - Each directory will contain a page.hbs (src/pages/{apis/home/api-landing}/page.hbs) which contains all the partial html content of the page. The partials directory (src/pages/{apis/home/api-landing}/partials) contains the html content for each page (organization landing,api listing, api landing).
-  - The /src/partials folder holds the common content for the pages. The header and footer are injected as partials into the layout.
-  - The /src/images folder contains the images.  
-  **mock**
-  - Includes the mock API information. Mock APIs are displayed to define the structure. In a production scenario, these will be replaced by actual published APIs.
-  - Each api folder contains the api definition file, the api metadata and the content to be included in the api landing page (either md or hbs).
-  - mock/apiMetadata.json Includes the metadata of the mock APIs to be displayed in the api listing page.
-  - mock/auth.json Includes details about the Identity provider to be used when logging in to the dev-portal in development mode.
+  - **src**
+     - The src folder contains the page layout and content including  the html, images and style sheets.
+     - The /src/layout folder includes the main layout of the dev portal. Other pages inherit this layout.
+     - The /src/pages folder holds the content for the pages. The html content of each page is in the src/pages directory.
+     - Each directory will contain a page.hbs (src/pages/{apis/home/api-landing}/page.hbs) which contains all the partial html content of the page. The partials directory (src/pages/{apis/home/api-landing}/partials) contains the html content for each page (organization landing,api listing, api landing).
+     - The /src/partials folder holds the common content for the pages. The header and footer are injected as partials into the layout.
+     - The /src/images folder contains the images.  
+  - **mock**
+    - Includes the mock API information. Mock APIs are displayed to define the structure. In a production scenario, these will be replaced by actual published APIs.
+    - Each api folder contains the api definition file, the api metadata and the content to be included in the api landing page (either md or hbs).
+    - mock/apiMetadata.json Includes the metadata of the mock APIs to be displayed in the api listing page.
+    - mock/auth.json Includes details about the Identity provider to be used when logging in to the dev-portal in development mode.
   **config.json**
   Configuration file for the developer portal.
   **artifacts**
@@ -90,10 +101,9 @@ Each of the api landing and tryout pages are available at the following URLs:
 5. Customize the content for the organization landing, api listing and api landing pages.
    From above pages, except for the tryout page, the content can be customized by modifying the hbs files in the src/pages directory.
 
-Customize a page
-----------------
-To customize the content for the api-landing, api-listing or organization landing (home) pages, the relevant hbs files can be modified under  
-the relevant folder for the page in the src/pages directory.
+ **Customize a page**
+
+To customize the content for the api-landing, api-listing or organization landing (home) pages, the relevant hbs files can be modified under the relevant folder for the page in the src/pages directory.
 
 The styles folder (src/styles) will contain the style sheets for all the partials, named after the relevant partial file.
 
@@ -111,7 +121,9 @@ apiMetadata: [
     {
       apiID: '6d9b40b5-46a6-4777-8bde-d72e4660a307',
       apiInfo:{
+            "provider": "WSO2",
             "apiName": "NavigationAPI",
+            "orgName": "ACME",
             "apiVersion": "3.0.2",
             "apiDescription": "API for retrieving information about hotels and managing reservations",
             "apiType": "REST",
@@ -131,8 +143,8 @@ apiMetadata: [
             }
         },
         "endPoints": {
-            "sandboxUrl": "string",
-            "productionUrl": "https://taxi-navigation.mnm.abc.com"
+            "sandboxURL": "string",
+            "productionURL": "https://taxi-navigation.mnm.abc.com"
         },
         "subscriptionPolicies": [
             {
@@ -173,8 +185,8 @@ API Landing Page:
     #same as above
   },
   endPoints: {
-    sandboxUrl: 'https://taxi-navigation.mnm.abc.com',
-    productionUrl: 'https://taxi-navigation.mnm.abc.com'
+    sandboxURL: 'https://taxi-navigation.mnm.abc.com',
+    productionURL: 'https://taxi-navigation.mnm.abc.com'
   },
   subscriptionPolicies: [
     { policyName: 'advanced' },
@@ -197,8 +209,8 @@ The api information can be accessed from the src/pages/api-landing/partials/api-
 <p> {{apiMetadata.apiInfo.apiVersion}}</p>
 <p class="api-desciption">{{apiMetadata.apiInfo.apiDescription}}</p>
 ```
-Customize API landing page
---------------------------
+**Customize API landing page**
+
 The mock (/mock) folder will contain each APIs content for the apis displayed in the api listing page (/apis).
 
 An api landing page’s content can either be rendered using a markdown file or by modifying the api-content hbs file directly.
@@ -213,8 +225,8 @@ markdown: apiContent.md
 
 HBS: api-conent.hbs
 
-Add a page
-----------  
+**Add a page**
+ 
 In order to add a new page, a folder needs to be created under the pages directory, representing the relevant url path of the page in the directory structure.
 
   ex: [http://localhost:3000/applications/myapps](http://localhost:3000/applications/myapps)
@@ -237,8 +249,8 @@ The page.hbs file should have the following format:
     {{{ content  }}} # name of the markdown file, if any
 ```
 
-Configure login
----------------
+**Configure login**
+
 To test a user login to the developer portal, the auth.json file in the mock folder can be modified to include the identity provider details.
 
 Promote to production
@@ -323,7 +335,9 @@ Click update.
     "scope": "openid email groups",
     "signUpURL": "<IDP_SignUP_URL>",
     "logoutURL": "https://<IDP_DOMAIN>/oidc/logout",
-    "logoutRedirectURI": "http://localhost:3000/ACME"
+    "logoutRedirectURI": "http://localhost:3000/ACME",
+    "certificate": "",
+    "jwksURL": "https://localhost:9443/oauth2/jwks"
 },
 "roleClaim": "roles", 
 "orgIDClaim": "organizationID",
@@ -364,7 +378,9 @@ curl --location --request POST 'http://localhost:3000/devportal/organizations/{o
     "scope": "openid email groups",
     "signUpURL": "<IDP_SignUP_URL>",
     "logoutURL": "https://<IDP_DOMAIN>/oidc/logout",
-    "logoutRedirectURI": "http://localhost:3000/ACME"
+    "logoutRedirectURI": "http://localhost:3000/ACME",
+    "certificate": "",
+    "jwksURL": "https://localhost:9443/oauth2/jwks"
 }'
 ```
 
@@ -380,56 +396,61 @@ controlPlane : {
 4.  Store the created API metadata in developer portal side, as mentioned in step 5 of the below section.  
 
 
-Follow the steps below to populate the organization’s content in the developer portal.
+**Follow the steps below to populate the organization’s content in the developer portal.**
 
 1.  Create an organization in the developer portal.
 
-Login to the developer portal using the credentials of the user with superAdmin role.
-Navigate to 'http://localhost:3000/portal' and create the organization.
-
-Enter the following information:
-```bash
-       "orgName": "ACME",
-       "businessOwner": "John Doe",
-       "businessOwnerContact": "+94-76-123-456",
-       "businessOwnerEmail": "john.doe@example.com",
-       "devPortalURLIdentifier": "myPortal", //customize URL for the devportal.  
-       "roleClaimName": <claim name for the user roles>.  
-       "groupsClaimName": <claim name for the user groups>.  
-       "organizationClaimName": <claim name for the organization identifier>.  
-       "organizationIdentifier": <value for the organization identifier>.  
-       "adminRole": <admin role name>. 
-       "subscriberRole": <subscriber role name>.  
-       "superAdminRole": <super admin role name>
-```
-
-    
 ``` bash
 curl --location --request POST 'http://localhost:3000/devportal/organizations' 
 
    --header 'Content-Type: application/json'
    --data-raw '{
-       "orgName": "ACME",
-       "businessOwner": "John Doe",
-       "businessOwnerContact": "+94-76-123-456",
-       "businessOwnerEmail": "john.doe@example.com"
+    "orgName": "ACME",
+    "businessOwner" : "Sachini",
+    "businessOwnerContact" : "03434343",
+    "businessOwnerEmail" : "sachini@gmail.com",
+    "devPortalURLIdentifier": "ACME", //customize URL for the devportal.  
+    "roleClaimName":"roles",  
+    "groupsClaimName": "groups",  
+    "organizationClaimName": "organizationID",
+    "organizationIdentifier":"ACME",  
+    "adminRole": "admin",
+    "subscriberRole": "subscriber", 
+    "superAdminRole": "superAdmin"
 }'
 ```
 
 2.  Upload the generated zip with the organization content.
     
-Login to the developer portal using the credentials of the user with superAdmin role.  
-Navigate to 'http://localhost:3000/{orgName}/configure' and upload the zip.
-
 ``` bash
 curl --location --request POST 'http://localhost:3000/devportal/organizations/{orgID}/layout' 
 --form 'file=@{pathToZipFile}
 ```
 
-3. Click on configure IDP and add IDP details for the organization.
+3. Configure IDP and add IDP details for the organization.
 
+```bash
+curl --location 'http://localhost:3000/devportal/organizations//identityProvider' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer <access_token>' \
+--data '{
+    "name": "IS",
+    "issuer": "https://127.0.0.1:9443/oauth2/token",
+    "authorizationURL": "https://localhost:9443/oauth2/authorize",
+    "tokenURL": "https://127.0.0.1:9443/oauth2/token",
+    "userInfoURL": "https://localhost:9443/oauth2/userinfo",
+    "clientId": "",
+    "callbackURL": "http://localhost:3000/ACME/callback",
+    "scope": "openid profile",
+    "signUpURL": "",
+    "logoutURL": "https://localhost:9443/oidc/logout",
+    "logoutRedirectURI": "http://localhost:3000/ACME",
+    "certificate": "",
+    "jwksURL": "https://localhost:9443/oauth2/jwks"
+  }'
+```
 
-4.  Navigate to [http://localhost:3000/{orgName](http://localhost:3000/{orgName)}.
+4.  Navigate to [http://localhost:3000/{orgName}.
     
 The organization landing page will include the uploaded content.
 The /apis page will render the page with no apis, since no API content is uploaded yet.Follow the steps below to populate the api details in the developer portal.
@@ -446,6 +467,7 @@ This is a multi part request containing a json with metadata related to the API 
                   "apiInfo": { 
                      "referenceID": "<UUID for the API created in WSO2 publisher>",
                      "apiName": "NavigationAPI",
+                     "provider": "WSO2",
                      "orgName": "ACME",
                      "apiCategory": "Travel",
                      "apiDescription": "API for retrieving information about hotels and managing reservations",
@@ -476,7 +498,7 @@ This is a multi part request containing a json with metadata related to the API 
    --form 'apiDefinition=@"{apiDefinition.json}"'
 ```
 
-6. Upload the api landing page content. 
+6. Upload the api landing page content.
 
 To upload the content to be displayed on the api-landing page, create a zip file with the folder structure as follows:
 ``` bash
