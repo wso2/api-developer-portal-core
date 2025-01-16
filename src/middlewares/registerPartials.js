@@ -24,6 +24,7 @@ const markdown = require('marked');
 const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const constants = require('../utils/constants');
+const apiMetadataService = require('../services/apiMetadataService');
 
 const filePrefix = config.pathToContent;
 const hbs = exphbs.create({});
@@ -36,7 +37,7 @@ const registerPartials = async (req, res, next) => {
     try {
       await registerPartialsFromAPI(req);
     } catch (error) {
-      console.error(`Error while loading organization :,${error}`)
+      console.error('Error while loading organization :', error);
     }
   }
   next();
@@ -60,15 +61,14 @@ const registerInternalPartials = (req) => {
           const partialContent = fs.readFileSync(path.join(dir, file), 'utf8');
           hbs.handlebars.registerPartial(partialName, partialContent);
 
-          if(partialName === constants.HEADER_PARTIAL_NAME) {
+          if (partialName === constants.HEADER_PARTIAL_NAME) {
             hbs.handlebars.partials = {
               ...hbs.handlebars.partials,
               header: hbs.handlebars.compile(partialContent)({
-                profile: req.user,
+                profile: req.user
               })
             };
           }
-          
         }
       });
     }
@@ -108,16 +108,26 @@ const registerPartialsFromAPI = async (req) => {
   Object.keys(partialObject).forEach((partialName) => {
     hbs.handlebars.registerPartial(partialName, partialObject[partialName]);
   });
-  hbs.handlebars.partials = {
-    ...hbs.handlebars.partials,
-    header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
-      baseUrl: "/" + orgName,
-      profile: req.user,
-    }),
-    [constants.HERO_PARTIAL_NAME]: hbs.handlebars.compile(partialObject[constants.HERO_PARTIAL_NAME])(
-      { baseUrl: "/" + orgName }
-    ),
-  };
+  let isAdmin, isSuperAdmin = false;
+  if (req.user) {
+    isAdmin = req.user["isAdmin"];
+    isSuperAdmin = req.user["isSuperAdmin"];
+  }
+  if (partialObject[constants.HEADER_PARTIAL_NAME]) {
+    hbs.handlebars.partials = {
+      ...hbs.handlebars.partials,
+      header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
+        baseUrl: "/" + orgName,
+        profile: req.user,
+        isAdmin: isAdmin,
+        isSuperAdmin: isSuperAdmin,
+        hasWSO2APIs: await checkWSO2APIAvailability()
+      }),
+      [constants.HERO_PARTIAL_NAME]: hbs.handlebars.compile(partialObject[constants.HERO_PARTIAL_NAME])(
+        { baseUrl: "/" + orgName }
+      ),
+    };
+  }
   if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
 
     const apiName = req.params.apiName;
@@ -134,10 +144,31 @@ const registerPartialsFromAPI = async (req) => {
       let additionalAPIContent = additionalAPIContentResponse.API_FILE.toString("utf8");
       partialObject[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME] = additionalAPIContent ? additionalAPIContent : "";
     }
+    metaData = await apiMetadataService.getMetadataFromDB(orgID, apiID);
+    const data = metaData ? JSON.stringify(metaData) : {};
+    metaData = JSON.parse(data);
+    //replace image urls
+    let images = metaData.apiInfo.apiImageMetadata;
+    for (const key in images) {
+        let apiImageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}`
+        const modifiedApiImageURL = apiImageUrl + images[key]
+        images[key] = modifiedApiImageURL;
+    }
     hbs.handlebars.partials[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME] = hbs.handlebars.compile(
-      partialObject[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME])({ apiContent: markdownHtml });
+      partialObject[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME])({ 
+        apiContent: markdownHtml,
+        apiMetadata: metaData
+    });
   }
 };
+
+async function checkWSO2APIAvailability() {
+
+  const condition = {
+    PROVIDER: "WSO2"
+  }
+  return await apiDao.getAPIMetadataByCondition(condition).then(apis => apis.length > 0);
+}
 
 function registerPartialsFromFile(baseURL, dir, profile) {
 
@@ -152,6 +183,7 @@ function registerPartialsFromFile(baseURL, dir, profile) {
           header: hbs.handlebars.compile(template)({
             baseUrl: baseURL,
             profile: profile,
+            hasWSO2APIs: true
           }),
         };
       }

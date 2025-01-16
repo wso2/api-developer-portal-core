@@ -159,10 +159,18 @@ function validateGenerateButton(isProduction) {
   };
 })();
 
-function openApiKeyModal(apiKey) {
+function openApiKeyModal(apiKey, title, subTitle) {
   const apiKeyInput = document.getElementById('apiKeyModalField');
   apiKeyInput.value = apiKey;
   const modal = document.getElementById('apiKeyModal');
+  const modalTitle = document.getElementById('keyModalTitle');
+  modalTitle.textContent = title;
+  const modaSublTitle = document.getElementById('keyModalSubTitle');
+  modaSublTitle.textContent = subTitle;
+  if (title.includes('CURL')) {
+    const modalDescription = document.getElementById('modalDescription');
+    modalDescription.textContent = '';
+  }
   const bootstrapModal = new bootstrap.Modal(modal);
   bootstrapModal.show();
 }
@@ -175,12 +183,12 @@ async function apiKeyCopyToClipboard() {
   try {
     const success = document.execCommand('copy');
     if (success) {
-      await showAlert('API Key copied to clipboard!', 'success');
+      await showAlert('Copied to clipboard!', 'success');
     } else {
-      await showAlert('Failed to copy API key!', 'error');
+      await showAlert('Failed to copy!', 'error');
     }
   } catch (err) {
-    await showAlert('Failed to copy API key!', 'error');
+    await showAlert('Failed to copy!', 'error');
   }
   window.getSelection().removeAllRanges();
 }
@@ -301,7 +309,7 @@ async function generateAPIKey(applicationID, isProduction) {
 
     const responseData = await response.json();
     cleanForms(isProduction);
-    openApiKeyModal(responseData.apikey);
+    openApiKeyModal(responseData.apikey, 'Generated API Key', 'API Key');
     await showAlert('API Key generated successfully!', 'success');
   } catch (error) {
     console.error('Error:', error);

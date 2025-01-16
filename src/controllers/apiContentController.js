@@ -26,6 +26,8 @@ const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const apiMetadataService = require('../services/apiMetadataService');
+const adminService = require('../services/adminService');
+
 
 const filePrefix = config.pathToContent;
 const generateArray = (length) => Array.from({ length });
@@ -50,8 +52,9 @@ const loadAPIs = async (req, res) => {
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis");
         } catch (error) {
-            console.error(`Error while loading organization content ,${error}`);
-            return res.redirect('/configure');
+            console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
+            html = constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR;
+
         }
     }
     res.send(html);
@@ -97,24 +100,28 @@ const loadAPIContent = async (req, res) => {
             const apiID = await apiDao.getAPIId(apiName);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
             let subscriptionPlans = [];
-            
-            for (const policy of metaData.subscriptionPolicies) {
-                const subscriptionPlan = await loadSubscriptionPlan(req, res, policy.policyName);
-                subscriptionPlans.push({
-                    apiId: metaData.apiReferenceID,
-                    name: subscriptionPlan.name,
-                    description: subscriptionPlan.description,
-                    tierPlan: subscriptionPlan.tierPlan,
-                });
-            };
+
+            //load subscription plans for authenticated users
+            if (req.user && req.user.accessToken) {
+                for (const policy of metaData.subscriptionPolicies) {
+                    const subscriptionPlan = await loadSubscriptionPlan(req, res, policy.policyName);
+                    subscriptionPlans.push({
+                        apiId: metaData.apiReferenceID,
+                        name: subscriptionPlan.name,
+                        description: subscriptionPlan.description,
+                        tierPlan: subscriptionPlan.tierPlan,
+                    });
+                };
+            }
 
             let providerUrl;
             if (metaData.provider === "WSO2") {
                 providerUrl = '#subscriptionPlans';
-            } else {   
-                providerUrl = config.providerURL[metaData.provider];
+            } else {
+                const providerList = await adminService.getAllProviders(orgID);
+                providerUrl = providerList.find(provider => provider.name === metaData.provider)?.providerURL || '#subscriptionPlans';
             }
-            
+
             const templateContent = {
                 provider: metaData.provider,
                 providerUrl: providerUrl,
@@ -133,6 +140,7 @@ const loadAPIContent = async (req, res) => {
 }
 
 const loadSubscriptionPlan = async (req, res, policyId) => {
+
     try {
         return await util.invokeApiRequest(req, 'GET', `${config.controlPlane.url}/throttling-policies/subscription/${policyId}`);
     } catch (error) {
@@ -164,12 +172,11 @@ const loadTryOutPage = async (req, res) => {
             const apiID = await apiDao.getAPIId(apiName);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
             let apiDefinition;
-            if (metaData.apiType === "GraphQL") {
-                apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_GRAPHQL, orgID, apiID);
-            } else {
+            if (metaData.apiInfo.apiType !== "GraphQL") {
+                apiDefinition = "";
                 apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, orgID, apiID);
+                apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
             }
-            apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
             const templateContent = {
                 apiMetadata: metaData,
                 baseUrl: req.params.orgName,
@@ -181,7 +188,7 @@ const loadTryOutPage = async (req, res) => {
             const layoutResponse = await loadLayoutFromAPI(orgID);
             html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         } catch (error) {
-            console.error(`Failed to load api tryout : ,${error}`);
+            console.error(`Failed to load api tryout :`, error);
         }
     }
     res.send(html);
@@ -199,11 +206,17 @@ async function loadAPIMetaDataList() {
     return mockAPIMetaData;
 }
 
-
-
 async function loadAPIMetaDataListFromAPI(req, orgID, orgName) {
 
-    let metaData = await apiMetadataService.getMetadataListFromDB(orgID);
+    let groups = "";
+    let groupList = [];
+    if (req.user && req.user[constants.ROLES.GROUP_CLAIM]) {
+        groups = req.user[constants.ROLES.GROUP_CLAIM];
+    }
+    if (groups !== "") {
+        groupList = groups.split(" ");
+    }
+    let metaData = await apiMetadataService.getMetadataListFromDB(orgID, groupList);
     metaData.forEach(item => {
         item.baseUrl = '/' + orgName;
     });

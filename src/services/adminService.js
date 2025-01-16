@@ -99,7 +99,6 @@ const getAllOrganizations = async () => {
 const updateOrganization = async (req, res) => {
 
     try {
-        console.log("Update orggg")
         const orgId = req.params.orgId;
         if (!orgId) {
             console.log("Missing required parameter: 'orgId'");
@@ -115,6 +114,7 @@ const updateOrganization = async (req, res) => {
             return res.status(400).json(util.getErrors(errors));
         }
         const payload = req.body;
+        payload.orgId = orgId;
         const [, updatedOrg] = await adminDao.updateOrganization(payload);
         res.status(200).json({
             orgId: updatedOrg[0].dataValues.ORG_ID,
@@ -165,11 +165,12 @@ const createIdentityProvider = async (req, res) => {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
         const rules = util.validateIDP();
-        for (let validation of rules) {
+        for (let validation of rules) {        
             await validation.run(req);
         }
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
+            console.log(util.getErrors(errors));
             return res.status(400).json(util.getErrors(errors));
         }
         const idpResponse = await adminDao.createIdentityProvider(orgId, idpData);
@@ -253,7 +254,7 @@ const createOrgContent = async (req, res) => {
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
     await util.unzipFile(zipPath, extractPath);
     try {
-        const files = await readFilesInDirectory(extractPath, orgId, req);
+        const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'));
         for (const { filePath, fileName, fileContent, fileType } of files) {
             await createContent(filePath, fileName, fileContent, fileType, orgId);
         }
@@ -293,7 +294,7 @@ const updateOrgContent = async (req, res) => {
     const zipPath = req.file.path;
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
     await util.unzipFile(zipPath, extractPath);
-    const files = await readFilesInDirectory(extractPath, orgId, req);
+    const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'));
     try {
         for (const { filePath, fileName, fileContent, fileType } of files) {
             if (fileName != null && !fileName.startsWith('.')) {
@@ -350,53 +351,153 @@ const deleteOrgContent = async (req, res) => {
     }
 };
 
-async function readFilesInDirectory(directory, orgId, req, baseDir = '') {
 
-    const files = await fs.promises.readdir(directory, { withFileTypes: true });
-    let fileDetails = [];
-    for (const file of files) {
-        const filePath = path.join(directory, file.name);
-        const relativePath = path.join(baseDir, file.name);
-        if (file.isDirectory()) {
-            const subDirContents = await readFilesInDirectory(filePath, orgId, req, relativePath);
-            fileDetails = fileDetails.concat(subDirContents);
+
+const createProvider = async (req, res) => {
+
+    const orgID = req.params.orgId;
+    const payload = req.body;
+    const rules = util.validateProvider();
+
+    for (let validation of rules) {
+        await validation.run(req);
+    }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json(util.getErrors(errors));
+    }
+    const extraKeys = util.rejectExtraProperties(['name', 'providerURL'], payload)
+    if (extraKeys.length > 0) {
+        return res.status(400).json(new CustomError(400, "Bad Request", `Unexpected properties: ${extraKeys.join(', ')}`));
+    }
+    try {
+        const provider = await adminDao.createProvider(orgID, payload);
+        let providerData = {
+            orgId: provider[0].dataValues.ORG_ID,
+            name: provider[0].dataValues.NAME,
+        };
+        for (const prop of provider) {
+            providerData[prop.dataValues.PROPERTY] = prop.dataValues.VALUE;
+        }
+        res.status(201).send(providerData);
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.PROVIDER_CREATE_ERROR}, ${error}`);
+        util.handleError(res, error);
+    }
+}
+
+const updateProvider = async (req, res) => {
+
+    try {
+        const orgId = req.params.orgId;
+        const payload = req.body;
+        if (!orgId) {
+            console.log("Missing required parameter: 'orgId'");
+            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+        }
+        const rules = util.validateProvider();
+
+        for (let validation of rules) {
+            await validation.run(req);
+        }
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json(util.getErrors(errors));
+        }
+        const extraKeys = util.rejectExtraProperties(['name', 'providerURL'], payload)
+        if (extraKeys.length > 0) {
+            return res.status(400).json(new CustomError(400, "Bad Request", `Unexpected properties: ${extraKeys.join(', ')}`));
+        }
+        const provider = await adminDao.updateProvider(orgId, payload);
+        let providerData = {
+            orgId: provider[0][0].dataValues.ORG_ID,
+            name: provider[0][0].dataValues.NAME,
+        };
+        for (const prop of provider) {
+            providerData[prop[0].dataValues.PROPERTY] = prop[0].dataValues.VALUE;
+        }
+        res.status(200).json(providerData);
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.PROVIDER_UPDATE_ERROR}, ${error}`);
+        util.handleError(res, error);
+    }
+
+}
+
+const getProviders = async (req, res) => {
+
+    try {
+        const orgID = req.params.orgId;
+        if (req.query.name) {
+            const providerName = req.query.name;
+            return res.status(200).send(await getProvidetByName(orgID, providerName));
         } else {
-            let content = await fs.promises.readFile(filePath);
-            let strContent = await fs.promises.readFile(filePath, constants.CHARSET_UTF8);
-            let dir = baseDir.replace(/^[^/]+\/?/, '') || '/';
-            let fileType;
-            if (file.name.endsWith(".css")) {
-                fileType = "style"
-                if (file.name === "main.css") {
-                    strContent = strContent.replace(/@import\s*'\/styles\/([^']+)';/g,
-                        `@import url("${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/layout?fileType=style&fileName=$1");`);
-                    content = Buffer.from(strContent, constants.CHARSET_UTF8);
-                }
-            } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
-                fileType = "layout"
-                if (file.name === "main.hbs") {
-                    strContent = strContent.replace(/\/styles\//g, `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/layout?fileType=style&fileName=`);
-                    content = Buffer.from(strContent, constants.CHARSET_UTF8);
-                }
-            } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
-                fileType = "partial"
-            } else if (file.name.endsWith(".md") && dir.endsWith("content")) {
-                fileType = "markDown";
-            } else if (file.name.endsWith(".hbs")) {
-                fileType = "template";
-            } else {
-                fileType = "image";
-            }
+            const providerList = await getAllProviders(orgID);
+            return res.status(200).send(providerList);
+        }
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.PROVIDER_FETCH_ERROR}, ${error}`);
+        util.handleError(res, error);
+    }
+}
 
-            fileDetails.push({
-                filePath: dir,
-                fileName: file.name,
-                fileContent: content,
-                fileType: fileType
-            });
+const getProvidetByName = async (orgID, name) => {
+
+    const providerData = await adminDao.getProvider(orgID, name);
+    if (providerData.length > 0) {
+        const providerResponse = {
+            name: providerData[0].dataValues.NAME,
+        };
+        for (const provider of providerData) {
+            providerResponse[provider.dataValues.PROPERTY] = provider.dataValues.VALUE;
+        }
+        return providerResponse;
+    }
+
+}
+
+const getAllProviders = async (orgID) => {
+
+    const providers = await adminDao.getProviders(orgID);
+    const providerList = [];
+    if (providers.length > 0) {
+        for (const provider of providers) {
+            const providerData = {
+                name: provider.dataValues.NAME,
+            };
+            for (const [key, value] of Object.entries(provider.dataValues.properties)) {
+                providerData[key] = value;
+            }
+            providerList.push(providerData);
         }
     }
-    return fileDetails;
+    return providerList;
+}
+
+const deleteProvider = async (req, res) => {
+
+    try {
+        const orgId = req.params.orgId;
+        const providerName = req.query.name;
+        let property, deletedRowsCount;
+        if (req.query.property) {
+            property = req.query.property;
+            deletedRowsCount = await adminDao.deleteProviderProperty(orgId, property, providerName);
+        } else {
+            deletedRowsCount = await adminDao.deleteProvider(orgId, providerName);
+        }
+        if (!orgId || !providerName) {
+            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+        }
+        if (deletedRowsCount > 0) {
+            res.status(204).send();
+        } else {
+            throw new CustomError(404, "Records Not Found", 'Provider property not found');
+        }
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.PROVIDER_DELETE_ERROR}, ${error}`);
+        util.handleError(res, error);
+    }
 }
 
 module.exports = {
@@ -412,5 +513,11 @@ module.exports = {
     getIdentityProvider,
     deleteIdentityProvider,
     getOrganizations,
-    getAllOrganizations
+    getAllOrganizations,
+    createProvider,
+    updateProvider,
+    getProviders,
+    getAllProviders,
+    deleteProvider,
+
 };

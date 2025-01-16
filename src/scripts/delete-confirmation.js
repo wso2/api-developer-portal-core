@@ -1,6 +1,7 @@
-function openDeleteModal(applicationId) {
+function openDeleteModal(applicationId, mappingId) {
   const modal = document.getElementById('deleteConfirmation');
   modal.dataset.applicationId = applicationId;
+  modal.dataset.mappingId = mappingId;
   const bootstrapModal = new bootstrap.Modal(modal);
   bootstrapModal.show();
 }

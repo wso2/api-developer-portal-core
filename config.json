@@ -1,6 +1,6 @@
 {
   "port": 3000,
-  "pathToContent": "../src/",
+  "pathToContent": "/src/",
   "mode": "production",
   "controlPlane": {
     "url": "https://127.0.0.1:9443/api/am/devportal/v3",
@@ -12,10 +12,24 @@
     "password": "postgres",
     "database": "devportal",
     "host": "localhost",
+    "port": 5432,
     "dialect": "postgres"
   },
   "providerURL": {
     "AWS": "https://aws.amazon.com"
+  },
+  "defaultAuth": {
+    "users": [
+      {
+        "username": "admin",
+        "password": "admin",
+        "roles": [
+          "admin"
+        ],
+        "orgClaimName": "ACME",
+        "organizationIdentifier": "ACME"
+      }
+    ]
   },
   "identityProvider": {
     "name": "IS",
@@ -23,13 +37,16 @@
     "authorizationURL": "https://localhost:9443/oauth2/authorize",
     "tokenURL": "https://127.0.0.1:9443/oauth2/token",
     "userInfoURL": "https://localhost:9443/oauth2/userinfo",
-    "clientId": "<client-id>",
+    "clientId": "",
     "callbackURL": "http://localhost:3000/ACME/callback",
-    "scope": "openid email profile apim:subscribe role",
+    "scope": "openid profile",
     "signUpURL": "",
     "logoutURL": "https://localhost:9443/oidc/logout",
-    "logoutRedirectURI": "http://localhost:3000/ACME"
+    "logoutRedirectURI": "http://localhost:3000/ACME",
+    "certificate": "",
+    "jwksURL": "https://localhost:9443/oauth2/jwks"
   },
+  "disableTLS": true,
   "roleClaim": "roles",
   "orgIDClaim": "organizationID",
   "groupsClaim": "groups",

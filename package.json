@@ -1,6 +1,6 @@
 {
   "name": "devportal-webapp",
-  "version": "1.0.70",
+  "version": "1.0.79",
   "description": "devportal-webapp",
   "main": "index.js",
   "scripts": {
@@ -40,6 +40,7 @@
     "handlebars": "^4.7.8",
     "hbs": "^4.2.0",
     "https": "^1.0.0",
+    "jose": "^5.9.6",
     "js-yaml": "^4.1.0",
     "jsonwebtoken": "^9.0.2",
     "marked": "^13.0.3",
@@ -49,6 +50,7 @@
     "node-fetch": "^3.3.2",
     "nodemon": "^3.1.4",
     "passport": "^0.7.0",
+    "passport-custom": "^1.1.1",
     "passport-oauth2": "^1.8.0",
     "passport-openidconnect": "^0.0.2",
     "path": "^0.12.7",

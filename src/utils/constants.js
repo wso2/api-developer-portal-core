@@ -21,7 +21,7 @@ module.exports = {
     STYLE: 'style',
     TEXT: 'text',
     CHARSET_UTF8: 'utf-8',
-    FILE_NAME_PARAM : '&fileName=',
+    FILE_NAME_PARAM: '&fileName=',
     API_TEMPLATE_FILE_NAME: '/template?fileName=',
     HEADER_PARTIAL_NAME: 'header',
     HERO_PARTIAL_NAME: 'hero',
@@ -29,6 +29,12 @@ module.exports = {
     BASE_URL_NAME: 'baseUrl',
     ORG_ID: 'orgID',
     ORG_IDENTIFIER: 'organizationIdentifier',
+    ACCESS_TOKEN: 'accessToken',
+    BASIC_HEADER: 'basicAuthHeader',
+    API_VISIBILITY: {
+        PUBLIC: 'PUBLIC',
+        PRIVATE: 'PRIVATE'    
+    },
     MIME_TYPES: {
         HTML: 'text/html',
         TEXT: 'text/plain',
@@ -45,6 +51,11 @@ module.exports = {
         CONYEMT_TYPE: 'Content-Type',
         CONTENT_DISPOSITION: 'Content-Disposition',
         Cache_Control: 'Cache-Control',
+    },
+
+    SCOPES: {
+        ADMIN: 'admin',
+        DEVELOPER: 'dev',
     },
 
     FILE_EXTENSIONS: {
@@ -66,22 +77,22 @@ module.exports = {
     },
 
     ROUTE: {
-      DEV_PORTAL:  '/devportal',
-      STYLES: '/styles',
-      TECHNICAL_STYLES: '/technical-styles',
-      TECHNICAL_SCRIPTS: '/technical-scripts',
-      IMAGES: '/images',
-      IMAGES_PATH: '/images/',
-      DEFAULT: '/',
-      MOCK: '/mock',
-      API_LISTING_PAGE: '/apis',  
-      API_FILE_PATH: '/apis/',
-      API_LANDING_PAGE_PATH: '/api/',
-      DEVPORTAL_ASSETS_BASE_PATH: '/devportal/organizations/',
-      DEVPORTAL_CONFIGURE: '/*/configure',
-      DEVPORTAL_ROOT: '/portal',
-      DEVPORTAL_API_LISTING: '/*/apis',
-      DEVPORTAL_TECHNICAL_PAGES: ['*/application']
+        DEV_PORTAL: '/devportal',
+        STYLES: '/styles',
+        TECHNICAL_STYLES: '/technical-styles',
+        TECHNICAL_SCRIPTS: '/technical-scripts',
+        IMAGES: '/images',
+        IMAGES_PATH: '/images/',
+        DEFAULT: '/',
+        MOCK: '/mock',
+        API_LISTING_PAGE: '/apis',
+        API_FILE_PATH: '/apis/',
+        API_LANDING_PAGE_PATH: '/api/',
+        DEVPORTAL_ASSETS_BASE_PATH: '/devportal/organizations/',
+        DEVPORTAL_CONFIGURE: '/*/configure',
+        DEVPORTAL_ROOT: '/portal',
+        DEVPORTAL_API_LISTING: '/*/apis',
+        DEVPORTAL_TECHNICAL_PAGES: ['*/application']
     },
     ROLES: {
         ADMIN: 'admin',
@@ -95,7 +106,10 @@ module.exports = {
         LAYOUT: 'layout',
         TEMPLATE: 'template',
     },
-
+    KEY_TYPE: {
+        PRODUCTION: 'PRODUCTION',
+        SANDBOX: 'SANDBOX',
+    },
     FILE_NAME: {
         MAIN: 'main.hbs',
         PAGE: 'page.hbs',
@@ -107,7 +121,6 @@ module.exports = {
         API_DEFINITION_XML: 'apiDefinition.xml',
         PARTIAL_HEADER_FILE_NAME: 'header.hbs',
     },
-
     ERROR_MESSAGE: {
         ORG_NOT_FOUND: "Failed to load organization",
         ORG_CREATE_ERROR: "Error while creating organization",
@@ -125,10 +138,21 @@ module.exports = {
         API_CONTENT_UPDATE_ERROR: "Error while updating API content",
         API_CONTENT_DELETE_ERROR: "Error while deleting API content",
         API_CONTENT_CREATE_ERROR: "Error while creating API content",
+        API_LISTING_LOAD_ERROR: "Error while loading API listing",
         IDP_NOT_FOUND: "Failed to load IDP",
         IDP_CREATE_ERROR: "Error while creating IDP",
         IDP_UPDATE_ERROR: "Error while updating IDP",
         IDP_DELETE_ERROR: "Error while deleting IDP",
-        API_NOT_IN_ORG: "API does not belong to given organization"
+        API_NOT_IN_ORG: "API does not belong to given organization",
+        UNAUTHENTICATED: "User is not authenticated",
+        FORBIDDEN: "You do not have permission to access this resource",
+        PROVIDER_CREATE_ERROR: "Error while creating provider",
+        PROVIDER_UPDATE_ERROR: "Error while updating provider",
+        PROVIDER_DELETE_ERROR: "Error while deleting provider",
+        PROVIDER_FETCH_ERROR: "Error while fetching providers"
+    },
+    ERROR_CODE: {
+        401: "Unauthenticated",
+        403: "Forbidden"
     }
 }

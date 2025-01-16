@@ -1,10 +1,11 @@
 <head>
   <script src='/technical-scripts/subscription.js' defer></script>
 </head>
-<main>
+<main style="padding: 0 3.75rem;">
     {{> application-dashboard }}
-    {{> delete-confirmation }}
     {{> alert }}
     {{> throttling-reset-modal}}
     {{> api-key-modal}}
+    {{> delete-confirmation modalTitle="Do you really want to remove keys?" modalMessage="This will remove the key entries stored in devportal, 
+    gateway as well as in the service provider." modalFunction="removeApplicationKey()" }}
 </main>

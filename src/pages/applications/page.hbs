@@ -1,6 +1,7 @@
 <main>
+    {{> applications-hero-banner}}
     {{> applications-listing }}
-    {{> delete-confirmation }}
-    {{> community }}
+    {{> delete-confirmation modalTitle="Delete Application" modalMessage="This Application will be removed" modalFunction="deleteApplication()" }}
     {{> alert }}
+    {{> faqBanner }}
 </main>

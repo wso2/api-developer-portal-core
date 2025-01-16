@@ -20,6 +20,10 @@ const minimatch = require('minimatch');
 const constants = require('../utils/constants');
 const config = require(process.cwd() + '/config.json');
 const adminDao = require('../dao/admin');
+const { jwtVerify, createRemoteJWKSet, importX509 } = require('jose');
+const util = require('../utils/util');
+const { CustomError } = require('../utils/errors/customErrors');
+const IdentityProviderDTO = require("../dto/identityProvider");
 
 const ensurePermission = (currentPage, role, req) => {
 
@@ -41,8 +45,6 @@ const ensurePermission = (currentPage, role, req) => {
 
 const ensureAuthenticated = async (req, res, next) => {
 
-    console.log('Original URL: ' + req.originalUrl);
-    console.log('Authenticated pages', config.authenticatedPages)
     let adminRole = config.adminRole;
     let superAdminRole = config.superAdminRole;
     let subscriberRole = config.subscriberRole;
@@ -110,4 +112,127 @@ const ensureAuthenticated = async (req, res, next) => {
     };
 };
 
+function validateAuthentication(scope) {
+    return async function (req, res, next) {
+
+        let IDP, valid, scopes, orgId, response;
+        if (req.params.orgName) {
+            orgId = await adminDao.getOrgId(orgName);
+        } else {
+            orgId = req.params.orgId;
+        }
+        if (orgId) {
+            response = await adminDao.getIdentityProvider(orgId);
+            if (response.length !== 0) {
+                //login from super IDP
+                IDP = new IdentityProviderDTO(response[0].dataValues);
+            } else {
+                IDP = config.identityProvider;
+            }
+        } else {
+            IDP = config.identityProvider;
+        }
+
+        let accessToken, basicHeader;
+        //if IDP present, fetch bearer token else use basic header
+        if (IDP.clientId !== "") {
+            if (req.isAuthenticated() && req.user) {
+                accessToken = req.user[constants.ACCESS_TOKEN];
+            } else {
+                accessToken = req.headers.authorization && req.headers.authorization.split(' ')[1];
+            }
+            //fetch certificate or JWKS URL
+            if (IDP.certificate) {
+                const pemKey = IDP.certificate;
+                const publicKey = await importX509(pemKey, 'RS256');
+                [valid, scopes] = await validateWithCert(accessToken, publicKey);
+            } else {
+                if (IDP.jwksURL) {
+                    [valid, scopes] = await validateWithJWKS(accessToken, IDP.jwksURL);
+                } else {
+                    valid = false;
+                }
+            }
+            if (valid) {
+                if (scopes.split(" ").includes(scope)) {
+                    return next();
+                } else {
+                    if (req.user) {
+                        return res.redirect('login');
+                    } else {
+                        return util.handleError(res, new CustomError(403, constants.ERROR_CODE[403], constants.ERROR_MESSAGE.FORBIDDEN));
+                    }
+                }
+            } else {
+                if (req.user) {
+                    return res.redirect('login');
+                } else {
+                    return util.handleError(res, new CustomError(401, constants.ERROR_CODE[401], constants.ERROR_MESSAGE.UNAUTHENTICATED));
+                }
+            }
+        } else {
+            if (req.isAuthenticated() && req.user) {
+                basicHeader = req.user[constants.BASIC_HEADER];
+            } else {
+                basicHeader = req.headers.authorization && req.headers.authorization.split(' ')[1];
+            }
+            valid = await validateBasicAuth(basicHeader);
+            if (valid) {
+                return next();
+            } else {
+                if (req.user) {
+                    return res.redirect('login');
+                } else {
+                    return util.handleError(res, new CustomError(401, constants.ERROR_CODE[401], constants.ERROR_MESSAGE.UNAUTHENTICATED));
+                }
+            }
+        }
+    }
+}
+
+const validateWithCert = async (token, publicKey) => {
+
+    try {
+        const { payload } = await jwtVerify(token, publicKey);
+        return [true, payload.scope];
+    } catch (err) {
+        console.log(err);
+        console.error("Invalid token:", err.message);
+        return [false, ""];
+    }
+}
+
+const validateWithJWKS = async (token, jwksURL) => {
+
+    try {
+        const jwks = await createRemoteJWKSet(new URL(jwksURL));
+        const { payload } = await jwtVerify(token, jwks);
+        return [true, payload.scope];
+    } catch (err) {
+        console.error("Invalid token:", err.message);
+        return [false, ""];
+    }
+}
+
+const validateBasicAuth = async (basicHeader) => {
+
+    let valid = false;
+    const base64Decoded = Buffer.from(basicHeader, 'base64').toString('utf-8');
+    const [username, password] = base64Decoded.split(':');
+    const users = config.defaultAuth.users;
+    for (let user of users) {
+        if (username === user.username && password === user.password) {
+            valid = true;
+            break;
+        }
+    }
+    return valid;
+}
+
 module.exports = ensureAuthenticated;
+
+module.exports = {
+    ensureAuthenticated,
+    validateAuthentication
+
+}

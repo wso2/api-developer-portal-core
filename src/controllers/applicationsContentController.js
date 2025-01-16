@@ -172,12 +172,57 @@ const loadApplication = async (req, res) => {
             });
 
             kMmetaData = await getAPIMKeyManagers(req);
+            kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
+            let applicationKeyList = await getApplicationKeys(req, applicationId);
+            let productionKeys = [];
+            let sandboxKeys = [];
+
+            applicationKeyList?.list?.map(key => {
+                let client_name;
+                if (key?.additionalProperties?.client_name) {
+                    client_name = key.additionalProperties.client_name;
+                }
+                let keyData = {
+                    keyManager: key.keyManager,
+                    consumerKey: key.consumerKey,
+                    consumerSecret: key.consumerSecret,
+                    keyMappingId: key.keyMappingId,
+                    keyType: key.keyType,
+                    supportedGrantTypes: key.supportedGrantTypes,
+                    additionalProperties: key.additionalProperties,
+                    clientName: client_name
+                };
+                if (key.keyType === constants.KEY_TYPE.PRODUCTION) {
+                    productionKeys.push(keyData);
+                } else {
+                    sandboxKeys.push(keyData);
+                }
+                return keyData;
+            }) || [];
+
+
+            kMmetaData.forEach(keyManager => {
+                productionKeys.forEach(productionKey => {
+                    if (productionKey.keyManager === keyManager.name) {
+                        keyManager.productionKeys = productionKey;
+                    }
+                });
+                sandboxKeys.forEach(sandboxKey => {
+                    if (sandboxKey.keyManager === keyManager.name) {
+                        keyManager.sandboxKeys = sandboxKey;
+                    }
+                });
+            });
+
             templateContent = {
                 applicationMetadata: metaData,
                 keyManagersMetadata: kMmetaData,
                 baseUrl: '/' + orgName,
-                apis: apiList
+                apis: apiList,
+                productionKeys: productionKeys,
+                sandboxKeys: sandboxKeys
             }
+
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID);
             html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
@@ -190,6 +235,14 @@ const loadApplication = async (req, res) => {
     }
 }
 
+async function getApplicationKeys(req, applicationId) {
+    try {
+        return await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${applicationId}/keys`, {}, {});
+    } catch (error) {
+        console.error("Error occurred while generating application keys", error);
+        return null;
+    }
+}
 
 async function getAllAPIs(req) {
     try {
@@ -226,7 +279,7 @@ const loadApplicationForEdit = async (req, res) => {
         const orgName = req.params.orgName;
         const orgID = await orgIDValue(orgName);
         metaData = await getAPIMApplication(req, applicationId);
-        throttlingMetaData = await getAPIMThrottlingPolicies(req);
+        throttlingMetaData = await getAPIMThrottlingPolicies(req);        
         templateContent = {
             applicationMetadata: metaData,
             throttlingPoliciesMetadata: throttlingMetaData,

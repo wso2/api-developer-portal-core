@@ -1,134 +1,191 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap");
-@import '/technical-styles/header.css';
+@import "/technical-styles/header.css";
 :root {
-  --main-bg-color: #f7f8fb;
-  --light-bg-color: #ffffff;
+  --main-bg-color: #ffffff;
+  /* primary colors */
+  --primary-main-color: #5952ad;
+  --primary-light-color: #f7f7ff;
+  --primary-dark-color: #423c89;
+  --primary-darkest-color: #302c6a;
+  /* secondary colors */
+  --secondary-main-color: #5dc7b1;
+  --secondary-light-color: #eef3f2;
+  --secondary-dark-color: #49a18e;
+  --secondary-darkest-color: #357b6c;
+  /* font colors */
+  --white-text-color: #ffffff;
   --main-text-color: #40404b;
   --light-text-color: #6b7280;
-  --dark-text-color: #000000;
-  --primary-color: #3e6ff2;
-  --primary-light-color: #CCD1F2;
-  --secondary-color: #0f2751;
-  --light-color: #ffc371;
-  --dark-color: #0f3971;
+  /* other special colors */
   --success-color: #28a745;
   --danger-color: #dc3545;
   --warning-color: #ffc107;
-  --info-color: #17a2b8;
-  --font-colour-primary: #ffffff;
-  --border-colour-primary: #1a73e8;
-  --border-colour-secondary: #ffffff;
-  --notselect-star-color: #bebec0;
-  --border-color: #ddd;
+  --white-color: #ffffff;
+  --Black-color: #000000;
+  /* Gradient */
+  --primary-gradient: linear-gradient(90deg, #eeeeff 0%, #ebfbf7 100%);
+  --dark-gradient: linear-gradient(to right, #50c9c3, #4a6fa1);
 
   --font-family-sans: "Poppins", sans-serif;
   --font-family-serif: "Sofia Sans", serif;
   --font-family-mono: "Roboto", monospace;
 }
-
-html {
-  overflow: hidden;
+html,
+body {
+  margin: 0;
   height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 body {
-  padding-top: 60px;
-  overflow: auto;
-  height: 100%;
+  padding-top: 3rem;
 }
 
-/* primary button */
+footer {
+  margin-top: auto;
+  width: 100%;
+}
+
+.technical-footer {
+  padding: 0 3.75rem;
+}
+
 .common-btn-primary {
-  text-decoration: none;
+  background-color: var(--primary-dark-color);
+  color: var(--white-text-color);
+  font-size: 0.875rem;
+  padding: 0.625rem 1.25rem;
   border: none;
-  border-radius: 25px;
-  padding: 12px 24px;
-  font-size: 14px;
+  border-radius: 1.875rem;
+  text-decoration: none;
   cursor: pointer;
-  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
-  background-color: var(--secondary-color);
-  color: var(--font-colour-primary);
+  text-align: center;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 0.25rem 0.375rem rgba(0, 0, 0, 0.1);
 }
 
 .common-btn-primary:hover {
-  background-color: transparent;
-  border: 1px solid var(--main-bg-color);
-  color: var(--font-colour-primary);
+  background-color: var(--primary-main-color);
+  box-shadow: 0 0.375rem 0.625rem rgba(0, 0, 0, 0.15);
+  color: var(--white-text-color);
 }
 
 .common-btn-primary:active {
-  background-color: #042249;
+  background-color: var(--primary-darkest-color);
+  box-shadow: 0 0.125rem 0.125rem rgba(0, 0, 0, 0.1);
+  color: var(--white-text-color);
 }
 
 .common-btn-primary:focus {
-  background-color: var(--dark-color);
-  color: var(--font-colour-primary);
+  outline: none;
+  box-shadow: 0 0 0 0.25rem rgba(92, 79, 163, 0.4);
 }
 
-/* secondary button - light Color */
-.common-btn-secondary {
+.common-btn-white {
+  background-color: var(--white-color);
+  color: var(--primary-dark-color);
+  font-size: 0.875rem;
+  padding: 0.625rem 1.25rem;
+  border: none;
+  border-radius: 3.125rem;
+  cursor: pointer;
+  text-align: center;
   text-decoration: none;
-  border: 1px solid var(--main-bg-color);
-  border-radius: 25px;
-  padding: 12px 24px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 0.125rem 0.125rem rgba(0, 0, 0, 0.1);
+}
+
+.common-btn-white:hover {
+  background-color: var(--primary-main-color);
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+  color: var(--white-text-color);
+}
+
+.common-btn-white:active {
+  background-color: var(--primary-main-color);
+  box-shadow: 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.1);
+  transform: scale(0.98);
+  color: var(--white-text-color);
+}
+
+.common-btn-white:focus {
+  outline: none;
+  box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.4);
+}
+
+.common-btn-link {
   background-color: transparent;
-  color: var(--font-colour-primary);
-}
-
-.common-btn-secondary:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.common-btn-secondary:active {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-.common-btn-secondary:focus {
-  background-color: var(--secondary-color);
-  color: var(--font-colour-primary);
+  color: var(--primary-main-color);
+  font-size: 0.875rem;
+  padding: 0.625rem 1.25rem;
   border: none;
-}
-
-/* primary button - Dark Color */
-.common-btn-dark {
-  border: none;
-  border-radius: 25px;
-  padding: 12px 24px;
-  font-size: 14px;
+  border-radius: 3.125rem;
+  text-decoration: none;
   cursor: pointer;
-  background-color: var(--secondary-color);
-  color: var(--font-colour-primary);
+  text-align: center;
+  transition: all 0.3s ease-in-out;
+  box-shadow: none;
 }
 
-.common-btn-dark:hover {
-  transform: scale(1.05);
-  transition: background-color 0.3s, color 0.3s, transform 0.3s;
+.common-btn-link:hover {
+  color: var(--primary-dark-color);
+  background-color: var(--primary-main-color);
+  color: var(--white-text-color);
 }
 
-.common-btn-dark:focus {
-  background-color: var(--dark-color);
-  color: var(--font-colour-primary);
-  box-shadow: inset 0 2px 2px rgba(35, 40, 61, 0.6);
+.common-btn-link:active {
+  color: var(--white-text-color);
+  background-color: var(--primary-main-color);
 }
 
-/* common-sub-header */
-.dev-sub-header h5 {
+.common-btn-link:focus {
+  outline: none;
+  box-shadow: 0 0 0 0.25rem var(--primary-light-color);
+}
+
+.common-btn-outlined {
+  background-color: transparent;
+  color: var(--primary-main-color);
+  font-size: 0.875rem;
+  padding: 0.625rem 1.25rem;
+  border: 0.0625rem solid var(--primary-main-color);
+  border-radius: 3.125rem;
+  text-decoration: none;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s ease-in-out;
+}
+
+.common-btn-outlined:hover {
+  background-color: var(--primary-main-color);
+  color: var(--white-text-color);
+  border-color: var(--primary-dark-color);
+}
+
+.common-btn-outlined:active {
+  background-color: var(--primary-dark-color);
+  color: var(--white-text-color);
+}
+
+.common-btn-outlined:focus {
+  outline: none;
+  box-shadow: 0 0 0 0.25rem var(--primary-light-color);
+}
+
+.common-sub-header h5 {
   text-transform: uppercase;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--primary-color);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  color: var(--primary-main-color);
   vertical-align: top;
 }
 
-/* common-header */
-.dev-header h2 {
-  font-size: 30px;
-  margin-bottom: 45px;
+.common-header h2 {
+  font-size: 1.875rem;
+  margin-bottom: 2.8125rem;
   font-weight: 600;
-  color: var(--main-text-color);
+  color: var(--primary-main-color);
 }
 
 /* common-badge */
@@ -141,7 +198,7 @@ body {
 }
 
 /* common-card-style */
-.dev-card{
+.dev-card {
   background-color: var(--light-bg-color);
   border-radius: 12px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -162,13 +219,16 @@ body {
   color: var(--main-text-color);
 }
 
-.api-md-content h3,h2 {
+.api-md-content h3,
+h2 {
   font-size: 24px;
   color: var(--main-text-color);
 }
 
 /* --SubTitle-- */
-.api-md-content h4,h5,h6 {
+.api-md-content h4,
+h5,
+h6 {
   font-size: 20px;
   color: var(--main-text-color);
 }
@@ -186,4 +246,13 @@ body {
 
 .api-md-content li::marker {
   color: var(--primary-color);
+}
+
+.custom-modal {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.custom-modal-btn-section {
+  padding: 0 1rem 1rem 1rem;
+  display: flex;
 }

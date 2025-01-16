@@ -20,6 +20,8 @@ const { invokeApiRequest } = require('../utils/util');
 const config = require(process.cwd() + '/config');
 const controlPlaneUrl = config.controlPlane.url;
 const util = require('../utils/util');
+const passport = require('passport');
+const { Strategy: CustomStrategy } = require('passport-custom');
 
 
 const unsubscribeAPI = async (req, res) => {
@@ -77,7 +79,7 @@ const saveApplication = async (req, res) => {
 const updateApplication = async (req, res) => {
     try {
         const { name, throttlingPolicy, description } = req.body;
-        const applicationId = req.params.applicationid;
+        const applicationId = req.params.applicationId;
         const responseData = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/applications/${applicationId}`, {
             'Content-Type': 'application/json',
         }, {
@@ -100,7 +102,7 @@ const updateApplication = async (req, res) => {
 
 const deleteApplication = async (req, res) => {
     try {
-        const applicationId = req.params.applicationid;
+        const applicationId = req.params.applicationId;
         const responseData = await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${applicationId}`, null, null);
         res.status(200).json({ message: responseData.message });
     } catch (error) {
@@ -113,7 +115,7 @@ const deleteApplication = async (req, res) => {
 
 const resetThrottlingPolicy = async (req, res) => {
     try {
-        const applicationId = req.params.applicationid;
+        const applicationId = req.params.applicationId;
         const { userName } = req.body;
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/reset-throttle-policy`, {
             'Content-Type': 'application/json'
@@ -131,7 +133,7 @@ const resetThrottlingPolicy = async (req, res) => {
 
 const generateAPIKeys = async (req, res) => {
     try {
-        const applicationId = req.params.applicationid;
+        const applicationId = req.params.applicationId;
         const environment = req.params.env;
         const { validityPeriod, additionalProperties } = req.body;
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/api-keys/${environment}/generate`, {
@@ -146,6 +148,100 @@ const generateAPIKeys = async (req, res) => {
     }
 };
 
+const generateApplicationKeys = async (req, res) => {
+    try {
+        const applicationId = req.params.applicationId;
+        const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/generate-keys`, {}, req.body);
+        res.status(200).json(responseData);
+    } catch (error) {
+        console.error("Error occurred while generating the application keys", error);
+        util.handleError(res, error);
+    }
+};
+
+const generateOAuthKeys = async (req, res) => {
+    try {
+        const applicationId = req.params.applicationId;
+        const keyMappingId = req.params.keyMappingId;
+        const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}/generate-token`, {}, req.body);
+        res.status(200).json(responseData);
+    } catch (error) {
+        console.error("Error occurred while generating the OAuth keys", error);
+        util.handleError(res, error);
+    }
+};
+
+const revokeOAuthKeys = async (req, res) => {
+    try {
+        const applicationId = req.params.applicationId;
+        const keyMappingId = req.params.keyMappingId;
+        const responseData = await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}`, {}, {});
+        res.status(200).json(responseData);
+    } catch (error) {
+        console.error("Error occurred while generating the OAuth keys", error);
+        util.handleError(res, error);
+    }
+};
+
+const cleanUp = async (req, res) => {
+    try {
+        const applicationId = req.params.applicationId;
+        const keyMappingId = req.params.keyMappingId;
+        const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}/clean-up`, {}, req.body);
+        res.status(200).json(responseData);
+    } catch (error) {
+        console.error("Error occurred while generating the OAuth keys", error);
+        util.handleError(res, error);
+    }
+};
+
+const updateOAuthKeys = async (req, res) => {
+    try {
+        const applicationId = req.params.applicationId;
+        const keyMappingId = req.params.keyMappingId;
+        const responseData = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}`, {}, req.body);
+        res.status(200).json(responseData);
+    } catch (error) {
+        console.error("Error occurred while generating the OAuth keys", error);
+        util.handleError(res, error);
+    }
+};
+
+const login = async (req, res) => {
+    const username = req.body.username;
+    const password = req.body.password;
+
+    const defaultUser = config.defaultAuth.users.find(user => user.username === username && user.password === password);
+    passport.use(
+        'default-auth',
+        new CustomStrategy((req, done) => {
+            if (defaultUser) {
+                const user = { ...defaultUser };
+                return done(null, user);
+            } else {
+                return done(null, false, { message: 'Invalid credentials' });
+            }
+        })
+    );
+
+    passport.authenticate('default-auth', (err, user, info) => {
+        if (err) {
+            console.error("Error occurred while logging in", err);
+            return util.handleError(res, err);
+        }
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+        req.logIn(user, (err) => {
+            if (err) {
+                return util.handleError(res, err);
+            }
+            console.log("Login successful", req.user);
+            res.status(200).json({ message: 'Login successful' });
+        });
+    })(req, res);
+};
+
 module.exports = {
     unsubscribeAPI,
     subscribeAPI,
@@ -153,5 +249,11 @@ module.exports = {
     updateApplication,
     deleteApplication,
     resetThrottlingPolicy,
-    generateAPIKeys
+    generateAPIKeys,
+    generateApplicationKeys,
+    generateOAuthKeys,
+    revokeOAuthKeys,
+    updateOAuthKeys,
+    cleanUp,
+    login
 };

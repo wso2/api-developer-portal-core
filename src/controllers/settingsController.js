@@ -32,22 +32,9 @@ const loadSettingPage = async (req, res) => {
     let orgID;
     const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'configure', 'page.hbs');
     const layoutPath = path.join(require.main.filename, '..', 'pages', 'layout', 'main.hbs');
-    //retrieve orgID from the user object
-    if (req.user) {
-        orgID = req.user[constants.ORG_ID];
-    } else {
-        let orgName = req.params.orgName;
-        orgID = await adminDao.getOrgId(orgName);
-        const templatePath = path.join(require.main.filename, '..', 'pages', 'error-page', 'page.hbs');
-        const templateResponse = fs.readFileSync(templatePath, constants.CHARSET_UTF8);
-        const layoutResponse = await loadLayoutFromAPI(orgID);
-        let html = await renderGivenTemplate(templateResponse, layoutResponse, {});
-        return res.send(html);
-    }
 
     let templateContent = {
         baseUrl: req.params.orgName,
-        orgID: orgID,
         orgContent: true
     }
     let layoutResponse = "";
@@ -59,15 +46,30 @@ const loadSettingPage = async (req, res) => {
             views = [{
                 'name': 'Default'
             }]
+            templateContent.createIDP = true
             templateContent.content = true;
-            templateContent.orgContent = false;
+            templateContent.orgContent = true;
             templateContent.views = views;
+            templateContent.apiProviders = getMockAPIProviders();
         } else {
+            //retrieve orgID from the user object
+            if (req.user) {
+                orgID = req.user[constants.ORG_ID];
+            } else {
+                let orgName = req.params.orgName;
+                orgID = await adminDao.getOrgId(orgName);
+                const templatePath = path.join(require.main.filename, '..', 'pages', 'error-page', 'page.hbs');
+                const templateResponse = fs.readFileSync(templatePath, constants.CHARSET_UTF8);
+                const layoutResponse = await loadLayoutFromAPI(orgID);
+                let html = await renderGivenTemplate(templateResponse, layoutResponse, {});
+                return res.send(html);
+            }
+            templateContent.orgID = orgID;
             const retrievedIDP = await adminDao.getIdentityProvider(orgID);
             if (retrievedIDP.length > 0) {
                 templateContent.idp = new IdentityProviderDTO(retrievedIDP[0]);
             } else {
-                templateContent.create = true;
+                templateContent.createIDP = true;
             }
             //TODO: fetch view names from DB
             const file = await adminService.getOrgContent(orgID, 'layout', 'main.hbs', 'layout');
@@ -78,6 +80,11 @@ const loadSettingPage = async (req, res) => {
                 templateContent.content = true;
                 templateContent.views = views;
                 templateContent.orgContent = false;
+            }
+            //get api providers
+            const apiProviders = await getAPIProviders(orgID);
+            if (apiProviders.length > 0) {
+                templateContent.apiProviders = apiProviders;
             }
             layoutResponse = await loadLayoutFromAPI(orgID);
         }
@@ -90,6 +97,19 @@ const loadSettingPage = async (req, res) => {
     } catch (error) {
         console.error(`Error while loading content from DB: ${error}`);
     }
+}
+
+async function getMockAPIProviders() {
+
+    const mockAPIProvidersDataPath = path.join(process.cwd(), filePrefix + '../mock/APIProviders/APIProviders.json');
+    const mockAPIProvidersData = JSON.parse(fs.readFileSync(mockAPIProvidersDataPath, 'utf-8'));
+    return mockAPIProvidersData;
+}
+
+async function getAPIProviders(orgID) {
+
+    const apiProviders = await adminService.getAllProviders(orgID);
+    return apiProviders;
 }
 
 async function getMockIdentityProvider() {

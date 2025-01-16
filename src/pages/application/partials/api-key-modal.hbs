@@ -15,12 +15,12 @@
       <div class='modal-dialog'>
         <div class='modal-content'>
           <div class='modal-header'>
-            <h5 class='modal-title'>Generated API Key</h5>
+            <h5 class='modal-title' id="keyModalTitle"></h5>
           </div>
 
           <div class='modal-body'>
             <div class='mb-3'>
-              <label for='userName' class='form-label'>API Key</label>
+              <label for='userName' class='form-label' id="keyModalSubTitle"></label>
               <input
                 type='text'
                 id='apiKeyModalField'
@@ -28,7 +28,7 @@
                 placeholder='API Key'
                 readonly
               />
-              <div class='form-text'>Please copy this generated token value as
+              <div class='form-text' id='modalDescription'>Please copy this generated token value as
                 it will be displayed only for the current browser session. (The
                 token will not be visible in the UI after the page is refreshed)</div>
               <div

@@ -4,115 +4,71 @@
 </head>
 
 <main>
-  <section>
-    <div class='col-lg-12 hero-section-apilisting'>
-      <div class='apilist-hero-container anim'>
-        <div class='apilist-hero-content'>
-          <div class='apilist-hero-header'>
-            <h1>Subscribe to
-              <span>APIs</span>
-              by creating applications.
-            </h1>
+<section>
+  <div class="container-fluid col-lg-11 applicationspage-container" id="applicationsContainer">
+    <!-- Create Project Button -->
+    <div class="card create-project-card">
+      <a type="button" class="btn create-project-button" href="{{baseUrl}}/applications/create">
+        <div class="create-project-content">
+          <span class="plus-icon">+</span>
+          <span class="create-text">New Application</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Application Cards -->
+    {{#applicationsMetadata}}
+    <div class="card application-card" id="app-card-{{applicationId}}" data-name="{{name}}">
+      <div class="application-card-body">
+        <h5 class="application-card-title">
+          <a href="{{../baseUrl}}/applications/{{applicationId}}" class="application-name-link">
+            {{name}}
+          </a>
+        </h5>
+        <div class='row list-items'>
+          <div class='applicationlist-tags'>
+            {{#if (eq status 'APPROVED')}}
+            <span class='badge badge-custom1'>{{status}}</span>
+            {{else}}
+              <span class='badge badge-custom2'>{{status}}</span>
+            {{/if}}
+            <span class='badge badge-custom3'>Owner:
+            {{owner}}</span>
           </div>
-          <div class='apilist-hero-subtitle'>
-            <p>Create, manage, or remove applications here.</p>
-          </div>
-          <div class='col-lg-10 search-container'>
-            <div class='search-input'>
-              <i class='bi bi-search'></i>
-              <input
-                type='text'
-                id='query'
-                placeholder='Search Applications'
-              />
-            </div>
-          </div>
+        </div>
+        <div class='application-card-meta'>
+          <p>
+            <i class='bi bi-grid'></i>
+              Subscriptions:
+              {{subscriptionCount}}
+          </p>
+          <p>
+            <i class='bi bi-speedometer2'></i>
+              Throttling Policy:
+              {{throttlingPolicy}}
+          </p>
+        </div>
+        <div class="application-card-actions">
+          <button
+            type="button"
+            class="btn application-btn-icon edit-button"
+            title="Edit"
+            onclick="window.location.href='{{../baseUrl}}/applications/{{applicationId}}/edit'"
+          >
+            <i class='bi bi-pencil-fill'></i>
+          </button>
+          <button
+            type="button"
+            class="btn application-btn-icon delete-button"
+            title="Delete"
+            onclick="openDeleteModal('{{applicationId}}', '')"
+          >
+            <i class="bi bi-trash-fill"></i>
+          </button>
         </div>
       </div>
     </div>
-    <div
-      class='container-fluid col-lg-12 applicationspage-container'
-      id='applicationsContainer'
-    >
-      <div class='row list-items'>
-        <div class='col-lg-2'>
-          <div class='applicationsbtn-container mt-3'>
-            <div class='row'>
-              <div class='col-10 text-left'>
-                <a
-                  type='button'
-                  class='btn applicationsaddbtn-primary'
-                  href='{{baseUrl}}/applications/create'
-                >+ New Application</a>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class='col-lg-10'>
-          <div class='row list-items'>
-            <div class='col'>
-              <div
-                class='applicationlist-container row list-items'
-                id='applicationCardsContainer'
-              >
-                {{#applicationsMetadata}}
-                  <div
-                    id='app-card-{{applicationId}}'
-                    class='card application-card col-lg-3 col-md-10 col-sm-10 m-2'
-                    data-name='{{name}}'
-                  >
-                    <div class='application-card-body'>
-                      <h5 class='application-card-title'>
-                        <a
-                          href='{{../baseUrl}}/applications/{{applicationId}}'
-                          class='application-name-link'
-                        >{{name}}</a>
-                      </h5>
-                      <div class='row list-items'>
-                        <div class='apilisting-tags'>
-                          <span class='badge badge-custom1'>{{status}}</span>
-                          <span class='badge badge-custom1'>Owner:
-                            {{owner}}</span>
-                        </div>
-                      </div>
-                      <div class='application-card-meta'>
-                        <p>
-                          <i class='bi bi-grid'></i>
-                          Subscriptions:
-                          {{subscriptionCount}}
-                        </p>
-                        <p>
-                          <i class='bi bi-speedometer2'></i>
-                          Throttling Policy:
-                          {{throttlingPolicy}}
-                        </p>
-                      </div>
-                      <div class='application-card-actions'>
-                        <button
-                          type='button'
-                          class='btn btn-icon edit-button'
-                          title='Edit'
-                          onclick="window.location.href='{{../baseUrl}}/applications/{{applicationId}}/edit'"
-                        >
-                          <i class='bi bi-pencil-fill'></i>
-                        </button>
-                        <button
-                          type='button'
-                          class='btn btn-icon delete-button'
-                          title='Delete'
-                          onclick="openDeleteModal('{{applicationId}}')"
-                        >
-                          <i class='bi bi-trash-fill'></i>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                {{/applicationsMetadata}}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+    {{/applicationsMetadata}}
+  </div>
+</section>
 </main>
