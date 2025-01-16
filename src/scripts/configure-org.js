@@ -49,7 +49,6 @@ document.addEventListener('DOMContentLoaded', function () {
         editIDPButton.addEventListener('click', function () {
             const details = this.closest('.organization').querySelector('.organization-details');
             if (details.style.display === 'block') {
-                console.log('block');
                 details.style.display = 'none';
                 this.textContent = 'Edit';
             } else {

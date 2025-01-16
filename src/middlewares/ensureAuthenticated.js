@@ -45,8 +45,6 @@ const ensurePermission = (currentPage, role, req) => {
 
 const ensureAuthenticated = async (req, res, next) => {
 
-    console.log('Original URL: ' + req.originalUrl);
-    console.log('Authenticated pages', config.authenticatedPages)
     let adminRole = config.adminRole;
     let superAdminRole = config.superAdminRole;
     let subscriberRole = config.subscriberRole;

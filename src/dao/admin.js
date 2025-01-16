@@ -365,7 +365,6 @@ const createProvider = async (orgID, provider) => {
     let providerDataList = [];
     for (const [key, value] of Object.entries(provider)) {
         if (key !== 'name') {
-            console.log(key, value)
             const providerData = {
                 ORG_ID: orgID,
                 NAME: provider.name,
@@ -377,7 +376,6 @@ const createProvider = async (orgID, provider) => {
     }
     try {
         const provider = await Provider.bulkCreate(providerDataList);
-        console.log(provider)
         return provider;
     } catch (error) {
         console.log(error)
