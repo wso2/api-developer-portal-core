@@ -12,6 +12,7 @@
     "password": "postgres",
     "database": "devportal",
     "host": "localhost",
+    "port": 5432,
     "dialect": "postgres"
   },
   "providerURL": {
@@ -45,7 +46,7 @@
     "certificate": "",
     "jwksURL": "https://localhost:9443/oauth2/jwks"
   },
-  "disableTLS": false,
+  "disableTLS": true,
   "roleClaim": "roles",
   "orgIDClaim": "organizationID",
   "groupsClaim": "groups",

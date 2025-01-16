@@ -1,9 +1,10 @@
 #!/bin/bash
-DB_HOST="localhost"
-DB_PORT="5432"
-DB_NAME="test"
-DB_USER="postgres"
- 
+CONFIG_FILE="./config.json"
+DB_HOST=$(grep -A 6 '"db"' "$CONFIG_FILE" | grep '"host"' | sed 's/.*"host": "\(.*\)".*/\1/')
+DB_PORT=$(grep -A 6 '"db"' "$CONFIG_FILE" | grep '"port"' | sed 's/.*"port": \(.*\),.*/\1/')
+DB_NAME=$(grep -A 6 '"db"' "$CONFIG_FILE" | grep '"database"' | sed 's/.*"database": "\(.*\)".*/\1/')
+DB_USER=$(grep -A 6 '"db"' "$CONFIG_FILE" | grep '"username"' | sed 's/.*"username": "\(.*\)".*/\1/')
+
 DELETE_API="DELETE FROM \"DP_API_METADATA\";"
 psql -U "$DB_USER" -d "$DB_NAME" -h "$DB_HOST" -p "$DB_PORT" -c "$DELETE_API"
 if [ $? -eq 0 ]; then
