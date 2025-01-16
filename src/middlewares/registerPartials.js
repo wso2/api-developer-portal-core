@@ -122,7 +122,8 @@ const registerPartialsFromAPI = async (req) => {
         baseUrl: "/" + orgName,
         profile: req.user,
         isAdmin: isAdmin,
-        isSuperAdmin: isSuperAdmin
+        isSuperAdmin: isSuperAdmin,
+        hasWSO2APIs: await checkWSO2APIAvailability()
       }),
       [constants.HERO_PARTIAL_NAME]: hbs.handlebars.compile(partialObject[constants.HERO_PARTIAL_NAME])(
         { baseUrl: "/" + orgName }
@@ -162,6 +163,14 @@ const registerPartialsFromAPI = async (req) => {
     });
   }
 };
+
+async function checkWSO2APIAvailability() {
+
+  const condition = {
+    PROVIDER: "WSO2"
+  }
+  return await apiDao.getAPIMetadataByCondition(condition).then(apis => apis.length > 0);
+}
 
 function registerPartialsFromFile(baseURL, dir, profile) {
 
