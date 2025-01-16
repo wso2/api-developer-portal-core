@@ -230,10 +230,24 @@ const validateBasicAuth = async (basicHeader) => {
 }
 
 const enforceMTLS = (req, res, next) => {
-    const clientCert = req.connection.getPeerCertificate();
-    if (!clientCert || !clientCert.subject) {
+    const clientCert = req.connection.getPeerCertificate(true);
+
+    if (!clientCert || Object.keys(clientCert).length === 0) {
         return res.status(403).send('Client certificate required');
     }
+
+    if (!req.client.authorized) {
+        return res.status(403).send('Client certificate verification failed');
+    }
+
+    const now = new Date();
+    const validFrom = new Date(clientCert.valid_from);
+    const validTo = new Date(clientCert.valid_to);
+    if (validFrom > now || validTo < now) {
+        return res.status(403).send('Client certificate is expired or not yet valid');
+    }
+
+    console.log('Client certificate successfully verified:', clientCert.subject);
     return next();
 };
 

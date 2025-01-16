@@ -28,6 +28,8 @@ const { ensureAuthenticated, validateAuthentication, enforceMTLS } = require('..
 const constants = require('../utils/constants');
 
 router.get('/b2b/organizations/:orgId', enforceMTLS, devportalService.getOrganization);
+router.post('/b2b/organizations/:orgId/apis', enforceMTLS, apiDefinition.single('apiDefinition'), apiMetadataService.createAPIMetadata);
+router.post('/b2b/organizations', enforceMTLS, adminService.createOrganization);
 
 router.post('/organizations', validateAuthentication(constants.SCOPES.ADMIN), adminService.createOrganization);
 router.get('/organizations', validateAuthentication(constants.SCOPES.ADMIN), adminService.getOrganizations);
