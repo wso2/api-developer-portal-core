@@ -39,7 +39,6 @@ async function editProvider(orgID, formID) {
     formData.forEach((value, key) => {
         data[key] = sanitizeInput(value);
     });
-    console.log(`/devportal/organizations/${orgID}/provider`);
     const response = await fetch(`/devportal/organizations/${orgID}/provider`, {
         method: 'PUT',
         headers: {
