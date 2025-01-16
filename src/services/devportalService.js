@@ -31,7 +31,15 @@ const getOrganization = async (req, res) => {
             orgName: organization.ORG_NAME,
             businessOwner: organization.BUSINESS_OWNER,
             businessOwnerContact: organization.BUSINESS_OWNER_CONTACT,
-            businessOwnerEmail: organization.BUSINESS_OWNER_EMAIL
+            businessOwnerEmail: organization.BUSINESS_OWNER_EMAIL,
+            devPortalURLIdentifier: organization.DEV_PORTAL_URL_IDENTIFIER,
+            roleClaimName: organization.ROLE_CLAIM_NAME,
+            groupsClaimName: organization.GROUPS_CLAIM_NAME,
+            organizationClaimName: organization.ORGANIZATION_CLAIM_NAME,
+            organizationIdentifier: organization.ORGANIZATION_IDENTIFIER,
+            adminRole: organization.ADMIN_ROLE,
+            subscriberRole: organization.SUBSCRIBER_ROLE,
+            groupClaimName: organization.GROUP_CLAIM_NAME
         });
     } catch (error) {
         util.handleError(res, error);

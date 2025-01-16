@@ -216,8 +216,7 @@ const fileMapping = {
 
 const textFiles = [
     constants.FILE_EXTENSIONS.HTML, constants.FILE_EXTENSIONS.HBS, constants.FILE_EXTENSIONS.MD,
-    constants.FILE_EXTENSIONS.JSON, constants.FILE_EXTENSIONS.YAML, constants.FILE_EXTENSIONS.YML,
-    constants.FILE_EXTENSIONS.SVG
+    constants.FILE_EXTENSIONS.JSON, constants.FILE_EXTENSIONS.YAML, constants.FILE_EXTENSIONS.YML
 ]
 
 const isTextFile = (fileExtension) => {
@@ -408,6 +407,61 @@ const rejectExtraProperties = (allowedKeys, payload) => {
     return extraKeys;
 };
 
+async function readFilesInDirectory(directory, orgId, protocol, host, baseDir = '') {
+
+    const files = await fs.promises.readdir(directory, { withFileTypes: true });
+    let fileDetails = [];
+    console.log("Directory", directory);
+    for (const file of files) {
+        const filePath = path.join(directory, file.name);
+        console.log("FilePath ", filePath);
+        const relativePath = path.join(baseDir, file.name);
+        if (file.isDirectory()) {
+            const subDirContents = await readFilesInDirectory(filePath, orgId, protocol, host, relativePath);
+            fileDetails = fileDetails.concat(subDirContents);
+        } else {
+            let content = await fs.promises.readFile(filePath);
+            let strContent = await fs.promises.readFile(filePath, constants.CHARSET_UTF8);
+            console.log("Basedir", baseDir);
+            let dir = baseDir.replace(/^[^/]+\/?/, '') || '/';
+            console.log("Directory", dir);
+            let fileType;
+            if (file.name.endsWith(".css")) {
+                fileType = "style"
+                if (file.name === "main.css") {
+                    strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g,
+                        `@import url("${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/layout?fileType=style&fileName=$1");`);
+                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
+                }
+            } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
+                fileType = "layout"
+                console.log("File Name", file.name);
+                if (file.name === "main.hbs") {
+                    console.log("Main HBS file");
+                    console.log("File type", fileType);
+                    strContent = strContent.replace(/\/styles\//g, `${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/layout?fileType=style&fileName=`);
+                    content = Buffer.from(strContent, constants.CHARSET_UTF8);
+                }
+            } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
+                fileType = "partial"
+            } else if (file.name.endsWith(".md") && dir.endsWith("content")) {
+                fileType = "markDown";
+            } else if (file.name.endsWith(".hbs")) {
+                fileType = "template";
+            } else {
+                fileType = "image";
+            }
+
+            fileDetails.push({
+                filePath: dir,
+                fileName: file.name,
+                fileContent: content,
+                fileType: fileType
+            });
+        }
+    }
+    return fileDetails;
+}
 
 module.exports = {
     loadMarkdown,
@@ -427,5 +481,6 @@ module.exports = {
     validateOrganization,
     getErrors,
     validateProvider,
-    rejectExtraProperties
+    rejectExtraProperties,
+    readFilesInDirectory
 }

@@ -1,0 +1,22 @@
+<section id="subscriptionPlans" class="api-plans-section">
+    <div class="col-11 row align-items-center api-plans-content">
+        <div class="common-header">
+            <h2>Available Subscription Plans</h2>
+        </div>
+        <div class="row card-section">
+            {{#each subscriptionPlans}}
+            <div class="col-lg-3">
+                <div class="card dev-card custom-plans-card">
+                    <div class="card-body">
+                        <h5 >{{name}}</h5>
+                        <p> Tier plan: {{tierPlan}} </p>
+                        <p class="custom-plans-description"> {{description}}</p>
+                        <a type="button" class="common-btn-outlined"
+                            href="{{../baseUrl}}/myAPIs?tierPlan={{name}}&apiId={{apiId}}">Subscribe</a>
+                    </div>
+                </div>
+            </div>
+            {{/each}}
+        </div>
+    </div>
+</section>

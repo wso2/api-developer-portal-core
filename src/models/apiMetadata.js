@@ -30,7 +30,7 @@ const APIMetadata = sequelize.define('DP_API_METADATA', {
   },
   REFERENCE_ID : {
     type: DataTypes.UUID,
-    allowNull: false,
+    allowNull: true,
     unique: true
   },
   API_NAME: {
@@ -62,23 +62,23 @@ const APIMetadata = sequelize.define('DP_API_METADATA', {
   },
   TECHNICAL_OWNER: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true
   },
   TECHNICAL_OWNER_EMAIL: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true
   },
   BUSINESS_OWNER: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true
   },
   BUSINESS_OWNER_EMAIL: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true
   },
   SANDBOX_URL: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true
   },
   PRODUCTION_URL: {
     type: DataTypes.STRING,
@@ -90,7 +90,7 @@ const APIMetadata = sequelize.define('DP_API_METADATA', {
   },
   METADATA_SEARCH: {
     type: DataTypes.JSON,
-    allowNull: false
+    allowNull: true
   }
 }, {
   timestamps: false,
