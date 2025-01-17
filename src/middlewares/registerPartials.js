@@ -110,7 +110,6 @@ const registerPartialsFromAPI = async (req) => {
   });
   let isAdmin, isSuperAdmin = false;
   if (req.user) {
-    console.log("req.user", req.user);
     isAdmin = req.user["isAdmin"];
     isSuperAdmin = req.user["isSuperAdmin"];
   }
@@ -184,6 +183,7 @@ function registerPartialsFromFile(baseURL, dir, profile) {
           header: hbs.handlebars.compile(template)({
             baseUrl: baseURL,
             profile: profile,
+            hasWSO2APIs: true
           }),
         };
       }

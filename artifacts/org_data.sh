@@ -1,8 +1,15 @@
 #!/bin/bash
-DB_HOST="localhost"
-DB_PORT="5432"
-DB_NAME="test"
-DB_USER="postgres"
+# Read database configuration from config.json
+CONFIG_FILE="./config.json"
+DB_HOST=$(grep -A 6 '"db"' "$CONFIG_FILE" | grep '"host"' | sed 's/.*"host": "\(.*\)".*/\1/')
+DB_PORT=$(grep -A 6 '"db"' "$CONFIG_FILE" | grep '"port"' | sed 's/.*"port": \(.*\),.*/\1/')
+DB_NAME=$(grep -A 6 '"db"' "$CONFIG_FILE" | grep '"database"' | sed 's/.*"database": "\(.*\)".*/\1/')
+DB_USER=$(grep -A 6 '"db"' "$CONFIG_FILE" | grep '"username"' | sed 's/.*"username": "\(.*\)".*/\1/')
+
+SQL_FILE="./artifacts/script.sql"
+
+# Create Tables
+psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$SQL_FILE"
 
 # Directory containing the files
 DIRECTORY="./artifacts/default/orgcontent/ACME"
@@ -55,7 +62,7 @@ INSERT INTO \"DP_ORGANIZATION\" (
 "
 
 # Execute the SQL statement using psql
-psql -h "localhost" -p "5432" -U "postgres" -d "test" -c "$SQL"
+psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "$SQL"
 
 # Loop through files in the directory
 process_directory() {
@@ -94,7 +101,7 @@ process_directory() {
             # Use \lo_import to import the file as a large object and store its OID
             #PATH=$(cd "$(dirname "$file")" && pwd)/$(basename "$file")
 
-            OID=$(psql -U postgres -d test -h "localhost" -p "5432" -Atc "\lo_import '$file'" | awk '{print $NF}')
+            OID=$(psql -U "$DB_USER" -d "$DB_NAME" -h "$DB_HOST" -p "$DB_PORT" -Atc "\lo_import '$file'" | awk '{print $NF}')
 
             echo "OID: $OID"
 
