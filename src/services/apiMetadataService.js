@@ -152,9 +152,7 @@ const updateAPIMetadata = async (req, res) => {
             if (!updatedRows) {
                 throw new Sequelize.EmptyResultError("No record found to update");
             }
-            console.log("Updated API", updatedRows);
             if (apiMetadata.subscriptionPolicies) {
-                console.log("Subscription Policies", apiMetadata.subscriptionPolicies);
                 const subscriptionPolicies = apiMetadata.subscriptionPolicies;
                 if (!Array.isArray(subscriptionPolicies)) {
                     throw new Sequelize.ValidationError(
