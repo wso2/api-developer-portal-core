@@ -13,11 +13,12 @@
 
 <head>
     <link rel="stylesheet" href="/technical-styles/settings.css">
+     <script src='/technical-scripts/create-org.js' defer></script>
 </head>
 <section>
     <div class="container mt-5">
         {{#if organizations}}
-            {{> list-org }}
+            {{> org-list }}
             <div class="text-end mt-3">
                 <button class="btn btn-primary" onclick="showCreateOrg()">Create New Organization</button>
             </div>

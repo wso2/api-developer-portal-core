@@ -70,9 +70,12 @@ const ensureAuthenticated = async (req, res, next) => {
                     req.user[constants.ROLES.ADMIN] = adminRole;
                     req.user[constants.ROLES.SUPER_ADMIN] = superAdminRole;
                     req.user[constants.ROLES.SUBSCRIBER] = subscriberRole;
+                    console.log("Setting roles");
                     if (orgDetails) {
                         req.user[constants.ORG_ID] = orgDetails.ORG_ID;
+                        console.log("Setting org ID");
                         req.user[constants.ORG_IDENTIFIER] = orgDetails.ORGANIZATION_IDENTIFIER
+                        console.log( req.user[constants.ORG_ID])
                     }
                 }
                 //verify user belongs to organization

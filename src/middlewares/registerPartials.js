@@ -35,7 +35,10 @@ const registerPartials = async (req, res, next) => {
     registerAllPartialsFromFile(constants.BASE_URL + config.port, req);
   } else {
     try {
-      await registerPartialsFromAPI(req);
+      console.log(req.params.orgName)
+      if (req.params.orgName && req.params.orgName !== "portal") {
+        await registerPartialsFromAPI(req);
+      }
     } catch (error) {
       console.error('Error while loading organization :', error);
     }
@@ -150,15 +153,15 @@ const registerPartialsFromAPI = async (req) => {
     //replace image urls
     let images = metaData.apiInfo.apiImageMetadata;
     for (const key in images) {
-        let apiImageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}`
-        const modifiedApiImageURL = apiImageUrl + images[key]
-        images[key] = modifiedApiImageURL;
+      let apiImageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}`
+      const modifiedApiImageURL = apiImageUrl + images[key]
+      images[key] = modifiedApiImageURL;
     }
     hbs.handlebars.partials[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME] = hbs.handlebars.compile(
-      partialObject[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME])({ 
+      partialObject[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME])({
         apiContent: markdownHtml,
         apiMetadata: metaData
-    });
+      });
   }
 };
 

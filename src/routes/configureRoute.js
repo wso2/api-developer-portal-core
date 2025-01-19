@@ -9,4 +9,6 @@ router.get('/(((?!favicon.ico|images)):orgName/configure)', ensureAuthenticated,
 
 router.get('/(((?!favicon.ico|images))portal)', registerPartials, ensureAuthenticated, settingsController.createorganization);
 
+router.get('/(((?!favicon.ico|images))portal/:orgId/edit)', registerPartials, ensureAuthenticated, settingsController.editOrganization);
+
 module.exports = router;

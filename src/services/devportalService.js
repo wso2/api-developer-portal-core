@@ -25,26 +25,33 @@ const { retrieveContentType } = require('../utils/util');
 const getOrganization = async (req, res) => {
 
     try {
-        const organization = await adminDao.getOrganization(req.params.orgId);
-        res.status(200).json({
-            orgId: organization.ORG_ID,
-            orgName: organization.ORG_NAME,
-            businessOwner: organization.BUSINESS_OWNER,
-            businessOwnerContact: organization.BUSINESS_OWNER_CONTACT,
-            businessOwnerEmail: organization.BUSINESS_OWNER_EMAIL,
-            devPortalURLIdentifier: organization.DEV_PORTAL_URL_IDENTIFIER,
-            roleClaimName: organization.ROLE_CLAIM_NAME,
-            groupsClaimName: organization.GROUPS_CLAIM_NAME,
-            organizationClaimName: organization.ORGANIZATION_CLAIM_NAME,
-            organizationIdentifier: organization.ORGANIZATION_IDENTIFIER,
-            adminRole: organization.ADMIN_ROLE,
-            subscriberRole: organization.SUBSCRIBER_ROLE,
-            groupClaimName: organization.GROUP_CLAIM_NAME
-        });
+        const organization = await getOrganizationDetails(req.params.orgId);
+        res.status(200).json(organization);
     } catch (error) {
         util.handleError(res, error);
     }
 };
+
+const getOrganizationDetails = async (orgId) => {
+
+    console.log("Org ID", orgId)
+    const organization = await adminDao.getOrganization(orgId);
+    return {
+        orgId: organization.ORG_ID,
+        orgName: organization.ORG_NAME,
+        businessOwner: organization.BUSINESS_OWNER,
+        businessOwnerContact: organization.BUSINESS_OWNER_CONTACT,
+        businessOwnerEmail: organization.BUSINESS_OWNER_EMAIL,
+        devPortalURLIdentifier: organization.DEV_PORTAL_URL_IDENTIFIER,
+        roleClaimName: organization.ROLE_CLAIM_NAME,
+        groupsClaimName: organization.GROUPS_CLAIM_NAME,
+        organizationClaimName: organization.ORGANIZATION_CLAIM_NAME,
+        organizationIdentifier: organization.ORGANIZATION_IDENTIFIER,
+        adminRole: organization.ADMIN_ROLE,
+        subscriberRole: organization.SUBSCRIBER_ROLE,
+        groupClaimName: organization.GROUP_CLAIM_NAME
+    };
+}
 
 const getOrgContent = async (req, res) => {
 
@@ -66,7 +73,7 @@ const getOrgContent = async (req, res) => {
                 results.push(resp);
             }
             return res.status(200).send(results);
-        } else {        
+        } else {
             res.status(400).send('Invalid request');
         }
     } catch (error) {
@@ -76,5 +83,6 @@ const getOrgContent = async (req, res) => {
 
 module.exports = {
     getOrgContent,
-    getOrganization
+    getOrganization,
+    getOrganizationDetails
 };
