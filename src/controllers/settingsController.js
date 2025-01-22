@@ -25,7 +25,6 @@ const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
 const adminService = require('../services/adminService');
 const devPortalService = require('../services/devportalService');
-const controlPlaneUrl = config.devPortalURL;
 
 const filePrefix = config.pathToContent;
 
