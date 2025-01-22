@@ -25,6 +25,7 @@ const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
 const adminService = require('../services/adminService');
 const devPortalService = require('../services/devportalService');
+const controlPlaneUrl = config.devPortalURL;
 
 const filePrefix = config.pathToContent;
 
@@ -116,7 +117,7 @@ async function getMockIdentityProvider() {
     return mockIDPaData;
 }
 
-const createOrganization = async (req, res) => {
+const loadPortalPage = async (req, res) => {
 
     let templateContent = {};
     try {
@@ -125,7 +126,6 @@ const createOrganization = async (req, res) => {
             templateContent.organizations = organizations;
         } else {
             templateContent = {
-                'orgID': req.user[constants.ORG_ID],
                 'profile': req.user
             }
             //fetch all created organizations
@@ -143,26 +143,28 @@ const createOrganization = async (req, res) => {
         res.send(html);
 
     } catch (error) {
-        console.error(`Error while loading setting page: ${error}`);
+        console.error(`Error while loading setting page:`, error);
     }
 }
 
-const editOrganization = async (req, res) => {
+const loadEditOrganizationPage = async (req, res) => {
 
     let templateContent = {};
-    console.log(req.user)
+    let orgID = "";
     try {
         if (config.mode === constants.DEV_MODE) {
             const organizations = await getMockOrganizations();
             templateContent.organizations = organizations;
         } else {
-            templateContent = {
-                'orgID': req.user[constants.ORG_ID],
-                'profile': req.user
+            if (req.params.orgId !== 'create') {
+                orgID = req.params.orgId;
+                const organization = await devPortalService.getOrganizationDetails(orgID);
+                templateContent = {
+                    'orgID': orgID,
+                    'profile': req.user,
+                    'organization': organization
+                }
             }
-            //fetch all created organizations
-            const organization = await devPortalService.getOrganizationDetails(req.user[constants.ORG_ID]);
-            templateContent.organization = organization;
         }
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'edit-organization', 'page.hbs');
         const layoutPath = path.join(require.main.filename, '..', 'pages', 'layout', 'main.hbs');
@@ -171,8 +173,22 @@ const editOrganization = async (req, res) => {
         const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         res.send(html);
     } catch (error) {
-        console.log(error);
-        console.error(`Error while loading setting page: ${error}`);
+        console.error(`Error while loading setting page :`, error);
+    }
+}
+
+const loadCreateOrganizationPage = async (req, res) => {
+
+    let templateContent = {};
+    try {
+        const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'add-organization', 'page.hbs');
+        const layoutPath = path.join(require.main.filename, '..', 'pages', 'layout', 'main.hbs');
+        const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
+        const layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
+        const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        res.send(html);
+    } catch (error) {
+        console.error(`Error while loading setting page :`, error);
     }
 }
 
@@ -186,6 +202,7 @@ async function getMockOrganizations() {
 
 module.exports = {
     loadSettingPage,
-    createorganization: createOrganization,
-    editOrganization
+    loadPortalPage,
+    loadEditOrganizationPage,
+    loadCreateOrganizationPage
 };

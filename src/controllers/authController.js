@@ -34,7 +34,7 @@ const fetchAuthJsonContent = async (req, orgName) => {
 
     //use super admin for org creation page login
     if (req.session.returnTo) {
-        if (minimatch.minimatch(req.session.returnTo, constants.ROUTE.DEVPORTAL_ROOT)) {
+        if (constants.ROUTE.DEVPORTAL_ROOT.some(pattern => minimatch.minimatch(req.session.returnTo, pattern))) {
             return config.identityProvider;
         }
     }

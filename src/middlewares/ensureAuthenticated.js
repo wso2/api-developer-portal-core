@@ -34,7 +34,7 @@ const ensurePermission = (currentPage, role, req) => {
         subscriberRole = req.user[constants.ROLES.SUBSCRIBER];
         if (minimatch.minimatch(currentPage, constants.ROUTE.DEVPORTAL_CONFIGURE)) {
             return role.includes(superAdminRole) || role.includes(adminRole);
-        } else if (minimatch.minimatch(currentPage, constants.ROUTE.DEVPORTAL_ROOT)) {
+        } else if (constants.ROUTE.DEVPORTAL_ROOT.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
             return role.includes(superAdminRole);
         } else if (config.authorizedPages.some(pattern => minimatch.minimatch(currentPage, pattern))) {
             return role.includes(subscriberRole) || role.includes(adminRole) || role.includes(superAdminRole);
@@ -51,10 +51,15 @@ const ensureAuthenticated = async (req, res, next) => {
     if ((req.originalUrl != '/favicon.ico' | req.originalUrl != '/images') &&
         config.authenticatedPages.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
         //fetch role details from DB
-        const orgName = req.params.orgName;
+        let orgID;
+        if (req.params.orgName) {
+            orgID = req.params.orgName;
+        } else {
+            orgID = req.params.orgId;
+        }
         let orgDetails;
-        if (!(orgName === undefined)) {
-            orgDetails = await adminDao.getOrganization(orgName);
+        if (!(orgID === undefined)) {
+            orgDetails = await adminDao.getOrganization(orgID);
             adminRole = orgDetails.ADMIN_ROLE;
             superAdminRole = orgDetails.SUPER_ADMIN_ROLE;
             subscriberRole = orgDetails.SUBSCRIBER_ROLE;
@@ -70,17 +75,19 @@ const ensureAuthenticated = async (req, res, next) => {
                     req.user[constants.ROLES.ADMIN] = adminRole;
                     req.user[constants.ROLES.SUPER_ADMIN] = superAdminRole;
                     req.user[constants.ROLES.SUBSCRIBER] = subscriberRole;
-                    console.log("Setting roles");
                     if (orgDetails) {
                         req.user[constants.ORG_ID] = orgDetails.ORG_ID;
-                        console.log("Setting org ID");
                         req.user[constants.ORG_IDENTIFIER] = orgDetails.ORGANIZATION_IDENTIFIER
-                        console.log( req.user[constants.ORG_ID])
+                        console.log(req.user[constants.ORG_ID])
                     }
                 }
                 //verify user belongs to organization
-                if (!minimatch.minimatch(req.originalUrl, constants.ROUTE.DEVPORTAL_ROOT)) {
+                const isMatch = constants.ROUTE.DEVPORTAL_ROOT.some(pattern => minimatch.minimatch(req.originalUrl, pattern));
+
+                if (!isMatch) {
                     if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
+                        console.log(req.user[constants.ROLES.ORGANIZATION_CLAIM])
+                        console.log(req.user[constants.ORG_IDENTIFIER])
                         console.log('User is not authorized to access organization');
                         return res.send("User not authorized to access organization");
                     }
@@ -106,8 +113,8 @@ const ensureAuthenticated = async (req, res, next) => {
             if (req.params.orgName) {
                 res.redirect(`/${req.params.orgName}/login`);
             } else {
-                res.redirect(`/portal/login`);
-
+                console.log('Redirecting to login')
+                res.redirect(303, `/portal/login`);
             }
         }
     } else {

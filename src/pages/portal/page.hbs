@@ -1,42 +1,30 @@
-{{!-- <head>
+{{!--
+
+<head>
     <link rel="stylesheet" href="/technical-styles/settings.css">
 </head>
 <main>
     <div class="container mt-5">
-         {{> create-org }}
-         {{#if organizations}}
-         {{> list-org }}
-         {{> alert }}
-         {{/if}}
+        {{> create-org }}
+        {{#if organizations}}
+        {{> list-org }}
+        {{> alert }}
+        {{/if}}
     </div>
 </main> --}}
 
 <head>
     <link rel="stylesheet" href="/technical-styles/settings.css">
-     <script src='/technical-scripts/create-org.js' defer></script>
+    <script src='/technical-scripts/create-org.js' defer></script>
 </head>
 <section>
     <div class="container mt-5">
+        {{> org-hero-banner}}
         {{#if organizations}}
-            {{> org-list }}
-            <div class="text-end mt-3">
-                <button class="btn btn-primary" onclick="showCreateOrg()">Create New Organization</button>
-            </div>
-            <div id="createOrgContainer" class="mt-4" style="display: none;">
-                {{> create-org }}
-            </div>
+        {{> org-list }}
         {{else}}
-            {{> create-org }}
+        {{> create-org }}
         {{/if}}
+        {{> alert }}
     </div>
 </section>
-
-<script>
-    function showCreateOrg() {
-        const createOrgContainer = document.getElementById('createOrgContainer');
-        if (createOrgContainer) {
-            createOrgContainer.style.display = 'block'; 
-            window.scrollTo({ top: createOrgContainer.offsetTop, behavior: 'smooth' });
-        }
-    }
-</script>

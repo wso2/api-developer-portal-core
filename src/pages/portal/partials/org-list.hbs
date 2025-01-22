@@ -1,52 +1,42 @@
 <head>
-  <link rel='stylesheet' href='/technical-styles/applications.css' />
-  <script src='/technical-scripts/application-listing.js' defer></script>
+    <link rel='stylesheet' href='/technical-styles/applications.css' />
 </head>
 
 <main>
-<section>
-  <div class="container-fluid col-lg-11 applicationspage-container" id="applicationsContainer">
-    <!-- Create Project Button -->
-    <div class="card create-project-card">
-      <a type="button" class="btn create-project-button" href="{{baseUrl}}/applications/create">
-        <div class="create-project-content">
-          <span class="plus-icon">+</span>
-          <span class="create-text">New Organization</span>
+    <section>
+        <div class="container-fluid col-lg-11 applicationspage-container">
+            <!-- Create Organization Button -->
+            <div class="card create-project-card">
+                <a type="button" class="btn create-project-button" href="{{baseUrl}}/portal/create">
+                    <div class="create-project-content">
+                        <span class="plus-icon">+</span>
+                        <span class="create-text">New Organization</span>
+                    </div>
+                </a>
+            </div>
+            <!-- Organization Cards -->
+            {{#organizations}}
+            {{> delete-confirmation modalTitle="Do you really want to delete this organization?" modalMessage="This will remove the organization stored in devportal" modalFunction='deleteOrg()' }}
+            <div class="card application-card" id="app-card-{{applicationId}}" data-name="{{name}}">
+                <div class="application-card-body">
+                    <h5 class="application-card-title">
+                        <p>
+                            {{orgName}}
+                        </p>
+                    </h5>
+                    <div class="application-card-actions">
+                        <button type="button" class="btn application-btn-icon edit-button" title="Edit"
+                            onclick="window.location.href='{{../baseUrl}}/portal/{{orgID}}/edit'">
+                            <i class='bi bi-pencil-fill'></i>
+                        </button>
+                        <button type="button" class="btn application-btn-icon delete-button" title="Delete"
+                            onclick="openOrgDeleteModal('{{orgID}}');">
+                            <i class="bi bi-trash-fill"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {{/organizations}}
         </div>
-      </a>
-    </div>
-
-    <!-- Application Cards -->
-    {{#organizations}}
-    <div class="card application-card" id="app-card-{{applicationId}}" data-name="{{name}}">
-      <div class="application-card-body">
-        <h5 class="application-card-title">
-          <a href="{{../baseUrl}}/applications/{{applicationId}}" class="application-name-link">
-            {{orgName}} {{orgID}}
-          </a>
-        </h5>
-
-        <div class="application-card-actions">
-          <button
-            type="button"
-            class="btn application-btn-icon edit-button"
-            title="Edit"
-            onclick="window.location.href='{{../baseUrl}}/portal/{{orgID}}/edit'"
-          >
-            <i class='bi bi-pencil-fill'></i>
-          </button>
-          <button
-            type="button"
-            class="btn application-btn-icon delete-button"
-            title="Delete"
-            onclick="openDeleteModal('{{applicationId}}', '')"
-          >
-            <i class="bi bi-trash-fill"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-    {{/organizations}}
-  </div>
-</section>
+    </section>
 </main>

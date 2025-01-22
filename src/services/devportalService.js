@@ -34,7 +34,6 @@ const getOrganization = async (req, res) => {
 
 const getOrganizationDetails = async (orgId) => {
 
-    console.log("Org ID", orgId)
     const organization = await adminDao.getOrganization(orgId);
     return {
         orgId: organization.ORG_ID,
@@ -48,6 +47,7 @@ const getOrganizationDetails = async (orgId) => {
         organizationClaimName: organization.ORGANIZATION_CLAIM_NAME,
         organizationIdentifier: organization.ORGANIZATION_IDENTIFIER,
         adminRole: organization.ADMIN_ROLE,
+        superAdminRole: organization.SUPER_ADMIN_ROLE,
         subscriberRole: organization.SUBSCRIBER_ROLE,
         groupClaimName: organization.GROUP_CLAIM_NAME
     };
