@@ -14,12 +14,14 @@
           <li class="nav-item">
             <a class="nav-link" href="{{baseUrl}}/apis">APIs</a>
           </li>
+          {{#if hasWSO2APIs}}
           <li class="nav-item">
             <a class="nav-link" href="{{baseUrl}}/myapis">MyAPIs</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{baseUrl}}/applications">Applications</a>
           </li>
+          {{/if}}
           {{!-- {{#if isAdmin}}
           <li class="nav-item">
             <a class="nav-link" href="{{baseUrl}}/configure">Add Content</a>
@@ -28,8 +30,8 @@
            {{#if isSuperAdmin}}
           <li class="nav-item">
             <a class="nav-link" href="/portal">Create organizations</a>
-          </li> --}}
-          {{/if}}
+          </li>
+          {{/if}} --}}
         </ul>
       </div>
       <div class="d-flex align-items-center">
@@ -38,7 +40,7 @@
           <a class="nav-link dropdown-toggle profile-link d-flex align-items-center" href="#" id="navbarDropdown"
             role="button" data-bs-toggle="dropdown" aria-expanded="false">
             <img src="/images/profile.svg" alt="Profile" class="profile-icon me-2" />
-            <span>Hi, {{profile.name}}</span>
+            <span>Hi</span>
           </a>
           <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
             <li class="dropdown-item">

@@ -1,9 +1,10 @@
 #!/bin/bash
-DB_HOST="localhost"
-DB_PORT="5432"
-DB_NAME="test"
-DB_USER="postgres"
- 
+CONFIG_FILE="./config.json"
+DB_HOST=$(grep -A 6 '"db"' "$CONFIG_FILE" | grep '"host"' | sed 's/.*"host": "\(.*\)".*/\1/')
+DB_PORT=$(grep -A 6 '"db"' "$CONFIG_FILE" | grep '"port"' | sed 's/.*"port": \(.*\),.*/\1/')
+DB_NAME=$(grep -A 6 '"db"' "$CONFIG_FILE" | grep '"database"' | sed 's/.*"database": "\(.*\)".*/\1/')
+DB_USER=$(grep -A 6 '"db"' "$CONFIG_FILE" | grep '"username"' | sed 's/.*"username": "\(.*\)".*/\1/')
+
  insert_api_data() {
 
    # Read JSON fields using jq
@@ -23,7 +24,7 @@ DB_USER="postgres"
     PRODUCTION_URL="$5"
     SANDBOX_URL="$5"
     METADATA_SEARCH={}
-    PROVIDER="WSO2"
+    PROVIDER="DEFAULT"
 
     # Insert data into PostgreSQL table
     psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "

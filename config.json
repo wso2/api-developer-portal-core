@@ -12,6 +12,7 @@
     "password": "postgres",
     "database": "devportal",
     "host": "localhost",
+    "port": 5432,
     "dialect": "postgres"
   },
   "providerURL": {
@@ -36,7 +37,7 @@
     "authorizationURL": "https://localhost:9443/oauth2/authorize",
     "tokenURL": "https://127.0.0.1:9443/oauth2/token",
     "userInfoURL": "https://localhost:9443/oauth2/userinfo",
-    "clientId": "",
+    "clientId": "1YMWnYMOHNX6bv170RZAmH_AHOIa",
     "callbackURL": "http://localhost:3000/ACME/callback",
     "scope": "openid profile",
     "signUpURL": "",
@@ -45,7 +46,7 @@
     "certificate": "",
     "jwksURL": "https://localhost:9443/oauth2/jwks"
   },
-  "disableTLS": false,
+  "disableTLS": true,
   "roleClaim": "roles",
   "orgIDClaim": "organizationID",
   "groupsClaim": "groups",
