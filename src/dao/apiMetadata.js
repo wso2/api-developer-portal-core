@@ -19,6 +19,10 @@ const { APIMetadata } = require('../models/apiMetadata');
 const SubscriptionPolicy = require('../models/subscriptionPolicy');
 const APIContent = require('../models/apiContent');
 const APIImageMetadata = require('../models/apiImages');
+const Labels = require('../models/labels');
+const APILabels = require('../models/apiLabels');
+const View = require('../models/views');
+const ViewLabels = require('../models/viewLabels');
 const { Sequelize } = require('sequelize');
 const { Op } = require('sequelize');
 const constants = require('../utils/constants');
@@ -59,6 +63,190 @@ const createAPIMetadata = async (orgID, apiMetadata, t) => {
         throw new Sequelize.DatabaseError(error);
     }
 };
+
+const createAPILabelMapping = async (orgID, apiID, labels) => {
+
+    const labelList = [];
+    const IDList = getLabelID(orgID, labels);
+    try {
+        IDList.forEach(label => {
+            labelList.push({
+                LABEL_ID: label,
+                API_ID: apiID,
+                ORG_ID: orgID
+            });
+        });
+        const labelResponse = await APILabels.bulkCreate(labelList);
+        return labelResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+
+}
+
+const createLabels = async (orgID, labels) => {
+
+    const labelList = [];
+    try {
+        labels.forEach(label => {
+            labelList.push({
+                NAME: label,
+                ORG_ID: orgID
+            });
+        })
+        const labelResponse = await Labels.bulkCreate(labelList);
+        return labelResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getLabelID = async (orgID, labels, t) => {
+
+    const IDList = [];
+    try {
+        labels.forEach(async label => {
+            const labelResponse = await Labels.findOne({
+                where: {
+                    NAME: label,
+                    ORG_ID: orgID
+                }
+            }, { transaction: t });
+            IDList.push(labelResponse.ID);
+        })
+        return IDList;
+
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const deleteLabel = async (orgID, labelName) => {
+
+    try {
+        const labelResponse = await Labels.destroy({
+            where: {
+                NAME: labelName,
+                ORG_ID: orgID
+            }
+        });
+        return labelResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getLabels = async (orgID) => {
+
+    try {
+        const labelResponse = await Labels.findAll({
+            where: {
+                ORG_ID: orgID
+            }
+        });
+        return labelResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const addView = async (orgID, payload, t) => {
+
+    let displayName = payload.displayName ? payload.displayName : payload.name;
+    try {
+        const viewResponse = await View.create({
+            DISPLAY_NAME: displayName,
+            NAME: payload.name,
+            ORG_ID: orgID
+        }, { transaction: t });
+        return viewResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const updateView = async (orgID, name, displayName, t) => {
+
+    try {
+        const viewResponse = await View.update({
+            DISPLAY_NAME: displayName
+        }, {
+            where: {
+                NAME: name,
+                ORG_ID: orgID
+            },
+            returning: true
+        }, { transaction: t });
+        return viewResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const addViewLabels = async (orgID, viewID, labels, t) => {
+
+    const labelList = [];
+    const IDList = getLabelID(orgID, labels);
+    try {
+        IDList.forEach(label => {
+            labelList.push({
+                LABEL_ID: label,
+                VIEW_ID: viewID,
+                ORG_ID: orgID
+            });
+        });
+        const labelResponse = await ViewLabels.bulkCreate(labelList, { transaction: t });
+        return labelResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const deleteViewLabels = async (orgID, viewName, labels ,t) => {
+
+    const IDList = getLabelID(orgID, labels);
+    try {
+        IDList.forEach(label => {
+            const labelResponse = await ViewLabels.destroy({
+                where: {
+                    LABEL_ID: label,
+                    VIEW_ID: viewName,
+                    ORG_ID: orgID
+                }
+            }, { transaction: t });
+        });
+        return labelResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
 
 const createSubscriptionPolicy = async (subscriptionPolicies, apiID, orgID, t) => {
 
@@ -612,5 +800,12 @@ module.exports = {
     getAPIFile,
     deleteAPIFile,
     getAPIId,
-    getAPIMetadataByCondition
+    getAPIMetadataByCondition,
+    createLabels,
+    getLabelID,
+    deleteLabel,
+    getLabels,
+    addView,
+    addViewLabels,
+    updateView
 };

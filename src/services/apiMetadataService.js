@@ -351,6 +351,125 @@ const deleteAPIFile = async (req, res) => {
         util.handleError(res, error);
     }
 };
+
+const createLabels = async (req, res) => {
+
+    const orgId = req.params.orgId;
+    const labels = JSON.parse(req.body.labels);
+    try {
+        if (!orgId || !labels) {
+            throw new Sequelize.ValidationError(
+                "Missing or Invalid fields in the request payload"
+            );
+        }
+        await apiDao.createLabels(orgId, labels);
+        res.status(201).send(labels);
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.LABEL_CREATE_ERROR}, ${error}`);
+        util.handleError(res, error);
+    }
+}
+
+const deleteLabels = async (req, res) => {
+
+    const orgId = req.params.orgId;
+    const labelName = req.query.name;
+    if (!orgId || !labelName) {
+        throw new Sequelize.ValidationError(
+            "Missing or Invalid fields in the request payload"
+        );
+    }
+    try {
+        await apiDao.deleteLabel(orgId, labelName);
+        res.status(204).send(labels);
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.LABEL_DELETE_ERROR}`, error);
+        util.handleError(res, error);
+    }
+}
+
+const retrieveLabels = async (req, res) => {
+
+    const orgId = req.params.orgId;
+    if (!orgId) {
+        throw new Sequelize.ValidationError(
+            "Missing or Invalid fields in the request payload"
+        );
+    }
+    try {
+        const labels = await getOrgLabels(orgId);
+        res.status(200).send(labels);
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.LABEL_RETRIEVE_ERROR}`, error);
+        util.handleError(res, error);
+    }
+}
+
+const getOrgLabels = async (orgId) => {
+
+    try {
+        return await apiDao.getLabels(orgId);
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.LABEL_UPDATE_ERROR}, ${error}`);
+        util.handleError(res, error);
+    }
+}
+
+const addView = async (req, res) => {
+
+    const orgId = req.params.orgId;
+    const labels = JSON.parse(req.body.labels);
+    const viewName = req.body.name;
+    if (!orgId || !viewName || !labels) {
+        throw new Sequelize.ValidationError(
+            "Missing or Invalid fields in the request payload"
+        );
+    }
+    await sequelize.transaction(async (t) => {
+        try {
+            const viewResponse = await apiDao.addView(orgId, req.body, t);
+            const viewID = viewResponse.dataValues.VIEW_ID;
+            await apiDao.addViewLabels(orgId, viewID, labels, t);
+            res.status(201).send({ message: "View added successfully" });
+        } catch (error) {
+            console.error(`${constants.ERROR_MESSAGE.VIEW_CREATE_ERROR}, ${error}`);
+            util.handleError(res, error);
+        }
+    });
+}
+
+const updateView = async (req, res) => {
+
+    const orgId = req.params.orgId;
+    const removedLabels = req.body.removedLabels ? JSON.parse(req.body.removedLabels): [];
+    const addedLabels = req.body.addedLabels ? JSON.parse(req.body.addedLabels): [];
+    const viewName = req.params.name;
+    if (!orgId || !viewName || addedLabels.length === 0) {
+        throw new Sequelize.ValidationError(
+            "Missing or Invalid fields in the request payload"
+        );
+    }
+    await sequelize.transaction(async (t) => {
+        try {
+            if (req.body.displayName) {
+                let [updatedRows, updateView] = await apiDao.updateView(orgId, viewName, req.body.displayName, t);
+                if (!updatedRows) {
+                    throw new Sequelize.EmptyResultError("No record found to update");
+                }
+            }
+            if (removedLabels.length !== 0) {
+                await apiDao.deleteViewLabels(orgId, viewName, removedLabels, t);
+            }
+            const viewID = viewResponse.dataValues.VIEW_ID;
+            await apiDao.addViewLabels(orgId, viewID, labels, t);
+            res.status(201).send({ message: "View added successfully" });
+        } catch (error) {
+            console.error(`${constants.ERROR_MESSAGE.VIEW_CREATE_ERROR}, ${error}`);
+            util.handleError(res, error);
+        }
+    });
+}
+
 module.exports = {
     createAPIMetadata,
     getAPIMetadata,
@@ -363,4 +482,9 @@ module.exports = {
     deleteAPIFile,
     getMetadataListFromDB,
     getMetadataFromDB,
+    createLabels,
+    deleteLabels,
+    retrieveLabels,
+    addView,
+    updateView
 };

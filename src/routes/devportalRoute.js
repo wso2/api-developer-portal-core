@@ -63,6 +63,16 @@ router.get('/organizations/:orgId/apis/:apiId/template', apiMetadataService.getA
 router.delete('/organizations/:orgId/apis/:apiId/template', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIFile);
 
 
+router.post('/organizations/:orgId/labels', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.createLabels);
+router.get('/organizations/:orgId/labels', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.retrieveLabels);
+router.delete('/organizations/:orgId/labels', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.deleteLabels);
+
+router.post('/organizations/:orgId/views', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.addView);
+router.put('/organizations/:orgId/views/:name', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.updateView);
+router.get('/organizations/:orgId/views/:name', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.getViews);
+router.get('/organizations/:orgId/views', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.getAllViews);
+router.delete('/organizations/:orgId/views/:name', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.deleteView);
+
 router.post('/subscriptions', ensureAuthenticated, devportalController.subscribeAPI);
 router.delete('/subscriptions/:subscriptionId', ensureAuthenticated, devportalController.unsubscribeAPI);
 

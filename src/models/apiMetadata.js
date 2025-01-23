@@ -123,8 +123,6 @@ APIMetadata.hasMany(APIContent, {
   onDelete: 'CASCADE'
 });
 
-
-// Export both models
 module.exports = {
   APIMetadata
 };
