@@ -361,13 +361,11 @@ const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
         `;
         const formattedGroups = `{${groups.map((g) => `"${g}"`).join(',')}}`;
 
-        console.log("formattedGroups", formattedGroups);
-
         const results = await APIMetadata.sequelize.query(query, {
             replacements: { searchTerm, orgID, groups: formattedGroups },
             type: Sequelize.QueryTypes.SELECT,
         });
-        console.log(results);
+
         return results;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
