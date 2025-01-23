@@ -505,6 +505,65 @@ const getAllAPIMetadata = async (orgID, groups, t) => {
     return apiList;
 };
 
+const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
+    try {
+        const query = `
+        SELECT 
+            metadata.*,
+            COALESCE(
+                JSON_AGG("DP_API_IMAGEDATA") FILTER (WHERE "DP_API_IMAGEDATA"."API_ID" IS NOT NULL), 
+                '[]'
+            ) AS "DP_API_IMAGEDATA",
+             COALESCE(
+                JSON_AGG("DP_API_SUBSCRIPTION_POLICY") FILTER (WHERE "DP_API_SUBSCRIPTION_POLICY"."API_ID" IS NOT NULL), 
+                '[]'
+            ) AS "DP_API_SUBSCRIPTION_POLICY"
+        FROM 
+            "DP_API_METADATA" metadata
+        JOIN 
+            "DP_API_CONTENT" content 
+            ON metadata."API_ID" = content."API_ID"
+        LEFT OUTER JOIN 
+            "DP_API_IMAGEDATA" 
+            ON metadata."API_ID" = "DP_API_IMAGEDATA"."API_ID"
+        LEFT OUTER JOIN 
+            "DP_API_SUBSCRIPTION_POLICY" 
+            ON metadata."API_ID" = "DP_API_SUBSCRIPTION_POLICY"."API_ID"
+        WHERE 
+            (
+                to_tsvector('english', metadata."METADATA_SEARCH"::text) @@ plainto_tsquery('english', :searchTerm)
+                OR to_tsvector('english', convert_from(content."API_FILE", 'UTF8')) @@ plainto_tsquery('english', :searchTerm)
+            )
+            AND metadata."ORG_ID" = :orgID
+            AND (
+                content."FILE_NAME" LIKE '%.hbs' 
+                OR content."FILE_NAME" LIKE '%md%' 
+            )
+            AND (
+                (
+                    :groups IS NOT NULL AND string_to_array(metadata."VISIBLE_GROUPS", ' ') && :groups
+                )
+                OR metadata."VISIBILITY" = 'PUBLIC'
+            )
+        GROUP BY 
+            metadata."API_ID";
+        `;
+        const formattedGroups = `{${groups.map((g) => `"${g}"`).join(',')}}`;
+
+        const results = await APIMetadata.sequelize.query(query, {
+            replacements: { searchTerm, orgID, groups: formattedGroups },
+            type: Sequelize.QueryTypes.SELECT,
+        });
+
+        return results;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
 const deleteAPIMetadata = async (orgID, apiID, t) => {
 
     try {
@@ -801,6 +860,7 @@ module.exports = {
     deleteAPIFile,
     getAPIId,
     getAPIMetadataByCondition,
+    searchAPIMetadata,
     createLabels,
     getLabelID,
     deleteLabel,
