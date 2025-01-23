@@ -28,9 +28,11 @@ const constants = require("../utils/constants");
 const createAPIMetadata = async (req, res) => {
 
     const apiMetadata = JSON.parse(req.body.apiMetadata);
-    const apiDefinitionFile = req.file.buffer;
-    const apiFileName = req.file.originalname;
-
+    let apiDefinitionFile, apiFileName = "";
+    if (req.file) {
+        apiDefinitionFile = req.file.buffer;
+        apiFileName = req.file.originalname;
+    }
     const orgId = req.params.orgId;
     try {
         // Validate input
@@ -137,9 +139,11 @@ const getMetadataListFromDB = async (orgID, groups, searchTerm) => {
 const updateAPIMetadata = async (req, res) => {
 
     const apiMetadata = JSON.parse(req.body.apiMetadata);
-    const apiDefinitionFile = req.file.buffer;
-    const apiFileName = req.file.originalname;
-
+    let apiDefinitionFile, apiFileName = "";
+    if (req.file) {
+        apiDefinitionFile = req.file.buffer;
+        apiFileName = req.file.originalname;
+    }
     //TODO: Get orgId from the orgName
     const { orgId, apiId } = req.params;
 

@@ -1,0 +1,74 @@
+<section>
+    <div class="container my-5">
+        <div class="form-card p-5">
+            <form id="editOrg{{organization.orgName}}" class="editOrg">
+                <div class="mb-3">
+                    <label for="orgName" class="form-label">Name</label>
+                    <input type="text" class="form-control orgName" id="orgName" name="orgName" 
+                      placeholder="Enter Organization Name" value={{organization.orgName}}>
+                </div>
+                <div class="mb-3">
+                    <label for="business-owner" class="form-label">Business Owner</label>
+                    <input type="text" class="form-control businessOwner" id="businessOwner" name="businessOwner"
+                        placeholder="Enter Business Owner Name" value={{organization.businessOwner}}>
+                </div>
+                <div class="mb-3">
+                    <label for="business-owner-contact" class="form-label">Business Owner Contact</label>
+                    <input type="text" class="form-control" id="businessOwnerContact" name="businessOwnerContact"
+                        placeholder="Enter Business Owner Contact" pattern="\d{10}"
+                        title="Please enter a valid 10-digit contact number" value={{organization.businessOwnerContact}}>
+                </div>
+                <div class="mb-3">
+                    <label for="business-owner-email" class="form-label">Business Owner Email</label>
+                    <input type="email" class="form-control" id="businessOwnerEmail" name="businessOwnerEmail"
+                        placeholder="Enter Business Owner Email" title="Please enter a valid email address"
+                        value={{organization.businessOwnerEmail}}>
+                </div>
+                <div class="mb-3">
+                    <label for="devPortalURLIdentifier" class="form-label">Dev Portal URL Identifier</label>
+                    <input type="text" class="form-control" id="devPortalURLIdentifier" name="devPortalURLIdentifier"
+                        placeholder="Enter Dev Portal URL Identifier" required value={{organization.devPortalURLIdentifier}}>
+                </div>
+                <div class="mb-3">
+                    <label for="roleClaimName" class="form-label">Role Claim Name</label>
+                    <input type="text" class="form-control" id="roleClaimName" name="roleClaimName"
+                        placeholder="Enter Role Claim Name"  required value={{organization.roleClaimName}}>
+                </div>
+                <div class="mb-3">
+                    <label for="groupsClaimName" class="form-label">Groups Claim Name</label>
+                    <input type="text" class="form-control" id="groupsClaimName" name="groupsClaimName"
+                        placeholder="Enter Groups Claim Name" required value={{organization.groupsClaimName}}>
+                </div>
+                <div class="mb-3">
+                    <label for="organizationClaimName" class="form-label">Organization Claim Name</label>
+                    <input type="text" class="form-control" id="organizationClaimName" name="organizationClaimName"
+                        placeholder="Enter Organization Claim Name" required value={{organization.organizationClaimName}}>
+                </div>
+                <div class="mb-3">
+                    <label for="organizationIdentifier" class="form-label">Organization Identifier</label>
+                    <input type="text" class="form-control" id="organizationIdentifier" name="organizationIdentifier"
+                        placeholder="Enter Organization Identifier" required value={{organization.organizationIdentifier}}>
+                </div>
+                <div class="mb-3">
+                    <label for="adminRole" class="form-label">Admin Role Name</label>
+                    <input type="text" class="form-control" id="adminRole" name="adminRole"
+                        placeholder="Enter Admin Role" required value={{organization.adminRole}} >
+                </div>
+                <div class="mb-3">
+                    <label for="subscriberRole" class="form-label">Subscriber Role</label>
+                    <input type="text" class="form-control" id="subscriberRole" name="subscriberRole"
+                        placeholder="Enter Subscriber Role" required value={{organization.subscriberRole}}>
+                </div>
+                 <div class="mb-3">
+                    <label for="superAdminRole" class="form-label">Super Admin Role</label>
+                    <input type="text" class="form-control" id="superAdminRole" name="superAdminRole"
+                        placeholder="Enter Super Admin Role" required value={{organization.superAdminRole}}>
+                </div>
+                <div class="text-end">
+                    <button type="button" class="btn btn-primary"
+                        onclick="editOrg('{{orgID}}', 'editOrg{{organization.orgName}}')">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
