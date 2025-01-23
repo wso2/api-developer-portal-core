@@ -78,7 +78,6 @@ const ensureAuthenticated = async (req, res, next) => {
                     if (orgDetails) {
                         req.user[constants.ORG_ID] = orgDetails.ORG_ID;
                         req.user[constants.ORG_IDENTIFIER] = orgDetails.ORGANIZATION_IDENTIFIER
-                        console.log(req.user[constants.ORG_ID])
                     }
                 }
                 //verify user belongs to organization
@@ -86,8 +85,6 @@ const ensureAuthenticated = async (req, res, next) => {
 
                 if (!isMatch) {
                     if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
-                        console.log(req.user[constants.ROLES.ORGANIZATION_CLAIM])
-                        console.log(req.user[constants.ORG_IDENTIFIER])
                         console.log('User is not authorized to access organization');
                         return res.send("User not authorized to access organization");
                     }

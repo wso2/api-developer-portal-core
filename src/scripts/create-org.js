@@ -85,7 +85,6 @@ function openOrgDeleteModal(orgID) {
 
     const modal = document.getElementById('deleteConfirmation');
     modal.dataset.orgID = orgID;
-    console.log("Delete Org modal ", modal.dataset.orgID);
     const bootstrapModal = new bootstrap.Modal(modal);
     bootstrapModal.show();
   }

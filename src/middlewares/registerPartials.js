@@ -35,7 +35,6 @@ const registerPartials = async (req, res, next) => {
     registerAllPartialsFromFile(constants.BASE_URL + config.port, req);
   } else {
     try {
-      console.log(req.params.orgName)
       if (req.params.orgName && req.params.orgName !== "portal") {
         await registerPartialsFromAPI(req);
       }
