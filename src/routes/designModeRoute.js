@@ -42,7 +42,7 @@ router.get('/applications/:applicationid/edit', registerPartials, applicationCon
 router.get('/myAPIs', registerPartials, myAPIsController.loadDefaultContent);
 
 router.get('/configure', registerPartials, settingsController.loadSettingPage);
-router.get('/portal', registerPartials, settingsController.createorganization);
+router.get('/portal', registerPartials, settingsController.loadCreateOrganizationPage);
 
 router.get('/login', registerPartials, authController.login);
 router.get('/callback', registerPartials, authController.handleCallback);

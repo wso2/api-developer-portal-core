@@ -24,6 +24,8 @@ const IdentityProviderDTO = require("../dto/identityProvider");
 const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
 const adminService = require('../services/adminService');
+const devPortalService = require('../services/devportalService');
+
 const filePrefix = config.pathToContent;
 
 
@@ -58,11 +60,6 @@ const loadSettingPage = async (req, res) => {
             } else {
                 let orgName = req.params.orgName;
                 orgID = await adminDao.getOrgId(orgName);
-                const templatePath = path.join(require.main.filename, '..', 'pages', 'error-page', 'page.hbs');
-                const templateResponse = fs.readFileSync(templatePath, constants.CHARSET_UTF8);
-                const layoutResponse = await loadLayoutFromAPI(orgID);
-                let html = await renderGivenTemplate(templateResponse, layoutResponse, {});
-                return res.send(html);
             }
             templateContent.orgID = orgID;
             const retrievedIDP = await adminDao.getIdentityProvider(orgID);
@@ -119,7 +116,7 @@ async function getMockIdentityProvider() {
     return mockIDPaData;
 }
 
-const createOrganization = async (req, res) => {
+const loadPortalPage = async (req, res) => {
 
     let templateContent = {};
     try {
@@ -128,7 +125,6 @@ const createOrganization = async (req, res) => {
             templateContent.organizations = organizations;
         } else {
             templateContent = {
-                'orgID': req.user[constants.ORG_ID],
                 'profile': req.user
             }
             //fetch all created organizations
@@ -146,7 +142,52 @@ const createOrganization = async (req, res) => {
         res.send(html);
 
     } catch (error) {
-        console.error(`Error while loading setting page: ${error}`);
+        console.error(`Error while loading setting page:`, error);
+    }
+}
+
+const loadEditOrganizationPage = async (req, res) => {
+
+    let templateContent = {};
+    let orgID = "";
+    try {
+        if (config.mode === constants.DEV_MODE) {
+            const organizations = await getMockOrganizations();
+            templateContent.organizations = organizations;
+        } else {
+            if (req.params.orgId !== 'create') {
+                orgID = req.params.orgId;
+                const organization = await devPortalService.getOrganizationDetails(orgID);
+                templateContent = {
+                    'orgID': orgID,
+                    'profile': req.user,
+                    'organization': organization
+                }
+            }
+        }
+        const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'edit-organization', 'page.hbs');
+        const layoutPath = path.join(require.main.filename, '..', 'pages', 'layout', 'main.hbs');
+        const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
+        const layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
+        const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        res.send(html);
+    } catch (error) {
+        console.error(`Error while loading setting page :`, error);
+    }
+}
+
+const loadCreateOrganizationPage = async (req, res) => {
+
+    let templateContent = {};
+    try {
+        const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'add-organization', 'page.hbs');
+        const layoutPath = path.join(require.main.filename, '..', 'pages', 'layout', 'main.hbs');
+        const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
+        const layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
+        const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        res.send(html);
+    } catch (error) {
+        console.error(`Error while loading setting page :`, error);
     }
 }
 
@@ -160,5 +201,7 @@ async function getMockOrganizations() {
 
 module.exports = {
     loadSettingPage,
-    createorganization: createOrganization
+    loadPortalPage,
+    loadEditOrganizationPage,
+    loadCreateOrganizationPage
 };

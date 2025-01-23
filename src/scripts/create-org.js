@@ -81,8 +81,19 @@ async function editOrg(orgID, formID) {
     }
 }
 
-async function deleteOrg(orgID) {
+function openOrgDeleteModal(orgID) {
 
+    const modal = document.getElementById('deleteConfirmation');
+    modal.dataset.orgID = orgID;
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+  }
+
+
+async function deleteOrg() {
+
+    const modal = document.getElementById('deleteConfirmation');
+    const orgID = modal.dataset.orgID;
     const response = await fetch(`/devportal/organizations/${orgID}`, {
         method: 'DELETE'
     });
