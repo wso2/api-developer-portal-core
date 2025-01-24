@@ -20,6 +20,7 @@ const router = express.Router();
 const devportalService = require('../services/devportalService');
 const apiMetadataService = require('../services/apiMetadataService');
 const adminService = require('../services/adminService');
+const systemService = require('../services/systemService');
 const devportalController = require('../controllers/devportalController');
 const multer = require('multer');
 const storage = multer.memoryStorage()
@@ -27,9 +28,8 @@ const apiDefinition = multer({ storage: storage })
 const { ensureAuthenticated, validateAuthentication, enforceMTLS } = require('../middlewares/ensureAuthenticated');
 const constants = require('../utils/constants');
 
-router.get('/b2b/organizations/:orgId', enforceMTLS, devportalService.getOrganization);
-router.post('/b2b/organizations/:orgId/apis', enforceMTLS, apiDefinition.single('apiDefinition'), apiMetadataService.createAPIMetadata);
-router.post('/b2b/organizations', enforceMTLS, adminService.createOrganization);
+router.post('/action/org', enforceMTLS, systemService.orgAction);
+router.post('/action/api', enforceMTLS, apiDefinition.single('apiDefinition'), systemService.apiAction);
 
 router.post('/organizations', validateAuthentication(constants.SCOPES.ADMIN), adminService.createOrganization);
 router.get('/organizations', validateAuthentication(constants.SCOPES.ADMIN), adminService.getOrganizations);

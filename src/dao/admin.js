@@ -71,6 +71,22 @@ const getOrganization = async (param) => {
     }
 };
 
+const getOrgIdFromReferenceId = async (orgRef) => {
+    try {
+        // TODO: Decide if the orgRef is name or new orgRef in DB
+        const organization = await Organization.findOne({ where: { ORG_NAME: orgRef } });
+        if (!organization) {
+            throw new Sequelize.EmptyResultError('Organization not found');
+        }
+        return organization.ORG_ID;
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
 const getOrgId = async (orgName) => {
     try {
         const organization = await Organization.findOne({ where: { ORG_NAME: orgName } });
@@ -536,5 +552,6 @@ module.exports = {
     deleteProvider,
     updateProvider,
     getProviders,
-    getProvider
+    getProvider,
+    getOrgIdFromReferenceId
 };

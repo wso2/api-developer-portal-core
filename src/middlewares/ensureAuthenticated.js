@@ -247,7 +247,6 @@ const enforceMTLS = (req, res, next) => {
         return res.status(403).send('Client certificate is expired or not yet valid');
     }
 
-    console.log('Client certificate successfully verified:', clientCert.subject);
     return next();
 };
 
