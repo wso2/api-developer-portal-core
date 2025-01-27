@@ -103,6 +103,9 @@ const getAllAPIMetadata = async (req, res) => {
 
     const orgID = req.params.orgId;
     const searchTerm = req.query.query;
+    const apiName = req.query.name;
+    const apiVersion = req.query.version;
+    const tags = req.query.tags;
 
     let groupList = [];
     if (req.query.groups) {
@@ -112,7 +115,7 @@ const getAllAPIMetadata = async (req, res) => {
         throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
     }
     try {
-        const retrievedAPIs = await getMetadataListFromDB(orgID, groupList, searchTerm);
+        const retrievedAPIs = await getMetadataListFromDB(orgID, groupList, searchTerm, apiName, apiVersion, tags);
         res.status(200).send(retrievedAPIs);
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.API_NOT_FOUND}, ${error}`);
@@ -120,12 +123,17 @@ const getAllAPIMetadata = async (req, res) => {
     }
 };
 
-const getMetadataListFromDB = async (orgID, groups, searchTerm) => {
+const getMetadataListFromDB = async (orgID, groups, searchTerm, apiName, apiVersion, tags) => {
 
     return await sequelize.transaction(async (t) => {
         let retrievedAPIs;
-
-        if (searchTerm) {
+        if (apiName || apiVersion || tags) {
+            const condition = {};
+            if (apiName) condition.API_NAME = apiName;
+            if (apiVersion) condition.API_VERSION = apiVersion;
+            if (tags) condition.TAGS = tags;
+            retrievedAPIs = await apiDao.getAPIMetadataByCondition(condition);
+        } else if (searchTerm) {
             retrievedAPIs = await apiDao.searchAPIMetadata(orgID, groups, searchTerm, t);
         } else {
             retrievedAPIs = await apiDao.getAllAPIMetadata(orgID, groups, t);

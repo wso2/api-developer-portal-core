@@ -51,8 +51,11 @@ class APIInfo {
         if (apiInfo.BUSINESS_OWNER || apiInfo.TECHNICAL_OWNER) {
             this.owners = new Owner(apiInfo);
         }
-        if(apiInfo.DP_API_IMAGEDATA) {
-           this.apiImageMetadata = getAPIImages(apiInfo.DP_API_IMAGEDATA);
+        if (apiInfo.DP_API_IMAGEDATA) {
+            this.apiImageMetadata = getAPIImages(apiInfo.DP_API_IMAGEDATA);
+        }
+        if (apiInfo.TAGS) {
+            this.tags = apiInfo.TAGS.split(",");
         }
     }
 }
