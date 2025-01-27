@@ -215,18 +215,26 @@ const getAPIFile = async (fileName, orgID, apiID, t) => {
 
 const getAPIMetadataByCondition = async (condition, t) => {
     try {
-        const tags = condition.TAGS;
-        if (tags) {
-            const tagsArray = tags.split(",").map(tag => tag.trim());
-            console.log("tagsArray", tagsArray);
-
+        if (condition.TAGS) {
+            const tagsArray = condition.TAGS.split(",").map(tag => tag.trim());
             condition.TAGS = {
-                [Op.and]: tagsArray.map(tag => ({
-                    [Sequelize.Op.like]: `%${tag}%`
+                [Op.or]: tagsArray.map(tag => ({
+                    [Op.and]: tag.split(" ").map(subTag => ({
+                        [Sequelize.Op.or]: [
+                            {
+                                [Sequelize.Op.like]: `% ${subTag} %`
+                            },
+                            {
+                                [Sequelize.Op.like]: `% ${subTag}%`
+                            },
+                            {
+                                [Sequelize.Op.like]: `%${subTag} %`
+                            }
+                        ]
+                    }))
                 }))
             };
         }
-
         const apiMetadataResponse = await APIMetadata.findAll({
             include: [{
                 model: APIImageMetadata,
