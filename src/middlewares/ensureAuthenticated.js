@@ -25,6 +25,30 @@ const util = require('../utils/util');
 const { CustomError } = require('../utils/errors/customErrors');
 const IdentityProviderDTO = require("../dto/identityProvider");
 
+function enforceSecuirty(scope) {
+    return async function (req, res, next) {
+        try {
+            const authHeader = req.headers.authorization;        
+            if (authHeader && authHeader.startsWith("Bearer ")) {
+                const token = authHeader.split(" ")[1]; 
+                if (token) {
+                    // Handle token flow
+                    // TODO - Implement token validation
+                    validateAuthentication(scope)(req, res, next);
+                    console.log("Token: ", token);
+                    console.log("Scope: ", scope);
+                }
+            } else {
+                // Handle MTLS flow
+                enforceMTLS(req, res, next);
+            }
+        } catch (err) {
+            console.error("Error checking access token:", err);
+            return res.status(500).json({ error: "Internal Server Error" });
+        }    
+    }
+}
+
 const ensurePermission = (currentPage, role, req) => {
 
     let adminRole, superAdminRole, subscriberRole;
@@ -255,5 +279,5 @@ module.exports = ensureAuthenticated;
 module.exports = {
     ensureAuthenticated,
     validateAuthentication,
-    enforceMTLS
+    enforceSecuirty
 }
