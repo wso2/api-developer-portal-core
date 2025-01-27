@@ -28,7 +28,7 @@ const APIMetadata = sequelize.define('DP_API_METADATA', {
     defaultValue: Sequelize.UUIDV4,
     primaryKey: true
   },
-  REFERENCE_ID : {
+  REFERENCE_ID: {
     type: DataTypes.UUID,
     allowNull: true,
     unique: true
@@ -90,7 +90,11 @@ const APIMetadata = sequelize.define('DP_API_METADATA', {
   METADATA_SEARCH: {
     type: DataTypes.JSON,
     allowNull: true
-  }
+  },
+  TAGS: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
 }, {
   timestamps: false,
   tableName: 'DP_API_METADATA',
@@ -110,15 +114,15 @@ APIMetadata.belongsTo(Organization, {
   foreignKey: 'ORG_ID'
 })
 
-APIMetadata.hasMany(SubscriptionPolicy, { 
+APIMetadata.hasMany(SubscriptionPolicy, {
   foreignKey: 'API_ID',
   onDelete: 'CASCADE'
 });
-APIMetadata.hasMany(APIImages, { 
+APIMetadata.hasMany(APIImages, {
   foreignKey: 'API_ID',
   onDelete: 'CASCADE'
 });
-APIMetadata.hasMany(APIContent, { 
+APIMetadata.hasMany(APIContent, {
   foreignKey: 'API_ID',
   onDelete: 'CASCADE'
 });

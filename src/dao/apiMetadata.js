@@ -215,7 +215,29 @@ const getAPIFile = async (fileName, orgID, apiID, t) => {
 
 const getAPIMetadataByCondition = async (condition, t) => {
     try {
-        const apiMetadataResponse = await APIMetadata.findAll({ where: condition }, { transaction: t });
+        const tags = condition.TAGS;
+        if (tags) {
+            const tagsArray = tags.split(",").map(tag => tag.trim());
+            console.log("tagsArray", tagsArray);
+
+            condition.TAGS = {
+                [Op.and]: tagsArray.map(tag => ({
+                    [Sequelize.Op.like]: `%${tag}%`
+                }))
+            };
+        }
+
+        const apiMetadataResponse = await APIMetadata.findAll({
+            include: [{
+                model: APIImageMetadata,
+                required: false
+            }, {
+                model: SubscriptionPolicy,
+                required: false
+            }
+            ],
+            where: condition
+        }, { transaction: t });
         return apiMetadataResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
