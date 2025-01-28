@@ -219,19 +219,19 @@ const getAPIMetadataByCondition = async (condition, t) => {
             const tagsArray = condition.TAGS.split(",").map(tag => tag.trim());
             condition.TAGS = {
                 [Op.or]: tagsArray.map(tag => ({
-                    [Op.and]: tag.split(" ").map(subTag => ({
+                    [Op.and]: {
                         [Sequelize.Op.or]: [
                             {
-                                [Sequelize.Op.like]: `% ${subTag} %`
+                                [Sequelize.Op.like]: `% ${tag} %`
                             },
                             {
-                                [Sequelize.Op.like]: `% ${subTag}%`
+                                [Sequelize.Op.like]: `% ${tag}`
                             },
                             {
-                                [Sequelize.Op.like]: `%${subTag} %`
+                                [Sequelize.Op.like]: `${tag} %`
                             }
                         ]
-                    }))
+                    }
                 }))
             };
         }
