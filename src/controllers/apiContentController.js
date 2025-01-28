@@ -229,7 +229,6 @@ async function loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags)
     if (groups !== "") {
         groupList = groups.split(" ");
     }
-    console.log("Group List: ", tags);
     let metaData = await apiMetadataService.getMetadataListFromDB(orgID, groupList, searchTerm, tags);
     metaData.forEach(item => {
         item.baseUrl = '/' + orgName;
