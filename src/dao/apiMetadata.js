@@ -229,6 +229,9 @@ const getAPIMetadataByCondition = async (condition, t) => {
                             },
                             {
                                 [Sequelize.Op.like]: `${tag} %`
+                            },
+                            {
+                                [Sequelize.Op.eq]: `${tag}`
                             }
                         ]
                     }

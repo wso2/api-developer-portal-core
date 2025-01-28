@@ -84,6 +84,10 @@ Handlebars.registerHelper('getValue', function (obj, key) {
     return obj[key];
 });
 
+Handlebars.registerHelper('lowercase', function (str) {
+    return typeof str === 'string' ? str.toLowerCase() : str;
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
