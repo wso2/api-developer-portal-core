@@ -69,10 +69,12 @@ const loadSettingPage = async (req, res) => {
             } else {
                 templateContent.createIDP = true;
             }
+            templateContent.viewCreate = true;
             const views = await apiMetadataService.getViewsFromDB(orgID);
             if (views.length > 0) {
                 templateContent.content = true;
                 templateContent.views = views;
+                templateContent.viewCreate = false;
                 templateContent.orgContent = false;
             }
             const orgLabels = await apiMetadataService.getOrgLabels(orgID);
