@@ -32,15 +32,16 @@ function enforceSecuirty(scope) {
             if (authHeader && authHeader.startsWith("Bearer ")) {
                 const token = authHeader.split(" ")[1]; 
                 if (token) {
-                    // Handle token flow
-                    // TODO - Implement token validation
+                    // TODO: Implement organization extraction logic
                     validateAuthentication(scope)(req, res, next);
-                    console.log("Token: ", token);
-                    console.log("Scope: ", scope);
                 }
             } else {
                 // Handle MTLS flow
-                enforceMTLS(req, res, next);
+                const organization = req.headers.organization;
+                if (organization) {
+                    req.params.orgId = organization;   
+                } 
+                enforceMTLS(req, res, next);    
             }
         } catch (err) {
             console.error("Error checking access token:", err);
