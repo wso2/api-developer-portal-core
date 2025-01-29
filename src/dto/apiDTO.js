@@ -55,7 +55,7 @@ class APIInfo {
             this.apiImageMetadata = getAPIImages(apiInfo.DP_API_IMAGEDATA);
         }
         if (apiInfo.TAGS) {
-            this.tags = apiInfo.TAGS.split(",");
+            this.tags = apiInfo.TAGS.split(" ");
         }
     }
 }

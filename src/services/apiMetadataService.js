@@ -115,7 +115,7 @@ const getAllAPIMetadata = async (req, res) => {
         throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
     }
     try {
-        const retrievedAPIs = await getMetadataListFromDB(orgID, groupList, searchTerm, apiName, apiVersion, tags);
+        const retrievedAPIs = await getMetadataListFromDB(orgID, groupList, searchTerm, tags, apiName, apiVersion);
         res.status(200).send(retrievedAPIs);
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.API_NOT_FOUND}, ${error}`);
@@ -123,7 +123,7 @@ const getAllAPIMetadata = async (req, res) => {
     }
 };
 
-const getMetadataListFromDB = async (orgID, groups, searchTerm, apiName, apiVersion, tags) => {
+const getMetadataListFromDB = async (orgID, groups, searchTerm, tags, apiName, apiVersion) => {
 
     return await sequelize.transaction(async (t) => {
         let retrievedAPIs;

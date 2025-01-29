@@ -46,9 +46,21 @@ const loadAPIs = async (req, res) => {
         try {
             const orgID = await adminDao.getOrgId(orgName);
             const searchTerm = req.query.query;
-            const metaData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm);
+            const tags = req.query.tags;
+
+            const metaData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags);
+            const apiData = await loadAPIMetaDataListFromAPI(req, orgID, orgName);
+            let apiTags = [];
+            apiData.forEach(api => {
+                api.apiInfo.tags.forEach(tag => {
+                    if (!apiTags.includes(tag)) {
+                        apiTags.push(tag);
+                    }
+                });
+            });
             const templateContent = {
                 apiMetadata: metaData,
+                tags: apiTags,
                 baseUrl: '/' + orgName
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis");
@@ -207,7 +219,7 @@ async function loadAPIMetaDataList() {
     return mockAPIMetaData;
 }
 
-async function loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm) {
+async function loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags) {
 
     let groups = "";
     let groupList = [];
@@ -217,7 +229,7 @@ async function loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm) {
     if (groups !== "") {
         groupList = groups.split(" ");
     }
-    let metaData = await apiMetadataService.getMetadataListFromDB(orgID, groupList, searchTerm);
+    let metaData = await apiMetadataService.getMetadataListFromDB(orgID, groupList, searchTerm, tags);
     metaData.forEach(item => {
         item.baseUrl = '/' + orgName;
     });
