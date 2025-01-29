@@ -49,9 +49,11 @@ const loadCustomContent = async (req, res) => {
         try {
             filePath = 'pages/' + filePath;
             let orgId =  await adminDao.getOrgId(orgName);
+            let viewName = req.params.viewName;
             let markDownFiles = await adminDao.getOrgContent({
                 orgId: orgId,
                 fileType: 'markDown',
+                viewName: viewName
             });
             if (markDownFiles.length > 0) {
                 markDownFiles.forEach((item) => {
@@ -59,10 +61,10 @@ const loadCustomContent = async (req, res) => {
                     content[tempKey] = markdown.parse(item.FILE_CONTENT.toString(constants.CHARSET_UTF8));
                 });
             }
-            content[constants.BASE_URL_NAME] = "/" + orgName;
-            html = await renderTemplateFromAPI(content, orgId, orgName, filePath);
+            content[constants.BASE_URL_NAME] = "/" + orgName + "/views/" + viewName;
+            html = await renderTemplateFromAPI(content, orgId, orgName, filePath, viewName);
         } catch (error) {
-            console.error(`Failed to load organization: , ${error}`);
+            console.error(`Failed to load organization :` , error);
         }
     }
     res.send(html);

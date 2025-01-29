@@ -64,12 +64,13 @@ function renderTemplate(templatePath, layoutPath, templateContent, isTechnical) 
     });
 }
 
-async function loadLayoutFromAPI(orgID) {
+async function loadLayoutFromAPI(orgID, viewName) {
 
     var layoutContent = await adminDao.getOrgContent({
         orgId: orgID,
         fileType: constants.FILE_TYPE.LAYOUT,
-        fileName: constants.FILE_NAME.MAIN
+        fileName: constants.FILE_NAME.MAIN,
+        viewName: viewName
     });
     if (layoutContent) {
         return layoutContent.FILE_CONTENT.toString(constants.CHARSET_UTF8);
@@ -78,21 +79,22 @@ async function loadLayoutFromAPI(orgID) {
     }
 }
 
-async function loadTemplateFromAPI(orgID, filePath) {
+async function loadTemplateFromAPI(orgID, filePath, viewName) {
 
     var templateContent = await adminDao.getOrgContent({
         orgId: orgID,
         filePath: filePath,
         fileType: constants.FILE_TYPE.TEMPLATE,
-        fileName: constants.FILE_NAME.PAGE
+        fileName: constants.FILE_NAME.PAGE,
+        viewName: viewName
     });
     return templateContent ? templateContent.FILE_CONTENT.toString(constants.CHARSET_UTF8) : "";
 }
 
-async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath) {
+async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, viewName) {
 
-    var templatePage = await loadTemplateFromAPI(orgID, filePath);
-    var layoutContent = await loadLayoutFromAPI(orgID);
+    var templatePage = await loadTemplateFromAPI(orgID, filePath, viewName);
+    var layoutContent = await loadLayoutFromAPI(orgID, viewName);
 
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutContent.toString());
@@ -407,7 +409,7 @@ const rejectExtraProperties = (allowedKeys, payload) => {
     return extraKeys;
 };
 
-async function readFilesInDirectory(directory, orgId, protocol, host, baseDir = '') {
+async function readFilesInDirectory(directory, orgId, protocol, host, viewName, baseDir = '') {
 
     const files = await fs.promises.readdir(directory, { withFileTypes: true });
     let fileDetails = [];
@@ -415,7 +417,7 @@ async function readFilesInDirectory(directory, orgId, protocol, host, baseDir = 
         const filePath = path.join(directory, file.name);
         const relativePath = path.join(baseDir, file.name);
         if (file.isDirectory()) {
-            const subDirContents = await readFilesInDirectory(filePath, orgId, protocol, host, relativePath);
+            const subDirContents = await readFilesInDirectory(filePath, orgId, protocol, host, viewName, relativePath);
             fileDetails = fileDetails.concat(subDirContents);
         } else {
             let content = await fs.promises.readFile(filePath);
@@ -426,13 +428,13 @@ async function readFilesInDirectory(directory, orgId, protocol, host, baseDir = 
                 fileType = "style"
                 if (file.name === "main.css") {
                     strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g,
-                        `@import url("${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/layout?fileType=style&fileName=$1");`);
+                        `@import url("${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
                      content = Buffer.from(strContent, constants.CHARSET_UTF8);
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                 fileType = "layout"
                 if (file.name === "main.hbs") {
-                    strContent = strContent.replace(/\/styles\//g, `${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/layout?fileType=style&fileName=`);
+                    strContent = strContent.replace(/\/styles\//g, `${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=`);
                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {

@@ -1,0 +1,48 @@
+<script>
+    var initialLabels = {{{ json labels }}}; // Convert Handlebars data to JavaScript
+</script>
+<section>
+    <div class="container">
+        <form id="createView">
+            <div class="d-flex flex-row align-items-center">
+                <div class="mb-3 me-3">
+                    <label for="displayName" class="form-label">View display name</label>
+                    <input type="text" class="form-control" id="displayName{{displayName}}" name="displayName" required value={{displayName}}>
+                </div>
+                <div class="mb-3 me-3">
+                    <label for="viewName" class="form-label">View Name</label>
+                    <input type="text" class="form-control" id="viewName{{name}}" name="viewName" required value={{name}}>
+                </div>
+                <div class="d-flex flex-row align-items-center">
+                    <select id="labelSelect{{name}}" class="me-3">
+                        {{#each @root.orgLabels as |orgLabelGroup|}}
+                        <option>{{orgLabelGroup.name}}</option>
+                        {{/each}}
+                    </select>
+                    <div class="labels-container me-3" id="labelsContainer{{name}}">
+                        {{#each labels}}
+                        <span class="label-span span-item">
+                            {{this}}<span class="remove-btn remove">×</span> <!-- The '×' icon for remove -->
+                        </span>
+                        {{/each}}
+                    </div>
+                    <button class="common-btn-primary" style="width: 150px;"
+                        onclick="addLabel('labelSelect{{name}}', 'labelsContainer{{name}}')">Attach Label</button>
+                    <button type="button" class="common-btn-primary" style="width: 150px;"
+                        onclick="editView({{json labels}}, 'labelsContainer{{name}}', 'displayName{{displayName}}', 'viewName{{name}}', '{{@root.orgID}}')">Create View</button>
+                </div>
+                <div class="container ms-3">
+                    <form id="uploadContent">
+                        <div class="d-flex flex-row align-items-center justify-content-end">
+                            <div class="mb-3 me-3">
+                                <label for="contentFile" class="form-label">Upload Content</label>
+                                <input type="file" class="form-control" id="contentFile" name="contentFile" required>
+                            </div>
+                            <button type="button" class="common-btn-primary" onclick="uploadContent()">Upload</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>

@@ -57,6 +57,19 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    const removeButtons = document.querySelectorAll('.span-item .remove-btn');
+    
+    // Add event listener to each remove button
+    removeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove the parent span item
+            const spanItem = button.closest('.span-item');
+            if (spanItem) {
+                spanItem.remove();
+            }
+        });
+    });
 });
 
 function sanitizeInput(input) {
@@ -169,3 +182,61 @@ async function uploadOrgContent(orgID) {
         alert(`Upload failed: ${error}`);
     }
 }
+
+function addLabel(labelSelectID, labelsContainerID) {
+    const select = document.getElementById(labelSelectID);
+    console.log(select);
+    const labelsContainer = document.getElementById(labelsContainerID);
+    const selectedValue = select.value;
+    
+    // Check if label already exists
+    if ([...labelsContainer.children].some(span => span.textContent.includes(selectedValue))) {
+        return;
+    }
+    const span = document.createElement("span");
+    span.className = "label-span";
+    span.textContent = selectedValue;
+    
+    const removeBtn = document.createElement("span");
+    removeBtn.className = "remove";
+    removeBtn.textContent = "×";
+    removeBtn.onclick = function () {
+        labelsContainer.removeChild(span);
+    };
+    span.appendChild(removeBtn);
+    labelsContainer.appendChild(span);
+}
+
+async function editView(existingLabels, labelsContainerID, displayNameID, nameID, orgID) {
+
+    const labelsContainer = document.getElementById(labelsContainerID);
+    const displayName = document.getElementById(displayNameID).value;
+    const name = document.getElementById(nameID).value;
+    const selected = [...labelsContainer.children].map(span => span.textContent.replace("×", "").trim());
+    const addedLabels = selected.filter(label => !existingLabels.includes(label));
+    const removedLabels = existingLabels.filter(label => !selected.includes(label));
+
+    const sanitizAddedLabels = addedLabels.map(label => sanitizeInput(label));
+    const sanitizeRemovedLabels = removedLabels.map(label => sanitizeInput(label));
+    
+    const data = {
+        displayName: displayName,
+        addedLabels: sanitizAddedLabels,
+        removedLabels: sanitizeRemovedLabels
+    }
+    console.log(data);
+    const response = await fetch(`/devportal/organizations/${orgID}/views/${name}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+    if (response.ok) {
+       // window.location.href = 'configure';
+    } else {
+        showAlert(`Field validation failed`, `error`);
+    }
+
+}
+

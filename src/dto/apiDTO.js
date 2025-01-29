@@ -45,14 +45,23 @@ class APIInfo {
         this.apiDescription = apiInfo.API_DESCRIPTION;
         this.apiType = apiInfo.API_TYPE;
         this.visibility = apiInfo.VISIBILITY;
+        if (apiInfo.addedLabels) {
+            this.addedLabels = apiInfo.addedLabels;
+        }
+        if (apiInfo.removedLabels) {
+            this.removedLabels = apiInfo.removedLabels;
+        }
         if (apiInfo.VISIBLE_GROUPS) {
             this.visibleGroups = apiInfo.VISIBLE_GROUPS.split(" ");
         }
         if (apiInfo.BUSINESS_OWNER || apiInfo.TECHNICAL_OWNER) {
             this.owners = new Owner(apiInfo);
         }
-        if(apiInfo.DP_API_IMAGEDATA) {
-           this.apiImageMetadata = getAPIImages(apiInfo.DP_API_IMAGEDATA);
+        if (apiInfo.DP_API_IMAGEDATA) {
+            this.apiImageMetadata = getAPIImages(apiInfo.DP_API_IMAGEDATA);
+        }
+        if (apiInfo.DP_LABELs) {
+            this.labels = apiInfo.DP_LABELs.map(label => label.dataValues.NAME);
         }
     }
 }

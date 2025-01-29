@@ -49,6 +49,10 @@ app.engine('.hbs', engine({
 
 app.set('view engine', 'hbs');
 
+Handlebars.registerHelper('json', function(context) {
+    return JSON.stringify(context);
+});
+
 Handlebars.registerHelper('eq', function (a, b) {
     return (a === b || (a != null && b != null && (a === b.toString() || a.toString() === b)));
 });

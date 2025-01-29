@@ -20,8 +20,9 @@ const { validate } = require('uuid');
 const { Sequelize } = require('sequelize');
 const { IdentityProvider } = require('../models/identityProvider');
 const Provider = require('../models/provider');
+const apiDao = require('./apiMetadata');
 
-const createOrganization = async (orgData) => {
+const createOrganization = async (orgData, t) => {
 
     let devPortalID = "";
     if (orgData.devPortalURLIdentifier) {
@@ -42,7 +43,7 @@ const createOrganization = async (orgData) => {
         SUPER_ADMIN_ROLE: orgData.superAdminRole
     };
     try {
-        const organization = await Organization.create(createOrgData);
+        const organization = await Organization.create(createOrgData, { transaction: t });
         return organization;
     } catch (error) {
         console.log(error)
@@ -266,6 +267,7 @@ const deleteIdentityProvider = async (orgID) => {
 
 const createOrgContent = async (orgData) => {
 
+    const viewID = await apiDao.getViewID(orgData.orgId, orgData.viewName);
     try {
         const orgContent = await OrgContent.create({
             FILE_TYPE: orgData.fileType,
@@ -273,6 +275,7 @@ const createOrgContent = async (orgData) => {
             FILE_CONTENT: orgData.fileContent,
             FILE_PATH: orgData.filePath,
             ORG_ID: orgData.orgId,
+            VIEW_ID: viewID
         });
         return orgContent;
     } catch (error) {
@@ -285,6 +288,7 @@ const createOrgContent = async (orgData) => {
 
 const updateOrgContent = async (orgData) => {
 
+    const viewID = await apiDao.getViewID(orgData.orgId, orgData.viewName);
     try {
         const [updatedRowsCount, updatedOrgContent] = await OrgContent.update({
             FILE_TYPE: orgData.fileType,
@@ -293,7 +297,13 @@ const updateOrgContent = async (orgData) => {
             FILE_PATH: orgData.filePath,
         },
             {
-                where: { FILE_TYPE: orgData.fileType, FILE_NAME: orgData.fileName, FILE_PATH: orgData.filePath, ORG_ID: orgData.orgId },
+                where: {
+                    FILE_TYPE: orgData.fileType,
+                    FILE_NAME: orgData.fileName,
+                    FILE_PATH: orgData.filePath,
+                    ORG_ID: orgData.orgId,
+                    VIEW_ID: viewID
+                },
                 returning: true
             });
         if (updatedRowsCount < 1) {
@@ -314,11 +324,13 @@ const updateOrgContent = async (orgData) => {
 const getOrgContent = async (orgData) => {
 
     try {
+        const viewID = await apiDao.getViewID(orgData.orgId, orgData.viewName);
         if (orgData.fileName || orgData.filePath) {
             return await OrgContent.findOne(
                 {
                     where: {
                         ORG_ID: orgData.orgId,
+                        VIEW_ID: viewID,
                         FILE_TYPE: orgData.fileType,
                         ...(orgData.fileName && { FILE_NAME: orgData.fileName }),
                         ...(orgData.filePath && { FILE_PATH: orgData.filePath })
@@ -329,6 +341,7 @@ const getOrgContent = async (orgData) => {
                 {
                     where: {
                         ORG_ID: orgData.orgId,
+                        VIEW_ID: viewID,
                         FILE_TYPE: orgData.fileType,
                     }
                 });
@@ -341,10 +354,17 @@ const getOrgContent = async (orgData) => {
     }
 };
 
-const deleteOrgContent = async (orgId, fileName) => {
+const deleteOrgContent = async (orgId, viewName, fileName) => {
 
+    const viewId = await apiDao.getViewID(orgId, viewName);
     try {
-        const deletedRowsCount = await OrgContent.destroy({ where: { ORG_ID: orgId, FILE_NAME: fileName } });
+        const deletedRowsCount = await OrgContent.destroy({
+            where: {
+                ORG_ID: orgId,
+                VIEW_ID: viewId,
+                FILE_NAME: fileName
+            }
+        });
 
         if (deletedRowsCount < 1) {
             throw Object.assign(new Sequelize.EmptyResultError('Organization content not found'));
@@ -359,8 +379,7 @@ const deleteOrgContent = async (orgId, fileName) => {
     }
 };
 
-const createProvider = async (orgID, provider) => {
-
+const createProvider = async (orgID, provider, t) => {
 
     let providerDataList = [];
     for (const [key, value] of Object.entries(provider)) {
@@ -375,7 +394,7 @@ const createProvider = async (orgID, provider) => {
         }
     }
     try {
-        const provider = await Provider.bulkCreate(providerDataList);
+        const provider = await Provider.bulkCreate(providerDataList, { transaction: t });
         return provider;
     } catch (error) {
         console.log(error)
@@ -513,7 +532,6 @@ const getProvider = async (orgID, name) => {
         }
         throw new Sequelize.DatabaseError(error);
     }
-
 }
 
 module.exports = {

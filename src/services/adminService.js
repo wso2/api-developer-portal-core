@@ -18,12 +18,15 @@
 /* eslint-disable no-undef */
 const { CustomError } = require('../utils/errors/customErrors');
 const adminDao = require('../dao/admin');
+const apiDao = require('../dao/apiMetadata');
 const util = require('../utils/util');
 const fs = require('fs');
 const path = require('path');
 const IdentityProviderDTO = require("../dto/identityProvider");
 const constants = require('../utils/constants');
 const { validationResult } = require('express-validator');
+const sequelize = require("../db/sequelize");
+const config = require(process.cwd() + '/config.json');
 
 const createOrganization = async (req, res) => {
 
@@ -36,9 +39,21 @@ const createOrganization = async (req, res) => {
         return res.status(400).json(util.getErrors(errors));
     }
     const payload = req.body;
+    let organization = "";
     try {
-
-        const organization = await adminDao.createOrganization(payload);
+        await sequelize.transaction(async (t) => {
+            organization = await adminDao.createOrganization(payload, t);
+            const orgId = organization.ORG_ID;
+            // create default label
+            const labels = await apiDao.createLabels(organization.ORG_ID, [{ name: 'default' , displayName: 'default'}], t);
+            const labelId = labels[0].dataValues.LABEL_ID;
+            //create default view
+            const viewResponse = await apiDao.addView(orgId, {name: 'default', displayName: 'default'}, t);
+            const viewID = viewResponse.dataValues.VIEW_ID;
+            await apiDao.addLabel(orgId, labelId, viewID, t);
+            //create default provider
+            await adminDao.createProvider(organization.ORG_ID, { name: 'WSO2', providerURL: config.controlPlane.url}, t);
+        });
         const orgCreationResponse = {
             orgId: organization.ORG_ID,
             orgName: organization.ORG_NAME,
@@ -56,7 +71,7 @@ const createOrganization = async (req, res) => {
         };
         res.status(201).send(orgCreationResponse);
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.ORG_CREATE_ERROR}, ${error}`);
+        console.error(`${constants.ERROR_MESSAGE.ORG_CREATE_ERROR}`, error);
         util.handleError(res, error);
     }
 };
@@ -72,6 +87,7 @@ const getOrganizations = async (req, res) => {
 };
 
 const getAllOrganizations = async () => {
+
     const organizations = await adminDao.getOrganizations();
     const orgList = [];
     if (organizations.length > 0) {
@@ -250,13 +266,14 @@ const deleteIdentityProvider = async (req, res) => {
 const createOrgContent = async (req, res) => {
 
     const orgId = req.params.orgId;
+    const viewName = req.params.name;
     const zipPath = req.file.path;
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
     await util.unzipFile(zipPath, extractPath);
     try {
-        const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'));
+        const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'), viewName);
         for (const { filePath, fileName, fileContent, fileType } of files) {
-            await createContent(filePath, fileName, fileContent, fileType, orgId);
+            await createContent(filePath, fileName, fileContent, fileType, orgId, viewName);
         }
         res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
         fs.rmSync(extractPath, { recursive: true, force: true });
@@ -268,7 +285,7 @@ const createOrgContent = async (req, res) => {
     }
 };
 
-const createContent = async (filePath, fileName, fileContent, fileType, orgId) => {
+const createContent = async (filePath, fileName, fileContent, fileType, orgId, viewName) => {
 
     let content;
     // eslint-disable-next-line no-useless-catch
@@ -279,7 +296,8 @@ const createContent = async (filePath, fileName, fileContent, fileType, orgId) =
                 fileName: fileName,
                 fileContent: fileContent,
                 filePath: filePath,
-                orgId: orgId
+                orgId: orgId,
+                viewName: viewName
             });
         }
     } catch (error) {
@@ -291,41 +309,44 @@ const createContent = async (filePath, fileName, fileContent, fileType, orgId) =
 const updateOrgContent = async (req, res) => {
 
     const orgId = req.params.orgId;
+    const viewName = req.params.name;
     const zipPath = req.file.path;
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
     await util.unzipFile(zipPath, extractPath);
-    const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'));
+    const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'), viewName);
     try {
         for (const { filePath, fileName, fileContent, fileType } of files) {
             if (fileName != null && !fileName.startsWith('.')) {
-                const organizationContent = await getOrgContent(orgId, fileType, fileName, filePath);
+                const organizationContent = await getOrgContent(orgId, viewName, fileType, fileName, filePath);
                 if (organizationContent) {
                     await adminDao.updateOrgContent({
                         fileType: fileType,
                         fileName: fileName,
                         fileContent: fileContent,
                         filePath: filePath,
-                        orgId: orgId
+                        orgId: orgId,
+                        viewName: viewName
                     });
                 } else {
                     console.log("Update Content not exists, hense creating new content");
-                    await createContent(filePath, fileName, fileContent, fileType, orgId);
+                    await createContent(filePath, fileName, fileContent, fileType, orgId, viewName);
                 }
             }
         }
         fs.rmSync(extractPath, { recursive: true, force: true });
         res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.ORG_CONTENT_UPDATE_ERROR}, ${error}`);
+        console.error(`${constants.ERROR_MESSAGE.ORG_CONTENT_UPDATE_ERROR}`, error);
         fs.rmSync(extractPath, { recursive: true, force: true });
         util.handleError(res, error);
     }
 };
 
-const getOrgContent = async (orgId, fileType, fileName, filePath) => {
+const getOrgContent = async (orgId, viewName, fileType, fileName, filePath) => {
 
     return await adminDao.getOrgContent({
         orgId: orgId,
+        viewName: viewName,
         fileType: fileType,
         fileName: fileName,
         filePath: filePath
@@ -339,7 +360,7 @@ const deleteOrgContent = async (req, res) => {
         if (!req.query.fileName) {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'fileName'");
         }
-        const deletedRowsCount = await adminDao.deleteOrgContent(req.params.orgId, fileName);
+        const deletedRowsCount = await adminDao.deleteOrgContent(req.params.orgId, req.params.name, fileName);
         if (deletedRowsCount > 0) {
             res.status(204).send();
         } else {
@@ -519,5 +540,5 @@ module.exports = {
     getProviders,
     getAllProviders,
     deleteProvider,
-
+    getProvidetByName
 };

@@ -35,6 +35,7 @@ const generateArray = (length) => Array.from({ length });
 const loadAPIs = async (req, res) => {
 
     const orgName = req.params.orgName;
+    const viewName = req.params.viewName;
     let html;
     if (config.mode === constants.DEV_MODE) {
         const templateContent = {
@@ -46,12 +47,12 @@ const loadAPIs = async (req, res) => {
         try {
             const orgID = await adminDao.getOrgId(orgName);
             const searchTerm = req.query.query;
-            const metaData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm);
+            const metaData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, viewName);
             const templateContent = {
                 apiMetadata: metaData,
-                baseUrl: '/' + orgName
+                baseUrl: '/' + orgName + '/views/' + viewName
             };
-            html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis");
+            html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
         } catch (error) {
             console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
             html = constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR;
@@ -73,7 +74,6 @@ const loadAPIContent = async (req, res) => {
         if (fs.existsSync(filePath)) {
             hbs.handlebars.registerPartial('api-content', fs.readFileSync(filePath, constants.CHARSET_UTF8));
         }
-
         let subscriptionPlans = [];
         metaData.subscriptionPolicies.forEach(policy => {
             const subscriptionPlan = {
@@ -98,7 +98,8 @@ const loadAPIContent = async (req, res) => {
     } else {
         try {
             const orgID = await adminDao.getOrgId(orgName);
-            const apiID = await apiDao.getAPIId(apiName);
+            const apiID = await apiDao.getAPIId(orgID, apiName);
+            const viewName = req.params.viewName;
             const metaData = await loadAPIMetaData(req, orgID, apiID);
             let subscriptionPlans = [];
 
@@ -128,10 +129,10 @@ const loadAPIContent = async (req, res) => {
                 providerUrl: providerUrl,
                 apiMetadata: metaData,
                 subscriptionPlans: subscriptionPlans,
-                baseUrl: '/' + orgName,
+                baseUrl: '/' + orgName + '/views/' + viewName,
                 schemaUrl: `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${constants.FILE_NAME.API_DEFINITION_XML}`
             };
-            html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing");
+            html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
             res.send(html);
         } catch (error) {
             console.error(`Failed to load api content: ,${error}`);
@@ -152,7 +153,7 @@ const loadSubscriptionPlan = async (req, res, policyId) => {
 
 const loadTryOutPage = async (req, res) => {
 
-    const { orgName, apiName } = req.params;
+    const { orgName, apiName, viewName } = req.params;
     let html = "";
     if (config.mode === constants.DEV_MODE) {
         const metaData = loadAPIMetaDataFromFile(apiName);
@@ -170,7 +171,7 @@ const loadTryOutPage = async (req, res) => {
     } else {
         try {
             const orgID = await adminDao.getOrgId(orgName);
-            const apiID = await apiDao.getAPIId(apiName);
+            const apiID = await apiDao.getAPIId(orgID, apiName);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
             let apiDefinition;
             if (metaData.apiInfo.apiType !== "GraphQL") {
@@ -180,13 +181,13 @@ const loadTryOutPage = async (req, res) => {
             }
             const templateContent = {
                 apiMetadata: metaData,
-                baseUrl: req.params.orgName,
+                baseUrl: req.params.orgName + '/views/' + viewName,
                 apiType: metaData.apiInfo.apiType,
                 swagger: apiDefinition
             };
             const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'tryout', 'page.hbs');
             const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
-            const layoutResponse = await loadLayoutFromAPI(orgID);
+            const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
             html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         } catch (error) {
             console.error(`Failed to load api tryout :`, error);
@@ -207,7 +208,7 @@ async function loadAPIMetaDataList() {
     return mockAPIMetaData;
 }
 
-async function loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm) {
+async function loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, viewName) {
 
     let groups = "";
     let groupList = [];
@@ -217,10 +218,7 @@ async function loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm) {
     if (groups !== "") {
         groupList = groups.split(" ");
     }
-    let metaData = await apiMetadataService.getMetadataListFromDB(orgID, groupList, searchTerm);
-    metaData.forEach(item => {
-        item.baseUrl = '/' + orgName;
-    });
+    let metaData = await apiMetadataService.getMetadataListFromDB(orgID, groupList, searchTerm, viewName);
     metaData.forEach(element => {
         const randomNumber = Math.floor(Math.random() * 3) + 3;
         element.apiInfo.ratings = generateArray(randomNumber);
@@ -237,10 +235,10 @@ async function loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm) {
     return JSON.parse(data);
 }
 
-async function loadAPIMetaData(req, orgID, apiID) {
+async function loadAPIMetaData(req, orgID, apiID, viewName) {
 
     let metaData = {};
-    metaData = await apiMetadataService.getMetadataFromDB(orgID, apiID);
+    metaData = await apiMetadataService.getMetadataFromDB(orgID, apiID, viewName);
     const data = metaData ? JSON.stringify(metaData) : {};
     metaData = JSON.parse(data);
     //replace image urls

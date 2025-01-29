@@ -23,7 +23,9 @@ const util = require("../utils/util");
 const path = require("path");
 const fs = require("fs").promises;
 const APIDTO = require("../dto/apiDTO");
+const ViewDTO = require("../dto/views");
 const constants = require("../utils/constants");
+const LabelDTO = require("../dto/label");
 
 const createAPIMetadata = async (req, res) => {
 
@@ -50,7 +52,6 @@ const createAPIMetadata = async (req, res) => {
             // Create apimetadata record
             const createdAPI = await apiDao.createAPIMetadata(orgId, apiMetadata, t);
             const apiID = createdAPI.dataValues.API_ID;
-
             if (apiMetadata.subscriptionPolicies) {
                 const subscriptionPolicies = apiMetadata.subscriptionPolicies;
                 if (!Array.isArray(subscriptionPolicies)) {
@@ -60,13 +61,25 @@ const createAPIMetadata = async (req, res) => {
                 }
                 await apiDao.createSubscriptionPolicy(subscriptionPolicies, apiID, orgId, t);
             }
+            //store api labels
+            if (apiMetadata.apiInfo.labels) {
+                const labels = apiMetadata.apiInfo.labels;
+                if (!Array.isArray(labels)) {
+                    throw new Sequelize.ValidationError(
+                        "Missing or Invalid fields in the request payload"
+                    );
+                }
+                await apiDao.createAPILabelMapping(orgId, apiID, labels, t);
+            } else {
+                await apiDao.createAPILabelMapping(orgId, apiID, ['default'], t);
+            }
             // store api definition file
             await apiDao.storeAPIFile(apiDefinitionFile, apiFileName, apiID, orgId, t);
             apiMetadata.apiID = apiID;
         });
         res.status(201).send(apiMetadata);
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.API_CREATE_ERROR}, ${error}`);
+        console.error(`${constants.ERROR_MESSAGE.API_CREATE_ERROR}`, error);
         util.handleError(res, error);
     }
 };
@@ -81,10 +94,14 @@ const getAPIMetadata = async (req, res) => {
     }
     try {
         const retrievedAPI = await getMetadataFromDB(orgId, apiId);
-        // Create response object
-        res.status(200).send(retrievedAPI);
+        if (retrievedAPI !== "") {
+            // Create response object
+            res.status(200).send(retrievedAPI);
+        } else {
+            res.status(404).send("API not found");
+        }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.API_NOT_FOUND}, ${error}`);
+        console.error(`${constants.ERROR_MESSAGE.API_NOT_FOUND}`, error);
         util.handleError(res, error);
     }
 };
@@ -95,7 +112,9 @@ const getMetadataFromDB = async (orgID, apiID) => {
         const retrievedAPI = await apiDao.getAPIMetadata(orgID, apiID, t);
         if (retrievedAPI.length > 0) {
             return new APIDTO(retrievedAPI[0]);
-        } else return {};
+        } else {
+            return "";
+        }
     });
 };
 
@@ -103,6 +122,7 @@ const getAllAPIMetadata = async (req, res) => {
 
     const orgID = req.params.orgId;
     const searchTerm = req.query.query;
+    const viewName = req.query.view;
 
     let groupList = [];
     if (req.query.groups) {
@@ -112,23 +132,23 @@ const getAllAPIMetadata = async (req, res) => {
         throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
     }
     try {
-        const retrievedAPIs = await getMetadataListFromDB(orgID, groupList, searchTerm);
+        const retrievedAPIs = await getMetadataListFromDB(orgID, groupList, searchTerm, viewName);
         res.status(200).send(retrievedAPIs);
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.API_NOT_FOUND}, ${error}`);
+        console.error(`${constants.ERROR_MESSAGE.API_NOT_FOUND}`, error);
         util.handleError(res, error);
     }
 };
 
-const getMetadataListFromDB = async (orgID, groups, searchTerm) => {
+const getMetadataListFromDB = async (orgID, groups, searchTerm, viewName) => {
 
     return await sequelize.transaction(async (t) => {
         let retrievedAPIs;
 
         if (searchTerm) {
-            retrievedAPIs = await apiDao.searchAPIMetadata(orgID, groups, searchTerm, t);
+            retrievedAPIs = await apiDao.searchAPIMetadata(orgID, groups, searchTerm, viewName, t);
         } else {
-            retrievedAPIs = await apiDao.getAllAPIMetadata(orgID, groups, t);
+            retrievedAPIs = await apiDao.getAllAPIMetadata(orgID, groups, viewName, t);
         }
         // Create response object
         const apiCreationResponse = retrievedAPIs.map((api) => new APIDTO(api));
@@ -160,6 +180,29 @@ const updateAPIMetadata = async (req, res) => {
             if (!updatedRows) {
                 throw new Sequelize.EmptyResultError("No record found to update");
             }
+            if (apiMetadata.apiInfo.addedLabels) {
+                const labels = apiMetadata.apiInfo.addedLabels;
+                if (!Array.isArray(labels)) {
+                    throw new Sequelize.ValidationError(
+                        "Missing or Invalid fields in the request payload"
+                    );
+                }
+                await apiDao.createAPILabelMapping(orgId, apiId, labels, t);
+                updatedAPI[0].dataValues.addedLabels = apiMetadata.apiInfo.addedLabels;
+            }
+            if (apiMetadata.apiInfo.removedLabels) {
+                const labels = apiMetadata.apiInfo.removedLabels;
+                if (!Array.isArray(labels)) {
+                    throw new Sequelize.ValidationError(
+                        "Missing or Invalid fields in the request payload"
+                    );
+                }
+                const labelDelete = await apiDao.deleteAPILabels(orgId, apiId, labels, t);
+                if (labelDelete === 0) {
+                    throw new Sequelize.EmptyResultError("API Labels not found to delete");
+                }
+                updatedAPI[0].dataValues.removedLabels = apiMetadata.apiInfo.removedLabels;
+            }
             if (apiMetadata.subscriptionPolicies) {
                 const subscriptionPolicies = apiMetadata.subscriptionPolicies;
                 if (!Array.isArray(subscriptionPolicies)) {
@@ -178,7 +221,7 @@ const updateAPIMetadata = async (req, res) => {
             res.status(200).send(new APIDTO(updatedAPI[0].dataValues));
         });
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.API_UPDATE_ERROR}, ${error}`);
+        console.error(`${constants.ERROR_MESSAGE.API_UPDATE_ERROR}`, error);
         util.handleError(res, error);
     }
 };
@@ -363,7 +406,7 @@ const deleteAPIFile = async (req, res) => {
 const createLabels = async (req, res) => {
 
     const orgId = req.params.orgId;
-    const labels = JSON.parse(req.body.labels);
+    const labels = req.body;
     try {
         if (!orgId || !labels) {
             throw new Sequelize.ValidationError(
@@ -374,6 +417,24 @@ const createLabels = async (req, res) => {
         res.status(201).send(labels);
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.LABEL_CREATE_ERROR}, ${error}`);
+        util.handleError(res, error);
+    }
+}
+
+const updateLabel = async (req, res) => {
+
+    const orgId = req.params.orgId;
+    const label = req.body;
+    try {
+        if (!orgId || !label) {
+            throw new Sequelize.ValidationError(
+                "Missing or Invalid fields in the request payload"
+            );
+        }
+        await apiDao.updateLabel(orgId, label);
+        res.status(201).send(label);
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.LABEL_UPDATE_ERROR}`, error);
         util.handleError(res, error);
     }
 }
@@ -389,7 +450,7 @@ const deleteLabels = async (req, res) => {
     }
     try {
         await apiDao.deleteLabel(orgId, labelName);
-        res.status(204).send(labels);
+        res.status(204).send();
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.LABEL_DELETE_ERROR}`, error);
         util.handleError(res, error);
@@ -416,7 +477,8 @@ const retrieveLabels = async (req, res) => {
 const getOrgLabels = async (orgId) => {
 
     try {
-        return await apiDao.getLabels(orgId);
+        const labels = await apiDao.getLabels(orgId);
+        return labels.map((label) => new LabelDTO(label));
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.LABEL_UPDATE_ERROR}, ${error}`);
         util.handleError(res, error);
@@ -426,7 +488,7 @@ const getOrgLabels = async (orgId) => {
 const addView = async (req, res) => {
 
     const orgId = req.params.orgId;
-    const labels = JSON.parse(req.body.labels);
+    const labels = req.body.labels;
     const viewName = req.body.name;
     if (!orgId || !viewName || !labels) {
         throw new Sequelize.ValidationError(
@@ -440,7 +502,7 @@ const addView = async (req, res) => {
             await apiDao.addViewLabels(orgId, viewID, labels, t);
             res.status(201).send({ message: "View added successfully" });
         } catch (error) {
-            console.error(`${constants.ERROR_MESSAGE.VIEW_CREATE_ERROR}, ${error}`);
+            console.error(`${constants.ERROR_MESSAGE.VIEW_CREATE_ERROR}`, error);
             util.handleError(res, error);
         }
     });
@@ -449,33 +511,123 @@ const addView = async (req, res) => {
 const updateView = async (req, res) => {
 
     const orgId = req.params.orgId;
-    const removedLabels = req.body.removedLabels ? JSON.parse(req.body.removedLabels): [];
-    const addedLabels = req.body.addedLabels ? JSON.parse(req.body.addedLabels): [];
+    const removedLabels = req.body.removedLabels ? req.body.removedLabels : [];
+    const addedLabels = req.body.addedLabels ? req.body.addedLabels : [];
     const viewName = req.params.name;
-    if (!orgId || !viewName || addedLabels.length === 0) {
+    if (!orgId || !viewName) {
         throw new Sequelize.ValidationError(
             "Missing or Invalid fields in the request payload"
         );
     }
-    await sequelize.transaction(async (t) => {
-        try {
+    try {
+        await sequelize.transaction(async (t) => {
+
+            let viewID = "";
             if (req.body.displayName) {
-                let [updatedRows, updateView] = await apiDao.updateView(orgId, viewName, req.body.displayName, t);
+                let [updatedRows, viewResponse] = await apiDao.updateView(orgId, viewName, req.body.displayName, t);
                 if (!updatedRows) {
                     throw new Sequelize.EmptyResultError("No record found to update");
                 }
+                viewID = viewResponse[0].dataValues.VIEW_ID;
             }
             if (removedLabels.length !== 0) {
-                await apiDao.deleteViewLabels(orgId, viewName, removedLabels, t);
+                await apiDao.deleteViewLabels(orgId, viewID, removedLabels, t);
             }
-            const viewID = viewResponse.dataValues.VIEW_ID;
-            await apiDao.addViewLabels(orgId, viewID, labels, t);
-            res.status(201).send({ message: "View added successfully" });
-        } catch (error) {
-            console.error(`${constants.ERROR_MESSAGE.VIEW_CREATE_ERROR}, ${error}`);
-            util.handleError(res, error);
+            if (addedLabels.length !== 0) {
+                viewID = viewID ? viewID : await apiDao.getViewID(orgId, viewName, t);
+                await apiDao.addViewLabels(orgId, viewID, addedLabels, t);
+            }
+            res.status(200).send(req.body);
+        });
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.VIEW_UPDATE_ERROR}`, error);
+        util.handleError(res, error);
+    }
+}
+
+const deleteView = async (req, res) => {
+
+    const orgId = req.params.orgId;
+    const name = req.params.name;
+    if (!orgId || !name) {
+        throw new Sequelize.ValidationError(
+            "Missing or Invalid fields in the request payload"
+        );
+    }
+    try {
+        const viewDelete = await apiDao.deleteView(orgId, name);
+        if (viewDelete === 0) {
+            throw new Sequelize.EmptyResultError("Resource not found to delete");
+        } else {
+            res.status(204).send("View Deleted Successfully");
         }
-    });
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.VIEW_DELETE_ERROR}`, error);
+        util.handleError(res, error);
+    }
+}
+
+const getView = async (req, res) => {
+
+    const orgId = req.params.orgId;
+    const name = req.params.name;
+    if (!orgId || !name) {
+        throw new Sequelize.ValidationError(
+            "Missing or Invalid fields in the request payload"
+        );
+    }
+    try {
+        const view = await getViewInfo(orgId, name);
+        if (view) {
+            res.status(200).send(view);
+        } else {
+            res.status(404).send(`View ${name} not found`);
+        }
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.VIEW_RETRIEVE_ERROR}`, error);
+        util.handleError(res, error);
+    }
+}
+
+const getViewInfo = async (orgId, name) => {
+
+    const view =  await apiDao.getView(orgId, name);
+    if (view.dataValues) {
+        return new ViewDTO(view.dataValues);
+    } else {
+       return null;
+    }
+}
+
+const getAllViews = async (req, res) => {
+
+    const orgId = req.params.orgId;
+    if (!orgId) {
+        throw new Sequelize.ValidationError(
+            "Missing or Invalid fields in the request payload"
+        );
+    }
+    try {
+        const views = await getViewsFromDB(orgId);
+        if (views.length > 0) {
+            return res.status(200).send(views);;
+        } else {
+            res.status(404).send("No views found");
+        }
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.VIEW_RETRIEVE_ERROR}`, error);
+        util.handleError(res, error);
+    }
+}
+
+const getViewsFromDB = async (orgId) => {
+
+    const views = await apiDao.getAllViews(orgId);
+    if (views.length > 0) {
+        return views.map((view) => new ViewDTO(view));
+    } else {
+        return [];
+    }
 }
 
 module.exports = {
@@ -493,6 +645,13 @@ module.exports = {
     createLabels,
     deleteLabels,
     retrieveLabels,
+    getOrgLabels,
+    updateLabel,
     addView,
-    updateView
+    updateView,
+    deleteView,
+    getView,
+    getAllViews,
+    getViewsFromDB,
+    getViewInfo
 };

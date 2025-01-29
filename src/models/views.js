@@ -17,7 +17,6 @@
  */
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize');
-const { Organization } = require('./orgModels')
 
 const View = sequelize.define('DP_VIEWS', {
     VIEW_ID: {
@@ -32,24 +31,24 @@ const View = sequelize.define('DP_VIEWS', {
     },
     NAME: {
         type: DataTypes.STRING,
-        allowNull: false,
-        unique: true
+        allowNull: false
     },
     DISPLAY_NAME: {
         type: DataTypes.STRING,
-        allowNull: false,
-        unique: true
+        allowNull: false
     }
 }, {
     timestamps: false,
     tableName: 'DP_VIEWS',
     returning: true
-});
+},
+    {
+        indexes: [
+            {
+                unique: true,
+                fields: ['NAME', 'DISPLAY_NAME', 'ORG_ID']
+            }
+        ]
+    });
 
-View.belongsTo(Organization, {
-    foreignKey: 'ORG_ID'
-  })
-
-module.exports = {
-    View
-};
+module.exports = View;

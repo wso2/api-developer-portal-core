@@ -18,12 +18,11 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize');
 const { Organization } = require('./orgModels')
-const { View } = require('./views');
-const { Labels } = require('./labels');
+const View = require('./views');
+const Labels = require('./labels');
 
 
 const ViewLabels = sequelize.define('DP_VIEW_LABELS', {
-
     ID: {
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -34,31 +33,40 @@ const ViewLabels = sequelize.define('DP_VIEW_LABELS', {
         defaultValue: Sequelize.UUIDV4
     },
     VIEW_ID: {
-        type: DataTypes.STRING,
-        allowNull: false
+        type: DataTypes.UUID,
+        references: {
+            model: View,
+            key: 'VIEW_ID',
+        },
     },
     LABEL_ID: {
-        type: DataTypes.STRING,
-        allowNull: false
+        type: DataTypes.UUID,
+        references: {
+            model: Labels,
+            key: 'LABEL_ID',
+        }
     }
 }, {
     timestamps: false,
     tableName: 'DP_VIEW_LABELS',
-    returning: true
+    returning: true,
+    unique: false
 });
 
 ViewLabels.belongsTo(Organization, {
     foreignKey: 'ORG_ID'
 });
 
-ViewLabels.belongsTo(Labels, {
-    foreignKey: 'LABEL_ID'
+View.belongsToMany(Labels, {
+    through: ViewLabels,
+    foreignKey: "VIEW_ID",
+    otherKey: "LABEL_ID",
+});
+Labels.belongsToMany(View, {
+    through: ViewLabels,
+    foreignKey: "LABEL_ID",
+    otherKey: "VIEW_ID",
 });
 
-ViewLabels.belongsTo(View, {
-    foreignKey: 'VIEW_ID'
-});
+module.exports = ViewLabels;
 
-module.exports = {
-    ViewLabels
-};

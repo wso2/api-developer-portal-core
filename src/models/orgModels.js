@@ -18,7 +18,7 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize');
 const Provider = require('../models/provider');
-
+const Views = require('../models/views');
 
 const Organization = sequelize.define('DP_ORGANIZATION', {
     ORG_ID: {
@@ -83,7 +83,7 @@ const Organization = sequelize.define('DP_ORGANIZATION', {
 });
 
 const OrgContent = sequelize.define('DP_ORGANIZATION_ASSETS', {
-    ASSERT_ID: {
+    ASSET_ID: {
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true
@@ -108,6 +108,11 @@ const OrgContent = sequelize.define('DP_ORGANIZATION_ASSETS', {
         type: DataTypes.UUID,
         allowNull: false,
         forignKey: true,
+    },
+    VIEW_ID: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        forignKey: true,
     }
 }, {
     timestamps: false,
@@ -116,7 +121,7 @@ const OrgContent = sequelize.define('DP_ORGANIZATION_ASSETS', {
     indexes: [
         {
             unique: true,
-            fields: ['FILE_TYPE', 'FILE_NAME', 'FILE_PATH', 'ORG_ID']
+            fields: ['FILE_TYPE', 'FILE_NAME', 'FILE_PATH', 'ORG_ID', 'VIEW_ID']
         }
     ]
 });
@@ -124,6 +129,19 @@ const OrgContent = sequelize.define('DP_ORGANIZATION_ASSETS', {
 OrgContent.belongsTo(Organization, {
     foreignKey: 'ORG_ID',
 });
+
+OrgContent.belongsTo(Views, {
+    foreignKey: 'VIEW_ID',
+});
+
+Views.hasOne(OrgContent, {
+    foreignKey: 'VIEW_ID',
+    onDelete: 'CASCADE',
+});
+
+Views.belongsTo(Organization, {
+    foreignKey: 'ORG_ID'
+})
 
 Organization.hasMany(OrgContent, {
     foreignKey: 'ORG_ID',

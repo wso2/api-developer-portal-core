@@ -34,19 +34,29 @@ const Labels = sequelize.define('DP_LABELS', {
     },
     NAME: {
         type: DataTypes.STRING,
-        allowNull: false,
-        unique: true
-    }
+        allowNull: false
+    },
+    DISPLAY_NAME: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
 }, {
     timestamps: false,
     tableName: 'DP_LABELS',
     returning: true
-});
+},
+    {
+        indexes: [
+            {
+                unique: true,
+                fields: ['NAME', 'DISPLAY_NAME', 'ORG_ID']
+            }
+        ]
+    });
 
 Labels.belongsTo(Organization, {
     foreignKey: 'ORG_ID'
-  })
+})
 
-module.exports = {
-    Labels
-};
+module.exports = Labels;
+

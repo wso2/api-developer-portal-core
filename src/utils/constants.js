@@ -152,7 +152,12 @@ module.exports = {
         PROVIDER_FETCH_ERROR: "Error while fetching providers",
         LABEL_DELETE_ERROR: "Error while deleting label",
         LABEL_RETRIEVE_ERROR: "Error while deleting label",
-        LABEL_CREATE_ERROR: "Error while creating labels"
+        LABEL_CREATE_ERROR: "Error while creating labels",
+        LABEL_UPDATE_ERROR: "Error while updating labels",
+        VIEW_CREATE_ERROR: "Error while creating view",
+        VIEW_UPDATE_ERROR: "Error while updating view",
+        VIEW_DELETE_ERROR: "Error while deleting view",
+        VIEW_RETRIEVE_ERROR: "Error while fetching view"
     },
     ERROR_CODE: {
         401: "Unauthenticated",
