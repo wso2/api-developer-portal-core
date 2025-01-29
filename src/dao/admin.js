@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-const { Organization, OrgContent } = require('../models/orgModels');
+const { Organization, OrgContent } = require('../models/organization');
 const { validate } = require('uuid');
 const { Sequelize } = require('sequelize');
 const { IdentityProvider } = require('../models/identityProvider');

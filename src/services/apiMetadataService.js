@@ -52,13 +52,23 @@ const createAPIMetadata = async (req, res) => {
             const apiID = createdAPI.dataValues.API_ID;
 
             if (apiMetadata.subscriptionPolicies) {
-                const subscriptionPolicies = apiMetadata.subscriptionPolicies;
-                if (!Array.isArray(subscriptionPolicies)) {
+                const subscriptionPolicies = [];
+                const apiSubscriptionPolicies = apiMetadata.subscriptionPolicies;
+                if (!Array.isArray(apiSubscriptionPolicies)) {
                     throw new Sequelize.ValidationError(
                         "Missing or Invalid fields in the request payload"
                     );
+                } else {
+                    for (const policy of apiSubscriptionPolicies) {
+                        const subscriptionPolicy = await apiDao.getSubscriptionPolicyByName(orgId, policy.policyName);
+                        if (!subscriptionPolicy) {
+                            throw new Sequelize.EmptyResultError("Subscription policy not found");
+                        } else {
+                            subscriptionPolicies.push({ apiID: apiID, policyID: subscriptionPolicy.POLICY_ID });
+                        }
+                    };
                 }
-                await apiDao.createSubscriptionPolicy(subscriptionPolicies, apiID, orgId, t);
+                await apiDao.createAPISubscriptionPolicy(subscriptionPolicies, apiID, t);
             }
             // store api definition file
             await apiDao.storeAPIFile(apiDefinitionFile, apiFileName, apiID, orgId, t);
@@ -169,14 +179,26 @@ const updateAPIMetadata = async (req, res) => {
                 throw new Sequelize.EmptyResultError("No record found to update");
             }
             if (apiMetadata.subscriptionPolicies) {
-                const subscriptionPolicies = apiMetadata.subscriptionPolicies;
-                if (!Array.isArray(subscriptionPolicies)) {
+                const subscriptionPolicies = [];
+                const apiSubscriptionPolicies = apiMetadata.subscriptionPolicies;
+                if (!Array.isArray(apiSubscriptionPolicies)) {
                     throw new Sequelize.ValidationError(
                         "Missing or Invalid fields in the request payload"
                     );
+                } else {
+                    for (const policy of apiSubscriptionPolicies) {
+                        const subscriptionPolicy = await apiDao.getSubscriptionPolicyByName(orgId, policy.policyName);
+                        if (!subscriptionPolicy) {
+                            throw new Sequelize.EmptyResultError("Subscription policy not found");
+                        } else {
+                            subscriptionPolicies.push({ apiID: apiId, policyID: subscriptionPolicy.POLICY_ID });
+                        }
+                    };
                 }
-                const subscriptionPolicyResponse = await apiDao.updateSubscriptionPolicy(orgId, apiId, subscriptionPolicies, t);
-                updatedAPI[0].dataValues["DP_API_SUBSCRIPTION_POLICies"] = subscriptionPolicyResponse;
+                // Get subscription policy IDs and fail if any policy is not found
+                await apiDao.updateAPISubscriptionPolicy(subscriptionPolicies, apiId, orgId, t);
+                console.log("apiMetadata.subscriptionPolicies", await apiDao.getSubscriptionPolicies(apiId, t));
+                updatedAPI[0].dataValues["DP_API_SUBSCRIPTION_POLICies"] = await apiDao.getSubscriptionPolicies(apiId, t);
             }
             // update api definition file
             const updatedFileCount = await apiDao.updateAPIFile(apiDefinitionFile, apiFileName, apiId, orgId, t);
@@ -367,6 +389,75 @@ const deleteAPIFile = async (req, res) => {
         util.handleError(res, error);
     }
 };
+
+const createSubscriptionPolicy = async (req, res) => {
+
+    const { orgId } = req.params;
+    const subscriptionPolicyBody = req.body;
+    if (!orgId || !subscriptionPolicyBody) {
+        throw new Sequelize.ValidationError(
+            "Missing or Invalid fields in the request payload"
+        );
+    }
+    console.log(subscriptionPolicyBody);
+
+    try {
+        await sequelize.transaction(async (t) => {
+            const subscriptionPolicyResponse = await apiDao.createSubscriptionPolicy(orgId, subscriptionPolicyBody, t);
+            res.status(201).send(subscriptionPolicyResponse);
+        });
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_CREATE_ERROR}, ${error}`);
+        util.handleError(res, error);
+    }
+};
+
+const updateSubscriptionPolicy = async (req, res) => {
+
+    const { orgId, apiId } = req.params;
+    const subscriptionPolicies = req.body;
+    if (!orgId || !apiId || !subscriptionPolicies) {
+        throw new Sequelize.ValidationError(
+            "Missing or Invalid fields in the request payload"
+        );
+    }
+    try {
+        await sequelize.transaction(async (t) => {
+            const subscriptionPolicyResponse = await apiDao.updateSubscriptionPolicy(subscriptionPolicies, apiId, orgId, t);
+            res.status(200).send(subscriptionPolicyResponse);
+        });
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_UPDATE_ERROR}, ${error}`);
+        util.handleError(res, error);
+    }
+};
+
+const deleteSubscriptionPolicy = async (req, res) => {
+
+    const { orgId, apiId } = req.params;
+    const subscriptionPolicyId = req.query.policyId;
+    if (!orgId || !apiId || !subscriptionPolicyId) {
+        throw new Sequelize.ValidationError(
+            "Missing or Invalid fields in the request payload"
+        );
+    }
+    try {
+        await sequelize.transaction(async (t) => {
+            const subscriptionPolicyResponse = await apiDao.deleteSubscriptionPolicy(subscriptionPolicyId, apiId, orgId, t);
+            res.status(204).send(subscriptionPolicyResponse);
+        });
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_DELETE_ERROR}, ${error}`);
+        util.handleError(res, error);
+    }
+};
+
+const getSubscriptionPolicy = async (req, res) => {
+
+    const { orgId, apiId } = req.params;
+    const subscriptionPolicyId = req.query
+};
+
 module.exports = {
     createAPIMetadata,
     getAPIMetadata,
@@ -379,4 +470,8 @@ module.exports = {
     deleteAPIFile,
     getMetadataListFromDB,
     getMetadataFromDB,
+    createSubscriptionPolicy,
+    updateSubscriptionPolicy,
+    deleteSubscriptionPolicy,
+    getSubscriptionPolicy
 };

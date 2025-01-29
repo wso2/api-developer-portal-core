@@ -16,6 +16,7 @@
  * under the License.
  */
 const { APIMetadata } = require('../models/apiMetadata');
+const APISubscriptionPolicy = require('../models/apiSubscriptionPolicy');
 const SubscriptionPolicy = require('../models/subscriptionPolicy');
 const APIContent = require('../models/apiContent');
 const APIImageMetadata = require('../models/apiImages');
@@ -59,17 +60,36 @@ const createAPIMetadata = async (orgID, apiMetadata, t) => {
     }
 };
 
-const createSubscriptionPolicy = async (subscriptionPolicies, apiID, orgID, t) => {
+const createAPISubscriptionPolicy = async (apiSubscriptionPolicies, apiID, t) => {
 
-    let subscriptionPolicyList = []
+    let apiSubscriptionPolicyList = []
     try {
-        subscriptionPolicies.forEach(policy => {
-            subscriptionPolicyList.push({
-                POLICY_NAME: policy.policyName,
+        apiSubscriptionPolicies.forEach(policy => {
+            apiSubscriptionPolicyList.push({
+                POLICY_ID: policy.policyID,
                 API_ID: apiID
             })
         });
-        const subscriptionPolicyResponse = await SubscriptionPolicy.bulkCreate(subscriptionPolicyList, { transaction: t });
+        const apiSubscriptionPolicyResponse = await APISubscriptionPolicy.bulkCreate(apiSubscriptionPolicyList, { transaction: t });
+        return apiSubscriptionPolicyResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.ValidationError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const createSubscriptionPolicy = async (orgID, policy, t) => {
+
+    try {
+        const subscriptionPolicyResponse = await SubscriptionPolicy.create({
+            POLICY_NAME: policy.policyName,
+            DISPLAY_NAME: policy.displayName,
+            BILLING_PLAN: policy.billingPlan,
+            DESCRIPTION: policy.description,
+            ORG_ID: orgID
+        }, { transaction: t });
         return subscriptionPolicyResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -77,7 +97,26 @@ const createSubscriptionPolicy = async (subscriptionPolicies, apiID, orgID, t) =
         }
         throw new Sequelize.DatabaseError(error);
     }
-}
+};
+
+const getSubscriptionPolicyByName = async (orgID, policyName, t) => {
+
+    try {
+        const subscriptionPolicyResponse = await SubscriptionPolicy.findOne({
+            where: {
+                POLICY_NAME: policyName,
+                ORG_ID: orgID
+            }
+        }, { transaction: t });
+        return subscriptionPolicyResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.ValidationError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
 
 const storeAPIImageMetadata = async (apiImages, apiID, t) => {
 
@@ -244,6 +283,7 @@ const getAPIMetadataByCondition = async (condition, t) => {
                 required: false
             }, {
                 model: SubscriptionPolicy,
+                through: { attributes: [] },
                 required: false
             }
             ],
@@ -273,6 +313,7 @@ const getAPIMetadata = async (orgID, apiID, t) => {
                 where: {
                     API_ID: apiID
                 },
+                through: { attributes: [] },
                 required: false
             }
             ],
@@ -307,6 +348,7 @@ const getAllAPIMetadata = async (orgID, groups, t) => {
                     required: false
                 }, {
                     model: SubscriptionPolicy,
+                    through: { attributes: [] },
                     required: false
                 }],
             }, { transaction: t });
@@ -334,6 +376,7 @@ const getAllAPIMetadata = async (orgID, groups, t) => {
                 required: false
             }, {
                 model: SubscriptionPolicy,
+                through: { attributes: [] },
                 required: false
             }],
         }, { transaction: t });
@@ -466,26 +509,28 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
     }
 }
 
-async function updateSubscriptionPolicy(orgID, apiID, subscriptionPolicies, t) {
+async function updateAPISubscriptionPolicy(subscriptionPolicies, apiID, orgID, t) {
 
     let policiesToCreate = [];
-    let existingPolicies = [];
     try {
         for (const policy of subscriptionPolicies) {
-            const subscriptionResponse = await getSubscriptionPolicy(policy.policyName, apiID, orgID, t);
-            if (subscriptionResponse == null || subscriptionResponse == undefined) {
-                policiesToCreate.push({
-                    POLICY_NAME: policy.policyName,
-                    API_ID: apiID
-                })
-            } else {
-                existingPolicies.push(subscriptionResponse.dataValues);
-            }
+            const subscriptionResponse = await getAPISubscriptionPolicy(apiID, policy.policyID, t);
+            console.log("subscriptionResponse", subscriptionResponse);
+            policiesToCreate.push({
+                POLICY_ID: policy.policyID,
+                API_ID: apiID
+            })
         }
         if (policiesToCreate.length > 0) {
-            return await SubscriptionPolicy.bulkCreate(policiesToCreate, { transaction: t });
+            APISubscriptionPolicy.destroy({
+                where: {
+                    API_ID: apiID
+                }
+            }, { transaction: t });
+            console.log("policiesToCreate", policiesToCreate);
+            return await APISubscriptionPolicy.bulkCreate(policiesToCreate, { transaction: t });
         } else {
-            return existingPolicies;
+            return policiesToCreate;
         }
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -495,24 +540,56 @@ async function updateSubscriptionPolicy(orgID, apiID, subscriptionPolicies, t) {
     }
 }
 
-const getSubscriptionPolicy = async (policyName, apiID, orgID, t) => {
+const getSubscriptionPolicy = async (policyID, orgID, t) => {
 
     try {
         const subscriptionPolicyResponse = await SubscriptionPolicy.findOne({
             where: {
-                API_ID: apiID,
-                POLICY_NAME: policyName
-            },
-            include: [
-                {
-                    model: APIMetadata,
-                    where: {
-                        ORG_ID: orgID
-                    }
-                }
-            ]
+                ORG_ID: orgID,
+                POLICY_ID: policyID
+            }
         }, { transaction: t });
         return subscriptionPolicyResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getSubscriptionPolicies = async (apiID, t) => {
+
+    try {
+        const subscriptionPolicyResponse = await SubscriptionPolicy.findAll({
+                  include: [
+                {
+                    model: APIMetadata, 
+                    where: { API_ID: apiID },
+                    through: { attributes: [] }
+                }
+            ],
+            transaction: t
+        }, { transaction: t });
+        return subscriptionPolicyResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getAPISubscriptionPolicy = async (apiID, policyID, t) => {
+
+    try {
+        const apiSubscriptionPolicyResponse = await APISubscriptionPolicy.findOne({
+            where: {
+                API_ID: apiID,
+                POLICY_ID: policyID
+            }
+        }, { transaction: t });
+        return apiSubscriptionPolicyResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
@@ -688,14 +765,14 @@ const getAPIId = async (apiName) => {
 
 module.exports = {
     createAPIMetadata,
-    createSubscriptionPolicy,
+    createAPISubscriptionPolicy,
     storeAPIFile,
     getAPIMetadata,
     getAllAPIMetadata,
     storeAPIImageMetadata,
     deleteAPIMetadata,
     updateAPIMetadata,
-    updateSubscriptionPolicy,
+    updateAPISubscriptionPolicy,
     updateAPIImageMetadata,
     updateAPIFile,
     storeAPIFiles,
@@ -704,5 +781,9 @@ module.exports = {
     deleteAPIFile,
     getAPIId,
     getAPIMetadataByCondition,
-    searchAPIMetadata
+    searchAPIMetadata,
+    createSubscriptionPolicy,
+    getSubscriptionPolicyByName,
+    getSubscriptionPolicy,
+    getSubscriptionPolicies
 };

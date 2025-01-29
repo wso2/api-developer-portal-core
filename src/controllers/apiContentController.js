@@ -271,8 +271,24 @@ function loadAPIMetaDataFromFile(apiName) {
     return JSON.parse(fs.readFileSync(mockAPIDataPath, constants.CHARSET_UTF8));
 }
 
+const createSubscriptionPolicy = async (req, res) => {
+};
+
+const getSubscriptionPolicies = async (req, res) => {
+};
+
+const updateSubscriptionPolicy = async (req, res) => {
+};
+
+const deleteSubscriptionPolicy = async (req, res) => {
+};
+
 module.exports = {
     loadAPIs,
     loadAPIContent,
     loadTryOutPage,
+    createSubscriptionPolicy,
+    getSubscriptionPolicies,
+    updateSubscriptionPolicy,
+    deleteSubscriptionPolicy
 };
