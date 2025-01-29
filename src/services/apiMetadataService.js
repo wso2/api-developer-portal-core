@@ -24,6 +24,7 @@ const path = require("path");
 const fs = require("fs").promises;
 const APIDTO = require("../dto/apiDTO");
 const constants = require("../utils/constants");
+const subscriptionPolicyDTO = require("../dto/subscriptionPolicy");
 
 const createAPIMetadata = async (req, res) => {
 
@@ -196,8 +197,7 @@ const updateAPIMetadata = async (req, res) => {
                     };
                 }
                 // Get subscription policy IDs and fail if any policy is not found
-                await apiDao.updateAPISubscriptionPolicy(subscriptionPolicies, apiId, orgId, t);
-                console.log("apiMetadata.subscriptionPolicies", await apiDao.getSubscriptionPolicies(apiId, t));
+                await apiDao.updateAPISubscriptionPolicy(subscriptionPolicies, apiId, t);
                 updatedAPI[0].dataValues["DP_API_SUBSCRIPTION_POLICies"] = await apiDao.getSubscriptionPolicies(apiId, t);
             }
             // update api definition file
@@ -393,18 +393,16 @@ const deleteAPIFile = async (req, res) => {
 const createSubscriptionPolicy = async (req, res) => {
 
     const { orgId } = req.params;
-    const subscriptionPolicyBody = req.body;
-    if (!orgId || !subscriptionPolicyBody) {
+    const subscriptionPolicy = req.body;
+    if (!orgId || !subscriptionPolicy) {
         throw new Sequelize.ValidationError(
             "Missing or Invalid fields in the request payload"
         );
     }
-    console.log(subscriptionPolicyBody);
-
     try {
         await sequelize.transaction(async (t) => {
-            const subscriptionPolicyResponse = await apiDao.createSubscriptionPolicy(orgId, subscriptionPolicyBody, t);
-            res.status(201).send(subscriptionPolicyResponse);
+            const subscriptionPolicyResponse = await apiDao.createSubscriptionPolicy(orgId, subscriptionPolicy, t);
+            res.status(201).send(new subscriptionPolicyDTO(subscriptionPolicyResponse));
         });
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_CREATE_ERROR}, ${error}`);
@@ -414,17 +412,17 @@ const createSubscriptionPolicy = async (req, res) => {
 
 const updateSubscriptionPolicy = async (req, res) => {
 
-    const { orgId, apiId } = req.params;
-    const subscriptionPolicies = req.body;
-    if (!orgId || !apiId || !subscriptionPolicies) {
+    const { orgId, policyID } = req.params;
+    const subscriptionPolicy = req.body;
+    if (!orgId || !policyID || !subscriptionPolicy) {
         throw new Sequelize.ValidationError(
             "Missing or Invalid fields in the request payload"
         );
     }
     try {
         await sequelize.transaction(async (t) => {
-            const subscriptionPolicyResponse = await apiDao.updateSubscriptionPolicy(subscriptionPolicies, apiId, orgId, t);
-            res.status(200).send(subscriptionPolicyResponse);
+            const subscriptionPolicyResponse = await apiDao.updateSubscriptionPolicy(orgId, policyID, subscriptionPolicy, t);
+            res.status(200).send(new subscriptionPolicyDTO(subscriptionPolicyResponse[0]));
         });
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_UPDATE_ERROR}, ${error}`);
@@ -434,17 +432,16 @@ const updateSubscriptionPolicy = async (req, res) => {
 
 const deleteSubscriptionPolicy = async (req, res) => {
 
-    const { orgId, apiId } = req.params;
-    const subscriptionPolicyId = req.query.policyId;
-    if (!orgId || !apiId || !subscriptionPolicyId) {
+    const { orgId, policyID } = req.params;
+    if (!orgId || !policyID) {
         throw new Sequelize.ValidationError(
             "Missing or Invalid fields in the request payload"
         );
     }
     try {
         await sequelize.transaction(async (t) => {
-            const subscriptionPolicyResponse = await apiDao.deleteSubscriptionPolicy(subscriptionPolicyId, apiId, orgId, t);
-            res.status(204).send(subscriptionPolicyResponse);
+            await apiDao.deleteSubscriptionPolicy(orgId, policyID, t);
+            res.status(204).send();
         });
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_DELETE_ERROR}, ${error}`);
@@ -454,8 +451,21 @@ const deleteSubscriptionPolicy = async (req, res) => {
 
 const getSubscriptionPolicy = async (req, res) => {
 
-    const { orgId, apiId } = req.params;
-    const subscriptionPolicyId = req.query
+    const { orgId, policyID } = req.params;
+
+    if (!orgId || !policyID) {
+        throw new Sequelize.ValidationError(
+            "Missing or Invalid fields in the request payload"
+        );
+    }
+
+    try {
+        const subscriptionPolicyResponse = await apiDao.getSubscriptionPolicy(policyID, orgId);
+        res.status(200).send(new subscriptionPolicyDTO(subscriptionPolicyResponse));
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_GET_ERROR}, ${error}`);
+        util.handleError(res, error);
+    }
 };
 
 module.exports = {

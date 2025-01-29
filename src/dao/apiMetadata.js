@@ -99,6 +99,50 @@ const createSubscriptionPolicy = async (orgID, policy, t) => {
     }
 };
 
+const updateSubscriptionPolicy = async (orgID, policyID, policy, t) => {
+    try {
+        const [affectedCount, updatedRows] = await SubscriptionPolicy.update({
+            POLICY_NAME: policy.policyName,
+            DISPLAY_NAME: policy.displayName,
+            BILLING_PLAN: policy.billingPlan,
+            DESCRIPTION: policy.description
+        }, {
+            where: {
+                POLICY_ID: policyID,
+                ORG_ID: orgID
+            },
+            returning: true,
+            transaction: t
+        });
+        console.log(updatedRows.map(row => row.get({ plain: true })));
+        return updatedRows;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
+const deleteSubscriptionPolicy = async (orgID, policyID, t) => {
+
+    try {
+        const subscriptionPolicyResponse = await SubscriptionPolicy.destroy({
+            where: {
+                POLICY_ID: policyID,
+                ORG_ID: orgID
+            }
+        }, { transaction: t });
+        return subscriptionPolicyResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+
 const getSubscriptionPolicyByName = async (orgID, policyName, t) => {
 
     try {
@@ -424,7 +468,10 @@ const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
             AND metadata."ORG_ID" = :orgID
             AND (
                 content."FILE_NAME" LIKE '%.hbs' 
-                OR content."FILE_NAME" LIKE '%md%' 
+                OR content."FILE_NAME" LIKE '%.md%' 
+                OR content."FILE_NAME" LIKE '%.json%'
+                OR content."FILE_NAME" LIKE '%.xml%'
+                OR content."FILE_NAME" LIKE '%.graphql%'
             )
             AND (
                 (
@@ -509,13 +556,11 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
     }
 }
 
-async function updateAPISubscriptionPolicy(subscriptionPolicies, apiID, orgID, t) {
+async function updateAPISubscriptionPolicy(subscriptionPolicies, apiID, t) {
 
     let policiesToCreate = [];
     try {
         for (const policy of subscriptionPolicies) {
-            const subscriptionResponse = await getAPISubscriptionPolicy(apiID, policy.policyID, t);
-            console.log("subscriptionResponse", subscriptionResponse);
             policiesToCreate.push({
                 POLICY_ID: policy.policyID,
                 API_ID: apiID
@@ -527,7 +572,6 @@ async function updateAPISubscriptionPolicy(subscriptionPolicies, apiID, orgID, t
                     API_ID: apiID
                 }
             }, { transaction: t });
-            console.log("policiesToCreate", policiesToCreate);
             return await APISubscriptionPolicy.bulkCreate(policiesToCreate, { transaction: t });
         } else {
             return policiesToCreate;
@@ -562,9 +606,9 @@ const getSubscriptionPolicies = async (apiID, t) => {
 
     try {
         const subscriptionPolicyResponse = await SubscriptionPolicy.findAll({
-                  include: [
+            include: [
                 {
-                    model: APIMetadata, 
+                    model: APIMetadata,
                     where: { API_ID: apiID },
                     through: { attributes: [] }
                 }
@@ -572,24 +616,6 @@ const getSubscriptionPolicies = async (apiID, t) => {
             transaction: t
         }, { transaction: t });
         return subscriptionPolicyResponse;
-    } catch (error) {
-        if (error instanceof Sequelize.UniqueConstraintError) {
-            throw error;
-        }
-        throw new Sequelize.DatabaseError(error);
-    }
-}
-
-const getAPISubscriptionPolicy = async (apiID, policyID, t) => {
-
-    try {
-        const apiSubscriptionPolicyResponse = await APISubscriptionPolicy.findOne({
-            where: {
-                API_ID: apiID,
-                POLICY_ID: policyID
-            }
-        }, { transaction: t });
-        return apiSubscriptionPolicyResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
@@ -785,5 +811,7 @@ module.exports = {
     createSubscriptionPolicy,
     getSubscriptionPolicyByName,
     getSubscriptionPolicy,
-    getSubscriptionPolicies
+    getSubscriptionPolicies,
+    updateSubscriptionPolicy,
+    deleteSubscriptionPolicy
 };
