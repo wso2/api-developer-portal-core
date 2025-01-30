@@ -52,11 +52,13 @@ const loadAPIs = async (req, res) => {
             const apiData = await loadAPIMetaDataListFromAPI(req, orgID, orgName);
             let apiTags = [];
             apiData.forEach(api => {
-                api.apiInfo.tags.forEach(tag => {
-                    if (!apiTags.includes(tag)) {
-                        apiTags.push(tag);
-                    }
-                });
+                if (api.apiInfo.tags) {
+                    api.apiInfo.tags.forEach(tag => {
+                        if (!apiTags.includes(tag)) {
+                            apiTags.push(tag);
+                        }
+                    });
+                }
             });
             const templateContent = {
                 apiMetadata: metaData,
