@@ -47,9 +47,23 @@ const loadAPIs = async (req, res) => {
         try {
             const orgID = await adminDao.getOrgId(orgName);
             const searchTerm = req.query.query;
-            const metaData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, viewName);
+            const tags = req.query.tags;
+
+            const metaData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, viewName, tags);
+            const apiData = await loadAPIMetaDataListFromAPI(req, orgID, orgName);
+            let apiTags = [];
+            apiData.forEach(api => {
+                if (api.apiInfo.tags) {
+                    api.apiInfo.tags.forEach(tag => {
+                        if (!apiTags.includes(tag)) {
+                            apiTags.push(tag);
+                        }
+                    });
+                }
+            });
             const templateContent = {
                 apiMetadata: metaData,
+                tags: apiTags,
                 baseUrl: '/' + orgName + '/views/' + viewName
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
@@ -208,7 +222,7 @@ async function loadAPIMetaDataList() {
     return mockAPIMetaData;
 }
 
-async function loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, viewName) {
+async function loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName) {
 
     let groups = "";
     let groupList = [];
@@ -218,7 +232,7 @@ async function loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, viewN
     if (groups !== "") {
         groupList = groups.split(" ");
     }
-    let metaData = await apiMetadataService.getMetadataListFromDB(orgID, groupList, searchTerm, viewName);
+    let metaData = await apiMetadataService.getMetadataListFromDB(orgID, groupList, searchTerm, tags, viewName);
     metaData.forEach(element => {
         const randomNumber = Math.floor(Math.random() * 3) + 3;
         element.apiInfo.ratings = generateArray(randomNumber);

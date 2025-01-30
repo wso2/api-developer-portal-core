@@ -45,6 +45,7 @@ const createAPIMetadata = async (orgID, apiMetadata, t) => {
             API_TYPE: apiInfo.apiType,
             VISIBILITY: apiInfo.visibility,
             VISIBLE_GROUPS: apiInfo.visibleGroups ? apiInfo.visibleGroups.join(' ') : null,
+            TAGS: apiInfo.tags ? apiInfo.tags.join(' ') : null,
             TECHNICAL_OWNER: owners.technicalOwner,
             TECHNICAL_OWNER_EMAIL: owners.technicalOwnerEmail,
             BUSINESS_OWNER_EMAIL: owners.businessOwnerEmail,
@@ -563,7 +564,40 @@ const getAPIFile = async (fileName, orgID, apiID, t) => {
 
 const getAPIMetadataByCondition = async (condition, t) => {
     try {
-        const apiMetadataResponse = await APIMetadata.findAll({ where: condition }, { transaction: t });
+        if (condition.TAGS) {
+            const tagsArray = condition.TAGS.split(",").map(tag => tag.trim());
+            condition.TAGS = {
+                [Op.or]: tagsArray.map(tag => ({
+                    [Op.and]: {
+                        [Sequelize.Op.or]: [
+                            {
+                                [Sequelize.Op.like]: `% ${tag} %`
+                            },
+                            {
+                                [Sequelize.Op.like]: `% ${tag}`
+                            },
+                            {
+                                [Sequelize.Op.like]: `${tag} %`
+                            },
+                            {
+                                [Sequelize.Op.eq]: `${tag}`
+                            }
+                        ]
+                    }
+                }))
+            };
+        }
+        const apiMetadataResponse = await APIMetadata.findAll({
+            include: [{
+                model: APIImageMetadata,
+                required: false
+            }, {
+                model: SubscriptionPolicy,
+                required: false
+            }
+            ],
+            where: condition
+        }, { transaction: t });
         return apiMetadataResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -795,6 +829,7 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
             API_DESCRIPTION: apiInfo.apiDescription,
             API_VERSION: apiInfo.apiVersion,
             API_TYPE: apiInfo.apiType,
+            TAGS: apiInfo.tags ? apiInfo.tags.join(' ') : null,
             VISIBILITY: apiInfo.visibility,
             VISIBLE_GROUPS: apiInfo.visibleGroups ? apiInfo.visibleGroups.join(' ') : null,
             TECHNICAL_OWNER: owners.technicalOwner,

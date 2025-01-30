@@ -24,13 +24,13 @@ const devportalController = require('../controllers/devportalController');
 const multer = require('multer');
 const storage = multer.memoryStorage()
 const apiDefinition = multer({ storage: storage })
-const { ensureAuthenticated, validateAuthentication } = require('../middlewares/ensureAuthenticated');
+const { ensureAuthenticated, validateAuthentication, enforceSecuirty } = require('../middlewares/ensureAuthenticated');
 const constants = require('../utils/constants');
 
 router.post('/organizations', validateAuthentication(constants.SCOPES.ADMIN), adminService.createOrganization);
 router.get('/organizations', validateAuthentication(constants.SCOPES.ADMIN), adminService.getOrganizations);
 router.put('/organizations/:orgId', validateAuthentication(constants.SCOPES.ADMIN), adminService.updateOrganization);
-router.get('/organizations/:orgId', validateAuthentication(constants.SCOPES.ADMIN), devportalService.getOrganization);
+router.get('/organizations/:orgId', enforceSecuirty(constants.SCOPES.ADMIN), devportalService.getOrganization); // S2S Applied 
 router.delete('/organizations/:orgId', validateAuthentication(constants.SCOPES.ADMIN), adminService.deleteOrganization);
 
 router.post('/organizations/:orgId/identityProvider', validateAuthentication(constants.SCOPES.ADMIN), adminService.createIdentityProvider);
@@ -62,6 +62,11 @@ router.put('/organizations/:orgId/apis/:apiId/template', validateAuthentication(
 router.get('/organizations/:orgId/apis/:apiId/template', apiMetadataService.getAPIFile);
 router.delete('/organizations/:orgId/apis/:apiId/template', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIFile);
 
+// S2S Applied APIS
+router.post('/apis', enforceSecuirty(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.createAPIMetadata); // s2s applied
+router.get('/apis', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.getAllAPIMetadata); // s2s applied
+router.put('/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.updateAPIMetadata); // s2s applied
+router.delete('/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIMetadata); // s2s applied
 
 router.post('/organizations/:orgId/labels', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.createLabels);
 router.put('/organizations/:orgId/labels', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.updateLabel);

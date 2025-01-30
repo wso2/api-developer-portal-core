@@ -10,11 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 document.getElementById("query").addEventListener("keypress", function (event) {
     if (event.key === "Enter") {
-        console.log("Enter key pressed");
         const query = document.getElementById("query").value;
         window.location.href = `${window.location.pathname}?query=${encodeURIComponent(query)}`;
-        if (query) {
-            searchAPIs(query);
-        }
     }
 });
