@@ -354,9 +354,6 @@ const getAPIMetadata = async (orgID, apiID, t) => {
                 required: false
             }, {
                 model: SubscriptionPolicy,
-                where: {
-                    API_ID: apiID
-                },
                 through: { attributes: [] },
                 required: false
             }
@@ -462,7 +459,7 @@ const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
             ON metadata."API_ID" = "DP_API_SUBSCRIPTION_POLICY"."API_ID"
         WHERE 
             (
-                to_tsvector('english', metadata."METADATA_SEARCH"::text) @@ plainto_tsquery('english', :searchTerm)
+                to_tsvector('english', metadata."METADATA_SEARCH"::text) @@ plainto_tsquery('english', COALESCE(:searchTerm, ''))
                 OR to_tsvector('english', convert_from(content."API_FILE", 'UTF8')) @@ plainto_tsquery('english', :searchTerm)
             )
             AND metadata."ORG_ID" = :orgID
