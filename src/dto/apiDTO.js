@@ -70,6 +70,7 @@ class APIInfo {
         }
     }
 }
+}
 
 class SubscriptionPolicy {
     constructor(subscriptionPolicy) {

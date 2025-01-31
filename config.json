@@ -8,9 +8,9 @@
     "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
   },
   "serverCerts": {
-    "pathToCert": "../api-developer-portal/conf/security/client-truststore.pem",
-    "pathToPK": "../api-developer-portal/conf/security/private-key.pem",
-    "pathToCA": "../api-developer-portal/conf/security/client-truststore.pem"
+    "pathToCert": "../certs/client-truststore.pem",
+    "pathToPK": "../certs/private-key.pem",
+    "pathToCA": "../certs/client-truststore.pem"
   },
   "db": {
     "username": "postgres",
@@ -42,12 +42,12 @@
     "authorizationURL": "https://localhost:9443/oauth2/authorize",
     "tokenURL": "https://127.0.0.1:9443/oauth2/token",
     "userInfoURL": "https://localhost:9443/oauth2/userinfo",
-    "clientId": "",
-    "callbackURL": "http://localhost:3000/ACME/callback",
+    "clientId": "meVRlVAkUoVufXXjN3aUk72PVF8a",
+    "callbackURL": "https://localhost:3000/carbon.super/callback",
     "scope": "openid profile",
     "signUpURL": "",
     "logoutURL": "https://localhost:9443/oidc/logout",
-    "logoutRedirectURI": "http://localhost:3000/ACME",
+    "logoutRedirectURI": "https://localhost:3000/carbon.super",
     "certificate": "",
     "jwksURL": "https://localhost:9443/oauth2/jwks"
   },
@@ -62,20 +62,21 @@
     "/portal/*/edit",
     "/portal",
     "/*/configure",
-    "/*/views/*/applications",
-    "/*/views/*/applications/",
-    "/*/views/*/api/*",
-    "/*/views/*/myapis",
-    "/*/views/*/myapis/*"
+    "/*/applications",
+    "/*/applications/*",
+    "/*/api/*",
+    "/*/myapis",
+    "/*/myapis/*"
   ],
   "authorizedPages": [
-    "/*/views/*/applications",
-    "/*/views/*/applications/",
+    "/*/applications",
+    "/*/applications/*",
     "/*/configure",
     "/portal/*/edit",
     "/portal",
-    "/*/views/*/api/*",
-    "/*/views/*/myapis",
-    "/*/views/*/myapis/*"
-  ]  
-}
+    "/*/api/*",
+    "/*/myapis",
+    "/*/myapis/*"
+  ] 
+ }
+ 

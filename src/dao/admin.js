@@ -56,10 +56,16 @@ const createOrganization = async (orgData, t) => {
 
 const getOrganization = async (param) => {
 
-    const isUUID = validate(param);
-    const condition = isUUID ? { ORG_ID: param } : { ORG_NAME: param };
     try {
-        const organization = await Organization.findOne({ where: condition });
+        const organization = await Organization.findOne({
+            where: {
+                [Sequelize.Op.or]: [
+                    { ORG_NAME: param },
+                    { ORGANIZATION_IDENTIFIER: param },
+                    { ORG_ID: param }
+                ]
+            }
+        });
         if (!organization) {
             throw new Sequelize.EmptyResultError('Organization not found');
         }
@@ -74,7 +80,14 @@ const getOrganization = async (param) => {
 
 const getOrgId = async (orgName) => {
     try {
-        const organization = await Organization.findOne({ where: { ORG_NAME: orgName } });
+        const organization = await Organization.findOne({
+            where: {
+                [Sequelize.Op.or]: [
+                    { ORG_NAME: orgName },
+                    { ORGANIZATION_IDENTIFIER: orgName }
+                ]
+            }
+        });
         if (!organization) {
             throw new Sequelize.EmptyResultError('Organization not found');
         }
