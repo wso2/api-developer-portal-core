@@ -198,7 +198,7 @@ const updateAPIMetadata = async (req, res) => {
                 }
                 // Get subscription policy IDs and fail if any policy is not found
                 await apiDao.updateAPISubscriptionPolicy(subscriptionPolicies, apiId, t);
-                updatedAPI[0].dataValues["DP_API_SUBSCRIPTION_POLICies"] = await apiDao.getSubscriptionPolicies(apiId, t);
+                updatedAPI[0].dataValues["DP_SUBSCRIPTION_POLICies"] = await apiDao.getSubscriptionPolicies(apiId, t);
             }
             // update api definition file
             const updatedFileCount = await apiDao.updateAPIFile(apiDefinitionFile, apiFileName, apiId, orgId, t);
