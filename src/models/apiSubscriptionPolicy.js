@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2025, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -15,41 +15,38 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-const { Sequelize, DataTypes } = require('sequelize');
+const { DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize');
-const { Organization } = require('./organization');
+const SubscriptionPolicy = require('./subscriptionPolicy');
+const { APIMetadata } = require('./apiMetadata');
 
-const SubscriptionPolicy = sequelize.define('DP_SUBSCRIPTION_POLICY', {
-    POLICY_ID: {
+const APISubscriptionPolicy = sequelize.define('DP_API_SUBSCRIPTION_POLICY', {
+    API_ID: {
         type: DataTypes.UUID,
-        defaultValue: Sequelize.UUIDV4,
         allowNull: false,
         primaryKey: true
     },
-    POLICY_NAME: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    DISPLAY_NAME: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    BILLING_PLAN: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    DESCRIPTION: {
-        type: DataTypes.STRING,
-        allowNull: true
+    POLICY_ID: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        primaryKey: true
     }
 }, {
     timestamps: false,
-    tableName: 'DP_SUBSCRIPTION_POLICY',
+    tableName: 'DP_API_SUBSCRIPTION_POLICY',
     returning: true
 });
 
-SubscriptionPolicy.belongsTo(Organization, {
-    foreignKey: 'ORG_ID'
+APIMetadata.belongsToMany(SubscriptionPolicy, {
+    foreignKey: 'API_ID',
+    otherKey: 'POLICY_ID',
+    through: APISubscriptionPolicy
 });
 
-module.exports = SubscriptionPolicy;
+SubscriptionPolicy.belongsToMany(APIMetadata, {
+    foreignKey: 'POLICY_ID',
+    otherKey: 'API_ID',
+    through: APISubscriptionPolicy
+});
+
+module.exports = APISubscriptionPolicy;
