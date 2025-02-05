@@ -17,7 +17,7 @@
  */
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize');
-const { Organization } = require('./orgModels')
+const { Organization } = require('./organization');
 const View = require('./views');
 const Labels = require('./labels');
 

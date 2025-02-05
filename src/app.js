@@ -54,7 +54,7 @@ app.set('view engine', 'hbs');
 Handlebars.registerHelper('json', function(context) {
 
     if(context) {
-        return [context];
+        return JSON.stringify(context);
     } else {
         return JSON.stringify();
     }

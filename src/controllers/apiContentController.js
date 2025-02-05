@@ -231,7 +231,7 @@ async function loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags,
     if (groups !== "") {
         groupList = groups.split(" ");
     }
-    let metaData = await apiMetadataService.getMetadataListFromDB(orgID, groupList, searchTerm, tags, viewName);
+    let metaData = await apiMetadataService.getMetadataListFromDB(orgID, groupList, searchTerm, tags, null, null, viewName);
     metaData.forEach(element => {
         const randomNumber = Math.floor(Math.random() * 3) + 3;
         element.apiInfo.ratings = generateArray(randomNumber);

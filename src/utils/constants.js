@@ -90,7 +90,7 @@ module.exports = {
         API_LANDING_PAGE_PATH: '/api/',
         DEVPORTAL_ASSETS_BASE_PATH: '/devportal/organizations/',
         DEVPORTAL_CONFIGURE: '/*/configure',
-        DEVPORTAL_ROOT: ['/portal', '/devportal'],
+        DEVPORTAL_ROOT: ['/portal','/portal/*/edit', '/devportal'],
         DEVPORTAL_API_LISTING: '/*/apis',
         DEVPORTAL_TECHNICAL_PAGES: ['*/application']
     },

@@ -20,9 +20,7 @@ const sequelize = require('../db/sequelize')
 const APIContent = require('../models/apiContent')
 const APIImages = require('./apiImages')
 const { Organization } = require('./organization')
-const SubscriptionPolicy = require('./subscriptionPolicy')
 const Labels = require('./labels');
-const { Organization } = require('./orgModels')
 
 const APIMetadata = sequelize.define('DP_API_METADATA', {
   API_ID: {
@@ -101,6 +99,14 @@ const APIMetadata = sequelize.define('DP_API_METADATA', {
   timestamps: false,
   tableName: 'DP_API_METADATA',
   returning: true
+},
+{
+  indexes: [
+      {
+          unique: true,
+          fields: ['API_NAME', 'API_VERSION', 'ORG_ID']
+      }
+  ]
 });
 
 const APILabels = sequelize.define('DP_API_LABELS', {

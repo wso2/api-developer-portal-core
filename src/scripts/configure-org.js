@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Add event listener to each remove button
     removeButtons.forEach(button => {
         button.addEventListener('click', function() {
-=            // Remove the parent span item
+           // Remove the parent span item
             const spanItem = button.closest('.span-item');
             if (spanItem) {
                 spanItem.remove();
@@ -253,7 +253,7 @@ async function editView(existingLabels, labelsContainerID, displayNameID, nameID
     const addedLabels = selected.filter(label => !existingLabels.includes(label));
     let removedLabels = [];
     if (existingLabels.length > 0) {
-        const existinglabelsList = existingLabels.split(",");
+        const existinglabelsList = JSON.parse(existingLabels);
          removedLabels = existinglabelsList.filter(label => !selected.includes(label));
     }
     const sanitizAddedLabels = addedLabels.map(label => sanitizeInput(label));
@@ -299,7 +299,6 @@ async function addLabels(orgID, orgLabels) {
     const addedLabels = selected.filter(label => !existingLabels.includes(label));
     const removedLabels = existingLabels.filter(label => !selected.includes(label));
     const sanitizeAdd = addedLabels.map(label => sanitizeInput(label));
-    console.log("Select", sanitizeAdd)
 
     if (removedLabels.length > 0) {
         const sanitizeDelete = removedLabels.map(label => sanitizeInput(label));
@@ -312,7 +311,7 @@ async function addLabels(orgID, orgLabels) {
             }
         });
         if (response.ok) {
-           // window.location.href = 'configure';
+           window.location.href = 'configure';
          } else {
              showAlert(`Field validation failed`, `error`);
          } 
@@ -325,7 +324,6 @@ async function addLabels(orgID, orgLabels) {
             "displayName": label
         });
     });
-    console.log("added", sanitizeAdd)
  
     const response = await fetch(`/devportal/organizations/${orgID}/labels`, {
         method: "PUT",

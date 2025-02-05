@@ -36,7 +36,7 @@ const createOrganization = async (req, res) => {
     }
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json(util.getErrors(errors));
+                return res.status(400).json(util.getErrors(errors));
     }
     const payload = req.body;
     let organization = "";
@@ -98,7 +98,7 @@ const getAllOrganizations = async () => {
                 businessOwner: organization.dataValues.BUSINESS_OWNER,
                 businessOwnerContact: organization.dataValues.BUSINESS_OWNER_CONTACT,
                 businessOwnerEmail: organization.dataValues.BUSINESS_OWNER_EMAIL,
-                devPortalURLIdentifier: organization.ORG_HANDLE,
+                orgHandle: organization.ORG_HANDLE,
                 roleClaimName: organization.ROLE_CLAIM_NAME,
                 groupsClaimName: organization.GROUPS_CLAIM_NAME,
                 organizationClaimName: organization.ORGANIZATION_CLAIM_NAME,

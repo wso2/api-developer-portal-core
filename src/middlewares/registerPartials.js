@@ -98,7 +98,6 @@ const registerPartialsFromAPI = async (req) => {
 
   const orgName = req.params.orgName;
   const viewName = req.params.viewName;
-  console.log("Views=========", viewName);
   const orgID = await adminDao.getOrgId(orgName);
   const imageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/views/${viewName}/layout?fileType=image&fileName=`;
   let partials = await adminDao.getOrgContent({

@@ -27,7 +27,6 @@ const { Sequelize } = require('sequelize');
 const { Op } = require('sequelize');
 const constants = require('../utils/constants');
 const { CustomError } = require('../utils/errors/customErrors');
-const e = require('express');
 
 const createAPIMetadata = async (orgID, apiMetadata, t) => {
 
@@ -461,23 +460,7 @@ const createSubscriptionPolicy = async (orgID, policy, t) => {
         throw new Sequelize.DatabaseError(error);
     }
 };
-const getSubscriptionPolicyByName = async (orgID, policyName, t) => {
 
-    try {
-        const subscriptionPolicyResponse = await SubscriptionPolicy.findOne({
-            where: {
-                POLICY_NAME: policyName,
-                ORG_ID: orgID
-            }
-        }, { transaction: t });
-        return subscriptionPolicyResponse;
-    } catch (error) {
-        if (error instanceof Sequelize.ValidationError) {
-            throw error;
-        }
-        throw new Sequelize.DatabaseError(error);
-    }
-};
 const updateSubscriptionPolicy = async (orgID, policyID, policy, t) => {
     try {
         const [affectedCount, updatedRows] = await SubscriptionPolicy.update({
@@ -983,7 +966,7 @@ async function updateAPISubscriptionPolicy(subscriptionPolicies, apiID, t) {
             })
         }
         if (policiesToCreate.length > 0) {
-            APISubscriptionPolicy.destroy({
+            await APISubscriptionPolicy.destroy({
                 where: {
                     API_ID: apiID
                 }

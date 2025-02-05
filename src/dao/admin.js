@@ -15,8 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-const { Organization, OrgContent } = require('../models/orgModels');
-const { validate } = require('uuid');
+const { Organization, OrgContent } = require('../models/organization');
 const { Sequelize } = require('sequelize');
 const { IdentityProvider } = require('../models/identityProvider');
 const Provider = require('../models/provider');
@@ -25,8 +24,8 @@ const apiDao = require('./apiMetadata');
 const createOrganization = async (orgData, t) => {
 
     let devPortalID = "";
-    if (orgData.devPortalURLIdentifier) {
-        devPortalID = orgData.devPortalURLIdentifier
+    if (orgData.orgHandle) {
+        devPortalID = orgData.orgHandle
     }
     const createOrgData = {
         ORG_NAME: orgData.orgName,
@@ -61,7 +60,7 @@ const getOrganization = async (param) => {
             where: {
                 [Sequelize.Op.or]: [
                     { ORG_NAME: param },
-                    { ORGANIZATION_IDENTIFIER: param },
+                    { ORG_HANDLE: param },
                     { ORG_ID: param }
                 ]
             }
@@ -84,7 +83,7 @@ const getOrgId = async (orgName) => {
             where: {
                 [Sequelize.Op.or]: [
                     { ORG_NAME: orgName },
-                    { ORGANIZATION_IDENTIFIER: orgName }
+                    { ORG_HANDLE: orgName }
                 ]
             }
         });
@@ -119,8 +118,8 @@ const getOrganizations = async () => {
 const updateOrganization = async (orgData) => {
 
     let devPortalID = "";
-    if (orgData.devPortalURLIdentifier) {
-        devPortalID = orgData.devPortalURLIdentifier
+    if (orgData.orgHandle) {
+        devPortalID = orgData.orgHandle
     }
     try {
         const [updatedRowsCount, updatedOrg] = await Organization.update(
@@ -337,7 +336,6 @@ const updateOrgContent = async (orgData) => {
 const getOrgContent = async (orgData) => {
 
     try {
-        console.log(orgData)
         const viewID = await apiDao.getViewID(orgData.orgId, orgData.viewName);
         if (orgData.fileName || orgData.filePath) {
             return await OrgContent.findOne(

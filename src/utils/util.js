@@ -373,13 +373,13 @@ const validateOrganization = () => {
 
     const validations = [
         body('businessOwnerEmail')
-            .notEmpty()
+            .optional({ checkFalsy: true })
             .isEmail(),
         body('*')
-            .if(body('*').not().equals('devPortalURLIdentifier'))
+            .if(body('*').not().equals('orgHandle'))
+            .optional()
             .customSanitizer(value => value.replace(/[<>"'&]/g, ''))
             .trim()
-            .notEmpty()
     ]
     return validations;
 }

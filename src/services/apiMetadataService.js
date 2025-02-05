@@ -137,7 +137,6 @@ const getAllAPIMetadata = async (req, res) => {
     const apiVersion = req.query.version;
     const tags = req.query.tags;
     const viewName = req.params.viewName;
-
     let groupList = [];
     if (req.query.groups) {
         groupList.push(req.query.groups.split(" "));
@@ -754,7 +753,7 @@ module.exports = {
     createSubscriptionPolicy,
     updateSubscriptionPolicy,
     deleteSubscriptionPolicy,
-    getSubscriptionPolicy
+    getSubscriptionPolicy,
     createLabels,
     deleteLabels,
     retrieveLabels,
