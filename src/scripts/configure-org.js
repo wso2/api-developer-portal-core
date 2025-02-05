@@ -31,18 +31,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // eslint-disable-next-line no-undef
-    const editFileModal = new bootstrap.Modal(document.getElementById('editFileModal'));
-
-    // Edit file functionality
-    document.querySelectorAll('.edit-file').forEach(button => {
-        button.addEventListener('click', function () {
-            const fileId = this.getAttribute('data-file-id');
-            document.getElementById('editFileId').value = fileId;
-            editFileModal.show();
-        });
-
-    });
     //update IDP
     const editIDPButton = document.getElementById('idpEdit');
     if (editIDPButton) {
@@ -63,13 +51,60 @@ document.addEventListener('DOMContentLoaded', function () {
     // Add event listener to each remove button
     removeButtons.forEach(button => {
         button.addEventListener('click', function() {
-            // Remove the parent span item
+=            // Remove the parent span item
             const spanItem = button.closest('.span-item');
             if (spanItem) {
                 spanItem.remove();
             }
         });
     });
+
+    //add labels
+    const textInput = document.getElementById('textInput');
+        const inputContainer = document.getElementById('inputContainer');
+
+        textInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                const text = this.value.trim();
+                if (text) {
+                    addSpan(text);
+                    this.value = '';
+                }
+            }
+        });
+
+        function addSpan(text) {
+            const span = document.createElement('span');
+            span.className = 'span-tag';
+            span.innerHTML = `${text}<span class="remove">&times;</span>`;
+            
+            span.querySelector('.remove').addEventListener('click', function() {
+                inputContainer.removeChild(span);
+            });
+
+            inputContainer.insertBefore(span, textInput);
+        }
+
+        // Ensure the input is always visible
+        inputContainer.addEventListener('click', function() {
+            textInput.focus();
+        });
+
+        //remove labels from div
+        const removeLabels = document.querySelectorAll('.span-tag .remove');
+    
+        // Add event listener to each remove button
+        removeLabels.forEach(label => {
+            label.addEventListener('click', function() {
+                console.log("label remove")
+                // Remove the parent span item
+                const spanItem = label.closest('.span-tag');
+                if (spanItem) {
+                    spanItem.remove();
+                }
+            });
+        });
 });
 
 function sanitizeInput(input) {
@@ -163,13 +198,15 @@ async function updateOrgContent(orgID) {
     }
 }
 
-async function uploadOrgContent(orgID) {
+async function uploadContent(orgID) {
 
     const zipFile = document.getElementById('file');
     const formData = new FormData();
     formData.append('file', zipFile.files[0]);
-    const response = await fetch(`/devportal/organizations/${orgID}/layout`, {
-        method: 'POST',
+
+    const view = document.getElementById('views').value;
+    const response = await fetch(`/devportal/organizations/${orgID}/views/${view}/layout`, {
+        method: 'PUT',
         body: formData,
         credentials: 'same-origin'
     });
@@ -183,18 +220,18 @@ async function uploadOrgContent(orgID) {
     }
 }
 
-function addLabel(labelSelectID, labelsContainerID) {
+function addViewLabel(labelSelectID, labelsContainerID) {
+
     const select = document.getElementById(labelSelectID);
-    console.log(select);
     const labelsContainer = document.getElementById(labelsContainerID);
     const selectedValue = select.value;
     
-    // Check if label already exists
+    //Check if label already exists
     if ([...labelsContainer.children].some(span => span.textContent.includes(selectedValue))) {
         return;
     }
     const span = document.createElement("span");
-    span.className = "label-span";
+    span.className = "span-tag";
     span.textContent = selectedValue;
     
     const removeBtn = document.createElement("span");
@@ -214,8 +251,11 @@ async function editView(existingLabels, labelsContainerID, displayNameID, nameID
     const name = document.getElementById(nameID).value;
     const selected = [...labelsContainer.children].map(span => span.textContent.replace("×", "").trim());
     const addedLabels = selected.filter(label => !existingLabels.includes(label));
-    const removedLabels = existingLabels.filter(label => !selected.includes(label));
-
+    let removedLabels = [];
+    if (existingLabels.length > 0) {
+        const existinglabelsList = existingLabels.split(",");
+         removedLabels = existinglabelsList.filter(label => !selected.includes(label));
+    }
     const sanitizAddedLabels = addedLabels.map(label => sanitizeInput(label));
     const sanitizeRemovedLabels = removedLabels.map(label => sanitizeInput(label));
     
@@ -233,10 +273,71 @@ async function editView(existingLabels, labelsContainerID, displayNameID, nameID
         body: JSON.stringify(data),
     });
     if (response.ok) {
-       // window.location.href = 'configure';
+       window.location.href = 'configure';
     } else {
         showAlert(`Field validation failed`, `error`);
     }
+}
 
+async function deleteView(orgID, viewName) {
+    
+    const response = await fetch(`/devportal/organizations/${orgID}/views/${viewName}`, {
+        method: 'DELETE',
+    });
+    if (response.ok) {
+        window.location.href = 'configure';
+    } else {
+        showAlert(`Field validation failed`, `error`);
+    }
+}
+
+async function addLabels(orgID, orgLabels) {
+
+    const labelsContainer = document.getElementById("inputContainer");
+    const selected = [...labelsContainer.getElementsByClassName('span-tag')].map(span => span.textContent.replace('×', "").trim());
+    const existingLabels = orgLabels.map(label => label.name);
+    const addedLabels = selected.filter(label => !existingLabels.includes(label));
+    const removedLabels = existingLabels.filter(label => !selected.includes(label));
+    const sanitizeAdd = addedLabels.map(label => sanitizeInput(label));
+    console.log("Select", sanitizeAdd)
+
+    if (removedLabels.length > 0) {
+        const sanitizeDelete = removedLabels.map(label => sanitizeInput(label));
+        const labelName = sanitizeDelete.join(",");
+        console.log('delete labels', labelName);
+        const response = await fetch(`/devportal/organizations/${orgID}/labels?names=${labelName}`, {
+            method: "DELETE",
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        if (response.ok) {
+           // window.location.href = 'configure';
+         } else {
+             showAlert(`Field validation failed`, `error`);
+         } 
+
+    }
+    const labels = []
+    sanitizeAdd.forEach(async label => {    
+        labels.push({
+            "name": label,
+            "displayName": label
+        });
+    });
+    console.log("added", sanitizeAdd)
+ 
+    const response = await fetch(`/devportal/organizations/${orgID}/labels`, {
+        method: "PUT",
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(labels),
+    });
+    if (response.ok) {
+       window.location.href = 'configure';
+     } else {
+         showAlert(`Field validation failed`, `error`);
+     }
 }
 

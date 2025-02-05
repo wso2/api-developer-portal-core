@@ -101,7 +101,7 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
     if (Object.keys(templateContent).length === 0 && templateContent.constructor === Object) {
         return layout({
             body: template({
-                baseUrl: '/' + orgName
+                baseUrl: '/' + orgName + '/views/' + viewName
             }),
         });
     } else {

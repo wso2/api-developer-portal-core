@@ -113,16 +113,21 @@ const createLabels = async (orgID, labels, t) => {
 const updateLabel = async (orgID, label) => {
 
     try {
-        const updatedRow = await Labels.update({
-            DISPLAY_NAME: label.displayName
-        }, {
+        let [record, created] = await Labels.findOrCreate({
             where: {
                 NAME: label.name,
                 ORG_ID: orgID
             },
+            defaults: {
+                NAME: label.name,
+                DISPLAY_NAME: label.displayName,
+            },
             returning: true
         });
-        return updatedRow;
+        if (!created) {
+            record = await record.update(label); // Update if found
+          }
+        return record;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
@@ -159,12 +164,12 @@ const getLabelIDList = async (orgID, label, t) => {
     return labelResponse.dataValues.LABEL_ID;
 }
 
-const deleteLabel = async (orgID, labelName) => {
+const deleteLabel = async (orgID, labelNames) => {
 
     try {
         const labelResponse = await Labels.destroy({
             where: {
-                NAME: labelName,
+                NAME: labelNames,
                 ORG_ID: orgID
             }
         });
@@ -215,16 +220,25 @@ const addView = async (orgID, payload, t) => {
 const updateView = async (orgID, name, displayName, t) => {
 
     try {
-        const viewResponse = await View.update({
-            DISPLAY_NAME: displayName
-        }, {
+        let [record, created] =await View.findOrCreate({
             where: {
                 NAME: name,
                 ORG_ID: orgID
             },
+            defaults: {
+                NAME: name,
+                DISPLAY_NAME: displayName,
+            },
+            transaction: t ,
             returning: true
-        }, { transaction: t });
-        return viewResponse;
+        });
+        if (!created) {
+            record = await record.update({
+                NAME: name,
+                DISPLAY_NAME: displayName,
+            }); // Update if found
+          }
+         return record;        
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;

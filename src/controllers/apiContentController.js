@@ -35,7 +35,6 @@ const generateArray = (length) => Array.from({ length });
 const loadAPIs = async (req, res) => {
 
     const orgName = req.params.orgName;
-    const viewName = req.params.viewName;
     let html;
     if (config.mode === constants.DEV_MODE) {
         const templateContent = {
@@ -46,11 +45,11 @@ const loadAPIs = async (req, res) => {
     } else {
         try {
             const orgID = await adminDao.getOrgId(orgName);
+            const viewName = req.params.viewName;
             const searchTerm = req.query.query;
             const tags = req.query.tags;
-
-            const metaData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, viewName, tags);
-            const apiData = await loadAPIMetaDataListFromAPI(req, orgID, orgName);
+            const metaData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
+            const apiData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
             let apiTags = [];
             apiData.forEach(api => {
                 if (api.apiInfo.tags) {
@@ -68,7 +67,7 @@ const loadAPIs = async (req, res) => {
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
         } catch (error) {
-            console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
+                        console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
             html = constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR;
 
         }

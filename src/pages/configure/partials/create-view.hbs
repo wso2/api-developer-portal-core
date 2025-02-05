@@ -1,6 +1,3 @@
-<script>
-    var initialLabels = {{{ json labels }}}; // Convert Handlebars data to JavaScript
-</script>
 <div class="container">
     <form id="editView">
         <div class="d-flex flex-row align-items-center">
@@ -24,16 +21,10 @@
                     <span class="span-tag">{{this}}<span class="remove">&times;</span></span>
                     {{/each}}
                 </div>
-                <button type="button" class="common-btn-primary me-3" style="width: 150px; margin-right: 10px;"
+                 <button type="button" class="common-btn-primary me-3" style="width: 150px; margin-right: 10px;"
                     onclick="addViewLabel('labelSelect{{name}}', 'labelsContainer{{name}}')">Attach Label</button>
                 <button type="button" class="common-btn-primary" style="width: 150px; margin-right: 10px;"
                     onclick="editView( '{{json labels}}', 'labelsContainer{{name}}', 'displayName{{displayName}}', 'viewName{{name}}', '{{@root.orgID}}')">Update</button>
-                {{#if (notEquals name "default")}}
-                <button type="button" class="btn btn-sm btn-outline-danger" style="margin-right: 10px;"
-                    onclick="if (confirm('Are you sure you want to delete this view?')) { deleteView('{{@root.orgID}}', '{{name}}'); }">
-                    <i class="bi bi-trash"></i> Delete
-                </button>
-                {{/if}}
             </div>
         </div>
     </form>

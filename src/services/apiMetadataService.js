@@ -125,7 +125,7 @@ const getAllAPIMetadata = async (req, res) => {
     const apiName = req.query.name;
     const apiVersion = req.query.version;
     const tags = req.query.tags;
-    const viewName = req.query.view;
+    const viewName = req.params.viewName;
 
     let groupList = [];
     if (req.query.groups) {
@@ -432,15 +432,17 @@ const createLabels = async (req, res) => {
 const updateLabel = async (req, res) => {
 
     const orgId = req.params.orgId;
-    const label = req.body;
+    const labels = req.body;
     try {
-        if (!orgId || !label) {
+        if (!orgId || !labels) {
             throw new Sequelize.ValidationError(
                 "Missing or Invalid fields in the request payload"
             );
         }
-        await apiDao.updateLabel(orgId, label);
-        res.status(201).send(label);
+        for (const label of labels) {
+            await apiDao.updateLabel(orgId, label);
+        };
+        res.status(201).send(labels);
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.LABEL_UPDATE_ERROR}`, error);
         util.handleError(res, error);
@@ -450,14 +452,15 @@ const updateLabel = async (req, res) => {
 const deleteLabels = async (req, res) => {
 
     const orgId = req.params.orgId;
-    const labelName = req.query.name;
-    if (!orgId || !labelName) {
+    const labelNames = req.query.names;
+    if (!orgId || !labelNames) {
         throw new Sequelize.ValidationError(
             "Missing or Invalid fields in the request payload"
         );
     }
+    const labelList = labelNames.split(",");
     try {
-        await apiDao.deleteLabel(orgId, labelName);
+        await apiDao.deleteLabel(orgId, labelList);
         res.status(204).send();
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.LABEL_DELETE_ERROR}`, error);
@@ -532,11 +535,8 @@ const updateView = async (req, res) => {
 
             let viewID = "";
             if (req.body.displayName) {
-                let [updatedRows, viewResponse] = await apiDao.updateView(orgId, viewName, req.body.displayName, t);
-                if (!updatedRows) {
-                    throw new Sequelize.EmptyResultError("No record found to update");
-                }
-                viewID = viewResponse[0].dataValues.VIEW_ID;
+                let viewResponse = await apiDao.updateView(orgId, viewName, req.body.displayName, t);
+                viewID = viewResponse.dataValues.VIEW_ID;
             }
             if (removedLabels.length !== 0) {
                 await apiDao.deleteViewLabels(orgId, viewID, removedLabels, t);

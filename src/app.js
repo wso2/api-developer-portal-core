@@ -52,12 +52,21 @@ app.engine('.hbs', engine({
 app.set('view engine', 'hbs');
 
 Handlebars.registerHelper('json', function(context) {
-    return JSON.stringify(context);
+
+    if(context) {
+        return [context];
+    } else {
+        return JSON.stringify();
+    }
 });
 
 Handlebars.registerHelper('eq', function (a, b) {
     return (a === b || (a != null && b != null && (a === b.toString() || a.toString() === b)));
 });
+
+Handlebars.registerHelper('notEquals', function (a, b) {
+    return a !== b;
+  });
 
 Handlebars.registerHelper('in', function (value, options) {
     const validValues = Array.isArray(options.hash.values) ? options.hash.values : options.hash.values.split(',');
