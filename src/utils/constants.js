@@ -149,7 +149,9 @@ module.exports = {
         PROVIDER_CREATE_ERROR: "Error while creating provider",
         PROVIDER_UPDATE_ERROR: "Error while updating provider",
         PROVIDER_DELETE_ERROR: "Error while deleting provider",
-        PROVIDER_FETCH_ERROR: "Error while fetching providers"
+        PROVIDER_FETCH_ERROR: "Error while fetching providers",
+        SUBSCRIPTION_POLICY_CREATE_ERROR: "Error while creating subscription policy",
+        SUBSCRIPTION_POLICY_NOT_FOUND: "Subscription policy not found",
     },
     ERROR_CODE: {
         401: "Unauthenticated",

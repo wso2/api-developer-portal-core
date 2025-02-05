@@ -22,7 +22,7 @@ class SubscriptionPolicy {
         this.policyName = subscriptionPolicy.POLICY_NAME;
         this.displayName = subscriptionPolicy.DISPLAY_NAME;
         this.billingPlan = subscriptionPolicy.BILLING_PLAN;
-        this.policyDescription = subscriptionPolicy.POLICY_DESCRIPTION;
+        this.description = subscriptionPolicy.DESCRIPTION;
         this.orgID = subscriptionPolicy.ORG_ID;
     }
 }

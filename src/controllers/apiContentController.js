@@ -27,6 +27,8 @@ const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const apiMetadataService = require('../services/apiMetadataService');
 const adminService = require('../services/adminService');
+const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
+const { CustomError } = require('../utils/errors/customErrors');
 
 
 const filePrefix = config.pathToContent;
@@ -115,16 +117,16 @@ const loadAPIContent = async (req, res) => {
             let subscriptionPlans = [];
 
             //load subscription plans for authenticated users
-            if (req.user && req.user.accessToken) {
-                for (const policy of metaData.subscriptionPolicies) {
-                    const subscriptionPlan = await loadSubscriptionPlan(req, res, policy.policyName);
-                    subscriptionPlans.push({
-                        apiId: metaData.apiReferenceID,
-                        name: subscriptionPlan.name,
-                        description: subscriptionPlan.description,
-                        tierPlan: subscriptionPlan.tierPlan,
-                    });
-                };
+            for (const policy of metaData.subscriptionPolicies) {
+                const subscriptionPlan = await loadSubscriptionPlan(orgID, policy.policyName);
+                subscriptionPlans.push({
+                    apiId: metaData.apiReferenceID,
+                    displayName: subscriptionPlan.displayName,
+                    policyName: subscriptionPlan.policyName,
+                    description: subscriptionPlan.description,
+                    billingPlan: subscriptionPlan.billingPlan,
+                });
+
             }
 
             let providerUrl;
@@ -152,10 +154,15 @@ const loadAPIContent = async (req, res) => {
     }
 }
 
-const loadSubscriptionPlan = async (req, res, policyId) => {
+const loadSubscriptionPlan = async (orgID, policyName) => {
 
     try {
-        return await util.invokeApiRequest(req, 'GET', `${config.controlPlane.url}/throttling-policies/subscription/${policyId}`);
+        const policyData = await apiDao.getSubscriptionPolicyByName(orgID, policyName);
+        if (policyData) {
+            return new subscriptionPolicyDTO(policyData);
+        } else {
+            throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
+        }
     } catch (error) {
         console.error("Error occurred while loading subscription plans", error);
         util.handleError(res, error);

@@ -22,9 +22,11 @@ const { renderGivenTemplate, loadLayoutFromAPI, renderTemplate } = require('../u
 const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
+const apiDao = require('../dao/apiMetadata');
 const apiMetadataService = require('../services/apiMetadataService');
 const util = require('../utils/util');
 const controlPlaneUrl = config.controlPlane.url;
+const APIDTO = require('../dto/apiDTO');
 
 const loadMyAPIs = async (req, res) => {
     const orgName = req.params.orgName;
@@ -69,13 +71,17 @@ const loadMyAPIs = async (req, res) => {
         }
 
         // Load modal content with subscribed applications and applications that are not subscribed
-        let apiId = req.query.apiId;
-        if (apiId) {
+        let apiName = req.query.apiName;
+        if (apiName) {
             const apps = await loadApplications(req);
+            const condition = {
+                API_NAME: apiName,
+                API_VERSION: req.query.apiVersion,
+            };
+            const metaData = await apiDao.getAPIMetadataByCondition(condition);
+            const apiId = new APIDTO(metaData[0]).apiReferenceID;
             const apiSubs = await loadSubscriptions(req, apiId.replace(/[^a-zA-Z0-9\s-]/g, ''));
             if (Array.isArray(apiSubs.list)) {
-
-
                 const subAppIds = new Set(apiSubs.list.map(sub => sub.applicationInfo.applicationId));
 
                 for (const app of apps.list) {

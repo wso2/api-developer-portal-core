@@ -2,10 +2,11 @@ document.addEventListener('DOMContentLoaded', checkQueryParamsAndLoadModal);
 
 function checkQueryParamsAndLoadModal() {
     const urlParams = new URLSearchParams(window.location.search);
-    const subPlan = urlParams.get('tierPlan');
-
-    const apiId = urlParams.get('apiId');
-    if (apiId && subPlan) {
+    const subPlan = urlParams.get('policyName');
+    const apiName = urlParams.get('apiName');
+    const apiVersion = urlParams.get('apiVersion');
+    
+    if (subPlan && apiName && apiVersion) {
         const modal = document.getElementById('planModal');
         modal.style.display = 'block';
 
@@ -115,9 +116,9 @@ function sanitize(input) {
     return div.innerHTML;
 }
 
-async function handleSubscribe(appId, apiId) {
+async function handleSubscribe(appId) {
     const applicationSelect = document.getElementById('applicationSelect');
-    let tierPlan;
+    let policyName;
 
     const applicationId = appId !== null 
         ? appId 
@@ -132,11 +133,12 @@ async function handleSubscribe(appId, apiId) {
     try {
         const urlParams = new URLSearchParams(window.location.search);
 
-        if (urlParams.has('apiId') && urlParams.has('tierPlan')) {
-            apiId = urlParams.get('apiId');
-            tierPlan = urlParams.get('tierPlan');
+        if (urlParams.has('apiName') && urlParams.has('policyName')) {
+            apiName = urlParams.get('apiName');
+            apiVersion = urlParams.get('apiVersion');
+            policyName = urlParams.get('policyName');
         } else {
-            tierPlan = document.getElementById('subscriptionPlan').value;
+            policyName = document.getElementById('subscriptionPlan').value;
         }
 
         const response = await fetch(`/devportal/subscriptions`, {
@@ -146,8 +148,9 @@ async function handleSubscribe(appId, apiId) {
             },
             body: JSON.stringify({
                 applicationId: applicationId.replace(/[^a-zA-Z0-9\s-]/g, ''),
-                apiId: apiId.replace(/[^a-zA-Z0-9\s-]/g, ''),
-                throttlingPolicy: tierPlan.replace(/[^a-zA-Z0-9\s-]/g, ''),
+                apiName: apiName.replace(/[^a-zA-Z0-9\s-]/g, ''),
+                apiVersion: apiVersion.replace(/[^a-zA-Z0-9.\s-]/g, ''),
+                throttlingPolicy: policyName.replace(/[^a-zA-Z0-9\s-]/g, ''),
             }),
         });
 
