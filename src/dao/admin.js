@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-const { Organization, OrgContent } = require('../models/organization');
+const { Organization, OrgContent } = require('../models/orgModels');
 const { validate } = require('uuid');
 const { Sequelize } = require('sequelize');
 const { IdentityProvider } = require('../models/identityProvider');
@@ -33,7 +33,7 @@ const createOrganization = async (orgData, t) => {
         BUSINESS_OWNER: orgData.businessOwner,
         BUSINESS_OWNER_CONTACT: orgData.businessOwnerContact,
         BUSINESS_OWNER_EMAIL: orgData.businessOwnerEmail,
-        DEV_PORTAL_URL_IDENTIFIER: devPortalID,
+        ORG_HANDLE: devPortalID,
         ROLE_CLAIM_NAME: orgData.roleClaimName,
         GROUPS_CLAIM_NAME: orgData.groupsClaimName,
         ORGANIZATION_CLAIM_NAME: orgData.organizationClaimName,
@@ -129,7 +129,7 @@ const updateOrganization = async (orgData) => {
                 BUSINESS_OWNER: orgData.businessOwner,
                 BUSINESS_OWNER_CONTACT: orgData.businessOwnerContact,
                 BUSINESS_OWNER_EMAIL: orgData.businessOwnerEmail,
-                DEV_PORTAL_URL_IDENTIFIER: devPortalID,
+                ORG_HANDLE: devPortalID,
                 ROLE_CLAIM_NAME: orgData.roleClaimName,
                 GROUPS_CLAIM_NAME: orgData.groupsClaimName,
                 ORGANIZATION_CLAIM_NAME: orgData.organizationClaimName,
@@ -337,6 +337,7 @@ const updateOrgContent = async (orgData) => {
 const getOrgContent = async (orgData) => {
 
     try {
+        console.log(orgData)
         const viewID = await apiDao.getViewID(orgData.orgId, orgData.viewName);
         if (orgData.fileName || orgData.filePath) {
             return await OrgContent.findOne(

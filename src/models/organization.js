@@ -44,7 +44,7 @@ const Organization = sequelize.define('DP_ORGANIZATION', {
         type: DataTypes.STRING,
         allowNull: true
     },
-    DEV_PORTAL_URL_IDENTIFIER: {
+    ORG_HANDLE: {
         type: DataTypes.STRING,
         allowNull: true,
     },

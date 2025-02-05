@@ -41,7 +41,7 @@ const getOrganizationDetails = async (orgId) => {
         businessOwner: organization.BUSINESS_OWNER,
         businessOwnerContact: organization.BUSINESS_OWNER_CONTACT,
         businessOwnerEmail: organization.BUSINESS_OWNER_EMAIL,
-        devPortalURLIdentifier: organization.DEV_PORTAL_URL_IDENTIFIER,
+        orgHandle: organization.ORG_HANDLE,
         roleClaimName: organization.ROLE_CLAIM_NAME,
         groupsClaimName: organization.GROUPS_CLAIM_NAME,
         organizationClaimName: organization.ORGANIZATION_CLAIM_NAME,
