@@ -56,6 +56,34 @@ DB_USER=$(grep -A 6 '"db"' "$CONFIG_FILE" | grep '"username"' | sed 's/.*"userna
     "
  }
 
+ insert_subscription_policy_data() {
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "
+    INSERT INTO \"DP_SUBSCRIPTION_POLICY\" (
+        \"ORG_ID\", \"POLICY_ID\", \"POLICY_NAME\", \"DISPLAY_NAME\", \"BILLING_PLAN\", \"DESCRIPTION\"
+    ) VALUES (
+        '$ORG_ID', '1ba42a09-45c0-40f8-a1bf-e4aa7cde1234', 'Gold', 'Gold', 'FREE', 'Allows 1000 total tokens and 100 requests per minute',
+        '$ORG_ID', '1ba42a09-45c0-40f8-a1bf-e4aa7cde2345', 'Silver', 'Silver', 'FREE', 'Allows 2000 requests per minute',
+        '$ORG_ID', '1ba42a09-45c0-40f8-a1bf-e4aa7cde3456', 'Bronze', 'Bronze', 'FREE', 'Allows 1000 requests per minute',
+        '$ORG_ID', '1ba42a09-45c0-40f8-a1bf-e4aa7cde4567', 'Unlimited', 'Unlimited', 'FREE', 'Allows unlimited requests'
+    )
+    "
+ }
+
+ insert_api_subscription_data() {
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "
+    INSERT INTO \"DP_API_SUBSCRIPTION\" (
+        \"POLICY_ID\", \"API_ID\"
+    ) VALUES (
+        '1ba42a09-45c0-40f8-a1bf-e4aa7cde1234', 'AccommodationAPI',
+        '1ba42a09-45c0-40f8-a1bf-e4aa7cde2345', 'AccommodationAPI',
+        '1ba42a09-45c0-40f8-a1bf-e4aa7cde3456', 'AccommodationAPI',
+        '1ba42a09-45c0-40f8-a1bf-e4aa7cde4567', 'AccommodationAPI',
+        '1ba42a09-45c0-40f8-a1bf-e4aa7cde1234', 'CountriesAPI',
+        '1ba42a09-45c0-40f8-a1bf-e4aa7cde2345', 'CountriesAPI',
+        '1ba42a09-45c0-40f8-a1bf-e4aa7cde4567', 'CountriesAPI'
+        )"
+ }
+
 process_files() {
     local DIR="$1"
     API_ID="$2"
@@ -111,5 +139,5 @@ process_files "./artifacts/default/apiContent/NavigationAPI/content" "Navigation
 process_files "./artifacts/default/apiContent/NavigationAPI/images" "NavigationAPI"
 insert_image_data "NavigationAPI" "navigation.jpeg" "api-icon"
 
-
-
+insert_subscription_policy_data
+insert_api_subscription_data
