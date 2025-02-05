@@ -56,6 +56,11 @@ router.get('/organizations/:orgId/apis', validateAuthentication(constants.SCOPES
 router.put('/organizations/:orgId/apis/:apiId', validateAuthentication(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.updateAPIMetadata);
 router.delete('/organizations/:orgId/apis/:apiId', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIMetadata);
 
+router.post('/organizations/:orgId/subscriptionPolicy', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.createSubscriptionPolicy);
+router.get('/organizations/:orgId/subscriptionPolicy/:policyID', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.getSubscriptionPolicy);
+router.put('/organizations/:orgId/subscriptionPolicy/:policyID', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.updateSubscriptionPolicy);
+router.delete('/organizations/:orgId/subscriptionPolicy/:policyID', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.deleteSubscriptionPolicy);
+
 const apiZip = multer({ dest: '/tmp' });
 router.post('/organizations/:orgId/apis/:apiId/template', validateAuthentication(constants.SCOPES.DEVELOPER), apiZip.single('apiContent'), apiMetadataService.createAPITemplate);
 router.put('/organizations/:orgId/apis/:apiId/template', validateAuthentication(constants.SCOPES.DEVELOPER), apiZip.single('apiContent'), apiMetadataService.updateAPITemplate);

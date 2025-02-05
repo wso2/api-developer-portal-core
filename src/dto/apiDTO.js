@@ -24,8 +24,8 @@ class APIDTO {
         this.provider = api.PROVIDER;
         this.apiInfo = new APIInfo(api);
         this.endPoints = new Endpoints(api);
-        if (api.DP_API_SUBSCRIPTION_POLICies) {
-            this.subscriptionPolicies = api.DP_API_SUBSCRIPTION_POLICies.map(policy => new SubscriptionPolicy(policy));
+        if (api.DP_SUBSCRIPTION_POLICies) {
+            this.subscriptionPolicies = api.DP_SUBSCRIPTION_POLICies.map(policy => new APISubscriptionPolicy(policy));
         }
     }
 
@@ -72,9 +72,9 @@ class APIInfo {
 }
 }
 
-class SubscriptionPolicy {
-    constructor(subscriptionPolicy) {
-        this.policyName = subscriptionPolicy.POLICY_NAME;
+class APISubscriptionPolicy {
+    constructor(apiSubscriptionPolicy) {
+        this.policyName = apiSubscriptionPolicy.POLICY_NAME;
     }
 }
 

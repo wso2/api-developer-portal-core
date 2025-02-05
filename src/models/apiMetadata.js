@@ -19,6 +19,7 @@ const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize')
 const APIContent = require('../models/apiContent')
 const APIImages = require('./apiImages')
+const { Organization } = require('./organization')
 const SubscriptionPolicy = require('./subscriptionPolicy')
 const Labels = require('./labels');
 const { Organization } = require('./orgModels')
@@ -148,15 +149,8 @@ APIContent.belongsTo(APIMetadata, {
 APIImages.belongsTo(APIMetadata, {
   foreignKey: 'API_ID',
 });
-SubscriptionPolicy.belongsTo(APIMetadata, {
-  foreignKey: 'API_ID',
-});
 APIMetadata.belongsTo(Organization, {
   foreignKey: 'ORG_ID'
-})
-APIMetadata.hasMany(SubscriptionPolicy, {
-  foreignKey: 'API_ID',
-  onDelete: 'CASCADE'
 });
 APIMetadata.hasMany(APIImages, {
   foreignKey: 'API_ID',
