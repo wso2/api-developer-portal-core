@@ -445,7 +445,11 @@ const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
              COALESCE(
                 JSON_AGG("DP_API_SUBSCRIPTION_POLICY") FILTER (WHERE "DP_API_SUBSCRIPTION_POLICY"."API_ID" IS NOT NULL), 
                 '[]'
-            ) AS "DP_API_SUBSCRIPTION_POLICY"
+            ) AS "DP_API_SUBSCRIPTION_POLICY",
+            ts_rank(
+                to_tsvector('english', metadata."METADATA_SEARCH"::text),
+                plainto_tsquery('english', COALESCE(:searchTerm, ''))
+            ) AS "rank_metadata"
         FROM 
             "DP_API_METADATA" metadata
         JOIN 
@@ -477,7 +481,9 @@ const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
                 OR metadata."VISIBILITY" = 'PUBLIC'
             )
         GROUP BY 
-            metadata."API_ID";
+            metadata."API_ID"
+        ORDER BY
+            rank_metadata DESC;
         `;
         const formattedGroups = `{${groups.map((g) => `"${g}"`).join(',')}}`;
 
