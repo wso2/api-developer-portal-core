@@ -1,11 +1,16 @@
 {
   "port": 3000,
-  "pathToContent": "/src/",
+  "pathToContent": "../api-developer-portal/src/",
   "mode": "production",
   "controlPlane": {
     "url": "https://127.0.0.1:9443/api/am/devportal/v3",
     "disableCertValidation": true,
     "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
+  },
+  "serverCerts": {
+    "pathToCert": "../certs/client-truststore.pem",
+    "pathToPK": "../certs/private-key.pem",
+    "pathToCA": "../certs/client-truststore.pem"
   },
   "db": {
     "username": "postgres",
@@ -38,11 +43,11 @@
     "tokenURL": "https://127.0.0.1:9443/oauth2/token",
     "userInfoURL": "https://localhost:9443/oauth2/userinfo",
     "clientId": "",
-    "callbackURL": "http://localhost:3000/ACME/callback",
+    "callbackURL": "https://localhost:3000/ACME/callback",
     "scope": "openid profile",
     "signUpURL": "",
     "logoutURL": "https://localhost:9443/oidc/logout",
-    "logoutRedirectURI": "http://localhost:3000/ACME",
+    "logoutRedirectURI": "https://localhost:3000/ACME",
     "certificate": "",
     "jwksURL": "https://localhost:9443/oauth2/jwks"
   },

@@ -25,6 +25,31 @@ const util = require('../utils/util');
 const { CustomError } = require('../utils/errors/customErrors');
 const IdentityProviderDTO = require("../dto/identityProvider");
 
+function enforceSecuirty(scope) {
+    return async function (req, res, next) {
+        try {
+            const authHeader = req.headers.authorization;        
+            if (authHeader && authHeader.startsWith("Bearer ")) {
+                const token = authHeader.split(" ")[1]; 
+                if (token) {
+                    // TODO: Implement organization extraction logic
+                    validateAuthentication(scope)(req, res, next);
+                }
+            } else {
+                // Handle MTLS flow
+                const organization = req.headers.organization;
+                if (organization) {
+                    req.params.orgId = organization;   
+                } 
+                enforceMTLS(req, res, next);    
+            }
+        } catch (err) {
+            console.error("Error checking access token:", err);
+            return res.status(500).json({ error: "Internal Server Error" });
+        }    
+    }
+}
+
 const ensurePermission = (currentPage, role, req) => {
 
     let adminRole, superAdminRole, subscriberRole;
@@ -60,9 +85,9 @@ const ensureAuthenticated = async (req, res, next) => {
         let orgDetails;
         if (!(orgID === undefined)) {
             orgDetails = await adminDao.getOrganization(orgID);
-            adminRole = orgDetails.ADMIN_ROLE;
-            superAdminRole = orgDetails.SUPER_ADMIN_ROLE;
-            subscriberRole = orgDetails.SUBSCRIBER_ROLE;
+            adminRole = orgDetails.ADMIN_ROLE || adminRole;
+            superAdminRole = orgDetails.SUPER_ADMIN_ROLE || superAdminRole;
+            subscriberRole = orgDetails.SUBSCRIBER_ROLE || subscriberRole;
         }
         let role;
         if (req.isAuthenticated()) {
@@ -77,7 +102,7 @@ const ensureAuthenticated = async (req, res, next) => {
                     req.user[constants.ROLES.SUBSCRIBER] = subscriberRole;
                     if (orgDetails) {
                         req.user[constants.ORG_ID] = orgDetails.ORG_ID;
-                        req.user[constants.ORG_IDENTIFIER] = orgDetails.ORGANIZATION_IDENTIFIER
+                        req.user[constants.ORG_IDENTIFIER] = orgDetails.ORGANIZATION_IDENTIFIER || config.orgIDClaim;
                     }
                 }
                 //verify user belongs to organization
@@ -236,10 +261,31 @@ const validateBasicAuth = async (basicHeader) => {
     return valid;
 }
 
+const enforceMTLS = (req, res, next) => {
+    const clientCert = req.connection.getPeerCertificate(true);
+
+    if (!clientCert || Object.keys(clientCert).length === 0) {
+        return res.status(403).send('Client certificate required');
+    }
+
+    if (!req.client.authorized) {
+        return res.status(403).send('Client certificate verification failed');
+    }
+
+    const now = new Date();
+    const validFrom = new Date(clientCert.valid_from);
+    const validTo = new Date(clientCert.valid_to);
+    if (validFrom > now || validTo < now) {
+        return res.status(403).send('Client certificate is expired or not yet valid');
+    }
+
+    return next();
+};
+
 module.exports = ensureAuthenticated;
 
 module.exports = {
     ensureAuthenticated,
-    validateAuthentication
-
+    validateAuthentication,
+    enforceSecuirty
 }

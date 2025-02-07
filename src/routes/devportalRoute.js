@@ -24,13 +24,13 @@ const devportalController = require('../controllers/devportalController');
 const multer = require('multer');
 const storage = multer.memoryStorage()
 const apiDefinition = multer({ storage: storage })
-const { ensureAuthenticated, validateAuthentication } = require('../middlewares/ensureAuthenticated');
+const { ensureAuthenticated, validateAuthentication, enforceSecuirty } = require('../middlewares/ensureAuthenticated');
 const constants = require('../utils/constants');
 
 router.post('/organizations', validateAuthentication(constants.SCOPES.ADMIN), adminService.createOrganization);
 router.get('/organizations', validateAuthentication(constants.SCOPES.ADMIN), adminService.getOrganizations);
 router.put('/organizations/:orgId', validateAuthentication(constants.SCOPES.ADMIN), adminService.updateOrganization);
-router.get('/organizations/:orgId', validateAuthentication(constants.SCOPES.ADMIN), devportalService.getOrganization);
+router.get('/organizations/:orgId', enforceSecuirty(constants.SCOPES.ADMIN), devportalService.getOrganization); // S2S Applied 
 router.delete('/organizations/:orgId', validateAuthentication(constants.SCOPES.ADMIN), adminService.deleteOrganization);
 
 router.post('/organizations/:orgId/identityProvider', validateAuthentication(constants.SCOPES.ADMIN), adminService.createIdentityProvider);
@@ -39,11 +39,11 @@ router.get('/organizations/:orgId/identityProvider', validateAuthentication(cons
 router.delete('/organizations/:orgId/identityProvider', validateAuthentication(constants.SCOPES.ADMIN), adminService.deleteIdentityProvider);
 
 const upload = multer({ dest: '../.tmp/' });
-router.post('/organizations/:orgId/layout', validateAuthentication(constants.SCOPES.ADMIN), upload.single('file'), adminService.createOrgContent);
-router.put('/organizations/:orgId/layout', validateAuthentication(constants.SCOPES.ADMIN), upload.single('file'), adminService.updateOrgContent);
-router.get('/organizations/:orgId/layout', devportalService.getOrgContent);
-router.get('/organizations/:orgId/layout/:fileType', devportalService.getOrgContent);
-router.delete('/organizations/:orgId/layout', validateAuthentication(constants.SCOPES.ADMIN), adminService.deleteOrgContent);
+router.post('/organizations/:orgId/views/:name/layout', validateAuthentication(constants.SCOPES.ADMIN), upload.single('file'), adminService.createOrgContent);
+router.put('/organizations/:orgId/views/:name/layout', validateAuthentication(constants.SCOPES.ADMIN), upload.single('file'), adminService.updateOrgContent);
+router.get('/organizations/:orgId/views/:name/layout', devportalService.getOrgContent);
+router.get('/organizations/:orgId/views/:name/layout/:fileType', devportalService.getOrgContent);
+router.delete('/organizations/:orgId/views/:name/layout', validateAuthentication(constants.SCOPES.ADMIN), adminService.deleteOrgContent);
 
 router.post('/organizations/:orgId/provider', validateAuthentication(constants.SCOPES.ADMIN), adminService.createProvider);
 router.put('/organizations/:orgId/provider', validateAuthentication(constants.SCOPES.ADMIN), adminService.updateProvider);
@@ -67,6 +67,22 @@ router.put('/organizations/:orgId/apis/:apiId/template', validateAuthentication(
 router.get('/organizations/:orgId/apis/:apiId/template', apiMetadataService.getAPIFile);
 router.delete('/organizations/:orgId/apis/:apiId/template', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIFile);
 
+// S2S Applied APIS
+router.post('/apis', enforceSecuirty(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.createAPIMetadata); // s2s applied
+router.get('/apis', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.getAllAPIMetadata); // s2s applied
+router.put('/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.updateAPIMetadata); // s2s applied
+router.delete('/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIMetadata); // s2s applied
+
+router.post('/organizations/:orgId/labels', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.createLabels);
+router.put('/organizations/:orgId/labels', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.updateLabel);
+router.get('/organizations/:orgId/labels', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.retrieveLabels);
+router.delete('/organizations/:orgId/labels', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.deleteLabels);
+
+router.post('/organizations/:orgId/views', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.addView);
+router.put('/organizations/:orgId/views/:name', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.updateView);
+router.get('/organizations/:orgId/views/:name', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.getView);
+router.get('/organizations/:orgId/views', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.getAllViews);
+router.delete('/organizations/:orgId/views/:name', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.deleteView);
 
 router.post('/subscriptions', ensureAuthenticated, devportalController.subscribeAPI);
 router.delete('/subscriptions/:subscriptionId', ensureAuthenticated, devportalController.unsubscribeAPI);

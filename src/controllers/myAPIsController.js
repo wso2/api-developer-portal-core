@@ -18,20 +18,24 @@
 /* eslint-disable no-undef */
 const path = require('path');
 const fs = require('fs');
-const { renderGivenTemplate, loadLayoutFromAPI, renderTemplate } = require('../utils/util');
+const { renderGivenTemplate, loadLayoutFromAPI} = require('../utils/util');
 const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const apiMetadataService = require('../services/apiMetadataService');
+const adminService = require('../services/adminService');
 const util = require('../utils/util');
-const controlPlaneUrl = config.controlPlane.url;
 const APIDTO = require('../dto/apiDTO');
 
+let controlPlaneUrl = "";
 const loadMyAPIs = async (req, res) => {
     const orgName = req.params.orgName;
     const orgId = await adminDao.getOrgId(orgName);
+    const viewName = req.params.viewName;
 
+    const provider = await adminService.getProvidetByName(orgId, "WSO2");
+    controlPlaneUrl = provider.providerURL;
     let groups = "";
     let groupList = [];
     if (req.user && req.user[constants.ROLES.GROUP_CLAIM]) {
@@ -44,7 +48,7 @@ const loadMyAPIs = async (req, res) => {
     try {
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'myAPIs', 'page.hbs');
         const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
-        const layoutResponse = await loadLayoutFromAPI(orgId);
+        const layoutResponse = await loadLayoutFromAPI(orgId, viewName);
         let metaData = await apiMetadataService.getMetadataListFromDB(orgId, groupList);
         const apiRefIds = new Set(metaData.map(api => api.apiReferenceID));
 
@@ -104,7 +108,7 @@ const loadMyAPIs = async (req, res) => {
             subscriptions: subscriptions,
             applications: applications,
             subscribedApps: subscribedApps,
-            baseUrl: '/' + orgName
+            baseUrl: '/' + orgName + '/views/' + viewName
         };
 
         const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
@@ -113,7 +117,7 @@ const loadMyAPIs = async (req, res) => {
         console.error("Error occurred while loading My APIs", error);
         const templatePath = path.join(require.main.filename, '..', 'pages', 'error-page', 'page.hbs');
         const templateResponse = fs.readFileSync(templatePath, constants.CHARSET_UTF8);
-        const layoutResponse = await loadLayoutFromAPI(orgId);
+        const layoutResponse = await loadLayoutFromAPI(orgId, viewName);
         let html = await renderGivenTemplate(templateResponse, layoutResponse, {});
         res.send(html);
     }

@@ -50,25 +50,27 @@ const loadApplications = async (req, res) => {
             html = renderTemplate('../pages/applications/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
         } else {
             const orgName = req.params.orgName;
+            const viewName = req.params.viewName;
             const orgID = await orgIDValue(orgName);
             metaData = await getAPIMApplications(req);
             templateContent = {
                 applicationsMetadata: metaData,
-                baseUrl: '/' + orgName
+                baseUrl: '/' + orgName + '/views/' + viewName
             }
             const templateResponse = await templateResponseValue('applications');
-            const layoutResponse = await loadLayoutFromAPI(orgID);
+            const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
             html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         }
         res.send(html);
     } catch (error) {
         console.error("Error occurred while loading Applications", error);
         const orgName = req.params.orgName;
+        const viewName = req.params.viewName;
         const orgId = await orgIDValue(orgName);
         
         const templatePath = path.join(require.main.filename, '..', 'pages', 'error-page', 'page.hbs');
         const templateResponse = fs.readFileSync(templatePath, constants.CHARSET_UTF8);
-        const layoutResponse = await loadLayoutFromAPI(orgId);
+        const layoutResponse = await loadLayoutFromAPI(orgId, viewName);
         let html = await renderGivenTemplate(templateResponse, layoutResponse, {});
         res.send(html);
     }
@@ -99,6 +101,7 @@ const loadThrottlingPolicies = async (req, res) => {
     }
     else {
         const orgName = req.params.orgName;
+        const viewName = req.params.viewName;
         const orgID = await orgIDValue(orgName);
         metaData = await getAPIMThrottlingPolicies(req);
         templateContent = {
@@ -106,7 +109,7 @@ const loadThrottlingPolicies = async (req, res) => {
             baseUrl: '/' + orgName
         }
         const templateResponse = await templateResponseValue('add-application');
-        const layoutResponse = await loadLayoutFromAPI(orgID);
+        const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
         html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
     }
 
@@ -141,6 +144,7 @@ const loadApplication = async (req, res) => {
             html = renderTemplate('../pages/application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
         } else {
             const orgName = req.params.orgName;
+            const viewName = req.params.viewName;
             const orgID = await orgIDValue(orgName);
             metaData = await getAPIMApplication(req, applicationId);
             const allApis = await getAllAPIs(req);
@@ -224,7 +228,7 @@ const loadApplication = async (req, res) => {
             }
 
             const templateResponse = await templateResponseValue('application');
-            const layoutResponse = await loadLayoutFromAPI(orgID);
+            const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
             html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         }
 
@@ -277,6 +281,7 @@ const loadApplicationForEdit = async (req, res) => {
         html = renderTemplate('../pages/edit-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     } else {
         const orgName = req.params.orgName;
+        const viewName = req.params.viewName;
         const orgID = await orgIDValue(orgName);
         metaData = await getAPIMApplication(req, applicationId);
         throttlingMetaData = await getAPIMThrottlingPolicies(req);        
@@ -286,7 +291,7 @@ const loadApplicationForEdit = async (req, res) => {
             baseUrl: '/' + orgName
         }
         const templateResponse = await templateResponseValue('edit-application');
-        const layoutResponse = await loadLayoutFromAPI(orgID);
+        const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
         html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
 
     }

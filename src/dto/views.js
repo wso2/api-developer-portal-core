@@ -1,5 +1,6 @@
+
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2025, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -15,12 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-const express = require('express');
-const router = express.Router();
-const orgController = require('../controllers/orgContentController');
-const registerPartials = require('../middlewares/registerPartials');
 
-router.get('/(((?!favicon.ico|images|portal)):orgName/views/:viewName)', registerPartials, orgController.loadOrganizationContent);
+class ViewDTO {
+    constructor(view) {
+        this.name = view.NAME;
+        this.displayName = view.DISPLAY_NAME;
+        this.labels = view.DP_LABELs.map(label => label.dataValues.NAME);
+    }
 
+    setResponseData(data) {
+        this.data = data;
+    }
 
-module.exports = router;
+    getResponseData() {
+        return this.data;
+    }
+}
+
+module.exports = ViewDTO;

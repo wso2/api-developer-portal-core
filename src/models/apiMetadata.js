@@ -20,6 +20,7 @@ const sequelize = require('../db/sequelize')
 const APIContent = require('../models/apiContent')
 const APIImages = require('./apiImages')
 const { Organization } = require('./organization')
+const Labels = require('./labels');
 
 const APIMetadata = sequelize.define('DP_API_METADATA', {
   API_ID: {
@@ -98,6 +99,54 @@ const APIMetadata = sequelize.define('DP_API_METADATA', {
   timestamps: false,
   tableName: 'DP_API_METADATA',
   returning: true
+},
+{
+  indexes: [
+      {
+          unique: true,
+          fields: ['API_NAME', 'API_VERSION', 'ORG_ID']
+      }
+  ]
+});
+
+const APILabels = sequelize.define('DP_API_LABELS', {
+
+  ID: {
+      type: DataTypes.UUID,
+      defaultValue: Sequelize.UUIDV4,
+      primaryKey: true
+  },
+  ORG_ID: {
+      type: DataTypes.UUID,
+      defaultValue: Sequelize.UUIDV4
+  },
+  API_ID: {
+      type: DataTypes.UUID,
+      references: {
+          model: APIMetadata,
+          key: 'API_ID',
+      }
+  },
+  LABEL_ID: {
+      type: DataTypes.UUID,
+      references: {
+          model: Labels,
+          key: 'LABEL_ID',
+      }
+  }
+}, {
+  timestamps: false,
+  tableName: 'DP_API_LABELS',
+  returning: true,
+  unique: false
+});
+
+APILabels.belongsTo(Organization, {
+  foreignKey: 'ORG_ID'
+});
+
+APILabels.belongsTo(APIMetadata, {
+  foreignKey: 'API_ID'
 });
 
 APIContent.belongsTo(APIMetadata, {
@@ -118,8 +167,18 @@ APIMetadata.hasMany(APIContent, {
   onDelete: 'CASCADE'
 });
 
+APIMetadata.belongsToMany(Labels, { 
+  through: APILabels, 
+  foreignKey: "API_ID",
+  otherKey: "LABEL_ID"
+});
+Labels.belongsToMany(APIMetadata, { 
+  through: APILabels,
+  foreignKey: "LABEL_ID",
+  otherKey: "API_ID"
+ });
 
-// Export both models
 module.exports = {
-  APIMetadata
+  APIMetadata,
+  APILabels
 };
