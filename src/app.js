@@ -64,10 +64,6 @@ Handlebars.registerHelper('eq', function (a, b) {
     return (a === b || (a != null && b != null && (a === b.toString() || a.toString() === b)));
 });
 
-Handlebars.registerHelper('notEquals', function (a, b) {
-    return a !== b;
-  });
-
 Handlebars.registerHelper('in', function (value, options) {
     const validValues = Array.isArray(options.hash.values) ? options.hash.values : options.hash.values.split(',');
     return Array.isArray(validValues) && validValues.includes(value)

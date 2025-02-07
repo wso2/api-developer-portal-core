@@ -730,7 +730,6 @@ const getAPIMetadata = async (orgID, apiID, t) => {
                 API_ID: apiID
             }
         }, { transaction: t });
-        console.log("RESPONSE", apiMetadataResponse)
         return apiMetadataResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -1177,8 +1176,7 @@ const getAPIId = async (orgID, apiName) => {
             attributes: ['API_ID'],
             where: {
                 API_NAME: apiName,
-                ORG_ID: orgID
-            }
+                ORG_ID: orgID            }
         })
         return api.API_ID;
     } catch (error) {
