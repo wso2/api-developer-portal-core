@@ -85,9 +85,9 @@ const ensureAuthenticated = async (req, res, next) => {
         let orgDetails;
         if (!(orgID === undefined)) {
             orgDetails = await adminDao.getOrganization(orgID);
-            adminRole = orgDetails.ADMIN_ROLE;
-            superAdminRole = orgDetails.SUPER_ADMIN_ROLE;
-            subscriberRole = orgDetails.SUBSCRIBER_ROLE;
+            adminRole = orgDetails.ADMIN_ROLE || adminRole;
+            superAdminRole = orgDetails.SUPER_ADMIN_ROLE || superAdminRole;
+            subscriberRole = orgDetails.SUBSCRIBER_ROLE || subscriberRole;
         }
         let role;
         if (req.isAuthenticated()) {
@@ -102,7 +102,7 @@ const ensureAuthenticated = async (req, res, next) => {
                     req.user[constants.ROLES.SUBSCRIBER] = subscriberRole;
                     if (orgDetails) {
                         req.user[constants.ORG_ID] = orgDetails.ORG_ID;
-                        req.user[constants.ORG_IDENTIFIER] = orgDetails.ORGANIZATION_IDENTIFIER
+                        req.user[constants.ORG_IDENTIFIER] = orgDetails.ORGANIZATION_IDENTIFIER || config.orgIDClaim;
                     }
                 }
                 //verify user belongs to organization

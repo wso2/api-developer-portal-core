@@ -54,7 +54,7 @@ const loadOrgContentFromAPI = async (req, res) => {
     const orgName = req.params.orgName;
     try {
         const orgId = await adminDao.getOrgId(orgName);
-        html = await renderTemplateFromAPI({}, orgId, req.params.orgName, 'pages/home');
+        html = await renderTemplateFromAPI({}, orgId, orgName, 'pages/home', req.params.viewName);
     } catch (error) {
         console.error(`Failed to load organization :, ${error}`);
         return res.redirect('/configure');

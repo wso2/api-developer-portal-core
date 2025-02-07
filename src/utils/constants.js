@@ -90,7 +90,7 @@ module.exports = {
         API_LANDING_PAGE_PATH: '/api/',
         DEVPORTAL_ASSETS_BASE_PATH: '/devportal/organizations/',
         DEVPORTAL_CONFIGURE: '/*/configure',
-        DEVPORTAL_ROOT: ['/portal', '/devportal'],
+        DEVPORTAL_ROOT: ['/portal','/portal/*/edit', '/devportal'],
         DEVPORTAL_API_LISTING: '/*/apis',
         DEVPORTAL_TECHNICAL_PAGES: ['*/application']
     },
@@ -149,7 +149,15 @@ module.exports = {
         PROVIDER_CREATE_ERROR: "Error while creating provider",
         PROVIDER_UPDATE_ERROR: "Error while updating provider",
         PROVIDER_DELETE_ERROR: "Error while deleting provider",
-        PROVIDER_FETCH_ERROR: "Error while fetching providers"
+        PROVIDER_FETCH_ERROR: "Error while fetching providers",
+        LABEL_DELETE_ERROR: "Error while deleting label",
+        LABEL_RETRIEVE_ERROR: "Error while deleting label",
+        LABEL_CREATE_ERROR: "Error while creating labels",
+        LABEL_UPDATE_ERROR: "Error while updating labels",
+        VIEW_CREATE_ERROR: "Error while creating view",
+        VIEW_UPDATE_ERROR: "Error while updating view",
+        VIEW_DELETE_ERROR: "Error while deleting view",
+        VIEW_RETRIEVE_ERROR: "Error while fetching view"
     },
     ERROR_CODE: {
         401: "Unauthenticated",

@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
@@ -15,12 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-const express = require('express');
-const router = express.Router();
-const contentController = require('../controllers/customContentController');
-const registerPartials = require('../middlewares/registerPartials');
-const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
 
-// eslint-disable-next-line no-useless-escape
-router.get('(^(?!\/(favicon\.ico|images\/|technical-styles\/|styles\/|*login*|*portal*|devportal\/))/:orgName/views/viewName/*)', ensureAuthenticated, registerPartials, contentController.loadCustomContent);
-module.exports = router;
+class LabelDTO {
+    constructor(label) {
+        this.name = label.NAME;
+        this.displayName = label.DISPLAY_NAME;
+    }
+
+    setResponseData(data) {
+        this.data = data;
+    }
+
+    getResponseData() {
+        return this.data;
+    }
+}
+
+module.exports = LabelDTO;

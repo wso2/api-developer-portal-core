@@ -51,6 +51,15 @@ app.engine('.hbs', engine({
 
 app.set('view engine', 'hbs');
 
+Handlebars.registerHelper('json', function(context) {
+
+    if(context) {
+        return JSON.stringify(context);
+    } else {
+        return JSON.stringify();
+    }
+});
+
 Handlebars.registerHelper('eq', function (a, b) {
     return (a === b || (a != null && b != null && (a === b.toString() || a.toString() === b)));
 });
