@@ -571,6 +571,7 @@ const storeAPIFiles = async (files, apiID, t) => {
             apiContent.push({
                 API_FILE: file.content,
                 FILE_NAME: file.fileName,
+                TYPE: file.type,
                 API_ID: apiID
             })
         });

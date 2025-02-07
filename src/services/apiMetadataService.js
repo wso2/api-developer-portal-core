@@ -282,6 +282,7 @@ const createAPITemplate = async (req, res) => {
     try {
         const { orgId, apiId } = req.params;
         let imageMetadata = JSON.parse(req.body.imageMetadata);
+        let documentMetadata = JSON.parse(req.body.imageMetadata);
         const extractPath = path.join("/tmp", orgId + "/" + apiId);
         await fs.mkdir(extractPath, { recursive: true });
         const zipFilePath = req.file.path;
@@ -291,23 +292,28 @@ const createAPITemplate = async (req, res) => {
         // Build complete paths
         const contentPath = path.join(extractPath, apiContentFileName, "content");
         const imagesPath = path.join(extractPath, apiContentFileName, "images");
+        const documentPath = path.join(extractPath, apiContentFileName, "documents");
 
         // Verify directories exist
         try {
             await fs.access(contentPath);
             await fs.access(imagesPath);
+            await fs.access(documentPath);
         } catch (err) {
             console.error(err);
             throw new Error(
-                `Required directories not found after extraction. Content path: ${contentPath}, Images path: ${imagesPath}`
+                `Required directories not found after extraction. Content path: ${contentPath}, Images path: ${imagesPath}
+                , Documents path: ${documentPath}`
             );
         }
         //get api files
         let apiContent = await util.getAPIFileContent(contentPath);
         //get api images
         const apiImages = await util.getAPIImages(imagesPath);
+        //get api documents
+        const apiDocuments = await util.getAPIDocuments(documentPath, documentMetadata);
         apiContent.push(...apiImages);
-
+        apiContent.push(...apiDocuments);
         await sequelize.transaction(async (t) => {
             //check whether api belongs to given org
             let apiMetadata = await apiDao.getAPIMetadata(orgId, apiId, t);

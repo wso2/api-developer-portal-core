@@ -209,6 +209,40 @@ const loadTryOutPage = async (req, res) => {
     res.send(html);
 }
 
+const loadDocsPage = async (req, res) => { 
+
+    const { orgName, apiName, viewName } = req.params;
+    let html = "";
+    if (config.mode === constants.DEV_MODE) {
+        const metaData = loadAPIMetaDataFromFile(apiName);
+        let apiDefinition = path.join(process.cwd(), filePrefix + '../mock', req.params.apiName + '/apiDefinition.json');
+        if (fs.existsSync(apiDefinition)) {
+            apiDefinition = await fs.readFileSync(apiDefinition, constants.CHARSET_UTF8);
+        }
+        const templateContent = {
+            apiMetadata: metaData,
+            baseUrl: constants.BASE_URL + config.port,
+            apiType: metaData.apiInfo.apiType,
+            swagger: apiDefinition
+        }
+        html = renderTemplate('../pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
+    } else {
+        try {
+            const orgID = await adminDao.getOrgId(orgName);
+            const apiID = await apiDao.getAPIId(orgID, apiName);
+            
+            const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'docs', 'page.hbs');
+            const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
+            const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
+            html = await renderGivenTemplate(templateResponse, layoutResponse, {});
+        } catch (error) {
+            console.error(`Failed to load api tryout :`, error);
+        }
+    }
+    res.send(html);
+
+}
+
 async function loadAPIMetaDataList() {
 
     const mockAPIMetaDataPath = path.join(process.cwd(), filePrefix + '../mock', 'apiMetadata.json');
@@ -274,4 +308,5 @@ module.exports = {
     loadAPIs,
     loadAPIContent,
     loadTryOutPage,
+    loadDocsPage
 };

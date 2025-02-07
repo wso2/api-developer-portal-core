@@ -35,6 +35,19 @@ module.exports = {
         PUBLIC: 'PUBLIC',
         PRIVATE: 'PRIVATE'    
     },
+    DOC_TYPES: {
+        API_LANDING: 'MARKETING',
+        API_DEFINITION: 'API_DEFINITION',
+        IMAGES: 'IMAGE',
+        DOCUMENT: 'DOCUMENT',
+        DOCS: {
+            HOW_TO: 'HOW_TO',
+            SAMPLES: 'SAMPLES',
+            PUBLIC_FORUM: 'PUBLIC_FORUM',
+            SUPPORT_FORUM: 'SUPPORT_FORUM',
+            OTHER: 'OTHER'
+        }
+    },
     MIME_TYPES: {
         HTML: 'text/html',
         TEXT: 'text/plain',

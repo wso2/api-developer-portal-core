@@ -247,7 +247,7 @@ const getAPIFileContent = (directory) => {
     filenames.forEach((filename) => {
         if (!(filename === '.DS_Store')) {
             let fileContent = fs.readFileSync(path.join(directory, filename), 'utf8');
-            files.push({ fileName: filename, content: fileContent });
+            files.push({ fileName: filename, content: fileContent, type: constants.DOC_TYPES.API_LANDING});
         }
     });
     return files;
@@ -259,9 +259,21 @@ const getAPIImages = async (directory) => {
     for (const filename of filenames) {
         if (!(filename === '.DS_Store')) {
             let fileContent = await fs.promises.readFile(path.join(directory, filename.name));
-            files.push({ fileName: filename.name, content: fileContent });
+            files.push({ fileName: filename.name, content: fileContent, type: constants.DOC_TYPES.IMAGES });
         }
     }
+    return files;
+};
+
+const getAPIDocuments = (directory, documentMetadata) => {
+    let files = [];
+    const filenames = fs.readdirSync(directory);
+    filenames.forEach((filename) => {
+        if (!(filename === '.DS_Store')) {
+            let fileContent = fs.readFileSync(path.join(directory, filename), 'utf8');
+            files.push({ fileName: filename, content: fileContent, type: documentMetadata[filename] });
+        }
+    });
     return files;
 };
 
@@ -470,6 +482,7 @@ module.exports = {
     retrieveContentType,
     getAPIFileContent,
     getAPIImages,
+    getAPIDocuments,
     isTextFile,
     invokeApiRequest,
     validateIDP,
