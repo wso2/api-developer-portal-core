@@ -18,7 +18,7 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize');
 const Provider = require('./provider');
-
+const View = require('./views');
 
 const Organization = sequelize.define('DP_ORGANIZATION', {
     ORG_ID: {
@@ -33,8 +33,7 @@ const Organization = sequelize.define('DP_ORGANIZATION', {
     },
     BUSINESS_OWNER: {
         type: DataTypes.STRING,
-        allowNull: false,
-        unique: true
+        allowNull: true,
     },
     BUSINESS_OWNER_CONTACT: {
         type: DataTypes.STRING,
@@ -44,17 +43,18 @@ const Organization = sequelize.define('DP_ORGANIZATION', {
         type: DataTypes.STRING,
         allowNull: true
     },
-    DEV_PORTAL_URL_IDENTIFIER: {
+    ORG_HANDLE: {
         type: DataTypes.STRING,
-        allowNull: true,
+        allowNull: false,
+        unique: true
     },
     ROLE_CLAIM_NAME: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
     },
     ORGANIZATION_CLAIM_NAME: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
     },
     ORGANIZATION_IDENTIFIER: {
         type: DataTypes.STRING,
@@ -62,19 +62,19 @@ const Organization = sequelize.define('DP_ORGANIZATION', {
     },
     ADMIN_ROLE: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
     },
     SUPER_ADMIN_ROLE: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
     },
     SUBSCRIBER_ROLE: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
     },
     GROUPS_CLAIM_NAME: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
     }
 }, {
     timestamps: false,
@@ -83,7 +83,7 @@ const Organization = sequelize.define('DP_ORGANIZATION', {
 });
 
 const OrgContent = sequelize.define('DP_ORGANIZATION_ASSETS', {
-    ASSERT_ID: {
+    ASSET_ID: {
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true
@@ -108,6 +108,10 @@ const OrgContent = sequelize.define('DP_ORGANIZATION_ASSETS', {
         type: DataTypes.UUID,
         allowNull: false,
         forignKey: true,
+    },
+    VIEW_ID: {
+        type: DataTypes.UUID,
+        allowNull: true,
     }
 }, {
     timestamps: false,
@@ -137,6 +141,15 @@ Provider.belongsTo(Organization, {
 Organization.hasMany(Provider, {
     foreignKey: 'ORG_ID',
     onDelete: 'CASCADE',
+});
+
+View.hasOne(OrgContent, {
+    foreignKey: 'VIEW_ID',
+});
+
+OrgContent.belongsTo(View, {
+    foreignKey: 'VIEW_ID',
+    onDelete: 'CASCADE'
 });
 
 // Export both models

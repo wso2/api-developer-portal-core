@@ -34,8 +34,12 @@ const registerPartials = async (req, res, next) => {
   if (config.mode === constants.DEV_MODE) {
     registerAllPartialsFromFile(constants.BASE_URL + config.port, req);
   } else {
+    let matchURL = req.originalUrl;
+    if (req.session.returnTo) {
+      matchURL = req.session.returnTo;
+    }
     try {
-      if (req.params.orgName && req.params.orgName !== "portal") {
+      if (req.params.orgName && req.params.orgName !== "portal" && (!(/configure/i.test(matchURL)))) {
         await registerPartialsFromAPI(req);
       }
     } catch (error) {
@@ -93,11 +97,13 @@ const registerAllPartialsFromFile = async (baseURL, req) => {
 const registerPartialsFromAPI = async (req) => {
 
   const orgName = req.params.orgName;
+  const viewName = req.params.viewName;
   const orgID = await adminDao.getOrgId(orgName);
-  const imageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/layout?fileType=image&fileName=`;
+  const imageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/views/${viewName}/layout?fileType=image&fileName=`;
   let partials = await adminDao.getOrgContent({
     orgId: orgID,
     fileType: 'partial',
+    viewName: viewName
   });
   let partialObject = {}
   partials.forEach(file => {
@@ -119,21 +125,21 @@ const registerPartialsFromAPI = async (req) => {
     hbs.handlebars.partials = {
       ...hbs.handlebars.partials,
       header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
-        baseUrl: "/" + orgName,
+        baseUrl: "/" + orgName + "/views/" + viewName,
         profile: req.user,
         isAdmin: isAdmin,
         isSuperAdmin: isSuperAdmin,
         hasWSO2APIs: await checkWSO2APIAvailability()
       }),
       [constants.HERO_PARTIAL_NAME]: hbs.handlebars.compile(partialObject[constants.HERO_PARTIAL_NAME])(
-        { baseUrl: "/" + orgName }
+        { baseUrl: "/" + orgName + "/views/" + viewName }
       ),
     };
   }
   if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
 
     const apiName = req.params.apiName;
-    const apiID = await apiDao.getAPIId(apiName);
+    const apiID = await apiDao.getAPIId(orgID, apiName);
 
     //fetch markdown content for API if exists
     const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, orgID, apiID);

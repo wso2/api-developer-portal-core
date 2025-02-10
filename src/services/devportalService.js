@@ -41,7 +41,7 @@ const getOrganizationDetails = async (orgId) => {
         businessOwner: organization.BUSINESS_OWNER,
         businessOwnerContact: organization.BUSINESS_OWNER_CONTACT,
         businessOwnerEmail: organization.BUSINESS_OWNER_EMAIL,
-        devPortalURLIdentifier: organization.DEV_PORTAL_URL_IDENTIFIER,
+        orgHandle: organization.ORG_HANDLE,
         roleClaimName: organization.ROLE_CLAIM_NAME,
         groupsClaimName: organization.GROUPS_CLAIM_NAME,
         organizationClaimName: organization.ORGANIZATION_CLAIM_NAME,
@@ -57,12 +57,12 @@ const getOrgContent = async (req, res) => {
 
     try {
         if (req.query.fileType && req.query.fileName) {
-            const asset = await adminService.getOrgContent(req.params.orgId, req.query.fileType, req.query.fileName, req.query.filePath);
+            const asset = await adminService.getOrgContent(req.params.orgId, req.params.name, req.query.fileType, req.query.fileName, req.query.filePath);
             const contentType = retrieveContentType(asset.FILE_NAME, asset.FILE_TYPE);
             res.set(constants.MIME_TYPES.CONYEMT_TYPE, contentType);
             return res.status(200).send(Buffer.isBuffer(asset.FILE_CONTENT) ? asset.FILE_CONTENT : constants.CHARSET_UTF8);
         } else if (req.params.fileType) {
-            const assets = await adminService.getOrgContent(req.params.orgId, req.params.fileType);
+            const assets = await adminService.getOrgContent(req.params.orgId, req.params.viewId, req.params.fileType);
             const results = [];
             for (const asset of assets) {
                 const resp = {
@@ -77,6 +77,7 @@ const getOrgContent = async (req, res) => {
             res.status(400).send('Invalid request');
         }
     } catch (error) {
+        console.error(`Error while fetching organization content:`, error);
         res.status(404).send(error.message);
     }
 };

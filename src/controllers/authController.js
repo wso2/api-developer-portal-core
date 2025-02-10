@@ -60,27 +60,24 @@ const fetchAuthJsonContent = async (req, orgName) => {
 const login = async (req, res, next) => {
 
     let orgName, IDP;
-    let claimNames = {};
+    let claimNames = {
+        [constants.ROLES.ROLE_CLAIM] : config.roleClaim,
+        [constants.ROLES.GROUP_CLAIM] : config.groupsClaim,
+        [constants.ROLES.ORGANIZATION_CLAIM] : config.orgIDClaim
+    };
     if (req.params.orgName) {
         orgName = req.params.orgName;
-        console.log(orgName)
         if(orgName !== 'portal') {
         const orgDetails = await adminDao.getOrganization(orgName);
         if (orgDetails) {
-            claimNames[constants.ROLES.ROLE_CLAIM] = orgDetails.ROLE_CLAIM_NAME;
-            claimNames[constants.ROLES.GROUP_CLAIM] = orgDetails.GROUPS_CLAIM_NAME;
-            claimNames[constants.ROLES.ORGANIZATION_CLAIM] = orgDetails.ORGANIZATION_CLAIM_NAME;
+            claimNames[constants.ROLES.ROLE_CLAIM] = orgDetails.ROLE_CLAIM_NAME || config.roleClaim;
+            claimNames[constants.ROLES.GROUP_CLAIM] = orgDetails.GROUPS_CLAIM_NAME || config.groupsClaim;
+            claimNames[constants.ROLES.ORGANIZATION_CLAIM] = orgDetails.ORGANIZATION_CLAIM_NAME || config.orgIDClaim;
         }
     }
     }
     IDP = await fetchAuthJsonContent(req, orgName);
     if (IDP.clientId) {
-        //fetch claim names from DB
-        if (Object.keys(claimNames).length === 0) {
-            claimNames[constants.ROLES.ROLE_CLAIM] = config.roleClaim;
-            claimNames[constants.ROLES.GROUP_CLAIM] = config.groupsClaim;
-            claimNames[constants.ROLES.ORGANIZATION_CLAIM] = config.orgIDClaim;
-        }
         configurePassport(IDP, claimNames);  // Configure passport dynamically
         passport.authenticate('oauth2')(req, res, next);
         next();

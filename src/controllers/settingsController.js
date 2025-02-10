@@ -24,6 +24,7 @@ const IdentityProviderDTO = require("../dto/identityProvider");
 const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
 const adminService = require('../services/adminService');
+const apiMetadataService = require('../services/apiMetadataService');
 const devPortalService = require('../services/devportalService');
 
 const filePrefix = config.pathToContent;
@@ -68,26 +69,23 @@ const loadSettingPage = async (req, res) => {
             } else {
                 templateContent.createIDP = true;
             }
-            //TODO: fetch view names from DB
-            const file = await adminService.getOrgContent(orgID, 'layout', 'main.hbs', 'layout');
-            if (file !== null) {
-                views = [{
-                    'name': 'Default'
-                }]
+            templateContent.viewCreate = true;
+            const views = await apiMetadataService.getViewsFromDB(orgID);
+            if (views.length > 0) {
                 templateContent.content = true;
                 templateContent.views = views;
+                templateContent.viewCreate = false;
                 templateContent.orgContent = false;
             }
+            const orgLabels = await apiMetadataService.getOrgLabels(orgID);
+            templateContent.orgLabels = orgLabels;
             //get api providers
             const apiProviders = await getAPIProviders(orgID);
             if (apiProviders.length > 0) {
                 templateContent.apiProviders = apiProviders;
             }
-            layoutResponse = await loadLayoutFromAPI(orgID);
         }
-        if (layoutResponse === "") {
-            layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
-        }
+        layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
         const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
         let html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         res.send(html);

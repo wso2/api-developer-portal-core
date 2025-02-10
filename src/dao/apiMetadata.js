@@ -15,13 +15,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-const { APIMetadata } = require('../models/apiMetadata');
+const { APIMetadata, APILabels } = require('../models/apiMetadata');
 const APISubscriptionPolicy = require('../models/apiSubscriptionPolicy');
 const SubscriptionPolicy = require('../models/subscriptionPolicy');
 const APIContent = require('../models/apiContent');
 const APIImageMetadata = require('../models/apiImages');
-const { Sequelize, Op } = require('sequelize');
+const Labels = require('../models/labels');
+const View = require('../models/views');
+const ViewLabels = require('../models/viewLabels');
+const { Sequelize } = require('sequelize');
+const { Op } = require('sequelize');
 const constants = require('../utils/constants');
+const { CustomError } = require('../utils/errors/customErrors');
 
 const createAPIMetadata = async (orgID, apiMetadata, t) => {
 
@@ -40,6 +45,7 @@ const createAPIMetadata = async (orgID, apiMetadata, t) => {
             API_TYPE: apiInfo.apiType,
             VISIBILITY: apiInfo.visibility,
             VISIBLE_GROUPS: apiInfo.visibleGroups ? apiInfo.visibleGroups.join(' ') : null,
+            TAGS: apiInfo.tags ? apiInfo.tags.join(' ') : null,
             TECHNICAL_OWNER: owners.technicalOwner,
             TECHNICAL_OWNER_EMAIL: owners.technicalOwnerEmail,
             BUSINESS_OWNER_EMAIL: owners.businessOwnerEmail,
@@ -59,6 +65,362 @@ const createAPIMetadata = async (orgID, apiMetadata, t) => {
         throw new Sequelize.DatabaseError(error);
     }
 };
+
+const createAPILabelMapping = async (orgID, apiID, labels, t) => {
+
+    const labelList = [];
+    const IDList = await getLabelID(orgID, labels, t);
+    try {
+        IDList.forEach(label => {
+            labelList.push({
+                LABEL_ID: label,
+                API_ID: apiID,
+                ORG_ID: orgID
+            });
+        });
+        const labelResponse = await APILabels.bulkCreate(labelList, { transaction: t });
+        return labelResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+
+}
+
+const createLabels = async (orgID, labels, t) => {
+
+    const labelList = [];
+    try {
+        labels.forEach(label => {
+            labelList.push({
+                NAME: label.name,
+                DISPLAY_NAME: label.displayName,
+                ORG_ID: orgID
+            });
+        })
+        const labelResponse = await Labels.bulkCreate(labelList, { transaction: t });
+        return labelResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const updateLabel = async (orgID, label) => {
+
+    try {
+        let [record, created] = await Labels.findOrCreate({
+            where: {
+                NAME: label.name,
+                ORG_ID: orgID
+            },
+            defaults: {
+                NAME: label.name,
+                DISPLAY_NAME: label.displayName,
+            },
+            returning: true
+        });
+        if (!created) {
+            record = await record.update(label); // Update if found
+          }
+        return record;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getLabelID = async (orgID, labels, t) => {
+
+    let IDList = [];
+    try {
+        for (const label of labels) {
+            IDList.push(await getLabelIDList(orgID, label, t));
+        };
+        return IDList;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getLabelIDList = async (orgID, label, t) => {
+
+    const labelResponse = await Labels.findOne({
+        where: {
+            NAME: label,
+            ORG_ID: orgID
+        }
+    }, { transaction: t });
+    console.log(labelResponse)
+    return labelResponse.dataValues.LABEL_ID;
+}
+
+const deleteLabel = async (orgID, labelNames) => {
+
+    try {
+        const labelResponse = await Labels.destroy({
+            where: {
+                NAME: labelNames,
+                ORG_ID: orgID
+            }
+        });
+        return labelResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getLabels = async (orgID) => {
+
+    try {
+        const labelResponse = await Labels.findAll({
+            where: {
+                ORG_ID: orgID
+            }
+        });
+        return labelResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const addView = async (orgID, payload, t) => {
+
+    let displayName = payload.displayName ? payload.displayName : payload.name;
+    try {
+        const viewResponse = await View.create({
+            DISPLAY_NAME: displayName,
+            NAME: payload.name,
+            ORG_ID: orgID
+        }, { transaction: t });
+        return viewResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const updateView = async (orgID, name, displayName, t) => {
+
+    try {
+        let [record, created] =await View.findOrCreate({
+            where: {
+                NAME: name,
+                ORG_ID: orgID
+            },
+            defaults: {
+                NAME: name,
+                DISPLAY_NAME: displayName,
+            },
+            transaction: t ,
+            returning: true
+        });
+        if (!created) {
+            record = await record.update({
+                NAME: name,
+                DISPLAY_NAME: displayName,
+            }); // Update if found
+          }
+         return record;        
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const deleteView = async (orgID, viewName) => {
+
+    try {
+        const viewResponse = await View.destroy({
+            where: {
+                NAME: viewName,
+                ORG_ID: orgID
+            }
+        });
+        return viewResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getView = async (orgID, viewName) => {
+
+    try {
+        const viewResponse = await View.findOne({
+            where: {
+                NAME: viewName,
+                ORG_ID: orgID
+            },
+            include: {
+                model: Labels,
+                attributes: ["NAME"],
+                through: { attributes: [] }
+            },
+        });
+        return viewResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getViewID = async (orgID, viewName) => {
+
+    try {
+        const viewResponse = await View.findOne({
+            where: {
+                [Op.or]: [
+                    { DISPLAY_NAME: viewName },
+                    { NAME: viewName }
+                ],
+                ORG_ID: orgID
+            }
+        });
+        if (!viewResponse) {
+            throw new CustomError(404, constants.ERROR_CODE[404], "View not found")
+        }
+        return viewResponse.dataValues.VIEW_ID;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw error;
+    }
+}
+
+const getAllViews = async (orgID) => {
+
+    try {
+        const viewResponse = await View.findAll({
+            where: {
+                ORG_ID: orgID
+            },
+            include: {
+                model: Labels,
+                attributes: ["NAME"],
+                through: {
+                    attributes: []
+                }
+            },
+        });
+        return viewResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const addViewLabels = async (orgID, viewID, labels, t) => {
+
+    const labelList = [];
+    const IDList = await getLabelID(orgID, labels, t);
+    try {
+        IDList.forEach(label => {
+            labelList.push({
+                LABEL_ID: label,
+                VIEW_ID: viewID,
+                ORG_ID: orgID
+            });
+        });
+        const labelResponse = await ViewLabels.bulkCreate(labelList, { transaction: t });
+        return labelResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const addLabel = async (orgID, labelID, viewID, t) => {
+
+    try {
+        const labelResponse = await ViewLabels.create({
+            LABEL_ID: labelID,
+            VIEW_ID: viewID,
+            ORG_ID: orgID
+        }, { transaction: t });
+        return labelResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const deleteViewLabels = async (orgID, viewID, labels, t) => {
+
+    const IDList = await getLabelID(orgID, labels);
+    let deleteResponse;
+    try {
+        IDList.forEach(async label => {
+            deleteResponse = await ViewLabels.destroy({
+                where: {
+                    LABEL_ID: label,
+                    VIEW_ID: viewID,
+                    ORG_ID: orgID
+                }
+            }, { transaction: t });
+        });
+        return deleteResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+
+const deleteAPILabels = async (orgID, apiID, labels, t) => {
+
+    const IDList = await getLabelID(orgID, labels);
+    let deleteResponse;
+    try {
+        IDList.forEach(async label => {
+            deleteResponse = await APILabels.destroy({
+                where: {
+                    LABEL_ID: label,
+                    API_ID: apiID,
+                    ORG_ID: orgID
+                }
+            }, { transaction: t });
+        });
+        return deleteResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
 
 const createAPISubscriptionPolicy = async (apiSubscriptionPolicies, apiID, t) => {
 
@@ -356,6 +718,11 @@ const getAPIMetadata = async (orgID, apiID, t) => {
                 model: SubscriptionPolicy,
                 through: { attributes: [] },
                 required: false
+            },
+            {
+                model: Labels,
+                attributes: ["NAME"],
+                through: { attributes: [] }
             }
             ],
             where: {
@@ -372,8 +739,9 @@ const getAPIMetadata = async (orgID, apiID, t) => {
     }
 };
 
-const getAllAPIMetadata = async (orgID, groups, t) => {
+const getAllAPIMetadata = async (orgID, groups, viewName, t) => {
 
+    const viewID = await getViewID(orgID, viewName);
     let apiList = [];
     for (const group of groups) {
         try {
@@ -382,7 +750,7 @@ const getAllAPIMetadata = async (orgID, groups, t) => {
                     ORG_ID: orgID,
                     VISIBLE_GROUPS: {
                         [Op.like]: `%${group}%`
-                    }
+                    },
                 },
                 include: [{
                     model: APIImageMetadata,
@@ -391,7 +759,19 @@ const getAllAPIMetadata = async (orgID, groups, t) => {
                     model: SubscriptionPolicy,
                     through: { attributes: [] },
                     required: false
-                }],
+                },
+                {
+                    model: Labels,
+                    attributes: ["NAME"], 
+                    required: true,
+                    through: { attributes: [] },
+                    where: {
+                        LABEL_ID: {
+                            [Op.in]: Sequelize.literal(`(SELECT "LABEL_ID" FROM "DP_VIEW_LABELS" WHERE "VIEW_ID" = '${viewID}')`)
+                        }
+                    }
+                }
+                ],
             }, { transaction: t });
             if (apiMetadataResponse) {
                 apiList.push(...apiMetadataResponse);
@@ -419,7 +799,19 @@ const getAllAPIMetadata = async (orgID, groups, t) => {
                 model: SubscriptionPolicy,
                 through: { attributes: [] },
                 required: false
-            }],
+            },
+            {
+                model: Labels,
+                attributes: ["NAME"],
+                required: true,
+                through: { attributes: [] },
+                where: {
+                    LABEL_ID: {
+                        [Op.in]: Sequelize.literal(`(SELECT "LABEL_ID" FROM "DP_VIEW_LABELS" WHERE "VIEW_ID" = '${viewID}')`)
+                    }
+                }
+            }
+            ],
         }, { transaction: t });
         apiList.push(...publicAPIS);
     } catch (error) {
@@ -446,10 +838,8 @@ const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
                 JSON_AGG("DP_API_SUBSCRIPTION_POLICY") FILTER (WHERE "DP_API_SUBSCRIPTION_POLICY"."API_ID" IS NOT NULL), 
                 '[]'
             ) AS "DP_API_SUBSCRIPTION_POLICY",
-            ts_rank(
-                to_tsvector('english', metadata."METADATA_SEARCH"::text),
-                plainto_tsquery('english', COALESCE(:searchTerm, ''))
-            ) AS "rank_metadata"
+            COALESCE(
+                ARRAY_AGG(DISTINCT "DP_LABELS"."NAME") FILTER (WHERE "DP_LABELS"."NAME" IS NOT NULL), '{}') AS labels
         FROM 
             "DP_API_METADATA" metadata
         JOIN 
@@ -461,6 +851,12 @@ const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
         LEFT OUTER JOIN 
             "DP_API_SUBSCRIPTION_POLICY" 
             ON metadata."API_ID" = "DP_API_SUBSCRIPTION_POLICY"."API_ID"
+        LEFT OUTER JOIN 
+            "DP_API_LABELS"  
+            ON metadata."API_ID" = "DP_API_LABELS"."API_ID"
+        LEFT OUTER JOIN 
+            "DP_LABELS" 
+            ON "DP_API_LABELS"."LABEL_ID" = "DP_LABELS"."LABEL_ID"
         WHERE 
             (
                 to_tsvector('english', metadata."METADATA_SEARCH"::text) @@ plainto_tsquery('english', COALESCE(:searchTerm, ''))
@@ -534,6 +930,7 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
             API_DESCRIPTION: apiInfo.apiDescription,
             API_VERSION: apiInfo.apiVersion,
             API_TYPE: apiInfo.apiType,
+            TAGS: apiInfo.tags ? apiInfo.tags.join(' ') : null,
             VISIBILITY: apiInfo.visibility,
             VISIBLE_GROUPS: apiInfo.visibleGroups ? apiInfo.visibleGroups.join(' ') : null,
             TECHNICAL_OWNER: owners.technicalOwner,
@@ -570,7 +967,7 @@ async function updateAPISubscriptionPolicy(subscriptionPolicies, apiID, t) {
             })
         }
         if (policiesToCreate.length > 0) {
-            APISubscriptionPolicy.destroy({
+            await APISubscriptionPolicy.destroy({
                 where: {
                     API_ID: apiID
                 }
@@ -773,14 +1170,14 @@ const deleteAPIFile = async (fileName, orgID, apiID, t) => {
     }
 }
 
-const getAPIId = async (apiName) => {
+const getAPIId = async (orgID, apiName) => {
 
     try {
         const api = await APIMetadata.findOne({
             attributes: ['API_ID'],
             where: {
-                API_NAME: apiName
-            }
+                API_NAME: apiName,
+                ORG_ID: orgID            }
         })
         return api.API_ID;
     } catch (error) {
@@ -815,5 +1212,22 @@ module.exports = {
     getSubscriptionPolicy,
     getSubscriptionPolicies,
     updateSubscriptionPolicy,
-    deleteSubscriptionPolicy
+    deleteSubscriptionPolicy,
+    createLabels,
+    getLabelID,
+    deleteLabel,
+    getLabels,
+    addView,
+    addViewLabels,
+    deleteViewLabels,
+    updateView,
+    deleteView,
+    getView,
+    getAllViews,
+    getViewID,
+    createAPILabelMapping,
+    deleteAPILabels,
+    updateLabel,
+    addLabel
+
 };
