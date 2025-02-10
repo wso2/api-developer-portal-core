@@ -454,7 +454,7 @@ const createSubscriptionPolicy = async (orgID, policy, t) => {
         }, { transaction: t });
         return subscriptionPolicyResponse;
     } catch (error) {
-        if (error instanceof Sequelize.UniqueConstraintError) {
+        if (error instanceof Sequelize.UniqueConstraintError || error instanceof Sequelize.ValidationError) {
             throw error;
         }
         throw new Sequelize.DatabaseError(error);
@@ -479,7 +479,7 @@ const updateSubscriptionPolicy = async (orgID, policyID, policy, t) => {
         console.log(updatedRows.map(row => row.get({ plain: true })));
         return updatedRows;
     } catch (error) {
-        if (error instanceof Sequelize.UniqueConstraintError) {
+        if (error instanceof Sequelize.UniqueConstraintError || error instanceof Sequelize.ValidationError) {
             throw error;
         }
         throw new Sequelize.DatabaseError(error);
@@ -497,7 +497,7 @@ const deleteSubscriptionPolicy = async (orgID, policyID, t) => {
         }, { transaction: t });
         return subscriptionPolicyResponse;
     } catch (error) {
-        if (error instanceof Sequelize.UniqueConstraintError) {
+        if (error instanceof Sequelize.ValidationError) {
             throw error;
         }
         throw new Sequelize.DatabaseError(error);
@@ -983,7 +983,6 @@ async function updateAPISubscriptionPolicy(subscriptionPolicies, apiID, t) {
 }
 
 const getSubscriptionPolicy = async (policyID, orgID, t) => {
-
     try {
         const subscriptionPolicyResponse = await SubscriptionPolicy.findOne({
             where: {
@@ -993,7 +992,7 @@ const getSubscriptionPolicy = async (policyID, orgID, t) => {
         }, { transaction: t });
         return subscriptionPolicyResponse;
     } catch (error) {
-        if (error instanceof Sequelize.UniqueConstraintError) {
+        if (error instanceof Sequelize.EmptyResultError) {
             throw error;
         }
         throw new Sequelize.DatabaseError(error);

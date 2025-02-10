@@ -22,7 +22,8 @@ const controlPlaneUrl = config.controlPlane.url;
 const util = require('../utils/util');
 const passport = require('passport');
 const { Strategy: CustomStrategy } = require('passport-custom');
-
+const apiDao = require('../dao/apiMetadata');
+const APIDTO = require('../dto/apiDTO');
 
 const unsubscribeAPI = async (req, res) => {
     try {
@@ -36,7 +37,18 @@ const unsubscribeAPI = async (req, res) => {
 
 const subscribeAPI = async (req, res) => {
     try {
-        res.send(await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, req.body));
+        const condition = {
+            API_NAME: req.body.apiName,
+            API_VERSION: req.body.apiVersion,
+        };
+        const metaData = await apiDao.getAPIMetadataByCondition(condition);
+        const apiId = new APIDTO(metaData[0]).apiReferenceID;
+        const requestBody = {
+            apiId,
+            applicationId: req.body.applicationId,
+            throttlingPolicy: req.body.throttlingPolicy,
+        };
+        res.send(await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, requestBody));
     } catch (error) {
         console.error("Error occurred while subscribing to API", error);
         util.handleError(res, error);
