@@ -163,6 +163,7 @@ const getMetadataListFromDB = async (orgID, groups, searchTerm, tags, apiName, a
             if (apiName) condition.API_NAME = apiName;
             if (apiVersion) condition.API_VERSION = apiVersion;
             if (tags) condition.TAGS = tags;
+            condition.ORG_ID = orgID;
             retrievedAPIs = await apiDao.getAPIMetadataByCondition(condition);
         } else if (searchTerm) {
             retrievedAPIs = await apiDao.searchAPIMetadata(orgID, groups, searchTerm, viewName, t);

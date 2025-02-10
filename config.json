@@ -8,9 +8,9 @@
     "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
   },
   "serverCerts": {
-    "pathToCert": "../certs/client-truststore.pem",
-    "pathToPK": "../certs/private-key.pem",
-    "pathToCA": "../certs/client-truststore.pem"
+    "pathToCert": "certs/client-truststore.pem",
+    "pathToPK": "certs/private-key.pem",
+    "pathToCA": "certs/client-truststore.pem"
   },
   "db": {
     "username": "postgres",
@@ -42,7 +42,7 @@
     "authorizationURL": "https://localhost:9443/oauth2/authorize",
     "tokenURL": "https://127.0.0.1:9443/oauth2/token",
     "userInfoURL": "https://localhost:9443/oauth2/userinfo",
-    "clientId": "",
+    "clientId": "foC0E_ye5WWfNqDE6KOZZzUHHFAa",
     "callbackURL": "https://localhost:3000/ACME/callback",
     "scope": "openid profile",
     "signUpURL": "",
@@ -62,22 +62,22 @@
     "/portal/*/edit",
     "/portal",
     "/*/configure",
-    "/*/applications",
-    "/*/applications/*",
-    "/*/api/*",
-    "/*/myapis",
-    "/*/myapis/*",
-    "/*/myapis?*"
+    "**/applications",
+    "**/applications/*",
+    "**/api/*",
+    "**/myapis",
+    "**/myapis/*",
+    "**/myapis?*"
   ],
   "authorizedPages": [
-    "/*/applications",
-    "/*/applications/*",
+    "**/applications",
+    "**/applications/*",
     "/*/configure",
     "/portal/*/edit",
     "/portal",
-    "/*/api/*",
-    "/*/myapis",
-    "/*/myapis/*",
-    "/*/myapis?*"
+    "**/api/*",
+    "**/myapis",
+    "**/myapis/*",
+    "**/myapis?*"
   ]  
 }

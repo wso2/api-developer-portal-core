@@ -49,7 +49,7 @@ const loadMyAPIs = async (req, res) => {
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'myAPIs', 'page.hbs');
         const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
         const layoutResponse = await loadLayoutFromAPI(orgId, viewName);
-        let metaData = await apiMetadataService.getMetadataListFromDB(orgId, groupList);
+        let metaData = await apiMetadataService.getMetadataListFromDB(orgId, groupList, null, null, null, null, req.params.viewName);
         const apiRefIds = new Set(metaData.map(api => api.apiReferenceID));
 
         let subscriptions = [];
@@ -81,6 +81,7 @@ const loadMyAPIs = async (req, res) => {
             const condition = {
                 API_NAME: apiName,
                 API_VERSION: req.query.apiVersion,
+                ORG_ID: orgId,
             };
             const metaData = await apiDao.getAPIMetadataByCondition(condition);
             const apiId = new APIDTO(metaData[0]).apiReferenceID;
