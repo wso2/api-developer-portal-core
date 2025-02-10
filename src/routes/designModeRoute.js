@@ -35,6 +35,8 @@ router.get('/api/:apiName', registerPartials, apiController.loadAPIContent);
 
 router.get('/api/:apiName/tryout', registerPartials, apiController.loadTryOutPage);
 
+router.get('/views/:viewName/api/:apiName/docs/:docType', registerPartials, apiController.loadDocsPage);
+
 router.get('/applications', registerPartials, applicationController.loadApplications);
 router.get('/applications/create', registerPartials, applicationController.loadThrottlingPolicies);
 router.get('/applications/:applicationid', registerPartials, applicationController.loadApplication);
@@ -49,6 +51,6 @@ router.get('/logout', registerPartials, authController.handleLogOut);
 router.get('/signup', registerPartials, authController.handleSignUp);
 
 // eslint-disable-next-line no-useless-escape
-router.get('(^(?!\/(favicon\.ico|images\/|styles\/|*login*|devportal\/)))/*', registerPartials,  contentController.loadCustomContent);
+router.get('(^(?!\/(favicon\.ico|images\/|styles\/|*login*|devportal\/|views\/)))/*', registerPartials,  contentController.loadCustomContent);
 
 module.exports = router;

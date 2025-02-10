@@ -67,7 +67,7 @@ const loadAPIs = async (req, res) => {
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
         } catch (error) {
-                        console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
+            console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
             html = constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR;
 
         }
@@ -209,34 +209,35 @@ const loadTryOutPage = async (req, res) => {
     res.send(html);
 }
 
-const loadDocsPage = async (req, res) => { 
+const loadDocsPage = async (req, res) => {
 
-    const { orgName, apiName, viewName } = req.params;
+    const hbs = exphbs.create({});
+
+    const { orgName, apiName, viewName, docType } = req.params;
     let html = "";
+    let fileName = "";
     if (config.mode === constants.DEV_MODE) {
-        const metaData = loadAPIMetaDataFromFile(apiName);
-        let apiDefinition = path.join(process.cwd(), filePrefix + '../mock', req.params.apiName + '/apiDefinition.json');
-        if (fs.existsSync(apiDefinition)) {
-            apiDefinition = await fs.readFileSync(apiDefinition, constants.CHARSET_UTF8);
+        const filePath = path.join(process.cwd(), filePrefix + '../mock', apiName + "/" + docType + "/" + "api-doc.hbs");
+        if (fs.existsSync(filePath)) {
+            hbs.handlebars.registerPartial('api-doc', fs.readFileSync(filePath, constants.CHARSET_UTF8));
         }
         const templateContent = {
-            apiMetadata: metaData,
-            baseUrl: constants.BASE_URL + config.port,
-            apiType: metaData.apiInfo.apiType,
-            swagger: apiDefinition
+            apiMD: await loadMarkdown("api-doc.md", filePrefix + '../mock/' + apiName + "/" + docType),
+            baseUrl: constants.BASE_URL + config.port + "/views/" + viewName + "/api/" + apiName
         }
-        html = renderTemplate('../pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
+        html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
     } else {
         try {
             const orgID = await adminDao.getOrgId(orgName);
-            const apiID = await apiDao.getAPIId(orgID, apiName);
-            
-            const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'docs', 'page.hbs');
-            const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
-            const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
-            html = await renderGivenTemplate(templateResponse, layoutResponse, {});
+            const viewName = req.params.viewName;
+            const templateContent = {
+                baseUrl: '/' + orgName + '/views/' + viewName + "/api/" + apiName,
+
+            };
+            html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
         } catch (error) {
-            console.error(`Failed to load api tryout :`, error);
+            console.error(`Failed to load api content: ,${error}`);
+            html = "An error occurred while loading the API content.";
         }
     }
     res.send(html);

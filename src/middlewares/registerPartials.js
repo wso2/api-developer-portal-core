@@ -88,6 +88,7 @@ const registerAllPartialsFromFile = async (baseURL, req) => {
   registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "home", "partials"), req.user);
   registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req.user);
   registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "apis", "partials"), req.user);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "docs", "partials"), req.user);
 
   if (fs.existsSync(path.join(process.cwd(), filePrefix + "pages", filePath, "partials"))) {
     registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix + "pages", filePath, "partials"), req.user);
@@ -142,12 +143,12 @@ const registerPartialsFromAPI = async (req) => {
     const apiID = await apiDao.getAPIId(orgID, apiName);
 
     //fetch markdown content for API if exists
-    const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, orgID, apiID);
+    const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, constants.DOC_TYPES.API_LANDING, orgID, apiID);
     const markdownContent = markdownResponse ? markdownResponse.API_FILE.toString("utf8") : "";
     const markdownHtml = markdownContent ? markdown.parse(markdownContent) : "";
 
     //if hbs content available for API, render the hbs page
-    let additionalAPIContentResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME, orgID, apiID);
+    let additionalAPIContentResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME, constants.DOC_TYPES.API_LANDING, orgID, apiID);
     if (additionalAPIContentResponse !== null) {
       let additionalAPIContent = additionalAPIContentResponse.API_FILE.toString("utf8");
       partialObject[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME] = additionalAPIContent ? additionalAPIContent : "";
@@ -166,6 +167,31 @@ const registerPartialsFromAPI = async (req) => {
       partialObject[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME])({
         apiContent: markdownHtml,
         apiMetadata: metaData
+      });
+  }
+  //register doc page partials
+  if (req.originalUrl.includes(constants.ROUTE.API_DOCS_PATH)) {
+
+    const { orgName, apiName, viewName, docType } = req.params;
+    const apiID = await apiDao.getAPIId(orgID, apiName);
+
+    //fetch markdown content for API if exists
+    const markdownResponse = await apiDao.getAPIDoc(docType, orgID, apiID);
+    const markdownContent = markdownResponse ? markdownResponse.API_FILE.toString("utf8") : "";
+    const markdownHtml = markdownContent ? markdown.parse(markdownContent) : "";
+
+    if (!markdownResponse) {
+      let docContentResponse = await apiDao.getAPIDoc(docType, orgID, apiID);
+      if (docContentResponse !== null) {
+        let additionalDocContent = docContentResponse.API_FILE.toString("utf8");
+        partialObject[docType] = additionalDocContent ? additionalDocContent : "";
+      }
+    }
+
+    hbs.handlebars.partials[constants.FILE_NAME.API_DOC_PARTIAL_NAME] = hbs.handlebars.compile(
+      partialObject[constants.FILE_NAME.API_DOC_PARTIAL_NAME])({
+        baseUrl: "/" + orgName + "/views/" + viewName + "/api/" + apiName,
+        apiMD: markdownHtml
       });
   }
 };

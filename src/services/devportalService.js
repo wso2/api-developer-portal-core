@@ -58,11 +58,13 @@ const getOrgContent = async (req, res) => {
     try {
         if (req.query.fileType && req.query.fileName) {
             const asset = await adminService.getOrgContent(req.params.orgId, req.params.name, req.query.fileType, req.query.fileName, req.query.filePath);
-            const contentType = retrieveContentType(asset.FILE_NAME, asset.FILE_TYPE);
-            res.set(constants.MIME_TYPES.CONYEMT_TYPE, contentType);
-            return res.status(200).send(Buffer.isBuffer(asset.FILE_CONTENT) ? asset.FILE_CONTENT : constants.CHARSET_UTF8);
+            if (asset) {
+                const contentType = asset ? retrieveContentType(asset.FILE_NAME, asset.FILE_TYPE) : "";
+                res.set(constants.MIME_TYPES.CONYEMT_TYPE, contentType);
+                return res.status(200).send(Buffer.isBuffer(asset.FILE_CONTENT) ? asset.FILE_CONTENT : constants.CHARSET_UTF8);
+            }
         } else if (req.params.fileType) {
-            const assets = await adminService.getOrgContent(req.params.orgId, req.params.viewId, req.params.fileType);
+            const assets = await adminService.getOrgContent(req.params.orgId, req.params.name, req.params.fileType);
             const results = [];
             for (const asset of assets) {
                 const resp = {

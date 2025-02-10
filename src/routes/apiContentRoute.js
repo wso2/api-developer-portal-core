@@ -28,7 +28,7 @@ router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiName', ensureAuth
 
 router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiName/tryout', ensureAuthenticated, registerPartials, apiController.loadTryOutPage);
 
-router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiName/docs', ensureAuthenticated, registerPartials, apiController.loadDocsPage);
+router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiName/docs/:docType', ensureAuthenticated, registerPartials, apiController.loadDocsPage);
 
 
 module.exports = router;

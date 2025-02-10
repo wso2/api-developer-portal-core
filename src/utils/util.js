@@ -247,7 +247,7 @@ const getAPIFileContent = (directory) => {
     filenames.forEach((filename) => {
         if (!(filename === '.DS_Store')) {
             let fileContent = fs.readFileSync(path.join(directory, filename), 'utf8');
-            files.push({ fileName: filename, content: fileContent, type: constants.DOC_TYPES.API_LANDING});
+            files.push({ fileName: filename, content: fileContent, type: constants.DOC_TYPES.API_LANDING });
         }
     });
     return files;
@@ -268,12 +268,16 @@ const getAPIImages = async (directory) => {
 const getAPIDocuments = (directory, documentMetadata) => {
     let files = [];
     const filenames = fs.readdirSync(directory);
-    filenames.forEach((filename) => {
-        if (!(filename === '.DS_Store')) {
-            let fileContent = fs.readFileSync(path.join(directory, filename), 'utf8');
-            files.push({ fileName: filename, content: fileContent, type: documentMetadata[filename] });
-        }
+    Object.entries(documentMetadata).forEach(([key, value]) => {
+        filenames.forEach((filename) => {
+            if (!(filename === '.DS_Store') && filename === value) {
+                let fileContent = fs.readFileSync(path.join(directory, filename), 'utf8');
+                files.push({ fileName: filename, content: fileContent, type: key });
+            }
+        });
     });
+    
+    
     return files;
 };
 
@@ -441,7 +445,7 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                 if (file.name === "main.css") {
                     strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g,
                         `@import url("${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
-                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
+                    content = Buffer.from(strContent, constants.CHARSET_UTF8);
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                 fileType = "layout"
@@ -470,6 +474,19 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
     return fileDetails;
 }
 
+async function listFiles(path) {
+
+    let files = [];
+    fs.promises.readdir(path, (err, files) => {
+        if (err) {
+            console.error('Error reading directory:', err);
+            return;
+        }
+        console.log('Files in directory:', files);
+    });
+    return files;
+}
+
 module.exports = {
     loadMarkdown,
     renderTemplate,
@@ -490,5 +507,6 @@ module.exports = {
     getErrors,
     validateProvider,
     rejectExtraProperties,
-    readFilesInDirectory
+    readFilesInDirectory,
+    listFiles
 }

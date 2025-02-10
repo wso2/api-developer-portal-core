@@ -282,7 +282,7 @@ const createAPITemplate = async (req, res) => {
     try {
         const { orgId, apiId } = req.params;
         let imageMetadata = JSON.parse(req.body.imageMetadata);
-        let documentMetadata = JSON.parse(req.body.imageMetadata);
+        let documentMetadata = JSON.parse(req.body.documentMetadata);
         const extractPath = path.join("/tmp", orgId + "/" + apiId);
         await fs.mkdir(extractPath, { recursive: true });
         const zipFilePath = req.file.path;
@@ -338,6 +338,7 @@ const updateAPITemplate = async (req, res) => {
     try {
         const { orgId, apiId } = req.params;
         const imageMetadata = JSON.parse(req.body.imageMetadata);
+        let documentMetadata = JSON.parse(req.body.documentMetadata);
         const extractPath = path.join("/tmp", orgId + "/" + apiId);
         await fs.mkdir(extractPath, { recursive: true });
         const zipFilePath = req.file.path;
@@ -347,20 +348,27 @@ const updateAPITemplate = async (req, res) => {
         // Build complete paths
         const contentPath = path.join(extractPath, apiContentFileName, "content");
         const imagesPath = path.join(extractPath, apiContentFileName, "images");
+        const documentPath = path.join(extractPath, apiContentFileName, "documents");
+
         // Verify directories exist
         try {
             await fs.access(contentPath);
             await fs.access(imagesPath);
+            await fs.access(documentPath);
         } catch (err) {
             console.error(err);
             throw new Error(
-                `Required directories not found after extraction. Content path: ${contentPath}, Images path: ${imagesPath}`
+                `Required directories not found after extraction. Content path: ${contentPath}, Images path: ${imagesPath},
+                Documents path: ${documentPath}`
             );
         }
         //get api files
         let apiContent = await util.getAPIFileContent(contentPath);
         //get api images
         const apiImages = await util.getAPIImages(imagesPath);
+        //get api documents
+        const apiDocuments = await util.getAPIDocuments(documentPath, documentMetadata);
+        apiContent.push(...apiDocuments);
         apiContent.push(...apiImages);
         await sequelize.transaction(async (t) => {
             //check whether api belongs to given org
@@ -386,7 +394,8 @@ const getAPIFile = async (req, res) => {
 
     const { orgId, apiId } = req.params;
     const apiFileName = req.query.fileName;
-    if (!orgId || !apiId || !apiFileName) {
+    const type = req.query.type;
+    if (!orgId || !apiId || !apiFileName || !type) {
         throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
     }
     let apiFileResponse = "";
@@ -394,7 +403,7 @@ const getAPIFile = async (req, res) => {
     let contentType = "";
     try {
         const fileExtension = path.extname(apiFileName).toLowerCase();
-        apiFileResponse = await apiDao.getAPIFile(apiFileName, orgId, apiId);
+        apiFileResponse = await apiDao.getAPIFile(apiFileName, type, orgId, apiId);
         if (util.isTextFile(fileExtension)) {
             apiFile = apiFileResponse.API_FILE;
             contentType = util.retrieveContentType(apiFileName, constants.TEXT)

@@ -595,7 +595,8 @@ const updateOrCreateAPIFiles = async (files, apiID, orgID, t) => {
                 filesToCreate.push({
                     API_FILE: file.content,
                     FILE_NAME: file.fileName,
-                    API_ID: apiID
+                    API_ID: apiID,
+                    TYPE: file.type,
                 })
             } else {
                 const updateResponse = await APIContent.update(
@@ -606,6 +607,7 @@ const updateOrCreateAPIFiles = async (files, apiID, orgID, t) => {
                         where: {
                             API_ID: apiID,
                             FILE_NAME: apiFileResponse.FILE_NAME,
+                            TYPE: file.type,
                         },
                         include: [
                             {
@@ -633,13 +635,40 @@ const updateOrCreateAPIFiles = async (files, apiID, orgID, t) => {
     }
 }
 
-const getAPIFile = async (fileName, orgID, apiID, t) => {
+const getAPIFile = async (fileName, type, orgID, apiID, t) => {
 
     try {
         const apiFileResponse = await APIContent.findOne({
             where: {
                 FILE_NAME: fileName,
-                API_ID: apiID
+                API_ID: apiID,
+                TYPE: type
+            },
+            include: [
+                {
+                    model: APIMetadata,
+                    where: {
+                        ORG_ID: orgID
+                    }
+                }
+            ]
+        }, { transaction: t });
+        return apiFileResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getAPIDoc = async (type, orgID, apiID, t) => {
+
+    try {
+        const apiFileResponse = await APIContent.findOne({
+            where: {
+                API_ID: apiID,
+                TYPE: type
             },
             include: [
                 {
@@ -731,7 +760,6 @@ const getAPIMetadata = async (orgID, apiID, t) => {
                 API_ID: apiID
             }
         }, { transaction: t });
-        console.log("RESPONSE", apiMetadataResponse)
         return apiMetadataResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -1205,6 +1233,7 @@ module.exports = {
     storeAPIFiles,
     updateOrCreateAPIFiles,
     getAPIFile,
+    getAPIDoc,
     deleteAPIFile,
     getAPIId,
     getAPIMetadataByCondition,
