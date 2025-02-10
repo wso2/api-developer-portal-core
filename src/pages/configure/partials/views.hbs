@@ -28,12 +28,11 @@
                     onclick="addViewLabel('labelSelect{{name}}', 'labelsContainer{{name}}')">Attach Label</button>
                 <button type="button" class="common-btn-primary" style="width: 150px; margin-right: 10px;"
                     onclick="editView( '{{json labels}}', 'labelsContainer{{name}}', 'displayName{{displayName}}', 'viewName{{name}}', '{{@root.orgID}}')">Update</button>
-                {{#if (notEquals name "default")}}
+                {{#unless (eq name "default")}}
                 <button type="button" class="btn btn-sm btn-outline-danger" style="margin-right: 10px;"
                     onclick="if (confirm('Are you sure you want to delete this view?')) { deleteView('{{@root.orgID}}', '{{name}}'); }">
                     <i class="bi bi-trash"></i> Delete
-                </button>
-                {{/if}}
+                {{/unless}}
             </div>
         </div>
     </form>

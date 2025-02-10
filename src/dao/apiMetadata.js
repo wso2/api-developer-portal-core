@@ -1206,8 +1206,7 @@ const getAPIId = async (orgID, apiName) => {
             attributes: ['API_ID'],
             where: {
                 API_NAME: apiName,
-                ORG_ID: orgID
-            }
+                ORG_ID: orgID            }
         })
         return api.API_ID;
     } catch (error) {
