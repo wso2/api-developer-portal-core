@@ -122,7 +122,6 @@ const loadAPIContent = async (req, res) => {
             for (const policy of metaData.subscriptionPolicies) {
                 const subscriptionPlan = await loadSubscriptionPlan(orgID, policy.policyName);
                 subscriptionPlans.push({
-                    apiId: metaData.apiReferenceID,
                     displayName: subscriptionPlan.displayName,
                     policyName: subscriptionPlan.policyName,
                     description: subscriptionPlan.description,
