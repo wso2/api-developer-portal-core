@@ -839,12 +839,33 @@ const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
                 '[]'
             ) AS "DP_API_SUBSCRIPTION_POLICY",
             COALESCE(
-                ARRAY_AGG(DISTINCT "DP_LABELS"."NAME") FILTER (WHERE "DP_LABELS"."NAME" IS NOT NULL), '{}') AS labels
+                ARRAY_AGG(DISTINCT "DP_LABELS"."NAME") FILTER (WHERE "DP_LABELS"."NAME" IS NOT NULL), 
+                '{}'
+            ) AS "DP_API_LABELS",
+            ts_rank(
+                to_tsvector('english', metadata."METADATA_SEARCH"::text),
+                plainto_tsquery('english', COALESCE(:searchTerm, ''))
+            ) AS "rank_metadata",
+            STRING_AGG(
+		        DISTINCT CASE 
+		            WHEN content."API_FILE" IS NOT NULL 
+		            AND to_tsvector('english', convert_from(content."API_FILE", 'UTF8')) @@ plainto_tsquery('english', :searchTerm)
+		            THEN content."TYPE"
+		            ELSE 'METADATA'
+		        END, ', '
+		    ) AS "DATA_SOURCE" 
         FROM 
             "DP_API_METADATA" metadata
-        JOIN 
+        LEFT JOIN  
             "DP_API_CONTENT" content 
             ON metadata."API_ID" = content."API_ID"
+            AND (
+                content."FILE_NAME" LIKE '%.hbs' 
+                OR content."FILE_NAME" LIKE '%.md%' 
+                OR content."FILE_NAME" LIKE '%.json%'
+                OR content."FILE_NAME" LIKE '%.xml%'
+                OR content."FILE_NAME" LIKE '%.graphql%'
+            ) 
         LEFT OUTER JOIN 
             "DP_API_IMAGEDATA" 
             ON metadata."API_ID" = "DP_API_IMAGEDATA"."API_ID"
@@ -860,16 +881,12 @@ const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
         WHERE 
             (
                 to_tsvector('english', metadata."METADATA_SEARCH"::text) @@ plainto_tsquery('english', COALESCE(:searchTerm, ''))
-                OR to_tsvector('english', convert_from(content."API_FILE", 'UTF8')) @@ plainto_tsquery('english', :searchTerm)
+                OR (
+                    content."API_FILE" IS NOT NULL AND
+                    to_tsvector('english', convert_from(content."API_FILE", 'UTF8')) @@ plainto_tsquery('english', :searchTerm)
+                )
             )
             AND metadata."ORG_ID" = :orgID
-            AND (
-                content."FILE_NAME" LIKE '%.hbs' 
-                OR content."FILE_NAME" LIKE '%.md%' 
-                OR content."FILE_NAME" LIKE '%.json%'
-                OR content."FILE_NAME" LIKE '%.xml%'
-                OR content."FILE_NAME" LIKE '%.graphql%'
-            )
             AND (
                 (
                     :groups IS NOT NULL AND string_to_array(metadata."VISIBLE_GROUPS", ' ') && :groups

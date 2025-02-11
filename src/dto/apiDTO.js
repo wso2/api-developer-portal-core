@@ -22,6 +22,7 @@ class APIDTO {
         this.apiID = api.API_ID;
         this.apiReferenceID = api.REFERENCE_ID;
         this.provider = api.PROVIDER;
+        this.dataSource = api.DATA_SOURCE;
         this.apiInfo = new APIInfo(api);
         this.endPoints = new Endpoints(api);
         if (api.DP_SUBSCRIPTION_POLICies) {
