@@ -24,6 +24,7 @@ const path = require("path");
 const fs = require("fs").promises;
 const APIDTO = require("../dto/apiDTO");
 const ViewDTO = require("../dto/views");
+const APIDocDTO = require("../dto/apiDoc");
 const constants = require("../utils/constants");
 const subscriptionPolicyDTO = require("../dto/subscriptionPolicy");
 const LabelDTO = require("../dto/label");
@@ -282,7 +283,6 @@ const createAPITemplate = async (req, res) => {
     try {
         const { orgId, apiId } = req.params;
         let imageMetadata = JSON.parse(req.body.imageMetadata);
-        let documentMetadata = JSON.parse(req.body.documentMetadata);
         const extractPath = path.join("/tmp", orgId + "/" + apiId);
         await fs.mkdir(extractPath, { recursive: true });
         const zipFilePath = req.file.path;
@@ -311,7 +311,13 @@ const createAPITemplate = async (req, res) => {
         //get api images
         const apiImages = await util.getAPIImages(imagesPath);
         //get api documents
-        const apiDocuments = await util.getAPIDocuments(documentPath, documentMetadata);
+        const apiDocuments = await util.readDocFiles(documentPath);
+        let docMetadata = "";
+        if (req.body.docMetadata) {
+            docMetadata = JSON.parse(req.body.docMetadata);
+            const links = util.getAPIDocLinks(docMetadata);
+            apiContent.push(...links);
+        }
         apiContent.push(...apiImages);
         apiContent.push(...apiDocuments);
         await sequelize.transaction(async (t) => {
@@ -328,7 +334,7 @@ const createAPITemplate = async (req, res) => {
         await fs.rm(extractPath, { recursive: true, force: true });
         res.status(201).type("application/json").send({ message: "API Template updated successfully" });
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.API_CONTENT_CREATE_ERROR}, ${error}`);
+        console.error(`${constants.ERROR_MESSAGE.API_CONTENT_CREATE_ERROR}`, error);
         util.handleError(res, error);
     }
 };
@@ -338,7 +344,6 @@ const updateAPITemplate = async (req, res) => {
     try {
         const { orgId, apiId } = req.params;
         const imageMetadata = JSON.parse(req.body.imageMetadata);
-        let documentMetadata = JSON.parse(req.body.documentMetadata);
         const extractPath = path.join("/tmp", orgId + "/" + apiId);
         await fs.mkdir(extractPath, { recursive: true });
         const zipFilePath = req.file.path;
@@ -367,7 +372,13 @@ const updateAPITemplate = async (req, res) => {
         //get api images
         const apiImages = await util.getAPIImages(imagesPath);
         //get api documents
-        const apiDocuments = await util.getAPIDocuments(documentPath, documentMetadata);
+        const apiDocuments = await util.readDocFiles(documentPath);
+
+        if (req.body.docMetadata) {
+            docMetadata = JSON.parse(req.body.docMetadata);
+            const links = util.getAPIDocLinks(docMetadata);
+            apiContent.push(...links);
+        }
         apiContent.push(...apiDocuments);
         apiContent.push(...apiImages);
         await sequelize.transaction(async (t) => {
@@ -404,11 +415,15 @@ const getAPIFile = async (req, res) => {
     try {
         const fileExtension = path.extname(apiFileName).toLowerCase();
         apiFileResponse = await apiDao.getAPIFile(apiFileName, type, orgId, apiId);
-        if (util.isTextFile(fileExtension)) {
-            apiFile = apiFileResponse.API_FILE;
+        apiFile = apiFileResponse.API_FILE;
+        //convert to text to check if link
+        const textContent = new TextDecoder().decode(apiFile);
+        if (textContent.startsWith("http") || textContent.startsWith("https")) {
+            apiFile = textContent;
+            contentType = constants.MIME_TYPES.TEXT;
+        } else if (util.isTextFile(fileExtension)) {
             contentType = util.retrieveContentType(apiFileName, constants.TEXT)
         } else {
-            apiFile = apiFileResponse.API_FILE;
             contentType = util.retrieveContentType(apiFileName, constants.IMAGE);
         }
         res.set(constants.MIME_TYPES.CONYEMT_TYPE, contentType);
@@ -424,6 +439,24 @@ const getAPIFile = async (req, res) => {
         util.handleError(res, error);
     }
 };
+
+const getAPIDocTypes = async (orgID, apiID) => {
+
+    try {
+        // const docTypeResponse = await apiDao.getAPIDocTypes(orgID, apiID);
+        // const docLinkResponse = await apiDao.getAPIDocLinks(orgID, apiID);
+        const docResponse = await apiDao.getAPIDocs(orgID, apiID);
+        console.log("Doc ", docResponse);
+        docLinkResponse.forEach((link) => {
+
+        });
+        const apiCreationResponse = docTypeResponse.map((doc) => new APIDocDTO(doc.dataValues));
+        return apiCreationResponse;
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.API_DOCS_LIST_ERROR}`, error);
+        util.handleError(res, error);
+    }
+}
 
 const deleteAPIFile = async (req, res) => {
 
@@ -714,11 +747,11 @@ const getView = async (req, res) => {
 
 const getViewInfo = async (orgId, name) => {
 
-    const view =  await apiDao.getView(orgId, name);
+    const view = await apiDao.getView(orgId, name);
     if (view.dataValues) {
         return new ViewDTO(view.dataValues);
     } else {
-       return null;
+        return null;
     }
 }
 
@@ -762,6 +795,7 @@ module.exports = {
     createAPITemplate,
     updateAPITemplate,
     getAPIFile,
+    getAPIDocTypes,
     deleteAPIFile,
     getMetadataListFromDB,
     getMetadataFromDB,

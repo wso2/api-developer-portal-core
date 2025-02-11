@@ -22,7 +22,7 @@ module.exports = {
     TEXT: 'text',
     CHARSET_UTF8: 'utf-8',
     FILE_NAME_PARAM: '&fileName=',
-    API_TEMPLATE_FILE_NAME: '/template?fileName=',
+    API_TYPE_QUERY: '/template?type=',
     HEADER_PARTIAL_NAME: 'header',
     HERO_PARTIAL_NAME: 'hero',
     BASE_URL: 'https://localhost:',
@@ -36,10 +36,13 @@ module.exports = {
         PRIVATE: 'PRIVATE'    
     },
     DOC_TYPES: {
+        DOC_ID: 'DOC_',
+        DOCLINK_ID: 'LINK_',
         API_LANDING: 'MARKETING',
         API_DEFINITION: 'API_DEFINITION',
         IMAGES: 'IMAGE',
         DOCUMENT: 'DOCUMENT',
+        LINK: "DOC_LINK",
         DOCS: {
             HOW_TO: 'HowTo',
             SAMPLES: 'Samples',
@@ -155,6 +158,7 @@ module.exports = {
         API_CONTENT_UPDATE_ERROR: "Error while updating API content",
         API_CONTENT_DELETE_ERROR: "Error while deleting API content",
         API_CONTENT_CREATE_ERROR: "Error while creating API content",
+        API_DOCS_LIST_ERROR: "Error while fetching API docs",
         API_LISTING_LOAD_ERROR: "Error while loading API listing",
         IDP_NOT_FOUND: "Failed to load IDP",
         IDP_CREATE_ERROR: "Error while creating IDP",

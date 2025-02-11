@@ -265,21 +265,40 @@ const getAPIImages = async (directory) => {
     return files;
 };
 
-const getAPIDocuments = (directory, documentMetadata) => {
+const getAPIDocLinks = (documentMetadata) => {
+    
     let files = [];
-    const filenames = fs.readdirSync(directory);
-    Object.entries(documentMetadata).forEach(([key, value]) => {
-        filenames.forEach((filename) => {
-            if (!(filename === '.DS_Store') && filename === value) {
-                let fileContent = fs.readFileSync(path.join(directory, filename), 'utf8');
-                files.push({ fileName: filename, content: fileContent, type: key });
-            }
+    documentMetadata.forEach((doc) => {
+        doc.links.forEach((link) => {
+            files.push({ fileName: constants.DOC_TYPES.DOCLINK_ID + link.displayName, content: link.url, type: doc.type });
         });
     });
-    
-    
     return files;
 };
+
+async function readDocFiles(directory, baseDir = '') {
+
+    const files = await fs.promises.readdir(directory, { withFileTypes: true });
+    let fileDetails = [];
+    for (const file of files) {
+        const filePath = path.join(directory, file.name);
+        const relativePath = path.join(baseDir, file.name);
+        if (file.isDirectory()) {
+            const subDirContents = await readDocFiles(filePath, relativePath);
+            fileDetails = fileDetails.concat(subDirContents);
+        } else {
+            if (!(file.name === '.DS_Store')) {
+                let content = await fs.promises.readFile(filePath);
+                fileDetails.push({
+                    type: constants.DOC_TYPES.DOC_ID + baseDir,
+                    fileName: file.name,
+                    content: content,
+                });
+            }
+        }
+    }
+    return fileDetails;
+}
 
 const invokeApiRequest = async (req, method, url, headers, body) => {
 
@@ -499,7 +518,7 @@ module.exports = {
     retrieveContentType,
     getAPIFileContent,
     getAPIImages,
-    getAPIDocuments,
+    getAPIDocLinks,
     isTextFile,
     invokeApiRequest,
     validateIDP,
@@ -508,5 +527,6 @@ module.exports = {
     validateProvider,
     rejectExtraProperties,
     readFilesInDirectory,
-    listFiles
+    listFiles,
+    readDocFiles
 }

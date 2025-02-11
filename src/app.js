@@ -99,6 +99,14 @@ Handlebars.registerHelper('lowercase', function (str) {
     return typeof str === 'string' ? str.toLowerCase() : str;
 });
 
+Handlebars.registerHelper('startsWith', function(str, includeStr, options) {
+    if (str && str.startsWith(includeStr)) {
+        return options.fn(this);  // Executes the block if true
+    } else {
+        return options.inverse(this);  // Executes the else block if false
+    }
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

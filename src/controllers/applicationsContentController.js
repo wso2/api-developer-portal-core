@@ -45,7 +45,7 @@ const loadApplications = async (req, res) => {
             metaData = await getMockApplications();
             templateContent = {
                 applicationsMetadata: metaData,
-                baseUrl: constants.BASE_URL + config.port
+                baseUrl: constants.BASE_URL + config.port + "/views/" + req.params.viewName
             }
             html = renderTemplate('../pages/applications/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
         } else {
@@ -95,7 +95,7 @@ const loadThrottlingPolicies = async (req, res) => {
         metaData = await getMockThrottlingPolicies();
         templateContent = {
             throttlingPoliciesMetadata: metaData,
-            baseUrl: constants.BASE_URL + config.port
+            baseUrl: constants.BASE_URL + config.port + "/views/" + req.params.viewName
         }
         html = renderTemplate('../pages/add-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     }

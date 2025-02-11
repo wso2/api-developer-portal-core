@@ -30,9 +30,10 @@ const filePrefix = config.pathToContent;
 const hbs = exphbs.create({});
 const registerPartials = async (req, res, next) => {
 
+  const viewName = req.params.viewName;
   registerInternalPartials(req);
   if (config.mode === constants.DEV_MODE) {
-    registerAllPartialsFromFile(constants.BASE_URL + config.port, req);
+    registerAllPartialsFromFile(constants.BASE_URL + config.port + "/views/" + viewName, req);
   } else {
     let matchURL = req.originalUrl;
     if (req.session.returnTo) {
@@ -170,24 +171,21 @@ const registerPartialsFromAPI = async (req) => {
       });
   }
   //register doc page partials
-  if (req.originalUrl.includes(constants.ROUTE.API_DOCS_PATH)) {
+  if (req.originalUrl.includes(constants.ROUTE.API_DOCS_PATH) && req.params.docType && req.params.docName) {
 
-    const { orgName, apiName, viewName, docType } = req.params;
+    const { orgName, apiName, viewName, docType, docName } = req.params;
     const apiID = await apiDao.getAPIId(orgID, apiName);
-
-    //fetch markdown content for API if exists
-    const markdownResponse = await apiDao.getAPIDoc(docType, orgID, apiID);
-    const markdownContent = markdownResponse ? markdownResponse.API_FILE.toString("utf8") : "";
-    const markdownHtml = markdownContent ? markdown.parse(markdownContent) : "";
-
-    if (!markdownResponse) {
-      let docContentResponse = await apiDao.getAPIDoc(docType, orgID, apiID);
-      if (docContentResponse !== null) {
+    let markdownHtml = "";
+    let docContentResponse = await apiDao.getAPIDocByName(constants.DOC_TYPES.DOC_ID+docType, docName, orgID, apiID);
+    if (docContentResponse !== null) {
+      if (docName.endsWith(".md")) {
+        const markdownContent = docContentResponse.API_FILE.toString("utf8") ;
+        markdownHtml = markdownContent ? markdown.parse(markdownContent) : "";
+      } else {
         let additionalDocContent = docContentResponse.API_FILE.toString("utf8");
-        partialObject[docType] = additionalDocContent ? additionalDocContent : "";
+        partialObject[constants.FILE_NAME.API_DOC_PARTIAL_NAME] = additionalDocContent ? additionalDocContent : "";
       }
     }
-
     hbs.handlebars.partials[constants.FILE_NAME.API_DOC_PARTIAL_NAME] = hbs.handlebars.compile(
       partialObject[constants.FILE_NAME.API_DOC_PARTIAL_NAME])({
         baseUrl: "/" + orgName + "/views/" + viewName + "/api/" + apiName,
