@@ -67,7 +67,7 @@ class APIInfo {
             this.tags = apiInfo.TAGS.split(" ");
         }
         if (apiInfo.DP_LABELs) {
-            this.labels = apiInfo.DP_LABELs.map(label => label.dataValues.NAME);
+            this.labels = apiInfo.DP_LABELs.map(label => label.dataValues ? label.dataValues.NAME : label);
         }
     }
 }

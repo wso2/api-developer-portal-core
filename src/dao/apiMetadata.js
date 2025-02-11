@@ -841,7 +841,7 @@ const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
             COALESCE(
                 ARRAY_AGG(DISTINCT "DP_LABELS"."NAME") FILTER (WHERE "DP_LABELS"."NAME" IS NOT NULL), 
                 '{}'
-            ) AS "DP_API_LABELS",
+            ) AS "DP_LABELs",
             ts_rank(
                 to_tsvector('english', metadata."METADATA_SEARCH"::text),
                 plainto_tsquery('english', COALESCE(:searchTerm, ''))
