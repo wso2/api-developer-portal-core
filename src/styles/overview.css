@@ -1,9 +1,28 @@
 .app-header {
-  display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 2px solid #ddd;
   padding-bottom: 10px;
+}
+
+.app-header p {
+  flex-basis: 100%; 
+  text-align: left;
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: 250px auto; /* Fixed width for label, flexible for text */
+  gap: 50px; /* Space between span and text */
+}
+
+.app-header span {
+  margin-right: 100px;
+}
+
+.app-plan {
+  display: flex; /* Make it a flex container */
+  justify-content: space-between; /* Space out the text and button */
+  align-items: center; /* Align items vertically */
+  flex-basis: 100%;
 }
 
 .app-title {
@@ -19,6 +38,7 @@
 
 .app-details {
   margin-top: 20px;
+  padding-bottom: 10px
 }
 
 .details-section,

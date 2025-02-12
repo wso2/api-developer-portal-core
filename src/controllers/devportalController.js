@@ -24,6 +24,7 @@ const passport = require('passport');
 const { Strategy: CustomStrategy } = require('passport-custom');
 const apiDao = require('../dao/apiMetadata');
 const APIDTO = require('../dto/apiDTO');
+const adminDao = require('../dao/admin');
 
 const unsubscribeAPI = async (req, res) => {
     try {
@@ -40,6 +41,7 @@ const subscribeAPI = async (req, res) => {
         const condition = {
             API_NAME: req.body.apiName,
             API_VERSION: req.body.apiVersion,
+            ORG_ID: await adminDao.getOrgId(req.user.organizationIdentifier),
         };
         const metaData = await apiDao.getAPIMetadataByCondition(condition);
         const apiId = new APIDTO(metaData[0]).apiReferenceID;
