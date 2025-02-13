@@ -1,3 +1,8 @@
+.custom-modal {
+  background-color: rgba(0, 0, 0, 0.5);
+  padding-top: 3rem;
+}
+
 .create-application-content {
   margin-top: 0.5rem;
 }
@@ -9,4 +14,13 @@
 .application-creation-body{
     padding: 0 1rem;
     margin-bottom: 1.5rem;
+}
+
+.custom-modal .btn-close {
+  background-color: transparent;
+}
+
+.custom-modal-btn-section {
+  display: flex;
+  padding: 0 1rem 1rem 1rem;
 }
