@@ -76,7 +76,7 @@ const login = async (req, res, next) => {
         }
     }
     }
-    req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : req.originalUrl;
+    req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
     IDP = await fetchAuthJsonContent(req, orgName);
     if (IDP.clientId) {
         configurePassport(IDP, claimNames);  // Configure passport dynamically
