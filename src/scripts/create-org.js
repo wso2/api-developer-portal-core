@@ -1,7 +1,40 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-undef */
 document.addEventListener('DOMContentLoaded', function () {
+
+    const orgDefaultContent = document.getElementById('orgDefaultContent');
+    const addOrg = document.getElementById('addOrg');
+    const editOrg = document.getElementById('editOrg');
+
+    const createOrgBtn = document.getElementById('createOrgBtn');
+    const cancelAddBtn = document.getElementById('cancelAddBtn');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
     
+    const editOrgBtn = document.getElementById('editOrgBtn');
+    // Show form
+    createOrgBtn.addEventListener('click', function () {
+        orgDefaultContent.style.display = 'none';
+        addOrg.style.display = 'block';
+    });
+
+    editOrgBtn.addEventListener('click', function () {
+        orgDefaultContent.style.display = 'none';
+        editOrg.style.display = 'block';
+    });
+
+    // Hide form (cancel)
+    cancelAddBtn.addEventListener('click', function () {
+        orgDefaultContent.style.display = 'block';
+        addOrg.style.display = 'none';
+    });
+
+    cancelEditBtn.addEventListener('click', function () {
+        orgDefaultContent.style.display = 'block';
+        editOrg.style.display = 'none';
+    });
+
+
+
     const editButtons = document.querySelectorAll('.edit-btn');
     editButtons.forEach(button => {
         button.addEventListener('click', function () {
@@ -25,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 method: 'DELETE'
             });
             if (response.ok) {
-                window.location.href = '/portal/';
+                window.location.href = 'configure';
             } else {
                 showAlert(`Field validation failed`, `error`);
             }
@@ -54,7 +87,7 @@ async function createOrg() {
         body: JSON.stringify(data),
     });
     if (response.ok) {
-        window.location.href = '/portal/';
+        window.location.href = 'configure';
     } else {
         showAlert(`Field validation failed`, `error`);
     }
@@ -62,6 +95,7 @@ async function createOrg() {
 
 async function editOrg(orgID, formID) {
 
+    console.log(document.getElementById(formID));
     const formData = new FormData(document.getElementById(formID));
     const data = {};
     formData.forEach((value, key) => {
@@ -75,7 +109,7 @@ async function editOrg(orgID, formID) {
         body: JSON.stringify(data),
     });
     if (response.ok) {
-        window.location.href = '/portal/';
+        window.location.href = 'configure';
     } else {
         showAlert(`Field validation failed`, `error`);
     }
@@ -87,7 +121,7 @@ function openOrgDeleteModal(orgID) {
     modal.dataset.orgID = orgID;
     const bootstrapModal = new bootstrap.Modal(modal);
     bootstrapModal.show();
-  }
+}
 
 
 async function deleteOrg() {
@@ -98,7 +132,7 @@ async function deleteOrg() {
         method: 'DELETE'
     });
     if (response.ok) {
-        window.location.href = '/portal/';
+        window.location.href = 'configure';
     } else {
         showAlert(`Field validation failed`, `error`);
     }

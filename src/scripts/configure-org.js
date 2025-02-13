@@ -2,6 +2,21 @@
 /* eslint-disable no-unused-vars */
 document.addEventListener('DOMContentLoaded', function () {
     
+    const createViewBtn = document.getElementById('createViewBtn');
+    const viewDetails = document.getElementById('viewDetails');
+    const createView = document.getElementById('createView');
+    const cancelViewBtn = document.getElementById('cancelViewBtn');
+
+    createViewBtn.addEventListener('click', function () {
+        viewDetails.style.display = 'none';
+        createView.style.display = 'block';
+    });
+
+    cancelViewBtn.addEventListener('click', function () {
+        viewDetails.style.display = 'block';
+        createView.style.display = 'none';
+    });
+
     //upload new organization content
     const uploadArea = document.getElementById('uploadArea');
     const zipFile = document.getElementById('file');

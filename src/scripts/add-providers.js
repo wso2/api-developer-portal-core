@@ -1,5 +1,25 @@
 /* eslint-disable no-undef */
 /* eslint-disable no-unused-vars */
+
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const createProviderBtn = document.getElementById('createProviderBtn');
+    const viewProviders = document.getElementById('providerDetails');
+    const addProviders = document.getElementById('addProvider');
+    const cancelProviderBtn = document.getElementById('cancelProviderBtn');
+
+    createProviderBtn.addEventListener('click', function () {
+        viewProviders.style.display = 'none';
+        addProviders.style.display = 'block';
+    });
+
+    cancelProviderBtn.addEventListener('click', function () {
+        viewProviders.style.display = 'block';
+        addProviders.style.display = 'none';
+    });
+});
+
 function sanitizeInput(input) {
     const div = document.createElement('div');
     div.appendChild(document.createTextNode(input));
