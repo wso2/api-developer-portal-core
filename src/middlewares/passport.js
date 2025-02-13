@@ -61,7 +61,6 @@ function configurePassport(authJsonContent, claimNames) {
         if (roles.includes(constants.ROLES.SUPER_ADMIN)) {
             isSuperAdmin = true;
         }
-        console.log('decodedJWT:', decodedJWT);
         profile = {
             'firstName': firstName ? (firstName.includes(" ") ? firstName.split(" ")[0] : firstName) : '',
             'lastName': lastName ? lastName : (firstName && firstName.includes(" ") ? firstName.split(" ")[1] : ''),
