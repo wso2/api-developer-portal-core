@@ -49,7 +49,8 @@ function configurePassport(authJsonContent, claimNames) {
             return done(new Error('Access token missing'));
         }
         const decodedJWT = jwt.decode(params.id_token);
-        const name = decodedJWT['given_name'] ? decodedJWT['given_name'] : decodedJWT['nickname'];
+        const firstName = decodedJWT['given_name'] || decodedJWT['nickname'];
+        const lastName = decodedJWT['family_name'];
         const organizationID = decodedJWT[claimNames[constants.ROLES.ORGANIZATION_CLAIM]] ? decodedJWT[config.orgIDClaim] : '';
         const roles = decodedJWT[claimNames[constants.ROLES.ROLE_CLAIM]] ? decodedJWT[config.roleClaim] : '';
                 const groups = decodedJWT[claimNames[constants.ROLES.GROUP_CLAIM]] ? decodedJWT[config.groupsClaim] : '';
@@ -61,7 +62,8 @@ function configurePassport(authJsonContent, claimNames) {
             isSuperAdmin = true;
         }
         profile = {
-            'name': name,
+            'firstName': firstName ? (firstName.includes(" ") ? firstName.split(" ")[0] : firstName) : '',
+            'lastName': lastName ? lastName : (firstName && firstName.includes(" ") ? firstName.split(" ")[1] : ''),
             'idToken': params.id_token,
             'email': decodedJWT['email'],
             [constants.ROLES.ORGANIZATION_CLAIM]: organizationID,
@@ -72,6 +74,7 @@ function configurePassport(authJsonContent, claimNames) {
             'isAdmin': isAdmin,
             'isSuperAdmin': isSuperAdmin
         };
+        console.log('Profile:', profile);
         return done(null, profile);
     });
     strategy._oauth2.setAgent(agent);

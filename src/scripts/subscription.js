@@ -116,7 +116,8 @@ function sanitize(input) {
     return div.innerHTML;
 }
 
-async function handleSubscribe(appId) {
+async function handleSubscribe(appId, apiName, apiVersion) {
+    console.log('Subscribing to API:', appId, apiName, apiVersion);
     const applicationSelect = document.getElementById('applicationSelect');
     let policyName;
 
@@ -144,13 +145,13 @@ async function handleSubscribe(appId) {
         const response = await fetch(`/devportal/subscriptions`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+            'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                applicationId: applicationId.replace(/[^a-zA-Z0-9\s-]/g, ''),
-                apiName: apiName.replace(/[^a-zA-Z0-9\s-]/g, ''),
-                apiVersion: apiVersion.replace(/[^a-zA-Z0-9.\s-]/g, ''),
-                throttlingPolicy: policyName.replace(/[^a-zA-Z0-9\s-]/g, ''),
+            applicationId: applicationId.replace(/[^a-zA-Z0-9\s-]/g, ''),
+            apiName: apiName.replace(/[^a-zA-Z0-9\s-]/g, ''),
+            apiVersion: apiVersion.replace(/[^a-zA-Z0-9\s-.]/g, ''),
+            throttlingPolicy: policyName.replace(/[^a-zA-Z0-9\s-]/g, ''),
             }),
         });
 
