@@ -82,7 +82,6 @@ function configurePassport(authJsonContent, claimNames) {
             'isAdmin': isAdmin,
             'isSuperAdmin': isSuperAdmin
         };
-        console.log('Profile:', profile);
         return done(null, profile);
     });
     strategy._oauth2.setAgent(agent);
