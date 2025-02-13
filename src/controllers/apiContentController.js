@@ -81,7 +81,8 @@ const loadAPIContent = async (req, res) => {
 
     let html;
     const hbs = exphbs.create({});
-    const { orgName, apiName } = req.params;
+    let { orgName, apiName } = req.params;
+    apiName = decodeURIComponent(apiName);
 
     if (config.mode === constants.DEV_MODE) {
         const metaData = loadAPIMetaDataFromFile(apiName);

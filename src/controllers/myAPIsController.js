@@ -64,6 +64,7 @@ const loadMyAPIs = async (req, res) => {
                     subscriptions.push({
                         id: sub.subscriptionId,
                         apiName: sub.apiInfo.name,
+                        apiVersion: sub.apiInfo.version,
                         applicationName: sub.applicationInfo.name,
                         applicationId: sub.applicationInfo.applicationId,
                         throttlingTier: sub.throttlingPolicy,
