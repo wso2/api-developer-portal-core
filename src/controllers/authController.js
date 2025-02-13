@@ -141,9 +141,6 @@ const handleSignUp = async (req, res) => {
 };
 
 const handleLogOut = async (req, res) => {
-
-    console.log('Logging out', req.user);
-
     const authJsonContent = await fetchAuthJsonContent(req, req.params.orgName);
     let idToken = ''
     if (req.user != null) {
@@ -152,15 +149,10 @@ const handleLogOut = async (req, res) => {
 
     req.session.destroy();
     if (req.user && req.user.accessToken) {
-        console.log('Logging out with access token', req.originalUrl.replace('/logout', ''));
-        console.log('Logging out with access token', req.get('referer'));
         const referer = req.get('referer');
         const regex = /(.+\/views\/[^\/]+)\/?/;
         const match = referer.match(regex);
         const logoutURL = match ? match[1] : null;
-
-        console.log('Logging out with access token', logoutURL);
-
 
         req.logout(
             () => res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${logoutURL}&id_token_hint=${idToken}`)
