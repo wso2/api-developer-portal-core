@@ -199,6 +199,7 @@ footer {
 
 /* common-card-style */
 .dev-card {
+  height: 100%;
   background-color: var(--light-bg-color);
   border-radius: 12px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
