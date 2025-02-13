@@ -76,6 +76,7 @@ const login = async (req, res, next) => {
         }
     }
     }
+    req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : req.originalUrl;
     IDP = await fetchAuthJsonContent(req, orgName);
     if (IDP.clientId) {
         configurePassport(IDP, claimNames);  // Configure passport dynamically
@@ -141,17 +142,31 @@ const handleSignUp = async (req, res) => {
 
 const handleLogOut = async (req, res) => {
 
+    console.log('Logging out', req.user);
+
     const authJsonContent = await fetchAuthJsonContent(req, req.params.orgName);
     let idToken = ''
     if (req.user != null) {
         idToken = req.user.idToken;
     }
+
     req.session.destroy();
     if (req.user && req.user.accessToken) {
-    req.logout(
-        () => res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${authJsonContent.logoutRedirectURI}&id_token_hint=${idToken}`)
-    );
+        console.log('Logging out with access token', req.originalUrl.replace('/logout', ''));
+        console.log('Logging out with access token', req.get('referer'));
+        const referer = req.get('referer');
+        const regex = /(.+\/views\/[^\/]+)\/?/;
+        const match = referer.match(regex);
+        const logoutURL = match ? match[1] : null;
+
+        console.log('Logging out with access token', logoutURL);
+
+
+        req.logout(
+            () => res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${logoutURL}&id_token_hint=${idToken}`)
+        );
     } else {
+
         res.redirect(req.originalUrl.replace('/logout', ''));
     }
 };

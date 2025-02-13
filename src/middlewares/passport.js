@@ -61,9 +61,17 @@ function configurePassport(authJsonContent, claimNames) {
         if (roles.includes(constants.ROLES.SUPER_ADMIN)) {
             isSuperAdmin = true;
         }
+        const returnTo = req.session.returnTo;
+        let view = '';
+        if (returnTo) {
+            const startIndex = returnTo.indexOf('/views/') + 7;
+            const endIndex = returnTo.indexOf('/', startIndex) !== -1 ? returnTo.indexOf('/', startIndex) : returnTo.length;
+            view = returnTo.substring(startIndex, endIndex);
+        }
         profile = {
             'firstName': firstName ? (firstName.includes(" ") ? firstName.split(" ")[0] : firstName) : '',
             'lastName': lastName ? lastName : (firstName && firstName.includes(" ") ? firstName.split(" ")[1] : ''),
+            'view': view,
             'idToken': params.id_token,
             'email': decodedJWT['email'],
             [constants.ROLES.ORGANIZATION_CLAIM]: organizationID,
