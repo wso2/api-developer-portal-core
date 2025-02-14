@@ -87,7 +87,7 @@ const loadMyAPIs = async (req, res) => {
             const metaData = await apiDao.getAPIMetadataByCondition(condition);
             const apiId = new APIDTO(metaData[0]).apiReferenceID;
             const apiSubs = await loadSubscriptions(req, apiId.replace(/[^a-zA-Z0-9\s-]/g, ''));
-            if (Array.isArray(apiSubs.list)) {
+            if (apiSubs && Array.isArray(apiSubs.list)) {
                 const subAppIds = new Set(apiSubs.list.map(sub => sub.applicationInfo.applicationId));
 
                 for (const app of apps.list) {

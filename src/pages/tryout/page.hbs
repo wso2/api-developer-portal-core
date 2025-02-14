@@ -5,7 +5,9 @@
   <script src="https://unpkg.com/@stoplight/elements/web-components.min.js"></script>
 </head>
 <main>
-  <elements-api apiDescriptionDocument='{{{swagger}}}' router="hash" layout="sidebar" />
+  <div class="p-3">
+    <elements-api apiDescriptionDocument='{{{swagger}}}' router="hash" layout="sidebar" />
+  </div>
 </main>
 
 {{else if (eq apiType "AsyncAPI")}}

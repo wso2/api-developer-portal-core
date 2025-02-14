@@ -116,8 +116,7 @@ function sanitize(input) {
     return div.innerHTML;
 }
 
-async function handleSubscribe(appId, apiName, apiVersion) {
-    console.log('Subscribing to API:', appId, apiName, apiVersion);
+async function handleSubscribe(appId, apiName, apiVersion, apiRefId) {
     const applicationSelect = document.getElementById('applicationSelect');
     let policyName;
 
@@ -152,6 +151,7 @@ async function handleSubscribe(appId, apiName, apiVersion) {
             apiName: apiName.replace(/[^a-zA-Z0-9\s-]/g, ''),
             apiVersion: apiVersion.replace(/[^a-zA-Z0-9\s-.]/g, ''),
             throttlingPolicy: policyName.replace(/[^a-zA-Z0-9\s-]/g, ''),
+            apiRefId: apiRefId,
             }),
         });
 
