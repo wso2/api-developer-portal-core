@@ -99,6 +99,11 @@ Handlebars.registerHelper('lowercase', function (str) {
     return typeof str === 'string' ? str.toLowerCase() : str;
 });
 
+Handlebars.registerHelper('isMiddle', function(index, length) {
+    const middleIndex = Math.floor(length / 2);
+    return index === middleIndex;
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
