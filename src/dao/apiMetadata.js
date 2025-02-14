@@ -40,6 +40,7 @@ const createAPIMetadata = async (orgID, apiMetadata, t) => {
             REFERENCE_ID: apiInfo.referenceID,
             PROVIDER: apiInfo.provider,
             API_NAME: apiInfo.apiName,
+            API_HANDLE: `${apiInfo.apiName.toLowerCase()}-v${apiInfo.apiVersion}`,
             API_DESCRIPTION: apiInfo.apiDescription,
             API_VERSION: apiInfo.apiVersion,
             API_TYPE: apiInfo.apiType,
@@ -925,6 +926,7 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
             REFERENCE_ID: apiInfo.referenceID,
             PROVIDER: apiInfo.provider,
             API_NAME: apiInfo.apiName,
+            API_HANDLE: `${apiInfo.apiName.toLowerCase()}-v${apiInfo.apiVersion}`,
             API_DESCRIPTION: apiInfo.apiDescription,
             API_VERSION: apiInfo.apiVersion,
             API_TYPE: apiInfo.apiType,
@@ -1168,13 +1170,13 @@ const deleteAPIFile = async (fileName, orgID, apiID, t) => {
     }
 }
 
-const getAPIId = async (orgID, apiName) => {
+const getAPIId = async (orgID, apiHandle) => {
 
     try {
         const api = await APIMetadata.findOne({
             attributes: ['API_ID'],
             where: {
-                API_NAME: apiName,
+                API_HANDLE: apiHandle,
                 ORG_ID: orgID            }
         })
         return api.API_ID;

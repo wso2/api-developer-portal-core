@@ -81,12 +81,11 @@ const loadAPIContent = async (req, res) => {
 
     let html;
     const hbs = exphbs.create({});
-    let { orgName, apiName } = req.params;
-    apiName = decodeURIComponent(apiName);
+    let { orgName, apiHandle } = req.params;
 
     if (config.mode === constants.DEV_MODE) {
-        const metaData = loadAPIMetaDataFromFile(apiName);
-        const filePath = path.join(process.cwd(), filePrefix + '../mock', req.params.apiName + "/" + constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME);
+        const metaData = loadAPIMetaDataFromFile(apiHandle);
+        const filePath = path.join(process.cwd(), filePrefix + '../mock', apiHandle + "/" + constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME);
         if (fs.existsSync(filePath)) {
             hbs.handlebars.registerPartial('api-content', fs.readFileSync(filePath, constants.CHARSET_UTF8));
         }
@@ -114,7 +113,7 @@ const loadAPIContent = async (req, res) => {
     } else {
         try {
             const orgID = await adminDao.getOrgId(orgName);
-            const apiID = await apiDao.getAPIId(orgID, apiName);
+            const apiID = await apiDao.getAPIId(orgID, apiHandle);
             const viewName = req.params.viewName;
             const metaData = await loadAPIMetaData(req, orgID, apiID);
             let subscriptionPlans = [];
@@ -173,11 +172,11 @@ const loadSubscriptionPlan = async (orgID, policyName) => {
 
 const loadTryOutPage = async (req, res) => {
 
-    const { orgName, apiName, viewName } = req.params;
+    const { orgName, apiHandle, viewName } = req.params;
     let html = "";
     if (config.mode === constants.DEV_MODE) {
-        const metaData = loadAPIMetaDataFromFile(apiName);
-        let apiDefinition = path.join(process.cwd(), filePrefix + '../mock', req.params.apiName + '/apiDefinition.json');
+        const metaData = loadAPIMetaDataFromFile(apiHandle);
+        let apiDefinition = path.join(process.cwd(), filePrefix + '../mock', apiHandle + '/apiDefinition.json');
         if (fs.existsSync(apiDefinition)) {
             apiDefinition = await fs.readFileSync(apiDefinition, constants.CHARSET_UTF8);
         }
@@ -191,7 +190,7 @@ const loadTryOutPage = async (req, res) => {
     } else {
         try {
             const orgID = await adminDao.getOrgId(orgName);
-            const apiID = await apiDao.getAPIId(orgID, apiName);
+            const apiID = await apiDao.getAPIId(orgID, apiHandle);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
             let apiDefinition;
             if (metaData.apiInfo.apiType !== "GraphQL") {

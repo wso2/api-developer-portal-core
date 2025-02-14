@@ -138,8 +138,8 @@ const registerPartialsFromAPI = async (req) => {
   }
   if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
 
-    const apiName = req.params.apiName;
-    const apiID = await apiDao.getAPIId(orgID, apiName);
+    const apiHandle = req.params.apiHandle;
+    const apiID = await apiDao.getAPIId(orgID, apiHandle);
 
     //fetch markdown content for API if exists
     const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, orgID, apiID);

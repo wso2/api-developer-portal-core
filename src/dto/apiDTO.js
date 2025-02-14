@@ -21,6 +21,7 @@ class APIDTO {
     constructor(api) {
         this.apiID = api.API_ID;
         this.apiReferenceID = api.REFERENCE_ID;
+        this.apiHandle = api.API_HANDLE;
         this.provider = api.PROVIDER;
         this.apiInfo = new APIInfo(api);
         this.endPoints = new Endpoints(api);
