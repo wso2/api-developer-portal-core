@@ -25,7 +25,7 @@ module.exports = {
     API_TEMPLATE_FILE_NAME: '/template?fileName=',
     HEADER_PARTIAL_NAME: 'header',
     HERO_PARTIAL_NAME: 'hero',
-    BASE_URL: 'http://localhost:',
+    BASE_URL: 'https://localhost:',
     BASE_URL_NAME: 'baseUrl',
     ORG_ID: 'orgID',
     ORG_IDENTIFIER: 'organizationIdentifier',
@@ -92,7 +92,8 @@ module.exports = {
         DEVPORTAL_CONFIGURE: '/*/configure',
         DEVPORTAL_ROOT: ['/portal','/portal/*/edit', '/devportal'],
         DEVPORTAL_API_LISTING: '/*/apis',
-        DEVPORTAL_TECHNICAL_PAGES: ['*/application']
+        DEVPORTAL_TECHNICAL_PAGES: ['*/application'],
+        VIEWS_PATH: "/views/"
     },
     ROLES: {
         ADMIN: 'admin',
@@ -163,6 +164,7 @@ module.exports = {
     },
     ERROR_CODE: {
         401: "Unauthenticated",
-        403: "Forbidden"
+        403: "Forbidden",
+        404: "Not Found"
     }
 }

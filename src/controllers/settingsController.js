@@ -16,7 +16,7 @@
  * under the License.
  */
 /* eslint-disable no-undef */
-const { renderGivenTemplate, loadLayoutFromAPI } = require('../utils/util');
+const { renderGivenTemplate } = require('../utils/util');
 const fs = require('fs');
 const path = require('path');
 const adminDao = require('../dao/admin');
@@ -37,7 +37,7 @@ const loadSettingPage = async (req, res) => {
     const layoutPath = path.join(require.main.filename, '..', 'pages', 'layout', 'main.hbs');
 
     let templateContent = {
-        baseUrl: req.params.orgName,
+        baseUrl: req.params.orgName+'/views/default',
         orgContent: true
     }
     let layoutResponse = "";
@@ -55,14 +55,20 @@ const loadSettingPage = async (req, res) => {
             templateContent.views = views;
             templateContent.apiProviders = getMockAPIProviders();
         } else {
+            let orgName = req.params.orgName;
+            templateContent.loggedOrg = orgName;
             //retrieve orgID from the user object
             if (req.user) {
                 orgID = req.user[constants.ORG_ID];
             } else {
-                let orgName = req.params.orgName;
                 orgID = await adminDao.getOrgId(orgName);
             }
             templateContent.orgID = orgID;
+            const organizations = await adminService.getAllOrganizations();
+            let orgs = organizations.length;
+            if (orgs !== 0) {
+                templateContent.organizations = organizations;
+            }
             const retrievedIDP = await adminDao.getIdentityProvider(orgID);
             if (retrievedIDP.length > 0) {
                 templateContent.idp = new IdentityProviderDTO(retrievedIDP[0]);
@@ -88,6 +94,7 @@ const loadSettingPage = async (req, res) => {
         layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
         const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
         let html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        console.log(templateContent);
         res.send(html);
     } catch (error) {
         console.error(`Error while loading content from DB: ${error}`);
@@ -130,6 +137,7 @@ const loadPortalPage = async (req, res) => {
             let orgs = organizations.length;
             if (orgs !== 0) {
                 templateContent.organizations = organizations;
+                templateContent.create = true;
             }
         }
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'portal', 'page.hbs');
@@ -153,13 +161,17 @@ const loadEditOrganizationPage = async (req, res) => {
             const organizations = await getMockOrganizations();
             templateContent.organizations = organizations;
         } else {
+            const orgName = req.params.orgName;
             if (req.params.orgId !== 'create') {
-                orgID = req.params.orgId;
+                orgID = await adminDao.getOrgId(orgName);
+
+                //orgID = req.params.orgId;
                 const organization = await devPortalService.getOrganizationDetails(orgID);
                 templateContent = {
                     'orgID': orgID,
                     'profile': req.user,
-                    'organization': organization
+                    'organization': organization,
+                    'edit': true
                 }
             }
         }

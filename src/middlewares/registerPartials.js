@@ -32,7 +32,7 @@ const registerPartials = async (req, res, next) => {
 
   registerInternalPartials(req);
   if (config.mode === constants.DEV_MODE) {
-    registerAllPartialsFromFile(constants.BASE_URL + config.port, req);
+    registerAllPartialsFromFile(constants.BASE_URL + config.port + constants.ROUTE.VIEWS_PATH + req.params.viewName, req);
   } else {
     let matchURL = req.originalUrl;
     if (req.session.returnTo) {
@@ -71,7 +71,8 @@ const registerInternalPartials = (req) => {
             hbs.handlebars.partials = {
               ...hbs.handlebars.partials,
               header: hbs.handlebars.compile(partialContent)({
-                profile: req.user
+                profile: req.user,
+                baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
               })
             };
           }
@@ -99,7 +100,7 @@ const registerPartialsFromAPI = async (req) => {
   const orgName = req.params.orgName;
   const viewName = req.params.viewName;
   const orgID = await adminDao.getOrgId(orgName);
-  const imageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/views/${viewName}/layout?fileType=image&fileName=`;
+  const imageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.VIEWS_PATH}${viewName}/layout?fileType=image&fileName=`;
   let partials = await adminDao.getOrgContent({
     orgId: orgID,
     fileType: 'partial',
@@ -125,14 +126,14 @@ const registerPartialsFromAPI = async (req) => {
     hbs.handlebars.partials = {
       ...hbs.handlebars.partials,
       header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
-        baseUrl: "/" + orgName + "/views/" + viewName,
+        baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
         profile: req.user,
         isAdmin: isAdmin,
         isSuperAdmin: isSuperAdmin,
         hasWSO2APIs: await checkWSO2APIAvailability()
       }),
       [constants.HERO_PARTIAL_NAME]: hbs.handlebars.compile(partialObject[constants.HERO_PARTIAL_NAME])(
-        { baseUrl: "/" + orgName + "/views/" + viewName }
+        { baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName }
       ),
     };
   }

@@ -9,8 +9,8 @@ router.get('/(((?!favicon.ico|images)):orgName/configure)', ensureAuthenticated,
 
 router.get('/(((?!favicon.ico|images))portal)', registerPartials, ensureAuthenticated, settingsController.loadPortalPage);
 
-router.get('/(((?!favicon.ico|images))portal/:orgId/edit)', registerPartials, ensureAuthenticated, settingsController.loadEditOrganizationPage);
+router.get('/(((?!favicon.ico|images)):orgName/configure/edit)', registerPartials, ensureAuthenticated, settingsController.loadEditOrganizationPage);
 
-router.get('/(((?!favicon.ico|images))portal/create)', registerPartials, ensureAuthenticated, settingsController.loadCreateOrganizationPage);
+router.get('/(((?!favicon.ico|images)):orgName/configure/create)', registerPartials, ensureAuthenticated, settingsController.loadCreateOrganizationPage);
 
 module.exports = router;

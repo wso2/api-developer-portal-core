@@ -33,21 +33,21 @@ const { CustomError } = require('../utils/errors/customErrors');
 
 const filePrefix = config.pathToContent;
 const generateArray = (length) => Array.from({ length });
+const baseURLDev = constants.BASE_URL + config.port  + constants.ROUTE.VIEWS_PATH;
 
 const loadAPIs = async (req, res) => {
 
-    const orgName = req.params.orgName;
+    const { orgName, viewName } = req.params;
     let html;
     if (config.mode === constants.DEV_MODE) {
         const templateContent = {
             apiMetadata: await loadAPIMetaDataList(),
-            baseUrl: constants.BASE_URL + config.port
+            baseUrl: baseURLDev + viewName
         }
         html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
     } else {
         try {
             const orgID = await adminDao.getOrgId(orgName);
-            const viewName = req.params.viewName;
             const searchTerm = req.query.query;
             const tags = req.query.tags;
             const metaData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
@@ -65,7 +65,7 @@ const loadAPIs = async (req, res) => {
             const templateContent = {
                 apiMetadata: metaData,
                 tags: apiTags,
-                baseUrl: '/' + orgName + '/views/' + viewName
+                baseUrl: '/' + orgName + + constants.ROUTE.VIEWS_PATH + viewName
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
         } catch (error) {
@@ -81,7 +81,7 @@ const loadAPIContent = async (req, res) => {
 
     let html;
     const hbs = exphbs.create({});
-    let { orgName, apiName } = req.params;
+    let { orgName, apiName, viewName } = req.params;
     apiName = decodeURIComponent(apiName);
 
     if (config.mode === constants.DEV_MODE) {
@@ -106,7 +106,7 @@ const loadAPIContent = async (req, res) => {
             apiContent: await loadMarkdown(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, filePrefix + '../mock/' + req.params.apiName),
             apiMetadata: metaData,
             subscriptionPlans: subscriptionPlans,
-            baseUrl: constants.BASE_URL + config.port,
+            baseUrl: baseURLDev + viewName,
             schemaUrl: orgName + '/mock/' + apiName + '/apiDefinition.xml'
         }
         html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
@@ -115,7 +115,6 @@ const loadAPIContent = async (req, res) => {
         try {
             const orgID = await adminDao.getOrgId(orgName);
             const apiID = await apiDao.getAPIId(orgID, apiName);
-            const viewName = req.params.viewName;
             const metaData = await loadAPIMetaData(req, orgID, apiID);
             let subscriptionPlans = [];
 
@@ -144,7 +143,7 @@ const loadAPIContent = async (req, res) => {
                 providerUrl: providerUrl,
                 apiMetadata: metaData,
                 subscriptionPlans: subscriptionPlans,
-                baseUrl: '/' + orgName + '/views/' + viewName,
+                baseUrl: '/' + orgName + + constants.ROUTE.VIEWS_PATH + viewName,
                 schemaUrl: `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${constants.FILE_NAME.API_DEFINITION_XML}`
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
@@ -183,7 +182,7 @@ const loadTryOutPage = async (req, res) => {
         }
         const templateContent = {
             apiMetadata: metaData,
-            baseUrl: constants.BASE_URL + config.port,
+            baseUrl: baseURLDev + viewName,
             apiType: metaData.apiInfo.apiType,
             swagger: apiDefinition
         }
@@ -201,7 +200,7 @@ const loadTryOutPage = async (req, res) => {
             }
             const templateContent = {
                 apiMetadata: metaData,
-                baseUrl: req.params.orgName + '/views/' + viewName,
+                baseUrl: '/' + orgName + + constants.ROUTE.VIEWS_PATH + viewName,
                 apiType: metaData.apiInfo.apiType,
                 swagger: apiDefinition
             };

@@ -145,7 +145,7 @@ const getLabelID = async (orgID, labels, t) => {
         };
         return IDList;
     } catch (error) {
-        if (error instanceof Sequelize.UniqueConstraintError) {
+        if (error instanceof Sequelize.UniqueConstraintError || error instanceof CustomError) {
             throw error;
         }
         throw new Sequelize.DatabaseError(error);
@@ -160,7 +160,9 @@ const getLabelIDList = async (orgID, label, t) => {
             ORG_ID: orgID
         }
     }, { transaction: t });
-    console.log(labelResponse)
+    if (!labelResponse) {
+        throw new CustomError(404, constants.ERROR_CODE[404], "Label not found")
+    }
     return labelResponse.dataValues.LABEL_ID;
 }
 
