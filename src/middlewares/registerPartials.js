@@ -71,7 +71,8 @@ const registerInternalPartials = (req) => {
             hbs.handlebars.partials = {
               ...hbs.handlebars.partials,
               header: hbs.handlebars.compile(partialContent)({
-                profile: req.user
+                profile: req.user,
+                baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
               })
             };
           }
