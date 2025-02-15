@@ -40,7 +40,7 @@ const createAPIMetadata = async (orgID, apiMetadata, t) => {
             REFERENCE_ID: apiInfo.referenceID,
             PROVIDER: apiInfo.provider,
             API_NAME: apiInfo.apiName,
-            API_HANDLE: `${apiInfo.apiName.toLowerCase().replace(/\s+/g, '')}-v${apiInfo.apiVersion}`,
+            API_HANDLE: apiInfo.apiHandle ? apiInfo.apiHandle : `${apiInfo.apiName.toLowerCase().replace(/\s+/g, '')}-v${apiInfo.apiVersion}`,
             API_DESCRIPTION: apiInfo.apiDescription,
             API_VERSION: apiInfo.apiVersion,
             API_TYPE: apiInfo.apiType,
@@ -60,6 +60,7 @@ const createAPIMetadata = async (orgID, apiMetadata, t) => {
         );
         return apiMetadataResponse;
     } catch (error) {
+        console.log(error);
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
         }

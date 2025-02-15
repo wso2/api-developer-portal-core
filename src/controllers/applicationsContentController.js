@@ -222,7 +222,7 @@ const loadApplication = async (req, res) => {
             templateContent = {
                 applicationMetadata: metaData,
                 keyManagersMetadata: kMmetaData,
-                baseUrl: '/' + orgName,
+                baseUrl: '/' + orgName + '/views/' + viewName,
                 apis: apiList,
                 productionKeys: productionKeys,
                 sandboxKeys: sandboxKeys

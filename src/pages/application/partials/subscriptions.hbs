@@ -12,7 +12,7 @@
             <ul class="policy-label">
                 <li>{{subscribedPolicy.policy}}</li>
         </h6>
-        <button class="common-btn-outlined mt-2" onclick="openDeleteModal('{{this.id}}', '')">Unsubscribe</button>
+        <button class="common-btn-outlined mt-2" onclick="openDeleteModal('{{subscribedPolicy.id}}', '')">Unsubscribe</button>
 
         {{else}}
         <select id="subscriptionPlan" class="form-control items-label sub-api-card-item">

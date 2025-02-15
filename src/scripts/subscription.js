@@ -49,6 +49,7 @@ function hideElementById(elementId) {
 function closeModal() {
     hideElementById('planModal');
     hideElementById('applicationFormSection');
+    hideElementById('applicationFormCreation');
 
     const appInput = document.getElementById('appName');
     if (appInput) {
@@ -70,8 +71,10 @@ window.onclick = function (event) {
 
 // Function to show the application creation form
 function showApplicationForm() {
-    const modal = document.getElementById('applicationFormSection');
-    modal.style.display = 'block';
+    const creationForm = document.getElementById('applicationFormCreation');
+    creationForm.style.display = 'block';
+
+    hideElementById('applicationFormSection');
 
     const subButton = document.getElementById('createSubButton');
     subButton.style.display = 'block';
