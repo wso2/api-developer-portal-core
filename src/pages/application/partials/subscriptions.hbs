@@ -19,7 +19,7 @@
             <option value="{{this}}">{{this}}</option>
             {{/each}}
         </select>
-        <button class="common-btn-primary mt-1" onclick="handleSubscribe(null,'{{this.id}}')">Subscribe</button>
+        <button class="common-btn-primary mt-1" onclick="handleSubscribe(null, '{{this.name}}', '{{this.version}}')">Subscribe</button>
         {{/if}}
     </div>
     {{/if}}

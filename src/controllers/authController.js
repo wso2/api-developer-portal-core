@@ -76,6 +76,7 @@ const login = async (req, res, next) => {
         }
     }
     }
+    req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
     IDP = await fetchAuthJsonContent(req, orgName);
     if (IDP.clientId) {
         configurePassport(IDP, claimNames);  // Configure passport dynamically
@@ -140,18 +141,24 @@ const handleSignUp = async (req, res) => {
 };
 
 const handleLogOut = async (req, res) => {
-
     const authJsonContent = await fetchAuthJsonContent(req, req.params.orgName);
     let idToken = ''
     if (req.user != null) {
         idToken = req.user.idToken;
     }
+
     req.session.destroy();
     if (req.user && req.user.accessToken) {
-    req.logout(
-        () => res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${authJsonContent.logoutRedirectURI}&id_token_hint=${idToken}`)
-    );
+        const referer = req.get('referer');
+        const regex = /(.+\/views\/[^\/]+)\/?/;
+        const match = referer.match(regex);
+        const logoutURL = match ? match[1] : null;
+
+        req.logout(
+            () => res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${logoutURL}&id_token_hint=${idToken}`)
+        );
     } else {
+
         res.redirect(req.originalUrl.replace('/logout', ''));
     }
 };

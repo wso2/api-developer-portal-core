@@ -6,7 +6,15 @@
 <body>
     <section>
         <div class="app-header mb-4 pt-4">
-            <h3 class="app-title">{{applicationMetadata.name}}</h3>
+            <h1 class='app-title'>{{applicationMetadata.name}}</h1>
+            <div class="d-flex justify-content-between align-items-center">
+                <p>Subscriptions: {{applicationMetadata.subscriptionCount}}</p>
+                <div class='action-buttons'>
+                <button class='btn btn-sm' title='Edit' onclick="window.location.href='{{../baseUrl}}/applications/{{applicationId}}/edit'">
+                    <i class='bi bi-pencil-square'></i>
+                </button>
+                </div>
+            </div>
         </div>
         <ul class="nav nav-tabs" id="keyManagerTabs" role="tablist">
             {{#each keyManagersMetadata}}

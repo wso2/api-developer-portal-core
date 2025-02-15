@@ -172,6 +172,7 @@ const loadApplication = async (req, res) => {
 
                 apiList.push({
                     name: api.name,
+                    version: api.version,
                     id: api.id,
                     isSubAvailable: api.isSubscriptionAvailable,
                     subscriptionPolicies: subscriptionPolicies,
