@@ -27,19 +27,19 @@ const myAPIsController = require('../controllers/myAPIsController');
 const settingsController = require('../controllers//settingsController');
 
 
-router.get('/', registerPartials, orgController.loadOrganizationContent);
+router.get('/views/:viewName', registerPartials, orgController.loadOrganizationContent);
 
-router.get('/apis', registerPartials, apiController.loadAPIs);
+router.get('/views/:viewName/apis', registerPartials, apiController.loadAPIs);
 
-router.get('/api/:apiName', registerPartials, apiController.loadAPIContent);
+router.get('/views/:viewName/api/:apiName', registerPartials, apiController.loadAPIContent);
 
-router.get('/api/:apiName/tryout', registerPartials, apiController.loadTryOutPage);
+router.get('/views/:viewName/api/:apiName/tryout', registerPartials, apiController.loadTryOutPage);
 
-router.get('/applications', registerPartials, applicationController.loadApplications);
-router.get('/applications/create', registerPartials, applicationController.loadThrottlingPolicies);
-router.get('/applications/:applicationid', registerPartials, applicationController.loadApplication);
-router.get('/applications/:applicationid/edit', registerPartials, applicationController.loadApplicationForEdit);
-router.get('/myAPIs', registerPartials, myAPIsController.loadDefaultContent);
+router.get('/views/:viewName/applications', registerPartials, applicationController.loadApplications);
+router.get('/views/:viewName/applications/create', registerPartials, applicationController.loadThrottlingPolicies);
+router.get('/views/:viewName/applications/:applicationid', registerPartials, applicationController.loadApplication);
+router.get('/views/:viewName/applications/:applicationid/edit', registerPartials, applicationController.loadApplicationForEdit);
+router.get('/views/:viewName/myAPIs', registerPartials, myAPIsController.loadDefaultContent);
 
 router.get('/configure', registerPartials, settingsController.loadSettingPage);
 

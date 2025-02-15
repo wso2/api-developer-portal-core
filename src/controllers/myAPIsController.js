@@ -109,7 +109,7 @@ const loadMyAPIs = async (req, res) => {
             subscriptions: subscriptions,
             applications: applications,
             subscribedApps: subscribedApps,
-            baseUrl: '/' + orgName + '/views/' + viewName
+            baseUrl: '/' + orgName + + constants.ROUTE.VIEWS_PATH + viewName
         };
 
         const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);

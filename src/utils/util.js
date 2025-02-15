@@ -95,20 +95,12 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
 
     var templatePage = await loadTemplateFromAPI(orgID, filePath, viewName);
     var layoutContent = await loadLayoutFromAPI(orgID, viewName);
-
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutContent.toString());
-    if (Object.keys(templateContent).length === 0 && templateContent.constructor === Object) {
-        return layout({
-            body: template({
-                baseUrl: '/' + orgName + '/views/' + viewName
-            }),
-        });
-    } else {
-        return layout({
-            body: template(templateContent),
-        });
-    }
+    return layout({
+        body: template(templateContent),
+    });
+
 }
 
 async function renderGivenTemplate(templatePage, layoutPage, templateContent) {
@@ -429,7 +421,7 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                 if (file.name === "main.css") {
                     strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g,
                         `@import url("${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
-                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
+                    content = Buffer.from(strContent, constants.CHARSET_UTF8);
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                 fileType = "layout"

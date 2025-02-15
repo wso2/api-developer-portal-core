@@ -16,7 +16,7 @@
  * under the License.
  */
 /* eslint-disable no-undef */
-const { renderGivenTemplate, loadLayoutFromAPI } = require('../utils/util');
+const { renderGivenTemplate } = require('../utils/util');
 const fs = require('fs');
 const path = require('path');
 const adminDao = require('../dao/admin');
