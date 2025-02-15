@@ -65,7 +65,7 @@ const loadAPIs = async (req, res) => {
             const templateContent = {
                 apiMetadata: metaData,
                 tags: apiTags,
-                baseUrl: '/' + orgName + + constants.ROUTE.VIEWS_PATH + viewName
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
         } catch (error) {
@@ -142,7 +142,7 @@ const loadAPIContent = async (req, res) => {
                 providerUrl: providerUrl,
                 apiMetadata: metaData,
                 subscriptionPlans: subscriptionPlans,
-                baseUrl: '/' + orgName + + constants.ROUTE.VIEWS_PATH + viewName,
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 schemaUrl: `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${constants.FILE_NAME.API_DEFINITION_XML}`
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
@@ -199,7 +199,7 @@ const loadTryOutPage = async (req, res) => {
             }
             const templateContent = {
                 apiMetadata: metaData,
-                baseUrl: '/' + orgName + + constants.ROUTE.VIEWS_PATH + viewName,
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 apiType: metaData.apiInfo.apiType,
                 swagger: apiDefinition
             };

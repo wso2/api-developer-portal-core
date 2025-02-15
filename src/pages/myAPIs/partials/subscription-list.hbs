@@ -16,7 +16,7 @@
       <tbody>
         {{#each subscriptions}}
         <tr>
-          <td> <a class="table-links" href="{{../baseUrl}}/api/{{this.apiName}}">{{this.apiName}} - {{this.apiVersion}}</a></td>
+          <td> <a class="table-links" href="{{../baseUrl}}/api/{{this.apiHandle}}">{{this.apiName}} - {{this.apiVersion}}</a></td>
           <td> <a class="table-links"
               href="{{../baseUrl}}/applications/{{this.applicationId}}">{{this.applicationName}}</a></td>
           <td>{{this.throttlingTier}}</td>

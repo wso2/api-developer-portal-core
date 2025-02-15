@@ -58,7 +58,7 @@ const loadApplications = async (req, res) => {
             metaData = await getAPIMApplications(req);
             templateContent = {
                 applicationsMetadata: metaData,
-                baseUrl: '/' + orgName + + constants.ROUTE.VIEWS_PATH + viewName
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
             }
             const templateResponse = await templateResponseValue('applications');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
@@ -110,7 +110,7 @@ const loadThrottlingPolicies = async (req, res) => {
         metaData = await getAPIMThrottlingPolicies(req);
         templateContent = {
             throttlingPoliciesMetadata: metaData,
-            baseUrl: '/' + orgName + + constants.ROUTE.VIEWS_PATH + viewName
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
         }
         const templateResponse = await templateResponseValue('add-application');
         const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
@@ -227,7 +227,7 @@ const loadApplication = async (req, res) => {
             templateContent = {
                 applicationMetadata: metaData,
                 keyManagersMetadata: kMmetaData,
-                baseUrl: '/' + orgName + + constants.ROUTE.VIEWS_PATH + viewName,
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 apis: apiList,
                 productionKeys: productionKeys,
                 sandboxKeys: sandboxKeys
@@ -292,7 +292,7 @@ const loadApplicationForEdit = async (req, res) => {
         templateContent = {
             applicationMetadata: metaData,
             throttlingPoliciesMetadata: throttlingMetaData,
-            baseUrl: '/' + orgName + + constants.ROUTE.VIEWS_PATH + viewName
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
         }
         const templateResponse = await templateResponseValue('edit-application');
         const layoutResponse = await loadLayoutFromAPI(orgID, viewName);

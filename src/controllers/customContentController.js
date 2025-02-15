@@ -61,7 +61,7 @@ const loadCustomContent = async (req, res) => {
                     content[tempKey] = markdown.parse(item.FILE_CONTENT.toString(constants.CHARSET_UTF8));
                 });
             }
-            content[constants.BASE_URL_NAME] = '/' + orgName + + constants.ROUTE.VIEWS_PATH + viewName;
+            content[constants.BASE_URL_NAME] = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
             html = await renderTemplateFromAPI(content, orgId, orgName, filePath, viewName);
         } catch (error) {
             console.error(`Failed to load organization :`, error);

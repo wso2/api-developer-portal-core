@@ -65,6 +65,7 @@ const loadMyAPIs = async (req, res) => {
                         id: sub.subscriptionId,
                         apiName: sub.apiInfo.name,
                         apiVersion: sub.apiInfo.version,
+                        apiHandle: await apiDao.getAPIHandle(orgId, sub.apiInfo.id),
                         applicationName: sub.applicationInfo.name,
                         applicationId: sub.applicationInfo.applicationId,
                         throttlingTier: sub.throttlingPolicy,
@@ -110,7 +111,7 @@ const loadMyAPIs = async (req, res) => {
             subscriptions: subscriptions,
             applications: applications,
             subscribedApps: subscribedApps,
-            baseUrl: '/' + orgName + + constants.ROUTE.VIEWS_PATH + viewName
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
         };
 
         const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);

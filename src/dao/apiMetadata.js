@@ -1210,6 +1210,26 @@ const getAPIId = async (orgID, apiHandle) => {
     }
 }
 
+const getAPIHandle = async (orgID, apiRefID) => {
+    console.log(orgID, apiRefID);
+
+    try {
+        const api = await APIMetadata.findOne({
+            attributes: ['API_HANDLE'],
+            where: {
+                REFERENCE_ID: apiRefID,
+                ORG_ID: orgID            
+            }
+        })
+        return api.API_HANDLE;
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
 module.exports = {
     createAPIMetadata,
     createAPISubscriptionPolicy,
@@ -1227,6 +1247,7 @@ module.exports = {
     getAPIFile,
     deleteAPIFile,
     getAPIId,
+    getAPIHandle,
     getAPIMetadataByCondition,
     searchAPIMetadata,
     createSubscriptionPolicy,
