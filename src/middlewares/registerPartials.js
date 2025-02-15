@@ -59,9 +59,9 @@ const registerInternalPartials = (req) => {
 
   const partialsDirs = [partialsDir, ...getDirectories(path.join(require.main.filename, '..', '/pages')).map(dir => path.join(dir, 'partials'))];
 
-  partialsDirs.forEach(dir => {
+  for (const dir of partialsDirs) {
     if (fs.existsSync(dir)) {
-      fs.readdirSync(dir).forEach(file => {
+      fs.readdirSync(dir).forEach(async file => {
         if (file.endsWith('.hbs')) {
           const partialName = path.basename(file, '.hbs');
           const partialContent = fs.readFileSync(path.join(dir, file), 'utf8');
@@ -73,13 +73,14 @@ const registerInternalPartials = (req) => {
               header: hbs.handlebars.compile(partialContent)({
                 profile: req.user,
                 baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
+                hasWSO2APIs: await checkWSO2APIAvailability()
               })
             };
           }
         }
       });
     }
-  });
+  };
 }
 
 const registerAllPartialsFromFile = async (baseURL, req) => {
@@ -176,6 +177,7 @@ async function checkWSO2APIAvailability() {
   const condition = {
     PROVIDER: "WSO2"
   }
+  console.log("Checking WSO2 APIs availability", await apiDao.getAPIMetadataByCondition(condition).then(apis => apis.length > 0));
   return await apiDao.getAPIMetadataByCondition(condition).then(apis => apis.length > 0);
 }
 

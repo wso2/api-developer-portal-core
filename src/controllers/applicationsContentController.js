@@ -137,7 +137,7 @@ const loadApplication = async (req, res) => {
 
     const viewName = req.params.viewName;
     try {
-        const applicationId = req.params.applicationid;
+        const applicationId = req.params.applicationId;
         let html, templateContent, metaData, kMmetaData;
         if (config.mode === constants.DEV_MODE) {
             metaData = await getMockApplication();
@@ -287,6 +287,7 @@ const loadApplicationForEdit = async (req, res) => {
         html = renderTemplate('../pages/edit-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     } else {
         const orgID = await orgIDValue(orgName);
+        console.log('orgID', req.params);
         metaData = await getAPIMApplication(req, applicationId);
         throttlingMetaData = await getAPIMThrottlingPolicies(req);        
         templateContent = {
