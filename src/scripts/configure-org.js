@@ -61,6 +61,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    const editOrgPButton = document.getElementById('orgEdit');
+    if (editOrgPButton) {
+        editOrgPButton.addEventListener('click', function () {
+            const details = this.closest('.organization').querySelector('.editOrg');
+            if (details.style.display === 'block') {
+                details.style.display = 'none';
+                this.textContent = 'Edit';
+            } else {
+                details.style.display = 'block';
+                this.textContent = 'Close';
+            }
+        });
+    }
+
     const removeButtons = document.querySelectorAll('.span-item .remove-btn');
     
     // Add event listener to each remove button
@@ -219,7 +233,8 @@ async function uploadContent(orgID) {
     const formData = new FormData();
     formData.append('file', zipFile.files[0]);
 
-    const view = document.getElementById('views').value;
+    const view = document.getElementById('uploadViewContent').value;
+    console.log(view);
     const response = await fetch(`/devportal/organizations/${orgID}/views/${view}/layout`, {
         method: 'PUT',
         body: formData,

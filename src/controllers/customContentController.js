@@ -31,7 +31,7 @@ const loadCustomContent = async (req, res) => {
 
     let html = "";
     const { orgName, viewName } = req.params;
-    let filePath = req.originalUrl.split("/" + orgName + constants.ROUTE.VIEWS_PATH).pop();
+    let filePath = req.originalUrl.split("/" + orgName + constants.ROUTE.VIEWS_PATH + viewName + "/")[1];
     if (config.mode === constants.DEV_MODE) {
         let templateContent = {};
         templateContent[constants.BASE_URL_NAME] = baseURLDev + viewName;
