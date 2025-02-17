@@ -15,10 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     menuItems.forEach(item => {
-        console.log("item", item.getAttribute("href").split("/").pop());
-        console.log("currentPage", currentPage);
         if (item.getAttribute("href").split("/").pop() === currentPage) {
-            console.log("active");
             item.classList.add("active");
         }
     });

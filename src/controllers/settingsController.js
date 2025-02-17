@@ -94,7 +94,6 @@ const loadSettingPage = async (req, res) => {
         layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
         const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
         let html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
-        console.log(templateContent);
         res.send(html);
     } catch (error) {
         console.error(`Error while loading content from DB: ${error}`);

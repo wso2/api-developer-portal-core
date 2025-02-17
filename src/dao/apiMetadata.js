@@ -480,7 +480,6 @@ const updateSubscriptionPolicy = async (orgID, policyID, policy, t) => {
             returning: true,
             transaction: t
         });
-        console.log(updatedRows.map(row => row.get({ plain: true })));
         return updatedRows;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError || error instanceof Sequelize.ValidationError) {
