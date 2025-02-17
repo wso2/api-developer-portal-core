@@ -105,6 +105,7 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
 
 async function renderGivenTemplate(templatePage, layoutPage, templateContent) {
 
+    console.log("Rendering given template", templatePage, layoutPage, templateContent);
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutPage.toString());
     return layout({
@@ -291,7 +292,7 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         const response = await axios(url, options);
         return response.data;
     } catch (error) {
-        
+
         console.log(`Error while invoking API: ${error}`);
         let message = error.message;
         if (error.response) {
