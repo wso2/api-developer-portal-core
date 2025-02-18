@@ -287,7 +287,6 @@ const loadApplicationForEdit = async (req, res) => {
         html = renderTemplate('../pages/edit-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     } else {
         const orgID = await orgIDValue(orgName);
-        console.log('orgID', req.params);
         metaData = await getAPIMApplication(req, applicationId);
         throttlingMetaData = await getAPIMThrottlingPolicies(req);        
         templateContent = {
