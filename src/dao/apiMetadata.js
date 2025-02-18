@@ -60,7 +60,6 @@ const createAPIMetadata = async (orgID, apiMetadata, t) => {
         );
         return apiMetadataResponse;
     } catch (error) {
-        console.log(error);
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
         }
