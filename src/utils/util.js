@@ -105,7 +105,6 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
 
 async function renderGivenTemplate(templatePage, layoutPage, templateContent) {
 
-    console.log("Rendering given template", templatePage, layoutPage, templateContent);
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutPage.toString());
     return layout({
