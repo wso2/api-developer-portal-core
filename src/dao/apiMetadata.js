@@ -40,6 +40,7 @@ const createAPIMetadata = async (orgID, apiMetadata, t) => {
             REFERENCE_ID: apiInfo.referenceID,
             PROVIDER: apiInfo.provider,
             API_NAME: apiInfo.apiName,
+            API_HANDLE: apiInfo.apiHandle ? apiInfo.apiHandle : `${apiInfo.apiName.toLowerCase().replace(/\s+/g, '')}-v${apiInfo.apiVersion}`,
             API_DESCRIPTION: apiInfo.apiDescription,
             API_VERSION: apiInfo.apiVersion,
             API_TYPE: apiInfo.apiType,
@@ -478,7 +479,6 @@ const updateSubscriptionPolicy = async (orgID, policyID, policy, t) => {
             returning: true,
             transaction: t
         });
-        console.log(updatedRows.map(row => row.get({ plain: true })));
         return updatedRows;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError || error instanceof Sequelize.ValidationError) {
@@ -946,6 +946,7 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
             REFERENCE_ID: apiInfo.referenceID,
             PROVIDER: apiInfo.provider,
             API_NAME: apiInfo.apiName,
+            API_HANDLE: `${apiInfo.apiName.toLowerCase().replace(/\s+/g, '')}-v${apiInfo.apiVersion}`,
             API_DESCRIPTION: apiInfo.apiDescription,
             API_VERSION: apiInfo.apiVersion,
             API_TYPE: apiInfo.apiType,
@@ -1189,16 +1190,36 @@ const deleteAPIFile = async (fileName, orgID, apiID, t) => {
     }
 }
 
-const getAPIId = async (orgID, apiName) => {
+const getAPIId = async (orgID, apiHandle) => {
 
     try {
         const api = await APIMetadata.findOne({
             attributes: ['API_ID'],
             where: {
-                API_NAME: apiName,
+                API_HANDLE: apiHandle,
                 ORG_ID: orgID            }
         })
         return api.API_ID;
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getAPIHandle = async (orgID, apiRefID) => {
+    console.log(orgID, apiRefID);
+
+    try {
+        const api = await APIMetadata.findOne({
+            attributes: ['API_HANDLE'],
+            where: {
+                REFERENCE_ID: apiRefID,
+                ORG_ID: orgID            
+            }
+        })
+        return api.API_HANDLE;
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -1224,6 +1245,7 @@ module.exports = {
     getAPIFile,
     deleteAPIFile,
     getAPIId,
+    getAPIHandle,
     getAPIMetadataByCondition,
     searchAPIMetadata,
     createSubscriptionPolicy,

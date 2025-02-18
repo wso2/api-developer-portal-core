@@ -49,6 +49,7 @@ function hideElementById(elementId) {
 function closeModal() {
     hideElementById('planModal');
     hideElementById('applicationFormSection');
+    hideElementById('applicationFormCreation');
 
     const appInput = document.getElementById('appName');
     if (appInput) {
@@ -70,8 +71,10 @@ window.onclick = function (event) {
 
 // Function to show the application creation form
 function showApplicationForm() {
-    const modal = document.getElementById('applicationFormSection');
-    modal.style.display = 'block';
+    const creationForm = document.getElementById('applicationFormCreation');
+    creationForm.style.display = 'block';
+
+    hideElementById('applicationFormSection');
 
     const subButton = document.getElementById('createSubButton');
     subButton.style.display = 'block';
@@ -116,8 +119,7 @@ function sanitize(input) {
     return div.innerHTML;
 }
 
-async function handleSubscribe(appId, apiName, apiVersion) {
-    console.log('Subscribing to API:', appId, apiName, apiVersion);
+async function handleSubscribe(appId, apiName, apiVersion, apiRefId) {
     const applicationSelect = document.getElementById('applicationSelect');
     let policyName;
 
@@ -152,6 +154,7 @@ async function handleSubscribe(appId, apiName, apiVersion) {
             apiName: apiName.replace(/[^a-zA-Z0-9\s-]/g, ''),
             apiVersion: apiVersion.replace(/[^a-zA-Z0-9\s-.]/g, ''),
             throttlingPolicy: policyName.replace(/[^a-zA-Z0-9\s-]/g, ''),
+            apiRefId: apiRefId,
             }),
         });
 

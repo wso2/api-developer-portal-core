@@ -39,11 +39,20 @@ const unsubscribeAPI = async (req, res) => {
 
 const subscribeAPI = async (req, res) => {
     try {
-        const condition = {
-            API_NAME: req.body.apiName,
-            API_VERSION: req.body.apiVersion,
-            ORG_ID: req.user[constants.ORG_ID],
-        };
+        const apiRefId = req.body.apiRefId;
+        let condition;
+        if (apiRefId) {
+            condition = {
+                REFERENCE_ID: apiRefId,
+                ORG_ID: req.user[constants.ORG_ID]
+            };
+        } else {
+            condition = {
+                API_NAME: req.body.apiName,
+                API_VERSION: req.body.apiVersion,
+                ORG_ID: req.user[constants.ORG_ID],
+            };
+        }
         const metaData = await apiDao.getAPIMetadataByCondition(condition);
         const apiId = new APIDTO(metaData[0]).apiReferenceID;
         const requestBody = {

@@ -95,6 +95,10 @@ const APIMetadata = sequelize.define('DP_API_METADATA', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  API_HANDLE: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
 }, {
   timestamps: false,
   tableName: 'DP_API_METADATA',

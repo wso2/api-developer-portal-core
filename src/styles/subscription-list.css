@@ -10,18 +10,20 @@
 tbody td:nth-child(2),
 tbody td:nth-child(3),
 tbody td:nth-child(4) {
-    width: 18%;
-    white-space: nowrap;
+  width: 18%;
+  white-space: nowrap;
 }
 
 .table {
-  border: 1px solid #dee2e6;
+  border: 2px solid #ffff;
   border-radius: 5px;
 }
 
 .table tbody {
+  border: 2px solid #ffff;
   font-size: small;
 }
+
 .table th {
   background-color: var(--primary-light-color);
   color: var(--primary-main-color);
@@ -65,4 +67,13 @@ tbody td:nth-child(4) {
   padding: 5px 10px;
   border-radius: 5px;
   font-weight: 500;
+}
+
+.btn-unsubscribe {
+  text-decoration: none;
+  color: inherit;
+}
+
+.btn-unsubscribe:hover {
+  text-decoration: underline;
 }
