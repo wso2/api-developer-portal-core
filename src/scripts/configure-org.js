@@ -2,6 +2,21 @@
 /* eslint-disable no-unused-vars */
 document.addEventListener('DOMContentLoaded', function () {
     
+    const createViewBtn = document.getElementById('createViewBtn');
+    const viewDetails = document.getElementById('viewDetails');
+    const createView = document.getElementById('createView');
+    const cancelViewBtn = document.getElementById('cancelViewBtn');
+
+    createViewBtn.addEventListener('click', function () {
+        viewDetails.style.display = 'none';
+        createView.style.display = 'block';
+    });
+
+    cancelViewBtn.addEventListener('click', function () {
+        viewDetails.style.display = 'block';
+        createView.style.display = 'none';
+    });
+
     //upload new organization content
     const uploadArea = document.getElementById('uploadArea');
     const zipFile = document.getElementById('file');
@@ -36,6 +51,20 @@ document.addEventListener('DOMContentLoaded', function () {
     if (editIDPButton) {
         editIDPButton.addEventListener('click', function () {
             const details = this.closest('.organization').querySelector('.organization-details');
+            if (details.style.display === 'block') {
+                details.style.display = 'none';
+                this.textContent = 'Edit';
+            } else {
+                details.style.display = 'block';
+                this.textContent = 'Close';
+            }
+        });
+    }
+
+    const editOrgPButton = document.getElementById('orgEdit');
+    if (editOrgPButton) {
+        editOrgPButton.addEventListener('click', function () {
+            const details = this.closest('.organization').querySelector('.editOrg');
             if (details.style.display === 'block') {
                 details.style.display = 'none';
                 this.textContent = 'Edit';
@@ -204,7 +233,8 @@ async function uploadContent(orgID) {
     const formData = new FormData();
     formData.append('file', zipFile.files[0]);
 
-    const view = document.getElementById('views').value;
+    const view = document.getElementById('uploadViewContent').value;
+    console.log(view);
     const response = await fetch(`/devportal/organizations/${orgID}/views/${view}/layout`, {
         method: 'PUT',
         body: formData,

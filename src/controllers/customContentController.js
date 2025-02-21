@@ -25,15 +25,16 @@ const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 
 const filePrefix = config.pathToContent;
+const baseURLDev = constants.BASE_URL + config.port + constants.ROUTE.VIEWS_PATH;
 
 const loadCustomContent = async (req, res) => {
-    
+
     let html = "";
-    const orgName = req.originalUrl.split("/")[1];
-    let filePath = req.originalUrl.split("/" + orgName + "/").pop();
+    const { orgName, viewName } = req.params;
+    let filePath = req.originalUrl.split("/" + orgName + constants.ROUTE.VIEWS_PATH + viewName + "/")[1];    
     if (config.mode === constants.DEV_MODE) {
         let templateContent = {};
-        templateContent[constants.BASE_URL_NAME] = constants.BASE_URL + config.port;
+        templateContent[constants.BASE_URL_NAME] = baseURLDev + viewName;
         //read all markdown content
         if (fs.existsSync(path.join(process.cwd(), filePrefix + 'pages', filePath, 'content'))) {
             const markdDownFiles = fs.readdirSync(path.join(process.cwd(), filePrefix + 'pages/' + filePath + '/content'));
@@ -48,8 +49,7 @@ const loadCustomContent = async (req, res) => {
         let content = {};
         try {
             filePath = 'pages/' + filePath;
-            let orgId =  await adminDao.getOrgId(orgName);
-            let viewName = req.params.viewName;
+            let orgId = await adminDao.getOrgId(orgName);
             let markDownFiles = await adminDao.getOrgContent({
                 orgId: orgId,
                 fileType: 'markDown',
@@ -61,10 +61,10 @@ const loadCustomContent = async (req, res) => {
                     content[tempKey] = markdown.parse(item.FILE_CONTENT.toString(constants.CHARSET_UTF8));
                 });
             }
-            content[constants.BASE_URL_NAME] = "/" + orgName + "/views/" + viewName;
+            content[constants.BASE_URL_NAME] = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
             html = await renderTemplateFromAPI(content, orgId, orgName, filePath, viewName);
         } catch (error) {
-            console.error(`Failed to load organization :` , error);
+            console.error(`Failed to load organization :`, error);
         }
     }
     res.send(html);

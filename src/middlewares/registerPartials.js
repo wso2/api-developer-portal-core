@@ -30,10 +30,9 @@ const filePrefix = config.pathToContent;
 const hbs = exphbs.create({});
 const registerPartials = async (req, res, next) => {
 
-  const viewName = req.params.viewName;
   registerInternalPartials(req);
   if (config.mode === constants.DEV_MODE) {
-    registerAllPartialsFromFile(constants.BASE_URL + config.port + "/views/" + viewName, req);
+    registerAllPartialsFromFile(constants.BASE_URL + config.port + constants.ROUTE.VIEWS_PATH + req.params.viewName, req);
   } else {
     let matchURL = req.originalUrl;
     if (req.session.returnTo) {
@@ -50,8 +49,13 @@ const registerPartials = async (req, res, next) => {
   next();
 };
 
-const registerInternalPartials = (req) => {
+const registerInternalPartials = async (req) => {
 
+  let isAdmin, isSuperAdmin = false;
+  if (req.user) {
+    isAdmin = req.user["isAdmin"];
+    isSuperAdmin = req.user["isSuperAdmin"];
+  }
   const partialsDir = path.join(path.join(require.main.filename, '..', '/pages/partials'));
   const getDirectories = source =>
     fs.readdirSync(source, { withFileTypes: true })
@@ -59,27 +63,32 @@ const registerInternalPartials = (req) => {
       .map(dirent => path.join(source, dirent.name));
 
   const partialsDirs = [partialsDir, ...getDirectories(path.join(require.main.filename, '..', '/pages')).map(dir => path.join(dir, 'partials'))];
+  const hasWSO2API = await checkWSO2APIAvailability();
 
-  partialsDirs.forEach(dir => {
+  for (const dir of partialsDirs) {
     if (fs.existsSync(dir)) {
       fs.readdirSync(dir).forEach(file => {
         if (file.endsWith('.hbs')) {
           const partialName = path.basename(file, '.hbs');
           const partialContent = fs.readFileSync(path.join(dir, file), 'utf8');
           hbs.handlebars.registerPartial(partialName, partialContent);
-
+          
           if (partialName === constants.HEADER_PARTIAL_NAME) {
             hbs.handlebars.partials = {
               ...hbs.handlebars.partials,
               header: hbs.handlebars.compile(partialContent)({
-                profile: req.user
+                isAdmin: isAdmin,
+                isSuperAdmin: isSuperAdmin,
+                profile: req.user,
+                baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
+                hasWSO2APIs: hasWSO2API
               })
             };
           }
         }
       });
     }
-  });
+  };
 }
 
 const registerAllPartialsFromFile = async (baseURL, req) => {
@@ -101,7 +110,7 @@ const registerPartialsFromAPI = async (req) => {
   const orgName = req.params.orgName;
   const viewName = req.params.viewName;
   const orgID = await adminDao.getOrgId(orgName);
-  const imageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/views/${viewName}/layout?fileType=image&fileName=`;
+  const imageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.VIEWS_PATH}${viewName}/layout?fileType=image&fileName=`;
   let partials = await adminDao.getOrgContent({
     orgId: orgID,
     fileType: 'partial',
@@ -127,21 +136,21 @@ const registerPartialsFromAPI = async (req) => {
     hbs.handlebars.partials = {
       ...hbs.handlebars.partials,
       header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
-        baseUrl: "/" + orgName + "/views/" + viewName,
+        baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
         profile: req.user,
         isAdmin: isAdmin,
         isSuperAdmin: isSuperAdmin,
         hasWSO2APIs: await checkWSO2APIAvailability()
       }),
       [constants.HERO_PARTIAL_NAME]: hbs.handlebars.compile(partialObject[constants.HERO_PARTIAL_NAME])(
-        { baseUrl: "/" + orgName + "/views/" + viewName }
+        { baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName }
       ),
     };
   }
   if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
 
-    const apiName = req.params.apiName;
-    const apiID = await apiDao.getAPIId(orgID, apiName);
+    const apiHandle = req.params.apiHandle;
+    const apiID = await apiDao.getAPIId(orgID, apiHandle);
 
     //fetch markdown content for API if exists
     const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, constants.DOC_TYPES.API_LANDING, orgID, apiID);

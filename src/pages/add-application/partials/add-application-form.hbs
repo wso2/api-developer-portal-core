@@ -8,12 +8,6 @@
     <div class='container my-5'>
       <div class='form-card p-5'>
         <h2 class='title mb-4'>Create an Application</h2>
-        <p class='text-muted mb-4'>
-          Create an application providing name and quota parameters. Description
-          is optional. Required fields are marked with an asterisk (<span
-            class='text-danger'
-          >*</span>).
-        </p>
         <form id='applicationForm'>
           <!-- Application Name -->
           <div class='mb-3'>
@@ -26,8 +20,6 @@
               placeholder='My Application'
               required
             />
-            <div class='form-text'>Enter a name to identify the application. You
-              will be able to pick this application when subscribing to APIs.</div>
             <div
               id='nameError'
               class='error-msg text-danger mt-1'
@@ -36,7 +28,7 @@
           </div>
 
           <!-- Shared Quota -->
-          <div class='mb-3'>
+          <div class='mb-3' style="display: none;">
             <label for='throttlingPolicy' class='form-label'>Shared Quota for
               Application Tokens
               <span class='text-danger'>*</span></label>
@@ -45,9 +37,6 @@
                 <option>{{name}}</option>
               {{/throttlingPoliciesMetadata}}
             </select>
-            <div class='form-text'>Assign API request quota per access token.
-              Allocated quota will be shared among all the subscribed APIs of
-              the application.</div>
           </div>
 
           <!-- Application Description -->

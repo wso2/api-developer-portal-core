@@ -22,9 +22,11 @@ const { renderGivenTemplate, loadLayoutFromAPI} = require('../utils/util');
 const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
+const apiDao = require('../dao/apiMetadata');
 const apiMetadataService = require('../services/apiMetadataService');
 const adminService = require('../services/adminService');
 const util = require('../utils/util');
+const APIDTO = require('../dto/apiDTO');
 
 let controlPlaneUrl = "";
 const loadMyAPIs = async (req, res) => {
@@ -47,7 +49,7 @@ const loadMyAPIs = async (req, res) => {
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'myAPIs', 'page.hbs');
         const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
         const layoutResponse = await loadLayoutFromAPI(orgId, viewName);
-        let metaData = await apiMetadataService.getMetadataListFromDB(orgId, groupList);
+        let metaData = await apiMetadataService.getMetadataListFromDB(orgId, groupList, null, null, null, null, req.params.viewName);
         const apiRefIds = new Set(metaData.map(api => api.apiReferenceID));
 
         let subscriptions = [];
@@ -62,6 +64,8 @@ const loadMyAPIs = async (req, res) => {
                     subscriptions.push({
                         id: sub.subscriptionId,
                         apiName: sub.apiInfo.name,
+                        apiVersion: sub.apiInfo.version,
+                        apiHandle: await apiDao.getAPIHandle(orgId, sub.apiInfo.id),
                         applicationName: sub.applicationInfo.name,
                         applicationId: sub.applicationInfo.applicationId,
                         throttlingTier: sub.throttlingPolicy,
@@ -73,13 +77,18 @@ const loadMyAPIs = async (req, res) => {
         }
 
         // Load modal content with subscribed applications and applications that are not subscribed
-        let apiId = req.query.apiId;
-        if (apiId) {
+        let apiName = req.query.apiName;
+        if (apiName) {
             const apps = await loadApplications(req);
+            const condition = {
+                API_NAME: apiName,
+                API_VERSION: req.query.apiVersion,
+                ORG_ID: orgId,
+            };
+            const metaData = await apiDao.getAPIMetadataByCondition(condition);
+            const apiId = new APIDTO(metaData[0]).apiReferenceID;
             const apiSubs = await loadSubscriptions(req, apiId.replace(/[^a-zA-Z0-9\s-]/g, ''));
-            if (Array.isArray(apiSubs.list)) {
-
-
+            if (apiSubs && Array.isArray(apiSubs.list)) {
                 const subAppIds = new Set(apiSubs.list.map(sub => sub.applicationInfo.applicationId));
 
                 for (const app of apps.list) {
@@ -102,7 +111,7 @@ const loadMyAPIs = async (req, res) => {
             subscriptions: subscriptions,
             applications: applications,
             subscribedApps: subscribedApps,
-            baseUrl: '/' + orgName + '/views/' + viewName
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
         };
 
         const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);

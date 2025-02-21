@@ -21,6 +21,6 @@ const registerPartials = require('../middlewares/registerPartials');
 const myAPIsController = require('../controllers/myAPIsController');
 const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
 
-router.get('/((?!favicon.ico)):orgName/views/:viewName/myAPIs', ensureAuthenticated, registerPartials, myAPIsController.loadMyAPIs);
+router.get('/((?!favicon.ico)):orgName/views/:viewName/myapis', ensureAuthenticated, registerPartials, myAPIsController.loadMyAPIs);
 
 module.exports = router;

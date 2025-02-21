@@ -27,25 +27,27 @@ const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const apiMetadataService = require('../services/apiMetadataService');
 const adminService = require('../services/adminService');
+const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
+const { CustomError } = require('../utils/errors/customErrors');
 
 
 const filePrefix = config.pathToContent;
 const generateArray = (length) => Array.from({ length });
+const baseURLDev = constants.BASE_URL + config.port  + constants.ROUTE.VIEWS_PATH;
 
 const loadAPIs = async (req, res) => {
 
-    const orgName = req.params.orgName;
+    const { orgName, viewName } = req.params;
     let html;
     if (config.mode === constants.DEV_MODE) {
         const templateContent = {
             apiMetadata: await loadAPIMetaDataList(),
-            baseUrl: constants.BASE_URL + config.port + "/views/" + req.params.viewName
+            baseUrl: baseURLDev + viewName
         }
         html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
     } else {
         try {
             const orgID = await adminDao.getOrgId(orgName);
-            const viewName = req.params.viewName;
             const searchTerm = req.query.query;
             const tags = req.query.tags;
             const metaData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
@@ -63,7 +65,7 @@ const loadAPIs = async (req, res) => {
             const templateContent = {
                 apiMetadata: metaData,
                 tags: apiTags,
-                baseUrl: '/' + orgName + '/views/' + viewName
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
         } catch (error) {
@@ -79,11 +81,11 @@ const loadAPIContent = async (req, res) => {
 
     let html;
     const hbs = exphbs.create({});
-    const { orgName, apiName } = req.params;
+    let { orgName, apiHandle, viewName } = req.params;
 
     if (config.mode === constants.DEV_MODE) {
-        const metaData = loadAPIMetaDataFromFile(apiName);
-        const filePath = path.join(process.cwd(), filePrefix + '../mock', req.params.apiName + "/" + constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME);
+        const metaData = loadAPIMetaDataFromFile(apiHandle);
+        const filePath = path.join(process.cwd(), filePrefix + '../mock', apiHandle + "/" + constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME);
         if (fs.existsSync(filePath)) {
             hbs.handlebars.registerPartial('api-content', fs.readFileSync(filePath, constants.CHARSET_UTF8));
         }
@@ -103,7 +105,7 @@ const loadAPIContent = async (req, res) => {
             apiContent: await loadMarkdown(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, filePrefix + '../mock/' + req.params.apiName),
             apiMetadata: metaData,
             subscriptionPlans: subscriptionPlans,
-            baseUrl: constants.BASE_URL + config.port + "/views/" + req.params.viewName,
+            baseUrl: baseURLDev + viewName,
             schemaUrl: orgName + '/mock/' + apiName + '/apiDefinition.xml'
         }
         html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
@@ -111,22 +113,20 @@ const loadAPIContent = async (req, res) => {
     } else {
         try {
             const orgID = await adminDao.getOrgId(orgName);
-            const apiID = await apiDao.getAPIId(orgID, apiName);
-            const viewName = req.params.viewName;
+            const apiID = await apiDao.getAPIId(orgID, apiHandle);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
             let subscriptionPlans = [];
 
             //load subscription plans for authenticated users
-            if (req.user && req.user.accessToken) {
-                for (const policy of metaData.subscriptionPolicies) {
-                    const subscriptionPlan = await loadSubscriptionPlan(req, res, policy.policyName);
-                    subscriptionPlans.push({
-                        apiId: metaData.apiReferenceID,
-                        name: subscriptionPlan.name,
-                        description: subscriptionPlan.description,
-                        tierPlan: subscriptionPlan.tierPlan,
-                    });
-                };
+            for (const policy of metaData.subscriptionPolicies) {
+                const subscriptionPlan = await loadSubscriptionPlan(orgID, policy.policyName);
+                subscriptionPlans.push({
+                    displayName: subscriptionPlan.displayName,
+                    policyName: subscriptionPlan.policyName,
+                    description: subscriptionPlan.description,
+                    billingPlan: subscriptionPlan.billingPlan,
+                });
+
             }
 
             let providerUrl;
@@ -142,7 +142,7 @@ const loadAPIContent = async (req, res) => {
                 providerUrl: providerUrl,
                 apiMetadata: metaData,
                 subscriptionPlans: subscriptionPlans,
-                baseUrl: '/' + orgName + '/views/' + viewName,
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 schemaUrl: `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${constants.FILE_NAME.API_DEFINITION_XML}`
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
@@ -154,10 +154,15 @@ const loadAPIContent = async (req, res) => {
     }
 }
 
-const loadSubscriptionPlan = async (req, res, policyId) => {
+const loadSubscriptionPlan = async (orgID, policyName) => {
 
     try {
-        return await util.invokeApiRequest(req, 'GET', `${config.controlPlane.url}/throttling-policies/subscription/${policyId}`);
+        const policyData = await apiDao.getSubscriptionPolicyByName(orgID, policyName);
+        if (policyData) {
+            return new subscriptionPolicyDTO(policyData);
+        } else {
+            throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
+        }
     } catch (error) {
         console.error("Error occurred while loading subscription plans", error);
         util.handleError(res, error);
@@ -166,17 +171,17 @@ const loadSubscriptionPlan = async (req, res, policyId) => {
 
 const loadTryOutPage = async (req, res) => {
 
-    const { orgName, apiName, viewName } = req.params;
+    const { orgName, apiHandle, viewName } = req.params;
     let html = "";
     if (config.mode === constants.DEV_MODE) {
-        const metaData = loadAPIMetaDataFromFile(apiName);
-        let apiDefinition = path.join(process.cwd(), filePrefix + '../mock', req.params.apiName + '/apiDefinition.json');
+        const metaData = loadAPIMetaDataFromFile(apiHandle);
+        let apiDefinition = path.join(process.cwd(), filePrefix + '../mock', apiHandle + '/apiDefinition.json');
         if (fs.existsSync(apiDefinition)) {
             apiDefinition = await fs.readFileSync(apiDefinition, constants.CHARSET_UTF8);
         }
         const templateContent = {
             apiMetadata: metaData,
-            baseUrl: constants.BASE_URL + config.port,
+            baseUrl: baseURLDev + viewName,
             apiType: metaData.apiInfo.apiType,
             swagger: apiDefinition
         }
@@ -184,7 +189,7 @@ const loadTryOutPage = async (req, res) => {
     } else {
         try {
             const orgID = await adminDao.getOrgId(orgName);
-            const apiID = await apiDao.getAPIId(orgID, apiName);
+            const apiID = await apiDao.getAPIId(orgID, apiHandle);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
             let apiDefinition;
             if (metaData.apiInfo.apiType !== "GraphQL") {
@@ -194,7 +199,7 @@ const loadTryOutPage = async (req, res) => {
             }
             const templateContent = {
                 apiMetadata: metaData,
-                baseUrl: req.params.orgName + '/views/' + viewName,
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 apiType: metaData.apiInfo.apiType,
                 swagger: apiDefinition
             };

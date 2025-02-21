@@ -27,6 +27,7 @@ const ViewDTO = require("../dto/views");
 const APIDocDTO = require("../dto/apiDoc");
 const constants = require("../utils/constants");
 const subscriptionPolicyDTO = require("../dto/subscriptionPolicy");
+const { CustomError } = require("../utils/errors/customErrors");
 const LabelDTO = require("../dto/label");
 
 const createAPIMetadata = async (req, res) => {
@@ -163,6 +164,7 @@ const getMetadataListFromDB = async (orgID, groups, searchTerm, tags, apiName, a
             if (apiName) condition.API_NAME = apiName;
             if (apiVersion) condition.API_VERSION = apiVersion;
             if (tags) condition.TAGS = tags;
+            condition.ORG_ID = orgID;
             retrievedAPIs = await apiDao.getAPIMetadataByCondition(condition);
         } else if (searchTerm) {
             retrievedAPIs = await apiDao.searchAPIMetadata(orgID, groups, searchTerm, viewName, t);
@@ -492,7 +494,11 @@ const createSubscriptionPolicy = async (req, res) => {
     try {
         await sequelize.transaction(async (t) => {
             const subscriptionPolicyResponse = await apiDao.createSubscriptionPolicy(orgId, subscriptionPolicy, t);
-            res.status(201).send(new subscriptionPolicyDTO(subscriptionPolicyResponse));
+            if (subscriptionPolicyResponse) {
+                res.status(201).send(new subscriptionPolicyDTO(subscriptionPolicyResponse));
+            } else {
+                throw new CustomError(500, constants.ERROR_CODE[500], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_CREATE_ERROR);
+            }
         });
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_CREATE_ERROR}, ${error}`);
@@ -512,10 +518,14 @@ const updateSubscriptionPolicy = async (req, res) => {
     try {
         await sequelize.transaction(async (t) => {
             const subscriptionPolicyResponse = await apiDao.updateSubscriptionPolicy(orgId, policyID, subscriptionPolicy, t);
-            res.status(200).send(new subscriptionPolicyDTO(subscriptionPolicyResponse[0]));
+            if (subscriptionPolicyResponse) {
+                res.status(200).send(new subscriptionPolicyDTO(subscriptionPolicyResponse[0]));
+            } else {
+                throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
+            }
         });
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_UPDATE_ERROR}, ${error}`);
+        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND}, ${error}`);
         util.handleError(res, error);
     }
 };
@@ -530,8 +540,12 @@ const deleteSubscriptionPolicy = async (req, res) => {
     }
     try {
         await sequelize.transaction(async (t) => {
-            await apiDao.deleteSubscriptionPolicy(orgId, policyID, t);
-            res.status(204).send();
+            const deleteCount = await apiDao.deleteSubscriptionPolicy(orgId, policyID, t);
+            if (deleteCount === 0) {
+                throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
+            } else {
+                res.status(204).send();
+            }
         });
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_DELETE_ERROR}, ${error}`);
@@ -551,9 +565,13 @@ const getSubscriptionPolicy = async (req, res) => {
 
     try {
         const subscriptionPolicyResponse = await apiDao.getSubscriptionPolicy(policyID, orgId);
-        res.status(200).send(new subscriptionPolicyDTO(subscriptionPolicyResponse));
+        if (subscriptionPolicyResponse) {
+            res.status(200).send(new subscriptionPolicyDTO(subscriptionPolicyResponse));
+        } else {
+            throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
+        }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_GET_ERROR}, ${error}`);
+        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND}, ${error}`);
         util.handleError(res, error);
     }
 };

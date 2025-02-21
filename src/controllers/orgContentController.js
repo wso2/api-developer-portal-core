@@ -24,6 +24,7 @@ const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
 
 const filePrefix = config.pathToContent;
+const baseURLDev = constants.BASE_URL + config.port  + constants.ROUTE.VIEWS_PATH;
 
 const loadOrganizationContent = async (req, res) => {
 
@@ -36,14 +37,14 @@ const loadOrganizationContent = async (req, res) => {
     res.send(html);
 }
 
-const loadOrgContentFromFile = async () => {
+const loadOrgContentFromFile = async (req, res) => {
 
     //TODO fetch from DB
     const mockProfileDataPath = path.join(process.cwd(), filePrefix + '../mock', '/userProfiles.json');
     const mockProfileData = JSON.parse(fs.readFileSync(mockProfileDataPath, constants.CHARSET_UTF8));
     const templateContent = {
         userProfiles: mockProfileData,
-        baseUrl: constants.BASE_URL + config.port
+        baseUrl: baseURLDev + req.params.viewName
     };
     return renderTemplate(filePrefix + 'pages/home/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false)
 }
@@ -54,7 +55,10 @@ const loadOrgContentFromAPI = async (req, res) => {
     const orgName = req.params.orgName;
     try {
         const orgId = await adminDao.getOrgId(orgName);
-        html = await renderTemplateFromAPI({}, orgId, orgName, 'pages/home', req.params.viewName);
+        templateContent = {
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName
+        };
+        html = await renderTemplateFromAPI(templateContent, orgId, orgName, 'pages/home', req.params.viewName);
     } catch (error) {
         console.error(`Failed to load organization :, ${error}`);
         return res.redirect('/configure');

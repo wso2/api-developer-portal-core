@@ -21,7 +21,9 @@ class APIDTO {
     constructor(api) {
         this.apiID = api.API_ID;
         this.apiReferenceID = api.REFERENCE_ID;
+        this.apiHandle = api.API_HANDLE;
         this.provider = api.PROVIDER;
+        this.dataSource = api.DATA_SOURCE;
         this.apiInfo = new APIInfo(api);
         this.endPoints = new Endpoints(api);
         if (api.DP_SUBSCRIPTION_POLICies) {
@@ -66,7 +68,7 @@ class APIInfo {
             this.tags = apiInfo.TAGS.split(" ");
         }
         if (apiInfo.DP_LABELs) {
-            this.labels = apiInfo.DP_LABELs.map(label => label.dataValues.NAME);
+            this.labels = apiInfo.DP_LABELs.map(label => label.dataValues ? label.dataValues.NAME : label);
         }
     }
 }

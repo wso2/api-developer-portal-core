@@ -8,9 +8,9 @@
     "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
   },
   "serverCerts": {
-    "pathToCert": "../certs/client-truststore.pem",
-    "pathToPK": "../certs/private-key.pem",
-    "pathToCA": "../certs/client-truststore.pem"
+    "pathToCert": "certs/client-truststore.pem",
+    "pathToPK": "certs/private-key.pem",
+    "pathToCA": "certs/client-truststore.pem"
   },
   "db": {
     "username": "postgres",
@@ -62,21 +62,22 @@
     "/portal/*/edit",
     "/portal",
     "/*/configure",
-    "/*/applications",
-    "/*/applications/*",
-    "/*/api/*",
-    "/*/myapis",
-    "/*/myapis/*"
+    "**/applications",
+    "**/applications/*",
+    "**/api/*",
+    "**/myapis",
+    "**/myapis/*",
+    "**/myapis?*"
   ],
   "authorizedPages": [
-    "/*/applications",
-    "/*/applications/*",
+    "**/applications",
+    "**/applications/*",
     "/*/configure",
     "/portal/*/edit",
     "/portal",
-    "/*/api/*",
-    "/*/myapis",
-    "/*/myapis/*"
-  ] 
- }
- 
+    "**/api/*",
+    "**/myapis",
+    "**/myapis/*",
+    "**/myapis?*"
+  ]  
+}

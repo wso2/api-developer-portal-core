@@ -49,7 +49,8 @@ function configurePassport(authJsonContent, claimNames) {
             return done(new Error('Access token missing'));
         }
         const decodedJWT = jwt.decode(params.id_token);
-        const name = decodedJWT['given_name'] ? decodedJWT['given_name'] : decodedJWT['nickname'];
+        const firstName = decodedJWT['given_name'] || decodedJWT['nickname'];
+        const lastName = decodedJWT['family_name'];
         const organizationID = decodedJWT[claimNames[constants.ROLES.ORGANIZATION_CLAIM]] ? decodedJWT[config.orgIDClaim] : '';
         const roles = decodedJWT[claimNames[constants.ROLES.ROLE_CLAIM]] ? decodedJWT[config.roleClaim] : '';
                 const groups = decodedJWT[claimNames[constants.ROLES.GROUP_CLAIM]] ? decodedJWT[config.groupsClaim] : '';
@@ -60,8 +61,17 @@ function configurePassport(authJsonContent, claimNames) {
         if (roles.includes(constants.ROLES.SUPER_ADMIN)) {
             isSuperAdmin = true;
         }
+        const returnTo = req.session.returnTo;
+        let view = '';
+        if (returnTo) {
+            const startIndex = returnTo.indexOf('/views/') + 7;
+            const endIndex = returnTo.indexOf('/', startIndex) !== -1 ? returnTo.indexOf('/', startIndex) : returnTo.length;
+            view = returnTo.substring(startIndex, endIndex);
+        }
         profile = {
-            'name': name,
+            'firstName': firstName ? (firstName.includes(" ") ? firstName.split(" ")[0] : firstName) : '',
+            'lastName': lastName ? lastName : (firstName && firstName.includes(" ") ? firstName.split(" ")[1] : ''),
+            'view': view,
             'idToken': params.id_token,
             'email': decodedJWT['email'],
             [constants.ROLES.ORGANIZATION_CLAIM]: organizationID,

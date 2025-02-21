@@ -95,20 +95,12 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
 
     var templatePage = await loadTemplateFromAPI(orgID, filePath, viewName);
     var layoutContent = await loadLayoutFromAPI(orgID, viewName);
-
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutContent.toString());
-    if (Object.keys(templateContent).length === 0 && templateContent.constructor === Object) {
-        return layout({
-            body: template({
-                baseUrl: '/' + orgName + '/views/' + viewName
-            }),
-        });
-    } else {
-        return layout({
-            body: template(templateContent),
-        });
-    }
+    return layout({
+        body: template(templateContent),
+    });
+
 }
 
 async function renderGivenTemplate(templatePage, layoutPage, templateContent) {

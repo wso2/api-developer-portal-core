@@ -99,6 +99,11 @@ Handlebars.registerHelper('lowercase', function (str) {
     return typeof str === 'string' ? str.toLowerCase() : str;
 });
 
+Handlebars.registerHelper('isMiddle', function(index, length) {
+    const middleIndex = Math.floor(length / 2);
+    return index === middleIndex;
+});
+
 Handlebars.registerHelper('startsWith', function(str, includeStr, options) {
     if (str && str.startsWith(includeStr)) {
         return options.fn(this);  // Executes the block if true

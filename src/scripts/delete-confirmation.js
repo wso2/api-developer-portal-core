@@ -1,6 +1,6 @@
-function openDeleteModal(applicationId, mappingId) {
+function openDeleteModal(componentId, mappingId) {
   const modal = document.getElementById('deleteConfirmation');
-  modal.dataset.applicationId = applicationId;
+  modal.dataset.componentId = componentId;
   modal.dataset.mappingId = mappingId;
   const bootstrapModal = new bootstrap.Modal(modal);
   bootstrapModal.show();
@@ -8,7 +8,7 @@ function openDeleteModal(applicationId, mappingId) {
 
 async function deleteApplication() {
   const modal = document.getElementById('deleteConfirmation');
-  const applicationId = modal.dataset.applicationId;
+  const applicationId = modal.dataset.componentId;
   try {
     const response = await fetch(`/devportal/applications/${applicationId}`, { method: 'DELETE' });
     if (response.ok) {
@@ -23,4 +23,11 @@ async function deleteApplication() {
     await showAlert('An error occurred while deleting the application. Please try again.', 'error');
   }
   window.location.reload(true);
+}
+
+async function removeSubscription() {
+  const modal = document.getElementById('deleteConfirmation');
+  const subscriptionId = modal.dataset.componentId;
+
+  unsubscribe(subscriptionId);
 }

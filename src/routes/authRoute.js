@@ -25,10 +25,10 @@ router.get('/portal/callback', authController.handleCallback);
 router.get('/portal/logout', authController.handleLogOut);
 router.get('/portal/signup', authController.handleSignUp);
 
-router.get('/:orgName/login', registerPartials, authController.login);
+router.get('/:orgName/views/:viewName/login', registerPartials, authController.login);
 router.get('/:orgName/callback', authController.handleCallback);
-router.get('/:orgName/logout', authController.handleLogOut);
-router.get('/:orgName/signup', authController.handleSignUp);
+router.get('/:orgName/views/:viewName/logout', authController.handleLogOut);
+router.get('/:orgName/views/:viewName/signup', authController.handleSignUp);
 
 
 
