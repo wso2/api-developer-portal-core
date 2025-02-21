@@ -49,7 +49,7 @@ const registerPartials = async (req, res, next) => {
   next();
 };
 
-const registerInternalPartials = (req) => {
+const registerInternalPartials = async (req) => {
 
   let isAdmin, isSuperAdmin = false;
   if (req.user) {
@@ -63,8 +63,9 @@ const registerInternalPartials = (req) => {
       .map(dirent => path.join(source, dirent.name));
 
   const partialsDirs = [partialsDir, ...getDirectories(path.join(require.main.filename, '..', '/pages')).map(dir => path.join(dir, 'partials'))];
+  const hasWSO2API = await checkWSO2APIAvailability();
 
-  partialsDirs.forEach(dir => {
+  for (const dir of partialsDirs) {
     if (fs.existsSync(dir)) {
       fs.readdirSync(dir).forEach(file => {
         if (file.endsWith('.hbs')) {
@@ -80,13 +81,14 @@ const registerInternalPartials = (req) => {
                 isSuperAdmin: isSuperAdmin,
                 profile: req.user,
                 baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
+                hasWSO2APIs: hasWSO2API
               })
             };
           }
         }
       });
     }
-  });
+  };
 }
 
 const registerAllPartialsFromFile = async (baseURL, req) => {
@@ -146,8 +148,8 @@ const registerPartialsFromAPI = async (req) => {
   }
   if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
 
-    const apiName = req.params.apiName;
-    const apiID = await apiDao.getAPIId(orgID, apiName);
+    const apiHandle = req.params.apiHandle;
+    const apiID = await apiDao.getAPIId(orgID, apiHandle);
 
     //fetch markdown content for API if exists
     const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, orgID, apiID);

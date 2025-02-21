@@ -24,8 +24,8 @@ const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
 
 router.get('/((?!favicon.ico)):orgName/views/:viewName/apis', ensureAuthenticated, registerPartials, apiController.loadAPIs);
 
-router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiName', ensureAuthenticated, registerPartials, apiController.loadAPIContent);
+router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiHandle', ensureAuthenticated, registerPartials, apiController.loadAPIContent);
 
-router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiName/tryout', ensureAuthenticated, registerPartials, apiController.loadTryOutPage);
+router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiHandle/tryout', ensureAuthenticated, registerPartials, apiController.loadTryOutPage);
 
 module.exports = router;

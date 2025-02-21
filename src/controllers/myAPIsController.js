@@ -65,6 +65,7 @@ const loadMyAPIs = async (req, res) => {
                         id: sub.subscriptionId,
                         apiName: sub.apiInfo.name,
                         apiVersion: sub.apiInfo.version,
+                        apiHandle: await apiDao.getAPIHandle(orgId, sub.apiInfo.id),
                         applicationName: sub.applicationInfo.name,
                         applicationId: sub.applicationInfo.applicationId,
                         throttlingTier: sub.throttlingPolicy,
@@ -87,7 +88,7 @@ const loadMyAPIs = async (req, res) => {
             const metaData = await apiDao.getAPIMetadataByCondition(condition);
             const apiId = new APIDTO(metaData[0]).apiReferenceID;
             const apiSubs = await loadSubscriptions(req, apiId.replace(/[^a-zA-Z0-9\s-]/g, ''));
-            if (Array.isArray(apiSubs.list)) {
+            if (apiSubs && Array.isArray(apiSubs.list)) {
                 const subAppIds = new Set(apiSubs.list.map(sub => sub.applicationInfo.applicationId));
 
                 for (const app of apps.list) {
@@ -110,7 +111,7 @@ const loadMyAPIs = async (req, res) => {
             subscriptions: subscriptions,
             applications: applications,
             subscribedApps: subscribedApps,
-            baseUrl: '/' + orgName + + constants.ROUTE.VIEWS_PATH + viewName
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
         };
 
         const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);

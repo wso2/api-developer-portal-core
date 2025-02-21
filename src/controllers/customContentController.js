@@ -31,7 +31,7 @@ const loadCustomContent = async (req, res) => {
 
     let html = "";
     const { orgName, viewName } = req.params;
-    let filePath = req.originalUrl.split("/" + orgName + constants.ROUTE.VIEWS_PATH + viewName + "/")[1];
+    let filePath = req.originalUrl.split("/" + orgName + constants.ROUTE.VIEWS_PATH + viewName + "/")[1];    
     if (config.mode === constants.DEV_MODE) {
         let templateContent = {};
         templateContent[constants.BASE_URL_NAME] = baseURLDev + viewName;
@@ -61,7 +61,7 @@ const loadCustomContent = async (req, res) => {
                     content[tempKey] = markdown.parse(item.FILE_CONTENT.toString(constants.CHARSET_UTF8));
                 });
             }
-            content[constants.BASE_URL_NAME] = '/' + orgName + + constants.ROUTE.VIEWS_PATH + viewName;
+            content[constants.BASE_URL_NAME] = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
             html = await renderTemplateFromAPI(content, orgId, orgName, filePath, viewName);
         } catch (error) {
             console.error(`Failed to load organization :`, error);

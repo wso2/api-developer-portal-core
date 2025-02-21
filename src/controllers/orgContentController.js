@@ -56,7 +56,7 @@ const loadOrgContentFromAPI = async (req, res) => {
     try {
         const orgId = await adminDao.getOrgId(orgName);
         templateContent = {
-            baseUrl: '/' + orgName + + constants.ROUTE.VIEWS_PATH + req.params.viewName
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName
         };
         html = await renderTemplateFromAPI(templateContent, orgId, orgName, 'pages/home', req.params.viewName);
     } catch (error) {
