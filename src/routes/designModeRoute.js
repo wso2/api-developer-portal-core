@@ -31,13 +31,13 @@ router.get('/views/:viewName', registerPartials, orgController.loadOrganizationC
 
 router.get('/views/:viewName/apis', registerPartials, apiController.loadAPIs);
 
-router.get('/views/:viewName/api/:apiName', registerPartials, apiController.loadAPIContent);
+router.get('/views/:viewName/api/:apiHandle', registerPartials, apiController.loadAPIContent);
 
-router.get('/views/:viewName/api/:apiName/tryout', registerPartials, apiController.loadTryOutPage);
+router.get('/views/:viewName/api/:apiHandle/docs/specification', registerPartials, apiController.loadDocument);
 
-router.get('/views/:viewName/api/:apiName/docs', registerPartials, apiController.loadDocsPage);
+router.get('/views/:viewName/api/:apiHandle/docs', registerPartials, apiController.loadDocsPage);
 
-router.get('/views/:viewName/api/:apiName/docs/:docType/:docName', registerPartials, apiController.loadDocument);
+router.get('/views/:viewName/api/:apiHandle/docs/:docType/:docName', registerPartials, apiController.loadDocument);
 
 
 router.get('/views/:viewName/applications', registerPartials, applicationController.loadApplications);

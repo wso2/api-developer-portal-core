@@ -445,13 +445,7 @@ const getAPIFile = async (req, res) => {
 const getAPIDocTypes = async (orgID, apiID) => {
 
     try {
-        // const docTypeResponse = await apiDao.getAPIDocTypes(orgID, apiID);
-        // const docLinkResponse = await apiDao.getAPIDocLinks(orgID, apiID);
-        const docResponse = await apiDao.getAPIDocs(orgID, apiID);
-        console.log("Doc ", docResponse);
-        docLinkResponse.forEach((link) => {
-
-        });
+        const docTypeResponse = await apiDao.getAPIDocTypes(orgID, apiID);
         const apiCreationResponse = docTypeResponse.map((doc) => new APIDocDTO(doc.dataValues));
         return apiCreationResponse;
     } catch (error) {

@@ -31,7 +31,7 @@ const { body } = require('express-validator');
 const { Sequelize } = require('sequelize');
 
 // Function to load and convert markdown file to HTML
-function loadMarkdown(filename, dirName) {
+async function loadMarkdown(filename, dirName) {
 
     const filePath = path.join(process.cwd(), dirName, filename);
     if (fs.existsSync(filePath)) {

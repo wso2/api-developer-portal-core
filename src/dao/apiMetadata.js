@@ -718,41 +718,44 @@ const getAPIDocByName = async (type, name, orgID, apiID, t) => {
     }
 }
 
-// const getAPIDocTypes = async (orgID, apiID) => {
+const getAPIDocTypes = async (orgID, apiID) => {
 
-//     try {
-//         const apiFileResponse = await APIContent.findAll({
-//             attributes: [
-//                 "TYPE",
-//                 [Sequelize.fn("ARRAY_AGG", Sequelize.col("DP_API_CONTENT.FILE_NAME")), "FILE_NAMES"]
-//             ],
-//             where: {
-//                 API_ID: apiID,
-//                 TYPE: {
-//                     [Op.like]: "DOC_%"
-//                 },
-//             },
-//             group: ["DP_API_CONTENT.TYPE"],
-//             include: [
-//                 {
-//                     model: APIMetadata,
-//                     required: true,
-//                     attributes: [],
-//                     where: {
-//                         ORG_ID: orgID
-//                     }
-//                 }
-//             ]
-//         });
+    try {
+        const apiFileResponse = await APIContent.findAll({
+            attributes: [
+            "TYPE",
+            [Sequelize.fn("ARRAY_AGG", Sequelize.col("DP_API_CONTENT.FILE_NAME")), "FILE_NAMES"]
+            ],
+            where: {
+            API_ID: apiID,
+            TYPE: {
+                [Op.or]: [
+                { [Op.like]: "DOC_%" },
+                { [Op.like]: constants.DOC_TYPES.API_DEFINITION }
+                ]
+            },
+            },
+            group: ["DP_API_CONTENT.TYPE"],
+            include: [
+            {
+                model: APIMetadata,
+                required: true,
+                attributes: [],
+                where: {
+                ORG_ID: orgID
+                }
+            }
+            ]
+        });
 
-//         return apiFileResponse;
-//     } catch (error) {
-//         if (error instanceof Sequelize.UniqueConstraintError) {
-//             throw error;
-//         }
-//         throw new Sequelize.DatabaseError(error);
-//     }
-// }
+        return apiFileResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
 
 const getAPIDocs = async (orgID, apiID) => {
     try {
@@ -1417,6 +1420,7 @@ module.exports = {
     getAPIDocs,
     getAPIDocLinks,
     getAPIDocByName,
+    getAPIDocTypes,
     getAPIId,
     getAPIHandle,
     getAPIMetadataByCondition,

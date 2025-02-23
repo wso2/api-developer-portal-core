@@ -48,7 +48,8 @@ module.exports = {
             SAMPLES: 'Samples',
             PUBLIC_FORUM: 'PublicForum',
             SUPPORT_FORUM: 'SupportForum',
-            OTHER: 'Other'
+            OTHER: 'Other',
+            API_DEFINITION: 'Specification'
         }
     },
     MIME_TYPES: {
@@ -138,6 +139,7 @@ module.exports = {
         API_CONTENT_PARTIAL_NAME: "api-content",
         API_DOC_PARTIAL_NAME: "api-doc",
         API_DEFINITION_FILE_NAME: 'apiDefinition.json',
+        API_SPECIFICATION_PATH: 'specification',
         API_DEFINITION_GRAPHQL: 'apiDefinition.graphql',
         API_DEFINITION_XML: 'apiDefinition.xml',
         PARTIAL_HEADER_FILE_NAME: 'header.hbs',

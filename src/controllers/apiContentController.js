@@ -33,7 +33,7 @@ const { CustomError } = require('../utils/errors/customErrors');
 
 const filePrefix = config.pathToContent;
 const generateArray = (length) => Array.from({ length });
-const baseURLDev = constants.BASE_URL + config.port  + constants.ROUTE.VIEWS_PATH;
+const baseURLDev = constants.BASE_URL + config.port + constants.ROUTE.VIEWS_PATH;
 
 const loadAPIs = async (req, res) => {
 
@@ -106,7 +106,7 @@ const loadAPIContent = async (req, res) => {
             apiMetadata: metaData,
             subscriptionPlans: subscriptionPlans,
             baseUrl: baseURLDev + viewName,
-            schemaUrl: orgName + '/mock/' + apiName + '/apiDefinition.xml'
+            schemaUrl: orgName + '/mock/' + apiHandle + '/apiDefinition.xml'
         }
         html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
         res.send(html);
@@ -169,6 +169,32 @@ const loadSubscriptionPlan = async (orgID, policyName) => {
     }
 }
 
+const loadAPIDefinition = async (orgName, viewName, apiHandle) => {
+
+    let metaData, templateContent = {};
+    if (config.mode === constants.DEV_MODE) {
+        metaData = loadAPIMetaDataFromFile(apiHandle);
+        let apiDefinition = path.join(process.cwd(), filePrefix + '../mock', apiHandle + '/apiDefinition.json');
+        if (fs.existsSync(apiDefinition)) {
+            apiDefinition = await fs.readFileSync(apiDefinition, constants.CHARSET_UTF8);
+        }
+        templateContent.apiType = metaData.apiInfo.apiType;
+        templateContent.swagger = apiDefinition;
+    } else {
+        const orgID = await adminDao.getOrgId(orgName);
+        const apiID = await apiDao.getAPIId(orgID, apiHandle);
+        metaData = await apiMetadataService.getMetadataFromDB(orgID, apiID, viewName);
+        const data = metaData ? JSON.stringify(metaData) : {};
+        metaData = JSON.parse(data);
+        //metaData = await loadAPIMetaData(req, orgID, apiID);
+        apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
+        apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
+        templateContent.apiType = metaData.apiInfo.apiType;
+        templateContent.swagger = apiDefinition;
+    }
+    return templateContent;
+}
+
 const loadTryOutPage = async (req, res) => {
 
     const { orgName, apiHandle, viewName } = req.params;
@@ -216,25 +242,25 @@ const loadTryOutPage = async (req, res) => {
 
 const loadDocsPage = async (req, res) => {
 
-    const { orgName, apiName, viewName, docType } = req.params;
+    const { orgName, apiHandle, viewName, docType } = req.params;
     let html = "";
     if (config.mode === constants.DEV_MODE) {
-        const apiMetadata = await loadAPIMetaDataFromFile(apiName);
+        const apiMetadata = await loadAPIMetaDataFromFile(apiHandle);
         const docNames = apiMetadata.docTypes;
         const templateContent = {
-            apiMD: await loadMarkdown("api-doc.md", filePrefix + '../mock/' + apiName + "/" + docType),
-            baseUrl: constants.BASE_URL + config.port + "/views/" + viewName + "/api/" + apiName,
-            docTypes: docNames,
+            apiMD: await loadMarkdown("api-doc.md", filePrefix + '../mock/' + apiHandle + "/" + docType),
+            baseUrl: constants.BASE_URL + config.port + "/views/" + viewName + "/api/" + apiHandle,
+            docTypes: docNames
         }
         html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
     } else {
         try {
             const orgID = await adminDao.getOrgId(orgName);
-            const apiID = await apiDao.getAPIId(orgID, apiName);
+            const apiID = await apiDao.getAPIId(orgID, apiHandle);
             const viewName = req.params.viewName;
             const docNames = await apiMetadataService.getAPIDocTypes(orgID, apiID)
             const templateContent = {
-                baseUrl: '/' + orgName + '/views/' + viewName + "/api/" + apiName,
+                baseUrl: '/' + orgName + '/views/' + viewName + "/api/" + apiHandle,
                 docTypes: docNames
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
@@ -248,32 +274,42 @@ const loadDocsPage = async (req, res) => {
 
 const loadDocument = async (req, res) => {
 
-    const { orgName, apiName, viewName, docType, docName } = req.params;
+    const { orgName, apiHandle, viewName, docType, docName } = req.params;
     const hbs = exphbs.create({});
+    const templateContent = {
+        "isAPIDefinition": false
+    };
+    //load API definition
+    if (req.originalUrl.includes(constants.FILE_NAME.API_SPECIFICATION_PATH)) {
+        const definitionResponse = await loadAPIDefinition(orgName, viewName, apiHandle);
+        console.log("Definition", definitionResponse);
+        templateContent.swagger = definitionResponse.swagger;
+        templateContent.apiType = definitionResponse.apiType;
+        templateContent.isAPIDefinition = true;
+    }
     if (config.mode === constants.DEV_MODE) {
-        const apiMetadata = await loadAPIMetaDataFromFile(apiName);
+        const apiMetadata = await loadAPIMetaDataFromFile(apiHandle);
         const docNames = apiMetadata.docTypes;
-        const filePath = path.join(process.cwd(), filePrefix + '../mock', apiName + "/" + docType + "/" + docName);
-
-        if (fs.existsSync(filePath) && filePath.endsWith('.hbs')) {
-            hbs.handlebars.registerPartial(constants.FILE_NAME.API_DOC_PARTIAL_NAME, fs.readFileSync(filePath, constants.CHARSET_UTF8));
+        let apiMD = "";
+        if (docType !== undefined && docName !== undefined) {
+            const filePath = path.join(process.cwd(), filePrefix + '../mock', apiHandle + "/" + docType + "/" + docName);
+            if (fs.existsSync(filePath) && (filePath.endsWith('.hbs') || filePath.endsWith('.html'))) {
+                hbs.handlebars.registerPartial(constants.FILE_NAME.API_DOC_PARTIAL_NAME, fs.readFileSync(filePath, constants.CHARSET_UTF8));
+            }
+            apiMD = await loadMarkdown(docName, filePrefix + '../mock/' + apiHandle + "/" + docType);
         }
-        const templateContent = {
-            apiMD: await loadMarkdown(docName, filePrefix + '../mock/' + apiName + "/" + docType),
-            baseUrl: constants.BASE_URL + config.port + "/views/" + viewName + "/api/" + apiName,
-            docTypes: docNames
-        }
+        templateContent.baseUrl = constants.BASE_URL + config.port + "/views/" + viewName + "/api/" + apiHandle;
+        templateContent.docTypes = docNames;
+        templateContent.apiMD = apiMD;
         html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
     } else {
         try {
             const orgID = await adminDao.getOrgId(orgName);
-            const apiID = await apiDao.getAPIId(orgID, apiName);
+            const apiID = await apiDao.getAPIId(orgID, apiHandle);
             const viewName = req.params.viewName;
             const docNames = await apiMetadataService.getAPIDocTypes(orgID, apiID)
-            const templateContent = {
-                baseUrl: '/' + orgName + '/views/' + viewName + "/api/" + apiName,
-                docTypes: docNames
-            };
+            templateContent.baseUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle;
+            templateContent.docTypes = docNames;
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
         } catch (error) {
             console.error(`Failed to load api content :`, error);

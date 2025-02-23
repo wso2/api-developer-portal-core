@@ -63,7 +63,10 @@ const registerInternalPartials = async (req) => {
       .map(dirent => path.join(source, dirent.name));
 
   const partialsDirs = [partialsDir, ...getDirectories(path.join(require.main.filename, '..', '/pages')).map(dir => path.join(dir, 'partials'))];
-  const hasWSO2API = await checkWSO2APIAvailability();
+  let hasWSO2API = true;
+  if (config.mode !== constants.DEV_MODE) {
+    hasWSO2API = await checkWSO2APIAvailability();
+  }
 
   for (const dir of partialsDirs) {
     if (fs.existsSync(dir)) {
@@ -182,8 +185,8 @@ const registerPartialsFromAPI = async (req) => {
   //register doc page partials
   if (req.originalUrl.includes(constants.ROUTE.API_DOCS_PATH) && req.params.docType && req.params.docName) {
 
-    const { orgName, apiName, viewName, docType, docName } = req.params;
-    const apiID = await apiDao.getAPIId(orgID, apiName);
+    const { orgName, apiHandle, viewName, docType, docName } = req.params;
+    const apiID = await apiDao.getAPIId(orgID, apiHandle);
     let markdownHtml = "";
     let docContentResponse = await apiDao.getAPIDocByName(constants.DOC_TYPES.DOC_ID+docType, docName, orgID, apiID);
     if (docContentResponse !== null) {
@@ -197,7 +200,7 @@ const registerPartialsFromAPI = async (req) => {
     }
     hbs.handlebars.partials[constants.FILE_NAME.API_DOC_PARTIAL_NAME] = hbs.handlebars.compile(
       partialObject[constants.FILE_NAME.API_DOC_PARTIAL_NAME])({
-        baseUrl: "/" + orgName + "/views/" + viewName + "/api/" + apiName,
+        baseUrl: "/" + orgName + "/views/" + viewName + "/api/" + apiHandle,
         apiMD: markdownHtml
       });
   }

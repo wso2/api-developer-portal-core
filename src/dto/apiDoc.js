@@ -21,9 +21,10 @@ const constants = require("../utils/constants");
 
 class APIDocDTO {
     constructor(doc) {
-        console.log('doc', doc);
-        this.type = doc.TYPE.split(constants.DOC_TYPES.DOC_ID)[1];
-        this.fileNames = doc.FILE_NAMES;
+        this.type = this.getDocType(doc.TYPE);
+        if (this.type !== constants.DOC_TYPES.DOCS.API_DEFINITION) {
+            this.names = doc.FILE_NAMES;
+        }
     }
 
     setResponseData(data) {
@@ -32,6 +33,17 @@ class APIDocDTO {
 
     getResponseData() {
         return this.data;
+    }
+
+    getDocType(docType) {
+
+        let type = "";
+        if (docType === constants.DOC_TYPES.API_DEFINITION) {
+            type = constants.DOC_TYPES.DOCS.API_DEFINITION;
+        } else {
+            type = docType.split(constants.DOC_TYPES.DOC_ID)[1]
+        }
+        return type;
     }
 }
 
