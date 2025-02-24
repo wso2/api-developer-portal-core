@@ -35,7 +35,7 @@ router.get('/views/:viewName/api/:apiHandle', registerPartials, apiController.lo
 
 router.get('/views/:viewName/api/:apiHandle/docs/specification', registerPartials, apiController.loadDocument);
 
-router.get('/views/:viewName/api/:apiHandle/docs', registerPartials, apiController.loadDocsPage);
+//router.get('/views/:viewName/api/:apiHandle/docs', registerPartials, apiController.loadDocsPage);
 
 router.get('/views/:viewName/api/:apiHandle/docs/:docType/:docName', registerPartials, apiController.loadDocument);
 

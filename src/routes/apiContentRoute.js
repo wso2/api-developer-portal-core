@@ -28,7 +28,7 @@ router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiHandle', ensureAu
 
 router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiHandle/docs/specification', ensureAuthenticated, registerPartials, apiController.loadDocument);
 
-router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiHandle/docs', ensureAuthenticated, registerPartials, apiController.loadDocsPage);
+// router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiHandle/docs', ensureAuthenticated, registerPartials, apiController.loadDocsPage);
 
 router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiHandle/docs/:docType/:docName', registerPartials, apiController.loadDocument);
 
