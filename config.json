@@ -63,21 +63,21 @@
     "/portal",
     "/*/configure",
     "**/applications",
-    "**/applications/*",
+    "**/applications/**",
     "**/api/*",
     "**/myapis",
-    "**/myapis/*",
-    "**/myapis?*"
+    "**/myapis/**",
+    "**/myapis?**"
   ],
   "authorizedPages": [
     "**/applications",
-    "**/applications/*",
+    "**/applications/**",
     "/*/configure",
     "/portal/*/edit",
     "/portal",
-    "**/api/*",
+    "**/api/**",
     "**/myapis",
-    "**/myapis/*",
-    "**/myapis?*"
+    "**/myapis/**",
+    "**/myapis?**"
   ]  
 }

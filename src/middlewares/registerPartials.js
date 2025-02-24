@@ -74,8 +74,18 @@ const registerInternalPartials = async (req) => {
               header: hbs.handlebars.compile(partialContent)({
                 profile: req.user,
                 baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
+              }),
+            };
+          };
+
+          if (partialName === constants.SIDEBAR_PARTIAL_NAME) {
+            hbs.handlebars.partials = {
+              ...hbs.handlebars.partials,
+              sidebar: hbs.handlebars.compile(partialContent)({
+                profile: req.user,
+                baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
                 hasWSO2APIs: hasWSO2API
-              })
+              }),
             };
           }
         }
@@ -139,6 +149,19 @@ const registerPartialsFromAPI = async (req) => {
       ),
     };
   }
+
+  if (partialObject[constants.SIDEBAR_PARTIAL_NAME]) {
+    hbs.handlebars.partials = {
+      ...hbs.handlebars.partials,
+      sidebar: hbs.handlebars.compile(partialObject[constants.SIDEBAR_PARTIAL_NAME])({
+        baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+        isAdmin: isAdmin,
+        isSuperAdmin: isSuperAdmin,
+        hasWSO2APIs: await checkWSO2APIAvailability()
+      }),
+    };
+  }
+
   if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
 
     const apiHandle = req.params.apiHandle;
@@ -194,6 +217,15 @@ function registerPartialsFromFile(baseURL, dir, profile) {
           header: hbs.handlebars.compile(template)({
             baseUrl: baseURL,
             profile: profile,
+            hasWSO2APIs: true
+          }),
+        };
+      };
+      if (filename === constants.FILE_NAME.PARTIAL_SIDEBAR_FILE_NAME) {
+        hbs.handlebars.partials = {
+          ...hbs.handlebars.partials,
+          sidebar: hbs.handlebars.compile(template)({
+            baseUrl: baseURL,
             hasWSO2APIs: true
           }),
         };
