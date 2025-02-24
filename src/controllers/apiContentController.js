@@ -186,7 +186,6 @@ const loadAPIDefinition = async (orgName, viewName, apiHandle) => {
         metaData = await apiMetadataService.getMetadataFromDB(orgID, apiID, viewName);
         const data = metaData ? JSON.stringify(metaData) : {};
         metaData = JSON.parse(data);
-        //metaData = await loadAPIMetaData(req, orgID, apiID);
         apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
         templateContent.apiType = metaData.apiInfo.apiType;
