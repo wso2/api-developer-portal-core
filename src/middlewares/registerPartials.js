@@ -81,8 +81,18 @@ const registerInternalPartials = async (req) => {
                 isSuperAdmin: isSuperAdmin,
                 profile: req.user,
                 baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
+              }),
+            };
+          };
+
+          if (partialName === constants.SIDEBAR_PARTIAL_NAME) {
+            hbs.handlebars.partials = {
+              ...hbs.handlebars.partials,
+              sidebar: hbs.handlebars.compile(partialContent)({
+                profile: req.user,
+                baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
                 hasWSO2APIs: hasWSO2API
-              })
+              }),
             };
           }
         }
@@ -115,7 +125,8 @@ const registerPartialsFromAPI = async (req) => {
     fileType: 'partial',
     viewName: viewName
   });
-  let partialObject = {}
+  let partialObject = {};
+  let hasWSO2APIs = await checkWSO2APIAvailability();
   partials.forEach(file => {
     let fileName = file.FILE_NAME.split(".")[0];
     let content = file.FILE_CONTENT.toString(constants.CHARSET_UTF8);
@@ -139,13 +150,26 @@ const registerPartialsFromAPI = async (req) => {
         profile: req.user,
         isAdmin: isAdmin,
         isSuperAdmin: isSuperAdmin,
-        hasWSO2APIs: await checkWSO2APIAvailability()
+        hasWSO2APIs: hasWSO2APIs
       }),
       [constants.HERO_PARTIAL_NAME]: hbs.handlebars.compile(partialObject[constants.HERO_PARTIAL_NAME])(
         { baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName }
       ),
     };
   }
+
+  if (partialObject[constants.SIDEBAR_PARTIAL_NAME]) {
+    hbs.handlebars.partials = {
+      ...hbs.handlebars.partials,
+      sidebar: hbs.handlebars.compile(partialObject[constants.SIDEBAR_PARTIAL_NAME])({
+        baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+        isAdmin: isAdmin,
+        isSuperAdmin: isSuperAdmin,
+        hasWSO2APIs: hasWSO2APIs
+      }),
+    };
+  }
+
   if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
 
     const apiHandle = req.params.apiHandle;
@@ -201,6 +225,15 @@ function registerPartialsFromFile(baseURL, dir, profile) {
           header: hbs.handlebars.compile(template)({
             baseUrl: baseURL,
             profile: profile,
+            hasWSO2APIs: true
+          }),
+        };
+      };
+      if (filename === constants.FILE_NAME.PARTIAL_SIDEBAR_FILE_NAME) {
+        hbs.handlebars.partials = {
+          ...hbs.handlebars.partials,
+          sidebar: hbs.handlebars.compile(template)({
+            baseUrl: baseURL,
             hasWSO2APIs: true
           }),
         };
