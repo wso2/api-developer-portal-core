@@ -118,7 +118,8 @@ const registerPartialsFromAPI = async (req) => {
     fileType: 'partial',
     viewName: viewName
   });
-  let partialObject = {}
+  let partialObject = {};
+  let hasWSO2APIs = await checkWSO2APIAvailability();
   partials.forEach(file => {
     let fileName = file.FILE_NAME.split(".")[0];
     let content = file.FILE_CONTENT.toString(constants.CHARSET_UTF8);
@@ -142,7 +143,7 @@ const registerPartialsFromAPI = async (req) => {
         profile: req.user,
         isAdmin: isAdmin,
         isSuperAdmin: isSuperAdmin,
-        hasWSO2APIs: await checkWSO2APIAvailability()
+        hasWSO2APIs: hasWSO2APIs
       }),
       [constants.HERO_PARTIAL_NAME]: hbs.handlebars.compile(partialObject[constants.HERO_PARTIAL_NAME])(
         { baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName }
@@ -157,7 +158,7 @@ const registerPartialsFromAPI = async (req) => {
         baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
         isAdmin: isAdmin,
         isSuperAdmin: isSuperAdmin,
-        hasWSO2APIs: await checkWSO2APIAvailability()
+        hasWSO2APIs: hasWSO2APIs
       }),
     };
   }
