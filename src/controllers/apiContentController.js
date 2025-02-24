@@ -282,7 +282,6 @@ const loadDocument = async (req, res) => {
     //load API definition
     if (req.originalUrl.includes(constants.FILE_NAME.API_SPECIFICATION_PATH)) {
         const definitionResponse = await loadAPIDefinition(orgName, viewName, apiHandle);
-        console.log("Definition", definitionResponse);
         templateContent.swagger = definitionResponse.swagger;
         templateContent.apiType = definitionResponse.apiType;
         templateContent.isAPIDefinition = true;
