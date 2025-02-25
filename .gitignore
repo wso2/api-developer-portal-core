@@ -94,7 +94,3 @@ replay_pid*
 eslint.config.mjs
 
 .prettierrc
-
-config.json
-resources/default-layout
-resources/mock
