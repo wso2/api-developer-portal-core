@@ -149,8 +149,8 @@ if (config.mode === constants.DEV_MODE) {
 
 const PORT = process.env.PORT || config.port;
 http.createServer(app).listen(PORT, '0.0.0.0', () => {
-    console.log(`\n🔥 Developer Portal V2 is running on port ${PORT} 🔥`);
-    console.log(`🌐 Mode: ${config.mode}\n`);
+    console.log(`Developer Portal V2 is running on port ${PORT}`);
+    console.log(`Mode: ${config.mode}`);
 });
 
 process.on('uncaughtException', (err) => {
