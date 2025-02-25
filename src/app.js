@@ -147,7 +147,7 @@ if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.DEFAULT, customContent);
 }
 
-const PORT = process.env.PORT || config.port;
+const PORT = process.env.PORT || config.defaultPort;
 http.createServer(app).listen(PORT, '0.0.0.0', () => {
     console.log(`Developer Portal V2 is running on port ${PORT}`);
     console.log(`Mode: ${config.mode}`);

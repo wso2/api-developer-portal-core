@@ -1,6 +1,6 @@
 {
   "baseUrl": "https://d08e68b9-e1ec-4c21-9d02-f5f4b3be3eb0.e1-us-east-azure.choreoapps.dev",
-  "defaultPort": 3000,
+  "defaultPort": 8080,
   "pathToContent": "./resources/default-layout/",
   "mode": "development",
   "controlPlane": {
