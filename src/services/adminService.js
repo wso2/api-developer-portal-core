@@ -26,7 +26,10 @@ const IdentityProviderDTO = require("../dto/identityProvider");
 const constants = require('../utils/constants');
 const { validationResult } = require('express-validator');
 const sequelize = require("../db/sequelize");
+const { ApplicationDTO, SubscriptionDTO } = require('../dto/application');
 const config = require(process.cwd() + '/config.json');
+const controlPlaneUrl = config.controlPlane.url;
+const { invokeApiRequest } = require('../utils/util');
 
 const createOrganization = async (req, res) => {
 
@@ -36,7 +39,7 @@ const createOrganization = async (req, res) => {
     }
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-                return res.status(400).json(util.getErrors(errors));
+        return res.status(400).json(util.getErrors(errors));
     }
     const payload = req.body;
     let organization = "";
@@ -45,14 +48,14 @@ const createOrganization = async (req, res) => {
             organization = await adminDao.createOrganization(payload, t);
             const orgId = organization.ORG_ID;
             // create default label
-            const labels = await apiDao.createLabels(organization.ORG_ID, [{ name: 'default' , displayName: 'default'}], t);
+            const labels = await apiDao.createLabels(organization.ORG_ID, [{ name: 'default', displayName: 'default' }], t);
             const labelId = labels[0].dataValues.LABEL_ID;
             //create default view
-            const viewResponse = await apiDao.addView(orgId, {name: 'default', displayName: 'default'}, t);
+            const viewResponse = await apiDao.addView(orgId, { name: 'default', displayName: 'default' }, t);
             const viewID = viewResponse.dataValues.VIEW_ID;
             await apiDao.addLabel(orgId, labelId, viewID, t);
             //create default provider
-            await adminDao.createProvider(organization.ORG_ID, { name: 'WSO2', providerURL: config.controlPlane.url}, t);
+            await adminDao.createProvider(organization.ORG_ID, { name: 'WSO2', providerURL: config.controlPlane.url }, t);
         });
         const orgCreationResponse = {
             orgId: organization.ORG_ID,
@@ -181,7 +184,7 @@ const createIdentityProvider = async (req, res) => {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
         const rules = util.validateIDP();
-        for (let validation of rules) {        
+        for (let validation of rules) {
             await validation.run(req);
         }
         const errors = validationResult(req);
@@ -515,10 +518,213 @@ const deleteProvider = async (req, res) => {
             throw new CustomError(404, "Records Not Found", 'Provider property not found');
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.PROVIDER_DELETE_ERROR}, ${error}`);
+        console.error(`${constants.ERROR_MESSAGE.PROVIDER_DELETE_ERROR}`, error);
         util.handleError(res, error);
     }
 }
+
+const createDevPortalApplication = async (req, res) => {
+
+    try {
+        const orgID = req.params.orgId;
+        const userID = req[constants.USER_ID]
+        if (!orgID) {
+            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+        }
+        const applicationData = req.body;
+        try {
+            const application = await adminDao.createApplication(orgID, userID, applicationData);
+            res.status(201).send(new ApplicationDTO(application.dataValues));
+        } catch (error) {
+            console.error(`${constants.ERROR_MESSAGE.PROVIDER_CREATE_ERROR}`, error);
+            util.handleError(res, error);
+        }
+
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.APPLICATION_CREATE_ERROR}`, error);
+        util.handleError(res, error);
+    }
+
+}
+
+const updateDevPortalApplication = async (req, res) => {
+
+    try {
+        const { orgId, appId } = req.params;
+        const userId = req[constants.USER_ID]
+        const applicationData = req.body;
+        if (!orgId) {
+            console.log("Missing required parameter: 'orgId'");
+            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+        }
+        const [updatedRows, updatedApp] = await adminDao.updateApplication(orgId, appId, userId, applicationData);
+        console.log(updatedApp);
+        if (!updatedRows) {
+            throw new Sequelize.EmptyResultError("No record found to update");
+        }
+        res.status(200).send(new ApplicationDTO(updatedApp[0].dataValues));
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.APPLICATION_UPDATE_ERROR}`, error);
+        util.handleError(res, error);
+    }
+
+}
+
+const getDevPortalApplications = async (req, res) => {
+
+    const orgID = req.params.orgId;
+    const userID = req[constants.USER_ID]
+
+    try {
+        const applications = await adminDao.getApplications(orgID, userID);
+        // Create response object
+        if (applications.length > 0) {
+            const appResponse = applications.map((app) => new ApplicationDTO(app));
+            res.status(200).send(appResponse);
+        } else {
+            throw new CustomError(404, "Records Not Found", 'Applications not found');
+        }
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.APPLICATION_RETRIEVE_ERROR}`, error);
+        util.handleError(res, error);
+    }
+}
+
+const getAllApplications = async (orgID, userID) => {
+
+    const applications = await adminDao.getApplications(orgID, userID);
+    let appList = [];
+    // Create response object
+    if (applications.length > 0) {
+        appList = applications.map((app) => new ApplicationDTO(app));
+    }
+    return appList;
+}
+
+const getDevPortalApplicationDetails = async (req, res) => {
+
+    const orgID = req.params.orgId;
+    const appID = req.params.appId;
+    const userID = req[constants.USER_ID]
+    try {
+        const application = await adminDao.getApplication(orgID, appID, userID);
+        // Create response object
+        if (application) {
+            const appResponse = new ApplicationDTO(application.dataValues);
+            res.status(200).send(appResponse);
+        } else {
+            throw new CustomError(404, "Records Not Found", 'Applications not found');
+        }
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.APPLICATION_RETRIEVE_ERROR}`, error);
+        util.handleError(res, error);
+    }
+
+}
+
+const deleteDevPortalApplication = async (req, res) => {
+
+    const { orgId, appId } = req.params;
+    const userID = req[constants.USER_ID]
+    try {
+        const appDeleteResponse = await adminDao.deleteApplication(orgId, appId, userID);
+        if (appDeleteResponse === 0) {
+            throw new Sequelize.EmptyResultError("Resource not found to delete");
+        } else {
+            res.status(200).send("Resouce Deleted Successfully");
+        }
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.APPLICATION_DELETE_ERROR}`, error);
+        util.handleError(res, error);
+    }
+}
+
+const createSubscription = async (req, res) => {
+
+    try {
+        const orgID = req.params.orgId;
+        if (!orgID) {
+            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+        }
+        try {
+            const subscription = await adminDao.createSubscription(orgID, req.body);
+            res.status(201).send(new SubscriptionDTO(subscription.dataValues));
+        } catch (error) {
+            console.error(`${constants.ERROR_MESSAGE.PROVIDER_CREATE_ERROR}`, error);
+            util.handleError(res, error);
+        }
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_CREATE_ERROR}`, error);
+        util.handleError(res, error);
+    }
+}
+
+const getSubscription = async (req, res) => {
+
+    const orgID = req.params.orgId;
+    const subID = req.params.subscriptionId;
+    try {
+        const subscription = await adminDao.getSubscription(orgID, subID);
+        // Create response object
+        if (subscription) {
+            res.status(200).send(new SubscriptionDTO(subscription.dataValues));
+        } else {
+            throw new CustomError(404, "Records Not Found", 'Subscriptions not found');
+        }
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_RETRIEVE_ERROR}`, error);
+        util.handleError(res, error);
+    }
+}
+
+const getAllSubscriptions = async (req, res) => {
+
+    const orgID = req.params.orgId;
+    const appID = req.query.appId ? req.query.appId : "";
+    const apiID = req.query.apiId ? req.query.apiId : "";
+    try {
+        const subscriptions = await adminDao.getSubscriptions(orgID, appID, apiID);
+        let subList = [];
+        // Create response object
+        if (subscriptions.length > 0) {
+            subList = subscriptions.map((sub) => new SubscriptionDTO(sub));
+        }
+        res.status(200).send(subList);
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_RETRIEVE_ERROR}`, error);
+        util.handleError(res, error);
+    }
+}
+
+const deleteSubscription = async (req, res) => {
+
+    const orgID = req.params.orgId;
+    const subID = req.params.subscriptionId;
+    try {
+        await sequelize.transaction(async (t) => {
+            const subscription = await adminDao.getSubscription(orgID, subID, t);
+            const subDeleteResponse = await adminDao.deleteSubscription(orgID, subID, t);
+            if (subDeleteResponse === 0) {
+                throw new Sequelize.EmptyResultError("Resource not found to delete");
+            } else {
+                //get subscription reference for control plane
+                const subIDList = await adminDao.getAPISubscriptionReference(orgID, subscription.dataValues.APP_ID, subscription.dataValues.REFERENCE_ID, t);
+                console.log("Subscriptipn", subIDList);
+                //delete subscription from control plane
+                for (const subscription of subIDList) {
+                    const subscriptionID = subscription.dataValues.SUBSCRIPTION_REF_ID;
+                    await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${subscriptionID}`, {}, {})
+                    await adminDao.deleteAppKeyMapping(orgID, subDeleteResponse.APP_ID, subscriptionID, t);
+                }
+                res.status(200).send("Resouce Deleted Successfully");
+            }
+        });
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_DELETE_ERROR}`, error);
+        util.handleError(res, error);
+    }
+}
+
 
 module.exports = {
     createOrganization,
@@ -539,5 +745,15 @@ module.exports = {
     getProviders,
     getAllProviders,
     deleteProvider,
-    getProvidetByName
+    getProvidetByName,
+    createDevPortalApplication,
+    updateDevPortalApplication,
+    getDevPortalApplications,
+    getDevPortalApplicationDetails,
+    deleteDevPortalApplication,
+    getAllApplications,
+    createSubscription,
+    getSubscription,
+    getAllSubscriptions,
+    deleteSubscription
 };

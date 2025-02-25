@@ -24,29 +24,34 @@ const { jwtVerify, createRemoteJWKSet, importX509 } = require('jose');
 const util = require('../utils/util');
 const { CustomError } = require('../utils/errors/customErrors');
 const IdentityProviderDTO = require("../dto/identityProvider");
+const jwt = require('jsonwebtoken');
+
 
 function enforceSecuirty(scope) {
     return async function (req, res, next) {
         try {
-            const authHeader = req.headers.authorization;        
+            const authHeader = req.headers.authorization;
             if (authHeader && authHeader.startsWith("Bearer ")) {
-                const token = authHeader.split(" ")[1]; 
+                const token = authHeader.split(" ")[1];
                 if (token) {
                     // TODO: Implement organization extraction logic
                     validateAuthentication(scope)(req, res, next);
                 }
+                //set user ID
+                const decodedAccessToken = jwt.decode(token);
+                req[constants.USER_ID] = decodedAccessToken[constants.USER_ID]
             } else {
                 // Handle MTLS flow
                 const organization = req.headers.organization;
                 if (organization) {
-                    req.params.orgId = organization;   
-                } 
-                enforceMTLS(req, res, next);    
+                    req.params.orgId = organization;
+                }
+                enforceMTLS(req, res, next);
             }
         } catch (err) {
             console.error("Error checking access token:", err);
             return res.status(500).json({ error: "Internal Server Error" });
-        }    
+        }
     }
 }
 

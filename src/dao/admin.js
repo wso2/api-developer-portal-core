@@ -18,6 +18,7 @@
 const { Organization, OrgContent } = require('../models/organization');
 const { Sequelize } = require('sequelize');
 const { IdentityProvider } = require('../models/identityProvider');
+const { Application, ApplicationKeyMapping, SubscriptionMapping } = require('../models/application');
 const Provider = require('../models/provider');
 const apiDao = require('./apiMetadata');
 
@@ -546,6 +547,236 @@ const getProvider = async (orgID, name) => {
     }
 }
 
+const createApplication = async (orgID, userID, appData) => {
+
+    const createAppData = {
+        NAME: appData.name,
+        ORG_ID: orgID,
+        DESCRIPTION: appData.description,
+        TYPE: appData.type,
+        CREATED_BY: userID
+    };
+    try {
+        const application = await Application.create(createAppData);
+        return application;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
+const updateApplication = async (orgID, appID, userID, appData) => {
+
+    try {
+        const [updatedRowsCount, appContent] = await Application.update(
+            {
+                NAME: appData.appName,
+                DESCRIPTION: appData.description,
+                TYPE: appData.type
+            },
+            {
+                where: {
+                    ORG_ID: orgID,
+                    APP_ID: appID,
+                    CREATED_BY: userID
+                },
+                returning: true
+            }
+        );
+        return [updatedRowsCount, appContent];
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
+const getApplication = async (orgID, appID, userID) => {
+
+    try {
+        return await Application.findOne(
+            {
+                where: {
+                    ORG_ID: orgID,
+                    APP_ID: appID,
+                    CREATED_BY: userID
+                }
+            });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getApplications = async (orgID, userID) => {
+
+    try {
+        return await Application.findAll(
+            {
+                where: {
+                    ORG_ID: orgID,
+                    CREATED_BY: userID
+                }
+            });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const deleteApplication = async (orgID, appID, userID) => {
+
+    try {
+        const deletedRowsCount = await Application.destroy({
+            where: {
+                ORG_ID: orgID,
+                APP_ID: appID,
+                CREATED_BY: userID
+            }
+        });
+        if (deletedRowsCount < 1) {
+            throw Object.assign(new Sequelize.EmptyResultError('Application not found'));
+        } else {
+            return deletedRowsCount;
+        }
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const createSubscription = async (orgID, subscription) => {
+
+    try {
+        const subMapping = await SubscriptionMapping.create({
+            APP_ID: subscription.applicationID,
+            REFERENCE_ID: subscription.apiId,
+            POLICY_ID: subscription.policyId,
+            ORG_ID: orgID,
+        });
+        return subMapping;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
+const getSubscription = async (orgID, subID, t) => {
+
+    try {
+        return await SubscriptionMapping.findOne(
+            {
+                where: {
+                    ORG_ID: orgID,
+                    SUB_ID: subID
+                }, transaction: t
+            });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getSubscriptions = async (orgID, appID, apiID) => {
+
+    try {
+        return await SubscriptionMapping.findAll(
+            {
+                where: {
+                    ORG_ID: orgID,
+                    [Sequelize.Op.or]: [
+                        { APP_ID: appID },
+                        { REFERENCE_ID: apiID }
+                    ]
+                }
+            });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const deleteSubscription = async (orgID, subID, t) => {
+
+    try {
+        const deletedRowsCount = await SubscriptionMapping.destroy({
+            where: {
+                ORG_ID: orgID,
+                SUB_ID: subID
+            }, transaction: t
+        },);
+        if (deletedRowsCount < 1) {
+            throw new Sequelize.EmptyResultError('Subscription not found');
+        } else {
+            return deletedRowsCount;
+        }
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const deleteAppKeyMapping = async (orgID, appID, apiID, t) => {
+
+    try {
+        const deletedRowsCount = await ApplicationKeyMapping.destroy({
+            where: {
+                ORG_ID: orgID,
+                APP_ID: appID,
+                API_REF_ID: apiID
+            }, transaction: t
+        });
+        if (deletedRowsCount < 1) {
+            throw Object.assign(new Sequelize.EmptyResultError('Application Key Mapping not found'));
+        } else {
+            return deletedRowsCount;
+        }
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getAPISubscriptionReference = async (orgID, appID, apiID, t) => {
+
+    try {
+        const subscriptionReference =  await ApplicationKeyMapping.findAll(
+            {
+                attributes: ['SUBSCRIPTION_REF_ID'],
+                where: {
+                    ORG_ID: orgID,
+                    APP_ID: appID,
+                    API_REF_ID: apiID
+                }
+            }, { transaction: t });
+            return subscriptionReference;
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
 module.exports = {
     createOrganization,
     getOrganization,
@@ -566,5 +797,16 @@ module.exports = {
     deleteProvider,
     updateProvider,
     getProviders,
-    getProvider
+    getProvider,
+    createApplication,
+    updateApplication,
+    getApplication,
+    getApplications,
+    deleteApplication,
+    createSubscription,
+    getSubscription,
+    getSubscriptions,
+    deleteSubscription,
+    deleteAppKeyMapping,
+    getAPISubscriptionReference
 };
