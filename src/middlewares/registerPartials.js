@@ -32,7 +32,7 @@ const registerPartials = async (req, res, next) => {
 
   registerInternalPartials(req);
   if (config.mode === constants.DEV_MODE) {
-    registerAllPartialsFromFile(constants.BASE_URL + config.port + constants.ROUTE.VIEWS_PATH + req.params.viewName, req);
+    registerAllPartialsFromFile(config.baseUrl + constants.ROUTE.VIEWS_PATH + req.params.viewName, req);
   } else {
     let matchURL = req.originalUrl;
     if (req.session.returnTo) {

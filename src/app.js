@@ -22,8 +22,7 @@ const passport = require('passport');
 const session = require('express-session');
 const crypto = require('crypto');
 const path = require('path');
-const https = require('https'); // Import https for mTLS
-const fs = require('fs'); // To read certs
+const http = require('http');
 const authRoute = require('./routes/authRoute');
 const devportalRoute = require('./routes/devportalRoute');
 const orgContent = require('./routes/orgContentRoute');
@@ -148,19 +147,16 @@ if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.DEFAULT, customContent);
 }
 
-const certPath = path.join(process.cwd(), config.serverCerts.pathToCert);
-const keyPath = path.join(process.cwd(), config.serverCerts.pathToPK);
-const caPath = path.join(process.cwd(), config.serverCerts.pathToCA);
-const serverCert = fs.readFileSync(certPath);
-const serverKey = fs.readFileSync(keyPath);
-const caCert = fs.readFileSync(caPath);
+const PORT = process.env.PORT || config.port;
+http.createServer(app).listen(PORT, '0.0.0.0', () => {
+    console.log(`\n🔥 Developer Portal V2 is running on port ${PORT} 🔥`);
+    console.log(`🌐 Mode: ${config.mode}\n`);
+});
 
-https.createServer({
-    key: serverKey,
-    cert: serverCert,
-    ca: caCert, 
-    requestCert: true,  
-    rejectUnauthorized: false  
-}, app).listen(config.port, () => {
-    console.log(`HTTPS server running on port ${config.port}`);
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled rejection at:', promise, 'reason:', reason);
 });

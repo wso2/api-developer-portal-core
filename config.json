@@ -1,16 +1,17 @@
 {
-  "port": 3000,
-  "pathToContent": "../api-developer-portal/src/",
-  "mode": "production",
+  "baseUrl": "https://d08e68b9-e1ec-4c21-9d02-f5f4b3be3eb0.e1-us-east-azure.choreoapps.dev",
+  "defaultPort": 3000,
+  "pathToContent": "./resources/default-layout/",
+  "mode": "development",
   "controlPlane": {
     "url": "https://127.0.0.1:9443/api/am/devportal/v3",
     "disableCertValidation": true,
-    "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
+    "pathToCertificate": "./resources/security/client-truststore.pem"
   },
   "serverCerts": {
-    "pathToCert": "certs/client-truststore.pem",
-    "pathToPK": "certs/private-key.pem",
-    "pathToCA": "certs/client-truststore.pem"
+    "pathToCert": "./resources/security/client-truststore.pem",
+    "pathToPK": "./resources/security/private-key.pem",
+    "pathToCA": "./resources/security/client-truststore.pem"
   },
   "db": {
     "username": "postgres",
@@ -43,11 +44,11 @@
     "tokenURL": "https://127.0.0.1:9443/oauth2/token",
     "userInfoURL": "https://localhost:9443/oauth2/userinfo",
     "clientId": "",
-    "callbackURL": "https://localhost:3000/ACME/callback",
+    "callbackURL": "http://localhost:3000/ACME/callback",
     "scope": "openid profile",
     "signUpURL": "",
     "logoutURL": "https://localhost:9443/oidc/logout",
-    "logoutRedirectURI": "https://localhost:3000/ACME",
+    "logoutRedirectURI": "http://localhost:3000/ACME",
     "certificate": "",
     "jwksURL": "https://localhost:9443/oauth2/jwks"
   },
@@ -59,25 +60,24 @@
   "subscriberRole": "Internal/subscriber",
   "superAdminRole": "superAdmin",
   "authenticatedPages": [
-    "/portal/*/edit",
-    "/portal",
-    "/*/configure",
-    "**/applications",
-    "**/applications/**",
-    "**/api/*",
-    "**/myapis",
-    "**/myapis/**",
-    "**/myapis?**"
+    
   ],
   "authorizedPages": [
-    "**/applications",
-    "**/applications/**",
+    "/*/applications",
+    "/*/applications/*",
     "/*/configure",
     "/portal/*/edit",
     "/portal",
-    "**/api/**",
-    "**/myapis",
-    "**/myapis/**",
-    "**/myapis?**"
+    "/*/api/**",
+    "/*/myapis",
+    "/*/myapis/**",
+    "/portal/*/edit",
+    "/portal",
+    "/*/configure",
+    "/*/applications",
+    "/*/applications/*",
+    "/*/api/*",
+    "/*/myapis",
+    "/*/myapis/**"
   ]  
 }
