@@ -40,7 +40,6 @@ async function unsubscribe(subscriptionId) {
 }
 
 function hideElementById(elementId) {
-    console.log('Hiding element:', elementId);
     const element = document.getElementById(elementId);
     if (element) {
         element.style.display = 'none';
