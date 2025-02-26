@@ -1,4 +1,4 @@
 dependencies:
     connectionReferences:
     - name: developer-portal-db-connection
-      resourceRef: database:Godzilla-PostgreSQL/developer-portal 
+      resourceRef: database:Godzilla-PostgreSQL/developer-portal
