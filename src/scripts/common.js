@@ -18,17 +18,19 @@ document.addEventListener("DOMContentLoaded", function () {
         const subscriptionBox = card.querySelector(".subscription-container");
         const dropdown = card.querySelector(".custom-dropdown");
 
-        card.addEventListener("mouseenter", function () {
-            console.log("mouse enter", subscriptionBox);
-            dropdown.classList.add("show");
-            dropdown.style.display = "block";
-            subscriptionBox.classList.add("subscription-box");
-        });
-
-        card.addEventListener("mouseleave", function () {
-            dropdown.classList.remove("show");
-            dropdown.style.display = "none";
-            subscriptionBox.classList.remove("subscription-box");
-        });
+        if (dropdown) {
+            card.addEventListener("mouseenter", function () {
+                console.log("mouse enter", subscriptionBox);
+                dropdown.classList.add("show");
+                dropdown.style.display = "block";
+                subscriptionBox.classList.add("subscription-box");
+            });
+    
+            card.addEventListener("mouseleave", function () {
+                dropdown.classList.remove("show");
+                dropdown.style.display = "none";
+                subscriptionBox.classList.remove("subscription-box");
+            });
+        }
     });
 });

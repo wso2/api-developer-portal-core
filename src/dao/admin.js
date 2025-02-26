@@ -660,7 +660,7 @@ const createSubscription = async (orgID, subscription) => {
         const subMapping = await SubscriptionMapping.create({
             APP_ID: subscription.applicationID,
             REFERENCE_ID: subscription.apiId,
-            POLICY_ID: subscription.policyId,
+            POLICY_ID: subscription.policyId || 'Unlimited',
             ORG_ID: orgID,
         });
         return subMapping;
@@ -701,6 +701,25 @@ const getSubscriptions = async (orgID, appID, apiID) => {
                         { APP_ID: appID },
                         { REFERENCE_ID: apiID }
                     ]
+                }
+            });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getAppApiSubscription = async (orgID, appID, apiID) => {
+
+    try {
+        return await SubscriptionMapping.findAll(
+            {
+                where: {
+                    ORG_ID: orgID,
+                    APP_ID: appID,
+                    REFERENCE_ID: apiID
                 }
             });
     } catch (error) {
@@ -808,5 +827,6 @@ module.exports = {
     getSubscriptions,
     deleteSubscription,
     deleteAppKeyMapping,
-    getAPISubscriptionReference
+    getAPISubscriptionReference,
+    getAppApiSubscription
 };

@@ -40,26 +40,15 @@ async function unsubscribe(subscriptionId) {
 }
 
 function hideElementById(elementId) {
+    console.log('Hiding element:', elementId);
     const element = document.getElementById(elementId);
     if (element) {
         element.style.display = 'none';
     }
 }
 
-function closeModal() {
-    hideElementById('planModal');
-    hideElementById('applicationFormSection');
-    hideElementById('applicationFormCreation');
-
-    const appInput = document.getElementById('appName');
-    if (appInput) {
-        appInput.value = '';
-    }
-
-    const throttlingTier = document.getElementById('throttlingPolicies');
-    if (throttlingTier) {
-        throttlingTier.selectedIndex = 0;
-    }
+function closeModal(elementId) {
+    hideElementById(elementId);
 }
 
 window.onclick = function (event) {
@@ -174,7 +163,44 @@ async function handleSubscribe(appId, apiName, apiVersion, apiRefId) {
 }
 
 
-function loadSubscriptionPlasnModal(apiHandle) {
-    const modal = document.getElementById('planModal-' + apiHandle);
+function loadSubscriptionPlasnModal(apiId) {
+    const modal = document.getElementById('planModal-' + apiId);
     modal.style.display = 'flex';
+}
+
+async function subscribe(applicationID, apiId, policyId) {
+    try {
+
+        if (!applicationID) {
+            applicationID = document.getElementById('appDropdown-' + apiId).value;
+        }
+
+        const subBtn = document.getElementById('subscribe-btn-' + policyId);
+
+        if (subBtn) {
+            subBtn.innerText = 'Subscribed';
+            subBtn.disabled = true;
+        }
+
+        const response = await fetch(`/devportal/subscriptions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ applicationID, apiId, policyId }),
+        });
+
+        const responseData = await response.json();
+
+        if (response.ok) {
+            await showAlert('Subscribed successfully!', 'success');
+            closeModal('planModal-' + apiId);
+        } else {
+            console.error('Failed to create application:', responseData);
+            await showAlert(`Failed to create application. Please try again.\n${responseData.description}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        await showAlert(`An error occurred while subscribing: \n${error.message}`, 'error');
+    }
 }

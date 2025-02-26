@@ -29,11 +29,12 @@ const apiMetadataService = require('../services/apiMetadataService');
 const adminService = require('../services/adminService');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const { CustomError } = require('../utils/errors/customErrors');
+const { ApplicationDTO } = require('../dto/application');
 
 
 const filePrefix = config.pathToContent;
 const generateArray = (length) => Array.from({ length });
-const baseURLDev = constants.BASE_URL + config.port  + constants.ROUTE.VIEWS_PATH;
+const baseURLDev = constants.BASE_URL + config.port + constants.ROUTE.VIEWS_PATH;
 
 const loadAPIs = async (req, res) => {
 
@@ -42,14 +43,14 @@ const loadAPIs = async (req, res) => {
     if (config.mode === constants.DEV_MODE) {
         const metaDataList = await loadAPIMetaDataList();
         for (const metaData of metaDataList) {
-                let subscriptionPlans = [];
-                subscriptionPlans.push({
-                    displayName: "Sample",
-                    policyName: "Sample",
-                    description: "Sample",
-                    billingPlan: "Sample",
-                    requestCount: "1000",
-                });
+            let subscriptionPlans = [];
+            subscriptionPlans.push({
+                displayName: "Sample",
+                policyName: "Sample",
+                description: "Sample",
+                billingPlan: "Sample",
+                requestCount: "1000",
+            });
             metaData.subscriptionPolicyDetails = subscriptionPlans;
         }
         const templateContent = {
@@ -64,6 +65,7 @@ const loadAPIs = async (req, res) => {
             const tags = req.query.tags;
             const metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
             const apiData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
+            let appList = [];
             let apiTags = [];
             apiData.forEach(api => {
                 if (api.apiInfo.tags) {
@@ -80,6 +82,7 @@ const loadAPIs = async (req, res) => {
                 for (const policy of metaData.subscriptionPolicies) {
                     const subscriptionPlan = await loadSubscriptionPlan(orgID, policy.policyName);
                     subscriptionPlans.push({
+                        policyID: subscriptionPlan.policyID,
                         displayName: subscriptionPlan.displayName,
                         policyName: subscriptionPlan.policyName,
                         description: subscriptionPlan.description,
@@ -88,9 +91,25 @@ const loadAPIs = async (req, res) => {
                     });
                 }
                 metaData.subscriptionPolicyDetails = subscriptionPlans;
+                if (req.user) {
+                    let applications = await adminDao.getApplications(orgID, req.user.sub);
+                    if (applications.length > 0) {
+                        appList = await Promise.all(
+                            applications.map(async (app) => {
+                                const subscription = await adminDao.getAppApiSubscription(orgID, app.APP_ID, metaData.apiReferenceID);
+                                return {
+                                    ...new ApplicationDTO(app),
+                                    subscribed: subscription.length > 0,
+                                };
+                            })
+                        );
+                    }
+                }
+                metaData.applications = appList;
             }
 
             const templateContent = {
+                isAuthenticated: req.isAuthenticated(),
                 apiMetadata: metaDataList,
                 tags: apiTags,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
@@ -99,7 +118,6 @@ const loadAPIs = async (req, res) => {
         } catch (error) {
             console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
             html = constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR;
-
         }
     }
     res.send(html);
