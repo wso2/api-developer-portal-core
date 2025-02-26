@@ -24,7 +24,6 @@ const passport = require('passport');
 const { Strategy: CustomStrategy } = require('passport-custom');
 const apiDao = require('../dao/apiMetadata');
 const APIDTO = require('../dto/apiDTO');
-const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 
 const unsubscribeAPI = async (req, res) => {

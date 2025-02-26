@@ -31,6 +31,7 @@ module.exports = {
     ORG_ID: 'orgID',
     ORG_IDENTIFIER: 'organizationIdentifier',
     ACCESS_TOKEN: 'accessToken',
+    USER_ID: 'sub',
     BASIC_HEADER: 'basicAuthHeader',
     API_VISIBILITY: {
         PUBLIC: 'PUBLIC',
@@ -76,7 +77,11 @@ module.exports = {
         YML: '.yml',
         XML: '.xml'
     },
-
+    TOKEN_TYPES: {
+        API_KEY: 'API_KEY',
+        OAUTH: 'OAUTH',
+        BASIC: 'BASIC'
+    },
     ROUTE: {
         DEV_PORTAL: '/devportal',
         STYLES: '/styles',
@@ -163,6 +168,13 @@ module.exports = {
         VIEW_RETRIEVE_ERROR: "Error while fetching view",
         SUBSCRIPTION_POLICY_CREATE_ERROR: "Error while creating subscription policy",
         SUBSCRIPTION_POLICY_NOT_FOUND: "Subscription policy not found",
+        APPLICATION_CREATE_ERROR: "Error while creating application",
+        APPLICATION_UPDATE_ERROR: "Error while updating application",
+        APPLICATION_DELETE_ERROR: "Error while deleting application",
+        APPLICATION_RETRIEVE_ERROR: "Error while fetching application",
+        SUBSCRIPTION_CREATE_ERROR: "Error while creating subscription",
+        SUBSCRIPTION_RETRIEVE_ERROR: "Error while retrieving subscription",
+        SUBSCRIPTION_DELETE_ERROR: "Error while deleting subscription"
     },
     ERROR_CODE: {
         401: "Unauthenticated",
