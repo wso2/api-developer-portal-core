@@ -27,7 +27,7 @@ const apiDefinition = multer({ storage: storage })
 const { ensureAuthenticated, validateAuthentication, enforceSecuirty } = require('../middlewares/ensureAuthenticated');
 const constants = require('../utils/constants');
 
-router.post('/organizations', adminService.createOrganization);
+router.post('/organizations', validateAuthentication(constants.SCOPES.ADMIN), adminService.createOrganization);
 router.get('/organizations', validateAuthentication(constants.SCOPES.ADMIN), adminService.getOrganizations);
 router.put('/organizations/:orgId', validateAuthentication(constants.SCOPES.ADMIN), adminService.updateOrganization);
 router.get('/organizations/:orgId', enforceSecuirty(constants.SCOPES.ADMIN), devportalService.getOrganization); // S2S Applied 
@@ -39,7 +39,7 @@ router.get('/organizations/:orgId/identityProvider', validateAuthentication(cons
 router.delete('/organizations/:orgId/identityProvider', validateAuthentication(constants.SCOPES.ADMIN), adminService.deleteIdentityProvider);
 
 const upload = multer({ dest: '../.tmp/' });
-router.post('/organizations/:orgId/views/:name/layout', upload.single('file'), adminService.createOrgContent);
+router.post('/organizations/:orgId/views/:name/layout', validateAuthentication(constants.SCOPES.ADMIN), upload.single('file'), adminService.createOrgContent);
 router.put('/organizations/:orgId/views/:name/layout', validateAuthentication(constants.SCOPES.ADMIN), upload.single('file'), adminService.updateOrgContent);
 router.get('/organizations/:orgId/views/:name/layout', devportalService.getOrgContent);
 router.get('/organizations/:orgId/views/:name/layout/:fileType', devportalService.getOrgContent);
