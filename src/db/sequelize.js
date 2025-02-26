@@ -25,7 +25,6 @@ const sequelize = new Sequelize(
     process.env.CHOREO_DEVELOPER_PORTAL_DB_CONNECTION_PASSWORD || config.db.password,
     {
         host: process.env.CHOREO_DEVELOPER_PORTAL_DB_CONNECTION_HOSTNAME || config.db.host,
-        port: process.env.CHOREO_DEVELOPER_PORTAL_DB_CONNECTION_PORT || config.db.port,
         dialect: config.db.dialect,
         logging: false,
         pool: {
