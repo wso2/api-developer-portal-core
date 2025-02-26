@@ -194,6 +194,8 @@ async function subscribe(applicationID, apiId, policyId) {
         if (response.ok) {
             await showAlert('Subscribed successfully!', 'success');
             closeModal('planModal-' + apiId);
+            const url = new URL(window.location.origin + window.location.pathname);
+            window.location.href = url.toString();
         } else {
             console.error('Failed to create application:', responseData);
             await showAlert(`Failed to create application. Please try again.\n${responseData.description}`, 'error');

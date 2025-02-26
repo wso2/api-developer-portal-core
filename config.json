@@ -42,7 +42,7 @@
     "authorizationURL": "https://localhost:9443/oauth2/authorize",
     "tokenURL": "https://127.0.0.1:9443/oauth2/token",
     "userInfoURL": "https://localhost:9443/oauth2/userinfo",
-    "clientId": "",
+    "clientId": "foC0E_ye5WWfNqDE6KOZZzUHHFAa",
     "callbackURL": "https://localhost:3000/ACME/callback",
     "scope": "openid profile",
     "signUpURL": "",

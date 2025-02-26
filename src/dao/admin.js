@@ -660,7 +660,7 @@ const createSubscription = async (orgID, subscription) => {
         const subMapping = await SubscriptionMapping.create({
             APP_ID: subscription.applicationID,
             REFERENCE_ID: subscription.apiId,
-            POLICY_ID: subscription.policyId || 'Unlimited',
+            POLICY_ID: subscription.policyId,
             ORG_ID: orgID,
         });
         return subMapping;

@@ -57,7 +57,15 @@ const loadApplications = async (req, res) => {
             const orgName = req.params.orgName;
             const orgID = await orgIDValue(orgName);
             const applications = await adminDao.getApplications(orgID, req.user.sub)
-            const metaData = applications.map(application => new ApplicationDTO(application));
+            const metaData = await Promise.all(
+                applications.map(async (application) => {
+                    const subApis = await adminDao.getSubscriptions(orgID, application.APP_ID, '');
+                    return {
+                        ...new ApplicationDTO(application),
+                        subscriptionCount: subApis.length // Add subscription count to metadata
+                    };
+                })
+            );
             templateContent = {
                 applicationsMetadata: metaData,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
