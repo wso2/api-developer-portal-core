@@ -49,6 +49,7 @@ function configurePassport(authJsonContent, claimNames) {
             return done(new Error('Access token missing'));
         }
         const decodedJWT = jwt.decode(params.id_token);
+        const decodedAccessToken = jwt.decode(accessToken);
         const firstName = decodedJWT['given_name'] || decodedJWT['nickname'];
         const lastName = decodedJWT['family_name'];
         const organizationID = decodedJWT[claimNames[constants.ROLES.ORGANIZATION_CLAIM]] ? decodedJWT[config.orgIDClaim] : '';
@@ -80,7 +81,8 @@ function configurePassport(authJsonContent, claimNames) {
             [constants.ROLES.ROLE_CLAIM]: roles,
             [constants.ROLES.GROUP_CLAIM]: groups,
             'isAdmin': isAdmin,
-            'isSuperAdmin': isSuperAdmin
+            'isSuperAdmin': isSuperAdmin,
+            [constants.USER_ID]: decodedAccessToken[constants.USER_ID]
         };
         return done(null, profile);
     });

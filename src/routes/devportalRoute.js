@@ -78,6 +78,23 @@ router.put('/organizations/:orgId/labels', validateAuthentication(constants.SCOP
 router.get('/organizations/:orgId/labels', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.retrieveLabels);
 router.delete('/organizations/:orgId/labels', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.deleteLabels);
 
+router.post('/organizations/:orgId/applications', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.createDevPortalApplication);
+router.put('/organizations/:orgId/applications/:appId', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.updateDevPortalApplication);
+router.get('/organizations/:orgId/applications/:appId', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.getDevPortalApplicationDetails);
+router.get('/organizations/:orgId/applications', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.getDevPortalApplications);
+router.delete('/organizations/:orgId/applications/:appId', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.deleteDevPortalApplication);
+
+//store API subscription
+router.post('/organizations/:orgId/subscriptions', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.createSubscription);
+router.get('/organizations/:orgId/subscriptions/:subscriptionId', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.getSubscription);
+router.get('/organizations/:orgId/subscriptions', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.getAllSubscriptions);
+router.delete('/organizations/:orgId/subscriptions/:subscriptionId', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.deleteSubscription);
+
+//store key mapping for devportal app and Control plane apps
+// router.post('/organizations/:orgId/app-key-mapping', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.createDevPortalApplication);
+// router.get('/organizations/:orgId/app-key-mapping/:appId', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.updateDevPortalApplication);
+// router.delete('/organizations/:orgId/app-key-mapping/:appId', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.updateDevPortalApplication);
+
 router.post('/organizations/:orgId/views', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.addView);
 router.put('/organizations/:orgId/views/:name', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.updateView);
 router.get('/organizations/:orgId/views/:name', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.getView);

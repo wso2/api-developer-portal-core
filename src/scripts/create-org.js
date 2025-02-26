@@ -9,17 +9,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const createOrgBtn = document.getElementById('createOrgBtn');
     const cancelAddBtn = document.getElementById('cancelAddBtn');
     const cancelEditBtn = document.getElementById('cancelEditBtn');
-    
-    const editOrgBtn = document.getElementById('editOrgBtn');
+
     // Show form
     createOrgBtn.addEventListener('click', function () {
         orgDefaultContent.style.display = 'none';
         addOrg.style.display = 'block';
-    });
-
-    editOrgBtn.addEventListener('click', function () {
-        orgDefaultContent.style.display = 'none';
-        editOrg.style.display = 'block';
     });
 
     // Hide form (cancel)
@@ -32,8 +26,6 @@ document.addEventListener('DOMContentLoaded', function () {
         orgDefaultContent.style.display = 'block';
         editOrg.style.display = 'none';
     });
-
-
 
     const editButtons = document.querySelectorAll('.edit-btn');
     editButtons.forEach(button => {
@@ -65,6 +57,18 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+
+function showEditForm(id) {
+    const orgDefaultContent = document.getElementById('orgDefaultContent');
+    orgDefaultContent.style.display = 'none';
+    document.getElementById('editForm-' + id).style.display = 'block';
+}
+
+function hideEditForm(id) {
+    document.getElementById('editForm-' + id).style.display = 'none';
+    const orgDefaultContent = document.getElementById('orgDefaultContent');
+    orgDefaultContent.style.display = 'block';
+}
 
 function sanitizeInput(input) {
     const div = document.createElement('div');

@@ -51,6 +51,11 @@ const registerPartials = async (req, res, next) => {
 
 const registerInternalPartials = async (req) => {
 
+  let isAdmin, isSuperAdmin = false;
+  if (req.user) {
+    isAdmin = req.user["isAdmin"];
+    isSuperAdmin = req.user["isSuperAdmin"];
+  }
   const partialsDir = path.join(path.join(require.main.filename, '..', '/pages/partials'));
   const getDirectories = source =>
     fs.readdirSync(source, { withFileTypes: true })
@@ -67,11 +72,13 @@ const registerInternalPartials = async (req) => {
           const partialName = path.basename(file, '.hbs');
           const partialContent = fs.readFileSync(path.join(dir, file), 'utf8');
           hbs.handlebars.registerPartial(partialName, partialContent);
-
+          
           if (partialName === constants.HEADER_PARTIAL_NAME) {
             hbs.handlebars.partials = {
               ...hbs.handlebars.partials,
               header: hbs.handlebars.compile(partialContent)({
+                isAdmin: isAdmin,
+                isSuperAdmin: isSuperAdmin,
                 profile: req.user,
                 baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
               }),
