@@ -172,3 +172,9 @@ async function handleSubscribe(appId, apiName, apiVersion, apiRefId) {
         await showAlert(`An error occurred while subscribing: \n${error.message}`, 'error');
     }
 }
+
+
+function loadSubscriptionPlasnModal(apiHandle) {
+    const modal = document.getElementById('planModal-' + apiHandle);
+    modal.style.display = 'flex';
+}

@@ -40,8 +40,20 @@ const loadAPIs = async (req, res) => {
     const { orgName, viewName } = req.params;
     let html;
     if (config.mode === constants.DEV_MODE) {
+        const metaDataList = await loadAPIMetaDataList();
+        for (const metaData of metaDataList) {
+                let subscriptionPlans = [];
+                subscriptionPlans.push({
+                    displayName: "Sample",
+                    policyName: "Sample",
+                    description: "Sample",
+                    billingPlan: "Sample",
+                    requestCount: "1000",
+                });
+            metaData.subscriptionPolicyDetails = subscriptionPlans;
+        }
         const templateContent = {
-            apiMetadata: await loadAPIMetaDataList(),
+            apiMetadata: metaDataList,
             baseUrl: baseURLDev + viewName
         }
         html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
@@ -50,7 +62,7 @@ const loadAPIs = async (req, res) => {
             const orgID = await adminDao.getOrgId(orgName);
             const searchTerm = req.query.query;
             const tags = req.query.tags;
-            const metaData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
+            const metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
             const apiData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
             let apiTags = [];
             apiData.forEach(api => {
@@ -62,8 +74,24 @@ const loadAPIs = async (req, res) => {
                     });
                 }
             });
+
+            for (const metaData of metaDataList) {
+                let subscriptionPlans = [];
+                for (const policy of metaData.subscriptionPolicies) {
+                    const subscriptionPlan = await loadSubscriptionPlan(orgID, policy.policyName);
+                    subscriptionPlans.push({
+                        displayName: subscriptionPlan.displayName,
+                        policyName: subscriptionPlan.policyName,
+                        description: subscriptionPlan.description,
+                        billingPlan: subscriptionPlan.billingPlan,
+                        requestCount: subscriptionPlan.requestCount,
+                    });
+                }
+                metaData.subscriptionPolicyDetails = subscriptionPlans;
+            }
+
             const templateContent = {
-                apiMetadata: metaData,
+                apiMetadata: metaDataList,
                 tags: apiTags,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
             };
