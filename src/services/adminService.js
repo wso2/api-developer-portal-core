@@ -732,7 +732,6 @@ const createAppKeyMapping = async (req, res) => {
     await sequelize.transaction(async (t) => {
         const { applicationName, apis, tokenType, tokenDetails, provider } = req.body;
         const appIDResponse = await adminDao.getApplicationID(orgID, userID, applicationName);
-        console.log("appIDResponse", appIDResponse);
         const appID = appIDResponse.dataValues.APP_ID;
         let cpApplicationName;
         //all token types bound to one app if shared?
