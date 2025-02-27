@@ -20,7 +20,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (dropdown) {
             card.addEventListener("mouseenter", function () {
-                console.log("mouse enter", subscriptionBox);
                 dropdown.classList.add("show");
                 dropdown.style.display = "block";
                 subscriptionBox.classList.add("subscription-box");
