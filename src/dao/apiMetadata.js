@@ -453,6 +453,7 @@ const createSubscriptionPolicy = async (orgID, policy, t) => {
             DISPLAY_NAME: policy.displayName,
             BILLING_PLAN: policy.billingPlan,
             DESCRIPTION: policy.description,
+            REQUEST_COUNT: policy.requestCount,
             ORG_ID: orgID
         }, { transaction: t });
         return subscriptionPolicyResponse;
@@ -470,7 +471,8 @@ const updateSubscriptionPolicy = async (orgID, policyID, policy, t) => {
             POLICY_NAME: policy.policyName,
             DISPLAY_NAME: policy.displayName,
             BILLING_PLAN: policy.billingPlan,
-            DESCRIPTION: policy.description
+            DESCRIPTION: policy.description,
+            REQUEST_COUNT: policy.requestCount,
         }, {
             where: {
                 POLICY_ID: policyID,
