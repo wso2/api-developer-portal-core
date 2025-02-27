@@ -613,6 +613,26 @@ const getApplication = async (orgID, appID, userID) => {
     }
 }
 
+const getApplicationID = async (orgID, userID, appName) => {
+
+    try {
+        return await Application.findOne(
+            {   
+                attributes: ['APP_ID'],
+                where: {
+                    ORG_ID: orgID,
+                    CREATED_BY: userID,
+                    NAME: appName
+                }
+            });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
 const getApplications = async (orgID, userID) => {
 
     try {
@@ -777,6 +797,37 @@ const getAPISubscriptionReference = async (orgID, appID, apiID, t) => {
     }
 }
 
+const createAppKeyMapping = async (appKeyMap, t) => {
+    
+    try {
+        const appKeyMapping = await ApplicationKeyMapping.create(appKeyMap, { transaction: t });
+        return appKeyMapping;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getKeyMapping = async (orgID, appID, t) => {
+
+    try {
+        return await ApplicationKeyMapping.findAll(
+            {
+                where: {
+                    ORG_ID: orgID,
+                    APP_ID: appID
+                }
+            }, { transaction: t });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
 module.exports = {
     createOrganization,
     getOrganization,
@@ -808,5 +859,8 @@ module.exports = {
     getSubscriptions,
     deleteSubscription,
     deleteAppKeyMapping,
-    getAPISubscriptionReference
+    getAPISubscriptionReference,
+    getApplicationID,
+    createAppKeyMapping,
+    getKeyMapping
 };

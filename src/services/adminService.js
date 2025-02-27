@@ -725,6 +725,87 @@ const deleteSubscription = async (req, res) => {
     }
 }
 
+const createAppKeyMapping = async (req, res) => {
+
+    const orgID = req.params.orgId;
+    const userID = req[constants.USER_ID];
+    await sequelize.transaction(async (t) => {
+        const { applicationName, apis, tokenType, tokenDetails, provider } = req.body;
+        const appIDResponse = await adminDao.getApplicationID(orgID, userID, applicationName);
+        console.log("appIDResponse", appIDResponse);
+        const appID = appIDResponse.dataValues.APP_ID;
+        let cpApplicationName;
+        //all token types bound to one app if shared?
+        if (apis.length > 1) {
+            cpApplicationName = applicationName + "_" + tokenType;
+        } else if (apis.length == 1) {
+            cpApplicationName = applicationName + "_" + apis[0].apiName + "_" + tokenType;
+        }
+        try {
+            //create control plane application
+            const cpAppCreationResponse = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications`, {
+                'Content-Type': 'application/json'
+            }, {
+                name: cpApplicationName,
+                throttlingPolicy: 'Unlimited',
+                tokenType: 'JWT',
+                groups: [],
+                attributes: {},
+                subscriptionScopes: []
+            });
+            const cpAppID = cpAppCreationResponse.applicationId;
+            // add subscription to control plane for each api
+            const apiSubscriptions = [];
+            for (const api of apis) {
+                const requestBody = {
+                    apiId: api.apiRefId,
+                    applicationId: cpAppID,
+                    throttlingPolicy: api.policyName
+                };
+                const cpSubscribeResponse = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, requestBody);
+                apiSubscriptions.push(cpSubscribeResponse);
+            }
+            //create app key mapping
+            //TODO: only oauth key shared scenario is considered, need to handle other token types 
+            for (const apiSubscription of apiSubscriptions) {
+                const appKeyMappping = {
+                    ORG_ID: orgID,
+                    APP_ID: appID,
+                    CP_APP_REF: cpAppCreationResponse.applicationId,
+                    API_REF_ID: apiSubscription.apiId,
+                    SUBSCRIPTION_REF_ID: apiSubscription.subscriptionId,
+                    SHARED_TOKEN: true,
+                    TOKEN_TYPE: constants.TOKEN_TYPES.OAUTH
+                }
+                await adminDao.createAppKeyMapping(appKeyMappping, t);
+            }
+            //generate oauth key
+            const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${cpAppID}/generate-keys`, {}, tokenDetails);
+            res.status(200).json(responseData);
+        } catch (error) {
+            console.error(`${constants.ERROR_MESSAGE.KEY_MAPPING_CREATE_ERROR}`, error);
+            util.handleError(res, error);
+        }
+    });
+}
+
+const retriveAppKeyMappings = async (req, res) => {
+    
+    const {orgId, appId }  = req.param;
+    const userID = req[constants.USER_ID]
+    try {
+        const appIDResponse = await adminDao.getApplication(orgId, appId, userID);
+        if (!appIDResponse) {
+            throw new CustomError(404, "Records Not Found", 'Application not found');
+        }
+        const appKeyMappings = await adminDao.getKeyMapping(orgID, appId);
+        res.status(200).send(appKeyMappings);
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.KEY_MAPPING_RETRIEVE_ERROR}`, error);
+        util.handleError(res, error);
+    }
+}
+
 
 module.exports = {
     createOrganization,
@@ -755,5 +836,7 @@ module.exports = {
     createSubscription,
     getSubscription,
     getAllSubscriptions,
-    deleteSubscription
+    deleteSubscription,
+    createAppKeyMapping,
+    retriveAppKeyMappings
 };

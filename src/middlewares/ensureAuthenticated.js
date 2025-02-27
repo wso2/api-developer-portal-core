@@ -39,7 +39,7 @@ function enforceSecuirty(scope) {
                 }
                 //set user ID
                 const decodedAccessToken = jwt.decode(token);
-                req[constants.USER_ID] = decodedAccessToken[constants.USER_ID]
+                req[constants.USER_ID] = decodedAccessToken[constants.USER_ID];
             } else {
                 // Handle MTLS flow
                 const organization = req.headers.organization;

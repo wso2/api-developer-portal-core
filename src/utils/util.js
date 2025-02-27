@@ -29,6 +29,7 @@ const https = require('https');
 const config = require(process.cwd() + '/config.json');
 const { body } = require('express-validator');
 const { Sequelize } = require('sequelize');
+const jwt = require('jsonwebtoken');
 
 // Function to load and convert markdown file to HTML
 function loadMarkdown(filename, dirName) {
@@ -263,7 +264,7 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
     headers = headers || {};
     if (req.user) {
         headers.Authorization = "Bearer " + req.user.accessToken;
-    } else { 
+    } else {
         headers.Authorization = req.headers.authorization;
     }
     let httpsAgent;
@@ -289,7 +290,11 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         if (body) {
             options.data = body;
         }
-
+        if (config.apendOrgId) {
+            let accessToken = headers.Authorization.split(" ")[1];
+            decodedToken = jwt.decode(accessToken);
+            url = url + `?${constants.ORG_ID}=${decodedToken.organization.uuid}`;
+        }
         const response = await axios(url, options);
         return response.data;
     } catch (error) {

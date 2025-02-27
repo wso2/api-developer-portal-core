@@ -7,6 +7,7 @@
     "disableCertValidation": true,
     "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
   },
+  "apendOrgId": true,
   "serverCerts": {
     "pathToCert": "certs/client-truststore.pem",
     "pathToPK": "certs/private-key.pem",
