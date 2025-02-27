@@ -799,7 +799,6 @@ const getAPISubscriptionReference = async (orgID, appID, apiID, t) => {
 }
 
 const getSubscribedAPIs = async (orgID, appID) => {
-    console.log(orgID, appID)
     try {
         const subscribedAPIs = await APIMetadata.findAll({
             where: { ORG_ID: orgID  },
