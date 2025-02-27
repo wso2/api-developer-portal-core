@@ -422,7 +422,7 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                 fileType = "style"
                 if (file.name === "main.css") {
                     strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g,
-                        `@import url("${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
+                        `@import url("${config.baseUrl}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
