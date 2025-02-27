@@ -1,4 +1,15 @@
 dependencies:
-  connectionReferences:
-  - name: developer-portal-db-connection
-    resourceRef: database:Godzilla-PostgreSQL/developer-portal
+    serviceReferences:
+    - name: database:developer-portal
+      connectionConfig: 01eff39c-4895-1cfe-ab10-7dba01cf85d6
+      env: 
+      - from: HostName
+        to: CHOREO_DEVELOPER_PORTAL_DB_CONNECTION_HOSTNAME
+      - from: Port
+        to: CHOREO_DEVELOPER_PORTAL_DB_CONNECTION_PORT
+      - from: Username
+        to: CHOREO_DEVELOPER_PORTAL_DB_CONNECTION_USERNAME
+      - from: Password
+        to: CHOREO_DEVELOPER_PORTAL_DB_CONNECTION_PASSWORD
+      - from: DatabaseName
+        to: CHOREO_DEVELOPER_PORTAL_DB_CONNECTION_DATABASENAME
