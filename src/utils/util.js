@@ -428,7 +428,7 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
             } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                 fileType = "layout"
                 if (file.name === "main.hbs") {
-                    strContent = strContent.replace(/\/styles\//g, `${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=`);
+                    strContent = strContent.replace(/\/styles\//g, `${config.baseUrl}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=`);
                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
