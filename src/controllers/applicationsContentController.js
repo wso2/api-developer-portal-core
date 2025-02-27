@@ -26,6 +26,7 @@ const util = require('../utils/util');
 const filePrefix = config.pathToContent;
 const controlPlaneUrl = config.controlPlane.url;
 const { ApplicationDTO } = require('../dto/application');
+const APIDTO = require('../dto/apiDTO');
 
 const baseURLDev = constants.BASE_URL + config.port  + constants.ROUTE.VIEWS_PATH;
 
@@ -62,7 +63,7 @@ const loadApplications = async (req, res) => {
                     const subApis = await adminDao.getSubscriptions(orgID, application.APP_ID, '');
                     return {
                         ...new ApplicationDTO(application),
-                        subscriptionCount: subApis.length // Add subscription count to metadata
+                        subscriptionCount: subApis.length
                     };
                 })
             );
@@ -156,86 +157,90 @@ const loadApplication = async (req, res) => {
         } else {
             const orgName = req.params.orgName;
             const orgID = await orgIDValue(orgName);
-            metaData = await getAPIMApplication(req, applicationId);
-            const allApis = await getAllAPIs(req);
-            const subApis = await getSubscribedApis(req, applicationId);
-            const subApiMap = new Map();
-            subApis.list.forEach(subApi => subApiMap.set(subApi.apiId, { policy: subApi.throttlingPolicy, id: subApi.subscriptionId }));
-            const apiList = [];
+            metaData = new ApplicationDTO(await adminDao.getApplication(orgID, applicationId, req.user.sub));
+            const subscriptions = await adminDao.getSubscribedAPIs(orgID, applicationId);
+            console.log("Subscriptions", subscriptions);
+            let subList = [];
+            if (subscriptions.length > 0) {
+                subList = subscriptions.map((sub) => new APIDTO(sub));
+            }
+            // const subApiMap = new Map();
+            // subApis.list.forEach(subApi => subApiMap.set(subApi.apiId, { policy: subApi.throttlingPolicy, id: subApi.subscriptionId }));
+            // const apiList = [];
 
-            allApis.list.forEach(api => {
-                let subscriptionPolicies = [];
-                let subscribedPolicy;
+            // allApis.list.forEach(api => {
+            //     let subscriptionPolicies = [];
+            //     let subscribedPolicy;
 
-                if (subApiMap.has(api.id)) {
-                    subscribedPolicy = subApiMap.get(api.id)
-                } else {
-                    api.throttlingPolicies.forEach(policy => {
-                        subscriptionPolicies.push(policy);
-                    });
-                }
+            //     if (subApiMap.has(api.id)) {
+            //         subscribedPolicy = subApiMap.get(api.id)
+            //     } else {
+            //         api.throttlingPolicies.forEach(policy => {
+            //             subscriptionPolicies.push(policy);
+            //         });
+            //     }
 
-                apiList.push({
-                    name: api.name,
-                    version: api.version,
-                    id: api.id,
-                    isSubAvailable: api.isSubscriptionAvailable,
-                    subscriptionPolicies: subscriptionPolicies,
-                    subscribedPolicy: subscribedPolicy
-                });
+            //     apiList.push({
+            //         name: api.name,
+            //         version: api.version,
+            //         id: api.id,
+            //         isSubAvailable: api.isSubscriptionAvailable,
+            //         subscriptionPolicies: subscriptionPolicies,
+            //         subscribedPolicy: subscribedPolicy
+            //     });
 
-            });
+            // });
 
-            kMmetaData = await getAPIMKeyManagers(req);
-            kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
-            let applicationKeyList = await getApplicationKeys(req, applicationId);
-            let productionKeys = [];
-            let sandboxKeys = [];
+            // kMmetaData = await getAPIMKeyManagers(req);
+            // kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
+            // let applicationKeyList = await getApplicationKeys(req, applicationId);
+            // let productionKeys = [];
+            // let sandboxKeys = [];
 
-            applicationKeyList?.list?.map(key => {
-                let client_name;
-                if (key?.additionalProperties?.client_name) {
-                    client_name = key.additionalProperties.client_name;
-                }
-                let keyData = {
-                    keyManager: key.keyManager,
-                    consumerKey: key.consumerKey,
-                    consumerSecret: key.consumerSecret,
-                    keyMappingId: key.keyMappingId,
-                    keyType: key.keyType,
-                    supportedGrantTypes: key.supportedGrantTypes,
-                    additionalProperties: key.additionalProperties,
-                    clientName: client_name
-                };
-                if (key.keyType === constants.KEY_TYPE.PRODUCTION) {
-                    productionKeys.push(keyData);
-                } else {
-                    sandboxKeys.push(keyData);
-                }
-                return keyData;
-            }) || [];
+            // applicationKeyList?.list?.map(key => {
+            //     let client_name;
+            //     if (key?.additionalProperties?.client_name) {
+            //         client_name = key.additionalProperties.client_name;
+            //     }
+            //     let keyData = {
+            //         keyManager: key.keyManager,
+            //         consumerKey: key.consumerKey,
+            //         consumerSecret: key.consumerSecret,
+            //         keyMappingId: key.keyMappingId,
+            //         keyType: key.keyType,
+            //         supportedGrantTypes: key.supportedGrantTypes,
+            //         additionalProperties: key.additionalProperties,
+            //         clientName: client_name
+            //     };
+            //     if (key.keyType === constants.KEY_TYPE.PRODUCTION) {
+            //         productionKeys.push(keyData);
+            //     } else {
+            //         sandboxKeys.push(keyData);
+            //     }
+            //     return keyData;
+            // }) || [];
 
 
-            kMmetaData.forEach(keyManager => {
-                productionKeys.forEach(productionKey => {
-                    if (productionKey.keyManager === keyManager.name) {
-                        keyManager.productionKeys = productionKey;
-                    }
-                });
-                sandboxKeys.forEach(sandboxKey => {
-                    if (sandboxKey.keyManager === keyManager.name) {
-                        keyManager.sandboxKeys = sandboxKey;
-                    }
-                });
-            });
-
+            // kMmetaData.forEach(keyManager => {
+            //     productionKeys.forEach(productionKey => {
+            //         if (productionKey.keyManager === keyManager.name) {
+            //             keyManager.productionKeys = productionKey;
+            //         }
+            //     });
+            //     sandboxKeys.forEach(sandboxKey => {
+            //         if (sandboxKey.keyManager === keyManager.name) {
+            //             keyManager.sandboxKeys = sandboxKey;
+            //         }
+            //     });
+            // });
+            console.log("Subscriptions", subList);
             templateContent = {
                 applicationMetadata: metaData,
-                keyManagersMetadata: kMmetaData,
+                // keyManagersMetadata: kMmetaData,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-                apis: apiList,
-                productionKeys: productionKeys,
-                sandboxKeys: sandboxKeys
+                subscriptions: subList,
+                // productionKeys: productionKeys,
+                // sandboxKeys: sandboxKeys
             }
 
             const templateResponse = await templateResponseValue('application');
