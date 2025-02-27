@@ -96,7 +96,7 @@ const loadAPIs = async (req, res) => {
                     if (applications.length > 0) {
                         appList = await Promise.all(
                             applications.map(async (app) => {
-                                const subscription = await adminDao.getAppApiSubscription(orgID, app.APP_ID, metaData.apiReferenceID);
+                                const subscription = await adminDao.getAppApiSubscription(orgID, app.APP_ID, metaData.API_ID);
                                 return {
                                     ...new ApplicationDTO(app),
                                     subscribed: subscription.length > 0,

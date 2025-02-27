@@ -21,6 +21,7 @@ const { IdentityProvider } = require('../models/identityProvider');
 const { Application, ApplicationKeyMapping, SubscriptionMapping } = require('../models/application');
 const Provider = require('../models/provider');
 const apiDao = require('./apiMetadata');
+const { APIMetadata } = require('../models/apiMetadata');
 
 const createOrganization = async (orgData, t) => {
 
@@ -84,7 +85,8 @@ const getOrgId = async (orgName) => {
             where: {
                 [Sequelize.Op.or]: [
                     { ORG_NAME: orgName },
-                    { ORG_HANDLE: orgName }
+                    { ORG_HANDLE: orgName },
+                    { ORGANIZATION_IDENTIFIER: orgName }
                 ]
             }
         });
@@ -699,7 +701,7 @@ const getSubscriptions = async (orgID, appID, apiID) => {
                     ORG_ID: orgID,
                     [Sequelize.Op.or]: [
                         { APP_ID: appID },
-                        { REFERENCE_ID: apiID }
+                        { API_ID: apiID }
                     ]
                 }
             });
@@ -778,7 +780,7 @@ const deleteAppKeyMapping = async (orgID, appID, apiID, t) => {
 const getAPISubscriptionReference = async (orgID, appID, apiID, t) => {
 
     try {
-        const subscriptionReference =  await ApplicationKeyMapping.findAll(
+        const subscriptionReference = await ApplicationKeyMapping.findAll(
             {
                 attributes: ['SUBSCRIPTION_REF_ID'],
                 where: {
@@ -787,7 +789,28 @@ const getAPISubscriptionReference = async (orgID, appID, apiID, t) => {
                     API_REF_ID: apiID
                 }
             }, { transaction: t });
-            return subscriptionReference;
+        return subscriptionReference;
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getSubscribedAPIs = async (orgID, appID) => {
+    try {
+        const subscribedAPIs = await APIMetadata.findAll({
+            where: { ORG_ID: orgID  },
+            include: [{
+                model: Application,
+                where: { APP_ID: appID },
+                required: true,
+                through: { attributes: [] }
+            }]
+        });
+        console.log(subscribedAPIs)
+        return subscribedAPIs;
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -828,5 +851,6 @@ module.exports = {
     deleteSubscription,
     deleteAppKeyMapping,
     getAPISubscriptionReference,
-    getAppApiSubscription
+    getAppApiSubscription,
+    getSubscribedAPIs
 };
