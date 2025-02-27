@@ -159,7 +159,6 @@ const loadApplication = async (req, res) => {
             const orgID = await orgIDValue(orgName);
             metaData = new ApplicationDTO(await adminDao.getApplication(orgID, applicationId, req.user.sub));
             const subscriptions = await adminDao.getSubscribedAPIs(orgID, applicationId);
-            console.log("Subscriptions", subscriptions);
             let subList = [];
             if (subscriptions.length > 0) {
                 subList = subscriptions.map((sub) => new APIDTO(sub));
@@ -233,7 +232,6 @@ const loadApplication = async (req, res) => {
             //         }
             //     });
             // });
-            console.log("Subscriptions", subList);
             templateContent = {
                 applicationMetadata: metaData,
                 // keyManagersMetadata: kMmetaData,
