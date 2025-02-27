@@ -20,12 +20,12 @@ const { Sequelize } = require('sequelize');
 const config = require(process.cwd() + '/config.json');
 
 const sequelize = new Sequelize(
-    process.env.CHOREO_DEVELOPER_PORTAL_DB_CONNECTION_DATABASENAME || config.db.database,
-    process.env.CHOREO_DEVELOPER_PORTAL_DB_CONNECTION_USERNAME || config.db.username,
-    process.env.CHOREO_DEVELOPER_PORTAL_DB_CONNECTION_PASSWORD || config.db.password,
+    config.db.database,
+    config.db.username,
+    config.db.password,
     {
-        host: process.env.CHOREO_DEVELOPER_PORTAL_DB_CONNECTION_HOSTNAME || config.db.host,
-        port: process.env.CHOREO_DEVELOPER_PORTAL_DB_CONNECTION_PORT || config.db.port,
+        host: config.db.host,
+        port: config.db.port,
         dialect: config.db.dialect,
         logging: false,
         pool: {
