@@ -25,25 +25,11 @@
             {{name}}
           </a>
         </h5>
-        <div class='row list-items'>
-          <div class='applicationlist-tags'>
-            {{#if (eq status 'APPROVED')}}
-            <span class='badge badge-custom1'>{{status}}</span>
-            {{else}}
-              <span class='badge badge-custom2'>{{status}}</span>
-            {{/if}}
-          </div>
-        </div>
         <div class='application-card-meta'>
           <p>
             <i class='bi bi-grid'></i>
               Subscriptions:
               {{subscriptionCount}}
-          </p>
-          <p>
-            <i class='bi bi-speedometer2'></i>
-              Throttling Policy:
-              {{throttlingPolicy}}
           </p>
         </div>
         <div class="application-card-actions">

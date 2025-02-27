@@ -22,9 +22,9 @@ const controlPlaneUrl = config.controlPlane.url;
 const util = require('../utils/util');
 const passport = require('passport');
 const { Strategy: CustomStrategy } = require('passport-custom');
-const apiDao = require('../dao/apiMetadata');
-const APIDTO = require('../dto/apiDTO');
+const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
+const { ApplicationDTO } = require('../dto/application');
 
 const unsubscribeAPI = async (req, res) => {
     try {
@@ -38,28 +38,8 @@ const unsubscribeAPI = async (req, res) => {
 
 const subscribeAPI = async (req, res) => {
     try {
-        const apiRefId = req.body.apiRefId;
-        let condition;
-        if (apiRefId) {
-            condition = {
-                REFERENCE_ID: apiRefId,
-                ORG_ID: req.user[constants.ORG_ID]
-            };
-        } else {
-            condition = {
-                API_NAME: req.body.apiName,
-                API_VERSION: req.body.apiVersion,
-                ORG_ID: req.user[constants.ORG_ID],
-            };
-        }
-        const metaData = await apiDao.getAPIMetadataByCondition(condition);
-        const apiId = new APIDTO(metaData[0]).apiReferenceID;
-        const requestBody = {
-            apiId,
-            applicationId: req.body.applicationId,
-            throttlingPolicy: req.body.throttlingPolicy,
-        };
-        res.send(await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, requestBody));
+        const orgID = await adminDao.getOrgId(req.user[constants.ROLES.ORGANIZATION_CLAIM]);
+        return res.send(await adminDao.createSubscription(orgID, req.body));
     } catch (error) {
         console.error("Error occurred while subscribing to API", error);
         util.handleError(res, error);
@@ -72,25 +52,9 @@ const subscribeAPI = async (req, res) => {
 
 const saveApplication = async (req, res) => {
     try {
-        let { name, throttlingPolicy, description } = req.body;
-
-        if (!throttlingPolicy) {
-            throttlingPolicy = 'Unlimited';
-        }
-
-        const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications`, {
-            'Content-Type': 'application/json'
-        }, {
-            name,
-            throttlingPolicy,
-            description,
-            tokenType: 'JWT',
-            groups: [],
-            attributes: {},
-            subscriptionScopes: []
-        });
-        res.status(200).json(responseData);
-
+        const orgID = await adminDao.getOrgId(req.user[constants.ROLES.ORGANIZATION_CLAIM]);
+        const application = await adminDao.createApplication(orgID, req.user.sub, req.body);
+        return res.status(201).json(new ApplicationDTO(application.dataValues));
     } catch (error) {
         console.error("Error occurred while creating the application", error);
         util.handleError(res, error);

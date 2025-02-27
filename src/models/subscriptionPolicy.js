@@ -41,6 +41,10 @@ const SubscriptionPolicy = sequelize.define('DP_SUBSCRIPTION_POLICY', {
     DESCRIPTION: {
         type: DataTypes.STRING,
         allowNull: true
+    },
+    REQUEST_COUNT: {
+        type: DataTypes.STRING,
+        allowNull: true
     }
 }, {
     timestamps: false,

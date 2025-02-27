@@ -711,6 +711,25 @@ const getSubscriptions = async (orgID, appID, apiID) => {
     }
 }
 
+const getAppApiSubscription = async (orgID, appID, apiID) => {
+
+    try {
+        return await SubscriptionMapping.findAll(
+            {
+                where: {
+                    ORG_ID: orgID,
+                    APP_ID: appID,
+                    REFERENCE_ID: apiID
+                }
+            });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
 const deleteSubscription = async (orgID, subID, t) => {
 
     try {
@@ -808,5 +827,6 @@ module.exports = {
     getSubscriptions,
     deleteSubscription,
     deleteAppKeyMapping,
-    getAPISubscriptionReference
+    getAPISubscriptionReference,
+    getAppApiSubscription
 };

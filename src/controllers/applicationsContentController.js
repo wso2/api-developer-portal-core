@@ -25,6 +25,7 @@ const adminDao = require('../dao/admin');
 const util = require('../utils/util');
 const filePrefix = config.pathToContent;
 const controlPlaneUrl = config.controlPlane.url;
+const { ApplicationDTO } = require('../dto/application');
 
 const baseURLDev = constants.BASE_URL + config.port  + constants.ROUTE.VIEWS_PATH;
 
@@ -55,7 +56,16 @@ const loadApplications = async (req, res) => {
         } else {
             const orgName = req.params.orgName;
             const orgID = await orgIDValue(orgName);
-            metaData = await getAPIMApplications(req);
+            const applications = await adminDao.getApplications(orgID, req.user.sub)
+            const metaData = await Promise.all(
+                applications.map(async (application) => {
+                    const subApis = await adminDao.getSubscriptions(orgID, application.APP_ID, '');
+                    return {
+                        ...new ApplicationDTO(application),
+                        subscriptionCount: subApis.length // Add subscription count to metadata
+                    };
+                })
+            );
             templateContent = {
                 applicationsMetadata: metaData,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
@@ -83,11 +93,6 @@ async function getMockApplications() {
     const mockApplicationsMetaDataPath = path.join(process.cwd(), filePrefix + '../mock/Applications', 'applications.json');
     const mockApplicationsMetaData = JSON.parse(fs.readFileSync(mockApplicationsMetaDataPath, 'utf-8'));
     return mockApplicationsMetaData.list;
-}
-
-async function getAPIMApplications(req) {
-    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/applications', null, null);
-    return responseData.list;
 }
 
 // ***** Load Throttling Policies *****
