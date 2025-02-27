@@ -40,7 +40,7 @@ router.delete('/organizations/:orgId/identityProvider', validateAuthentication(c
 
 const upload = multer({ dest: '../.tmp/' });
 router.post('/organizations/:orgId/views/:name/layout', upload.single('file'), adminService.createOrgContent);
-router.put('/organizations/:orgId/views/:name/layout', validateAuthentication(constants.SCOPES.ADMIN), upload.single('file'), adminService.updateOrgContent);
+router.put('/organizations/:orgId/views/:name/layout', upload.single('file'), adminService.updateOrgContent);
 router.get('/organizations/:orgId/views/:name/layout', devportalService.getOrgContent);
 router.get('/organizations/:orgId/views/:name/layout/:fileType', devportalService.getOrgContent);
 router.delete('/organizations/:orgId/views/:name/layout', validateAuthentication(constants.SCOPES.ADMIN), adminService.deleteOrgContent);
