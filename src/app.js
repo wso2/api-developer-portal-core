@@ -23,6 +23,9 @@ const session = require('express-session');
 const crypto = require('crypto');
 const path = require('path');
 const http = require('http');
+const https = require('https');
+const fs = require('fs');
+const chalk = require('chalk');
 const authRoute = require('./routes/authRoute');
 const devportalRoute = require('./routes/devportalRoute');
 const orgContent = require('./routes/orgContentRoute');
@@ -148,15 +151,56 @@ if (config.mode === constants.DEV_MODE) {
 }
 
 const PORT = process.env.PORT || config.defaultPort;
-http.createServer(app).listen(PORT, '0.0.0.0', () => {
-    console.log(`Developer Portal V2 is running on port ${PORT}`);
-    console.log(`Mode: ${config.mode}`);
-});
+if (config.choreoExtended) {
+    http.createServer(app).listen(PORT, '0.0.0.0', () => {
+        console.log('\n' + chalk.green.bold(`Choreo Extended Developer Portal V2 is running on port ${PORT}`) + '\n');
+        logStartupInfo();
+    });
 
+} else {
+    try {
+        const certPath = path.join(process.cwd(), config.serverCerts.pathToCert);
+        const keyPath = path.join(process.cwd(), config.serverCerts.pathToPK);
+        const caPath = path.join(process.cwd(), config.serverCerts.pathToCA);
+
+        const serverCert = fs.readFileSync(certPath);
+        const serverKey = fs.readFileSync(keyPath);
+        const caCert = fs.readFileSync(caPath);
+
+        https.createServer({
+            key: serverKey,
+            cert: serverCert,
+            ca: caCert, 
+            requestCert: true,  
+            rejectUnauthorized: false  
+        }, app).listen(PORT, () => {
+            console.log('\n' + chalk.green.bold(`Developer Portal V2 is running on port ${PORT}`) + '\n');
+            logStartupInfo();
+        });
+
+    } catch (err) {
+        console.error('\n' + chalk.red.bold('Error setting up HTTPS server:') + '\n', chalk.red(err.message) + '\n');
+    }
+}
+
+const logStartupInfo = () => {
+    console.log('\n' + chalk.cyan.bold(`Mode: ${config.mode}`) + '\n');
+
+    if (config.mode === constants.DEV_MODE) {
+        console.log('\n' + chalk.yellow('⚠️  Since you are in DEV mode...') + '\n');
+        console.log(chalk.greenBright('✅ Ensure that the default content is correctly available at the configured "pathToContent".') + '\n');
+        console.log(chalk.greenBright('✅ The "Mock" folder must exist in the same root directory as "pathToContent".') + '\n');
+    }
+
+    console.log(chalk.blue(`🔗 Visit: ${chalk.underline(config.baseUrl + (config.mode === constants.DEV_MODE ? "/views/default" : "<organization>/views/default"))}`) + '\n');
+};
+
+// Handle Uncaught Exceptions
 process.on('uncaughtException', (err) => {
-    console.error('Uncaught exception:', err);
+    console.error('\n' + chalk.bgRed.white.bold(' Uncaught Exception ') + '\n', chalk.red(err.stack || err.message) + '\n');
 });
 
+// Handle Unhandled Rejections
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled rejection at:', promise, 'reason:', reason);
+    console.error('\n' + chalk.bgRed.white.bold(' Unhandled Rejection ') + '\n', chalk.red('Promise:', promise, '\nReason:', reason) + '\n');
 });
