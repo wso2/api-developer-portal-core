@@ -4,7 +4,6 @@ const collapseBtn = document.getElementById('collapseBtn');
 collapseBtn.addEventListener('click', () => {
     sidebar.classList.toggle('collapsed');
 
-    console.log(sidebar.classList.contains('collapsed'));
     if (sidebar.classList.contains('collapsed')) {
         arrowIcon.src = "/images/arrow-left.svg";
     } else {
