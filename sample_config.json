@@ -6,10 +6,12 @@
     "dbSslDialectOption": false,
     "resourceLoadFromBaseUrl": false,
     "mtlsLessCommunication" : {
-      "enabled": false,
-      "key-type": "x-wso2-api-key",
-      "key-value": "x-wso2-api-key"
-    }
+      "enabled": true,
+      "keyType": "x-wso2-api-key",
+      "keyValue": "x-wso2-api-key"
+    },
+    "disabledRoleValidation": true,
+    "ignoreReturnToNullScenario": true
   },
   "pathToContent": "./resources/default-layout/",
   "mode": "production",

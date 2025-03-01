@@ -127,18 +127,20 @@ const ensureAuthenticated = async (req, res, next) => {
                         return res.send("User not authorized to access organization");
                     }
                 }
-                if (ensurePermission(req.originalUrl, role, req)) {
-                    console.log('User is authorized');
-                    return next();
-                } else {
-                    console.log('User is not authorized');
-                    if (req.params.orgName === undefined) {
-                        return res.send("User unauthorized");
+                if (!config.advanced.disabledRoleValidation) {
+                    if (ensurePermission(req.originalUrl, role, req)) {
+                        console.log('User is authorized');
+                        return next();
                     } else {
-                        console.log('Redirecting')
-                        return res.send("User unauthorized");
+                        console.log('User is not authorized');
+                        if (req.params.orgName === undefined) {
+                            return res.send("User unauthorized");
+                        } else {
+                            console.log('Redirecting')
+                            return res.send("User unauthorized");
+                        }
                     }
-                }
+                }     
             }
             return next();
         } else {
