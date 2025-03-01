@@ -599,7 +599,7 @@ const updateApplication = async (orgID, appID, userID, appData) => {
 const getApplication = async (orgID, appID, userID) => {
 
     try {
-        return await Application.findOne(
+        const application =  await Application.findOne(
             {
                 where: {
                     ORG_ID: orgID,
@@ -607,6 +607,7 @@ const getApplication = async (orgID, appID, userID) => {
                     CREATED_BY: userID
                 }
             });
+        return application;
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -735,13 +736,14 @@ const getSubscriptions = async (orgID, appID, apiID) => {
 
 const getAppApiSubscription = async (orgID, appID, apiID) => {
 
+    console.log(orgID, appID, apiID)
     try {
         return await SubscriptionMapping.findAll(
             {
                 where: {
                     ORG_ID: orgID,
                     APP_ID: appID,
-                    REFERENCE_ID: apiID
+                    API_ID: apiID
                 }
             });
     } catch (error) {
@@ -834,12 +836,20 @@ const createAppKeyMapping = async (appKeyMap, t) => {
 const getKeyMapping = async (orgID, appID, t) => {
 
     try {
-        return await ApplicationKeyMapping.findAll(
+        return await Application.findOne(
             {
                 where: {
                     ORG_ID: orgID,
                     APP_ID: appID
-                }
+                },
+                include: [
+                    {
+                        model: ApplicationKeyMapping,
+                        where: {
+                            APP_ID: appID
+                        }
+                    }
+                ]
             }, { transaction: t });
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
@@ -849,6 +859,7 @@ const getKeyMapping = async (orgID, appID, t) => {
     }
 }
 
+
 const getSubscribedAPIs = async (orgID, appID) => {
     try {
         const subscribedAPIs = await APIMetadata.findAll({
@@ -857,10 +868,9 @@ const getSubscribedAPIs = async (orgID, appID) => {
                 model: Application,
                 where: { APP_ID: appID },
                 required: true,
-                through: { attributes: [] }
+                through: { attributes: ['POLICY_ID'] }
             }]
         });
-        console.log(subscribedAPIs)
         return subscribedAPIs;
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {

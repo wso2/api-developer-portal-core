@@ -30,13 +30,11 @@ const jwt = require('jsonwebtoken');
 function enforceSecuirty(scope) {
     return async function (req, res, next) {
         try {
-            const authHeader = req.headers.authorization;
-            if (authHeader && authHeader.startsWith("Bearer ")) {
-                const token = authHeader.split(" ")[1];
-                if (token) {
-                    // TODO: Implement organization extraction logic
-                    validateAuthentication(scope)(req, res, next);
-                }
+            const token = accessTokenPresent(req);
+            if (token) {
+                // TODO: Implement organization extraction logic
+                validateAuthentication(scope)(req, res, next);
+
                 //set user ID
                 const decodedAccessToken = jwt.decode(token);
                 req[constants.USER_ID] = decodedAccessToken[constants.USER_ID];
@@ -53,6 +51,16 @@ function enforceSecuirty(scope) {
             return res.status(500).json({ error: "Internal Server Error" });
         }
     }
+}
+
+function accessTokenPresent(req) {
+
+    if (req.isAuthenticated() && req.user) {
+        accessToken = req.user[constants.ACCESS_TOKEN];
+    } else {
+        accessToken = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    }
+    return accessToken;
 }
 
 const ensurePermission = (currentPage, role, req) => {
@@ -96,6 +104,11 @@ const ensureAuthenticated = async (req, res, next) => {
         }
         let role;
         if (req.isAuthenticated()) {
+            const token = accessTokenPresent(req);
+            if (token) {
+                const decodedAccessToken = jwt.decode(token);
+                req[constants.USER_ID] = decodedAccessToken[constants.USER_ID];
+            }
             if (config.authorizedPages.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
                 role = req.user[constants.ROLES.ROLE_CLAIM];
                 console.log('Logged in Role is: ' + role);

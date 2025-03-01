@@ -19,6 +19,7 @@
 
 class APIDTO {
     constructor(api) {
+        console.log("API", api);
         this.apiID = api.API_ID;
         this.apiReferenceID = api.REFERENCE_ID;
         this.apiHandle = api.API_HANDLE;
@@ -28,6 +29,9 @@ class APIDTO {
         this.endPoints = new Endpoints(api);
         if (api.DP_SUBSCRIPTION_POLICies) {
             this.subscriptionPolicies = api.DP_SUBSCRIPTION_POLICies.map(policy => new APISubscriptionPolicy(policy));
+        }
+        if (api.DP_APPLICATIONs) {
+            this.policyID = api.DP_APPLICATIONs[0].DP_API_SUBSCRIPTION.dataValues.POLICY_ID;
         }
     }
 
@@ -61,17 +65,17 @@ class APIInfo {
         }
         if (apiInfo.DP_API_IMAGEDATA) {
             this.apiImageMetadata = getAPIImages(apiInfo.DP_API_IMAGEDATA);
-        if (apiInfo.DP_API_IMAGEDATA) {
-            this.apiImageMetadata = getAPIImages(apiInfo.DP_API_IMAGEDATA);
-        }
-        if (apiInfo.TAGS) {
-            this.tags = apiInfo.TAGS.split(" ");
-        }
-        if (apiInfo.DP_LABELs) {
-            this.labels = apiInfo.DP_LABELs.map(label => label.dataValues ? label.dataValues.NAME : label);
+            if (apiInfo.DP_API_IMAGEDATA) {
+                this.apiImageMetadata = getAPIImages(apiInfo.DP_API_IMAGEDATA);
+            }
+            if (apiInfo.TAGS) {
+                this.tags = apiInfo.TAGS.split(" ");
+            }
+            if (apiInfo.DP_LABELs) {
+                this.labels = apiInfo.DP_LABELs.map(label => label.dataValues ? label.dataValues.NAME : label);
+            }
         }
     }
-}
 }
 
 class APISubscriptionPolicy {

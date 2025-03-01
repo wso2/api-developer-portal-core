@@ -263,9 +263,12 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
     console.log(`Invoking API: ${url}`);
     headers = headers || {};
     if (req.user) {
+        console.log(`User is authenticated. Adding access token to the request.`);
         headers.Authorization = "Bearer " + req.user.accessToken;
-    } else {
+    } else if (req.headers.authorization) {
         headers.Authorization = req.headers.authorization;
+    } else {
+        console.log("Access token expired")
     }
     let httpsAgent;
 

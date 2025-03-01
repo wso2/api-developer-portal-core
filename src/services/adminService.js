@@ -732,14 +732,14 @@ const createAppKeyMapping = async (req, res) => {
     await sequelize.transaction(async (t) => {
         const { applicationName, apis, tokenType, tokenDetails, provider } = req.body;
         const appIDResponse = await adminDao.getApplicationID(orgID, userID, applicationName);
+        console.log(appIDResponse);
         const appID = appIDResponse.dataValues.APP_ID;
         let cpApplicationName;
-        //all token types bound to one app if shared?
-        if (apis.length > 1) {
-            cpApplicationName = applicationName + "_" + tokenType;
-        } else if (apis.length == 1) {
-            cpApplicationName = applicationName + "_" + apis[0].apiName + "_" + tokenType;
-        }
+        //all token types bound to one app if shared
+
+        //when token is share, control plane app name and devportal app name is same
+        cpApplicationName = applicationName
+        //TODO - handel non-shared token types scenarios
         try {
             //create control plane application
             const cpAppCreationResponse = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications`, {
@@ -756,10 +756,11 @@ const createAppKeyMapping = async (req, res) => {
             // add subscription to control plane for each api
             const apiSubscriptions = [];
             for (const api of apis) {
+                const policyDetails = await apiDao.getSubscriptionPolicy(api.policyID, orgID, t);
                 const requestBody = {
                     apiId: api.apiRefId,
                     applicationId: cpAppID,
-                    throttlingPolicy: api.policyName
+                    throttlingPolicy: policyDetails.dataValues.POLICY_NAME
                 };
                 const cpSubscribeResponse = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, requestBody);
                 apiSubscriptions.push(cpSubscribeResponse);
@@ -789,20 +790,31 @@ const createAppKeyMapping = async (req, res) => {
 }
 
 const retriveAppKeyMappings = async (req, res) => {
-    
-    const {orgId, appId }  = req.param;
-    const userID = req[constants.USER_ID]
+
+    const { orgId, appId } = req.params;
+    const userID = req[constants.USER_ID] ? req[constants.USER_ID] : "";
     try {
         const appIDResponse = await adminDao.getApplication(orgId, appId, userID);
         if (!appIDResponse) {
             throw new CustomError(404, "Records Not Found", 'Application not found');
         }
-        const appKeyMappings = await adminDao.getKeyMapping(orgID, appId);
+        const appKeyMappings = await adminDao.getKeyMapping(orgId, appId);
         res.status(200).send(appKeyMappings);
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.KEY_MAPPING_RETRIEVE_ERROR}`, error);
         util.handleError(res, error);
     }
+}
+
+const getApplicationKeyMap = async (orgId, appId, userId) => {
+
+    const appIDResponse = await adminDao.getApplication(orgId, appId, userId);
+    if (!appIDResponse) {
+        throw new CustomError(404, "Records Not Found", 'Application not found');
+    }
+    const appKeyMappings = await adminDao.getKeyMapping(orgId, appId);
+    const appMappingDTO = new ApplicationDTO(appKeyMappings);
+    return appMappingDTO;
 }
 
 
@@ -837,5 +849,6 @@ module.exports = {
     getAllSubscriptions,
     deleteSubscription,
     createAppKeyMapping,
-    retriveAppKeyMappings
+    retriveAppKeyMappings,
+    getApplicationKeyMap
 };

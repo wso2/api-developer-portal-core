@@ -7,16 +7,16 @@
     "disableCertValidation": true,
     "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
   },
-  "apendOrgId": true,
+  "apendOrgId": false,
   "serverCerts": {
-    "pathToCert": "certs/client-truststore.pem",
-    "pathToPK": "certs/private-key.pem",
-    "pathToCA": "certs/client-truststore.pem"
+    "pathToCert": "../certs/client-truststore.pem",
+    "pathToPK": "../certs/private-key.pem",
+    "pathToCA": "../certs/client-truststore.pem"
   },
   "db": {
     "username": "postgres",
     "password": "postgres",
-    "database": "devportal",
+    "database": "test",
     "host": "localhost",
     "port": 5432,
     "dialect": "postgres"
@@ -43,12 +43,12 @@
     "authorizationURL": "https://localhost:9443/oauth2/authorize",
     "tokenURL": "https://127.0.0.1:9443/oauth2/token",
     "userInfoURL": "https://localhost:9443/oauth2/userinfo",
-    "clientId": "",
-    "callbackURL": "https://localhost:3000/ACME/callback",
+    "clientId": "meVRlVAkUoVufXXjN3aUk72PVF8a",
+    "callbackURL": "https://localhost:3000/carbon.super/callback",
     "scope": "openid profile",
     "signUpURL": "",
     "logoutURL": "https://localhost:9443/oidc/logout",
-    "logoutRedirectURI": "https://localhost:3000/ACME",
+    "logoutRedirectURI": "https://localhost:3000/carbon.super",
     "certificate": "",
     "jwksURL": "https://localhost:9443/oauth2/jwks"
   },

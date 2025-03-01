@@ -27,7 +27,7 @@ const filePrefix = config.pathToContent;
 const controlPlaneUrl = config.controlPlane.url;
 const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
-
+const adminService = require('../services/adminService');
 const baseURLDev = constants.BASE_URL + config.port  + constants.ROUTE.VIEWS_PATH;
 
 const orgIDValue = async (orgName) => {
@@ -157,7 +157,7 @@ const loadApplication = async (req, res) => {
         } else {
             const orgName = req.params.orgName;
             const orgID = await orgIDValue(orgName);
-            metaData = new ApplicationDTO(await adminDao.getApplication(orgID, applicationId, req.user.sub));
+            //metaData = new ApplicationDTO(await adminDao.getApplication(orgID, applicationId, req.user.sub));
             const subscriptions = await adminDao.getSubscribedAPIs(orgID, applicationId);
             let subList = [];
             if (subscriptions.length > 0) {
@@ -190,62 +190,63 @@ const loadApplication = async (req, res) => {
 
             // });
 
-            // kMmetaData = await getAPIMKeyManagers(req);
-            // kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
-            // let applicationKeyList = await getApplicationKeys(req, applicationId);
-            // let productionKeys = [];
-            // let sandboxKeys = [];
+            kMmetaData = await getAPIMKeyManagers(req);
+            kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
+            const userID = req[constants.USER_ID]
+            const applicationList =  await adminService.getApplicationKeyMap(orgID, applicationId, userID);
+            metaData = applicationList;
+            let applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
+            let productionKeys = [];
+            let sandboxKeys = [];
 
-            // applicationKeyList?.list?.map(key => {
-            //     let client_name;
-            //     if (key?.additionalProperties?.client_name) {
-            //         client_name = key.additionalProperties.client_name;
-            //     }
-            //     let keyData = {
-            //         keyManager: key.keyManager,
-            //         consumerKey: key.consumerKey,
-            //         consumerSecret: key.consumerSecret,
-            //         keyMappingId: key.keyMappingId,
-            //         keyType: key.keyType,
-            //         supportedGrantTypes: key.supportedGrantTypes,
-            //         additionalProperties: key.additionalProperties,
-            //         clientName: client_name
-            //     };
-            //     if (key.keyType === constants.KEY_TYPE.PRODUCTION) {
-            //         productionKeys.push(keyData);
-            //     } else {
-            //         sandboxKeys.push(keyData);
-            //     }
-            //     return keyData;
-            // }) || [];
-
-
-            // kMmetaData.forEach(keyManager => {
-            //     productionKeys.forEach(productionKey => {
-            //         if (productionKey.keyManager === keyManager.name) {
-            //             keyManager.productionKeys = productionKey;
-            //         }
-            //     });
-            //     sandboxKeys.forEach(sandboxKey => {
-            //         if (sandboxKey.keyManager === keyManager.name) {
-            //             keyManager.sandboxKeys = sandboxKey;
-            //         }
-            //     });
-            // });
+            applicationKeyList?.list?.map(key => {
+                let client_name;
+                if (key?.additionalProperties?.client_name) {
+                    client_name = key.additionalProperties.client_name;
+                }
+                let keyData = {
+                    keyManager: key.keyManager,
+                    consumerKey: key.consumerKey,
+                    consumerSecret: key.consumerSecret,
+                    keyMappingId: key.keyMappingId,
+                    keyType: key.keyType,
+                    supportedGrantTypes: key.supportedGrantTypes,
+                    additionalProperties: key.additionalProperties,
+                    clientName: client_name
+                };
+                if (key.keyType === constants.KEY_TYPE.PRODUCTION) {
+                    productionKeys.push(keyData);
+                } else {
+                    sandboxKeys.push(keyData);
+                }
+                return keyData;
+            }) || [];
+            kMmetaData.forEach(keyManager => {
+                productionKeys.forEach(productionKey => {
+                    if (productionKey.keyManager === keyManager.name) {
+                        keyManager.productionKeys = productionKey;
+                    }
+                });
+                sandboxKeys.forEach(sandboxKey => {
+                    if (sandboxKey.keyManager === keyManager.name) {
+                        keyManager.sandboxKeys = sandboxKey;
+                    }
+                });
+            });
             templateContent = {
+                orgID: orgID,
                 applicationMetadata: metaData,
-                // keyManagersMetadata: kMmetaData,
+                keyManagersMetadata: kMmetaData,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 subscriptions: subList,
-                // productionKeys: productionKeys,
-                // sandboxKeys: sandboxKeys
+                productionKeys: productionKeys,
+                isProduction: true
             }
-
+            console.log("templateContent", templateContent)
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
             html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         }
-
         res.send(html);
     } catch (error) {
         console.error("Error occurred while loading application", error);
@@ -253,13 +254,18 @@ const loadApplication = async (req, res) => {
     }
 }
 
-async function getApplicationKeys(req, applicationId) {
-    try {
-        return await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${applicationId}/keys`, {}, {});
-    } catch (error) {
-        console.error("Error occurred while generating application keys", error);
-        return null;
-    }
+async function getApplicationKeys(applicationList, req) {
+
+    //TODO: handle multiple CP applications
+    for (const application of applicationList) {
+        const appRef = application.appRefID;
+        try {
+            return await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${appRef}/keys`, {}, {});
+        } catch (error) {
+            console.error("Error occurred while generating application keys", error);
+            return null;
+        }
+    } 
 }
 
 async function getAllAPIs(req) {

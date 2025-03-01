@@ -22,6 +22,9 @@ class ApplicationDTO {
         this.name = app.NAME;
         this.description = app.DESCRIPTION;
         this.type = app.TYPE;
+        if (app.DP_APP_KEY_MAPPINGs) {
+            this.appMap = app.DP_APP_KEY_MAPPINGs.map(map => new AppMappingDTO(map));
+        }
     }
 
     setResponseData(data) {
@@ -50,7 +53,23 @@ class SubscriptionDTO {
     }
 }
 
-module.exports = { 
-    ApplicationDTO, 
+class AppMappingDTO {
+    constructor(map) {
+        this.appRefID = map.CP_APP_REF;
+        this.token = map.TOKEN_TYPE;
+        this.shared = map.SHARED_TOKEN;
+    }
+
+    setResponseData(data) {
+        this.data = data;
+    }
+
+    getResponseData() {
+        return this.data;
+    }
+}
+
+module.exports = {
+    ApplicationDTO,
     SubscriptionDTO
 };
