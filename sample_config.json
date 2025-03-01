@@ -1,5 +1,5 @@
 {
-  "baseUrl": "https://localhost:300",
+  "baseUrl": "https://localhost:3000",
   "defaultPort": 3000,
   "choreoExtended": false,
   "pathToContent": "./resources/default-layout/",
