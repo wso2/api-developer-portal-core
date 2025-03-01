@@ -5,7 +5,7 @@
     "http": false,
     "dbSslDialectOption": false,
     "resourceLoadFromBaseUrl": false,
-    "mtlsLessCommunication" : {
+    "apiKey" : {
       "enabled": true,
       "keyType": "x-wso2-api-key",
       "keyValue": "x-wso2-api-key"

@@ -44,7 +44,7 @@ function enforceSecuirty(scope) {
                 const organization = req.headers.organization;
                 if (organization) {
                     req.params.orgId = organization;
-                    if (config.advanced.mtlsLessCommunication.enabled) {
+                    if (config.advanced.apiKey.enabled) {
                         // Communcation with API KEY
                         enforceAPIKey(req, res, next);
                         
@@ -297,8 +297,8 @@ const enforceMTLS = (req, res, next) => {
 };
 
 const enforceAPIKey = (req, res, next) => {
-    const keyType = config.advanced?.mtlsLessCommunication?.keyType;
-    const keyValue = config.advanced?.mtlsLessCommunication?.keyValue;
+    const keyType = config.advanced?.apiKey?.keyType;
+    const keyValue = config.advanced?.apiKey?.keyValue;
 
     if (!keyType || !keyValue) {
         return res.status(500).json({ error: "Server configuration error" });
