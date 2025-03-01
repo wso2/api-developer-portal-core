@@ -119,7 +119,7 @@ const registerPartialsFromAPI = async (req) => {
   const orgName = req.params.orgName;
   const viewName = req.params.viewName;
   const orgID = await adminDao.getOrgId(orgName);
-  const imageUrl = `${config.choreoExtended ? config.baseUrl : `${req.protocol}://${req.get('host')}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.VIEWS_PATH}${viewName}/layout?fileType=image&fileName=`;
+  const imageUrl = `${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${req.protocol}://${req.get('host')}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.VIEWS_PATH}${viewName}/layout?fileType=image&fileName=`;
 
   let partials = await adminDao.getOrgContent({
     orgId: orgID,

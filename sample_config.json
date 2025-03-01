@@ -1,7 +1,11 @@
 {
   "baseUrl": "https://localhost:3000",
   "defaultPort": 3000,
-  "choreoExtended": false,
+  "advanced": {
+    "http": false,
+    "dbSslDialectOption": false,
+    "resourceLoadFromBaseUrl": false
+  },
   "pathToContent": "./resources/default-layout/",
   "mode": "production",
   "controlPlane": {

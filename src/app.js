@@ -151,9 +151,8 @@ if (config.mode === constants.DEV_MODE) {
 }
 
 const PORT = process.env.PORT || config.defaultPort;
-if (config.choreoExtended) {
+if (config.advanced.http) {
     http.createServer(app).listen(PORT, '0.0.0.0', () => {
-        console.log('\n' + chalk.green.bold(`Choreo Extended Developer Portal V2 is running on port ${PORT}`) + '\n');
         logStartupInfo();
     });
 
@@ -174,7 +173,6 @@ if (config.choreoExtended) {
             requestCert: true,  
             rejectUnauthorized: false  
         }, app).listen(PORT, () => {
-            console.log('\n' + chalk.green.bold(`Developer Portal V2 is running on port ${PORT}`) + '\n');
             logStartupInfo();
         });
 
@@ -184,6 +182,7 @@ if (config.choreoExtended) {
 }
 
 const logStartupInfo = () => {
+    console.log('\n' + chalk.green.bold(`Developer Portal V2 is running on port ${PORT}`) + '\n');
     console.log('\n' + chalk.cyan.bold(`Mode: ${config.mode}`) + '\n');
 
     if (config.mode === constants.DEV_MODE) {

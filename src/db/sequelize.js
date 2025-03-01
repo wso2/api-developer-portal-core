@@ -32,7 +32,7 @@ const sequelizeOptions = {
     }
 };
 
-if (config.choreoExtended) {
+if (config.advanced.dbSslDialectOption) {
     sequelizeOptions.dialectOptions = {
         ssl: {
             require: true,
