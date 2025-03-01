@@ -4,7 +4,12 @@
   "advanced": {
     "http": false,
     "dbSslDialectOption": false,
-    "resourceLoadFromBaseUrl": false
+    "resourceLoadFromBaseUrl": false,
+    "mtlsLessCommunication" : {
+      "enabled": false,
+      "key-type": "x-wso2-api-key",
+      "key-value": "x-wso2-api-key"
+    }
   },
   "pathToContent": "./resources/default-layout/",
   "mode": "production",

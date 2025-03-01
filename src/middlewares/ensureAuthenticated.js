@@ -41,12 +41,20 @@ function enforceSecuirty(scope) {
                 const decodedAccessToken = jwt.decode(token);
                 req[constants.USER_ID] = decodedAccessToken[constants.USER_ID]
             } else {
-                // Handle MTLS flow
                 const organization = req.headers.organization;
                 if (organization) {
                     req.params.orgId = organization;
-                }
-                enforceMTLS(req, res, next);
+                    if (config.advanced.mtlsLessCommunication.enabled) {
+                        // Communcation with API KEY
+                        enforceAPIKey(req, res, next);
+                        
+                    } else {
+                        // Communication with MTLS
+                        enforceMTLS(req, res, next);
+                    } 
+                } else {
+                    return res.status(404).json({ error: "Organization not found" });
+                }          
             }
         } catch (err) {
             console.error("Error checking access token:", err);
@@ -283,6 +291,22 @@ const enforceMTLS = (req, res, next) => {
         return res.status(403).send('Client certificate is expired or not yet valid');
     }
 
+    return next();
+};
+
+const enforceAPIKey = (req, res, next) => {
+    const keyType = config.advanced?.mtlsLessCommunication?.keyType;
+    const keyValue = config.advanced?.mtlsLessCommunication?.keyValue;
+
+    if (!keyType || !keyValue) {
+        return res.status(500).json({ error: "Server configuration error" });
+    }
+
+    const apiKey = req.headers[keyType.toLowerCase()];
+
+    if (!apiKey || apiKey !== keyValue) {
+        return res.status(401).json({ error: "Unauthorized: API key is invalid or not found" });
+    }
     return next();
 };
 
