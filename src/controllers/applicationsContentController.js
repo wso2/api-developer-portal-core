@@ -212,7 +212,8 @@ const loadApplication = async (req, res) => {
                     keyType: key.keyType,
                     supportedGrantTypes: key.supportedGrantTypes,
                     additionalProperties: key.additionalProperties,
-                    clientName: client_name
+                    clientName: client_name,
+                    callbackUrl: key.callbackUrl
                 };
                 if (key.keyType === constants.KEY_TYPE.PRODUCTION) {
                     productionKeys.push(keyData);
@@ -242,7 +243,6 @@ const loadApplication = async (req, res) => {
                 productionKeys: productionKeys,
                 isProduction: true
             }
-            console.log("templateContent", templateContent)
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
             html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);

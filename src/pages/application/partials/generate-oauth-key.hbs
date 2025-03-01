@@ -7,74 +7,22 @@
     <link rel="stylesheet" href="/technical-styles/oauth2-key-generation.css" />
     <script src="/technical-scripts/oauth2-key-generation.js" defer></script>
     <style>
-        .container {
+        .keygen-container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
 
-        .main-content {
-            display: flex;
-            gap: 20px;
-        }
-
-        .left-panel {
-            flex: 1;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-        }
-
-        .right-panel {
-            padding: 20px;
-
-        }
-
-        .section-header h1 {
+        .keygen-section-header h1 {
             font-size: 20px;
             font-weight: 600;
             margin-bottom: 4px;
         }
 
-        .subtitle {
+        .keygen-subtitle {
             color: #6b7280;
             font-size: 14px;
             margin-bottom: 16px;
-        }
-
-        .dropdown-container {
-            margin-bottom: 20px;
-        }
-
-        .dropdown {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 16px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .chevron-down,
-        .chevron-up {
-            color: #6b7280;
-        }
-
-        .advanced-config {
-            margin-bottom: 20px;
-        }
-
-        .advanced-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-        }
-
-        .advanced-text {
-            color: var(--primary-main-color);
-            font-weight: 500;
         }
 
         .section {
@@ -87,12 +35,12 @@
             margin-bottom: 12px;
         }
 
-        .checkbox-group {
+        .keygen-checkbox-group {
             display: flex;
             gap: 16px;
         }
 
-        .checkbox-container {
+        .keygen-checkbox-container {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -100,51 +48,25 @@
             font: 14px
         }
 
-        .checkmark {
-            width: 18px;
-            height: 18px;
-            border: 2px solid #d1d5db;
-            border-radius: 4px;
-            display: inline-block;
-            position: relative;
-        }
-
-        input[type="checkbox"]:checked+.checkmark {
-            background-color: var(--primary-main-color);
-            border-color: var(--primary-main-color);
-        }
-
-        input[type="checkbox"]:checked+.checkmark::after {
-            content: "";
-            position: absolute;
-            left: 5px;
-            top: 2px;
-            width: 5px;
-            height: 10px;
-            border: solid white;
-            border-width: 0 2px 2px 0;
-            transform: rotate(45deg);
-        }
-
-        .toggle-section {
+        .keygen-toggle-section {
             display: flex;
             justify-content: space-between;
         }
 
-        .toggle-item {
+        .keygen-toggle-item {
             display: flex;
             align-items: center;
             gap: 12px;
         }
 
-        .toggle {
+        .keygen-toggle {
             position: relative;
             display: inline-block;
             width: 40px;
             height: 20px;
         }
 
-        .toggle input {
+        .keygen-toggle input {
             opacity: 0;
             width: 0;
             height: 0;
@@ -194,23 +116,12 @@
             align-items: center;
         }
 
-        .add-default-btn {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            background: none;
-            border: none;
-            color: #6b7280;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .input-container {
+        .keygen-input-container {
             position: relative;
             margin-bottom: 8px;
         }
 
-        .input-container input {
+        .keygen-input-container input {
             width: 100%;
             padding: 10px 16px;
             border: 1px solid #d1d5db;
@@ -218,82 +129,16 @@
             font-size: 14px;
         }
 
-        .input-container.error input {
+        .keygen-input-container.error input {
             border-color: #F87171;
             background-color: #FEF2F2;
         }
 
-        .input-container.with-label input {
+        .keygen-input-container.with-label input {
             padding-right: 60px;
         }
 
-        .input-label {
-            position: absolute;
-            right: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6b7280;
-            font-size: 14px;
-        }
 
-        .error-message {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            color: #F87171;
-            font-size: 14px;
-        }
-
-        .generate-keys-btn {
-            background-color: var(--primary-main-color);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 10px 20px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .generate-keys-btn:hover {
-            background-color: var(--primary-main-color);
-        }
-
-        .info-box {
-            background-color: #F5F7FF;
-            border-radius: 8px;
-            padding: 16px;
-            display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .info-content p {
-            font-size: 14px;
-            color: #4B5563;
-        }
-
-        .info-content strong {
-            font-weight: 600;
-        }
-
-        .connection-data-box {
-            background-color: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 16px;
-        }
-
-        .connection-data-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .connection-data-header h2 {
-            font-size: 16px;
-            font-weight: 500;
-        }
 
         .idp-dropdown {
             position: relative;
@@ -322,21 +167,15 @@
             font-size: 14px;
         }
 
-        .collapsible-container {
-            width: 100%;
-            max-width: 1000px;
-            border-radius: 8px;
-            overflow: hidden;
-            background-color: white;
-        }
-
         .collapsible-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px;
+            padding: 5px;
+            margin-bottom: 10px;
             cursor: pointer;
-            border-bottom: 1px solid #e0e0e0;
+            border: 1px solid var(--primary-main-color);
+            border-radius: 6px;
         }
 
         .collapsible-header h2 {
@@ -355,10 +194,6 @@
             transform: rotate(180deg);
         }
 
-        .collapsible-content {
-            padding: 24px;
-        }
-
         .description {
             color: #666;
             font-size: 16px;
@@ -366,39 +201,11 @@
             margin-bottom: 24px;
         }
 
-        .endpoint-section {
-            margin-bottom: 24px;
-        }
-
-        .endpoint-label {
-            font-size: 14px;
-            font-weight: 500;
-            color: #333;
-            margin-bottom: 12px;
-        }
-
-        .endpoint-value-container {
-            position: relative;
-            background-color: #f7f7f7;
-            border-radius: 6px;
-            padding: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
         .endpoint-value {
             font-size: 12px;
             color: #333;
             word-break: break-all;
             padding-right: 40px;
-        }
-
-        .copy-button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 4px;
         }
 
         .copy-icon {
@@ -409,7 +216,7 @@
 </head>
 
 <section>
-    <div class="container">
+    <div class="keygen-container">
         <div class='d-flex gap-3'>
             <button type='button' class='common-btn-primary' onclick='loadKeyGenModal()'>
                 Generate OAuth Keys
@@ -423,9 +230,9 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
                     onclick="closeModal('OauthKeyModal')"></button>
                 <div style="margin-bottom: 20px;">
-                    <div class="section-header">
+                    <div class="keygen-section-header">
                         <h1>Identity Provider</h1>
-                        <p class="subtitle">Select an Identity Provider to configure</p>
+                        <p class="keygen-subtitle">Select an Identity Provider to configure</p>
                     </div>
                     <div class="idp-dropdown">
                         <select id="select-idp-list" name="selectIdpList">
@@ -446,152 +253,74 @@
                         <form
                             id='applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'>
                             <div>
-                                {{!-- <div class="section-header">
-                                    <h1>Identity Provider</h1>
-                                    <p class="subtitle">Select an Identity Provider to configure</p>
+                                <h3 class='h6'> Key and Secret </h3>
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label
+                                            for='consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                                            class='form-label'>
+                                            Consumer Key
+                                            <span class='text-danger'>*</span>
+                                        </label>
+                                        <input type='text'
+                                            id='consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                                            class='form-control' name="consumerKey" value='{{keys.consumerKey}}'
+                                            readonly />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label
+                                            for='consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                                            class='form-label'>
+                                            Consumer Secret
+                                            <span class='text-danger'>*</span>
+                                        </label>
+                                        <input type='text'
+                                            id='consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                                            class='form-control' name="consumerSecret" value='{{keys.consumerSecret}}'
+                                            readonly />
+                                    </div>
                                 </div>
-                                <div class="idp-dropdown">
-                                    <select id="select-idp-list" name="selectIdpList">
-                                        {{#each keyManagersMetadata}}
-                                        {{#if enabled}}
-                                        <option value="{{name}}" id="{{name}}">{{name}}</option>
-                                        {{/if}}
-                                        {{/each}}
-                                    </select>
-                                </div> --}}
-                                {{!-- {{#each keyManagersMetadata}}
-                                {{#if enabled}}
-                                {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}} --}}
-                                {{!-- <div id="KMData_{{../name}}" style="display: none;" class="KMConfig"> --}}
-                                    <h3 class='h6'> Key and Secret </h3>
-                                    <div class="row mb-4">
-                                        <div class="col-md-6">
-                                            <label
-                                                for='consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
-                                                class='form-label'>
-                                                Consumer Key
-                                                <span class='text-danger'>*</span>
-                                            </label>
-                                            <input type='text'
-                                                id='consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
-                                                class='form-control' name="consumerKey" value='{{keys.consumerKey}}'
-                                                readonly />
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label
-                                                for='consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
-                                                class='form-label'>
-                                                Consumer Secret
-                                                <span class='text-danger'>*</span>
-                                            </label>
-                                            <input type='text'
-                                                id='consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
-                                                class='form-control' name="consumerSecret"
-                                                value='{{keys.consumerSecret}}' readonly />
-                                        </div>
-                                    </div>
-                                    {{!-- {{#if keys.consumerKey}}
-                                    <div class="row mb-4">
-                                        <div class="col-md-6">
-                                            <label
-                                                for='consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
-                                                class='form-label'>
-                                                Consumer Key
-                                                <span class='text-danger'>*</span>
-                                            </label>
-                                            <input type='text'
-                                                id='consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
-                                                class='form-control' name="consumerKey" value='{{keys.consumerKey}}'
-                                                readonly />
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label
-                                                for='consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
-                                                class='form-label'>
-                                                Consumer Secret
-                                                <span class='text-danger'>*</span>
-                                            </label>
-                                            <input type='text'
-                                                id='consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
-                                                class='form-control' name="consumerSecret"
-                                                value='{{keys.consumerSecret}}' readonly />
-                                        </div>
-                                    </div>
-                                    {{else}}
-                                    <p class="mb-4"> {{#if ../../isProduction}}Production{{else}}Sandbox{{/if}} Key and
-                                        Secret is not generated for this
-                                        application</p>
-                                    {{/if}} --}}
-                                    <div class="section">
-                                        <h2>Grant Types</h2>
-                                        <div class="row">
-                                            {{#let "supportedGrantTypes" keys.supportedGrantTypes }}
-                                            {{#each ../../availableGrantTypes}}
-                                            {{!-- <div class="col-md-4 mb-2">
-                                                <div class="form-check">
-                                                    <div class="col-md-4 mb-2">
-                                                        <div class="form-check">
-                                                            <input type="checkbox" class="form-check-input"
-                                                                id="grant-type-{{this}}-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
-                                                                name="grantTypes" value="{{this}}" {{#if (contains
-                                                                ../supportedGrantTypes this)}}checked{{/if}} />
-                                                            <label class="form-check-label"
-                                                                for="grant-type-{{this}}-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}">
-                                                                {{this}}
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div> --}}
-                                            <div class="col-md-4 mb-2">
-                                                <div class="form-check">
-                                                    <div class="checkbox-group" id="grant-types">
-                                                        <label class="checkbox-container">
-                                                            <input type="checkbox"
-                                                                id="grant-type-{{this}}-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
-                                                                name="grantTypes" value="{{this}}" {{#if (contains
-                                                                ../supportedGrantTypes this)}}checked{{/if}} />
-                                                            <label class="form-check-label"
-                                                                for="grant-type-{{this}}-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}">
-                                                                {{this}}
-                                                            </label>
+                                <div class="section">
+                                    <h2>Grant Types</h2>
+                                    <div class="row">
+                                        {{#let "supportedGrantTypes" keys.supportedGrantTypes }}
+                                        {{#each ../../availableGrantTypes}}
+                                        <div class="col-md-4 mb-2">
+                                            <div class="form-check">
+                                                <div class="keygen-checkbox-group" id="grant-types">
+                                                    <label class="keygen-checkbox-container">
+                                                        <input type="checkbox"
+                                                            id="grant-type-{{this}}-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
+                                                            name="grantTypes" value="{{this}}" {{#if (contains
+                                                            ../supportedGrantTypes this)}}checked{{/if}} />
+                                                        <label class="form-check-label"
+                                                            for="grant-type-{{this}}-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}">
+                                                            {{this}}
                                                         </label>
-                                                    </div>
+                                                    </label>
                                                 </div>
                                             </div>
-                                            {{/each}}
-                                            {{/let}}
-
                                         </div>
+                                        {{/each}}
+                                        {{/let}}
+
                                     </div>
-
-                                    {{!-- <div class="section toggle-section">
-                                        <div class="toggle-item">
-                                            <span>Enable Public Client</span>
-                                            <label class="toggle">
-                                                <input type="checkbox">
-                                                <span class="slider round"></span>
-                                            </label>
-                                        </div>
-                                        <div class="toggle-item">
-                                            <span>Enable PKCE</span>
-                                            <label class="toggle">
-                                                <input type="checkbox">
-                                                <span class="slider round"></span>
-                                            </label>
-                                        </div>
-                                    </div> --}}
-
-                                    <div class="section">
-                                        <div class="callback-header">
-                                            <h2>Callback URL</h2>
-                                        </div>
-                                        <div class="input-container">
-                                            <input type="text" name="callbackURL" placeholder="Callback URLs">
-                                        </div>
+                                </div>
+                                <div class="section">
+                                    <div class="callback-header">
+                                        <h2>Callback URL</h2>
                                     </div>
+                                    <div class="keygen-input-container">
+                                        <input type="text" name="callbackURL" placeholder="Callback URLs"
+                                            value="{{keys.callbackUrl}}" class="form-control" />
+                                    </div>
+                                </div>
 
-                                    <!-- Additional Configuration Fields -->
+                                <!-- Additional Configuration Fields -->
+                                <div id="additionalPropsHeader" class="collapsible-header"
+                                    onclick="showAdvanced('additionalProps{{../name}}')">Advanced Configuration
+                                </div>
+                                <div id="additionalProps{{../name}}" style="display: none;">
                                     {{#let "additionalProperties" (conditionalIf keys.additionalProperties
                                     keys.additionalProperties [])}}
                                     {{#each ../../applicationConfiguration}}
@@ -652,10 +381,10 @@
                                         {{#if (eq ../type 'checkbox')}}
                                         <div class="col-md-4 mb-2">
                                             <div class="form-check">
-                                                <div class="section toggle-section">
-                                                    <div class="toggle-item">
+                                                <div class="section keygen-toggle-section">
+                                                    <div class="keygen-toggle-item">
                                                         <span> {{../label}}</span>
-                                                        <label class="toggle">
+                                                        <label class="keygen-toggle">
                                                             <input type="checkbox" value="true" {{#if (eq propValue
                                                                 true)}} checked{{/if}}>
                                                             <span class="slider round"></span>
@@ -664,51 +393,13 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        {{!-- <div class="col-md-4 mb-2">
-                                            <div class="form-check">
-                                                <input type="checkbox" name="additionalProperties.{{../name}}"
-                                                    id="{{../name}}-{{../../../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
-                                                    class="form-check-input" value="true" {{#if (eq propValue true)}}
-                                                    checked{{/if}} />
-                                                <label class="form-check-label"
-                                                    for="{{../name}}-{{../../../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}">
-                                                    {{../label}}
-                                                </label>
-                                            </div>
-                                        </div> --}}
                                         {{/if}}
-
                                         <div class='form-text mb-3'>{{tooltip}}</div>
                                     </div>
                                     {{/let}}
                                     {{/each}}
                                     {{/let}}
-
-                                    {{!-- <div class="section">
-                                        <h2>User Token Expiry (Minutes)</h2>
-                                        <div class="input-container with-label">
-                                            <input type="text" value="1440">
-                                            <span class="input-label">1 day</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="section">
-                                        <h2>Refresh Token Expiry (Minutes)</h2>
-                                        <div class="input-container with-label">
-                                            <input type="text" value="10080">
-                                            <span class="input-label">7 days</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="section">
-                                        <button class="generate-keys-btn">Generate Keys</button>
-                                    </div> --}}
-
-                                    {{!--
-                                </div> --}}
-                                {{!-- {{/let}}
-                                {{/if}}
-                                {{/each}} --}}
+                                </div>
                             </div>
                         </form>
                         {{#if keys.consumerKey}}
@@ -785,10 +476,6 @@
 
         const selectElement = document.getElementById("select-idp-list");
 
-        // const advancedhHeader = document.getElementById('config-header');
-        // const advancedContent = document.getElementById('KMData_'+ selectElement.value);
-        // const chevronAdvanced = document.getElementById('chevron-advanced');
-
         // Initialize as expanded (matching the image)
         let isCollapsed = false;
 
@@ -828,7 +515,6 @@
             const selectedValue = selectElement.value;
             const kmData = document.getElementById("KMData_" + selectedValue);
             const kmURL = document.getElementById("KMURL_" + selectedValue);
-            console.log(kmData);
             if (kmData) {
                 kmData.style.display = "block";
             }
@@ -836,6 +522,11 @@
                 kmURL.style.display = "block";
             }
             const keyManager = keyManagers.find(km => km.name === selectedValue);
+        }
+
+        function showAdvanced(id) {
+            const content = document.getElementById(id);
+            content.style.display = content.style.display === "block" ? "none" : "block";
         }
         selectElement.addEventListener("change", updateKeyManagerInfo);
         // Initialize with selected value
