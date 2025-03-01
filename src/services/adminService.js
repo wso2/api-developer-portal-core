@@ -266,7 +266,7 @@ const deleteIdentityProvider = async (req, res) => {
 };
 
 const createOrgContent = async (req, res) => {
-
+    
     const orgId = req.params.orgId;
     const viewName = req.params.name;
     const zipPath = req.file.path;

@@ -1,16 +1,22 @@
 {
-  "port": 3000,
-  "pathToContent": "../api-developer-portal/src/",
+  "baseUrl": "https://localhost:3000",
+  "defaultPort": 3000,
+  "advanced": {
+    "http": false,
+    "dbSslDialectOption": false,
+    "resourceLoadFromBaseUrl": false
+  },
+  "pathToContent": "./resources/default-layout/",
   "mode": "production",
   "controlPlane": {
     "url": "https://127.0.0.1:9443/api/am/devportal/v3",
     "disableCertValidation": true,
-    "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
+    "pathToCertificate": "./resources/security/client-truststore.pem"
   },
   "serverCerts": {
-    "pathToCert": "certs/client-truststore.pem",
-    "pathToPK": "certs/private-key.pem",
-    "pathToCA": "certs/client-truststore.pem"
+    "pathToCert": "./resources/security/client-truststore.pem",
+    "pathToPK": "./resources/security/private-key.pem",
+    "pathToCA": "./resources/security/client-truststore.pem"
   },
   "db": {
     "username": "postgres",

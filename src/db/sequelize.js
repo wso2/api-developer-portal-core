@@ -19,21 +19,33 @@
 const { Sequelize } = require('sequelize');
 const config = require(process.cwd() + '/config.json');
 
+const sequelizeOptions = {
+    host: config.db.host,
+    port: config.db.port,
+    dialect: config.db.dialect,
+    logging: false,
+    pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
+    }
+};
+
+if (config.advanced.dbSslDialectOption) {
+    sequelizeOptions.dialectOptions = {
+        ssl: {
+            require: true,
+            rejectUnauthorized: false
+        }
+    };
+}
+
 const sequelize = new Sequelize(
     config.db.database,
     config.db.username,
     config.db.password,
-    {
-        host: config.db.host,
-        dialect: config.db.dialect,
-        logging: false,
-        pool: {
-            max: 5,
-            min: 0,
-            acquire: 30000,
-            idle: 10000
-          }
-    },
+    sequelizeOptions
 );
 
 module.exports = sequelize;
