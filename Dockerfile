@@ -25,8 +25,11 @@ COPY . .
 # Expose the application port
 EXPOSE 8080
 
-# Switch to the built-in non-root Node.js user for better security
-USER node
+# Create a non-root user with UID 10001 to satisfy Checkov CKV_CHOREO_1
+RUN groupadd -g 10001 appgroup && useradd -m -u 10001 -g appgroup -s /bin/bash appuser
+
+# Switch to the non-root user
+USER appuser
 
 # Start the Node.js application
 CMD ["node", "src/app.js"]
