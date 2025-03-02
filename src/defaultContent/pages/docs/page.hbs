@@ -1,0 +1,25 @@
+<main>
+    <div class="doc-content">
+        <div class="documents">
+            <aside class="documents-sidebar">
+                {{#docTypes}}
+                <div>
+                    <div class="doc-section-title">
+                        {{#if (eq type "Specification")}}
+                        <a href="{{../baseUrl}}/docs/specification" class="doc-spec">{{type}}</a>
+                        {{else}}
+                        {{type}}
+                        {{/if}}
+                    </div>
+                    {{#names}}
+                    <div class="doc-links">
+                        <a href="{{../../baseUrl}}/docs/{{../type}}/{{this}}" class="doc-link">{{this}}</a>
+                    </div>
+                    {{/names}}
+                </div>
+                {{/docTypes}}
+            </aside>
+            {{> api-doc}}
+        </div>
+    </div>
+</main>

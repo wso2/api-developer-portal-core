@@ -1,0 +1,118 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.sidebar {
+    position: absolute;
+    display: flex;
+    flex-direction: column;    
+    justify-content: space-between;
+    height: 95vh;    
+    padding: 1rem 0;
+
+    background-color: #1a4c6d;
+    width: 256px;
+    transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+    width: 64px;
+}
+
+.nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.nav-link {
+    padding: 1rem 0rem 1rem 1rem;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #a8cadc;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+.nav-link:hover {
+    background-color: #41789c;
+    color: white;
+}
+
+.nav-link.active {
+    background-color: #41789c;
+    color: white;
+}
+
+.nav-link svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.nav-text {
+    margin: 0rem 0rem 0rem 1rem;
+    white-space: nowrap;
+    opacity: 1;
+    transition: opacity 0.2s;
+}
+
+.collapsed .nav-text {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+}
+
+.api-icon {
+    width: 20px;
+    height: 20px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+}
+
+.collapse-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: none;
+    border: none;
+    color: #a8cadc;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.collapse-btn:hover {
+    color: white;
+}
+
+.collapse-btn svg {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s;
+}
+
+.collapsed .collapse-btn svg {
+    transform: rotate(180deg);
+}
+
+.collapse-text {
+    white-space: nowrap;
+    opacity: 1;
+    transition: opacity 0.2s;
+}
+
+.collapsed .collapse-text {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+}

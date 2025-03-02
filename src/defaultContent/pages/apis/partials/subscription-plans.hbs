@@ -1,0 +1,40 @@
+<section>
+    <div id="planModal-{{apiReferenceID}}" class="modal custom-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="closeModal('planModal-{{apiReferenceID}}')"></button>
+                <div class="col-11 api-banner-content mt-5">
+                    <div class="d-flex justify-content-between">
+                        <div class="col-12 col-md-10">
+                            <div class="api-title pb-3">
+                                <div class="d-flex align-items-end gap-2">
+                                    <h4>{{apiInfo.apiName}}</h4>
+                                    <p> V{{apiInfo.apiVersion}}</p>
+                                </div>
+                                <p class="api-description">{{apiInfo.apiDescription}}</p>
+                            </div>
+                        </div>
+                        <img src="{{apiInfo.apiImageMetadata.api-icon}}" class="api-card-img" alt="..." />
+                    </div>
+                </div>
+                <div class="pb-5 pe-5 ps-5 d-flex flex-nowrap overflow-auto">
+                    {{#each subscriptionPolicyDetails}}
+                    <div class="col-lg-4">
+                        <div
+                            class="card dev-card {{#if (isMiddle @index ../subscriptionPlans.length)}} highlight-card{{else}}custom-plans-card{{/if}}">
+                            <div class="card-body align-items-center">
+                                <h5>{{displayName}}</h5>
+                                <h4 class="pt-4 mb-0">{{requestCount}}</h4>
+                                <p class="pb-4 pt-0">requests per minutes</p>
+                                <a id="subscribe-btn-{{policyID}}" type="button" class="common-btn-outlined p-1 ps-2 pe-2" onclick="subscribe('', '{{../apiReferenceID}}', '{{policyID}}')">Subscribe</a>
+                            </div>
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+                <div class="col-2 ps-3 pb-3">
+                   <a type="button" class="border common-btn-white" onclick="closeModal('planModal-{{apiReferenceID}}')">Cancel</a>
+                </div>
+            </div>
+        </div>
+</section>

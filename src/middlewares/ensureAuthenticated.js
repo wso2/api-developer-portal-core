@@ -45,28 +45,27 @@ function enforceSecuirty(scope) {
                     if (config.advanced.apiKey.enabled) {
                         // Communcation with API KEY
                         enforceAPIKey(req, res, next);
-                        
+
                     } else {
                         // Communication with MTLS
                         enforceMTLS(req, res, next);
                     }
-            } else {
-                console.log('User is not authenticated');
-                req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
-                if (req.params.orgName) {
-                    res.redirect(`/${req.params.orgName}/views/${req.session.view}/login`);
-                }
-                    } 
                 } else {
-                    return res.status(404).json({ error: "Organization not found" });
-                }          
+                    console.log('User is not authenticated');
+                    req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
+                    if (req.params.orgName) {
+                        res.redirect(`/${req.params.orgName}/views/${req.session.view}/login`);
+                    }
+                }
+            } else {
+                return res.status(404).json({ error: "Organization not found" });
             }
         } catch (err) {
             console.error("Error checking access token:", err);
             return res.status(500).json({ error: "Internal Server Error" });
         }
     }
-
+}
 
 function accessTokenPresent(req) {
 
@@ -162,7 +161,7 @@ const ensureAuthenticated = async (req, res, next) => {
                             return res.send("User unauthorized");
                         }
                     }
-                }     
+                }
             }
             return next();
         } else {

@@ -1,0 +1,14 @@
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.10.5/swagger-ui.min.css">
+</head>
+
+<main>
+    {{> api-detail-banner }}
+    {{#if loadDefault}}
+    {{> api-default}}
+    {{else}}
+    {{> api-content }}
+    {{/if}}
+    {{> subscription-plans}}
+    {{> faqBanner }}
+</main>

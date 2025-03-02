@@ -1,0 +1,275 @@
+.sidebar {
+    width: 250px;
+    background-color: #043556;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.logo {
+    padding: 1rem;
+    font-size: 1.25rem;
+    font-weight: bold;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-menu {
+    padding: 1rem 0;
+    flex: 1;
+}
+
+.nav-item {
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    color: white;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.nav-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-item.active {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Main Content Styles */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #f7f8fb;
+}
+
+/* Header Styles */
+.header {
+    background-color: white;
+    border-bottom: 1px solid #e0e2e9;
+    padding: 0.75rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.dropdown {
+    padding: 0.5rem 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #40404b;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dropdown:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+}
+
+/* Content Area Styles */
+.doc-content {
+    padding: 1rem 1.5rem 1.5rem 1.5rem;
+    flex: 1;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #e0e2e9;
+}
+
+.card.active {
+    border-color: #407893;
+}
+
+.card h3 {
+    margin-bottom: 0.5rem;
+    color: #40404b;
+}
+
+.card p {
+    color: #8d91a3;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+/* Documents Section */
+.documents {
+    display: flex;
+    gap: 2rem;
+}
+
+.documents-sidebar {
+    width: 250px;
+    flex-shrink: 0;
+}
+
+.search-box {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 0.5rem 1rem 0.5rem 2rem;
+    border: 1px solid #e0e2e9;
+    border-radius: 4px;
+}
+
+.create-doc {
+    width: 100%;
+    padding: 0.5rem;
+    background: white;
+    border: 1px solid #e0e2e9;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    cursor: pointer;
+}
+
+.doc-section {
+    margin-bottom: 1rem;
+}
+
+.doc-section-title {
+    padding: 0.5rem;
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.doc-links {
+    padding-left: 1rem;
+}
+
+.doc-link {
+    display: block;
+    padding: 0.25rem 0.5rem;
+    color: #40404b;
+    text-decoration: none;
+    font-size: 0.875rem;
+}
+
+.doc-spec {
+    display: block;
+    color: #40404b;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 1rem
+}
+
+/* FAQ Content */
+.faq-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    flex: 1;
+}
+
+.faq-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.faq-subtitle {
+    color: #8d91a3;
+    font-size: 0.875rem;
+    margin-bottom: 2rem;
+}
+
+.faq-item {
+    margin-bottom: 1.5rem;
+}
+
+.faq-question {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.faq-answer {
+    color: #8d91a3;
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+.file-types {
+    list-style: none;
+    padding-left: 1rem;
+}
+
+/* Footer Styles */
+.footer {
+    background: white;
+    border-top: 1px solid #e0e2e9;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    color: #8d91a3;
+    font-size: 0.875rem;
+}
+
+.footer-links {
+    display: flex;
+    gap: 1rem;
+}
+
+.footer-links a {
+    color: #8d91a3;
+    text-decoration: none;
+}
+
+.footer-links a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 60px;
+    }
+
+    .logo span {
+        display: none;
+    }
+
+    .nav-item span {
+        display: none;
+    }
+
+    .documents {
+        flex-direction: column;
+    }
+
+    .documents-sidebar {
+        width: 100%;
+    }
+
+    .cards {
+        grid-template-columns: 1fr;
+    }
+}
+        

@@ -25,14 +25,14 @@ const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const constants = require('../utils/constants');
 const apiMetadataService = require('../services/apiMetadataService');
-
+const { loadLayoutFromAPI } = require('../utils/util');
 const filePrefix = config.pathToContent;
 const hbs = exphbs.create({});
 const registerPartials = async (req, res, next) => {
 
   registerInternalPartials(req);
   if (config.mode === constants.DEV_MODE) {
-    registerAllPartialsFromFile(config.baseUrl + constants.ROUTE.VIEWS_PATH + req.params.viewName, req);
+    registerAllPartialsFromFile(config.baseUrl + constants.ROUTE.VIEWS_PATH + req.params.viewName, req, filePrefix);
   } else {
     let matchURL = req.originalUrl;
     if (req.session.returnTo) {
@@ -40,6 +40,12 @@ const registerPartials = async (req, res, next) => {
     }
     try {
       if (req.params.orgName && req.params.orgName !== "portal" && (!(/configure/i.test(matchURL)))) {
+
+        const orgID = await adminDao.getOrgId(req.params.orgName);
+        var layoutContent = await loadLayoutFromAPI(orgID, req.params.viewName);
+        if (layoutContent === "") {
+          registerAllPartialsFromFile(config.baseUrl + constants.ROUTE.VIEWS_PATH + req.params.viewName, req, './src/defaultContent');
+        }
         await registerPartialsFromAPI(req);
       }
     } catch (error) {
@@ -72,7 +78,7 @@ const registerInternalPartials = async (req) => {
           const partialName = path.basename(file, '.hbs');
           const partialContent = fs.readFileSync(path.join(dir, file), 'utf8');
           hbs.handlebars.registerPartial(partialName, partialContent);
-          
+
           if (partialName === constants.HEADER_PARTIAL_NAME) {
             hbs.handlebars.partials = {
               ...hbs.handlebars.partials,
@@ -101,7 +107,7 @@ const registerInternalPartials = async (req) => {
   };
 }
 
-const registerAllPartialsFromFile = async (baseURL, req) => {
+const registerAllPartialsFromFile = async (baseURL, req, filePrefix) => {
 
   const filePath = req.originalUrl.split(baseURL).pop();
   registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "partials"), req.user);

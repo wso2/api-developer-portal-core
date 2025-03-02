@@ -30,6 +30,7 @@ const config = require(process.cwd() + '/config.json');
 const { body } = require('express-validator');
 const { Sequelize } = require('sequelize');
 const jwt = require('jsonwebtoken');
+const filePrefix = '/src/defaultContent/';
 
 // Function to load and convert markdown file to HTML
 function loadMarkdown(filename, dirName) {
@@ -94,8 +95,14 @@ async function loadTemplateFromAPI(orgID, filePath, viewName) {
 
 async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, viewName) {
 
-    var templatePage = await loadTemplateFromAPI(orgID, filePath, viewName);
     var layoutContent = await loadLayoutFromAPI(orgID, viewName);
+    if (layoutContent === "") {
+        //load default org content
+        console.log("tempate path", filePrefix + filePath);
+        html = renderTemplate(filePrefix + filePath + '/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
+        return html;
+    }
+    var templatePage = await loadTemplateFromAPI(orgID, filePath, viewName);
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutContent.toString());
     return layout({
