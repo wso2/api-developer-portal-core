@@ -254,3 +254,60 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
     }
 
 }
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    
+    const selectElement = document.getElementById("select-idp-list");
+
+    function copyToClipboard(button) {
+        const textToCopy = button.parentElement.querySelector('.endpoint-value').textContent;
+        navigator.clipboard.writeText(textToCopy)
+            .then(() => {
+                // Optional: Show a copied notification
+                const originalSvg = button.innerHTML;
+                button.innerHTML = `
+                        <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="green" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    `;
+                setTimeout(() => {
+                    button.innerHTML = originalSvg;
+                }, 1500);
+            })
+            .catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+    }
+
+    function updateKeyManagerInfo() {
+        document.querySelectorAll(".KMConfig").forEach((el) => {
+            el.style.display = "none";
+        });
+        const selectedValue = selectElement.value;
+        const kmData = document.getElementById("KMData_" + selectedValue);
+        const kmURL = document.getElementById("KMURL_" + selectedValue);
+        if (kmData) {
+            kmData.style.display = "block";
+        }
+        if (kmURL) {
+            kmURL.style.display = "block";
+        }
+    }
+
+    selectElement.addEventListener("change", updateKeyManagerInfo);
+    // Initialize with selected value
+    updateKeyManagerInfo();
+
+});
+
+function loadKeyGenModal() {
+    const modal = document.getElementById('OauthKeyModal');
+    modal.style.display = 'flex';
+}
+
+function showAdvanced(id) {
+    const content = document.getElementById(id);
+    content.style.display = content.style.display === "block" ? "none" : "block";
+}
+

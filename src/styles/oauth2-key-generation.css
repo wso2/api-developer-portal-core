@@ -34,3 +34,207 @@
 .error-msg {
   font-size: 0.875rem;
 }
+
+.keygen-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.keygen-section-header h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.keygen-subtitle {
+  color: #6b7280;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.section {
+  margin-bottom: 24px;
+}
+
+.section h2 {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.keygen-checkbox-group {
+  display: flex;
+  gap: 16px;
+}
+
+.keygen-checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font: 14px
+}
+
+.keygen-toggle-section {
+  display: flex;
+  justify-content: space-between;
+}
+
+.keygen-toggle-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.keygen-toggle {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+
+.keygen-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #e5e7eb;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked+.slider {
+  background-color: var(--primary-main-color);
+}
+
+input:checked+.slider:before {
+  transform: translateX(20px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+.callback-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.keygen-input-container {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.keygen-input-container input {
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.keygen-input-container.error input {
+  border-color: #F87171;
+  background-color: #FEF2F2;
+}
+
+.keygen-input-container.with-label input {
+  padding-right: 60px;
+}
+
+.idp-dropdown {
+  position: relative;
+  display: inline-block;
+  width: 300px;
+}
+
+.idp-dropdown select {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  appearance: none;
+  background-color: white;
+  cursor: pointer;
+}
+
+.idp-dropdown::after {
+  content: "▼";
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 14px;
+}
+
+.collapsible-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  border: 1px solid var(--primary-main-color);
+  border-radius: 6px;
+}
+
+.collapsible-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.chevron {
+  width: 24px;
+  height: 24px;
+  transition: transform 0.3s ease;
+}
+
+.chevron.up {
+  transform: rotate(180deg);
+}
+
+.description {
+  color: #666;
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.endpoint-value {
+  font-size: 12px;
+  color: #333;
+  word-break: break-all;
+  padding-right: 40px;
+}
+
+.copy-icon {
+  width: 20px;
+  height: 20px;
+}
