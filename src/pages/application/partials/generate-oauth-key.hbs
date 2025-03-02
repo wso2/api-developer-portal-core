@@ -269,13 +269,13 @@
                                     </div>
                                     <div class="col-md-6">
                                         <label
-                                            for='consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                                            for='consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
                                             class='form-label'>
                                             Consumer Secret
                                             <span class='text-danger'>*</span>
                                         </label>
                                         <input type='text'
-                                            id='consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                                            id='consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
                                             class='form-control' name="consumerSecret" value='{{keys.consumerSecret}}'
                                             readonly />
                                     </div>
@@ -415,7 +415,7 @@
                         <div class="d-flex gap-3">
                             <button class="common-btn-primary" id="applicationKeyGenerateButton" name="http-values"
                                 type="button"
-                                onClick="generateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.id}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subscriptions}}', '{{../../orgID}}')">
+                                onClick="generateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.id}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subscriptions}}', '{{../../orgID}}', 'consumer-key-{{../id}}-production', 'consumer-secret-{{../id}}-production')">
                                 Generate Keys
                             </button>
                         </div>

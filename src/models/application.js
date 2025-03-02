@@ -82,7 +82,7 @@ const ApplicationKeyMapping = sequelize.define('DP_APP_KEY_MAPPING', {
     },
     API_REF_ID: {
         type: DataTypes.UUID,
-        allowNull: false
+        allowNull: true
     },
     ORG_ID: {
         type: DataTypes.UUID,
@@ -90,7 +90,7 @@ const ApplicationKeyMapping = sequelize.define('DP_APP_KEY_MAPPING', {
     },
     SUBSCRIPTION_REF_ID: {
         type: DataTypes.UUID,
-        allowNull: false
+        allowNull: true
     },
     SHARED_TOKEN: {
         type: DataTypes.BOOLEAN,

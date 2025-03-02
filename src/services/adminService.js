@@ -779,6 +779,19 @@ const createAppKeyMapping = async (req, res) => {
                 }
                 await adminDao.createAppKeyMapping(appKeyMappping, t);
             }
+            //handle scenario where no subscriptions exist for the application.
+            //assume always a shared app is creared in CP
+            if (apiSubscriptions.length === 0) {
+                const appKeyMappping = {
+                    ORG_ID: orgID,
+                    APP_ID: appID,
+                    CP_APP_REF: cpAppCreationResponse.applicationId,
+                    SHARED_TOKEN: true,
+                    TOKEN_TYPE: constants.TOKEN_TYPES.OAUTH
+                }
+                await adminDao.createAppKeyMapping(appKeyMappping, t);
+            }
+
             //generate oauth key
             const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${cpAppID}/generate-keys`, {}, tokenDetails);
             res.status(200).json(responseData);
@@ -813,8 +826,14 @@ const getApplicationKeyMap = async (orgId, appId, userId) => {
         throw new CustomError(404, "Records Not Found", 'Application not found');
     }
     const appKeyMappings = await adminDao.getKeyMapping(orgId, appId);
-    const appMappingDTO = new ApplicationDTO(appKeyMappings);
-    return appMappingDTO;
+    if (appKeyMappings) {
+        const appMappingDTO = new ApplicationDTO(appKeyMappings);
+        return appMappingDTO;
+    } else {
+       const application =  await adminDao.getApplication(orgId, appId, userId);
+       return new ApplicationDTO(application.dataValues);
+    }
+  
 }
 
 

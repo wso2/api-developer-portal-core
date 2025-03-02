@@ -1,4 +1,4 @@
-async function generateApplicationKey(formId, appId, keyType, keyManager, clientName, subscriptions, orgID) {
+async function generateApplicationKey(formId, appId, keyType, keyManager, clientName, subscriptions, orgID, consumerKeyID, consumerSecretID) {
 
     const form = document.getElementById(formId);
     const apiList = []
@@ -29,6 +29,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
         }
     })
     console.log("Payload", payload);
+    console.log("Consumer key", document.getElementById("consumerKey"))
     try {
         const response = await fetch(`/devportal/organizations/${orgID}/app-key-mapping`, {
             method: 'POST',
@@ -43,9 +44,9 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             await showAlert('Application keys generated successfully!', 'success');
             const consumerKey = responseData.consumerKey;
             const consumerSecret = responseData.consumerSecret;
-            console.log(responseData);
-            document.getElementById("consumerKey").value = consumerKey;
-            document.getElementById("consumerSecret").value = consumerSecret
+            console.log("Keys", responseData);
+            document.getElementById(consumerKeyID).value = consumerKey;
+            document.getElementById(consumerSecretID).value = consumerSecret
             //const url = new URL(window.location.origin + window.location.pathname);
             //window.location.href = url.toString();
         } else {

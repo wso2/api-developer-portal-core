@@ -38,13 +38,19 @@ function enforceSecuirty(scope) {
                 //set user ID
                 const decodedAccessToken = jwt.decode(token);
                 req[constants.USER_ID] = decodedAccessToken[constants.USER_ID];
-            } else {
+            } else if (req.headers.organization) {
                 // Handle MTLS flow
                 const organization = req.headers.organization;
                 if (organization) {
                     req.params.orgId = organization;
                 }
                 enforceMTLS(req, res, next);
+            } else {
+                console.log('User is not authenticated');
+                req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
+                if (req.params.orgName) {
+                    res.redirect(`/${req.params.orgName}/views/${req.session.view}/login`);
+                }
             }
         } catch (err) {
             console.error("Error checking access token:", err);
@@ -57,8 +63,10 @@ function accessTokenPresent(req) {
 
     if (req.isAuthenticated() && req.user) {
         accessToken = req.user[constants.ACCESS_TOKEN];
+    } else if (req.headers.authorization) {
+        accessToken = req.headers.authorization.split(' ')[1];
     } else {
-        accessToken = req.headers.authorization && req.headers.authorization.split(' ')[1];
+        return null;
     }
     return accessToken;
 }

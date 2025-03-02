@@ -195,7 +195,10 @@ const loadApplication = async (req, res) => {
             const userID = req[constants.USER_ID]
             const applicationList =  await adminService.getApplicationKeyMap(orgID, applicationId, userID);
             metaData = applicationList;
-            let applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
+            let applicationKeyList;
+            if (applicationList.appMap) { 
+                applicationKeyList  = await getApplicationKeys(applicationList.appMap, req);
+            }
             let productionKeys = [];
             let sandboxKeys = [];
 
