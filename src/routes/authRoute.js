@@ -27,7 +27,7 @@ router.get('/portal/signup', authController.handleSignUp);
 
 router.get('/:orgName/views/:viewName/login', registerPartials, authController.login);
 router.get('/:orgName/callback', authController.handleCallback);
-router.get('/callback', authController.handleCallback);
+router.get('/signin', authController.handleCallback);
 router.get('/:orgName/views/:viewName/logout', authController.handleLogOut);
 router.get('/:orgName/views/:viewName/signup', authController.handleSignUp);
 
