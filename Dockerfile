@@ -1,7 +1,8 @@
-FROM node:18-bullseye
+FROM node:18-bookworm
+
 ENV DEBIAN_FRONTEND=noninteractive 
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY . .
