@@ -11,7 +11,7 @@
       "keyValue": "x-wso2-api-key"
     },
     "disabledRoleValidation": true,
-    "ignoreReturnToNullScenario": true
+    "disableOrgCallback": true
   },
   "pathToContent": "./resources/default-layout/",
   "mode": "production",

@@ -116,7 +116,7 @@ const handleCallback = (req, res, next) => {
                 res.redirect(returnTo);
             } else {
                 let returnTo = req.user.returnTo;
-                if (!config.advanced.ignoreReturnToNullScenario) {
+                if (!config.advanced.disableOrgCallback) {
                     returnTo ||= `/${req.params.orgName}`;
                 }
                 delete req.session.returnTo;
