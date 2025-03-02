@@ -32,7 +32,7 @@ const registerPartials = async (req, res, next) => {
 
   registerInternalPartials(req);
   if (config.mode === constants.DEV_MODE) {
-    registerAllPartialsFromFile(constants.BASE_URL + config.port + constants.ROUTE.VIEWS_PATH + req.params.viewName, req);
+    registerAllPartialsFromFile(config.baseUrl + constants.ROUTE.VIEWS_PATH + req.params.viewName, req);
   } else {
     let matchURL = req.originalUrl;
     if (req.session.returnTo) {
@@ -119,7 +119,8 @@ const registerPartialsFromAPI = async (req) => {
   const orgName = req.params.orgName;
   const viewName = req.params.viewName;
   const orgID = await adminDao.getOrgId(orgName);
-  const imageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.VIEWS_PATH}${viewName}/layout?fileType=image&fileName=`;
+  const imageUrl = `${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${req.protocol}://${req.get('host')}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.VIEWS_PATH}${viewName}/layout?fileType=image&fileName=`;
+
   let partials = await adminDao.getOrgContent({
     orgId: orgID,
     fileType: 'partial',

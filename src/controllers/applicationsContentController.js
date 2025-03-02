@@ -28,7 +28,7 @@ const controlPlaneUrl = config.controlPlane.url;
 const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
 const adminService = require('../services/adminService');
-const baseURLDev = constants.BASE_URL + config.port  + constants.ROUTE.VIEWS_PATH;
+const baseURLDev = config.baseUrl  + constants.ROUTE.VIEWS_PATH;
 
 const orgIDValue = async (orgName) => {
     const organization = await adminDao.getOrganization(orgName);

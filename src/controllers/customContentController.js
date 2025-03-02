@@ -25,7 +25,7 @@ const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 
 const filePrefix = config.pathToContent;
-const baseURLDev = constants.BASE_URL + config.port + constants.ROUTE.VIEWS_PATH;
+const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
 
 const loadCustomContent = async (req, res) => {
 

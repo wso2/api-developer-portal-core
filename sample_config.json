@@ -1,22 +1,34 @@
 {
-  "port": 3000,
-  "pathToContent": "../api-developer-portal/src/",
+  "baseUrl": "https://localhost:3000",
+  "defaultPort": 3000,
+  "advanced": {
+    "http": false,
+    "dbSslDialectOption": false,
+    "resourceLoadFromBaseUrl": false,
+    "apiKey" : {
+      "enabled": true,
+      "keyType": "x-wso2-api-key",
+      "keyValue": "x-wso2-api-key"
+    },
+    "disabledRoleValidation": true,
+    "disableOrgCallback": true
+  },
+  "pathToContent": "./resources/default-layout/",
   "mode": "production",
   "controlPlane": {
     "url": "https://127.0.0.1:9443/api/am/devportal/v3",
     "disableCertValidation": true,
-    "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
+    "pathToCertificate": "./resources/security/client-truststore.pem"
   },
-  "apendOrgId": false,
   "serverCerts": {
-    "pathToCert": "../certs/client-truststore.pem",
-    "pathToPK": "../certs/private-key.pem",
-    "pathToCA": "../certs/client-truststore.pem"
+    "pathToCert": "./resources/security/client-truststore.pem",
+    "pathToPK": "./resources/security/private-key.pem",
+    "pathToCA": "./resources/security/client-truststore.pem"
   },
   "db": {
     "username": "postgres",
     "password": "postgres",
-    "database": "test",
+    "database": "devportal",
     "host": "localhost",
     "port": 5432,
     "dialect": "postgres"
@@ -43,12 +55,12 @@
     "authorizationURL": "https://localhost:9443/oauth2/authorize",
     "tokenURL": "https://127.0.0.1:9443/oauth2/token",
     "userInfoURL": "https://localhost:9443/oauth2/userinfo",
-    "clientId": "meVRlVAkUoVufXXjN3aUk72PVF8a",
-    "callbackURL": "https://localhost:3000/carbon.super/callback",
+    "clientId": "",
+    "callbackURL": "https://localhost:3000/ACME/callback",
     "scope": "openid profile",
     "signUpURL": "",
     "logoutURL": "https://localhost:9443/oidc/logout",
-    "logoutRedirectURI": "https://localhost:3000/carbon.super",
+    "logoutRedirectURI": "https://localhost:3000/ACME",
     "certificate": "",
     "jwksURL": "https://localhost:9443/oauth2/jwks"
   },

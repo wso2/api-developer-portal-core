@@ -39,25 +39,34 @@ function enforceSecuirty(scope) {
                 const decodedAccessToken = jwt.decode(token);
                 req[constants.USER_ID] = decodedAccessToken[constants.USER_ID];
             } else if (req.headers.organization) {
-                // Handle MTLS flow
                 const organization = req.headers.organization;
                 if (organization) {
                     req.params.orgId = organization;
-                }
-                enforceMTLS(req, res, next);
+                    if (config.advanced.apiKey.enabled) {
+                        // Communcation with API KEY
+                        enforceAPIKey(req, res, next);
+                        
+                    } else {
+                        // Communication with MTLS
+                        enforceMTLS(req, res, next);
+                    }
             } else {
                 console.log('User is not authenticated');
                 req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
                 if (req.params.orgName) {
                     res.redirect(`/${req.params.orgName}/views/${req.session.view}/login`);
                 }
+                    } 
+                } else {
+                    return res.status(404).json({ error: "Organization not found" });
+                }          
             }
         } catch (err) {
             console.error("Error checking access token:", err);
             return res.status(500).json({ error: "Internal Server Error" });
         }
     }
-}
+
 
 function accessTokenPresent(req) {
 
@@ -140,18 +149,20 @@ const ensureAuthenticated = async (req, res, next) => {
                         return res.send("User not authorized to access organization");
                     }
                 }
-                if (ensurePermission(req.originalUrl, role, req)) {
-                    console.log('User is authorized');
-                    return next();
-                } else {
-                    console.log('User is not authorized');
-                    if (req.params.orgName === undefined) {
-                        return res.send("User unauthorized");
+                if (!config.advanced.disabledRoleValidation) {
+                    if (ensurePermission(req.originalUrl, role, req)) {
+                        console.log('User is authorized');
+                        return next();
                     } else {
-                        console.log('Redirecting')
-                        return res.send("User unauthorized");
+                        console.log('User is not authorized');
+                        if (req.params.orgName === undefined) {
+                            return res.send("User unauthorized");
+                        } else {
+                            console.log('Redirecting')
+                            return res.send("User unauthorized");
+                        }
                     }
-                }
+                }     
             }
             return next();
         } else {
@@ -304,6 +315,22 @@ const enforceMTLS = (req, res, next) => {
         return res.status(403).send('Client certificate is expired or not yet valid');
     }
 
+    return next();
+};
+
+const enforceAPIKey = (req, res, next) => {
+    const keyType = config.advanced?.apiKey?.keyType;
+    const keyValue = config.advanced?.apiKey?.keyValue;
+
+    if (!keyType || !keyValue) {
+        return res.status(500).json({ error: "Server configuration error" });
+    }
+
+    const apiKey = req.headers[keyType.toLowerCase()];
+
+    if (!apiKey || apiKey !== keyValue) {
+        return res.status(401).json({ error: "Unauthorized: API key is invalid or not found" });
+    }
     return next();
 };
 

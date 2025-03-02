@@ -34,7 +34,7 @@ const { ApplicationDTO } = require('../dto/application');
 
 const filePrefix = config.pathToContent;
 const generateArray = (length) => Array.from({ length });
-const baseURLDev = constants.BASE_URL + config.port + constants.ROUTE.VIEWS_PATH;
+const baseURLDev = config.baseUrl  + constants.ROUTE.VIEWS_PATH;
 
 const loadAPIs = async (req, res) => {
 
