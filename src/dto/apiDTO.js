@@ -19,7 +19,6 @@
 
 class APIDTO {
     constructor(api) {
-        console.log("API", api);
         this.apiID = api.API_ID;
         this.apiReferenceID = api.REFERENCE_ID;
         this.apiHandle = api.API_HANDLE;
