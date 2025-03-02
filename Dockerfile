@@ -25,9 +25,8 @@ COPY . .
 # Expose the application port
 EXPOSE 8080
 
-# Create a non-root user and switch to it for better security
-RUN useradd -m -u 10001 -s /bin/bash appuser
-USER appuser
+# Switch to the built-in non-root Node.js user for better security
+USER node
 
 # Start the Node.js application
 CMD ["node", "src/app.js"]
