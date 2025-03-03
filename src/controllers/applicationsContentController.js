@@ -22,13 +22,13 @@ const constants = require('../utils/constants');
 const path = require('path');
 const fs = require('fs');
 const adminDao = require('../dao/admin');
-const util = require('../utils/util');
+const { util, renderTemplateFromAPI } = require('../utils/util');
 const filePrefix = config.pathToContent;
 const controlPlaneUrl = config.controlPlane.url;
 const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
 const adminService = require('../services/adminService');
-const baseURLDev = config.baseUrl  + constants.ROUTE.VIEWS_PATH;
+const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
 
 const orgIDValue = async (orgName) => {
     const organization = await adminDao.getOrganization(orgName);
@@ -55,6 +55,7 @@ const loadApplications = async (req, res) => {
             }
             html = renderTemplate('../pages/applications/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
         } else {
+            console.log("Loading Applications=========");
             const orgName = req.params.orgName;
             const orgID = await orgIDValue(orgName);
             const applications = await adminDao.getApplications(orgID, req.user.sub)
@@ -73,7 +74,11 @@ const loadApplications = async (req, res) => {
             }
             const templateResponse = await templateResponseValue('applications');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
-            html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+            if (layoutResponse === "") {
+                html = renderTemplate('../pages/applications/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+            } else {
+                html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+            }
         }
         res.send(html);
     } catch (error) {
@@ -81,7 +86,7 @@ const loadApplications = async (req, res) => {
         const orgName = req.params.orgName;
         const viewName = req.params.viewName;
         const orgId = await orgIDValue(orgName);
-        
+
         const templatePath = path.join(require.main.filename, '..', 'pages', 'error-page', 'page.hbs');
         const templateResponse = fs.readFileSync(templatePath, constants.CHARSET_UTF8);
         const layoutResponse = await loadLayoutFromAPI(orgId, viewName);
@@ -120,7 +125,11 @@ const loadThrottlingPolicies = async (req, res) => {
         }
         const templateResponse = await templateResponseValue('add-application');
         const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
-        html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        if (layoutResponse === "") {
+            html = renderTemplate('../pages/add-application/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+        } else {
+            html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        }
     }
 
     res.send(html);
@@ -193,11 +202,11 @@ const loadApplication = async (req, res) => {
             kMmetaData = await getAPIMKeyManagers(req);
             kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
             const userID = req[constants.USER_ID]
-            const applicationList =  await adminService.getApplicationKeyMap(orgID, applicationId, userID);
+            const applicationList = await adminService.getApplicationKeyMap(orgID, applicationId, userID);
             metaData = applicationList;
             let applicationKeyList;
-            if (applicationList.appMap) { 
-                applicationKeyList  = await getApplicationKeys(applicationList.appMap, req);
+            if (applicationList.appMap) {
+                applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
             }
             let productionKeys = [];
             let sandboxKeys = [];
@@ -248,7 +257,11 @@ const loadApplication = async (req, res) => {
             }
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
-            html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+            if (layoutResponse === "") {
+                html = renderTemplate('../pages/application/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+            } else {
+                html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+            }
         }
         res.send(html);
     } catch (error) {
@@ -268,7 +281,7 @@ async function getApplicationKeys(applicationList, req) {
             console.error("Error occurred while generating application keys", error);
             return null;
         }
-    } 
+    }
 }
 
 async function getAllAPIs(req) {
@@ -291,7 +304,7 @@ const getSubscribedApis = async (req, appId) => {
 
 const loadApplicationForEdit = async (req, res) => {
 
-    const {orgName, viewName, applicationId} = req.params;
+    const { orgName, viewName, applicationId } = req.params;
     let html, templateContent, metaData, throttlingMetaData;
     if (config.mode === constants.DEV_MODE) {
         metaData = await getMockApplication();
@@ -305,7 +318,7 @@ const loadApplicationForEdit = async (req, res) => {
     } else {
         const orgID = await orgIDValue(orgName);
         metaData = await getAPIMApplication(req, applicationId);
-        throttlingMetaData = await getAPIMThrottlingPolicies(req);        
+        throttlingMetaData = await getAPIMThrottlingPolicies(req);
         templateContent = {
             applicationMetadata: metaData,
             throttlingPoliciesMetadata: throttlingMetaData,
@@ -313,8 +326,11 @@ const loadApplicationForEdit = async (req, res) => {
         }
         const templateResponse = await templateResponseValue('edit-application');
         const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
-        html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
-
+        if (layoutResponse === "") {
+            html = renderTemplate('../pages/edit-application/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+        } else {
+            html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        }
     }
     res.send(html);
 }

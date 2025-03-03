@@ -44,7 +44,8 @@ const registerPartials = async (req, res, next) => {
         const orgID = await adminDao.getOrgId(req.params.orgName);
         var layoutContent = await loadLayoutFromAPI(orgID, req.params.viewName);
         if (layoutContent === "") {
-          registerAllPartialsFromFile(config.baseUrl + constants.ROUTE.VIEWS_PATH + req.params.viewName, req, './src/defaultContent');
+          console.log("Layout content not found in the database. Loading from file system");
+          registerAllPartialsFromFile(config.baseUrl + "/"+ req.params.orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName, req, './src/defaultContent');
         }
         await registerPartialsFromAPI(req);
       }
