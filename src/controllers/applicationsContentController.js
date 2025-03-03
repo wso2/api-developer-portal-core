@@ -259,7 +259,8 @@ const loadApplication = async (req, res) => {
                 // keyManagersMetadata: kMmetaData,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 subAPIs: subList,
-                nonSubAPIs: nonSubscribedAPIs
+                nonSubAPIs: nonSubscribedAPIs,
+                orgID: orgID,
                 // productionKeys: productionKeys,
                 // sandboxKeys: sandboxKeys
             }

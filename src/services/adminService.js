@@ -266,7 +266,7 @@ const deleteIdentityProvider = async (req, res) => {
 };
 
 const createOrgContent = async (req, res) => {
-    
+
     const orgId = req.params.orgId;
     const viewName = req.params.name;
     const zipPath = req.file.path;
@@ -642,20 +642,60 @@ const deleteDevPortalApplication = async (req, res) => {
 const createSubscription = async (req, res) => {
 
     try {
-        const orgID = req.params.orgId;
-        if (!orgID) {
-            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
-        }
-        try {
-            const subscription = await adminDao.createSubscription(orgID, req.body);
-            res.status(201).send(new SubscriptionDTO(subscription.dataValues));
-        } catch (error) {
-            console.error(`${constants.ERROR_MESSAGE.PROVIDER_CREATE_ERROR}`, error);
-            util.handleError(res, error);
-        }
+        const orgID = await adminDao.getOrgId(req.user[constants.ROLES.ORGANIZATION_CLAIM]);
+        const app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
+        sequelize.transaction(async (t) => {
+            try {
+                if (app.length > 0) {
+                    const response = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, {
+                        apiId: req.body.apiReferenceID,
+                        applicationId: app[0].dataValues.CP_APP_REF,
+                        throttlingPolicy: req.body.policyName
+                    });
+                    await handleSubscribe(orgID, req.body.applicationID, app.API_REF_ID, app.SUBSCRIPTION_REF_ID, response);
+                }
+
+                await adminDao.createSubscription(orgID, req.body);
+                return res.status(200).json({ message: 'Subscribed successfully' });
+
+            } catch (error) {
+                if (error.statusCode && error.statusCode === 409) {
+                    const response = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?apiId=${req.body.apiReferenceID}&applicationId=${app[0].dataValues.CP_APP_REF}`, {});
+                    await handleSubscribe(orgID, req.applicationID, app.API_REF_ID, app.SUBSCRIPTION_REF_ID, response);
+                    await adminDao.createSubscription(orgID, req.body);
+                    return res.status(200).json({ message: 'Subscribed successfully' });
+                }
+                console.error("Error occurred while subscribing to API", error);
+                return util.handleError(res, error);
+            }
+        });
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_CREATE_ERROR}`, error);
-        util.handleError(res, error);
+        console.error("Error occurred while subscribing to API", error);
+        return util.handleError(res, error);
+    }
+}
+
+async function handleSubscribe(orgID, applicationID, apiRefID, subRefID, response, t) {
+    if (apiRefID && subRefID) {
+        await adminDao.createApplicationKeyMapping({
+            orgID: orgID,
+            appID: applicationID,
+            cpAppRef: response.applicationId,
+            apiRefID: response.apiId,
+            subscriptionRefID: response.subscriptionId,
+            sharedToken: true,
+            tokenType: constants.TOKEN_TYPES.OAUTH
+        }, t);
+    } else {
+        await adminDao.updateApplicationKeyMapping(null, {
+            orgID: orgID,
+            appID: applicationID,
+            cpAppRef: response.applicationId,
+            apiRefID: response.apiId,
+            subscriptionRefID: response.subscriptionId,
+            sharedToken: true,
+            tokenType: constants.TOKEN_TYPES.OAUTH
+        }, t);
     }
 }
 

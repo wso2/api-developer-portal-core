@@ -167,7 +167,7 @@ function loadModal(modalID) {
     modal.style.display = 'flex';
 }
 
-async function subscribe(applicationID, apiId, apiRefID, policyId, policyName) {
+async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, policyName) {
     try {
         if (!applicationID) {
             applicationID = document.getElementById('appDropdown-' + apiId).value;
@@ -177,8 +177,8 @@ async function subscribe(applicationID, apiId, apiRefID, policyId, policyName) {
             if (!apiId) {
                 apiId = document.getElementById('apiSelect').value;
             }   
-            if (!apiRefID) {
-                apiRefID = document.getElementById('apiSelect').selectedOptions[0].getAttribute('data-apiRefID');
+            if (!apiReferenceID) {
+                apiReferenceID = document.getElementById('apiSelect').selectedOptions[0].getAttribute('data-apiRefID');
             }     
         }
        
@@ -197,12 +197,12 @@ async function subscribe(applicationID, apiId, apiRefID, policyId, policyName) {
             subBtn.disabled = true;
         }
 
-        const response = await fetch(`/devportal/subscriptions`, {
+        const response = await fetch(`/devportal/organizations/'${orgID}'/subscriptions`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ applicationID, apiId, apiRefID, policyId, policyName }),
+            body: JSON.stringify({ applicationID, apiId, apiReferenceID, policyId, policyName }),
         });
 
         const responseData = await response.json();
@@ -213,8 +213,8 @@ async function subscribe(applicationID, apiId, apiRefID, policyId, policyName) {
             const url = new URL(window.location.origin + window.location.pathname);
             window.location.href = url.toString();
         } else {
-            console.error('Failed to create application:', responseData);
-            await showAlert(`Failed to create application. Please try again.\n${responseData.description}`, 'error');
+            console.error('Failed to create subscription:', responseData);
+            await showAlert(`Failed to create subscription. Please try again.\n${responseData.description}`, 'error');
         }
     } catch (error) {
         console.error('Error:', error);
@@ -242,12 +242,13 @@ function addAPISubscription(selectElement) {
 
 async function removeSubscription() {
     const modal = document.getElementById('deleteConfirmation');
-    const appID = modal.dataset.param1;
-    const apiRefID = modal.dataset.param2;
-    const subID = modal.dataset.param3;
+    const orgID = modal.dataset.param1;
+    const appID = modal.dataset.param2;
+    const apiRefID = modal.dataset.param3;
+    const subID = modal.dataset.param4;
   
     try {
-        const response = await fetch(`/devportal/subscriptions?appID=${appID}&apiRefID=${apiRefID}&subID=${subID}`, {
+        const response = await fetch(`/devportal/organizations/${orgID}/subscriptions?appID=${appID}&apiReferenceID=${apiRefID}&subscriptionID=${subID}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',

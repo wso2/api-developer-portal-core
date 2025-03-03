@@ -1,8 +1,9 @@
-function openDeleteModal(param1, param2, param3) {
+function openDeleteModal(param1, param2, param3, param4) {
   const modal = document.getElementById('deleteConfirmation');
   modal.dataset.param1 = param1;
   modal.dataset.param2 = param2;
   modal.dataset.param3 = param3;
+  modal.dataset.param4 = param4;
   const bootstrapModal = new bootstrap.Modal(modal);
   bootstrapModal.show();
 }

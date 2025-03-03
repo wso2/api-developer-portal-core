@@ -100,7 +100,8 @@ const loadAPIs = async (req, res) => {
                 isAuthenticated: req.isAuthenticated(),
                 apiMetadata: metaDataList,
                 tags: apiTags,
-                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+                orgID: orgID,
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
         } catch (error) {
