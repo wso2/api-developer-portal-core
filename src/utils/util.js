@@ -261,11 +261,12 @@ const getAPIImages = async (directory) => {
 
 const invokeApiRequest = async (req, method, url, headers, body) => {
 
+    console.log(`Invoking API: ${url}`);
     headers = headers || {};
     if (req.user) {
-    headers.Authorization = "Bearer " + req.user.accessToken;
-    } else {
-         headers.Authorization = req.headers.authorization;
+        headers.Authorization = "Bearer " + req.user.accessToken;
+    } else { 
+        headers.Authorization = req.headers.authorization;
     }
     let httpsAgent;
 
@@ -292,7 +293,6 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         }
 
         const response = await axios(url, options);
-        console.log(`API response:`, response.data);
         return response.data;
     } catch (error) {
 
@@ -424,13 +424,13 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                 fileType = "style"
                 if (file.name === "main.css") {
                     strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g,
-                        `@import url("${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${protocol}://${host}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
+                        `@import url("${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                 fileType = "layout"
                 if (file.name === "main.hbs") {
-                    strContent = strContent.replace(/\/styles\//g, `${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${protocol}://${host}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=`);
+                    strContent = strContent.replace(/\/styles\//g, `${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=`);
                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {

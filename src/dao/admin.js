@@ -869,7 +869,6 @@ const createApplicationKeyMapping = async (mappingData, t) => {
 }
 
 const updateApplicationKeyMapping = async (apiID, mappingData, t) => {
-    console.log(mappingData);
     try {
         const [updatedRowsCount, appContent] = await ApplicationKeyMapping.update({
             ORG_ID: mappingData.orgID,
