@@ -25,24 +25,130 @@ const { Strategy: CustomStrategy } = require('passport-custom');
 const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 const { ApplicationDTO } = require('../dto/application');
+const sequelize = require('../db/sequelize');
 
 const unsubscribeAPI = async (req, res) => {
     try {
-        const subscriptionId = req.params.subscriptionId;
-        res.send(await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${subscriptionId}`, {}, {}));
+        const orgID = await adminDao.getOrgId(req.user[constants.ROLES.ORGANIZATION_CLAIM]);
+        const { appID, apiRefID, subID } = req.query;
+        const sharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, true);
+        const nonSharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, false);
+
+        await sequelize.transaction(async (t) => {
+            try {
+                if (nonSharedToken.length > 0) {
+                    await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${nonSharedToken.dataValues.SUBSCRIPTION_REF_ID}` , {}, {})
+                }
+                if (sharedToken.length === 1) {
+                    await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${sharedToken[0].dataValues.SUBSCRIPTION_REF_ID}`, {}, {})
+                } else {
+                    for (const dataValues of sharedToken) {
+                        if (dataValues.API_REF_ID === apiRefID) {
+                            await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${dataValues.SUBSCRIPTION_REF_ID}`, {}, {})
+                        }
+                    };
+                }
+                await handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiRefID, subID, t);
+                return res.status(204).send();
+            } catch (error) {
+                if (error.statusCode && error.statusCode === 404) {
+                    await handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiRefID, subID, t);
+                    return res.status(204).send();
+                }
+                console.error("Error occurred while unsubscribing from API", error);
+                return util.handleError(res, error);
+            }
+        });
     } catch (error) {
         console.error("Error occurred while unsubscribing from API", error);
-        util.handleError(res, error);
+        return util.handleError(res, error);
+    }
+}
+
+async function handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiRefID, subID, t) {
+    try {
+        await sequelize.transaction(async (t) => {
+
+            if (nonSharedToken.length > 0) {
+                await adminDao.deleteAppKeyMapping(orgID, appID, apiRefID);
+            }
+            if (sharedToken.length === 1) {
+                await adminDao.updateApplicationKeyMapping(apiRefID, {
+                    orgID: sharedToken[0].dataValues.ORG_ID,
+                    appID: sharedToken[0].dataValues.APP_ID,
+                    cpAppRef: sharedToken[0].dataValues.CP_APP_REF,
+                    apiRefID: null,
+                    subscriptionRefID: null,
+                    sharedToken: true,
+                    tokenType: constants.TOKEN_TYPES.OAUTH
+                });
+            } else {
+                await adminDao.deleteAppKeyMapping(orgID, appID, apiRefID, t);
+            }
+            await adminDao.deleteSubscription(orgID, subID, t);
+        });
+    } catch (error) {
+        console.error("Transaction failed during unsubscribing", error);
+        throw error;
     }
 }
 
 const subscribeAPI = async (req, res) => {
     try {
         const orgID = await adminDao.getOrgId(req.user[constants.ROLES.ORGANIZATION_CLAIM]);
-        return res.send(await adminDao.createSubscription(orgID, req.body));
+        const app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
+        sequelize.transaction(async (t) => {
+            try {
+                if (app.length > 0) {
+                    const response = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, {
+                        apiId: req.body.apiRefID,
+                        applicationId: app[0].dataValues.CP_APP_REF,
+                        throttlingPolicy: req.body.policyName
+                    });
+                    await handleSubscribe(orgID, req.body.applicationID, app.API_REF_ID, app.SUBSCRIPTION_REF_ID, response);
+                }
+
+                await adminDao.createSubscription(orgID, req.body);
+                return res.status(200).json({ message: 'Subscribed successfully' });
+
+            } catch (error) {
+                if (error.statusCode && error.statusCode === 409) {
+                    const response = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?apiId=${req.body.apiRefID}&applicationId=${app[0].dataValues.CP_APP_REF}`, {});
+                    await handleSubscribe(orgID, req.applicationID, app.API_REF_ID, app.SUBSCRIPTION_REF_ID, response);
+                    await adminDao.createSubscription(orgID, req.body);
+                    return res.status(200).json({ message: 'Subscribed successfully' });
+                }
+                console.error("Error occurred while subscribing to API", error);
+                return util.handleError(res, error);
+            }
+        });
     } catch (error) {
         console.error("Error occurred while subscribing to API", error);
-        util.handleError(res, error);
+        return util.handleError(res, error);
+    }
+}
+
+async function handleSubscribe(orgID, applicationID, apiRefID, subRefID, response, t) {
+    if (apiRefID && subRefID) {
+        await adminDao.createApplicationKeyMapping({
+            orgID: orgID,
+            appID: applicationID,
+            cpAppRef: response.applicationId,
+            apiRefID: response.apiId,
+            subscriptionRefID: response.subscriptionId,
+            sharedToken: true,
+            tokenType: constants.TOKEN_TYPES.OAUTH
+        }, t);
+    } else {
+        await adminDao.updateApplicationKeyMapping(null, {
+            orgID: orgID,
+            appID: applicationID,
+            cpAppRef: response.applicationId,
+            apiRefID: response.apiId,
+            subscriptionRefID: response.subscriptionId,
+            sharedToken: true,
+            tokenType: constants.TOKEN_TYPES.OAUTH
+        }, t);
     }
 }
 

@@ -3,7 +3,7 @@
   "pathToContent": "../api-developer-portal/src/",
   "mode": "production",
   "controlPlane": {
-    "url": "https://127.0.0.1:9443/api/am/devportal/v3",
+    "url": "https://sts.preview-dv.choreo.dev/api/am/devportal/v2",
     "disableCertValidation": true,
     "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
   },
@@ -42,7 +42,7 @@
     "authorizationURL": "https://localhost:9443/oauth2/authorize",
     "tokenURL": "https://127.0.0.1:9443/oauth2/token",
     "userInfoURL": "https://localhost:9443/oauth2/userinfo",
-    "clientId": "",
+    "clientId": "foC0E_ye5WWfNqDE6KOZZzUHHFAa",
     "callbackURL": "https://localhost:3000/ACME/callback",
     "scope": "openid profile",
     "signUpURL": "",
@@ -51,6 +51,7 @@
     "certificate": "",
     "jwksURL": "https://localhost:9443/oauth2/jwks"
   },
+  "tokenExchange": true,
   "disableTLS": true,
   "roleClaim": "roles",
   "orgIDClaim": "organizationID",

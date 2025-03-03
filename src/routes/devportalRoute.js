@@ -102,7 +102,7 @@ router.get('/organizations/:orgId/views', validateAuthentication(constants.SCOPE
 router.delete('/organizations/:orgId/views/:name', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.deleteView);
 
 router.post('/subscriptions', ensureAuthenticated, devportalController.subscribeAPI);
-router.delete('/subscriptions/:subscriptionId', ensureAuthenticated, devportalController.unsubscribeAPI);
+router.delete('/subscriptions', ensureAuthenticated, devportalController.unsubscribeAPI);
 
 router.post('/applications', ensureAuthenticated, devportalController.saveApplication);
 router.put('/applications/:applicationId', ensureAuthenticated, devportalController.updateApplication);

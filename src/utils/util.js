@@ -29,6 +29,8 @@ const https = require('https');
 const config = require(process.cwd() + '/config.json');
 const { body } = require('express-validator');
 const { Sequelize } = require('sequelize');
+const apiDao = require('../dao/apiMetadata');
+const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 
 // Function to load and convert markdown file to HTML
 function loadMarkdown(filename, dirName) {
@@ -259,13 +261,12 @@ const getAPIImages = async (directory) => {
 
 const invokeApiRequest = async (req, method, url, headers, body) => {
 
-    console.log(`Invoking API: ${url}`);
     headers = headers || {};
-    if (req.user) {
-        headers.Authorization = "Bearer " + req.user.accessToken;
-    } else { 
-        headers.Authorization = req.headers.authorization;
-    }
+    // if (req.user) {
+    headers.Authorization = "Bearer eyJ4NXQiOiJOMkprTmpZMllUZGtabVl4TldNNVltSTJabUkwWlRFNE56ZzRNREkxTVRneVpUaGpaVEppWWciLCJraWQiOiJNbUV5WlRSaFpHTTROamc1WW1SbU9XVXlOalkxT1dReVpURXlNREJoTXpVd01ESTFOak5pWlRkalptWXhZMlkzWWpCaU4ySTRaRFppTW1Jek5qYzJPUV9SUzI1NiIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJiZGVhMzllOC02ZjUyLTQ5MjItYmNlYy1iM2ZmNDViOTVlMzIiLCJhdXQiOiJBUFBMSUNBVElPTl9VU0VSIiwiY3B0Ijp0cnVlLCJpc3MiOiJodHRwczpcL1wvc3RzLnByZXZpZXctZHYuY2hvcmVvLmRldjo0NDNcL29hdXRoMlwvdG9rZW4iLCJncm91cHMiOlsiZmFjOThiM2ItNmM4ZS00OTdiLTkwZmUtYjQwZDMxNTdlY2FkIiwiMGI1MzcxMjctY2MyMS00ZTdjLTg3MTAtOTA2MDk0OTk1Njk3IiwiZTA5YWQzMjMtYmNiYS00ZWFjLWFhNGItMDdjNDQ5YWJmMzNmIiwiYjMyMmI4YzgtMzRkYy00ZmFmLThkMmQtYTQ0NjYwMDQ0ZWZhIiwiZWE4YjkzY2ItMjJlYy00MTlkLThiNTEtMjM4MjMyODRiM2VhIiwiMmEyMmY1MTctNjExOS00NzA2LWI4OTktMTIyNjU4NGM5NDAwIiwiM2IyYTUwMTctOGZiZS00NDE1LWJlZWQtMmUxZDE5YjAzMzI3IiwiZmNiMWY0YzgtMzA1NS00MWJmLTliMjUtZDk4ZGRjYmNiMDQ3IiwiOGY4YzRhNWEtYzQ5MC00N2QyLTk5MzYtYWY3ZmM0NTc4M2ZmIiwiNTJmZjgzOTktODE2YS00NTYzLTg2NDMtYjkwMmViODc3ZGEyIl0sImF1ZCI6WyJjaG9yZW9kZXZwb3J0YWwiLCJodHRwczpcL1wvc3RzLnByZXZpZXctZHYuY2hvcmVvLmRldjo0NDNcL29hdXRoMlwvdG9rZW4iXSwibmJmIjoxNzQxMDAwNTgxLCJhenAiOiJjaG9yZW9kZXZwb3J0YWwiLCJzY29wZSI6ImFwaW06YWRtaW4gYXBpbTpwcm9kX2tleV9tYW5hZ2UgYXBpbTpzYW5kX2tleV9tYW5hZ2UgYXBpbTpzdWJzY3JpYmUgZW52aXJvbm1lbnRzOnZpZXdfZGV2IGVudmlyb25tZW50czp2aWV3X3Byb2QiLCJvcmdhbml6YXRpb24iOnsiaGFuZGxlIjoic2FjaGluaXNkZXYiLCJ1dWlkIjoiZGM1Mjk0YzctZTBlMS00YzY3LWI5MmItMjZiNzIwNDJkOTA0In0sIm9yZ2FuaXphdGlvbnMiOlsiNjMxODQ2OTAtYmExMC00NmY5LTk1YjUtMzdkNTA2NzEwODIyIiwiZGM1Mjk0YzctZTBlMS00YzY3LWI5MmItMjZiNzIwNDJkOTA0Il0sImV4cCI6MTc0MTAwNDE4MSwiaWRwX2NsYWltcyI6eyJhdXQiOiJBUFBMSUNBVElPTl9VU0VSIiwibmFtZSI6IkRpdnlhIFByZW1hbmFudGhhIiwiZ2l2ZW5fbmFtZSI6IkRpdnlhIiwiZmFtaWx5X25hbWUiOiJQcmVtYW5hbnRoYSIsImVtYWlsIjoiZGl2eWFAd3NvMi5jb20ifSwiaWF0IjoxNzQxMDAwNTgxLCJqdGkiOiIyMzM3Y2Y2Ni01ZDA3LTQyMTMtOWQ5NS01NzY5NzQ3ODhhODUifQ.e37R37SEoEBerS0SzFDRBswKVkZcdhVGmaGnfJGILm-GrAeTz3AN6ubZz5KjPar6QOEfKaJcJeK_K3zeWe04Z0LeYY1zCU-2gwTr5452JikbS62GE5_e8SzEAppQiZ9fRB8b5JakxsoZBruNs710krPwzzhoTQljgAWlivr4YVL6Rtsrmh-21UnxNSJXlTGL7OjxU6MRzGLaqGWzthWLMmtczV4IA0NSU7aHjLojGHVfDhBC7VpndjTD3pdvtoN2VYJp6IWcZ7EC3xd_H3HrvzcvkcbRuv0y1M4K5x7BSVsvS1vCaaQq9uXBGVFbX2VfwpV9z4onp_lToqsFM6FjfWLH_e5FPH7_GogUcEQs8haXx8B_O8p3BdQJ3J5gKrtAlqSadBDNxZu2drBNOOqb8z6F0jwVb9qCb0o5ydM_l06nxAAtL5LaFiWUfRb5B4h2VHY86Ppe-rxtPBK7-Rxcq78w2SVjrseoM2CRffiti990bf7UhWhDxQKCfAgpaZF2eBWasOgSDRzkVNtLo-vX90-l862I2gtKi-c5V1KQREk-KYPsUyR9W-3-BEWjWV-tkqDJKjzdwtkKra6d78EvnIUO0LPI1U2-xRzX0XwhtZBqRynWCT6Zvi--6-c3NOR_DJbTEizeoJL69gxuDu9M_UI7pkani-dF9k7uXK73j5U"
+    // } else {
+    //     headers.Authorization = req.headers.authorization;
+    // }
     let httpsAgent;
 
     if (config.controlPlane.disableCertValidation) {
@@ -291,6 +292,7 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         }
 
         const response = await axios(url, options);
+        console.log(`API response:`, response.data);
         return response.data;
     } catch (error) {
 
@@ -452,6 +454,57 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
     return fileDetails;
 }
 
+function appendAPIImageURL(subList, req, orgID) {
+    subList.forEach(element => {
+        const images = element.apiInfo.apiImageMetadata;
+        let apiImageUrl = '';
+        for (const key in images) {
+            apiImageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${element.apiID}${constants.API_TEMPLATE_FILE_NAME}`;
+            const modifiedApiImageURL = apiImageUrl + images[key];
+            element.apiInfo.apiImageMetadata[key] = modifiedApiImageURL;
+        }
+    });
+}
+
+async function appendSubscriptionPlanDetails(orgID, subscriptionPolicies) {
+    let subscriptionPlans = [];
+    if (subscriptionPolicies) {
+        for (const policy of subscriptionPolicies) {
+            const subscriptionPlan = await loadSubscriptionPlan(orgID, policy.policyName);
+            subscriptionPlans.push({
+                policyID: subscriptionPlan.policyID,
+                displayName: subscriptionPlan.displayName,
+                policyName: subscriptionPlan.policyName,
+                description: subscriptionPlan.description,
+                billingPlan: subscriptionPlan.billingPlan,
+                requestCount: subscriptionPlan.requestCount,
+            });
+        }
+    }
+    return subscriptionPlans;
+}
+
+const loadSubscriptionPlan = async (orgID, policyName) => {
+
+    try {
+        const policyData = await apiDao.getSubscriptionPolicyByName(orgID, policyName);
+        if (policyData) {
+            return new subscriptionPolicyDTO(policyData);
+        } else {
+            throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
+        }
+    } catch (error) {
+        console.error("Error occurred while loading subscription plans", error);
+        util.handleError(res, error);
+    }
+}
+
+function appendOrgIdQueryParam(url, req) {
+    if (config.tokenExchange) {
+        return `${url}?organizationId=${req.user.organization}`;
+    }
+}
+
 module.exports = {
     loadMarkdown,
     renderTemplate,
@@ -471,5 +524,8 @@ module.exports = {
     getErrors,
     validateProvider,
     rejectExtraProperties,
-    readFilesInDirectory
+    readFilesInDirectory,
+    appendAPIImageURL,
+    appendSubscriptionPlanDetails,
+    appendOrgIdQueryParam
 }
