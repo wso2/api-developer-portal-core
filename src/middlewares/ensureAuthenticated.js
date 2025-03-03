@@ -60,7 +60,6 @@ function enforceSecuirty(scope) {
                 } else {
                     return res.status(404).json({ error: "Organization not found" });
                 }          
-            }
         } catch (err) {
             console.error("Error checking access token:", err);
             return res.status(500).json({ error: "Internal Server Error" });
