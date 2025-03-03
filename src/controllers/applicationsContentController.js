@@ -55,7 +55,6 @@ const loadApplications = async (req, res) => {
             }
             html = renderTemplate('../pages/applications/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
         } else {
-            console.log("Loading Applications=========");
             const orgName = req.params.orgName;
             const orgID = await orgIDValue(orgName);
             const applications = await adminDao.getApplications(orgID, req.user.sub)

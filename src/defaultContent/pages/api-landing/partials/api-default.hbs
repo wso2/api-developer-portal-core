@@ -1,12 +1,33 @@
-<head>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.10.5/swagger-ui.min.css">
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.10.5/swagger-ui-bundle.min.js"></script>
-</head>
-<main>
-    <div id="swagger-ui"></div>
-    <script>
-        window.onload = () => {
-            SwaggerUIBundle({ spec: {{{apiDefinition}}}, dom_id: "#swagger-ui" });
-        };
-    </script>
-</main>
+<section>
+    <div class="defaultapi-container">
+        <div class="defaultapi-section">
+            <h2 class="defaultapi-section-title">Endpoint(s)</h2>
+            {{#resources.serverDetails}}
+            <div class="endpoint-row">
+                <span class="defaultapi-development-label">{{description}}</span>
+                <span class="defaultapi-endpoint-url">{{url}}</span>
+            </div>
+            {{/resources.serverDetails}}
+        </div>
+        <div class="defaultapi-section">
+            <h2 class="defaultapi-section-title">Description</h2>
+            <div class="defaultapi-description">
+                <p>{{resources.description}}</p>
+            </div>
+        </div>
+        <div class="defaultapi-section">
+            <h2 class="defaultapi-section-title">Resources</h2>
+            <div class="defaultapi-resources">
+                {{#resources.endpoints}}
+                {{#methods}}
+                <div class="defaultapi-resource-item">
+                    <div class="defaultapi-http-method {{method}}">{{method}}</div>
+                    <div class="defaultapi-resource-path">{{path}}</div>
+                    <div class="defaultapi-resource-path">{{summary}}</div>
+                </div>
+                {{/methods}}
+                {{/resources.endpoints}}
+            </div>
+        </div>
+    </div>
+</section>

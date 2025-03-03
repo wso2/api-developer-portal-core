@@ -46,8 +46,9 @@ const registerPartials = async (req, res, next) => {
         if (layoutContent === "") {
           console.log("Layout content not found in the database. Loading from file system");
           registerAllPartialsFromFile(config.baseUrl + "/"+ req.params.orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName, req, './src/defaultContent');
+        } else {
+          await registerPartialsFromAPI(req);
         }
-        await registerPartialsFromAPI(req);
       }
     } catch (error) {
       console.error('Error while loading organization :', error);
