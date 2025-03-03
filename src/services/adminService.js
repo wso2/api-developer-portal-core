@@ -642,7 +642,7 @@ const deleteDevPortalApplication = async (req, res) => {
 const createSubscription = async (req, res) => {
 
     try {
-        const orgID = await adminDao.getOrgId(req.user[constants.ROLES.ORGANIZATION_CLAIM]);
+        const orgID = req.params.orgId;
         const app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
         sequelize.transaction(async (t) => {
             try {
@@ -661,6 +661,10 @@ const createSubscription = async (req, res) => {
             } catch (error) {
                 if (error.statusCode && error.statusCode === 409) {
                     const response = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?apiId=${req.body.apiReferenceID}&applicationId=${app[0].dataValues.CP_APP_REF}`, {});
+                    
+                    /** Handle both scenario where a reference application in cp is created but no subscriptions avaiable 
+                     * (update existing row) & a reference application in cp is created & a subscriptions for a different 
+                     * API already exisits (create new row) **/
                     await handleSubscribe(orgID, req.applicationID, app.API_REF_ID, app.SUBSCRIPTION_REF_ID, response);
                     await adminDao.createSubscription(orgID, req.body);
                     return res.status(200).json({ message: 'Subscribed successfully' });
@@ -768,7 +772,7 @@ const deleteSubscription = async (req, res) => {
 
 const unsubscribeAPI = async (req, res) => {
     try {
-        const orgID = await adminDao.getOrgId(req.user[constants.ROLES.ORGANIZATION_CLAIM]);
+        const orgID = req.params.orgId;        ;
         const { appID, apiReferenceID, subscriptionID } = req.query;
         const sharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, true);
         const nonSharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, false);
