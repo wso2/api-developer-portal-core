@@ -1,16 +1,29 @@
 {
-  "port": 3000,
-  "pathToContent": "../api-developer-portal/src/",
+  "baseUrl": "https://localhost:3000",
+  "defaultPort": 3000,
+  "advanced": {
+    "http": false,
+    "dbSslDialectOption": false,
+    "resourceLoadFromBaseUrl": false,
+    "apiKey" : {
+      "enabled": true,
+      "keyType": "x-wso2-api-key",
+      "keyValue": "x-wso2-api-key"
+    },
+    "disabledRoleValidation": true,
+    "disableOrgCallback": true
+  },
+  "pathToContent": "./resources/default-layout/",
   "mode": "production",
   "controlPlane": {
     "url": "https://sts.preview-dv.choreo.dev/api/am/devportal/v2",
     "disableCertValidation": true,
-    "pathToCertificate": "../api-developer-portal/conf/security/client-truststore.pem"
+    "pathToCertificate": "./resources/security/client-truststore.pem"
   },
   "serverCerts": {
-    "pathToCert": "certs/client-truststore.pem",
-    "pathToPK": "certs/private-key.pem",
-    "pathToCA": "certs/client-truststore.pem"
+    "pathToCert": "./resources/security/client-truststore.pem",
+    "pathToPK": "./resources/security/private-key.pem",
+    "pathToCA": "./resources/security/client-truststore.pem"
   },
   "db": {
     "username": "postgres",
