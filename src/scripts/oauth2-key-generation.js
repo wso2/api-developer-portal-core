@@ -28,8 +28,6 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             "additionalProperties": jsonObject.additionalProperties
         }
     })
-    console.log("Payload", payload);
-    console.log("Consumer key", document.getElementById("consumerKey"))
     try {
         const response = await fetch(`/devportal/organizations/${orgID}/app-key-mapping`, {
             method: 'POST',
@@ -97,8 +95,10 @@ function getFormData(formData, keyManager, clientName) {
         }
         jsonObject.additionalProperties = additionalProperties;
     }
-
+    console.log("Additional Properties");
     formData.forEach((value, key) => {
+        console.log("Key", key);
+        console.log("Value", value);
         if (key.startsWith("additionalProperties.")) {
             const propName = key.replace("additionalProperties.", "");
             // Handle multiple optional value selection
