@@ -166,14 +166,12 @@ const loadApplication = async (req, res) => {
             const subAPIs = await adminDao.getSubscribedAPIs(orgID, applicationId);
             const allAPIs = await apiMetadata.getAllAPIMetadata(orgID, groupList, viewName);
 
-            console.log(subAPIs)
             const subscribedAPIIds = new Set(subAPIs.map(api => api.API_ID));
             const nonSubscribedAPIs = allAPIs
                 .filter(api => !subscribedAPIIds.has(api.API_ID) && api.DP_SUBSCRIPTION_POLICies.length > 0)
                 .map(api => new APIDTO(api));
 
             let subList = [];
-            console.log(applicationId);
             if (subAPIs.length > 0) {
                 subList = subAPIs.map((sub) => {
                     console.log(sub);
