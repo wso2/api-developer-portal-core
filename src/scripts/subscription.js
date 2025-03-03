@@ -5,7 +5,7 @@ function checkQueryParamsAndLoadModal() {
     const subPlan = urlParams.get('policyName');
     const apiName = urlParams.get('apiName');
     const apiVersion = urlParams.get('apiVersion');
-    
+
     if (subPlan && apiName && apiVersion) {
         const modal = document.getElementById('planModal');
         modal.style.display = 'block';
@@ -135,14 +135,14 @@ async function handleSubscribe(appId, apiName, apiVersion, apiRefId) {
         const response = await fetch(`/devportal/subscriptions`, {
             method: 'POST',
             headers: {
-            'Content-Type': 'application/json',
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-            applicationId: applicationId.replace(/[^a-zA-Z0-9\s-]/g, ''),
-            apiName: apiName.replace(/[^a-zA-Z0-9\s-]/g, ''),
-            apiVersion: apiVersion.replace(/[^a-zA-Z0-9\s-.]/g, ''),
-            throttlingPolicy: policyName.replace(/[^a-zA-Z0-9\s-]/g, ''),
-            apiRefId: apiRefId,
+                applicationId: applicationId.replace(/[^a-zA-Z0-9\s-]/g, ''),
+                apiName: apiName.replace(/[^a-zA-Z0-9\s-]/g, ''),
+                apiVersion: apiVersion.replace(/[^a-zA-Z0-9\s-.]/g, ''),
+                throttlingPolicy: policyName.replace(/[^a-zA-Z0-9\s-]/g, ''),
+                apiRefId: apiRefId,
             }),
         });
 
@@ -162,17 +162,33 @@ async function handleSubscribe(appId, apiName, apiVersion, apiRefId) {
 }
 
 
-function loadSubscriptionPlasnModal(apiId) {
-    const modal = document.getElementById('planModal-' + apiId);
+function loadModal(modalID) {
+    const modal = document.getElementById(modalID);
     modal.style.display = 'flex';
 }
 
-async function subscribe(applicationID, apiId, policyId) {
+async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, policyName) {
     try {
-
         if (!applicationID) {
             applicationID = document.getElementById('appDropdown-' + apiId).value;
         }
+
+        if (document.getElementById('apiSelect')) {
+            if (!apiId) {
+                apiId = document.getElementById('apiSelect').value;
+            }   
+            if (!apiReferenceID) {
+                apiReferenceID = document.getElementById('apiSelect').selectedOptions[0].getAttribute('data-apiRefID');
+            }     
+        }
+       
+        if (document.getElementById('planSelect')) {
+            policyId = document.getElementById('planSelect').value;
+            if (!policyName) {
+                policyName = planSelect.selectedOptions[0].getAttribute('data-policyName');
+            }
+        }
+
 
         const subBtn = document.getElementById('subscribe-btn-' + policyId);
 
@@ -181,12 +197,12 @@ async function subscribe(applicationID, apiId, policyId) {
             subBtn.disabled = true;
         }
 
-        const response = await fetch(`/devportal/subscriptions`, {
+        const response = await fetch(`/devportal/organizations/'${orgID}'/subscriptions`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ applicationID, apiId, policyId }),
+            body: JSON.stringify({ applicationID, apiId, apiReferenceID, policyId, policyName }),
         });
 
         const responseData = await response.json();
@@ -197,11 +213,58 @@ async function subscribe(applicationID, apiId, policyId) {
             const url = new URL(window.location.origin + window.location.pathname);
             window.location.href = url.toString();
         } else {
-            console.error('Failed to create application:', responseData);
-            await showAlert(`Failed to create application. Please try again.\n${responseData.description}`, 'error');
+            console.error('Failed to create subscription:', responseData);
+            await showAlert(`Failed to create subscription. Please try again.\n${responseData.description}`, 'error');
         }
     } catch (error) {
         console.error('Error:', error);
         await showAlert(`An error occurred while subscribing: \n${error.message}`, 'error');
     }
+}
+
+function addAPISubscription(selectElement) {
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const subscriptionPolicies = JSON.parse(selectedOption.getAttribute("data-policies") || "[]");
+    const planSelect = document.getElementById("planSelect");
+
+    planSelect.innerHTML = '<option value="" disabled selected>Select a Plan</option>';
+
+    subscriptionPolicies.forEach(policy => {
+        const option = document.createElement("option");
+        option.value = policy.policyID;
+        option.textContent = policy.displayName;
+        option.setAttribute("data-policyName", policy.policyName);
+        planSelect.appendChild(option);
+    });
+
+}
+
+
+async function removeSubscription() {
+    const modal = document.getElementById('deleteConfirmation');
+    const orgID = modal.dataset.param1;
+    const appID = modal.dataset.param2;
+    const apiRefID = modal.dataset.param3;
+    const subID = modal.dataset.param4;
+  
+    try {
+        const response = await fetch(`/devportal/organizations/${orgID}/subscriptions?appID=${appID}&apiReferenceID=${apiRefID}&subscriptionID=${subID}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        if (response.ok) {
+            await showAlert(`Unsubscribed successfully!`, 'success');
+            const url = new URL(window.location.origin + window.location.pathname);
+            window.location.href = url.toString();
+        } else {
+            const responseData = await response.json();
+            console.error('Failed to unsubscribe:', responseData);
+            await showAlert(`Failed to unsubscribe.\n${responseData.description}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        await showAlert(`An error occurred.\n${error.message}`, 'error');
+    }  
 }

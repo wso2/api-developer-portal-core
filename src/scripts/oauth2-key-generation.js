@@ -182,7 +182,7 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
 async function removeApplicationKey() {
     const modal = document.getElementById('deleteConfirmation');
     const applicationId = modal.dataset.applicationId;
-    const keyMappingId = modal.dataset.mappingId;
+    const keyMappingId = modal.dataset.param2;
 
     try {
         const response = await fetch(`/devportal/applications/${applicationId}/oauth-keys/${keyMappingId}`, {

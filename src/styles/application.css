@@ -25,3 +25,7 @@
   color: var(--primary-main-color);
   margin-bottom: 0.5rem;
 }
+
+.modal-md {
+  width: 25%;
+}

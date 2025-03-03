@@ -22,6 +22,8 @@ const { Application, ApplicationKeyMapping, SubscriptionMapping } = require('../
 const Provider = require('../models/provider');
 const apiDao = require('./apiMetadata');
 const { APIMetadata } = require('../models/apiMetadata');
+const APIImageMetadata = require('../models/apiImages');
+const SubscriptionPolicy = require('../models/subscriptionPolicy');
 
 const createOrganization = async (orgData, t) => {
 
@@ -677,15 +679,14 @@ const deleteApplication = async (orgID, appID, userID) => {
     }
 }
 
-const createSubscription = async (orgID, subscription) => {
-
+const createSubscription = async (orgID, subscription, t) => {
     try {
         const subMapping = await SubscriptionMapping.create({
             APP_ID: subscription.applicationID,
-            REFERENCE_ID: subscription.apiId,
+            API_ID: subscription.apiId,
             POLICY_ID: subscription.policyId,
             ORG_ID: orgID,
-        });
+        }, { transaction: t });
         return subMapping;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -704,7 +705,7 @@ const getSubscription = async (orgID, subID, t) => {
                     ORG_ID: orgID,
                     SUB_ID: subID
                 }, transaction: t
-            });
+            }, { transaction: t });
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -762,7 +763,7 @@ const deleteSubscription = async (orgID, subID, t) => {
                 ORG_ID: orgID,
                 SUB_ID: subID
             }, transaction: t
-        },);
+        }, { transaction: t });
         if (deletedRowsCount < 1) {
             throw new Sequelize.EmptyResultError('Subscription not found');
         } else {
@@ -785,7 +786,7 @@ const deleteAppKeyMapping = async (orgID, appID, apiID, t) => {
                 APP_ID: appID,
                 API_REF_ID: apiID
             }, transaction: t
-        });
+        }, { transaction: t });
         if (deletedRowsCount < 1) {
             throw Object.assign(new Sequelize.EmptyResultError('Application Key Mapping not found'));
         } else {
@@ -863,17 +864,95 @@ const getKeyMapping = async (orgID, appID, t) => {
 const getSubscribedAPIs = async (orgID, appID) => {
     try {
         const subscribedAPIs = await APIMetadata.findAll({
-            where: { ORG_ID: orgID  },
+            where: { ORG_ID: orgID },
             include: [{
                 model: Application,
                 where: { APP_ID: appID },
                 required: true,
-                through: { attributes: ['POLICY_ID'] }
+                through: { attributes: ["SUB_ID"] }
+            },
+            {
+                model: APIImageMetadata,
+                required: false
+            }, {
+                model: SubscriptionPolicy,
+                through: { attributes: ['POLICY_ID'] },
+                required: false
             }]
         });
         return subscribedAPIs;
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getApplicationKeyMapping = async (orgID, appID, isSharedToken) => {
+
+    try {
+        return await ApplicationKeyMapping.findAll(
+            {
+                where: {
+                    ORG_ID: orgID,
+                    APP_ID: appID,
+                    SHARED_TOKEN: isSharedToken
+                }
+            });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const createApplicationKeyMapping = async (mappingData, t) => {
+
+    try {
+        const appKeyMapping = await ApplicationKeyMapping.create({
+            ORG_ID: mappingData.orgID,
+            APP_ID: mappingData.appID,
+            CP_APP_REF: mappingData.cpAppRef,
+            API_REF_ID: mappingData.apiRefID,
+            SUBSCRIPTION_REF_ID: mappingData.subscriptionRefID,
+            SHARED_TOKEN: mappingData.sharedToken,
+            TOKEN_TYPE: mappingData.tokenType
+        }, { transaction: t });
+        return appKeyMapping;
+    } catch (error) {
+        console.log(error)
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const updateApplicationKeyMapping = async (apiID, mappingData, t) => {
+    try {
+        const [updatedRowsCount, appContent] = await ApplicationKeyMapping.update({
+            ORG_ID: mappingData.orgID,
+            APP_ID: mappingData.appID,
+            API_REF_ID: mappingData.apiRefID,
+            CP_APP_REF: mappingData.cpAppRef,
+            SUBSCRIPTION_REF_ID: mappingData.subscriptionRefID,
+            SHARED_TOKEN: mappingData.sharedToken,
+            TOKEN_TYPE: mappingData.tokenType
+        },
+            {
+                where: {
+                    API_REF_ID: apiID
+                },
+                transaction: t
+            });
+
+        return [updatedRowsCount, appContent];
+
+    } catch (error) {
+        console.log(error)
+        if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
         }
         throw new Sequelize.DatabaseError(error);
@@ -916,5 +995,8 @@ module.exports = {
     createAppKeyMapping,
     getKeyMapping,
     getAppApiSubscription,
-    getSubscribedAPIs
+    getSubscribedAPIs,
+    getApplicationKeyMapping,
+    createApplicationKeyMapping,
+    updateApplicationKeyMapping
 };

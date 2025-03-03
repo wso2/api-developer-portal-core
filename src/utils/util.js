@@ -29,6 +29,8 @@ const https = require('https');
 const config = require(process.cwd() + '/config.json');
 const { body } = require('express-validator');
 const { Sequelize } = require('sequelize');
+const apiDao = require('../dao/apiMetadata');
+const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const jwt = require('jsonwebtoken');
 
 // Function to load and convert markdown file to HTML
@@ -429,13 +431,13 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                 fileType = "style"
                 if (file.name === "main.css") {
                     strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g,
-                        `@import url("${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${protocol}://${host}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
+                        `@import url("${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                 fileType = "layout"
                 if (file.name === "main.hbs") {
-                    strContent = strContent.replace(/\/styles\//g, `${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${protocol}://${host}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=`);
+                    strContent = strContent.replace(/\/styles\//g, `${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=`);
                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
                 }
             } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
@@ -459,6 +461,51 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
     return fileDetails;
 }
 
+function appendAPIImageURL(subList, req, orgID) {
+    subList.forEach(element => {
+        const images = element.apiInfo.apiImageMetadata;
+        let apiImageUrl = '';
+        for (const key in images) {
+            apiImageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${element.apiID}${constants.API_TEMPLATE_FILE_NAME}`;
+            const modifiedApiImageURL = apiImageUrl + images[key];
+            element.apiInfo.apiImageMetadata[key] = modifiedApiImageURL;
+        }
+    });
+}
+
+async function appendSubscriptionPlanDetails(orgID, subscriptionPolicies) {
+    let subscriptionPlans = [];
+    if (subscriptionPolicies) {
+        for (const policy of subscriptionPolicies) {
+            const subscriptionPlan = await loadSubscriptionPlan(orgID, policy.policyName);
+            subscriptionPlans.push({
+                policyID: subscriptionPlan.policyID,
+                displayName: subscriptionPlan.displayName,
+                policyName: subscriptionPlan.policyName,
+                description: subscriptionPlan.description,
+                billingPlan: subscriptionPlan.billingPlan,
+                requestCount: subscriptionPlan.requestCount,
+            });
+        }
+    }
+    return subscriptionPlans;
+}
+
+const loadSubscriptionPlan = async (orgID, policyName) => {
+
+    try {
+        const policyData = await apiDao.getSubscriptionPolicyByName(orgID, policyName);
+        if (policyData) {
+            return new subscriptionPolicyDTO(policyData);
+        } else {
+            throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
+        }
+    } catch (error) {
+        console.error("Error occurred while loading subscription plans", error);
+        util.handleError(res, error);
+    }
+}
+
 module.exports = {
     loadMarkdown,
     renderTemplate,
@@ -478,5 +525,7 @@ module.exports = {
     getErrors,
     validateProvider,
     rejectExtraProperties,
-    readFilesInDirectory
+    readFilesInDirectory,
+    appendAPIImageURL,
+    appendSubscriptionPlanDetails,
 }

@@ -16,7 +16,7 @@
   "pathToContent": "./resources/default-layout/",
   "mode": "production",
   "controlPlane": {
-    "url": "https://127.0.0.1:9443/api/am/devportal/v3",
+    "url": "https://sts.preview-dv.choreo.dev/api/am/devportal/v2",
     "disableCertValidation": true,
     "pathToCertificate": "./resources/security/client-truststore.pem"
   },
@@ -64,6 +64,7 @@
     "certificate": "",
     "jwksURL": "https://localhost:9443/oauth2/jwks"
   },
+  "tokenExchange": true,
   "disableTLS": true,
   "roleClaim": "roles",
   "orgIDClaim": "organizationID",
