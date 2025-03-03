@@ -22,6 +22,7 @@ const constants = require('../utils/constants');
 const path = require('path');
 const fs = require('fs');
 const adminDao = require('../dao/admin');
+const apiMetadata = require('../dao/apiMetadata');
 const util = require('../utils/util');
 const filePrefix = config.pathToContent;
 const controlPlaneUrl = config.controlPlane.url;
@@ -81,7 +82,7 @@ const loadApplications = async (req, res) => {
         const orgName = req.params.orgName;
         const viewName = req.params.viewName;
         const orgId = await orgIDValue(orgName);
-        
+
         const templatePath = path.join(require.main.filename, '..', 'pages', 'error-page', 'page.hbs');
         const templateResponse = fs.readFileSync(templatePath, constants.CHARSET_UTF8);
         const layoutResponse = await loadLayoutFromAPI(orgId, viewName);
@@ -157,12 +158,33 @@ const loadApplication = async (req, res) => {
         } else {
             const orgName = req.params.orgName;
             const orgID = await orgIDValue(orgName);
-            metaData = new ApplicationDTO(await adminDao.getApplication(orgID, applicationId, req.user.sub));
-            const subscriptions = await adminDao.getSubscribedAPIs(orgID, applicationId);
-            let subList = [];
-            if (subscriptions.length > 0) {
-                subList = subscriptions.map((sub) => new APIDTO(sub));
+            let groupList = [];
+            if (req.query.groups) {
+                groupList.push(req.query.groups.split(" "));
             }
+            metaData = new ApplicationDTO(await adminDao.getApplication(orgID, applicationId, req.user.sub));
+            const subAPIs = await adminDao.getSubscribedAPIs(orgID, applicationId);
+            const allAPIs = await apiMetadata.getAllAPIMetadata(orgID, groupList, viewName);
+
+            const subscribedAPIIds = new Set(subAPIs.map(api => api.API_ID));
+            const nonSubscribedAPIs = allAPIs
+                .filter(api => !subscribedAPIIds.has(api.API_ID) && api.DP_SUBSCRIPTION_POLICies.length > 0)
+                .map(api => new APIDTO(api));
+
+            let subList = [];
+            if (subAPIs.length > 0) {
+                subList = subAPIs.map((sub) => {
+                    const apiDTO = new APIDTO(sub);
+                    apiDTO.subID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.SUB_ID;
+                    return apiDTO;
+                });
+            }
+            util.appendAPIImageURL(subList, req, orgID);
+
+            await Promise.all(nonSubscribedAPIs.map(async (api) => {
+                api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
+            }));
+
             // const subApiMap = new Map();
             // subApis.list.forEach(subApi => subApiMap.set(subApi.apiId, { policy: subApi.throttlingPolicy, id: subApi.subscriptionId }));
             // const apiList = [];
@@ -236,7 +258,9 @@ const loadApplication = async (req, res) => {
                 applicationMetadata: metaData,
                 // keyManagersMetadata: kMmetaData,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-                subscriptions: subList,
+                subAPIs: subList,
+                nonSubAPIs: nonSubscribedAPIs,
+                orgID: orgID,
                 // productionKeys: productionKeys,
                 // sandboxKeys: sandboxKeys
             }
@@ -282,7 +306,7 @@ const getSubscribedApis = async (req, appId) => {
 
 const loadApplicationForEdit = async (req, res) => {
 
-    const {orgName, viewName, applicationId} = req.params;
+    const { orgName, viewName, applicationId } = req.params;
     let html, templateContent, metaData, throttlingMetaData;
     if (config.mode === constants.DEV_MODE) {
         metaData = await getMockApplication();
@@ -296,7 +320,7 @@ const loadApplicationForEdit = async (req, res) => {
     } else {
         const orgID = await orgIDValue(orgName);
         metaData = await getAPIMApplication(req, applicationId);
-        throttlingMetaData = await getAPIMThrottlingPolicies(req);        
+        throttlingMetaData = await getAPIMThrottlingPolicies(req);
         templateContent = {
             applicationMetadata: metaData,
             throttlingPoliciesMetadata: throttlingMetaData,

@@ -25,26 +25,7 @@ const { Strategy: CustomStrategy } = require('passport-custom');
 const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 const { ApplicationDTO } = require('../dto/application');
-
-const unsubscribeAPI = async (req, res) => {
-    try {
-        const subscriptionId = req.params.subscriptionId;
-        res.send(await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${subscriptionId}`, {}, {}));
-    } catch (error) {
-        console.error("Error occurred while unsubscribing from API", error);
-        util.handleError(res, error);
-    }
-}
-
-const subscribeAPI = async (req, res) => {
-    try {
-        const orgID = await adminDao.getOrgId(req.user[constants.ROLES.ORGANIZATION_CLAIM]);
-        return res.send(await adminDao.createSubscription(orgID, req.body));
-    } catch (error) {
-        console.error("Error occurred while subscribing to API", error);
-        util.handleError(res, error);
-    }
-}
+const sequelize = require('../db/sequelize');    
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
 
@@ -230,8 +211,6 @@ const login = async (req, res) => {
 };
 
 module.exports = {
-    unsubscribeAPI,
-    subscribeAPI,
     saveApplication,
     updateApplication,
     deleteApplication,

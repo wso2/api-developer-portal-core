@@ -89,6 +89,7 @@ router.post('/organizations/:orgId/subscriptions', enforceSecuirty(constants.SCO
 router.get('/organizations/:orgId/subscriptions/:subscriptionId', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.getSubscription);
 router.get('/organizations/:orgId/subscriptions', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.getAllSubscriptions);
 router.delete('/organizations/:orgId/subscriptions/:subscriptionId', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.deleteSubscription);
+router.delete('/organizations/:orgId/subscriptions', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.unsubscribeAPI);
 
 //store key mapping for devportal app and Control plane apps
 // router.post('/organizations/:orgId/app-key-mapping', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.createDevPortalApplication);
@@ -100,9 +101,6 @@ router.put('/organizations/:orgId/views/:name', validateAuthentication(constants
 router.get('/organizations/:orgId/views/:name', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.getView);
 router.get('/organizations/:orgId/views', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.getAllViews);
 router.delete('/organizations/:orgId/views/:name', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.deleteView);
-
-router.post('/subscriptions', ensureAuthenticated, devportalController.subscribeAPI);
-router.delete('/subscriptions/:subscriptionId', ensureAuthenticated, devportalController.unsubscribeAPI);
 
 router.post('/applications', ensureAuthenticated, devportalController.saveApplication);
 router.put('/applications/:applicationId', ensureAuthenticated, devportalController.updateApplication);
