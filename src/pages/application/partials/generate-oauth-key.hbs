@@ -198,7 +198,7 @@
                         <div class="d-flex gap-3">
                             <button class="common-btn-primary" id="applicationKeyGenerateButton" name="http-values"
                                 type="button"
-                                onClick="generateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.id}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subscriptions}}', '{{../../orgID}}', 'consumer-key-{{../id}}-production', 'consumer-secret-{{../id}}-production')">
+                                onClick="generateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.id}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-production', 'consumer-secret-{{../id}}-production')">
                                 Generate Keys
                             </button>
                         </div>

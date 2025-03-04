@@ -869,7 +869,7 @@ const getSubscribedAPIs = async (orgID, appID) => {
                 model: Application,
                 where: { APP_ID: appID },
                 required: true,
-                through: { attributes: ["SUB_ID"] }
+                through: { attributes: ["SUB_ID", "POLICY_ID"] }
             },
             {
                 model: APIImageMetadata,
@@ -897,6 +897,27 @@ const getApplicationKeyMapping = async (orgID, appID, isSharedToken) => {
                 where: {
                     ORG_ID: orgID,
                     APP_ID: appID,
+                    SHARED_TOKEN: isSharedToken
+                }
+            });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const  getApplicationAPIMapping = async (orgID, appID, apiID, appRefID ,isSharedToken) => {
+
+    try {
+        return await ApplicationKeyMapping.findAll(
+            {
+                where: {
+                    ORG_ID: orgID,
+                    APP_ID: appID,
+                    API_REF_ID: apiID,
+                    CP_APP_REF: appRefID,
                     SHARED_TOKEN: isSharedToken
                 }
             });
@@ -998,5 +1019,6 @@ module.exports = {
     getSubscribedAPIs,
     getApplicationKeyMapping,
     createApplicationKeyMapping,
-    updateApplicationKeyMapping
+    updateApplicationKeyMapping,
+    getApplicationAPIMapping
 };

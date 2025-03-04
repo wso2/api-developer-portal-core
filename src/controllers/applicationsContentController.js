@@ -176,6 +176,7 @@ const loadApplication = async (req, res) => {
                 subList = subAPIs.map((sub) => {
                     const apiDTO = new APIDTO(sub);
                     apiDTO.subID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.SUB_ID;
+                    apiDTO.policyID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.POLICY_ID;
                     return apiDTO;
                 });
             }
