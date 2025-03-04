@@ -624,6 +624,6 @@ module.exports = {
     rejectExtraProperties,
     readFilesInDirectory,
     appendAPIImageURL,
-    appendSubscriptionPlanDetails,,
+    appendSubscriptionPlanDetails,
     tokenExchanger
 }
