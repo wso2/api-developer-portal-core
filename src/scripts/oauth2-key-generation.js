@@ -28,8 +28,6 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             "additionalProperties": jsonObject.additionalProperties
         }
     })
-    console.log("Payload", payload);
-    console.log("Consumer key", document.getElementById("consumerKey"))
     try {
         const response = await fetch(`/devportal/organizations/${orgID}/app-key-mapping`, {
             method: 'POST',
@@ -153,7 +151,6 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
         "keyMappingId": keyManagerId,
         "additionalProperties": jsonObject.additionalProperties
     });
-    console.log("Update payload ", payload);
     try {
         const response = await fetch(`/devportal/applications/${appId}/oauth-keys/${keyManagerId}`, {
             method: 'PUT',
@@ -164,7 +161,6 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
         });
 
         const responseData = await response.json();
-        console.log("Update response", responseData)
         if (response.ok) {
             await showAlert('Application keys generated successfully!', 'success');
             const url = new URL(window.location.origin + window.location.pathname);
