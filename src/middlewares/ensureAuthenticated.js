@@ -119,14 +119,14 @@ const ensureAuthenticated = async (req, res, next) => {
                     }
                 }
                 //verify user belongs to organization
-                const isMatch = constants.ROUTE.DEVPORTAL_ROOT.some(pattern => minimatch.minimatch(req.originalUrl, pattern));
+                // const isMatch = constants.ROUTE.DEVPORTAL_ROOT.some(pattern => minimatch.minimatch(req.originalUrl, pattern));
 
-                if (!isMatch) {
-                    if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
-                        console.log('User is not authorized to access organization');
-                        return res.send("User not authorized to access organization");
-                    }
-                }
+                // if (!isMatch) {
+                //     if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
+                //         console.log('User is not authorized to access organization');
+                //         return res.send("User not authorized to access organization");
+                //     }
+                // }
                 if (!config.advanced.disabledRoleValidation) {
                     if (ensurePermission(req.originalUrl, role, req)) {
                         console.log('User is authorized');

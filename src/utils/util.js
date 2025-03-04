@@ -25,6 +25,7 @@ const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 const unzipper = require('unzipper');
 const axios = require('axios');
+const qs = require('qs');
 const https = require('https');
 const config = require(process.cwd() + '/config.json');
 const { body } = require('express-validator');
@@ -263,11 +264,7 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
 
     console.log(`Invoking API: ${url}`);
     headers = headers || {};
-    if (req.user) {
-        headers.Authorization = "Bearer " + req.user.accessToken;
-    } else { 
-        headers.Authorization = req.headers.authorization;
-    }
+    headers.Authorization = req.user?.exchangedToken ? `Bearer ${req.exchangedToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
     let httpsAgent;
 
     if (config.controlPlane.disableCertValidation) {
@@ -536,6 +533,41 @@ const loadSubscriptionPlan = async (orgID, policyName) => {
     }
 }
 
+async function tokenExchanger(token, orgName) {
+    const url = config.advanced.tokenExchanger.url;
+    const orgDetails = await adminDao.getOrganization(orgName);
+    if (!orgDetails) {
+        throw new Error('Organization not found');
+    } else if (!orgDetails.ORGANIZATION_IDENTIFIER) {
+        throw new Error('Organization Identifier not found');
+    }
+
+    const data = qs.stringify({
+        client_id: config.advanced.tokenExchanger.client_id,
+        grant_type: config.advanced.tokenExchanger.grant_type,
+        subject_token_type: config.advanced.tokenExchanger.subject_token_type,
+        requested_token_type: config.advanced.tokenExchanger.requested_token_type,
+        scope: config.advanced.tokenExchanger.scope,
+        subject_token: token,
+        orgHandle: orgDetails.ORGANIZATION_IDENTIFIER
+    });
+
+    try {
+        const response = await axios.post(url, data, {
+            headers: {
+                'Referer': '',
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+
+        return response.data.access_token;
+    } catch (error) {
+        console.error('Token exchange failed:', error.response ? error.response.data : error.message);
+        throw new Error('Failed to exchange token');
+    }
+}
+
 module.exports = {
     loadMarkdown,
     renderTemplate,
@@ -558,4 +590,5 @@ module.exports = {
     readFilesInDirectory,
     appendAPIImageURL,
     appendSubscriptionPlanDetails,
+    tokenExchanger
 }
