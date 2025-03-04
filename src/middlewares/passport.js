@@ -51,7 +51,6 @@ function configurePassport(authJsonContent, claimNames) {
         }
         if (config.advanced.tokenExchanger.enabled) {
             const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
-            console.log('exchangedToken:', exchangedToken);
             req.exchangedToken = exchangedToken;
         }
         const decodedJWT = jwt.decode(params.id_token);
