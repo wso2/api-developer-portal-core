@@ -197,7 +197,7 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
             subBtn.disabled = true;
         }
 
-        const response = await fetch(`/devportal/organizations/'${orgID}'/subscriptions`, {
+        const response = await fetch(`/devportal/organizations/${orgID}/subscriptions`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
