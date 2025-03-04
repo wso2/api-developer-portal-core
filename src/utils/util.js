@@ -407,51 +407,88 @@ const rejectExtraProperties = (allowedKeys, payload) => {
 
 async function readFilesInDirectory(directory, orgId, protocol, host, viewName, baseDir = '') {
 
-    const files = await fs.promises.readdir(directory, { withFileTypes: true });
-    let fileDetails = [];
-    for (const file of files) {
-        const filePath = path.join(directory, file.name);
-        const relativePath = path.join(baseDir, file.name);
-        if (file.isDirectory()) {
-            const subDirContents = await readFilesInDirectory(filePath, orgId, protocol, host, viewName, relativePath);
-            fileDetails = fileDetails.concat(subDirContents);
-        } else {
-            let content = await fs.promises.readFile(filePath);
-            let strContent = await fs.promises.readFile(filePath, constants.CHARSET_UTF8);
-            let dir = baseDir.replace(/^[^/]+\/?/, '') || '/';
-            let fileType;
-            if (file.name.endsWith(".css")) {
-                fileType = "style"
-                if (file.name === "main.css") {
-                    strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g,
-                        `@import url("${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
-                    content = Buffer.from(strContent, constants.CHARSET_UTF8);
-                }
-            } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
-                fileType = "layout"
-                if (file.name === "main.hbs") {
-                    strContent = strContent.replace(/\/styles\//g, `${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=`);
-                    content = Buffer.from(strContent, constants.CHARSET_UTF8);
-                }
-            } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
-                fileType = "partial"
-            } else if (file.name.endsWith(".md") && dir.endsWith("content")) {
-                fileType = "markDown";
-            } else if (file.name.endsWith(".hbs")) {
-                fileType = "template";
+    try {
+        const files = await fs.promises.readdir(directory, { withFileTypes: true });
+        let fileDetails = [];
+        for (const file of files) {
+            const filePath = path.join(directory, file.name);
+            const relativePath = path.join(baseDir, file.name);
+            if (file.isDirectory()) {
+                const subDirContents = await readFilesInDirectory(filePath, orgId, protocol, host, viewName, relativePath);
+                fileDetails = fileDetails.concat(subDirContents);
             } else {
-                fileType = "image";
-            }
+                let content = await fs.promises.readFile(filePath);
+                let strContent = await fs.promises.readFile(filePath, constants.CHARSET_UTF8);
+                let dir = baseDir.replace(/^[^/]+\/?/, '') || '/';
+                let fileType;
+                if (file.name.endsWith(".css")) {
+                    fileType = "style"
+                    if (file.name === "main.css") {
+                        strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g,
+                            `@import url("${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
+                        content = Buffer.from(strContent, constants.CHARSET_UTF8);
+                    }
+                } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
+                    fileType = "layout"
+                    if (file.name === "main.hbs") {
+                        strContent = strContent.replace(/\/styles\//g, `${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=`);
+                        content = Buffer.from(strContent, constants.CHARSET_UTF8);
+                    }
+                    validateScripts(strContent);
+                } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
+                    validateScripts(strContent);
+                    fileType = "partial"
+                } else if (file.name.endsWith(".md") && dir.endsWith("content")) {
+                    fileType = "markDown";
+                } else if (file.name.endsWith(".hbs")) {
+                    validateScripts(strContent);
+                    fileType = "template";
+                } else {
+                    fileType = "image";
+                }
 
-            fileDetails.push({
-                filePath: dir,
-                fileName: file.name,
-                fileContent: content,
-                fileType: fileType
-            });
+                fileDetails.push({
+                    filePath: dir,
+                    fileName: file.name,
+                    fileContent: content,
+                    fileType: fileType
+                });
+            }
         }
+        return fileDetails;
+    } catch (error) {
+        console.error("Error occurred while reading files in directory", error);
+        throw error;
     }
-    return fileDetails;
+}
+
+function validateScripts(strContent) {
+    try {
+        const allowedScripts = new Set([
+            "<script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'></script>",
+            "<script src='/technical-scripts/search.js' defer></script>",
+            "<script src='/technical-scripts/filter.js' defer></script>",
+            "<script src='/technical-scripts/common.js' defer></script>",
+            "<script src='/technical-scripts/subscription.js' defer></script>"
+        ]);
+    
+        const scriptRegex = /<script(?:\s+[^>]*)?>[\s\S]*?<\/script>/g;
+        let match;
+        const extractedScripts = new Set();
+    
+        while ((match = scriptRegex.exec(strContent)) !== null) {
+            extractedScripts.add(match[0].trim());
+        }
+    
+        for (const script of extractedScripts) {
+            if (!allowedScripts.has(script)) {
+                throw new CustomError(400, constants.ERROR_CODE[400], `Additional scripts not allowed`);
+            }
+        }
+    } catch (error) {
+        console.error("Error occurred while validating scripts", error);
+        throw error;
+    }
 }
 
 function appendAPIImageURL(subList, req, orgID) {
