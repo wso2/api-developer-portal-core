@@ -18,6 +18,7 @@
 /* eslint-disable no-undef */
 const { Sequelize } = require('sequelize');
 const config = require(process.cwd() + '/config.json');
+const secret = require(process.cwd() + '/secret.json');
 
 const sequelizeOptions = {
     host: config.db.host,
@@ -44,7 +45,7 @@ if (config.advanced.dbSslDialectOption) {
 const sequelize = new Sequelize(
     config.db.database,
     config.db.username,
-    config.db.password,
+    secret.dbSecret,
     sequelizeOptions
 );
 
