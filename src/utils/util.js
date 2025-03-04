@@ -265,7 +265,7 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
 
     console.log(`Invoking API: ${url}`);
     headers = headers || {};
-    headers.Authorization = req.user?.exchangedToken ? `Bearer ${req.exchangedToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
+    headers.Authorization = req.user?.exchangeToken ? `Bearer ${req.user.exchangeToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
     let httpsAgent;
 
     if (config.controlPlane.disableCertValidation) {
@@ -289,10 +289,12 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         if (body) {
             options.data = body;
         }
+        console.log(`Request req['exchangedToken1']:`, req.user);
+
         if (config.advanced.tokenExchanger.enabled) {
-            decodedToken = jwt.decode(req.exchangedToken);
+            decodedToken = jwt.decode(req.user.exchangeToken);
             const orgId = decodedToken.organization.uuid;
-            url = url.includes("?") ? `${url}&${orgId}` : `${url}?${orgId}`;
+            url = url.includes("?") ? `${url}&organizationId=${orgId}` : `${url}?organizationId=${orgId}`;
         }
         const response = await axios(url, options);
         return response.data;

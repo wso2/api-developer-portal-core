@@ -51,7 +51,7 @@ function configurePassport(authJsonContent, claimNames) {
         }
         if (config.advanced.tokenExchanger.enabled) {
             const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
-            req.exchangedToken = exchangedToken;
+            req['exchangedToken'] = exchangedToken;
         }
         const decodedJWT = jwt.decode(params.id_token);
         const decodedAccessToken = jwt.decode(accessToken);
@@ -83,6 +83,7 @@ function configurePassport(authJsonContent, claimNames) {
             [constants.ROLES.ORGANIZATION_CLAIM]: organizationID,
             'returnTo': req.session.returnTo,
             accessToken,
+            'exchangeToken': req.exchangedToken,
             [constants.ROLES.ROLE_CLAIM]: roles,
             [constants.ROLES.GROUP_CLAIM]: groups,
             'isAdmin': isAdmin,

@@ -114,9 +114,7 @@ const loadThrottlingPolicies = async (req, res) => {
     else {
         const orgName = req.params.orgName;
         const orgID = await orgIDValue(orgName);
-        metaData = await getAPIMThrottlingPolicies(req);
         templateContent = {
-            throttlingPoliciesMetadata: metaData,
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
         }
         const templateResponse = await templateResponseValue('add-application');
