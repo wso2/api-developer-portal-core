@@ -174,7 +174,10 @@ module.exports = {
         APPLICATION_RETRIEVE_ERROR: "Error while fetching application",
         SUBSCRIPTION_CREATE_ERROR: "Error while creating subscription",
         SUBSCRIPTION_RETRIEVE_ERROR: "Error while retrieving subscription",
-        SUBSCRIPTION_DELETE_ERROR: "Error while deleting subscription"
+        SUBSCRIPTION_DELETE_ERROR: "Error while deleting subscription",
+        KEY_MAPPING_CREATE_ERROR: "Error while creating key mapping",
+        KEY_MAPPING_RETRIEVE_ERROR: "Error while retrieving key mapping",
+        KEY_MAPPING_DELETE_ERROR: "Error while deleting key mapping"
     },
     ERROR_CODE: {
         401: "Unauthenticated",

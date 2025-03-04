@@ -1,0 +1,253 @@
+<section>
+    <div class="keygen-container">
+        <div class='d-flex gap-3'>
+            <button type='button' class='common-btn-primary' onclick='loadKeyGenModal()'>
+                OAuth Keys
+            </button>
+        </div>
+    </div>
+    <div class="modal custom-modal" id='OauthKeyModal'>
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content" style="padding: 20px;">
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                    onclick="closeModal('OauthKeyModal')"></button>
+                <div style="margin-bottom: 20px;">
+                    <div class="keygen-section-header">
+                        <h1>Identity Provider</h1>
+                        <p class="keygen-subtitle">Select an Identity Provider to configure</p>
+                    </div>
+                    <div class="idp-dropdown">
+                        <select id="select-idp-list" name="selectIdpList">
+                            {{#each keyManagersMetadata}}
+                            {{#if enabled}}
+                            <option value="{{name}}" id="{{name}}">{{name}}</option>
+                            {{/if}}
+                            {{/each}}
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    {{#each keyManagersMetadata}}
+                    {{#if enabled}}
+                    {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
+
+                    <div class="col-md-6 KMConfig" id="KMData_{{../name}}">
+                        <form
+                            id='applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'>
+                            <div>
+                                <h3 class='h6'> Key and Secret </h3>
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label
+                                            for='consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                                            class='form-label'>
+                                            Consumer Key
+                                            <span class='text-danger'>*</span>
+                                        </label>
+                                        <input type='text'
+                                            id='consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                                            class='form-control' name="consumerKey" value='{{keys.consumerKey}}'
+                                            readonly />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label
+                                            for='consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                                            class='form-label'>
+                                            Consumer Secret
+                                            <span class='text-danger'>*</span>
+                                        </label>
+                                        <input type='text'
+                                            id='consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                                            class='form-control' name="consumerSecret" value='{{keys.consumerSecret}}'
+                                            readonly />
+                                    </div>
+                                </div>
+                                <div class="section">
+                                    <h2>Grant Types</h2>
+                                    <div class="row">
+                                        {{#let "supportedGrantTypes" keys.supportedGrantTypes }}
+                                        {{#each ../../availableGrantTypes}}
+                                        <div class="col-md-4 mb-2">
+                                            <div class="form-check">
+                                                <div class="keygen-checkbox-group" id="grant-types">
+                                                    <label class="keygen-checkbox-container">
+                                                        <input type="checkbox"
+                                                            id="grant-type-{{this}}-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
+                                                            name="grantTypes" value="{{this}}" {{#if (contains
+                                                            ../supportedGrantTypes this)}}checked{{/if}} />
+                                                        <label class="form-check-label"
+                                                            for="grant-type-{{this}}-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}">
+                                                            {{this}}
+                                                        </label>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {{/each}}
+                                        {{/let}}
+
+                                    </div>
+                                </div>
+                                <div class="section">
+                                    <div class="callback-header">
+                                        <h2>Callback URL</h2>
+                                    </div>
+                                    <div class="keygen-input-container">
+                                        <input type="text" name="callbackURL" placeholder="Callback URLs"
+                                            value="{{keys.callbackUrl}}" class="form-control" />
+                                    </div>
+                                </div>
+
+                                <!-- Additional Configuration Fields -->
+                                <div id="additionalPropsHeader" class="collapsible-header"
+                                    onclick="showAdvanced('additionalProps{{../name}}')">Advanced Configuration
+                                </div>
+                                <div id="additionalProps{{../name}}" style="display: none;">
+                                    {{#let "additionalProperties" (conditionalIf keys.additionalProperties
+                                    keys.additionalProperties [])}}
+                                    {{#each ../../applicationConfiguration}}
+                                    {{#let "propValue" (conditionalIf (getValue ../additionalProperties name)
+                                    (getValue
+                                    ../additionalProperties name)
+                                    default)}}
+                                    <div class="mb-3">
+                                        {{#if (eq ../type 'checkbox')}}
+                                        {{else}}
+                                        <label
+                                            for="{{../name}}-{{../../../../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
+                                            class="form-label">
+                                            {{../label}}
+                                            {{#if required}}<span class="text-danger">*</span>{{/if}}
+                                        </label>
+                                        {{/if}}
+
+                                        {{#if (eq ../type 'input')}}
+                                        <input type="text" name="additionalProperties.{{{../name}}}"
+                                            id="{{../name}}-{{../../../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
+                                            class="form-control" value="{{propValue}}" {{#if
+                                            required}}required{{/if}} />
+                                        {{/if}}
+
+                                        {{#if (eq ../type 'text')}}
+                                        <input type="text" name="additionalProperties.{{../name}}"
+                                            id="{{../name}}-{{../../../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
+                                            class="form-control" value="{{propValue}}" {{#if
+                                            required}}required{{/if}} />
+                                        {{/if}}
+
+                                        {{#and (eq ../type 'select') (eq ../multiple false)}}
+                                        <select
+                                            id="{{../name}}-{{../../../../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
+                                            class="form-control" {{#if required}}required{{/if}}
+                                            name="additionalProperties.{{../name}}">
+                                            {{#each ../values}}
+                                            {{#if (eq this ../propValue)}}cedce {{/if}}
+                                            <option value="{{this}}" {{#if (eq ../propValue this)}}selected{{/if}}>
+                                                {{this}}
+                                            </option>
+                                            {{/each}}
+                                        </select>
+                                        {{/and}}
+
+                                        {{#and (eq ../type 'select') (eq ../multiple true)}}
+                                        <select
+                                            id="{{../name}}-{{../../../../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
+                                            class="form-control" name="additionalProperties.{{../name}}" multiple>
+                                            {{#each ../values}}
+                                            <option {{#in this values=../propValue}}selected{{/in}}>{{this}}
+                                            </option>
+                                            {{/each}}
+                                        </select>
+                                        {{/and}}
+
+                                        {{#if (eq ../type 'checkbox')}}
+                                        <div class="col-md-4 mb-2">
+                                            <div class="form-check">
+                                                <div class="section keygen-toggle-section">
+                                                    <div class="keygen-toggle-item">
+                                                        <span> {{../label}}</span>
+                                                        <label class="keygen-toggle">
+                                                            <input type="checkbox" value="true" {{#if (eq propValue
+                                                                true)}} checked{{/if}}>
+                                                            <span class="slider round"></span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {{/if}}
+                                        <div class='form-text mb-3'>{{tooltip}}</div>
+                                    </div>
+                                    {{/let}}
+                                    {{/each}}
+                                    {{/let}}
+                                </div>
+                            </div>
+                        </form>
+                        {{#if keys.consumerKey}}
+                        <div class="d-flex gap-3">
+                            <button class="common-btn-primary" id="applicationKeyUpdateButton" name="http-values"
+                                type="button" onClick="updateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', 
+                                        '{{json ../../applicationMetadata.appMap}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', 
+                                        '{{keys.keyMappingId}}', '{{keys.clientName}}')">
+                                Update
+                            </button>
+                        </div>
+                        {{else}}
+                        <div class="d-flex gap-3">
+                            <button class="common-btn-primary" id="applicationKeyGenerateButton" name="http-values"
+                                type="button"
+                                onClick="generateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.id}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-production', 'consumer-secret-{{../id}}-production')">
+                                Generate Keys
+                            </button>
+                        </div>
+                        {{/if}}
+                    </div>
+                    <div class="col-md-6 KMConfig" id="KMURL_{{../name}}" style="display: none;">
+                        <div>
+                            <div id="header">
+                                <h2>Identity Provider Connection Data</h2>
+                            </div>
+                            <div id="km-details">
+                                <p class="description">
+                                    If your application manages authentication, use the following details to enable
+                                    authentication and
+                                    authorization within your application.
+                                </p>
+                                {{!-- Token Endpoint --}}
+                                <div class='mb-3'>
+                                    <label
+                                        for='token-endpoint-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                                        class='form-label'>
+                                        Token Endpoint
+                                        <span class='text-danger'>*</span>
+                                    </label>
+                                    <input type='url' name="tokenURL"
+                                        id='token-endpoint-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                                        class='form-control' value='{{../tokenEndpoint}}' readonly />
+                                </div>
+
+                                {{!-- Revoke Endpoint --}}
+                                <div class='mb-3'>
+                                    <label
+                                        for='revoke-endpoint-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                                        class='form-label'>
+                                        Revoke Endpoint
+                                        <span class='text-danger'>*</span>
+                                    </label>
+                                    <input type='url' name="revokeURL"
+                                        id='revoke-endpoint-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                                        class='form-control' value='{{../revokeEndpoint}}' readonly />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {{/let}}
+                    {{/if}}
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
