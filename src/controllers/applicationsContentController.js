@@ -162,7 +162,6 @@ const loadApplication = async (req, res) => {
             if (req.query.groups) {
                 groupList.push(req.query.groups.split(" "));
             }
-            //metaData = new ApplicationDTO(await adminDao.getApplication(orgID, applicationId, req.user.sub));
             const subAPIs = await adminDao.getSubscribedAPIs(orgID, applicationId);
             const allAPIs = await apiMetadata.getAllAPIMetadata(orgID, groupList, viewName);
 
@@ -185,34 +184,6 @@ const loadApplication = async (req, res) => {
             await Promise.all(nonSubscribedAPIs.map(async (api) => {
                 api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
             }));
-
-            // const subApiMap = new Map();
-            // subApis.list.forEach(subApi => subApiMap.set(subApi.apiId, { policy: subApi.throttlingPolicy, id: subApi.subscriptionId }));
-            // const apiList = [];
-
-            // allApis.list.forEach(api => {
-            //     let subscriptionPolicies = [];
-            //     let subscribedPolicy;
-
-            //     if (subApiMap.has(api.id)) {
-            //         subscribedPolicy = subApiMap.get(api.id)
-            //     } else {
-            //         api.throttlingPolicies.forEach(policy => {
-            //             subscriptionPolicies.push(policy);
-            //         });
-            //     }
-
-            //     apiList.push({
-            //         name: api.name,
-            //         version: api.version,
-            //         id: api.id,
-            //         isSubAvailable: api.isSubscriptionAvailable,
-            //         subscriptionPolicies: subscriptionPolicies,
-            //         subscribedPolicy: subscribedPolicy
-            //     });
-
-            // });
-
             kMmetaData = await getAPIMKeyManagers(req);
             kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
             const userID = req[constants.USER_ID]

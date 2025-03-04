@@ -795,13 +795,15 @@ const createAppKeyMapping = async (req, res) => {
                 cpAppID = cpAppCreationResponse.applicationId;
                 //create application mapping entry
                 const appKeyMappping = {
-                    ORG_ID: orgID,
-                    APP_ID: appID,
-                    CP_APP_REF: cpAppCreationResponse.applicationId,
-                    SHARED_TOKEN: true,
-                    TOKEN_TYPE: constants.TOKEN_TYPES.OAUTH
+                    orgID: orgID,
+                    appID: appID,
+                    cpAppRef: cpAppCreationResponse.applicationId,
+                    apiRefID: null,
+                    subscriptionRefID: null,
+                    sharedToken: true,
+                    tokenType: constants.TOKEN_TYPES.OAUTH
                 }
-                await adminDao.createAppKeyMapping(appKeyMappping, t);
+                await adminDao.createApplicationKeyMapping(appKeyMappping, t);
             }
             // add subscription to control plane for each api
             const apiSubscriptions = [];
@@ -814,18 +816,18 @@ const createAppKeyMapping = async (req, res) => {
             //TODO: only oauth key shared scenario is considered, need to handle other token types 
             for (const apiSubscription of apiSubscriptions) {
                 const appKeyMappping = {
-                    ORG_ID: orgID,
-                    APP_ID: appID,
-                    CP_APP_REF: cpAppID,
-                    API_REF_ID: apiSubscription.apiId,
-                    SUBSCRIPTION_REF_ID: apiSubscription.subscriptionId,
-                    SHARED_TOKEN: true,
-                    TOKEN_TYPE: constants.TOKEN_TYPES.OAUTH
+                    orgID: orgID,
+                    appID: appID,
+                    cpAppRef: cpAppID,
+                    apiRefID: apiSubscription.apiId,
+                    subscriptionRefID: apiSubscription.subscriptionId,
+                    sharedToken: true,
+                    tokenType: constants.TOKEN_TYPES.OAUTH
                 }
                 //check whether key mapping exists
                 const mappingResponse = await adminDao.getApplicationAPIMapping(orgID, appID, apiSubscription.apiId, cpAppID, true, t);
                 if (mappingResponse.length === 0) {
-                  await adminDao.createAppKeyMapping(appKeyMappping, t);
+                    await adminDao.createApplicationKeyMapping(appKeyMappping, t);
                 }
             }
             //delete app key mapping entries with no api id ref

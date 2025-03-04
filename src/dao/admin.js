@@ -737,7 +737,6 @@ const getSubscriptions = async (orgID, appID, apiID) => {
 
 const getAppApiSubscription = async (orgID, appID, apiID) => {
 
-    console.log(orgID, appID, apiID)
     try {
         return await SubscriptionMapping.findAll(
             {
