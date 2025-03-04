@@ -32,6 +32,7 @@ const { body } = require('express-validator');
 const { Sequelize } = require('sequelize');
 const apiDao = require('../dao/apiMetadata');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
+const jwt = require('jsonwebtoken');
 
 // Function to load and convert markdown file to HTML
 function loadMarkdown(filename, dirName) {
@@ -288,11 +289,14 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         if (body) {
             options.data = body;
         }
-
+        if (config.advanced.tokenExchanger.enabled) {
+            decodedToken = jwt.decode(req.exchangedToken);
+            const orgId = decodedToken.organization.uuid;
+            url = url.includes("?") ? `${url}&${orgId}` : `${url}?${orgId}`;
+        }
         const response = await axios(url, options);
         return response.data;
     } catch (error) {
-
         console.log(`Error while invoking API:`, error);
         let message = error.message;
         if (error.response) {

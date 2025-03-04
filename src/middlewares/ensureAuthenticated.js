@@ -31,37 +31,52 @@ const jwt = require('jsonwebtoken');
 function enforceSecuirty(scope) {
     return async function (req, res, next) {
         try {
-            const authHeader = req.headers.authorization;
-            if (authHeader && authHeader.startsWith("Bearer ")) {
-                const token = authHeader.split(" ")[1];
-                if (token) {
-                    // TODO: Implement organization extraction logic
-                    validateAuthentication(scope)(req, res, next);
-                }
+            const token = accessTokenPresent(req);
+            if (token) {
+                // TODO: Implement organization extraction logic
+                validateAuthentication(scope)(req, res, next);
                 //set user ID
                 const decodedAccessToken = jwt.decode(token);
-                req[constants.USER_ID] = decodedAccessToken[constants.USER_ID]
-            } else {
+                req[constants.USER_ID] = decodedAccessToken[constants.USER_ID];
+            } else if (req.headers.organization) {
                 const organization = req.headers.organization;
                 if (organization) {
                     req.params.orgId = organization;
                     if (config.advanced.apiKey.enabled) {
                         // Communcation with API KEY
                         enforceAPIKey(req, res, next);
-                        
+
                     } else {
                         // Communication with MTLS
                         enforceMTLS(req, res, next);
-                    } 
+                    }
                 } else {
-                    return res.status(404).json({ error: "Organization not found" });
-                }          
+                    console.log('User is not authenticated');
+                    req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
+                    if (req.params.orgName) {
+                        res.redirect(`/${req.params.orgName}/views/${req.session.view}/login`);
+                    }
+                }
+            } else {
+                return res.status(404).json({ error: "Organization not found" });
             }
         } catch (err) {
             console.error("Error checking access token:", err);
             return res.status(500).json({ error: "Internal Server Error" });
         }
     }
+}
+
+function accessTokenPresent(req) {
+
+    if (req.isAuthenticated() && req.user) {
+        accessToken = req.user[constants.ACCESS_TOKEN];
+    } else if (req.headers.authorization) {
+        accessToken = req.headers.authorization.split(' ')[1];
+    } else {
+        return null;
+    }
+    return accessToken;
 }
 
 const ensurePermission = (currentPage, role, req) => {
@@ -105,6 +120,11 @@ const ensureAuthenticated = async (req, res, next) => {
         }
         let role;
         if (req.isAuthenticated()) {
+            const token = accessTokenPresent(req);
+            if (token) {
+                const decodedAccessToken = jwt.decode(token);
+                req[constants.USER_ID] = decodedAccessToken[constants.USER_ID];
+            }
             if (config.authorizedPages.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
                 role = req.user[constants.ROLES.ROLE_CLAIM];
                 console.log('Logged in Role is: ' + role);
@@ -141,7 +161,7 @@ const ensureAuthenticated = async (req, res, next) => {
                             return res.send("User unauthorized");
                         }
                     }
-                }     
+                }
             }
             return next();
         } else {
@@ -312,7 +332,6 @@ const enforceAPIKey = (req, res, next) => {
     return next();
 };
 
-module.exports = ensureAuthenticated;
 
 module.exports = {
     ensureAuthenticated,

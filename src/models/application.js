@@ -175,10 +175,10 @@ ApplicationKeyMapping.belongsTo(Organization, {
 Organization.hasMany(ApplicationKeyMapping, {
     foreignKey: 'ORG_ID'
 })
-ApplicationKeyMapping.hasOne(Application, {
+ApplicationKeyMapping.belongsTo(Application, {
     foreignKey: 'APP_ID'
 })
-Application.hasOne(ApplicationKeyMapping, {
+Application.hasMany(ApplicationKeyMapping, {
     foreignKey: 'APP_ID'
 })
 

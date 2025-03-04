@@ -601,12 +601,33 @@ const updateApplication = async (orgID, appID, userID, appData) => {
 const getApplication = async (orgID, appID, userID) => {
 
     try {
-        return await Application.findOne(
+        const application =  await Application.findOne(
             {
                 where: {
                     ORG_ID: orgID,
                     APP_ID: appID,
                     CREATED_BY: userID
+                }
+            });
+        return application;
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getApplicationID = async (orgID, userID, appName) => {
+
+    try {
+        return await Application.findOne(
+            {   
+                attributes: ['APP_ID'],
+                where: {
+                    ORG_ID: orgID,
+                    CREATED_BY: userID,
+                    NAME: appName
                 }
             });
     } catch (error) {
@@ -799,6 +820,46 @@ const getAPISubscriptionReference = async (orgID, appID, apiID, t) => {
     }
 }
 
+const createAppKeyMapping = async (appKeyMap, t) => {
+    
+    try {
+        const appKeyMapping = await ApplicationKeyMapping.create(appKeyMap, { transaction: t });
+        return appKeyMapping;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getKeyMapping = async (orgID, appID, t) => {
+
+    try {
+        return await Application.findOne(
+            {
+                where: {
+                    ORG_ID: orgID,
+                    APP_ID: appID
+                },
+                include: [
+                    {
+                        model: ApplicationKeyMapping,
+                        where: {
+                            APP_ID: appID
+                        }
+                    }
+                ]
+            }, { transaction: t });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+
 const getSubscribedAPIs = async (orgID, appID) => {
     try {
         const subscribedAPIs = await APIMetadata.findAll({
@@ -807,14 +868,14 @@ const getSubscribedAPIs = async (orgID, appID) => {
                 model: Application,
                 where: { APP_ID: appID },
                 required: true,
-                through: { attributes: ["SUB_ID"] }
+                through: { attributes: ["SUB_ID", "POLICY_ID"] }
             },
             {
                 model: APIImageMetadata,
                 required: false
             }, {
                 model: SubscriptionPolicy,
-                through: { attributes: [] },
+                through: { attributes: ['POLICY_ID'] },
                 required: false
             }]
         });
@@ -835,6 +896,27 @@ const getApplicationKeyMapping = async (orgID, appID, isSharedToken) => {
                 where: {
                     ORG_ID: orgID,
                     APP_ID: appID,
+                    SHARED_TOKEN: isSharedToken
+                }
+            });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const  getApplicationAPIMapping = async (orgID, appID, apiID, appRefID ,isSharedToken) => {
+
+    try {
+        return await ApplicationKeyMapping.findAll(
+            {
+                where: {
+                    ORG_ID: orgID,
+                    APP_ID: appID,
+                    API_REF_ID: apiID,
+                    CP_APP_REF: appRefID,
                     SHARED_TOKEN: isSharedToken
                 }
             });
@@ -929,9 +1011,13 @@ module.exports = {
     deleteSubscription,
     deleteAppKeyMapping,
     getAPISubscriptionReference,
+    getApplicationID,
+    createAppKeyMapping,
+    getKeyMapping,
     getAppApiSubscription,
     getSubscribedAPIs,
     getApplicationKeyMapping,
     createApplicationKeyMapping,
-    updateApplicationKeyMapping
+    updateApplicationKeyMapping,
+    getApplicationAPIMapping
 };
