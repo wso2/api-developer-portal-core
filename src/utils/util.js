@@ -265,14 +265,6 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
 
     console.log(`Invoking API: ${url}`);
     headers = headers || {};
-    if (req.user) {
-        console.log(`User is authenticated. Adding access token to the request.`);
-        headers.Authorization = "Bearer " + req.user.accessToken;
-    } else if (req.headers.authorization) {
-        headers.Authorization = req.headers.authorization;
-    } else {
-        console.log("Access token expired")
-    }
     headers.Authorization = req.user?.exchangedToken ? `Bearer ${req.exchangedToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
     let httpsAgent;
 
@@ -297,10 +289,10 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         if (body) {
             options.data = body;
         }
-        if (config.apendOrgId) {
-            let accessToken = headers.Authorization.split(" ")[1];
-            decodedToken = jwt.decode(accessToken);
-            url = url + `?${constants.ORG_ID}=${decodedToken.organization.uuid}`;
+        if (config.advanced.tokenExchanger.enabled) {
+            decodedToken = jwt.decode(req.exchangedToken);
+            const orgId = decodedToken.organization.uuid;
+            url = url.includes("?") ? `${url}&${orgId}` : `${url}?${orgId}`;
         }
         const response = await axios(url, options);
         return response.data;
