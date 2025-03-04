@@ -21,6 +21,7 @@ const OAuth2Strategy = require('passport-oauth2');
 const jwt = require('jsonwebtoken');
 const https = require('https');
 const constants = require('../utils/constants');
+const util = require('../utils/util');
 const config = require(process.cwd() + '/config.json');
 
 function configurePassport(authJsonContent, claimNames) {
@@ -43,10 +44,15 @@ function configurePassport(authJsonContent, claimNames) {
         passReqToCallback: true,
         state: true,
         pkce: true
-    }, (req, accessToken, refreshToken, params, profile, done) => {
+    }, async (req, accessToken, refreshToken, params, profile, done) => {
         if (!accessToken) {
             console.error('No access token received');
             return done(new Error('Access token missing'));
+        }
+        if (config.advanced.tokenExchanger.enabled) {
+            const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
+            console.log('exchangedToken:', exchangedToken);
+            req.exchangedToken = exchangedToken;
         }
         const decodedJWT = jwt.decode(params.id_token);
         const decodedAccessToken = jwt.decode(accessToken);
