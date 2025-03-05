@@ -647,7 +647,7 @@ const createSubscription = async (req, res) => {
         sequelize.transaction(async (t) => {
             const app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
             try {
-                if (app.length > 0) {
+                if (app.length < 0) {
                     const response = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, {
                         apiId: req.body.apiReferenceID,
                         applicationId: app[0].dataValues.CP_APP_REF,

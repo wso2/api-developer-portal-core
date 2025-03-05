@@ -65,7 +65,8 @@ const getOrganization = async (param) => {
                 [Sequelize.Op.or]: [
                     { ORG_NAME: param },
                     { ORG_HANDLE: param },
-                    { ORG_ID: param }
+                    { ORG_ID: param },
+                    { ORGANIZATION_IDENTIFIER: param}
                 ]
             }
         });

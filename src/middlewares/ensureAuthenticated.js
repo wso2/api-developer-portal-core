@@ -39,27 +39,24 @@ function enforceSecuirty(scope) {
                 const decodedAccessToken = jwt.decode(token);
                 req[constants.USER_ID] = decodedAccessToken[constants.USER_ID];
                 return next();
-            } else if (req.headers.organization) {
+            } else if (config.advanced.apiKey.enabled) {
+                // Communcation with API KEY
+                enforceAPIKey(req, res, next);
+            } else if (req.connection.getPeerCertificate(true)) {
+                enforceMTLS(req, res, next);
+            } else {
+                console.log('User is not authenticated');
+                req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
+                if (req.params.orgName) {
+                    res.redirect(`/${req.params.orgName}/views/${req.session.view}/login`);
+                }
+            }
+
+            if (req.headers.organization) {
                 const organization = req.headers.organization;
                 if (organization) {
                     req.params.orgId = organization;
-                    if (config.advanced.apiKey.enabled) {
-                        // Communcation with API KEY
-                        enforceAPIKey(req, res, next);
-
-                    } else {
-                        // Communication with MTLS
-                        enforceMTLS(req, res, next);
-                    }
-                } else {
-                    console.log('User is not authenticated');
-                    req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
-                    if (req.params.orgName) {
-                        res.redirect(`/${req.params.orgName}/views/${req.session.view}/login`);
-                    }
                 }
-            } else {
-                return res.status(404).json({ error: "Organization not found" });
             }
         } catch (err) {
             console.error("Error checking access token:", err);
