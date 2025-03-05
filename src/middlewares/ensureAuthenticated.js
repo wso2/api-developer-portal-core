@@ -38,6 +38,7 @@ function enforceSecuirty(scope) {
                 //set user ID
                 const decodedAccessToken = jwt.decode(token);
                 req[constants.USER_ID] = decodedAccessToken[constants.USER_ID];
+                return next();
             } else if (req.headers.organization) {
                 const organization = req.headers.organization;
                 if (organization) {
@@ -220,7 +221,7 @@ function validateAuthentication(scope) {
                     valid = false;
                 }
             }
-            if (valid) {
+            if (!config.advanced.disableScopeValidation && valid) {
                 if (scopes.split(" ").includes(scope)) {
                     return next();
                 } else {

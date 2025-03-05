@@ -5,13 +5,14 @@
     "http": false,
     "dbSslDialectOption": false,
     "resourceLoadFromBaseUrl": false,
-    "apiKey" : {
+    "apiKey": {
       "enabled": true,
       "keyType": "x-wso2-api-key",
       "keyValue": "x-wso2-api-key"
     },
     "disabledRoleValidation": true,
-    "disableOrgCallback": true
+    "disableOrgCallback": true,
+    "disableScopeValidation": true
   },
   "pathToContent": "./resources/default-layout/",
   "mode": "production",
@@ -93,5 +94,5 @@
     "**/myapis",
     "**/myapis/**",
     "**/myapis?**"
-  ]  
+  ]
 }

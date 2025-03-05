@@ -62,6 +62,16 @@ Handlebars.registerHelper('json', function(context) {
     }
 });
 
+Handlebars.registerHelper("every", function (array, key, options) {
+    if (!Array.isArray(array)) {
+        return options.inverse(this);
+    }
+    
+    const allMatch = array.every(item => item[key]);
+    
+    return allMatch ? true : false;
+});
+
 Handlebars.registerHelper('eq', function (a, b) {
     return (a === b || (a != null && b != null && (a === b.toString() || a.toString() === b)));
 });
