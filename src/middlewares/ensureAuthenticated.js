@@ -221,7 +221,7 @@ function validateAuthentication(scope) {
                     valid = false;
                 }
             }
-            if (config.advanced.disableScopeValidation && valid) {
+            if (!config.advanced.disableScopeValidation && valid) {
                 if (scopes.split(" ").includes(scope)) {
                     return next();
                 } else {
