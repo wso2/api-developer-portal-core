@@ -793,8 +793,7 @@ const getAllAPIMetadata = async (orgID, groups, viewName, t) => {
     try {
         const publicAPIS = await APIMetadata.findAll({
             where: {
-                ORG_ID: orgID,
-                VISIBILITY: constants.API_VISIBILITY.PUBLIC
+                ORG_ID: orgID
             },
             include: [{
                 model: APIImageMetadata,
@@ -895,7 +894,6 @@ const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
                 (
                     :groups IS NOT NULL AND string_to_array(metadata."VISIBLE_GROUPS", ' ') && :groups
                 )
-                OR metadata."VISIBILITY" = 'PUBLIC'
             )
         GROUP BY 
             metadata."API_ID"
