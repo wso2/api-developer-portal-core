@@ -65,7 +65,8 @@ const getOrganization = async (param) => {
                 [Sequelize.Op.or]: [
                     { ORG_NAME: param },
                     { ORG_HANDLE: param },
-                    { ORG_ID: param }
+                    { ORG_ID: param },
+                    { ORGANIZATION_IDENTIFIER: param}
                 ]
             }
         });
@@ -680,6 +681,7 @@ const deleteApplication = async (orgID, appID, userID) => {
 }
 
 const createSubscription = async (orgID, subscription, t) => {
+    console.log("subscription")
     try {
         const subMapping = await SubscriptionMapping.create({
             APP_ID: subscription.applicationID,
