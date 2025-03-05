@@ -33,7 +33,7 @@ const sequelize = require('../db/sequelize');
 
 const saveApplication = async (req, res) => {
     try {
-        const orgID = await adminDao.getOrgId(req.user[constants.ORG_HANDLE]);
+        const orgID = await adminDao.getOrgId(req.user[constants.ORG_IDENTIFIER]);
         const application = await adminDao.createApplication(orgID, req.user.sub, req.body);
         return res.status(201).json(new ApplicationDTO(application.dataValues));
     } catch (error) {
