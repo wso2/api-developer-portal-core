@@ -30,6 +30,7 @@ const { ApplicationDTO, SubscriptionDTO } = require('../dto/application');
 const config = require(process.cwd() + '/config.json');
 const controlPlaneUrl = config.controlPlane.url;
 const { invokeApiRequest } = require('../utils/util');
+const { Sequelize } = require("sequelize");
 
 const createOrganization = async (req, res) => {
 
@@ -266,7 +267,8 @@ const deleteIdentityProvider = async (req, res) => {
 };
 
 const createOrgContent = async (req, res) => {
-    
+
+
     const orgId = req.params.orgId;
     const viewName = req.params.name;
     const zipPath = req.file.path;
@@ -315,8 +317,8 @@ const updateOrgContent = async (req, res) => {
     const zipPath = req.file.path;
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
     await util.unzipFile(zipPath, extractPath);
-    const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'), viewName);
     try {
+        const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'), viewName);
         for (const { filePath, fileName, fileContent, fileType } of files) {
             if (fileName != null && !fileName.startsWith('.')) {
                 const organizationContent = await getOrgContent(orgId, viewName, fileType, fileName, filePath);
@@ -558,7 +560,6 @@ const updateDevPortalApplication = async (req, res) => {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
         const [updatedRows, updatedApp] = await adminDao.updateApplication(orgId, appId, userId, applicationData);
-        console.log(updatedApp);
         if (!updatedRows) {
             throw new Sequelize.EmptyResultError("No record found to update");
         }
@@ -643,19 +644,62 @@ const createSubscription = async (req, res) => {
 
     try {
         const orgID = req.params.orgId;
-        if (!orgID) {
-            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
-        }
-        try {
-            const subscription = await adminDao.createSubscription(orgID, req.body);
-            res.status(201).send(new SubscriptionDTO(subscription.dataValues));
-        } catch (error) {
-            console.error(`${constants.ERROR_MESSAGE.PROVIDER_CREATE_ERROR}`, error);
-            util.handleError(res, error);
-        }
+        sequelize.transaction(async (t) => {
+            const app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
+            try {
+                if (app.length < 0) {
+                    const response = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, {
+                        apiId: req.body.apiReferenceID,
+                        applicationId: app[0].dataValues.CP_APP_REF,
+                        throttlingPolicy: req.body.policyName
+                    });
+                    await handleSubscribe(orgID, req.body.applicationID, app.API_REF_ID, app.SUBSCRIPTION_REF_ID, response, t);
+                }
+                await adminDao.createSubscription(orgID, req.body, t);
+                return res.status(200).json({ message: 'Subscribed successfully' });
+
+            } catch (error) {
+                if (error.statusCode && error.statusCode === 409) {
+                    const response = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?apiId=${req.body.apiReferenceID}&applicationId=${app[0].dataValues.CP_APP_REF}`, {});
+
+                    /** Handle both scenario where a reference application in cp is created but no subscriptions avaiable 
+                     * (update existing row) & a reference application in cp is created & a subscriptions for a different 
+                     * API already exisits (create new row) **/
+                    await handleSubscribe(orgID, req.applicationID, app.API_REF_ID, app.SUBSCRIPTION_REF_ID, response, t);
+                    await adminDao.createSubscription(orgID, req.body, t);
+                    return res.status(200).json({ message: 'Subscribed successfully' });
+                }
+                console.error("Error occurred while subscribing to API", error);
+                return util.handleError(res, error);
+            }
+        });
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_CREATE_ERROR}`, error);
-        util.handleError(res, error);
+        console.error("Error occurred while subscribing to API", error);
+        return util.handleError(res, error);
+    }
+}
+
+async function handleSubscribe(orgID, applicationID, apiRefID, subRefID, response, t) {
+    if (apiRefID && subRefID) {
+        await adminDao.createApplicationKeyMapping({
+            orgID: orgID,
+            appID: applicationID,
+            cpAppRef: response.applicationId,
+            apiRefID: response.apiId,
+            subscriptionRefID: response.subscriptionId,
+            sharedToken: true,
+            tokenType: constants.TOKEN_TYPES.OAUTH
+        }, t);
+    } else {
+        await adminDao.updateApplicationKeyMapping(null, {
+            orgID: orgID,
+            appID: applicationID,
+            cpAppRef: response.applicationId,
+            apiRefID: response.apiId,
+            subscriptionRefID: response.subscriptionId,
+            sharedToken: true,
+            tokenType: constants.TOKEN_TYPES.OAUTH
+        }, t);
     }
 }
 
@@ -732,7 +776,6 @@ const createAppKeyMapping = async (req, res) => {
     await sequelize.transaction(async (t) => {
         const { applicationName, apis, tokenType, tokenDetails, provider } = req.body;
         const appIDResponse = await adminDao.getApplicationID(orgID, userID, applicationName);
-        console.log(appIDResponse);
         const appID = appIDResponse.dataValues.APP_ID;
         let cpApplicationName;
         //all token types bound to one app if shared
@@ -742,64 +785,107 @@ const createAppKeyMapping = async (req, res) => {
         //TODO - handel non-shared token types scenarios
         try {
             //create control plane application
-            const cpAppCreationResponse = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications`, {
-                'Content-Type': 'application/json'
-            }, {
-                name: cpApplicationName,
-                throttlingPolicy: 'Unlimited',
-                tokenType: 'JWT',
-                groups: [],
-                attributes: {},
-                subscriptionScopes: []
-            });
-            const cpAppID = cpAppCreationResponse.applicationId;
+            const cpAppCreationResponse = await createCPApplication(req, res, cpApplicationName);
+            let cpAppID = "";
+            if (cpAppCreationResponse === "Application already exists") {
+                //get CP app id
+                const sharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, true);
+                cpAppID = sharedToken[0].dataValues.CP_APP_REF;
+            } else {
+                cpAppID = cpAppCreationResponse.applicationId;
+                //create application mapping entry
+                const appKeyMappping = {
+                    orgID: orgID,
+                    appID: appID,
+                    cpAppRef: cpAppCreationResponse.applicationId,
+                    apiRefID: null,
+                    subscriptionRefID: null,
+                    sharedToken: true,
+                    tokenType: constants.TOKEN_TYPES.OAUTH
+                }
+                await adminDao.createApplicationKeyMapping(appKeyMappping, t);
+            }
             // add subscription to control plane for each api
             const apiSubscriptions = [];
             for (const api of apis) {
                 const policyDetails = await apiDao.getSubscriptionPolicy(api.policyID, orgID, t);
-                const requestBody = {
-                    apiId: api.apiRefId,
-                    applicationId: cpAppID,
-                    throttlingPolicy: policyDetails.dataValues.POLICY_NAME
-                };
-                const cpSubscribeResponse = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, requestBody);
+                const cpSubscribeResponse = await createCPSubscription(req, res, api.apiRefId, cpAppID, policyDetails);
                 apiSubscriptions.push(cpSubscribeResponse);
             }
             //create app key mapping
             //TODO: only oauth key shared scenario is considered, need to handle other token types 
             for (const apiSubscription of apiSubscriptions) {
                 const appKeyMappping = {
-                    ORG_ID: orgID,
-                    APP_ID: appID,
-                    CP_APP_REF: cpAppCreationResponse.applicationId,
-                    API_REF_ID: apiSubscription.apiId,
-                    SUBSCRIPTION_REF_ID: apiSubscription.subscriptionId,
-                    SHARED_TOKEN: true,
-                    TOKEN_TYPE: constants.TOKEN_TYPES.OAUTH
+                    orgID: orgID,
+                    appID: appID,
+                    cpAppRef: cpAppID,
+                    apiRefID: apiSubscription.apiId,
+                    subscriptionRefID: apiSubscription.subscriptionId,
+                    sharedToken: true,
+                    tokenType: constants.TOKEN_TYPES.OAUTH
                 }
-                await adminDao.createAppKeyMapping(appKeyMappping, t);
-            }
-            //handle scenario where no subscriptions exist for the application.
-            //assume always a shared app is creared in CP
-            if (apiSubscriptions.length === 0) {
-                const appKeyMappping = {
-                    ORG_ID: orgID,
-                    APP_ID: appID,
-                    CP_APP_REF: cpAppCreationResponse.applicationId,
-                    SHARED_TOKEN: true,
-                    TOKEN_TYPE: constants.TOKEN_TYPES.OAUTH
+                //check whether key mapping exists
+                const mappingResponse = await adminDao.getApplicationAPIMapping(orgID, appID, apiSubscription.apiId, cpAppID, true, t);
+                if (mappingResponse.length === 0) {
+                    await adminDao.createApplicationKeyMapping(appKeyMappping, t);
                 }
-                await adminDao.createAppKeyMapping(appKeyMappping, t);
             }
-
+            //delete app key mapping entries with no api id ref
+            await adminDao.deleteAppKeyMapping(orgID, appID, null, t);
             //generate oauth key
             const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${cpAppID}/generate-keys`, {}, tokenDetails);
-            res.status(200).json(responseData);
+            return res.status(200).json(responseData);
         } catch (error) {
             console.error(`${constants.ERROR_MESSAGE.KEY_MAPPING_CREATE_ERROR}`, error);
             util.handleError(res, error);
         }
     });
+}
+
+const createCPApplication = async (req, res, cpApplicationName) => {
+
+    try {
+        //create control plane application
+        const cpAppCreationResponse = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications`, {
+            'Content-Type': 'application/json'
+        }, {
+            name: cpApplicationName,
+            throttlingPolicy: 'Unlimited',
+            tokenType: 'JWT',
+            groups: [],
+            attributes: {},
+            subscriptionScopes: []
+        });
+        return cpAppCreationResponse;
+    } catch (error) {
+        //application already exists
+        console.error(`${constants.ERROR_MESSAGE.KEY_MAPPING_CREATE_ERROR}`, error);
+        if (error.statusCode && error.statusCode === 409) {
+            return "Application already exists";
+        }
+        util.handleError(res, error);
+    }
+}
+
+const createCPSubscription = async (req, res, apiId, cpAppID, policyDetails) => {
+
+    try {
+        const requestBody = {
+            apiId: apiId,
+            applicationId: cpAppID,
+            throttlingPolicy: policyDetails.dataValues.POLICY_NAME
+        };
+        const cpSubscribeResponse = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, requestBody);
+        return cpSubscribeResponse;
+    } catch (error) {
+        if (error.statusCode && error.statusCode === 409) {
+            console.log("Subscription already exists, retrieving subscription details");
+            const response = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?apiId=${apiId}&applicationId=${cpAppID}`, {});
+            return response.list[0];
+        }
+        console.error(`${constants.ERROR_MESSAGE.KEY_MAPPING_CREATE_ERROR}`, error);
+        util.handleError(res, error);
+    }
 }
 
 const retriveAppKeyMappings = async (req, res) => {
@@ -830,12 +916,77 @@ const getApplicationKeyMap = async (orgId, appId, userId) => {
         const appMappingDTO = new ApplicationDTO(appKeyMappings);
         return appMappingDTO;
     } else {
-       const application =  await adminDao.getApplication(orgId, appId, userId);
-       return new ApplicationDTO(application.dataValues);
+        const application = await adminDao.getApplication(orgId, appId, userId);
+        return new ApplicationDTO(application.dataValues);
     }
-  
+
 }
 
+const unsubscribeAPI = async (req, res) => {
+    try {
+        const orgID = req.params.orgId;;
+        const { appID, apiReferenceID, subscriptionID } = req.query;
+        const sharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, true);
+        const nonSharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, false);
+
+        await sequelize.transaction(async (t) => {
+            try {
+                if (nonSharedToken.length > 0) {
+                    await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${nonSharedToken.dataValues.SUBSCRIPTION_REF_ID}`, {}, {})
+                }
+                if (sharedToken.length === 1) {
+                    await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${sharedToken[0].dataValues.SUBSCRIPTION_REF_ID}`, {}, {})
+                } else {
+                    for (const dataValues of sharedToken) {
+                        if (dataValues.API_REF_ID === apiReferenceID) {
+                            await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${dataValues.SUBSCRIPTION_REF_ID}`, {}, {})
+                        }
+                    };
+                }
+                await handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiReferenceID, subscriptionID, t);
+                return res.status(204).send();
+            } catch (error) {
+                if (error.statusCode && error.statusCode === 404) {
+                    await handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiReferenceID, subscriptionID, t);
+                    return res.status(204).send();
+                }
+                console.error("Error occurred while unsubscribing from API", error);
+                return util.handleError(res, error);
+            }
+        });
+    } catch (error) {
+        console.error("Error occurred while unsubscribing from API", error);
+        return util.handleError(res, error);
+    }
+}
+
+async function handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiRefID, subID, t) {
+    try {
+        await sequelize.transaction(async (t) => {
+
+            if (nonSharedToken.length > 0) {
+                await adminDao.deleteAppKeyMapping(orgID, appID, apiRefID);
+            }
+            if (sharedToken.length === 1) {
+                await adminDao.updateApplicationKeyMapping(apiRefID, {
+                    orgID: sharedToken[0].dataValues.ORG_ID,
+                    appID: sharedToken[0].dataValues.APP_ID,
+                    cpAppRef: sharedToken[0].dataValues.CP_APP_REF,
+                    apiRefID: null,
+                    subscriptionRefID: null,
+                    sharedToken: true,
+                    tokenType: constants.TOKEN_TYPES.OAUTH
+                });
+            } else {
+                await adminDao.deleteAppKeyMapping(orgID, appID, apiRefID, t);
+            }
+            await adminDao.deleteSubscription(orgID, subID, t);
+        });
+    } catch (error) {
+        console.error("Transaction failed during unsubscribing", error);
+        throw error;
+    }
+}
 
 module.exports = {
     createOrganization,
@@ -867,6 +1018,7 @@ module.exports = {
     getSubscription,
     getAllSubscriptions,
     deleteSubscription,
+    unsubscribeAPI,
     createAppKeyMapping,
     retriveAppKeyMappings,
     getApplicationKeyMap

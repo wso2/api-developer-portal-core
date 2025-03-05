@@ -30,6 +30,7 @@ module.exports = {
     BASE_URL_NAME: 'baseUrl',
     ORG_ID: 'orgID',
     ORG_IDENTIFIER: 'organizationIdentifier',
+    ORG_HANDLE: 'orgHandle',
     ACCESS_TOKEN: 'accessToken',
     USER_ID: 'sub',
     BASIC_HEADER: 'basicAuthHeader',

@@ -25,10 +25,13 @@ const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 const unzipper = require('unzipper');
 const axios = require('axios');
+const qs = require('qs');
 const https = require('https');
 const config = require(process.cwd() + '/config.json');
 const { body } = require('express-validator');
 const { Sequelize } = require('sequelize');
+const apiDao = require('../dao/apiMetadata');
+const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const jwt = require('jsonwebtoken');
 const filePrefix = '/src/defaultContent/';
 
@@ -269,14 +272,7 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
 
     console.log(`Invoking API: ${url}`);
     headers = headers || {};
-    if (req.user) {
-        console.log(`User is authenticated. Adding access token to the request.`);
-        headers.Authorization = "Bearer " + req.user.accessToken;
-    } else if (req.headers.authorization) {
-        headers.Authorization = req.headers.authorization;
-    } else {
-        console.log("Access token expired")
-    }
+    headers.Authorization = req.user?.exchangeToken ? `Bearer ${req.user.exchangeToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
     let httpsAgent;
 
     if (config.controlPlane.disableCertValidation) {
@@ -300,15 +296,15 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         if (body) {
             options.data = body;
         }
-        if (config.apendOrgId) {
-            let accessToken = headers.Authorization.split(" ")[1];
-            decodedToken = jwt.decode(accessToken);
-            url = url + `?${constants.ORG_ID}=${decodedToken.organization.uuid}`;
+
+        if (config.advanced.tokenExchanger.enabled) {
+            decodedToken = jwt.decode(req.user.exchangeToken);
+            const orgId = decodedToken.organization.uuid;
+            url = url.includes("?") ? `${url}&organizationId=${orgId}` : `${url}?organizationId=${orgId}`;
         }
         const response = await axios(url, options);
         return response.data;
     } catch (error) {
-
         console.log(`Error while invoking API:`, error);
         let message = error.message;
         if (error.response) {
@@ -420,51 +416,167 @@ const rejectExtraProperties = (allowedKeys, payload) => {
 
 async function readFilesInDirectory(directory, orgId, protocol, host, viewName, baseDir = '') {
 
-    const files = await fs.promises.readdir(directory, { withFileTypes: true });
-    let fileDetails = [];
-    for (const file of files) {
-        const filePath = path.join(directory, file.name);
-        const relativePath = path.join(baseDir, file.name);
-        if (file.isDirectory()) {
-            const subDirContents = await readFilesInDirectory(filePath, orgId, protocol, host, viewName, relativePath);
-            fileDetails = fileDetails.concat(subDirContents);
-        } else {
-            let content = await fs.promises.readFile(filePath);
-            let strContent = await fs.promises.readFile(filePath, constants.CHARSET_UTF8);
-            let dir = baseDir.replace(/^[^/]+\/?/, '') || '/';
-            let fileType;
-            if (file.name.endsWith(".css")) {
-                fileType = "style"
-                if (file.name === "main.css") {
-                    strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g,
-                        `@import url("${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${protocol}://${host}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
-                    content = Buffer.from(strContent, constants.CHARSET_UTF8);
-                }
-            } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
-                fileType = "layout"
-                if (file.name === "main.hbs") {
-                    strContent = strContent.replace(/\/styles\//g, `${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${protocol}://${host}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=`);
-                    content = Buffer.from(strContent, constants.CHARSET_UTF8);
-                }
-            } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
-                fileType = "partial"
-            } else if (file.name.endsWith(".md") && dir.endsWith("content")) {
-                fileType = "markDown";
-            } else if (file.name.endsWith(".hbs")) {
-                fileType = "template";
+    try {
+        const files = await fs.promises.readdir(directory, { withFileTypes: true });
+        let fileDetails = [];
+        for (const file of files) {
+            const filePath = path.join(directory, file.name);
+            const relativePath = path.join(baseDir, file.name);
+            if (file.isDirectory()) {
+                const subDirContents = await readFilesInDirectory(filePath, orgId, protocol, host, viewName, relativePath);
+                fileDetails = fileDetails.concat(subDirContents);
             } else {
-                fileType = "image";
-            }
+                let content = await fs.promises.readFile(filePath);
+                let strContent = await fs.promises.readFile(filePath, constants.CHARSET_UTF8);
+                let dir = baseDir.replace(/^[^/]+\/?/, '') || '/';
+                let fileType;
+                if (file.name.endsWith(".css")) {
+                    fileType = "style"
+                    if (file.name === "main.css") {
+                        strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g, `@import url("${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${protocol}://${host}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
+                        content = Buffer.from(strContent, constants.CHARSET_UTF8);
+                    }
+                } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
+                    fileType = "layout"
+                    if (file.name === "main.hbs") {
+                        strContent = strContent.replace(/\/styles\//g, `${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${protocol}://${host}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=`);                        
+                        content = Buffer.from(strContent, constants.CHARSET_UTF8);
+                    }
+                    validateScripts(strContent);
+                } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
+                    validateScripts(strContent);
+                    fileType = "partial"
+                } else if (file.name.endsWith(".md") && dir.endsWith("content")) {
+                    fileType = "markDown";
+                } else if (file.name.endsWith(".hbs")) {
+                    validateScripts(strContent);
+                    fileType = "template";
+                } else {
+                    fileType = "image";
+                }
 
-            fileDetails.push({
-                filePath: dir,
-                fileName: file.name,
-                fileContent: content,
-                fileType: fileType
+                fileDetails.push({
+                    filePath: dir,
+                    fileName: file.name,
+                    fileContent: content,
+                    fileType: fileType
+                });
+            }
+        }
+        return fileDetails;
+    } catch (error) {
+        console.error("Error occurred while reading files in directory", error);
+        throw error;
+    }
+}
+
+function validateScripts(strContent) {
+    try {
+        const allowedScripts = new Set([
+            "<script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'></script>",
+            "<script src='/technical-scripts/search.js' defer></script>",
+            "<script src='/technical-scripts/filter.js' defer></script>",
+            "<script src='/technical-scripts/common.js' defer></script>",
+            "<script src='/technical-scripts/subscription.js' defer></script>"
+        ]);
+
+        const scriptRegex = /<script(?:\s+[^>]*)?>[\s\S]*?<\/script>/g;
+        let match;
+        const extractedScripts = new Set();
+
+        while ((match = scriptRegex.exec(strContent)) !== null) {
+            extractedScripts.add(match[0].trim());
+        }
+
+        for (const script of extractedScripts) {
+            if (!allowedScripts.has(script)) {
+                throw new CustomError(400, constants.ERROR_CODE[400], `Additional scripts not allowed`);
+            }
+        }
+    } catch (error) {
+        console.error("Error occurred while validating scripts", error);
+        throw error;
+    }
+}
+
+function appendAPIImageURL(subList, req, orgID) {
+    subList.forEach(element => {
+        const images = element.apiInfo.apiImageMetadata;
+        let apiImageUrl = '';
+        for (const key in images) {
+            apiImageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${element.apiID}${constants.API_TEMPLATE_FILE_NAME}`;
+            const modifiedApiImageURL = apiImageUrl + images[key];
+            element.apiInfo.apiImageMetadata[key] = modifiedApiImageURL;
+        }
+    });
+}
+
+async function appendSubscriptionPlanDetails(orgID, subscriptionPolicies) {
+    let subscriptionPlans = [];
+    if (subscriptionPolicies) {
+        for (const policy of subscriptionPolicies) {
+            const subscriptionPlan = await loadSubscriptionPlan(orgID, policy.policyName);
+            subscriptionPlans.push({
+                policyID: subscriptionPlan.policyID,
+                displayName: subscriptionPlan.displayName,
+                policyName: subscriptionPlan.policyName,
+                description: subscriptionPlan.description,
+                billingPlan: subscriptionPlan.billingPlan,
+                requestCount: subscriptionPlan.requestCount,
             });
         }
     }
-    return fileDetails;
+    return subscriptionPlans;
+}
+
+const loadSubscriptionPlan = async (orgID, policyName) => {
+
+    try {
+        const policyData = await apiDao.getSubscriptionPolicyByName(orgID, policyName);
+        if (policyData) {
+            return new subscriptionPolicyDTO(policyData);
+        } else {
+            throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
+        }
+    } catch (error) {
+        console.error("Error occurred while loading subscription plans", error);
+        util.handleError(res, error);
+    }
+}
+
+async function tokenExchanger(token, orgName) {
+    const url = config.advanced.tokenExchanger.url;
+    const orgDetails = await adminDao.getOrganization(orgName);
+    if (!orgDetails) {
+        throw new Error('Organization not found');
+    } else if (!orgDetails.ORGANIZATION_IDENTIFIER) {
+        throw new Error('Organization Identifier not found');
+    }
+
+    const data = qs.stringify({
+        client_id: config.advanced.tokenExchanger.client_id,
+        grant_type: config.advanced.tokenExchanger.grant_type,
+        subject_token_type: config.advanced.tokenExchanger.subject_token_type,
+        requested_token_type: config.advanced.tokenExchanger.requested_token_type,
+        scope: config.advanced.tokenExchanger.scope,
+        subject_token: token,
+        orgHandle: orgDetails.ORG_HANDLE
+    });
+
+    try {
+        const response = await axios.post(url, data, {
+            headers: {
+                'Referer': '',
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+
+        return response.data.access_token;
+    } catch (error) {
+        console.error('Token exchange failed:', error.response ? error.response.data : error.message);
+        throw new Error('Failed to exchange token');
+    }
 }
 
 module.exports = {
@@ -486,5 +598,8 @@ module.exports = {
     getErrors,
     validateProvider,
     rejectExtraProperties,
-    readFilesInDirectory
+    readFilesInDirectory,
+    appendAPIImageURL,
+    appendSubscriptionPlanDetails,
+    tokenExchanger
 }

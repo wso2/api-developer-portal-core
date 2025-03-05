@@ -22,6 +22,7 @@ const constants = require('../utils/constants');
 const path = require('path');
 const fs = require('fs');
 const adminDao = require('../dao/admin');
+const apiMetadata = require('../dao/apiMetadata');
 const { util, renderTemplateFromAPI } = require('../utils/util');
 const filePrefix = config.pathToContent;
 const controlPlaneUrl = config.controlPlane.url;
@@ -117,9 +118,7 @@ const loadThrottlingPolicies = async (req, res) => {
     else {
         const orgName = req.params.orgName;
         const orgID = await orgIDValue(orgName);
-        metaData = await getAPIMThrottlingPolicies(req);
         templateContent = {
-            throttlingPoliciesMetadata: metaData,
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
         }
         const templateResponse = await templateResponseValue('add-application');
@@ -165,41 +164,38 @@ const loadApplication = async (req, res) => {
         } else {
             const orgName = req.params.orgName;
             const orgID = await orgIDValue(orgName);
-            //metaData = new ApplicationDTO(await adminDao.getApplication(orgID, applicationId, req.user.sub));
-            const subscriptions = await adminDao.getSubscribedAPIs(orgID, applicationId);
-            let subList = [];
-            if (subscriptions.length > 0) {
-                subList = subscriptions.map((sub) => new APIDTO(sub));
+            let groupList = [];
+            if (req.query.groups) {
+                groupList.push(req.query.groups.split(" "));
             }
-            // const subApiMap = new Map();
-            // subApis.list.forEach(subApi => subApiMap.set(subApi.apiId, { policy: subApi.throttlingPolicy, id: subApi.subscriptionId }));
-            // const apiList = [];
+            const subAPIs = await adminDao.getSubscribedAPIs(orgID, applicationId);
+            const allAPIs = await apiMetadata.getAllAPIMetadata(orgID, groupList, viewName);
 
-            // allApis.list.forEach(api => {
-            //     let subscriptionPolicies = [];
-            //     let subscribedPolicy;
+            const subscribedAPIIds = new Set(subAPIs.map(api => api.API_ID));
+            const nonSubscribedAPIs = allAPIs
+                .filter(api => !subscribedAPIIds.has(api.API_ID) && api.DP_SUBSCRIPTION_POLICies.length > 0)
+                .map(api => new APIDTO(api));
 
-            //     if (subApiMap.has(api.id)) {
-            //         subscribedPolicy = subApiMap.get(api.id)
-            //     } else {
-            //         api.throttlingPolicies.forEach(policy => {
-            //             subscriptionPolicies.push(policy);
-            //         });
-            //     }
+            let subList = [];
+            if (subAPIs.length > 0) {
+                subList = subAPIs.map((sub) => {
+                    const apiDTO = new APIDTO(sub);
+                    apiDTO.subID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.SUB_ID;
+                    apiDTO.policyID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.POLICY_ID;
+                    return apiDTO;
+                });
+            }
+            util.appendAPIImageURL(subList, req, orgID);
 
-            //     apiList.push({
-            //         name: api.name,
-            //         version: api.version,
-            //         id: api.id,
-            //         isSubAvailable: api.isSubscriptionAvailable,
-            //         subscriptionPolicies: subscriptionPolicies,
-            //         subscribedPolicy: subscribedPolicy
-            //     });
-
-            // });
-
+            await Promise.all(nonSubscribedAPIs.map(async (api) => {
+                api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
+            }));
             kMmetaData = await getAPIMKeyManagers(req);
             kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
+
+            //display only Resident for chroeo.
+            //TODO: handle multiple KM scenarios
+            kMmetaData = kMmetaData.filter(keyManager => keyManager.name === 'Resident Key Manager');
             const userID = req[constants.USER_ID]
             const applicationList = await adminService.getApplicationKeyMap(orgID, applicationId, userID);
             metaData = applicationList;
@@ -250,7 +246,8 @@ const loadApplication = async (req, res) => {
                 applicationMetadata: metaData,
                 keyManagersMetadata: kMmetaData,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-                subscriptions: subList,
+                subAPIs: subList,
+                nonSubAPIs: nonSubscribedAPIs,
                 productionKeys: productionKeys,
                 isProduction: true
             }
@@ -316,7 +313,12 @@ const loadApplicationForEdit = async (req, res) => {
         html = renderTemplate('../pages/edit-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     } else {
         const orgID = await orgIDValue(orgName);
-        metaData = await getAPIMApplication(req, applicationId);
+        const application = await adminDao.getApplication(orgID, applicationId, req.user.sub)
+        if (application) {
+            const appResponse = new ApplicationDTO(application.dataValues);
+            metaData = appResponse;
+        }
+        //metaData = await getAPIMApplication(req, applicationId);
         throttlingMetaData = await getAPIMThrottlingPolicies(req);
         templateContent = {
             applicationMetadata: metaData,

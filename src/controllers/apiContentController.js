@@ -78,19 +78,7 @@ const loadAPIs = async (req, res) => {
             });
 
             for (const metaData of metaDataList) {
-                let subscriptionPlans = [];
-                for (const policy of metaData.subscriptionPolicies) {
-                    const subscriptionPlan = await loadSubscriptionPlan(orgID, policy.policyName);
-                    subscriptionPlans.push({
-                        policyID: subscriptionPlan.policyID,
-                        displayName: subscriptionPlan.displayName,
-                        policyName: subscriptionPlan.policyName,
-                        description: subscriptionPlan.description,
-                        billingPlan: subscriptionPlan.billingPlan,
-                        requestCount: subscriptionPlan.requestCount,
-                    });
-                }
-                metaData.subscriptionPolicyDetails = subscriptionPlans;
+                metaData.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, metaData.subscriptionPolicies);
                 if (req.user) {
                     let applications = await adminDao.getApplications(orgID, req.user.sub);
                     if (applications.length > 0) {
@@ -112,7 +100,8 @@ const loadAPIs = async (req, res) => {
                 isAuthenticated: req.isAuthenticated(),
                 apiMetadata: metaDataList,
                 tags: apiTags,
-                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+                orgID: orgID,
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
         } catch (error) {
@@ -161,19 +150,7 @@ const loadAPIContent = async (req, res) => {
             const orgID = await adminDao.getOrgId(orgName);
             const apiID = await apiDao.getAPIId(orgID, apiHandle);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
-            let subscriptionPlans = [];
-
-            //load subscription plans for authenticated users
-            for (const policy of metaData.subscriptionPolicies) {
-                const subscriptionPlan = await loadSubscriptionPlan(orgID, policy.policyName);
-                subscriptionPlans.push({
-                    displayName: subscriptionPlan.displayName,
-                    policyName: subscriptionPlan.policyName,
-                    description: subscriptionPlan.description,
-                    billingPlan: subscriptionPlan.billingPlan,
-                });
-
-            }
+            let subscriptionPlans = await util.appendSubscriptionPlanDetails(orgID, metaData.subscriptionPolicies);
 
             let providerUrl;
             if (metaData.provider === "WSO2") {
@@ -215,21 +192,6 @@ const loadAPIContent = async (req, res) => {
             console.error(`Failed to load api content:`, error);
             html = "An error occurred while loading the API content.";
         }
-    }
-}
-
-const loadSubscriptionPlan = async (orgID, policyName) => {
-
-    try {
-        const policyData = await apiDao.getSubscriptionPolicyByName(orgID, policyName);
-        if (policyData) {
-            return new subscriptionPolicyDTO(policyData);
-        } else {
-            throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
-        }
-    } catch (error) {
-        console.error("Error occurred while loading subscription plans", error);
-        util.handleError(res, error);
     }
 }
 
@@ -305,14 +267,9 @@ async function loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags,
         const randomNumber = Math.floor(Math.random() * 3) + 3;
         element.apiInfo.ratings = generateArray(randomNumber);
         element.apiInfo.ratingsNoFill = generateArray(5 - randomNumber);
-        const images = element.apiInfo.apiImageMetadata;
-        let apiImageUrl = '';
-        for (const key in images) {
-            apiImageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${element.apiID}${constants.API_TEMPLATE_FILE_NAME}`;
-            const modifiedApiImageURL = apiImageUrl + images[key];
-            element.apiInfo.apiImageMetadata[key] = modifiedApiImageURL;
-        }
     });
+    util.appendAPIImageURL(metaData, req, orgID);
+
     let data = JSON.stringify(metaData);
     return JSON.parse(data);
 }
