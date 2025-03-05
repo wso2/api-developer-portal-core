@@ -27,11 +27,11 @@ const apiDefinition = multer({ storage: storage })
 const { ensureAuthenticated, validateAuthentication, enforceSecuirty } = require('../middlewares/ensureAuthenticated');
 const constants = require('../utils/constants');
 
-router.post('/organizations', adminService.createOrganization);
-router.get('/organizations', validateAuthentication(constants.SCOPES.ADMIN), adminService.getOrganizations);
-router.put('/organizations/:orgId', validateAuthentication(constants.SCOPES.ADMIN), adminService.updateOrganization);
+router.post('/organizations', enforceSecuirty(constants.SCOPES.ADMIN), adminService.createOrganization);
+router.get('/organizations', enforceSecuirty(constants.SCOPES.ADMIN), adminService.getOrganizations);
+router.put('/organizations/:orgId', enforceSecuirty(constants.SCOPES.ADMIN), adminService.updateOrganization);
 router.get('/organizations/:orgId', enforceSecuirty(constants.SCOPES.ADMIN), devportalService.getOrganization); // S2S Applied 
-router.delete('/organizations/:orgId', validateAuthentication(constants.SCOPES.ADMIN), adminService.deleteOrganization);
+router.delete('/organizations/:orgId', enforceSecuirty(constants.SCOPES.ADMIN), adminService.deleteOrganization);
 
 router.post('/organizations/:orgId/identityProvider', validateAuthentication(constants.SCOPES.ADMIN), adminService.createIdentityProvider);
 router.put('/organizations/:orgId/identityProvider', validateAuthentication(constants.SCOPES.ADMIN), adminService.updateIdentityProvider);

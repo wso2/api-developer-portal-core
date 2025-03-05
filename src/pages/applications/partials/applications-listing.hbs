@@ -37,7 +37,7 @@
             type="button"
             class="btn application-btn-icon edit-button"
             title="Edit"
-            onclick="window.location.href='{{../baseUrl}}/applications/{{applicationId}}/edit'"
+            onclick="window.location.href='{{../baseUrl}}/applications/{{id}}/edit'"
           >
             <i class='bi bi-pencil-fill'></i>
           </button>
@@ -45,7 +45,7 @@
             type="button"
             class="btn application-btn-icon delete-button"
             title="Delete"
-            onclick="openDeleteModal('{{applicationId}}', '')"
+            onclick="openDeleteModal('{{id}}', '')"
           >
             <i class="bi bi-trash-fill"></i>
           </button>

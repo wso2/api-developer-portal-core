@@ -1,9 +1,19 @@
 <section>
-    <div class="keygen-container">
-        <div class='d-flex gap-3'>
-            <button type='button' class='common-btn-primary' onclick='loadKeyGenModal()'>
-                OAuth Keys
-            </button>
+
+    <div class="col-11 mx-auto">
+        <div class="api-title pb-3">
+            <div class="d-flex align-items-center justify-content-between w-100">
+                <h4> Tokens </h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-11 mx-auto">
+        <div class="api-title pb-3">
+            <div class="d-flex align-items-center justify-content-between w-100">
+                <button type='button' class='common-btn-primary' onclick='loadKeyGenModal()'>
+                    OAuth Keys
+                </button>
+            </div>
         </div>
     </div>
     <div class="modal custom-modal" id='OauthKeyModal'>
@@ -13,11 +23,11 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
                     onclick="closeModal('OauthKeyModal')"></button>
                 <div style="margin-bottom: 20px;">
-                    <div class="keygen-section-header">
+                    <div class="keygen-section-header" style="display: none;">
                         <h1>Identity Provider</h1>
                         <p class="keygen-subtitle">Select an Identity Provider to configure</p>
                     </div>
-                    <div class="idp-dropdown">
+                    {{!-- <div class="idp-dropdown">
                         <select id="select-idp-list" name="selectIdpList">
                             {{#each keyManagersMetadata}}
                             {{#if enabled}}
@@ -25,7 +35,7 @@
                             {{/if}}
                             {{/each}}
                         </select>
-                    </div>
+                    </div> --}}
                 </div>
                 <div class="row">
                     {{#each keyManagersMetadata}}
@@ -204,7 +214,7 @@
                         </div>
                         {{/if}}
                     </div>
-                    <div class="col-md-6 KMConfig" id="KMURL_{{../name}}" style="display: none;">
+                    <div class="col-md-6 KMConfig" id="KMURL_{{../name}}">
                         <div>
                             <div id="header">
                                 <h2>Identity Provider Connection Data</h2>

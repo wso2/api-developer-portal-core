@@ -30,6 +30,7 @@ const { ApplicationDTO, SubscriptionDTO } = require('../dto/application');
 const config = require(process.cwd() + '/config.json');
 const controlPlaneUrl = config.controlPlane.url;
 const { invokeApiRequest } = require('../utils/util');
+const { Sequelize } = require("sequelize");
 
 const createOrganization = async (req, res) => {
 
@@ -559,7 +560,6 @@ const updateDevPortalApplication = async (req, res) => {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
         const [updatedRows, updatedApp] = await adminDao.updateApplication(orgId, appId, userId, applicationData);
-        console.log(updatedApp);
         if (!updatedRows) {
             throw new Sequelize.EmptyResultError("No record found to update");
         }
