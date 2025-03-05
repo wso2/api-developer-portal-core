@@ -644,8 +644,8 @@ const createSubscription = async (req, res) => {
 
     try {
         const orgID = req.params.orgId;
-        const app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
         sequelize.transaction(async (t) => {
+            const app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
             try {
                 if (app.length > 0) {
                     const response = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, {
@@ -653,9 +653,9 @@ const createSubscription = async (req, res) => {
                         applicationId: app[0].dataValues.CP_APP_REF,
                         throttlingPolicy: req.body.policyName
                     });
-                    await handleSubscribe(orgID, req.body.applicationID, app.API_REF_ID, app.SUBSCRIPTION_REF_ID, response);
+                    await handleSubscribe(orgID, req.body.applicationID, app.API_REF_ID, app.SUBSCRIPTION_REF_ID, response, t);
                 }
-                await adminDao.createSubscription(orgID, req.body);
+                await adminDao.createSubscription(orgID, req.body, t);
                 return res.status(200).json({ message: 'Subscribed successfully' });
 
             } catch (error) {
@@ -665,8 +665,8 @@ const createSubscription = async (req, res) => {
                     /** Handle both scenario where a reference application in cp is created but no subscriptions avaiable 
                      * (update existing row) & a reference application in cp is created & a subscriptions for a different 
                      * API already exisits (create new row) **/
-                    await handleSubscribe(orgID, req.applicationID, app.API_REF_ID, app.SUBSCRIPTION_REF_ID, response);
-                    await adminDao.createSubscription(orgID, req.body);
+                    await handleSubscribe(orgID, req.applicationID, app.API_REF_ID, app.SUBSCRIPTION_REF_ID, response, t);
+                    await adminDao.createSubscription(orgID, req.body, t);
                     return res.status(200).json({ message: 'Subscribed successfully' });
                 }
                 console.error("Error occurred while subscribing to API", error);

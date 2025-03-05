@@ -289,7 +289,6 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         if (body) {
             options.data = body;
         }
-        console.log(`Request req['exchangedToken1']:`, req.user);
 
         if (config.advanced.tokenExchanger.enabled) {
             decodedToken = jwt.decode(req.user.exchangeToken);
@@ -555,7 +554,7 @@ async function tokenExchanger(token, orgName) {
         requested_token_type: config.advanced.tokenExchanger.requested_token_type,
         scope: config.advanced.tokenExchanger.scope,
         subject_token: token,
-        orgHandle: orgDetails.ORGANIZATION_IDENTIFIER
+        orgHandle: orgDetails.ORG_HANDLE
     });
 
     try {
