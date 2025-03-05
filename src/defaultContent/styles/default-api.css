@@ -1,0 +1,106 @@
+.defaultapi-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.defaultapi-section {
+    margin-bottom: 30px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+}
+
+.defaultapi-section-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.defaultapi-endpoint-row {
+    display: flex;
+    align-items: center;
+    background-color: #f1f5f9;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.defaultapi-development-label {
+    margin-right: 10px;
+    font-weight: 500;
+}
+
+.defaultapi-endpoint-url {
+    flex-grow: 1;
+    color: #555;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.defaultapi-description {
+    line-height: 1.7;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.defaultapi-resources {
+    border: 1px solid #eee;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.defaultapi-resource-item {
+    display: flex;
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+    align-items: center;
+}
+
+.defaultapi-resource-item:last-child {
+    border-bottom: none;
+}
+
+.defaultapi-http-method {
+    padding: 6px 12px;
+    border-radius: 4px;
+    color: white;
+    font-weight: 500;
+    font-size: 14px;
+    width: 80px;
+    text-align: center;
+    margin-right: 20px;
+}
+
+.POST {
+    background-color: #4ade80;
+}
+
+.PUT {
+    background-color: #fb923c;
+}
+
+.GET {
+    background-color: #3b82f6;
+}
+
+.DELETE {
+    background-color: #d85050;
+}
+
+.defaultapi-resource-path {
+    font-family: monospace;
+    font-size: 16px;
+    margin-right: 20px;
+    min-width: 200px;
+}
+
+.defaultapi-resource-description {
+    color: #666;
+    font-size: 14px;
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

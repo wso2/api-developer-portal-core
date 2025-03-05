@@ -1,11 +1,20 @@
 <head>
+  <link rel='stylesheet' href='/technical-styles/application.css' />
   <script src='/technical-scripts/subscription.js' defer></script>
+  <script src='/technical-scripts/application-dashboard.js' defer></script>
+  <link rel="stylesheet" href="/technical-styles/oauth2-key-generation.css" />
+  <script src="/technical-scripts/oauth2-key-generation.js" defer></script>
 </head>
-<main style="padding: 0 3.75rem;">
-    {{> application-dashboard }}
+<main>
+    {{> overview }}
+    {{> apis }}
+    {{> application-modal }}
+    {{> generate-oauth-key }}
     {{> alert }}
+    {{!-- {{> oauth2-key-generation}} --}}
+    {{!-- {{> alert }}
     {{> throttling-reset-modal}}
     {{> api-key-modal}}
     {{> delete-confirmation modalTitle="Do you really want to remove keys?" modalMessage="This will remove the key entries stored in devportal, 
-    gateway as well as in the service provider." modalFunction="removeApplicationKey()" }}
+    gateway as well as in the service provider." modalFunction="removeApplicationKey()" }} --}}
 </main>

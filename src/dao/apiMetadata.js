@@ -453,6 +453,7 @@ const createSubscriptionPolicy = async (orgID, policy, t) => {
             DISPLAY_NAME: policy.displayName,
             BILLING_PLAN: policy.billingPlan,
             DESCRIPTION: policy.description,
+            REQUEST_COUNT: policy.requestCount,
             ORG_ID: orgID
         }, { transaction: t });
         return subscriptionPolicyResponse;
@@ -470,7 +471,8 @@ const updateSubscriptionPolicy = async (orgID, policyID, policy, t) => {
             POLICY_NAME: policy.policyName,
             DISPLAY_NAME: policy.displayName,
             BILLING_PLAN: policy.billingPlan,
-            DESCRIPTION: policy.description
+            DESCRIPTION: policy.description,
+            REQUEST_COUNT: policy.requestCount,
         }, {
             where: {
                 POLICY_ID: policyID,
@@ -963,8 +965,7 @@ const getAllAPIMetadata = async (orgID, groups, viewName, t) => {
     try {
         const publicAPIS = await APIMetadata.findAll({
             where: {
-                ORG_ID: orgID,
-                VISIBILITY: constants.API_VISIBILITY.PUBLIC
+                ORG_ID: orgID
             },
             include: [{
                 model: APIImageMetadata,
@@ -1065,7 +1066,6 @@ const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
                 (
                     :groups IS NOT NULL AND string_to_array(metadata."VISIBLE_GROUPS", ' ') && :groups
                 )
-                OR metadata."VISIBILITY" = 'PUBLIC'
             )
         GROUP BY 
             metadata."API_ID"

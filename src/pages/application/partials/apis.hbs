@@ -1,0 +1,35 @@
+<section>
+    <div class="col-11 mx-auto">
+        <div class="api-title pb-3">
+            <div class="d-flex align-items-center justify-content-between w-100">
+                <h4> APIs </h4>
+                <div class='action-buttons'>
+                    <a class="common-btn-primary" type="button"
+                        onclick="loadModal('appModal-{{applicationMetadata.id}}')">+ Add API</a>
+                </div>
+            </div>
+            <p class="api-description">{{description}}</p>
+        </div>
+
+        <div class="row">
+            {{#subAPIs}}
+            <div class="col-lg-4 col-md-6 mb-4" id="apiCard">
+                <div class="card dev-card api-card d-flex flex-column">
+                    <div class="d-flex align-items-end justify-content-between w-100">
+                        <div class="d-flex align-items-center gap-2">
+                            <img src="{{apiInfo.apiImageMetadata.api-icon}}" class="api-card-img" />
+                            <div class="api-card-body flex-grow-1">
+                                <h5 class="api-card-title mb-0">{{apiInfo.apiName}}</h5>
+                                <p>V {{apiInfo.apiVersion}}</p>
+                            </div>
+                        </div>
+                            {{> delete-confirmation modalTitle="Do you really want to remove the subscription?" modalMessage="This will remove the subscription entry stored in the devportal." modalFunction="removeSubscription()" }}
+                        <a class="common-btn-primary pt-2 pb-2" type="button"
+                            onclick="openDeleteModal('{{../orgID}}', '{{../applicationMetadata.id}}', '{{apiReferenceID}}', '{{subID}}')">Unsubscribe</a>
+                    </div>
+                </div>
+            </div>
+            {{/subAPIs}}
+        </div>
+    </div>
+</section>

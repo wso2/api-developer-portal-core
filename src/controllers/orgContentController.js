@@ -24,7 +24,7 @@ const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
 
 const filePrefix = config.pathToContent;
-const baseURLDev = constants.BASE_URL + config.port  + constants.ROUTE.VIEWS_PATH;
+const baseURLDev = config.baseUrl  + constants.ROUTE.VIEWS_PATH;
 
 const loadOrganizationContent = async (req, res) => {
 
@@ -60,7 +60,7 @@ const loadOrgContentFromAPI = async (req, res) => {
         };
         html = await renderTemplateFromAPI(templateContent, orgId, orgName, 'pages/home', req.params.viewName);
     } catch (error) {
-        console.error(`Failed to load organization :, ${error}`);
+        console.error(`Failed to load organization :`, error);
         return res.redirect('/configure');
     }
     return html;

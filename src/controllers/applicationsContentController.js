@@ -22,11 +22,14 @@ const constants = require('../utils/constants');
 const path = require('path');
 const fs = require('fs');
 const adminDao = require('../dao/admin');
-const util = require('../utils/util');
+const apiMetadata = require('../dao/apiMetadata');
+const { util, renderTemplateFromAPI } = require('../utils/util');
 const filePrefix = config.pathToContent;
 const controlPlaneUrl = config.controlPlane.url;
-
-const baseURLDev = constants.BASE_URL + config.port  + constants.ROUTE.VIEWS_PATH;
+const { ApplicationDTO } = require('../dto/application');
+const APIDTO = require('../dto/apiDTO');
+const adminService = require('../services/adminService');
+const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
 
 const orgIDValue = async (orgName) => {
     const organization = await adminDao.getOrganization(orgName);
@@ -55,14 +58,27 @@ const loadApplications = async (req, res) => {
         } else {
             const orgName = req.params.orgName;
             const orgID = await orgIDValue(orgName);
-            metaData = await getAPIMApplications(req);
+            const applications = await adminDao.getApplications(orgID, req.user.sub)
+            const metaData = await Promise.all(
+                applications.map(async (application) => {
+                    const subApis = await adminDao.getSubscriptions(orgID, application.APP_ID, '');
+                    return {
+                        ...new ApplicationDTO(application),
+                        subscriptionCount: subApis.length
+                    };
+                })
+            );
             templateContent = {
                 applicationsMetadata: metaData,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
             }
             const templateResponse = await templateResponseValue('applications');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
-            html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+            if (layoutResponse === "") {
+                html = renderTemplate('../pages/applications/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+            } else {
+                html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+            }
         }
         res.send(html);
     } catch (error) {
@@ -70,7 +86,7 @@ const loadApplications = async (req, res) => {
         const orgName = req.params.orgName;
         const viewName = req.params.viewName;
         const orgId = await orgIDValue(orgName);
-        
+
         const templatePath = path.join(require.main.filename, '..', 'pages', 'error-page', 'page.hbs');
         const templateResponse = fs.readFileSync(templatePath, constants.CHARSET_UTF8);
         const layoutResponse = await loadLayoutFromAPI(orgId, viewName);
@@ -83,11 +99,6 @@ async function getMockApplications() {
     const mockApplicationsMetaDataPath = path.join(process.cwd(), filePrefix + '../mock/Applications', 'applications.json');
     const mockApplicationsMetaData = JSON.parse(fs.readFileSync(mockApplicationsMetaDataPath, 'utf-8'));
     return mockApplicationsMetaData.list;
-}
-
-async function getAPIMApplications(req) {
-    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/applications', null, null);
-    return responseData.list;
 }
 
 // ***** Load Throttling Policies *****
@@ -107,14 +118,16 @@ const loadThrottlingPolicies = async (req, res) => {
     else {
         const orgName = req.params.orgName;
         const orgID = await orgIDValue(orgName);
-        metaData = await getAPIMThrottlingPolicies(req);
         templateContent = {
-            throttlingPoliciesMetadata: metaData,
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
         }
         const templateResponse = await templateResponseValue('add-application');
         const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
-        html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        if (layoutResponse === "") {
+            html = renderTemplate('../pages/add-application/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+        } else {
+            html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        }
     }
 
     res.send(html);
@@ -151,39 +164,45 @@ const loadApplication = async (req, res) => {
         } else {
             const orgName = req.params.orgName;
             const orgID = await orgIDValue(orgName);
-            metaData = await getAPIMApplication(req, applicationId);
-            const allApis = await getAllAPIs(req);
-            const subApis = await getSubscribedApis(req, applicationId);
-            const subApiMap = new Map();
-            subApis.list.forEach(subApi => subApiMap.set(subApi.apiId, { policy: subApi.throttlingPolicy, id: subApi.subscriptionId }));
-            const apiList = [];
+            let groupList = [];
+            if (req.query.groups) {
+                groupList.push(req.query.groups.split(" "));
+            }
+            const subAPIs = await adminDao.getSubscribedAPIs(orgID, applicationId);
+            const allAPIs = await apiMetadata.getAllAPIMetadata(orgID, groupList, viewName);
 
-            allApis.list.forEach(api => {
-                let subscriptionPolicies = [];
-                let subscribedPolicy;
+            const subscribedAPIIds = new Set(subAPIs.map(api => api.API_ID));
+            const nonSubscribedAPIs = allAPIs
+                .filter(api => !subscribedAPIIds.has(api.API_ID) && api.DP_SUBSCRIPTION_POLICies.length > 0)
+                .map(api => new APIDTO(api));
 
-                if (subApiMap.has(api.id)) {
-                    subscribedPolicy = subApiMap.get(api.id)
-                } else {
-                    api.throttlingPolicies.forEach(policy => {
-                        subscriptionPolicies.push(policy);
-                    });
-                }
-
-                apiList.push({
-                    name: api.name,
-                    version: api.version,
-                    id: api.id,
-                    isSubAvailable: api.isSubscriptionAvailable,
-                    subscriptionPolicies: subscriptionPolicies,
-                    subscribedPolicy: subscribedPolicy
+            let subList = [];
+            if (subAPIs.length > 0) {
+                subList = subAPIs.map((sub) => {
+                    const apiDTO = new APIDTO(sub);
+                    apiDTO.subID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.SUB_ID;
+                    apiDTO.policyID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.POLICY_ID;
+                    return apiDTO;
                 });
+            }
+            util.appendAPIImageURL(subList, req, orgID);
 
-            });
-
+            await Promise.all(nonSubscribedAPIs.map(async (api) => {
+                api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
+            }));
             kMmetaData = await getAPIMKeyManagers(req);
             kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
-            let applicationKeyList = await getApplicationKeys(req, applicationId);
+
+            //display only Resident for chroeo.
+            //TODO: handle multiple KM scenarios
+            kMmetaData = kMmetaData.filter(keyManager => keyManager.name === 'Resident Key Manager');
+            const userID = req[constants.USER_ID]
+            const applicationList = await adminService.getApplicationKeyMap(orgID, applicationId, userID);
+            metaData = applicationList;
+            let applicationKeyList;
+            if (applicationList.appMap) {
+                applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
+            }
             let productionKeys = [];
             let sandboxKeys = [];
 
@@ -200,7 +219,8 @@ const loadApplication = async (req, res) => {
                     keyType: key.keyType,
                     supportedGrantTypes: key.supportedGrantTypes,
                     additionalProperties: key.additionalProperties,
-                    clientName: client_name
+                    clientName: client_name,
+                    callbackUrl: key.callbackUrl
                 };
                 if (key.keyType === constants.KEY_TYPE.PRODUCTION) {
                     productionKeys.push(keyData);
@@ -209,8 +229,6 @@ const loadApplication = async (req, res) => {
                 }
                 return keyData;
             }) || [];
-
-
             kMmetaData.forEach(keyManager => {
                 productionKeys.forEach(productionKey => {
                     if (productionKey.keyManager === keyManager.name) {
@@ -223,21 +241,24 @@ const loadApplication = async (req, res) => {
                     }
                 });
             });
-
             templateContent = {
+                orgID: orgID,
                 applicationMetadata: metaData,
                 keyManagersMetadata: kMmetaData,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-                apis: apiList,
+                subAPIs: subList,
+                nonSubAPIs: nonSubscribedAPIs,
                 productionKeys: productionKeys,
-                sandboxKeys: sandboxKeys
+                isProduction: true
             }
-
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
-            html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+            if (layoutResponse === "") {
+                html = renderTemplate('../pages/application/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+            } else {
+                html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+            }
         }
-
         res.send(html);
     } catch (error) {
         console.error("Error occurred while loading application", error);
@@ -245,12 +266,17 @@ const loadApplication = async (req, res) => {
     }
 }
 
-async function getApplicationKeys(req, applicationId) {
-    try {
-        return await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${applicationId}/keys`, {}, {});
-    } catch (error) {
-        console.error("Error occurred while generating application keys", error);
-        return null;
+async function getApplicationKeys(applicationList, req) {
+
+    //TODO: handle multiple CP applications
+    for (const application of applicationList) {
+        const appRef = application.appRefID;
+        try {
+            return await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${appRef}/keys`, {}, {});
+        } catch (error) {
+            console.error("Error occurred while generating application keys", error);
+            return null;
+        }
     }
 }
 
@@ -274,7 +300,7 @@ const getSubscribedApis = async (req, appId) => {
 
 const loadApplicationForEdit = async (req, res) => {
 
-    const {orgName, viewName, applicationId} = req.params;
+    const { orgName, viewName, applicationId } = req.params;
     let html, templateContent, metaData, throttlingMetaData;
     if (config.mode === constants.DEV_MODE) {
         metaData = await getMockApplication();
@@ -287,8 +313,13 @@ const loadApplicationForEdit = async (req, res) => {
         html = renderTemplate('../pages/edit-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     } else {
         const orgID = await orgIDValue(orgName);
-        metaData = await getAPIMApplication(req, applicationId);
-        throttlingMetaData = await getAPIMThrottlingPolicies(req);        
+        const application = await adminDao.getApplication(orgID, applicationId, req.user.sub)
+        if (application) {
+            const appResponse = new ApplicationDTO(application.dataValues);
+            metaData = appResponse;
+        }
+        //metaData = await getAPIMApplication(req, applicationId);
+        throttlingMetaData = await getAPIMThrottlingPolicies(req);
         templateContent = {
             applicationMetadata: metaData,
             throttlingPoliciesMetadata: throttlingMetaData,
@@ -296,8 +327,11 @@ const loadApplicationForEdit = async (req, res) => {
         }
         const templateResponse = await templateResponseValue('edit-application');
         const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
-        html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
-
+        if (layoutResponse === "") {
+            html = renderTemplate('../pages/edit-application/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+        } else {
+            html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        }
     }
     res.send(html);
 }

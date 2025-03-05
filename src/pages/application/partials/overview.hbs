@@ -4,39 +4,23 @@
 
 <section>
   {{#applicationMetadata}}
-  <div class="app-header mb-4 pt-4">
-    <h1 class='app-title'>{{name}}</h1>
-    <div class="d-flex justify-content-between align-items-center">
-      <p>Subscriptions: {{subscriptionCount}}</p>
-      <div class='action-buttons'>
-        <button class='btn btn-sm' title='Edit'
-          onclick="window.location.href='{{../baseUrl}}/applications/{{applicationId}}/edit'">
-          <i class='bi bi-pencil-square'></i>
-        </button>
+  <div class="col-11 api-banner-content">
+    <div class="d-flex justify-content-between">
+      <div class="col-12 col-md-12">
+        <div class="api-title pb-3">
+          <div class="d-flex align-items-center justify-content-between w-100">
+            <h4>{{name}}</h4>
+            <div class='action-buttons'>
+              <button class='btn btn-sm' title='Edit'
+                onclick="window.location.href='{{../baseUrl}}/applications/{{id}}/edit'">
+                <i class='bi bi-pencil-square'></i>
+              </button>
+            </div>
+          </div>
+          <p class="api-description">{{description}}</p>
+        </div>
       </div>
     </div>
   </div>
-  <div class="app-header">
-    <div class='app-details'>
-        <p> <span>Description</span> {{description}} </p>
-    </div>
-  </div>
-  <div class="app-header">
-    <div class='app-details app-plan'>
-      <p><span>Business Plan</span> {{throttlingPolicy}}</p>
-    </div>
-  </div>
-  <div class="app-header">
-    <div class='app-details'>
-      <p><span>Workflow Status</span> {{status}}</p>
-    </div>
-  </div>
-  <div class="app-header">
-    <div class='app-details'>
-      <p><span>Application Owner:</span> {{owner}}</p>
-    </div>
-  </div>
-
-
   {{/applicationMetadata}}
 </section>

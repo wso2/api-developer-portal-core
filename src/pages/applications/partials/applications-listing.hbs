@@ -21,29 +21,15 @@
     <div class="card application-card" id="app-card-{{applicationId}}" data-name="{{name}}">
       <div class="application-card-body">
         <h5 class="application-card-title">
-          <a href="{{../baseUrl}}/applications/{{applicationId}}" class="application-name-link">
+          <a href="{{../baseUrl}}/applications/{{id}}" class="application-name-link">
             {{name}}
           </a>
         </h5>
-        <div class='row list-items'>
-          <div class='applicationlist-tags'>
-            {{#if (eq status 'APPROVED')}}
-            <span class='badge badge-custom1'>{{status}}</span>
-            {{else}}
-              <span class='badge badge-custom2'>{{status}}</span>
-            {{/if}}
-          </div>
-        </div>
         <div class='application-card-meta'>
           <p>
             <i class='bi bi-grid'></i>
               Subscriptions:
               {{subscriptionCount}}
-          </p>
-          <p>
-            <i class='bi bi-speedometer2'></i>
-              Throttling Policy:
-              {{throttlingPolicy}}
           </p>
         </div>
         <div class="application-card-actions">
@@ -51,7 +37,7 @@
             type="button"
             class="btn application-btn-icon edit-button"
             title="Edit"
-            onclick="window.location.href='{{../baseUrl}}/applications/{{applicationId}}/edit'"
+            onclick="window.location.href='{{../baseUrl}}/applications/{{id}}/edit'"
           >
             <i class='bi bi-pencil-fill'></i>
           </button>
@@ -59,7 +45,7 @@
             type="button"
             class="btn application-btn-icon delete-button"
             title="Delete"
-            onclick="openDeleteModal('{{applicationId}}', '')"
+            onclick="openDeleteModal('{{id}}', '')"
           >
             <i class="bi bi-trash-fill"></i>
           </button>

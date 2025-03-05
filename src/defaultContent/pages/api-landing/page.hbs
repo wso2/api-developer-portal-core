@@ -1,0 +1,10 @@
+<main>
+    {{> api-detail-banner }}
+    {{#if loadDefault}}
+    {{> api-default}}
+    {{else}}
+    {{> api-content }}
+    {{/if}}
+    {{> subscription-plans}}
+    {{> faqBanner }}
+</main>

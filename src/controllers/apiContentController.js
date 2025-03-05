@@ -29,19 +29,32 @@ const apiMetadataService = require('../services/apiMetadataService');
 const adminService = require('../services/adminService');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const { CustomError } = require('../utils/errors/customErrors');
-
+const { ApplicationDTO } = require('../dto/application');
+const SwaggerParser = require("swagger-parser");
 
 const filePrefix = config.pathToContent;
 const generateArray = (length) => Array.from({ length });
-const baseURLDev = constants.BASE_URL + config.port + constants.ROUTE.VIEWS_PATH;
+const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
 
 const loadAPIs = async (req, res) => {
 
     const { orgName, viewName } = req.params;
     let html;
     if (config.mode === constants.DEV_MODE) {
+        const metaDataList = await loadAPIMetaDataList();
+        for (const metaData of metaDataList) {
+            let subscriptionPlans = [];
+            subscriptionPlans.push({
+                displayName: "Sample",
+                policyName: "Sample",
+                description: "Sample",
+                billingPlan: "Sample",
+                requestCount: "1000",
+            });
+            metaData.subscriptionPolicyDetails = subscriptionPlans;
+        }
         const templateContent = {
-            apiMetadata: await loadAPIMetaDataList(),
+            apiMetadata: metaDataList,
             baseUrl: baseURLDev + viewName
         }
         html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
@@ -50,8 +63,9 @@ const loadAPIs = async (req, res) => {
             const orgID = await adminDao.getOrgId(orgName);
             const searchTerm = req.query.query;
             const tags = req.query.tags;
-            const metaData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
+            const metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
             const apiData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
+            let appList = [];
             let apiTags = [];
             apiData.forEach(api => {
                 if (api.apiInfo.tags) {
@@ -62,16 +76,37 @@ const loadAPIs = async (req, res) => {
                     });
                 }
             });
+
+            for (const metaData of metaDataList) {
+                metaData.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, metaData.subscriptionPolicies);
+                if (req.user) {
+                    let applications = await adminDao.getApplications(orgID, req.user.sub);
+                    if (applications.length > 0) {
+                        appList = await Promise.all(
+                            applications.map(async (app) => {
+                                const subscription = await adminDao.getAppApiSubscription(orgID, app.APP_ID, metaData.apiID);
+                                return {
+                                    ...new ApplicationDTO(app),
+                                    subscribed: subscription.length > 0,
+                                };
+                            })
+                        );
+                    }
+                }
+                metaData.applications = appList;
+            }
+
             const templateContent = {
-                apiMetadata: metaData,
+                isAuthenticated: req.isAuthenticated(),
+                apiMetadata: metaDataList,
                 tags: apiTags,
-                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+                orgID: orgID,
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
         } catch (error) {
             console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
             html = constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR;
-
         }
     }
     res.send(html);
@@ -115,19 +150,7 @@ const loadAPIContent = async (req, res) => {
             const orgID = await adminDao.getOrgId(orgName);
             const apiID = await apiDao.getAPIId(orgID, apiHandle);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
-            let subscriptionPlans = [];
-
-            //load subscription plans for authenticated users
-            for (const policy of metaData.subscriptionPolicies) {
-                const subscriptionPlan = await loadSubscriptionPlan(orgID, policy.policyName);
-                subscriptionPlans.push({
-                    displayName: subscriptionPlan.displayName,
-                    policyName: subscriptionPlan.policyName,
-                    description: subscriptionPlan.description,
-                    billingPlan: subscriptionPlan.billingPlan,
-                });
-
-            }
+            let subscriptionPlans = await util.appendSubscriptionPlanDetails(orgID, metaData.subscriptionPolicies);
 
             let providerUrl;
             if (metaData.provider === "WSO2") {
@@ -136,36 +159,38 @@ const loadAPIContent = async (req, res) => {
                 const providerList = await adminService.getAllProviders(orgID);
                 providerUrl = providerList.find(provider => provider.name === metaData.provider)?.providerURL || '#subscriptionPlans';
             }
-
+            //check whether api content exists
+            let loadDefault = false
+            let apiDefinition, apiDetails = "";
+            const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, orgID, apiID);
+            if (!markdownResponse) {
+                let additionalAPIContentResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME, orgID, apiID);
+                if (!additionalAPIContentResponse) {
+                    loadDefault = true;
+                    if (metaData.apiInfo.apiType !== "GraphQL") {
+                        apiDefinition = "";
+                        apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, orgID, apiID);
+                        apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
+                    }
+                    apiDetails = await parseSwaggerFromObject(JSON.parse(apiDefinition));
+                }
+            }
             const templateContent = {
                 provider: metaData.provider,
                 providerUrl: providerUrl,
                 apiMetadata: metaData,
                 subscriptionPlans: subscriptionPlans,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-                schemaUrl: `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${constants.FILE_NAME.API_DEFINITION_XML}`
+                schemaUrl: `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${constants.FILE_NAME.API_DEFINITION_XML}`,
+                loadDefault: loadDefault,
+                resources: apiDetails
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
             res.send(html);
         } catch (error) {
-            console.error(`Failed to load api content: ,${error}`);
+            console.error(`Failed to load api content:`, error);
             html = "An error occurred while loading the API content.";
         }
-    }
-}
-
-const loadSubscriptionPlan = async (orgID, policyName) => {
-
-    try {
-        const policyData = await apiDao.getSubscriptionPolicyByName(orgID, policyName);
-        if (policyData) {
-            return new subscriptionPolicyDTO(policyData);
-        } else {
-            throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
-        }
-    } catch (error) {
-        console.error("Error occurred while loading subscription plans", error);
-        util.handleError(res, error);
     }
 }
 
@@ -344,14 +369,9 @@ async function loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags,
         const randomNumber = Math.floor(Math.random() * 3) + 3;
         element.apiInfo.ratings = generateArray(randomNumber);
         element.apiInfo.ratingsNoFill = generateArray(5 - randomNumber);
-        const images = element.apiInfo.apiImageMetadata;
-        let apiImageUrl = '';
-        for (const key in images) {
-            apiImageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${element.apiID}${constants.API_TYPE_QUERY}IMAGE${constants.FILE_NAME_PARAM}`;
-            const modifiedApiImageURL = apiImageUrl + images[key];
-            element.apiInfo.apiImageMetadata[key] = modifiedApiImageURL;
-        }
     });
+    util.appendAPIImageURL(metaData, req, orgID);
+
     let data = JSON.stringify(metaData);
     return JSON.parse(data);
 }
@@ -377,6 +397,32 @@ function loadAPIMetaDataFromFile(apiName) {
     const mockAPIDataPath = path.join(process.cwd(), filePrefix + '../mock', apiName + '/apiMetadata.json');
     return JSON.parse(fs.readFileSync(mockAPIDataPath, constants.CHARSET_UTF8));
 }
+
+async function parseSwaggerFromObject(swaggerObject) {
+    try {
+        // Dereference the Swagger object (resolve $ref references)
+        const api = await SwaggerParser.dereference(swaggerObject);
+        const servers = api.servers || [];
+        // Extract API metadata
+        const apiTitle = api.info?.title || "No title";
+        const apiDescription = api.info?.description || "No description available";
+
+        // Extract endpoints
+        const endpoints = Object.entries(api.paths || {}).map(([path, methods]) => ({
+            path,
+            methods: Object.keys(methods).map(method => ({
+                path: path,
+                method: method.toUpperCase(),
+                summary: methods[method]?.summary || "No summary",
+                description: methods[method]?.description || "No description",
+            })),
+        }));
+        return { title: apiTitle, description: apiDescription, serverDetails: servers, endpoints };
+    } catch (error) {
+        console.error("Error parsing Swagger data:", error);
+    }
+}
+
 module.exports = {
     loadAPIs,
     loadAPIContent,

@@ -80,8 +80,8 @@ applicationForm.addEventListener('submit', async (e) => {
             },
             body: JSON.stringify({
                 name,
-                throttlingPolicy,
                 description,
+                type: 'WEB',
             }),
         });
 

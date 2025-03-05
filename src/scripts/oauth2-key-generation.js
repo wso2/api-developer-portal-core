@@ -1,32 +1,52 @@
-async function generateApplicationKey(formId, appId, keyType, keyManager, clientName) {
+async function generateApplicationKey(formId, appId, keyType, keyManager, clientName, subscriptions, orgID, consumerKeyID, consumerSecretID) {
+
     const form = document.getElementById(formId);
+    const apiList = []
+    const subList = JSON.parse(subscriptions);
+    subList.forEach(subscription => {
+        apiList.push({
+            "apiName": subscription.apiInfo.apiName,
+            "apiRefId": subscription.apiReferenceID,
+            "policyID": subscription.policyID
+        });
+    });
     const formData = new FormData(form);
     const jsonObject = getFormData(formData, keyManager, clientName);
-
+    const payload = JSON.stringify({
+        "applicationName": clientName,
+        "apis": apiList,
+        "tokenType": "OAUTH",
+        "tokenDetails": {
+            "grantTypesToBeSupported": jsonObject.grantTypes,
+            "keyType": keyType,
+            "keyManager": keyManager,
+            "callbackUrl": jsonObject.callbackURL,
+            "scopes": [
+                "default"
+            ],
+            "validityTime": 3600,
+            "additionalProperties": jsonObject.additionalProperties
+        }
+    })
     try {
-        const response = await fetch(`/devportal/applications/${appId}/generate-keys`, {
+        const response = await fetch(`/devportal/organizations/${orgID}/app-key-mapping`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                "grantTypesToBeSupported": jsonObject.grantTypes,
-                "keyType": keyType,
-                "keyManager": keyManager,
-                "callbackUrl": jsonObject.callbackURL,
-                "scopes": [
-                    "default"
-                ],
-                "validityTime": 3600,
-                "additionalProperties": jsonObject.additionalProperties
-            }),
+            body: payload,
         });
 
         const responseData = await response.json();
         if (response.ok) {
             await showAlert('Application keys generated successfully!', 'success');
-            const url = new URL(window.location.origin + window.location.pathname);
-            window.location.href = url.toString();
+            const consumerKey = responseData.consumerKey;
+            const consumerSecret = responseData.consumerSecret;
+            console.log("Keys", responseData);
+            document.getElementById(consumerKeyID).value = consumerKey;
+            document.getElementById(consumerSecretID).value = consumerSecret
+            //const url = new URL(window.location.origin + window.location.pathname);
+            //window.location.href = url.toString();
         } else {
             console.error('Failed to generate keys:', responseData);
             await showAlert(`Failed to generate application keys. Please try again.\n${responseData.description}`, 'error');
@@ -75,7 +95,6 @@ function getFormData(formData, keyManager, clientName) {
         }
         jsonObject.additionalProperties = additionalProperties;
     }
-
     formData.forEach((value, key) => {
         if (key.startsWith("additionalProperties.")) {
             const propName = key.replace("additionalProperties.", "");
@@ -114,27 +133,30 @@ function getFormData(formData, keyManager, clientName) {
     return jsonObject;
 };
 
-async function updateApplicationKey(formId, appId, keyType, keyManager, keyManagerId, clientName) {
+async function updateApplicationKey(formId, appMap, keyType, keyManager, keyManagerId, clientName) {
     const form = document.getElementById(formId);
     const formData = new FormData(form);
+    const jsonAppdata = JSON.parse(appMap);
+    //TODO: Handle multiple CP applications
+    const appId = jsonAppdata[0].appRefID;
     const jsonObject = getFormData(formData, keyManager, clientName);
-
+    const payload = JSON.stringify({
+        "supportedGrantTypes": jsonObject.grantTypes,
+        "keyType": keyType,
+        "keyManager": keyManager,
+        "callbackUrl": jsonObject.callbackURL,
+        "consumerKey": jsonObject.consumerKey,
+        "consumerSecret": jsonObject.consumerSecret,
+        "keyMappingId": keyManagerId,
+        "additionalProperties": jsonObject.additionalProperties
+    });
     try {
         const response = await fetch(`/devportal/applications/${appId}/oauth-keys/${keyManagerId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                "supportedGrantTypes": jsonObject.grantTypes,
-                "keyType": keyType,
-                "keyManager": keyManager,
-                "callbackUrl": jsonObject.callbackURL,
-                "consumerKey": jsonObject.consumerKey,
-                "consumerSecret": jsonObject.consumerSecret,
-                "keyMappingId": keyManagerId,
-                "additionalProperties": jsonObject.additionalProperties
-            }),
+            body: payload,
         });
 
         const responseData = await response.json();
@@ -155,7 +177,7 @@ async function updateApplicationKey(formId, appId, keyType, keyManager, keyManag
 async function removeApplicationKey() {
     const modal = document.getElementById('deleteConfirmation');
     const applicationId = modal.dataset.applicationId;
-    const keyMappingId = modal.dataset.mappingId;
+    const keyMappingId = modal.dataset.param2;
 
     try {
         const response = await fetch(`/devportal/applications/${applicationId}/oauth-keys/${keyMappingId}`, {
@@ -187,7 +209,7 @@ async function generateCurl(formId) {
     const tokenURL = formData.get('tokenURL');
     const auth = btoa(`${formData.get('consumerKey')}:${formData.get('consumerSecret')}`);
     const curl = `curl -k -X POST ${tokenURL} -d "grant_type=password&username=Username&password=Password" -H "Authorization: Basic ${auth}"`;
-    
+
     openApiKeyModal(curl, "CURL to Generate Access Token", "The following cURL command shows how to generate an access token using the Password Grant type.");
 }
 
@@ -227,3 +249,60 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
     }
 
 }
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    
+    const selectElement = document.getElementById("select-idp-list");
+
+    function copyToClipboard(button) {
+        const textToCopy = button.parentElement.querySelector('.endpoint-value').textContent;
+        navigator.clipboard.writeText(textToCopy)
+            .then(() => {
+                // Optional: Show a copied notification
+                const originalSvg = button.innerHTML;
+                button.innerHTML = `
+                        <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="green" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    `;
+                setTimeout(() => {
+                    button.innerHTML = originalSvg;
+                }, 1500);
+            })
+            .catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+    }
+
+    function updateKeyManagerInfo() {
+        document.querySelectorAll(".KMConfig").forEach((el) => {
+            el.style.display = "none";
+        });
+        const selectedValue = selectElement.value;
+        const kmData = document.getElementById("KMData_" + selectedValue);
+        const kmURL = document.getElementById("KMURL_" + selectedValue);
+        if (kmData) {
+            kmData.style.display = "block";
+        }
+        if (kmURL) {
+            kmURL.style.display = "block";
+        }
+    }
+
+    selectElement.addEventListener("change", updateKeyManagerInfo);
+    // Initialize with selected value
+    updateKeyManagerInfo();
+
+});
+
+function loadKeyGenModal() {
+    const modal = document.getElementById('OauthKeyModal');
+    modal.style.display = 'flex';
+}
+
+function showAdvanced(id) {
+    const content = document.getElementById(id);
+    content.style.display = content.style.display === "block" ? "none" : "block";
+}
+

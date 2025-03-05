@@ -111,11 +111,14 @@ const handleCallback = (req, res, next) => {
                 return next(err);
             }
             if (config.mode === constants.DEV_MODE) {
-                const returnTo = req.user.returnTo || constants.BASE_URL + config.port;
+                const returnTo = req.user.returnTo || config.baseUrl;
                 delete req.session.returnTo;
                 res.redirect(returnTo);
             } else {
-                const returnTo = req.user.returnTo || `/${req.params.orgName}`;
+                let returnTo = req.user.returnTo;
+                if (!config.advanced.disableOrgCallback && returnTo == null) {
+                    returnTo = `/${req.params.orgName}`;
+                }
                 delete req.session.returnTo;
                 res.redirect(returnTo);
             }
@@ -130,7 +133,7 @@ const handleSignUp = async (req, res) => {
         res.redirect(authJsonContent.signUpURL);
     } else {
         if (config.mode === constants.DEV_MODE) {
-            const returnTo = req.session.returnTo || constants.BASE_URL + config.port;
+            const returnTo = req.session.returnTo || config.baseUrl;
             delete req.session.returnTo;
             res.redirect(returnTo);
         } else {

@@ -22,50 +22,10 @@ const controlPlaneUrl = config.controlPlane.url;
 const util = require('../utils/util');
 const passport = require('passport');
 const { Strategy: CustomStrategy } = require('passport-custom');
-const apiDao = require('../dao/apiMetadata');
-const APIDTO = require('../dto/apiDTO');
 const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
-
-const unsubscribeAPI = async (req, res) => {
-    try {
-        const subscriptionId = req.params.subscriptionId;
-        res.send(await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${subscriptionId}`, {}, {}));
-    } catch (error) {
-        console.error("Error occurred while unsubscribing from API", error);
-        util.handleError(res, error);
-    }
-}
-
-const subscribeAPI = async (req, res) => {
-    try {
-        const apiRefId = req.body.apiRefId;
-        let condition;
-        if (apiRefId) {
-            condition = {
-                REFERENCE_ID: apiRefId,
-                ORG_ID: req.user[constants.ORG_ID]
-            };
-        } else {
-            condition = {
-                API_NAME: req.body.apiName,
-                API_VERSION: req.body.apiVersion,
-                ORG_ID: req.user[constants.ORG_ID],
-            };
-        }
-        const metaData = await apiDao.getAPIMetadataByCondition(condition);
-        const apiId = new APIDTO(metaData[0]).apiReferenceID;
-        const requestBody = {
-            apiId,
-            applicationId: req.body.applicationId,
-            throttlingPolicy: req.body.throttlingPolicy,
-        };
-        res.send(await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, requestBody));
-    } catch (error) {
-        console.error("Error occurred while subscribing to API", error);
-        util.handleError(res, error);
-    }
-}
+const { ApplicationDTO } = require('../dto/application');
+const { Sequelize } = require("sequelize");
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
 
@@ -73,25 +33,9 @@ const subscribeAPI = async (req, res) => {
 
 const saveApplication = async (req, res) => {
     try {
-        let { name, throttlingPolicy, description } = req.body;
-
-        if (!throttlingPolicy) {
-            throttlingPolicy = 'Unlimited';
-        }
-
-        const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications`, {
-            'Content-Type': 'application/json'
-        }, {
-            name,
-            throttlingPolicy,
-            description,
-            tokenType: 'JWT',
-            groups: [],
-            attributes: {},
-            subscriptionScopes: []
-        });
-        res.status(200).json(responseData);
-
+        const orgID = await adminDao.getOrgId(req.user[constants.ORG_IDENTIFIER]);
+        const application = await adminDao.createApplication(orgID, req.user.sub, req.body);
+        return res.status(201).json(new ApplicationDTO(application.dataValues));
     } catch (error) {
         console.error("Error occurred while creating the application", error);
         util.handleError(res, error);
@@ -102,20 +46,13 @@ const saveApplication = async (req, res) => {
 
 const updateApplication = async (req, res) => {
     try {
-        const { name, throttlingPolicy, description } = req.body;
-        const applicationId = req.params.applicationId;
-        const responseData = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/applications/${applicationId}`, {
-            'Content-Type': 'application/json',
-        }, {
-            name,
-            throttlingPolicy,
-            description,
-            tokenType: 'JWT',
-            groups: [],
-            attributes: {},
-            subscriptionScopes: []
-        });
-        res.status(200).json({ message: responseData.message });
+        const orgID = await adminDao.getOrgId(req.user[constants.ORG_IDENTIFIER]);
+        const appID = req.params.applicationId;
+        const [updatedRows, updatedApp] = await adminDao.updateApplication(orgID, appID, req.user.sub, req.body);
+        if (!updatedRows) {
+            throw new Sequelize.EmptyResultError("No record found to update");
+        }
+        res.status(200).send(new ApplicationDTO(updatedApp[0].dataValues));
     } catch (error) {
         console.error("Error occurred while updating the application", error);
         util.handleError(res, error);
@@ -126,8 +63,14 @@ const updateApplication = async (req, res) => {
 
 const deleteApplication = async (req, res) => {
     try {
+        const orgID = await adminDao.getOrgId(req.user[constants.ORG_IDENTIFIER]);
         const applicationId = req.params.applicationId;
-        const responseData = await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${applicationId}`, null, null);
+        const appDeleteResponse = await adminDao.deleteApplication(orgID, applicationId, req.user.sub);
+        if (appDeleteResponse === 0) {
+            throw new Sequelize.EmptyResultError("Resource not found to delete");
+        } else {
+            res.status(200).send("Resouce Deleted Successfully");
+        }
         res.status(200).json({ message: responseData.message });
     } catch (error) {
         console.error("Error occurred while deleting the application", error);
@@ -267,8 +210,6 @@ const login = async (req, res) => {
 };
 
 module.exports = {
-    unsubscribeAPI,
-    subscribeAPI,
     saveApplication,
     updateApplication,
     deleteApplication,

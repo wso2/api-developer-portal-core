@@ -36,7 +36,10 @@ const APIContent = sequelize.define('DP_API_CONTENT', {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    
+    TYPE: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    }
 }, {
     timestamps: false,
     tableName: 'DP_API_CONTENT',
