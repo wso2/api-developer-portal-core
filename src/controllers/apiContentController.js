@@ -30,11 +30,11 @@ const adminService = require('../services/adminService');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const { CustomError } = require('../utils/errors/customErrors');
 const { ApplicationDTO } = require('../dto/application');
-
+const SwaggerParser = require("swagger-parser");
 
 const filePrefix = config.pathToContent;
 const generateArray = (length) => Array.from({ length });
-const baseURLDev = config.baseUrl  + constants.ROUTE.VIEWS_PATH;
+const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
 
 const loadAPIs = async (req, res) => {
 
@@ -159,19 +159,36 @@ const loadAPIContent = async (req, res) => {
                 const providerList = await adminService.getAllProviders(orgID);
                 providerUrl = providerList.find(provider => provider.name === metaData.provider)?.providerURL || '#subscriptionPlans';
             }
-
+            //check whether api content exists
+            let loadDefault = false
+            let apiDefinition, apiDetails = "";
+            const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, orgID, apiID);
+            if (!markdownResponse) {
+                let additionalAPIContentResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME, orgID, apiID);
+                if (!additionalAPIContentResponse) {
+                    loadDefault = true;
+                    if (metaData.apiInfo.apiType !== "GraphQL") {
+                        apiDefinition = "";
+                        apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, orgID, apiID);
+                        apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
+                    }
+                    apiDetails = await parseSwaggerFromObject(JSON.parse(apiDefinition));
+                }
+            }
             const templateContent = {
                 provider: metaData.provider,
                 providerUrl: providerUrl,
                 apiMetadata: metaData,
                 subscriptionPlans: subscriptionPlans,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-                schemaUrl: `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${constants.FILE_NAME.API_DEFINITION_XML}`
+                schemaUrl: `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${constants.FILE_NAME.API_DEFINITION_XML}`,
+                loadDefault: loadDefault,
+                resources: apiDetails
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
             res.send(html);
         } catch (error) {
-            console.error(`Failed to load api content: ,${error}`);
+            console.error(`Failed to load api content:`, error);
             html = "An error occurred while loading the API content.";
         }
     }
@@ -276,6 +293,31 @@ function loadAPIMetaDataFromFile(apiName) {
 
     const mockAPIDataPath = path.join(process.cwd(), filePrefix + '../mock', apiName + '/apiMetadata.json');
     return JSON.parse(fs.readFileSync(mockAPIDataPath, constants.CHARSET_UTF8));
+}
+
+async function parseSwaggerFromObject(swaggerObject) {
+    try {
+        // Dereference the Swagger object (resolve $ref references)
+        const api = await SwaggerParser.dereference(swaggerObject);
+        const servers = api.servers || [];
+        // Extract API metadata
+        const apiTitle = api.info?.title || "No title";
+        const apiDescription = api.info?.description || "No description available";
+
+        // Extract endpoints
+        const endpoints = Object.entries(api.paths || {}).map(([path, methods]) => ({
+            path,
+            methods: Object.keys(methods).map(method => ({
+                path: path,
+                method: method.toUpperCase(),
+                summary: methods[method]?.summary || "No summary",
+                description: methods[method]?.description || "No description",
+            })),
+        }));
+        return { title: apiTitle, description: apiDescription, serverDetails: servers, endpoints };
+    } catch (error) {
+        console.error("Error parsing Swagger data:", error);
+    }
 }
 
 module.exports = {

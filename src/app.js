@@ -138,9 +138,8 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser((user, done) => {
     done(null, user);
 });
-
-app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), filePrefix + 'styles')));
-app.use(constants.ROUTE.IMAGES, express.static(path.join(process.cwd(), filePrefix + 'images')));
+app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), './src//defaultContent/' + 'styles')));
+app.use(constants.ROUTE.IMAGES, express.static(path.join(process.cwd(), './src//defaultContent/' + 'images')));
 app.use(constants.ROUTE.TECHNICAL_STYLES, express.static(path.join(require.main.filename, '../styles')));
 app.use(constants.ROUTE.TECHNICAL_SCRIPTS, express.static(path.join(require.main.filename, '../scripts')));
 
@@ -148,6 +147,8 @@ app.use(constants.ROUTE.TECHNICAL_SCRIPTS, express.static(path.join(require.main
 app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
 
 if (config.mode === constants.DEV_MODE) {
+    app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), filePrefix + 'styles')));
+    app.use(constants.ROUTE.IMAGES, express.static(path.join(process.cwd(), filePrefix + 'images')));
     app.use(constants.ROUTE.MOCK, express.static(path.join(process.cwd(), filePrefix + 'mock')));
     app.use(constants.ROUTE.DEFAULT, designRoute);
 } else {

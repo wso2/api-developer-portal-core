@@ -95,7 +95,6 @@ function getFormData(formData, keyManager, clientName) {
         }
         jsonObject.additionalProperties = additionalProperties;
     }
-
     formData.forEach((value, key) => {
         if (key.startsWith("additionalProperties.")) {
             const propName = key.replace("additionalProperties.", "");

@@ -1,0 +1,24 @@
+<section>
+    <div class="sidebar collapsed" id="sidebar">
+        <nav class="nav">
+            <a href="{{baseUrl}}/" class="nav-link active">
+                <img src="/images/home-icon.svg" />
+                <span class="nav-text">Home</span>
+            </a>
+            <a href="{{baseUrl}}/apis" class="nav-link">
+                <img src="/images/apis-icon.svg" />
+                <span class="nav-text" href="{{baseUrl}}/apis">APIs</span>
+            </a>
+            {{!-- {{#if hasWSO2APIs}} --}}
+            <a href="{{baseUrl}}/applications" class="nav-link">
+                <img src="/images/applications-icon.svg" />
+                <span class="nav-text">My Applications</span>
+            </a>
+            {{!-- {{/if}} --}}
+        </nav>
+        <button class="collapse-btn" id="collapseBtn">
+            <img id="arrowIcon" src="/images/arrow-left.svg" />
+            <span class="collapse-text">Collapse</span>
+        </button>
+    </div>
+</section>

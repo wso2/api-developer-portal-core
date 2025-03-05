@@ -23,7 +23,7 @@ const path = require('path');
 const fs = require('fs');
 const adminDao = require('../dao/admin');
 const apiMetadata = require('../dao/apiMetadata');
-const util = require('../utils/util');
+const { util, renderTemplateFromAPI } = require('../utils/util');
 const filePrefix = config.pathToContent;
 const controlPlaneUrl = config.controlPlane.url;
 const { ApplicationDTO } = require('../dto/application');
@@ -74,7 +74,11 @@ const loadApplications = async (req, res) => {
             }
             const templateResponse = await templateResponseValue('applications');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
-            html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+            if (layoutResponse === "") {
+                html = renderTemplate('../pages/applications/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+            } else {
+                html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+            }
         }
         res.send(html);
     } catch (error) {
@@ -119,7 +123,11 @@ const loadThrottlingPolicies = async (req, res) => {
         }
         const templateResponse = await templateResponseValue('add-application');
         const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
-        html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        if (layoutResponse === "") {
+            html = renderTemplate('../pages/add-application/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+        } else {
+            html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        }
     }
 
     res.send(html);
@@ -245,7 +253,11 @@ const loadApplication = async (req, res) => {
             }
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
-            html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+            if (layoutResponse === "") {
+                html = renderTemplate('../pages/application/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+            } else {
+                html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+            }
         }
         res.send(html);
     } catch (error) {
@@ -315,8 +327,11 @@ const loadApplicationForEdit = async (req, res) => {
         }
         const templateResponse = await templateResponseValue('edit-application');
         const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
-        html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
-
+        if (layoutResponse === "") {
+            html = renderTemplate('../pages/edit-application/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+        } else {
+            html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        }
     }
     res.send(html);
 }

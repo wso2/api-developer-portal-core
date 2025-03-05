@@ -555,7 +555,8 @@ const storeAPIFile = async (apiDefinition, fileName, apiID, orgID, t) => {
         const apiFileResponse = await APIContent.create({
             API_FILE: apiDefinition,
             FILE_NAME: fileName,
-            API_ID: apiID
+            API_ID: apiID,
+            TYPE: "API_DEFINITION",
         }, { transaction: t }
         );
         return apiFileResponse;
