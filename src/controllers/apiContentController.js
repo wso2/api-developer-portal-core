@@ -183,7 +183,6 @@ const loadAPIContent = async (req, res) => {
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 schemaUrl: `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${constants.FILE_NAME.API_DEFINITION_XML}`,
                 loadDefault: loadDefault,
-                apiDefinition: apiDefinition,
                 resources: apiDetails
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
