@@ -162,17 +162,18 @@ const loadAPIContent = async (req, res) => {
             //check whether api content exists
             let loadDefault = false
             let apiDefinition, apiDetails = "";
-            const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, orgID, apiID);
+            const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, constants.DOC_TYPES.API_LANDING, orgID, apiID);
             if (!markdownResponse) {
-                let additionalAPIContentResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME, orgID, apiID);
+                let additionalAPIContentResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME, constants.DOC_TYPES.API_LANDING, orgID, apiID);
                 if (!additionalAPIContentResponse) {
                     loadDefault = true;
                     if (metaData.apiInfo.apiType !== "GraphQL") {
                         apiDefinition = "";
-                        apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, orgID, apiID);
+                        apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
                         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
                     }
                     apiDetails = await parseSwaggerFromObject(JSON.parse(apiDefinition));
+                    console.log("apiDetails", apiDetails);
                 }
             }
             const templateContent = {

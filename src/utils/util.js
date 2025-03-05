@@ -614,6 +614,19 @@ async function tokenExchanger(token, orgName) {
     }
 }
 
+async function listFiles(path) {
+
+    let files = [];
+    fs.promises.readdir(path, (err, files) => {
+        if (err) {
+            console.error('Error reading directory:', err);
+            return;
+        }
+        console.log('Files in directory:', files);
+    });
+    return files;
+}
+
 module.exports = {
     loadMarkdown,
     renderTemplate,
