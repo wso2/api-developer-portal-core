@@ -59,11 +59,10 @@ document.addEventListener('DOMContentLoaded', () => {
 // Submittion of the form
 
 const form = document.getElementById('editApplicationForm');
-const applicationId = form.dataset.applicationId;
-
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = document.getElementById('editApplicationName').value;
+    const applicationId = form.dataset.applicationId;
     const throttlingPolicy = document.getElementById(
         'editApplicationThrottlingPolicy'
     ).value;
@@ -71,6 +70,7 @@ form.addEventListener('submit', async (e) => {
         'editApplicationDescription'
     ).value;
     try {
+        
         const response = await fetch(`/devportal/applications/${applicationId}`, {
             method: 'PUT',
             headers: {
@@ -78,8 +78,8 @@ form.addEventListener('submit', async (e) => {
             },
             body: JSON.stringify({
                 name,
-                throttlingPolicy,
                 description,
+                type: 'WEB'
             }),
         });
         if (!response.ok) {

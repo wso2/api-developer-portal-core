@@ -576,7 +576,7 @@ const updateApplication = async (orgID, appID, userID, appData) => {
     try {
         const [updatedRowsCount, appContent] = await Application.update(
             {
-                NAME: appData.appName,
+                NAME: appData.name,
                 DESCRIPTION: appData.description,
                 TYPE: appData.type
             },

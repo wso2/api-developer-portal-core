@@ -29,7 +29,7 @@ const controlPlaneUrl = config.controlPlane.url;
 const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
 const adminService = require('../services/adminService');
-const baseURLDev = config.baseUrl  + constants.ROUTE.VIEWS_PATH;
+const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
 
 const orgIDValue = async (orgName) => {
     const organization = await adminDao.getOrganization(orgName);
@@ -184,12 +184,16 @@ const loadApplication = async (req, res) => {
             }));
             kMmetaData = await getAPIMKeyManagers(req);
             kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
+
+            //display only Resident for chroeo.
+            //TODO: handle multiple KM scenarios
+            kMmetaData = kMmetaData.filter(keyManager => keyManager.name === 'Resident Key Manager');
             const userID = req[constants.USER_ID]
-            const applicationList =  await adminService.getApplicationKeyMap(orgID, applicationId, userID);
+            const applicationList = await adminService.getApplicationKeyMap(orgID, applicationId, userID);
             metaData = applicationList;
             let applicationKeyList;
-            if (applicationList.appMap) { 
-                applicationKeyList  = await getApplicationKeys(applicationList.appMap, req);
+            if (applicationList.appMap) {
+                applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
             }
             let productionKeys = [];
             let sandboxKeys = [];
@@ -261,7 +265,7 @@ async function getApplicationKeys(applicationList, req) {
             console.error("Error occurred while generating application keys", error);
             return null;
         }
-    } 
+    }
 }
 
 async function getAllAPIs(req) {
@@ -297,7 +301,12 @@ const loadApplicationForEdit = async (req, res) => {
         html = renderTemplate('../pages/edit-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
     } else {
         const orgID = await orgIDValue(orgName);
-        metaData = await getAPIMApplication(req, applicationId);
+        const application = await adminDao.getApplication(orgID, applicationId, req.user.sub)
+        if (application) {
+            const appResponse = new ApplicationDTO(application.dataValues);
+            metaData = appResponse;
+        }
+        //metaData = await getAPIMApplication(req, applicationId);
         throttlingMetaData = await getAPIMThrottlingPolicies(req);
         templateContent = {
             applicationMetadata: metaData,
