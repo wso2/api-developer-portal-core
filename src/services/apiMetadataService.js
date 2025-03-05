@@ -107,7 +107,7 @@ const createAPIMetadata = async (req, res) => {
 
 function getRandomDarkColor() {
     let r, g, b;
-    
+
     do {
         r = Math.floor(Math.random() * 128);  // Red component (0-127)
         g = Math.floor(Math.random() * 128);  // Green component (0-127)
@@ -332,7 +332,9 @@ const createAPITemplate = async (req, res) => {
         try {
             await fs.access(contentPath);
             await fs.access(imagesPath);
-            await fs.access(documentPath);
+            if (fs.existsSync(documentPath)) {
+                await fs.access(documentPath);
+            }
         } catch (err) {
             console.error(err);
             throw new Error(
@@ -345,7 +347,10 @@ const createAPITemplate = async (req, res) => {
         //get api images
         const apiImages = await util.getAPIImages(imagesPath);
         //get api documents
-        const apiDocuments = await util.readDocFiles(documentPath);
+        if (fs.existsSync(documentPath)) {
+            const apiDocuments = await util.readDocFiles(documentPath);
+            apiContent.push(...apiDocuments);
+        }
         let docMetadata = "";
         if (req.body.docMetadata) {
             docMetadata = JSON.parse(req.body.docMetadata);
@@ -353,7 +358,6 @@ const createAPITemplate = async (req, res) => {
             apiContent.push(...links);
         }
         apiContent.push(...apiImages);
-        apiContent.push(...apiDocuments);
         await sequelize.transaction(async (t) => {
             //check whether api belongs to given org
             let apiMetadata = await apiDao.getAPIMetadata(orgId, apiId, t);
