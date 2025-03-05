@@ -88,13 +88,45 @@ const createAPIMetadata = async (req, res) => {
             // store api definition file
             await apiDao.storeAPIFile(apiDefinitionFile, apiFileName, apiID, orgId, t);
             apiMetadata.apiID = apiID;
+
+            const apiImageName = apiMetadata.apiInfo.apiName.toLowerCase().replace(/\s/g, "-") + ".svg";
+            await apiDao.storeAPIImageMetadata({
+                "api-icon": apiImageName,
+            }, apiID, t);
+            await apiDao.storeAPIFile(generateSVG(apiMetadata.apiInfo.apiName.substring(0, 2), getRandomDarkColor()), apiImageName, apiID, orgId, t);
         });
+
+
         res.status(201).send(apiMetadata);
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.API_CREATE_ERROR}`, error);
         util.handleError(res, error);
     }
 };
+
+function getRandomDarkColor() {
+    let r, g, b;
+    
+    do {
+        r = Math.floor(Math.random() * 128);  // Red component (0-127)
+        g = Math.floor(Math.random() * 128);  // Green component (0-127)
+        b = Math.floor(Math.random() * 128);  // Blue component (0-127)
+    } while (r === 0 && g === 0 && b === 0);  // Skip black color
+
+    return `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
+}
+
+function generateSVG(letter, color) {
+    return `
+    <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="${color}" rx="10"/>
+    <text x="50%" y="50%" font-size="50" font-family="Arial" fill="white" text-anchor="middle" alignment-baseline="central">
+        ${letter}
+    </text>
+    </svg>
+    `;
+}
+
 
 const getAPIMetadata = async (req, res) => {
 
@@ -717,11 +749,11 @@ const getView = async (req, res) => {
 
 const getViewInfo = async (orgId, name) => {
 
-    const view =  await apiDao.getView(orgId, name);
+    const view = await apiDao.getView(orgId, name);
     if (view.dataValues) {
         return new ViewDTO(view.dataValues);
     } else {
-       return null;
+        return null;
     }
 }
 
