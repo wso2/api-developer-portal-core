@@ -1,12 +1,11 @@
 .defaultapi-container {
     max-width: 1200px;
-    margin: 0 auto;
+    margin: 0 150px;
     padding: 20px;
 }
 
 .defaultapi-section {
     margin-bottom: 30px;
-    border-bottom: 1px solid #eee;
     padding-bottom: 20px;
 }
 
