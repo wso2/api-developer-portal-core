@@ -549,14 +549,14 @@ const storeAPIImageMetadata = async (apiImages, apiID, t) => {
     }
 }
 
-const storeAPIFile = async (apiDefinition, fileName, apiID, orgID, t) => {
+const storeAPIFile = async (apiDefinition, fileName, apiID, type, t) => {
 
     try {
         const apiFileResponse = await APIContent.create({
             API_FILE: apiDefinition,
             FILE_NAME: fileName,
             API_ID: apiID,
-            TYPE: constants.DOC_TYPES.API_DEFINITION
+            TYPE: type
         }, { transaction: t }
         );
         return apiFileResponse;
