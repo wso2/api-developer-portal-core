@@ -38,9 +38,14 @@ function enforceSecuirty(scope) {
                 //set user ID
                 const decodedAccessToken = jwt.decode(token);
                 req[constants.USER_ID] = decodedAccessToken[constants.USER_ID];
-                return next();
             } else if (config.advanced.apiKey.enabled) {
                 // Communcation with API KEY
+                if (req.headers.organization) {
+                    const organization = req.headers.organization;
+                    if (organization) {
+                        req.params.orgId = organization;
+                    }
+                }
                 enforceAPIKey(req, res, next);
             } else if (req.connection.getPeerCertificate(true)) {
                 enforceMTLS(req, res, next);
@@ -49,13 +54,6 @@ function enforceSecuirty(scope) {
                 req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
                 if (req.params.orgName) {
                     res.redirect(`/${req.params.orgName}/views/${req.session.view}/login`);
-                }
-            }
-
-            if (req.headers.organization) {
-                const organization = req.headers.organization;
-                if (organization) {
-                    req.params.orgId = organization;
                 }
             }
         } catch (err) {
@@ -230,7 +228,7 @@ function validateAuthentication(scope) {
                 }
             } else {
                 if (req.user) {
-                    return res.redirect('login');
+                    return next();
                 } else {
                     return util.handleError(res, new CustomError(401, constants.ERROR_CODE[401], constants.ERROR_MESSAGE.UNAUTHENTICATED));
                 }
