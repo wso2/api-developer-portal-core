@@ -176,20 +176,23 @@ const loadAPIContent = async (req, res) => {
                 }
             }
             let appList = [];
-            let applications = await adminDao.getApplications(orgID, req.user.sub);
-            if (applications.length > 0) {
-                appList = await Promise.all(
-                    applications.map(async (app) => {
-                        const subscription = await adminDao.getAppApiSubscription(orgID, app.APP_ID, metaData.apiID);
-                        return {
-                            ...new ApplicationDTO(app),
-                            subscribed: subscription.length > 0,
-                        };
-                    })
-                );
+            if (req.user) {
+                let applications = await adminDao.getApplications(orgID, req.user.sub);
+                if (applications.length > 0) {
+                    appList = await Promise.all(
+                        applications.map(async (app) => {
+                            const subscription = await adminDao.getAppApiSubscription(orgID, app.APP_ID, metaData.apiID);
+                            return {
+                                ...new ApplicationDTO(app),
+                                subscribed: subscription.length > 0,
+                            };
+                        })
+                    );
+                }
             }
 
             const templateContent = {
+                isAuthenticated: req.isAuthenticated(),
                 applications: appList,
                 provider: metaData.provider,
                 providerUrl: providerUrl,
