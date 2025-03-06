@@ -36,7 +36,7 @@ module.exports = {
     BASIC_HEADER: 'basicAuthHeader',
     API_VISIBILITY: {
         PUBLIC: 'PUBLIC',
-        PRIVATE: 'PRIVATE'    
+        PRIVATE: 'PRIVATE'
     },
     DOC_TYPES: {
         DOC_ID: 'DOC_',
@@ -115,7 +115,7 @@ module.exports = {
         API_DOCS_PATH: '/docs/',
         DEVPORTAL_ASSETS_BASE_PATH: '/devportal/organizations/',
         DEVPORTAL_CONFIGURE: '/*/configure',
-        DEVPORTAL_ROOT: ['/portal','/portal/*/edit', '/devportal'],
+        DEVPORTAL_ROOT: ['/portal', '/portal/*/edit', '/devportal'],
         DEVPORTAL_API_LISTING: '/*/apis',
         DEVPORTAL_TECHNICAL_PAGES: ['*/application'],
         VIEWS_PATH: "/views/"
@@ -152,6 +152,36 @@ module.exports = {
         PARTIAL_HEADER_FILE_NAME: 'header.hbs',
         PARTIAL_SIDEBAR_FILE_NAME: 'sidebar.hbs',
     },
+    DEFAULT_SUBSCRIPTION_PLANS: [
+            {
+                "policyName": "Bronze",
+                "description": "Allows 1000 requests per minute",
+                "requestCount": 1000,
+                "displayName": "Bronze",
+                "billingPlan": "FREE"
+            },
+            {
+                "policyName": "Gold",
+                "description": "Allows 5000 requests per minute",
+                "displayName": "Gold",
+                "requestCount": 5000,
+                "billingPlan": "FREE"
+            },
+            {
+                "policyName": "Silver",
+                "description": "Allows 2000 requests per minute",
+                "displayName": "Silver",
+                "requestCount": 2000,
+                "billingPlan": "FREE"
+            },
+            {
+                "policyName": "Unlimited",
+                "description": "Allows unlimited requests",
+                "displayName": "Unlimited",
+                "requestCount": "Unlimited",
+                "billingPlan": "FREE"
+            }
+    ],
     ERROR_MESSAGE: {
         ORG_NOT_FOUND: "Failed to load organization",
         ORG_CREATE_ERROR: "Error while creating organization",
