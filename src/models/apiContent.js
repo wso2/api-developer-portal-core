@@ -35,10 +35,6 @@ const APIContent = sequelize.define('DP_API_CONTENT', {
     FILE_NAME: {
         type: DataTypes.STRING,
         allowNull: false,
-    },
-    TYPE: {
-        type: DataTypes.STRING,
-        allowNull: false,
     }
 }, {
     timestamps: false,
