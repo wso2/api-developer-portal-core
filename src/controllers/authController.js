@@ -158,8 +158,9 @@ const handleLogOut = async (req, res) => {
         const match = referer.match(regex);
         const logoutURL = match ? match[1] : null;
 
+        console.log('Redirecting to post_logout_redirect_uri ....', authJsonContent.logoutRedirectURI);
         req.logout(
-            () => res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${logoutURL}&id_token_hint=${idToken}`)
+            () => res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${authJsonContent.logoutRedirectURI}&id_token_hint=${idToken}`)
         );
     } else {
 
