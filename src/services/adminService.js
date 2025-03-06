@@ -773,19 +773,21 @@ const createAppKeyMapping = async (req, res) => {
 
     const orgID = req.params.orgId;
     const userID = req[constants.USER_ID];
-    await sequelize.transaction(async (t) => {
-        const { applicationName, apis, tokenType, tokenDetails, provider } = req.body;
-        const appIDResponse = await adminDao.getApplicationID(orgID, userID, applicationName);
-        const appID = appIDResponse.dataValues.APP_ID;
-        let cpApplicationName;
-        //all token types bound to one app if shared
+    try {
+        let responseData;
+        await sequelize.transaction(async (t) => {
+            const { applicationName, apis, tokenType, tokenDetails, provider } = req.body;
+            const appIDResponse = await adminDao.getApplicationID(orgID, userID, applicationName);
+            const appID = appIDResponse.dataValues.APP_ID;
+            let cpApplicationName;
+            //all token types bound to one app if shared
 
-        //when token is share, control plane app name and devportal app name is same
-        cpApplicationName = applicationName
-        //TODO - handel non-shared token types scenarios
-        try {
+            //when token is share, control plane app name and devportal app name is same
+            cpApplicationName = applicationName
+            //TODO - handel non-shared token types scenarios
             //create control plane application
-            const cpAppCreationResponse = await createCPApplication(req, res, cpApplicationName);
+            const cpAppCreationResponse = await createCPApplication(req, cpApplicationName);
+
             let cpAppID = "";
             if (cpAppCreationResponse === "Application already exists") {
                 //get CP app id
@@ -809,7 +811,7 @@ const createAppKeyMapping = async (req, res) => {
             const apiSubscriptions = [];
             for (const api of apis) {
                 const policyDetails = await apiDao.getSubscriptionPolicy(api.policyID, orgID, t);
-                const cpSubscribeResponse = await createCPSubscription(req, res, api.apiRefId, cpAppID, policyDetails);
+                const cpSubscribeResponse = await createCPSubscription(req, api.apiRefId, cpAppID, policyDetails);
                 apiSubscriptions.push(cpSubscribeResponse);
             }
             //create app key mapping
@@ -833,16 +835,16 @@ const createAppKeyMapping = async (req, res) => {
             //delete app key mapping entries with no api id ref
             await adminDao.deleteAppKeyMapping(orgID, appID, null, t);
             //generate oauth key
-            const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${cpAppID}/generate-keys`, {}, tokenDetails);
-            return res.status(200).json(responseData);
-        } catch (error) {
-            console.error(`${constants.ERROR_MESSAGE.KEY_MAPPING_CREATE_ERROR}`, error);
-            util.handleError(res, error);
-        }
-    });
+            responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${cpAppID}/generate-keys`, {}, tokenDetails);
+        });
+        return res.status(200).json(responseData);
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.KEY_MAPPING_CREATE_ERROR}`, error);
+        return util.handleError(res, error);
+    }
 }
 
-const createCPApplication = async (req, res, cpApplicationName) => {
+const createCPApplication = async (req, cpApplicationName) => {
 
     try {
         //create control plane application
@@ -863,11 +865,11 @@ const createCPApplication = async (req, res, cpApplicationName) => {
         if (error.statusCode && error.statusCode === 409) {
             return "Application already exists";
         }
-        util.handleError(res, error);
+        throw error;
     }
 }
 
-const createCPSubscription = async (req, res, apiId, cpAppID, policyDetails) => {
+const createCPSubscription = async (req, apiId, cpAppID, policyDetails) => {
 
     try {
         const requestBody = {
@@ -884,7 +886,7 @@ const createCPSubscription = async (req, res, apiId, cpAppID, policyDetails) => 
             return response.list[0];
         }
         console.error(`${constants.ERROR_MESSAGE.KEY_MAPPING_CREATE_ERROR}`, error);
-        util.handleError(res, error);
+        throw error;
     }
 }
 
