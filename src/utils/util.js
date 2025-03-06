@@ -103,6 +103,7 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
         //load default org content
         console.log("tempate path", filePrefix + filePath);
         html = renderTemplate(filePrefix + filePath + '/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
+        console.log("returning html")
         return html;
     }
     var templatePage = await loadTemplateFromAPI(orgID, filePath, viewName);

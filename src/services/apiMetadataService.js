@@ -22,6 +22,7 @@ const apiDao = require("../dao/apiMetadata");
 const util = require("../utils/util");
 const path = require("path");
 const fs = require("fs").promises;
+const fsDir = require("fs");
 const APIDTO = require("../dto/apiDTO");
 const ViewDTO = require("../dto/views");
 const APIDocDTO = require("../dto/apiDoc");
@@ -332,7 +333,8 @@ const createAPITemplate = async (req, res) => {
         try {
             await fs.access(contentPath);
             await fs.access(imagesPath);
-            if (fs.existsSync(documentPath)) {
+            if (fsDir.existsSync(documentPath)) {
+                console.log("documentPath", documentPath);
                 await fs.access(documentPath);
             }
         } catch (err) {
@@ -347,7 +349,7 @@ const createAPITemplate = async (req, res) => {
         //get api images
         const apiImages = await util.getAPIImages(imagesPath);
         //get api documents
-        if (fs.existsSync(documentPath)) {
+        if (fsDir.existsSync(documentPath)) {
             const apiDocuments = await util.readDocFiles(documentPath);
             apiContent.push(...apiDocuments);
         }
