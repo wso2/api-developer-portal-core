@@ -22,6 +22,7 @@ module.exports = {
     TEXT: 'text',
     CHARSET_UTF8: 'utf-8',
     FILE_NAME_PARAM: '&fileName=',
+    API_TEMPLATE_FILE_NAME: '/template?fileName=',
     API_TYPE_QUERY: '/template?type=',
     HEADER_PARTIAL_NAME: 'header',
     SIDEBAR_PARTIAL_NAME: 'sidebar',
