@@ -62,10 +62,10 @@ router.put('/organizations/:orgId/subscriptionPolicy/:policyID', validateAuthent
 router.delete('/organizations/:orgId/subscriptionPolicy/:policyID', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.deleteSubscriptionPolicy);
 
 const apiZip = multer({ dest: '/tmp' });
-router.post('/organizations/:orgId/apis/:apiId/template', validateAuthentication(constants.SCOPES.DEVELOPER), apiZip.single('apiContent'), apiMetadataService.createAPITemplate);
-router.put('/organizations/:orgId/apis/:apiId/template', validateAuthentication(constants.SCOPES.DEVELOPER), apiZip.single('apiContent'), apiMetadataService.updateAPITemplate);
+router.post('/organizations/:orgId/apis/:apiId/template', enforceSecuirty(constants.SCOPES.DEVELOPER), apiZip.single('apiContent'), apiMetadataService.createAPITemplate);
+router.put('/organizations/:orgId/apis/:apiId/template', enforceSecuirty(constants.SCOPES.DEVELOPER), apiZip.single('apiContent'), apiMetadataService.updateAPITemplate);
 router.get('/organizations/:orgId/apis/:apiId/template', apiMetadataService.getAPIFile);
-router.delete('/organizations/:orgId/apis/:apiId/template', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIFile);
+router.delete('/organizations/:orgId/apis/:apiId/template', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIFile);
 
 // S2S Applied APIS
 router.post('/apis', enforceSecuirty(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.createAPIMetadata); // s2s applied
