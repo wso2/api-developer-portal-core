@@ -28,9 +28,7 @@ const apiDao = require('../dao/apiMetadata');
 const apiMetadataService = require('../services/apiMetadataService');
 const adminService = require('../services/adminService');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
-const { CustomError } = require('../utils/errors/customErrors');
 const { ApplicationDTO } = require('../dto/application');
-const SwaggerParser = require("swagger-parser");
 
 const filePrefix = config.pathToContent;
 const generateArray = (length) => Array.from({ length });
@@ -141,7 +139,7 @@ const loadAPIContent = async (req, res) => {
             apiMetadata: metaData,
             subscriptionPlans: subscriptionPlans,
             baseUrl: baseURLDev + viewName,
-            schemaUrl: orgName + '/mock/' + apiName + '/apiDefinition.xml'
+            schemaUrl: orgName + '/mock/' + apiHandle + '/apiDefinition.xml'
         }
         html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
         res.send(html);
@@ -162,17 +160,17 @@ const loadAPIContent = async (req, res) => {
             //check whether api content exists
             let loadDefault = false
             let apiDefinition, apiDetails = "";
-            const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, orgID, apiID);
+            const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, constants.DOC_TYPES.API_LANDING, orgID, apiID);
             if (!markdownResponse) {
-                let additionalAPIContentResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME, orgID, apiID);
+                let additionalAPIContentResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME, constants.DOC_TYPES.API_LANDING, orgID, apiID);
                 if (!additionalAPIContentResponse) {
                     loadDefault = true;
                     if (metaData.apiInfo.apiType !== "GraphQL") {
                         apiDefinition = "";
-                        apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, orgID, apiID);
+                        apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
                         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
                     }
-                    apiDetails = await parseSwaggerFromObject(JSON.parse(apiDefinition));
+                    apiDetails = await parseSwagger(JSON.parse(apiDefinition))
                 }
             }
             const templateContent = {
@@ -192,6 +190,31 @@ const loadAPIContent = async (req, res) => {
             html = "An error occurred while loading the API content.";
         }
     }
+}
+
+const loadAPIDefinition = async (orgName, viewName, apiHandle) => {
+
+    let metaData, templateContent = {};
+    if (config.mode === constants.DEV_MODE) {
+        metaData = loadAPIMetaDataFromFile(apiHandle);
+        let apiDefinition = path.join(process.cwd(), filePrefix + '../mock', apiHandle + '/apiDefinition.json');
+        if (fs.existsSync(apiDefinition)) {
+            apiDefinition = await fs.readFileSync(apiDefinition, constants.CHARSET_UTF8);
+        }
+        templateContent.apiType = metaData.apiInfo.apiType;
+        templateContent.swagger = apiDefinition;
+    } else {
+        const orgID = await adminDao.getOrgId(orgName);
+        const apiID = await apiDao.getAPIId(orgID, apiHandle);
+        metaData = await apiMetadataService.getMetadataFromDB(orgID, apiID, viewName);
+        const data = metaData ? JSON.stringify(metaData) : {};
+        metaData = JSON.parse(data);
+        apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
+        apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
+        templateContent.apiType = metaData.apiInfo.apiType;
+        templateContent.swagger = apiDefinition;
+    }
+    return templateContent;
 }
 
 const loadTryOutPage = async (req, res) => {
@@ -219,7 +242,7 @@ const loadTryOutPage = async (req, res) => {
             let apiDefinition;
             if (metaData.apiInfo.apiType !== "GraphQL") {
                 apiDefinition = "";
-                apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, orgID, apiID);
+                apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
                 apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
             }
             const templateContent = {
@@ -234,6 +257,84 @@ const loadTryOutPage = async (req, res) => {
             html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         } catch (error) {
             console.error(`Failed to load api tryout :`, error);
+        }
+    }
+    res.send(html);
+}
+
+const loadDocsPage = async (req, res) => {
+
+    const { orgName, apiHandle, viewName, docType } = req.params;
+    let html = "";
+    if (config.mode === constants.DEV_MODE) {
+        const apiMetadata = await loadAPIMetaDataFromFile(apiHandle);
+        const docNames = apiMetadata.docTypes;
+        const templateContent = {
+            apiMD: await loadMarkdown("api-doc.md", filePrefix + '../mock/' + apiHandle + "/" + docType),
+            baseUrl: constants.BASE_URL + config.port + "/views/" + viewName + "/api/" + apiHandle,
+            docTypes: docNames
+        }
+        html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
+    } else {
+        try {
+            const orgID = await adminDao.getOrgId(orgName);
+            const apiID = await apiDao.getAPIId(orgID, apiHandle);
+            const viewName = req.params.viewName;
+            const docNames = await apiMetadataService.getAPIDocTypes(orgID, apiID)
+            const templateContent = {
+                baseUrl: '/' + orgName + '/views/' + viewName + "/api/" + apiHandle,
+                docTypes: docNames
+            };
+            html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
+        } catch (error) {
+            console.error(`Failed to load api docs:`, error);
+            html = "An error occurred while loading the API content.";
+        }
+    }
+    res.send(html);
+}
+
+const loadDocument = async (req, res) => {
+
+    const { orgName, apiHandle, viewName, docType, docName } = req.params;
+    const hbs = exphbs.create({});
+    const templateContent = {
+        "isAPIDefinition": false
+    };
+    //load API definition
+    if (req.originalUrl.includes(constants.FILE_NAME.API_SPECIFICATION_PATH)) {
+        const definitionResponse = await loadAPIDefinition(orgName, viewName, apiHandle);
+        templateContent.swagger = definitionResponse.swagger;
+        templateContent.apiType = definitionResponse.apiType;
+        templateContent.isAPIDefinition = true;
+    }
+    if (config.mode === constants.DEV_MODE) {
+        const apiMetadata = await loadAPIMetaDataFromFile(apiHandle);
+        const docNames = apiMetadata.docTypes;
+        let apiMD = "";
+        if (docType !== undefined && docName !== undefined) {
+            const filePath = path.join(process.cwd(), filePrefix + '../mock', apiHandle + "/" + docType + "/" + docName);
+            if (fs.existsSync(filePath) && (filePath.endsWith('.hbs') || filePath.endsWith('.html'))) {
+                hbs.handlebars.registerPartial(constants.FILE_NAME.API_DOC_PARTIAL_NAME, fs.readFileSync(filePath, constants.CHARSET_UTF8));
+            }
+            apiMD = await loadMarkdown(docName, filePrefix + '../mock/' + apiHandle + "/" + docType);
+        }
+        templateContent.baseUrl = constants.BASE_URL + config.port + "/views/" + viewName + "/api/" + apiHandle;
+        templateContent.docTypes = docNames;
+        templateContent.apiMD = apiMD;
+        html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
+    } else {
+        try {
+            const orgID = await adminDao.getOrgId(orgName);
+            const apiID = await apiDao.getAPIId(orgID, apiHandle);
+            const viewName = req.params.viewName;
+            const docNames = await apiMetadataService.getAPIDocTypes(orgID, apiID)
+            templateContent.baseUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle;
+            templateContent.docTypes = docNames;
+            html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
+        } catch (error) {
+            console.error(`Failed to load api content :`, error);
+            html = "An error occurred while loading the API content.";
         }
     }
     res.send(html);
@@ -282,7 +383,7 @@ async function loadAPIMetaData(req, orgID, apiID, viewName) {
     //replace image urls
     let images = metaData.apiInfo.apiImageMetadata;
     for (const key in images) {
-        let apiImageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}`
+        let apiImageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TYPE_QUERY}IMAGE${constants.FILE_NAME_PARAM}`
         const modifiedApiImageURL = apiImageUrl + images[key]
         images[key] = modifiedApiImageURL;
     }
@@ -295,28 +396,26 @@ function loadAPIMetaDataFromFile(apiName) {
     return JSON.parse(fs.readFileSync(mockAPIDataPath, constants.CHARSET_UTF8));
 }
 
-async function parseSwaggerFromObject(swaggerObject) {
+async function parseSwagger(api) { 
     try {
-        // Dereference the Swagger object (resolve $ref references)
-        const api = await SwaggerParser.dereference(swaggerObject);
-        const servers = api.servers || [];
-        // Extract API metadata
-        const apiTitle = api.info?.title || "No title";
+        // Extract general API info
+        const title = api.info?.title || "No title";
         const apiDescription = api.info?.description || "No description available";
+        const servers = api.servers || [];
 
         // Extract endpoints
         const endpoints = Object.entries(api.paths || {}).map(([path, methods]) => ({
             path,
+            fullUrls: servers.map(server => `${server}${path}`),
             methods: Object.keys(methods).map(method => ({
-                path: path,
                 method: method.toUpperCase(),
                 summary: methods[method]?.summary || "No summary",
                 description: methods[method]?.description || "No description",
             })),
         }));
-        return { title: apiTitle, description: apiDescription, serverDetails: servers, endpoints };
+        return { title, description: apiDescription, serverDetails: servers, endpoints };
     } catch (error) {
-        console.error("Error parsing Swagger data:", error);
+        console.error("Error parsing OpenAPI:", error);
     }
 }
 
@@ -324,4 +423,6 @@ module.exports = {
     loadAPIs,
     loadAPIContent,
     loadTryOutPage,
+    loadDocsPage,
+    loadDocument
 };

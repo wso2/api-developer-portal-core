@@ -116,6 +116,14 @@ Handlebars.registerHelper('isMiddle', function(index, length) {
     return index === middleIndex;
 });
 
+Handlebars.registerHelper('startsWith', function(str, includeStr, options) {
+    if (str && str.startsWith(includeStr)) {
+        return options.fn(this);  // Executes the block if true
+    } else {
+        return options.inverse(this);  // Executes the else block if false
+    }
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -138,8 +146,6 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser((user, done) => {
     done(null, user);
 });
-app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), './src//defaultContent/' + 'styles')));
-app.use(constants.ROUTE.IMAGES, express.static(path.join(process.cwd(), './src//defaultContent/' + 'images')));
 app.use(constants.ROUTE.TECHNICAL_STYLES, express.static(path.join(require.main.filename, '../styles')));
 app.use(constants.ROUTE.TECHNICAL_SCRIPTS, express.static(path.join(require.main.filename, '../scripts')));
 
@@ -152,6 +158,8 @@ if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.MOCK, express.static(path.join(process.cwd(), filePrefix + 'mock')));
     app.use(constants.ROUTE.DEFAULT, designRoute);
 } else {
+    app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), './src/defaultContent/' + 'styles')));
+    app.use(constants.ROUTE.IMAGES, express.static(path.join(process.cwd(), './src/defaultContent/' + 'images')));
     app.use(constants.ROUTE.DEFAULT, authRoute);
     app.use(constants.ROUTE.DEFAULT, apiContent);
     app.use(constants.ROUTE.DEFAULT, applicationContent);

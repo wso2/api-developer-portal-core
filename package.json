@@ -40,6 +40,7 @@
     "handlebars": "^4.7.8",
     "hbs": "^4.2.0",
     "https": "^1.0.0",
+    "install": "^0.13.0",
     "jose": "^5.9.6",
     "js-yaml": "^4.1.0",
     "jsonwebtoken": "^9.0.2",
@@ -49,6 +50,7 @@
     "node": "22.0.0",
     "node-fetch": "^3.3.2",
     "nodemon": "^3.1.4",
+    "npm": "^11.2.0",
     "passport": "^0.7.0",
     "passport-custom": "^1.1.1",
     "passport-oauth2": "^1.8.0",
@@ -60,7 +62,6 @@
     "react-dom": "^18.3.1",
     "sequelize": "^6.37.3",
     "shelljs": "^0.8.5",
-    "swagger-parser": "^10.0.3",
     "unzipper": "^0.12.3",
     "uuid": "^11.0.3"
   },

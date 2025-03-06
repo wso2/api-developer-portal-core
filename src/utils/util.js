@@ -36,7 +36,7 @@ const jwt = require('jsonwebtoken');
 const filePrefix = '/src/defaultContent/';
 
 // Function to load and convert markdown file to HTML
-function loadMarkdown(filename, dirName) {
+async function loadMarkdown(filename, dirName) {
 
     const filePath = path.join(process.cwd(), dirName, filename);
     if (fs.existsSync(filePath)) {
@@ -101,7 +101,6 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
     var layoutContent = await loadLayoutFromAPI(orgID, viewName);
     if (layoutContent === "") {
         //load default org content
-        console.log("tempate path", filePrefix + filePath);
         html = renderTemplate(filePrefix + filePath + '/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
         return html;
     }
@@ -250,7 +249,7 @@ const getAPIFileContent = (directory) => {
     filenames.forEach((filename) => {
         if (!(filename === '.DS_Store')) {
             let fileContent = fs.readFileSync(path.join(directory, filename), 'utf8');
-            files.push({ fileName: filename, content: fileContent });
+            files.push({ fileName: filename, content: fileContent, type: constants.DOC_TYPES.API_LANDING });
         }
     });
     return files;
@@ -262,11 +261,46 @@ const getAPIImages = async (directory) => {
     for (const filename of filenames) {
         if (!(filename === '.DS_Store')) {
             let fileContent = await fs.promises.readFile(path.join(directory, filename.name));
-            files.push({ fileName: filename.name, content: fileContent });
+            files.push({ fileName: filename.name, content: fileContent, type: constants.DOC_TYPES.IMAGES });
         }
     }
     return files;
 };
+
+const getAPIDocLinks = (documentMetadata) => {
+
+    let files = [];
+    documentMetadata.forEach((doc) => {
+        doc.links.forEach((link) => {
+            files.push({ fileName: constants.DOC_TYPES.DOCLINK_ID + link.displayName, content: link.url, type: doc.type });
+        });
+    });
+    return files;
+};
+
+async function readDocFiles(directory, baseDir = '') {
+
+    const files = await fs.promises.readdir(directory, { withFileTypes: true });
+    let fileDetails = [];
+    for (const file of files) {
+        const filePath = path.join(directory, file.name);
+        const relativePath = path.join(baseDir, file.name);
+        if (file.isDirectory()) {
+            const subDirContents = await readDocFiles(filePath, relativePath);
+            fileDetails = fileDetails.concat(subDirContents);
+        } else {
+            if (!(file.name === '.DS_Store')) {
+                let content = await fs.promises.readFile(filePath);
+                fileDetails.push({
+                    type: constants.DOC_TYPES.DOC_ID + baseDir,
+                    fileName: file.name,
+                    content: content,
+                });
+            }
+        }
+    }
+    return fileDetails;
+}
 
 const invokeApiRequest = async (req, method, url, headers, body) => {
 
@@ -415,7 +449,6 @@ const rejectExtraProperties = (allowedKeys, payload) => {
 };
 
 async function readFilesInDirectory(directory, orgId, protocol, host, viewName, baseDir = '') {
-
     try {
         const files = await fs.promises.readdir(directory, { withFileTypes: true });
         let fileDetails = [];
@@ -439,7 +472,7 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                 } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                     fileType = "layout"
                     if (file.name === "main.hbs") {
-                        strContent = strContent.replace(/\/styles\//g, `${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${protocol}://${host}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=`);                        
+                        strContent = strContent.replace(/\/styles\//g, `${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${protocol}://${host}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=`);
                         content = Buffer.from(strContent, constants.CHARSET_UTF8);
                     }
                     validateScripts(strContent);
@@ -469,6 +502,7 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
         throw error;
     }
 }
+
 
 function validateScripts(strContent) {
     try {
@@ -579,6 +613,19 @@ async function tokenExchanger(token, orgName) {
     }
 }
 
+async function listFiles(path) {
+
+    let files = [];
+    fs.promises.readdir(path, (err, files) => {
+        if (err) {
+            console.error('Error reading directory:', err);
+            return;
+        }
+        console.log('Files in directory:', files);
+    });
+    return files;
+}
+
 module.exports = {
     loadMarkdown,
     renderTemplate,
@@ -591,6 +638,7 @@ module.exports = {
     retrieveContentType,
     getAPIFileContent,
     getAPIImages,
+    getAPIDocLinks,
     isTextFile,
     invokeApiRequest,
     validateIDP,
@@ -601,5 +649,7 @@ module.exports = {
     readFilesInDirectory,
     appendAPIImageURL,
     appendSubscriptionPlanDetails,
-    tokenExchanger
+    tokenExchanger,
+    listFiles,
+    readDocFiles
 }

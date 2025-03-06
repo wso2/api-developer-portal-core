@@ -22,7 +22,7 @@ module.exports = {
     TEXT: 'text',
     CHARSET_UTF8: 'utf-8',
     FILE_NAME_PARAM: '&fileName=',
-    API_TEMPLATE_FILE_NAME: '/template?fileName=',
+    API_TYPE_QUERY: '/template?type=',
     HEADER_PARTIAL_NAME: 'header',
     SIDEBAR_PARTIAL_NAME: 'sidebar',
     HERO_PARTIAL_NAME: 'hero',
@@ -37,6 +37,23 @@ module.exports = {
     API_VISIBILITY: {
         PUBLIC: 'PUBLIC',
         PRIVATE: 'PRIVATE'    
+    },
+    DOC_TYPES: {
+        DOC_ID: 'DOC_',
+        DOCLINK_ID: 'LINK_',
+        API_LANDING: 'MARKETING',
+        API_DEFINITION: 'API_DEFINITION',
+        IMAGES: 'IMAGE',
+        DOCUMENT: 'DOCUMENT',
+        LINK: "DOC_LINK",
+        DOCS: {
+            HOW_TO: 'HowTo',
+            SAMPLES: 'Samples',
+            PUBLIC_FORUM: 'PublicForum',
+            SUPPORT_FORUM: 'SupportForum',
+            OTHER: 'Other',
+            API_DEFINITION: 'Specification'
+        }
     },
     MIME_TYPES: {
         HTML: 'text/html',
@@ -95,6 +112,7 @@ module.exports = {
         API_LISTING_PAGE: '/apis',
         API_FILE_PATH: '/apis/',
         API_LANDING_PAGE_PATH: '/api/',
+        API_DOCS_PATH: '/docs/',
         DEVPORTAL_ASSETS_BASE_PATH: '/devportal/organizations/',
         DEVPORTAL_CONFIGURE: '/*/configure',
         DEVPORTAL_ROOT: ['/portal','/portal/*/edit', '/devportal'],
@@ -123,8 +141,12 @@ module.exports = {
         PAGE: 'page.hbs',
         API_MD_CONTENT_FILE_NAME: 'apiContent.md',
         API_HBS_CONTENT_FILE_NAME: 'api-content.hbs',
+        API_DOC_MD: 'api-doc.md',
+        API_DOC_HBS: 'api-doc.hbs',
         API_CONTENT_PARTIAL_NAME: "api-content",
+        API_DOC_PARTIAL_NAME: "api-doc",
         API_DEFINITION_FILE_NAME: 'apiDefinition.json',
+        API_SPECIFICATION_PATH: 'specification',
         API_DEFINITION_GRAPHQL: 'apiDefinition.graphql',
         API_DEFINITION_XML: 'apiDefinition.xml',
         PARTIAL_HEADER_FILE_NAME: 'header.hbs',
@@ -147,6 +169,7 @@ module.exports = {
         API_CONTENT_UPDATE_ERROR: "Error while updating API content",
         API_CONTENT_DELETE_ERROR: "Error while deleting API content",
         API_CONTENT_CREATE_ERROR: "Error while creating API content",
+        API_DOCS_LIST_ERROR: "Error while fetching API docs",
         API_LISTING_LOAD_ERROR: "Error while loading API listing",
         IDP_NOT_FOUND: "Failed to load IDP",
         IDP_CREATE_ERROR: "Error while creating IDP",

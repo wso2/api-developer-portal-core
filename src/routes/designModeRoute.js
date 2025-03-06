@@ -31,9 +31,14 @@ router.get('/views/:viewName', registerPartials, orgController.loadOrganizationC
 
 router.get('/views/:viewName/apis', registerPartials, apiController.loadAPIs);
 
-router.get('/views/:viewName/api/:apiName', registerPartials, apiController.loadAPIContent);
+router.get('/views/:viewName/api/:apiHandle', registerPartials, apiController.loadAPIContent);
 
-router.get('/views/:viewName/api/:apiName/tryout', registerPartials, apiController.loadTryOutPage);
+router.get('/views/:viewName/api/:apiHandle/docs/specification', registerPartials, apiController.loadDocument);
+
+//router.get('/views/:viewName/api/:apiHandle/docs', registerPartials, apiController.loadDocsPage);
+
+router.get('/views/:viewName/api/:apiHandle/docs/:docType/:docName', registerPartials, apiController.loadDocument);
+
 
 router.get('/views/:viewName/applications', registerPartials, applicationController.loadApplications);
 router.get('/views/:viewName/applications/create', registerPartials, applicationController.loadThrottlingPolicies);
@@ -49,6 +54,6 @@ router.get('/logout', registerPartials, authController.handleLogOut);
 router.get('/signup', registerPartials, authController.handleSignUp);
 
 // eslint-disable-next-line no-useless-escape
-router.get('(^(?!\/(favicon\.ico|images\/|styles\/|*login*|devportal\/)))/*', registerPartials,  contentController.loadCustomContent);
+router.get('(^(?!\/(favicon\.ico|images\/|styles\/|*login*|devportal\/|views\/)))/*', registerPartials,  contentController.loadCustomContent);
 
 module.exports = router;

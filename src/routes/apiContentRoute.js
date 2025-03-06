@@ -26,6 +26,10 @@ router.get('/((?!favicon.ico)):orgName/views/:viewName/apis', ensureAuthenticate
 
 router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiHandle', ensureAuthenticated, registerPartials, apiController.loadAPIContent);
 
-router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiHandle/tryout', ensureAuthenticated, registerPartials, apiController.loadTryOutPage);
+router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiHandle/docs/specification', ensureAuthenticated, registerPartials, apiController.loadDocument);
+
+// router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiHandle/docs', ensureAuthenticated, registerPartials, apiController.loadDocsPage);
+
+router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiHandle/docs/:docType/:docName', registerPartials, apiController.loadDocument);
 
 module.exports = router;

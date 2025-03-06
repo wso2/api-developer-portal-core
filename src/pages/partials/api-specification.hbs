@@ -1,0 +1,56 @@
+{{#if (eq apiType "REST")}}
+
+<head>
+  <link rel="stylesheet" href="https://unpkg.com/@stoplight/elements/styles.min.css">
+  <script src="https://unpkg.com/@stoplight/elements/web-components.min.js"></script>
+</head>
+<main>
+  <div class="p-3">
+    <elements-api apiDescriptionDocument='{{{swagger}}}' router="hash" layout="sidebar" />
+  </div>
+  <style>
+    .sl-border-t {
+      display: none;
+    }
+  </style>
+</main>
+
+{{else if (eq apiType "AsyncAPI")}}
+
+<head>
+  <link rel="stylesheet" href="/technical-styles/async-tryout.css">
+</head>
+<main>
+  <div id="asyncapi"></div>
+  <script src="https://unpkg.com/@asyncapi/react-component@latest/browser/standalone/index.js"></script>
+  <script>
+    const config = { "show": { "sidebar": false }, "sidebar": { "showOperations": "byDefault" } };
+    AsyncApiStandalone.hydrate({
+      schema: {{{ swagger }}},
+      config
+    }, document.getElementById('asyncapi'));
+  </script>
+</main>
+
+{{else if (eq apiType "GraphQL")}}
+
+<head>
+  <link rel="stylesheet" href="https://unpkg.com/graphiql@latest/graphiql.min.css">
+  <script src="https://unpkg.com/react@18.0.0/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18.0.0/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/graphiql/graphiql.min.js"></script>
+</head>
+<main>
+  <div id="root" style="height: 100vh;"></div>
+  <script>
+    const fetcher = GraphiQL.createFetcher({ url: '{{ apiMetadata.endPoints.productionURL }}' });
+    const rootElement = document.getElementById('root');
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(
+      React.createElement(GraphiQL, {
+        fetcher: fetcher,
+      })
+    );
+  </script>
+</main>
+{{/if}}

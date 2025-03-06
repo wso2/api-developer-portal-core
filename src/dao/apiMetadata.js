@@ -127,7 +127,7 @@ const updateLabel = async (orgID, label) => {
         });
         if (!created) {
             record = await record.update(label); // Update if found
-          }
+        }
         return record;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -223,7 +223,7 @@ const addView = async (orgID, payload, t) => {
 const updateView = async (orgID, name, displayName, t) => {
 
     try {
-        let [record, created] =await View.findOrCreate({
+        let [record, created] = await View.findOrCreate({
             where: {
                 NAME: name,
                 ORG_ID: orgID
@@ -232,7 +232,7 @@ const updateView = async (orgID, name, displayName, t) => {
                 NAME: name,
                 DISPLAY_NAME: displayName,
             },
-            transaction: t ,
+            transaction: t,
             returning: true
         });
         if (!created) {
@@ -240,8 +240,8 @@ const updateView = async (orgID, name, displayName, t) => {
                 NAME: name,
                 DISPLAY_NAME: displayName,
             }); // Update if found
-          }
-         return record;        
+        }
+        return record;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
@@ -556,7 +556,7 @@ const storeAPIFile = async (apiDefinition, fileName, apiID, orgID, t) => {
             API_FILE: apiDefinition,
             FILE_NAME: fileName,
             API_ID: apiID,
-            TYPE: "API_DEFINITION",
+            TYPE: constants.DOC_TYPES.API_DEFINITION
         }, { transaction: t }
         );
         return apiFileResponse;
@@ -576,6 +576,7 @@ const storeAPIFiles = async (files, apiID, t) => {
             apiContent.push({
                 API_FILE: file.content,
                 FILE_NAME: file.fileName,
+                TYPE: file.type,
                 API_ID: apiID
             })
         });
@@ -594,12 +595,13 @@ const updateOrCreateAPIFiles = async (files, apiID, orgID, t) => {
     let filesToCreate = []
     try {
         for (const file of files) {
-            const apiFileResponse = await getAPIFile(file.fileName, orgID, apiID, t);
+            const apiFileResponse = await getAPIFile(file.fileName, file.type, orgID, apiID, t);
             if (apiFileResponse == null || apiFileResponse == undefined) {
                 filesToCreate.push({
                     API_FILE: file.content,
                     FILE_NAME: file.fileName,
-                    API_ID: apiID
+                    API_ID: apiID,
+                    TYPE: file.type,
                 })
             } else {
                 const updateResponse = await APIContent.update(
@@ -610,6 +612,7 @@ const updateOrCreateAPIFiles = async (files, apiID, orgID, t) => {
                         where: {
                             API_ID: apiID,
                             FILE_NAME: apiFileResponse.FILE_NAME,
+                            TYPE: file.type,
                         },
                         include: [
                             {
@@ -637,13 +640,14 @@ const updateOrCreateAPIFiles = async (files, apiID, orgID, t) => {
     }
 }
 
-const getAPIFile = async (fileName, orgID, apiID, t) => {
+const getAPIFile = async (fileName, type, orgID, apiID, t) => {
 
     try {
         const apiFileResponse = await APIContent.findOne({
             where: {
                 FILE_NAME: fileName,
-                API_ID: apiID
+                API_ID: apiID,
+                TYPE: type
             },
             include: [
                 {
@@ -654,6 +658,173 @@ const getAPIFile = async (fileName, orgID, apiID, t) => {
                 }
             ]
         }, { transaction: t });
+        return apiFileResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getAPIDoc = async (type, orgID, apiID, t) => {
+
+    try {
+        const apiFileResponse = await APIContent.findOne({
+            where: {
+                API_ID: apiID,
+                TYPE: type
+            },
+            include: [
+                {
+                    model: APIMetadata,
+                    where: {
+                        ORG_ID: orgID
+                    }
+                }
+            ]
+        }, { transaction: t });
+        return apiFileResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getAPIDocByName = async (type, name, orgID, apiID, t) => {
+
+    try {
+        const apiFileResponse = await APIContent.findOne({
+            where: {
+                API_ID: apiID,
+                TYPE: type,
+                FILE_NAME: name
+            },
+            include: [
+                {
+                    model: APIMetadata,
+                    where: {
+                        ORG_ID: orgID
+                    }
+                }
+            ]
+        }, { transaction: t });
+        return apiFileResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getAPIDocTypes = async (orgID, apiID) => {
+
+    try {
+        const apiFileResponse = await APIContent.findAll({
+            attributes: [
+            "TYPE",
+            [Sequelize.fn("ARRAY_AGG", Sequelize.col("DP_API_CONTENT.FILE_NAME")), "FILE_NAMES"]
+            ],
+            where: {
+            API_ID: apiID,
+            TYPE: {
+                [Op.or]: [
+                { [Op.like]: "DOC_%" },
+                { [Op.like]: constants.DOC_TYPES.API_DEFINITION }
+                ]
+            },
+            },
+            group: ["DP_API_CONTENT.TYPE"],
+            include: [
+            {
+                model: APIMetadata,
+                required: true,
+                attributes: [],
+                where: {
+                ORG_ID: orgID
+                }
+            }
+            ]
+        });
+
+        return apiFileResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const getAPIDocs = async (orgID, apiID) => {
+    try {
+        const apiFileResponse = await APIContent.findAll({
+            attributes: [
+                "TYPE",
+                [Sequelize.fn("ARRAY_AGG", Sequelize.col("DP_API_CONTENT.FILE_NAME")), "FILE_NAMES"],
+                [Sequelize.fn("ARRAY_AGG", Sequelize.col("DP_API_CONTENT.API_FILE")), "API_FILES"]
+            ],
+            where: {
+                API_ID: apiID,
+                [Op.or]: [
+                    { TYPE: { [Op.like]: "DOC_%" } },
+                    { FILE_NAME: { [Op.like]: "LINK_%" } }
+                ]
+            },
+            group: ["DP_API_CONTENT.TYPE"],
+            include: [
+                {
+                    model: APIMetadata,
+                    required: true,
+                    attributes: [],
+                    where: {
+                        ORG_ID: orgID
+                    }
+                }
+            ]
+        });
+
+        return apiFileResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+
+const getAPIDocLinks = async (orgID, apiID) => {
+
+    try {
+        const apiFileResponse = await APIContent.findAll({
+            attributes: [
+                "TYPE",
+                [Sequelize.fn("ARRAY_AGG", Sequelize.col("DP_API_CONTENT.FILE_NAME")), "FILE_NAMES"],
+                [Sequelize.fn("ARRAY_AGG", Sequelize.col("DP_API_CONTENT.API_FILE")), "API_FILES"]
+            ],
+            where: {
+                API_ID: apiID,
+                FILE_NAME: {
+                    [Op.like]: "LINK_%"
+                },
+            },
+            group: ["DP_API_CONTENT.TYPE"],
+            include: [
+                {
+                    model: APIMetadata,
+                    required: true,
+                    attributes: [],
+                    where: {
+                        ORG_ID: orgID
+                    }
+                }
+            ]
+        });
+
         return apiFileResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -767,7 +938,7 @@ const getAllAPIMetadata = async (orgID, groups, viewName, t) => {
                 },
                 {
                     model: Labels,
-                    attributes: ["NAME"], 
+                    attributes: ["NAME"],
                     required: true,
                     through: { attributes: [] },
                     where: {
@@ -1125,7 +1296,7 @@ const getImageMetadata = async (imageTag, imageName, orgID, apiID, t) => {
 const updateAPIFile = async (apiFile, fileName, apiID, orgID, t) => {
 
     try {
-        const apiFileResponse = await getAPIFile(fileName, orgID, apiID, t);
+        const apiFileResponse = await getAPIFile(fileName, constants.DOC_TYPES.API_DEFINITION, orgID, apiID, t);
         let fileUpdateResponse;
         if (apiFileResponse == null || apiFileResponse == undefined) {
             fileUpdateResponse = await APIContent.create({
@@ -1136,13 +1307,13 @@ const updateAPIFile = async (apiFile, fileName, apiID, orgID, t) => {
         } else {
             fileUpdateResponse = await APIContent.update({
                 API_FILE: apiFile,
-                API_ID: apiID,
                 FILE_NAME: fileName
             },
                 {
                     where: {
                         API_ID: apiID,
                         FILE_NAME: fileName,
+                        TYPE: constants.DOC_TYPES.API_DEFINITION
                     },
                     include: [
                         {
@@ -1244,7 +1415,12 @@ module.exports = {
     storeAPIFiles,
     updateOrCreateAPIFiles,
     getAPIFile,
+    getAPIDoc,
     deleteAPIFile,
+    getAPIDocs,
+    getAPIDocLinks,
+    getAPIDocByName,
+    getAPIDocTypes,
     getAPIId,
     getAPIHandle,
     getAPIMetadataByCondition,
