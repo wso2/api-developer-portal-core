@@ -30,6 +30,7 @@ router.get('/:orgName/callback', authController.handleCallback);
 router.get('/signin', authController.handleCallback);
 router.get('/:orgName/views/:viewName/logout', authController.handleLogOut);
 router.get('/:orgName/views/:viewName/signup', authController.handleSignUp);
+router.get('/logout', authController.handleLogOutLanding);
 
 
 

@@ -175,7 +175,22 @@ const loadAPIContent = async (req, res) => {
                     apiDetails = await parseSwaggerFromObject(JSON.parse(apiDefinition));
                 }
             }
+            let appList = [];
+            let applications = await adminDao.getApplications(orgID, req.user.sub);
+            if (applications.length > 0) {
+                appList = await Promise.all(
+                    applications.map(async (app) => {
+                        const subscription = await adminDao.getAppApiSubscription(orgID, app.APP_ID, metaData.apiID);
+                        return {
+                            ...new ApplicationDTO(app),
+                            subscribed: subscription.length > 0,
+                        };
+                    })
+                );
+            }
+
             const templateContent = {
+                applications: appList,
                 provider: metaData.provider,
                 providerUrl: providerUrl,
                 apiMetadata: metaData,
@@ -183,7 +198,8 @@ const loadAPIContent = async (req, res) => {
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 schemaUrl: `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${constants.FILE_NAME.API_DEFINITION_XML}`,
                 loadDefault: loadDefault,
-                resources: apiDetails
+                resources: apiDetails,
+                orgID: orgID
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
             res.send(html);

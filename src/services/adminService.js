@@ -670,7 +670,7 @@ const createSubscription = async (req, res) => {
                     return res.status(200).json({ message: 'Subscribed successfully' });
                 }
                 console.error("Error occurred while subscribing to API", error);
-                return util.handleError(res, error);
+                throw error;
             }
         });
     } catch (error) {
