@@ -334,7 +334,6 @@ const createAPITemplate = async (req, res) => {
             await fs.access(contentPath);
             await fs.access(imagesPath);
             if (fsDir.existsSync(documentPath)) {
-                console.log("documentPath", documentPath);
                 await fs.access(documentPath);
             }
         } catch (err) {
