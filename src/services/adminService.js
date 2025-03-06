@@ -60,7 +60,7 @@ const createOrganization = async (req, res) => {
             //store default subscription policies
             const storagePlans  = constants.DEFAULT_SUBSCRIPTION_PLANS;
             for (const plan of storagePlans) {
-               const subscriptionPolicyResponse = await apiDao.createSubscriptionPolicy(orgId, subscriptionPolicy, t);
+              await apiDao.createSubscriptionPolicy(orgId, plan, t);
             }
         });
         const orgCreationResponse = {
