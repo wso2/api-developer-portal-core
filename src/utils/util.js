@@ -175,21 +175,53 @@ function handleError(res, error) {
 };
 
 const unzipFile = async (zipPath, extractPath) => {
+    if (typeof zipPath !== 'string' || typeof extractPath !== 'string' || !zipPath || !extractPath) {
+        return reject(new Error('Invalid zip path or extract path.'));
+    }
     const extractedFiles = [];
+    const maxFileSize = 50 * 1024 * 1024; // 50MB (limit for individual file size)
+    const maxTotalSize = 100 * 1024 * 1024; // 100MB (limit for total extracted data)
+    const maxDepth = 10; // Limit to prevent excessive nesting
+    let totalExtractedSize = 0; // Total extracted data size
+
     await new Promise((resolve, reject) => {
         fs.createReadStream(zipPath)
             .pipe(unzipper.Parse())
-            .on('entry', entry => {
+            .on('entry', async (entry) => {
                 const entryPath = entry.path;
+		        const entrySize = entry.size;
+                const entryDepth = entryPath.split(path.sep).length;
+                
                 if (!entryPath.includes('__MACOSX')) {
-                    const filePath = path.join(extractPath, entryPath);
+	                const filePath = path.resolve(extractPath, entryPath);
+                    // Prevent path traversal
+                    const normalizedFilePath = path.normalize(filePath);
+	                if (!normalizedFilePath.startsWith(path.resolve(extractPath))) {
+                        return entry.autodrain();
+                    }
 
-                    if (entry.type === 'Directory') {
-                        fs.mkdirSync(filePath, { recursive: true });
-                        entry.autodrain();
-                    } else {
-                        extractedFiles.push(filePath);
-                        entry.pipe(fs.createWriteStream(filePath));
+	                // Validate depth (to avoid zip bombs with excessive nesting)
+                    // and reject files that are too large
+                    // and check if adding this file would exceed the total size limit
+	                if ((entryDepth > maxDepth) || (entrySize > maxFileSize) 
+                        || (totalExtractedSize + entrySize > maxTotalSize)) {
+	                    return entry.autodrain();
+	                }
+
+                    try {
+                        if (entry.type === 'Directory') {
+                            await fs.promises.mkdir(normalizedFilePath, { recursive: true });
+                            entry.autodrain();
+                        } else {
+                            extractedFiles.push(normalizedFilePath);
+                            entry.pipe(fs.createWriteStream(normalizedFilePath));
+                            
+			                // Update the total extracted size
+                            totalExtractedSize += entrySize;
+                        }
+                    } catch (err) {
+                        console.error("Failed to create directory for unziping file. ", err);
+                        throw err;
                     }
                 } else {
                     entry.autodrain();
@@ -206,32 +238,59 @@ const unzipFile = async (zipPath, extractPath) => {
 
 
 const unzipDirectory = async (zipPath, extractPath) => {
+    if (typeof zipPath !== 'string' || typeof extractPath !== 'string' || !zipPath || !extractPath) {
+        return reject(new Error('Invalid zip path or extract path.'));
+    }
     const extractedFiles = [];
+    const maxFileSize = 50 * 1024 * 1024; // 50MB (limit for individual file size)
+    const maxTotalSize = 100 * 1024 * 1024; // 100MB (limit for total extracted data)
+    const maxDepth = 10; // Limit to prevent excessive nesting
+    let totalExtractedSize = 0; // Total extracted data size
 
     await new Promise((resolve, reject) => {
         const streams = [];
         fs.createReadStream(zipPath)
             .pipe(unzipper.Parse())
-            .on('entry', entry => {
+            .on('entry', async (entry) => {
                 const entryPath = entry.path;
-                console.log("Entry path:", entryPath);
-                if (!entryPath.includes('__MACOSX') || !entryPath.includes('._')) {
-                    const filePath = path.join(extractPath, entryPath);
-                    const dirName = path.dirname(filePath);
-                    fs.mkdirSync(dirName, { recursive: true });
-    
-                    if (entry.type === 'Directory') {
-                        console.log("Unzipping directory:", entryPath);
-                        fs.mkdirSync(filePath, { recursive: true });
-                        entry.autodrain();
-                    } else {
-                        extractedFiles.push(filePath);
-                        const stream = new Promise((resolve, reject) => {
-                            entry.pipe(fs.createWriteStream(filePath))
-                                .on('finish', resolve)
-                                .on('error', reject);
-                        });
-                        streams.push(stream);
+                const entrySize = entry.size;
+                const entryDepth = entryPath.split(path.sep).length;
+
+                if (!entryPath.includes('__MACOSX')) {
+                    const filePath = path.resolve(extractPath, entryPath);
+                    // Prevent path traversal
+                    const normalizedFilePath = path.normalize(filePath);
+	                if (!normalizedFilePath.startsWith(path.resolve(extractPath))) {
+                        return entry.autodrain();
+                    }
+
+                    // Validate depth (to avoid zip bombs with excessive nesting)
+                    // and reject files that are too large
+                    // and check if adding this file would exceed the total size limit
+	                if ((entryDepth > maxDepth) || (entrySize > maxFileSize) 
+                        || (totalExtractedSize + entrySize > maxTotalSize)) {
+	                    return entry.autodrain();
+	                }
+
+                    const dirName = path.dirname(normalizedFilePath);
+                    try {
+                        await fs.promises.mkdir(dirName, { recursive: true });
+                        if (entry.type === 'Directory') {
+                            entry.autodrain();
+                        } else {
+                            extractedFiles.push(normalizedFilePath);
+                            const stream = new Promise((resolve, reject) => {
+                                entry.pipe(fs.createWriteStream(normalizedFilePath))
+                                    .on('finish', resolve)
+                                    .on('error', reject);
+                            });
+                            streams.push(stream);
+                            // Update the total extracted size
+                            totalExtractedSize += entrySize;
+                        }
+                    } catch (err) {
+                        console.error("Failed to create directory for unziping file. ", err);
+                        throw err;
                     }
                 } else {
                     entry.autodrain();
@@ -248,8 +307,7 @@ const unzipDirectory = async (zipPath, extractPath) => {
             .on('error', err => {
                 reject(new Error(`Unzip failed: ${err.message}`));
             });
-    });
-    
+    });  
 }
 
 const imageMapping = {
