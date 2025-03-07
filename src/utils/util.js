@@ -585,7 +585,7 @@ function appendAPIImageURL(subList, req, orgID) {
         const images = element.apiInfo.apiImageMetadata;
         let apiImageUrl = '';
         for (const key in images) {
-            apiImageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${element.apiID}${constants.API_TEMPLATE_FILE_NAME}`;
+            apiImageUrl = `${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${req.protocol}://${req.get('host')}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${element.apiID}${constants.API_TEMPLATE_FILE_NAME}`;
             const modifiedApiImageURL = apiImageUrl + images[key];
             element.apiInfo.apiImageMetadata[key] = modifiedApiImageURL;
         }

@@ -1,32 +1,40 @@
-<section id="subscriptionPlans" class="api-plans-section">
-    <div class="col-11 row align-items-center api-plans-content">
-        {{#if subscriptionPlans.length}}
-        <div class="common-header text-start">
-            <h2>Available Subscription Plans</h2>
-        </div>
-        <div class="row card-section">
-            {{#each subscriptionPlans}}
-            <div class="col-lg-3">
-                <div class="card dev-card {{#if (isMiddle @index ../subscriptionPlans.length)}} highlight-card{{else}}custom-plans-card{{/if}}">
-                    <div class="card-body">
-                        <h5 >{{displayName}}</h5>
-                        <p> Billing plan: {{billingPlan}} </p>
-                        <p class="custom-plans-description"> {{description}}</p>
-                        {{#if (eq ../providerUrl "#subscriptionPlans")}}
-                            <a type="button" class="{{#if (isMiddle @index ../subscriptionPlans.length)}} common-btn-primary{{else}}common-btn-outlined{{/if}}" 
-                                href="{{../baseUrl}}/myapis?policyName={{policyName}}&apiName={{../apiMetadata.apiInfo.apiName}}&apiVersion={{../apiMetadata.apiInfo.apiVersion}}">Subscribe</a>
-                        {{else}}
-                            <a type="button" class="common-btn-outlined" href="{{../providerUrl}}" target="_blank">Subscribe</a>
-                        {{/if}}
+<section id="subscriptionPlans" class="my-5 mx-5">
+    <div class="col-11 row align-items-center">
+        <div class="col-12 col-md-10 common-header">
+            {{#if subscriptionPlans.length}}
+            <h2 class="ms-5 ps-4"> Subscription Plans</h5>
+            {{/if}}
+                <div class="ms-4 pb-5 pe-5 ps-5 d-flex flex-nowrap overflow-auto">
+                    {{#each subscriptionPlans}}
+                    <div class="col-lg-4 api-card">
+                        <div class="card dev-card">
+                            <div class="card-body align-items-center">
+                                <h5>{{displayName}}</h5>
+                                <h4 class="pt-4 mb-0">{{requestCount}}</h4>
+                                <p class="pb-4 pt-0">requests per minutes</p>
+                                {{#if ../isAuthenticated}}
+                                {{#unless (every ../applications "subscribed")}}
+                                <div id="subscriptionBox" class="subscription-container">
+                                    <a id="subscribe-btn-{{../apiMetadata.apiID}}" type="button"
+                                        class="common-btn-outlined p-1 ps-2 pe-2"
+                                        onclick="subscribe('{{@root.orgID}}', '', '{{../apiMetadata.apiID}}', '{{../apiMetadata.apiReferenceID}}', '{{policyID}}', '{{policyName}}')">Subscribe</a>
+                                    <select class="form-select bg-white text-dark custom-dropdown"
+                                        id="appDropdown-{{../apiMetadata.apiID}}">
+                                        {{#each ../applications}}
+                                        <option value="{{id}}" {{#if subscribed}} disabled {{/if}}>{{name}} {{#if
+                                            subscribed}} ✔ {{/if}} </option>
+                                        {{/each}}
+                                    </select>
+                                </div>                                                     
+                                {{else}}
+                                    <a type="button" class="common-btn-primary disabled" disabled>Subscribe</a>
+                                {{/unless}} 
+                                {{/if}}
+                            </div>
+                        </div>
                     </div>
+                    {{/each}}
                 </div>
-            </div>
-            {{/each}}
         </div>
-        {{else}}
-        <div class="common-header">
-            <h2>No Subscription Plans Available</h2>
-        </div>
-        {{/if}}
     </div>
 </section>

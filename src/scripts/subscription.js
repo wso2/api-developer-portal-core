@@ -168,6 +168,8 @@ function loadModal(modalID) {
 }
 
 async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, policyName) {
+    console.log('Subscribing to API:', apiId);
+    console.log('Application ID:', document.getElementById('appDropdown-' + apiId));
     try {
         if (!applicationID) {
             applicationID = document.getElementById('appDropdown-' + apiId).value;

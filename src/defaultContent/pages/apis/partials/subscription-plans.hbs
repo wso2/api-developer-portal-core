@@ -1,8 +1,8 @@
 <section>
-    <div id="planModal-{{apiReferenceID}}" class="modal custom-modal" tabindex="-1" role="dialog">
+    <div id="planModal-{{apiID}}" class="modal custom-modal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content">
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="closeModal('planModal-{{apiReferenceID}}')"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="closeModal('planModal-{{apiID}}')"></button>
                 <div class="col-11 api-banner-content mt-5">
                     <div class="d-flex justify-content-between">
                         <div class="col-12 col-md-10">
@@ -21,19 +21,19 @@
                     {{#each subscriptionPolicyDetails}}
                     <div class="col-lg-4">
                         <div
-                            class="card dev-card {{#if (isMiddle @index ../subscriptionPlans.length)}} highlight-card{{else}}custom-plans-card{{/if}}">
+                            class="card dev-card">
                             <div class="card-body align-items-center">
                                 <h5>{{displayName}}</h5>
                                 <h4 class="pt-4 mb-0">{{requestCount}}</h4>
                                 <p class="pb-4 pt-0">requests per minutes</p>
-                                <a id="subscribe-btn-{{policyID}}" type="button" class="common-btn-outlined p-1 ps-2 pe-2" onclick="subscribe('', '{{../apiReferenceID}}', '{{policyID}}')">Subscribe</a>
+                                <a id="subscribe-btn-{{../apiID}}" type="button" class="common-btn-outlined p-1 ps-2 pe-2" onclick="subscribe('{{@root.orgID}}', '', '{{../apiID}}', '{{../apiReferenceID}}', '{{policyID}}', '{{policyName}}')">Subscribe</a>
                             </div>
                         </div>
                     </div>
                     {{/each}}
                 </div>
                 <div class="col-2 ps-3 pb-3">
-                   <a type="button" class="border common-btn-white" onclick="closeModal('planModal-{{apiReferenceID}}')">Cancel</a>
+                   <a type="button" class="border common-btn-white" onclick="closeModal('planModal-{{apiID}}')">Cancel</a>
                 </div>
             </div>
         </div>
