@@ -179,7 +179,10 @@ const loadApplication = async (req, res) => {
             let subList = [];
             if (subAPIs.length > 0) {
                 subList = subAPIs.map((sub) => {
-                    const apiDTO = new APIDTO(sub);
+                    const api = new APIDTO(sub);
+                    let apiDTO = {};
+                    apiDTO.name = api.apiInfo.apiName;
+                    apiDTO.version = api.apiInfo.apiVersion;
                     apiDTO.subID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.SUB_ID;
                     apiDTO.policyID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.POLICY_ID;
                     return apiDTO;
