@@ -391,7 +391,8 @@ const updateAPITemplate = async (req, res) => {
         const extractPath = path.join("/tmp", orgId + "/" + apiId);
         await fs.mkdir(extractPath, { recursive: true });
         const zipFilePath = req.file.path;
-        await util.unzipFile(zipFilePath, extractPath);
+        //await util.unzipFile(zipFilePath, extractPath);
+        await util.unzipDirectory(zipFilePath, extractPath);
         const apiContentFileName = req.file.originalname.split(".zip")[0];
 
         // Build complete paths
