@@ -402,9 +402,9 @@ async function loadAPIMetaData(req, orgID, apiID, viewName) {
     //replace image urls
     let images = metaData.apiInfo.apiImageMetadata;
     for (const key in images) {
-        let apiImageUrl = `${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${req.protocol}://${req.get('host')}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${element.apiID}${constants.API_TEMPLATE_FILE_NAME}`;
+        let apiImageUrl = `${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${req.protocol}://${req.get('host')}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}`;
         const modifiedApiImageURL = apiImageUrl + images[key];
-        element.apiInfo.apiImageMetadata[key] = modifiedApiImageURL;
+        images[key] = modifiedApiImageURL;
     }
     return metaData;
 }
