@@ -180,7 +180,6 @@ const unzipFile = async (zipPath, extractPath) => {
             .pipe(unzipper.Parse())
             .on('entry', entry => {
                 const entryPath = entry.path;
-
                 if (!entryPath.includes('__MACOSX')) {
                     const filePath = path.join(extractPath, entryPath);
 
@@ -203,6 +202,54 @@ const unzipFile = async (zipPath, extractPath) => {
             });
     });
 };
+
+
+const unzipDirectory = async (zipPath, extractPath) => {
+    const extractedFiles = [];
+
+    await new Promise((resolve, reject) => {
+        const streams = [];
+        fs.createReadStream(zipPath)
+            .pipe(unzipper.Parse())
+            .on('entry', entry => {
+                const entryPath = entry.path;
+                console.log("Entry path:", entryPath);
+                if (!entryPath.includes('__MACOSX')) {
+                    const filePath = path.join(extractPath, entryPath);
+                    const dirName = path.dirname(filePath);
+                    fs.mkdirSync(dirName, { recursive: true });
+    
+                    if (entry.type === 'Directory') {
+                        console.log("Unzipping directory:", entryPath);
+                        fs.mkdirSync(filePath, { recursive: true });
+                        entry.autodrain();
+                    } else {
+                        extractedFiles.push(filePath);
+                        const stream = new Promise((resolve, reject) => {
+                            entry.pipe(fs.createWriteStream(filePath))
+                                .on('finish', resolve)
+                                .on('error', reject);
+                        });
+                        streams.push(stream);
+                    }
+                } else {
+                    entry.autodrain();
+                }
+            })
+            .on('close', async () => {
+                try {
+                    await Promise.all(streams); // Wait for all files to finish writing
+                    extractedFiles.length > 0 ? resolve() : reject(new Error('No files were extracted'));
+                } catch (err) {
+                    reject(new Error(`Unzip failed: ${err.message}`));
+                }
+            })
+            .on('error', err => {
+                reject(new Error(`Unzip failed: ${err.message}`));
+            });
+    });
+    
+}
 
 const imageMapping = {
     [constants.FILE_EXTENSIONS.SVG]: constants.MIME_TYPES.SVG,
@@ -651,5 +698,6 @@ module.exports = {
     appendSubscriptionPlanDetails,
     tokenExchanger,
     listFiles,
-    readDocFiles
+    readDocFiles,
+    unzipDirectory
 }

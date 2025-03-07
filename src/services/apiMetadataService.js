@@ -321,8 +321,12 @@ const createAPITemplate = async (req, res) => {
         const extractPath = path.join("/tmp", orgId + "/" + apiId);
         await fs.mkdir(extractPath, { recursive: true });
         const zipFilePath = req.file.path;
-        await util.unzipFile(zipFilePath, extractPath);
+        console.log("zipFilePath", zipFilePath)
+        //await util.unzipFile(zipFilePath, extractPath);
+        await util.unzipDirectory(zipFilePath, extractPath);
+
         const apiContentFileName = req.file.originalname.split(".zip")[0];
+        console.log("apiContentFileName", apiContentFileName)
 
         // Build complete paths
         const contentPath = path.join(extractPath, apiContentFileName, "content");
@@ -337,6 +341,7 @@ const createAPITemplate = async (req, res) => {
                 await fs.access(documentPath);
             }
         } catch (err) {
+            console.log("Error while trying to access directories");
             console.error(err);
             throw new Error(
                 `Required directories not found after extraction. Content path: ${contentPath}, Images path: ${imagesPath}
@@ -386,7 +391,8 @@ const updateAPITemplate = async (req, res) => {
         const extractPath = path.join("/tmp", orgId + "/" + apiId);
         await fs.mkdir(extractPath, { recursive: true });
         const zipFilePath = req.file.path;
-        await util.unzipFile(zipFilePath, extractPath);
+        //await util.unzipFile(zipFilePath, extractPath);
+        await util.unzipDirectory(zipFilePath, extractPath);
         const apiContentFileName = req.file.originalname.split(".zip")[0];
 
         // Build complete paths
