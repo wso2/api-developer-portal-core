@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const dropdown = card.querySelector(".custom-dropdown");
 
         if (dropdown) {
+            let isOptionSelected = false;
             card.addEventListener("mouseenter", function () {
                 dropdown.classList.add("show");
                 dropdown.style.display = "block";
@@ -28,9 +29,11 @@ document.addEventListener("DOMContentLoaded", function () {
             });
 
             card.addEventListener("mouseleave", function () {
-                dropdown.classList.remove("show");
-                dropdown.style.display = "none";
-                subscriptionBox.classList.remove("subscription-box");
+                if (!isOptionSelected) {
+                    dropdown.classList.remove("show");
+                    dropdown.style.display = "none";
+                    subscriptionBox.classList.remove("subscription-box");
+                }
             });
             
             // Custom select functionality
@@ -54,6 +57,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     e.stopPropagation();
                     const value = this.getAttribute("data-value");
                     const text = this.textContent.trim();
+                    isOptionSelected = true;
                     
                     // Update the visible selected text
                     selectSelected.querySelector(".selected-text").textContent = text;
