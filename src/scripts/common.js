@@ -21,7 +21,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const dropdown = card.querySelector(".custom-dropdown");
 
         if (dropdown) {
-            let isOptionSelected = false;
             card.addEventListener("mouseenter", function () {
                 dropdown.classList.add("show");
                 dropdown.style.display = "block";
@@ -29,11 +28,9 @@ document.addEventListener("DOMContentLoaded", function () {
             });
 
             card.addEventListener("mouseleave", function () {
-                if (!isOptionSelected) {
-                    dropdown.classList.remove("show");
-                    dropdown.style.display = "none";
-                    subscriptionBox.classList.remove("subscription-box");
-                }
+                dropdown.classList.remove("show");
+                dropdown.style.display = "none";
+                subscriptionBox.classList.remove("subscription-box");
             });
             
             // Custom select functionality
@@ -42,6 +39,24 @@ document.addEventListener("DOMContentLoaded", function () {
             const selectOptions = dropdown.querySelectorAll(".select-item");
             const actionItem = dropdown.querySelector(".select-action-item");
             const hiddenSelect = dropdown.querySelector("select");
+            
+            // Set first option as selected initially
+            if (selectOptions.length > 0) {
+                const firstOption = selectOptions[0];
+                const firstValue = firstOption.getAttribute("data-value");
+                const firstText = firstOption.textContent.trim();
+                
+                // Update the visible selected text
+                selectSelected.querySelector(".selected-text").textContent = firstText;
+                
+                // Update the hidden select value
+                for (let i = 0; i < hiddenSelect.options.length; i++) {
+                    if (hiddenSelect.options[i].value === firstValue) {
+                        hiddenSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
             
             // Toggle dropdown when clicking on the selected item
             selectSelected.addEventListener("click", function(e) {
@@ -57,7 +72,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     e.stopPropagation();
                     const value = this.getAttribute("data-value");
                     const text = this.textContent.trim();
-                    isOptionSelected = true;
                     
                     // Update the visible selected text
                     selectSelected.querySelector(".selected-text").textContent = text;
