@@ -180,12 +180,10 @@ const unzipFile = async (zipPath, extractPath) => {
             .pipe(unzipper.Parse())
             .on('entry', entry => {
                 const entryPath = entry.path;
-                console.log("Entry path:", entryPath);
                 if (!entryPath.includes('__MACOSX')) {
                     const filePath = path.join(extractPath, entryPath);
 
                     if (entry.type === 'Directory') {
-                        console.log("Unzipping directory:", entryPath);
                         fs.mkdirSync(filePath, { recursive: true });
                         entry.autodrain();
                     } else {
