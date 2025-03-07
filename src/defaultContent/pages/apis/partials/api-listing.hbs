@@ -75,20 +75,24 @@
                   <div id="subscriptionBox" class="subscription-container">
                     {{> subscription-plans apiInfo=apiInfo apiName=apiInfo.apiName}}
                     {{#if ../isAuthenticated}}
+                    {{#unless (every applications "subscribed")}}
                       {{#if subscriptionPolicies.length}}
-                        {{#if (eq subscriptionPolicies.length 1)}}
-                          <a type="button" class="common-btn-primary" onclick="subscribe('', '{{apiReferenceID}}', '')">Subscribe</a>
-                        {{else}}
-                          <a type="button" class="common-btn-primary" onclick="loadSubscriptionPlasnModal('{{apiReferenceID}}')">Subscribe</a>
-                        {{/if}}   
+                        {{!-- {{#if (eq subscriptionPolicies.length 1)}} --}}
+                          {{!-- <a type="button" class="common-btn-primary" onclick="subscribe('{{../orgID}}', '', '{{apiID}}', '{{apiReferenceID}}', '{{subscriptionPolicyDetails.[0].policyID}}', '{{subscriptionPolicyDetails.[0].policyName}}')">Subscribe</a> --}}
+                          {{!-- {{else}} --}}
+                          <a type="button" class="common-btn-primary" onclick="loadModal('planModal-{{apiID}}')">Subscribe</a>
+                        {{!-- {{/if}}    --}}
                       {{#if applications.length}}
-                      <select class="form-select bg-white text-dark custom-dropdown" id="appDropdown-{{apiReferenceID}}">
+                      <select class="form-select bg-white text-dark custom-dropdown" id="appDropdown-{{apiID}}">
                         {{#each applications}}
                         <option value="{{id}}" {{#if subscribed}} disabled {{/if}}>{{name}} {{#if subscribed}} ✔ {{/if}} </option>
                         {{/each}}
                       </select>
                       {{/if}}
-                      {{/if}} 
+                      {{/if}}
+                      {{else}}
+                        <a type="button" class="common-btn-primary disabled" disabled>Subscribe</a>
+                      {{/unless}} 
                     {{/if}}
                   </div>
                 </div>
