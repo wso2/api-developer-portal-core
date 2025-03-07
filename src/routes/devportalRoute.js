@@ -39,11 +39,11 @@ router.get('/organizations/:orgId/identityProvider', validateAuthentication(cons
 router.delete('/organizations/:orgId/identityProvider', validateAuthentication(constants.SCOPES.ADMIN), adminService.deleteIdentityProvider);
 
 const upload = multer({ dest: '../.tmp/' });
-router.post('/organizations/:orgId/views/:name/layout', upload.single('file'), adminService.createOrgContent);
-router.put('/organizations/:orgId/views/:name/layout', upload.single('file'), adminService.updateOrgContent);
+router.post('/organizations/:orgId/views/:name/layout', enforceSecuirty(constants.SCOPES.ADMIN), upload.single('file'), adminService.createOrgContent);
+router.put('/organizations/:orgId/views/:name/layout', enforceSecuirty(constants.SCOPES.ADMIN), upload.single('file'), adminService.updateOrgContent);
 router.get('/organizations/:orgId/views/:name/layout', devportalService.getOrgContent);
 router.get('/organizations/:orgId/views/:name/layout/:fileType', devportalService.getOrgContent);
-router.delete('/organizations/:orgId/views/:name/layout', validateAuthentication(constants.SCOPES.ADMIN), adminService.deleteOrgContent);
+router.delete('/organizations/:orgId/views/:name/layout', enforceSecuirty(constants.SCOPES.ADMIN), adminService.deleteOrgContent);
 
 router.post('/organizations/:orgId/provider', validateAuthentication(constants.SCOPES.ADMIN), adminService.createProvider);
 router.put('/organizations/:orgId/provider', validateAuthentication(constants.SCOPES.ADMIN), adminService.updateProvider);
