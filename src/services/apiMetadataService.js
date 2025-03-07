@@ -367,6 +367,12 @@ const createAPITemplate = async (req, res) => {
         await sequelize.transaction(async (t) => {
             //check whether api belongs to given org
             let apiMetadata = await apiDao.getAPIMetadata(orgId, apiId, t);
+            let exsistingAPIImage = await apiDao.getImage(constants.API_ICON, apiId, t);
+
+            if (imageMetadata[constants.API_ICON], exsistingAPIImage) {
+                await apiDao.deleteImage(constants.API_ICON, apiId, t);
+            }
+            
             if (apiMetadata) {
                 // Store image metadata
                 await apiDao.storeAPIImageMetadata(imageMetadata, apiId, t);
