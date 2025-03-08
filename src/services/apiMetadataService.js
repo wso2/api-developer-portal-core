@@ -19,6 +19,7 @@
 const { Sequelize } = require("sequelize");
 const sequelize = require("../db/sequelize");
 const apiDao = require("../dao/apiMetadata");
+const adminDao = require("../dao/admin");
 const util = require("../utils/util");
 const path = require("path");
 const fs = require("fs").promises;
@@ -300,6 +301,11 @@ const deleteAPIMetadata = async (req, res) => {
     }
     await sequelize.transaction(async (t) => {
         try {
+            //check if subscriptions exist for the application
+            const subApis = await adminDao.getSubscriptions(orgId, '', apiId);
+            if (subApis.length > 0) {
+                throw new  CustomError(401, constants.ERROR_CODE[401], "API has subscriptions.");
+            }
             const apiDeleteResponse = await apiDao.deleteAPIMetadata(orgId, apiId, t);
             if (apiDeleteResponse === 0) {
                 throw new Sequelize.EmptyResultError("Resource not found to delete");

@@ -581,6 +581,7 @@ function validateScripts(strContent) {
 }
 
 function appendAPIImageURL(subList, req, orgID) {
+
     subList.forEach(element => {
         const images = element.apiInfo.apiImageMetadata;
         let apiImageUrl = '';

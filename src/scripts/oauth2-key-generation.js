@@ -6,7 +6,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
     subList.forEach(subscription => {
         apiList.push({
             "apiName": subscription.name,
-            "apiRefId": subscription.apiReferenceID,
+            "apiRefId": subscription.refID,
             "policyID": subscription.policyID
         });
     });

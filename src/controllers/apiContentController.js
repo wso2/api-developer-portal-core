@@ -159,18 +159,19 @@ const loadAPIContent = async (req, res) => {
             }
             //check whether api content exists
             let loadDefault = false
-            let apiDefinition, apiDetails = "";
+            let apiDetails = "";
+            let apiDefinition = {};
             const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, constants.DOC_TYPES.API_LANDING, orgID, apiID);
             if (!markdownResponse) {
                 let additionalAPIContentResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME, constants.DOC_TYPES.API_LANDING, orgID, apiID);
                 if (!additionalAPIContentResponse) {
                     loadDefault = true;
-                    if (metaData.apiInfo.apiType !== "GraphQL") {
+                    if (metaData.apiInfo && metaData.apiInfo.apiType !== "GraphQL") {
                         apiDefinition = "";
                         apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
                         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
+                        apiDetails = await parseSwagger(JSON.parse(apiDefinition))
                     }
-                    apiDetails = await parseSwagger(JSON.parse(apiDefinition))
                 }
             }
             let appList = [];
@@ -221,7 +222,7 @@ const loadAPIDefinition = async (orgName, viewName, apiHandle) => {
             apiDefinition = await fs.readFileSync(apiDefinition, constants.CHARSET_UTF8);
         }
         templateContent.apiType = metaData.apiInfo.apiType;
-        templateContent.swagger = apiDefinition;
+        templateContent.swagger = JSON.parse(apiDefinition);
     } else {
         const orgID = await adminDao.getOrgId(orgName);
         const apiID = await apiDao.getAPIId(orgID, apiHandle);
@@ -397,14 +398,16 @@ async function loadAPIMetaData(req, orgID, apiID, viewName) {
 
     let metaData = {};
     metaData = await apiMetadataService.getMetadataFromDB(orgID, apiID, viewName);
-    const data = metaData ? JSON.stringify(metaData) : {};
-    metaData = JSON.parse(data);
-    //replace image urls
-    let images = metaData.apiInfo.apiImageMetadata;
-    for (const key in images) {
-        let apiImageUrl = `${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${req.protocol}://${req.get('host')}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}`;
-        const modifiedApiImageURL = apiImageUrl + images[key];
-        images[key] = modifiedApiImageURL;
+    if (metaData !== "") {
+        const data = metaData ? JSON.stringify(metaData) : {};
+        metaData = JSON.parse(data);
+        //replace image urls
+        let images = metaData.apiInfo.apiImageMetadata;
+        for (const key in images) {
+            let apiImageUrl = `${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${req.protocol}://${req.get('host')}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}`;
+            const modifiedApiImageURL = apiImageUrl + images[key];
+            images[key] = modifiedApiImageURL;
+        }
     }
     return metaData;
 }

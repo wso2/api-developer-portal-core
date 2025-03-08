@@ -39,6 +39,10 @@ module.exports = {
         PUBLIC: 'PUBLIC',
         PRIVATE: 'PRIVATE'
     },
+    API_STATUS: {
+        PUBLISHED: "PUBLISHED",
+        UNPUBLISHED: "UNPUBLISHED"
+    },
     DOC_TYPES: {
         DOC_ID: 'DOC_',
         DOCLINK_ID: 'LINK_',

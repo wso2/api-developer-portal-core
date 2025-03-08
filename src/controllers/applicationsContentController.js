@@ -181,11 +181,15 @@ const loadApplication = async (req, res) => {
                 subList = subAPIs.map((sub) => {
                     const api = new APIDTO(sub);
                     let apiDTO = {};
+                    apiDTO.apiInfo = {};
                     apiDTO.name = api.apiInfo.apiName;
+                    apiDTO.apiID = api.apiID;
                     apiDTO.version = api.apiInfo.apiVersion;
+                    apiDTO.apiInfo.apiImageMetadata = api.apiInfo.apiImageMetadata;
                     apiDTO.image = api.apiInfo.apiImageMetadata["api-icon"];
                     apiDTO.subID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.SUB_ID;
                     apiDTO.policyID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.POLICY_ID;
+                    apiDTO.refID = api.apiReferenceID;
                     return apiDTO;
                 });
             }
