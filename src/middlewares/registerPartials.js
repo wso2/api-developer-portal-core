@@ -46,13 +46,13 @@ const registerPartials = async (req, res, next) => {
         if (layoutContent === "") {
           console.log("Layout content not found in the database. Loading from file system");
           await registerAllPartialsFromFile(config.baseUrl + "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName, req, './src/defaultContent');
-          if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
-            await registerAPILandingContent(req, orgID, {});
-          }
           //register doc page partials
           if (req.originalUrl.includes(constants.ROUTE.API_DOCS_PATH) && req.params.docType && req.params.docName) {
             await registerDocsPageContent(req, orgID, {});
+          } else if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
+            await registerAPILandingContent(req, orgID, {});
           }
+
         } else {
           await registerPartialsFromAPI(req);
         }
@@ -171,10 +171,7 @@ const registerPartialsFromAPI = async (req) => {
         isAdmin: isAdmin,
         isSuperAdmin: isSuperAdmin,
         hasWSO2APIs: hasWSO2APIs
-      }),
-      [constants.HERO_PARTIAL_NAME]: hbs.handlebars.compile(partialObject[constants.HERO_PARTIAL_NAME])(
-        { baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName }
-      ),
+      })    
     };
   }
 
@@ -205,7 +202,7 @@ async function registerAPILandingContent(req, orgID, partialObject) {
   const apiID = await apiDao.getAPIId(orgID, apiHandle);
   //fetch markdown content for API if exists
   const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, constants.DOC_TYPES.API_LANDING, orgID, apiID);
-  const markdownContent = markdownResponse ? markdownResponse.API_FILE.toString("utf8") : "";
+  const markdownContent = markdownResponse !== null ? markdownResponse.API_FILE.toString("utf8") : "";
   const markdownHtml = markdownContent ? markdown.parse(markdownContent) : "";
 
   //if hbs content available for API, render the hbs page

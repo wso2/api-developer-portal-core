@@ -183,6 +183,7 @@ const loadApplication = async (req, res) => {
                     let apiDTO = {};
                     apiDTO.name = api.apiInfo.apiName;
                     apiDTO.version = api.apiInfo.apiVersion;
+                    apiDTO.image = api.apiInfo.apiImageMetadata["api-icon"];
                     apiDTO.subID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.SUB_ID;
                     apiDTO.policyID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.POLICY_ID;
                     return apiDTO;

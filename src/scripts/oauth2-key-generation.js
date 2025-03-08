@@ -5,11 +5,12 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
     const subList = JSON.parse(subscriptions);
     subList.forEach(subscription => {
         apiList.push({
-            "apiName": subscription.apiInfo.apiName,
+            "apiName": subscription.name,
             "apiRefId": subscription.apiReferenceID,
             "policyID": subscription.policyID
         });
     });
+    console.log("API List", apiList);
     const formData = new FormData(form);
     const jsonObject = getFormData(formData, keyManager, clientName);
     const payload = JSON.stringify({

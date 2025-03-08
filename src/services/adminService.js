@@ -817,6 +817,7 @@ const createAppKeyMapping = async (req, res) => {
             // add subscription to control plane for each api
             const apiSubscriptions = [];
             for (const api of apis) {
+                console.log("API", api);
                 const policyDetails = await apiDao.getSubscriptionPolicy(api.policyID, orgID, t);
                 const cpSubscribeResponse = await createCPSubscription(req, api.apiRefId, cpAppID, policyDetails);
                 apiSubscriptions.push(cpSubscribeResponse);
