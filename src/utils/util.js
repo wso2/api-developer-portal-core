@@ -384,17 +384,26 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
             url = url.includes("?") ? `${url}&organizationId=${orgId}` : `${url}?organizationId=${orgId}`;
         }
 
-        let response = await axios(url, options);
-
-        if (response.status === 401 && req.user?.exchangeToken) {
-            const newExchangedToken = await util.tokenExchanger(req.user.accessToken, req.session.returnTo.split("/")[1]);
-            req.user.exchangeToken = newExchangedToken;
-            headers.Authorization = `Bearer ${newExchangedToken}`;
-            
-            response = await axios(url, options);
-        }
+        const response = await axios(url, options);
         return response.data;
     } catch (error) {
+        if (error.response?.status === 401 && req.user?.exchangeToken) {
+            console.log("Unauthorized. Trying to refresh token...");
+            try {
+                const newExchangedToken = await util.tokenExchanger(req.user.accessToken, req.session.returnTo.split("/")[1]);
+                req.user.exchangeToken = newExchangedToken;
+                headers.Authorization = `Bearer ${newExchangedToken}`;
+                options.headers = headers;
+                return (await axios(url, options)).data;
+            } catch (retryError) {
+                console.error("Retry failed:", retryError);
+                let retryMessage = retryError.message;
+                if (retryError.response) {
+                    retryMessage = retryError.response.data.description;
+                }
+                throw new CustomError(retryError.response?.status || 500, "Request retry failed", retryMessage);
+            }
+        }
         console.log(`Error while invoking API:`, error);
         let message = error.message;
         if (error.response) {
