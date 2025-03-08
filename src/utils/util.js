@@ -174,72 +174,9 @@ function handleError(res, error) {
     }
 };
 
-const unzipFile = async (zipPath, extractPath) => {
-    if (typeof zipPath !== 'string' || typeof extractPath !== 'string' || !zipPath || !extractPath) {
-        return reject(new Error('Invalid zip path or extract path.'));
-    }
-    const extractedFiles = [];
-    const maxFileSize = 50 * 1024 * 1024; // 50MB (limit for individual file size)
-    const maxTotalSize = 100 * 1024 * 1024; // 100MB (limit for total extracted data)
-    const maxDepth = 10; // Limit to prevent excessive nesting
-    let totalExtractedSize = 0; // Total extracted data size
-
-    await new Promise((resolve, reject) => {
-        fs.createReadStream(zipPath)
-            .pipe(unzipper.Parse())
-            .on('entry', async (entry) => {
-                const entryPath = entry.path;
-		        const entrySize = entry.size;
-                const entryDepth = entryPath.split(path.sep).length;
-                
-                if (!entryPath.includes('__MACOSX')) {
-	                const filePath = path.resolve(extractPath, entryPath);
-                    // Prevent path traversal
-                    const normalizedFilePath = path.normalize(filePath);
-	                if (!normalizedFilePath.startsWith(path.resolve(extractPath))) {
-                        return entry.autodrain();
-                    }
-
-	                // Validate depth (to avoid zip bombs with excessive nesting)
-                    // and reject files that are too large
-                    // and check if adding this file would exceed the total size limit
-	                if ((entryDepth > maxDepth) || (entrySize > maxFileSize) 
-                        || (totalExtractedSize + entrySize > maxTotalSize)) {
-	                    return entry.autodrain();
-	                }
-
-                    try {
-                        if (entry.type === 'Directory') {
-                            await fs.promises.mkdir(normalizedFilePath, { recursive: true });
-                            entry.autodrain();
-                        } else {
-                            extractedFiles.push(normalizedFilePath);
-                            entry.pipe(fs.createWriteStream(normalizedFilePath));
-                            
-			                // Update the total extracted size
-                            totalExtractedSize += entrySize;
-                        }
-                    } catch (err) {
-                        console.error("Failed to create directory for unziping file. ", err);
-                        throw err;
-                    }
-                } else {
-                    entry.autodrain();
-                }
-            })
-            .on('close', async () => {
-                extractedFiles.length > 0 ? resolve() : reject(new Error('No files were extracted'));
-            })
-            .on('error', err => {
-                reject(new Error(`Unzip failed: ${err.message}`));
-            });
-    });
-};
-
-
 const unzipDirectory = async (zipPath, extractPath) => {
     if (typeof zipPath !== 'string' || typeof extractPath !== 'string' || !zipPath || !extractPath) {
-        return reject(new Error('Invalid zip path or extract path.'));
+        throw new CustomError(400, 'Error unzipping directory', 'Invalid zip path or extract path.');
     }
     const extractedFiles = [];
     const maxFileSize = 50 * 1024 * 1024; // 50MB (limit for individual file size)
@@ -251,30 +188,34 @@ const unzipDirectory = async (zipPath, extractPath) => {
         const streams = [];
         fs.createReadStream(zipPath)
             .pipe(unzipper.Parse())
-            .on('entry', async (entry) => {
-                const entryPath = entry.path;
-                const entrySize = entry.size;
-                const entryDepth = entryPath.split(path.sep).length;
+            .on('entry', entry => {
+                try {
+                    const entryPath = entry.path;
+                    const entrySize = entry.size;
+                    const entryDepth = entryPath.split(path.sep).length;
 
-                if (!entryPath.includes('__MACOSX')) {
-                    const filePath = path.resolve(extractPath, entryPath);
-                    // Prevent path traversal
-                    const normalizedFilePath = path.normalize(filePath);
-	                if (!normalizedFilePath.startsWith(path.resolve(extractPath))) {
-                        return entry.autodrain();
-                    }
+                    if (!entryPath.includes('__MACOSX')) {
+                        const filePath = path.resolve(extractPath, entryPath);
+                        // Prevent path traversal
+                        const normalizedFilePath = path.normalize(filePath);
+                        if (!normalizedFilePath.startsWith(path.resolve(extractPath))) {
+                            entry.autodrain();
+                            return reject (new CustomError(400, 'Error unzipping directory'
+                                , 'File access outside working directory detected.'));
+                        }
 
-                    // Validate depth (to avoid zip bombs with excessive nesting)
-                    // and reject files that are too large
-                    // and check if adding this file would exceed the total size limit
-	                if ((entryDepth > maxDepth) || (entrySize > maxFileSize) 
-                        || (totalExtractedSize + entrySize > maxTotalSize)) {
-	                    return entry.autodrain();
-	                }
+                        // Validate depth (to avoid zip bombs with excessive nesting)
+                        // and reject files that are too large
+                        // and check if adding this file would exceed the total size limit
+                        if ((entryDepth > maxDepth) || (entrySize > maxFileSize) 
+                            || (totalExtractedSize + entrySize > maxTotalSize)) {
+                            entry.autodrain();
+                            return reject (new CustomError(400, 'Error unzipping directory'
+                                , 'File size exceeded the limit of 100 MB'));
+                        }
 
-                    const dirName = path.dirname(normalizedFilePath);
-                    try {
-                        await fs.promises.mkdir(dirName, { recursive: true });
+                        const dirName = path.dirname(normalizedFilePath);
+                        fs.mkdirSync(dirName, { recursive: true });
                         if (entry.type === 'Directory') {
                             entry.autodrain();
                         } else {
@@ -288,12 +229,13 @@ const unzipDirectory = async (zipPath, extractPath) => {
                             // Update the total extracted size
                             totalExtractedSize += entrySize;
                         }
-                    } catch (err) {
-                        console.error("Failed to create directory for unziping file. ", err);
-                        throw err;
+                    } else {
+                        entry.autodrain();
                     }
-                } else {
+                } catch (err) {
+                    console.error("Error processing entry. ", err);
                     entry.autodrain();
+                    reject (new Error('Error processing entry.'));
                 }
             })
             .on('close', async () => {
@@ -307,6 +249,8 @@ const unzipDirectory = async (zipPath, extractPath) => {
             .on('error', err => {
                 reject(new Error(`Unzip failed: ${err.message}`));
             });
+    }).catch ((err) => {
+        throw err;
     });  
 }
 
@@ -580,6 +524,16 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
         for (const file of files) {
             const filePath = path.join(directory, file.name);
             const relativePath = path.join(baseDir, file.name);
+
+            // Normalize and resolve filePath to ensure it stays within the intended directory
+            const resolvedFilePath = path.resolve(filePath);
+            const resolvedBaseDir = path.resolve(directory);
+
+            // Ensure the file path is within the target directory
+            if (!resolvedFilePath.startsWith(resolvedBaseDir + path.sep)) {
+                throw new Error(`Invalid file path: ${filePath}`);
+            }
+
             if (file.isDirectory()) {
                 const subDirContents = await readFilesInDirectory(filePath, orgId, protocol, host, viewName, relativePath);
                 fileDetails = fileDetails.concat(subDirContents);
@@ -587,6 +541,8 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                 let content = await fs.promises.readFile(filePath);
                 let strContent = await fs.promises.readFile(filePath, constants.CHARSET_UTF8);
                 let dir = baseDir.replace(/^[^/]+\/?/, '') || '/';
+                const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp', '.svg'];
+                const fileExtension = path.extname(file.name).toLowerCase();
                 let fileType;
                 if (file.name.endsWith(".css")) {
                     fileType = "style"
@@ -610,8 +566,12 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                 } else if (file.name.endsWith(".hbs")) {
                     validateScripts(strContent);
                     fileType = "template";
-                } else {
+                } else if (imageExtensions.includes(fileExtension)) {
                     fileType = "image";
+                } else {
+                    // Unexpected file type
+                    console.warn(`Unexpected file type detected: ${file.name}`);
+                    fileType = "unknown"; // Set default to unknown
                 }
 
                 fileDetails.push({
@@ -762,7 +722,6 @@ module.exports = {
     renderTemplateFromAPI,
     renderGivenTemplate,
     handleError,
-    unzipFile,
     retrieveContentType,
     getAPIFileContent,
     getAPIImages,

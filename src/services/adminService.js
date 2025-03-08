@@ -278,9 +278,8 @@ const createOrgContent = async (req, res) => {
     const viewName = req.params.name;
     const zipPath = req.file.path;
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
-    await util.unzipDirectory(zipPath, extractPath);
-    //await util.unzipFile(zipPath, extractPath);
     try {
+        await util.unzipDirectory(zipPath, extractPath);
         const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'), viewName);
         for (const { filePath, fileName, fileContent, fileType } of files) {
             await createContent(filePath, fileName, fileContent, fileType, orgId, viewName);
@@ -322,9 +321,8 @@ const updateOrgContent = async (req, res) => {
     const viewName = req.params.name;
     const zipPath = req.file.path;
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
-    //await util.unzipFile(zipPath, extractPath);
-    await util.unzipDirectory(zipPath, extractPath);
     try {
+        await util.unzipDirectory(zipPath, extractPath);
         const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'), viewName);
         for (const { filePath, fileName, fileContent, fileType } of files) {
             if (fileName != null && !fileName.startsWith('.')) {
