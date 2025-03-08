@@ -1293,6 +1293,41 @@ const getImageMetadata = async (imageTag, imageName, orgID, apiID, t) => {
     }
 }
 
+const getImage = async (imageTag, apiID, t) => {
+    console.log(imageTag, apiID);
+    try {
+        const apiImageData = await APIImageMetadata.findOne({
+            where: {
+                IMAGE_TAG: imageTag,
+                API_ID: apiID
+            }
+        }, { transaction: t });
+        return apiImageData;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const deleteImage = async (imageTag, apiID, t) => {
+    try {
+        const apiImageData = await APIImageMetadata.destroy({
+            where: {
+                IMAGE_TAG: imageTag,
+                API_ID: apiID
+            }
+        }, { transaction: t });
+        return apiImageData;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
 const updateAPIFile = async (apiFile, fileName, apiID, orgID, t) => {
 
     try {
@@ -1446,6 +1481,7 @@ module.exports = {
     createAPILabelMapping,
     deleteAPILabels,
     updateLabel,
-    addLabel
-
+    addLabel,
+    getImage,
+    deleteImage
 };
