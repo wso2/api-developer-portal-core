@@ -379,11 +379,20 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         }
 
         if (config.advanced.tokenExchanger.enabled) {
-            decodedToken = jwt.decode(req.user.exchangeToken);
+            const decodedToken = jwt.decode(req.user.exchangeToken);
             const orgId = decodedToken.organization.uuid;
             url = url.includes("?") ? `${url}&organizationId=${orgId}` : `${url}?organizationId=${orgId}`;
         }
-        const response = await axios(url, options);
+
+        let response = await axios(url, options);
+
+        if (response.status === 401 && req.user?.exchangeToken) {
+            const newExchangedToken = await util.tokenExchanger(req.user.accessToken, req.session.returnTo.split("/")[1]);
+            req.user.exchangeToken = newExchangedToken;
+            headers.Authorization = `Bearer ${newExchangedToken}`;
+            
+            response = await axios(url, options);
+        }
         return response.data;
     } catch (error) {
         console.log(`Error while invoking API:`, error);
