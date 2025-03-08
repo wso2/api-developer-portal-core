@@ -325,20 +325,16 @@ hr {
   width: 100%;
 }
 
-.subscription-box {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 0.25rem;
-  display: flex;
-  gap: 1rem;
-  padding: 7px !important;
-  width: 100%;
-}
-
 .subscription-container {
   padding: 8px;
+}
+
+.subscription-box {
+  border-radius: 1rem;
+  background-color: #f8f9fa;
+  display: flex;
+  gap: 1rem;
+  width: 100%;
 }
 
 /* Custom Select styling */
@@ -380,17 +376,30 @@ hr {
   max-height: 200px;
   overflow-y: auto;
   display: none;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .select-item {
   padding: 8px 10px;
   cursor: pointer;
   font-size: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .select-item:hover {
   background-color: #f8f9fa;
+}
+
+.select-item.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #f0f0f0;
+}
+
+.select-item.disabled:hover {
+  background-color: #f0f0f0;
 }
 
 .select-action-item {
@@ -408,4 +417,13 @@ hr {
 
 .select-items.show {
   display: block;
+}
+
+/* Add styling for subscription icon */
+.subscription-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-left: 8px;
+  float: right;
 }

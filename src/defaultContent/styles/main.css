@@ -78,6 +78,10 @@ body {
   margin-top: 0.5rem;
 }
 
+.section {
+  margin: 5rem 3.75rem;
+}
+
 .common-btn-primary {
   display: inline-block;
   background-color: var(--primary-dark-color);
@@ -170,12 +174,9 @@ body {
 
 .common-btn-link {
   display: inline-block;
-  background-color: transparent;
-  color: var(--secondary-light-color);
+  color: var(--primary-dark-color);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
-  border: none;
-  border-radius: 3.125rem;
   text-decoration: none;
   cursor: pointer;
   text-align: center;
@@ -184,19 +185,16 @@ body {
 }
 
 .common-btn-link:hover {
-  color: var(--primary-dark-color);
-  background-color: var(--primary-light-color);
-  color: var(--white-text-color);
+  color: var(--primary-light-color);
+  text-decoration: none;
 }
 
 .common-btn-link:active {
-  color: var(--white-text-color);
-  background-color: var(--primary-main-color);
+  color: var(--primary-dark-color);
 }
 
 .common-btn-link:focus {
-  outline: none;
-  box-shadow: 0 0 0 0.25rem var(--primary-light-color);
+  border: none;
 }
 
 .common-btn-outlined {
@@ -239,7 +237,7 @@ body {
 
 .common-header h2 {
   font-size: 1.875rem;
-  margin-bottom: 2.8125rem;
+  margin-bottom: 3.5rem;
   font-weight: 600;
   color: var(--primary-main-color);
 }
@@ -290,7 +288,7 @@ h6 {
 /* --Paragraph-- */
 .api-md-content p {
   font-size: 15px;
-  color: var(--main-text-color);
+  color: var (--main-text-color);
 }
 
 .api-md-content li {
@@ -300,4 +298,9 @@ h6 {
 
 .api-md-content li::marker {
   color: var(--primary-color);
+}
+
+/* Classes for Font weights */
+.font-light {
+  font-weight: 300;
 }

@@ -39,7 +39,7 @@
             </div>
           </div>
           <div class="api-card-body flex-grow-1">
-            <div class="truncate-text small mb-3">{{apiInfo.apiDescription}}</div>
+            <div class="truncate-text font-light apilisting-api-description small mb-3">{{apiInfo.apiDescription}}</div>
             <div class="row">
               <div class="apilisting-tags">
                 {{#apiInfo.tags}}
@@ -76,12 +76,15 @@
                     <div class="select-items" role="listbox">
                       <div class="select-action-item" role="button" data-action="create-app">+ Create Application</div>
                       {{#each applications}}
-                        <div class="select-item" role="option" data-value="{{id}}">{{name}} {{#if subscribed}} ✔ {{/if}}</div>
+                        <div class="select-item" role="option" data-value="{{id}}">
+                          <span>{{name}}</span>
+                          {{#if subscribed}}<img src="/images/success-rounded.svg" alt="Subscribed" class="subscription-icon" />{{/if}}
+                        </div>
                       {{/each}}
                     </div>
                     <select class="d-none" id="appDropdown-{{apiID}}">
                       {{#each applications}}
-                        <option value="{{id}}" {{#if subscribed}} disabled {{/if}}>{{name}} {{#if subscribed}} ✔ {{/if}}</option>
+                        <option value="{{id}}" {{#if subscribed}} disabled {{/if}}>{{name}}</option>
                       {{/each}}
                     </select>
                   </div>
