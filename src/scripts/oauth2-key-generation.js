@@ -19,7 +19,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
         "tokenType": "OAUTH",
         "tokenDetails": {
             "grantTypesToBeSupported": jsonObject.grantTypes,
-            "keyType": keyType,
+            "keyType": "SANDBOX",
             "keyManager": keyManager,
             "callbackUrl": jsonObject.callbackURL,
             "scopes": [

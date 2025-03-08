@@ -402,8 +402,8 @@ async function loadAPIMetaData(req, orgID, apiID, viewName) {
     //replace image urls
     let images = metaData.apiInfo.apiImageMetadata;
     for (const key in images) {
-        let apiImageUrl = `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TYPE_QUERY}IMAGE${constants.FILE_NAME_PARAM}`
-        const modifiedApiImageURL = apiImageUrl + images[key]
+        let apiImageUrl = `${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${req.protocol}://${req.get('host')}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}`;
+        const modifiedApiImageURL = apiImageUrl + images[key];
         images[key] = modifiedApiImageURL;
     }
     return metaData;
@@ -415,7 +415,7 @@ function loadAPIMetaDataFromFile(apiName) {
     return JSON.parse(fs.readFileSync(mockAPIDataPath, constants.CHARSET_UTF8));
 }
 
-async function parseSwagger(api) { 
+async function parseSwagger(api) {
     try {
         // Extract general API info
         const title = api.info?.title || "No title";
