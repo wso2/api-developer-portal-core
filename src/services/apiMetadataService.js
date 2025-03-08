@@ -304,7 +304,7 @@ const deleteAPIMetadata = async (req, res) => {
             //check if subscriptions exist for the application
             const subApis = await adminDao.getSubscriptions(orgId, '', apiId);
             if (subApis.length > 0) {
-                throw new  CustomError(401, constants.ERROR_CODE[401], "API has subscriptions.");
+                throw new CustomError(401, constants.ERROR_CODE[401], "API has subscriptions.");
             }
             const apiDeleteResponse = await apiDao.deleteAPIMetadata(orgId, apiId, t);
             if (apiDeleteResponse === 0) {
@@ -323,7 +323,6 @@ const createAPITemplate = async (req, res) => {
 
     try {
         const { orgId, apiId } = req.params;
-        let imageMetadata = JSON.parse(req.body.imageMetadata);
         const extractPath = path.join("/tmp", orgId + "/" + apiId);
         await fs.mkdir(extractPath, { recursive: true });
         const zipFilePath = req.file.path;
@@ -341,8 +340,12 @@ const createAPITemplate = async (req, res) => {
 
         // Verify directories exist
         try {
-            await fs.access(contentPath);
-            await fs.access(imagesPath);
+            if (fsDir.existsSync(contentPath)) {
+                await fs.access(contentPath);
+            }
+            if (fsDir.existsSync(imagesPath)) {
+                await fs.access(imagesPath);
+            }
             if (fsDir.existsSync(documentPath)) {
                 await fs.access(documentPath);
             }
@@ -354,10 +357,21 @@ const createAPITemplate = async (req, res) => {
                 , Documents path: ${documentPath}`
             );
         }
+        let apiContent = [];
+
         //get api files
-        let apiContent = await util.getAPIFileContent(contentPath);
+        if (fsDir.existsSync(contentPath)) {
+             console.log("contentPath", contentPath)
+            let apiLanding = await util.getAPIFileContent(contentPath);
+            apiContent.push(...apiLanding);
+        }
+        console.log("apiContent", apiContent)   
         //get api images
-        const apiImages = await util.getAPIImages(imagesPath);
+        if (fsDir.existsSync(imagesPath)) {
+            const apiImages = await util.getAPIImages(imagesPath);
+            apiContent.push(...apiImages);
+
+        }
         //get api documents
         if (fsDir.existsSync(documentPath)) {
             const apiDocuments = await util.readDocFiles(documentPath);
@@ -369,7 +383,10 @@ const createAPITemplate = async (req, res) => {
             const links = util.getAPIDocLinks(docMetadata);
             apiContent.push(...links);
         }
-        apiContent.push(...apiImages);
+        let imageMetadata = {};
+        if (req.body.imageMetadata) {
+            imageMetadata = JSON.parse(req.body.imageMetadata);
+        }
         await sequelize.transaction(async (t) => {
             //check whether api belongs to given org
             let apiMetadata = await apiDao.getAPIMetadata(orgId, apiId, t);
@@ -378,7 +395,7 @@ const createAPITemplate = async (req, res) => {
             if (imageMetadata[constants.API_ICON], exsistingAPIImage) {
                 await apiDao.deleteImage(constants.API_ICON, apiId, t);
             }
-            
+
             if (apiMetadata) {
                 // Store image metadata
                 await apiDao.storeAPIImageMetadata(imageMetadata, apiId, t);
