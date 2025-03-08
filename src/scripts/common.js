@@ -33,13 +33,36 @@ document.addEventListener("DOMContentLoaded", function () {
                 subscriptionBox.classList.remove("subscription-box");
             });
 
-
             // Custom select functionality
             const selectSelected = dropdown.querySelector(".select-selected");
             const selectItems = dropdown.querySelector(".select-items");
             const selectOptions = dropdown.querySelectorAll(".select-item");
             const actionItem = dropdown.querySelector(".select-action-item");
             const hiddenSelect = dropdown.querySelector("select");
+
+            // Set first non-subscribed option as selected initially
+            let firstNonSubscribedOption = null;
+            selectOptions.forEach(option => {
+                if (!option.querySelector('.subscription-icon') && !firstNonSubscribedOption) {
+                    firstNonSubscribedOption = option;
+                }
+            });
+
+            if (firstNonSubscribedOption) {
+                const firstValue = firstNonSubscribedOption.getAttribute("data-value");
+                const firstText = firstNonSubscribedOption.textContent.trim();
+
+                // Update the visible selected text
+                selectSelected.querySelector(".selected-text").textContent = firstText;
+
+                // Update the hidden select value
+                for (let i = 0; i < hiddenSelect.options.length; i++) {
+                    if (hiddenSelect.options[i].value === firstValue) {
+                        hiddenSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
 
             // Toggle dropdown when clicking on the selected item
             selectSelected.addEventListener("click", function(e) {
@@ -51,8 +74,24 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // Handle option selection
             selectOptions.forEach(item => {
+                // Check if the item is subscribed
+                const isSubscribed = item.querySelector('.subscription-icon') !== null;
+                
+                // Add disabled class if subscribed
+                if (isSubscribed) {
+                    item.classList.add('disabled');
+                    item.style.opacity = '0.6';
+                    item.style.cursor = 'not-allowed';
+                }
+                
                 item.addEventListener("click", function(e) {
                     e.stopPropagation();
+                    
+                    // Don't process click if item is subscribed
+                    if (isSubscribed) {
+                        return;
+                    }
+                    
                     const value = this.getAttribute("data-value");
                     const text = this.textContent.trim();
 

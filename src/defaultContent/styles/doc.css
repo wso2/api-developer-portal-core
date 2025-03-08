@@ -82,33 +82,36 @@
     flex: 1;
 }
 
-.cards {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
+/* Adding a parent class to avoid overriding the card styles globally */
+.doc-content {
+    .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
 
-.card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 8px;
-    border: 1px solid #e0e2e9;
-}
+    .card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        border: 1px solid #e0e2e9;
+    }
 
-.card.active {
-    border-color: #407893;
-}
+    .card.active {
+        border-color: #407893;
+    }
 
-.card h3 {
-    margin-bottom: 0.5rem;
-    color: #40404b;
-}
+    .card h3 {
+        margin-bottom: 0.5rem;
+        color: #40404b;
+    }
 
-.card p {
-    color: #8d91a3;
-    font-size: 0.875rem;
-    line-height: 1.5;
+    .card p {
+        color: #8d91a3;
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
 }
 
 /* Documents Section */
@@ -272,4 +275,3 @@
         grid-template-columns: 1fr;
     }
 }
-        

@@ -1,105 +1,104 @@
 <section class="apis-section">
-  <div class="col-lg-12 hero-section-apilisting">
-    <div class="apilist-hero-container anim">
+  <div class="container-fluid">
+    <div class="apilist-hero-container">
       <div class="apilist-hero-content">
         <div class="apilist-hero-header">
-          <h1>Discover our
-            <span>APIs</span>
-            to power your next solution
+          <h1 class="apilist-hero-title">
+            Discover, Integrate, and Scale with
+            <span class="apilist-hero-title-highlight">
+              Powerful APIs
+            </span>
           </h1>
-        </div>
-        <div class="col-lg-12 search-container">
-          <div class="search-input">
-            <input type="text" id="query" />
+          <div class="apilist-hero-description">
+            Explore our extensive API catalog and discover how to integrate them seamlessly into your application.
           </div>
         </div>
       </div>
       <div class="col-lg-6 col-md-12 apilist-hero-image">
-        <img src="/images/apisHeroImg.svg" alt="Hero Image" class="img-fluid" />
+        <img src="/images/apisHeroImg.png" alt="Hero Image" class="img-fluid" />
       </div>
     </div>
   </div>
-  <div class="container-fluid col-lg-12 apilist-container">
-    <div class="row list-items ">
-      {{!-- TODO: Move this to search functionality
-      <div class="col-lg-2 api-filterlist">
-        <div class="filter-header">
-          <h6>Filter By</h6>
-          <a class="filter-header-clear" id="clearAll">Clear All</a>
-        </div>
-        <div class="row list-items api-filter-content">
-          <div class="col-lg filter-sub"> Explore </div>
-          <div class="col-lg dropdown" id="exploreFilter" data-bs-toggle="collapse" data-bs-target="#collapseExplore"
-            aria-expanded="true" aria-controls="collapseExplore">
-            <i class="bi bi-chevron-down"></i>
-          </div>
-          <hr />
-          {{#tags}}
-          <div class="collapse show" id="collapseExplore">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="" id={{lowercase this}} data-tag={{this}} />
-              <label class="form-check-label" for="flexCheckDefault">{{this}}</label>
-            </div>
-          </div>
-          {{/tags}}
-        </div>
-      </div> --}}
-      <div class="container">
-        <div class="row">
-          {{#apiMetadata}}
-          <div class="col-lg-4 col-md-6 mb-4" id="apiCard">
-            <div class="card dev-card api-card d-flex flex-column">
-              <div class="d-flex align-items-center gap-2">
-                <img src="{{apiInfo.apiImageMetadata.api-icon}}" class="api-card-img" alt="..." />
-                <div class="api-card-body flex-grow-1">
-                  <h5 class="api-card-title mb-0">{{apiInfo.apiName}}</h5>
-                  <p>V {{apiInfo.apiVersion}}</p>
-                  <p>{{apiInfo.apiType}}</p>
-                </div>
-              </div>
-              <div class="api-card-body flex-grow-1">
-                <p class="truncate-text">{{apiInfo.apiDescription}}</p>
-                <div class="row list-items">
-                  <div class="apilisting-tags">
-                    {{#apiInfo.tags}}
-                    <span class="badge badge-custom2">{{this}}</span>
-                    {{/apiInfo.tags}}
-                  </div>
-                </div>
-              </div>
-              <div class="apibtn-container">
-                <div id="btnSection" class="d-flex align-items-center gap-3 pb-3">
-                  <div class="flex-shrink-0">
-                    <a type="button" class="common-btn-white" href="{{../baseUrl}}/api/{{apiHandle}}">Overview</a>
-                  </div>
-                  <div id="subscriptionBox" class="subscription-container">
-                    {{> subscription-plans apiInfo=apiInfo apiName=apiInfo.apiName}}
-                    {{#if ../isAuthenticated}}
-                    {{#unless (every applications "subscribed")}}
-                      {{#if subscriptionPolicies.length}}
-                        {{!-- {{#if (eq subscriptionPolicies.length 1)}} --}}
-                          {{!-- <a type="button" class="common-btn-primary" onclick="subscribe('{{../orgID}}', '', '{{apiID}}', '{{apiReferenceID}}', '{{subscriptionPolicyDetails.[0].policyID}}', '{{subscriptionPolicyDetails.[0].policyName}}')">Subscribe</a> --}}
-                          {{!-- {{else}} --}}
-                          <a type="button" class="common-btn-primary" onclick="loadModal('planModal-{{apiID}}')">Subscribe</a>
-                        {{!-- {{/if}}    --}}
-                      {{#if applications.length}}
-                      <select class="form-select bg-white text-dark custom-dropdown" id="appDropdown-{{apiID}}">
-                        {{#each applications}}
-                        <option value="{{id}}" {{#if subscribed}} disabled {{/if}}>{{name}} {{#if subscribed}} ✔ {{/if}} </option>
-                        {{/each}}
-                      </select>
-                      {{/if}}
-                      {{/if}}
-                      {{else}}
-                        <a type="button" class="common-btn-primary disabled" disabled>Subscribe</a>
-                      {{/unless}} 
-                    {{/if}}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        {{/apiMetadata}}
+  <div class="container-fluid apilist-container">
+    <div class="search-container">
+      <div class="search-input">
+        <img src="/images/search.svg" alt="search" class="search-icon" />
+        <input type="text" id="query" placeholder="Search APIs" autocomplete="off" />
       </div>
     </div>
+    <div class="row row-gap-4">
+      {{#apiMetadata}}
+      <div class="col-lg-4 col-md-6 col-sm-12" id="apiCard">
+        <div class="card api-card d-flex flex-column">
+          <div class="api-card-header d-flex align-items-center gap-3">
+            <img src="{{apiInfo.apiImageMetadata.api-icon}}" class="api-card-img" alt="..." />
+            <div class="flex-grow-1">
+              <h5 class="api-card-title mb-0">{{apiInfo.apiName}}</h5>
+              <p>V {{apiInfo.apiVersion}}</p>
+              <p>{{apiInfo.apiType}}</p>
+            </div>
+          </div>
+          <div class="api-card-body flex-grow-1">
+            <div class="truncate-text font-light apilisting-api-description small mb-3">{{apiInfo.apiDescription}}</div>
+            <div class="row">
+              <div class="apilisting-tags">
+                {{#apiInfo.tags}}
+                <span class="badge badge-custom2">{{this}}</span>
+                {{/apiInfo.tags}}
+              </div>
+            </div>
+          </div>
+          <hr class="mx-3 my-0" />
+          <div class="api-card-footer">
+            <div id="btnSection" class="d-flex align-items-center gap-2 w-100">
+              <div class="flex-shrink-0">
+                <a type="button" class="common-btn-outlined" href="{{../baseUrl}}/api/{{apiHandle}}">Overview</a>
+              </div>
+              <div id="subscriptionBox" class="subscription-container">
+                {{> subscription-plans apiInfo=apiInfo apiName=apiInfo.apiName}}
+                {{#if ../isAuthenticated}}
+                {{#unless (every applications "subscribed")}}
+                {{#if subscriptionPolicies.length}}
+                {{#if (eq subscriptionPolicies.length 1)}}
+                <a type="button" class="common-btn-outlined"
+                  onclick="subscribe('{{../orgID}}', '', '{{apiID}}', '{{apiReferenceID}}', '{{subscriptionPolicyDetails.policyID}}', '{{subscriptionPolicyDetails.policyName}}')">Subscribe</a>
+                {{else}}
+                <a type="button" class="common-btn-primary" onclick="loadModal('planModal-{{apiID}}')">Subscribe</a>
+                {{/if}}
+
+                {{#if applications.length}}
+                <div class="custom-dropdown" id="customDropdown-{{apiID}}">
+                  <div class="custom-select-container">
+                    <div class="select-selected" role="combobox" aria-expanded="false" aria-haspopup="listbox">
+                      <span class="selected-text small">Select an app</span>
+                      <span class="select-arrow"></span>
+                    </div>
+                    <div class="select-items" role="listbox">
+                      <div class="select-action-item" role="button" data-action="create-app">+ Create Application</div>
+                      {{#each applications}}
+                        <div class="select-item" role="option" data-value="{{id}}">
+                          <span>{{name}}</span>
+                          {{#if subscribed}}<img src="/images/success-rounded.svg" alt="Subscribed" class="subscription-icon" />{{/if}}
+                        </div>
+                      {{/each}}
+                    </div>
+                    <select class="d-none" id="appDropdown-{{apiID}}">
+                      {{#each applications}}
+                        <option value="{{id}}" {{#if subscribed}} disabled {{/if}}>{{name}}</option>
+                      {{/each}}
+                    </select>
+                  </div>
+                </div>
+                {{/if}}
+                {{/if}}
+                {{else}}
+                <a type="button" class="common-btn-primary disabled" disabled>Subscribe</a>
+                {{/unless}}
+                {{/if}}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {{/apiMetadata}}
 </section>
