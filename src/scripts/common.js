@@ -33,13 +33,30 @@ document.addEventListener("DOMContentLoaded", function () {
                 subscriptionBox.classList.remove("subscription-box");
             });
 
-
             // Custom select functionality
             const selectSelected = dropdown.querySelector(".select-selected");
             const selectItems = dropdown.querySelector(".select-items");
             const selectOptions = dropdown.querySelectorAll(".select-item");
             const actionItem = dropdown.querySelector(".select-action-item");
             const hiddenSelect = dropdown.querySelector("select");
+
+            // Set first option as selected initially
+            if (selectOptions.length > 0) {
+                const firstOption = selectOptions[0];
+                const firstValue = firstOption.getAttribute("data-value");
+                const firstText = firstOption.textContent.trim();
+
+                // Update the visible selected text
+                selectSelected.querySelector(".selected-text").textContent = firstText;
+
+                // Update the hidden select value
+                for (let i = 0; i < hiddenSelect.options.length; i++) {
+                    if (hiddenSelect.options[i].value === firstValue) {
+                        hiddenSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
 
             // Toggle dropdown when clicking on the selected item
             selectSelected.addEventListener("click", function(e) {
