@@ -15,6 +15,27 @@ collapseBtn.addEventListener('click', () => {
 });
 
 document.addEventListener("DOMContentLoaded", function () {
+    // Set active status based on current URL path
+    const setActiveSidebarLink = () => {
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.nav-link');
+        
+        // Remove active class from all links
+        navLinks.forEach(link => link.classList.remove('active'));
+        
+        // Set the active class based on path
+        if (currentPath.endsWith('/') || currentPath === '') {
+            document.getElementById('home')?.classList.add('active');
+        } else if (currentPath.includes('/apis')) {
+            document.getElementById('apis')?.classList.add('active');
+        } else if (currentPath.includes('/applications')) {
+            document.getElementById('applications')?.classList.add('active');
+        }
+    };
+    
+    // Call the function when page loads
+    setActiveSidebarLink();
+    
     const cards = document.querySelectorAll(".api-card");
     cards.forEach(card => {
         const subscriptionBox = card.querySelector(".subscription-container");
@@ -132,14 +153,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 selectSelected.setAttribute("aria-expanded", "false");
             });
         }
-    });
-    
-    const navLinks = document.querySelectorAll('.nav-link');
-    navLinks.forEach(link => {
-        link.addEventListener('click', function (event) {
-            navLinks.forEach(link => link.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-        });
     });
 });
 
