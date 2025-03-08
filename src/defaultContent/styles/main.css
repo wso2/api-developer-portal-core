@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;600;700&display=swap");
 @import "/styles/hero.css";
 @import "/styles/footer.css";
 @import "/styles/header.css";
@@ -24,6 +24,8 @@
 
 :root {
   --main-bg-color: #ffffff;
+  --secondary-bg-color: #D4E8F64D;
+  --light-bg-color: #F7F8FB;
   /* primary colors */
   --primary-main-color: #1A4C6D;
   --primary-light-color: #407893;
@@ -45,7 +47,7 @@
   --white-color: #ffffff;
   --Black-color: #000000;
   /* Gradient */
-  --primary-gradient: linear-gradient(90deg, #eeeeff 0%, #ebfbf7 100%);
+  --primary-gradient: linear-gradient(110.69deg, #1a4c6d33 17.45%, #40789333 90.82%);
   --dark-gradient: linear-gradient(to right, #50c9c3, #4a6fa1);
 
   --font-family-sans: "Poppins", sans-serif;
@@ -64,6 +66,7 @@ body {
   height: 100%;
   display: flex;
   flex-direction: column;
+  font-family: var(--font-family-sans);
 }
 
 .main-container {
@@ -71,10 +74,16 @@ body {
 }
 
 .content-area {
-  margin-left: 3.75rem
+  margin-left: 4rem;
+  margin-top: 0.5rem;
+}
+
+.section {
+  margin: 5rem 3.75rem;
 }
 
 .common-btn-primary {
+  display: inline-block;
   background-color: var(--primary-dark-color);
   color: var(--white-text-color);
   font-size: 0.875rem;
@@ -99,6 +108,7 @@ body {
 }
 
 .common-btn-light {
+  display: inline-block;
   background-color: var(--primary-light-color);
   color: var(--white-text-color);
   font-size: 0.875rem;
@@ -130,6 +140,7 @@ body {
 }
 
 .common-btn-white {
+  display: inline-block;
   background-color: var(--white-color);
   color: var(--primary-dark-color);
   font-size: 0.875rem;
@@ -162,12 +173,10 @@ body {
 }
 
 .common-btn-link {
-  background-color: transparent;
-  color: var(--secondary-light-color);
+  display: inline-block;
+  color: var(--primary-dark-color);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
-  border: none;
-  border-radius: 3.125rem;
   text-decoration: none;
   cursor: pointer;
   text-align: center;
@@ -176,22 +185,20 @@ body {
 }
 
 .common-btn-link:hover {
-  color: var(--primary-dark-color);
-  background-color: var(--primary-light-color);
-  color: var(--white-text-color);
+  color: var(--primary-light-color);
+  text-decoration: none;
 }
 
 .common-btn-link:active {
-  color: var(--white-text-color);
-  background-color: var(--primary-main-color);
+  color: var(--primary-dark-color);
 }
 
 .common-btn-link:focus {
-  outline: none;
-  box-shadow: 0 0 0 0.25rem var(--primary-light-color);
+  border: none;
 }
 
 .common-btn-outlined {
+  display: inline-block;
   background-color: transparent;
   color: var(--primary-main-color);
   font-size: 0.875rem;
@@ -230,7 +237,7 @@ body {
 
 .common-header h2 {
   font-size: 1.875rem;
-  margin-bottom: 2.8125rem;
+  margin-bottom: 3.5rem;
   font-weight: 600;
   color: var(--primary-main-color);
 }
@@ -247,11 +254,8 @@ body {
 /* common-card-style */
 .dev-card {
   height: 100%;
-  background-color: var(--light-bg-color);
   border-radius: 12px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px 20px 0px 20px;
-  margin: 10px 10px 10px 0;
+  padding: 20px;
 }
 
 /* common-md-file-style */
@@ -284,7 +288,7 @@ h6 {
 /* --Paragraph-- */
 .api-md-content p {
   font-size: 15px;
-  color: var(--main-text-color);
+  color: var (--main-text-color);
 }
 
 .api-md-content li {
@@ -294,4 +298,9 @@ h6 {
 
 .api-md-content li::marker {
   color: var(--primary-color);
+}
+
+/* Classes for Font weights */
+.font-light {
+  font-weight: 300;
 }

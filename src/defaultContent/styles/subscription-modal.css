@@ -1,4 +1,3 @@
-
 .modal-xl {
   width: 50%;
 }
@@ -50,10 +49,59 @@
 }
 
 .custom-modal .btn-close {
+  align-self: flex-end;
   background-color: transparent;
 }
 
 .custom-modal-btn-section {
   display: flex;
   padding: 0 1rem 1rem 1rem;
+}
+
+.subscription-plans-body {
+  background-color: var(--light-bg-color);
+  padding: 2rem;
+}
+
+.subscription-plans-rounded-bottom {
+  margin-top: -1rem;
+  border-bottom-left-radius: 24px;
+  border-bottom-right-radius: 24px;
+}
+
+.subscription-plans-title {
+  font-weight: 500;
+}
+
+.subscription-plans-subtitle {
+  font-weight: 300;
+}
+
+.subscription-plans-card-title {
+  color: var(--primary-main-color);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.subscription-plans-request-count {
+  color: var(--primary-main-color);
+  font-weight: 600;
+  padding-top: 1.5rem;
+  margin-bottom: 0;
+}
+
+.subscription-plans-card-subtitle {
+  color: var(--light-text-color) !important;
+  font-size: 0.85rem !important;
+  font-weight: 500;
+}
+
+.subscription-plan-subscribe-btn {
+  font-size: 0.75rem;
+}
+
+.subscription-modal-cancel-btn-wrapper {
+  padding-left: 1rem;
+  padding-bottom: 1rem;
+  margin-top: 1.5rem;
 }

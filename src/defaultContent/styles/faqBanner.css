@@ -1,8 +1,5 @@
 .faq-banner-section {
-  background-color: var(--primary-light-color);
-  border-radius: 1.5rem;
-  padding: 2.5rem;
-  margin: 3.75rem 7.75rem;
+  margin: 1rem 3.75rem;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -10,7 +7,9 @@
 }
 
 .faq-banner-container {
-  max-width: 50rem;
+  padding: 2.5rem;
+  border-radius: 1.5rem;
+  background: var(--primary-gradient);
 }
 
 .faq-banner-description {
