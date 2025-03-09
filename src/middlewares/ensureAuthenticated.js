@@ -31,7 +31,7 @@ const jwt = require('jsonwebtoken');
 function enforceSecuirty(scope) {
     return async function (req, res, next) {
         try {
-            const token = accessTokenPresent(req); //asgardeo
+            const token = accessTokenPresent(req);
             if (token) {
                 // TODO: Implement organization extraction logic
                 validateAuthentication(scope)(req, res, next);
