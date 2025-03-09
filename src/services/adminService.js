@@ -273,9 +273,19 @@ const deleteIdentityProvider = async (req, res) => {
 
 const createOrgContent = async (req, res) => {
 
-
+    const rules = util.validateRequestParameters();
+    for (let validation of rules) {
+        await validation.run(req);
+    }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json(util.getErrors(errors));
+    }
     const orgId = req.params.orgId;
     const viewName = req.params.name;
+    if (!orgId) {
+        throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+    }
     const zipPath = req.file.path;
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
     try {
@@ -317,8 +327,19 @@ const createContent = async (filePath, fileName, fileContent, fileType, orgId, v
 
 const updateOrgContent = async (req, res) => {
 
+    const rules = util.validateRequestParameters();
+    for (let validation of rules) {
+        await validation.run(req);
+    }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json(util.getErrors(errors));
+    }
     const orgId = req.params.orgId;
     const viewName = req.params.name;
+    if (!orgId) {
+        throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+    }
     const zipPath = req.file.path;
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
     try {

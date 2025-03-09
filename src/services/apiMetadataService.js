@@ -24,6 +24,7 @@ const util = require("../utils/util");
 const path = require("path");
 const fs = require("fs").promises;
 const fsDir = require("fs");
+const { validationResult } = require('express-validator');
 const APIDTO = require("../dto/apiDTO");
 const ViewDTO = require("../dto/views");
 const APIDocDTO = require("../dto/apiDoc");
@@ -335,16 +336,24 @@ const deleteAPIMetadata = async (req, res) => {
 const createAPITemplate = async (req, res) => {
 
     try {
+        const rules = util.validateRequestParametersForTemplate();
+        for (let validation of rules) {
+            await validation.run(req);
+        }
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json(util.getErrors(errors));
+        }
         const { orgId, apiId } = req.params;
+        if (!orgId) {
+            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+        }
+        const zipFilePath = req.file.path;
         const extractPath = path.join("/tmp", orgId + "/" + apiId);
         await fs.mkdir(extractPath, { recursive: true });
-        const zipFilePath = req.file.path;
-        console.log("zipFilePath", zipFilePath)
-        //await util.unzipFile(zipFilePath, extractPath);
         await util.unzipDirectory(zipFilePath, extractPath);
 
         const apiContentFileName = req.file.originalname.split(".zip")[0];
-        console.log("apiContentFileName", apiContentFileName)
 
         // Build complete paths
         const contentPath = path.join(extractPath, apiContentFileName, "content");
@@ -425,15 +434,26 @@ const createAPITemplate = async (req, res) => {
 const updateAPITemplate = async (req, res) => {
 
     try {
+
+        const rules = util.validateRequestParametersForTemplate();
+        for (let validation of rules) {
+            await validation.run(req);
+        }
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json(util.getErrors(errors));
+        }
         const { orgId, apiId } = req.params;
         let imageMetadata;
         if (req.body.imageMetadata) {
             imageMetadata = JSON.parse(req.body.imageMetadata);
         }
+        if (!orgId) {
+            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+        }
+        const zipFilePath = req.file.path;
         const extractPath = path.join("/tmp", orgId + "/" + apiId);
         await fs.mkdir(extractPath, { recursive: true });
-        const zipFilePath = req.file.path;
-        //await util.unzipFile(zipFilePath, extractPath);
         await util.unzipDirectory(zipFilePath, extractPath);
         const apiContentFileName = req.file.originalname.split(".zip")[0];
 

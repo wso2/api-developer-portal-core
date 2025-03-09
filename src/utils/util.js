@@ -28,7 +28,7 @@ const axios = require('axios');
 const qs = require('qs');
 const https = require('https');
 const config = require(process.cwd() + '/config.json');
-const { body } = require('express-validator');
+const { body, param } = require('express-validator');
 const { Sequelize } = require('sequelize');
 const apiDao = require('../dao/apiMetadata');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
@@ -509,6 +509,55 @@ const validateProvider = () => {
     return validations;
 }
 
+const validateRequestParameters = () => {
+
+    const validations = [
+        param('*')
+            .notEmpty()
+            .customSanitizer(value => {
+                // Return the sanitized value
+                return value.replace(/[<>"'&]/g, '');
+            })
+            .trim(),
+        body('file')
+            .custom((value, { req }) => {
+                if (!req.file) {
+                    throw new Error('File is required.');
+                }
+                return true;
+            })
+    ]
+    return validations;
+}
+
+const validateRequestParametersForTemplate = () => {
+
+    const validations = [
+        param('*')
+            .notEmpty()
+            .customSanitizer(value => {
+                // Return the sanitized value
+                return value.replace(/[<>"'&]/g, '');
+            })
+            .trim(),
+        body('file')
+            .custom((value, { req }) => {
+                if (!req.file) {
+                    throw new Error('File is required.');
+                }
+                return true;
+            }),
+        body('imageMetadata')
+            .custom((value, { req }) => {
+                if (!value) {
+                    throw new Error('imageMetadata is required.');
+                }
+                return true;
+            })
+    ]
+    return validations;
+}
+
 const rejectExtraProperties = (allowedKeys, payload) => {
 
     const extraKeys = Object.keys(payload).filter(
@@ -571,7 +620,7 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                 } else {
                     // Unexpected file type
                     console.warn(`Unexpected file type detected: ${file.name}`);
-                    fileType = "unknown"; // Set default to unknown
+                    continue;
                 }
 
                 fileDetails.push({
@@ -732,6 +781,8 @@ module.exports = {
     validateOrganization,
     getErrors,
     validateProvider,
+    validateRequestParameters,
+    validateRequestParametersForTemplate,
     rejectExtraProperties,
     readFilesInDirectory,
     appendAPIImageURL,
