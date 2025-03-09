@@ -98,15 +98,20 @@ const ensureAuthenticated = async (req, res, next) => {
     let adminRole = config.adminRole;
     let superAdminRole = config.superAdminRole;
     let subscriberRole = config.subscriberRole;
+    let orgID;
+    if (req.params.orgName) {
+        orgID = req.params.orgName;
+    } else if (req.params.orgId) {
+        orgID = req.params.orgId;
+    }
+    if (req.originalUrl.includes('/apis') && req.isAuthenticated()) {
+        const orgDetails = await adminDao.getOrganization(orgID);
+        req.user[constants.ORG_ID] = orgDetails.ORG_ID;
+        req.user[constants.ORG_IDENTIFIER] = orgDetails.ORGANIZATION_IDENTIFIER || config.orgIDClaim;
+    }
+
     if ((req.originalUrl != '/favicon.ico' | req.originalUrl != '/images') &&
         config.authenticatedPages.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
-        //fetch role details from DB
-        let orgID;
-        if (req.params.orgName) {
-            orgID = req.params.orgName;
-        } else {
-            orgID = req.params.orgId;
-        }
         let orgDetails;
         if (!(orgID === undefined)) {
             orgDetails = await adminDao.getOrganization(orgID);

@@ -48,6 +48,7 @@ function hideElementById(elementId) {
 
 function closeModal(elementId) {
     hideElementById(elementId);
+    document.querySelector("form").reset();
 }
 
 window.onclick = function (event) {

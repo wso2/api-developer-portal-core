@@ -67,7 +67,6 @@ applicationForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const name = document.getElementById('applicationName').value;
-    const throttlingPolicy = document.getElementById('throttlingPolicy').value;
     const description = document.getElementById(
         'applicationDescription'
     ).value;
@@ -92,7 +91,11 @@ applicationForm.addEventListener('submit', async (e) => {
         const responseData = await response.json();
         await showAlert(responseData.message || 'Application saved successfully!', 'success');
         applicationForm.reset();
-        window.location.href = document.referrer || '/applications';
+        if (document.referrer.includes('/apis')) {
+            window.location.reload();
+        } else {
+            window.location.href = document.referrer || '/applications';
+        }
     } catch (error) {
         console.error('Error saving application:', error);
         await showAlert('Failed to save application.', 'error');
