@@ -1,19 +1,12 @@
-.applicationspage-container {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 1rem 3rem;
-  gap: 1.25rem;
-  justify-content: flex-start;
+.applicationspage-container .container-header {
+  display: block;
+  color: var(--primary-main-color);
+  font-size: 2rem;
+  font-weight: 600;
 }
 
 .applicationspage-container .card {
-  flex: 1 1 calc(25% - 1.25rem);
-  max-width: calc(25% - 1.25rem);
-  min-width: 12.5rem;
-  border-radius: 0.75rem;
-  background-color: var(--white-color);
-  border: 0.0125rem solid var(--primary-main-color);
-  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+  border-radius: 1.5rem;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -41,33 +34,47 @@
 }
 
 .plus-icon {
-  font-size: 2rem;
+  font-size: 1.5rem;
+  line-height: 1.5rem;
+  font-weight: 300;
   color: var(--primary-main-color);
   display: block;
 }
 
 .create-text {
   font-size: 1rem;
+  font-weight: 500;
   color: var(--primary-main-color);
 }
 
 .application-name-link {
-  color: var(--primary-main-color);
+  color: var(--dark-text-color);
   text-decoration: none;
   font-size: 1rem;
+  font-weight: 500;
+  overflow: hidden;
+}
+
+.application-status {
+  display: inline-block;
+  padding: 0 4px 1px 4px;
+  border-radius: 4px;
+  font-size: 10px;
+  text-transform: lowercase;
+  background-color: var(--light-bg-color);
+  color: var(--secondary-text-color);
+  border: 1px solid;
+}
+
+.application-status::first-letter {
+  text-transform: uppercase;
 }
 
 .application-card {
   display: flex;
   flex-direction: column;
   height: 11.25rem;
-  padding: 1rem;
-}
-
-.application-card-title {
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
+  padding: 1.5rem;
 }
 
 .applicationlist-tags {
@@ -101,7 +108,7 @@
 
 .application-card-meta p {
   display: flex;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   color: var(--main-text-color);
   margin: 0.3125rem 0;
 }
@@ -121,6 +128,7 @@
   align-items: center;
   justify-content: center;
   border: none;
+  padding: 0 0 0 0.75rem;
   background-color: transparent;
   color: var(--main-text-color);
   font-size: 1rem;
@@ -129,6 +137,32 @@
 
 .application-btn-icon:hover {
   color: var(--primary-main-color);
+}
+
+/* Add specific styling for delete button */
+.application-btn-icon.delete-button {
+  color: var(--danger-color);
+}
+
+.application-btn-icon.delete-button:hover {
+  color: var(--danger-color);
+  opacity: 0.8;
+}
+
+.application-btn-icon.edit-button {
+  color: var(--main-text-color);
+}
+
+.application-btn-icon.edit-button:hover {
+  color: var(--main-text-color);
+  opacity: 0.8;
+}
+
+.application-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
 }
 
 @media (max-width: 768px) {
