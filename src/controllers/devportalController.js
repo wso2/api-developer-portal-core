@@ -26,6 +26,7 @@ const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 const { ApplicationDTO } = require('../dto/application');
 const { Sequelize } = require("sequelize");
+const { checkAdditionalValues } = require('../services/adminService');
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
 
@@ -163,10 +164,13 @@ const cleanUp = async (req, res) => {
 };
 
 const updateOAuthKeys = async (req, res) => {
+
+    let tokenDetails = req.body;
+    tokenDetails.additionalProperties = checkAdditionalValues(tokenDetails.additionalProperties);
     try {
         const applicationId = req.params.applicationId;
         const keyMappingId = req.params.keyMappingId;
-        const responseData = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}`, {}, req.body);
+        const responseData = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}`, {}, tokenDetails);
         res.status(200).json(responseData);
     } catch (error) {
         console.error("Error occurred while generating the OAuth keys", error);

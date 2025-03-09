@@ -199,17 +199,30 @@ const loadApplication = async (req, res) => {
                 api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
             }));
             kMmetaData = await getAPIMKeyManagers(req);
+            console.log("Key Managers", kMmetaData);
             kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
 
-            //display only Resident for chroeo.
             //TODO: handle multiple KM scenarios
-            kMmetaData = kMmetaData.filter(keyManager => keyManager.name === 'Resident Key Manager');
+            //select only Resident for chroeo.
+            // kMmetaData = kMmetaData.filter(keyManager => 
+            //     keyManager.name.includes("_internal_key_manager_") ||
+            //     (!kMmetaData.some(km => km.name.includes("_internal_key_manager_")) && keyManager.name.includes("ChoreoAppDevSTS")) ||
+            //     (!kMmetaData.some(km => km.name.includes("_internal_key_manager_") || km.name.includes("ChoreoAppDevSTS")) && keyManager.name.includes("Resident Key Manager"))
+            // );
+            
+            kMmetaData = kMmetaData.filter(keyManager => keyManager.name.includes("_internal_key_manager_"));
+
+            for (const keyManager of kMmetaData) {
+                keyManager.availableGrantTypes = await mapGrants(keyManager.availableGrantTypes);
+                keyManager.applicationConfiguration = await mapDefaultValues(keyManager.applicationConfiguration);
+            }
             const userID = req[constants.USER_ID]
             const applicationList = await adminService.getApplicationKeyMap(orgID, applicationId, userID);
             metaData = applicationList;
             let applicationKeyList;
             if (applicationList.appMap) {
                 applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
+                console.log("Application Key List", applicationKeyList.list[0].additionalProperties);
             }
             let productionKeys = [];
             let sandboxKeys = [];
@@ -237,6 +250,7 @@ const loadApplication = async (req, res) => {
                 }
                 return keyData;
             }) || [];
+
             kMmetaData.forEach(keyManager => {
                 productionKeys.forEach(productionKey => {
                     if (productionKey.keyManager === keyManager.name) {
@@ -364,6 +378,64 @@ async function getAPIMApplication(req, applicationId) {
 async function getAPIMKeyManagers(req) {
     const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers', null, null);
     return responseData.list;
+}
+
+async function mapGrants(grantTypes) {
+
+    let mappedGrantTypes = [];
+    grantTypes.map(grantType => {
+        if (grantType === 'password') {
+            mappedGrantTypes.push({
+                label: 'Password',
+                name: grantType
+            });
+        } else if (grantType === 'client_credentials') {
+            mappedGrantTypes.push(
+                {
+                    label: 'Client Credentials',
+                    name: grantType
+                }
+            );
+        } else if (grantType === 'refresh_token') {
+            mappedGrantTypes.push(
+                {
+                    label: 'Refresh Token',
+                    name: grantType
+                }
+            );
+        } else if (grantType === 'authorization_code') {
+            mappedGrantTypes.push(
+                {
+                    label: 'Authorization Code',
+                    name: grantType
+                }
+            );
+        } else if (grantType === 'implicit') {
+            mappedGrantTypes.push(
+                {
+                    label: 'Implicit',
+                    name: grantType
+                }
+            );
+        }
+    });
+    console.log("Mapped Grant Types", mappedGrantTypes)
+    return mappedGrantTypes;
+}
+
+async function mapDefaultValues(applicationConfiguration) {
+    
+    let appConfigs = [];
+    let defaultConfigs = ["application_access_token_expiry_time", "user_access_token_expiry_time", "id_token_expiry_time"];
+    applicationConfiguration.map(config => {
+        if (defaultConfigs.includes(config.name) && config.default == 'N/A') {
+            config.default = 3600;
+        } else if (config.name === 'refresh_token_expiry_time' && config.default == 'N/A') {
+            config.default = 86400;
+        }
+        appConfigs.push(config);
+    });
+    return appConfigs;
 }
 
 module.exports = {

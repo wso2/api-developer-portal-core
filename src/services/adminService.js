@@ -58,9 +58,9 @@ const createOrganization = async (req, res) => {
             //create default provider
             await adminDao.createProvider(organization.ORG_ID, { name: 'WSO2', providerURL: config.controlPlane.url }, t);
             //store default subscription policies
-            const storagePlans  = constants.DEFAULT_SUBSCRIPTION_PLANS;
+            const storagePlans = constants.DEFAULT_SUBSCRIPTION_PLANS;
             for (const plan of storagePlans) {
-              await apiDao.createSubscriptionPolicy(orgId, plan, t);
+                await apiDao.createSubscriptionPolicy(orgId, plan, t);
             }
         });
         const orgCreationResponse = {
@@ -840,16 +840,36 @@ const createAppKeyMapping = async (req, res) => {
                     await adminDao.createApplicationKeyMapping(appKeyMappping, t);
                 }
             }
+            //check if more than one mapping en
+            const appKeyMapping = await adminDao.getApplicationKeyMapping(orgID, appID, true);
             //delete app key mapping entries with no api id ref
-            await adminDao.deleteAppKeyMapping(orgID, appID, null, t);
+            if (appKeyMapping.length > 1) {
+                await adminDao.deleteAppKeyMapping(orgID, appID, null, t);
+            }
+            tokenDetails.additionalProperties = checkAdditionalValues(tokenDetails.additionalProperties);
+            console.log("Key generation payload", tokenDetails);
             //generate oauth key
             responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${cpAppID}/generate-keys`, {}, tokenDetails);
+            console.log("responseData", responseData);
         });
         return res.status(200).json(responseData);
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.KEY_MAPPING_CREATE_ERROR}`, error);
         return util.handleError(res, error);
     }
+}
+
+function checkAdditionalValues(additionalValues) {
+
+    let defaultConfigs = ["application_access_token_expiry_time", "user_access_token_expiry_time", "id_token_expiry_time", "refresh_token_expiry_time"];
+    const props = {}
+    for (const key in additionalValues) {
+        if (defaultConfigs.includes(key)) {
+            props[key] = parseInt(additionalValues[key]);
+        }
+    }
+    return props;
+
 }
 
 const createCPApplication = async (req, cpApplicationName) => {
@@ -1031,5 +1051,6 @@ module.exports = {
     unsubscribeAPI,
     createAppKeyMapping,
     retriveAppKeyMappings,
-    getApplicationKeyMap
+    getApplicationKeyMap,
+    checkAdditionalValues
 };

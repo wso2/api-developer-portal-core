@@ -1,5 +1,6 @@
 async function generateApplicationKey(formId, appId, keyType, keyManager, clientName, subscriptions, orgID, consumerKeyID, consumerSecretID) {
 
+
     const form = document.getElementById(formId);
     const apiList = []
     const subList = JSON.parse(subscriptions);
@@ -19,7 +20,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
         "tokenType": "OAUTH",
         "tokenDetails": {
             "grantTypesToBeSupported": jsonObject.grantTypes,
-            "keyType": "SANDBOX",
+            "keyType": keyType,
             "keyManager": keyManager,
             "callbackUrl": jsonObject.callbackURL,
             "scopes": [
@@ -29,6 +30,9 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             "additionalProperties": jsonObject.additionalProperties
         }
     })
+ 
+ 
+    console.log("additionalProperties", jsonObject.additionalProperties);
     try {
         const response = await fetch(`/devportal/organizations/${orgID}/app-key-mapping`, {
             method: 'POST',
@@ -37,7 +41,8 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             },
             body: payload,
         });
-
+ 
+ 
         const responseData = await response.json();
         if (response.ok) {
             await showAlert('Application keys generated successfully!', 'success');
@@ -46,6 +51,10 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             console.log("Keys", responseData);
             document.getElementById(consumerKeyID).value = consumerKey;
             document.getElementById(consumerSecretID).value = consumerSecret
+            const consumerKeyElement = document.getElementById("consumerKeys_" + keyManager);
+            consumerKeyElement.style.display = "block";
+            const KMURLs = document.getElementById("KMURl_" + keyManager);
+            KMURLs.style.display = "block";
             //const url = new URL(window.location.origin + window.location.pathname);
             //window.location.href = url.toString();
         } else {
@@ -56,9 +65,10 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
         console.error('Error:', error);
         await showAlert(`An error occurred generating application keys: \n${error.message}`, 'error');
     }
-}
-
-async function cleanUp(applicationId, keyMappingId) {
+ }
+ 
+ 
+ async function cleanUp(applicationId, keyMappingId) {
     try {
         const response = await fetch(`/devportal/applications/${applicationId}/oauth-keys/${keyMappingId}/clean-up`, {
             method: 'POST',
@@ -66,7 +76,6 @@ async function cleanUp(applicationId, keyMappingId) {
                 'Content-Type': 'application/json',
             },
         });
-
         const responseData = await response.json();
         if (response.ok) {
             await showAlert('Application keys cleaned up successfully!', 'success');
@@ -80,13 +89,15 @@ async function cleanUp(applicationId, keyMappingId) {
         console.error('Error:', error);
         await showAlert(`An error occurred cleaning up application keys: \n${error.message}`, 'error');
     }
-}
-
-function getFormData(formData, keyManager, clientName) {
+ }
+ 
+ 
+ function getFormData(formData, keyManager, clientName) {
     let jsonObject = {
         additionalProperties: {},
     };
-
+ 
+ 
     if (keyManager !== 'Resident Key Manager') {
         additionalProperties = {
             "client_id": formData.get('consumerKey'),
@@ -130,11 +141,13 @@ function getFormData(formData, keyManager, clientName) {
             }
         }
     });
-
+ 
+ 
     return jsonObject;
-};
-
-async function updateApplicationKey(formId, appMap, keyType, keyManager, keyManagerId, clientName) {
+ };
+ 
+ 
+ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyManagerId, clientName) {
     const form = document.getElementById(formId);
     const formData = new FormData(form);
     const jsonAppdata = JSON.parse(appMap);
@@ -159,7 +172,8 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
             },
             body: payload,
         });
-
+ 
+ 
         const responseData = await response.json();
         if (response.ok) {
             await showAlert('Application keys generated successfully!', 'success');
@@ -173,13 +187,15 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
         console.error('Error:', error);
         await showAlert(`An error occurred generating application keys: \n${error.message}`, 'error');
     }
-}
-
-async function removeApplicationKey() {
+ }
+ 
+ 
+ async function removeApplicationKey() {
     const modal = document.getElementById('deleteConfirmation');
     const applicationId = modal.dataset.applicationId;
     const keyMappingId = modal.dataset.param2;
-
+ 
+ 
     try {
         const response = await fetch(`/devportal/applications/${applicationId}/oauth-keys/${keyMappingId}`, {
             method: 'DELETE',
@@ -187,7 +203,8 @@ async function removeApplicationKey() {
                 'Content-Type': 'application/json',
             },
         });
-
+ 
+ 
         const responseData = await response.json();
         if (response.ok) {
             await showAlert('Application keys removed successfully!', 'success');
@@ -201,24 +218,29 @@ async function removeApplicationKey() {
         console.error('Error:', error);
         await showAlert(`An error occurred removing application keys: \n${error.message}`, 'error');
     }
-}
-
-
-async function generateCurl(formId) {
+ }
+ 
+ 
+ 
+ 
+ async function generateCurl(formId) {
     const form = document.getElementById(formId);
     const formData = new FormData(form);
     const tokenURL = formData.get('tokenURL');
     const auth = btoa(`${formData.get('consumerKey')}:${formData.get('consumerSecret')}`);
     const curl = `curl -k -X POST ${tokenURL} -d "grant_type=password&username=Username&password=Password" -H "Authorization: Basic ${auth}"`;
-
+ 
+ 
     openApiKeyModal(curl, "CURL to Generate Access Token", "The following cURL command shows how to generate an access token using the Password Grant type.");
-}
-
-async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName) {
+ }
+ 
+ 
+ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName) {
     const form = document.getElementById(formId);
     const formData = new FormData(form);
     const jsonObject = getFormData(formData, keyManager, clientName);
-
+ 
+ 
     try {
         const response = await fetch(`/devportal/applications/${appId}/oauth-keys/${keyMappingId}/generate-token`, {
             method: 'POST',
@@ -233,7 +255,8 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
                 "validityPeriod": 3600
             }),
         });
-
+ 
+ 
         const responseData = await response.json();
         openApiKeyModal(responseData.accessToken, "Generated OAuth Token", "OAuth Token");
         if (response.ok) {
@@ -248,14 +271,18 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
         console.error('Error:', error);
         await showAlert(`An error occurred while generating OAuth keys: \n${error.message}`, 'error');
     }
-
-}
-
-
-document.addEventListener('DOMContentLoaded', () => {
-    
+ 
+ 
+ }
+ 
+ 
+ 
+ 
+ document.addEventListener('DOMContentLoaded', () => {
+   
     const selectElement = document.getElementById("select-idp-list");
-
+ 
+ 
     function copyToClipboard(button) {
         const textToCopy = button.parentElement.querySelector('.endpoint-value').textContent;
         navigator.clipboard.writeText(textToCopy)
@@ -275,7 +302,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Failed to copy: ', err);
             });
     }
-
+ 
+ 
     function updateKeyManagerInfo() {
         document.querySelectorAll(".KMConfig").forEach((el) => {
             el.style.display = "none";
@@ -290,20 +318,27 @@ document.addEventListener('DOMContentLoaded', () => {
             kmURL.style.display = "block";
         }
     }
-
+ 
+ 
     selectElement.addEventListener("change", updateKeyManagerInfo);
     // Initialize with selected value
     updateKeyManagerInfo();
-
-});
-
-function loadKeyGenModal() {
+ 
+ 
+ });
+ 
+ 
+ function loadKeyGenModal() {
     const modal = document.getElementById('OauthKeyModal');
     modal.style.display = 'flex';
-}
-
-function showAdvanced(id) {
-    const content = document.getElementById(id);
+ }
+ 
+ 
+ function showAdvanced(configId) {
+    const content = document.getElementById(configId) ;
     content.style.display = content.style.display === "block" ? "none" : "block";
-}
-
+    // const KMDetails = document.getElementById(KMDetailsId) ;
+    // KMDetails.style.display = KMDetails.style.display === "block" ? "none" : "block";
+ }
+ 
+ 

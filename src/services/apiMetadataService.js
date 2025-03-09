@@ -365,7 +365,6 @@ const createAPITemplate = async (req, res) => {
             let apiLanding = await util.getAPIFileContent(contentPath);
             apiContent.push(...apiLanding);
         }
-        console.log("apiContent", apiContent)   
         //get api images
         if (fsDir.existsSync(imagesPath)) {
             const apiImages = await util.getAPIImages(imagesPath);
