@@ -367,13 +367,14 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
             rejectUnauthorized: true,
         });
     }
-    try {
-        const options = {
-            method,
-            headers,
-            httpsAgent,
-        };
 
+    const options = {
+        method,
+        headers,
+        httpsAgent,
+    };
+
+    try { 
         if (body) {
             options.data = body;
         }
@@ -388,28 +389,35 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         return response.data;
     } catch (error) {
         if (error.response?.status === 401 && req.user?.exchangeToken) {
-            console.log("Unauthorized. Trying to refresh token...");
             try {
-                const newExchangedToken = await util.tokenExchanger(req.user.accessToken, req.session.returnTo.split("/")[1]);
+                const newExchangedToken = await tokenExchanger(req.user.accessToken, req.user.returnTo.split("/")[1]);
                 req.user.exchangeToken = newExchangedToken;
                 headers.Authorization = `Bearer ${newExchangedToken}`;
                 options.headers = headers;
-                return (await axios(url, options)).data;
+                const response = await axios(url, options);
+                return response.data;
             } catch (retryError) {
-                console.error("Retry failed:", retryError);
                 let retryMessage = retryError.message;
-                if (retryError.response) {
-                    retryMessage = retryError.response.data.description;
-                }
-                throw new CustomError(retryError.response?.status || 500, "Request retry failed", retryMessage);
+                if (retryError.response?.status === 401) {
+                    const basePath = req.user.returnTo;
+                    console.log("Token exchange failed. Destroying user session.");
+                    req.session.destroy();
+                    console.log("redirec to: ", basePath);
+                } else {
+                    if (retryError.response) {
+                        retryMessage = retryError.response.data.description;
+                    }
+                    throw new CustomError(retryError.response?.status || 500, "Request retry failed", retryMessage);
+                }     
             }
-        }
-        console.log(`Error while invoking API:`, error);
-        let message = error.message;
-        if (error.response) {
-            message = error.response.data.description;
-        }
-        throw new CustomError(error.status, 'Request failed', message);
+        } else {
+            console.log(`Error while invoking API:`, error);
+            let message = error.message;
+            if (error.response) {
+                message = error.response.data.description;
+            }
+            throw new CustomError(error.status, 'Request failed', message);
+        }      
     }
 };
 
