@@ -26,7 +26,7 @@
   "homepage": "https://github.com/api-developer-portal-core#readme",
   "dependencies": {
     "async-lock": "^1.4.1",
-    "axios": "^1.7.8",
+    "axios": "^1.8.2",
     "bootstrap-icons": "^1.11.3",
     "chalk": "^4.1.2",
     "chokidar": "^3.6.0",
@@ -57,7 +57,7 @@
     "passport-custom": "^1.1.1",
     "passport-local": "^1.0.0",
     "passport-oauth2": "^1.8.0",
-    "passport-openidconnect": "^0.0.2",
+    "passport-openidconnect": "^0.1.2",
     "path": "^0.12.7",
     "pg": "^8.14.0",
     "pg-hstore": "^2.3.4",
