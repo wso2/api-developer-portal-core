@@ -19,6 +19,21 @@ document.addEventListener("DOMContentLoaded", function () {
     const setActiveSidebarLink = () => {
         const currentPath = window.location.pathname;
         const navLinks = document.querySelectorAll('.nav-link');
+        const apiSubmenu = document.getElementById('api-submenu');
+        const apisLink = document.getElementById('apis');
+        
+        // Function to extract base path from links in the sidebar
+        const extractBasePath = () => {
+            const homeLink = document.getElementById('home');
+            if (homeLink && homeLink.getAttribute('href')) {
+                const href = homeLink.getAttribute('href');
+                // Remove trailing slash if present
+                return href.endsWith('/') ? href.slice(0, -1) : href;
+            }
+            return '';
+        };
+        
+        const basePath = extractBasePath();
         
         // Remove active class from all links
         navLinks.forEach(link => link.classList.remove('active'));
@@ -26,10 +41,40 @@ document.addEventListener("DOMContentLoaded", function () {
         // Set the active class based on path
         if (currentPath.endsWith('/') || currentPath === '') {
             document.getElementById('home')?.classList.add('active');
+            apiSubmenu.classList.remove('show');
+            apisLink?.classList.remove('has-active-submenu');
         } else if (currentPath.includes('/apis')) {
-            document.getElementById('apis')?.classList.add('active');
+            apisLink?.classList.add('active');
+            apiSubmenu.classList.remove('show');
+            apisLink?.classList.remove('has-active-submenu');
+        } else if (currentPath.includes('/api/')) {
+            apiSubmenu.classList.add('show');
+            apisLink?.classList.add('active');
+            apisLink?.classList.add('has-active-submenu');
+            
+            // Extract API ID from URL path and update submenu links
+            const apiIdMatch = currentPath.match(/\/api\/([^\/]+)/);
+            if (apiIdMatch && apiIdMatch[1]) {
+                const apiId = apiIdMatch[1];
+                
+                // Update the submenu links with the correct API ID and base path
+                document.getElementById('api-overview').href = `${basePath}/api/${apiId}`;
+                document.getElementById('api-tryout').href = `${basePath}/api/${apiId}/tryout`;
+                document.getElementById('api-docs').href = `${basePath}/api/${apiId}/docs/specification`;
+                
+                // Set active submenu item
+                if (currentPath.includes('/tryout')) {
+                    document.getElementById('api-tryout')?.classList.add('active');
+                } else if (currentPath.includes('/docs')) {
+                    document.getElementById('api-docs')?.classList.add('active');
+                } else {
+                    document.getElementById('api-overview')?.classList.add('active');
+                }
+            }
         } else if (currentPath.includes('/applications')) {
             document.getElementById('applications')?.classList.add('active');
+            apiSubmenu.classList.remove('show');
+            apisLink?.classList.remove('has-active-submenu');
         }
     };
     
