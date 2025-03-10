@@ -96,7 +96,7 @@ const createAPIMetadata = async (req, res) => {
             await apiDao.storeAPIImageMetadata({
                 "api-icon": apiImageName,
             }, apiID, t);
-            await apiDao.storeAPIFile(generateSVG(apiMetadata.apiInfo.apiName.substring(0, 2), getRandomDarkColor()), apiImageName, apiID, constants.DOC_TYPES.IMAGES, t);
+            await apiDao.storeAPIFile(generateSVG(apiMetadata.apiInfo.apiName.substring(0, 1).toUpperCase(), getRandomDarkColor()), apiImageName, apiID, constants.DOC_TYPES.IMAGES, t);
         });
 
 
@@ -122,8 +122,8 @@ function getRandomDarkColor() {
 function generateSVG(letter, color) {
     return `
     <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-    <rect width="100" height="100" fill="${color}" rx="10"/>
-    <text x="50%" y="50%" font-size="50" font-family="Arial" fill="white" text-anchor="middle" alignment-baseline="central">
+    <rect width="100" height="100" fill="#1A4C6D" rx="10"/>
+    <text x="50%" y="50%" font-size="50" fill="#ffffff" font-family="Arial" text-anchor="middle" alignment-baseline="central">
         ${letter}
     </text>
     </svg>
@@ -502,24 +502,26 @@ const getAPIFile = async (req, res) => {
     try {
         const fileExtension = path.extname(apiFileName).toLowerCase();
         apiFileResponse = await apiDao.getAPIFile(apiFileName, type, orgId, apiId);
-        apiFile = apiFileResponse.API_FILE;
-        //convert to text to check if link
-        const textContent = new TextDecoder().decode(apiFile);
-        if (textContent.startsWith("http") || textContent.startsWith("https")) {
-            apiFile = textContent;
-            contentType = constants.MIME_TYPES.TEXT;
-        } else if (util.isTextFile(fileExtension)) {
-            contentType = util.retrieveContentType(apiFileName, constants.TEXT)
-        } else {
-            contentType = util.retrieveContentType(apiFileName, constants.IMAGE);
-        }
-        res.set(constants.MIME_TYPES.CONYEMT_TYPE, contentType);
-
         if (apiFileResponse) {
-            // Send file content as text
-            return res.status(200).send(Buffer.isBuffer(apiFile) ? apiFile : constants.CHARSET_UTF8);
-        } else {
-            res.status(404).send("API File not found");
+            apiFile = apiFileResponse.API_FILE;
+            //convert to text to check if link
+            const textContent = new TextDecoder().decode(apiFile);
+            if (textContent.startsWith("http") || textContent.startsWith("https")) {
+                apiFile = textContent;
+                contentType = constants.MIME_TYPES.TEXT;
+            } else if (util.isTextFile(fileExtension)) {
+                contentType = util.retrieveContentType(apiFileName, constants.TEXT)
+            } else {
+                contentType = util.retrieveContentType(apiFileName, constants.IMAGE);
+            }
+            res.set(constants.MIME_TYPES.CONYEMT_TYPE, contentType);
+
+            if (apiFileResponse) {
+                // Send file content as text
+                return res.status(200).send(Buffer.isBuffer(apiFile) ? apiFile : constants.CHARSET_UTF8);
+            } else {
+                res.status(404).send("API File not found");
+            }
         }
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.API_CONTENT_NOT_FOUND}, ${error}`);

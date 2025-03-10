@@ -151,7 +151,6 @@ const handleLogOut = async (req, res) => {
     }
     req['returnLogout'] = req.originalUrl.replace('/logout', '');
     console.log('Logged out URL: ', req['returnLogout']);
-    req.session.destroy();
     if (req.user && req.user.accessToken) {
         const referer = req.get('referer');
         const regex = /(.+\/views\/[^\/]+)\/?/;
@@ -169,7 +168,9 @@ const handleLogOut = async (req, res) => {
 };
 
 const handleLogOutLanding = async (req, res) => {  
+    console.log('Logged out URL request: ', req);
     console.log('Redirecting to ....', req['returnLogout']);
+    req.session.destroy();
     res.redirect(req['returnLogout']);
 }
 
