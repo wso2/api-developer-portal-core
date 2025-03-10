@@ -847,10 +847,8 @@ const createAppKeyMapping = async (req, res) => {
                 await adminDao.deleteAppKeyMapping(orgID, appID, null, t);
             }
             tokenDetails.additionalProperties = checkAdditionalValues(tokenDetails.additionalProperties);
-            console.log("Key generation payload", tokenDetails);
             //generate oauth key
             responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${cpAppID}/generate-keys`, {}, tokenDetails);
-            console.log("responseData", responseData);
         });
         return res.status(200).json(responseData);
     } catch (error) {

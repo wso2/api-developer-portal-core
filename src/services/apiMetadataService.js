@@ -361,7 +361,6 @@ const createAPITemplate = async (req, res) => {
 
         //get api files
         if (fsDir.existsSync(contentPath)) {
-            console.log("contentPath", contentPath)
             let apiLanding = await util.getAPIFileContent(contentPath);
             apiContent.push(...apiLanding);
         }
