@@ -45,9 +45,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     applicationNameInput.addEventListener('input', validateForm);
 
-    cancelButton.addEventListener('click', () => {
-        window.history.back();
-    });
+    if (cancelButton) {
+        cancelButton.addEventListener('click', () => {
+            window.history.back();
+        });
+    }
 
     document
         .getElementById('applicationForm')
@@ -91,7 +93,7 @@ applicationForm.addEventListener('submit', async (e) => {
         const responseData = await response.json();
         await showAlert(responseData.message || 'Application saved successfully!', 'success');
         applicationForm.reset();
-        if (document.referrer.includes('/apis')) {
+        if (window.location.href.includes('/apis')) {
             window.location.reload();
         } else {
             window.location.href = document.referrer || '/applications';
