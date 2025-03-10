@@ -488,7 +488,6 @@ const getAPIFile = async (req, res) => {
             }
         }
     } catch (error) {
-        console.log(error)
         console.error(`${constants.ERROR_MESSAGE.API_CONTENT_NOT_FOUND}, ${error}`);
         util.handleError(res, error);
     }
