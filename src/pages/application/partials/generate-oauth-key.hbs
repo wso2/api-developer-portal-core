@@ -108,7 +108,7 @@
                                                         id="grant-type-{{name}}-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
                                                         name="grantTypes" value="{{name}}" {{#if (contains
                                                         ../supportedGrantTypes name)}}checked{{/if}} {{#if (eq
-                                                        ../supportedGrantTypes "Client Credentials" )}}checked{{/if}} />
+                                                        name "client_credentials" )}}checked{{/if}} />
                                                     <label class="form-check-label"
                                                         for="grant-type-{{name}}-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}">
                                                         {{label}}
@@ -214,6 +214,87 @@
                                 </div>
                             </div>
                         </form>
+
+                    </div>
+                    <div class="d-flex mb-4">
+                        {{#if (contains keys.supportedGrantTypes "client_credentials")}}
+                        <div class="row">
+                            <div class="d-flex flex-column">
+                                <div class="d-flex mb-2">
+                                    <button class='common-btn-primary mb-3'
+                                        id='apiKeyGenerateButton-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                                        name='http-values' type='button'
+                                        onClick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{keys.clientName}}')">
+                                        Generate Token
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="tokenDisplay_{{../name}}" style="display: none;">
+                                <div class="info-box">
+                                    <div class="info-content">
+                                        <h2 class="info-title">Copy the access token</h2>
+                                        <p class="info-text">
+                                            Please copy this generated access token as it will not be visible in the UI
+                                            again.
+                                        </p>
+                                    </div>
+                                    <div class="info-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <div class="token-card">
+                                    <pre id="token_{{../name}}" class="token-text"></pre>
+                                    <button id="copyButton_{{../name}}" class="copy-button" aria-label="Copy token"
+                                        type="button" onclick="copyToken('{{../name}}')">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column">
+                                <div class="d-flex mb-2">
+                                    <button class='common-btn-primary mb-3'
+                                        id='curl-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                                        name='http-values' type='button'
+                                        onClick="generateCurl('{{../name}}', '{{../tokenEndpoint}}')">
+                                        CURL
+                                    </button>
+                                </div>
+                                <div id="curlDisplay_{{../name}}" style="display: none;">
+                                    <h4>cURL to Generate Access Token</h4>
+                                    <p class="curl-description">
+                                        The following cURL command allows you to generate an access token using the
+                                        client
+                                        credentials grant type,
+                                    </p>
+                                    <div class="code-block">
+                                        <button class="copy-button" aria-label="Copy to clipboard">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1">
+                                                </path>
+                                            </svg>
+                                        </button>
+                                        <code id="curl_{{../name}}"></code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{/if}}
+
 
                     </div>
                     <div id="KMURl_{{../name}}" style="{{#unless keys.consumerKey}}display: none;{{/unless}}">

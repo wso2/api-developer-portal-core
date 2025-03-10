@@ -199,18 +199,17 @@ const loadApplication = async (req, res) => {
                 api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
             }));
             kMmetaData = await getAPIMKeyManagers(req);
-            console.log("Key Managers", kMmetaData);
             kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
 
             //TODO: handle multiple KM scenarios
-            //select only Resident for chroeo.
-            // kMmetaData = kMmetaData.filter(keyManager => 
-            //     keyManager.name.includes("_internal_key_manager_") ||
-            //     (!kMmetaData.some(km => km.name.includes("_internal_key_manager_")) && keyManager.name.includes("ChoreoAppDevSTS")) ||
-            //     (!kMmetaData.some(km => km.name.includes("_internal_key_manager_") || km.name.includes("ChoreoAppDevSTS")) && keyManager.name.includes("Resident Key Manager"))
-            // );
+            //select only one KM for chroeo.
+            kMmetaData = kMmetaData.filter(keyManager => 
+                keyManager.name.includes("_internal_key_manager_") ||
+                (!kMmetaData.some(km => km.name.includes("_internal_key_manager_")) && keyManager.name.includes("ChoreoAppDevSTS")) ||
+                (!kMmetaData.some(km => km.name.includes("_internal_key_manager_") || km.name.includes("ChoreoAppDevSTS")) && keyManager.name.includes("Resident Key Manager"))
+            );
             
-            kMmetaData = kMmetaData.filter(keyManager => keyManager.name.includes("_internal_key_manager_"));
+            //kMmetaData = kMmetaData.filter(keyManager => keyManager.name.includes("Resident Key Manager"));
 
             for (const keyManager of kMmetaData) {
                 keyManager.availableGrantTypes = await mapGrants(keyManager.availableGrantTypes);
@@ -219,10 +218,11 @@ const loadApplication = async (req, res) => {
             const userID = req[constants.USER_ID]
             const applicationList = await adminService.getApplicationKeyMap(orgID, applicationId, userID);
             metaData = applicationList;
+            let applicationReference = "";
             let applicationKeyList;
             if (applicationList.appMap) {
+                applicationReference = applicationList.appMap[0].appRefID;
                 applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
-                console.log("Application Key List", applicationKeyList.list[0].additionalProperties);
             }
             let productionKeys = [];
             let sandboxKeys = [];
@@ -241,7 +241,8 @@ const loadApplication = async (req, res) => {
                     supportedGrantTypes: key.supportedGrantTypes,
                     additionalProperties: key.additionalProperties,
                     clientName: client_name,
-                    callbackUrl: key.callbackUrl
+                    callbackUrl: key.callbackUrl,
+                    appRefID: applicationReference
                 };
                 if (key.keyType === constants.KEY_TYPE.PRODUCTION) {
                     productionKeys.push(keyData);
