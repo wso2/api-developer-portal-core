@@ -11,7 +11,6 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             "policyID": subscription.policyID
         });
     });
-    console.log("API List", apiList);
     const formData = new FormData(form);
     const jsonObject = getFormData(formData, keyManager, clientName);
     const payload = JSON.stringify({
@@ -30,9 +29,6 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             "additionalProperties": jsonObject.additionalProperties
         }
     })
-
-
-    console.log("additionalProperties", jsonObject.additionalProperties);
     try {
         const response = await fetch(`/devportal/organizations/${orgID}/app-key-mapping`, {
             method: 'POST',
