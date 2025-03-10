@@ -687,7 +687,6 @@ const createSubscription = async (req, res) => {
 }
 
 async function handleSubscribe(orgID, applicationID, apiRefID, subRefID, response, t) {
-    console.log("Response", apiRefID, subRefID);
     if (apiRefID && subRefID) {
         await adminDao.createApplicationKeyMapping({
             orgID: orgID,
