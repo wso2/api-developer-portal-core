@@ -25,7 +25,6 @@ router.get(['/favicon.ico', '/images/*', '/portal/*'], (req, res, next) => {
     res.status(404).send('Not found');
 });
 
-// Use a basic route pattern
 router.get('/:orgName/views/:viewName', registerPartials, orgController.loadOrganizationContent);
 
 module.exports = router;

@@ -21,7 +21,7 @@ const apiController = require('../controllers/apiContentController');
 const registerPartials = require('../middlewares/registerPartials');
 const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
 
-// Exclude specific paths using middleware
+// Exclude specific paths
 router.get(['/favicon.ico'], (req, res) => {
     res.status(404).send('Not found');
 });
