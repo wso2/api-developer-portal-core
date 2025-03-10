@@ -96,7 +96,7 @@ const createAPIMetadata = async (req, res) => {
             await apiDao.storeAPIImageMetadata({
                 "api-icon": apiImageName,
             }, apiID, t);
-            await apiDao.storeAPIFile(generateSVG(apiMetadata.apiInfo.apiName.substring(0, 1).toUpperCase(), getRandomDarkColor()), apiImageName, apiID, constants.DOC_TYPES.IMAGES, t);
+            await apiDao.storeAPIFile(generateSVG(apiMetadata.apiInfo.apiName.substring(0, 2).toUpperCase(), getRandomDarkColor()), apiImageName, apiID, constants.DOC_TYPES.IMAGES, t);
         });
 
 
