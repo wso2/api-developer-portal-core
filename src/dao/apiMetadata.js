@@ -38,6 +38,7 @@ const createAPIMetadata = async (orgID, apiMetadata, t) => {
     try {
         const apiMetadataResponse = await APIMetadata.create({
             REFERENCE_ID: apiInfo.referenceID,
+            STATUS: constants.API_STATUS.PUBLISHED,
             PROVIDER: apiInfo.provider,
             API_NAME: apiInfo.apiName,
             API_HANDLE: apiInfo.apiHandle ? apiInfo.apiHandle : `${apiInfo.apiName.toLowerCase().replace(/\s+/g, '')}-v${apiInfo.apiVersion}`,
@@ -903,7 +904,8 @@ const getAPIMetadata = async (orgID, apiID, t) => {
             ],
             where: {
                 ORG_ID: orgID,
-                API_ID: apiID
+                API_ID: apiID,
+                STATUS: constants.API_STATUS.PUBLISHED
             }
         }, { transaction: t });
         return apiMetadataResponse;
@@ -927,6 +929,7 @@ const getAllAPIMetadata = async (orgID, groups, viewName, t) => {
                     VISIBLE_GROUPS: {
                         [Op.like]: `%${group}%`
                     },
+                    STATUS: constants.API_STATUS.PUBLISHED
                 },
                 include: [{
                     model: APIImageMetadata,
@@ -965,7 +968,8 @@ const getAllAPIMetadata = async (orgID, groups, viewName, t) => {
     try {
         const publicAPIS = await APIMetadata.findAll({
             where: {
-                ORG_ID: orgID
+                ORG_ID: orgID,
+                STATUS: constants.API_STATUS.PUBLISHED
             },
             include: [{
                 model: APIImageMetadata,
@@ -1078,7 +1082,6 @@ const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
             replacements: { searchTerm, orgID, groups: formattedGroups },
             type: Sequelize.QueryTypes.SELECT,
         });
-
         return results;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -1116,6 +1119,7 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
     try {
         const [updateCount, apiMetadataResponse] = await APIMetadata.update({
             REFERENCE_ID: apiInfo.referenceID,
+            STATUS: apiInfo.status,
             PROVIDER: apiInfo.provider,
             API_NAME: apiInfo.apiName,
             API_HANDLE: `${apiInfo.apiName.toLowerCase().replace(/\s+/g, '')}-v${apiInfo.apiVersion}`,
@@ -1337,7 +1341,8 @@ const updateAPIFile = async (apiFile, fileName, apiID, orgID, t) => {
             fileUpdateResponse = await APIContent.create({
                 API_FILE: apiFile,
                 FILE_NAME: fileName,
-                API_ID: apiID
+                API_ID: apiID,
+                TYPE: constants.DOC_TYPES.API_DEFINITION
             }, { transaction: t });
         } else {
             fileUpdateResponse = await APIContent.update({

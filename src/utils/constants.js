@@ -27,7 +27,6 @@ module.exports = {
     API_TYPE_QUERY: '/template?type=',
     HEADER_PARTIAL_NAME: 'header',
     SIDEBAR_PARTIAL_NAME: 'sidebar',
-    HERO_PARTIAL_NAME: 'hero',
     BASE_URL: 'https://localhost:',
     BASE_URL_NAME: 'baseUrl',
     ORG_ID: 'orgID',
@@ -39,6 +38,10 @@ module.exports = {
     API_VISIBILITY: {
         PUBLIC: 'PUBLIC',
         PRIVATE: 'PRIVATE'
+    },
+    API_STATUS: {
+        PUBLISHED: "PUBLISHED",
+        UNPUBLISHED: "UNPUBLISHED"
     },
     DOC_TYPES: {
         DOC_ID: 'DOC_',

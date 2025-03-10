@@ -1,15 +1,17 @@
 async function generateApplicationKey(formId, appId, keyType, keyManager, clientName, subscriptions, orgID, consumerKeyID, consumerSecretID) {
 
+
     const form = document.getElementById(formId);
     const apiList = []
     const subList = JSON.parse(subscriptions);
     subList.forEach(subscription => {
         apiList.push({
-            "apiName": subscription.apiInfo.apiName,
-            "apiRefId": subscription.apiReferenceID,
+            "apiName": subscription.name,
+            "apiRefId": subscription.refID,
             "policyID": subscription.policyID
         });
     });
+    console.log("API List", apiList);
     const formData = new FormData(form);
     const jsonObject = getFormData(formData, keyManager, clientName);
     const payload = JSON.stringify({
@@ -18,7 +20,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
         "tokenType": "OAUTH",
         "tokenDetails": {
             "grantTypesToBeSupported": jsonObject.grantTypes,
-            "keyType": "SANDBOX",
+            "keyType": keyType,
             "keyManager": keyManager,
             "callbackUrl": jsonObject.callbackURL,
             "scopes": [
@@ -28,6 +30,9 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             "additionalProperties": jsonObject.additionalProperties
         }
     })
+
+
+    console.log("additionalProperties", jsonObject.additionalProperties);
     try {
         const response = await fetch(`/devportal/organizations/${orgID}/app-key-mapping`, {
             method: 'POST',
@@ -37,6 +42,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             body: payload,
         });
 
+
         const responseData = await response.json();
         if (response.ok) {
             await showAlert('Application keys generated successfully!', 'success');
@@ -45,6 +51,10 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             console.log("Keys", responseData);
             document.getElementById(consumerKeyID).value = consumerKey;
             document.getElementById(consumerSecretID).value = consumerSecret
+            const consumerKeyElement = document.getElementById("consumerKeys_" + keyManager);
+            consumerKeyElement.style.display = "block";
+            const KMURLs = document.getElementById("KMURl_" + keyManager);
+            KMURLs.style.display = "block";
             //const url = new URL(window.location.origin + window.location.pathname);
             //window.location.href = url.toString();
         } else {
@@ -57,6 +67,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
     }
 }
 
+
 async function cleanUp(applicationId, keyMappingId) {
     try {
         const response = await fetch(`/devportal/applications/${applicationId}/oauth-keys/${keyMappingId}/clean-up`, {
@@ -65,7 +76,6 @@ async function cleanUp(applicationId, keyMappingId) {
                 'Content-Type': 'application/json',
             },
         });
-
         const responseData = await response.json();
         if (response.ok) {
             await showAlert('Application keys cleaned up successfully!', 'success');
@@ -81,10 +91,12 @@ async function cleanUp(applicationId, keyMappingId) {
     }
 }
 
+
 function getFormData(formData, keyManager, clientName) {
     let jsonObject = {
         additionalProperties: {},
     };
+
 
     if (keyManager !== 'Resident Key Manager') {
         additionalProperties = {
@@ -130,8 +142,10 @@ function getFormData(formData, keyManager, clientName) {
         }
     });
 
+
     return jsonObject;
 };
+
 
 async function updateApplicationKey(formId, appMap, keyType, keyManager, keyManagerId, clientName) {
     const form = document.getElementById(formId);
@@ -159,6 +173,7 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
             body: payload,
         });
 
+
         const responseData = await response.json();
         if (response.ok) {
             await showAlert('Application keys generated successfully!', 'success');
@@ -174,10 +189,12 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
     }
 }
 
+
 async function removeApplicationKey() {
     const modal = document.getElementById('deleteConfirmation');
     const applicationId = modal.dataset.applicationId;
     const keyMappingId = modal.dataset.param2;
+
 
     try {
         const response = await fetch(`/devportal/applications/${applicationId}/oauth-keys/${keyMappingId}`, {
@@ -186,6 +203,7 @@ async function removeApplicationKey() {
                 'Content-Type': 'application/json',
             },
         });
+
 
         const responseData = await response.json();
         if (response.ok) {
@@ -203,20 +221,26 @@ async function removeApplicationKey() {
 }
 
 
-async function generateCurl(formId) {
-    const form = document.getElementById(formId);
-    const formData = new FormData(form);
-    const tokenURL = formData.get('tokenURL');
-    const auth = btoa(`${formData.get('consumerKey')}:${formData.get('consumerSecret')}`);
-    const curl = `curl -k -X POST ${tokenURL} -d "grant_type=password&username=Username&password=Password" -H "Authorization: Basic ${auth}"`;
 
-    openApiKeyModal(curl, "CURL to Generate Access Token", "The following cURL command shows how to generate an access token using the Password Grant type.");
+
+async function generateCurl(keyManager, tokenURL) {
+   
+    const auth = `consumerKey:consuemrSecret`;
+    const curl = `curl -k -X POST ${tokenURL} -d "grant_type=client_credentials" -H "Authorization: Basic ${auth}"`;
+
+    const curlDisplay = document.getElementById("curlDisplay_" + keyManager);
+    curlDisplay.style.display = "block";
+    console.log(document.getElementById("curl_" + keyManager))
+    document.getElementById("curl_" + keyManager).textContent = curl;
+  
 }
+
 
 async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName) {
     const form = document.getElementById(formId);
     const formData = new FormData(form);
     const jsonObject = getFormData(formData, keyManager, clientName);
+
 
     try {
         const response = await fetch(`/devportal/applications/${appId}/oauth-keys/${keyMappingId}/generate-token`, {
@@ -233,13 +257,18 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
             }),
         });
 
+
         const responseData = await response.json();
-        openApiKeyModal(responseData.accessToken, "Generated OAuth Token", "OAuth Token");
+        const tokenDetails = document.getElementById("tokenDisplay_" + keyManager);
+        tokenDetails.style.display = "block";
+        //openApiKeyModal(responseData.accessToken, "Generated OAuth Token", "OAuth Token");
+        console.log(document.getElementById("token_" + keyManager))
+        document.getElementById("token_" + keyManager).textContent = responseData.accessToken;
         if (response.ok) {
-            await showAlert('OAuth keys generated successfully!', 'success');
+            await showAlert('Token generated successfully!', 'success');
         } else {
-            console.error('Failed to generate OAuth keys:', responseData);
-            await showAlert(`Failed to generate OAuth keys. Please try again.\n${responseData.description}`, 'error');
+            console.error('Failed to generate access token:', responseData);
+            await showAlert(`Failed to generate access token. Please try again.\n${responseData.description}`, 'error');
             const url = new URL(window.location.origin + window.location.pathname);
             window.location.href = url.toString();
         }
@@ -248,13 +277,17 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
         await showAlert(`An error occurred while generating OAuth keys: \n${error.message}`, 'error');
     }
 
+
 }
 
 
-document.addEventListener('DOMContentLoaded', () => {
-    
-    const selectElement = document.getElementById("select-idp-list");
 
+
+document.addEventListener('DOMContentLoaded', () => {
+  
+    const selectElement = document.getElementById("select-idp-list");
+ 
+ 
     function copyToClipboard(button) {
         const textToCopy = button.parentElement.querySelector('.endpoint-value').textContent;
         navigator.clipboard.writeText(textToCopy)
@@ -274,7 +307,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Failed to copy: ', err);
             });
     }
-
+ 
+ 
     function updateKeyManagerInfo() {
         document.querySelectorAll(".KMConfig").forEach((el) => {
             el.style.display = "none";
@@ -289,20 +323,48 @@ document.addEventListener('DOMContentLoaded', () => {
             kmURL.style.display = "block";
         }
     }
-
     selectElement.addEventListener("change", updateKeyManagerInfo);
     // Initialize with selected value
     updateKeyManagerInfo();
+ 
+ 
+ });
+  
 
-});
 
 function loadKeyGenModal() {
     const modal = document.getElementById('OauthKeyModal');
     modal.style.display = 'flex';
 }
 
-function showAdvanced(id) {
-    const content = document.getElementById(id);
+
+function showAdvanced(configId) {
+    const content = document.getElementById(configId);
     content.style.display = content.style.display === "block" ? "none" : "block";
+    // const KMDetails = document.getElementById(KMDetailsId) ;
+    // KMDetails.style.display = KMDetails.style.display === "block" ? "none" : "block";
 }
+
+
+async function copyToken(KMName) {
+    // Copy access token
+    const tokenElement = document.getElementById('token_' + KMName);
+    if (!tokenElement) {
+        console.error('Token element not found for:', KMName);
+        return;
+    }
+
+    const tokenText = tokenElement.textContent.trim();
+    console.log('Copying token to clipboard:', tokenText);
+
+    try {
+        // Copy to clipboard
+        await navigator.clipboard.writeText(tokenText);
+        await showAlert('Token copied to clipboard!');
+    } catch (err) {
+        console.error('Could not copy text:', err);
+        await showAlert('Failed to copy token', true);
+    }
+}
+
 
