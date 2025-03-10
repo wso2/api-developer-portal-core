@@ -11,33 +11,38 @@
       </button>
       <div class="d-flex align-items-center">
         {{#if profile}}
-        <div class="dropdown ms-3">
-          <a class="nav-link dropdown-toggle profile-link d-flex align-items-center p-1" href="#" id="navbarDropdown"
-            role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <img src="/images/profile.svg" alt="Profile" class="profile-icon me-2" />
-            <span>{{profile.firstName}}</span>
-          </a>
-          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-            <li class="dropdown-item">
-              <div class="userprofile-info d-flex align-items-center">
-                <img src="/images/profile.svg" class="avatar me-2" />
-                <div>
-                  <span class="user-name d-block">{{profile.firstName}} {{profile.lastName}}</span>
-                  <span class="user-email text-muted">{{profile.email}}</span>
-                </div>
+        <a class="dropdown-toggle profile-link d-flex align-items-center p-1 fw-light" href="#" id="navbarDropdown"
+          role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <img src="/images/profile.svg" alt="Profile" class="profile-icon me-2" />
+          <span>{{profile.firstName}}</span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end profile-options" aria-labelledby="navbarDropdown">
+          <li class="dropdown-item">
+            <div class="userprofile-info d-flex align-items-center">
+              <img src="/images/profile.svg" class="avatar me-2" />
+              <div>
+                <span class="user-name d-block">{{profile.firstName}} {{profile.lastName}}</span>
+                <span class="user-email text-muted">{{profile.email}}</span>
               </div>
-            </li>
-            <li>
-              <hr class="dropdown-divider" />
-            </li>
-            <li class="dropdown-item"><i class="fas fa-question-circle me-2"></i><a target="_blank" href="https://apim.docs.wso2.com/en/latest/">Help Center</a></li>
-            <li>
-              <hr class="dropdown-divider" />
-            </li>
-            <li class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i><a href="{{baseUrl}}/logout">Sign Out</a>
-            </li>
-          </ul>
-        </div>
+            </div>
+          </li>
+          <li>
+            <hr class="dropdown-divider" />
+          </li>
+          <li class="dropdown-item">
+            <i class="fas fa-question-circle me-2"></i>
+            <a target="_blank" href="https://apim.docs.wso2.com/en/latest/" class="profile-dropdown-link">
+              Help Center
+            </a>
+          </li>
+          <li>
+            <hr class="dropdown-divider" />
+          </li>
+          <li class="dropdown-item">
+            <i class="fas fa-sign-out-alt me-2"></i>
+            <a href="{{baseUrl}}/logout" class="profile-dropdown-link">Sign Out</a>
+          </li>
+        </ul>
         {{else}}
         <div id="auth-section">
           <a class="common-btn-primary me-2" href="{{baseUrl}}/signup">Sign Up</a>

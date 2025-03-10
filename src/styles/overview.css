@@ -6,7 +6,7 @@
 }
 
 .app-header p {
-  flex-basis: 100%; 
+  flex-basis: 100%;
   text-align: left;
   margin-top: 8px;
   display: grid;
@@ -24,6 +24,27 @@
   flex-basis: 100%;
 }
 
+.app-overview-card {
+  padding: 2rem;
+}
+
+.app-description {
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--main-text-color);
+  margin: 5px 0;
+}
+
+.app-subscription-count {
+  font-weight: 500;
+}
+
+.app-overview-title {
+  font-size: 2.25rem;
+  font-weight: 600;
+  color: var(--primary-main-color);
+}
+
 .app-title {
   font-size: 24px;
   margin: 0;
@@ -33,6 +54,16 @@
 .action-buttons {
   display: flex;
   gap: 10px;
+}
+
+.action-buttons .btn-outline-secondary {
+  border-color: var(--primary-main-color);
+  color: var(--primary-main-color);
+}
+
+.action-buttons .btn-outline-secondary:hover {
+  background-color: var(--primary-main-color);
+  color: var(--white-text-color);
 }
 
 .app-details {
@@ -58,7 +89,7 @@ p {
 }
 
 p2 {
-    font-size: 10px;
+  font-size: 10px;
 }
 
 .business-plan-actions {
@@ -76,9 +107,9 @@ p2 {
   cursor: pointer;
   background-color: var(--font-colour-primary);
   color: var(--light-text-color);
-  display: flex; 
-  align-items: center; 
-  gap: 5px; 
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .reset-btn:hover,
