@@ -59,13 +59,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 
                 // Update the submenu links with the correct API ID and base path
                 document.getElementById('api-overview').href = `${basePath}/api/${apiId}`;
-                document.getElementById('api-tryout').href = `${basePath}/api/${apiId}/tryout`;
                 document.getElementById('api-docs').href = `${basePath}/api/${apiId}/docs/specification`;
                 
                 // Set active submenu item
-                if (currentPath.includes('/tryout')) {
-                    document.getElementById('api-tryout')?.classList.add('active');
-                } else if (currentPath.includes('/docs')) {
+                if (currentPath.includes('/docs')) {
                     document.getElementById('api-docs')?.classList.add('active');
                 } else {
                     document.getElementById('api-overview')?.classList.add('active');
