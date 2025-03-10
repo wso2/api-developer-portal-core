@@ -183,10 +183,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 actionItem.addEventListener("click", function(e) {
                     e.stopPropagation();
 
-                    // Navigate to create application page (Or alternatively, trigger a modal)
-                    actionItem.onclick = function () {
-                        loadModal('createAppModal');
-                    };
+                    // Open the create application modal
+                    loadModal('createAppModal');
 
                     // Close the dropdown
                     selectItems.classList.remove("show");
@@ -304,10 +302,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 actionItem.addEventListener("click", function(e) {
                     e.stopPropagation();
 
-                    // Navigate to create application page (Or alternatively, trigger a modal)
-                    actionItem.onclick = function () {
-                        loadModal('createAppModal');
-                    };
+                    // Open the create application modal
+                    loadModal('createAppModal');
 
                     // Close the dropdown
                     selectItems.classList.remove("show");

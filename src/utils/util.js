@@ -367,31 +367,49 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
             rejectUnauthorized: true,
         });
     }
-    try {
-        const options = {
-            method,
-            headers,
-            httpsAgent,
-        };
 
+    const options = {
+        method,
+        headers,
+        httpsAgent,
+    };
+
+    try { 
         if (body) {
             options.data = body;
         }
 
         if (config.advanced.tokenExchanger.enabled) {
-            decodedToken = jwt.decode(req.user.exchangeToken);
+            const decodedToken = jwt.decode(req.user.exchangeToken);
             const orgId = decodedToken.organization.uuid;
             url = url.includes("?") ? `${url}&organizationId=${orgId}` : `${url}?organizationId=${orgId}`;
         }
+
         const response = await axios(url, options);
         return response.data;
     } catch (error) {
-        console.log(`Error while invoking API:`, error);
-        let message = error.message;
-        if (error.response) {
-            message = error.response.data.description;
-        }
-        throw new CustomError(error.status, 'Request failed', message);
+        if (error.response?.status === 401 && req.user?.exchangeToken) {
+            try {
+                const newExchangedToken = await tokenExchanger(req.user.accessToken, req.user.returnTo.split("/")[1]);
+                req.user.exchangeToken = newExchangedToken;
+                headers.Authorization = `Bearer ${newExchangedToken}`;
+                options.headers = headers;
+                const response = await axios(url, options);
+                return response.data;
+            } catch (retryError) {
+                if (retryError.response) {
+                    retryMessage = retryError.response.data.description;
+                }
+                throw new CustomError(retryError.response?.status || 500, "Request retry failed", retryMessage);   
+            }
+        } else {
+            console.log(`Error while invoking API:`, error);
+            let message = error.message;
+            if (error.response) {
+                message = error.response.data.description;
+            }
+            throw new CustomError(error.status, 'Request failed', message);
+        }      
     }
 };
 
@@ -558,7 +576,8 @@ function validateScripts(strContent) {
             "<script src='/technical-scripts/search.js' defer></script>",
             "<script src='/technical-scripts/filter.js' defer></script>",
             "<script src='/technical-scripts/common.js' defer></script>",
-            "<script src='/technical-scripts/subscription.js' defer></script>"
+            "<script src='/technical-scripts/subscription.js' defer></script>",
+            "<script src='/technical-scripts/add-application-form.js' defer></script>"
         ]);
 
         const scriptRegex = /<script(?:\s+[^>]*)?>[\s\S]*?<\/script>/g;

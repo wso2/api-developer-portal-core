@@ -178,7 +178,8 @@ const loadApplication = async (req, res) => {
 
             let subList = [];
             if (subAPIs.length > 0) {
-                subList = subAPIs.map((sub) => {
+      
+                subList = await Promise.all(subAPIs.map(async (sub) => {
                     const api = new APIDTO(sub);
                     let apiDTO = {};
                     apiDTO.apiInfo = {};
@@ -190,8 +191,11 @@ const loadApplication = async (req, res) => {
                     apiDTO.subID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.SUB_ID;
                     apiDTO.policyID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.POLICY_ID;
                     apiDTO.refID = api.apiReferenceID;
+                    apiDTO.apiHandle = api.apiHandle;
+                    const subPolicy = await apiMetadata.getSubscriptionPolicy(apiDTO.policyID, orgID);
+                    apiDTO.policyName = subPolicy.dataValues.POLICY_NAME;
                     return apiDTO;
-                });
+                }));
             }
             util.appendAPIImageURL(subList, req, orgID);
 

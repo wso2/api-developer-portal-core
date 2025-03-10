@@ -61,20 +61,20 @@ const login = async (req, res, next) => {
 
     let orgName, IDP;
     let claimNames = {
-        [constants.ROLES.ROLE_CLAIM] : config.roleClaim,
-        [constants.ROLES.GROUP_CLAIM] : config.groupsClaim,
-        [constants.ROLES.ORGANIZATION_CLAIM] : config.orgIDClaim
+        [constants.ROLES.ROLE_CLAIM]: config.roleClaim,
+        [constants.ROLES.GROUP_CLAIM]: config.groupsClaim,
+        [constants.ROLES.ORGANIZATION_CLAIM]: config.orgIDClaim
     };
     if (req.params.orgName) {
         orgName = req.params.orgName;
-        if(orgName !== 'portal') {
-        const orgDetails = await adminDao.getOrganization(orgName);
-        if (orgDetails) {
-            claimNames[constants.ROLES.ROLE_CLAIM] = orgDetails.ROLE_CLAIM_NAME || config.roleClaim;
-            claimNames[constants.ROLES.GROUP_CLAIM] = orgDetails.GROUPS_CLAIM_NAME || config.groupsClaim;
-            claimNames[constants.ROLES.ORGANIZATION_CLAIM] = orgDetails.ORGANIZATION_CLAIM_NAME || config.orgIDClaim;
+        if (orgName !== 'portal') {
+            const orgDetails = await adminDao.getOrganization(orgName);
+            if (orgDetails) {
+                claimNames[constants.ROLES.ROLE_CLAIM] = orgDetails.ROLE_CLAIM_NAME || config.roleClaim;
+                claimNames[constants.ROLES.GROUP_CLAIM] = orgDetails.GROUPS_CLAIM_NAME || config.groupsClaim;
+                claimNames[constants.ROLES.ORGANIZATION_CLAIM] = orgDetails.ORGANIZATION_CLAIM_NAME || config.orgIDClaim;
+            }
         }
-    }
     }
     req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
     IDP = await fetchAuthJsonContent(req, orgName);
@@ -150,7 +150,9 @@ const handleLogOut = async (req, res) => {
         idToken = req.user.idToken;
     }
     req['returnLogout'] = req.originalUrl.replace('/logout', '');
+    req.session.returnLogout = req['returnLogout'];
     console.log('Logged out URL: ', req['returnLogout']);
+    console.log('Logged out session: ', req.session);
     if (req.user && req.user.accessToken) {
         const referer = req.get('referer');
         const regex = /(.+\/views\/[^\/]+)\/?/;
@@ -158,20 +160,28 @@ const handleLogOut = async (req, res) => {
         const logoutURL = match ? match[1] : null;
 
         console.log('Redirecting to post_logout_redirect_uri ....', authJsonContent.logoutRedirectURI);
-        req.logout(
-            () => res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${authJsonContent.logoutRedirectURI}&id_token_hint=${idToken}`)
-        );
+        req.session.save((err) => {
+
+            if (err) {
+                console.log('Error saving session:', err);
+                return res.status(500).send('Error logging out');
+            }
+            req.logout(
+                () => res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${authJsonContent.logoutRedirectURI}&id_token_hint=${idToken}`)
+            );
+        });
     } else {
 
         res.redirect(req.originalUrl.replace('/logout', ''));
     }
 };
 
-const handleLogOutLanding = async (req, res) => {  
-    console.log('Logged out URL request: ', req);
+const handleLogOutLanding = async (req, res) => {
     console.log('Redirecting to ....', req['returnLogout']);
+    console.log('Redirecting to session ....', req.session);
+    console.log('Redirecting to user ....', req.user);
     req.session.destroy();
-    res.redirect(req['returnLogout']);
+    res.redirect(req.session.returnLogout);
 }
 
 module.exports = {
