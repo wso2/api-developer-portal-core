@@ -184,7 +184,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     e.stopPropagation();
 
                     // Navigate to create application page (Or alternatively, trigger a modal)
-                    window.location.href = "applications/create";
+                    actionItem.onclick = function () {
+                        loadModal('createAppModal');
+                    };
 
                     // Close the dropdown
                     selectItems.classList.remove("show");

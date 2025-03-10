@@ -62,10 +62,9 @@
               <div id="subscriptionBox" class="subscription-container">
                 {{> subscription-plans apiInfo=apiInfo apiName=apiInfo.apiName}}
                 {{#if ../isAuthenticated}}
-                {{#unless (every applications "subscribed")}}
                 {{#if subscriptionPolicies.length}}
                 {{#if (eq subscriptionPolicies.length 1)}}
-                <a type="button" class="common-btn-outlined"
+                <a type="button" class="common-btn-primary"
                   onclick="subscribe('{{../orgID}}', '', '{{apiID}}', '{{apiReferenceID}}', '{{subscriptionPolicyDetails.policyID}}', '{{subscriptionPolicyDetails.policyName}}')">Subscribe</a>
                 {{else}}
                 <a type="button" class="common-btn-primary" onclick="loadModal('planModal-{{apiID}}')">Subscribe</a>
@@ -97,9 +96,6 @@
                 </div>
                 {{/if}}
                 {{/if}}
-                {{else}}
-                <a type="button" class="common-btn-primary disabled" disabled>Subscribe</a>
-                {{/unless}}
                 {{/if}}
               </div>
             </div>
