@@ -12,7 +12,6 @@
     justify-content: space-between;
     height: 95vh;
     padding: 1rem 0;
-
     background-color: #1a4c6d;
     width: 256px;
     transition: width 0.3s ease;
@@ -30,7 +29,7 @@
 }
 
 .nav-link {
-    padding: 1rem 0rem 1rem 1rem;
+    padding: 1rem 1rem 1rem 1rem;
     display: flex;
     align-items: center;
     text-decoration: none;
@@ -44,9 +43,19 @@
     color: white;
 }
 
+.nav-link:hover img,
+.nav-link:hover svg {
+    filter: brightness(0) invert(1);
+}
+
 .nav-link.active {
     background-color: #41789c;
     color: white;
+}
+
+.nav-link.active img,
+.nav-link.active svg {
+    filter: brightness(0) invert(1);
 }
 
 .nav-link svg {
@@ -63,9 +72,7 @@
 }
 
 .collapsed .nav-text {
-    opacity: 0;
-    width: 0;
-    overflow: hidden;
+    display: none;
 }
 
 .api-icon {
@@ -84,7 +91,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 1rem;
+    padding: 0.75rem;
     background: none;
     border: none;
     color: #a8cadc;
@@ -116,4 +123,61 @@
     opacity: 0;
     width: 0;
     overflow: hidden;
+}
+
+.submenu {
+    display: none;
+    flex-direction: column;
+    background-color: #043556;
+    border-radius: 0 0 8px 8px;
+    padding: 4px 0;
+    margin: -16px 5px 0 5px;
+}
+
+.submenu.show {
+    display: flex;
+}
+
+#apis.has-active-submenu {
+    background-color: #043556;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    margin-bottom: 0;
+}
+
+.submenu-link {
+    margin: 0;
+    border-radius: 0;
+    font-size: 15px;
+    padding: 0.75rem 1rem !important;
+    background-color: transparent;
+}
+
+.submenu-link.active {
+    background-color: #41789C;
+    border-radius: 0;
+}
+
+.submenu-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.sidebar.collapsed .submenu {
+    /* padding-left: 0; */
+    display: none;
+}
+
+.sidebar.collapsed .submenu.show {
+    display: flex;
+}
+
+.sidebar.collapsed .submenu-link {
+    justify-content: center;
+}
+
+.sidebar.collapsed .submenu-icon {
+    display: block;
+    margin: 0;
 }

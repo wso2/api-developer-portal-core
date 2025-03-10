@@ -1,47 +1,110 @@
-.api-plans-section {
-  margin: 3rem 3.75rem;
-  text-align: center;
-}
+.subscription-card {
 
-.api-plans-content {
-  margin: 4rem auto 2.5rem auto;
-}
+  /* Custom Dropdown styling for subscription plans */
+  .subscription-container {
+    padding: 8px;
+  }
 
-.card-section {
-  display: flex;
-  justify-content: left;
-}
+  .custom-dropdown {
+    display: none;
+    font-size: small;
+    position: relative;
+    width: 100%;
+  }
 
-.highlight-card {
-  border: 2px solid var(--primary-main-color);
-  transition: all 0.3s ease-in-out;
-  max-width: 380px;
-  background-color: #f2f2f9 !important;
-}
+  .subscription-box {
+    border-radius: 1rem;
+    background-color: #f8f9fa;
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+  }
 
-.highlight-card:hover {
-  transform: translateY(-5px);
-}
+  .custom-dropdown {
+    display: none;
+    font-size: small;
+    position: relative;
+    width: 100%;
+  }
 
-.custom-plans-card {
-  border: 0.2px solid var(--secondary-main-color);
-  transition: all 0.3s ease-in-out;
-  max-width: 380px;
-}
+  .custom-select-container {
+    position: relative;
+    width: 100%;
+  }
 
-.custom-plans-card:hover {
-  transform: translateY(-5px);
-}
+  .select-selected {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background-color: #fff;
+    cursor: pointer;
+    font-size: 0.875rem;
+  }
 
-.custom-plans-card h5 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary-main-color);
-  margin-bottom: 0.5rem;
-}
+  .select-arrow {
+    border: solid #888;
+    border-width: 0 2px 2px 0;
+    display: inline-block;
+    padding: 2px;
+    transform: rotate(45deg);
+    margin-left: 5px;
+  }
 
-.custom-plans-description {
-  font-size: 1rem;
-  color: var(--light-text-color);
-}
+  .select-items {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 0 0 4px 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
 
+  .select-item {
+    padding: 8px 10px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .select-item:hover {
+    background-color: #f8f9fa;
+  }
+
+  .select-item.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #f0f0f0;
+  }
+
+  .select-item.disabled:hover {
+    background-color: #f0f0f0;
+  }
+
+  .select-action-item {
+    padding: 8px 10px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    border-top: 1px solid #dee2e6;
+    color: var(--primary-main-color);
+    font-weight: 500;
+  }
+
+  .select-action-item:hover {
+    background-color: #f8f9fa;
+  }
+
+  .select-items.show {
+    display: block;
+  }
+}
