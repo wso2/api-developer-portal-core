@@ -397,18 +397,10 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
                 const response = await axios(url, options);
                 return response.data;
             } catch (retryError) {
-                let retryMessage = retryError.message;
-                if (retryError.response?.status === 401) {
-                    const basePath = req.user.returnTo;
-                    console.log("Token exchange failed. Destroying user session.");
-                    req.session.destroy();
-                    console.log("redirec to: ", basePath);
-                } else {
-                    if (retryError.response) {
-                        retryMessage = retryError.response.data.description;
-                    }
-                    throw new CustomError(retryError.response?.status || 500, "Request retry failed", retryMessage);
-                }     
+                if (retryError.response) {
+                    retryMessage = retryError.response.data.description;
+                }
+                throw new CustomError(retryError.response?.status || 500, "Request retry failed", retryMessage);   
             }
         } else {
             console.log(`Error while invoking API:`, error);
