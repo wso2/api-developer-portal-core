@@ -653,8 +653,6 @@ const createSubscription = async (req, res) => {
         const orgID = req.params.orgId;
         sequelize.transaction(async (t) => {
             const app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
-            console.log("App", app);
-            console.log("App", app.length);
             try {
                 if (app.length > 0) {
                     const response = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, {
