@@ -558,7 +558,8 @@ function validateScripts(strContent) {
             "<script src='/technical-scripts/search.js' defer></script>",
             "<script src='/technical-scripts/filter.js' defer></script>",
             "<script src='/technical-scripts/common.js' defer></script>",
-            "<script src='/technical-scripts/subscription.js' defer></script>"
+            "<script src='/technical-scripts/subscription.js' defer></script>",
+            "<script src='/technical-scripts/add-application-form.js' defer></script>"
         ]);
 
         const scriptRegex = /<script(?:\s+[^>]*)?>[\s\S]*?<\/script>/g;
