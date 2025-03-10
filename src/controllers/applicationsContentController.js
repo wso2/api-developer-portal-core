@@ -205,8 +205,8 @@ const loadApplication = async (req, res) => {
             //select only one KM for chroeo.
             kMmetaData = kMmetaData.filter(keyManager => 
                 keyManager.name.includes("_internal_key_manager_") ||
-                (!kMmetaData.some(km => km.name.includes("_internal_key_manager_")) && keyManager.name.includes("ChoreoAppDevSTS")) ||
-                (!kMmetaData.some(km => km.name.includes("_internal_key_manager_") || km.name.includes("ChoreoAppDevSTS")) && keyManager.name.includes("Resident Key Manager"))
+                (!kMmetaData.some(km => km.name.includes("_internal_key_manager_")) && keyManager.name.includes("Resident Key Manager")) ||
+                (!kMmetaData.some(km => km.name.includes("_internal_key_manager_") || km.name.includes("Resident Key Manager")) && keyManager.name.includes("_appdev_sts_key_manager_") && keyManager.name.endsWith("_prod"))
             );
             
             //kMmetaData = kMmetaData.filter(keyManager => keyManager.name.includes("Resident Key Manager"));
