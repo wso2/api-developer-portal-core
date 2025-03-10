@@ -149,39 +149,28 @@ const handleLogOut = async (req, res) => {
     if (req.user != null) {
         idToken = req.user.idToken;
     }
-    req['returnLogout'] = req.originalUrl.replace('/logout', '');
-    req.session.returnLogout = req['returnLogout'];
-    console.log('Logged out URL: ', req['returnLogout']);
-    console.log('Logged out session: ', req.session);
+    const currentPathURI = req.originalUrl.replace('/logout', '');
     if (req.user && req.user.accessToken) {
         const referer = req.get('referer');
         const regex = /(.+\/views\/[^\/]+)\/?/;
         const match = referer.match(regex);
         const logoutURL = match ? match[1] : null;
-
-        console.log('Redirecting to post_logout_redirect_uri ....', authJsonContent.logoutRedirectURI);
-        req.session.save((err) => {
-
+        req.logout((err) => {
             if (err) {
-                console.log('Error saving session:', err);
-                return res.status(500).send('Error logging out');
+                console.error("Logout error:", err);
             }
-            req.logout(
-                () => res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${authJsonContent.logoutRedirectURI}&id_token_hint=${idToken}`)
-            );
+            req.session.currentPathURI = currentPathURI;
+            res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${authJsonContent.logoutRedirectURI}&id_token_hint=${idToken}`);
         });
     } else {
-
         res.redirect(req.originalUrl.replace('/logout', ''));
     }
 };
 
-const handleLogOutLanding = async (req, res) => {
-    console.log('Redirecting to ....', req['returnLogout']);
-    console.log('Redirecting to session ....', req.session);
-    console.log('Redirecting to user ....', req.user);
+const handleLogOutLanding = async (req, res) => { 
+    const currentPathURI = req.session.currentPathURI; 
     req.session.destroy();
-    res.redirect(req.session.returnLogout);
+    res.redirect(currentPathURI);
 }
 
 module.exports = {
