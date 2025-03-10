@@ -1,3 +1,6 @@
+<head>
+  <script src='/technical-scripts/add-application-form.js' defer></script>
+</head>
 <main>
     {{> api-detail-banner }}
     {{#if loadDefault}}
@@ -6,6 +9,7 @@
     {{> api-content }}
     {{/if}}
     {{> api-subscription-plans}}
+    {{> create-app }}
     {{> alert }}
     {{> faqBanner }}
 </main>
