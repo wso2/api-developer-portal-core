@@ -654,13 +654,13 @@ const createSubscription = async (req, res) => {
         sequelize.transaction(async (t) => {
             const app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
             try {
-                if (app.length < 0) {
+                if (app.length > 0) {
                     const response = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, {
                         apiId: req.body.apiReferenceID,
                         applicationId: app[0].dataValues.CP_APP_REF,
                         throttlingPolicy: req.body.policyName
                     });
-                    await handleSubscribe(orgID, req.body.applicationID, app.API_REF_ID, app.SUBSCRIPTION_REF_ID, response, t);
+                    await handleSubscribe(orgID, req.body.applicationID, app[0].dataValues.API_REF_ID, app[0].dataValues.SUBSCRIPTION_REF_ID, response, t);
                 }
                 await adminDao.createSubscription(orgID, req.body, t);
                 return res.status(200).json({ message: 'Subscribed successfully' });
