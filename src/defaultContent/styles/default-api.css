@@ -1,20 +1,13 @@
 .defaultapi-container {
     max-width: 1200px;
-    margin: 0 150px;
+    margin: 0 auto;
     padding: 20px;
 }
 
 .defaultapi-section {
     margin-bottom: 30px;
+    border-bottom: 1px solid #eee;
     padding-bottom: 20px;
-}
-
-.defaultapi-section-title {
-    font-size: 20px;
-    font-weight: 600;
-    margin-bottom: 20px;
-    color: #333;
-    padding-left: 12px;
 }
 
 .defaultapi-endpoint-row {
@@ -50,7 +43,7 @@
 
 .defaultapi-development-label {
     font-weight: 600;
-    color: #333;
+    color: var(--main-text-color);
     margin-bottom: 8px;
     font-size: 14px;
 }
@@ -58,7 +51,7 @@
 .defaultapi-endpoint-url-container {
     position: relative;
     padding: 8px 12px;
-    background-color: rgba(0, 0, 0, 0.03);
+    background-color: #00000008;
     border-radius: 4px;
 }
 
@@ -73,7 +66,7 @@
 
 .defaultapi-description {
     line-height: 1.7;
-    color: #555;
+    color: var(--light-text-color);
     margin-bottom: 20px;
 }
 
@@ -119,7 +112,7 @@
 .defaultapi-http-method {
     padding: 6px 12px;
     border-radius: 4px;
-    color: white;
+    color: var(--white-text-color);
     font-weight: 500;
     font-size: 14px;
     width: 80px;
@@ -157,7 +150,7 @@
 }
 
 .defaultapi-resource-description {
-    color: #666;
+    color: var(--light-text-color);
     font-size: 14px;
     flex-grow: 1;
     white-space: nowrap;

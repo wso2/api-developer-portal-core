@@ -39,18 +39,9 @@
     padding: 10px 10px;
     border: 1px solid #dee2e6;
     border-radius: 4px;
-    background-color: #fff;
+    background-color: var(--main-bg-color);
     cursor: pointer;
     font-size: 0.875rem;
-  }
-
-  .select-arrow {
-    border: solid #888;
-    border-width: 0 2px 2px 0;
-    display: inline-block;
-    padding: 2px;
-    transform: rotate(45deg);
-    margin-left: 5px;
   }
 
   .select-items {
@@ -59,7 +50,7 @@
     left: 0;
     right: 0;
     z-index: 999;
-    background-color: white;
+    background-color: var(--main-bg-color);
     border: 1px solid #dee2e6;
     border-radius: 0 0 4px 4px;
     max-height: 200px;

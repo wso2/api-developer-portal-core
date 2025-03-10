@@ -3,7 +3,6 @@
 }
 
 .hero-content {
-  background-color: var(--primary-light-color);
   border-radius: 1.5rem;
   padding: 4rem 3rem;
 }
@@ -11,7 +10,7 @@
 .hero-title {
   font-size: 2.75rem;
   font-weight: 600;
-  color: white;
+  color: var(--white-text-color);
   margin-bottom: 1.5rem;
   line-height: 1.2;
 }
@@ -23,7 +22,7 @@
 
 .hero-description {
   font-size: 1rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--white-text-color);
   margin-bottom: 2rem;
   max-width: 600px;
 }
@@ -37,7 +36,6 @@
   background-image: url("/images/hero-new.svg");
   background-size: cover;
   background-position: center;
-  background-color: #0a1628;
   display: flex;
   justify-content: center;
   align-items: center;

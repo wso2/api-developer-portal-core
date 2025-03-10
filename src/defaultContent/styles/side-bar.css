@@ -12,7 +12,7 @@
     justify-content: space-between;
     height: 95vh;
     padding: 1rem 0;
-    background-color: #1a4c6d;
+    background-color: var(--primary-main-color);
     width: 256px;
     transition: width 0.3s ease;
 }
@@ -33,14 +33,14 @@
     display: flex;
     align-items: center;
     text-decoration: none;
-    color: #a8cadc;
+    color: var(--sidebar-link-color);
     border-radius: 0.5rem;
     transition: background-color 0.2s;
 }
 
 .nav-link:hover {
-    background-color: #41789c;
-    color: white;
+    background-color: var(--sidebar-active-color);
+    color: var(--white-text-color);
 }
 
 .nav-link:hover img,
@@ -49,8 +49,8 @@
 }
 
 .nav-link.active {
-    background-color: #41789c;
-    color: white;
+    background-color: var(--sidebar-active-color);
+    color: var(--white-text-color);
 }
 
 .nav-link.active img,
@@ -94,13 +94,13 @@
     padding: 0.75rem;
     background: none;
     border: none;
-    color: #a8cadc;
+    color: var(--sidebar-link-color);
     cursor: pointer;
     transition: color 0.2s;
 }
 
 .collapse-btn:hover {
-    color: white;
+    color: var(--white-text-color);
 }
 
 .collapse-btn svg {
@@ -128,7 +128,7 @@
 .submenu {
     display: none;
     flex-direction: column;
-    background-color: #043556;
+    background-color: var(--sidebar-submenu-bg);
     border-radius: 0 0 8px 8px;
     padding: 4px 0;
     margin: -16px 5px 0 5px;
@@ -139,7 +139,7 @@
 }
 
 #apis.has-active-submenu {
-    background-color: #043556;
+    background-color: var(--sidebar-submenu-bg);
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
     margin-bottom: 0;
@@ -154,7 +154,7 @@
 }
 
 .submenu-link.active {
-    background-color: #41789C;
+    background-color: var(--sidebar-active-color);
     border-radius: 0;
 }
 
