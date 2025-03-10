@@ -79,7 +79,7 @@
     "/*/configure",
     "**/applications",
     "**/applications/**",
-    "**/api/*",
+    "**/api/**",
     "**/myapis",
     "**/myapis/**",
     "**/myapis?**"
