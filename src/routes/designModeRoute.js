@@ -54,6 +54,12 @@ router.get('/logout', registerPartials, authController.handleLogOut);
 router.get('/signup', registerPartials, authController.handleSignUp);
 
 // eslint-disable-next-line no-useless-escape
-router.get('(^(?!\/(favicon\.ico|images\/|styles\/|*login*|devportal\/|views\/)))/*', registerPartials,  contentController.loadCustomContent);
+// Exclude specific paths
+router.get(['/favicon.ico', '/images/*', '/styles/*', '/login*', '/devportal/*', '/views/*'], (req, res) => {
+res.status(404).send('Not found');
+});
+  
+// Main route for custom content
+router.get('/:path/*', registerPartials, contentController.loadCustomContent);
 
 module.exports = router;

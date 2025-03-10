@@ -4,9 +4,17 @@ const applicationsController = require('../controllers/applicationsContentContro
 const registerPartials = require('../middlewares/registerPartials');
 const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
 
-router.get('/((?!favicon.ico)):orgName/views/:viewName/applications', registerPartials, ensureAuthenticated, applicationsController.loadApplications);
-router.get('/((?!favicon.ico)):orgName/views/:viewName/applications/create', registerPartials, ensureAuthenticated, applicationsController.loadThrottlingPolicies);
-router.get('/((?!favicon.ico)):orgName/views/:viewName/applications/:applicationId', registerPartials, ensureAuthenticated, applicationsController.loadApplication);
-router.get('/((?!favicon.ico)):orgName/views/:viewName/applications/:applicationId/edit', registerPartials, ensureAuthenticated, applicationsController.loadApplicationForEdit);
+// Exclude specific paths using middleware
+router.get(['/favicon.ico'], (req, res) => {
+    res.status(404).send('Not found');
+});
+  
+router.get('/:orgName/views/:viewName/applications', registerPartials, ensureAuthenticated, applicationsController.loadApplications);
+
+router.get('/:orgName/views/:viewName/applications/create', registerPartials, ensureAuthenticated, applicationsController.loadThrottlingPolicies);
+
+router.get('/:orgName/views/:viewName/applications/:applicationId', registerPartials, ensureAuthenticated, applicationsController.loadApplication);
+
+router.get('/:orgName/views/:viewName/applications/:applicationId/edit', registerPartials, ensureAuthenticated, applicationsController.loadApplicationForEdit);
 
 module.exports = router;

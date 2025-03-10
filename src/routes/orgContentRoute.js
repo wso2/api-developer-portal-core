@@ -20,7 +20,12 @@ const router = express.Router();
 const orgController = require('../controllers/orgContentController');
 const registerPartials = require('../middlewares/registerPartials');
 
-router.get('(((?!favicon.ico|images|portal)):orgName/views/:viewName)', registerPartials, orgController.loadOrganizationContent);
+// Exclude specific paths
+router.get(['/favicon.ico', '/images/*', '/portal/*'], (req, res, next) => {
+    res.status(404).send('Not found');
+});
 
+// Use a basic route pattern
+router.get('/:orgName/views/:viewName', registerPartials, orgController.loadOrganizationContent);
 
 module.exports = router;
