@@ -2,23 +2,23 @@
   <link rel='stylesheet' href='/technical-styles/overview.css' />
 </head>
 
-<section>
+<section class="section mt-0 mb-6">
   {{#applicationMetadata}}
-  <div class="col-11 api-banner-content">
-    <div class="d-flex justify-content-between">
-      <div class="col-12 col-md-12">
-        <div class="api-title pb-3">
-          <div class="d-flex align-items-center justify-content-between w-100">
-            <h4>{{name}}</h4>
-            <div class='action-buttons'>
-              <button class='btn btn-sm' title='Edit'
-                onclick="window.location.href='{{../baseUrl}}/applications/{{id}}/edit'">
-                <i class='bi bi-pencil-square'></i>
-              </button>
-            </div>
-          </div>
-          <p class="api-description">{{description}}</p>
+  <div class="container-fluid">
+    <div class="card dev-card app-overview-card">
+      <div class="d-flex align-items-start justify-content-between">
+        <h4 class="app-overview-title">{{name}}</h4>
+        <div class='action-buttons'>
+          <button class='btn btn-outline-secondary' title='Edit'
+            onclick="window.location.href='{{../baseUrl}}/applications/{{id}}/edit'">
+            <i class='bi bi-pencil'></i>
+          </button>
         </div>
+      </div>
+      <div class="col-lg-6 app-overview-body">
+        <p class="app-description">{{description}}</p>
+        <p class="app-subscription-count mt-3">Subscriptions: {{subscriptionCount}}</p>
+
       </div>
     </div>
   </div>

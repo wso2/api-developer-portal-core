@@ -41,7 +41,7 @@
 
 .ad-card h5 {
     font-size: 18px;
-    color: #407893;
+    color: var(--primary-light-color);
     font-weight: 600;
     margin-bottom: 1.5rem;
 }
@@ -54,7 +54,7 @@
 }
 
 .ad-card ul li {
-    color: #40404b;
+    color: var(--main-text-color);
     margin-bottom: 0.5rem;
     padding-left: 1rem;
     position: relative;
@@ -62,7 +62,7 @@
 
 .ad-card ul li::before {
     content: "•";
-    color: #5dc7b1;
+    color: var(--secondary-main-color);
     position: absolute;
     left: 0;
     font-size: 1rem;

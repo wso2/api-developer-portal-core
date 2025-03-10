@@ -24,11 +24,22 @@
 
 .profile-link {
   color: var(--main-text-color);
+  text-decoration: none;
 }
 
 .profile-icon {
   height: 1.875rem;
   border-radius: 50%;
+}
+
+.profile-options {
+  right: 3rem !important;
+  font-size: small !important;
+}
+
+.profile-dropdown-link {
+  color: var(--main-text-color);
+  text-decoration: none;
 }
 
 .navbar-toggler:focus {

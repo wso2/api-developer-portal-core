@@ -33,7 +33,7 @@
 
 .key-benefit-item:hover {
   transform: translateY(-0.3125rem);
-  box-shadow: 0 0.5rem 0.75rem rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0.5rem 0.75rem #0000001a;
 }
 
 .key-benefit-image {
@@ -91,7 +91,7 @@
   overflow: hidden;
   border-radius: 1.5rem;
   background: var(--primary-gradient);
-  box-shadow: 0 0.125rem 0.125rem rgba(125, 124, 124, 0.1);
+  box-shadow: 0 0.125rem 0.125rem #7d7c7c1a;
 }
 
 .overview-title {
