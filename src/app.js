@@ -72,6 +72,16 @@ Handlebars.registerHelper("every", function (array, key, options) {
     return allMatch ? true : false;
 });
 
+Handlebars.registerHelper("some", function (array, key, options) {
+    if (!Array.isArray(array)) {
+        return options.inverse(this);
+    }
+    
+    const someMatch = array.some(item => item[key]);
+    
+    return someMatch ? true : false;
+});
+
 Handlebars.registerHelper('eq', function (a, b) {
     return (a === b || (a != null && b != null && (a === b.toString() || a.toString() === b)));
 });

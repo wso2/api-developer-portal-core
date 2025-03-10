@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700&display=swap");
 @import "/styles/hero.css";
 @import "/styles/footer.css";
 @import "/styles/header.css";
@@ -9,6 +9,7 @@
 @import "/styles/faqBanner.css";
 @import "/styles/community.css";
 @import "/styles/api-listing.css";
+@import "/styles/subscription.css";
 @import "/styles/pagination.css";
 @import "/styles/api-detail-banner.css";
 @import "/styles/tryout-banner.css";
@@ -40,6 +41,7 @@
   --white-text-color: #ffffff;
   --main-text-color: #40404b;
   --light-text-color: #6b7280;
+  --dark-text-color: #1D2028;
   /* other special colors */
   --success-color: #28a745;
   --danger-color: #dc3545;
@@ -61,7 +63,6 @@ html {
 }
 
 body {
-  padding-top: 3.75rem;
   overflow: auto;
   height: 100%;
   display: flex;
@@ -71,6 +72,7 @@ body {
 
 .main-container {
   flex: 1;
+  margin-top: 4rem;
 }
 
 .content-area {
@@ -254,7 +256,7 @@ body {
 /* common-card-style */
 .dev-card {
   height: 100%;
-  border-radius: 12px;
+  border-radius: 24px;
   padding: 20px;
 }
 
@@ -300,7 +302,10 @@ h6 {
   color: var(--primary-color);
 }
 
-/* Classes for Font weights */
-.font-light {
-  font-weight: 300;
+/* header styles */
+.container-header {
+  display: block;
+  color: var(--primary-main-color);
+  font-size: 2rem;
+  font-weight: 600;
 }

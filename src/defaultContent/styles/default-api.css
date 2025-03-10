@@ -10,30 +10,63 @@
 }
 
 .defaultapi-section-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     color: #333;
+    padding-left: 12px;
 }
 
 .defaultapi-endpoint-row {
     display: flex;
     align-items: center;
-    background-color: #f1f5f9;
+    justify-content: space-between;
+    background-color: #f8fafc;
     padding: 15px 20px;
     border-radius: 8px;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    border-left: 4px solid #61affe;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.defaultapi-endpoint-row:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #f1f5f9;
+}
+
+.defaultapi-endpoint-row:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.defaultapi-endpoint-content {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    width: 100%;
 }
 
 .defaultapi-development-label {
-    margin-right: 10px;
-    font-weight: 500;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.defaultapi-endpoint-url-container {
+    position: relative;
+    padding: 8px 12px;
+    background-color: rgba(0, 0, 0, 0.03);
+    border-radius: 4px;
 }
 
 .defaultapi-endpoint-url {
+    font-family: var(--font-family-mono);
+    color: #3182ce;
+    font-size: 15px;
     flex-grow: 1;
-    color: #555;
-    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -45,20 +78,42 @@
 }
 
 .defaultapi-resources {
-    border: 1px solid #eee;
-    border-radius: 8px;
     overflow: hidden;
 }
 
 .defaultapi-resource-item {
     display: flex;
-    padding: 15px 20px;
-    border-bottom: 1px solid #eee;
+    padding: 10px;
+    margin-bottom: 0.5rem;
     align-items: center;
+    transition: background-color 0.2s ease;
+    border-radius: 4px;
 }
 
-.defaultapi-resource-item:last-child {
-    border-bottom: none;
+/* Method-specific resource item styling */
+.defaultapi-resource-item-GET {
+    background-color: rgba(97, 175, 254, 0.1);
+    border: 1px solid #61affe;
+}
+
+.defaultapi-resource-item-POST {
+    background-color: rgba(73, 204, 144, 0.1);
+    border: 1px solid #49cc90;
+}
+
+.defaultapi-resource-item-PUT {
+    background-color: rgba(252, 161, 48, 0.1);
+    border: 1px solid #fca130;
+}
+
+.defaultapi-resource-item-DELETE {
+    background-color: rgba(249, 62, 62, 0.1);
+    border: 1px solid #f93e3e;
+}
+
+.defaultapi-resource-item-PATCH {
+    background-color: rgba(80, 227, 194, 0.1);
+    border: 1px solid #50e3c2;
 }
 
 .defaultapi-http-method {
@@ -72,27 +127,33 @@
     margin-right: 20px;
 }
 
-.POST {
-    background-color: #4ade80;
+.defaultapi-http-method-POST {
+    background-color: #49cc90;
 }
 
-.PUT {
-    background-color: #fb923c;
+.defaultapi-http-method-PUT {
+    background-color: #fca130;
 }
 
-.GET {
-    background-color: #3b82f6;
+.defaultapi-http-method-GET {
+    background-color: #61affe;
 }
 
-.DELETE {
-    background-color: #d85050;
+.defaultapi-http-method-DELETE {
+    background-color: #f93e3e;
 }
 
 .defaultapi-resource-path {
-    font-family: monospace;
+    font-family: var(--font-family-mono);
     font-size: 16px;
     margin-right: 20px;
-    min-width: 200px;
+    font-weight: bold;
+}
+
+.defaultapi-resource-summary {
+    font-size: 12px;
+    margin-right: 20px;
+    font-weight: 300;
 }
 
 .defaultapi-resource-description {

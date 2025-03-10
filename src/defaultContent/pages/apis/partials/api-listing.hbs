@@ -30,16 +30,21 @@
       {{#apiMetadata}}
       <div class="col-lg-4 col-md-6 col-sm-12" id="apiCard">
         <div class="card api-card d-flex flex-column">
-          <div class="api-card-header d-flex align-items-center gap-3">
+          <div class="api-card-header d-flex align-items-center gap-3 position-relative overflow-hidden">
             <img src="{{apiInfo.apiImageMetadata.api-icon}}" class="api-card-img" alt="..." />
             <div class="flex-grow-1">
               <h5 class="api-card-title mb-0">{{apiInfo.apiName}}</h5>
               <p>V {{apiInfo.apiVersion}}</p>
               <p>{{apiInfo.apiType}}</p>
             </div>
+            {{#if ../isAuthenticated}}
+            {{#if (some applications "subscribed")}}
+            <div class="subscription-flag fw-light">Subscribed</div>
+            {{/if}}
+            {{/if}}
           </div>
           <div class="api-card-body flex-grow-1">
-            <div class="truncate-text font-light apilisting-api-description small mb-3">{{apiInfo.apiDescription}}</div>
+            <div class="truncate-text fw-light apilisting-api-description small mb-3">{{apiInfo.apiDescription}}</div>
             <div class="row">
               <div class="apilisting-tags">
                 {{#apiInfo.tags}}
@@ -75,15 +80,16 @@
                     <div class="select-items" role="listbox">
                       <div class="select-action-item" role="button" data-action="create-app">+ Create Application</div>
                       {{#each applications}}
-                        <div class="select-item" role="option" data-value="{{id}}">
-                          <span>{{name}}</span>
-                          {{#if subscribed}}<img src="/images/success-rounded.svg" alt="Subscribed" class="subscription-icon" />{{/if}}
-                        </div>
+                      <div class="select-item" role="option" data-value="{{id}}">
+                        <span>{{name}}</span>
+                        {{#if subscribed}}<img src="/images/success-rounded.svg" alt="Subscribed"
+                          class="subscription-icon" />{{/if}}
+                      </div>
                       {{/each}}
                     </div>
                     <select class="d-none" id="appDropdown-{{apiID}}">
                       {{#each applications}}
-                        <option value="{{id}}" {{#if subscribed}} disabled {{/if}}>{{name}}</option>
+                      <option value="{{id}}" {{#if subscribed}} disabled {{/if}}>{{name}}</option>
                       {{/each}}
                     </select>
                   </div>
@@ -97,4 +103,6 @@
         </div>
       </div>
       {{/apiMetadata}}
+    </div>
+  </div>
 </section>
