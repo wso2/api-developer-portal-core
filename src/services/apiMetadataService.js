@@ -413,6 +413,7 @@ const updateAPITemplate = async (req, res) => {
 
     try {
         const { orgId, apiId } = req.params;
+        let imageMetadata;
         if (req.body.imageMetadata) {
             imageMetadata = JSON.parse(req.body.imageMetadata);
         }
