@@ -361,7 +361,7 @@ const createAPITemplate = async (req, res) => {
 
         //get api files
         if (fsDir.existsSync(contentPath)) {
-             console.log("contentPath", contentPath)
+            console.log("contentPath", contentPath)
             let apiLanding = await util.getAPIFileContent(contentPath);
             apiContent.push(...apiLanding);
         }
@@ -369,7 +369,6 @@ const createAPITemplate = async (req, res) => {
         if (fsDir.existsSync(imagesPath)) {
             const apiImages = await util.getAPIImages(imagesPath);
             apiContent.push(...apiImages);
-
         }
         //get api documents
         if (fsDir.existsSync(documentPath)) {
@@ -415,7 +414,9 @@ const updateAPITemplate = async (req, res) => {
 
     try {
         const { orgId, apiId } = req.params;
-        const imageMetadata = JSON.parse(req.body.imageMetadata);
+        if (req.body.imageMetadata) {
+            imageMetadata = JSON.parse(req.body.imageMetadata);
+        }
         const extractPath = path.join("/tmp", orgId + "/" + apiId);
         await fs.mkdir(extractPath, { recursive: true });
         const zipFilePath = req.file.path;
@@ -430,9 +431,15 @@ const updateAPITemplate = async (req, res) => {
 
         // Verify directories exist
         try {
-            await fs.access(contentPath);
-            await fs.access(imagesPath);
-            await fs.access(documentPath);
+            if (fsDir.existsSync(contentPath)) {
+                await fs.access(contentPath);
+            }
+            if (fsDir.existsSync(imagesPath)) {
+                await fs.access(imagesPath);
+            }
+            if (fsDir.existsSync(documentPath)) {
+                await fs.access(documentPath);
+            }
         } catch (err) {
             console.error(err);
             throw new Error(
@@ -440,20 +447,28 @@ const updateAPITemplate = async (req, res) => {
                 Documents path: ${documentPath}`
             );
         }
+        let apiContent = [];
         //get api files
-        let apiContent = await util.getAPIFileContent(contentPath);
+        if (fsDir.existsSync(contentPath)) {
+            let apiLanding = await util.getAPIFileContent(contentPath);
+            apiContent.push(...apiLanding);
+        }
         //get api images
-        const apiImages = await util.getAPIImages(imagesPath);
+        if (fsDir.existsSync(imagesPath)) {
+            const apiImages = await util.getAPIImages(imagesPath);
+            apiContent.push(...apiImages);
+        }
         //get api documents
-        const apiDocuments = await util.readDocFiles(documentPath);
+        if (fsDir.existsSync(documentPath)) {
+            const apiDocuments = await util.readDocFiles(documentPath);
+            apiContent.push(...apiDocuments);
+        }
 
         if (req.body.docMetadata) {
             docMetadata = JSON.parse(req.body.docMetadata);
             const links = util.getAPIDocLinks(docMetadata);
             apiContent.push(...links);
         }
-        apiContent.push(...apiDocuments);
-        apiContent.push(...apiImages);
         await sequelize.transaction(async (t) => {
             //check whether api belongs to given org
             const apiMetadata = await apiDao.getAPIMetadata(orgId, apiId, t);

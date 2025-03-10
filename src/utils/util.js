@@ -214,7 +214,7 @@ const unzipDirectory = async (zipPath, extractPath) => {
             .on('entry', entry => {
                 const entryPath = entry.path;
                 console.log("Entry path:", entryPath);
-                if (!entryPath.includes('__MACOSX')) {
+                if (!entryPath.includes('__MACOSX') || !entryPath.includes('._')) {
                     const filePath = path.join(extractPath, entryPath);
                     const dirName = path.dirname(filePath);
                     fs.mkdirSync(dirName, { recursive: true });
