@@ -20,6 +20,8 @@ const sequelize = require('../db/sequelize');
 const { Organization } = require('./organization');
 const { APIMetadata } = require('./apiMetadata');
 const constants = require('../utils/constants');
+const SubscriptionPolicy = require('./subscriptionPolicy');
+const APISubscriptionPolicy = require('./apiSubscriptionPolicy');
 
 
 const Application = sequelize.define('DP_APPLICATION', {
@@ -133,7 +135,11 @@ const SubscriptionMapping = sequelize.define('DP_API_SUBSCRIPTION', {
     },
     POLICY_ID: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
+        references: {
+            model: SubscriptionPolicy,
+            key: 'POLICY_ID',
+        },
     },
     ORG_ID: {
         type: DataTypes.UUID,
@@ -161,6 +167,18 @@ APIMetadata.belongsToMany(Application, {
     through: SubscriptionMapping,
     foreignKey: "API_ID",
     otherKey: "APP_ID",
+});
+
+APIMetadata.belongsToMany(SubscriptionPolicy, {
+    through: APISubscriptionPolicy,
+    foreignKey: "API_ID",
+    otherKey: "POLICY_ID",
+});
+
+SubscriptionPolicy.belongsToMany(APIMetadata, {
+    through: APISubscriptionPolicy,
+    foreignKey: "POLICY_ID",
+    otherKey: "API_ID",
 });
 
 Application.belongsTo(Organization, {
