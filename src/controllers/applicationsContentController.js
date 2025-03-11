@@ -268,6 +268,8 @@ const loadApplication = async (req, res) => {
                     }
                 });
             });
+            //display only one key type (SANBOX).
+            //TODO: handle multiple key types
             templateContent = {
                 orgID: orgID,
                 applicationMetadata: metaData,
@@ -275,8 +277,8 @@ const loadApplication = async (req, res) => {
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 subAPIs: subList,
                 nonSubAPIs: nonSubscribedAPIs,
-                productionKeys: productionKeys,
-                isProduction: true
+                productionKeys: sandboxKeys,
+                isProduction: false
             }
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);

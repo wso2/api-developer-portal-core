@@ -828,7 +828,7 @@ const createAppKeyMapping = async (req, res) => {
                     sharedToken: true,
                     tokenType: constants.TOKEN_TYPES.OAUTH
                 }
-                await adminDao.createApplicationKeyMapping(appKeyMappping, t);
+                await adminDao.createApplicationKeyMapping(appKeyMappping);
             }
             // add subscription to control plane for each api
             const apiSubscriptions = [];
@@ -860,9 +860,12 @@ const createAppKeyMapping = async (req, res) => {
             const appKeyMapping = await adminDao.getApplicationKeyMapping(orgID, appID, true);
             //delete app key mapping entries with no api id ref
             if (appKeyMapping.length > 1) {
+                console.log("Delete app key mapping entries with no api id ref");
                 await adminDao.deleteAppKeyMapping(orgID, appID, null, t);
             }
             tokenDetails.additionalProperties = checkAdditionalValues(tokenDetails.additionalProperties);
+            //TODO: need to support both key types
+            tokenDetails.keyType = "SANDBOX"
             //generate oauth key
             responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${cpAppID}/generate-keys`, {}, tokenDetails);
         });
