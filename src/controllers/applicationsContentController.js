@@ -270,7 +270,10 @@ const loadApplication = async (req, res) => {
             });
             templateContent = {
                 orgID: orgID,
-                applicationMetadata: metaData,
+                applicationMetadata: {
+                    ...metaData,
+                    subscriptionCount: subList.length
+                },
                 keyManagersMetadata: kMmetaData,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 subAPIs: subList,
