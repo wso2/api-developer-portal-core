@@ -189,7 +189,9 @@ const loadApplication = async (req, res) => {
                     apiDTO.refID = api.apiReferenceID;
                     apiDTO.apiHandle = api.apiHandle;
                     const subPolicy = await apiMetadata.getSubscriptionPolicy(apiDTO.policyID, orgID);
-                    apiDTO.policyName = subPolicy.dataValues.POLICY_NAME;
+                    if (subPolicy) {
+                        apiDTO.policyName = subPolicy.dataValues.POLICY_NAME;
+                    }
                     return apiDTO;
                 }));
             }
