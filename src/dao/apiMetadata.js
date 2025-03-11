@@ -1066,11 +1066,6 @@ const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
                 )
             )
             AND metadata."ORG_ID" = :orgID
-            AND (
-                (
-                    :groups IS NOT NULL AND string_to_array(metadata."VISIBLE_GROUPS", ' ') && :groups
-                )
-            )
         GROUP BY 
             metadata."API_ID"
         ORDER BY
