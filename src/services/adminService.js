@@ -1008,9 +1008,6 @@ async function handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiR
     try {
         await sequelize.transaction(async (t) => {
 
-            console.log("Non Shared Token", sharedToken);
-            console.log("Non Shared Token", nonSharedToken);
-
             if (nonSharedToken.length > 0) {
                 await adminDao.deleteAppKeyMapping(orgID, appID, apiRefID);
             }
