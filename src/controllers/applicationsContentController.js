@@ -46,8 +46,8 @@ const templateResponseValue = async (pageName) => {
 const loadApplications = async (req, res) => {
 
     const viewName = req.params.viewName;
+    let html, metaData, templateContent;
     try {
-        let html, metaData, templateContent;
         if (config.mode === constants.DEV_MODE) {
             metaData = await getMockApplications();
             templateContent = {
@@ -97,9 +97,9 @@ async function getMockApplications() {
 
 const loadThrottlingPolicies = async (req, res) => {
 
+    let html, metaData, templateContent;
     try {
         const viewName = req.params.viewName;
-        let html, metaData, templateContent;
         if (config.mode === constants.DEV_MODE) {
             metaData = await getMockThrottlingPolicies();
             templateContent = {
@@ -144,10 +144,10 @@ async function getAPIMThrottlingPolicies(req) {
 
 const loadApplication = async (req, res) => {
 
+    let html, templateContent, metaData, kMmetaData;
     const viewName = req.params.viewName;
     try {
         const applicationId = req.params.applicationId;
-        let html, templateContent, metaData, kMmetaData;
         if (config.mode === constants.DEV_MODE) {
             metaData = await getMockApplication();
             kMmetaData = await getMockKeyManagers();
@@ -326,9 +326,9 @@ const getSubscribedApis = async (req, appId) => {
 
 const loadApplicationForEdit = async (req, res) => {
 
+    let html, templateContent, metaData, throttlingMetaData;
     try {
         const { orgName, viewName, applicationId } = req.params;
-        let html, templateContent, metaData, throttlingMetaData;
         if (config.mode === constants.DEV_MODE) {
             metaData = await getMockApplication();
             throttlingMetaData = await getMockThrottlingPolicies();
