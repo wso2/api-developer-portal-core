@@ -64,7 +64,7 @@ const loadCustomContent = async (req, res) => {
             content[constants.BASE_URL_NAME] = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
             html = await renderTemplateFromAPI(content, orgId, orgName, filePath, viewName);
         } catch (error) {
-            console.error(`Failed to load organization :`, error);
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
         }
     }
     res.send(html);

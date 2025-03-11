@@ -104,7 +104,7 @@ const loadAPIs = async (req, res) => {
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
         } catch (error) {
             console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
-            html = constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR;
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
         }
     }
     res.send(html);
@@ -208,7 +208,7 @@ const loadAPIContent = async (req, res) => {
             res.send(html);
         } catch (error) {
             console.error(`Failed to load api content:`, error);
-            html = "An error occurred while loading the API content.";
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
         }
     }
 }
@@ -277,7 +277,7 @@ const loadTryOutPage = async (req, res) => {
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
             html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         } catch (error) {
-            console.error(`Failed to load api tryout :`, error);
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
         }
     }
     res.send(html);
@@ -309,7 +309,7 @@ const loadDocsPage = async (req, res) => {
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
         } catch (error) {
             console.error(`Failed to load api docs:`, error);
-            html = "An error occurred while loading the API content.";
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
         }
     }
     res.send(html);
@@ -355,7 +355,7 @@ const loadDocument = async (req, res) => {
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
         } catch (error) {
             console.error(`Failed to load api content :`, error);
-            html = "An error occurred while loading the API content.";
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
         }
     }
     res.send(html);
