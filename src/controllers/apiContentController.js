@@ -171,6 +171,7 @@ const loadAPIContent = async (req, res) => {
                         apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
                         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
                         apiDetails = await parseSwagger(JSON.parse(apiDefinition))
+                        apiDetails["serverDetails"] = metaData.endPoints;   
                     }
                 }
             }
@@ -423,19 +424,18 @@ async function parseSwagger(api) {
         // Extract general API info
         const title = api.info?.title || "No title";
         const apiDescription = api.info?.description || "No description available";
-        const servers = api.servers || [];
+        //const servers = api.servers || [];
 
         // Extract endpoints
         const endpoints = Object.entries(api.paths || {}).map(([path, methods]) => ({
             path,
-            fullUrls: servers.map(server => `${server}${path}`),
             methods: Object.keys(methods).map(method => ({
                 method: method.toUpperCase(),
                 summary: methods[method]?.summary || "No summary",
                 description: methods[method]?.description || "No description",
             })),
         }));
-        return { title, description: apiDescription, serverDetails: servers, endpoints };
+        return { title, description: apiDescription, endpoints };
     } catch (error) {
         console.error("Error parsing OpenAPI:", error);
     }

@@ -1402,6 +1402,32 @@ const deleteAPIFile = async (fileName, orgID, apiID, t) => {
     }
 }
 
+const deleteAllAPIFiles = async (orgID, apiID, t) => {
+
+    try {
+        const apiFileResponse = await APIContent.destroy({
+            where: {
+                API_ID: apiID
+            },
+            include: [
+                {
+                    model: APIMetadata,
+                    where: {
+                        ORG_ID: orgID
+                    }
+                }
+            ]
+        }, { transaction: t });
+        return apiFileResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+
+}
+
 const getAPIId = async (orgID, apiHandle) => {
 
     try {
@@ -1457,6 +1483,7 @@ module.exports = {
     getAPIFile,
     getAPIDoc,
     deleteAPIFile,
+    deleteAllAPIFiles,
     getAPIDocs,
     getAPIDocLinks,
     getAPIDocByName,
