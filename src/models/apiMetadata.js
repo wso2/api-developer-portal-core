@@ -38,8 +38,7 @@ const APIMetadata = sequelize.define('DP_API_METADATA', {
     allowNull: false
   },
   STATUS: {
-    type: DataTypes.ENUM,
-    values: ['PUBLISHED', 'UNPUBLISHED'],
+    type: DataTypes.STRING,
     allowNull: false
   },
   API_DESCRIPTION: {
