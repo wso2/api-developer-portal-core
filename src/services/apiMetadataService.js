@@ -546,20 +546,25 @@ const deleteAPIFile = async (req, res) => {
 
     const { orgId, apiId } = req.params;
     const apiFileName = req.query.fileName;
-    if (!orgId || !apiId || !apiFileName) {
+    if (!orgId || !apiId) {
         throw new Sequelize.ValidationError(
             "Missing or Invalid fields in the request payload"
         );
     }
     try {
-        const apiFileResponse = await apiDao.deleteAPIFile(apiFileName, orgId, apiId);
+        let apiFileResponse;
+        if (apiFileName) {
+            apiFileResponse = await apiDao.deleteAPIFile(apiFileName, orgId, apiId);
+        } else {
+            apiFileResponse = await apiDao.deleteAllAPIFiles(orgId, apiId);
+        }
         if (apiFileResponse) {
             res.status(204).send();
         } else {
-            res.status(404).send("API File not found");
+            res.status(404).send("API Content not found");
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.API_CONTENT_DELETE_ERROR}, ${error}`);
+        console.error(`${constants.ERROR_MESSAGE.API_CONTENT_DELETE_ERROR}`, error);
         util.handleError(res, error);
     }
 };

@@ -397,6 +397,30 @@ const deleteOrgContent = async (orgId, viewName, fileName) => {
     }
 };
 
+const deleteAllOrgContent = async (orgId, viewName) => {
+
+    const viewId = await apiDao.getViewID(orgId, viewName);
+    try {
+        const deletedRowsCount = await OrgContent.destroy({
+            where: {
+                ORG_ID: orgId,
+                VIEW_ID: viewId
+            }
+        });
+
+        if (deletedRowsCount < 1) {
+            throw Object.assign(new Sequelize.EmptyResultError('Organization content not found'));
+        } else {
+            return deletedRowsCount;
+        }
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
 const createProvider = async (orgID, provider, t) => {
 
     let providerDataList = [];
@@ -989,6 +1013,7 @@ module.exports = {
     updateOrgContent,
     getOrgContent,
     deleteOrgContent,
+    deleteAllOrgContent,
     createIdentityProvider,
     updateIdentityProvider,
     getIdentityProvider,

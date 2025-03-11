@@ -368,10 +368,12 @@ const deleteOrgContent = async (req, res) => {
 
     try {
         const fileName = req.query.fileName;
+        let deletedRowsCount;
         if (!req.query.fileName) {
-            throw new CustomError(400, "Bad Request", "Missing required parameter: 'fileName'");
+           deletedRowsCount = await adminDao.deleteAllOrgContent(req.params.orgId, req.params.name);
+        } else {
+           deletedRowsCount = await adminDao.deleteOrgContent(req.params.orgId, req.params.name, fileName);
         }
-        const deletedRowsCount = await adminDao.deleteOrgContent(req.params.orgId, req.params.name, fileName);
         if (deletedRowsCount > 0) {
             res.status(204).send();
         } else {
@@ -383,7 +385,21 @@ const deleteOrgContent = async (req, res) => {
     }
 };
 
+const deleteAllOrgContent = async (req, res) => {
 
+    try {
+       
+        const deletedRowsCount = await adminDao.deleteAllOrgContent(req.params.orgId, req.params.name, fileName);
+        if (deletedRowsCount > 0) {
+            res.status(204).send();
+        } else {
+            throw new CustomError(404, "Records Not Found", 'Organization not found');
+        }
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.ORG_CONTENT_DELETE_ERROR}, ${error}`);
+        util.handleError(res, error);
+    }
+};
 
 const createProvider = async (req, res) => {
 
@@ -1024,6 +1040,7 @@ module.exports = {
     updateOrgContent,
     getOrgContent,
     deleteOrgContent,
+    deleteAllOrgContent,
     createIdentityProvider,
     updateIdentityProvider,
     getIdentityProvider,
