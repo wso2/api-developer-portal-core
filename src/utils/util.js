@@ -397,6 +397,7 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
                 const response = await axios(url, options);
                 return response.data;
             } catch (retryError) {
+                let retryMessage;
                 if (retryError.response) {
                     retryMessage = retryError.response.data.description;
                 }

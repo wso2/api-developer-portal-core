@@ -38,7 +38,7 @@ const createAPIMetadata = async (orgID, apiMetadata, t) => {
     try {
         const apiMetadataResponse = await APIMetadata.create({
             REFERENCE_ID: apiInfo.referenceID,
-            STATUS: constants.API_STATUS.PUBLISHED,
+            STATUS: apiInfo.apiStatus,
             PROVIDER: apiInfo.provider,
             API_NAME: apiInfo.apiName,
             API_HANDLE: apiInfo.apiHandle ? apiInfo.apiHandle : `${apiInfo.apiName.toLowerCase().replace(/\s+/g, '')}-v${apiInfo.apiVersion}`,
@@ -1119,7 +1119,7 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
     try {
         const [updateCount, apiMetadataResponse] = await APIMetadata.update({
             REFERENCE_ID: apiInfo.referenceID,
-            STATUS: apiInfo.status,
+            STATUS: apiInfo.apiStatus,
             PROVIDER: apiInfo.provider,
             API_NAME: apiInfo.apiName,
             API_HANDLE: `${apiInfo.apiName.toLowerCase().replace(/\s+/g, '')}-v${apiInfo.apiVersion}`,

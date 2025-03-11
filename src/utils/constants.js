@@ -40,8 +40,8 @@ module.exports = {
         PRIVATE: 'PRIVATE'
     },
     API_STATUS: {
-        PUBLISHED: "PUBLISHED",
-        UNPUBLISHED: "UNPUBLISHED"
+        PUBLISHED: "Publish",
+        UNPUBLISHED: "Demote to Created"
     },
     DOC_TYPES: {
         DOC_ID: 'DOC_',
