@@ -64,7 +64,7 @@
                 {{#if ../isAuthenticated}}
                 {{#if subscriptionPolicies.length}}
                 {{#if (eq subscriptionPolicies.length 1)}}
-                <a type="button" class="common-btn-outlined"
+                <a type="button" class="common-btn-primary"
                   onclick="subscribe('{{../orgID}}', '', '{{apiID}}', '{{apiReferenceID}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyID"}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyName"}}')">Subscribe</a>
                 {{else}}
                 <a type="button" class="common-btn-primary" onclick="loadModal('planModal-{{apiID}}')">Subscribe</a>
