@@ -1,22 +1,43 @@
 <main>
-    <div class="doc-content">
+    <div class="doc-content me-4">
         <div class="documents">
             <aside class="documents-sidebar">
                 {{#docTypes}}
+                {{#if (eq type "Specification")}}
                 <div>
                     <div class="doc-section-title">
-                        {{#if (eq type "Specification")}}
-                        <a href="{{../baseUrl}}/docs/specification" class="doc-spec">{{type}}</a>
-                        {{else}}
-                        {{type}}
-                        {{/if}}
+                        Specification
                     </div>
-                    {{#names}}
                     <div class="doc-links">
-                        <a href="{{../../baseUrl}}/docs/{{../type}}/{{this}}" class="doc-link">{{this}}</a>
+                        <a href="{{../baseUrl}}/docs/specification" class="doc-link">
+                            <div class="doc-icon">
+                                <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/api-definition.svg" alt="doc" />
+                            </div>
+                            <div class="doc-title">
+                                API Definition
+                            </div>
+                        </a>
                     </div>
-                    {{/names}}
                 </div>
+                {{else}}
+                <div>
+                    <div class="doc-section-title">
+                        {{type}}
+                    </div>
+                    <div class="doc-links">
+                        {{#names}}
+                        <a href="{{../../baseUrl}}/docs/{{../type}}/{{this}}" class="doc-link">
+                            <div class="doc-icon">
+                                <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/docs-icon.svg" alt="doc" />
+                            </div>
+                            <div class="doc-title">
+                                {{this}}
+                            </div>
+                        </a>
+                        {{/names}}
+                    </div>
+                </div>
+                {{/if}}
                 {{/docTypes}}
             </aside>
             {{> api-doc}}
