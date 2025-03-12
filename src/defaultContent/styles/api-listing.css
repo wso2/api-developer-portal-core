@@ -1,11 +1,7 @@
-body {
-  background-color: var(--main-bg-color);
-}
-
 .apis-section {
   display: flex;
   justify-content: center;
-  margin: 0 3.75rem;
+  margin: 0 2rem 0 0;
   align-items: center;
   flex-direction: column;
 }
@@ -321,6 +317,8 @@ hr {
 .api-card {
   .subscription-container {
     padding: 8px;
+    margin-top: -8px;
+    margin-bottom: -8px;
   }
 
   .custom-dropdown {
