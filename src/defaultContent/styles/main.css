@@ -75,17 +75,18 @@ body {
 }
 
 .main-container {
+  display: flex;
   flex: 1;
   margin-top: 4rem;
 }
 
 .content-area {
-  margin-left: 4rem;
+  width: 100%;
   margin-top: 1rem;
 }
 
 .section {
-  margin: 5rem 3.75rem;
+  margin: 5rem 2rem 0 0;
 }
 
 .common-btn-primary {

@@ -44,6 +44,15 @@
     font-size: 0.875rem;
   }
 
+  .select-arrow {
+    border: solid #888;
+    border-width: 0 2px 2px 0;
+    display: inline-block;
+    padding: 2px;
+    transform: rotate(45deg);
+    margin-left: 5px;
+  }
+
   .select-items {
     position: absolute;
     top: 100%;

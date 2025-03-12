@@ -5,16 +5,22 @@
 }
 
 .sidebar {
-    position: absolute;
+    position: sticky;
+    top: 5rem;
     z-index: 100;
     display: flex;
+    flex-shrink: 0;
     flex-direction: column;
     justify-content: space-between;
-    height: 95vh;
+    height: calc(95vh - 4rem);
     padding: 1rem 0;
+    margin-left: 1rem;
+    margin-right: 1rem;
     background-color: var(--primary-main-color);
     width: 256px;
     transition: width 0.3s ease;
+    border-radius: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar.collapsed {
