@@ -20,10 +20,10 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const registerPartials = require('../middlewares/registerPartials');
 
-// router.get('/portal/login', registerPartials, authController.login);
-// router.get('/portal/callback', authController.handleCallback);
-// router.get('/portal/logout', authController.handleLogOut);
-// router.get('/portal/signup', authController.handleSignUp);
+router.get('/portal/login', registerPartials, authController.login);
+router.get('/portal/callback', authController.handleCallback);
+router.get('/portal/logout', authController.handleLogOut);
+router.get('/portal/signup', authController.handleSignUp);
 
 router.get('/:orgName/views/:viewName/login', registerPartials, authController.login);
 router.get('/:orgName/callback', authController.handleCallback);

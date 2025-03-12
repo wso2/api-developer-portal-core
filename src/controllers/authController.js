@@ -79,10 +79,9 @@ const login = async (req, res, next) => {
     req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
     IDP = await fetchAuthJsonContent(req, orgName);
     if (IDP.clientId) {
-        await configurePassport(IDP, claimNames);  // Configure passport dynamically
+        configurePassport(IDP, claimNames);  // Configure passport dynamically
         passport.authenticate('oauth2')(req, res, next);
-        console.log("Passport authentication done");
-        //next();
+        next();
     } else {
         orgName = req.params.orgName;
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'login', 'page.hbs');

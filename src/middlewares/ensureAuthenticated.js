@@ -113,7 +113,6 @@ const ensureAuthenticated = async (req, res, next) => {
             adminRole = orgDetails.ADMIN_ROLE || adminRole;
             superAdminRole = orgDetails.SUPER_ADMIN_ROLE || superAdminRole;
             subscriberRole = orgDetails.SUBSCRIBER_ROLE || subscriberRole;
-            organizationClaimName = orgDetails.ORGANIZATION_CLAIM_NAME || config.orgIDClaim;
         }
         let role;
         if (req.isAuthenticated()) {
@@ -133,32 +132,18 @@ const ensureAuthenticated = async (req, res, next) => {
                     req.user[constants.ROLES.SUBSCRIBER] = subscriberRole;
                     if (orgDetails) {
                         req.user[constants.ORG_ID] = orgDetails.ORG_ID;
-                        req.user[constants.ORG_IDENTIFIER] = orgDetails.ORGANIZATION_IDENTIFIER;
+                        req.user[constants.ORG_IDENTIFIER] = orgDetails.ORGANIZATION_IDENTIFIER || config.orgIDClaim;
                     }
                 }
                 //verify user belongs to organization
-                const isMatch = constants.ROUTE.DEVPORTAL_ROOT.some(pattern => minimatch.minimatch(req.originalUrl, pattern));
+                // const isMatch = constants.ROUTE.DEVPORTAL_ROOT.some(pattern => minimatch.minimatch(req.originalUrl, pattern));
 
-                if (!isMatch) {
-                    console.log('Checking if user belongs to organization');
-                    if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
-                        //check if exchanged token has organization identifier
-                        const decodedToken = req.user.exchangeToken ? jwt.decode(req.user.exchangeToken) : null;
-                        console.log('Decoded token: ' , decodedToken);
-                        if (decodedToken && !(getNestedValue(decodedToken, organizationClaimName) === req.user[constants.ORG_IDENTIFIER])) {
-                            console.log('User is not authorized to access organization');
-                            const err = new Error('Authentication required');
-                            err.status = 401; // Unauthorized
-                            return next(err);
-                        } else if (!decodedToken) {
-                            console.log('User is not authorized to access organization');
-                            const err = new Error('Authentication required');
-                            err.status = 401; // Unauthorized
-                            return next(err);
-                        }
-                    }
-                }
-
+                // if (!isMatch) {
+                //     if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
+                //         console.log('User is not authorized to access organization');
+                //         return res.send("User not authorized to access organization");
+                //     }
+                // }
                 if (!config.advanced.disabledRoleValidation) {
                     if (ensurePermission(req.originalUrl, role, req)) {
                         console.log('User is authorized');
@@ -342,10 +327,6 @@ const enforceAPIKey = (req, res, next) => {
     }
     return next();
 };
-
-function getNestedValue(obj, path) {
-    return path.split('.').reduce((acc, key) => acc?.[key], obj);
-}
 
 
 module.exports = {
