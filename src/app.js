@@ -191,7 +191,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).send(`
       ${html}
     `);
-  });
+});
   
 
 const PORT = process.env.PORT || config.defaultPort;
