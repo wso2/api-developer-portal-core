@@ -50,11 +50,11 @@ router.put('/organizations/:orgId/provider', validateAuthentication(constants.SC
 router.get('/organizations/:orgId/provider', validateAuthentication(constants.SCOPES.ADMIN), adminService.getProviders);
 router.delete('/organizations/:orgId/provider', validateAuthentication(constants.SCOPES.ADMIN), adminService.deleteProvider);
 
-router.post('/organizations/:orgId/apis', validateAuthentication(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.createAPIMetadata);
-router.get('/organizations/:orgId/apis/:apiId', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.getAPIMetadata);
-router.get('/organizations/:orgId/apis', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.getAllAPIMetadata);
-router.put('/organizations/:orgId/apis/:apiId', validateAuthentication(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.updateAPIMetadata);
-router.delete('/organizations/:orgId/apis/:apiId', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIMetadata);
+router.post('/organizations/:orgId/apis', enforceSecuirty(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.createAPIMetadata);
+router.get('/organizations/:orgId/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.getAPIMetadata);
+router.get('/organizations/:orgId/apis', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.getAllAPIMetadata);
+router.put('/organizations/:orgId/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.updateAPIMetadata);
+router.delete('/organizations/:orgId/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIMetadata);
 
 router.post('/organizations/:orgId/subscriptionPolicy', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.createSubscriptionPolicy);
 router.get('/organizations/:orgId/subscriptionPolicy/:policyID', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.getSubscriptionPolicy);
