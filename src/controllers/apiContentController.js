@@ -234,6 +234,7 @@ const loadAPIDefinition = async (orgName, viewName, apiHandle) => {
         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
         templateContent.apiType = metaData.apiInfo.apiType;
         templateContent.swagger = apiDefinition;
+        templateContent.metaData = metaData;
     }
     return templateContent;
 }
@@ -325,8 +326,10 @@ const loadDocument = async (req, res) => {
     //load API definition
     if (req.originalUrl.includes(constants.FILE_NAME.API_SPECIFICATION_PATH)) {
         const definitionResponse = await loadAPIDefinition(orgName, viewName, apiHandle);
-        templateContent.swagger = definitionResponse.swagger;
         templateContent.apiType = definitionResponse.apiType;
+        let apiMetadata = definitionResponse.metaData;
+        let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
+        templateContent.swagger = JSON.stringify(modifiedSwagger);
         templateContent.isAPIDefinition = true;
     }
     if (config.mode === constants.DEV_MODE) {
@@ -439,6 +442,13 @@ async function parseSwagger(api) {
     } catch (error) {
         console.error("Error parsing OpenAPI:", error);
     }
+}
+
+function replaceEndpointParams(apiDefinition, prodEndpoint, snadboxEndpoint) {
+
+    apiDefinition.servers[0].url = prodEndpoint;
+    apiDefinition.servers[1].url = snadboxEndpoint;
+    return apiDefinition;
 }
 
 module.exports = {
