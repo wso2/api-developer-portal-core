@@ -84,21 +84,6 @@ function accessTokenPresent(req) {
     return accessToken;
 }
 
-const orgIdValid = async (req) => {
-
-    if (req.isAuthenticated() && req.user) {
-        decodedToken = req.user.exchangeToken ? jwt.decode(req.user.exchangeToken): null;
-        if (decodedToken && decodedToken.organization) {
-            let orgDetails = await adminDao.getOrganization(decodedToken.organization.uuid);
-            if (orgDetails  && decodedToken.organization.uuid == orgDetails.ORGANIZATION_IDENTIFIER) {
-                return true;
-            }
-        }
-    } 
-    return false;
-}
-
-
 const ensurePermission = (currentPage, role, req) => {
 
     let adminRole, superAdminRole, subscriberRole;
@@ -389,6 +374,5 @@ function getNestedValue(obj, path) {
 module.exports = {
     ensureAuthenticated,
     validateAuthentication,
-    enforceSecuirty,
-    orgIdValid
+    enforceSecuirty
 }

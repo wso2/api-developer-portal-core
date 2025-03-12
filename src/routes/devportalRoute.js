@@ -24,7 +24,7 @@ const devportalController = require('../controllers/devportalController');
 const multer = require('multer');
 const storage = multer.memoryStorage()
 const apiDefinition = multer({ storage: storage })
-const { ensureAuthenticated, validateAuthentication, enforceSecuirty, orgIdValid } = require('../middlewares/ensureAuthenticated');
+const { ensureAuthenticated, validateAuthentication, enforceSecuirty } = require('../middlewares/ensureAuthenticated');
 const constants = require('../utils/constants');
 
 router.post('/organizations', enforceSecuirty(constants.SCOPES.ADMIN), adminService.createOrganization);
