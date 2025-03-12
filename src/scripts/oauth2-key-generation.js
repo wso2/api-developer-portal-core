@@ -339,6 +339,13 @@ function showAdvanced(configId) {
     content.style.display = content.style.display === "block" ? "none" : "block";
     // const KMDetails = document.getElementById(KMDetailsId) ;
     // KMDetails.style.display = KMDetails.style.display === "block" ? "none" : "block";
+    
+    // Get the arrow icon from the clicked header and toggle its rotation
+    const headerElement = event.currentTarget;
+    const arrowIcon = headerElement.querySelector('.arrow-icon');
+    if (arrowIcon) {
+        arrowIcon.classList.toggle('rotated');
+    }
 }
 
 
