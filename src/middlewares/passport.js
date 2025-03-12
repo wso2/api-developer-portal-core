@@ -45,6 +45,8 @@ function configurePassport(authJsonContent, claimNames) {
         state: true,
         pkce: true
     }, async (req, accessToken, refreshToken, params, profile, done) => {
+
+
         if (!accessToken) {
             console.error('No access token received');
             return done(new Error('Access token missing'));
@@ -90,6 +92,7 @@ function configurePassport(authJsonContent, claimNames) {
             'isSuperAdmin': isSuperAdmin,
             [constants.USER_ID]: decodedAccessToken[constants.USER_ID]
         };
+        console.log('User profile:', profile);
         return done(null, profile);
     });
     strategy._oauth2.setAgent(agent);
@@ -104,7 +107,6 @@ function configurePassport(authJsonContent, claimNames) {
         });
     };
     passport.use(strategy);
-
 }
 
 module.exports = configurePassport;

@@ -81,7 +81,8 @@ const login = async (req, res, next) => {
     if (IDP.clientId) {
         configurePassport(IDP, claimNames);  // Configure passport dynamically
         passport.authenticate('oauth2')(req, res, next);
-        next();
+        console.log("Passport authentication done");
+        //next();
     } else {
         orgName = req.params.orgName;
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'login', 'page.hbs');
