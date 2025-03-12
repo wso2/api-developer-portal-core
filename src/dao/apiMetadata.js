@@ -726,28 +726,28 @@ const getAPIDocTypes = async (orgID, apiID) => {
     try {
         const apiFileResponse = await APIContent.findAll({
             attributes: [
-            "TYPE",
-            [Sequelize.fn("ARRAY_AGG", Sequelize.col("DP_API_CONTENT.FILE_NAME")), "FILE_NAMES"]
+                "TYPE",
+                [Sequelize.fn("ARRAY_AGG", Sequelize.col("DP_API_CONTENT.FILE_NAME")), "FILE_NAMES"]
             ],
             where: {
-            API_ID: apiID,
-            TYPE: {
-                [Op.or]: [
-                { [Op.like]: "DOC_%" },
-                { [Op.like]: constants.DOC_TYPES.API_DEFINITION }
-                ]
-            },
+                API_ID: apiID,
+                TYPE: {
+                    [Op.or]: [
+                        { [Op.like]: "DOC_%" },
+                        { [Op.like]: constants.DOC_TYPES.API_DEFINITION }
+                    ]
+                },
             },
             group: ["DP_API_CONTENT.TYPE"],
             include: [
-            {
-                model: APIMetadata,
-                required: true,
-                attributes: [],
-                where: {
-                ORG_ID: orgID
+                {
+                    model: APIMetadata,
+                    required: true,
+                    attributes: [],
+                    where: {
+                        ORG_ID: orgID
+                    }
                 }
-            }
             ]
         });
 
@@ -1112,32 +1112,60 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
         owners = apiInfo.owners;
     }
     try {
-        const [updateCount, apiMetadataResponse] = await APIMetadata.update({
-            REFERENCE_ID: apiInfo.referenceID,
-            STATUS: apiInfo.apiStatus,
-            PROVIDER: apiInfo.provider,
-            API_NAME: apiInfo.apiName,
-            API_HANDLE: `${apiInfo.apiName.toLowerCase().replace(/\s+/g, '')}-v${apiInfo.apiVersion}`,
-            API_DESCRIPTION: apiInfo.apiDescription,
-            API_VERSION: apiInfo.apiVersion,
-            API_TYPE: apiInfo.apiType,
-            TAGS: apiInfo.tags ? apiInfo.tags.join(' ') : null,
-            VISIBILITY: apiInfo.visibility,
-            VISIBLE_GROUPS: apiInfo.visibleGroups ? apiInfo.visibleGroups.join(' ') : null,
-            TECHNICAL_OWNER: owners.technicalOwner,
-            TECHNICAL_OWNER_EMAIL: owners.technicalOwnerEmail,
-            BUSINESS_OWNER_EMAIL: owners.businessOwnerEmail,
-            BUSINESS_OWNER: owners.businessOwner,
-            SANDBOX_URL: apiMetadata.endPoints.sandboxURL,
-            PRODUCTION_URL: apiMetadata.endPoints.productionURL,
-            METADATA_SEARCH: apiMetadata,
-        }, {
-            where: {
-                API_ID: apiID,
-                ORG_ID: orgID,
-            },
-            returning: true,
-        }, { transaction: t });
+        let updateCount, apiMetadataResponse;
+        if (apiMetadata.endPoints.sandboxURL !== "") {
+            [updateCount, apiMetadataResponse] = await APIMetadata.update({
+                REFERENCE_ID: apiInfo.referenceID,
+                STATUS: apiInfo.apiStatus,
+                PROVIDER: apiInfo.provider,
+                API_NAME: apiInfo.apiName,
+                API_HANDLE: `${apiInfo.apiName.toLowerCase().replace(/\s+/g, '')}-v${apiInfo.apiVersion}`,
+                API_DESCRIPTION: apiInfo.apiDescription,
+                API_VERSION: apiInfo.apiVersion,
+                API_TYPE: apiInfo.apiType,
+                TAGS: apiInfo.tags ? apiInfo.tags.join(' ') : null,
+                VISIBILITY: apiInfo.visibility,
+                VISIBLE_GROUPS: apiInfo.visibleGroups ? apiInfo.visibleGroups.join(' ') : null,
+                TECHNICAL_OWNER: owners.technicalOwner,
+                TECHNICAL_OWNER_EMAIL: owners.technicalOwnerEmail,
+                BUSINESS_OWNER_EMAIL: owners.businessOwnerEmail,
+                BUSINESS_OWNER: owners.businessOwner,
+                SANDBOX_URL: apiMetadata.endPoints.sandboxURL,
+                PRODUCTION_URL: apiMetadata.endPoints.productionURL,
+                METADATA_SEARCH: apiMetadata,
+            }, {
+                where: {
+                    API_ID: apiID,
+                    ORG_ID: orgID,
+                },
+                returning: true,
+            }, { transaction: t });
+        } else {
+            [updateCount, apiMetadataResponse] = await APIMetadata.update({
+                REFERENCE_ID: apiInfo.referenceID,
+                STATUS: apiInfo.apiStatus,
+                PROVIDER: apiInfo.provider,
+                API_NAME: apiInfo.apiName,
+                API_HANDLE: `${apiInfo.apiName.toLowerCase().replace(/\s+/g, '')}-v${apiInfo.apiVersion}`,
+                API_DESCRIPTION: apiInfo.apiDescription,
+                API_VERSION: apiInfo.apiVersion,
+                API_TYPE: apiInfo.apiType,
+                TAGS: apiInfo.tags ? apiInfo.tags.join(' ') : null,
+                VISIBILITY: apiInfo.visibility,
+                VISIBLE_GROUPS: apiInfo.visibleGroups ? apiInfo.visibleGroups.join(' ') : null,
+                TECHNICAL_OWNER: owners.technicalOwner,
+                TECHNICAL_OWNER_EMAIL: owners.technicalOwnerEmail,
+                BUSINESS_OWNER_EMAIL: owners.businessOwnerEmail,
+                BUSINESS_OWNER: owners.businessOwner,
+                METADATA_SEARCH: apiMetadata,
+            }, {
+                where: {
+                    API_ID: apiID,
+                    ORG_ID: orgID,
+                },
+                returning: true,
+            }, { transaction: t });
+        }
         return [updateCount, apiMetadataResponse];
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -1430,7 +1458,8 @@ const getAPIId = async (orgID, apiHandle) => {
             attributes: ['API_ID'],
             where: {
                 API_HANDLE: apiHandle,
-                ORG_ID: orgID            }
+                ORG_ID: orgID
+            }
         })
         return api.API_ID;
     } catch (error) {
@@ -1449,7 +1478,7 @@ const getAPIHandle = async (orgID, apiRefID) => {
             attributes: ['API_HANDLE'],
             where: {
                 REFERENCE_ID: apiRefID,
-                ORG_ID: orgID            
+                ORG_ID: orgID
             }
         })
         return api.API_HANDLE;

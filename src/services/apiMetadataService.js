@@ -43,7 +43,7 @@ const createAPIMetadata = async (req, res) => {
     const orgId = req.params.orgId;
     try {
         // Validate input
-        if (!apiMetadata.apiInfo || !apiDefinitionFile) {
+        if (!apiMetadata.apiInfo || !apiDefinitionFile || !apiMetadata.endPoints) {
             throw new Sequelize.ValidationError(
                 "Missing or Invalid fields in the request payload"
             );
@@ -52,19 +52,6 @@ const createAPIMetadata = async (req, res) => {
             throw new Sequelize.ValidationError(
                 "Visible groups cannot be specified for a public API"
             );
-        }
-        const apiDefinition = JSON.parse(apiDefinitionFile);
-        const endPoints = apiDefinition.servers;
-
-        if (!apiMetadata.apiInfo.endPoints || !apiMetadata.endPoints?.sandboxURL || !apiMetadata.endPoints?.productionURL) {
-            apiMetadata.endPoints = {};
-            if (endPoints) {
-                apiMetadata.endPoints.productionURL = endPoints[0].url;
-                apiMetadata.endPoints.sandboxURL = endPoints[0].url;
-            } else {
-                apiMetadata.endPoints.productionURL = "";
-                apiMetadata.endPoints.sandboxURL = "";
-            }
         }
         await sequelize.transaction(async (t) => {
             // Create apimetadata record
@@ -237,25 +224,12 @@ const updateAPIMetadata = async (req, res) => {
 
     try {
         // Validate input
-        if (!apiMetadata.apiInfo || !apiDefinitionFile) {
+        if (!apiMetadata.apiInfo || !apiDefinitionFile|| !apiMetadata.endPoints) {
             throw new Sequelize.ValidationError(
                 "Missing or Invalid fields in the request payload"
             );
         }
 
-        const apiDefinition = JSON.parse(apiDefinitionFile);
-        const endPoints = apiDefinition.servers;
-
-        if (!apiMetadata.apiInfo.endPoints || !apiMetadata.endPoints?.sandboxURL || !apiMetadata.endPoints?.productionURL) {
-            apiMetadata.endPoints = {};
-            if (endPoints) {
-                apiMetadata.endPoints.productionURL = endPoints[0].url;
-                apiMetadata.endPoints.sandboxURL = endPoints[0].url;
-            } else {
-                apiMetadata.endPoints.productionURL = "";
-                apiMetadata.endPoints.sandboxURL = "";
-            }
-        }
         await sequelize.transaction(async (t) => {
             // Create apimetadata record
             let [updatedRows, updatedAPI] = await apiDao.updateAPIMetadata(orgId, apiId, apiMetadata, t);
