@@ -1025,7 +1025,9 @@ async function handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiR
                     tokenType: constants.TOKEN_TYPES.OAUTH
                 });
             } else {
-                await adminDao.deleteAppKeyMapping(orgID, appID, apiRefID, t);
+                if (sharedToken.length > 1) {
+                    await adminDao.deleteAppKeyMapping(orgID, appID, apiRefID, t);
+                }
             }
             await adminDao.deleteSubscription(orgID, subID, t);
         });

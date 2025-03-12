@@ -534,8 +534,9 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                     fileType = "style"
                     if (file.name === "main.css") {
                         strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g, `@import url("${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${protocol}://${host}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
-                        content = Buffer.from(strContent, constants.CHARSET_UTF8);
-                    }
+                    } 
+                    strContent = strContent.replace(/\/images\/([^"]+)/g, `${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${protocol}://${host}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
+                    content = Buffer.from(strContent, constants.CHARSET_UTF8);
                 } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                     fileType = "layout"
                     if (file.name === "main.hbs") {

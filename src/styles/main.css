@@ -253,3 +253,11 @@ h6 {
   padding: 0 1rem 1rem 1rem;
   display: flex;
 }
+
+/* header styles */
+.container-header {
+  display: block;
+  color: var(--primary-main-color);
+  font-size: 2rem;
+  font-weight: 600;
+}

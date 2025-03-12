@@ -1,32 +1,36 @@
-<section>
-    <div class="col-11 mx-auto">
-        <div class="api-title pb-3">
-            <div class="d-flex align-items-center justify-content-between w-100">
-                <h4> APIs </h4>
-                <div class='action-buttons'>
-                    <a class="common-btn-primary" type="button"
-                        onclick="loadModal('appModal-{{applicationMetadata.id}}')">+ Add API</a>
-                </div>
+<section class="section mt-5 mb-6">
+    <div class="container-fluid">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="container-header">APIs</div>
+            <div class='action-buttons mt-0'>
+                <a class="common-btn-primary" type="button" onclick="loadModal('appModal-{{applicationMetadata.id}}')">+
+                    Add API
+                </a>
             </div>
-            <p class="api-description">{{description}}</p>
         </div>
-
-        <div class="row">
+        <div class="row row-gap-4">
             {{#subAPIs}}
-            <div class="col-lg-4 col-md-6 mb-4" id="apiCard">
-                <div class="card dev-card api-card d-flex flex-column">
-                    <div class="d-flex align-items-end justify-content-between w-100">
-                        <div class="d-flex align-items-center gap-2">
+            <div class="col-lg-4 col-md-6">
+                <div class="card dev-card h-auto p-4">
+                    <div class="d-flex flex-wrap align-items-start justify-content-between gap-2">
+                        <div class="d-flex align-items-center gap-2 overflow-hidden">
                             <img src="{{apiInfo.apiImageMetadata.api-icon}}" class="api-card-img" />
-                            <div class="api-card-body flex-grow-1 p-2">
-                                <h5 class="api-card-title mb-0"> <span onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'" class="cursor-pointer">{{name}}</span></h5>
-                                <p>V {{version}}</p>
-                                <div class="badge badge-custom2"> {{policyName}} </div>
+                            <div class="api-card-body flex-grow-1 p-0 overflow-hidden">
+                                <h5 class="api-card-title mb-0"> <span
+                                        onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
+                                        class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
+                                </h5>
+                                <p class="my-0">V {{version}}</p>
+                                <div class="badge badge-custom2 m-0"> {{policyName}} </div>
                             </div>
                         </div>
-                            {{> delete-confirmation modalTitle="Do you really want to remove the subscription?" modalMessage="This will remove the subscription entry stored in the devportal." modalFunction="removeSubscription()" }}
-                        <a class="common-btn-primary pt-2 pb-2" type="button"
-                            onclick="openDeleteModal('{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')">Unsubscribe</a>
+                        <div class="mt-auto ms-auto">
+                            {{> delete-confirmation modalTitle="Do you really want to remove the subscription?"
+                            modalMessage="This will remove the subscription entry stored in the devportal."
+                            modalFunction="removeSubscription()" }}
+                            <a class="common-btn-primary pt-2 pb-2" type="button"
+                                onclick="openDeleteModal('{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')">Unsubscribe</a>
+                        </div>
                     </div>
                 </div>
             </div>
