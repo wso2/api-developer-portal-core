@@ -22,14 +22,14 @@ const registerPartials = require('../middlewares/registerPartials');
 const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
 
 
-router.get('/((?!favicon.ico)):orgName/views/:viewName/apis', ensureAuthenticated, registerPartials, apiController.loadAPIs);
+router.get('/((?!favicon.ico)):orgName/views/:viewName/apis', registerPartials, ensureAuthenticated, apiController.loadAPIs);
 
-router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiHandle', ensureAuthenticated, registerPartials, apiController.loadAPIContent);
+router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiHandle', registerPartials, ensureAuthenticated, apiController.loadAPIContent);
 
-router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiHandle/docs/specification', ensureAuthenticated, registerPartials, apiController.loadDocument);
+router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiHandle/docs/specification', registerPartials, ensureAuthenticated, apiController.loadDocument);
 
 // router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiHandle/docs', ensureAuthenticated, registerPartials, apiController.loadDocsPage);
 
-router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiHandle/docs/:docType/:docName', registerPartials, apiController.loadDocument);
+router.get('/((?!favicon.ico)):orgName/views/:viewName/api/:apiHandle/docs/:docType/:docName', registerPartials, ensureAuthenticated, apiController.loadDocument);
 
 module.exports = router;
