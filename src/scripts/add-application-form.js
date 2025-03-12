@@ -96,7 +96,7 @@ applicationForm.addEventListener('submit', async (e) => {
         if (window.location.href.includes('/apis')) {
             window.location.reload();
         } else {
-            window.location.href = document.referrer || '/applications';
+            window.location.href = document.referrer || 'applications';
         }
     } catch (error) {
         console.error('Error saving application:', error);

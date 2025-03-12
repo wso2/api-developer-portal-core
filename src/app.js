@@ -38,6 +38,8 @@ const Handlebars = require('handlebars');
 const constants = require("./utils/constants");
 const designRoute = require('./routes/designModeRoute');
 const settingsRoute = require('./routes/configureRoute');
+const util = require('./utils/util');
+
 
 const app = express();
 const secret = crypto.randomBytes(64).toString('hex');
@@ -178,6 +180,19 @@ if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.DEFAULT, settingsRoute);
     app.use(constants.ROUTE.DEFAULT, customContent);
 }
+
+app.use((err, req, res, next) => {
+    
+   console.error(err.stack); // Log error for debugging
+   const templateContent = {
+        baseUrl : '/' + req.params.orgName + '/' + constants.ROUTE.VIEWS_PATH + "default"
+    }
+    html = util.renderTemplate('../pages/authentication-error/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+    res.status(err.status || 500).send(`
+      ${html}
+    `);
+  });
+  
 
 const PORT = process.env.PORT || config.defaultPort;
 if (config.advanced.http) {
