@@ -113,7 +113,6 @@ const ensureAuthenticated = async (req, res, next) => {
             adminRole = orgDetails.ADMIN_ROLE || adminRole;
             superAdminRole = orgDetails.SUPER_ADMIN_ROLE || superAdminRole;
             subscriberRole = orgDetails.SUBSCRIBER_ROLE || subscriberRole;
-            organizationClaimName = orgDetails.ORGANIZATION_CLAIM_NAME || config.orgIDClaim;
         }
         let role;
         if (req.isAuthenticated()) {
@@ -133,11 +132,11 @@ const ensureAuthenticated = async (req, res, next) => {
                     req.user[constants.ROLES.SUBSCRIBER] = subscriberRole;
                     if (orgDetails) {
                         req.user[constants.ORG_ID] = orgDetails.ORG_ID;
-                        req.user[constants.ORG_IDENTIFIER] = orgDetails.ORGANIZATION_IDENTIFIER;
+                        req.user[constants.ORG_IDENTIFIER] = orgDetails.ORGANIZATION_IDENTIFIER || config.orgIDClaim;
                     }
                 }
                 //verify user belongs to organization
-                const isMatch = constants.ROUTE.DEVPORTAL_ROOT.some(pattern => minimatch.minimatch(req.originalUrl, pattern));
+                // const isMatch = constants.ROUTE.DEVPORTAL_ROOT.some(pattern => minimatch.minimatch(req.originalUrl, pattern));
 
                 if (!isMatch) {
                     console.log('Checking if user belongs to organization');
@@ -342,10 +341,6 @@ const enforceAPIKey = (req, res, next) => {
     }
     return next();
 };
-
-function getNestedValue(obj, path) {
-    return path.split('.').reduce((acc, key) => acc?.[key], obj);
-}
 
 
 module.exports = {

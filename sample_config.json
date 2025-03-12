@@ -68,7 +68,7 @@
   "tokenExchange": true,
   "disableTLS": true,
   "roleClaim": "roles",
-  "orgIDClaim": "organization.uuid",
+  "orgIDClaim": "organizationID",
   "groupsClaim": "groups",
   "adminRole": "admin",
   "subscriberRole": "Internal/subscriber",
