@@ -28,7 +28,7 @@ const axios = require('axios');
 const qs = require('qs');
 const https = require('https');
 const config = require(process.cwd() + '/config.json');
-const { body, param } = require('express-validator');
+const { body, param, query } = require('express-validator');
 const { Sequelize } = require('sequelize');
 const apiDao = require('../dao/apiMetadata');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
@@ -513,47 +513,11 @@ const validateRequestParameters = () => {
 
     const validations = [
         param('*')
-            .notEmpty()
-            .customSanitizer(value => {
-                // Return the sanitized value
-                return value.replace(/[<>"'&]/g, '');
-            })
-            .trim(),
-        body('file')
-            .custom((value, { req }) => {
-                if (!req.file) {
-                    throw new Error('File is required.');
-                }
-                return true;
-            })
-    ]
-    return validations;
-}
-
-const validateRequestParametersForTemplate = () => {
-
-    const validations = [
-        param('*')
-            .notEmpty()
-            .customSanitizer(value => {
-                // Return the sanitized value
-                return value.replace(/[<>"'&]/g, '');
-            })
-            .trim(),
-        body('file')
-            .custom((value, { req }) => {
-                if (!req.file) {
-                    throw new Error('File is required.');
-                }
-                return true;
-            }),
-        body('imageMetadata')
-            .custom((value, { req }) => {
-                if (!value) {
-                    throw new Error('imageMetadata is required.');
-                }
-                return true;
-            })
+            .trim()
+            .escape(),
+        query('*')
+            .trim()
+            .escape(),
     ]
     return validations;
 }
@@ -590,7 +554,7 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                 let content = await fs.promises.readFile(filePath);
                 let strContent = await fs.promises.readFile(filePath, constants.CHARSET_UTF8);
                 let dir = baseDir.replace(/^[^/]+\/?/, '') || '/';
-                const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp', '.svg'];
+                const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.svg'];
                 const fileExtension = path.extname(file.name).toLowerCase();
                 let fileType;
                 if (file.name.endsWith(".css")) {
@@ -782,7 +746,6 @@ module.exports = {
     getErrors,
     validateProvider,
     validateRequestParameters,
-    validateRequestParametersForTemplate,
     rejectExtraProperties,
     readFilesInDirectory,
     appendAPIImageURL,

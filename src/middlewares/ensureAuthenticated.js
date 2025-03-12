@@ -21,6 +21,7 @@ const constants = require('../utils/constants');
 const config = require(process.cwd() + '/config.json');
 const secret = require(process.cwd() + '/secret.json');
 const adminDao = require('../dao/admin');
+const { validationResult } = require('express-validator');
 const { jwtVerify, createRemoteJWKSet, importX509 } = require('jose');
 const util = require('../utils/util');
 const { CustomError } = require('../utils/errors/customErrors');
@@ -31,6 +32,14 @@ const jwt = require('jsonwebtoken');
 function enforceSecuirty(scope) {
     return async function (req, res, next) {
         try {
+            const rules = util.validateRequestParameters();
+            for (let validation of rules) {
+                await validation.run(req);
+            }
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json(util.getErrors(errors));
+            }
             const token = accessTokenPresent(req);
             if (token) {
                 // TODO: Implement organization extraction logic
@@ -113,6 +122,14 @@ const ensureAuthenticated = async (req, res, next) => {
     let adminRole = config.adminRole;
     let superAdminRole = config.superAdminRole;
     let subscriberRole = config.subscriberRole;
+    const rules = util.validateRequestParameters();
+    for (let validation of rules) {
+        await validation.run(req);
+    }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json(util.getErrors(errors));
+    }
     if ((req.originalUrl != '/favicon.ico' | req.originalUrl != '/images') &&
         config.authenticatedPages.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
         //fetch role details from DB
@@ -206,7 +223,14 @@ const ensureAuthenticated = async (req, res, next) => {
 
 function validateAuthentication(scope) {
     return async function (req, res, next) {
-
+        const rules = util.validateRequestParameters();
+        for (let validation of rules) {
+            await validation.run(req);
+        }
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json(util.getErrors(errors));
+        }
         let IDP, valid, scopes, orgId, response;
         if (req.params.orgName) {
             orgId = await adminDao.getOrgId(orgName);

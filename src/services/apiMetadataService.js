@@ -524,6 +524,14 @@ const updateAPITemplate = async (req, res) => {
 
 const getAPIFile = async (req, res) => {
 
+    const rules = util.validateRequestParameters();
+    for (let validation of rules) {
+        await validation.run(req);
+    }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json(util.getErrors(errors));
+    }
     const { orgId, apiId } = req.params;
     const apiFileName = req.query.fileName;
     const type = req.query.type;
