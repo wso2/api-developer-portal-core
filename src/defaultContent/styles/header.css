@@ -1,10 +1,9 @@
 .custom-navbar {
   background-color: var(--white-color);
-  padding: 0.5rem 3.75rem;
+  padding: 0.5rem 3.75rem 0.5rem 1rem;
 }
 
 .navbar-logo {
-  margin-left: -2.7rem;
   height: 2.5rem;
 }
 
