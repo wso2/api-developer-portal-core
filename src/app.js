@@ -20,6 +20,8 @@ const express = require('express');
 const { engine } = require('express-handlebars');
 const passport = require('passport');
 const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
+const { Pool } = require('pg');
 const crypto = require('crypto');
 const path = require('path');
 const http = require('http');
@@ -38,9 +40,11 @@ const Handlebars = require('handlebars');
 const constants = require("./utils/constants");
 const designRoute = require('./routes/designModeRoute');
 const settingsRoute = require('./routes/configureRoute');
-const util = require('./utils/util');
+const AsyncLock = require('async-lock');
+const secretConf = require(process.cwd() + '/secret.json');
 
 
+const lock = new AsyncLock();
 const app = express();
 const secret = crypto.randomBytes(64).toString('hex');
 const filePrefix = config.pathToContent;
@@ -49,15 +53,25 @@ if (config.disableTLS) {
     process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 }
 
+// PostgreSQL connection pool
+const pool = new Pool({
+    user: config.db.username,
+    host: config.db.host,
+    database: config.db.database,
+    password: secretConf.dbSecret,
+    port: config.db.port,
+});
+
+
 app.engine('.hbs', engine({
     extname: '.hbs'
 }));
 
 app.set('view engine', 'hbs');
 
-Handlebars.registerHelper('json', function(context) {
+Handlebars.registerHelper('json', function (context) {
 
-    if(context) {
+    if (context) {
         return JSON.stringify(context);
     } else {
         return JSON.stringify();
@@ -68,9 +82,9 @@ Handlebars.registerHelper("every", function (array, key, options) {
     if (!Array.isArray(array)) {
         return options.inverse(this);
     }
-    
+
     const allMatch = array.every(item => item[key]);
-    
+
     return allMatch ? true : false;
 });
 
@@ -78,9 +92,9 @@ Handlebars.registerHelper("some", function (array, key, options) {
     if (!Array.isArray(array)) {
         return options.inverse(this);
     }
-    
+
     const someMatch = array.some(item => item[key]);
-    
+
     return someMatch ? true : false;
 });
 
@@ -123,12 +137,12 @@ Handlebars.registerHelper('lowercase', function (str) {
     return typeof str === 'string' ? str.toLowerCase() : str;
 });
 
-Handlebars.registerHelper('isMiddle', function(index, length) {
+Handlebars.registerHelper('isMiddle', function (index, length) {
     const middleIndex = Math.floor(length / 2);
     return index === middleIndex;
 });
 
-Handlebars.registerHelper('startsWith', function(str, includeStr, options) {
+Handlebars.registerHelper('startsWith', function (str, includeStr, options) {
     if (str && str.startsWith(includeStr)) {
         return options.fn(this);  // Executes the block if true
     } else {
@@ -140,23 +154,80 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(session({
+    store: new pgSession({
+        pool: pool,               
+        tableName: 'session'       
+    }),
     secret: secret,
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false } // Set to true if using HTTPS
+    resave: false,  
+    saveUninitialized: false,  
+    cookie: { 
+        secure: true,  
+        maxAge: 3600  
+    }
 }));
+
 
 app.use(passport.initialize());
 app.use(passport.session());
 
 // Serialize user into the session
 passport.serializeUser((user, done) => {
-    done(null, user);
+
+    console.log("Serializing user");
+    const profile = {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        view: user.view,
+        idToken: user.idToken,
+        [constants.ROLES.ORGANIZATION_CLAIM]: user[constants.ROLES.ORGANIZATION_CLAIM],
+        'returnTo': user.returnTo,
+        accessToken: user.accessToken,
+        'exchangeToken': user.exchangeToken,
+        'organizations': user.authorizedOrgs,
+        [constants.ROLES.ROLE_CLAIM]: user.roles,
+        [constants.ROLES.GROUP_CLAIM]: user.groups,
+        'isAdmin': user.isAdmin,
+        'isSuperAdmin': user.isSuperAdmin,
+        [constants.USER_ID]: user[constants.USER_ID]
+    };
+    lock.acquire('serialize', (release) => {
+        release(null, profile); 
+    }, (err, ret) => {
+        if (err) {
+            return done(err);
+        }
+        done(null, ret);
+    });
+    //done(null, profile);
 });
 
 // Deserialize user from the session
-passport.deserializeUser((user, done) => {
-    done(null, user);
+passport.deserializeUser(async (sessionData, done) => {
+
+        console.log("Deserializing user");
+        //return done(null, sessionData);
+        lock.acquire('deserialize', async (release) => {
+            try {
+                release (null, sessionData);
+            } catch (err) {
+                release(err);
+            }
+        }, (err, ret) => {
+            if (err) {
+                return done(err);
+            }
+            done(null, ret);
+        });
+});
+
+// Middleware to log session ID and user information
+app.use((req, res, next) => {
+    if (req.isAuthenticated()) {
+        console.log("Checking session");
+        console.log(`Session ID: ${req.sessionID}, User: ${req.user.firstName}`);
+    }
+    next();
 });
 app.use(constants.ROUTE.TECHNICAL_STYLES, express.static(path.join(require.main.filename, '../styles')));
 app.use(constants.ROUTE.TECHNICAL_SCRIPTS, express.static(path.join(require.main.filename, '../scripts')));
@@ -181,18 +252,18 @@ if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.DEFAULT, customContent);
 }
 
-app.use((err, req, res, next) => {
-    
-   console.error(err.stack); // Log error for debugging
-   const templateContent = {
-        baseUrl : '/' + req.params.orgName + '/' + constants.ROUTE.VIEWS_PATH + "default"
-    }
-    html = util.renderTemplate('../pages/authentication-error/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
-    res.status(err.status || 500).send(`
-      ${html}
-    `);
-});
-  
+// app.use((err, req, res, next) => {
+
+//     console.error(err.stack); // Log error for debugging
+//     const templateContent = {
+//         baseUrl: '/' + req.params.orgName + '/' + constants.ROUTE.VIEWS_PATH + "default"
+//     }
+//     html = util.renderTemplate('../pages/authentication-error/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+//     res.status(err.status || 500).send(`
+//       ${html}
+//     `);
+// });
+
 
 const PORT = process.env.PORT || config.defaultPort;
 if (config.advanced.http) {
@@ -213,9 +284,9 @@ if (config.advanced.http) {
         https.createServer({
             key: serverKey,
             cert: serverCert,
-            ca: caCert, 
-            requestCert: true,  
-            rejectUnauthorized: false  
+            ca: caCert,
+            requestCert: true,
+            rejectUnauthorized: false
         }, app).listen(PORT, () => {
             logStartupInfo();
         });

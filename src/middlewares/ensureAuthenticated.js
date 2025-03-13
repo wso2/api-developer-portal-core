@@ -143,34 +143,15 @@ const ensureAuthenticated = async (req, res, next) => {
                     console.log('Checking if user belongs to organization');
                     if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
                         //check if exchanged token has organization identifier
-                        const decodedToken = req.user.exchangeToken ? jwt.decode(req.user.exchangeToken) : null;
-                        console.log('Decoded token: ' , decodedToken);
-                        if (decodedToken && !(getNestedValue(decodedToken, organizationClaimName) === req.user[constants.ORG_IDENTIFIER])) {
+                        //const decodedToken = req.user.exchangeToken ? jwt.decode(req.user.exchangeToken) : null;
+                        const allowedOrgs = req.user.organizations;
+                        console.log('Allowed: ' , allowedOrgs);
+                        if (allowedOrgs && !(allowedOrgs.includes(req.user[constants.ORG_IDENTIFIER]))) {
                             console.log('User is not authorized to access organization');
                             const err = new Error('Authentication required');
                             err.status = 401; // Unauthorized
                             return next(err);
-                        } else if (!decodedToken) {
-                            console.log('User is not authorized to access organization');
-                            const err = new Error('Authentication required');
-                            err.status = 401; // Unauthorized
-                            return next(err);
-                        }
-                    }
-                }
-
-                if (!isMatch) {
-                    console.log('Checking if user belongs to organization');
-                    if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
-                        //check if exchanged token has organization identifier
-                        const decodedToken = req.user.exchangeToken ? jwt.decode(req.user.exchangeToken) : null;
-                        if (decodedToken && !(getNestedValue(decodedToken, organizationClaimName) === req.user[constants.ORG_IDENTIFIER])) {
-                            console.log(getNestedValue(decodedToken, organizationClaimName), req.user[constants.ORG_IDENTIFIER])
-                            console.log('User is not authorized to access organization');
-                            const err = new Error('Authentication required');
-                            err.status = 401; // Unauthorized
-                            return next(err);
-                        } else if (!decodedToken) {
+                        } else if (!allowedOrgs) {
                             console.log('User is not authorized to access organization');
                             const err = new Error('Authentication required');
                             err.status = 401; // Unauthorized
@@ -178,7 +159,6 @@ const ensureAuthenticated = async (req, res, next) => {
                         }
                     }
                 }
-
                 if (!config.advanced.disabledRoleValidation) {
                     if (ensurePermission(req.originalUrl, role, req)) {
                         console.log('User is authorized');
