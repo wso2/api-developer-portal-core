@@ -42,7 +42,7 @@ const designRoute = require('./routes/designModeRoute');
 const settingsRoute = require('./routes/configureRoute');
 const AsyncLock = require('async-lock');
 const secretConf = require(process.cwd() + '/secret.json');
-
+const util = require('./utils/util');
 
 const lock = new AsyncLock();
 const app = express();
@@ -52,15 +52,27 @@ const filePrefix = config.pathToContent;
 if (config.disableTLS) {
     process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 }
+let pool;
 
 // PostgreSQL connection pool
-const pool = new Pool({
-    user: config.db.username,
-    host: config.db.host,
-    database: config.db.database,
-    password: secretConf.dbSecret,
-    port: config.db.port,
-});
+if (config.advanced.dbSslDialectOption) {
+    pool = new Pool({
+        user: config.db.username,
+        host: config.db.host,
+        database: config.db.database,
+        password: secretConf.dbSecret,
+        port: config.db.port,
+        ssl: { rejectUnauthorized: false } 
+    });
+} else {
+    pool = new Pool({
+        user: config.db.username,
+        host: config.db.host,
+        database: config.db.database,
+        password: secretConf.dbSecret,
+        port: config.db.port,
+    });
+}
 
 
 app.engine('.hbs', engine({
@@ -155,15 +167,15 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(session({
     store: new pgSession({
-        pool: pool,               
-        tableName: 'session'       
+        pool: pool,
+        tableName: 'session'
     }),
     secret: secret,
-    resave: false,  
-    saveUninitialized: false,  
-    cookie: { 
-        secure: true,  
-        maxAge: 3600  
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: true,
+        maxAge: 3600
     }
 }));
 
@@ -192,7 +204,7 @@ passport.serializeUser((user, done) => {
         [constants.USER_ID]: user[constants.USER_ID]
     };
     lock.acquire('serialize', (release) => {
-        release(null, profile); 
+        release(null, profile);
     }, (err, ret) => {
         if (err) {
             return done(err);
@@ -205,20 +217,20 @@ passport.serializeUser((user, done) => {
 // Deserialize user from the session
 passport.deserializeUser(async (sessionData, done) => {
 
-        console.log("Deserializing user");
-        //return done(null, sessionData);
-        lock.acquire('deserialize', async (release) => {
-            try {
-                release (null, sessionData);
-            } catch (err) {
-                release(err);
-            }
-        }, (err, ret) => {
-            if (err) {
-                return done(err);
-            }
-            done(null, ret);
-        });
+    console.log("Deserializing user");
+    //return done(null, sessionData);
+    lock.acquire('deserialize', async (release) => {
+        try {
+            release(null, sessionData);
+        } catch (err) {
+            release(err);
+        }
+    }, (err, ret) => {
+        if (err) {
+            return done(err);
+        }
+        done(null, ret);
+    });
 });
 
 // Middleware to log session ID and user information
@@ -252,17 +264,17 @@ if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.DEFAULT, customContent);
 }
 
-// app.use((err, req, res, next) => {
+app.use((err, req, res, next) => {
 
-//     console.error(err.stack); // Log error for debugging
-//     const templateContent = {
-//         baseUrl: '/' + req.params.orgName + '/' + constants.ROUTE.VIEWS_PATH + "default"
-//     }
-//     html = util.renderTemplate('../pages/authentication-error/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
-//     res.status(err.status || 500).send(`
-//       ${html}
-//     `);
-// });
+    console.error(err.stack); // Log error for debugging
+    const templateContent = {
+        baseUrl: '/' + req.params.orgName + '/' + constants.ROUTE.VIEWS_PATH + "default"
+    }
+    html = util.renderTemplate('../pages/authentication-error/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+    res.status(err.status || 500).send(`
+      ${html}
+    `);
+});
 
 
 const PORT = process.env.PORT || config.defaultPort;
