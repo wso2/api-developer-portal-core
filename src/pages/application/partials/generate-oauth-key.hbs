@@ -2,7 +2,7 @@
     <div class="container-fluid">
         <div class="container-header mb-2">Tokens</div>
         <button type='button' class='common-btn-primary' onclick='loadKeyGenModal()'>
-            OAuth Keys
+            OAuth2 Keys
         </button>
     </div>
     <div class="modal custom-modal" id='OauthKeyModal'>
@@ -33,12 +33,12 @@
                     <!-- Empty div to maintain layout-->
                     <div></div>
                     {{else}}
-                    <div class="key-action-container">
+                    <div class="key-action-container" id="key-action-container">
                         <div class="d-flex col-md-6 justify-content-between w-100 align-items-center">
                             <div class="d-flex gap-3">
                                 <button class="common-btn-primary" id="applicationKeyGenerateButton" name="http-values"
                                     type="button"
-                                    onClick="generateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.id}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-production', 'consumer-secret-{{../id}}-production')">
+                                    onClick="generateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.id}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', 'consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}')">
                                     Generate Keys
                                 </button>
                             </div>
@@ -206,13 +206,24 @@
                                     class='form-label'>
                                     Consumer Secret
                                 </label>
-                                <input type='text'
-                                    id='consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
-                                    class='form-control' name="consumerSecret" value='{{keys.consumerSecret}}'
-                                    readonly />
+                                <div class="password-toggle-container">
+                                    <input type='password'
+                                        id='consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                                        class='form-control' name="consumerSecret" value='{{keys.consumerSecret}}'
+                                        readonly />
+                                    <button type="button" class="password-toggle-btn" 
+                                        onclick="togglePasswordVisibility('consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}')">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button type="button" class="password-copy-btn" 
+                                        onclick="copyConsumerSecret('consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}')">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
+
                     <div class="d-flex mb-4">
                         {{#if (contains keys.supportedGrantTypes "client_credentials")}}
                         <div class="row">
@@ -227,7 +238,7 @@
                                     id='curl-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
                                     name='http-values' type='button'
                                     onClick="generateCurl('{{../name}}', '{{../tokenEndpoint}}')">
-                                    CURL
+                                    cURL
                                 </button>
                             </div>
                             <div id="tokenDisplay_{{../name}}" style="display: none;">

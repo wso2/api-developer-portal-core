@@ -335,3 +335,51 @@ input[type="checkbox"]:checked {
   padding: 1rem;
   background-color: #f9fafb;
 }
+
+/* Password visibility toggle */
+.password-toggle-container {
+  position: relative;
+}
+
+.password-toggle-container input {
+  padding-right: 80px;
+}
+
+.password-toggle-btn,
+.password-copy-btn {
+  position: absolute;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  z-index: 10;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.password-toggle-btn {
+  right: 40px;
+}
+
+.password-copy-btn {
+  right: 8px;
+}
+
+.password-toggle-btn:hover,
+.password-copy-btn:hover {
+  color: #374151;
+}
+
+.password-toggle-btn:focus,
+.password-copy-btn:focus {
+  outline: none;
+}
+
+.password-toggle-container .bi {
+  width: auto;
+  height: auto;
+}

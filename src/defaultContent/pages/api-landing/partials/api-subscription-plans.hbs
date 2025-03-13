@@ -10,7 +10,7 @@
                     <div class="card-body align-items-center text-center p-0">
                         <span class="subscription-plans-card-title">{{displayName}}</span>
                         <h1 class="subscription-plans-request-count">{{requestCount}}</h1>
-                        <p class="subscription-plans-card-subtitle pb-4 pt-0">requests per minutes</p>
+                        <p class="subscription-plans-card-subtitle pt-0">requests per minutes</p>
                         {{#if ../isAuthenticated}}
                         <div id="subscriptionBox" class="subscription-container">
                             <a id="subscribe-btn-{{../apiMetadata.apiID}}" type="button"
@@ -28,7 +28,7 @@
                                         {{#each ../applications}}
                                         <div class="select-item" role="option" data-value="{{../id}}">
                                             {{name}}
-                                            {{#if subscribed}}<img src="/images/success-rounded.svg" alt="Subscribed"
+                                            {{#if subscribed}}<img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg" alt="Subscribed"
                                                 class="subscription-icon" />{{/if}}
                                         </div>
                                         {{/each}}

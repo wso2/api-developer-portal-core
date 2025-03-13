@@ -1,5 +1,5 @@
 .hero-section {
-  margin: 0rem 3.75rem;
+  margin: 0 2rem 0 0;
 }
 
 .hero-content {
@@ -33,7 +33,7 @@
 }
 
 .hero {
-  background-image: url("/images/hero-new.svg");
+  background-image: url("https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/hero.png");
   background-size: cover;
   background-position: center;
   display: flex;

@@ -87,7 +87,12 @@
   color: var(--primary-main-color);
   font-weight: 600;
   padding-top: 1.5rem;
+  font-size: clamp(1rem, 2vw, 2rem);
   margin-bottom: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
 }
 
 .subscription-plans-card-subtitle {

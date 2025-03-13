@@ -4,13 +4,10 @@ const collapseBtn = document.getElementById('collapseBtn');
 collapseBtn.addEventListener('click', () => {
     sidebar.classList.toggle('collapsed');
     const arrowIcon = document.getElementById('arrowIcon');
-
-    const urlObj = new URL(arrowIcon.src);
-
     if (sidebar.classList.contains('collapsed')) {
-        arrowIcon.src = urlObj.origin + urlObj.pathname + "?fileType=image&fileName=arrow-left.svg";
+        arrowIcon.style.transform = "rotate(0deg)";
     } else {
-        arrowIcon.src = urlObj.origin + urlObj.pathname + "?fileType=image&fileName=arrow-right.svg";
+        arrowIcon.style.transform = "rotate(180deg)";
     }
 });
 
@@ -77,7 +74,32 @@ document.addEventListener("DOMContentLoaded", function () {
     
     // Call the function when page loads
     setActiveSidebarLink();
-    
+
+    // Set active documentation link based on current path
+    const setActiveDocLink = () => {
+        const currentPath = window.location.pathname;
+        const docLinks = document.querySelectorAll('.doc-link');
+
+        // Check if we're on a docs page
+        if (currentPath.includes('/docs/')) {
+            docLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                // Remove active class first
+                link.classList.remove('active');
+
+                // Add active class if the href matches the current path
+                if (href === currentPath ||
+                    (href && currentPath.endsWith(href)) ||
+                    (href && currentPath === href)) {
+                    link.classList.add('active');
+                }
+            });
+        }
+    };
+
+    // Call the function when page loads
+    setActiveDocLink();
+
     const apiCards = document.querySelectorAll(".api-card");
     apiCards.forEach(card => {
         const subscriptionBox = card.querySelector(".subscription-container");
