@@ -105,6 +105,7 @@ const handleCallback = (req, res, next) => {
         keepSessionInfo: true
     }, (err, user) => {
         if (err || !user) {
+            console.log("User not present", !user)
             return next(err || new Error('Authentication failed'));
         }
         req.logIn(user, (err) => {
@@ -121,6 +122,7 @@ const handleCallback = (req, res, next) => {
                     returnTo = `/${req.params.orgName}`;
                 }
                 delete req.session.returnTo;
+                console.log(`User logged in: ${user.username}, Session ID: ${req.sessionID}`);
                 res.redirect(returnTo);
             }
         });

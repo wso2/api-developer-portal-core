@@ -51,8 +51,11 @@ async function configurePassport(authJsonContent, claimNames) {
             console.error('No access token received');
             return done(new Error('Access token missing'));
         }
+        let orgList;
         if (config.advanced.tokenExchanger.enabled) {
             const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
+            const decodedExchangedToken = jwt.decode(exchangedToken);
+            orgList = decodedExchangedToken.organizations;
             req['exchangedToken'] = exchangedToken;
         }
         const decodedJWT = jwt.decode(params.id_token);
@@ -85,6 +88,7 @@ async function configurePassport(authJsonContent, claimNames) {
             [constants.ROLES.ORGANIZATION_CLAIM]: organizationID,
             'returnTo': req.session.returnTo,
             accessToken,
+            'authorizedOrgs': orgList,
             'exchangeToken': req.exchangedToken,
             [constants.ROLES.ROLE_CLAIM]: roles,
             [constants.ROLES.GROUP_CLAIM]: groups,
@@ -93,6 +97,7 @@ async function configurePassport(authJsonContent, claimNames) {
             [constants.USER_ID]: decodedAccessToken[constants.USER_ID]
         };
         console.log('User profile:', profile);
+        req.session.user = req.user; // Store user in session
         return done(null, profile);
     });
     strategy._oauth2.setAgent(agent);
