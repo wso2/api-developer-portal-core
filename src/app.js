@@ -62,7 +62,7 @@ if (config.advanced.dbSslDialectOption) {
         database: config.db.database,
         password: secretConf.dbSecret,
         port: config.db.port,
-        ssl: { rejectUnauthorized: false } 
+        ssl: { require: true, rejectUnauthorized: false } 
     });
 } else {
     pool = new Pool({
