@@ -1,117 +1,6 @@
-.sidebar {
-    width: 250px;
-    background-color: #043556;
-    color: var(--white-text-color);
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-}
-
-.logo {
-    padding: 1rem;
-    font-size: 1.25rem;
-    font-weight: bold;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.nav-menu {
-    padding: 1rem 0;
-    flex: 1;
-}
-
-.nav-item {
-    padding: 0.75rem 1rem;
-    display: flex;
-    align-items: center;
-    color: var(--white-text-color);
-    text-decoration: none;
-    transition: background-color 0.2s;
-}
-
-.nav-item:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-.nav-item.active {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-/* Main Content Styles */
-.main-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background-color: var(--light-bg-color);
-}
-
-/* Header Styles */
-.header {
-    background-color: var(--main-bg-color);
-    border-bottom: 1px solid #e0e2e9;
-    padding: 0.75rem 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.header-controls {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-}
-
-.dropdown {
-    padding: 0.5rem 1rem;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--main-text-color);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.dropdown:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-    border-radius: 4px;
-}
-
 /* Content Area Styles */
 .doc-content {
-    padding: 1rem 1.5rem 1.5rem 1.5rem;
     flex: 1;
-}
-
-/* Adding a parent class to avoid overriding the card styles globally */
-.doc-content {
-    .cards {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-
-    .card {
-        background: var(--main-bg-color);
-        padding: 1.5rem;
-        border-radius: 8px;
-        border: 1px solid #e0e2e9;
-    }
-
-    .card.active {
-        border-color: var(--primary-light-color);
-    }
-
-    .card h3 {
-        margin-bottom: 0.5rem;
-        color: var(--main-text-color);
-    }
-
-    .card p {
-        color: #8d91a3;
-        font-size: 0.875rem;
-        line-height: 1.5;
-    }
 }
 
 /* Documents Section */
@@ -121,54 +10,107 @@
 }
 
 .documents-sidebar {
-    width: 250px;
+    padding: 1rem 2rem 1rem 1rem;
     flex-shrink: 0;
+    border-right: 1px solid #e0e2e9;
 }
 
-.search-box {
-    position: relative;
+.documents-sidebar .search-container {
+    display: flex;
     margin-bottom: 1rem;
+    justify-content: center;
+    width: 100%;
 }
 
-.search-box input {
+.documents-sidebar .search-input {
+    display: flex;
+    align-items: center;
+    background-color: #e0e2e9;
+    padding: 0.625rem 1rem;
+    border-radius: 5px;
     width: 100%;
-    padding: 0.5rem 1rem 0.5rem 2rem;
-    border: 1px solid #e0e2e9;
-    border-radius: 4px;
 }
 
-.create-doc {
+.documents-sidebar .search-icon {
+    width: 1rem;
+    height: 1rem;
+    opacity: 0.5;
+}
+
+.documents-sidebar .search-input input {
+    border: none;
+    outline: none;
     width: 100%;
-    padding: 0.5rem;
-    background: var(--main-bg-color);
-    border: 1px solid #e0e2e9;
-    border-radius: 4px;
-    margin-bottom: 1rem;
-    cursor: pointer;
+    margin-left: 1rem;
+    font-size: 14px;
+    font-weight: 300;
+    background-color: transparent;
+    color: var(--main-text-color);
+}
+
+.documents-sidebar #docQuery::placeholder {
+    color: var(--light-text-color);
+    opacity: 0.5;
 }
 
 .doc-section {
-    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 0.5px solid #e0e2e9;
+    border-radius: 16px;
+    box-shadow: 0px 2px 4px #0000000a;
 }
 
 .doc-section-title {
-    padding: 0.5rem;
     font-weight: 500;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    margin-bottom: 0.5rem;
+    color: var(--dark-text-color);
 }
 
 .doc-links {
-    padding-left: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
 }
 
 .doc-link {
-    display: block;
-    padding: 0.25rem 0.5rem;
-    color: var(--main-text-color);
+    display: flex;
+    align-items: center;
+    min-width: 200px;;
+    padding: 8px 12px;
+    gap: 12px;
+    background: var(--main-bg-color);
+    box-shadow: 0px 0px 0px 1px #e0e2e9, 0px 1px 1px #CBCEDB;
+    border-radius: 8px;
     text-decoration: none;
-    font-size: 0.875rem;
+    color: var(--main-text-color);
+}
+
+.doc-link:hover {
+    background-color: var(--light-bg-color);
+}
+
+.doc-link.active {
+    background-color: var(--light-bg-color);
+}
+
+.doc-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.doc-icon img {
+    width: 100%;
+    height: 100%;
+}
+
+.doc-title {
+    font-family: 'Gilmer Medium', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 24px;
+    color: var(--primary-darkest-color);
 }
 
 .doc-spec {
@@ -176,67 +118,11 @@
     color: var(--main-text-color);
     text-decoration: none;
     font-weight: 500;
-    font-size: 1rem
-}
-
-/* FAQ Content */
-.faq-content {
-    background: var(--main-bg-color);
-    padding: 2rem;
-    border-radius: 8px;
-    flex: 1;
-}
-
-.faq-title {
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-}
-
-.faq-subtitle {
-    color: #8d91a3;
-    font-size: 0.875rem;
-    margin-bottom: 2rem;
-}
-
-.faq-item {
-    margin-bottom: 1.5rem;
-}
-
-.faq-question {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-}
-
-.faq-answer {
-    color: #8d91a3;
-    font-size: 0.875rem;
-    line-height: 1.6;
-}
-
-.file-types {
-    list-style: none;
-    padding-left: 1rem;
+    font-size: 1rem;
 }
 
 /* Responsive Design */
-@media (max-width: 1024px) {
-    .cards {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
 @media (max-width: 768px) {
-    .sidebar {
-        width: 60px;
-    }
-
-    .logo span {
-        display: none;
-    }
-
-    .nav-item span {
-        display: none;
-    }
 
     .documents {
         flex-direction: column;
@@ -244,9 +130,5 @@
 
     .documents-sidebar {
         width: 100%;
-    }
-
-    .cards {
-        grid-template-columns: 1fr;
     }
 }

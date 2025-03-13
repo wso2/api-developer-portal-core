@@ -49,6 +49,8 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             document.getElementById(consumerSecretID).value = consumerSecret
             const consumerKeyElement = document.getElementById("consumerKeys_" + keyManager);
             consumerKeyElement.style.display = "block";
+            const keyActionContainer = document.getElementById("key-action-container");
+            keyActionContainer.style.display = "none";
             const KMURLs = document.getElementById("KMURl_" + keyManager);
             KMURLs.style.display = "block";
             //const url = new URL(window.location.origin + window.location.pathname);
@@ -367,6 +369,63 @@ async function copyToken(KMName) {
     } catch (err) {
         console.error('Could not copy text:', err);
         await showAlert('Failed to copy token', true);
+    }
+}
+
+/**
+ * Toggles password visibility for the specified input field
+ * @param {string} inputId - The ID of the input field
+ */
+function togglePasswordVisibility(inputId) {
+    const inputElement = document.getElementById(inputId);
+    const buttonElement = inputElement.nextElementSibling;
+    const iconElement = buttonElement.querySelector('i');
+    
+    // Toggle the input type between password and text
+    if (inputElement.type === 'password') {
+        inputElement.type = 'text';
+        // Change to eye-slash icon
+        iconElement.classList.remove('bi-eye');
+        iconElement.classList.add('bi-eye-slash');
+    } else {
+        inputElement.type = 'password';
+        // Change back to eye icon
+        iconElement.classList.remove('bi-eye-slash');
+        iconElement.classList.add('bi-eye');
+    }
+}
+
+/**
+ * Copies the consumer secret to the clipboard
+ * @param {string} inputId - The ID of the input field
+ */
+async function copyConsumerSecret(inputId) {
+    const inputElement = document.getElementById(inputId);
+    const buttonElement = inputElement.nextElementSibling.nextElementSibling;
+    const iconElement = buttonElement.querySelector('i');
+    
+    try {
+        // Get the value regardless of whether it's shown as password or text
+        const secretValue = inputElement.value;
+        
+        // Copy to clipboard
+        await navigator.clipboard.writeText(secretValue);
+        
+        // Show visual feedback
+        iconElement.classList.remove('bi-clipboard');
+        iconElement.classList.add('bi-clipboard-check');
+        
+        // Show alert
+        await showAlert('Consumer Secret copied to clipboard!');
+        
+        // Revert to original icon after 1.5 seconds
+        setTimeout(() => {
+            iconElement.classList.remove('bi-clipboard-check');
+            iconElement.classList.add('bi-clipboard');
+        }, 1500);
+    } catch (err) {
+        console.error('Could not copy text:', err);
+        await showAlert('Failed to copy Consumer Secret', true);
     }
 }
 

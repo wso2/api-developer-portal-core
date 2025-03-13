@@ -33,7 +33,7 @@
 }
 
 .hero {
-  background-image: url("/images/hero-new.svg");
+  background-image: url("https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/hero.png");
   background-size: cover;
   background-position: center;
   display: flex;
