@@ -54,7 +54,7 @@ if (config.disableTLS) {
 }
 let pool;
 
-// PostgreSQL connection pool
+//PostgreSQL connection pool for session store
 if (config.advanced.dbSslDialectOption) {
     pool = new Pool({
         user: config.db.username,
@@ -70,10 +70,9 @@ if (config.advanced.dbSslDialectOption) {
         host: config.db.host,
         database: config.db.database,
         password: secretConf.dbSecret,
-        port: config.db.port,
+        port: config.db.port
     });
 }
-
 
 app.engine('.hbs', engine({
     extname: '.hbs'
@@ -168,14 +167,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(session({
     store: new pgSession({
         pool: pool,
-        tableName: 'session'
+        tableName: 'session',
+        pruneSessionInterval: 3600
     }),
     secret: secret,
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: true,
-        maxAge: 3600
+        secure:true,
+        maxAge: 60 * 60 * 1000
     }
 }));
 
