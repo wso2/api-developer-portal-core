@@ -96,7 +96,6 @@ async function configurePassport(authJsonContent, claimNames) {
             'isSuperAdmin': isSuperAdmin,
             [constants.USER_ID]: decodedAccessToken[constants.USER_ID]
         };
-        console.log('User profile:', profile);
         req.session.user = req.user; // Store user in session
         return done(null, profile);
     });
