@@ -97,6 +97,7 @@ async function configurePassport(authJsonContent, claimNames) {
             [constants.USER_ID]: decodedAccessToken[constants.USER_ID]
         };
         req.session.user = req.user; // Store user in session
+        req.session.code_verifier = req.body.code_verifier || req.query.code_verifier;
         return done(null, profile);
     });
     strategy._oauth2.setAgent(agent);
