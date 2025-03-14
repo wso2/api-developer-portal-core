@@ -40,7 +40,7 @@
                                 </label>
                                 <input type='text'
                                     id='consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
-                                    class='form-control' name="consumerKey" value='{{keys.consumerKey}}' readonly />
+                                    class='form-control' name="consumerKey" value='{{keys.consumerKey}}' readonly disabled />
                             </div>
                             <div class="col-md-6">
                                 <label
@@ -52,7 +52,7 @@
                                     <input type='password'
                                         id='consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
                                         class='form-control' name="consumerSecret" value='{{keys.consumerSecret}}'
-                                        readonly />
+                                        readonly disabled />
                                     <button type="button" class="password-toggle-btn" 
                                         onclick="togglePasswordVisibility('consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}')">
                                         <i class="bi bi-eye"></i>
@@ -153,11 +153,10 @@
                                     for='token-endpoint-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
                                     class='form-label'>
                                     Token Endpoint
-                                    <span class='text-danger'>*</span>
                                 </label>
                                 <input type='url' name="tokenURL"
                                     id='token-endpoint-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
-                                    class='form-control' value='{{../tokenEndpoint}}' readonly />
+                                    class='form-control' value='{{../tokenEndpoint}}' readonly disabled />
                             </div>
                             {{!-- Revoke Endpoint --}}
                             <div class='mb-3'>
@@ -165,11 +164,10 @@
                                     for='revoke-endpoint-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
                                     class='form-label'>
                                     Revoke Endpoint
-                                    <span class='text-danger'>*</span>
                                 </label>
                                 <input type='url' name="revokeURL"
                                     id='revoke-endpoint-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
-                                    class='form-control' value='{{../revokeEndpoint}}' readonly />
+                                    class='form-control' value='{{../revokeEndpoint}}' readonly disabled />
                             </div>
                         </div>
                     </div>
