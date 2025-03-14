@@ -122,7 +122,6 @@ const handleCallback = (req, res, next) => {
                     returnTo = `/${req.params.orgName}`;
                 }
                 delete req.session.returnTo;
-                console.log(`User logged in: ${user.username}, Session ID: ${req.sessionID}`);
                 res.redirect(returnTo);
             }
         });
