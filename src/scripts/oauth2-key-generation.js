@@ -238,7 +238,7 @@ async function removeApplicationKey() {
 
 async function generateCurl(keyManager, tokenURL) {
    
-    const auth = `consumerKey:consuemrSecret`;
+    const auth = `consumerKey:consumerSecret`;
     const curl = `curl -k -X POST ${tokenURL} -d "grant_type=client_credentials" -H "Authorization: Basic ${auth}"`;
 
     const curlDisplay = document.getElementById("curlDisplay_" + keyManager);
