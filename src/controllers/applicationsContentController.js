@@ -433,7 +433,6 @@ async function mapGrants(grantTypes) {
             );
         }
     });
-    console.log("Mapped Grant Types", mappedGrantTypes)
     return mappedGrantTypes;
 }
 
