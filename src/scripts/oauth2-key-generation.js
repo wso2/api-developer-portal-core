@@ -68,6 +68,32 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
                 advancedConfigButton.style.display = "flex";
             }
 
+            // Show the token generation buttons
+            const tokenGenerationButtons = document.getElementById("tokenGenerationButtons_" + keyManager);
+            if (tokenGenerationButtons) {
+                tokenGenerationButtons.style.display = "flex";
+                
+                // Get the generate token button and update its onClick handler with correct values
+                const generateTokenButton = tokenGenerationButtons.querySelector(`#apiKeyGenerateButton-${keyType.toLowerCase()}`);
+                if (generateTokenButton) {
+                    generateTokenButton.setAttribute("onClick", 
+                        `generateOauthKey('${formId}', '${responseData.appRefId}', '${responseData.keyMappingId}', '${keyManager}', '${clientName}')`);
+                }
+            }
+
+            // Show the update button container
+            const updateButtonContainer = document.getElementById("applicationKeyUpdateButtonContainer");
+            if (updateButtonContainer) {
+                updateButtonContainer.style.display = "flex";
+                
+                // Get the update button and set its onClick handler with the correct appRefID
+                const updateButton = document.getElementById("applicationKeyUpdateButton");
+                if (updateButton) {
+                    updateButton.setAttribute("onClick", 
+                        `updateApplicationKey('${formId}', '${JSON.stringify([{appRefID: responseData.appRefId}])}', '${keyType}', '${keyManager}', '${responseData.keyMappingId}', '${clientName}')`);
+                }
+            }
+
             const KMURLs = document.getElementById("KMURl_" + keyManager);
             KMURLs.style.display = "block";
         } else {
