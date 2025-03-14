@@ -46,15 +46,30 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             const consumerSecret = responseData.consumerSecret;
             console.log("Keys", responseData);
             document.getElementById(consumerKeyID).value = consumerKey;
-            document.getElementById(consumerSecretID).value = consumerSecret
+            document.getElementById(consumerSecretID).value = consumerSecret;
             const consumerKeyElement = document.getElementById("consumerKeys_" + keyManager);
             consumerKeyElement.style.display = "block";
+
+            // Hide the key action container
             const keyActionContainer = document.getElementById("key-action-container");
             keyActionContainer.style.display = "none";
+
+            // Move the advanced configuration section to the placeholder
+            const advancedConfig = document.getElementById("KMData_" + keyManager);
+            const advancedConfigPlaceholder = document.getElementById("advanced-config-placeholder");
+            if (advancedConfig && advancedConfigPlaceholder) {
+                advancedConfigPlaceholder.appendChild(advancedConfig);
+                advancedConfig.style.display = "none"; // Keep it hidden initially
+            }
+
+            // Show the advanced config button
+            const advancedConfigButton = document.getElementById("advanced-config-button");
+            if (advancedConfigButton) {
+                advancedConfigButton.style.display = "flex";
+            }
+
             const KMURLs = document.getElementById("KMURl_" + keyManager);
             KMURLs.style.display = "block";
-            //const url = new URL(window.location.origin + window.location.pathname);
-            //window.location.href = url.toString();
         } else {
             console.error('Failed to generate keys:', responseData);
             await showAlert(`Failed to generate application keys. Please try again.\n${responseData.description}`, 'error');
