@@ -17,8 +17,14 @@
  */
 /* eslint-disable no-undef */
 const { Sequelize } = require('sequelize');
+const path = require('path');
+const fs = require('fs');
+
 const config = require(process.cwd() + '/config.json');
 const secret = require(process.cwd() + '/secret.json');
+
+const filePrefix = config.pathToDBCert;
+const dbCAPath = path.join(process.cwd(), filePrefix);
 
 const sequelizeOptions = {
     host: config.db.host,
@@ -37,7 +43,8 @@ if (config.advanced.dbSslDialectOption) {
     sequelizeOptions.dialectOptions = {
         ssl: {
             require: true,
-            rejectUnauthorized: false
+            rejectUnauthorized: true,
+            ca: fs.readFileSync(dbCAPath).toString(),
         }
     };
 }
