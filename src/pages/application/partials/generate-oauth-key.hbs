@@ -66,8 +66,8 @@
                         </div>
                     </div>
 
+                    {{#if (contains keys.supportedGrantTypes "client_credentials")}}
                     <div class="d-flex mb-4">
-                        {{#if (contains keys.supportedGrantTypes "client_credentials")}}
                         <div class="row">
                             <div class="d-flex gap-2 mb-3">
                                 <button class='common-btn-primary'
@@ -138,10 +138,9 @@
                                 </div>
                             </div>
                         </div>
-                        {{/if}}
-
-
                     </div>
+                    {{/if}}
+
                     <div id="KMURl_{{../name}}" style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
                         <div id="header">
                             <h2>Identity Provider Connection Data</h2>
