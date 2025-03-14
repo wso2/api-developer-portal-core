@@ -17,9 +17,6 @@
  */
 /* eslint-disable no-undef */
 const { Sequelize } = require('sequelize');
-const fs = require('fs');
-const https = require('https');
-
 const config = require(process.cwd() + '/config.json');
 const secret = require(process.cwd() + '/secret.json');
 
@@ -37,45 +34,19 @@ const sequelizeOptions = {
 };
 
 if (config.advanced.dbSslDialectOption) {
-    const urlToDBCert = config.urlToDBCert || 'https://aiven.io/aiven-ca.pem';
-
     sequelizeOptions.dialectOptions = {
         ssl: {
             require: true,
-            rejectUnauthorized: true
+            rejectUnauthorized: false
         }
     };
-
-    https.get(urlToDBCert, (res) => {
-        let certData = '';
-
-        res.on('data', (chunk) => {
-            certData += chunk;
-        });
-
-        res.on('end', () => {
-            sequelizeOptions.dialectOptions.ssl.ca = certData;
-
-            const sequelize = new Sequelize(
-                config.db.database,
-                config.db.username,
-                secret.dbSecret,
-                sequelizeOptions
-            );
-
-            module.exports = sequelize;
-        });
-    }).on('error', (err) => {
-        console.error('Error fetching CA certificate:', err);
-        process.exit(1);
-    });
-} else {
-    const sequelize = new Sequelize(
-        config.db.database,
-        config.db.username,
-        secret.dbSecret,
-        sequelizeOptions
-    );
-
-    module.exports = sequelize;
 }
+
+const sequelize = new Sequelize(
+    config.db.database,
+    config.db.username,
+    secret.dbSecret,
+    sequelizeOptions
+);
+
+module.exports = sequelize;
