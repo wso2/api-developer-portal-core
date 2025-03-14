@@ -233,14 +233,6 @@ passport.deserializeUser(async (sessionData, done) => {
     });
 });
 
-// Middleware to log session ID and user information
-app.use((req, res, next) => {
-    if (req.isAuthenticated()) {
-        console.log("Checking session");
-        console.log(`Session ID: ${req.sessionID}, User: ${req.user.firstName}`);
-    }
-    next();
-});
 app.use(constants.ROUTE.TECHNICAL_STYLES, express.static(path.join(require.main.filename, '../styles')));
 app.use(constants.ROUTE.TECHNICAL_SCRIPTS, express.static(path.join(require.main.filename, '../scripts')));
 

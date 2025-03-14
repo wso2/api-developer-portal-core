@@ -828,7 +828,7 @@ const createAppKeyMapping = async (req, res) => {
                     sharedToken: true,
                     tokenType: constants.TOKEN_TYPES.OAUTH
                 }
-                await adminDao.createApplicationKeyMapping(appKeyMappping);
+                await adminDao.createApplicationKeyMapping(appKeyMappping, t);
             }
             // add subscription to control plane for each api
             const apiSubscriptions = [];
@@ -872,6 +872,8 @@ const createAppKeyMapping = async (req, res) => {
         return res.status(200).json(responseData);
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.KEY_MAPPING_CREATE_ERROR}`, error);
+        //delete control plane application
+        await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${cpAppID}`, {}, {});
         return util.handleError(res, error);
     }
 }
