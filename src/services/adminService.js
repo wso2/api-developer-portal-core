@@ -868,6 +868,9 @@ const createAppKeyMapping = async (req, res) => {
             tokenDetails.keyType = "SANDBOX"
             //generate oauth key
             responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${cpAppID}/generate-keys`, {}, tokenDetails);
+            
+            // Add the appRefId to the response data
+            responseData.appRefId = cpAppID;
         });
         return res.status(200).json(responseData);
     } catch (error) {

@@ -66,8 +66,7 @@
                         </div>
                     </div>
 
-                    {{#if (contains keys.supportedGrantTypes "client_credentials")}}
-                    <div class="d-flex mb-4">
+                    <div id="tokenGenerationButtons_{{../name}}" class="d-flex mb-4" style="{{#unless (contains keys.supportedGrantTypes 'client_credentials')}} display: none !important;{{/unless}}">
                         <div class="row">
                             <div class="d-flex gap-2 mb-3">
                                 <button class='common-btn-primary'
@@ -139,7 +138,6 @@
                             </div>
                         </div>
                     </div>
-                    {{/if}}
 
                     <div id="KMURl_{{../name}}" style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
                         <div id="header">
@@ -313,6 +311,16 @@
                                 </div>
                             </div>
                         </form>
+                        <!-- Add Update configuration button when consumer key exists -->
+                        <div class="d-flex mt-4 mb-3" id="applicationKeyUpdateButtonContainer"
+                            style="{{#unless keys.consumerKey}}display: none !important;{{/unless}}">
+                            <button class="common-btn-primary" id="applicationKeyUpdateButton" name="http-values"
+                                type="button" onClick="updateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}',
+                                   '{{json ../../applicationMetadata.appMap}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}',
+                                   '{{keys.keyMappingId}}', '{{keys.clientName}}')">
+                                Update
+                            </button>
+                        </div>
                     </div>
                     {{else}}
                     <div class="key-action-container" id="key-action-container">
@@ -465,23 +473,23 @@
                                     </div>
                                 </div>
                             </form>
+
+                            <!-- Add Update button at the bottom only when consumer key exists -->
+                            <div class="d-flex mt-4 mb-3" id="applicationKeyUpdateButtonContainer"
+                                style="{{#unless keys.consumerKey}}display: none !important;{{/unless}}">
+                                <button class="common-btn-primary" id="applicationKeyUpdateButton" name="http-values"
+                                    type="button" onClick="updateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}',
+                                   '{{json ../../applicationMetadata.appMap}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}',
+                                   '{{keys.keyMappingId}}', '{{keys.clientName}}')">
+                                    Update
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     {{!-- Place to show the advanced configurations when the key generation is successful --}}
                     <div id="advanced-config-placeholder"></div>
-                    {{/if}}
 
-                    {{#if keys.consumerKey}}
-                    <!-- Add Update button at the bottom only when consumer key exists -->
-                    <div class="d-flex justify-content-end mt-4 mb-3">
-                        <button class="common-btn-primary" id="applicationKeyUpdateButton" name="http-values"
-                            type="button" onClick="updateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}',
-                                   '{{json ../../applicationMetadata.appMap}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}',
-                                   '{{keys.keyMappingId}}', '{{keys.clientName}}')">
-                            Update
-                        </button>
-                    </div>
                     {{/if}}
 
                     {{/let}}
