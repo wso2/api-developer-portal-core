@@ -233,14 +233,6 @@ passport.deserializeUser(async (sessionData, done) => {
     });
 });
 
-// Middleware to log session ID and user information
-app.use((req, res, next) => {
-    if (req.isAuthenticated()) {
-        console.log("Checking session");
-        console.log(`Session ID: ${req.sessionID}, User: ${req.user.firstName}`);
-    }
-    next();
-});
 app.use(constants.ROUTE.TECHNICAL_STYLES, express.static(path.join(require.main.filename, '../styles')));
 app.use(constants.ROUTE.TECHNICAL_SCRIPTS, express.static(path.join(require.main.filename, '../scripts')));
 
@@ -264,17 +256,21 @@ if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.DEFAULT, customContent);
 }
 
-// app.use((err, req, res, next) => {
+app.use((err, req, res, next) => {
 
-//     console.error(err.stack); // Log error for debugging
-//     const templateContent = {
-//         baseUrl: '/' + req.params.orgName + '/' + constants.ROUTE.VIEWS_PATH + "default"
-//     }
-//     html = util.renderTemplate('../pages/authentication-error/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
-//     res.status(err.status || 500).send(`
-//       ${html}
-//     `);
-// });
+    console.error(err.stack); // Log error for debugging
+    const templateContent = {
+        baseUrl: '/' + req.params.orgName + '/' + constants.ROUTE.VIEWS_PATH + "default"
+    }
+    if (err.status === 401) {
+        html = util.renderTemplate('../pages/authentication-error/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+    } else {
+        html = util.renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+    }
+    res.status(err.status || 500).send(`
+      ${html}
+    `);
+});
 
 
 const PORT = process.env.PORT || config.defaultPort;

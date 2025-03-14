@@ -11,7 +11,7 @@
                         <option value="" disabled selected>Select an API</option>
                         {{#each nonSubAPIs}}
                         <option value="{{apiID}}" data-apiRefID= "{{apiReferenceID}}" data-policies='{{{json this.subscriptionPolicyDetails}}}'>
-                            {{apiInfo.apiName}} - v{{apiInfo.apiVersion}}</option>
+                            {{apiInfo.apiName}} - {{apiInfo.apiVersion}}</option>
                         {{/each}}
                     </select>
                     <p class="pt-4" id="planSelectLabel"> Subscription Plan</p>

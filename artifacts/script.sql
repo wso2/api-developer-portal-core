@@ -221,6 +221,14 @@ CREATE TABLE "DP_APP_KEY_MAPPING" (
     FOREIGN KEY ("APP_ID") REFERENCES "DP_APPLICATION"("APP_ID") ON DELETE CASCADE
 );
 
+CREATE TABLE "session" (
+  "sid" varchar NOT NULL COLLATE "default",
+  "sess" json NOT NULL,
+  "expire" timestamp(6) NOT NULL
+)
+WITH (OIDS=FALSE);
+
+ALTER TABLE "session" ADD CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
 
 CREATE INDEX idx_metadata_api_id ON "DP_API_METADATA"("API_ID");
 CREATE INDEX idx_content_api_id ON "DP_API_CONTENT"("API_ID");
@@ -229,3 +237,4 @@ CREATE INDEX idx_subscription_policy_api_id ON "DP_API_SUBSCRIPTION_POLICY"("API
 CREATE INDEX idx_metadata_org_id ON "DP_API_METADATA"("ORG_ID");
 
 CREATE INDEX idx_metadata_search ON "DP_API_METADATA" USING gin(to_tsvector('english', "METADATA_SEARCH"));
+CREATE INDEX "IDX_session_expire" ON "session" ("expire");

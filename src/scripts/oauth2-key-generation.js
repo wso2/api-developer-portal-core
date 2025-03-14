@@ -340,7 +340,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize with selected value
     updateKeyManagerInfo();
  
- 
  });
   
 
