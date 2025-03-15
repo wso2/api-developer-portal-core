@@ -6,9 +6,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Update package lists and install necessary utilities in a single RUN to reduce image layers
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
     bash \
     coreutils \
     && rm -rf /var/lib/apt/lists/*
+
+# Verify the installed wget version
+RUN wget --version
 
 # Set the working directory inside the container
 WORKDIR /app
