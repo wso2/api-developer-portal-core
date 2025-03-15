@@ -187,6 +187,7 @@ app.use(passport.session());
 passport.serializeUser((user, done) => {
 
     console.log("Serializing user");
+    //console.log(sessionData.code_verifier);
     const profile = {
         firstName: user.firstName,
         lastName: user.lastName,
@@ -201,7 +202,8 @@ passport.serializeUser((user, done) => {
         [constants.ROLES.GROUP_CLAIM]: user.groups,
         'isAdmin': user.isAdmin,
         'isSuperAdmin': user.isSuperAdmin,
-        [constants.USER_ID]: user[constants.USER_ID]
+        [constants.USER_ID]: user[constants.USER_ID],
+        codeVerifier: user.codeVerifier
     };
     lock.acquire('serialize', (release) => {
         release(null, profile);
@@ -211,7 +213,7 @@ passport.serializeUser((user, done) => {
         }
         done(null, ret);
     });
-    //done(null, profile);
+    //done(null, user);
 });
 
 // Deserialize user from the session

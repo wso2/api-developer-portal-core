@@ -53,6 +53,7 @@
     "node-fetch": "^3.3.2",
     "nodemon": "^3.1.4",
     "npm": "^11.2.0",
+    "openid-client": "^6.3.4",
     "passport": "^0.7.0",
     "passport-custom": "^1.1.1",
     "passport-local": "^1.0.0",

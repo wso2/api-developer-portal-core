@@ -151,10 +151,10 @@ const ensureAuthenticated = async (req, res, next) => {
                             err.status = 401; // Unauthorized
                             return next(err);
                         } else if (!allowedOrgs) {
-                            console.log('User is not authorized to access organization');
-                            const err = new Error('Authentication required');
-                            err.status = 401; // Unauthorized
-                            return next(err);
+                            // console.log('User is not authorized to access organization');
+                            // const err = new Error('Authentication required');
+                            // err.status = 401; // Unauthorized
+                            // return next(err);
                         }
                     }
                 }
