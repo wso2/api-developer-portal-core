@@ -80,7 +80,6 @@ const login = async (req, res, next) => {
     if (IDP.clientId) {
         await configurePassport(IDP, claimNames);  // Configure passport dynamically
         console.log('Log in session ID:', req.sessionID);
-        console.log('Session before auth:', req.session); // Log session before
         req.session.save((err) => {
             if (err) {
               console.error('Session save error:', err);
@@ -88,9 +87,7 @@ const login = async (req, res, next) => {
             }
             passport.authenticate('oauth2')(req, res, next);
           });
-        //passport.authenticate('oauth2', { state: { beep: 'boop' } })(req, res, next);
         console.log("Passport authentication done");
-        //next();
     } else {
         orgName = req.params.orgName;
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'login', 'page.hbs');
