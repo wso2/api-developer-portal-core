@@ -187,7 +187,6 @@ app.use(passport.session());
 passport.serializeUser((user, done) => {
 
     console.log("Serializing user");
-    //console.log(sessionData.code_verifier);
     const profile = {
         firstName: user.firstName,
         lastName: user.lastName,
