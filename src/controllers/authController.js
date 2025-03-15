@@ -100,6 +100,7 @@ const login = async (req, res, next) => {
 
 const handleCallback = (req, res, next) => {
 
+   // const codeVerifier = req.session.codeVerifier;
     passport.authenticate('oauth2', {
         failureRedirect: '/login',
         keepSessionInfo: true
