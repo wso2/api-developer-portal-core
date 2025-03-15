@@ -46,7 +46,7 @@
 
 .nav-link:hover {
     background-color: var(--sidebar-active-color);
-    color: var(--white-text-color);
+    color: var(--lightest-text-color);
 }
 
 .nav-link:hover img,
@@ -56,7 +56,7 @@
 
 .nav-link.active {
     background-color: var(--sidebar-active-color);
-    color: var(--white-text-color);
+    color: var(--lightest-text-color);
 }
 
 .nav-link.active img,
@@ -106,7 +106,7 @@
 }
 
 .collapse-btn:hover {
-    color: var(--white-text-color);
+    color: var(--lightest-text-color);
 }
 
 .collapse-btn svg {

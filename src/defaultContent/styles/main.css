@@ -38,8 +38,8 @@
   --secondary-dark-color: #49a18e;
   --secondary-darkest-color: #357b6c;
   /* font colors */
-  --white-text-color: #ffffff;
   --main-text-color: #40404b;
+  --lightest-text-color: #ffffff;
   --light-text-color: #6b7280;
   --dark-text-color: #1D2028;
   /* other special colors */
@@ -66,12 +66,13 @@ html {
   height: 100%;
 }
 
-body {
+.main-body {
   overflow: auto;
   height: 100%;
   display: flex;
   flex-direction: column;
   font-family: var(--font-family-sans);
+  background-color: var(--main-bg-color);
 }
 
 .main-container {
@@ -92,7 +93,7 @@ body {
 .common-btn-primary {
   display: inline-block;
   background-color: var(--primary-dark-color);
-  color: var(--white-text-color);
+  color: var(--lightest-text-color);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   border: none;
@@ -107,7 +108,7 @@ body {
 .common-btn-primary[disabled],
 .common-btn-primary.disabled {
   background-color: var(--primary-dark-color);
-  color: var(--white-text-color);
+  color: var(--lightest-text-color);
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
@@ -117,7 +118,7 @@ body {
 .common-btn-light {
   display: inline-block;
   background-color: var(--primary-light-color);
-  color: var(--white-text-color);
+  color: var(--lightest-text-color);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   border: none;
@@ -131,22 +132,22 @@ body {
 
 .common-btn-light:hover {
   background-color: var(--primary-main-color);
-  color: var(--white-text-color);
+  color: var(--lightest-text-color);
 }
 
 .common-btn-light:active {
   background-color: var(--primary-darkest-color);
-  color: var(--white-text-color);
+  color: var(--lightest-text-color);
 }
 
 .common-btn-primary:hover {
   background-color: var(--primary-main-color);
-  color: var(--white-text-color);
+  color: var(--lightest-text-color);
 }
 
 .common-btn-primary:active {
   background-color: var(--primary-darkest-color);
-  color: var(--white-text-color);
+  color: var(--lightest-text-color);
 }
 
 .common-btn-primary:focus {
@@ -221,13 +222,13 @@ body {
 
 .common-btn-outlined:hover {
   background-color: var(--primary-main-color);
-  color: var(--white-text-color);
+  color: var(--lightest-text-color);
   border-color: var(--primary-dark-color);
 }
 
 .common-btn-outlined:active {
   background-color: var(--primary-dark-color);
-  color: var(--white-text-color);
+  color: var(--lightest-text-color);
 }
 
 .common-btn-outlined:focus {
@@ -264,6 +265,7 @@ body {
   height: 100%;
   border-radius: 24px;
   padding: 20px;
+  background: var(--main-bg-color);
 }
 
 /* common-md-file-style */
