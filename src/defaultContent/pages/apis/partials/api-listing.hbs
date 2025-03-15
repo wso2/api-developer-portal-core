@@ -15,14 +15,17 @@
         </div>
       </div>
       <div class="col-lg-6 col-md-12 apilist-hero-image">
-        <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/apisHeroImg.png" alt="Hero Image" class="img-fluid" />
+        <img
+          src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/apisHeroImg.png"
+          alt="Hero Image" class="img-fluid" />
       </div>
     </div>
   </div>
   <div class="container-fluid apilist-container">
     <div class="search-container">
       <div class="search-input">
-        <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/search.svg" alt="search" class="search-icon" />
+        <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/search.svg"
+          alt="search" class="search-icon" />
         <input type="text" id="query" placeholder="Search APIs" autocomplete="off" />
       </div>
     </div>
@@ -63,19 +66,9 @@
                 {{> subscription-plans apiInfo=apiInfo apiName=apiInfo.apiName}}
                 {{#if ../isAuthenticated}}
                 {{#if subscriptionPolicies.length}}
-
-                {{#unless (every applications "subscribed")}}
-                {{#if (eq subscriptionPolicies.length 1)}}
-                <a type="button" class="common-btn-primary"
-                  onclick="subscribe('{{../orgID}}', '', '{{apiID}}', '{{apiReferenceID}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyID"}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyName"}}')">Subscribe</a>
-                {{else}}
-                <a type="button" class="common-btn-primary" onclick="loadModal('planModal-{{apiID}}')">Subscribe</a>
-                {{/if}}
-                {{else}}
-                <a type="button" class="common-btn-primary disabled" disabled>Subscribe</a>
-                {{/unless}}
-
-                <div class="custom-dropdown" id="customDropdown-{{apiID}}">
+                <a type="button" class="common-btn-primary">Subscribe</a>
+                <div class="custom-dropdown">
+                  <input type="hidden" id="selectedAppId-{{apiID}}" value="" />
                   <div class="custom-select-container">
                     <div class="select-selected" role="combobox" aria-expanded="false" aria-haspopup="listbox">
                       <span class="selected-text small">Select an app</span>
@@ -84,23 +77,32 @@
                     <div class="select-items" role="listbox">
                       <div class="select-action-item" role="button" data-action="create-app">+ Create Application</div>
                       {{#each applications}}
-                      <div class="select-item" role="option" data-value="{{id}}">
+
+                      {{#if (eq ../subscriptionPolicies.length 1)}}
+                      <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}"
+                        onclick="document.getElementById('selectedAppId-{{../apiID}}').value='{{id}}'; subscribe('{{../../orgID}}', '{{id}}', '{{../apiID}}', '{{../apiReferenceID}}', 
+                        '{{lookup (lookup ../subscriptionPolicyDetails 0) 'policyID'}}', 
+                        '{{lookup (lookup ../subscriptionPolicyDetails 0) 'policyName'}}' )">
                         <span>{{name}}</span>
-                        {{#if subscribed}}<img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg" alt="Subscribed"
-                          class="subscription-icon" />{{/if}}
+                        {{#if subscribed}}<img
+                          src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
+                          alt="Subscribed" class="subscription-icon" />{{/if}}
                       </div>
+                      {{else}}
+                      <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}"
+                        onclick="document.getElementById('selectedAppId-{{../apiID}}').value='{{id}}'; loadModal('planModal-{{../apiID}}')">
+                        <span>{{name}}</span>
+                        {{#if subscribed}}<img
+                          src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
+                          alt="Subscribed" class="subscription-icon" />{{/if}}
+                      </div>
+                      {{/if}}
+
                       {{/each}}
                     </div>
-                    <select class="d-none" id="appDropdown-{{apiID}}">
-                      {{#each applications}}
-                      <option value="{{id}}" {{#if subscribed}} disabled {{/if}}>{{name}}</option>
-                      {{/each}}
-                    </select>
                   </div>
                 </div>
                 {{/if}}
-
-
                 {{/if}}
               </div>
             </div>

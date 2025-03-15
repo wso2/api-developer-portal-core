@@ -13,32 +13,32 @@
                         <p class="subscription-plans-card-subtitle pt-0">requests per minutes</p>
                         {{#if ../isAuthenticated}}
                         <div id="subscriptionBox" class="subscription-container">
-                            <a id="subscribe-btn-{{../apiMetadata.apiID}}" type="button"
-                                class="common-btn-outlined subscription-plan-subscribe-btn"
-                                onclick="subscribe('{{@root.orgID}}', '', '{{../apiMetadata.apiID}}', '{{../apiMetadata.apiReferenceID}}', '{{policyID}}', '{{policyName}}')">Subscribe</a>
-                            <div class="custom-dropdown" id="customDropdown-{{../apiMetadata.apiID}}">
+                            <a type="button" class="common-btn-outlined subscription-plan-subscribe-btn">
+                                Subscribe
+                            </a>
+                            <div class="custom-dropdown">
                                 <div class="custom-select-container">
                                     <div class="select-selected" aria-expanded="false">
                                         <span class="selected-text">Select Application</span>
                                         <span class="select-arrow"></span>
                                     </div>
                                     <div class="select-items" role="listbox">
-                                        <div class="select-action-item" role="button" data-action="create-app">+ Create
-                                            Application</div>
+                                        <div class="select-action-item" role="button" data-action="create-app">
+                                            + Create Application</div>
                                         {{#each ../applications}}
-                                        <div class="select-item" role="option" data-value="{{../id}}">
+                                        <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button"
+                                            data-value="{{../id}}" {{#unless subscribed}} onclick="subscribe('{{@root.orgID}}', '{{id}}', '{{../../apiMetadata.apiID}}', '{{../../apiMetadata.apiReferenceID}}', '{{../policyID}}', '{{../policyName}}'
+                                            )" {{/unless}}>
+
                                             {{name}}
-                                            {{#if subscribed}}<img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg" alt="Subscribed"
-                                                class="subscription-icon" />{{/if}}
+                                            {{#if subscribed}}
+                                            <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
+                                                alt="Subscribed" class="subscription-icon" />
+                                            {{/if}}
                                         </div>
                                         {{/each}}
                                     </div>
                                 </div>
-                                <select class="d-none" id="appDropdown-{{../apiMetadata.apiID}}">
-                                    {{#each ../applications}}
-                                    <option value="{{id}}" {{#if subscribed}} disabled {{/if}}>{{name}}</option>
-                                    {{/each}}
-                                </select>
                             </div>
                         </div>
                         {{else}}
@@ -50,5 +50,4 @@
             </div>
             {{/each}}
         </div>
-    </div>
 </section>

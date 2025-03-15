@@ -53,6 +53,8 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             // Hide the key action container
             const keyActionContainer = document.getElementById("key-action-container");
             keyActionContainer.style.display = "none";
+            const generateKeysButton = document.getElementById("applicationKeyGenerateButton");
+            generateKeysButton.style.display = "none";
 
             // Move the advanced configuration section to the placeholder
             const advancedConfig = document.getElementById("KMData_" + keyManager);
@@ -378,15 +380,33 @@ function loadKeyGenModal() {
 
 function showAdvanced(configId) {
     const content = document.getElementById(configId);
-    content.style.display = content.style.display === "block" ? "none" : "block";
-    // const KMDetails = document.getElementById(KMDetailsId) ;
-    // KMDetails.style.display = KMDetails.style.display === "block" ? "none" : "block";
+    const isExpanding = content.style.display !== "block";
+    content.style.display = isExpanding ? "block" : "none";
     
     // Get the arrow icon from the clicked header and toggle its rotation
     const headerElement = event.currentTarget;
     const arrowIcon = headerElement.querySelector('.arrow-icon');
     if (arrowIcon) {
         arrowIcon.classList.toggle('rotated');
+    }
+    
+    // Handle Generate Keys button movement
+    const generateKeysBtn = document.getElementById("applicationKeyGenerateButton");
+    const originalContainer = document.getElementById("generate-keys-btn-container");
+    const advancedContainer = document.getElementById("generate-keys-btn-advanced-container");
+    
+    if (generateKeysBtn && originalContainer && advancedContainer) {
+        if (isExpanding) {
+            // Move Generate Keys button to the advanced container
+            originalContainer.style.display = "none";
+            advancedContainer.style.display = "flex";
+            advancedContainer.appendChild(generateKeysBtn);
+        } else {
+            // Move Generate Keys button back to its original container
+            advancedContainer.style.display = "none";
+            originalContainer.style.display = "flex";
+            originalContainer.appendChild(generateKeysBtn);
+        }
     }
 }
 
