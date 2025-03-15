@@ -23,7 +23,6 @@ const https = require('https');
 const constants = require('../utils/constants');
 const util = require('../utils/util');
 const config = require(process.cwd() + '/config.json');
-const { generators } = require ('openid-client');
 
 
 async function configurePassport(authJsonContent, claimNames) {
@@ -34,9 +33,6 @@ async function configurePassport(authJsonContent, claimNames) {
     //set scopes to call API Manager REST apis
     const requestedScopes = "openid profile apim:subscribe admin dev";
     let scope = requestedScopes.split(" ");
-    const code_verifier = generators.codeVerifier();
-    const code_challenge = generators.codeChallenge(code_verifier);
-
     scope.push(...(authJsonContent.scope ? authJsonContent.scope.split(" ") : ""));
     const strategy = new OAuth2Strategy({
         issuer: authJsonContent.issuer,
@@ -48,11 +44,9 @@ async function configurePassport(authJsonContent, claimNames) {
         scope: scope,
         passReqToCallback: true,
         state: true,
-        code_challenge,
-        code_challenge_method: 'S256'
+        pkce: true
     }, async (req, accessToken, refreshToken, params, profile, done) => {
 
-        console.log('Executing passport strategy');
         if (!accessToken) {
             console.error('No access token received');
             return done(new Error('Access token missing'));
@@ -102,10 +96,6 @@ async function configurePassport(authJsonContent, claimNames) {
             'isSuperAdmin': isSuperAdmin,
             [constants.USER_ID]: decodedAccessToken[constants.USER_ID]
         };
-        //user["profile"] = profile;
-        //req.session.user = req.user; // Store user in session
-        //req.session.code_verifier = req.session?.code_verifier;
-        //return done(null, profile);
         return done(null, profile);
     });
     strategy._oauth2.setAgent(agent);
