@@ -79,7 +79,6 @@ const login = async (req, res, next) => {
     IDP = await fetchAuthJsonContent(req, orgName);
     if (IDP.clientId) {
         await configurePassport(IDP, claimNames);  // Configure passport dynamically
-        console.log('Log in session ID:', req.sessionID);
         req.session.save((err) => {
             if (err) {
                 console.error('Session save error:', err);
@@ -105,10 +104,7 @@ const login = async (req, res, next) => {
 
 const handleCallback = (req, res, next) => {
 
-    console.log('Session ID in callback:', req.sessionID);
-    console.log('Session at callback:', req.session); // Log session at callback
     passport.authenticate('oauth2', {
-        state: req.session["oauth2:dev.api.asgardeo.io"].state,
         failureRedirect: '/login'
     }, (err, user) => {
         if (err || !user) {
