@@ -336,14 +336,6 @@ const deleteAPIMetadata = async (req, res) => {
 const createAPITemplate = async (req, res) => {
 
     try {
-        const rules = util.validateRequestParametersForTemplate();
-        for (let validation of rules) {
-            await validation.run(req);
-        }
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json(util.getErrors(errors));
-        }
         const { orgId, apiId } = req.params;
         if (!orgId) {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
@@ -434,15 +426,6 @@ const createAPITemplate = async (req, res) => {
 const updateAPITemplate = async (req, res) => {
 
     try {
-
-        const rules = util.validateRequestParametersForTemplate();
-        for (let validation of rules) {
-            await validation.run(req);
-        }
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json(util.getErrors(errors));
-        }
         const { orgId, apiId } = req.params;
         let imageMetadata;
         if (req.body.imageMetadata) {
