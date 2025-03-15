@@ -201,8 +201,7 @@ passport.serializeUser((user, done) => {
         [constants.ROLES.GROUP_CLAIM]: user.groups,
         'isAdmin': user.isAdmin,
         'isSuperAdmin': user.isSuperAdmin,
-        [constants.USER_ID]: user[constants.USER_ID],
-        codeVerifier: user.codeVerifier
+        [constants.USER_ID]: user[constants.USER_ID]
     };
     lock.acquire('serialize', (release) => {
         release(null, profile);
