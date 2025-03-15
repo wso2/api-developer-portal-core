@@ -26,6 +26,7 @@ const adminDao = require('../dao/admin');
 const IdentityProviderDTO = require("../dto/identityProvider");
 const minimatch = require('minimatch');
 const { renderGivenTemplate } = require('../utils/util');
+const { profile } = require('console');
 
 const filePrefix = config.pathToContent;
 
@@ -79,15 +80,9 @@ const login = async (req, res, next) => {
     IDP = await fetchAuthJsonContent(req, orgName);
     if (IDP.clientId) {
         await configurePassport(IDP, claimNames);  // Configure passport dynamically
-        console.log('Log in session ID:', req.sessionID);
-        req.session.save((err) => {
-            if (err) {
-              console.error('Session save error:', err);
-              return res.status(500).send('Session error');
-            }
-            passport.authenticate('oauth2')(req, res, next);
-          });
+        passport.authenticate('oauth2')(req, res, next);
         console.log("Passport authentication done");
+        //next();
     } else {
         orgName = req.params.orgName;
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'login', 'page.hbs');
@@ -105,42 +100,32 @@ const login = async (req, res, next) => {
 
 const handleCallback = (req, res, next) => {
 
-    console.log('Session ID in callback:', req.sessionID);
-    console.log('Session at callback:', req.session); // Log session at callback
-    req.session.reload((err) => {
-        if (err) {
-          console.error('Session reload error:', err);
-          return res.status(500).send('Session error');
+    passport.authenticate('oauth2', {
+        failureRedirect: '/login',
+        keepSessionInfo: true
+    }, (err, user) => {
+        if (err || !user) {
+            console.log("User not present", !user)
+            return next(err || new Error('Authentication failed'));
         }
-        console.log('Session after reload:', req.session);
-        passport.authenticate('oauth2', {
-            state: req.session["oauth2:dev.api.asgardeo.io"].state,
-            failureRedirect: '/login'
-        }, (err, user) => {
-            if (err || !user) {
-                console.log("User not present", !user)
-                return next(err || new Error('Authentication failed'));
+        req.logIn(user, (err) => {
+            if (err) {
+                return next(err);
             }
-            req.logIn(user, (err) => {
-                if (err) {
-                    return next(err);
+            if (config.mode === constants.DEV_MODE) {
+                const returnTo = req.user.returnTo || config.baseUrl;
+                delete req.session.returnTo;
+                res.redirect(returnTo);
+            } else {
+                let returnTo = req.user.returnTo;
+                if (!config.advanced.disableOrgCallback && returnTo == null) {
+                    returnTo = `/${req.params.orgName}`;
                 }
-                if (config.mode === constants.DEV_MODE) {
-                    const returnTo = req.user.returnTo || config.baseUrl;
-                    delete req.session.returnTo;
-                    res.redirect(returnTo);
-                } else {
-                    let returnTo = req.user.returnTo;
-                    if (!config.advanced.disableOrgCallback && returnTo == null) {
-                        returnTo = `/${req.params.orgName}`;
-                    }
-                    delete req.session.returnTo;
-                    res.redirect(returnTo);
-                }
-            });
-        })(req, res, next);
-      });
-    
+                delete req.session.returnTo;
+                res.redirect(returnTo);
+            }
+        });
+    })(req, res, next);
 };
 
 const handleSignUp = async (req, res) => {
