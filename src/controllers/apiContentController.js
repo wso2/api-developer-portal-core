@@ -171,7 +171,11 @@ const loadAPIContent = async (req, res) => {
                         apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
                         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
                         apiDetails = await parseSwagger(JSON.parse(apiDefinition))
-                        apiDetails["serverDetails"] = metaData.endPoints;   
+                        if(metaData.endPoints.productionURL === "" && metaData.endPoints.sandboxURL === ""){
+                            apiDetails["serverDetails"] = "";   
+                        } else {
+                            apiDetails["serverDetails"] = metaData.endPoints;   
+                        }
                     }
                 }
             }
@@ -204,6 +208,7 @@ const loadAPIContent = async (req, res) => {
                 resources: apiDetails,
                 orgID: orgID
             };
+            console.log(apiDetails);
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
             res.send(html);
         } catch (error) {
