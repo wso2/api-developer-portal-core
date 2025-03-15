@@ -101,7 +101,6 @@ const login = async (req, res, next) => {
 const handleCallback = (req, res, next) => {
 
     passport.authenticate('oauth2', {
-        state: req.session["oauth2:dev.api.asgardeo.io"].state,
         failureRedirect: '/login',
         keepSessionInfo: true
     }, (err, user) => {
