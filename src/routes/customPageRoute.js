@@ -22,5 +22,19 @@ const registerPartials = require('../middlewares/registerPartials');
 const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
 
 // eslint-disable-next-line no-useless-escape
-router.get('(^(?!\/(favicon\.ico|images\/|technical-styles\/|styles\/|*login*|*portal*|devportal\/))/:orgName/views/:viewName/*)', registerPartials, ensureAuthenticated, contentController.loadCustomContent);
+// Exclude specific paths
+router.get([
+    '/favicon.ico',
+    '/images/*',
+    '/technical-styles/*',
+    '/styles/*',
+    '/login*',
+    '/portal*',
+    '/devportal/*'
+  ], (req, res) => {
+    res.status(404).send('Not found');
+  });
+  
+router.get('/:orgName/views/:viewName/*', registerPartials, ensureAuthenticated, contentController.loadCustomContent);
+
 module.exports = router;

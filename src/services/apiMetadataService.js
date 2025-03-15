@@ -53,6 +53,8 @@ const createAPIMetadata = async (req, res) => {
                 "Visible groups cannot be specified for a public API"
             );
         }
+        apiMetadata.endPoints.productionURL = changeEndpoint(apiMetadata.endPoints.productionURL);
+        apiMetadata.endPoints.sandboxURL = changeEndpoint(apiMetadata.endPoints.sandboxURL);
         await sequelize.transaction(async (t) => {
             // Create apimetadata record
             const createdAPI = await apiDao.createAPIMetadata(orgId, apiMetadata, t);
@@ -117,6 +119,14 @@ function getRandomDarkColor() {
     } while (r === 0 && g === 0 && b === 0);  // Skip black color
 
     return `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
+}
+
+function changeEndpoint(endPoint) {
+
+    if (endPoint.includes("choreoapis")) {
+        return endPoint.replace("choreoapis", "bijiraapis");
+    }
+    return endPoint;
 }
 
 function generateSVG(letter, color) {
@@ -224,11 +234,13 @@ const updateAPIMetadata = async (req, res) => {
 
     try {
         // Validate input
-        if (!apiMetadata.apiInfo || !apiDefinitionFile|| !apiMetadata.endPoints) {
+        if (!apiMetadata.apiInfo || !apiDefinitionFile || !apiMetadata.endPoints) {
             throw new Sequelize.ValidationError(
                 "Missing or Invalid fields in the request payload"
             );
         }
+        apiMetadata.endPoints.productionURL = changeEndpoint(apiMetadata.endPoints.productionURL);
+        apiMetadata.endPoints.sandboxURL = changeEndpoint(apiMetadata.endPoints.sandboxURL);
 
         await sequelize.transaction(async (t) => {
             // Create apimetadata record

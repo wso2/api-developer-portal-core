@@ -2,6 +2,14 @@
     <div class="container-fluid">
         <div class="defaultapi-section">
             <div class="container-header mb-4" style="justify-self: center;">Endpoints</div>
+            {{#if (eq resources.serverDetails "")}}
+            <div class="defaultapi-endpoint-row col-12 col-xl-9" style="justify-self: center;">
+                <div class="defaultapi-endpoint-content">
+                    <span class="defaultapi-development-label">No endpoints available</span>
+                </div>
+            </div>
+            {{else}}
+            {{#unless (eq resources.serverDetails.productionURL "")}}
             <div class="defaultapi-endpoint-row col-12 col-xl-9" style="justify-self: center;">
                 <div class="defaultapi-endpoint-content">
                     <span class="defaultapi-development-label">Production Endpoint</span>
@@ -10,6 +18,8 @@
                     </div>
                 </div>
             </div>
+            {{/unless}}
+            {{#unless (eq resources.serverDetails.sandboxURL "")}}
             <div class="defaultapi-endpoint-row col-12 col-xl-9" style="justify-self: center;">
                 <div class="defaultapi-endpoint-content">
                     <span class="defaultapi-development-label">Sandbox Endpoint</span>
@@ -18,6 +28,8 @@
                     </div>
                 </div>
             </div>
+            {{/unless}}
+            {{/if}}
         </div>
         <div class="defaultapi-section">
             <div class="container-header mb-4" style="justify-self: center;">Description</div>
