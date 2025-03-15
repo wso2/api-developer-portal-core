@@ -168,15 +168,13 @@ app.use(session({
     store: new pgSession({
         pool: pool,
         tableName: 'session',
-        pruneSessionInterval: 3600,
-        debug: console.log,
+        pruneSessionInterval: 3600
     }),
     secret: secret,
     resave: false,
     saveUninitialized: true,
     cookie: {
-        secure:true,
-        httpOnly: true,
+        secure:false,
         maxAge: 60 * 60 * 1000
     }
 }));
