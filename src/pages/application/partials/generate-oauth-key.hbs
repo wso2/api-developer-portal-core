@@ -8,8 +8,11 @@
     <div class="modal custom-modal" id='OauthKeyModal'>
         <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content" style="padding: 20px; width: 100%;">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
-                    onclick="closeModal('OauthKeyModal')"></button>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="modal-title m-0">OAuth2 Key Generation</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                        onclick="closeModal('OauthKeyModal')"></button>
+                </div>
                 <div style="margin-bottom: 20px;">
                     <div class="keygen-section-header" style="display: none;">
                         <h1>Identity Provider</h1>
@@ -324,8 +327,8 @@
                     </div>
                     {{else}}
                     <div class="key-action-container" id="key-action-container">
-                        <div class="d-flex col-md-6 justify-content-between w-100 align-items-center">
-                            <div class="d-flex gap-3">
+                        <div class="d-flex col-md-6 justify-content-between w-100 align-items-center" style="height: 40px;">
+                            <div class="d-flex gap-3" id="generate-keys-btn-container">
                                 <button class="common-btn-primary" id="applicationKeyGenerateButton" name="http-values"
                                     type="button"
                                     onClick="generateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.id}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', 'consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}')">
@@ -483,6 +486,10 @@
                                    '{{keys.keyMappingId}}', '{{keys.clientName}}')">
                                     Update
                                 </button>
+                            </div>
+                            
+                            <div class="d-flex mt-4 mb-3" id="generate-keys-btn-advanced-container" style="display: none; margin-left: -0.5rem;">
+                                <!-- Generate Keys button will be moved here when advanced config is expanded -->
                             </div>
                         </div>
                     </div>
