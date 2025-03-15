@@ -172,7 +172,7 @@ app.use(session({
     }),
     secret: secret,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: {
         secure:false,
         maxAge: 60 * 60 * 1000
@@ -211,7 +211,7 @@ passport.serializeUser((user, done) => {
         }
         done(null, ret);
     });
-    //done(null, profile);
+    //done(null, user);
 });
 
 // Deserialize user from the session

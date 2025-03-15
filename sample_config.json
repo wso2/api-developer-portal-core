@@ -15,6 +15,7 @@
     "disableScopeValidation": true
   },
   "pathToContent": "./resources/default-layout/",
+  "pathToDBCert": "./resources/security/ca.pem",
   "mode": "production",
   "controlPlane": {
     "url": "https://sts.preview-dv.choreo.dev/api/am/devportal/v2",

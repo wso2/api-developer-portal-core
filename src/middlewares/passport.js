@@ -24,6 +24,7 @@ const constants = require('../utils/constants');
 const util = require('../utils/util');
 const config = require(process.cwd() + '/config.json');
 
+
 async function configurePassport(authJsonContent, claimNames) {
 
     const agent = new https.Agent({
@@ -46,7 +47,6 @@ async function configurePassport(authJsonContent, claimNames) {
         pkce: true
     }, async (req, accessToken, refreshToken, params, profile, done) => {
 
-        console.log('Executing passport strategy');
         if (!accessToken) {
             console.error('No access token received');
             return done(new Error('Access token missing'));
@@ -96,7 +96,6 @@ async function configurePassport(authJsonContent, claimNames) {
             'isSuperAdmin': isSuperAdmin,
             [constants.USER_ID]: decodedAccessToken[constants.USER_ID]
         };
-        req.session.user = req.user; // Store user in session
         return done(null, profile);
     });
     strategy._oauth2.setAgent(agent);
