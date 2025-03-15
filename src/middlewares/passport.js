@@ -44,6 +44,7 @@ async function configurePassport(authJsonContent, claimNames) {
         scope: scope,
         passReqToCallback: true,
         state: true,
+        store: true,
         pkce: true
     }, async (req, accessToken, refreshToken, params, profile, done) => {
 
