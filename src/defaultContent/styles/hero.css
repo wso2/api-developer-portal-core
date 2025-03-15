@@ -10,7 +10,7 @@
 .hero-title {
   font-size: 2.75rem;
   font-weight: 600;
-  color: var(--white-text-color);
+  color: var(--lightest-text-color);
   margin-bottom: 1.5rem;
   line-height: 1.2;
 }
@@ -22,7 +22,7 @@
 
 .hero-description {
   font-size: 1rem;
-  color: var(--white-text-color);
+  color: var(--lightest-text-color);
   margin-bottom: 2rem;
   max-width: 600px;
 }

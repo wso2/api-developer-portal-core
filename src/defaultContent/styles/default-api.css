@@ -112,7 +112,7 @@
 .defaultapi-http-method {
     padding: 6px 12px;
     border-radius: 4px;
-    color: var(--white-text-color);
+    color: var(--lightest-text-color);
     font-weight: 500;
     font-size: 14px;
     width: 80px;

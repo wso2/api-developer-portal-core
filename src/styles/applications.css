@@ -27,6 +27,7 @@
   align-items: center;
   justify-content: center;
   height: 11.25rem;
+  background: var(--main-bg-color);
 }
 
 .create-project-content {
@@ -75,6 +76,7 @@
   flex-direction: column;
   height: 11.25rem;
   padding: 1.5rem;
+  background: var(--main-bg-color);
 }
 
 .applicationlist-tags {
