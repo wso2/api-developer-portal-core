@@ -155,9 +155,9 @@ Handlebars.registerHelper('isMiddle', function (index, length) {
 
 Handlebars.registerHelper('startsWith', function (str, includeStr, options) {
     if (str && str.startsWith(includeStr)) {
-        return options.fn(this);  // Executes the block if true
+        return options.fn(this);  
     } else {
-        return options.inverse(this);  // Executes the else block if false
+        return options.inverse(this); 
     }
 });
 
