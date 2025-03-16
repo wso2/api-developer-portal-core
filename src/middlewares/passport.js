@@ -47,25 +47,16 @@ async function configurePassport(authJsonContent, claimNames) {
         pkce: true
     }, async (req, accessToken, refreshToken, params, profile, done) => {
 
-        console.log('// verify invoked --------------------------------------');
-
-
         if (!accessToken) {
             console.error('No access token received');
             return done(new Error('Access token missing'));
         }
-
-        console.log('>>>>>>>>> Access token received');
-        console.log('>>>>>>>>> ');
-
         let orgList;
         if (config.advanced.tokenExchanger.enabled) {
-            console.log('>>>>>>>>> Token exchange enabled');
             const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
             const decodedExchangedToken = jwt.decode(exchangedToken);
             orgList = decodedExchangedToken.organizations;
             req['exchangedToken'] = exchangedToken;
-            console.log('>>>>>>>>> Token exchanged');
         }
         const decodedJWT = jwt.decode(params.id_token);
         const decodedAccessToken = jwt.decode(accessToken);
@@ -75,23 +66,18 @@ async function configurePassport(authJsonContent, claimNames) {
         const roles = decodedJWT[claimNames[constants.ROLES.ROLE_CLAIM]] ? decodedJWT[config.roleClaim] : '';
         const groups = decodedJWT[claimNames[constants.ROLES.GROUP_CLAIM]] ? decodedJWT[config.groupsClaim] : '';
         let isAdmin, isSuperAdmin = false;
-        console.log('>>>>>>>>> Line 78');
         if (roles.includes(constants.ROLES.SUPER_ADMIN) || roles.includes(constants.ROLES.ADMIN)) {
-            console.log('>>>>>>>>> Admin true');
             isAdmin = true;
         }
         if (roles.includes(constants.ROLES.SUPER_ADMIN)) {
-            console.log('>>>>>>>>> Super admin true');
             isSuperAdmin = true;
         }
         const returnTo = req.session.returnTo;
-        console.log('>>>>>>>>> return to: ' + returnTo);
         let view = '';
         if (returnTo) {
             const startIndex = returnTo.indexOf('/views/') + 7;
             const endIndex = returnTo.indexOf('/', startIndex) !== -1 ? returnTo.indexOf('/', startIndex) : returnTo.length;
             view = returnTo.substring(startIndex, endIndex);
-            console.log('>>>>>>>>> view: ' + view);
         }
         profile = {
             'firstName': firstName ? (firstName.includes(" ") ? firstName.split(" ")[0] : firstName) : '',
@@ -110,9 +96,6 @@ async function configurePassport(authJsonContent, claimNames) {
             'isSuperAdmin': isSuperAdmin,
             [constants.USER_ID]: decodedAccessToken[constants.USER_ID]
         };
-        console.log('>>>>>>>>> profile: ', JSON.stringify(profile, 2, null));
-        console.log('// verify invoked ------------------------------------//');
-
         return done(null, profile);
     });
     strategy._oauth2.setAgent(agent);
@@ -127,8 +110,6 @@ async function configurePassport(authJsonContent, claimNames) {
         });
     };
     passport.use(strategy);
-    console.log('>>>>>>>>>>>>> Passport strategy configured');
-    
 }
 
 module.exports = configurePassport;

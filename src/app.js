@@ -204,11 +204,6 @@ passport.serializeUser((user, done) => {
         'isSuperAdmin': user.isSuperAdmin,
         [constants.USER_ID]: user[constants.USER_ID]
     };
-
-
-    console.log("Profile:");
-    console.log(JSON.stringify(profile, 2, null));
-
     lock.acquire('serialize', (release) => {
         release(null, profile);
     }, (err, ret) => {
