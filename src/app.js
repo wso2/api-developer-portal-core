@@ -186,7 +186,6 @@ app.use(passport.session());
 
 // Serialize user into the session
 passport.serializeUser((user, done) => {
-    console.log('Serializing user ------------------------------------');
 
     console.log("Serializing user");
     const profile = {
@@ -208,14 +207,11 @@ passport.serializeUser((user, done) => {
     lock.acquire('serialize', (release) => {
         release(null, profile);
     }, (err, ret) => {
-        console.log("Serialized user error");
-        console.log(JSON.stringify(err, 2, null));
         if (err) {
             return done(err);
         }
         done(null, ret);
     });
-    console.log('Serializing user ----------------------------------//');
     //done(null, user);
 });
 
