@@ -123,7 +123,7 @@ function getRandomDarkColor() {
 
 function changeEndpoint(endPoint) {
 
-    if (endPoint.includes("choreoapis")) {
+    if (endPoint !== undefined && endPoint !== null && endPoint.includes("choreoapis")) {
         return endPoint.replace("choreoapis", "bijiraapis");
     }
     return endPoint;
