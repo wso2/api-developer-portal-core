@@ -83,7 +83,7 @@ const login = async (req, res, next) => {
         await configurePassport(IDP, claimNames);  // Configure passport dynamically
         req.session.save((err) => {
             if (err) {
-                console.error('Session save error:', err);
+                console.error('>>>>>>>>>>>>> Session save error:', err);
                 return res.status(500).send('Session error');
             }
             passport.authenticate('oauth2')(req, res, next);
