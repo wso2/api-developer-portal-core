@@ -59,7 +59,8 @@ const fetchAuthJsonContent = async (req, orgName) => {
 };
 
 const login = async (req, res, next) => {
-
+    console.log('login ----------------------------------------------');
+    console.log('>>>>>>>>>> session id: ' + req.sessionID);
     let orgName, IDP;
     let claimNames = {
         [constants.ROLES.ROLE_CLAIM]: config.roleClaim,
@@ -102,9 +103,13 @@ const login = async (req, res, next) => {
         const html = await renderGivenTemplate(layoutResponse, templateResponse, templateContent);
         res.send(html);
     }
+    console.log('login --------------------------------------------//');
 };
 
 const handleCallback = (req, res, next) => {
+    console.log('callback ----------------------------------------------');
+    console.log('>>>>>>>>>> session id: ' + req.sessionID);
+
     const rules = util.validateRequestParameters();
     const validationPromises = rules.map(validation => validation.run(req));
     Promise.all(validationPromises)
@@ -118,6 +123,7 @@ const handleCallback = (req, res, next) => {
         console.error("Error validating request parameters: " + error);
         return res.status(500).json({ message: 'Internal Server Error' });
     });
+    console.log('>>>>>>>> start authenticate');
     passport.authenticate('oauth2', {
         failureRedirect: '/login'
     }, (err, user) => {
@@ -144,6 +150,7 @@ const handleCallback = (req, res, next) => {
         });
     })(req, res, next);
 
+    console.log('login --------------------------------------------//');
 };
 
 const handleSignUp = async (req, res) => {
