@@ -164,22 +164,27 @@ Handlebars.registerHelper('startsWith', function (str, includeStr, options) {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(session({
-    store: new pgSession({
-        pool: pool,
-        tableName: 'session',
-        pruneSessionInterval: 3600,
-        debug: console.log,
-    }),
-    secret: secret,
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-        secure:false,
-        maxAge: 60 * 60 * 1000
-    }
-}));
+app.use((req, res, next) => {
+    
+    const cookieDomain = req.get('host').includes('localhost') ? 'localhost' : '.bijira.dev';
 
+    session({
+        store: new pgSession({
+            pool: pool,
+            tableName: 'session',
+            pruneSessionInterval: 3600,
+            debug: console.log,
+        }),
+        secret: secret,
+        resave: false,
+        saveUninitialized: true,
+        cookie: {
+            domain: cookieDomain,
+            secure: false,
+            maxAge: 60 * 60 * 1000
+        }
+    })(req, res, next);
+});
 
 app.use(passport.initialize());
 app.use(passport.session());
