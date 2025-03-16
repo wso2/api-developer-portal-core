@@ -85,7 +85,6 @@ const login = async (req, res, next) => {
                 return res.status(500).send('Session error');
             }
             console.log('Log in session ID:', req.sessionID);
-            console.log('Cookies:', req.cookies);
             passport.authenticate('oauth2')(req, res, next);
         });
         console.log("Passport authentication done");
@@ -107,7 +106,7 @@ const login = async (req, res, next) => {
 const handleCallback = (req, res, next) => {
 
     console.log('Callback session ID:', req.sessionID);
-    console.log('Cookies:', req.cookies);
+
     passport.authenticate('oauth2', {
         failureRedirect: '/login'
     }, (err, user) => {
