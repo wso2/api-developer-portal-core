@@ -272,15 +272,15 @@ const deleteIdentityProvider = async (req, res) => {
 };
 
 const createOrgContent = async (req, res) => {
-
-
     const orgId = req.params.orgId;
     const viewName = req.params.name;
+    if (!orgId) {
+        throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+    }
     const zipPath = req.file.path;
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
-    await util.unzipDirectory(zipPath, extractPath);
-    //await util.unzipFile(zipPath, extractPath);
     try {
+        await util.unzipDirectory(zipPath, extractPath);
         const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'), viewName);
         for (const { filePath, fileName, fileContent, fileType } of files) {
             await createContent(filePath, fileName, fileContent, fileType, orgId, viewName);
@@ -317,14 +317,15 @@ const createContent = async (filePath, fileName, fileContent, fileType, orgId, v
 };
 
 const updateOrgContent = async (req, res) => {
-
     const orgId = req.params.orgId;
     const viewName = req.params.name;
+    if (!orgId) {
+        throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+    }
     const zipPath = req.file.path;
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
-    //await util.unzipFile(zipPath, extractPath);
-    await util.unzipDirectory(zipPath, extractPath);
     try {
+        await util.unzipDirectory(zipPath, extractPath);
         const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'), viewName);
         for (const { filePath, fileName, fileContent, fileType } of files) {
             if (fileName != null && !fileName.startsWith('.')) {

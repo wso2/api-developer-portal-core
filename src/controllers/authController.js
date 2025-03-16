@@ -22,9 +22,11 @@ const config = require(process.cwd() + '/config.json');
 const fs = require('fs');
 const path = require('path');
 const constants = require('../utils/constants');
+const util = require('../utils/util');
 const adminDao = require('../dao/admin');
 const IdentityProviderDTO = require("../dto/identityProvider");
 const minimatch = require('minimatch');
+const { validationResult } = require('express-validator');
 const { renderGivenTemplate } = require('../utils/util');
 
 const filePrefix = config.pathToContent;
@@ -103,7 +105,19 @@ const login = async (req, res, next) => {
 };
 
 const handleCallback = (req, res, next) => {
-
+    const rules = util.validateRequestParameters();
+    const validationPromises = rules.map(validation => validation.run(req));
+    Promise.all(validationPromises)
+    .then(() => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json(util.getErrors(errors));
+        }
+    })
+    .catch(error => {
+        console.error("Error validating request parameters: " + error);
+        return res.status(500).json({ message: 'Internal Server Error' });
+    });
     passport.authenticate('oauth2', {
         failureRedirect: '/login'
     }, (err, user) => {
@@ -133,7 +147,14 @@ const handleCallback = (req, res, next) => {
 };
 
 const handleSignUp = async (req, res) => {
-
+    const rules = util.validateRequestParameters();
+    for (let validation of rules) {
+        await validation.run(req);
+    }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json(util.getErrors(errors));
+    }
     const authJsonContent = await fetchAuthJsonContent(req.params.orgName);
     if (authJsonContent.signUpURL) {
         res.redirect(authJsonContent.signUpURL);
@@ -150,6 +171,14 @@ const handleSignUp = async (req, res) => {
 };
 
 const handleLogOut = async (req, res) => {
+    const rules = util.validateRequestParameters();
+    for (let validation of rules) {
+        await validation.run(req);
+    }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json(util.getErrors(errors));
+    }
     const authJsonContent = await fetchAuthJsonContent(req, req.params.orgName);
     let idToken = ''
     if (req.user != null) {

@@ -26,10 +26,20 @@ const apiDao = require('../dao/apiMetadata');
 const constants = require('../utils/constants');
 const apiMetadataService = require('../services/apiMetadataService');
 const { loadLayoutFromAPI } = require('../utils/util');
+const util = require('../utils/util');
+const { validationResult } = require('express-validator');
 const filePrefix = config.pathToContent;
 const hbs = exphbs.create({});
 const registerPartials = async (req, res, next) => {
 
+  const rules = util.validateRequestParameters();
+  for (let validation of rules) {
+      await validation.run(req);
+  }
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+      return res.status(400).json(util.getErrors(errors));
+  }
   registerInternalPartials(req);
   if (config.mode === constants.DEV_MODE) {
     registerAllPartialsFromFile(config.baseUrl + constants.ROUTE.VIEWS_PATH + req.params.viewName, req, filePrefix);
