@@ -58,6 +58,8 @@ const fetchAuthJsonContent = async (req, orgName) => {
 
 const login = async (req, res, next) => {
 
+    console.log('// login ----------------------------------------');
+
     let orgName, IDP;
     let claimNames = {
         [constants.ROLES.ROLE_CLAIM]: config.roleClaim,
@@ -75,9 +77,19 @@ const login = async (req, res, next) => {
             }
         }
     }
+
+    console.log("Claim names");
+    console.log(JSON.stringify(claimNames, 2, null));
+
     req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
+    console.log("Request");
+    console.log(req);
+
     IDP = await fetchAuthJsonContent(req, orgName);
+    console.log("IDP");
+    console.log(JSON.stringify(IDP, 2, null));
     if (IDP.clientId) {
+        console.log('>>>>>>>>>>> has clientId: ' + IDP.clientId);
         await configurePassport(IDP, claimNames);  // Configure passport dynamically
         req.session.save((err) => {
             if (err) {
@@ -88,6 +100,7 @@ const login = async (req, res, next) => {
         });
         console.log("Passport authentication done");
     } else {
+        console.log('>>>>>>>>>>> no clientId');
         orgName = req.params.orgName;
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'login', 'page.hbs');
         const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
@@ -100,13 +113,21 @@ const login = async (req, res, next) => {
         const html = await renderGivenTemplate(layoutResponse, templateResponse, templateContent);
         res.send(html);
     }
+    console.log('// login --------------------------------------//');
 };
 
 const handleCallback = (req, res, next) => {
 
+    console.log("Callback called ----------------------------------------");
+    console.log(res);
+
     passport.authenticate('oauth2', {
         failureRedirect: '/login'
     }, (err, user) => {
+        console.log("User err block");
+        console.log(JSON.stringify(err, 2, null));
+        console.log(JSON.stringify(user, 2, null));
+
         if (err || !user) {
             console.log("User not present", !user)
             return next(err || new Error('Authentication failed'));
@@ -118,6 +139,7 @@ const handleCallback = (req, res, next) => {
             if (config.mode === constants.DEV_MODE) {
                 const returnTo = req.user.returnTo || config.baseUrl;
                 delete req.session.returnTo;
+                console.log('>>>>>>>>> 1 returnTo: ' + returnTo);
                 res.redirect(returnTo);
             } else {
                 let returnTo = req.user.returnTo;
@@ -125,11 +147,13 @@ const handleCallback = (req, res, next) => {
                     returnTo = `/${req.params.orgName}`;
                 }
                 delete req.session.returnTo;
+                console.log('>>>>>>>>> 2 returnTo: ' + returnTo);
                 res.redirect(returnTo);
             }
         });
     })(req, res, next);
 
+    console.log("Callback called --------------------------------------// ");
 };
 
 const handleSignUp = async (req, res) => {
