@@ -43,7 +43,7 @@
 
 .defaultapi-development-label {
     font-weight: 600;
-    color: var(--main-text-color);
+    color: var(--dp-main-text-color);
     margin-bottom: 8px;
     font-size: 14px;
 }

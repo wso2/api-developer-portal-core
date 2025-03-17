@@ -21,7 +21,7 @@
 
 .form-label {
   font-size: 0.8125rem;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
   margin: 0.3rem 0;
 }
 
@@ -145,7 +145,7 @@ input[type="checkbox"]:checked {
 
 .callback-header {
   font-size: 0.8125rem;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
   margin: 0.3rem 0;
   font-weight: 400;
 }

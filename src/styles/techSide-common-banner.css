@@ -79,7 +79,7 @@
   margin-left: 0.625rem;
   font-size: 1rem;
   background-color: transparent;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
 }
 
 #query::placeholder {

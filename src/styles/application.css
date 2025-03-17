@@ -1,6 +1,6 @@
 .content {
   padding: 2rem;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
 }
 
 .sub-api-card {
@@ -16,7 +16,7 @@
 .policy-label {
   font-size: 0.9rem;
   margin: 0.625rem;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
 }
 
 .custom-plans-card h2 a {

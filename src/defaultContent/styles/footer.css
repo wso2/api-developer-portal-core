@@ -34,7 +34,7 @@
 
 .footer-links a:hover,
 .footer-links a:active {
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
 }
 
 .footer-icons {
@@ -53,7 +53,7 @@
 
 .footer-icons a:hover,
 .footer-icons a:active {
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
 }
 
 .social-icon {

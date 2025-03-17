@@ -34,7 +34,7 @@
 
 .help-banner-content p {
   font-size: 0.875rem;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
   line-height: 1.5;
   margin-bottom: 0.5rem;
 }
