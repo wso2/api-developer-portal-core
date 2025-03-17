@@ -118,7 +118,6 @@ const handleCallback = (req, res, next) => {
             console.error("Error validating request parameters: " + error);
             return res.status(500).json({ message: 'Internal Server Error' });
         });
-    req.session.save(() => {
         passport.authenticate('oauth2', {
             failureRedirect: '/login'
         }, (err, user) => {
@@ -140,12 +139,12 @@ const handleCallback = (req, res, next) => {
                         returnTo = `/${req.params.orgName}`;
                     }
                     delete req.session.returnTo;
+                    console.log("Redirecting to: ", returnTo);
                     res.redirect(returnTo);
                 }
             });
         })(req, res, next);
-    })
-};
+    };
 
 const handleSignUp = async (req, res) => {
     const rules = util.validateRequestParameters();
