@@ -3,9 +3,7 @@
     <div class="api-banner-content align-items-center ">
       <div class="col-12 col-md-7">
         <div class="api-title">
-          <span
-            class="badge api-badge-custom1"
-          >{{apiMetadata.apiInfo.apiCategory}}</span>
+          <span class="badge api-badge-custom1">{{apiMetadata.apiInfo.apiCategory}}</span>
           <h4>{{apiMetadata.apiInfo.apiName}}</h4>
           <p class="api-version"> {{apiMetadata.apiInfo.apiVersion}}</p>
         </div>
@@ -17,36 +15,16 @@
         </div>
         <div class="api-details-btn">
           {{#in apiMetadata.apiInfo.apiType values="REST,AsyncAPI,GraphQL"}}
-          <a
-            type="button"
-            class="common-btn-primary"
-            href="{{baseUrl}}/api/{{apiMetadata.apiHandle}}/docs/specification"
-            >Documentation</a>
+          <a type="button" class="common-btn-primary"
+            href="{{baseUrl}}/api/{{apiMetadata.apiHandle}}/docs/specification">Documentation</a>
           {{else}}
-          <a
-            type="button"
-            class="common-btn-white"
-            href="{{{schemaUrl}}}"
-            download
-            >Download</a>
+          <a type="button" class="common-btn-white" href="{{{schemaUrl}}}" download>Download</a>
           {{/in}}
-          {{#if (eq subscriptionPlans.length 1)}}
-          {{#each subscriptionPlans}}
-          {{#if @first}}
-            <a type="button" class="common-btn-white" href="{{../baseUrl}}/myapis?policyName={{this.policyName}}&apiName={{../apiMetadata.apiInfo.apiName}}&apiVersion={{../apiMetadata.apiInfo.apiVersion}}">Subscribe</a>
-          {{/if}}
-          {{/each}}
-          {{else}}
           <a type="button" class="common-btn-white" href="#subscriptionPlans">Subscribe</a>
-          {{/if}}
         </div>
       </div>
       <div class="col-12 col-md-5 text-md-right">
-        <img
-          class="img-thumbnail api-image"
-          src="{{apiMetadata.apiInfo.apiImageMetadata.api-icon}}"
-          alt="API Image"
-        />
+        <img class="img-thumbnail api-image" src="{{apiMetadata.apiInfo.apiImageMetadata.api-icon}}" alt="API Image" />
       </div>
     </div>
   </div>

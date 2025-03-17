@@ -165,13 +165,15 @@ Handlebars.registerHelper('startsWith', function (str, includeStr, options) {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const store = new pgSession({
+    pool: pool,
+    tableName: 'session',
+    pruneSessionInterval: 3600,
+    debug: console.log,
+});
+
 app.use(session({
-    store: new pgSession({
-        pool: pool,
-        tableName: 'session',
-        pruneSessionInterval: 3600,
-        debug: console.log,
-    }),
+    store: store,
     secret: secret,
     resave: false,
     saveUninitialized: true,
