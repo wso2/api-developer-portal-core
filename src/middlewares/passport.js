@@ -35,9 +35,6 @@ async function configurePassport(authJsonContent, claimNames) {
     const requestedScopes = "openid profile apim:subscribe admin dev";
     let scope = requestedScopes.split(" ");
     scope.push(...(authJsonContent.scope ? authJsonContent.scope.split(" ") : ""));
-    if (!authJsonContent.clientSecret) {
-        authJsonContent.clientSecret = secret.clientSecret
-    }
     const strategy = new OAuth2Strategy({
         issuer: authJsonContent.issuer,
         authorizationURL: authJsonContent.authorizationURL,
@@ -47,7 +44,8 @@ async function configurePassport(authJsonContent, claimNames) {
         callbackURL: authJsonContent.callbackURL,
         scope: scope,
         passReqToCallback: true,
-        clientSecret: authJsonContent.clientSecret,
+        store: true,
+        pkce: true
     }, async (req, accessToken, refreshToken, params, profile, done) => {
         if (!accessToken) {
             console.error('No access token received');
