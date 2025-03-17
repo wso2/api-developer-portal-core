@@ -31,7 +31,7 @@
 .app-description {
   font-size: 14px;
   font-weight: 300;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
   margin: 5px 0;
 }
 

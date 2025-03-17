@@ -64,7 +64,7 @@
 
 .api-description {
   margin-bottom: 1rem;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
 }
 
 .api-tags {
