@@ -108,42 +108,43 @@ const handleCallback = (req, res, next) => {
     const rules = util.validateRequestParameters();
     const validationPromises = rules.map(validation => validation.run(req));
     Promise.all(validationPromises)
-    .then(() => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json(util.getErrors(errors));
-        }
-    })
-    .catch(error => {
-        console.error("Error validating request parameters: " + error);
-        return res.status(500).json({ message: 'Internal Server Error' });
-    });
-    passport.authenticate('oauth2', {
-        failureRedirect: '/login'
-    }, (err, user) => {
-        if (err || !user) {
-            console.log("User not present", !user)
-            return next(err || new Error('Authentication failed'));
-        }
-        req.logIn(user, (err) => {
-            if (err) {
-                return next(err);
+        .then(() => {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json(util.getErrors(errors));
             }
-            if (config.mode === constants.DEV_MODE) {
-                const returnTo = req.user.returnTo || config.baseUrl;
-                delete req.session.returnTo;
-                res.redirect(returnTo);
-            } else {
-                let returnTo = req.user.returnTo;
-                if (!config.advanced.disableOrgCallback && returnTo == null) {
-                    returnTo = `/${req.params.orgName}`;
-                }
-                delete req.session.returnTo;
-                res.redirect(returnTo);
-            }
+        })
+        .catch(error => {
+            console.error("Error validating request parameters: " + error);
+            return res.status(500).json({ message: 'Internal Server Error' });
         });
-    })(req, res, next);
-
+    req.session.save(() => {
+        passport.authenticate('oauth2', {
+            failureRedirect: '/login'
+        }, (err, user) => {
+            if (err || !user) {
+                console.log("User not present", !user)
+                return next(err || new Error('Authentication failed'));
+            }
+            req.logIn(user, (err) => {
+                if (err) {
+                    return next(err);
+                }
+                if (config.mode === constants.DEV_MODE) {
+                    const returnTo = req.user.returnTo || config.baseUrl;
+                    delete req.session.returnTo;
+                    res.redirect(returnTo);
+                } else {
+                    let returnTo = req.user.returnTo;
+                    if (!config.advanced.disableOrgCallback && returnTo == null) {
+                        returnTo = `/${req.params.orgName}`;
+                    }
+                    delete req.session.returnTo;
+                    res.redirect(returnTo);
+                }
+            });
+        })(req, res, next);
+    })
 };
 
 const handleSignUp = async (req, res) => {
