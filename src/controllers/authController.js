@@ -80,7 +80,7 @@ const login = async (req, res, next) => {
     req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
     IDP = await fetchAuthJsonContent(req, orgName);
     if (IDP.clientId) {
-        await configurePassport(IDP, claimNames);  // Configure passport dynamically
+        //await configurePassport(IDP, claimNames);  // Configure passport dynamically
         req.session.save((err) => {
             if (err) {
                 console.error('Session save error:', err);
@@ -214,5 +214,6 @@ module.exports = {
     handleCallback,
     handleSignUp,
     handleLogOut,
-    handleLogOutLanding
+    handleLogOutLanding,
+    fetchAuthJsonContent
 };

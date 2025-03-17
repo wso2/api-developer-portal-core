@@ -48,6 +48,8 @@ const lock = new AsyncLock();
 const app = express();
 const secret = crypto.randomBytes(64).toString('hex');
 const filePrefix = config.pathToContent;
+const configurePassport = require('./middlewares/passport');
+const fetchAuthJsonContent = require('./controllers/authController');
 
 if (config.disableTLS) {
     process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
@@ -183,6 +185,14 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+//configure global IDP
+let claimNames = {
+        [constants.ROLES.ROLE_CLAIM]: config.roleClaim,
+        [constants.ROLES.GROUP_CLAIM]: config.groupsClaim,
+        [constants.ROLES.ORGANIZATION_CLAIM]: config.orgIDClaim
+};
+configurePassport(config.identityProvider, claimNames);
 
 // Serialize user into the session
 passport.serializeUser((user, done) => {
