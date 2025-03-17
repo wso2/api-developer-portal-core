@@ -214,5 +214,5 @@ module.exports = {
     handleCallback,
     handleSignUp,
     handleLogOut,
-    handleLogOutLanding,
+    handleLogOutLanding
 };
