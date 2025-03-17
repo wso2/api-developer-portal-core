@@ -124,9 +124,9 @@ function getRandomDarkColor() {
 
 function changeEndpoint(endPoint) {
 
-    if (endPoint !== undefined && endPoint !== null && endPoint.includes("choreoapis")) {
-        return endPoint.replace("choreoapis", "bijiraapis");
-    }
+    // if (endPoint !== undefined && endPoint !== null && endPoint.includes("choreoapis")) {
+    //     return endPoint.replace("choreoapis", "bijiraapis");
+    // }
     return endPoint;
 }
 
