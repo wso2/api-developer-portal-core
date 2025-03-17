@@ -23,6 +23,7 @@ const https = require('https');
 const constants = require('../utils/constants');
 const util = require('../utils/util');
 const config = require(process.cwd() + '/config.json');
+const secret = require(process.cwd() + '/secret.json');
 
 
 async function configurePassport(authJsonContent, claimNames) {
@@ -34,6 +35,9 @@ async function configurePassport(authJsonContent, claimNames) {
     const requestedScopes = "openid profile apim:subscribe admin dev";
     let scope = requestedScopes.split(" ");
     scope.push(...(authJsonContent.scope ? authJsonContent.scope.split(" ") : ""));
+    if (!authJsonContent.clientSecret) {
+        authJsonContent.clientSecret = secret.clientSecret
+    }
     const strategy = new OAuth2Strategy({
         issuer: authJsonContent.issuer,
         authorizationURL: authJsonContent.authorizationURL,
@@ -43,10 +47,8 @@ async function configurePassport(authJsonContent, claimNames) {
         callbackURL: authJsonContent.callbackURL,
         scope: scope,
         passReqToCallback: true,
-        store: true,
-        pkce: true
+        clientSecret: authJsonContent.clientSecret,
     }, async (req, accessToken, refreshToken, params, profile, done) => {
-
         if (!accessToken) {
             console.error('No access token received');
             return done(new Error('Access token missing'));
