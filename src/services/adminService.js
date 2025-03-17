@@ -797,6 +797,7 @@ const createAppKeyMapping = async (req, res) => {
 
     const orgID = req.params.orgId;
     const userID = req[constants.USER_ID];
+    let cpAppID = "";
     try {
         let responseData;
         await sequelize.transaction(async (t) => {
@@ -812,7 +813,6 @@ const createAppKeyMapping = async (req, res) => {
             //create control plane application
             const cpAppCreationResponse = await createCPApplication(req, cpApplicationName);
 
-            let cpAppID = "";
             if (cpAppCreationResponse === "Application already exists") {
                 //get CP app id
                 const sharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, true);
@@ -877,7 +877,9 @@ const createAppKeyMapping = async (req, res) => {
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.KEY_MAPPING_CREATE_ERROR}`, error);
         //delete control plane application
-        await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${cpAppID}`, {}, {});
+        if (cpAppID) {
+            await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${cpAppID}`, {}, {});
+        }
         return util.handleError(res, error);
     }
 }
