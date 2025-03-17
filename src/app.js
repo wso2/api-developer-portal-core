@@ -208,11 +208,14 @@ passport.serializeUser((user, done) => {
         [constants.USER_ID]: user[constants.USER_ID]
     };
     lock.acquire('serialize', (release) => {
+        console.log(">>>>>>>>>>>>>>>>>>>> Acquiring lock while Serializing user");
+        console.log(">>>>>>>>>>>>>>>>>>>> Profile of serialized user: " + JSON.stringify(profile));
         release(null, profile);
     }, (err, ret) => {
         if (err) {
             return done(err);
         }
+        console.log(">>>>>>>>>>>>>>>>>>>> Successfully serialized user");
         done(null, ret);
     });
     //done(null, user);
@@ -225,6 +228,8 @@ passport.deserializeUser(async (sessionData, done) => {
     //return done(null, sessionData);
     lock.acquire('deserialize', async (release) => {
         try {
+            console.log(">>>>>>>>>>>>>>>>>>>> Acquiring lock while deserializing user");
+            console.log(">>>>>>>>>>>>>>>>>>>> session data while deserializing user: " + JSON.stringify(sessionData));
             release(null, sessionData);
         } catch (err) {
             release(err);
@@ -233,6 +238,7 @@ passport.deserializeUser(async (sessionData, done) => {
         if (err) {
             return done(err);
         }
+        console.log(">>>>>>>>>>>>>>>>>>>> Successfully deserialized user");
         done(null, ret);
     });
 });

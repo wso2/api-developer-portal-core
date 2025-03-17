@@ -27,7 +27,7 @@ const secret = require(process.cwd() + '/secret.json');
 
 
 async function configurePassport(authJsonContent, claimNames) {
-
+    console.log(">>>>>>>>>>>>>>>>>>>> Inside configurePassport method");
     const agent = new https.Agent({
         rejectUnauthorized: false
     });    
@@ -53,8 +53,11 @@ async function configurePassport(authJsonContent, claimNames) {
         }
         let orgList;
         if (config.advanced.tokenExchanger.enabled) {
+            console.log(">>>>>>>>>>>>>>>>>>>> config.advanced.tokenExchanger.enabled is enabled");
             const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
+            console.log(">>>>>>>>>>>>>>>>>>>> Token exchange done. Exchange token: " + exchangedToken);
             const decodedExchangedToken = jwt.decode(exchangedToken);
+            console.log(">>>>>>>>>>>>>>>>>>>> Decoded Exchange token: " + JSON.stringify(decodedExchangedToken));
             orgList = decodedExchangedToken.organizations;
             req['exchangedToken'] = exchangedToken;
         }
@@ -73,6 +76,7 @@ async function configurePassport(authJsonContent, claimNames) {
             isSuperAdmin = true;
         }
         const returnTo = req.session.returnTo;
+        console.log(">>>>>>>>>>>>>>>>>>>> returnTo value: " + returnTo);
         let view = '';
         if (returnTo) {
             const startIndex = returnTo.indexOf('/views/') + 7;
@@ -96,11 +100,14 @@ async function configurePassport(authJsonContent, claimNames) {
             'isSuperAdmin': isSuperAdmin,
             [constants.USER_ID]: decodedAccessToken[constants.USER_ID]
         };
+        console.log(">>>>>>>>>>>>>>>>>>>> profile object after token exchange and JWT decoding: " + JSON.stringify(profile));
+        console.log(">>>>>>>>>>>>>>>>>>>> Returning profile");
         return done(null, profile);
     });
     strategy._oauth2.setAgent(agent);
 
     const originalGetOAuthAccessToken = strategy._oauth2.getOAuthAccessToken;
+    console.log(">>>>>>>>>>>>>>>>>>>> originalGetOAuthAccessToken from stratergy: " + originalGetOAuthAccessToken);
     strategy._oauth2.getOAuthAccessToken = function (code, params, callback) {
         originalGetOAuthAccessToken.call(this, code, params, (err, accessToken, refreshToken, results) => {
             if (err) {

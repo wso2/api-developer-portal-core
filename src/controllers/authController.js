@@ -67,9 +67,11 @@ const login = async (req, res, next) => {
         [constants.ROLES.ORGANIZATION_CLAIM]: config.orgIDClaim
     };
     if (req.params.orgName) {
+        console.log(">>>>>>>>>>>>>>>>>>>> Org name: " + req.params.orgName);
         orgName = req.params.orgName;
         if (orgName !== 'portal') {
             const orgDetails = await adminDao.getOrganization(orgName);
+            console.log(">>>>>>>>>>>>>>>>>>>> Org details: " + JSON.stringify(orgDetails));
             if (orgDetails) {
                 claimNames[constants.ROLES.ROLE_CLAIM] = orgDetails.ROLE_CLAIM_NAME || config.roleClaim;
                 claimNames[constants.ROLES.GROUP_CLAIM] = orgDetails.GROUPS_CLAIM_NAME || config.groupsClaim;
@@ -78,18 +80,25 @@ const login = async (req, res, next) => {
         }
     }
     req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
+    console.log(">>>>>>>>>>>>>>>>>>>> req.session.returnTo = " + req.session.returnTo);
     IDP = await fetchAuthJsonContent(req, orgName);
     if (IDP.clientId) {
         await configurePassport(IDP, claimNames);  // Configure passport dynamically
+        console.log(">>>>>>>>>>>>>>>>>>>> End of configurePassport method");
+        console.log(">>>>>>>>>>>>>>>>>>>> Saving the session");
         req.session.save((err) => {
             if (err) {
                 console.error('Session save error:', err);
                 return res.status(500).send('Session error');
             }
+            console.log(">>>>>>>>>>>>>>>>>>>> Executing passport.authenticate within login function");
+            console.log('Before login session ID:', req.sessionID);
             passport.authenticate('oauth2')(req, res, next);
+            console.log('After login session ID:', req.sessionID);
         });
         console.log("Passport authentication done");
     } else {
+        console.log(">>>>>>>>>>>>>>>>>>>> No client ID for IDP");
         orgName = req.params.orgName;
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'login', 'page.hbs');
         const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
@@ -105,6 +114,7 @@ const login = async (req, res, next) => {
 };
 
 const handleCallback = (req, res, next) => {
+    console.log(">>>>>>>>>>>>>>>>>>>> Inside handleCallback method");
     const rules = util.validateRequestParameters();
     const validationPromises = rules.map(validation => validation.run(req));
     Promise.all(validationPromises)
@@ -119,7 +129,8 @@ const handleCallback = (req, res, next) => {
             return res.status(500).json({ message: 'Internal Server Error' });
         });
     console.log("Handling callback");
-
+    console.log(">>>>>>>>>>>>>>>>>>>> Executing passport.authenticate within handleCallback function");
+    console.log('Before callback session ID:', req.sessionID);
     passport.authenticate('oauth2', {
         failureRedirect: '/login'
     }, (err, user) => {
@@ -128,24 +139,30 @@ const handleCallback = (req, res, next) => {
             return next(err || new Error('Authentication failed'));
         }
         req.logIn(user, (err) => {
+            console.log(">>>>>>>>>>>>>>>>>>>> Executing req.logIn for user: " + user);
             if (err) {
                 return next(err);
             }
             if (config.mode === constants.DEV_MODE) {
+                console.log(">>>>>>>>>>>>>>>>>>>> Inside Dev mode");
                 const returnTo = req.user.returnTo || config.baseUrl;
                 delete req.session.returnTo;
                 res.redirect(returnTo);
             } else {
+                console.log(">>>>>>>>>>>>>>>>>>>> Mode in prod");
                 let returnTo = req.user.returnTo;
                 if (!config.advanced.disableOrgCallback && returnTo == null) {
                     returnTo = `/${req.params.orgName}`;
                 }
+                console.log(">>>>>>>>>>>>>>>>>>>> Deleting the request session return to");
                 delete req.session.returnTo;
                 console.log("Redirecting to: ", returnTo);
+                console.log(">>>>>>>>>>>>>>>>>>>> Redirecting to: " + returnTo);
                 res.redirect(returnTo);
             }
         });
     })(req, res, next);
+    console.log('After callback session ID:', req.sessionID);
 };
 
 const handleSignUp = async (req, res) => {
