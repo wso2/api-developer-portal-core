@@ -215,5 +215,4 @@ module.exports = {
     handleSignUp,
     handleLogOut,
     handleLogOutLanding,
-    fetchAuthJsonContent
 };
