@@ -173,15 +173,15 @@ const store = new pgSession({
     debug: console.log,
 });
 
-store.get = ((originalGet) => function (sid, callback) {
-    console.log(`🔍 Checking session in DB for SID: ${sid}`);
-    originalGet.call(this, sid, (err, session) => {
-      if (err) console.error("❌ Session retrieval error:", err);
-      else if (!session) console.warn("⚠️ No session found in DB for SID:", sid);
-      else console.log("✅ Session found in DB:", session);
-      callback(err, session);
-    });
-  })(store.get);
+// store.get = ((originalGet) => function (sid, callback) {
+//     console.log(`🔍 Checking session in DB for SID: ${sid}`);
+//     originalGet.call(this, sid, (err, session) => {
+//       if (err) console.error("❌ Session retrieval error:", err);
+//       else if (!session) console.warn("⚠️ No session found in DB for SID:", sid);
+//       else console.log("✅ Session found in DB:", session);
+//       callback(err, session);
+//     });
+//   })(store.get);
 
 app.use(session({
     store: store,
@@ -197,6 +197,29 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+
+const getCookiesFromHeader = (req) => {
+    const cookieHeader = req.headers.cookie; // Get raw Cookie header
+    if (!cookieHeader) return {}; // Return empty object if no cookies
+
+    return cookieHeader.split(';').reduce((cookies, cookie) => {
+        let [name, value] = cookie.trim().split('=');
+        cookies[name] = decodeURIComponent(value); // Decode and store in object
+        return cookies;
+    }, {});
+};
+
+app.use((req, res, next) => {
+    
+    const cookies = getCookiesFromHeader(req); // Parse all cookies
+    console.log("🔍 Parsed Cookies:", cookies);
+    let sessionId = cookies["connect.sid"].split('.')[0]; // Get session ID
+    sessionId = sessionId.replace(/^s:/, "");
+    console.log("🔹Setting Session ID:===============", sessionId);
+    req.sessionID = sessionId; // Set session ID in request
+    next();
+});
 
 let claimNames = {
     [constants.ROLES.ROLE_CLAIM]: config.roleClaim,
