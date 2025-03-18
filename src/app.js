@@ -173,6 +173,16 @@ const store = new pgSession({
     debug: console.log,
 });
 
+store.get = ((originalGet) => function (sid, callback) {
+    console.log(`🔍 Checking session in DB for SID: ${sid}`);
+    originalGet.call(this, sid, (err, session) => {
+      if (err) console.error("❌ Session retrieval error:", err);
+      else if (!session) console.warn("⚠️ No session found in DB for SID:", sid);
+      else console.log("✅ Session found in DB:", session);
+      callback(err, session);
+    });
+  })(store.get);
+
 app.use(session({
     store: store,
     secret: secret,
