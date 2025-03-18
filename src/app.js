@@ -196,13 +196,6 @@ let claimNames = {
 configurePassport(config.identityProvider, claimNames);
 
 
-app.use((req, res, next) => {
-    console.log("Checking session ID===============")
-    if (req.session) {
-      console.log("Session ID:", req.sessionID);
-    }
-    next();
-});
 // Serialize user into the session
 passport.serializeUser((user, done) => {
 
