@@ -266,7 +266,14 @@ app.use((err, req, res, next) => {
         baseUrl: '/' + req.params.orgName + '/' + constants.ROUTE.VIEWS_PATH + "default"
     }
     if (err.status === 401) {
-        html = util.renderTemplate('../pages/authentication-error/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+        req.session.destroy((err) => {
+            if (err) {
+                console.error("❌ Error destroying session:", err);
+                return res.status(500).send("Logout failed");
+            }
+            console.log("✅ User logged out and session destroyed");
+        });
+        html = util.renderTemplate('../pages/authentication-error/page.hbs', 'src/pages/error-layout/main.hbs', templateContent, true);
     } else {
         html = util.renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
     }
