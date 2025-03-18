@@ -52,6 +52,8 @@ const registerPartials = async (req, res, next) => {
       if (req.params.orgName && req.params.orgName !== "portal" && (!(/configure/i.test(matchURL)))) {
 
         const orgID = await adminDao.getOrgId(req.params.orgName);
+        console.log("Loading partials==================================: ");
+        console.log("View Name: ", req.params.viewName);
         var layoutContent = await loadLayoutFromAPI(orgID, req.params.viewName);
         if (layoutContent === "") {
           console.log("Layout content not found in the database. Loading from file system");
