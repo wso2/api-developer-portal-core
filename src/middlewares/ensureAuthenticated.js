@@ -42,6 +42,23 @@ function enforceSecuirty(scope) {
             }
             const token = accessTokenPresent(req);
             if (token) {
+                //check user belongs to organization
+                if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
+                    //check if exchanged token has organization identifier
+                    //const decodedToken = req.user.exchangeToken ? jwt.decode(req.user.exchangeToken) : null;
+                    const allowedOrgs = req.user.organizations;
+                    if (allowedOrgs && !(allowedOrgs.includes(req.user[constants.ORG_IDENTIFIER]))) {
+                        console.log('User is not authorized to access organization');
+                        const err = new Error('Authentication required');
+                        err.status = 401; // Unauthorized
+                        return next(err);
+                    } else if (!allowedOrgs) {
+                        console.log('User is not authorized to access organization');
+                        const err = new Error('Authentication required');
+                        err.status = 401; // Unauthorized
+                        return next(err);
+                    }
+                }
                 // TODO: Implement organization extraction logic
                 validateAuthentication(scope)(req, res, next);
                 //set user ID
