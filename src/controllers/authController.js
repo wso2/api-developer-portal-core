@@ -83,14 +83,19 @@ const login = async (req, res, next) => {
         //await configurePassport(IDP, claimNames);  // Configure passport dynamically
         req.session.save((err) => {
             if (err) {
-                console.error('Session save error:', err);
-                return res.status(500).send('Session error');
+                console.error("Session save error:", err);
+                return res.status(500).send("Session error");
             }
-            cookieIndex = req.rawHeaders.length - 1;
-            console.log("Before login==============================")
-            console.log("Cookie sid", req.rawHeaders);
-            console.log("Session ID", req.sessionID); 
-            passport.authenticate('oauth2')(req, res, next);
+        
+            console.log("Before login ==============================");
+            console.log("Cookie Headers:", req.rawHeaders);
+            console.log("Session ID:", req.sessionID);
+            console.log("Session Data:", req.session);
+        
+            // Ensure passport.authenticate runs after session is saved
+            process.nextTick(() => {
+                passport.authenticate("oauth2")(req, res, next);
+            });
         });
         console.log("Passport authentication done");
     } else {
