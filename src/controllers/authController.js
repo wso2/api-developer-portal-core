@@ -77,16 +77,18 @@ const login = async (req, res, next) => {
             }
         }
     }
-    req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
     IDP = await fetchAuthJsonContent(req, orgName);
     if (IDP.clientId) {
         //await configurePassport(IDP, claimNames);  // Configure passport dynamically
         req.session.save((err) => {
+            
+            req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
+
             if (err) {
                 console.error("Session save error:", err);
                 return res.status(500).send("Session error");
             }
-        
+            
             console.log("Before login ==============================");
             console.log("Cookie Headers:", req.rawHeaders);
             console.log("Session ID:", req.sessionID);
