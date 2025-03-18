@@ -80,12 +80,16 @@ const login = async (req, res, next) => {
     req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
     IDP = await fetchAuthJsonContent(req, orgName);
     if (IDP.clientId) {
-        await configurePassport(IDP, claimNames);  // Configure passport dynamically
+        //await configurePassport(IDP, claimNames);  // Configure passport dynamically
         req.session.save((err) => {
             if (err) {
                 console.error('Session save error:', err);
                 return res.status(500).send('Session error');
             }
+            cookieIndex = req.rawHeaders.length - 1;
+            console.log("Before login")
+            console.log("Cookie sid", req.rawHeaders[cookieIndex]);
+            console.log("Session ID", req.sessionID); 
             passport.authenticate('oauth2')(req, res, next);
         });
         console.log("Passport authentication done");
@@ -119,7 +123,10 @@ const handleCallback = (req, res, next) => {
             return res.status(500).json({ message: 'Internal Server Error' });
         });
     console.log("Handling callback");
-
+    cookieIndex = req.rawHeaders.length - 1;
+    console.log("Cookie sid", req.rawHeaders[cookieIndex]);
+    console.log("Session ID", req.sessionID); 
+    console.log("Session returnTo", req.session);
     passport.authenticate('oauth2', {
         failureRedirect: '/login'
     }, (err, user) => {
