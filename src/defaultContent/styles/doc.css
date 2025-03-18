@@ -45,7 +45,7 @@
     font-size: 14px;
     font-weight: 300;
     background-color: transparent;
-    color: var(--main-text-color);
+    color: var(--dp-main-text-color);
 }
 
 .documents-sidebar #docQuery::placeholder {
@@ -83,7 +83,7 @@
     box-shadow: 0px 0px 0px 1px #e0e2e9, 0px 1px 1px #CBCEDB;
     border-radius: 8px;
     text-decoration: none;
-    color: var(--main-text-color);
+    color: var(--dp-main-text-color);
 }
 
 .doc-link:hover {
@@ -115,7 +115,7 @@
 
 .doc-spec {
     display: block;
-    color: var(--main-text-color);
+    color: var(--dp-main-text-color);
     text-decoration: none;
     font-weight: 500;
     font-size: 1rem;

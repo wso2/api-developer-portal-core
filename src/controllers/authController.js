@@ -108,16 +108,18 @@ const handleCallback = (req, res, next) => {
     const rules = util.validateRequestParameters();
     const validationPromises = rules.map(validation => validation.run(req));
     Promise.all(validationPromises)
-    .then(() => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json(util.getErrors(errors));
-        }
-    })
-    .catch(error => {
-        console.error("Error validating request parameters: " + error);
-        return res.status(500).json({ message: 'Internal Server Error' });
-    });
+        .then(() => {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json(util.getErrors(errors));
+            }
+        })
+        .catch(error => {
+            console.error("Error validating request parameters: " + error);
+            return res.status(500).json({ message: 'Internal Server Error' });
+        });
+    console.log("Handling callback");
+
     passport.authenticate('oauth2', {
         failureRedirect: '/login'
     }, (err, user) => {
@@ -139,11 +141,11 @@ const handleCallback = (req, res, next) => {
                     returnTo = `/${req.params.orgName}`;
                 }
                 delete req.session.returnTo;
+                console.log("Redirecting to: ", returnTo);
                 res.redirect(returnTo);
             }
         });
     })(req, res, next);
-
 };
 
 const handleSignUp = async (req, res) => {

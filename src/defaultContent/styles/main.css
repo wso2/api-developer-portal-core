@@ -38,7 +38,7 @@
   --secondary-dark-color: #49a18e;
   --secondary-darkest-color: #357b6c;
   /* font colors */
-  --main-text-color: #40404b;
+  --dp-main-text-color: #40404b;
   --lightest-text-color: #ffffff;
   --light-text-color: #6b7280;
   --dark-text-color: #1D2028;
@@ -278,13 +278,13 @@ html {
 /* --Title-- */
 .api-md-content h1 {
   font-size: 30px;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
 }
 
 .api-md-content h3,
 h2 {
   font-size: 24px;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
 }
 
 /* --SubTitle-- */
@@ -292,18 +292,18 @@ h2 {
 h5,
 h6 {
   font-size: 20px;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
 }
 
 /* --Paragraph-- */
 .api-md-content p {
   font-size: 15px;
-  color: var (--main-text-color);
+  color: var (--dp-main-text-color);
 }
 
 .api-md-content li {
   font-size: 15px;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
 }
 
 .api-md-content li::marker {

@@ -103,7 +103,7 @@
 .applicationlist-tags .badge-custom3 {
   border: 0.0625rem solid rgba(99, 99, 110, 0.25);
   background-color: transparent;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
   font-weight: 0;
   margin: 0.125rem 0.3125rem 0.25rem 0;
 }
@@ -111,13 +111,13 @@
 .application-card-meta p {
   display: flex;
   font-size: 0.85rem;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
   margin: 0.3125rem 0;
 }
 
 .application-card-meta i {
   margin-right: 0.5rem;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
 }
 
 .application-card-actions {
@@ -132,7 +132,7 @@
   border: none;
   padding: 0 0 0 0.75rem;
   background-color: transparent;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
   font-size: 1rem;
   cursor: pointer;
 }
@@ -152,11 +152,11 @@
 }
 
 .application-btn-icon.edit-button {
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
 }
 
 .application-btn-icon.edit-button:hover {
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
   opacity: 0.8;
 }
 

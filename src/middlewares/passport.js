@@ -23,6 +23,7 @@ const https = require('https');
 const constants = require('../utils/constants');
 const util = require('../utils/util');
 const config = require(process.cwd() + '/config.json');
+const secret = require(process.cwd() + '/secret.json');
 
 
 async function configurePassport(authJsonContent, claimNames) {
@@ -46,7 +47,6 @@ async function configurePassport(authJsonContent, claimNames) {
         store: true,
         pkce: true
     }, async (req, accessToken, refreshToken, params, profile, done) => {
-
         if (!accessToken) {
             console.error('No access token received');
             return done(new Error('Access token missing'));

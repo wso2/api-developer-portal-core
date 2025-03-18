@@ -61,7 +61,7 @@
 
 .benefit-item p {
   font-size: 0.875rem;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
   margin-bottom: 1.25rem;
   line-height: 1.5;
 }

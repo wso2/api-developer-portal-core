@@ -44,7 +44,7 @@
 .apilist-hero-header h1 {
   font-size: 2rem;
   font-weight: 600;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
 }
 
 .apilist-hero-header h1 span {
@@ -56,7 +56,7 @@
 .apilist-hero-header .apilist-hero-title {
   font-size: 2rem;
   font-weight: 600;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
 }
 
 .apilist-hero-header .apilist-hero-title-highlight {
@@ -99,7 +99,7 @@
   font-size: 14px;
   font-weight: 300;
   background-color: transparent;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
 }
 
 #query::placeholder {
@@ -113,7 +113,7 @@
 }
 
 .api-filterlist {
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
   margin-top: 0.9375rem;
 }
 
@@ -151,7 +151,7 @@ a {
 
 .bi-chevron-down {
   font-size: 1rem;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
 }
 
 .form-check-input:checked {
@@ -161,7 +161,7 @@ a {
 
 .filter-sub {
   font-size: 0.875rem;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
 }
 
 .form-check-input {
@@ -180,7 +180,7 @@ hr {
 
 .form-check-label {
   font-size: 0.875rem;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
   margin-left: 0.3125rem;
 }
 
@@ -227,14 +227,14 @@ hr {
 
 .api-card-title {
   font-size: 1rem;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
   margin: 0;
   font-weight: 600;
 }
 
 .api-card p {
   font-size: 0.75rem;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
   margin: 0;
   line-height: 1.5;
 }
@@ -248,14 +248,14 @@ hr {
 .badge-custom1 {
   border: 1px solid var(--light-text-color);
   background-color: var(--main-bg-color);
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
   margin: 0.125rem 0.3125rem 1.25rem 0;
 }
 
 .badge-custom2 {
   border: 1px solid rgba(99, 99, 110, 0.25);
   background-color: transparent;
-  color: var(--main-text-color);
+  color: var(--dp-main-text-color);
   font-weight: 0;
   margin: 0.3125rem 0.3125rem 0 0;
 }
