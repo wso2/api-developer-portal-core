@@ -87,8 +87,8 @@ const login = async (req, res, next) => {
                 return res.status(500).send('Session error');
             }
             cookieIndex = req.rawHeaders.length - 1;
-            console.log("Before login")
-            console.log("Cookie sid", req.rawHeaders[cookieIndex]);
+            console.log("Before login==============================")
+            console.log("Cookie sid", req.rawHeaders);
             console.log("Session ID", req.sessionID); 
             passport.authenticate('oauth2')(req, res, next);
         });
@@ -122,9 +122,9 @@ const handleCallback = (req, res, next) => {
             console.error("Error validating request parameters: " + error);
             return res.status(500).json({ message: 'Internal Server Error' });
         });
-    console.log("Handling callback");
+    console.log("Handling callback**************************");
     cookieIndex = req.rawHeaders.length - 1;
-    console.log("Cookie sid", req.rawHeaders[cookieIndex]);
+    console.log("Cookie sid", req.rawHeaders);
     console.log("Session ID", req.sessionID); 
     console.log("Session returnTo", req.session);
     passport.authenticate('oauth2', {
