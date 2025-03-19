@@ -196,7 +196,8 @@ const ensureAuthenticated = async (req, res, next) => {
             req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
             console.log('Setting return to', req.session.returnTo);
             if (req.params.orgName) {
-                res.redirect(`/${req.params.orgName}/views/${req.session.view}/login`);
+                console.log('View', req.params.viewName);
+                res.redirect(`/${req.params.orgName}/views/${req.params.viewName}/login`);
             } else {
                 console.log('Redirecting to login')
                 res.redirect(303, `/portal/login`);

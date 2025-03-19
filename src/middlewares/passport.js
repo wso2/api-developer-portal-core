@@ -74,7 +74,9 @@ async function configurePassport(authJsonContent, claimNames) {
         if (roles.includes(constants.ROLES.SUPER_ADMIN)) {
             isSuperAdmin = true;
         }
-        const returnTo = req.session.returnTo;
+        const state = req.query
+        console.log("State", state);
+        let returnTo = (Buffer.from(state['state'], 'base64').toString("utf-8"));
         let view = '';
         if (returnTo) {
             const startIndex = returnTo.indexOf('/views/') + 7;
@@ -88,7 +90,7 @@ async function configurePassport(authJsonContent, claimNames) {
             'idToken': params.id_token,
             'email': decodedJWT['email'],
             [constants.ROLES.ORGANIZATION_CLAIM]: organizationID,
-            'returnTo': req.session.returnTo,
+            'returnTo': returnTo,
             accessToken,
             'authorizedOrgs': orgList,
             'exchangeToken': req.exchangedToken,
