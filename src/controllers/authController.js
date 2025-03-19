@@ -81,22 +81,26 @@ const login = async (req, res, next) => {
     if (IDP.clientId) {
         //await configurePassport(IDP, claimNames);  // Configure passport dynamically
         req.session.save((err) => {
-            
-            req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
+            //const { returnTo } = req.query
 
+            let returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
+            req.session.returnTo = returnTo;
+            console.log("Session returnTo", req.session.returnTo);
+
+            returnTo = Buffer.from(returnTo).toString('base64')
             if (err) {
                 console.error("Session save error:", err);
                 return res.status(500).send("Session error");
             }
-            
+
             console.log("Before login ==============================");
             console.log("Cookie Headers:", req.rawHeaders);
             console.log("Session ID:", req.sessionID);
             console.log("Session Data:", req.session);
-        
+
             // Ensure passport.authenticate runs after session is saved
             process.nextTick(() => {
-                passport.authenticate("oauth2")(req, res, next);
+                passport.authenticate("oauth2", { state: returnTo })(req, res, next);
             });
         });
         console.log("Passport authentication done");
@@ -132,8 +136,9 @@ const handleCallback = (req, res, next) => {
     console.log("Handling callback**************************");
     cookieIndex = req.rawHeaders.length - 1;
     console.log("Cookie sid", req.rawHeaders);
-    console.log("Session ID", req.sessionID); 
+    console.log("Session ID", req.sessionID);
     console.log("Session returnTo", req.session);
+
     passport.authenticate('oauth2', {
         failureRedirect: '/login'
     }, (err, user) => {
@@ -150,7 +155,12 @@ const handleCallback = (req, res, next) => {
                 delete req.session.returnTo;
                 res.redirect(returnTo);
             } else {
-                let returnTo = req.user.returnTo;
+                const state = req.query
+                console.log("State", state);
+                let returnTo = (Buffer.from(state['state'], 'base64').toString("utf-8"));
+
+                console.log("Return to", returnTo);
+                //let returnTo = req.user.returnTo;
                 if (!config.advanced.disableOrgCallback && returnTo == null) {
                     returnTo = `/${req.params.orgName}`;
                 }
