@@ -166,7 +166,24 @@ Handlebars.registerHelper('startsWith', function (str, includeStr, options) {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const store = new pgSession({
+class LoggingPgSession extends pgSession {
+    set(sid, session, callback) {
+        console.log("📝 Saving session to DB...");
+        console.log("🔑 Session ID:", sid);
+        console.log("📦 Session Data:", session);
+
+        super.set(sid, session, (err) => {
+            if (err) {
+                console.error("❌ Error saving session:", err);
+            } else {
+                console.log("✅ Session saved successfully!");
+            }
+            if (callback) callback(err);
+        });
+    }
+}
+
+const store = new LoggingPgSession({
     pool: pool,
     tableName: 'session',
     pruneSessionInterval: 3600,
