@@ -54,8 +54,17 @@ async function configurePassport(authJsonContent, claimNames) {
             return done(new Error('Access token missing'));
         }
         let orgList;
+        const state = req.query
+        console.log("State", state);
+        let returnTo = (Buffer.from(state['state'], 'base64').toString("utf-8"));
+        let view = '';
+        if (returnTo) {
+            const startIndex = returnTo.indexOf('/views/') + 7;
+            const endIndex = returnTo.indexOf('/', startIndex) !== -1 ? returnTo.indexOf('/', startIndex) : returnTo.length;
+            view = returnTo.substring(startIndex, endIndex);
+        }
         if (config.advanced.tokenExchanger.enabled) {
-            const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
+            const exchangedToken = await util.tokenExchanger(accessToken, returnTo.split("/")[1]);
             const decodedExchangedToken = jwt.decode(exchangedToken);
             orgList = decodedExchangedToken.organizations;
             req['exchangedToken'] = exchangedToken;
@@ -74,15 +83,7 @@ async function configurePassport(authJsonContent, claimNames) {
         if (roles.includes(constants.ROLES.SUPER_ADMIN)) {
             isSuperAdmin = true;
         }
-        const state = req.query
-        console.log("State", state);
-        let returnTo = (Buffer.from(state['state'], 'base64').toString("utf-8"));
-        let view = '';
-        if (returnTo) {
-            const startIndex = returnTo.indexOf('/views/') + 7;
-            const endIndex = returnTo.indexOf('/', startIndex) !== -1 ? returnTo.indexOf('/', startIndex) : returnTo.length;
-            view = returnTo.substring(startIndex, endIndex);
-        }
+       
         profile = {
             'firstName': firstName ? (firstName.includes(" ") ? firstName.split(" ")[0] : firstName) : '',
             'lastName': lastName ? lastName : (firstName && firstName.includes(" ") ? firstName.split(" ")[1] : ''),
