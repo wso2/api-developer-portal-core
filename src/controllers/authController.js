@@ -146,11 +146,6 @@ const handleCallback = (req, res, next) => {
             console.log("User not present", !user)
             return next(err || new Error('Authentication failed'));
         }
-        const state = req.query
-        console.log("State", state);
-        let returnTo = (Buffer.from(state['state'], 'base64').toString("utf-8"));
-        req.session.returnTo = returnTo;
-        console.log("Return to", returnTo);
         req.logIn(user, (err) => {
             if (err) {
                 return next(err);
@@ -160,7 +155,7 @@ const handleCallback = (req, res, next) => {
                 delete req.session.returnTo;
                 res.redirect(returnTo);
             } else {
-                //let returnTo = req.user.returnTo;
+                let returnTo = req.user.returnTo;
                 if (!config.advanced.disableOrgCallback && returnTo == null) {
                     returnTo = `/${req.params.orgName}`;
                 }
