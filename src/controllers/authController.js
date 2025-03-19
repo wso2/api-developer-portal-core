@@ -81,9 +81,13 @@ const login = async (req, res, next) => {
     if (IDP.clientId) {
         //await configurePassport(IDP, claimNames);  // Configure passport dynamically
         req.session.save((err) => {
+            //const { returnTo } = req.query
 
-            req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
+            let returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
+            req.session.returnTo = returnTo;
+            console.log("Session returnTo", req.session.returnTo);
 
+            returnTo = Buffer.from(returnTo).toString('base64')
             if (err) {
                 console.error("Session save error:", err);
                 return res.status(500).send("Session error");
@@ -96,7 +100,7 @@ const login = async (req, res, next) => {
 
             // Ensure passport.authenticate runs after session is saved
             process.nextTick(() => {
-                passport.authenticate("oauth2")(req, res, next);
+                passport.authenticate("oauth2", { state: returnTo })(req, res, next);
             });
         });
         console.log("Passport authentication done");
@@ -135,34 +139,37 @@ const handleCallback = (req, res, next) => {
     console.log("Session ID", req.sessionID);
     console.log("Session returnTo", req.session);
 
-    req.session.save(() => {
-        passport.authenticate('oauth2', {
-            failureRedirect: '/login'
-        }, (err, user) => {
-            if (err || !user) {
-                console.log("User not present", !user)
-                return next(err || new Error('Authentication failed'));
+    passport.authenticate('oauth2', {
+        failureRedirect: '/login'
+    }, (err, user) => {
+        if (err || !user) {
+            console.log("User not present", !user)
+            return next(err || new Error('Authentication failed'));
+        }
+        req.logIn(user, (err) => {
+            if (err) {
+                return next(err);
             }
-            req.logIn(user, (err) => {
-                if (err) {
-                    return next(err);
+            if (config.mode === constants.DEV_MODE) {
+                const returnTo = req.user.returnTo || config.baseUrl;
+                delete req.session.returnTo;
+                res.redirect(returnTo);
+            } else {
+                const state = req.query
+                console.log("State", state);
+                let returnTo = (Buffer.from(state['state'], 'base64').toString("utf-8"));
+
+                console.log("Return to", returnTo);
+                //let returnTo = req.user.returnTo;
+                if (!config.advanced.disableOrgCallback && returnTo == null) {
+                    returnTo = `/${req.params.orgName}`;
                 }
-                if (config.mode === constants.DEV_MODE) {
-                    const returnTo = req.user.returnTo || config.baseUrl;
-                    delete req.session.returnTo;
-                    res.redirect(returnTo);
-                } else {
-                    let returnTo = req.user.returnTo;
-                    if (!config.advanced.disableOrgCallback && returnTo == null) {
-                        returnTo = `/${req.params.orgName}`;
-                    }
-                    delete req.session.returnTo;
-                    console.log("Redirecting to: ", returnTo);
-                    res.redirect(returnTo);
-                }
-            });
-        })(req, res, next);
-    })
+                delete req.session.returnTo;
+                console.log("Redirecting to: ", returnTo);
+                res.redirect(returnTo);
+            }
+        });
+    })(req, res, next);
 };
 
 const handleSignUp = async (req, res) => {
