@@ -45,7 +45,7 @@ const registerPartials = async (req, res, next) => {
     registerAllPartialsFromFile(config.baseUrl + constants.ROUTE.VIEWS_PATH + req.params.viewName, req, filePrefix);
   } else {
     let matchURL = req.originalUrl;
-    if (req.user.returnTo) {
+    if (req.user?.returnTo) {
       matchURL = req.user.returnTo;
     }
     try {
