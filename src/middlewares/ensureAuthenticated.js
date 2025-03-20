@@ -283,6 +283,7 @@ function validateAuthentication(scope) {
                 if (req.user) {
                     return next();
                 } else {
+                    console.log('Failing user check==================================')
                     return util.handleError(res, new CustomError(401, constants.ERROR_CODE[401], constants.ERROR_MESSAGE.UNAUTHENTICATED));
                 }
             }
