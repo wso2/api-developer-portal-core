@@ -296,6 +296,7 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
                 "scopes": [],
                 "validityPeriod": 3600
             }),
+            credentials: 'include'
         });
 
 
