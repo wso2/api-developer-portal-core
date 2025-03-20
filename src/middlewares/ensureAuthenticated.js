@@ -88,7 +88,7 @@ function enforceSecuirty(scope) {
 
 function accessTokenPresent(req) {
 
-    if (req.isAuthenticated() && req.user) {
+    if (req.user) {
         console.log('Access token present in session')
         accessToken = req.user[constants.ACCESS_TOKEN];
     } else if (req.headers.authorization) {
