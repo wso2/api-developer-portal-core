@@ -205,9 +205,12 @@ const ensureAuthenticated = async (req, res, next) => {
             return next();
         } else {
             console.log('User is not authenticated');
-            req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
+            let returnTo = req.originalUrl || `/${req.params.orgName}`;
+            returnTo = decodeURIComponent(returnTo);
+            const queryParams = new URLSearchParams({ returnTo: returnTo}).toString();
+            console.log('Initializing return to', req.session.returnTo);
             if (req.params.orgName) {
-                res.redirect(`/${req.params.orgName}/views/${req.session.view}/login`);
+                res.redirect(`/${req.params.orgName}/views/${req.params.viewName}/login?${queryParams}`);
             } else {
                 console.log('Redirecting to login')
                 res.redirect(303, `/portal/login`);

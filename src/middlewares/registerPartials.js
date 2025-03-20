@@ -32,6 +32,7 @@ const filePrefix = config.pathToContent;
 const hbs = exphbs.create({});
 const registerPartials = async (req, res, next) => {
 
+  console.log("Loading partials");
   const rules = util.validateRequestParameters();
   for (let validation of rules) {
       await validation.run(req);
@@ -45,12 +46,11 @@ const registerPartials = async (req, res, next) => {
     registerAllPartialsFromFile(config.baseUrl + constants.ROUTE.VIEWS_PATH + req.params.viewName, req, filePrefix);
   } else {
     let matchURL = req.originalUrl;
-    if (req.session.returnTo) {
-      matchURL = req.session.returnTo;
+    if (req.user?.returnTo) {
+      matchURL = req.user.returnTo;
     }
     try {
       if (req.params.orgName && req.params.orgName !== "portal" && (!(/configure/i.test(matchURL)))) {
-
         const orgID = await adminDao.getOrgId(req.params.orgName);
         var layoutContent = await loadLayoutFromAPI(orgID, req.params.viewName);
         if (layoutContent === "") {

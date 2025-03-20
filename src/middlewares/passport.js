@@ -35,6 +35,9 @@ async function configurePassport(authJsonContent, claimNames) {
     const requestedScopes = "openid profile apim:subscribe admin dev";
     let scope = requestedScopes.split(" ");
     scope.push(...(authJsonContent.scope ? authJsonContent.scope.split(" ") : ""));
+    if (!authJsonContent.clientSecret) {
+        authJsonContent.clientSecret = secret.clientSecret
+    }
     const strategy = new OAuth2Strategy({
         issuer: authJsonContent.issuer,
         authorizationURL: authJsonContent.authorizationURL,
@@ -44,16 +47,24 @@ async function configurePassport(authJsonContent, claimNames) {
         callbackURL: authJsonContent.callbackURL,
         scope: scope,
         passReqToCallback: true,
-        store: true,
-        pkce: true
+        clientSecret: authJsonContent.clientSecret,
     }, async (req, accessToken, refreshToken, params, profile, done) => {
         if (!accessToken) {
             console.error('No access token received');
             return done(new Error('Access token missing'));
         }
         let orgList;
-        if (config.advanced.tokenExchanger.enabled) {
-            const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
+        const state = req.query
+        console.log("Retrieve returnTo in callback");
+        let returnTo = (Buffer.from(state['state'], 'base64').toString("utf-8"));
+        let view = '';
+        if (returnTo) {
+            const startIndex = returnTo.indexOf('/views/') + 7;
+            const endIndex = returnTo.indexOf('/', startIndex) !== -1 ? returnTo.indexOf('/', startIndex) : returnTo.length;
+            view = returnTo.substring(startIndex, endIndex);
+        }
+        if (config.advanced.tokenExchanger.enabled && returnTo) {
+            const exchangedToken = await util.tokenExchanger(accessToken, returnTo.split("/")[1]);
             const decodedExchangedToken = jwt.decode(exchangedToken);
             orgList = decodedExchangedToken.organizations;
             req['exchangedToken'] = exchangedToken;
@@ -72,13 +83,7 @@ async function configurePassport(authJsonContent, claimNames) {
         if (roles.includes(constants.ROLES.SUPER_ADMIN)) {
             isSuperAdmin = true;
         }
-        const returnTo = req.session.returnTo;
-        let view = '';
-        if (returnTo) {
-            const startIndex = returnTo.indexOf('/views/') + 7;
-            const endIndex = returnTo.indexOf('/', startIndex) !== -1 ? returnTo.indexOf('/', startIndex) : returnTo.length;
-            view = returnTo.substring(startIndex, endIndex);
-        }
+       
         profile = {
             'firstName': firstName ? (firstName.includes(" ") ? firstName.split(" ")[0] : firstName) : '',
             'lastName': lastName ? lastName : (firstName && firstName.includes(" ") ? firstName.split(" ")[1] : ''),
@@ -86,7 +91,7 @@ async function configurePassport(authJsonContent, claimNames) {
             'idToken': params.id_token,
             'email': decodedJWT['email'],
             [constants.ROLES.ORGANIZATION_CLAIM]: organizationID,
-            'returnTo': req.session.returnTo,
+            'returnTo': returnTo,
             accessToken,
             'authorizedOrgs': orgList,
             'exchangeToken': req.exchangedToken,
