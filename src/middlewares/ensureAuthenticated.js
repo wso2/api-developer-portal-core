@@ -31,6 +31,7 @@ const jwt = require('jsonwebtoken');
 
 function enforceSecuirty(scope) {
     return async function (req, res, next) {
+        console.log('User present in enforce security', req.user)
         try {
             const rules = util.validateRequestParameters();
             for (let validation of rules) {
