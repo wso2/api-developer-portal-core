@@ -1,8 +1,8 @@
 /* eslint-disable no-undef */
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -42,6 +42,18 @@ function enforceSecuirty(scope) {
             }
             const token = accessTokenPresent(req);
             if (token) {
+                //check user belongs to organization
+                if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
+                    //check if exchanged token has organization identifier
+                    //const decodedToken = req.user.exchangeToken ? jwt.decode(req.user.exchangeToken) : null;
+                    const allowedOrgs = req.user.organizations;
+                    if ((allowedOrgs && !(allowedOrgs.includes(req.user[constants.ORG_IDENTIFIER]))) || !allowedOrgs) {
+                        console.log('User is not authorized to access organization');
+                        const err = new Error('Authentication required');
+                        err.status = 401; // Unauthorized
+                        return next(err);
+                    }
+                }
                 // TODO: Implement organization extraction logic
                 validateAuthentication(scope)(req, res, next);
                 //set user ID
@@ -195,11 +207,9 @@ const ensureAuthenticated = async (req, res, next) => {
             console.log('User is not authenticated');
             let returnTo = req.originalUrl || `/${req.params.orgName}`;
             returnTo = decodeURIComponent(returnTo);
-
             const queryParams = new URLSearchParams({ returnTo: returnTo}).toString();
             console.log('Initializing return to', req.session.returnTo);
             if (req.params.orgName) {
-                console.log('View', req.params.viewName);
                 res.redirect(`/${req.params.orgName}/views/${req.params.viewName}/login?${queryParams}`);
             } else {
                 console.log('Redirecting to login')

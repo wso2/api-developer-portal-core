@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -356,6 +356,7 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
 
     console.log(`Invoking API: ${url}`);
     headers = headers || {};
+    console.log("exhcange token----------------", req.user.exchangeToken);  
     headers.Authorization = req.user?.exchangeToken ? `Bearer ${req.user.exchangeToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
     let httpsAgent;
 
@@ -681,6 +682,9 @@ const loadSubscriptionPlan = async (orgID, policyName) => {
 
 async function tokenExchanger(token, orgName) {
     const url = config.advanced.tokenExchanger.url;
+    const maxRetries = 3;
+    let delay = 1000;
+
     const orgDetails = await adminDao.getOrganization(orgName);
     if (!orgDetails) {
         throw new Error('Organization not found');
@@ -698,19 +702,27 @@ async function tokenExchanger(token, orgName) {
         orgHandle: orgDetails.ORG_HANDLE
     });
 
-    try {
-        const response = await axios.post(url, data, {
-            headers: {
-                'Referer': '',
-                'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        });
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await axios.post(url, data, {
+                headers: {
+                    'Referer': '',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
 
-        return response.data.access_token;
-    } catch (error) {
-        console.error('Token exchange failed:', error.response ? error.response.data : error.message);
-        throw new Error('Failed to exchange token');
+            return response.data.access_token;
+        } catch (error) {
+            if (error.response?.status >= 500 && error.response?.status < 600 && attempt < maxRetries) {
+                console.warn(`Token exchange failed. Retrying in ${delay}ms... (Attempt ${attempt + 1}/${maxRetries})`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                delay *= 2; 
+            } else {
+                console.error('Token exchange failed:', error.message);
+                throw new Error('Failed to exchange token');
+            }
+        }        
     }
 }
 

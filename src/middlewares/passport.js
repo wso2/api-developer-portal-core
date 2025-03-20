@@ -1,8 +1,8 @@
 /* eslint-disable no-undef */
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -55,7 +55,7 @@ async function configurePassport(authJsonContent, claimNames) {
         }
         let orgList;
         const state = req.query
-        console.log("State", state);
+        console.log("Retrieve returnTo in callback");
         let returnTo = (Buffer.from(state['state'], 'base64').toString("utf-8"));
         let view = '';
         if (returnTo) {
@@ -63,7 +63,7 @@ async function configurePassport(authJsonContent, claimNames) {
             const endIndex = returnTo.indexOf('/', startIndex) !== -1 ? returnTo.indexOf('/', startIndex) : returnTo.length;
             view = returnTo.substring(startIndex, endIndex);
         }
-        if (config.advanced.tokenExchanger.enabled) {
+        if (config.advanced.tokenExchanger.enabled && returnTo) {
             const exchangedToken = await util.tokenExchanger(accessToken, returnTo.split("/")[1]);
             const decodedExchangedToken = jwt.decode(exchangedToken);
             orgList = decodedExchangedToken.organizations;

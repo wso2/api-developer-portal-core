@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -32,6 +32,7 @@ const filePrefix = config.pathToContent;
 const hbs = exphbs.create({});
 const registerPartials = async (req, res, next) => {
 
+  console.log("Loading partials");
   const rules = util.validateRequestParameters();
   for (let validation of rules) {
       await validation.run(req);
@@ -50,10 +51,7 @@ const registerPartials = async (req, res, next) => {
     }
     try {
       if (req.params.orgName && req.params.orgName !== "portal" && (!(/configure/i.test(matchURL)))) {
-
         const orgID = await adminDao.getOrgId(req.params.orgName);
-        console.log("Loading partials==================================: ");
-        console.log("View Name: ", req.params.viewName);
         var layoutContent = await loadLayoutFromAPI(orgID, req.params.viewName);
         if (layoutContent === "") {
           console.log("Layout content not found in the database. Loading from file system");
