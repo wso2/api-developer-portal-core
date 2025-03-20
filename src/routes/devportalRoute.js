@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -33,10 +33,10 @@ router.put('/organizations/:orgId', enforceSecuirty(constants.SCOPES.ADMIN), adm
 router.get('/organizations/:orgId', enforceSecuirty(constants.SCOPES.ADMIN), devportalService.getOrganization); // S2S Applied 
 router.delete('/organizations/:orgId', enforceSecuirty(constants.SCOPES.ADMIN), adminService.deleteOrganization);
 
-router.post('/organizations/:orgId/identityProvider', validateAuthentication(constants.SCOPES.ADMIN), adminService.createIdentityProvider);
-router.put('/organizations/:orgId/identityProvider', validateAuthentication(constants.SCOPES.ADMIN), adminService.updateIdentityProvider);
-router.get('/organizations/:orgId/identityProvider', validateAuthentication(constants.SCOPES.ADMIN), adminService.getIdentityProvider);
-router.delete('/organizations/:orgId/identityProvider', validateAuthentication(constants.SCOPES.ADMIN), adminService.deleteIdentityProvider);
+router.post('/organizations/:orgId/identityProvider', enforceSecuirty(constants.SCOPES.ADMIN), adminService.createIdentityProvider);
+router.put('/organizations/:orgId/identityProvider', enforceSecuirty(constants.SCOPES.ADMIN), adminService.updateIdentityProvider);
+router.get('/organizations/:orgId/identityProvider', enforceSecuirty(constants.SCOPES.ADMIN), adminService.getIdentityProvider);
+router.delete('/organizations/:orgId/identityProvider', enforceSecuirty(constants.SCOPES.ADMIN), adminService.deleteIdentityProvider);
 
 const upload = multer({ dest: '../.tmp/' });
 router.post('/organizations/:orgId/views/:name/layout', enforceSecuirty(constants.SCOPES.ADMIN), upload.single('file'), adminService.createOrgContent);
@@ -45,10 +45,10 @@ router.get('/organizations/:orgId/views/:name/layout', devportalService.getOrgCo
 router.get('/organizations/:orgId/views/:name/layout/:fileType', devportalService.getOrgContent);
 router.delete('/organizations/:orgId/views/:name/layout', enforceSecuirty(constants.SCOPES.ADMIN), adminService.deleteOrgContent);
 
-router.post('/organizations/:orgId/provider', validateAuthentication(constants.SCOPES.ADMIN), adminService.createProvider);
-router.put('/organizations/:orgId/provider', validateAuthentication(constants.SCOPES.ADMIN), adminService.updateProvider);
-router.get('/organizations/:orgId/provider', validateAuthentication(constants.SCOPES.ADMIN), adminService.getProviders);
-router.delete('/organizations/:orgId/provider', validateAuthentication(constants.SCOPES.ADMIN), adminService.deleteProvider);
+router.post('/organizations/:orgId/provider', enforceSecuirty(constants.SCOPES.ADMIN), adminService.createProvider);
+router.put('/organizations/:orgId/provider', enforceSecuirty(constants.SCOPES.ADMIN), adminService.updateProvider);
+router.get('/organizations/:orgId/provider', enforceSecuirty(constants.SCOPES.ADMIN), adminService.getProviders);
+router.delete('/organizations/:orgId/provider', enforceSecuirty(constants.SCOPES.ADMIN), adminService.deleteProvider);
 
 router.post('/organizations/:orgId/apis', enforceSecuirty(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.createAPIMetadata);
 router.get('/organizations/:orgId/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.getAPIMetadata);
@@ -56,10 +56,10 @@ router.get('/organizations/:orgId/apis', enforceSecuirty(constants.SCOPES.DEVELO
 router.put('/organizations/:orgId/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.updateAPIMetadata);
 router.delete('/organizations/:orgId/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIMetadata);
 
-router.post('/organizations/:orgId/subscriptionPolicy', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.createSubscriptionPolicy);
-router.get('/organizations/:orgId/subscriptionPolicy/:policyID', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.getSubscriptionPolicy);
-router.put('/organizations/:orgId/subscriptionPolicy/:policyID', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.updateSubscriptionPolicy);
-router.delete('/organizations/:orgId/subscriptionPolicy/:policyID', validateAuthentication(constants.SCOPES.DEVELOPER), apiMetadataService.deleteSubscriptionPolicy);
+router.post('/organizations/:orgId/subscriptionPolicy', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.createSubscriptionPolicy);
+router.get('/organizations/:orgId/subscriptionPolicy/:policyID', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.getSubscriptionPolicy);
+router.put('/organizations/:orgId/subscriptionPolicy/:policyID', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.updateSubscriptionPolicy);
+router.delete('/organizations/:orgId/subscriptionPolicy/:policyID', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.deleteSubscriptionPolicy);
 
 const apiZip = multer({ dest: '/tmp' });
 router.post('/organizations/:orgId/apis/:apiId/template', enforceSecuirty(constants.SCOPES.DEVELOPER), apiZip.single('apiContent'), apiMetadataService.createAPITemplate);
@@ -73,10 +73,10 @@ router.get('/apis', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataServ
 router.put('/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.updateAPIMetadata); // s2s applied
 router.delete('/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIMetadata); // s2s applied
 
-router.post('/organizations/:orgId/labels', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.createLabels);
-router.put('/organizations/:orgId/labels', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.updateLabel);
-router.get('/organizations/:orgId/labels', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.retrieveLabels);
-router.delete('/organizations/:orgId/labels', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.deleteLabels);
+router.post('/organizations/:orgId/labels', enforceSecuirty(constants.SCOPES.ADMIN), apiMetadataService.createLabels);
+router.put('/organizations/:orgId/labels', enforceSecuirty(constants.SCOPES.ADMIN), apiMetadataService.updateLabel);
+router.get('/organizations/:orgId/labels', enforceSecuirty(constants.SCOPES.ADMIN), apiMetadataService.retrieveLabels);
+router.delete('/organizations/:orgId/labels', enforceSecuirty(constants.SCOPES.ADMIN), apiMetadataService.deleteLabels);
 
 router.post('/organizations/:orgId/applications', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.createDevPortalApplication);
 router.put('/organizations/:orgId/applications/:appId', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.updateDevPortalApplication);
@@ -96,22 +96,22 @@ router.post('/organizations/:orgId/app-key-mapping', enforceSecuirty(constants.S
 router.get('/organizations/:orgId/app-key-mapping/:appId', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.retriveAppKeyMappings);
 //router.delete('/organizations/:orgId/app-key-mapping/:appId', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.updateDevPortalApplication);
 
-router.post('/organizations/:orgId/views', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.addView);
-router.put('/organizations/:orgId/views/:name', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.updateView);
-router.get('/organizations/:orgId/views/:name', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.getView);
-router.get('/organizations/:orgId/views', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.getAllViews);
-router.delete('/organizations/:orgId/views/:name', validateAuthentication(constants.SCOPES.ADMIN), apiMetadataService.deleteView);
+router.post('/organizations/:orgId/views', enforceSecuirty(constants.SCOPES.ADMIN), apiMetadataService.addView);
+router.put('/organizations/:orgId/views/:name', enforceSecuirty(constants.SCOPES.ADMIN), apiMetadataService.updateView);
+router.get('/organizations/:orgId/views/:name', enforceSecuirty(constants.SCOPES.ADMIN), apiMetadataService.getView);
+router.get('/organizations/:orgId/views', enforceSecuirty(constants.SCOPES.ADMIN), apiMetadataService.getAllViews);
+router.delete('/organizations/:orgId/views/:name', enforceSecuirty(constants.SCOPES.ADMIN), apiMetadataService.deleteView);
 
-router.post('/applications', ensureAuthenticated, devportalController.saveApplication);
-router.put('/applications/:applicationId', ensureAuthenticated, devportalController.updateApplication);
-router.delete('/applications/:applicationId', ensureAuthenticated, devportalController.deleteApplication);
-router.post('/applications/:applicationId/reset-throttle-policy', ensureAuthenticated, devportalController.resetThrottlingPolicy);
-router.post('/applications/:applicationId/api-keys/:env/generate', ensureAuthenticated, devportalController.generateAPIKeys);
-router.post('/applications/:applicationId/generate-keys', ensureAuthenticated, devportalController.generateApplicationKeys);
-router.post('/applications/:applicationId/oauth-keys/:keyMappingId/generate-token', ensureAuthenticated, devportalController.generateOAuthKeys);
-router.delete('/applications/:applicationId/oauth-keys/:keyMappingId', ensureAuthenticated, devportalController.revokeOAuthKeys);
-router.put('/applications/:applicationId/oauth-keys/:keyMappingId', ensureAuthenticated, devportalController.updateOAuthKeys);
-router.post('/applications/:applicationId/oauth-keys/:keyMappingId/clean-up', ensureAuthenticated, devportalController.cleanUp);
+router.post('/applications', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.saveApplication);
+router.put('/applications/:applicationId', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.updateApplication);
+router.delete('/applications/:applicationId', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.deleteApplication);
+router.post('/applications/:applicationId/reset-throttle-policy', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.resetThrottlingPolicy);
+router.post('/applications/:applicationId/api-keys/:env/generate', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.generateAPIKeys);
+router.post('/applications/:applicationId/generate-keys', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.generateApplicationKeys);
+router.post('/applications/:applicationId/oauth-keys/:keyMappingId/generate-token', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.generateOAuthKeys);
+router.delete('/applications/:applicationId/oauth-keys/:keyMappingId', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.revokeOAuthKeys);
+router.put('/applications/:applicationId/oauth-keys/:keyMappingId', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.updateOAuthKeys);
+router.post('/applications/:applicationId/oauth-keys/:keyMappingId/clean-up', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.cleanUp);
 
 router.post('/login', devportalController.login);
 module.exports = router;
