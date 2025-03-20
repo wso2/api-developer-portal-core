@@ -1,7 +1,12 @@
 .footer-section {
   padding: 1rem 0;
   display: flex;
-  margin: 0 0 0 4rem;
+  margin: 0 0 0 6rem;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #fff;
 }
 
 .footer-container {
