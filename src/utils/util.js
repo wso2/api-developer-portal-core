@@ -687,7 +687,7 @@ async function tokenExchanger(token, orgName) {
                 await new Promise(resolve => setTimeout(resolve, delay));
                 delay *= 2; 
             } else {
-                console.error('Token exchange failed:', error.response ? error.response.data : error.message);
+                console.error('Token exchange failed:', error.message);
                 throw new Error('Failed to exchange token');
             }
         }        
