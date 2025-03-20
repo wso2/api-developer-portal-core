@@ -55,7 +55,7 @@ async function configurePassport(authJsonContent, claimNames) {
         }
         let orgList;
         const state = req.query
-        console.log("State", state);
+        console.log("Retrieve returnTo in callback");
         let returnTo = (Buffer.from(state['state'], 'base64').toString("utf-8"));
         let view = '';
         if (returnTo) {
@@ -63,7 +63,7 @@ async function configurePassport(authJsonContent, claimNames) {
             const endIndex = returnTo.indexOf('/', startIndex) !== -1 ? returnTo.indexOf('/', startIndex) : returnTo.length;
             view = returnTo.substring(startIndex, endIndex);
         }
-        if (config.advanced.tokenExchanger.enabled) {
+        if (config.advanced.tokenExchanger.enabled && returnTo) {
             const exchangedToken = await util.tokenExchanger(accessToken, returnTo.split("/")[1]);
             const decodedExchangedToken = jwt.decode(exchangedToken);
             orgList = decodedExchangedToken.organizations;
