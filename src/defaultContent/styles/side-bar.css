@@ -14,12 +14,12 @@
     justify-content: space-between;
     height: calc(95vh - 4rem);
     padding: 1rem 0;
-    margin-left: 1rem;
+    /* margin-left: 1rem;*/
     margin-right: 1rem;
     background-color: var(--primary-main-color);
     width: 256px;
     transition: width 0.3s ease;
-    border-radius: 1rem;
+    border-radius: 0 0.5rem 0.5rem 0;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
