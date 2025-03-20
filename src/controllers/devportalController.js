@@ -136,6 +136,7 @@ const generateApplicationKeys = async (req, res) => {
 
 const generateOAuthKeys = async (req, res) => {
     try {
+        console.log("Generating OAuth token");
         const applicationId = req.params.applicationId;
         const keyMappingId = req.params.keyMappingId;
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}/generate-token`, {}, req.body);
