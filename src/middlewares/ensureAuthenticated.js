@@ -207,11 +207,9 @@ const ensureAuthenticated = async (req, res, next) => {
             console.log('User is not authenticated');
             let returnTo = req.originalUrl || `/${req.params.orgName}`;
             returnTo = decodeURIComponent(returnTo);
-
             const queryParams = new URLSearchParams({ returnTo: returnTo}).toString();
             console.log('Initializing return to', req.session.returnTo);
             if (req.params.orgName) {
-                console.log('View', req.params.viewName);
                 res.redirect(`/${req.params.orgName}/views/${req.params.viewName}/login?${queryParams}`);
             } else {
                 console.log('Redirecting to login')
