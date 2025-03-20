@@ -83,10 +83,14 @@ const login = async (req, res, next) => {
         req.session.save((err) => {
             //const { returnTo } = req.query
             console.log("Setting return to")
-            console.log("Session returnTo", req.session.returnTo);
             console.log("Original URL", req.originalUrl);
-            let returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
+            let returnTo = req.query.returnTo ? req.query.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
             //req.session.returnTo = returnTo;
+            //returnTo = decodeURIComponent(returnTo);
+            returnTo = req.query.returnTo.replace(/&#x2F;/g, '/');
+
+            console.log("Session returnTo", returnTo);
+
             returnTo = Buffer.from(returnTo).toString('base64')
             if (err) {
                 console.error("Session save error:", err);
