@@ -144,6 +144,7 @@ async function getAPIMThrottlingPolicies(req) {
 
 const loadApplication = async (req, res) => {
 
+    console.log("Session id in application page", req.sessionID);
     let html, templateContent, metaData, kMmetaData;
     const viewName = req.params.viewName;
     try {
