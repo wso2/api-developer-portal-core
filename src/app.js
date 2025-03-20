@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -276,7 +276,14 @@ app.use((err, req, res, next) => {
         baseUrl: '/' + req.params.orgName + '/' + constants.ROUTE.VIEWS_PATH + "default"
     }
     if (err.status === 401) {
-        html = util.renderTemplate('../pages/authentication-error/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+        req.session.destroy((err) => {
+            if (err) {
+                console.error("❌ Error destroying session:", err);
+                return res.status(500).send("Logout failed");
+            }
+            console.log("✅ User logged out and session destroyed");
+        });
+        html = util.renderTemplate('../pages/authentication-error/page.hbs', 'src/pages/error-layout/main.hbs', templateContent, true);
     } else {
         html = util.renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
     }
