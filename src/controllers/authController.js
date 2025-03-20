@@ -82,19 +82,17 @@ const login = async (req, res, next) => {
         //await configurePassport(IDP, claimNames);  // Configure passport dynamically
         req.session.save((err) => {
             //const { returnTo } = req.query
-
-            let returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
-            req.session.returnTo = returnTo;
+            console.log("Setting return to")
             console.log("Session returnTo", req.session.returnTo);
-
+            console.log("Original URL", req.originalUrl);
+            let returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
+            //req.session.returnTo = returnTo;
             returnTo = Buffer.from(returnTo).toString('base64')
             if (err) {
                 console.error("Session save error:", err);
                 return res.status(500).send("Session error");
             }
-
             console.log("Before login ==============================");
-            console.log("Cookie Headers:", req.rawHeaders);
             console.log("Session ID:", req.sessionID);
             console.log("Session Data:", req.session);
 
@@ -135,7 +133,6 @@ const handleCallback = (req, res, next) => {
         });
     console.log("Handling callback**************************");
     cookieIndex = req.rawHeaders.length - 1;
-    console.log("Cookie sid", req.rawHeaders);
     console.log("Session ID", req.sessionID);
     console.log("Session returnTo", req.session);
 

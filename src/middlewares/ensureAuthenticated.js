@@ -194,7 +194,7 @@ const ensureAuthenticated = async (req, res, next) => {
         } else {
             console.log('User is not authenticated');
             req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
-            console.log('Setting return to', req.session.returnTo);
+            console.log('Initializing return to', req.session.returnTo);
             if (req.params.orgName) {
                 console.log('View', req.params.viewName);
                 res.redirect(`/${req.params.orgName}/views/${req.params.viewName}/login`);
