@@ -682,15 +682,15 @@ async function tokenExchanger(token, orgName) {
 
             return response.data.access_token;
         } catch (error) {
-            if (error.response?.status === 504 && attempt < maxRetries) {
-                console.warn(`Token exchange failed with 504. Retrying in ${delay}ms... (Attempt ${attempt + 1}/${maxRetries})`);
+            if (error.response?.status >= 500 && error.response?.status < 600 && attempt < maxRetries) {
+                console.warn(`Token exchange failed. Retrying in ${delay}ms... (Attempt ${attempt + 1}/${maxRetries})`);
                 await new Promise(resolve => setTimeout(resolve, delay));
-                delay *= 2;
+                delay *= 2; 
             } else {
                 console.error('Token exchange failed:', error.response ? error.response.data : error.message);
                 throw new Error('Failed to exchange token');
             }
-        }
+        }        
     }
 }
 
