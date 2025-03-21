@@ -47,7 +47,9 @@ const registerPartials = async (req, res, next) => {
   } else {
     let matchURL = req.originalUrl;
     if (req.user?.returnTo) {
+      console.log("register partials : user = " + req.user);
       matchURL = req.user.returnTo;
+      console.log("Match URL: " + matchURL);
     }
     try {
       if (req.params.orgName && req.params.orgName !== "portal" && (!(/configure/i.test(matchURL)))) {
