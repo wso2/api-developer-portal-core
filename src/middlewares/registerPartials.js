@@ -47,7 +47,7 @@ const registerPartials = async (req, res, next) => {
   } else {
     let matchURL = req.originalUrl;
     if (req.user?.returnTo) {
-      console.log("register partials : user = " + req.user);
+      console.log("register partials : user = " + (req.user? JSON.stringify(req.user): ''));
       matchURL = req.user.returnTo;
       console.log("Match URL: " + matchURL);
     }
