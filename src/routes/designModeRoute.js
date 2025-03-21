@@ -41,7 +41,6 @@ router.get('/views/:viewName/api/:apiHandle/docs/:docType/:docName', registerPar
 
 
 router.get('/views/:viewName/applications', registerPartials, applicationController.loadApplications);
-router.get('/views/:viewName/applications/create', registerPartials, applicationController.loadThrottlingPolicies);
 router.get('/views/:viewName/applications/:applicationid', registerPartials, applicationController.loadApplication);
 router.get('/views/:viewName/applications/:applicationid/edit', registerPartials, applicationController.loadApplicationForEdit);
 router.get('/views/:viewName/myAPIs', registerPartials, myAPIsController.loadDefaultContent);

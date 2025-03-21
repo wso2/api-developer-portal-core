@@ -93,42 +93,6 @@ async function getMockApplications() {
     return mockApplicationsMetaData.list;
 }
 
-// ***** Load Throttling Policies *****
-
-const loadThrottlingPolicies = async (req, res) => {
-
-    let html, metaData, templateContent;
-    try {
-        const viewName = req.params.viewName;
-        if (config.mode === constants.DEV_MODE) {
-            metaData = await getMockThrottlingPolicies();
-            templateContent = {
-                throttlingPoliciesMetadata: metaData,
-                baseUrl: baseURLDev + viewName
-            }
-            html = renderTemplate('../pages/add-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
-        }
-        else {
-            const orgName = req.params.orgName;
-            const orgID = await orgIDValue(orgName);
-            templateContent = {
-                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
-            }
-            const templateResponse = await templateResponseValue('add-application');
-            const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
-            if (layoutResponse === "") {
-                html = renderTemplate('../pages/add-application/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
-            } else {
-                html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
-            }
-        }
-    } catch (error) {
-        console.error("Error occurred", error);
-        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
-    }
-    res.send(html);
-}
-
 async function getMockThrottlingPolicies() {
     const mockThrottlingPoliciesMetaDataPath = path.join(process.cwd(), filePrefix + '../mock/Applications', 'throttlingPolicies.json');
     const mockThrottlingPoliciesMetaData = JSON.parse(fs.readFileSync(mockThrottlingPoliciesMetaDataPath, 'utf-8'));
@@ -453,7 +417,6 @@ async function mapDefaultValues(applicationConfiguration) {
 
 module.exports = {
     loadApplications,
-    loadThrottlingPolicies,
     loadApplication,
     loadApplicationForEdit
 };

@@ -25,3 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+function openAddApplicationModal() {
+    const modal = document.getElementById('addApplicationModal');
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+}
