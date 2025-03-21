@@ -9,32 +9,47 @@
             </div>
         </div>
         <div class="row row-gap-4">
-            {{#subAPIs}}
-            <div class="col-lg-4 col-md-6">
-                <div class="card dev-card h-auto p-4">
-                    <div class="d-flex flex-wrap align-items-start justify-content-between gap-2">
-                        <div class="d-flex align-items-center gap-2 overflow-hidden">
-                            <img src="{{apiInfo.apiImageMetadata.api-icon}}" class="api-card-img" />
-                            <div class="api-card-body flex-grow-1 p-0 overflow-hidden">
-                                <h5 class="api-card-title mb-0"> <span
-                                        onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
-                                        class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
-                                </h5>
-                                <p class="my-0"> {{version}}</p>
-                                <div class="badge badge-custom2 m-0"> {{policyName}} </div>
+            {{#if subAPIs.length}}
+                {{#each subAPIs}}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card dev-card h-auto p-4">
+                            <div class="d-flex flex-wrap align-items-start justify-content-between gap-2">
+                                <div class="d-flex align-items-center gap-2 overflow-hidden">
+                                    <img src="{{apiInfo.apiImageMetadata.api-icon}}" class="api-card-img" />
+                                    <div class="api-card-body flex-grow-1 p-0 overflow-hidden">
+                                        <h5 class="api-card-title mb-0"> <span
+                                                onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
+                                                class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
+                                        </h5>
+                                        <p class="my-0"> {{version}}</p>
+                                        <div class="badge badge-custom2 m-0"> {{policyName}} </div>
+                                    </div>
+                                </div>
+                                <div class="mt-auto ms-auto">
+                                    {{> delete-confirmation modalTitle="Do you really want to remove the subscription?"
+                                    modalMessage="This will remove the subscription entry stored in the devportal."
+                                    modalFunction="removeSubscription()" }}
+                                    <a class="common-btn-primary pt-2 pb-2" type="button"
+                                        onclick="openDeleteModal('{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')">Unsubscribe</a>
+                                </div>
                             </div>
                         </div>
-                        <div class="mt-auto ms-auto">
-                            {{> delete-confirmation modalTitle="Do you really want to remove the subscription?"
-                            modalMessage="This will remove the subscription entry stored in the devportal."
-                            modalFunction="removeSubscription()" }}
-                            <a class="common-btn-primary pt-2 pb-2" type="button"
-                                onclick="openDeleteModal('{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')">Unsubscribe</a>
+                    </div>
+                {{/each}}
+            {{else}}
+                <div class="col-lg-4 col-md-6">
+                    <div class="card dev-card h-auto p-4">
+                        <div class="d-flex flex-wrap align-items-start justify-content-between gap-2">
+                            <div class="d-flex align-items-center gap-2 overflow-hidden">
+                                <div class="api-card-body flex-grow-1 p-0 overflow-hidden">
+                                    <h5 class="api-card-title mb-0">No Subscribed APIs</h5>
+                                    <p class="my-0">You have not subscribed to any APIs yet.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            {{/subAPIs}}
+            {{/if}}
         </div>
     </div>
 </section>
