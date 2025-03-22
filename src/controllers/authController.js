@@ -82,8 +82,7 @@ const login = async (req, res, next) => {
         //await configurePassport(IDP, claimNames);  // Configure passport dynamically
         req.session.save((err) => {
             //extract returnTo value sent as a query parameter to /login
-            let returnTo = req.query.returnTo ? req.query.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
-            returnTo = req.query.returnTo.replace(/&#x2F;/g, '/');
+            let returnTo = req.query.returnTo ? req.query.returnTo.replace(/&#x2F;/g, '/') : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
             returnTo = Buffer.from(returnTo).toString('base64')
             console.log("Setting return to", returnTo);
             if (err) {
