@@ -1,6 +1,7 @@
 <head>
   <link rel='stylesheet' href='/technical-styles/applications.css' />
   <script src='/technical-scripts/application-listing.js' defer></script>
+  <script src='/technical-scripts/add-application-form.js' defer></script>
 </head>
 
 <section class="section mt-0 mb-6">
@@ -10,13 +11,11 @@
     <div class="row row-gap-4">
       <!-- Create Project Button -->
       <div class="col-12 col-md-4 col-lg-3">
-        <div class="card create-project-card">
-          <a type="button" class="btn create-project-button border-0" href="{{baseUrl}}/applications/create">
-            <div class="create-project-content">
-              <span class="plus-icon">+</span>
-              <span class="create-text">Create Application</span>
-            </div>
-          </a>
+        <div class="card create-project-card" style="cursor: pointer;" onclick="loadModal('createAppModal')">
+          <div class="create-project-content">
+            <span class="plus-icon">+</span>
+            <span class="create-text">Create Application</span>
+          </div>
         </div>
       </div>
 
