@@ -107,7 +107,7 @@ const login = async (req, res, next) => {
     }
 };
 
-const handleCallback = (req, res, next) => {
+const handleCallback = async (req, res, next) => {
     const rules = util.validateRequestParameters();
     const validationPromises = rules.map(validation => validation.run(req));
     Promise.all(validationPromises)
@@ -123,7 +123,7 @@ const handleCallback = (req, res, next) => {
         });
     console.log("Handling callback");
     console.log("Callback session ID", req.sessionID);
-    passport.authenticate('oauth2', {
+    await passport.authenticate('oauth2', {
         failureRedirect: '/login'
     }, (err, user) => {
         if (err || !user) {

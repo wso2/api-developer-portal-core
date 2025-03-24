@@ -151,6 +151,7 @@ const ensureAuthenticated = async (req, res, next) => {
         }
         let role;
         if (req.isAuthenticated()) {
+            console.log('User is authenticated==============');
             const token = accessTokenPresent(req);
             if (token) {
                 const decodedAccessToken = jwt.decode(token);
@@ -212,7 +213,7 @@ const ensureAuthenticated = async (req, res, next) => {
             console.log('User is not authenticated');
             req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
             if (req.params.orgName) {
-                res.redirect(`/${req.params.orgName}/views/${req.session.view}/login`);
+                res.redirect(`/${req.params.orgName}/views/${req.params.viewName}/login`);
             } else {
                 console.log('Redirecting to login')
                 res.redirect(303, `/portal/login`);
