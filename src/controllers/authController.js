@@ -123,21 +123,30 @@ const handleCallback = (req, res, next) => {
         });
     console.log("Handling callback");
     console.log("Callback session ID", req.sessionID);
-    passport.authenticate('oauth2', { failureRedirect: '/login' }, (err, user, info) => {
-        if (err) return next(err);
-        if (!user) return res.redirect('/login'); // Authentication failed
-    
-        req.logIn(user, (loginErr) => {
-            if (loginErr) return next(loginErr);
-    
-            let returnTo = req.user.returnTo || config.baseUrl;
-            if (!config.advanced.disableOrgCallback && !returnTo) {
-                returnTo = `/${req.params.orgName}`;
+    passport.authenticate('oauth2', {
+        failureRedirect: '/login'
+    }, (err, user) => {
+        if (err || !user) {
+            console.log("User not present", !user)
+            return next(err || new Error('Authentication failed'));
+        }
+        req.logIn(user, (err) => {
+            if (err) {
+                return next(err);
             }
-            delete req.session.returnTo;
-    
-            console.log("Redirecting to:", returnTo);
-            return res.redirect(returnTo);
+            if (config.mode === constants.DEV_MODE) {
+                const returnTo = req.user.returnTo || config.baseUrl;
+                delete req.session.returnTo;
+                res.redirect(returnTo);
+            } else {
+                let returnTo = req.user.returnTo;
+                if (!config.advanced.disableOrgCallback && returnTo == null) {
+                    returnTo = `/${req.params.orgName}`;
+                }
+                delete req.session.returnTo;
+                console.log("Redirecting to: ", returnTo);
+                res.redirect(returnTo);
+            }
         });
     })(req, res, next);
 };
