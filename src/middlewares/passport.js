@@ -70,6 +70,7 @@ async function configurePassport(authJsonContent, claimNames) {
             isSuperAdmin = true;
         }
         const returnTo = req.session.returnTo;
+        console.log("Retrieved returnTo in callback: " + returnTo);
         let view = '';
         if (returnTo) {
             const startIndex = returnTo.indexOf('/views/') + 7;
