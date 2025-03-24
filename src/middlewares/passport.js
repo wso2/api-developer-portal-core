@@ -41,7 +41,8 @@ async function configurePassport(authJsonContent, claimNames) {
         callbackURL: authJsonContent.callbackURL,
         scope: scope,
         store: true,
-        pkce: true
+        pkce: true,
+        passReqToCallback: true
     }, async (req, accessToken, refreshToken, params, profile, done) => {
         if (!accessToken) {
             console.error('No access token received');
