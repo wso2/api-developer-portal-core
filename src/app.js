@@ -44,7 +44,6 @@ const AsyncLock = require('async-lock');
 const secretConf = require(process.cwd() + '/secret.json');
 const util = require('./utils/util');
 
-
 const lock = new AsyncLock();
 const app = express();
 const secret = crypto.randomBytes(64).toString('hex');
@@ -188,14 +187,6 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-let claimNames = {
-    [constants.ROLES.ROLE_CLAIM]: config.roleClaim,
-    [constants.ROLES.GROUP_CLAIM]: config.groupsClaim,
-    [constants.ROLES.ORGANIZATION_CLAIM]: config.orgIDClaim
-};
-configurePassport(config.identityProvider, claimNames);
-
-
 // Serialize user into the session
 passport.serializeUser((user, done) => {
 
@@ -291,8 +282,6 @@ app.use((err, req, res, next) => {
       ${html}
     `);
 });
-
-
 
 
 const PORT = process.env.PORT || config.defaultPort;
