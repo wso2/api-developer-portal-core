@@ -247,7 +247,7 @@ passport.serializeUser((user, done) => {
 // });
 
 passport.deserializeUser((obj, done) => {
-    logging.infoSection('deserializeUser');
+    console.log('deserializeUser');
     done(null, obj)
 });
 
