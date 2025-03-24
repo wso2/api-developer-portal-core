@@ -236,6 +236,25 @@ html {
   box-shadow: 0 0 0 0.25rem var(--primary-light-color);
 }
 
+.common-btn-danger {
+  background-color: var(--danger-color);
+  color: var(--lightest-text-color);
+}
+
+.common-btn-danger:hover {
+  background-color: var(--danger-color);
+  color: var(--lightest-text-color);
+}
+
+.common-btn-danger:active {
+  background-color: var(--danger-color);
+  color: var(--lightest-text-color);
+}
+
+.common-btn-danger:focus {
+  outline: none;
+}
+
 .common-sub-header h5 {
   text-transform: uppercase;
   font-size: 0.9375rem;
