@@ -171,10 +171,10 @@ const loadAPIContent = async (req, res) => {
                         apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
                         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
                         apiDetails = await parseSwagger(JSON.parse(apiDefinition))
-                        if(metaData.endPoints.productionURL === "" && metaData.endPoints.sandboxURL === ""){
-                            apiDetails["serverDetails"] = "";   
+                        if (metaData.endPoints.productionURL === "" && metaData.endPoints.sandboxURL === "") {
+                            apiDetails["serverDetails"] = "";
                         } else {
-                            apiDetails["serverDetails"] = metaData.endPoints;   
+                            apiDetails["serverDetails"] = metaData.endPoints;
                         }
                     }
                 }
