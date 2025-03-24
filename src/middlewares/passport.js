@@ -29,10 +29,11 @@ const secret = require(process.cwd() + '/secret.json');
 async function configurePassport(authJsonContent, claimNames) {
   
     //set scopes to call API Manager REST apis
-    const requestedScopes = "openid profile apim:subscribe admin dev";
-    let scope = requestedScopes.split(" ");
-    scope.push(...(authJsonContent.scope ? authJsonContent.scope.split(" ") : ""));
+    // const requestedScopes = "openid profile apim:subscribe admin dev";
+    // let scope = requestedScopes.split(" ");
+    // scope.push(...(authJsonContent.scope ? authJsonContent.scope.split(" ") : ""));
     passport.use(new OAuth2Strategy({
+        name: 'Asgardeo',
         issuer: authJsonContent.issuer,
         authorizationURL: authJsonContent.authorizationURL,
         tokenURL: authJsonContent.tokenURL,
@@ -42,59 +43,74 @@ async function configurePassport(authJsonContent, claimNames) {
         scope: scope,
         pkce: true,
         state: true,
-        passReqToCallback: true
+        logoutURL: process.env.OAUTH2_LOGOUT_ENDPOINT,
+        logoutRedirectURI: process.env.OAUTH2_POST_LOGOUT_REDIRECT_URI,
+        certificate: '',
+        jwksURL: process.env.OAUTH2_JWKS_ENDPOINT,
+        passReqToCallback: true,
+        scope: ['openid', 'profile', 'email'],
     }, async (req, accessToken, refreshToken, params, profile, done) => {
-        console.log("Received access token in callback: " + accessToken);
+        
+        console.log('verify =================== ');
+        
         if (!accessToken) {
-            console.error('No access token received');
+            console.error('>>>>>>> No access token received');
             return done(new Error('Access token missing'));
         }
-        let orgList;
-        if (config.advanced.tokenExchanger.enabled) {
-            const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
-            const decodedExchangedToken = jwt.decode(exchangedToken);
-            orgList = decodedExchangedToken.organizations;
-            req['exchangedToken'] = exchangedToken;
-        }
-        const decodedJWT = jwt.decode(params.id_token);
-        const decodedAccessToken = jwt.decode(accessToken);
-        const firstName = decodedJWT['given_name'] || decodedJWT['nickname'];
-        const lastName = decodedJWT['family_name'];
-        const organizationID = decodedJWT[claimNames[constants.ROLES.ORGANIZATION_CLAIM]] ? decodedJWT[config.orgIDClaim] : '';
-        const roles = decodedJWT[claimNames[constants.ROLES.ROLE_CLAIM]] ? decodedJWT[config.roleClaim] : '';
-        const groups = decodedJWT[claimNames[constants.ROLES.GROUP_CLAIM]] ? decodedJWT[config.groupsClaim] : '';
-        let isAdmin, isSuperAdmin = false;
-        if (roles.includes(constants.ROLES.SUPER_ADMIN) || roles.includes(constants.ROLES.ADMIN)) {
-            isAdmin = true;
-        }
-        if (roles.includes(constants.ROLES.SUPER_ADMIN)) {
-            isSuperAdmin = true;
-        }
-        const returnTo = req.session.returnTo;
-        console.log("Retrieved returnTo in callback: " + returnTo);
-        let view = '';
-        if (returnTo) {
-            const startIndex = returnTo.indexOf('/views/') + 7;
-            const endIndex = returnTo.indexOf('/', startIndex) !== -1 ? returnTo.indexOf('/', startIndex) : returnTo.length;
-            view = returnTo.substring(startIndex, endIndex);
-        }
+        console.error('>>>>>>> access token: ' + accessToken);
+        // let orgList;
+        // if (config.advanced.tokenExchanger.enabled) {
+        //     const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
+        //     const decodedExchangedToken = jwt.decode(exchangedToken);
+        //     orgList = decodedExchangedToken.organizations;
+        //     req['exchangedToken'] = exchangedToken;
+        // }
+        // const decodedJWT = jwt.decode(params.id_token);
+        // const decodedAccessToken = jwt.decode(accessToken);
+        // const firstName = decodedJWT['given_name'] || decodedJWT['nickname'];
+        // const lastName = decodedJWT['family_name'];
+        // const organizationID = decodedJWT[claimNames[constants.ROLES.ORGANIZATION_CLAIM]] ? decodedJWT[config.orgIDClaim] : '';
+        // const roles = decodedJWT[claimNames[constants.ROLES.ROLE_CLAIM]] ? decodedJWT[config.roleClaim] : '';
+        // const groups = decodedJWT[claimNames[constants.ROLES.GROUP_CLAIM]] ? decodedJWT[config.groupsClaim] : '';
+        // let isAdmin, isSuperAdmin = false;
+        // if (roles.includes(constants.ROLES.SUPER_ADMIN) || roles.includes(constants.ROLES.ADMIN)) {
+        //     isAdmin = true;
+        // }
+        // if (roles.includes(constants.ROLES.SUPER_ADMIN)) {
+        //     isSuperAdmin = true;
+        // }
+        // const returnTo = req.session.returnTo;
+        // console.log("Retrieved returnTo in callback: " + returnTo);
+        // let view = '';
+        // if (returnTo) {
+        //     const startIndex = returnTo.indexOf('/views/') + 7;
+        //     const endIndex = returnTo.indexOf('/', startIndex) !== -1 ? returnTo.indexOf('/', startIndex) : returnTo.length;
+        //     view = returnTo.substring(startIndex, endIndex);
+        // }
+        // profile = {
+        //     'firstName': firstName ? (firstName.includes(" ") ? firstName.split(" ")[0] : firstName) : '',
+        //     'lastName': lastName ? lastName : (firstName && firstName.includes(" ") ? firstName.split(" ")[1] : ''),
+        //     'view': view,
+        //     'idToken': params.id_token,
+        //     'email': decodedJWT['email'],
+        //     [constants.ROLES.ORGANIZATION_CLAIM]: organizationID,
+        //     'returnTo': req.session.returnTo,
+        //     accessToken,
+        //     'authorizedOrgs': orgList,
+        //     'exchangeToken': req.exchangedToken,
+        //     [constants.ROLES.ROLE_CLAIM]: roles,
+        //     [constants.ROLES.GROUP_CLAIM]: groups,
+        //     'isAdmin': isAdmin,
+        //     'isSuperAdmin': isSuperAdmin,
+        //     [constants.USER_ID]: decodedAccessToken[constants.USER_ID]
+        // };
+
         profile = {
-            'firstName': firstName ? (firstName.includes(" ") ? firstName.split(" ")[0] : firstName) : '',
-            'lastName': lastName ? lastName : (firstName && firstName.includes(" ") ? firstName.split(" ")[1] : ''),
-            'view': view,
-            'idToken': params.id_token,
-            'email': decodedJWT['email'],
-            [constants.ROLES.ORGANIZATION_CLAIM]: organizationID,
-            'returnTo': req.session.returnTo,
             accessToken,
-            'authorizedOrgs': orgList,
-            'exchangeToken': req.exchangedToken,
-            [constants.ROLES.ROLE_CLAIM]: roles,
-            [constants.ROLES.GROUP_CLAIM]: groups,
-            'isAdmin': isAdmin,
-            'isSuperAdmin': isSuperAdmin,
-            [constants.USER_ID]: decodedAccessToken[constants.USER_ID]
         };
+
+        console.log('------ verify done ---------');
+
         return done(null, profile);
     }));
 }
