@@ -81,6 +81,7 @@ const login = async (req, res, next) => {
     IDP = await fetchAuthJsonContent(req, orgName);
     if (IDP.clientId) {
         //await configurePassport(IDP, claimNames);  // Configure passport dynamically
+        console.log("Login session ID", req.sessionID);
         await req.session.save(async (err) => {
             console.log('session save');
             if (err) {
@@ -120,7 +121,7 @@ const handleCallback = (req, res, next) => {
             return res.status(500).json({ message: 'Internal Server Error' });
         });
     console.log("Handling callback");
-    
+    console.log("Callback session ID", req.sessionID);
     passport.authenticate('oauth2', {
         failureRedirect: '/login'
     }, (err, user) => {
