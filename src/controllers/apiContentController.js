@@ -449,10 +449,20 @@ async function parseSwagger(api) {
     }
 }
 
-function replaceEndpointParams(apiDefinition, prodEndpoint, snadboxEndpoint) {
+function replaceEndpointParams(apiDefinition, prodEndpoint, sandboxEndpoint) {
 
-    apiDefinition.servers[0].url = prodEndpoint;
-    apiDefinition.servers[1].url = snadboxEndpoint;
+    let servers = [];
+    if (prodEndpoint.trim().length !== 0 || prodEndpoint !== null || prodEndpoint !== undefined) {
+        servers.push({
+            url: prodEndpoint
+        });
+    }
+    if (sandboxEndpoint.trim().length !== 0 || sandboxEndpoint !== null || sandboxEndpoint !== undefined) {
+        servers.push({
+            url: sandboxEndpoint
+        });
+    }
+    apiDefinition.servers = servers;
     return apiDefinition;
 }
 
