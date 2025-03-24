@@ -178,11 +178,9 @@ app.use(session({
     store: store,
     secret: secret,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: {
-        secure:true,
-        httpOnly: true,
-        sameSite: 'Lax',
+        secure:false,
         maxAge: 60 * 60 * 1000
     }
 }));
