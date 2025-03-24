@@ -178,7 +178,7 @@ const ensureAuthenticated = async (req, res, next) => {
                     if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
                         //check if exchanged token has organization identifier
                         //const decodedToken = req.user.exchangeToken ? jwt.decode(req.user.exchangeToken) : null;
-                        const allowedOrgs = req.user.organizations;
+                        const allowedOrgs = req.user.authorizedOrgs;
                         if (allowedOrgs && !(allowedOrgs.includes(req.user[constants.ORG_IDENTIFIER]))) {
                             console.log('User is not authorized to access organization');
                             const err = new Error('Authentication required');
