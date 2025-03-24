@@ -40,8 +40,8 @@ async function configurePassport(authJsonContent, claimNames) {
         clientID: authJsonContent.clientId,
         callbackURL: authJsonContent.callbackURL,
         scope: scope,
-        store: true,
         pkce: true,
+        state: true,
         passReqToCallback: true
     }, async (req, accessToken, refreshToken, params, profile, done) => {
         if (!accessToken) {
