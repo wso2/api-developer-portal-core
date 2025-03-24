@@ -44,6 +44,7 @@ async function configurePassport(authJsonContent, claimNames) {
         state: true,
         passReqToCallback: true
     }, async (req, accessToken, refreshToken, params, profile, done) => {
+        console.log("Received access token in callback: " + accessToken);
         if (!accessToken) {
             console.error('No access token received');
             return done(new Error('Access token missing'));

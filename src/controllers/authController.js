@@ -123,17 +123,8 @@ const handleCallback = (req, res, next) => {
         });
     console.log("Handling callback");
     console.log("Callback session ID", req.sessionID);
-    passport.authenticate('oauth2', {
-        failureRedirect: '/login'
-    }, (err, user) => {
-        if (err || !user) {
-            console.log("User not present", !user)
-            return next(err || new Error('Authentication failed'));
-        }
-        req.logIn(user, (err) => {
-            if (err) {
-                return next(err);
-            }
+    passport.authenticate('oauth2', { failureRedirect: '/login' }),
+        (req, res) => {
             if (config.mode === constants.DEV_MODE) {
                 const returnTo = req.user.returnTo || config.baseUrl;
                 delete req.session.returnTo;
@@ -147,8 +138,7 @@ const handleCallback = (req, res, next) => {
                 console.log("Redirecting to: ", returnTo);
                 res.redirect(returnTo);
             }
-        });
-    })(req, res, next);
+        }
 };
 
 const handleSignUp = async (req, res) => {
