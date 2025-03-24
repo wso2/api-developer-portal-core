@@ -173,13 +173,17 @@ const store = new pgSession({
     debug: console.log,
 });
 
+app.set('trust proxy', 1);
+
 app.use(session({
     store: store,
     secret: secret,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: {
-        secure:false,
+        secure:true,
+        httpOnly: true,
+        sameSite: 'Lax',
         maxAge: 60 * 60 * 1000
     }
 }));
