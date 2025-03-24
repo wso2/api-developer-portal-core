@@ -187,54 +187,66 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+let claimNames = {
+    [constants.ROLES.ROLE_CLAIM]: config.roleClaim,
+    [constants.ROLES.GROUP_CLAIM]: config.groupsClaim,
+    [constants.ROLES.ORGANIZATION_CLAIM]: config.orgIDClaim
+};
+configurePassport(config.identityProvider, claimNames);
+
 // Serialize user into the session
 passport.serializeUser((user, done) => {
 
     console.log("Serializing user");
-    const profile = {
-        firstName: user.firstName,
-        lastName: user.lastName,
-        view: user.view,
-        idToken: user.idToken,
-        [constants.ROLES.ORGANIZATION_CLAIM]: user[constants.ROLES.ORGANIZATION_CLAIM],
-        'returnTo': user.returnTo,
-        accessToken: user.accessToken,
-        'exchangeToken': user.exchangeToken,
-        'organizations': user.authorizedOrgs,
-        [constants.ROLES.ROLE_CLAIM]: user.roles,
-        [constants.ROLES.GROUP_CLAIM]: user.groups,
-        'isAdmin': user.isAdmin,
-        'isSuperAdmin': user.isSuperAdmin,
-        [constants.USER_ID]: user[constants.USER_ID]
-    };
-    lock.acquire('serialize', (release) => {
-        release(null, profile);
-    }, (err, ret) => {
-        if (err) {
-            return done(err);
-        }
-        done(null, ret);
-    });
-    //done(null, user);
+    // const profile = {
+    //     firstName: user.firstName,
+    //     lastName: user.lastName,
+    //     view: user.view,
+    //     idToken: user.idToken,
+    //     [constants.ROLES.ORGANIZATION_CLAIM]: user[constants.ROLES.ORGANIZATION_CLAIM],
+    //     'returnTo': user.returnTo,
+    //     accessToken: user.accessToken,
+    //     'exchangeToken': user.exchangeToken,
+    //     'organizations': user.authorizedOrgs,
+    //     [constants.ROLES.ROLE_CLAIM]: user.roles,
+    //     [constants.ROLES.GROUP_CLAIM]: user.groups,
+    //     'isAdmin': user.isAdmin,
+    //     'isSuperAdmin': user.isSuperAdmin,
+    //     [constants.USER_ID]: user[constants.USER_ID]
+    // };
+    // lock.acquire('serialize', (release) => {
+    //     release(null, profile);
+    // }, (err, ret) => {
+    //     if (err) {
+    //         return done(err);
+    //     }
+    //     done(null, ret);
+    // });
+    done(null, user);
 });
 
 // Deserialize user from the session
-passport.deserializeUser(async (sessionData, done) => {
+// passport.deserializeUser(async (sessionData, done) => {
 
-    console.log("Deserializing user");
-    //return done(null, sessionData);
-    lock.acquire('deserialize', async (release) => {
-        try {
-            release(null, sessionData);
-        } catch (err) {
-            release(err);
-        }
-    }, (err, ret) => {
-        if (err) {
-            return done(err);
-        }
-        done(null, ret);
-    });
+//     console.log("Deserializing user");
+//     //return done(null, sessionData);
+//     lock.acquire('deserialize', async (release) => {
+//         try {
+//             release(null, sessionData);
+//         } catch (err) {
+//             release(err);
+//         }
+//     }, (err, ret) => {
+//         if (err) {
+//             return done(err);
+//         }
+//         done(null, ret);
+//     });
+// });
+
+passport.deserializeUser((obj, done) => {
+    logging.infoSection('deserializeUser');
+    done(null, obj)
 });
 
 app.use(constants.ROUTE.TECHNICAL_STYLES, express.static(path.join(require.main.filename, '../styles')));

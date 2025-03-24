@@ -27,15 +27,12 @@ const secret = require(process.cwd() + '/secret.json');
 
 
 async function configurePassport(authJsonContent, claimNames) {
-
-    const agent = new https.Agent({
-        rejectUnauthorized: false
-    });    
+  
     //set scopes to call API Manager REST apis
     const requestedScopes = "openid profile apim:subscribe admin dev";
     let scope = requestedScopes.split(" ");
     scope.push(...(authJsonContent.scope ? authJsonContent.scope.split(" ") : ""));
-    const strategy = new OAuth2Strategy({
+    passport.use(new OAuth2Strategy({
         issuer: authJsonContent.issuer,
         authorizationURL: authJsonContent.authorizationURL,
         tokenURL: authJsonContent.tokenURL,
@@ -43,7 +40,6 @@ async function configurePassport(authJsonContent, claimNames) {
         clientID: authJsonContent.clientId,
         callbackURL: authJsonContent.callbackURL,
         scope: scope,
-        passReqToCallback: true,
         store: true,
         pkce: true
     }, async (req, accessToken, refreshToken, params, profile, done) => {
@@ -97,19 +93,7 @@ async function configurePassport(authJsonContent, claimNames) {
             [constants.USER_ID]: decodedAccessToken[constants.USER_ID]
         };
         return done(null, profile);
-    });
-    strategy._oauth2.setAgent(agent);
-
-    const originalGetOAuthAccessToken = strategy._oauth2.getOAuthAccessToken;
-    strategy._oauth2.getOAuthAccessToken = function (code, params, callback) {
-        originalGetOAuthAccessToken.call(this, code, params, (err, accessToken, refreshToken, results) => {
-            if (err) {
-                console.error('Error during token exchange:', err);
-            }
-            callback(err, accessToken, refreshToken, results);
-        });
-    };
-    passport.use(strategy);
+    }));
 }
 
 module.exports = configurePassport;
