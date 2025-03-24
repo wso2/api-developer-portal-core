@@ -452,12 +452,12 @@ async function parseSwagger(api) {
 function replaceEndpointParams(apiDefinition, prodEndpoint, sandboxEndpoint) {
 
     let servers = [];
-    if (prodEndpoint.trim().length !== 0 || prodEndpoint !== null || prodEndpoint !== undefined) {
+    if (prodEndpoint.trim().length !== 0) {
         servers.push({
             url: prodEndpoint
         });
     }
-    if (sandboxEndpoint.trim().length !== 0 || sandboxEndpoint !== null || sandboxEndpoint !== undefined) {
+    if (sandboxEndpoint.trim().length !== 0) {
         servers.push({
             url: sandboxEndpoint
         });
