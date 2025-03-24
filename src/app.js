@@ -173,7 +173,7 @@ const store = new pgSession({
     debug: console.log,
 });
 
-app.set('trust proxy', 1);
+//app.set('trust proxy', 1);
 
 app.use(session({
     store: store,
