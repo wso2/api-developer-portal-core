@@ -27,18 +27,12 @@ const secret = require(process.cwd() + '/secret.json');
 
 
 async function configurePassport(authJsonContent, claimNames) {
-
-    const agent = new https.Agent({
-        rejectUnauthorized: false
-    });    
+  
     //set scopes to call API Manager REST apis
     const requestedScopes = "openid profile apim:subscribe admin dev";
     let scope = requestedScopes.split(" ");
     scope.push(...(authJsonContent.scope ? authJsonContent.scope.split(" ") : ""));
-    if (!authJsonContent.clientSecret) {
-        authJsonContent.clientSecret = secret.clientSecret
-    }
-    const strategy = new OAuth2Strategy({
+    passport.use(new OAuth2Strategy({
         issuer: authJsonContent.issuer,
         authorizationURL: authJsonContent.authorizationURL,
         tokenURL: authJsonContent.tokenURL,
@@ -46,25 +40,16 @@ async function configurePassport(authJsonContent, claimNames) {
         clientID: authJsonContent.clientId,
         callbackURL: authJsonContent.callbackURL,
         scope: scope,
-        passReqToCallback: true,
-        clientSecret: authJsonContent.clientSecret,
+        store: true,
+        pkce: true
     }, async (req, accessToken, refreshToken, params, profile, done) => {
         if (!accessToken) {
             console.error('No access token received');
             return done(new Error('Access token missing'));
         }
         let orgList;
-        const state = req.query
-        console.log("Retrieve returnTo in callback");
-        let returnTo = (Buffer.from(state['state'], 'base64').toString("utf-8"));
-        let view = '';
-        if (returnTo) {
-            const startIndex = returnTo.indexOf('/views/') + 7;
-            const endIndex = returnTo.indexOf('/', startIndex) !== -1 ? returnTo.indexOf('/', startIndex) : returnTo.length;
-            view = returnTo.substring(startIndex, endIndex);
-        }
-        if (config.advanced.tokenExchanger.enabled && returnTo) {
-            const exchangedToken = await util.tokenExchanger(accessToken, returnTo.split("/")[1]);
+        if (config.advanced.tokenExchanger.enabled) {
+            const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
             const decodedExchangedToken = jwt.decode(exchangedToken);
             orgList = decodedExchangedToken.organizations;
             req['exchangedToken'] = exchangedToken;
@@ -83,7 +68,13 @@ async function configurePassport(authJsonContent, claimNames) {
         if (roles.includes(constants.ROLES.SUPER_ADMIN)) {
             isSuperAdmin = true;
         }
-       
+        const returnTo = req.session.returnTo;
+        let view = '';
+        if (returnTo) {
+            const startIndex = returnTo.indexOf('/views/') + 7;
+            const endIndex = returnTo.indexOf('/', startIndex) !== -1 ? returnTo.indexOf('/', startIndex) : returnTo.length;
+            view = returnTo.substring(startIndex, endIndex);
+        }
         profile = {
             'firstName': firstName ? (firstName.includes(" ") ? firstName.split(" ")[0] : firstName) : '',
             'lastName': lastName ? lastName : (firstName && firstName.includes(" ") ? firstName.split(" ")[1] : ''),
@@ -91,7 +82,7 @@ async function configurePassport(authJsonContent, claimNames) {
             'idToken': params.id_token,
             'email': decodedJWT['email'],
             [constants.ROLES.ORGANIZATION_CLAIM]: organizationID,
-            'returnTo': returnTo,
+            'returnTo': req.session.returnTo,
             accessToken,
             'authorizedOrgs': orgList,
             'exchangeToken': req.exchangedToken,
@@ -102,19 +93,7 @@ async function configurePassport(authJsonContent, claimNames) {
             [constants.USER_ID]: decodedAccessToken[constants.USER_ID]
         };
         return done(null, profile);
-    });
-    strategy._oauth2.setAgent(agent);
-
-    const originalGetOAuthAccessToken = strategy._oauth2.getOAuthAccessToken;
-    strategy._oauth2.getOAuthAccessToken = function (code, params, callback) {
-        originalGetOAuthAccessToken.call(this, code, params, (err, accessToken, refreshToken, results) => {
-            if (err) {
-                console.error('Error during token exchange:', err);
-            }
-            callback(err, accessToken, refreshToken, results);
-        });
-    };
-    passport.use(strategy);
+    }));
 }
 
 module.exports = configurePassport;

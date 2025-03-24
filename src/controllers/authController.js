@@ -77,25 +77,19 @@ const login = async (req, res, next) => {
             }
         }
     }
+    req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
     IDP = await fetchAuthJsonContent(req, orgName);
     if (IDP.clientId) {
         //await configurePassport(IDP, claimNames);  // Configure passport dynamically
-        req.session.save((err) => {
-            //extract returnTo value sent as a query parameter to /login
-            let returnTo = req.query.returnTo ? req.query.returnTo.replace(/&#x2F;/g, '/') : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
-            returnTo = Buffer.from(returnTo).toString('base64')
-            console.log("Setting return to", returnTo);
+        await req.session.save(async (err) => {
+            console.log('session save');
             if (err) {
-                console.error("Session save error:", err);
-                return res.status(500).send("Session error");
+                console.log('Session save failed');
+                return res.status(500).send('Internal Server Error');
             }
-            // Ensure passport.authenticate runs after session is saved
-            process.nextTick(() => {
-                //set returnTo value to state
-                console.log("Redirecting to login page");
-                passport.authenticate("oauth2", { state: returnTo })(req, res, next);
-            });
+            await passport.authenticate('oauth2')(req, res, next);
         });
+        console.log("Passport authentication done");
     } else {
         orgName = req.params.orgName;
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'login', 'page.hbs');
@@ -125,40 +119,34 @@ const handleCallback = (req, res, next) => {
             console.error("Error validating request parameters: " + error);
             return res.status(500).json({ message: 'Internal Server Error' });
         });
-    req.session.save((err) => {
-
-        if (err) {
-            console.error("Session save error:", err);
-            return res.status(500).send("Session error");
+    console.log("Handling callback");
+    
+    passport.authenticate('oauth2', {
+        failureRedirect: '/login'
+    }, (err, user) => {
+        if (err || !user) {
+            console.log("User not present", !user)
+            return next(err || new Error('Authentication failed'));
         }
-        passport.authenticate('oauth2', {
-            failureRedirect: '/login'
-        }, (err, user) => {
-            if (err || !user) {
-                console.log("User not present", !user)
-                return next(err || new Error('Authentication failed'));
+        req.logIn(user, (err) => {
+            if (err) {
+                return next(err);
             }
-            req.logIn(user, (err) => {
-                if (err) {
-                    return next(err);
+            if (config.mode === constants.DEV_MODE) {
+                const returnTo = req.user.returnTo || config.baseUrl;
+                delete req.session.returnTo;
+                res.redirect(returnTo);
+            } else {
+                let returnTo = req.user.returnTo;
+                if (!config.advanced.disableOrgCallback && returnTo == null) {
+                    returnTo = `/${req.params.orgName}`;
                 }
-                if (config.mode === constants.DEV_MODE) {
-                    const returnTo = req.user.returnTo || config.baseUrl;
-                    delete req.session.returnTo;
-                    res.redirect(returnTo);
-                } else {
-                    let returnTo = req.user.returnTo;
-                    if (!config.advanced.disableOrgCallback && returnTo == null) {
-                        returnTo = `/${req.params.orgName}`;
-                    }
-                    console.log("Session ID in callback: ", req.sessionID);
-                    console.log("Redirecting to: ", returnTo);
-                    res.redirect(returnTo);
-                }
-            });
-        })(req, res, next);
-    });
-
+                delete req.session.returnTo;
+                console.log("Redirecting to: ", returnTo);
+                res.redirect(returnTo);
+            }
+        });
+    })(req, res, next);
 };
 
 const handleSignUp = async (req, res) => {
