@@ -683,7 +683,7 @@ async function tokenExchanger(token, orgName) {
     const url = config.advanced.tokenExchanger.url;
     const maxRetries = 3;
     let delay = 1000;
-
+    console.log("TokenExchanger organization: " + orgName);
     const orgDetails = await adminDao.getOrganization(orgName);
     if (!orgDetails) {
         throw new Error('Organization not found');
