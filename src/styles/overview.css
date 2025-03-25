@@ -1,130 +1,68 @@
-.app-header {
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 2px solid #ddd;
-  padding-bottom: 10px;
-}
-
-.app-header p {
-  flex-basis: 100%;
-  text-align: left;
-  margin-top: 8px;
-  display: grid;
-  grid-template-columns: 250px auto;
-}
-
-.app-header span {
-  margin-right: 100px;
-}
-
-.app-plan {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-basis: 100%;
-}
-
 .app-overview-card {
-  padding: 2rem;
+  background-color: var(--secondary-bg-color) !important;
+  border-radius: 1.5rem !important;
+  padding: 2.5rem 2.5rem !important;
+  text-align: left;
+  min-height: 10rem;
+  display: flex !important;
+  margin-bottom: 2rem;
+  justify-content: space-between;
+  align-items: flex-start;
 }
 
 .app-description {
+  color: var(--dp-main-text-color);
   font-size: 14px;
   font-weight: 300;
-  color: var(--dp-main-text-color);
-  margin: 5px 0;
 }
 
 .app-subscription-count {
   font-weight: 500;
+  font-size: 14px;
+  color: var(--light-text-color);
 }
 
 .app-overview-title {
   font-size: 2.25rem;
   font-weight: 600;
   color: var(--primary-main-color);
+  margin: 0 0 0.5rem 0;
 }
 
-.app-title {
-  font-size: 24px;
-  margin: 0;
-  color: var(--primary-color);
-}
-
-.action-buttons {
-  display: flex;
-  gap: 10px;
-}
-
-.action-buttons .btn-outline-secondary {
+.edit-button {
   border-color: var(--primary-main-color);
   color: var(--primary-main-color);
+  float: right;
 }
 
-.action-buttons .btn-outline-secondary:hover {
+.edit-button:hover {
+  border-color: var(--primary-main-color);
   background-color: var(--primary-main-color);
-  color: var(--white-text-color);
+  color: var(--lightest-text-color);
 }
 
-.app-details {
-  margin-top: 20px;
-  padding-bottom: 10px
-}
-
-.details-section,
-.status-section {
-  margin-bottom: 20px;
-}
-
-h2 {
-  font-size: 18px;
-  color: var(--primary-color);
-  margin-bottom: 10px;
-}
-
-p {
-  font-size: 14px;
-  color: var(--light-text-color);
-  margin: 5px 0;
-}
-
-p2 {
-  font-size: 10px;
-}
-
-.business-plan-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.reset-btn,
-.info-btn {
-  padding: 5px 10px;
-  font-size: 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  cursor: pointer;
-  background-color: var(--font-colour-primary);
-  color: var(--light-text-color);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.reset-btn:hover,
-.info-btn:hover {
-  background-color: var(--light-color);
-}
-
-
-@media (max-width: 600px) {
-  .app-header {
-    flex-direction: column;
-    align-items: flex-start;
+@media (max-width: 992px) {
+  .app-overview-card {
+    padding: 2rem 2.5rem !important;
   }
+  
+  .app-overview-title {
+    font-size: 1.85rem;
+  }
+}
 
-  .action-buttons {
-    margin-top: 10px;
+@media (max-width: 768px) {
+  .app-overview-card {
+    padding: 1.5rem 2rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .app-overview-card {
+    padding: 1.25rem 1.5rem !important;
+  }
+  
+  .app-overview-title {
+    font-size: 1.5rem;
   }
 }

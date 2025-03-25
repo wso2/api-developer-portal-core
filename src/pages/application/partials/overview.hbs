@@ -5,20 +5,17 @@
 <section class="section mt-0 mb-6">
   {{#applicationMetadata}}
   <div class="container-fluid">
-    <div class="card dev-card app-overview-card">
-      <div class="d-flex align-items-start justify-content-between">
+    <div class="app-overview-card d-flex justify-content-between align-items-start">
+      <div class="me-5 w-75">
         <h4 class="app-overview-title">{{name}}</h4>
-        <div class='action-buttons'>
-          <button class='btn btn-outline-secondary' title='Edit'
-            onclick="window.location.href='{{../baseUrl}}/applications/{{id}}/edit'">
-            <i class='bi bi-pencil'></i>
-          </button>
-        </div>
-      </div>
-      <div class="col-lg-6 app-overview-body">
-        <p class="app-description">{{description}}</p>
+        <p class="app-description mt-3">{{description}}</p>
         <p class="app-subscription-count mt-3">Subscriptions: {{subscriptionCount}}</p>
-
+      </div>
+      <div>
+        <button class='btn btn-outline-secondary edit-button' title='Edit'
+          onclick="window.location.href='{{../baseUrl}}/applications/{{id}}/edit'">
+          <i class='bi bi-pencil'></i>
+        </button>
       </div>
     </div>
   </div>
