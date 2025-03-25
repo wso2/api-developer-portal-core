@@ -171,10 +171,10 @@ const loadAPIContent = async (req, res) => {
                         apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
                         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
                         apiDetails = await parseSwagger(JSON.parse(apiDefinition))
-                        if(metaData.endPoints.productionURL === "" && metaData.endPoints.sandboxURL === ""){
-                            apiDetails["serverDetails"] = "";   
+                        if (metaData.endPoints.productionURL === "" && metaData.endPoints.sandboxURL === "") {
+                            apiDetails["serverDetails"] = "";
                         } else {
-                            apiDetails["serverDetails"] = metaData.endPoints;   
+                            apiDetails["serverDetails"] = metaData.endPoints;
                         }
                     }
                 }
@@ -413,7 +413,7 @@ async function loadAPIMetaData(req, orgID, apiID, viewName) {
         //replace image urls
         let images = metaData.apiInfo.apiImageMetadata;
         for (const key in images) {
-            let apiImageUrl = `${config.advanced.resourceLoadFromBaseUrl ? config.baseUrl : `${req.protocol}://${req.get('host')}`}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}`;
+            let apiImageUrl = `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}`;
             const modifiedApiImageURL = apiImageUrl + images[key];
             images[key] = modifiedApiImageURL;
         }
@@ -449,10 +449,20 @@ async function parseSwagger(api) {
     }
 }
 
-function replaceEndpointParams(apiDefinition, prodEndpoint, snadboxEndpoint) {
+function replaceEndpointParams(apiDefinition, prodEndpoint, sandboxEndpoint) {
 
-    apiDefinition.servers[0].url = prodEndpoint;
-    apiDefinition.servers[1].url = snadboxEndpoint;
+    let servers = [];
+    if (prodEndpoint.trim().length !== 0) {
+        servers.push({
+            url: prodEndpoint
+        });
+    }
+    if (sandboxEndpoint.trim().length !== 0) {
+        servers.push({
+            url: sandboxEndpoint
+        });
+    }
+    apiDefinition.servers = servers;
     return apiDefinition;
 }
 
