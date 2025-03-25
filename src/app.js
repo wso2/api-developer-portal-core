@@ -17,7 +17,7 @@
  */
 /* eslint-disable no-undef */
 const express = require('express');
-// const { engine } = require('express-handlebars');
+const { engine } = require('express-handlebars');
 const passport = require('passport');
 const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
@@ -28,18 +28,18 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const chalk = require('chalk');
-// const authRoute = require('./routes/authRoute');
-// const devportalRoute = require('./routes/devportalRoute');
-// const orgContent = require('./routes/orgContentRoute');
-// const apiContent = require('./routes/apiContentRoute');
-// const myAPIs = require('./routes/myAPIRoute');
-// const applicationContent = require('./routes/applicationsContentRoute');
-// const customContent = require('./routes/customPageRoute');
+const authRoute = require('./routes/authRoute');
+const devportalRoute = require('./routes/devportalRoute');
+const orgContent = require('./routes/orgContentRoute');
+const apiContent = require('./routes/apiContentRoute');
+const myAPIs = require('./routes/myAPIRoute');
+const applicationContent = require('./routes/applicationsContentRoute');
+const customContent = require('./routes/customPageRoute');
 const config = require(process.cwd() + '/config.json');
-// const Handlebars = require('handlebars');
+const Handlebars = require('handlebars');
 const constants = require("./utils/constants");
-// const designRoute = require('./routes/designModeRoute');
-// const settingsRoute = require('./routes/configureRoute');
+const designRoute = require('./routes/designModeRoute');
+const settingsRoute = require('./routes/configureRoute');
 const AsyncLock = require('async-lock');
 const secretConf = require(process.cwd() + '/secret.json');
 const util = require('./utils/util');
@@ -49,12 +49,12 @@ const jwt = require('jsonwebtoken');
 // const secret = require(process.cwd() + '/secret.json');
 const { v4: uuidv4 } = require('uuid');
 
-// const lock = new AsyncLock();
+const lock = new AsyncLock();
 const app = express();
 // const secret = crypto.randomBytes(64).toString('hex');
 const sessionSecret = 'my-secret';
-// const filePrefix = config.pathToContent;
-// const configurePassport = require('./middlewares/passport');
+const filePrefix = config.pathToContent;
+const configurePassport = require('./middlewares/passport');
 
 const SERVER_ID = uuidv4();
 
@@ -83,94 +83,94 @@ const pool = new Pool({
 //     };
 // }
 
-// app.engine('.hbs', engine({
-//     extname: '.hbs'
-// }));
+app.engine('.hbs', engine({
+    extname: '.hbs'
+}));
 
-// app.set('view engine', 'hbs');
+app.set('view engine', 'hbs');
 
 // #region Register Handlebars helpers
 
-// Handlebars.registerHelper('json', function (context) {
+Handlebars.registerHelper('json', function (context) {
 
-//     if (context) {
-//         return JSON.stringify(context);
-//     } else {
-//         return JSON.stringify();
-//     }
-// });
+    if (context) {
+        return JSON.stringify(context);
+    } else {
+        return JSON.stringify();
+    }
+});
 
-// Handlebars.registerHelper("every", function (array, key, options) {
-//     if (!Array.isArray(array)) {
-//         return options.inverse(this);
-//     }
+Handlebars.registerHelper("every", function (array, key, options) {
+    if (!Array.isArray(array)) {
+        return options.inverse(this);
+    }
 
-//     const allMatch = array.every(item => item[key]);
+    const allMatch = array.every(item => item[key]);
 
-//     return allMatch ? true : false;
-// });
+    return allMatch ? true : false;
+});
 
-// Handlebars.registerHelper("some", function (array, key, options) {
-//     if (!Array.isArray(array)) {
-//         return options.inverse(this);
-//     }
+Handlebars.registerHelper("some", function (array, key, options) {
+    if (!Array.isArray(array)) {
+        return options.inverse(this);
+    }
 
-//     const someMatch = array.some(item => item[key]);
+    const someMatch = array.some(item => item[key]);
 
-//     return someMatch ? true : false;
-// });
+    return someMatch ? true : false;
+});
 
-// Handlebars.registerHelper('eq', function (a, b) {
-//     return (a === b || (a != null && b != null && (a === b.toString() || a.toString() === b)));
-// });
+Handlebars.registerHelper('eq', function (a, b) {
+    return (a === b || (a != null && b != null && (a === b.toString() || a.toString() === b)));
+});
 
-// Handlebars.registerHelper('in', function (value, options) {
-//     const validValues = Array.isArray(options.hash.values) ? options.hash.values : options.hash.values.split(',');
-//     return Array.isArray(validValues) && validValues.includes(value)
-//         ? options.fn(this)
-//         : options.inverse(this);
-// });
+Handlebars.registerHelper('in', function (value, options) {
+    const validValues = Array.isArray(options.hash.values) ? options.hash.values : options.hash.values.split(',');
+    return Array.isArray(validValues) && validValues.includes(value)
+        ? options.fn(this)
+        : options.inverse(this);
+});
 
-// Handlebars.registerHelper('conditionalIf', function (condition, value1, value2) {
-//     return condition ? value1 : value2;
-// });
+Handlebars.registerHelper('conditionalIf', function (condition, value1, value2) {
+    return condition ? value1 : value2;
+});
 
-// Handlebars.registerHelper('contains', function (array, value) {
-//     return array && array.includes(value);
-// });
+Handlebars.registerHelper('contains', function (array, value) {
+    return array && array.includes(value);
+});
 
-// Handlebars.registerHelper('let', function (name, value, options) {
-//     const data = Handlebars.createFrame(options.data);
-//     data[name] = value;
-//     return options.fn({ ...options.hash, ...data });
-// });
+Handlebars.registerHelper('let', function (name, value, options) {
+    const data = Handlebars.createFrame(options.data);
+    data[name] = value;
+    return options.fn({ ...options.hash, ...data });
+});
 
-// Handlebars.registerHelper('and', function () {
-//     const args = Array.prototype.slice.call(arguments);
-//     const lastArg = args.pop();
-//     return args.every(Boolean) ? lastArg.fn(this) : lastArg.inverse(this);
-// });
+Handlebars.registerHelper('and', function () {
+    const args = Array.prototype.slice.call(arguments);
+    const lastArg = args.pop();
+    return args.every(Boolean) ? lastArg.fn(this) : lastArg.inverse(this);
+});
 
-// Handlebars.registerHelper('getValue', function (obj, key) {
-//     return obj[key];
-// });
+Handlebars.registerHelper('getValue', function (obj, key) {
+    return obj[key];
+});
 
-// Handlebars.registerHelper('lowercase', function (str) {
-//     return typeof str === 'string' ? str.toLowerCase() : str;
-// });
+Handlebars.registerHelper('lowercase', function (str) {
+    return typeof str === 'string' ? str.toLowerCase() : str;
+});
 
-// Handlebars.registerHelper('isMiddle', function (index, length) {
-//     const middleIndex = Math.floor(length / 2);
-//     return index === middleIndex;
-// });
+Handlebars.registerHelper('isMiddle', function (index, length) {
+    const middleIndex = Math.floor(length / 2);
+    return index === middleIndex;
+});
 
-// Handlebars.registerHelper('startsWith', function (str, includeStr, options) {
-//     if (str && str.startsWith(includeStr)) {
-//         return options.fn(this);  
-//     } else {
-//         return options.inverse(this); 
-//     }
-// });
+Handlebars.registerHelper('startsWith', function (str, includeStr, options) {
+    if (str && str.startsWith(includeStr)) {
+        return options.fn(this);  
+    } else {
+        return options.inverse(this); 
+    }
+});
 
 // #endregion
 
@@ -190,8 +190,8 @@ app.use(session({
     },
 }));
 
-// app.use(express.json());
-// app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -272,10 +272,10 @@ passport.use(new OAuth2Strategy({
         [constants.ROLES.GROUP_CLAIM]: groups,
         'isAdmin': isAdmin,
         'isSuperAdmin': isSuperAdmin,
-        [constants.USER_ID]: decodedAccessToken[constants.USER_ID]
+        [constants.USER_ID]: decodedAccessToken[constants.USER_ID],
+        serverId: SERVER_ID,
+        avatar: decodedJWT['picture'],
     };
-
- 
 
     console.log('------ verify done ---------');
 
@@ -338,109 +338,109 @@ passport.deserializeUser((obj, done) => {
     done(null, obj)
 });
 
-// app.use(constants.ROUTE.TECHNICAL_STYLES, express.static(path.join(require.main.filename, '../styles')));
-// app.use(constants.ROUTE.TECHNICAL_SCRIPTS, express.static(path.join(require.main.filename, '../scripts')));
+app.use(constants.ROUTE.TECHNICAL_STYLES, express.static(path.join(require.main.filename, '../styles')));
+app.use(constants.ROUTE.TECHNICAL_SCRIPTS, express.static(path.join(require.main.filename, '../scripts')));
 
-// //backend routes
-// app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
+//backend routes
+app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
 
-// if (config.mode === constants.DEV_MODE) {
-//     app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), filePrefix + 'styles')));
-//     app.use(constants.ROUTE.IMAGES, express.static(path.join(process.cwd(), filePrefix + 'images')));
-//     app.use(constants.ROUTE.MOCK, express.static(path.join(process.cwd(), filePrefix + 'mock')));
-//     app.use(constants.ROUTE.DEFAULT, designRoute);
-// } else {
-//     app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), './src/defaultContent/' + 'styles')));
-//     app.use(constants.ROUTE.IMAGES, express.static(path.join(process.cwd(), './src/defaultContent/' + 'images')));
-//     app.use(constants.ROUTE.DEFAULT, authRoute);
-//     app.use(constants.ROUTE.DEFAULT, apiContent);
-//     app.use(constants.ROUTE.DEFAULT, applicationContent);
-//     app.use(constants.ROUTE.DEFAULT, orgContent);
-//     app.use(constants.ROUTE.DEFAULT, myAPIs);
-//     app.use(constants.ROUTE.DEFAULT, settingsRoute);
-//     app.use(constants.ROUTE.DEFAULT, customContent);
-// }
-
-app.get('/', (req, res) => {
-    res.send(`
-        <h1>Server ID: ${SERVER_ID}</h1>
-        <a href="/login">Login with OAuth2</a>
-    `);
-});
-
-const login = async (req, res, next) => {
-    console.log('========= login');
-    // await configPassport(); // this is not necessary as there are no org specific idps
-    await req.session.save(async (err) => {
-        console.log('>>> session save');
-        if (err) {
-            console.error('>>> Session save failed');
-            return res.status(500).send('Internal Server Error');
-        }
-        req.session.returnTo = "/sachinisdev/profile";
-        await passport.authenticate('oauth2')(req, res, next);
-    });
-    console.log('>>>> login done');
+if (config.mode === constants.DEV_MODE) {
+    app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), filePrefix + 'styles')));
+    app.use(constants.ROUTE.IMAGES, express.static(path.join(process.cwd(), filePrefix + 'images')));
+    app.use(constants.ROUTE.MOCK, express.static(path.join(process.cwd(), filePrefix + 'mock')));
+    app.use(constants.ROUTE.DEFAULT, designRoute);
+} else {
+    app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), './src/defaultContent/' + 'styles')));
+    app.use(constants.ROUTE.IMAGES, express.static(path.join(process.cwd(), './src/defaultContent/' + 'images')));
+    app.use(constants.ROUTE.DEFAULT, authRoute);
+    app.use(constants.ROUTE.DEFAULT, apiContent);
+    app.use(constants.ROUTE.DEFAULT, applicationContent);
+    app.use(constants.ROUTE.DEFAULT, orgContent);
+    app.use(constants.ROUTE.DEFAULT, myAPIs);
+    app.use(constants.ROUTE.DEFAULT, settingsRoute);
+    app.use(constants.ROUTE.DEFAULT, customContent);
 }
 
-// Login route
-app.get('/login', login);
-
-// Callback route
-app.get('/signin', 
-    passport.authenticate('oauth2', { failureRedirect: '/' }),
-    (req, res) => {
-        console.log("Return to in callback: ", req.user.returnTo);
-        res.redirect('/profile');
-    }
-);
-
-// Profile page (protected)
-app.get('/profile', (req, res) => {
-    console.log('profile');
-    if (!req.isAuthenticated()) {
-        console.log('Profile - Not authenticated')
-        return res.redirect('/');
-    }
-    console.log('Profile - Authenticated');
-    res.send(`
-        <h1>Logged In: ${SERVER_ID}</h1>
-        <pre>${JSON.stringify(req.user, null, 2)}</pre>
-        <a href="/logout">Logout</a>
-    `);
-});
-
-// Logout route
-app.get('/logout', (req, res) => {
-    req.logout(() => {
-        req.session.destroy();
-        res.redirect('/');
-    });
-});
-
-
-// app.use((err, req, res, next) => {
-
-//     console.error(err.stack); // Log error for debugging
-//     const templateContent = {
-//         baseUrl: '/' + req.params.orgName + '/' + constants.ROUTE.VIEWS_PATH + "default"
-//     }
-//     if (err.status === 401) {
-//         req.session.destroy((err) => {
-//             if (err) {
-//                 console.error("❌ Error destroying session:", err);
-//                 return res.status(500).send("Logout failed");
-//             }
-//             console.log("✅ User logged out and session destroyed");
-//         });
-//         html = util.renderTemplate('../pages/authentication-error/page.hbs', 'src/pages/error-layout/main.hbs', templateContent, true);
-//     } else {
-//         html = util.renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
-//     }
-//     res.status(err.status || 500).send(`
-//       ${html}
+// app.get('/', (req, res) => {
+//     res.send(`
+//         <h1>Server ID: ${SERVER_ID}</h1>
+//         <a href="/login">Login with OAuth2</a>
 //     `);
 // });
+
+// const login = async (req, res, next) => {
+//     console.log('========= login');
+//     // await configPassport(); // this is not necessary as there are no org specific idps
+//     await req.session.save(async (err) => {
+//         console.log('>>> session save');
+//         if (err) {
+//             console.error('>>> Session save failed');
+//             return res.status(500).send('Internal Server Error');
+//         }
+//         req.session.returnTo = "/sachinisdev/profile";
+//         await passport.authenticate('oauth2')(req, res, next);
+//     });
+//     console.log('>>>> login done');
+// }
+
+// Login route
+// app.get('/login', login);
+
+// Callback route
+// app.get('/signin', 
+//     passport.authenticate('oauth2', { failureRedirect: '/' }),
+//     (req, res) => {
+//         console.log("Return to in callback: ", req.user.returnTo);
+//         res.redirect('/profile');
+//     }
+// );
+
+// Profile page (protected)
+// app.get('/profile', (req, res) => {
+//     console.log('profile');
+//     if (!req.isAuthenticated()) {
+//         console.log('Profile - Not authenticated')
+//         return res.redirect('/');
+//     }
+//     console.log('Profile - Authenticated');
+//     res.send(`
+//         <h1>Logged In: ${SERVER_ID}</h1>
+//         <pre>${JSON.stringify(req.user, null, 2)}</pre>
+//         <a href="/logout">Logout</a>
+//     `);
+// });
+
+// Logout route
+// app.get('/logout', (req, res) => {
+//     req.logout(() => {
+//         req.session.destroy();
+//         res.redirect('/');
+//     });
+// });
+
+
+app.use((err, req, res, next) => {
+
+    console.error(err.stack); // Log error for debugging
+    const templateContent = {
+        baseUrl: '/' + req.params.orgName + '/' + constants.ROUTE.VIEWS_PATH + "default"
+    }
+    if (err.status === 401) {
+        req.session.destroy((err) => {
+            if (err) {
+                console.error("❌ Error destroying session:", err);
+                return res.status(500).send("Logout failed");
+            }
+            console.log("✅ User logged out and session destroyed");
+        });
+        html = util.renderTemplate('../pages/authentication-error/page.hbs', 'src/pages/error-layout/main.hbs', templateContent, true);
+    } else {
+        html = util.renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+    }
+    res.status(err.status || 500).send(`
+      ${html}
+    `);
+});
 
 
 const PORT = process.env.PORT || config.defaultPort;
