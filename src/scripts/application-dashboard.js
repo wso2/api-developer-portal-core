@@ -71,17 +71,14 @@ async function resetThrottlingPolicy(applicationId) {
       }
     );
     if (response.ok) {
-      console.log('Throttling policy reset successfully.');
       await showAlert('Throttling policy reset successfully!', 'success');
     } else {
-      console.error('Failed to reset throttling policy.');
       await showAlert(
         'Failed to reset throttling policy. Please try again.',
         'error'
       );
     }
   } catch (error) {
-    console.error('Error resetting throttling policy:', error);
     await showAlert(
       'An error occurred while resetting the throttling policy. Please try again.',
       'error'

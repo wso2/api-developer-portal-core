@@ -53,24 +53,10 @@ const fetchAuthJsonContent = async (req, orgName) => {
         }
         return new IdentityProviderDTO(response[0].dataValues);
     } catch (error) {
-        console.error("Failed to fetch identity provider details", error);
+        ("Failed to fetch identity provider details", error);
         return config.identityProvider;
     }
 };
-
-// const login = async (req, res, next) => {
-//     console.log('========= login');
-//     await req.session.save(async (err) => {
-//         console.log('>>> session save');
-//         if (err) {
-//             console.error('>>> Session save failed');
-//             return res.status(500).send('Internal Server Error');
-//         }
-//         req.session.returnTo = "/sachinisdev/profile";
-//         await passport.authenticate('oauth2')(req, res, next);
-//     });
-//     console.log('>>>> login done');
-// }
 
 const login = async (req, res, next) => {
 
@@ -94,21 +80,15 @@ const login = async (req, res, next) => {
     IDP = await fetchAuthJsonContent(req, orgName);
     if (IDP.clientId) {
         //await configurePassport(IDP, claimNames);  // Configure passport dynamically
-        console.log("Login session ID", req.sessionID);
         await req.session.save(async (err) => {
-            console.log('>>> session save');
             if (err) {
-                console.error('>>> Session save failed');
                 return res.status(500).send('Internal Server Error');
             }
             // req.session.returnTo = "/sachinisdev/profile";
             req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
-            console.log("Saving return to: ", req.session.returnTo);
             await passport.authenticate('oauth2')(req, res, next);
         });
-        console.log(">>>>> Passport authentication done");
     } else {
-        console.log('!!!!!!!!!! idp not found');
         orgName = req.params.orgName;
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'login', 'page.hbs');
         const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
@@ -123,14 +103,6 @@ const login = async (req, res, next) => {
     }
 };
 
-// app.get('/signin', 
-//     passport.authenticate('oauth2', { failureRedirect: '/' }),
-//     (req, res) => {
-//         console.log("Return to in callback: ", req.user.returnTo);
-//         res.redirect('/profile');
-//     }
-// );
-
 const handleCallback = async (req, res, next) => {
     const rules = util.validateRequestParameters();
     const validationPromises = rules.map(validation => validation.run(req));
@@ -142,11 +114,9 @@ const handleCallback = async (req, res, next) => {
             }
         })
         .catch(error => {
-            console.error("Error validating request parameters: " + error);
+            ("Error validating request parameters: " + error);
             return res.status(500).json({ message: 'Internal Server Error' });
         });
-    console.log("Handling callback");
-    console.log("Callback session ID", req.sessionID);
     await passport.authenticate(
         'oauth2', 
         {
@@ -154,7 +124,6 @@ const handleCallback = async (req, res, next) => {
         }, 
         (err, user) => {
         if (err || !user) {
-            console.log("User not present", !user)
             return next(err || new Error('Authentication failed'));
         }
         req.logIn(user, (err) => {
@@ -171,7 +140,6 @@ const handleCallback = async (req, res, next) => {
                     returnTo = `/${req.params.orgName}`;
                 }
                 delete req.session.returnTo;
-                console.log("Redirecting to: ", returnTo);
                 res.redirect(returnTo);
             }
         });
@@ -224,7 +192,7 @@ const handleLogOut = async (req, res) => {
         const logoutURL = match ? match[1] : null;
         req.logout((err) => {
             if (err) {
-                console.error("Logout error:", err);
+                ("Logout error:", err);
             }
             req.session.currentPathURI = currentPathURI;
             res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${authJsonContent.logoutRedirectURI}&id_token_hint=${idToken}`);

@@ -31,8 +31,6 @@ const jwt = require('jsonwebtoken');
 
 function enforceSecuirty(scope) {
     return async function (req, res, next) {
-        console.log('User present in enforce security', req.user)
-        console.log('Check session cookie', req.headers)
         try {
             const rules = util.validateRequestParameters();
             for (let validation of rules) {
@@ -44,14 +42,12 @@ function enforceSecuirty(scope) {
             }
             const token = accessTokenPresent(req);
             if (token) {
-                console.log('Access token present')
                 //check user belongs to organization
                 if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
                     //check if exchanged token has organization identifier
                     //const decodedToken = req.user.exchangeToken ? jwt.decode(req.user.exchangeToken) : null;
                     const allowedOrgs = req.user.organizations;
                     if ((allowedOrgs && !(allowedOrgs.includes(req.user[constants.ORG_IDENTIFIER]))) || !allowedOrgs) {
-                        console.log('User is not authorized to access organization');
                         const err = new Error('Authentication required');
                         err.status = 401; // Unauthorized
                         return next(err);
@@ -63,7 +59,6 @@ function enforceSecuirty(scope) {
                 const decodedAccessToken = jwt.decode(token);
                 req[constants.USER_ID] = decodedAccessToken[constants.USER_ID];
             } else if (config.advanced.apiKey.enabled) {
-                console.log('Checking API Key')
                 // Communcation with API KEY
                 if (req.headers.organization) {
                     const organization = req.headers.organization;
@@ -75,14 +70,12 @@ function enforceSecuirty(scope) {
             } else if (req.connection.getPeerCertificate(true)) {
                 enforceMTLS(req, res, next);
             } else {
-                console.log('User is not authenticated');
                 req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
                 if (req.params.orgName) {
                     res.redirect(`/${req.params.orgName}/views/${req.session.view}/login`);
                 }
             }
         } catch (err) {
-            console.error("Error checking access token:", err);
             return res.status(500).json({ error: "Internal Server Error" });
         }
     }
@@ -91,7 +84,6 @@ function enforceSecuirty(scope) {
 function accessTokenPresent(req) {
 
     if (req.user) {
-        console.log('Access token present in session')
         accessToken = req.user[constants.ACCESS_TOKEN];
     } else if (req.headers.authorization) {
         accessToken = req.headers.authorization.split(' ')[1];
@@ -151,7 +143,6 @@ const ensureAuthenticated = async (req, res, next) => {
         }
         let role;
         if (req.isAuthenticated()) {
-            console.log('User is authenticated==============');
             const token = accessTokenPresent(req);
             if (token) {
                 const decodedAccessToken = jwt.decode(token);
@@ -159,7 +150,6 @@ const ensureAuthenticated = async (req, res, next) => {
             }
             if (config.authorizedPages.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
                 role = req.user[constants.ROLES.ROLE_CLAIM];
-                console.log('Logged in Role is: ' + role);
                 //add organization ID to request
                 if (req.user) {
                     //add details to session
@@ -175,18 +165,15 @@ const ensureAuthenticated = async (req, res, next) => {
                 const isMatch = constants.ROUTE.DEVPORTAL_ROOT.some(pattern => minimatch.minimatch(req.originalUrl, pattern));
 
                 if (!isMatch) {
-                    console.log('Checking if user belongs to organization');
                     if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
                         //check if exchanged token has organization identifier
                         //const decodedToken = req.user.exchangeToken ? jwt.decode(req.user.exchangeToken) : null;
                         const allowedOrgs = req.user.authorizedOrgs;
                         if (allowedOrgs && !(allowedOrgs.includes(req.user[constants.ORG_IDENTIFIER]))) {
-                            console.log('User is not authorized to access organization');
                             const err = new Error('Authentication required');
                             err.status = 401; // Unauthorized
                             return next(err);
                         } else if (!allowedOrgs) {
-                            console.log('User is not authorized to access organization');
                             const err = new Error('Authentication required');
                             err.status = 401; // Unauthorized
                             return next(err);
@@ -195,14 +182,11 @@ const ensureAuthenticated = async (req, res, next) => {
                 }
                 if (!config.advanced.disabledRoleValidation) {
                     if (ensurePermission(req.originalUrl, role, req)) {
-                        console.log('User is authorized');
                         return next();
                     } else {
-                        console.log('User is not authorized');
                         if (req.params.orgName === undefined) {
                             return res.send("User unauthorized");
                         } else {
-                            console.log('Redirecting')
                             return res.send("User unauthorized");
                         }
                     }
@@ -210,12 +194,10 @@ const ensureAuthenticated = async (req, res, next) => {
             }
             return next();
         } else {
-            console.log('User is not authenticated');
             req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
             if (req.params.orgName) {
                 res.redirect(`/${req.params.orgName}/views/${req.params.viewName}/login`);
             } else {
-                console.log('Redirecting to login')
                 res.redirect(303, `/portal/login`);
             }
         }
@@ -286,7 +268,6 @@ function validateAuthentication(scope) {
                 if (req.user) {
                     return next();
                 } else {
-                    console.log('Failing user check==================================')
                     return util.handleError(res, new CustomError(401, constants.ERROR_CODE[401], constants.ERROR_MESSAGE.UNAUTHENTICATED));
                 }
             }
@@ -316,8 +297,7 @@ const validateWithCert = async (token, publicKey) => {
         const { payload } = await jwtVerify(token, publicKey);
         return [true, payload.scope];
     } catch (err) {
-        console.log(err);
-        console.error("Invalid token:", err.message);
+        ("Invalid token:", err.message);
         return [false, ""];
     }
 }
@@ -329,7 +309,7 @@ const validateWithJWKS = async (token, jwksURL) => {
         const { payload } = await jwtVerify(token, jwks);
         return [true, payload.scope];
     } catch (err) {
-        console.error("Invalid token:", err.message);
+        ("Invalid token:", err.message);
         return [false, ""];
     }
 }

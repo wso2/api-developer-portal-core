@@ -93,7 +93,7 @@ form.addEventListener('submit', async (e) => {
         form.reset();
         window.location.href = document.referrer || '/applications';
     } catch (error) {
-        console.error('Error saving application:', error);
+        ('Error saving application:', error);
         await showAlert('Failed to update application.', 'error');
     }
 });

@@ -312,6 +312,6 @@ async function generateAPIKey(applicationID, isProduction) {
     openApiKeyModal(responseData.apikey, 'Generated API Key', 'API Key');
     await showAlert('API Key generated successfully!', 'success');
   } catch (error) {
-    console.error('Error:', error);
+    ('Error:', error);
   }
 }

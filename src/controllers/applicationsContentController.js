@@ -57,9 +57,7 @@ const loadApplications = async (req, res) => {
             html = renderTemplate('../pages/applications/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
         } else {
             const orgName = req.params.orgName;
-            console.log("loadApplications organization: " + orgName);
             const orgID = await orgIDValue(orgName);
-            console.log("loadApplications orgID: " + orgID);
             const applications = await adminDao.getApplications(orgID, req.user.sub)
             const metaData = await Promise.all(
                 applications.map(async (application) => {
@@ -83,7 +81,7 @@ const loadApplications = async (req, res) => {
             }
         }
     } catch (error) {
-        console.error("Error occurred while loading Applications", error);
+        ("Error occurred while loading Applications", error);
         html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
     }
     res.send(html);
@@ -125,7 +123,7 @@ const loadThrottlingPolicies = async (req, res) => {
             }
         }
     } catch (error) {
-        console.error("Error occurred", error);
+        ("Error occurred", error);
         html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
     }
     res.send(html);
@@ -145,8 +143,6 @@ async function getAPIMThrottlingPolicies(req) {
 // ***** Load Application *****
 
 const loadApplication = async (req, res) => {
-
-    console.log("Session id in application page", req.sessionID);
     let html, templateContent, metaData, kMmetaData;
     const viewName = req.params.viewName;
     try {
@@ -293,7 +289,7 @@ const loadApplication = async (req, res) => {
             }
         }
     } catch (error) {
-        console.error("Error occurred while loading application", error);
+        ("Error occurred while loading application", error);
         html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
     }
     res.send(html);
@@ -307,7 +303,7 @@ async function getApplicationKeys(applicationList, req) {
         try {
             return await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${appRef}/keys`, {}, {});
         } catch (error) {
-            console.error("Error occurred while generating application keys", error);
+            ("Error occurred while generating application keys", error);
             return null;
         }
     }
@@ -317,7 +313,7 @@ async function getAllAPIs(req) {
     try {
         return await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis`);
     } catch (error) {
-        console.error("Error occurred while loading APIs", error);
+        ("Error occurred while loading APIs", error);
         throw error;
     }
 }
@@ -326,7 +322,7 @@ const getSubscribedApis = async (req, appId) => {
     try {
         return await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?applicationId=${appId}`);
     } catch (error) {
-        console.error("Error occurred while loading subscriptions", error);
+        ("Error occurred while loading subscriptions", error);
         throw error;
     }
 }
@@ -368,7 +364,7 @@ const loadApplicationForEdit = async (req, res) => {
             }
         }
     } catch (error) {
-        console.error("Error occurred while loading application for edit", error);
+        ("Error occurred while loading application for edit", error);
         html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
 
     }

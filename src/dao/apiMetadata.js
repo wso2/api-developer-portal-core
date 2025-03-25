@@ -1294,7 +1294,6 @@ const getImageMetadata = async (imageTag, imageName, orgID, apiID, t) => {
 }
 
 const getImage = async (imageTag, apiID, t) => {
-    console.log(imageTag, apiID);
     try {
         const apiImageData = await APIImageMetadata.findOne({
             where: {
@@ -1444,8 +1443,6 @@ const getAPIId = async (orgID, apiHandle) => {
 }
 
 const getAPIHandle = async (orgID, apiRefID) => {
-    console.log(orgID, apiRefID);
-
     try {
         const api = await APIMetadata.findOne({
             attributes: ['API_HANDLE'],

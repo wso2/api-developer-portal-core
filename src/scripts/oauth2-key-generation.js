@@ -44,7 +44,6 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             await showAlert('Application keys generated successfully!', 'success');
             const consumerKey = responseData.consumerKey;
             const consumerSecret = responseData.consumerSecret;
-            console.log("Keys", responseData);
             document.getElementById(consumerKeyID).value = consumerKey;
             document.getElementById(consumerSecretID).value = consumerSecret;
             const consumerKeyElement = document.getElementById("consumerKeys_" + keyManager);
@@ -99,11 +98,11 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             const KMURLs = document.getElementById("KMURl_" + keyManager);
             KMURLs.style.display = "block";
         } else {
-            console.error('Failed to generate keys:', responseData);
+            ('Failed to generate keys:', responseData);
             await showAlert(`Failed to generate application keys. Please try again.\n${responseData.description}`, 'error');
         }
     } catch (error) {
-        console.error('Error:', error);
+        ('Error:', error);
         await showAlert(`An error occurred generating application keys: \n${error.message}`, 'error');
     }
 }
@@ -123,11 +122,11 @@ async function cleanUp(applicationId, keyMappingId) {
             const url = new URL(window.location.origin + window.location.pathname);
             window.location.href = url.toString();
         } else {
-            console.error('Failed to clean up keys:', responseData);
+            ('Failed to clean up keys:', responseData);
             await showAlert(`Failed to clean up application keys. Please try again.\n${responseData.description}`, 'error');
         }
     } catch (error) {
-        console.error('Error:', error);
+        ('Error:', error);
         await showAlert(`An error occurred cleaning up application keys: \n${error.message}`, 'error');
     }
 }
@@ -221,11 +220,11 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
             const url = new URL(window.location.origin + window.location.pathname);
             window.location.href = url.toString();
         } else {
-            console.error('Failed to generate keys:', responseData);
+            ('Failed to generate keys:', responseData);
             await showAlert(`Failed to generate application keys. Please try again.\n${responseData.description}`, 'error');
         }
     } catch (error) {
-        console.error('Error:', error);
+        ('Error:', error);
         await showAlert(`An error occurred generating application keys: \n${error.message}`, 'error');
     }
 }
@@ -252,11 +251,11 @@ async function removeApplicationKey() {
             const url = new URL(window.location.origin + window.location.pathname);
             window.location.href = url.toString();
         } else {
-            console.error('Failed to removed keys:', responseData);
+            ('Failed to removed keys:', responseData);
             await showAlert(`Failed to removed application keys. Please try again.\n${responseData.description}`, 'error');
         }
     } catch (error) {
-        console.error('Error:', error);
+        ('Error:', error);
         await showAlert(`An error occurred removing application keys: \n${error.message}`, 'error');
     }
 }
@@ -271,7 +270,6 @@ async function generateCurl(keyManager, tokenURL) {
 
     const curlDisplay = document.getElementById("curlDisplay_" + keyManager);
     curlDisplay.style.display = "block";
-    console.log(document.getElementById("curl_" + keyManager))
     document.getElementById("curl_" + keyManager).textContent = curl;
   
 }
@@ -304,18 +302,17 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
         const tokenDetails = document.getElementById("tokenDisplay_" + keyManager);
         tokenDetails.style.display = "block";
         //openApiKeyModal(responseData.accessToken, "Generated OAuth Token", "OAuth Token");
-        console.log(document.getElementById("token_" + keyManager))
         document.getElementById("token_" + keyManager).textContent = responseData.accessToken;
         if (response.ok) {
             await showAlert('Token generated successfully!', 'success');
         } else {
-            console.error('Failed to generate access token:', responseData);
+            ('Failed to generate access token:', responseData);
             await showAlert(`Failed to generate access token. Please try again.\n${responseData.description}`, 'error');
             const url = new URL(window.location.origin + window.location.pathname);
             window.location.href = url.toString();
         }
     } catch (error) {
-        console.error('Error:', error);
+        ('Error:', error);
         await showAlert(`An error occurred while generating OAuth keys: \n${error.message}`, 'error');
     }
 
@@ -346,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 1500);
             })
             .catch(err => {
-                console.error('Failed to copy: ', err);
+                ('Failed to copy: ', err);
             });
     }
  
@@ -416,19 +413,17 @@ async function copyToken(KMName) {
     // Copy access token
     const tokenElement = document.getElementById('token_' + KMName);
     if (!tokenElement) {
-        console.error('Token element not found for:', KMName);
         return;
     }
 
     const tokenText = tokenElement.textContent.trim();
-    console.log('Copying token to clipboard:', tokenText);
 
     try {
         // Copy to clipboard
         await navigator.clipboard.writeText(tokenText);
         await showAlert('Token copied to clipboard!');
     } catch (err) {
-        console.error('Could not copy text:', err);
+        ('Could not copy text:', err);
         await showAlert('Failed to copy token', true);
     }
 }
@@ -485,7 +480,7 @@ async function copyConsumerSecret(inputId) {
             iconElement.classList.add('bi-clipboard');
         }, 1500);
     } catch (err) {
-        console.error('Could not copy text:', err);
+        ('Could not copy text:', err);
         await showAlert('Failed to copy Consumer Secret', true);
     }
 }

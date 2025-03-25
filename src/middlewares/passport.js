@@ -51,13 +51,9 @@ async function configurePassport(authJsonContent, claimNames) {
         scope: ['openid', 'profile', 'email'],
     }, async (req, accessToken, refreshToken, params, profile, done) => {
         
-        console.log('verify =================== ');
-        
         if (!accessToken) {
-            console.error('>>>>>>> No access token received');
             return done(new Error('Access token missing'));
         }
-        console.error('>>>>>>> access token: ' + accessToken);
         // let orgList;
         // if (config.advanced.tokenExchanger.enabled) {
         //     const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
@@ -80,7 +76,6 @@ async function configurePassport(authJsonContent, claimNames) {
         //     isSuperAdmin = true;
         // }
         // const returnTo = req.session.returnTo;
-        // console.log("Retrieved returnTo in callback: " + returnTo);
         // let view = '';
         // if (returnTo) {
         //     const startIndex = returnTo.indexOf('/views/') + 7;
@@ -108,8 +103,6 @@ async function configurePassport(authJsonContent, claimNames) {
         profile = {
             accessToken,
         };
-
-        console.log('------ verify done ---------');
 
         return done(null, profile);
     }));

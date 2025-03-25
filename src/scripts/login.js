@@ -25,11 +25,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 const newUrl = currentUrl.replace('/login', '');
                 window.location.href = document.referrer || newUrl;
             } else {
-                console.error('Login failed:', responseData);
+                ('Login failed:', responseData);
                 await showAlert(`Login failed. ${responseData.message}`, 'error');
             }
         } catch (error) {
-            console.error('Login failed:', error);
+            ('Login failed:', error);
             await showAlert('Login failed', 'error');
         }
     });

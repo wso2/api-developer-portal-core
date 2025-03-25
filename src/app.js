@@ -224,10 +224,10 @@ passport.use(new OAuth2Strategy({
     console.log('verify =================== ');
     
     if (!accessToken) {
-        console.error('>>>>>>> No access token received');
+        ('>>>>>>> No access token received');
         return done(new Error('Access token missing'));
     }
-    console.error('>>>>>>> access token: ' + accessToken);
+    ('>>>>>>> access token: ' + accessToken);
     let orgList;
     if (config.advanced.tokenExchanger.enabled) {
         const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
@@ -250,7 +250,6 @@ passport.use(new OAuth2Strategy({
         isSuperAdmin = true;
     }
     const returnTo = req.session.returnTo;
-    console.log("Retrieved returnTo in callback: " + returnTo);
     let view = '';
     if (returnTo) {
         const startIndex = returnTo.indexOf('/views/') + 7;
@@ -285,8 +284,7 @@ passport.use(new OAuth2Strategy({
 // Serialize user into the session
 passport.serializeUser((user, done) => {
 
-    console.log("Serializing user");
-    console.log(('>>> User: ' + JSON.stringify(user, null, 2)))
+    console.log(('>>> Serializing User: ' + JSON.stringify(user, null, 2)))
     // const profile = {
     //     firstName: user.firstName,
     //     lastName: user.lastName,
@@ -316,8 +314,6 @@ passport.serializeUser((user, done) => {
 
 // Deserialize user from the session
 // passport.deserializeUser(async (sessionData, done) => {
-
-//     console.log("Deserializing user");
 //     //return done(null, sessionData);
 //     lock.acquire('deserialize', async (release) => {
 //         try {
@@ -361,77 +357,18 @@ if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.DEFAULT, customContent);
 }
 
-// app.get('/', (req, res) => {
-//     res.send(`
-//         <h1>Server ID: ${SERVER_ID}</h1>
-//         <a href="/login">Login with OAuth2</a>
-//     `);
-// });
-
-// const login = async (req, res, next) => {
-//     console.log('========= login');
-//     // await configPassport(); // this is not necessary as there are no org specific idps
-//     await req.session.save(async (err) => {
-//         console.log('>>> session save');
-//         if (err) {
-//             console.error('>>> Session save failed');
-//             return res.status(500).send('Internal Server Error');
-//         }
-//         req.session.returnTo = "/sachinisdev/profile";
-//         await passport.authenticate('oauth2')(req, res, next);
-//     });
-//     console.log('>>>> login done');
-// }
-
-// Login route
-// app.get('/login', login);
-
-// Callback route
-// app.get('/signin', 
-//     passport.authenticate('oauth2', { failureRedirect: '/' }),
-//     (req, res) => {
-//         console.log("Return to in callback: ", req.user.returnTo);
-//         res.redirect('/profile');
-//     }
-// );
-
-// Profile page (protected)
-// app.get('/profile', (req, res) => {
-//     console.log('profile');
-//     if (!req.isAuthenticated()) {
-//         console.log('Profile - Not authenticated')
-//         return res.redirect('/');
-//     }
-//     console.log('Profile - Authenticated');
-//     res.send(`
-//         <h1>Logged In: ${SERVER_ID}</h1>
-//         <pre>${JSON.stringify(req.user, null, 2)}</pre>
-//         <a href="/logout">Logout</a>
-//     `);
-// });
-
-// Logout route
-// app.get('/logout', (req, res) => {
-//     req.logout(() => {
-//         req.session.destroy();
-//         res.redirect('/');
-//     });
-// });
-
 
 app.use((err, req, res, next) => {
 
-    console.error(err.stack); // Log error for debugging
+    (err.stack); // Log error for debugging
     const templateContent = {
         baseUrl: '/' + req.params.orgName + '/' + constants.ROUTE.VIEWS_PATH + "default"
     }
     if (err.status === 401) {
         req.session.destroy((err) => {
             if (err) {
-                console.error("❌ Error destroying session:", err);
                 return res.status(500).send("Logout failed");
             }
-            console.log("✅ User logged out and session destroyed");
         });
         html = util.renderTemplate('../pages/authentication-error/page.hbs', 'src/pages/error-layout/main.hbs', templateContent, true);
     } else {
@@ -470,29 +407,45 @@ if (config.advanced.http) {
         });
 
     } catch (err) {
-        console.error('\n' + chalk.red.bold('Error setting up HTTPS server:') + '\n', chalk.red(err.message) + '\n');
+        ('\n' + chalk.red.bold('Error setting up HTTPS server:') + '\n', chalk.red(err.message) + '\n');
     }
 }
 
 const logStartupInfo = () => {
-    console.log('\n' + chalk.green.bold(`Developer Portal V2 is running on port ${PORT}`) + '\n');
-    console.log('\n' + chalk.cyan.bold(`Mode: ${config.mode}`) + '\n');
-
     if (config.mode === constants.DEV_MODE) {
-        console.log('\n' + chalk.yellow('⚠️  Since you are in DEV mode...') + '\n');
-        console.log(chalk.greenBright('✅ Ensure that the default content is correctly available at the configured "pathToContent".') + '\n');
-        console.log(chalk.greenBright('✅ The "Mock" folder must exist in the same root directory as "pathToContent".') + '\n');
     }
-
-    console.log(chalk.blue(`🔗 Visit: ${chalk.underline(config.baseUrl + (config.mode === constants.DEV_MODE ? "/views/default" : "/<organization>/views/default"))}`) + '\n');
 };
 
 // Handle Uncaught Exceptions
 process.on('uncaughtException', (err) => {
-    console.error('\n' + chalk.bgRed.white.bold(' Uncaught Exception ') + '\n', chalk.red(err.stack || err.message) + '\n');
+    ('\n' + chalk.bgRed.white.bold(' Uncaught Exception ') + '\n', chalk.red(err.stack || err.message) + '\n');
 });
 
 // Handle Unhandled Rejections
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('\n' + chalk.bgRed.white.bold(' Unhandled Rejection ') + '\n', chalk.red('Promise:', promise, '\nReason:', reason) + '\n');
+    ('\n' + chalk.bgRed.white.bold(' Unhandled Rejection ') + '\n', chalk.red('Promise:', promise, '\nReason:', reason) + '\n');
 });
+
+
+// https://05a5e3e0-ae7f-4da7-9c21-4471f908e8b7.e1-us-east-azure.choreoapps.dev
+// https://05a5e3e0-ae7f-4da7-9c21-4471f908e8b7.e1-us-east-azure.choreoapps.dev/devportal/applications
+
+
+
+
+// curl 'https://05a5e3e0-ae7f-4da7-9c21-4471f908e8b7.e1-us-east-azure.choreoapps.dev/devportal/applications' \
+//   -H 'Accept: */*' \
+//   -H 'Accept-Language: en-GB,en-US;q=0.9,en;q=0.8' \
+//   -H 'Connection: keep-alive' \
+//   -H 'Content-Type: application/json' \
+//   -b '_hjSessionUser_5035958=eyJpZCI6IjViNGE4OWFlLWRkNzEtNWQ5My05NzAyLTA2NjhiMTI4Y2Y0NSIsImNyZWF0ZWQiOjE3MzA3NDM1OTU3OTEsImV4aXN0aW5nIjp0cnVlfQ==; _ga=GA1.1.779750804.1740669878; _hjSessionUser_5081033=eyJpZCI6ImQzNzQxZTI3LTU5YjEtNWFmYy1hNWVlLWNjNGJiOWZhN2E4YiIsImNyZWF0ZWQiOjE3NDA2Njk4Nzg5MjgsImV4aXN0aW5nIjp0cnVlfQ==; _ga_9K9KB0D73T=GS1.1.1741584871.6.1.1741584947.0.0.0; connect.sid=s%3A5Ikl9qKRHroBXFcbdCfq-vTzlw2yns6N.J52ioLVP47qycC7OAd1YDlVcVsout2mHE9azUMp3u1o' \
+//   -H 'Origin: https://05a5e3e0-ae7f-4da7-9c21-4471f908e8b7.e1-us-east-azure.choreoapps.dev' \
+//   -H 'Referer: https://05a5e3e0-ae7f-4da7-9c21-4471f908e8b7.e1-us-east-azure.choreoapps.dev/lasanthasamarakoon/views/default/applications/create' \
+//   -H 'Sec-Fetch-Dest: empty' \
+//   -H 'Sec-Fetch-Mode: cors' \
+//   -H 'Sec-Fetch-Site: same-origin' \
+//   -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36' \
+//   -H 'sec-ch-ua: "Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"' \
+//   -H 'sec-ch-ua-mobile: ?0' \
+//   -H 'sec-ch-ua-platform: "macOS"' \
+//   --data-raw '{"name":"DSFFD","description":"DSAFDFDFD","type":"WEB"}'

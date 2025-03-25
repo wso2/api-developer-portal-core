@@ -103,7 +103,7 @@ const loadAPIs = async (req, res) => {
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
         } catch (error) {
-            console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
+            (constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
             html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
         }
     }
@@ -208,11 +208,10 @@ const loadAPIContent = async (req, res) => {
                 resources: apiDetails,
                 orgID: orgID
             };
-            console.log(apiDetails);
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
             res.send(html);
         } catch (error) {
-            console.error(`Failed to load api content:`, error);
+            (`Failed to load api content:`, error);
             html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
         }
     }
@@ -314,7 +313,7 @@ const loadDocsPage = async (req, res) => {
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
         } catch (error) {
-            console.error(`Failed to load api docs:`, error);
+            (`Failed to load api docs:`, error);
             html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
         }
     }
@@ -362,7 +361,7 @@ const loadDocument = async (req, res) => {
             templateContent.docTypes = docNames;
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
         } catch (error) {
-            console.error(`Failed to load api content :`, error);
+            (`Failed to load api content :`, error);
             html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
         }
     }
@@ -445,7 +444,7 @@ async function parseSwagger(api) {
         }));
         return { title, description: apiDescription, endpoints };
     } catch (error) {
-        console.error("Error parsing OpenAPI:", error);
+        ("Error parsing OpenAPI:", error);
     }
 }
 
