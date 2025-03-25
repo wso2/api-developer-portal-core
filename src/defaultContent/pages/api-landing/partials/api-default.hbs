@@ -20,16 +20,16 @@
 <section class="section mb-4">
     <div class="container-fluid">
         <div class="defaultapi-section">
-            <div class="container-header mb-4" style="justify-self: center;">Endpoints</div>
+            <div class="container-header mb-4">Endpoints</div>
             {{#if (eq resources.serverDetails "")}}
             <div class="defaultapi-endpoint-row col-12 col-xl-9" style="justify-self: center;">
-                <div class="defaultapi-endpoint-content">
+                <div class="defaultapi-endpoint-content ">
                     <span class="defaultapi-development-label">No endpoints available</span>
                 </div>
             </div>
             {{else}}
             {{#unless (eq resources.serverDetails.productionURL "")}}
-            <div class="defaultapi-endpoint-row col-12 col-xl-9" style="justify-self: center;">
+            <div class="defaultapi-endpoint-row col-12 col-xl-9">
                 <div class="defaultapi-endpoint-content">
                     <span class="defaultapi-development-label">Production Endpoint</span>
                     <div class="defaultapi-endpoint-url-container">
@@ -39,7 +39,7 @@
             </div>
             {{/unless}}
             {{#unless (eq resources.serverDetails.sandboxURL "")}}
-            <div class="defaultapi-endpoint-row col-12 col-xl-9" style="justify-self: center;">
+            <div class="defaultapi-endpoint-row col-12 col-xl-9">
                 <div class="defaultapi-endpoint-content">
                     <span class="defaultapi-development-label">Sandbox Endpoint</span>
                     <div class="defaultapi-endpoint-url-container">
@@ -51,14 +51,8 @@
             {{/if}}
         </div>
         <div class="defaultapi-section">
-            <div class="container-header mb-4" style="justify-self: center;">Description</div>
-            <div class="defaultapi-description col-12 col-xl-9" style="justify-self: center;">
-                <p>{{resources.description}}</p>
-            </div>
-        </div>
-        <div class="defaultapi-section">
-            <div class="container-header mb-4" style="justify-self: center;">Resources</div>
-            <div class="defaultapi-resources col-12 col-xl-9" style="justify-self: center;">
+            <div class="container-header mb-4">Resources</div>
+            <div class="defaultapi-resources col-12">
                 {{#resources.endpoints}}
                 {{#methods}}
                 <div class="defaultapi-resource-item defaultapi-resource-item-{{method}}">

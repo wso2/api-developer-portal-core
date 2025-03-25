@@ -56,12 +56,14 @@
             <img src="{{apiInfo.apiImageMetadata.api-icon}}" class="api-card-img" alt="..." />
             <div class="flex-grow-1">
               <h5 class="api-card-title mb-0">{{apiInfo.apiName}}</h5>
-              <p>{{apiInfo.apiVersion}}</p>
-              <p>{{apiInfo.apiType}}</p>
+              <div class="d-flex align-items-center gap-2">
+                <p class="mb-0">{{apiInfo.apiVersion}}</p>
+                <span class="badge badge-custom2">{{apiInfo.apiType}}</span>
+              </div>
             </div>
             {{#if ../isAuthenticated}}
             {{#if (some applications "subscribed")}}
-            <div class="subscription-flag fw-light">Subscribed</div>
+            <div class="subscription-flag fw-bold">Subscribed</div>
             {{/if}}
             {{/if}}
           </div>

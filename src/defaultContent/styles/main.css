@@ -49,6 +49,7 @@
   --warning-color: #ffc107;
   --white-color: #ffffff;
   --Black-color: #000000;
+  --subscribed-color: #0c7838;
   /* sidebar specific colors */
   --sidebar-link-color: #a8cadc;
   --sidebar-active-color: #41789c;
@@ -87,15 +88,16 @@ html {
 .content-area {
   width: 100%;
   margin-top: 1rem;
+  margin-bottom: 1rem;
 }
 
 .section {
-  margin: 3.5rem 2rem 0 0;
+  margin: 3.5rem 1rem 0 0;
 }
 
 .common-btn-primary {
   display: inline-block;
-  background-color: var(--primary-btn-color);
+  background-color: var(--primary-main-color);
   color: var(--lightest-text-color);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
@@ -144,7 +146,7 @@ html {
 }
 
 .common-btn-primary:hover {
-  background-color: var(--primary-dark-color);
+  background-color: var(--primary-btn-color);
   color: var(--lightest-text-color);
 }
 
@@ -224,19 +226,18 @@ html {
 }
 
 .common-btn-outlined:hover {
-  background-color: var(--primary-main-color);
+  background-color: var(--primary-btn-color);
   color: var(--lightest-text-color);
   border-color: var(--primary-dark-color);
 }
 
 .common-btn-outlined:active {
-  background-color: var(--primary-dark-color);
+  background-color: var(--primary-btn-color);
   color: var(--lightest-text-color);
 }
 
 .common-btn-outlined:focus {
   outline: none;
-  box-shadow: 0 0 0 0.25rem var(--primary-light-color);
 }
 
 .common-sub-header h5 {
@@ -319,4 +320,8 @@ h6 {
   color: var(--primary-main-color);
   font-size: 2rem;
   font-weight: 600;
+}
+
+.container-header-style {
+ margin-left: 4rem;
 }

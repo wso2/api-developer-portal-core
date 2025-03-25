@@ -1,7 +1,7 @@
 .apis-section {
   display: flex;
   justify-content: center;
-  margin: 0 2rem 0 0;
+  margin: 0 1rem 0 0;
   align-items: center;
   flex-direction: column;
 }
@@ -12,7 +12,7 @@
   flex-direction: row;
   justify-content: space-between;
   padding: 1.5rem 3.5rem;
-  border-radius: 1.5rem;
+  border-radius: 0.75rem;
   background: var(--secondary-bg-color);
 }
 
@@ -81,7 +81,7 @@
   align-items: center;
   background-color: var(--light-bg-color);
   padding: 0.625rem 1rem;
-  border-radius: 5px;
+  border-radius: 0.75rem;
   width: 100%;
 }
 
@@ -108,7 +108,7 @@
 }
 
 .apilist-container {
-  margin-top: 3rem;
+  margin-top: 2rem;
   margin-bottom: 1.25rem;
 }
 
@@ -186,7 +186,7 @@ hr {
 
 .api-card {
   text-align: left;
-  border-radius: 24px;
+  border-radius: 0.75rem;
   height: 100%;
   background: var(--main-bg-color);
 }
@@ -201,17 +201,17 @@ hr {
 
 .api-card-header {
   padding: 20px;
-  border-top-right-radius: 23px;
-  border-top-left-radius: 23px;
+  border-top-right-radius: 0.75rem;
+  border-top-left-radius: 0.75rem;
   background-color: var(--secondary-bg-color);
 }
 
 .api-card-body {
-  padding: 20px;
+  padding: 1.25rem;
 }
 
 .api-card-footer {
-  padding: 20px;
+  padding: 1.25rem;
 }
 
 .truncate-text {
@@ -430,14 +430,14 @@ hr {
 
   .subscription-flag {
     position: absolute;
-    top: 25px;
-    right: -25px;
-    background-color: #006432;
-    font-size: 9px;
+    top: 1.563rem;
+    right: -2.5rem;
+    background-color: var(--subscribed-color);
+    font-size: 0.75rem;
     color: var(--lightest-text-color);
     text-align: center;
-    width: 120px;
-    padding: 2px 0;
+    width: 10rem;
+    padding: 0.125rem 0;
     transform: rotate(45deg);
   }
 }
