@@ -336,54 +336,6 @@ input[type="checkbox"]:checked {
   background-color: #f9fafb;
 }
 
-/* Modal with fixed height and scrollable content */
-.oauth-modal-content {
-  display: flex;
-  flex-direction: column;
-  max-height: 700px;
-  overflow: hidden;
-  padding: 0;
-  width: 100%;
-}
-
-.oauth-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-  flex-shrink: 0;
-  background-color: #fff;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.oauth-modal-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 1.25rem 1.5rem;
-}
-
-/* Custom scrollbar styling */
-.oauth-modal-body::-webkit-scrollbar {
-  width: 8px;
-}
-
-.oauth-modal-body::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-.oauth-modal-body::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
-}
-
-.oauth-modal-body::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
 /* Password visibility toggle */
 .password-toggle-container {
   position: relative;

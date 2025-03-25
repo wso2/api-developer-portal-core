@@ -344,3 +344,60 @@ h6 {
 .container-header-style {
  margin-left: 4rem;
 }
+
+/* Custom Modal */
+.custom-modal {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.custom-modal-content {
+  display: flex;
+  flex-direction: column;
+  max-height: 700px;
+  overflow: hidden;
+  padding: 0;
+  width: 100%;
+}
+
+.custom-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+  background-color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.custom-modal-title {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.custom-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem 1.5rem;
+}
+
+/* Custom Modal Scrollbar */
+.custom-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.custom-modal-body::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.custom-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
