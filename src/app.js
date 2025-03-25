@@ -425,27 +425,3 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason, promise) => {
     ('\n' + chalk.bgRed.white.bold(' Unhandled Rejection ') + '\n', chalk.red('Promise:', promise, '\nReason:', reason) + '\n');
 });
-
-
-// https://05a5e3e0-ae7f-4da7-9c21-4471f908e8b7.e1-us-east-azure.choreoapps.dev
-// https://05a5e3e0-ae7f-4da7-9c21-4471f908e8b7.e1-us-east-azure.choreoapps.dev/devportal/applications
-
-
-
-
-// curl 'https://05a5e3e0-ae7f-4da7-9c21-4471f908e8b7.e1-us-east-azure.choreoapps.dev/devportal/applications' \
-//   -H 'Accept: */*' \
-//   -H 'Accept-Language: en-GB,en-US;q=0.9,en;q=0.8' \
-//   -H 'Connection: keep-alive' \
-//   -H 'Content-Type: application/json' \
-//   -b '_hjSessionUser_5035958=eyJpZCI6IjViNGE4OWFlLWRkNzEtNWQ5My05NzAyLTA2NjhiMTI4Y2Y0NSIsImNyZWF0ZWQiOjE3MzA3NDM1OTU3OTEsImV4aXN0aW5nIjp0cnVlfQ==; _ga=GA1.1.779750804.1740669878; _hjSessionUser_5081033=eyJpZCI6ImQzNzQxZTI3LTU5YjEtNWFmYy1hNWVlLWNjNGJiOWZhN2E4YiIsImNyZWF0ZWQiOjE3NDA2Njk4Nzg5MjgsImV4aXN0aW5nIjp0cnVlfQ==; _ga_9K9KB0D73T=GS1.1.1741584871.6.1.1741584947.0.0.0; connect.sid=s%3A5Ikl9qKRHroBXFcbdCfq-vTzlw2yns6N.J52ioLVP47qycC7OAd1YDlVcVsout2mHE9azUMp3u1o' \
-//   -H 'Origin: https://05a5e3e0-ae7f-4da7-9c21-4471f908e8b7.e1-us-east-azure.choreoapps.dev' \
-//   -H 'Referer: https://05a5e3e0-ae7f-4da7-9c21-4471f908e8b7.e1-us-east-azure.choreoapps.dev/lasanthasamarakoon/views/default/applications/create' \
-//   -H 'Sec-Fetch-Dest: empty' \
-//   -H 'Sec-Fetch-Mode: cors' \
-//   -H 'Sec-Fetch-Site: same-origin' \
-//   -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36' \
-//   -H 'sec-ch-ua: "Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"' \
-//   -H 'sec-ch-ua-mobile: ?0' \
-//   -H 'sec-ch-ua-platform: "macOS"' \
-//   --data-raw '{"name":"DSFFD","description":"DSAFDFDFD","type":"WEB"}'

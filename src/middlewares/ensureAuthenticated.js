@@ -45,19 +45,28 @@ function enforceSecuirty(scope) {
             const token = accessTokenPresent(req);
             console.log('token', token);
             if (token) {
+                console.log('>>>>>> has token');
                 //check user belongs to organization
                 if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
+                    console.log('>>>>>> user thr...');
+                    console.log(JSON.stringify(req.user, null, 2));
                     //check if exchanged token has organization identifier
                     //const decodedToken = req.user.exchangeToken ? jwt.decode(req.user.exchangeToken) : null;
-                    const allowedOrgs = req.user.organizations;
-                    if ((allowedOrgs && !(allowedOrgs.includes(req.user[constants.ORG_IDENTIFIER]))) || !allowedOrgs) {
+                    const authorizedOrgs = req.user.authorizedOrgs;
+                    console.log('allowedOrgs', authorizedOrgs);
+                    if ((authorizedOrgs && !(authorizedOrgs.includes(req.user[constants.ORG_IDENTIFIER]))) || !authorizedOrgs) {
                         const err = new Error('Authentication required');
                         err.status = 401; // Unauthorized
+                        console.log('>>>>> unauthorized')
                         return next(err);
+                    } else {
+                        console.log('>>>>> success!!!');
                     }
                 }
+                console.log('>>>>>> if passed');
                 // TODO: Implement organization extraction logic
                 validateAuthentication(scope)(req, res, next);
+                console.log('>>>>>> validate auth passed');
                 //set user ID
                 const decodedAccessToken = jwt.decode(token);
                 req[constants.USER_ID] = decodedAccessToken[constants.USER_ID];
@@ -73,14 +82,17 @@ function enforceSecuirty(scope) {
             } else if (req.connection.getPeerCertificate(true)) {
                 enforceMTLS(req, res, next);
             } else {
+                console.log('>>>>>> else');
                 req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
                 if (req.params.orgName) {
                     res.redirect(`/${req.params.orgName}/views/${req.session.view}/login`);
                 }
             }
         } catch (err) {
+            console.log('>>>>>> error');
             return res.status(500).json({ error: "Internal Server Error" });
         }
+        console.log('>>>>>> exiting...');
     }
 }
 
