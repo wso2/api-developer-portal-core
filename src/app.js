@@ -277,6 +277,7 @@ passport.use(new OAuth2Strategy({
 
     profile = {
         accessToken,
+        "returnTo": req.session.returnTo
     };
 
     console.log('------ verify done ---------');
@@ -379,6 +380,7 @@ const login = async (req, res, next) => {
             console.error('>>> Session save failed');
             return res.status(500).send('Internal Server Error');
         }
+        req.session.returnTo = "/profile";
         await passport.authenticate('oauth2')(req, res, next);
     });
     console.log('>>>> login done');
@@ -397,12 +399,12 @@ app.get('/signin',
 
 // Profile page (protected)
 app.get('/profile', (req, res) => {
-    logging.infoSection('profile');
+    console.log('profile');
     if (!req.isAuthenticated()) {
-        logging.info('Profile - Not authenticated')
+        console.log('Profile - Not authenticated')
         return res.redirect('/');
     }
-    logging.info('Profile - Authenticated');
+    console.log('Profile - Authenticated');
     res.send(`
         <h1>Logged In: ${SERVER_ID}</h1>
         <pre>${JSON.stringify(req.user, null, 2)}</pre>
