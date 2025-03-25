@@ -18,10 +18,12 @@
     padding: 15px 20px;
     border-radius: 8px;
     margin-bottom: 15px;
+    margin-right: 2rem;
     border-left: 4px solid #61affe;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
     position: relative;
+    width:100%
 }
 
 .defaultapi-endpoint-row:hover {
@@ -57,7 +59,7 @@
 
 .defaultapi-endpoint-url {
     font-family: var(--font-family-mono);
-    color: #3182ce;
+    color: var(--dp-main-text-color);
     font-size: 15px;
     flex-grow: 1;
     overflow: hidden;
@@ -72,6 +74,9 @@
 
 .defaultapi-resources {
     overflow: hidden;
+    grid-gap: 0.5rem;
+    display: flex;
+    flex-direction: column;
 }
 
 .defaultapi-resource-item {
@@ -134,6 +139,10 @@
 
 .defaultapi-http-method-DELETE {
     background-color: #f93e3e;
+}
+
+.defaultapi-http-method-PATCH {
+    background-color: #50e3c2;
 }
 
 .defaultapi-resource-path {
