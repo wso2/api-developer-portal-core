@@ -31,6 +31,7 @@ const jwt = require('jsonwebtoken');
 
 function enforceSecuirty(scope) {
     return async function (req, res, next) {
+        console.log('enforceSecurity ======================');
         try {
             const rules = util.validateRequestParameters();
             for (let validation of rules) {
@@ -40,7 +41,9 @@ function enforceSecuirty(scope) {
             if (!errors.isEmpty()) {
                 return res.status(400).json(util.getErrors(errors));
             }
+            console.log('check access token');
             const token = accessTokenPresent(req);
+            console.log('token', token);
             if (token) {
                 //check user belongs to organization
                 if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
@@ -84,10 +87,13 @@ function enforceSecuirty(scope) {
 function accessTokenPresent(req) {
 
     if (req.user) {
+        console.log('user present');
         accessToken = req.user[constants.ACCESS_TOKEN];
     } else if (req.headers.authorization) {
+        console.log('header present');
         accessToken = req.headers.authorization.split(' ')[1];
     } else {
+        console.log('not present');
         return null;
     }
     return accessToken;
