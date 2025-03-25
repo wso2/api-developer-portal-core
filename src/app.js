@@ -42,10 +42,10 @@ const constants = require("./utils/constants");
 // const settingsRoute = require('./routes/configureRoute');
 const AsyncLock = require('async-lock');
 const secretConf = require(process.cwd() + '/secret.json');
-// const util = require('./utils/util');
+const util = require('./utils/util');
 
 const OAuth2Strategy = require('passport-oauth2');
-// const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 // const secret = require(process.cwd() + '/secret.json');
 const { v4: uuidv4 } = require('uuid');
 
@@ -228,57 +228,54 @@ passport.use(new OAuth2Strategy({
         return done(new Error('Access token missing'));
     }
     console.error('>>>>>>> access token: ' + accessToken);
-    // let orgList;
-    // if (config.advanced.tokenExchanger.enabled) {
-    //     const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
-    //     const decodedExchangedToken = jwt.decode(exchangedToken);
-    //     orgList = decodedExchangedToken.organizations;
-    //     req['exchangedToken'] = exchangedToken;
-    // }
-    // const decodedJWT = jwt.decode(params.id_token);
-    // const decodedAccessToken = jwt.decode(accessToken);
-    // const firstName = decodedJWT['given_name'] || decodedJWT['nickname'];
-    // const lastName = decodedJWT['family_name'];
-    // const organizationID = decodedJWT[claimNames[constants.ROLES.ORGANIZATION_CLAIM]] ? decodedJWT[config.orgIDClaim] : '';
-    // const roles = decodedJWT[claimNames[constants.ROLES.ROLE_CLAIM]] ? decodedJWT[config.roleClaim] : '';
-    // const groups = decodedJWT[claimNames[constants.ROLES.GROUP_CLAIM]] ? decodedJWT[config.groupsClaim] : '';
-    // let isAdmin, isSuperAdmin = false;
-    // if (roles.includes(constants.ROLES.SUPER_ADMIN) || roles.includes(constants.ROLES.ADMIN)) {
-    //     isAdmin = true;
-    // }
-    // if (roles.includes(constants.ROLES.SUPER_ADMIN)) {
-    //     isSuperAdmin = true;
-    // }
-    // const returnTo = req.session.returnTo;
-    // console.log("Retrieved returnTo in callback: " + returnTo);
-    // let view = '';
-    // if (returnTo) {
-    //     const startIndex = returnTo.indexOf('/views/') + 7;
-    //     const endIndex = returnTo.indexOf('/', startIndex) !== -1 ? returnTo.indexOf('/', startIndex) : returnTo.length;
-    //     view = returnTo.substring(startIndex, endIndex);
-    // }
-    // profile = {
-    //     'firstName': firstName ? (firstName.includes(" ") ? firstName.split(" ")[0] : firstName) : '',
-    //     'lastName': lastName ? lastName : (firstName && firstName.includes(" ") ? firstName.split(" ")[1] : ''),
-    //     'view': view,
-    //     'idToken': params.id_token,
-    //     'email': decodedJWT['email'],
-    //     [constants.ROLES.ORGANIZATION_CLAIM]: organizationID,
-    //     'returnTo': req.session.returnTo,
-    //     accessToken,
-    //     'authorizedOrgs': orgList,
-    //     'exchangeToken': req.exchangedToken,
-    //     [constants.ROLES.ROLE_CLAIM]: roles,
-    //     [constants.ROLES.GROUP_CLAIM]: groups,
-    //     'isAdmin': isAdmin,
-    //     'isSuperAdmin': isSuperAdmin,
-    //     [constants.USER_ID]: decodedAccessToken[constants.USER_ID]
-    // };
-
+    let orgList;
+    if (config.advanced.tokenExchanger.enabled) {
+        const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
+        const decodedExchangedToken = jwt.decode(exchangedToken);
+        orgList = decodedExchangedToken.organizations;
+        req['exchangedToken'] = exchangedToken;
+    }
+    const decodedJWT = jwt.decode(params.id_token);
+    const decodedAccessToken = jwt.decode(accessToken);
+    const firstName = decodedJWT['given_name'] || decodedJWT['nickname'];
+    const lastName = decodedJWT['family_name'];
+    const organizationID = decodedJWT[claimNames[constants.ROLES.ORGANIZATION_CLAIM]] ? decodedJWT[config.orgIDClaim] : '';
+    const roles = decodedJWT[claimNames[constants.ROLES.ROLE_CLAIM]] ? decodedJWT[config.roleClaim] : '';
+    const groups = decodedJWT[claimNames[constants.ROLES.GROUP_CLAIM]] ? decodedJWT[config.groupsClaim] : '';
+    let isAdmin, isSuperAdmin = false;
+    if (roles.includes(constants.ROLES.SUPER_ADMIN) || roles.includes(constants.ROLES.ADMIN)) {
+        isAdmin = true;
+    }
+    if (roles.includes(constants.ROLES.SUPER_ADMIN)) {
+        isSuperAdmin = true;
+    }
+    const returnTo = req.session.returnTo;
+    console.log("Retrieved returnTo in callback: " + returnTo);
+    let view = '';
+    if (returnTo) {
+        const startIndex = returnTo.indexOf('/views/') + 7;
+        const endIndex = returnTo.indexOf('/', startIndex) !== -1 ? returnTo.indexOf('/', startIndex) : returnTo.length;
+        view = returnTo.substring(startIndex, endIndex);
+    }
     profile = {
+        'firstName': firstName ? (firstName.includes(" ") ? firstName.split(" ")[0] : firstName) : '',
+        'lastName': lastName ? lastName : (firstName && firstName.includes(" ") ? firstName.split(" ")[1] : ''),
+        'view': view,
+        'idToken': params.id_token,
+        'email': decodedJWT['email'],
+        [constants.ROLES.ORGANIZATION_CLAIM]: organizationID,
+        'returnTo': req.session.returnTo,
         accessToken,
-        "returnTo": req.session.returnTo
+        'authorizedOrgs': orgList,
+        'exchangeToken': req.exchangedToken,
+        [constants.ROLES.ROLE_CLAIM]: roles,
+        [constants.ROLES.GROUP_CLAIM]: groups,
+        'isAdmin': isAdmin,
+        'isSuperAdmin': isSuperAdmin,
+        [constants.USER_ID]: decodedAccessToken[constants.USER_ID]
     };
+
+ 
 
     console.log('------ verify done ---------');
 
@@ -380,7 +377,7 @@ const login = async (req, res, next) => {
             console.error('>>> Session save failed');
             return res.status(500).send('Internal Server Error');
         }
-        req.session.returnTo = "/profile";
+        req.session.returnTo = "/sachinisdev/profile";
         await passport.authenticate('oauth2')(req, res, next);
     });
     console.log('>>>> login done');
@@ -393,6 +390,7 @@ app.get('/login', login);
 app.get('/signin', 
     passport.authenticate('oauth2', { failureRedirect: '/' }),
     (req, res) => {
+        console.log("Return to in callback: ", req.user.returnTo);
         res.redirect('/profile');
     }
 );
