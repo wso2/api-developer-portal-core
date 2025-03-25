@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveButton = document.getElementById('saveButton');
     const cancelButton = document.getElementById('cancelButton');
 
-    const MAX_CHARACTERS = 512;
+    const MAX_CHARACTERS = 256;
 
     const validateForm = () => {
         let hasError = false;
