@@ -22,7 +22,6 @@ const passport = require('passport');
 const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
 const { Pool } = require('pg');
-// const crypto = require('crypto');
 const path = require('path');
 const http = require('http');
 const https = require('https');
@@ -218,7 +217,6 @@ passport.use(new OAuth2Strategy({
         ('>>>>>>> No access token received');
         return done(new Error('Access token missing'));
     }
-    ('>>>>>>> access token: ' + accessToken);
     let orgList;
     if (config.advanced.tokenExchanger.enabled) {
         const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
