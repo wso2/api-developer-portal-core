@@ -153,7 +153,7 @@ document.addEventListener("DOMContentLoaded", function () {
     subscriptionCard.forEach(card => {
         const subscriptionBox = card.querySelector(".subscription-container");
         const dropdown = card.querySelector(".custom-dropdown");
-        const subscribeBtn = card.querySelector(".common-btn-outlined");
+        const subscribeBtn = card.querySelector(".common-btn-primary.subscription-plan-subscribe-btn");
 
         if (dropdown && subscribeBtn) {
             subscribeBtn.addEventListener("click", function(e) {
