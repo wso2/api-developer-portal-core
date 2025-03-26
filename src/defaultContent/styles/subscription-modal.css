@@ -60,14 +60,7 @@
 }
 
 .subscription-plans-body {
-  background-color: var(--light-bg-color);
   padding: 2rem;
-}
-
-.subscription-plans-rounded-bottom {
-  margin-top: -1rem;
-  border-bottom-left-radius: 24px;
-  border-bottom-right-radius: 24px;
 }
 
 .subscription-plans-title {
