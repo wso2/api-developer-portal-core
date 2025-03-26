@@ -1,3 +1,4 @@
+
 .api-overview-section {
   margin: 3rem 3.75rem;
 }
@@ -214,7 +215,7 @@
 
 .faq-container a {
   font-size: 1rem;
-  color: var(--secondary-dark-color);
+  color: var(--secondary-main-color);
   text-decoration: none;
 }
 
@@ -251,7 +252,7 @@
 .faq-answer {
   font-size: 1rem;
   line-height: 1.6;
-  color: var(--dark-text-color);
+  color: var(--dp-main-text-color);
   opacity: 0.7;
 }
 
@@ -430,9 +431,9 @@ hr {
 }
 
 .api-badge-custom2 {
-  border: 1px solid var(--dark-text-color);
+  border: 1px solid var(--dp-main-text-color);
   background-color: transparent;
-  color: var(--dark-text-color);
+  color: var(--dp-main-text-color);
   opacity: 0.7;
   padding: 0.3rem 1rem;
   border-radius: 1.25rem;

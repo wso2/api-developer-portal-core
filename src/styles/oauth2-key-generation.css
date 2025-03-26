@@ -28,7 +28,7 @@
 .form-control,
 .form-select {
   font-size: 0.8125rem;
-  color: var(--dark-text-color);
+  color: var(--dp-main-text-color);
   opacity: 0.7;
 }
 
@@ -133,7 +133,7 @@ input:checked+.slider:before {
 
 /* Add styling for selected checkboxes */
 input[type="checkbox"]:checked {
-  accent-color: var(--primary-dark-color);
+  accent-color: var(--primary-main-color);
 }
 
 .slider.round {

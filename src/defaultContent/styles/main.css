@@ -17,17 +17,13 @@
   /* primary colors */
   --primary-main-color: #1A4C6D;
   --primary-light-color: #407893;
-  --primary-dark-color: #1c4662;
   --primary-btn-color: #2b719f;
   /* secondary colors */
   --secondary-main-color: #FE8C3A;
   --secondary-light-color: #eef3f2;
-  --secondary-dark-color: #49a18e;
-  --secondary-darkest-color: #357b6c;
   /* font colors */
   --dp-main-text-color: #40404b;
   --lightest-text-color: #ffffff;
-  --dark-text-color: #1D2028;
   /* other special colors */
   --success-color: #28a745;
   --danger-color: #a40e26;
@@ -97,7 +93,7 @@ html {
 }
 .common-btn-primary[disabled],
 .common-btn-primary.disabled {
-  background-color: var(--primary-dark-color);
+  background-color: var(--primary-main-color);
   color: var(--lightest-text-color);
   opacity: 0.5;
   cursor: not-allowed;
@@ -126,7 +122,7 @@ html {
 }
 
 .common-btn-light:active {
-  background-color: var(--primary-dark-color);
+  background-color: var(--primary-main-color);
   color: var(--lightest-text-color);
 }
 
@@ -136,7 +132,7 @@ html {
 }
 
 .common-btn-primary:active {
-  background-color: var(--primary-dark-color);
+  background-color: var(--primary-main-color);
   color: var(--lightest-text-color);
 }
 
@@ -151,7 +147,7 @@ html {
 .common-btn-white {
   display: inline-block;
   background-color: var(--white-color);
-  color: var(--primary-dark-color);
+  color: var(--primary-main-color);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   border: none;
@@ -177,7 +173,7 @@ html {
 
 .common-btn-link {
   display: inline-block;
-  color: var(--primary-dark-color);
+  color: var(--primary-main-color);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   text-decoration: none;
@@ -193,7 +189,7 @@ html {
 }
 
 .common-btn-link:active {
-  color: var(--primary-dark-color);
+  color: var(--primary-main-color);
 }
 
 .common-btn-link:focus {
@@ -217,7 +213,7 @@ html {
 .common-btn-outlined:hover {
   background-color: var(--primary-btn-color);
   color: var(--lightest-text-color);
-  border-color: var(--primary-dark-color);
+  border-color: var(--primary-main-color);
 }
 
 .common-btn-outlined:active {

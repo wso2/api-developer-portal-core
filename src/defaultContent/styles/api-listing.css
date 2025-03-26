@@ -103,7 +103,7 @@
 }
 
 #query::placeholder {
-  color: var(--dark-text-color);
+  color: var(--dp-main-text-color);
   opacity: 0.5;
 }
 
@@ -171,7 +171,7 @@ a {
 hr {
   margin-top: 0;
   margin-bottom: 0.625rem;
-  border-color: var(--dark-text-color);
+  border-color: var(--dp-main-text-color);
   opacity: 0.7;
 }
 
@@ -247,7 +247,7 @@ hr {
 }
 
 .badge-custom1 {
-  border: 1px solid var(--dark-text-color);
+  border: 1px solid var(--dp-main-text-color);
   opacity: 0.7;
   background-color: var(--main-bg-color);
   color: var(--dp-main-text-color);
@@ -288,7 +288,7 @@ hr {
 
 .star:hover,
 .star.noselected {
-  color: var(--dark-text-color);
+  color: var(--dp-main-text-color);
   opacity: 0.7;
 }
 

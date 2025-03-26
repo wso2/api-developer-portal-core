@@ -83,6 +83,6 @@
 }
 
 #query::placeholder {
-  color: var(--dark-text-color);
+  color: var(--dp-main-text-color);
   opacity: 0.8;
 }
