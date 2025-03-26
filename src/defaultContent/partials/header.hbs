@@ -27,7 +27,7 @@
         aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-      <div class="d-flex align-items-center">
+      <div class="d-flex align-items-center me-2">
         {{#if profile}}
         <a class="dropdown-toggle profile-link d-flex align-items-center p-1 fw-light" href="#" id="navbarDropdown"
           role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -54,7 +54,7 @@
         </ul>
         {{else}}
         <div id="auth-section">
-          <a class="common-btn-primary me-2 login-btn" href="{{baseUrl}}/login">Log In</a>
+          <a class="common-btn-primary login-btn" href="{{baseUrl}}/login">Log In</a>
         </div>
         {{/if}}
       </div>

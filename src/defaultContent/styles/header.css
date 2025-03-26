@@ -1,6 +1,6 @@
 .custom-navbar {
   background-color: var(--white-color);
-  padding: 0.5rem 2rem 0.5rem 1rem;
+  padding: 0.5rem;
 }
 
 .navbar-logo {
@@ -33,7 +33,7 @@
 }
 
 .profile-options {
-  right: 3rem !important;
+  right: 2rem !important;
   font-size: small !important;
 }
 
