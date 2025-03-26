@@ -6,7 +6,7 @@
 }
 
 .applicationspage-container .card {
-  border-radius: 1.5rem;
+  border-radius: 0.75rem;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
