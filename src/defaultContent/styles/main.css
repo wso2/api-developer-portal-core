@@ -403,3 +403,7 @@ h6 {
 .custom-modal-body::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
+
+.span-highlight {
+  color: var(--secondary-main-color);
+}
