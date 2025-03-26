@@ -49,7 +49,7 @@
 }
 
 .documents-sidebar #docQuery::placeholder {
-    color: var(--light-text-color);
+    color: var(--dark-text-color);
     opacity: 0.5;
 }
 

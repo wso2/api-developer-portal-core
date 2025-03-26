@@ -115,7 +115,8 @@
 
 .pricing-cards-package .price span {
   font-size: 1rem;
-  color: var(--light-text-color);
+  color: var(--dark-text-color);
+  opacity: 0.7;
 }
 
 .pricing-cards-content {
