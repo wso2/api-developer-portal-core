@@ -25,20 +25,15 @@
       <div class="col-12 col-md-4 col-lg-3">
         <div class="card application-card" id="app-card-{{applicationId}}" data-name="{{name}}" style="cursor: pointer;"
           onclick="window.location.href='{{../baseUrl}}/applications/{{id}}'">
-          <div class="application-card-header mb-3">
+          <div class="application-card-header">
             <div class="overflow-hidden">
               <div>
                 <a href="{{../baseUrl}}/applications/{{id}}" class="application-name-link">
                   {{name}}
                 </a>
               </div>
-              {{!-- <div class="application-status">{{status}}</div> --}}
             </div>
             <div class="application-card-actions">
-              <button type="button" class="btn application-btn-icon edit-button" title="Edit"
-                onclick="event.stopPropagation(); window.location.href='{{../baseUrl}}/applications/{{id}}/edit'">
-                <i class='bi bi-pencil'></i>
-              </button>
               <button type="button" class="btn application-btn-icon delete-button" title="Delete"
                 onclick="event.stopPropagation(); openDeleteModal('{{id}}', '')">
                 <i class="bi bi-trash"></i>
@@ -46,11 +41,15 @@
             </div>
           </div>
           <div class="application-card-body">
-            <div class='application-card-meta'>
-              <p class="fw-light">
-                <i class='bi bi-grid'></i>
-                Subscriptions:&nbsp;
-                <span class="fw-bold"> {{subscriptionCount}}</span>
+            <div>
+              <span class="subscription-count-badge">
+                Subscriptions: {{subscriptionCount}}
+              </span>
+            </div>
+            <div class="application-card-meta mt-2 mb-3">
+              <p class="fw-light application-description">
+                <span class="truncate-text">{{description}}</span>
+              </p>
             </div>
           </div>
         </div>
