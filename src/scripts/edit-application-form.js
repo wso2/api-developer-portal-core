@@ -97,11 +97,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }, descriptionEditError);
             
             if (result) {
-                applicationDescription.dataset.original = newDescription;
-                applicationDescription.contentEditable = false;
-                descriptionEditActions.style.display = 'none';
-                editDescriptionBtn.style.display = 'inline-block';
-                descriptionEditError.style.display = 'none';
+                document.location.reload();
+                // applicationDescription.dataset.original = newDescription;
+                // applicationDescription.contentEditable = false;
+                // descriptionEditActions.style.display = 'none';
+                // editDescriptionBtn.style.display = 'inline-block';
+                // descriptionEditError.style.display = 'none';
             }
         });
     };
