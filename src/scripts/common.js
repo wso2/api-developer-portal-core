@@ -200,11 +200,12 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // Load hero image
-    if (document.getElementById("heroImage")) {
-        fetch("/images/heroImage.svg")
+    const heroImageElement = document.getElementById("heroImage");
+    if (heroImageElement) {
+        fetch(document.querySelector("#heroImage img").src)
             .then(response => response.text())
             .then(data => {
-                document.getElementById("heroImage").innerHTML = data;
+                heroImageElement.innerHTML = data;
 
                 let mainColor = getComputedStyle(document.documentElement).getPropertyValue("--primary-light-color").trim();
                 let secondaryColor = getComputedStyle(document.documentElement).getPropertyValue("--secondary-main-color").trim();
