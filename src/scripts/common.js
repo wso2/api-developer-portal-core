@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const navLinks = document.querySelectorAll('.nav-link');
         const apiSubmenu = document.getElementById('api-submenu');
         const apisLink = document.getElementById('apis');
-        
+
         // Function to extract base path from links in the sidebar
         const extractBasePath = () => {
             const homeLink = document.getElementById('home');
@@ -29,12 +29,12 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             return '';
         };
-        
+
         const basePath = extractBasePath();
-        
+
         // Remove active class from all links
         navLinks.forEach(link => link.classList.remove('active'));
-        
+
         // Set the active class based on path
         if (currentPath.endsWith('/') || currentPath === '') {
             document.getElementById('home')?.classList.add('active');
@@ -48,16 +48,16 @@ document.addEventListener("DOMContentLoaded", function () {
             apiSubmenu.classList.add('show');
             apisLink?.classList.add('active');
             apisLink?.classList.add('has-active-submenu');
-            
+
             // Extract API ID from URL path and update submenu links
             const apiIdMatch = currentPath.match(/\/api\/([^\/]+)/);
             if (apiIdMatch && apiIdMatch[1]) {
                 const apiId = apiIdMatch[1];
-                
+
                 // Update the submenu links with the correct API ID and base path
                 document.getElementById('api-overview').href = `${basePath}/api/${apiId}`;
                 document.getElementById('api-docs').href = `${basePath}/api/${apiId}/docs/specification`;
-                
+
                 // Set active submenu item
                 if (currentPath.includes('/docs')) {
                     document.getElementById('api-docs')?.classList.add('active');
@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", function () {
             apisLink?.classList.remove('has-active-submenu');
         }
     };
-    
+
     // Call the function when page loads
     setActiveSidebarLink();
 
@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const subscribeBtn = card.querySelector(".common-btn-primary");
 
         if (dropdown && subscribeBtn) {
-            subscribeBtn.addEventListener("click", function(e) {
+            subscribeBtn.addEventListener("click", function (e) {
                 e.preventDefault();
                 dropdown.style.display = "block";
                 dropdown.classList.add("show");
@@ -120,16 +120,16 @@ document.addEventListener("DOMContentLoaded", function () {
             const actionItem = dropdown.querySelector(".select-action-item");
 
             // Toggle dropdown when clicking on the selected item
-            selectSelected.addEventListener("click", function(e) {
+            selectSelected.addEventListener("click", function (e) {
                 e.stopPropagation();
                 selectItems.classList.toggle("show");
-                selectSelected.setAttribute("aria-expanded", 
+                selectSelected.setAttribute("aria-expanded",
                     selectItems.classList.contains("show") ? "true" : "false");
             });
 
             // Handle action item click (Create Application)
             if (actionItem) {
-                actionItem.addEventListener("click", function(e) {
+                actionItem.addEventListener("click", function (e) {
                     e.stopPropagation();
 
                     // Open the create application modal
@@ -142,7 +142,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             // Close dropdown when clicking outside
-            document.addEventListener("click", function() {
+            document.addEventListener("click", function () {
                 selectItems.classList.remove("show");
                 selectSelected.setAttribute("aria-expanded", "false");
             });
@@ -156,7 +156,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const subscribeBtn = card.querySelector(".common-btn-primary.subscription-plan-subscribe-btn");
 
         if (dropdown && subscribeBtn) {
-            subscribeBtn.addEventListener("click", function(e) {
+            subscribeBtn.addEventListener("click", function (e) {
                 e.preventDefault();
                 dropdown.style.display = "block";
                 dropdown.classList.add("show");
@@ -170,16 +170,16 @@ document.addEventListener("DOMContentLoaded", function () {
             const actionItem = dropdown.querySelector(".select-action-item");
 
             // Toggle dropdown when clicking on the selected item
-            selectSelected.addEventListener("click", function(e) {
+            selectSelected.addEventListener("click", function (e) {
                 e.stopPropagation();
                 selectItems.classList.toggle("show");
-                selectSelected.setAttribute("aria-expanded", 
+                selectSelected.setAttribute("aria-expanded",
                     selectItems.classList.contains("show") ? "true" : "false");
             });
 
             // Handle action item click (Create Application)
             if (actionItem) {
-                actionItem.addEventListener("click", function(e) {
+                actionItem.addEventListener("click", function (e) {
                     e.stopPropagation();
 
                     // Open the create application modal
@@ -192,12 +192,36 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             // Close dropdown when clicking outside
-            document.addEventListener("click", function() {
+            document.addEventListener("click", function () {
                 selectItems.classList.remove("show");
                 selectSelected.setAttribute("aria-expanded", "false");
             });
         }
     });
+
+    // Load hero image
+    if (document.getElementById("heroImage")) {
+        fetch("/images/heroImage.svg")
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById("heroImage").innerHTML = data;
+
+                let mainColor = getComputedStyle(document.documentElement).getPropertyValue("--primary-light-color").trim();
+                let secondaryColor = getComputedStyle(document.documentElement).getPropertyValue("--secondary-main-color").trim();
+
+                document.querySelectorAll("#heroImage stop[offset='1']").forEach(el => {
+                    if (el.hasAttribute("offset")) {
+                        el.setAttribute("stop-color", mainColor);
+                    }
+                });
+
+                document.querySelectorAll("#heroImage stop:first-of-type").forEach(el => {
+                    if (el.hasAttribute("stop-color")) {
+                        el.setAttribute("stop-color", secondaryColor);
+                    }
+                });
+            });
+    }
 });
 
 

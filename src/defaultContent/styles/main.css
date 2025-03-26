@@ -34,7 +34,7 @@
   --primary-darkest-color: #12364E;
   --primary-btn-color: #2b719f;
   /* secondary colors */
-  --secondary-main-color: #5dc7b1;
+  --secondary-main-color: #FE8C3A;
   --secondary-light-color: #eef3f2;
   --secondary-dark-color: #49a18e;
   --secondary-darkest-color: #357b6c;
@@ -55,7 +55,7 @@
   --sidebar-active-color: #41789c;
   --sidebar-submenu-bg: #043556;
   /* Gradient */
-  --primary-gradient: linear-gradient(110.69deg, #1a4c6d33 17.45%, #40789333 90.82%);
+  --primary-gradient: radial-gradient(circle at 40% 30%, rgba(0, 0, 0, 0.3), transparent 60%), linear-gradient(135deg, #3d6b8a, #1c3b52);
   --dark-gradient: linear-gradient(to right, #50c9c3, #4a6fa1);
 
   --font-family-sans: "Montserrat", "Quicksand", "Noto Sans", "Poppins", sans-serif;
@@ -157,6 +157,10 @@ html {
 
 .common-btn-primary:focus {
   outline: none;
+}
+
+.common-btn-secondary {
+  background-color: var(--secondary-main-color);
 }
 
 .common-btn-white {
@@ -343,4 +347,8 @@ h6 {
 
 .container-header-style {
  margin-left: 4rem;
+}
+
+.container {
+  max-width: 1620px;
 }
