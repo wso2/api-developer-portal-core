@@ -110,7 +110,7 @@
     font-weight: 600;
     font-size: 12px;
     line-height: 24px;
-    color: var(--primary-darkest-color);
+    color: var(--primary-dark-color);
 }
 
 .doc-spec {

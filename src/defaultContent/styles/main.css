@@ -31,7 +31,6 @@
   --primary-main-color: #1A4C6D;
   --primary-light-color: #407893;
   --primary-dark-color: #1c4662;
-  --primary-darkest-color: #12364E;
   --primary-btn-color: #2b719f;
   /* secondary colors */
   --secondary-main-color: #5dc7b1;
@@ -140,7 +139,7 @@ html {
 }
 
 .common-btn-light:active {
-  background-color: var(--primary-darkest-color);
+  background-color: var(--primary-dark-color);
   color: var(--lightest-text-color);
 }
 
@@ -150,7 +149,7 @@ html {
 }
 
 .common-btn-primary:active {
-  background-color: var(--primary-darkest-color);
+  background-color: var(--primary-dark-color);
   color: var(--lightest-text-color);
 }
 

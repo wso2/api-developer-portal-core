@@ -6,7 +6,6 @@
   --primary-main-color: #5952ad;
   --primary-light-color: #f7f7ff;
   --primary-dark-color: #423c89;
-  --primary-darkest-color: #302c6a;
   /* secondary colors */
   --secondary-main-color: #5dc7b1;
   --secondary-light-color: #eef3f2;
@@ -67,7 +66,7 @@ footer {
 }
 
 .common-btn-primary:active {
-  background-color: var(--primary-darkest-color);
+  background-color: var(--primary-dark-color);
   box-shadow: 0 0.125rem 0.125rem rgba(0, 0, 0, 0.1);
   color: var(--white-text-color);
 }
