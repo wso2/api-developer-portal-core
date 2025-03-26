@@ -19,10 +19,17 @@
           <div id="nameEditError" class="edit-error-message" style="display: none;"></div>
         </div>
         <div class="d-flex align-items-center edit-container mt-3">
-          <p class="app-description" id="applicationDescription" data-original="{{description}}">{{description}}</p>
-          <button class="btn btn-sm edit-inline-btn" id="editDescriptionBtn" title="Edit description">
-            <i class="bi bi-pencil"></i>
-          </button>
+          {{#if description}}
+            <p class="app-description" id="applicationDescription" data-original="{{description}}">{{description}}</p>
+            <button class="btn btn-sm edit-inline-btn" id="editDescriptionBtn" title="Edit description">
+              <i class="bi bi-pencil"></i>
+            </button>
+          {{else}}
+            <button class="btn btn-sm common-btn-link p-0" id="editDescriptionBtn" title="Add description">
+              <i class="bi bi-plus"></i> Add description
+            </button>
+            <p class="app-description" id="applicationDescription" data-original="{{null}}"></p>
+          {{/if}}
           <div class="edit-actions" id="descriptionEditActions" style="display: none;">
             <button class="btn btn-sm btn-success save-btn" id="saveDescriptionBtn"><i class="bi bi-check"></i></button>
             <button class="btn btn-sm btn-danger cancel-btn" id="cancelDescriptionBtn"><i class="bi bi-x"></i></button>

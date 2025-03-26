@@ -45,6 +45,7 @@
 .edit-container {
   position: relative;
   display: block;
+  margin-bottom: 0;
 }
 
 .edit-container h4, .edit-container p {
@@ -57,7 +58,7 @@
   transition: opacity 0.2s;
   color: var(--primary-main-color);
   padding: 0.25rem 0.5rem;
-  vertical-align: middle;
+  align-self: flex-start;
 }
 
 .edit-container:hover .edit-inline-btn {
