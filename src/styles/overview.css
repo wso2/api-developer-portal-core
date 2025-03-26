@@ -41,6 +41,58 @@
   color: var(--lightest-text-color);
 }
 
+/* Inline editing styles */
+.edit-container {
+  position: relative;
+  display: block;
+}
+
+.edit-container h4, .edit-container p {
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.edit-inline-btn {
+  opacity: 0.2;
+  transition: opacity 0.2s;
+  color: var(--primary-main-color);
+  padding: 0.25rem 0.5rem;
+  vertical-align: middle;
+}
+
+.edit-container:hover .edit-inline-btn {
+  opacity: 1;
+}
+
+.edit-actions {
+  margin-left: 0.5rem;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.save-btn, .cancel-btn {
+  padding: 0.25rem 0.5rem;
+  margin-left: 0.25rem;
+}
+
+[contenteditable="true"] {
+  border: 1px dashed var(--primary-main-color);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  margin-bottom: 0;
+  min-width: 200px;
+}
+
+/* Error message styling */
+.edit-error-message {
+  color: #dc3545;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  padding-left: 0.25rem;
+  display: block;
+  font-weight: 400;
+}
+
 @media (max-width: 992px) {
   .app-overview-card {
     padding: 2rem 2.5rem !important;
