@@ -31,7 +31,6 @@
   --primary-main-color: #1A4C6D;
   --primary-light-color: #407893;
   --primary-dark-color: #1c4662;
-  --primary-darkest-color: #12364E;
   --primary-btn-color: #2b719f;
   /* secondary colors */
   --secondary-main-color: #5dc7b1;
@@ -41,11 +40,10 @@
   /* font colors */
   --dp-main-text-color: #40404b;
   --lightest-text-color: #ffffff;
-  --light-text-color: #6b7280;
   --dark-text-color: #1D2028;
   /* other special colors */
   --success-color: #28a745;
-  --danger-color: #dc3545;
+  --danger-color: #a40e26;
   --warning-color: #ffc107;
   --white-color: #ffffff;
   --Black-color: #000000;
@@ -141,7 +139,7 @@ html {
 }
 
 .common-btn-light:active {
-  background-color: var(--primary-darkest-color);
+  background-color: var(--primary-dark-color);
   color: var(--lightest-text-color);
 }
 
@@ -151,7 +149,7 @@ html {
 }
 
 .common-btn-primary:active {
-  background-color: var(--primary-darkest-color);
+  background-color: var(--primary-dark-color);
   color: var(--lightest-text-color);
 }
 
@@ -286,7 +284,7 @@ html {
 /* common-card-style */
 .dev-card {
   height: 100%;
-  border-radius: 24px;
+  border-radius: 0.75rem;
   padding: 20px;
   background: var(--main-bg-color);
 }
@@ -343,4 +341,61 @@ h6 {
 
 .container-header-style {
  margin-left: 4rem;
+}
+
+/* Custom Modal */
+.custom-modal {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.custom-modal-content {
+  display: flex;
+  flex-direction: column;
+  max-height: 700px;
+  overflow: hidden;
+  padding: 0;
+  width: 100%;
+}
+
+.custom-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+  background-color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.custom-modal-title {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.custom-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem 1.5rem;
+}
+
+/* Custom Modal Scrollbar */
+.custom-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.custom-modal-body::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.custom-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
