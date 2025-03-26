@@ -49,7 +49,7 @@
 }
 
 .documents-sidebar #docQuery::placeholder {
-    color: var(--light-text-color);
+    color: var(--dark-text-color);
     opacity: 0.5;
 }
 
@@ -110,7 +110,7 @@
     font-weight: 600;
     font-size: 12px;
     line-height: 24px;
-    color: var(--primary-darkest-color);
+    color: var(--primary-dark-color);
 }
 
 .doc-spec {

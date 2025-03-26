@@ -75,9 +75,10 @@
 }
 
 .api-badge-custom2 {
-  border: 1px solid var(--light-text-color);
+  border: 1px solid var(--dark-text-color);
   background-color: transparent;
-  color: var(--light-text-color);
+  color: var(--dark-text-color);
+  opacity: 0.7;
   padding: 0.3rem 1rem;
   border-radius: 1.25rem;
   font-size: 0.875rem;
