@@ -39,7 +39,7 @@
 .edit-button:hover {
   border-color: var(--primary-main-color);
   background-color: var(--primary-main-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
 }
 
 /* Inline editing styles */

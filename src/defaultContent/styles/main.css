@@ -23,7 +23,7 @@
   --secondary-light-color: #eef3f2;
   /* font colors */
   --dp-main-text-color: #40404b;
-  --lightest-text-color: #ffffff;
+  --light-text-color: #ffffff;
   /* other special colors */
   --success-color: #28a745;
   --danger-color: #a40e26;
@@ -79,7 +79,7 @@ html {
 .common-btn-primary {
   display: inline-block;
   background-color: var(--primary-main-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   border: none;
@@ -94,7 +94,7 @@ html {
 .common-btn-primary[disabled],
 .common-btn-primary.disabled {
   background-color: var(--primary-main-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
@@ -104,7 +104,7 @@ html {
 .common-btn-light {
   display: inline-block;
   background-color: var(--primary-light-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   border: none;
@@ -118,22 +118,22 @@ html {
 
 .common-btn-light:hover {
   background-color: var(--primary-main-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
 }
 
 .common-btn-light:active {
   background-color: var(--primary-main-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
 }
 
 .common-btn-primary:hover {
   background-color: var(--primary-btn-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
 }
 
 .common-btn-primary:active {
   background-color: var(--primary-main-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
 }
 
 .common-btn-primary:focus {
@@ -212,13 +212,13 @@ html {
 
 .common-btn-outlined:hover {
   background-color: var(--primary-btn-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
   border-color: var(--primary-main-color);
 }
 
 .common-btn-outlined:active {
   background-color: var(--primary-btn-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
 }
 
 .common-btn-outlined:focus {
@@ -227,17 +227,17 @@ html {
 
 .common-btn-danger {
   background-color: var(--danger-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
 }
 
 .common-btn-danger:hover {
   background-color: var(--danger-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
 }
 
 .common-btn-danger:active {
   background-color: var(--danger-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
 }
 
 .common-btn-danger:focus {

@@ -437,7 +437,7 @@ hr {
     right: -2.5rem;
     background-color: var(--subscribed-color);
     font-size: 0.75rem;
-    color: var(--lightest-text-color);
+    color: var(--light-text-color);
     text-align: center;
     width: 10rem;
     padding: 0.125rem 0;
