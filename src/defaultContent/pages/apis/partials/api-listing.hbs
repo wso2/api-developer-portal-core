@@ -83,11 +83,18 @@
               <div class="flex-shrink-0">
                 <a type="button" class="common-btn-outlined" href="{{../baseUrl}}/api/{{apiHandle}}">Overview</a>
               </div>
-              <div id="subscriptionBox" class="subscription-container">
+              {{#if ../isAuthenticated}}
+              <div id="subscriptionBox" class="subscription-container subscription-box">
                 {{> subscription-plans apiInfo=apiInfo apiName=apiInfo.apiName}}
-                {{#if ../isAuthenticated}}
                 {{#if subscriptionPolicies.length}}
-                <a type="button" class="common-btn-primary">Subscribe</a>
+
+                 {{#if (eq subscriptionPolicies.length 1)}}
+                 <a type="button" class="common-btn-primary"
+                   onclick="subscribe('{{../orgID}}', '', '{{apiID}}', '{{apiReferenceID}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyID"}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyName"}}')">Subscribe</a>
+                 {{else}}
+                 <a type="button" class="common-btn-primary" onclick="loadModal('planModal-{{apiID}}')">Subscribe</a>
+                 {{/if}}
+
                 <div class="custom-dropdown">
                   <input type="hidden" id="selectedAppId-{{apiID}}" value="" />
                   <div class="custom-select-container">
@@ -97,32 +104,21 @@
                     </div>
                     <div class="select-items" role="listbox">
                       <div class="select-search-container">
-                        <input type="text" class="select-search-input" placeholder="Search applications" aria-label="Search applications">
+                        <input type="text" class="select-search-input" placeholder="Search applications"
+                          aria-label="Search applications">
                       </div>
                       <div class="select-items-container">
-                      {{#each applications}}
+                        {{#each applications}}
 
-                      {{#if (eq ../subscriptionPolicies.length 1)}}
-                      <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}" data-app-name="{{name}}"
-                        onclick="document.getElementById('selectedAppId-{{../apiID}}').value='{{id}}'; subscribe('{{../../orgID}}', '{{id}}', '{{../apiID}}', '{{../apiReferenceID}}', 
-                        '{{lookup (lookup ../subscriptionPolicyDetails 0) 'policyID'}}', 
-                        '{{lookup (lookup ../subscriptionPolicyDetails 0) 'policyName'}}' )">
-                        <span>{{name}}</span>
-                        {{#if subscribed}}<img
-                          src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
-                          alt="Subscribed" class="subscription-icon" />{{/if}}
-                      </div>
-                      {{else}}
-                      <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}" data-app-name="{{name}}"
-                        onclick="document.getElementById('selectedAppId-{{../apiID}}').value='{{id}}'; loadModal('planModal-{{../apiID}}')">
-                        <span>{{name}}</span>
-                        {{#if subscribed}}<img
-                          src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
-                          alt="Subscribed" class="subscription-icon" />{{/if}}
-                      </div>
-                      {{/if}}
+                        <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}"
+                          data-app-name="{{name}}">
+                          <span>{{name}}</span>
+                          {{#if subscribed}}<img
+                            src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
+                            alt="Subscribed" class="subscription-icon" />{{/if}}
+                        </div>
 
-                      {{/each}}
+                        {{/each}}
                       </div>
                       <div class="no-results-message" style="display: none;">
                         <div class="no-results-text">No applications found</div>
@@ -134,8 +130,8 @@
                   </div>
                 </div>
                 {{/if}}
-                {{/if}}
               </div>
+              {{/if}}
             </div>
           </div>
         </div>

@@ -326,7 +326,6 @@ hr {
   }
 
   .custom-dropdown {
-    display: none;
     font-size: small;
     position: relative;
     width: 100%;
@@ -358,6 +357,18 @@ hr {
     font-size: 0.875rem;
   }
 
+  .selected-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #6c757d;
+  }
+  
+  .selected-text.selected {
+    color: var(--main-text-color);
+    font-weight: 500;
+  }
+
   .select-arrow {
     border: solid #888;
     border-width: 0 2px 2px 0;
@@ -365,6 +376,7 @@ hr {
     padding: 2px;
     transform: rotate(45deg);
     margin-left: 5px;
+    flex-shrink: 0;
   }
 
   .select-items {

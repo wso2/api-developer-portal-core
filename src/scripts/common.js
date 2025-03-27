@@ -139,18 +139,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const apiCards = document.querySelectorAll(".api-card");
     apiCards.forEach(card => {
-        const subscriptionBox = card.querySelector(".subscription-container");
         const dropdown = card.querySelector(".custom-dropdown");
-        const subscribeBtn = card.querySelector(".common-btn-primary");
 
-        if (dropdown && subscribeBtn) {
-            subscribeBtn.addEventListener("click", function (e) {
-                e.preventDefault();
-                dropdown.style.display = "block";
-                dropdown.classList.add("show");
-                subscriptionBox.classList.add("subscription-box");
-            });
-
+        if (dropdown) {
             // Custom select functionality
             const selectSelected = dropdown.querySelector(".select-selected");
             const selectItems = dropdown.querySelector(".select-items");
@@ -208,6 +199,42 @@ document.addEventListener("DOMContentLoaded", function () {
                     e.stopPropagation();
                 });
             }
+            
+            // Handle selection of application items
+            const selectableItems = dropdown.querySelectorAll(".select-item:not(.disabled)");
+            selectableItems.forEach(item => {
+                item.addEventListener("click", function(e) {
+                    e.stopPropagation();
+                    
+                    // Get application data
+                    const appId = this.getAttribute("data-value");
+                    const appName = this.getAttribute("data-app-name");
+                    
+                    // Update hidden input with selected app ID
+                    const hiddenField = document.getElementById(
+                        dropdown.querySelector("[id^='selectedAppId-']").id
+                    );
+                    if (hiddenField) {
+                        hiddenField.value = appId;
+                    }
+                    
+                    // Update the display text
+                    const selectedText = dropdown.querySelector(".selected-text");
+                    if (selectedText) {
+                        selectedText.textContent = appName;
+                        selectedText.classList.add("selected");
+                    }
+                    
+                    // Close dropdown
+                    selectItems.classList.remove("show");
+                    
+                    // Update aria-expanded attribute
+                    const combobox = dropdown.querySelector("[role='combobox']");
+                    if (combobox) {
+                        combobox.setAttribute("aria-expanded", "false");
+                    }
+                });
+            });
 
             // Function to create application directly via API
             async function createApplicationDirectly(name, description = '') {
