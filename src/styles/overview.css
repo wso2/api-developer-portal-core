@@ -1,5 +1,5 @@
 .app-overview-card {
-  background-color: var(--secondary-bg-color) !important;
+  background-color: var(--primary-lightest-color) !important;
   border-radius: 0.75rem !important;
   padding: 2.5rem 2.5rem !important;
   text-align: left;

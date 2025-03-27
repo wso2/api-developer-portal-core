@@ -43,14 +43,14 @@
     display: flex;
     align-items: center;
     text-decoration: none;
-    color: var(--sidebar-link-color);
+    color: var(--primary-lightest-color);
     border-radius: 0.5rem;
     transition: background-color 0.2s;
     margin: 0  0.5rem;
 }
 
 .nav-link:hover {
-    background-color: var(--sidebar-active-color);
+    background-color: var(--primary-light-color);
     color: var(--light-text-color);
 }
 
@@ -60,7 +60,7 @@
 }
 
 .nav-link.active {
-    background-color: var(--sidebar-active-color);
+    background-color: var(--primary-light-color);
     color: var(--light-text-color);
 }
 
@@ -87,14 +87,14 @@
 }
 
 .api-icon {
-    width: 20px;
-    height: 20px;
-    border: 2px solid currentColor;
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 0.125rem solid currentColor;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    font-size: 0.625rem;
     flex-shrink: 0;
 }
 
@@ -106,7 +106,7 @@
     background: none;
     border: none;
     margin:0 0.3125rem;
-    color: var(--sidebar-link-color);
+    color: var(--primary-lightest-color);
     cursor: pointer;
     transition: color 0.2s;
 }
@@ -123,8 +123,8 @@
 }
 
 .collapse-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 1.25rem;
+    height: 1.25rem;
     transition: transform 0.3s;
 }
 
@@ -148,10 +148,10 @@
 .submenu {
     display: none;
     flex-direction: column;
-    background-color: var(--sidebar-submenu-bg);
-    border-radius: 0 0 8px 8px;
-    padding: 4px 0;
-    margin: -16px 5px 0 5px;
+    background-color: var(--primary-dark-color);
+    border-radius: 0 0 0.5rem 0.5rem;
+    padding: 0.25rem 0;
+    margin: -1rem 0.5rem 0 0.5rem;
 }
 
 .submenu.show {
@@ -159,7 +159,7 @@
 }
 
 #apis.has-active-submenu {
-    background-color: var(--sidebar-submenu-bg);
+    background-color: var(--primary-dark-color);
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
     margin-bottom: 0;
@@ -173,13 +173,13 @@
 }
 
 .submenu-link.active {
-    background-color: var(--sidebar-active-color);
+    background-color: var(--primary-light-color);
     border-radius: 0;
 }
 
 .submenu-icon {
-    width: 16px;
-    height: 16px;
+    width: 1rem;
+    height: 1rem;
     flex-shrink: 0;
 }
 

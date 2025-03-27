@@ -13,7 +13,7 @@
   justify-content: space-between;
   padding: 1.5rem 3.5rem;
   border-radius: 0.75rem;
-  background: var(--secondary-bg-color);
+  background: var(--primary-lightest-color);
 }
 
 .apilist-hero-content {
@@ -79,7 +79,7 @@
 .search-input {
   display: flex;
   align-items: center;
-  background-color: var(--light-bg-color);
+  background-color: var(--secondary-bg-color);
   padding: 0.625rem 1rem;
   border-radius: 0.75rem;
   width: 100%;
@@ -204,7 +204,7 @@ hr {
   padding: 20px;
   border-top-right-radius: 0.75rem;
   border-top-left-radius: 0.75rem;
-  background-color: var(--secondary-bg-color);
+  background-color: var(--primary-lightest-color);
 }
 
 .api-card-body {
