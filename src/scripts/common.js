@@ -200,29 +200,73 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // Load hero image
-    const heroImageElement = document.getElementById("heroImage");
-    if (heroImageElement) {
-        fetch(document.querySelector("#heroImage img").src)
+    let primaryColor = getComputedStyle(document.documentElement).getPropertyValue("--primary-light-color").trim();
+    let secondaryColor = getComputedStyle(document.documentElement).getPropertyValue("--secondary-main-color").trim();
+
+    const apisImage = document.getElementById("apisImage");
+    const launchImage = document.getElementById("launchImage");
+    const heroImage = document.getElementById("heroImage");
+    const applicationsImage = document.getElementById("applicationsImage");
+
+    if (apisImage) {
+        fetch(document.querySelector("#apisImage img").src)
             .then(response => response.text())
             .then(data => {
-                heroImageElement.innerHTML = data;
+                apisImage.innerHTML = data;
+                apisImage.querySelectorAll("#primaryColor").forEach(el => {
+                    el.setAttribute("fill", primaryColor);
 
-                let mainColor = getComputedStyle(document.documentElement).getPropertyValue("--primary-light-color").trim();
-                let secondaryColor = getComputedStyle(document.documentElement).getPropertyValue("--secondary-main-color").trim();
-
-                document.querySelectorAll("#heroImage stop[offset='1']").forEach(el => {
-                    if (el.hasAttribute("offset")) {
-                        el.setAttribute("stop-color", mainColor);
-                    }
                 });
+                apisImage.querySelectorAll("#secondaryColor").forEach(el => {
+                    el.setAttribute("fill", secondaryColor);
 
-                document.querySelectorAll("#heroImage stop:first-of-type").forEach(el => {
-                    if (el.hasAttribute("stop-color")) {
-                        el.setAttribute("stop-color", secondaryColor);
-                    }
                 });
             });
     }
+
+    if (applicationsImage) {
+        fetch(document.querySelector("#applicationsImage img").src)
+            .then(response => response.text())
+            .then(data => {
+                applicationsImage.innerHTML = data;
+                applicationsImage.querySelectorAll("#primaryColor").forEach(el => {
+                    el.setAttribute("fill", primaryColor);
+                });
+                applicationsImage.querySelectorAll("#secondaryColor").forEach(el => {
+                    el.setAttribute("fill", secondaryColor);
+                });
+            });
+    }
+
+    if (launchImage) {
+        fetch(document.querySelector("#launchImage img").src)
+            .then(response => response.text())
+            .then(data => {
+                launchImage.innerHTML = data;
+                launchImage.querySelectorAll("#primaryColor").forEach(el => {
+                    el.setAttribute("fill", primaryColor);
+
+                });
+                launchImage.querySelectorAll("#secondaryColor").forEach(el => {
+                    el.setAttribute("fill", secondaryColor);
+                });
+            });
+    }
+
+    if (heroImage) {
+        fetch(document.querySelector("#heroImage img").src)
+            .then(response => response.text())
+            .then(data => {
+                heroImage.innerHTML = data;
+                heroImage.querySelectorAll("#primaryColor").forEach(el => {
+                    el.setAttribute("stop-color", primaryColor);
+                });
+                heroImage.querySelectorAll("#secondaryColor").forEach(el => {
+                    el.setAttribute("stop-color", secondaryColor);
+                });
+            });
+    }
+
 });
 
 
