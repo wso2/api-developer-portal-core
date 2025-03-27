@@ -150,6 +150,40 @@ document.addEventListener("DOMContentLoaded", function () {
             const noResultsMessage = dropdown.querySelector(".no-results-message");
             const createAppOption = dropdown.querySelector(".create-app-option");
             const searchTermElement = dropdown.querySelector(".search-term");
+            
+            // Select first non-subscribed app by default
+            const selectFirstAvailableApp = () => {
+                const firstAvailableApp = dropdown.querySelector(".select-item:not(.disabled)");
+                if (firstAvailableApp) {
+                    // Get application data
+                    const appId = firstAvailableApp.getAttribute("data-value");
+                    const appName = firstAvailableApp.getAttribute("data-app-name");
+                    
+                    // Update hidden input with selected app ID
+                    const hiddenField = document.getElementById(
+                        dropdown.querySelector("[id^='selectedAppId-']").id
+                    );
+                    if (hiddenField) {
+                        hiddenField.value = appId;
+                    }
+                    
+                    // Update the display text
+                    const selectedText = dropdown.querySelector(".selected-text");
+                    if (selectedText) {
+                        selectedText.textContent = appName;
+                        selectedText.classList.add("selected");
+                    }
+                    
+                    // Enable the Subscribe button
+                    const subscribeButton = card.querySelector(".common-btn-primary[disabled]");
+                    if (subscribeButton) {
+                        subscribeButton.removeAttribute("disabled");
+                    }
+                }
+            };
+            
+            // Call this function when the page loads
+            selectFirstAvailableApp();
 
             // Toggle dropdown when clicking on the selected item
             selectSelected.addEventListener("click", function (e) {
@@ -223,6 +257,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (selectedText) {
                         selectedText.textContent = appName;
                         selectedText.classList.add("selected");
+                    }
+                    
+                    // Enable the Subscribe button by removing the disabled attribute
+                    const subscribeButton = card.querySelector(".common-btn-primary[disabled]");
+                    if (subscribeButton) {
+                        subscribeButton.removeAttribute("disabled");
                     }
                     
                     // Close dropdown
