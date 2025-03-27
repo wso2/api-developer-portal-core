@@ -200,8 +200,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // Load image vectors and apply theme colors
-    let primaryColor = getComputedStyle(document.documentElement).getPropertyValue("--primary-light-color").trim();
-    let secondaryColor = getComputedStyle(document.documentElement).getPropertyValue("--secondary-main-color").trim();
+    let primaryMain = getComputedStyle(document.documentElement).getPropertyValue("--primary-main-color").trim();
+    let primaryLight = getComputedStyle(document.documentElement).getPropertyValue("--primary-light-color").trim();
+    let primaryLightest = getComputedStyle(document.documentElement).getPropertyValue("--primary-lightest-color").trim();
+    let secondaryMain = getComputedStyle(document.documentElement).getPropertyValue("--secondary-main-color").trim();
 
     const apisImage = document.getElementById("apisImage");
     const launchImage = document.getElementById("launchImage");
@@ -213,12 +215,20 @@ document.addEventListener("DOMContentLoaded", function () {
             .then(response => response.text())
             .then(data => {
                 apisImage.innerHTML = data;
-                apisImage.querySelectorAll("#primaryColor").forEach(el => {
-                    el.setAttribute("fill", primaryColor);
+                apisImage.querySelectorAll("#primaryMain").forEach(el => {
+                    el.setAttribute("fill", primaryMain);
 
                 });
-                apisImage.querySelectorAll("#secondaryColor").forEach(el => {
-                    el.setAttribute("fill", secondaryColor);
+                apisImage.querySelectorAll("#primaryLight").forEach(el => {
+                    el.setAttribute("fill", primaryLight);
+
+                });
+                apisImage.querySelectorAll("#primaryLightest").forEach(el => {
+                    el.setAttribute("fill", primaryLightest);
+
+                });
+                apisImage.querySelectorAll("#secondaryMain").forEach(el => {
+                    el.setAttribute("fill", secondaryMain);
 
                 });
             });
@@ -229,11 +239,17 @@ document.addEventListener("DOMContentLoaded", function () {
             .then(response => response.text())
             .then(data => {
                 applicationsImage.innerHTML = data;
-                applicationsImage.querySelectorAll("#primaryColor").forEach(el => {
-                    el.setAttribute("fill", primaryColor);
+                applicationsImage.querySelectorAll("#primaryMain").forEach(el => {
+                    el.setAttribute("fill", primaryMain);
                 });
-                applicationsImage.querySelectorAll("#secondaryColor").forEach(el => {
-                    el.setAttribute("fill", secondaryColor);
+                applicationsImage.querySelectorAll("#primaryLight").forEach(el => {
+                    el.setAttribute("fill", primaryLight);
+                });
+                applicationsImage.querySelectorAll("#primaryLightest").forEach(el => {
+                    el.setAttribute("fill", primaryLightest);
+                });
+                applicationsImage.querySelectorAll("#secondaryMain").forEach(el => {
+                    el.setAttribute("fill", secondaryMain);
                 });
             });
     }
@@ -243,12 +259,20 @@ document.addEventListener("DOMContentLoaded", function () {
             .then(response => response.text())
             .then(data => {
                 launchImage.innerHTML = data;
-                launchImage.querySelectorAll("#primaryColor").forEach(el => {
-                    el.setAttribute("fill", primaryColor);
+                launchImage.querySelectorAll("#primaryMain").forEach(el => {
+                    el.setAttribute("fill", primaryMain);
 
                 });
-                launchImage.querySelectorAll("#secondaryColor").forEach(el => {
-                    el.setAttribute("fill", secondaryColor);
+                launchImage.querySelectorAll("#primaryLight").forEach(el => {
+                    el.setAttribute("fill", primaryLight);
+
+                });
+                launchImage.querySelectorAll("#primaryLightest").forEach(el => {
+                    el.setAttribute("fill", primaryLightest);
+
+                });
+                launchImage.querySelectorAll("#secondaryMain").forEach(el => {
+                    el.setAttribute("fill", secondaryMain);
                 });
             });
     }
@@ -258,11 +282,17 @@ document.addEventListener("DOMContentLoaded", function () {
             .then(response => response.text())
             .then(data => {
                 heroImage.innerHTML = data;
-                heroImage.querySelectorAll("#primaryColor").forEach(el => {
-                    el.setAttribute("stop-color", primaryColor);
+                heroImage.querySelectorAll("#primaryMain").forEach(el => {
+                    el.setAttribute("stop-color", primaryMain);
                 });
-                heroImage.querySelectorAll("#secondaryColor").forEach(el => {
-                    el.setAttribute("stop-color", secondaryColor);
+                heroImage.querySelectorAll("#primaryLight").forEach(el => {
+                    el.setAttribute("stop-color", primaryLight);
+                });
+                heroImage.querySelectorAll("#primaryLightest").forEach(el => {
+                    el.setAttribute("stop-color", primaryLightest);
+                });
+                heroImage.querySelectorAll("#secondaryMain").forEach(el => {
+                    el.setAttribute("stop-color", secondaryMain);
                 });
             });
     }

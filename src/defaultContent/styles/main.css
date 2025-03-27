@@ -255,7 +255,7 @@ html {
   text-transform: uppercase;
   font-size: 0.9375rem;
   font-weight: 400;
-  color: var(--primary-main-color);
+  color: var(--main-text-color);
   vertical-align: top;
 }
 
@@ -263,7 +263,7 @@ html {
   font-size: 1.875rem;
   margin-bottom: 3.5rem;
   font-weight: 600;
-  color: var(--primary-main-color);
+  color: var(--main-text-color);
 }
 
 /* common-badge */

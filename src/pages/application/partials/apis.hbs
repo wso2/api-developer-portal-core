@@ -1,15 +1,16 @@
 <section class="section mt-5 mb-6">
     <div class="container-fluid">
         <div class="d-flex align-items-center justify-content-between mb-3">
-            <div class="container-header">APIs</div>
+            <div class="container-header">Subscribed APIs</div>
             <div class='action-buttons mt-0'>
                 <a class="common-btn-primary" type="button" href="{{baseUrl}}/apis">
-                    <i class="fas fa-external-link-alt me-2"></i> Browse APIs
+                    <i class="fas fa-external-link-alt me-2"></i> Subscribed to more APIs
                 </a>
             </div>
         </div>
         <div class="row row-gap-4">
-            {{#subAPIs}}
+            {{#if subAPIs}}
+            {{#each subAPIs}}
             <div class="col-lg-4 col-md-6">
                 <div class="card dev-card h-auto p-4">
                     <div class="d-flex flex-wrap align-items-start justify-content-between gap-2">
@@ -36,7 +37,17 @@
                     </div>
                 </div>
             </div>
-            {{/subAPIs}}
+            {{/each}}
+            {{else}}
+            <div class="ps-3">
+                <div class="info-box">
+                    <div class="info-content">
+                        <div class="info-title">
+                            No subscriptions available for this application. Please subscribe to an API.
+                        </div>
+                    </div>
+                </div>
+                {{/if}}
+            </div>
         </div>
-    </div>
 </section>
