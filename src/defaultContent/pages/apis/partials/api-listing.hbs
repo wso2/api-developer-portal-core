@@ -96,11 +96,14 @@
                       <span class="select-arrow"></span>
                     </div>
                     <div class="select-items" role="listbox">
-                      <div class="select-action-item" role="button" data-action="create-app">+ Create Application</div>
+                      <div class="select-search-container">
+                        <input type="text" class="select-search-input" placeholder="Search applications" aria-label="Search applications">
+                      </div>
+                      <div class="select-items-container">
                       {{#each applications}}
 
                       {{#if (eq ../subscriptionPolicies.length 1)}}
-                      <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}"
+                      <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}" data-app-name="{{name}}"
                         onclick="document.getElementById('selectedAppId-{{../apiID}}').value='{{id}}'; subscribe('{{../../orgID}}', '{{id}}', '{{../apiID}}', '{{../apiReferenceID}}', 
                         '{{lookup (lookup ../subscriptionPolicyDetails 0) 'policyID'}}', 
                         '{{lookup (lookup ../subscriptionPolicyDetails 0) 'policyName'}}' )">
@@ -110,7 +113,7 @@
                           alt="Subscribed" class="subscription-icon" />{{/if}}
                       </div>
                       {{else}}
-                      <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}"
+                      <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}" data-app-name="{{name}}"
                         onclick="document.getElementById('selectedAppId-{{../apiID}}').value='{{id}}'; loadModal('planModal-{{../apiID}}')">
                         <span>{{name}}</span>
                         {{#if subscribed}}<img
@@ -120,6 +123,13 @@
                       {{/if}}
 
                       {{/each}}
+                      </div>
+                      <div class="no-results-message" style="display: none;">
+                        <div class="no-results-text">No applications found</div>
+                        <div class="create-app-option" role="button">
+                          Create application "<span class="search-term"></span>"
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

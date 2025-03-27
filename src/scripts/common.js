@@ -154,7 +154,11 @@ document.addEventListener("DOMContentLoaded", function () {
             // Custom select functionality
             const selectSelected = dropdown.querySelector(".select-selected");
             const selectItems = dropdown.querySelector(".select-items");
-            const actionItem = dropdown.querySelector(".select-action-item");
+            const searchInput = dropdown.querySelector(".select-search-input");
+            const selectItemsContainer = dropdown.querySelector(".select-items-container");
+            const noResultsMessage = dropdown.querySelector(".no-results-message");
+            const createAppOption = dropdown.querySelector(".create-app-option");
+            const searchTermElement = dropdown.querySelector(".search-term");
 
             // Toggle dropdown when clicking on the selected item
             selectSelected.addEventListener("click", function (e) {
@@ -162,16 +166,102 @@ document.addEventListener("DOMContentLoaded", function () {
                 selectItems.classList.toggle("show");
                 selectSelected.setAttribute("aria-expanded",
                     selectItems.classList.contains("show") ? "true" : "false");
+                
+                // Focus on search input when dropdown is opened
+                if (selectItems.classList.contains("show") && searchInput) {
+                    setTimeout(() => searchInput.focus(), 100);
+                }
             });
-
-            // Handle action item click (Create Application)
-            if (actionItem) {
-                actionItem.addEventListener("click", function (e) {
+            
+            // Add search functionality
+            if (searchInput) {
+                searchInput.addEventListener("input", function(e) {
+                    const searchValue = e.target.value.toLowerCase().trim();
+                    const appItems = selectItemsContainer.querySelectorAll(".select-item");
+                    let hasResults = false;
+                    
+                    appItems.forEach(item => {
+                        const appName = item.getAttribute("data-app-name").toLowerCase();
+                        if (appName.includes(searchValue)) {
+                            item.style.display = "flex";
+                            hasResults = true;
+                        } else {
+                            item.style.display = "none";
+                        }
+                    });
+                    
+                    // Show/hide no results message and update search term
+                    if (hasResults) {
+                        noResultsMessage.style.display = "none";
+                    } else {
+                        noResultsMessage.style.display = "block";
+                        
+                        // Update the search term in the create option
+                        if (searchValue && searchTermElement) {
+                            searchTermElement.textContent = searchValue;
+                        }
+                    }
+                });
+                
+                // Prevent dropdown from closing when clicking in search input
+                searchInput.addEventListener("click", function(e) {
                     e.stopPropagation();
+                });
+            }
 
-                    // Open the create application modal
-                    loadModal('createAppModal');
+            // Function to create application directly via API
+            async function createApplicationDirectly(name, description = '') {
+                try {
+                    const response = await fetch('/devportal/applications', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            name,
+                            description,
+                            type: 'WEB',
+                        }),
+                    });
 
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+                    }
+
+                    const responseData = await response.json();
+                    await showAlert(responseData.message || 'Application created successfully!', 'success');
+                    
+                    // Reload the page to show the new application
+                    window.location.reload();
+                    return responseData;
+                } catch (error) {
+                    console.error('Error creating application:', error);
+                    await showAlert(error.message || 'Failed to create application.', 'error');
+                    throw error;
+                }
+            }
+
+            // Handle create app option click
+            if (createAppOption) {
+                createAppOption.addEventListener("click", function(e) {
+                    e.stopPropagation();
+                    
+                    const appName = searchInput.value.trim();
+                    if (appName) {
+                        // Show loading state
+                        createAppOption.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creating...';
+                        createAppOption.classList.add('disabled');
+                        
+                        // Call the API to create the application directly
+                        createApplicationDirectly(appName)
+                            .catch(error => {
+                                // Reset the button on error
+                                createAppOption.innerHTML = `Create application "<span class="search-term">${appName}</span>"`;
+                                createAppOption.classList.remove('disabled');
+                            });
+                    }
+                    
                     // Close the dropdown
                     selectItems.classList.remove("show");
                     selectSelected.setAttribute("aria-expanded", "false");
@@ -182,6 +272,22 @@ document.addEventListener("DOMContentLoaded", function () {
             document.addEventListener("click", function () {
                 selectItems.classList.remove("show");
                 selectSelected.setAttribute("aria-expanded", "false");
+                
+                // Clear search input when closing dropdown
+                if (searchInput) {
+                    searchInput.value = '';
+                    
+                    // Reset visibility of all items
+                    const appItems = selectItemsContainer?.querySelectorAll(".select-item");
+                    appItems?.forEach(item => {
+                        item.style.display = "flex";
+                    });
+                    
+                    // Hide no results message
+                    if (noResultsMessage) {
+                        noResultsMessage.style.display = "none";
+                    }
+                }
             });
         }
     });
