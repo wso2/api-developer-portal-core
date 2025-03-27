@@ -194,6 +194,7 @@ passport.serializeUser((user, done) => {
     const profile = {
         firstName: user.firstName,
         lastName: user.lastName,
+        'imageURL': user.imageURL,
         view: user.view,
         idToken: user.idToken,
         [constants.ROLES.ORGANIZATION_CLAIM]: user[constants.ROLES.ORGANIZATION_CLAIM],

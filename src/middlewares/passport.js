@@ -82,6 +82,7 @@ async function configurePassport(authJsonContent, claimNames) {
         profile = {
             'firstName': firstName ? (firstName.includes(" ") ? firstName.split(" ")[0] : firstName) : '',
             'lastName': lastName ? lastName : (firstName && firstName.includes(" ") ? firstName.split(" ")[1] : ''),
+            'imageURL': decodedJWT['picture'] ? decodedJWT['picture'] : "https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/profile.svg",
             'view': view,
             'idToken': params.id_token,
             'email': decodedJWT['email'],
