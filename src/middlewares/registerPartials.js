@@ -108,6 +108,7 @@ const registerInternalPartials = async (req) => {
                 isAdmin: isAdmin,
                 isSuperAdmin: isSuperAdmin,
                 profile: req.user,
+                logo: constants.LOGO,
                 baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
               }),
             };
@@ -179,6 +180,7 @@ const registerPartialsFromAPI = async (req) => {
         baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
         profile: req.user,
         isAdmin: isAdmin,
+        logo: constants.LOGO,
         isSuperAdmin: isSuperAdmin,
         hasWSO2APIs: hasWSO2APIs
       })
@@ -286,6 +288,7 @@ function registerPartialsFromFile(baseURL, dir, profile) {
           header: hbs.handlebars.compile(template)({
             baseUrl: baseURL,
             profile: profile,
+            logo: constants.LOGO,
             hasWSO2APIs: true
           }),
         };
