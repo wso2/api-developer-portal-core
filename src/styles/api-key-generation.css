@@ -20,14 +20,14 @@
 
 .form-label {
   font-size: 0.875rem;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   margin: 0.3125rem 0;
 }
 
 .form-control,
 .form-select {
   font-size: 0.875rem;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 .error-msg {

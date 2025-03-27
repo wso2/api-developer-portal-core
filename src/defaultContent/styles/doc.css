@@ -45,11 +45,11 @@
     font-size: 14px;
     font-weight: 300;
     background-color: transparent;
-    color: var(--dp-main-text-color);
+    color: var(--main-text-color);
 }
 
 .documents-sidebar #docQuery::placeholder {
-    color: var(--dark-text-color);
+    color: var(--main-text-color);
     opacity: 0.5;
 }
 
@@ -63,7 +63,7 @@
 .doc-section-title {
     font-weight: 500;
     margin-bottom: 0.5rem;
-    color: var(--dark-text-color);
+    color: var(--main-text-color);
 }
 
 .doc-links {
@@ -83,7 +83,7 @@
     box-shadow: 0px 0px 0px 1px #e0e2e9, 0px 1px 1px #CBCEDB;
     border-radius: 8px;
     text-decoration: none;
-    color: var(--dp-main-text-color);
+    color: var(--main-text-color);
 }
 
 .doc-link:hover {
@@ -110,12 +110,12 @@
     font-weight: 600;
     font-size: 12px;
     line-height: 24px;
-    color: var(--primary-dark-color);
+    color: var(--primary-main-color);
 }
 
 .doc-spec {
     display: block;
-    color: var(--dp-main-text-color);
+    color: var(--main-text-color);
     text-decoration: none;
     font-weight: 500;
     font-size: 1rem;

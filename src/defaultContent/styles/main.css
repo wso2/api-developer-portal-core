@@ -17,17 +17,13 @@
   /* primary colors */
   --primary-main-color: #1A4C6D;
   --primary-light-color: #407893;
-  --primary-dark-color: #1c4662;
   --primary-btn-color: #2b719f;
   /* secondary colors */
   --secondary-main-color: #FE8C3A;
   --secondary-light-color: #eef3f2;
-  --secondary-dark-color: #49a18e;
-  --secondary-darkest-color: #357b6c;
   /* font colors */
-  --dp-main-text-color: #40404b;
-  --lightest-text-color: #ffffff;
-  --dark-text-color: #1D2028;
+  --main-text-color: #40404b;
+  --light-text-color: #ffffff;
   /* other special colors */
   --success-color: #28a745;
   --danger-color: #a40e26;
@@ -74,6 +70,8 @@ html {
   width: 100%;
   margin-top: 1rem;
   margin-bottom: 1rem;
+  padding-left: 2.25rem;
+  padding-right: 2.25rem;
 }
 
 .section {
@@ -83,7 +81,7 @@ html {
 .common-btn-primary {
   display: inline-block;
   background-color: var(--primary-main-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   border: none;
@@ -97,8 +95,8 @@ html {
 }
 .common-btn-primary[disabled],
 .common-btn-primary.disabled {
-  background-color: var(--primary-dark-color);
-  color: var(--lightest-text-color);
+  background-color: var(--primary-main-color);
+  color: var(--light-text-color);
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
@@ -108,7 +106,7 @@ html {
 .common-btn-light {
   display: inline-block;
   background-color: var(--primary-light-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   border: none;
@@ -122,22 +120,22 @@ html {
 
 .common-btn-light:hover {
   background-color: var(--primary-main-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
 }
 
 .common-btn-light:active {
-  background-color: var(--primary-dark-color);
-  color: var(--lightest-text-color);
+  background-color: var(--primary-main-color);
+  color: var(--light-text-color);
 }
 
 .common-btn-primary:hover {
   background-color: var(--primary-btn-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
 }
 
 .common-btn-primary:active {
-  background-color: var(--primary-dark-color);
-  color: var(--lightest-text-color);
+  background-color: var(--primary-main-color);
+  color: var(--light-text-color);
 }
 
 .common-btn-primary:focus {
@@ -151,7 +149,7 @@ html {
 .common-btn-white {
   display: inline-block;
   background-color: var(--white-color);
-  color: var(--primary-dark-color);
+  color: var(--primary-main-color);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   border: none;
@@ -177,7 +175,7 @@ html {
 
 .common-btn-link {
   display: inline-block;
-  color: var(--primary-dark-color);
+  color: var(--primary-main-color);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   text-decoration: none;
@@ -193,7 +191,7 @@ html {
 }
 
 .common-btn-link:active {
-  color: var(--primary-dark-color);
+  color: var(--primary-main-color);
 }
 
 .common-btn-link:focus {
@@ -216,13 +214,13 @@ html {
 
 .common-btn-outlined:hover {
   background-color: var(--primary-btn-color);
-  color: var(--lightest-text-color);
-  border-color: var(--primary-dark-color);
+  color: var(--light-text-color);
+  border-color: var(--primary-main-color);
 }
 
 .common-btn-outlined:active {
   background-color: var(--primary-btn-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
 }
 
 .common-btn-outlined:focus {
@@ -231,17 +229,17 @@ html {
 
 .common-btn-danger {
   background-color: var(--danger-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
 }
 
 .common-btn-danger:hover {
   background-color: var(--danger-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
 }
 
 .common-btn-danger:active {
   background-color: var(--danger-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
 }
 
 .common-btn-danger:focus {
@@ -290,13 +288,13 @@ html {
 /* --Title-- */
 .api-md-content h1 {
   font-size: 30px;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 .api-md-content h3,
 h2 {
   font-size: 24px;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 /* --SubTitle-- */
@@ -304,18 +302,18 @@ h2 {
 h5,
 h6 {
   font-size: 20px;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 /* --Paragraph-- */
 .api-md-content p {
   font-size: 15px;
-  color: var (--dp-main-text-color);
+  color: var (--main-text-color);
 }
 
 .api-md-content li {
   font-size: 15px;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 .api-md-content li::marker {
