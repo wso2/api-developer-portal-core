@@ -79,10 +79,10 @@
   margin-left: 0.625rem;
   font-size: 1rem;
   background-color: transparent;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 #query::placeholder {
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   opacity: 0.8;
 }

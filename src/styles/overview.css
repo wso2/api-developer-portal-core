@@ -11,7 +11,7 @@
 }
 
 .app-description {
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   font-size: 14px;
   font-weight: 300;
 }
@@ -19,7 +19,7 @@
 .app-subscription-count {
   font-weight: 500;
   font-size: 14px;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   opacity: 0.7;
 }
 

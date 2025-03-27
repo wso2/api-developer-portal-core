@@ -8,12 +8,12 @@
 }
 
 .nav-link {
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   margin: 0 0.3125rem;
 }
 
 .nav-item {
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 .nav-link:hover,
@@ -23,7 +23,7 @@
 }
 
 .profile-link {
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   text-decoration: none;
 }
 
@@ -38,7 +38,7 @@
 }
 
 .profile-dropdown-link {
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   text-decoration: none;
 }
 

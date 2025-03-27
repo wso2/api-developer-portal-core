@@ -12,7 +12,7 @@
   --secondary-darkest-color: #357b6c;
   /* font colors */
   --white-text-color: #ffffff;
-  --dp-main-text-color: #40404b;
+  --main-text-color: #40404b;
   /* other special colors */
   --success-color: #28a745;
   --danger-color: #dc3545;
@@ -210,13 +210,13 @@ footer {
 /* --Title-- */
 .api-md-content h1 {
   font-size: 30px;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 .api-md-content h3,
 h2 {
   font-size: 24px;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 /* --SubTitle-- */
@@ -224,18 +224,18 @@ h2 {
 h5,
 h6 {
   font-size: 20px;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 /* --Paragraph-- */
 .api-md-content p {
   font-size: 15px;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 .api-md-content li {
   font-size: 15px;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 .api-md-content li::marker {

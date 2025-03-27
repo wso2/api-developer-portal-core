@@ -136,7 +136,7 @@
 }
 
 .advantage-card ul li {
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   margin-bottom: 0.5rem;
   padding-left: 1rem;
   position: relative;
