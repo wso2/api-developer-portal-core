@@ -100,7 +100,7 @@
 <path d="M221.843 108.21L385.458 227.083C391.942 231.794 394.655 240.144 392.179 247.767L329.683 440.107C327.207 447.73 320.104 452.891 312.089 452.891H109.85C101.835 452.891 94.7317 447.73 92.2551 440.108L29.7597 247.767C27.283 240.144 29.9962 231.794 36.4802 227.083L200.095 108.21C206.579 103.499 215.359 103.499 221.843 108.21Z" stroke="url(#paint98_linear_697_16646)" stroke-width="3"/>
 <defs>
 <linearGradient id="paint0_linear_697_16646" x1="488.012" y1="347.891" x2="448.347" y2="65.6554" gradientUnits="userSpaceOnUse">
-<stop id="primaryColor" id="primaryColor" stop-color="#FE8C3A"/>
+<stop id="primaryColor" stop-color="#FE8C3A"/>
 <stop offset="1" id="secondaryColor" stop-color="#C8F7FA"/>
 </linearGradient>
 <linearGradient id="paint1_linear_697_16646" x1="482.94" y1="348.839" x2="448.27" y2="66.4702" gradientUnits="userSpaceOnUse">
