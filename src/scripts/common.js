@@ -1,17 +1,54 @@
-const sidebar = document.getElementById('sidebar');
-const collapseBtn = document.getElementById('collapseBtn');
-
-collapseBtn.addEventListener('click', () => {
-    sidebar.classList.toggle('collapsed');
-    const arrowIcon = document.getElementById('arrowIcon');
-    if (sidebar.classList.contains('collapsed')) {
-        arrowIcon.style.transform = "rotate(0deg)";
-    } else {
-        arrowIcon.style.transform = "rotate(180deg)";
-    }
-});
-
 document.addEventListener("DOMContentLoaded", function () {
+    const sidebar = document.getElementById('sidebar');
+    const collapseBtn = document.getElementById('collapseBtn');
+    
+    // Remove reference to sidebarPlaceholder which no longer exists
+    const sidebarPlaceholder = document.getElementById('sidebarPlaceholder');
+    if (sidebarPlaceholder) {
+        sidebarPlaceholder.remove();
+    }
+    
+    // Track if the mouse has left the sidebar
+    let mouseLeftSidebar = false;
+    
+    // Add mouse enter and leave event listeners
+    sidebar.addEventListener('mouseleave', () => {
+        mouseLeftSidebar = true;
+    });
+    
+    sidebar.addEventListener('mouseenter', () => {
+        // If mouse re-enters and the sidebar was previously force-collapsed
+        if (mouseLeftSidebar && sidebar.classList.contains('force-collapse')) {
+            sidebar.classList.remove('force-collapse');
+        }
+        mouseLeftSidebar = false;
+    });
+    
+    // Toggle between expanded and collapsed state when clicking the collapse button
+    collapseBtn.addEventListener('click', () => {
+        if (sidebar.classList.contains('expanded')) {
+            // If currently expanded, collapse and add a class to prevent hover expansion
+            sidebar.classList.remove('expanded');
+            
+            // Disable hover expansion until mouse re-enters
+            sidebar.classList.add('force-collapse');
+            
+            // Update button text and icon
+            collapseBtn.querySelector('.collapse-text').textContent = "Expand";
+            collapseBtn.querySelector('i').classList.remove('bi-chevron-left');
+            collapseBtn.querySelector('i').classList.add('bi-chevron-right');
+        } else {
+            // If currently collapsed, expand
+            sidebar.classList.add('expanded');
+            sidebar.classList.remove('force-collapse');
+            
+            // Update button text and icon
+            collapseBtn.querySelector('.collapse-text').textContent = "Collapse";
+            collapseBtn.querySelector('i').classList.remove('bi-chevron-right');
+            collapseBtn.querySelector('i').classList.add('bi-chevron-left');
+        }
+    });
+    
     // Set active status based on current URL path
     const setActiveSidebarLink = () => {
         const currentPath = window.location.pathname;

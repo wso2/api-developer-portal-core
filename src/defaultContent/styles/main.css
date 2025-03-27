@@ -60,13 +60,14 @@ html {
   margin-top: 4rem;
   font-weight: 500;
   margin-bottom: 2rem;
+  position: relative;
+  overflow-x: hidden;
 }
 
 .content-area {
   width: 100%;
   margin-top: 1rem;
   margin-bottom: 1rem;
-  padding-left: 2.25rem;
   padding-right: 2.25rem;
 }
 
