@@ -50,7 +50,7 @@
     </div>
     <div class="row row-gap-4">
       {{#apiMetadata}}
-      <div class="col-lg-4 col-md-6 col-sm-12" id="apiCard">
+      <div class="col-lg-4 col-md-6 col-sm-12" id="apiCard-{{apiID}}">
         <div class="card api-card d-flex flex-column">
           <div class="api-card-header d-flex align-items-center gap-3 position-relative overflow-hidden" 
                onclick="window.location.href='{{../baseUrl}}/api/{{apiHandle}}'" style="cursor: pointer;">
@@ -96,7 +96,7 @@
                     </div>
                     <div class="select-items" role="listbox">
                       <div class="select-search-container">
-                        <input type="text" class="select-search-input" placeholder="Search applications"
+                        <input type="text" class="select-search-input" placeholder="Find or create an application..."
                           aria-label="Search applications">
                       </div>
                       <div class="select-items-container">
@@ -112,10 +112,9 @@
 
                         {{/each}}
                       </div>
-                      <div class="no-results-message" style="display: none;">
-                        <div class="no-results-text">No applications found</div>
+                      <div class="create-app-container" style="display: none;">
                         <div class="create-app-option" role="button">
-                          Create application "<span class="search-term"></span>"
+                          Create application "<span class="search-term"></span>" and Subscribe
                         </div>
                       </div>
                     </div>
@@ -124,10 +123,10 @@
 
                 {{#if (eq subscriptionPolicies.length 1)}}
                  <a type="button" class="common-btn-primary"
-                   onclick="subscribe('{{../orgID}}', '', '{{apiID}}', '{{apiReferenceID}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyID"}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyName"}}')"
+                   onclick="showSubscribeButtonLoading(this); subscribe('{{../orgID}}', '', '{{apiID}}', '{{apiReferenceID}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyID"}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyName"}}')"
                    disabled>Subscribe</a>
                  {{else}}
-                 <a type="button" class="common-btn-primary" onclick="loadModal('planModal-{{apiID}}')" disabled>Subscribe</a>
+                 <a type="button" class="common-btn-primary" onclick="showSubscribeButtonLoading(this); loadModal('planModal-{{apiID}}')" disabled>Subscribe</a>
                  {{/if}}
 
                 {{/if}}
