@@ -10,7 +10,7 @@
 .hero-title {
   font-size: 2.75rem;
   font-weight: 600;
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
   margin-bottom: 1.5rem;
   line-height: 1.2;
 }
@@ -22,7 +22,7 @@
 
 .hero-description {
   font-size: 1rem;
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
   margin-bottom: 2rem;
   max-width: 600px;
 }
@@ -33,7 +33,7 @@
 }
 
 .hero {
-  background: var(--primary-gradient);  
+  background: var(--primary-gradient);
   background-size: cover;
   background-position: center;
   display: flex;
@@ -64,11 +64,11 @@
 @media (max-width: 768px) {
   .hero-title {
     font-size: 2.5rem;
-}
+  }
 
-.hero-description {
-  font-size: 1.125rem;
-}
+  .hero-description {
+    font-size: 1.125rem;
+  }
 
   .hero-buttons {
     flex-direction: column;
@@ -118,7 +118,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 1.5rem;
+  padding: 1.5rem 1.5rem 0 1.5rem;
 }
 
 .advantage-card h5 {
@@ -136,7 +136,7 @@
 }
 
 .advantage-card ul li {
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   margin-bottom: 0.5rem;
   padding-left: 1rem;
   position: relative;
