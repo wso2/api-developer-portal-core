@@ -52,7 +52,8 @@
       {{#apiMetadata}}
       <div class="col-lg-4 col-md-6 col-sm-12" id="apiCard">
         <div class="card api-card d-flex flex-column">
-          <div class="api-card-header d-flex align-items-center gap-3 position-relative overflow-hidden">
+          <div class="api-card-header d-flex align-items-center gap-3 position-relative overflow-hidden" 
+               onclick="window.location.href='{{../baseUrl}}/api/{{apiHandle}}'" style="cursor: pointer;">
             <img src="{{apiInfo.apiImageMetadata.api-icon}}" class="api-card-img" alt="..." />
             <div class="flex-grow-1">
               <h5 class="api-card-title mb-0">{{apiInfo.apiName}}</h5>
@@ -67,7 +68,7 @@
             {{/if}}
             {{/if}}
           </div>
-          <div class="api-card-body flex-grow-1">
+          <div class="api-card-body flex-grow-1" onclick="window.location.href='{{../baseUrl}}/api/{{apiHandle}}'" style="cursor: pointer;">
             <div class="truncate-text fw-light apilisting-api-description small mb-3">{{apiInfo.apiDescription}}</div>
             <div class="row">
               <div class="apilisting-tags">
@@ -80,21 +81,12 @@
           <hr class="mx-3 my-0" />
           <div class="api-card-footer">
             <div id="btnSection" class="d-flex align-items-center gap-2 w-100">
-              <div class="flex-shrink-0">
-                <a type="button" class="common-btn-outlined" href="{{../baseUrl}}/api/{{apiHandle}}">Overview</a>
-              </div>
               {{#if ../isAuthenticated}}
-              <div id="subscriptionBox" class="subscription-container subscription-box">
+              <div id="subscriptionBox" class="subscription-container subscription-box w-100">
                 {{> subscription-plans apiInfo=apiInfo apiName=apiInfo.apiName}}
                 {{#if subscriptionPolicies.length}}
 
-                 {{#if (eq subscriptionPolicies.length 1)}}
-                 <a type="button" class="common-btn-primary"
-                   onclick="subscribe('{{../orgID}}', '', '{{apiID}}', '{{apiReferenceID}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyID"}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyName"}}')">Subscribe</a>
-                 {{else}}
-                 <a type="button" class="common-btn-primary" onclick="loadModal('planModal-{{apiID}}')">Subscribe</a>
-                 {{/if}}
-
+                <p class="subscription-box-label">Application: </p>
                 <div class="custom-dropdown">
                   <input type="hidden" id="selectedAppId-{{apiID}}" value="" />
                   <div class="custom-select-container">
@@ -129,6 +121,14 @@
                     </div>
                   </div>
                 </div>
+
+                {{#if (eq subscriptionPolicies.length 1)}}
+                 <a type="button" class="common-btn-primary"
+                   onclick="subscribe('{{../orgID}}', '', '{{apiID}}', '{{apiReferenceID}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyID"}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyName"}}')">Subscribe</a>
+                 {{else}}
+                 <a type="button" class="common-btn-primary" onclick="loadModal('planModal-{{apiID}}')">Subscribe</a>
+                 {{/if}}
+
                 {{/if}}
               </div>
               {{/if}}
