@@ -199,7 +199,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // Load hero image
+    // Load image vectors and apply theme colors
     let primaryColor = getComputedStyle(document.documentElement).getPropertyValue("--primary-light-color").trim();
     let secondaryColor = getComputedStyle(document.documentElement).getPropertyValue("--secondary-main-color").trim();
 
