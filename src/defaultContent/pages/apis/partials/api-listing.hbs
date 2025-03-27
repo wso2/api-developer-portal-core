@@ -78,7 +78,9 @@
               </div>
             </div>
           </div>
+          {{#if ../isAuthenticated}}
           <hr class="mx-3 my-0" />
+          {{/if}}
           <div class="api-card-footer">
             <div id="btnSection" class="d-flex align-items-center gap-2 w-100">
               {{#if ../isAuthenticated}}
