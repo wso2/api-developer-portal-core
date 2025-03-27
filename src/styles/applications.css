@@ -62,7 +62,7 @@
   border-radius: 4px;
   font-size: 10px;
   text-transform: lowercase;
-  background-color: var(--light-bg-color);
+  background-color: var(--secondary-bg-color);
   color: var(--secondary-text-color);
   border: 1px solid;
 }

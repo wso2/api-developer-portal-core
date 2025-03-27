@@ -87,11 +87,11 @@
 }
 
 .doc-link:hover {
-    background-color: var(--light-bg-color);
+    background-color: var(--secondary-bg-color);
 }
 
 .doc-link.active {
-    background-color: var(--light-bg-color);
+    background-color: var(--secondary-bg-color);
 }
 
 .doc-icon {

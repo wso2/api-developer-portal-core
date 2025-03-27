@@ -363,7 +363,7 @@ hr {
 }
 
 .api-banner-content {
-  background-color: var(--secondary-bg-color);
+  background-color: var(--primary-lightest-color);
   border-radius: 0.75rem;
   padding: 2.5rem 3.75rem;
   text-align: left;
@@ -407,6 +407,7 @@ hr {
 .api-version {
   font-weight: 700;
   margin-bottom: 0.5rem;
+  color: var(--dark-text-color);
 }
 
 .api-badge-custom1 {
