@@ -49,6 +49,9 @@ function hideElementById(elementId) {
 function closeModal(elementId) {
     hideElementById(elementId);
     document.querySelector("form").reset();
+    document.querySelectorAll('[style*="display: block"]').forEach(element => {
+        element.style.display = "none";
+    });
 }
 
 window.onclick = function (event) {
@@ -112,8 +115,8 @@ async function handleSubscribe(appId, apiName, apiVersion, apiRefId) {
     const applicationSelect = document.getElementById('applicationSelect');
     let policyName;
 
-    const applicationId = appId !== null 
-        ? appId 
+    const applicationId = appId !== null
+        ? appId
         : (applicationSelect ? applicationSelect.value : window.location.pathname.split('/').pop());
 
 
@@ -184,12 +187,12 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
         if (document.getElementById('apiSelect')) {
             if (!apiId) {
                 apiId = document.getElementById('apiSelect').value;
-            }   
+            }
             if (!apiReferenceID) {
                 apiReferenceID = document.getElementById('apiSelect').selectedOptions[0].getAttribute('data-apiRefID');
-            }     
+            }
         }
-       
+
         if (document.getElementById('planSelect')) {
             policyId = document.getElementById('planSelect').value;
             if (!policyName) {
@@ -280,7 +283,7 @@ async function removeSubscription() {
     const appID = modal.dataset.param2;
     const apiRefID = modal.dataset.param3;
     const subID = modal.dataset.param4;
-  
+
     try {
         const response = await fetch(`/devportal/organizations/${orgID}/subscriptions?appID=${appID}&apiReferenceID=${apiRefID}&subscriptionID=${subID}`, {
             method: 'DELETE',
@@ -300,5 +303,5 @@ async function removeSubscription() {
     } catch (error) {
         console.error('Error:', error);
         await showAlert(`An error occurred.\n${error.message}`, 'error');
-    }  
+    }
 }
