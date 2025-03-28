@@ -18,10 +18,12 @@
     padding: 15px 20px;
     border-radius: 8px;
     margin-bottom: 15px;
+    margin-right: 2rem;
     border-left: 4px solid #61affe;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
     position: relative;
+    width:100%
 }
 
 .defaultapi-endpoint-row:hover {
@@ -43,7 +45,7 @@
 
 .defaultapi-development-label {
     font-weight: 600;
-    color: var(--dp-main-text-color);
+    color: var(--main-text-color);
     margin-bottom: 8px;
     font-size: 14px;
 }
@@ -57,7 +59,7 @@
 
 .defaultapi-endpoint-url {
     font-family: var(--font-family-mono);
-    color: #3182ce;
+    color: var(--main-text-color);
     font-size: 15px;
     flex-grow: 1;
     overflow: hidden;
@@ -66,12 +68,16 @@
 
 .defaultapi-description {
     line-height: 1.7;
-    color: var(--light-text-color);
+    color: var(--main-text-color);
+    opacity: 0.7;
     margin-bottom: 20px;
 }
 
 .defaultapi-resources {
     overflow: hidden;
+    grid-gap: 0.5rem;
+    display: flex;
+    flex-direction: column;
 }
 
 .defaultapi-resource-item {
@@ -112,7 +118,7 @@
 .defaultapi-http-method {
     padding: 6px 12px;
     border-radius: 4px;
-    color: var(--lightest-text-color);
+    color: var(--light-text-color);
     font-weight: 500;
     font-size: 14px;
     width: 80px;
@@ -136,6 +142,10 @@
     background-color: #f93e3e;
 }
 
+.defaultapi-http-method-PATCH {
+    background-color: #50e3c2;
+}
+
 .defaultapi-resource-path {
     font-family: var(--font-family-mono);
     font-size: 16px;
@@ -150,7 +160,8 @@
 }
 
 .defaultapi-resource-description {
-    color: var(--light-text-color);
+    color: var(--main-text-color);
+    opacity: 0.7;
     font-size: 14px;
     flex-grow: 1;
     white-space: nowrap;

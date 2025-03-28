@@ -22,7 +22,6 @@ const passport = require('passport');
 const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
 const { Pool } = require('pg');
-// const crypto = require('crypto');
 const path = require('path');
 const http = require('http');
 const https = require('https');
@@ -41,7 +40,6 @@ const constants = require("./utils/constants");
 const designRoute = require('./routes/designModeRoute');
 const settingsRoute = require('./routes/configureRoute');
 const AsyncLock = require('async-lock');
-const secretConf = require(process.cwd() + '/secret.json');
 const util = require('./utils/util');
 
 const OAuth2Strategy = require('passport-oauth2');
@@ -54,34 +52,26 @@ const app = express();
 // const secret = crypto.randomBytes(64).toString('hex');
 const sessionSecret = 'my-secret';
 const filePrefix = config.pathToContent;
-const configurePassport = require('./middlewares/passport');
 
 const SERVER_ID = uuidv4();
 
 console.log(`starting server: ${SERVER_ID}`);
 
-// if (config.disableTLS) {
-//     process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
-// }
+//PostgreSQL connection pool for session store
 const pool = new Pool({
     host: config.db.host,
     port: config.db.port,
     database: config.db.database,
     user: config.db.username,
-    password: config.db.password,
-    ssl: { 
-        require: true, 
-        rejectUnauthorized: false 
-    }
+    password: config.db.password
 });
 
-//PostgreSQL connection pool for session store
-// if (config.advanced.dbSslDialectOption) {
-//     pool.ssl = { 
-//         require: true, 
-//         rejectUnauthorized: false 
-//     };
-// }
+if (config.advanced.dbSslDialectOption) {
+    pool.ssl = { 
+        require: true, 
+        rejectUnauthorized: false 
+    };
+}
 
 app.engine('.hbs', engine({
     extname: '.hbs'
@@ -227,7 +217,6 @@ passport.use(new OAuth2Strategy({
         ('>>>>>>> No access token received');
         return done(new Error('Access token missing'));
     }
-    ('>>>>>>> access token: ' + accessToken);
     let orgList;
     if (config.advanced.tokenExchanger.enabled) {
         const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
@@ -412,8 +401,16 @@ if (config.advanced.http) {
 }
 
 const logStartupInfo = () => {
+    console.log('\n' + chalk.green.bold(`Developer Portal V2 is running on port ${PORT}`) + '\n');
+    console.log('\n' + chalk.cyan.bold(`Mode: ${config.mode}`) + '\n');
+
     if (config.mode === constants.DEV_MODE) {
+        console.log('\n' + chalk.yellow('⚠️  Since you are in DEV mode...') + '\n');
+        console.log(chalk.greenBright('✅ Ensure that the default content is correctly available at the configured "pathToContent".') + '\n');
+        console.log(chalk.greenBright('✅ The "Mock" folder must exist in the same root directory as "pathToContent".') + '\n');
     }
+
+    console.log(chalk.blue(`🔗 Visit: ${chalk.underline(config.baseUrl + (config.mode === constants.DEV_MODE ? "/views/default" : "/<organization>/views/default"))}`) + '\n');
 };
 
 // Handle Uncaught Exceptions

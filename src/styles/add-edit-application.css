@@ -3,7 +3,7 @@
   flex-direction: column;
   border: 1px solid var(--border-colour-secondary);
   border-radius: 12px;
-  background-color: var(--light-bg-color);
+  background-color: var(--secondary-bg-color);
   padding: 20px;
   height: 100%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -21,16 +21,41 @@
 
 .form-label {
   font-size: 14px;
-  color: var(--dark-text-color);
+  color: var(--main-text-color);
   margin: 5px 0;
 }
 
 .form-control,
 .form-select {
   font-size: 14px;
-  color: var(--light-text-color);
+  color: var(--main-text-color);
+  opacity: 0.7;
 }
 
 .error-msg {
   font-size: 14px;
+}
+
+/* Create application form wrapper class for controlling text size */
+.create-app-form {
+  font-size: 0.875rem;
+}
+
+.create-app-form .form-label {
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.create-app-form .form-control {
+  font-size: 0.875rem;
+  padding: 0.375rem 0.5rem;
+}
+
+.create-app-form .form-text {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.create-app-form .error-msg {
+  font-size: 0.75rem;
 }

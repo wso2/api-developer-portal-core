@@ -23,9 +23,9 @@
       <div class="apilist-hero-content">
         <div class="apilist-hero-header">
           <h1 class="apilist-hero-title">
-            Discover, Integrate, and Scale with
+            Discover, Integrate, and Innovate with
             <span class="apilist-hero-title-highlight">
-              Powerful APIs
+              Scalable APIs
             </span>
           </h1>
           <div class="apilist-hero-description">
@@ -50,22 +50,25 @@
     </div>
     <div class="row row-gap-4">
       {{#apiMetadata}}
-      <div class="col-lg-4 col-md-6 col-sm-12" id="apiCard">
+      <div class="col-lg-4 col-md-6 col-sm-12" id="apiCard-{{apiID}}">
         <div class="card api-card d-flex flex-column">
-          <div class="api-card-header d-flex align-items-center gap-3 position-relative overflow-hidden">
+          <div class="api-card-header d-flex align-items-center gap-3 position-relative overflow-hidden" 
+               onclick="window.location.href='{{../baseUrl}}/api/{{apiHandle}}'" style="cursor: pointer;">
             <img src="{{apiInfo.apiImageMetadata.api-icon}}" class="api-card-img" alt="..." />
             <div class="flex-grow-1">
               <h5 class="api-card-title mb-0">{{apiInfo.apiName}}</h5>
-              <p>V {{apiInfo.apiVersion}}</p>
-              <p>{{apiInfo.apiType}}</p>
+              <div class="d-flex align-items-center gap-2">
+                <p class="mb-0">{{apiInfo.apiVersion}}</p>
+                <span class="badge badge-custom2">{{apiInfo.apiType}}</span>
+              </div>
             </div>
             {{#if ../isAuthenticated}}
             {{#if (some applications "subscribed")}}
-            <div class="subscription-flag fw-light">Subscribed</div>
+            <div class="subscription-flag fw-bold">Subscribed</div>
             {{/if}}
             {{/if}}
           </div>
-          <div class="api-card-body flex-grow-1">
+          <div class="api-card-body flex-grow-1" onclick="window.location.href='{{../baseUrl}}/api/{{apiHandle}}'" style="cursor: pointer;">
             <div class="truncate-text fw-light apilisting-api-description small mb-3">{{apiInfo.apiDescription}}</div>
             <div class="row">
               <div class="apilisting-tags">
@@ -75,17 +78,17 @@
               </div>
             </div>
           </div>
+          {{#if ../isAuthenticated}}
           <hr class="mx-3 my-0" />
+          {{/if}}
           <div class="api-card-footer">
             <div id="btnSection" class="d-flex align-items-center gap-2 w-100">
-              <div class="flex-shrink-0">
-                <a type="button" class="common-btn-outlined" href="{{../baseUrl}}/api/{{apiHandle}}">Overview</a>
-              </div>
-              <div id="subscriptionBox" class="subscription-container">
+              {{#if ../isAuthenticated}}
+              <div id="subscriptionBox" class="subscription-container subscription-box w-100">
                 {{> subscription-plans apiInfo=apiInfo apiName=apiInfo.apiName}}
-                {{#if ../isAuthenticated}}
                 {{#if subscriptionPolicies.length}}
-                <a type="button" class="common-btn-primary">Subscribe</a>
+
+                <p class="subscription-box-label">Application: </p>
                 <div class="custom-dropdown">
                   <input type="hidden" id="selectedAppId-{{apiID}}" value="" />
                   <div class="custom-select-container">
@@ -94,36 +97,43 @@
                       <span class="select-arrow"></span>
                     </div>
                     <div class="select-items" role="listbox">
-                      <div class="select-action-item" role="button" data-action="create-app">+ Create Application</div>
-                      {{#each applications}}
-
-                      {{#if (eq ../subscriptionPolicies.length 1)}}
-                      <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}"
-                        onclick="document.getElementById('selectedAppId-{{../apiID}}').value='{{id}}'; subscribe('{{../../orgID}}', '{{id}}', '{{../apiID}}', '{{../apiReferenceID}}', 
-                        '{{lookup (lookup ../subscriptionPolicyDetails 0) 'policyID'}}', 
-                        '{{lookup (lookup ../subscriptionPolicyDetails 0) 'policyName'}}' )">
-                        <span>{{name}}</span>
-                        {{#if subscribed}}<img
-                          src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
-                          alt="Subscribed" class="subscription-icon" />{{/if}}
+                      <div class="select-search-container">
+                        <input type="text" class="select-search-input" placeholder="Find or create an application..."
+                          aria-label="Search applications">
                       </div>
-                      {{else}}
-                      <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}"
-                        onclick="document.getElementById('selectedAppId-{{../apiID}}').value='{{id}}'; loadModal('planModal-{{../apiID}}')">
-                        <span>{{name}}</span>
-                        {{#if subscribed}}<img
-                          src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
-                          alt="Subscribed" class="subscription-icon" />{{/if}}
-                      </div>
-                      {{/if}}
+                      <div class="select-items-container">
+                        {{#each applications}}
 
-                      {{/each}}
+                        <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}"
+                          data-app-name="{{name}}">
+                          <span>{{name}}</span>
+                          {{#if subscribed}}<img
+                            src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
+                            alt="Subscribed" class="subscription-icon" />{{/if}}
+                        </div>
+
+                        {{/each}}
+                      </div>
+                      <div class="create-app-container" style="display: none;">
+                        <div class="create-app-option" role="button">
+                          Create application "<span class="search-term"></span>" and Subscribe
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-                {{/if}}
+
+                {{#if (eq subscriptionPolicies.length 1)}}
+                 <a type="button" class="common-btn-primary"
+                   onclick="showSubscribeButtonLoading(this); subscribe('{{../orgID}}', '', '{{apiID}}', '{{apiReferenceID}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyID"}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyName"}}')"
+                   disabled>Subscribe</a>
+                 {{else}}
+                 <a type="button" class="common-btn-primary" onclick="showSubscribeButtonLoading(this); loadModal('planModal-{{apiID}}')" disabled>Subscribe</a>
+                 {{/if}}
+
                 {{/if}}
               </div>
+              {{/if}}
             </div>
           </div>
         </div>

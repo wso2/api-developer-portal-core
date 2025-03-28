@@ -192,7 +192,7 @@ const handleLogOut = async (req, res) => {
         const logoutURL = match ? match[1] : null;
         req.logout((err) => {
             if (err) {
-                ("Logout error:", err);
+                console.error("Logout error:", err);
             }
             req.session.currentPathURI = currentPathURI;
             res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${authJsonContent.logoutRedirectURI}&id_token_hint=${idToken}`);

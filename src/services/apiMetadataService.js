@@ -245,6 +245,7 @@ const updateAPIMetadata = async (req, res) => {
 
         await sequelize.transaction(async (t) => {
             // Create apimetadata record
+            console.log("Updating metadata", apiId);
             let [updatedRows, updatedAPI] = await apiDao.updateAPIMetadata(orgId, apiId, apiMetadata, t);
             if (!updatedRows) {
                 throw new Sequelize.EmptyResultError("No record found to update");
