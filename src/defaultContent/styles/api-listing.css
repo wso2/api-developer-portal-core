@@ -190,6 +190,12 @@ hr {
   border-radius: 0.75rem;
   height: 100%;
   background: var(--main-bg-color);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.api-card:hover {
+  /* transform: translateY(-0.3125rem); */ /* Note: Adding the tranform will break the modal */
+  box-shadow: 0px 0.5rem 1.25rem rgba(0, 0, 0, 0.15);
 }
 
 .api-card-img {
@@ -325,8 +331,15 @@ hr {
     margin-bottom: -8px;
   }
 
+  .subscription-box-label {
+    font-size: 0.75rem;
+    color: var(--main-text-color);
+    margin-left: 0.5rem;
+    display: block;
+    align-self: center;
+  }
+
   .custom-dropdown {
-    display: none;
     font-size: small;
     position: relative;
     width: 100%;
@@ -358,6 +371,18 @@ hr {
     font-size: 0.875rem;
   }
 
+  .selected-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #6c757d;
+  }
+  
+  .selected-text.selected {
+    color: var(--main-text-color);
+    font-weight: 500;
+  }
+
   .select-arrow {
     border: solid #888;
     border-width: 0 2px 2px 0;
@@ -365,6 +390,7 @@ hr {
     padding: 2px;
     transform: rotate(45deg);
     margin-left: 5px;
+    flex-shrink: 0;
   }
 
   .select-items {
@@ -380,6 +406,33 @@ hr {
     overflow-y: auto;
     display: none;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+
+  .select-search-container {
+    padding: 8px 10px;
+    border-bottom: 1px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    background-color: var(--main-bg-color);
+    z-index: 2;
+  }
+  
+  .select-search-input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    outline: none;
+  }
+  
+  .select-search-input:focus {
+    border-color: var(--primary-main-color);
+  }
+  
+  .select-items-container {
+    max-height: 150px;
+    overflow-y: auto;
   }
 
   .select-item {
@@ -420,6 +473,33 @@ hr {
 
   .select-items.show {
     display: block;
+  }
+  
+  .no-results-message {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    border-top: 1px solid #dee2e6;
+  }
+  
+  .no-results-text {
+    text-align: center;
+    color: #6c757d;
+    padding-bottom: 8px;
+  }
+  
+  .create-app-option {
+    color: var(--primary-main-color);
+    cursor: pointer;
+    padding: 8px 10px;
+    font-weight: 500;
+  }
+  
+  .create-app-option:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .search-term {
+    font-style: italic;
   }
 
   /* Add styling for subscription icon */
