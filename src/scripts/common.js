@@ -189,6 +189,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 //check if url queyr params has app id
                 let params = new URLSearchParams(window.location.search);
                 let appId, appName = "";
+                // Get application data
                 if (params.has('appID')) {
                      appId = params.get('appID');
                      appName  = params.get('appName');
@@ -198,9 +199,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     appName = firstAvailableApp.getAttribute("data-app-name");
                 }
                 if (appId && appName) {
-                    // Get application data
-                    
-                    
                     // Update hidden input with selected app ID
                     const hiddenField = document.getElementById(
                         dropdown.querySelector("[id^='selectedAppId-']").id
