@@ -89,6 +89,14 @@
   position: relative;
 }
 
+.application-create-card{
+  height: 100%;
+  width: 100%;
+  padding: 0.25rem;
+  background: var(--main-bg-color);
+  border-radius: 0.75rem;
+}
+
 .application-layout {
   display: flex;
   height: 100%;
@@ -105,6 +113,13 @@
 }
 
 .application-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.application-create-content {
   flex-grow: 1;
   display: flex;
   flex-direction: column;

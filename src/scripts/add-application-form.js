@@ -1,3 +1,24 @@
+function showApplicationForm(cardEl) {
+    const defaultView = cardEl.querySelector('.create-project-content');
+    const formView = cardEl.querySelector('.application-create-card');
+  
+    if (defaultView && formView) {
+      defaultView.classList.add('d-none');
+      formView.classList.remove('d-none');
+    }
+  }
+  
+function hideApplicationForm(el) {
+  const cardEl = el.closest('.create-project-card');
+  const defaultView = cardEl.querySelector('.create-project-content');
+  const formView = cardEl.querySelector('.application-create-card');
+
+  if (defaultView && formView) {
+    defaultView.classList.remove('d-none');
+    formView.classList.add('d-none');
+  }
+}
+
 // Validation of the form
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -17,14 +38,16 @@ document.addEventListener('DOMContentLoaded', () => {
         let hasError = false;
 
         if (!applicationNameInput.value.trim()) {
-            nameError.style.display = 'block';
+            nameError.style.visibility = 'visible';
             hasError = true;
         } else {
-            nameError.style.display = 'none';
+            nameError.style.visibility = 'hidden';
         }
 
-        const remaining = MAX_CHARACTERS - descriptionTextarea.value.length;
-        if (remaining < 0) {
+        const remaining = descriptionTextarea
+            ? MAX_CHARACTERS - descriptionTextarea.value.length
+            : MAX_CHARACTERS;
+        if (descriptionTextarea && remaining < 0) {
             descriptionError.style.display = 'block';
             hasError = true;
         } else {
@@ -103,7 +126,8 @@ applicationForm.addEventListener('submit', async (e) => {
         if (window.location.href.includes('/apis')) {
             window.location.reload();
         } else {
-            window.location.href = document.referrer || 'applications';
+            //window.location.href = document.referrer || 'applications';
+            window.location.reload();
         }
     } catch (error) {
         console.error('Error saving application:', error);

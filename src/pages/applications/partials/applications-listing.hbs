@@ -9,14 +9,37 @@
     <div class="container-header mb-4">Applications</div>
 
     <div class="row row-gap-4">
-      <!-- Create Project Button -->
+      <!-- Create application Card -->
       <div class="col-12 col-md-4 col-lg-3">
-        <div class="card create-project-card" style="cursor: pointer;" onclick="loadModal('createAppModal')">
+        <div class="card create-project-card" style="cursor: pointer;" onclick="showApplicationForm(this)">
           <div class="create-project-content">
-            <span class="plus-icon">+</span>
-            <span class="create-text">Create Application</span>
+              <span class="plus-icon">+</span>
+              <span class="create-text">Create Application</span>
           </div>
+          <div class="application-create-card d-none">
+            <div class="app-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                    onclick="event.stopPropagation(); hideApplicationForm(this);"></button>
+            </div>
+            <div class="app-create-body">
+                <form id='applicationForm' class='create-app-form'>
+                    <!-- Application Name -->
+                    <div class='mb-3'>
+                        <input type='text' id='applicationName' class='form-control'
+                            placeholder='Name' required />
+                        <div id='nameError' class='error-msg text-danger mt-1' style='visibility: hidden;'>
+                            Application name cannot be empty.</div>
+                    </div>
+                    <!-- Create Button -->
+                    <div class='d-flex gap-3 mt-4'>
+                        <button type='submit' class='common-btn-primary' id='saveButton' disabled>
+                            Save
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
+       </div>
       </div>
 
       <!-- Application Cards -->

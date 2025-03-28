@@ -326,6 +326,21 @@ h6 {
   color: var(--primary-color);
 }
 
+.app-header{
+  display: flex;
+  justify-content: right;
+  padding: 0.2rem 0.5rem;
+  flex-shrink: 0;
+  background-color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.app-create-body {
+  flex: 1;
+  padding: 0.75rem;
+}
 /* header styles */
 .container-header {
   display: block;
