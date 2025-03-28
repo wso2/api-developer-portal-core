@@ -13,7 +13,7 @@
   justify-content: space-between;
   padding: 1.5rem 3.5rem;
   border-radius: 0.75rem;
-  background: var(--secondary-bg-color);
+  background: var(--primary-lightest-color);
 }
 
 .apilist-hero-content {
@@ -44,7 +44,7 @@
 .apilist-hero-header h1 {
   font-size: 2rem;
   font-weight: 600;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 .apilist-hero-header h1 span {
@@ -56,7 +56,7 @@
 .apilist-hero-header .apilist-hero-title {
   font-size: 2rem;
   font-weight: 600;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 .apilist-hero-header .apilist-hero-title-highlight {
@@ -79,7 +79,7 @@
 .search-input {
   display: flex;
   align-items: center;
-  background-color: var(--light-bg-color);
+  background-color: var(--secondary-bg-color);
   padding: 0.625rem 1rem;
   border-radius: 0.75rem;
   width: 100%;
@@ -99,11 +99,11 @@
   font-size: 14px;
   font-weight: 300;
   background-color: transparent;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 #query::placeholder {
-  color: var(--light-text-color);
+  color: var(--main-text-color);
   opacity: 0.5;
 }
 
@@ -113,7 +113,7 @@
 }
 
 .api-filterlist {
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   margin-top: 0.9375rem;
 }
 
@@ -151,7 +151,7 @@ a {
 
 .bi-chevron-down {
   font-size: 1rem;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 .form-check-input:checked {
@@ -161,7 +161,7 @@ a {
 
 .filter-sub {
   font-size: 0.875rem;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 .form-check-input {
@@ -171,7 +171,8 @@ a {
 hr {
   margin-top: 0;
   margin-bottom: 0.625rem;
-  border-color: var(--light-text-color);
+  border-color: var(--main-text-color);
+  opacity: 0.7;
 }
 
 .form-check-input {
@@ -180,7 +181,7 @@ hr {
 
 .form-check-label {
   font-size: 0.875rem;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   margin-left: 0.3125rem;
 }
 
@@ -189,6 +190,12 @@ hr {
   border-radius: 0.75rem;
   height: 100%;
   background: var(--main-bg-color);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.api-card:hover {
+  /* transform: translateY(-0.3125rem); */ /* Note: Adding the tranform will break the modal */
+  box-shadow: 0px 0.5rem 1.25rem rgba(0, 0, 0, 0.15);
 }
 
 .api-card-img {
@@ -203,7 +210,7 @@ hr {
   padding: 20px;
   border-top-right-radius: 0.75rem;
   border-top-left-radius: 0.75rem;
-  background-color: var(--secondary-bg-color);
+  background-color: var(--primary-lightest-color);
 }
 
 .api-card-body {
@@ -227,14 +234,14 @@ hr {
 
 .api-card-title {
   font-size: 1rem;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   margin: 0;
   font-weight: 600;
 }
 
 .api-card p {
   font-size: 0.75rem;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   margin: 0;
   line-height: 1.5;
 }
@@ -246,16 +253,17 @@ hr {
 }
 
 .badge-custom1 {
-  border: 1px solid var(--light-text-color);
+  border: 1px solid var(--main-text-color);
+  opacity: 0.7;
   background-color: var(--main-bg-color);
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   margin: 0.125rem 0.3125rem 1.25rem 0;
 }
 
 .badge-custom2 {
   border: 1px solid rgba(99, 99, 110, 0.25);
   background-color: transparent;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   font-weight: 0;
   margin: 0.3125rem 0.3125rem 0 0;
 }
@@ -286,7 +294,8 @@ hr {
 
 .star:hover,
 .star.noselected {
-  color: var(--light-text-color);
+  color: var(--main-text-color);
+  opacity: 0.7;
 }
 
 @media (max-width: 992px) {
@@ -322,8 +331,15 @@ hr {
     margin-bottom: -8px;
   }
 
+  .subscription-box-label {
+    font-size: 0.75rem;
+    color: var(--main-text-color);
+    margin-left: 0.5rem;
+    display: block;
+    align-self: center;
+  }
+
   .custom-dropdown {
-    display: none;
     font-size: small;
     position: relative;
     width: 100%;
@@ -355,6 +371,18 @@ hr {
     font-size: 0.875rem;
   }
 
+  .selected-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #6c757d;
+  }
+  
+  .selected-text.selected {
+    color: var(--main-text-color);
+    font-weight: 500;
+  }
+
   .select-arrow {
     border: solid #888;
     border-width: 0 2px 2px 0;
@@ -362,6 +390,7 @@ hr {
     padding: 2px;
     transform: rotate(45deg);
     margin-left: 5px;
+    flex-shrink: 0;
   }
 
   .select-items {
@@ -377,6 +406,33 @@ hr {
     overflow-y: auto;
     display: none;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+
+  .select-search-container {
+    padding: 8px 10px;
+    border-bottom: 1px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    background-color: var(--main-bg-color);
+    z-index: 2;
+  }
+  
+  .select-search-input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    outline: none;
+  }
+  
+  .select-search-input:focus {
+    border-color: var(--primary-main-color);
+  }
+  
+  .select-items-container {
+    max-height: 150px;
+    overflow-y: auto;
   }
 
   .select-item {
@@ -418,6 +474,33 @@ hr {
   .select-items.show {
     display: block;
   }
+  
+  .no-results-message {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    border-top: 1px solid #dee2e6;
+  }
+  
+  .no-results-text {
+    text-align: center;
+    color: #6c757d;
+    padding-bottom: 8px;
+  }
+  
+  .create-app-option {
+    color: var(--primary-main-color);
+    cursor: pointer;
+    padding: 8px 10px;
+    font-weight: 500;
+  }
+  
+  .create-app-option:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .search-term {
+    font-style: italic;
+  }
 
   /* Add styling for subscription icon */
   .subscription-icon {
@@ -434,7 +517,7 @@ hr {
     right: -2.5rem;
     background-color: var(--subscribed-color);
     font-size: 0.75rem;
-    color: var(--lightest-text-color);
+    color: var(--light-text-color);
     text-align: center;
     width: 10rem;
     padding: 0.125rem 0;

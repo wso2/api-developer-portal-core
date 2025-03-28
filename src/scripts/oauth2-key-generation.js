@@ -373,6 +373,23 @@ document.addEventListener('DOMContentLoaded', () => {
 function loadKeyGenModal() {
     const modal = document.getElementById('OauthKeyModal');
     modal.style.display = 'flex';
+    
+    // Collapse all advanced configurations and reset UI state
+    document.querySelectorAll(".KMConfig").forEach(el => el.style.display = "none");
+    document.querySelectorAll(".arrow-icon").forEach(icon => icon.classList.remove('rotated'));
+    
+    // Move generate keys button back to original container if needed
+    const generateKeysBtn = document.getElementById("applicationKeyGenerateButton");
+    const originalContainer = document.getElementById("generate-keys-btn-container");
+    const advancedContainer = document.getElementById("generate-keys-btn-advanced-container");
+    
+    if (generateKeysBtn && originalContainer && advancedContainer) {
+        advancedContainer.style.display = "none";
+        originalContainer.style.display = "flex";
+        if (generateKeysBtn.parentElement === advancedContainer) {
+            originalContainer.appendChild(generateKeysBtn);
+        }
+    }
 }
 
 
@@ -385,7 +402,11 @@ function showAdvanced(configId) {
     const headerElement = event.currentTarget;
     const arrowIcon = headerElement.querySelector('.arrow-icon');
     if (arrowIcon) {
-        arrowIcon.classList.toggle('rotated');
+        if (isExpanding) {
+            arrowIcon.classList.add('rotated');
+        } else {
+            arrowIcon.classList.remove('rotated');
+        }
     }
     
     // Handle Generate Keys button movement

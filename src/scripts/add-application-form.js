@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveButton = document.getElementById('saveButton');
     const cancelButton = document.getElementById('cancelButton');
 
-    const MAX_CHARACTERS = 512;
+    const MAX_CHARACTERS = 256;
 
     const validateForm = () => {
         let hasError = false;
@@ -45,11 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     applicationNameInput.addEventListener('input', validateForm);
 
-    if (cancelButton) {
-        cancelButton.addEventListener('click', () => {
-            window.history.back();
-        });
-    }
+    cancelButton.addEventListener('click', () => {
+        closeModal('createAppModal');
+    });
 
     document
         .getElementById('applicationForm')
@@ -59,6 +57,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 event.preventDefault();
             }
         });
+        
+    // Initialize the character count and form validation on page load
+    const remaining = Math.max(
+        0,
+        MAX_CHARACTERS - descriptionTextarea.value.length
+    );
+    remainingCharactersSpan.textContent = remaining;
+    validateForm();
 });
 
 // Submittion of the form

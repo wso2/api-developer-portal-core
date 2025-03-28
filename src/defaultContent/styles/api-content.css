@@ -1,3 +1,4 @@
+
 .api-overview-section {
   margin: 3rem 3.75rem;
 }
@@ -61,7 +62,7 @@
 
 .key-benefit-item p {
   font-size: 0.875rem;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   margin-bottom: 1.25rem;
   line-height: 1.5;
 }
@@ -96,7 +97,7 @@
 
 .overview-title {
   font-size: 2.25rem;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   margin-bottom: 1.25rem;
 }
 
@@ -119,7 +120,7 @@
 
 .section-title {
   font-size: 1rem;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   margin-bottom: 1.25rem;
   font-weight: 600;
   margin-bottom: 0.625rem;
@@ -209,12 +210,12 @@
 
 .faq-container p {
   font-size: 1rem;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 .faq-container a {
   font-size: 1rem;
-  color: var(--secondary-dark-color);
+  color: var(--secondary-main-color);
   text-decoration: none;
 }
 
@@ -231,7 +232,7 @@
 .faq-question {
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   margin-bottom: 0.5rem;
 }
 
@@ -240,8 +241,8 @@
 }
 
 .faq-badge-custom1 {
-  border: 0.0625rem solid var(--dp-main-text-color);
-  color: var(--dp-main-text-color);
+  border: 0.0625rem solid var(--main-text-color);
+  color: var(--main-text-color);
   margin: 0px 0.3125rem 0.625rem 0;
   padding: 0.375rem 1.25rem;
   border-radius: 1.875rem;
@@ -251,7 +252,8 @@
 .faq-answer {
   font-size: 1rem;
   line-height: 1.6;
-  color: var(--light-text-color);
+  color: var(--main-text-color);
+  opacity: 0.7;
 }
 
 hr {
@@ -350,4 +352,98 @@ hr {
   
   font-size: 16px;
   line-height: 1.6; /* Improves readability */
+}
+
+.api-banner-section {
+  display: flex;
+  justify-content: center;
+  margin: 0 1rem 0 0;
+  align-items: center;
+  flex-direction: column;
+}
+
+.api-banner-content {
+  background-color: var(--primary-lightest-color);
+  border-radius: 0.75rem;
+  padding: 2.5rem 3.75rem;
+  text-align: left;
+  min-height: 10rem;
+  display: flex;
+}
+
+.api-image {
+  width: 13.75rem;
+  height: 13.75rem;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 0;
+  margin-right: 2.5rem;
+  float: right;
+}
+
+.api-image-small {
+  width: 9.375rem;
+  height: 9.375rem;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 0;
+  float: right;
+}
+
+.api-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.625rem;
+}
+
+.api-title h4 {
+  font-size: 2.25rem;
+  font-weight: 600;
+  color: var(--primary-main-color);
+  margin: 0;
+}
+
+.api-version {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--dark-text-color);
+}
+
+.api-badge-custom1 {
+  border: 1px solid var(--secondary-main-color);
+  background-color: transparent;
+  color: var(--secondary-main-color);
+  padding: 0.3rem 0.75rem;
+  border-radius: 1.25rem;
+  font-size: 0.875rem;
+}
+
+.api-description {
+  margin-bottom: 1rem;
+  color: var(--main-text-color);
+}
+
+.api-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5625rem;
+}
+
+.api-badge-custom2 {
+  border: 1px solid var(--main-text-color);
+  background-color: transparent;
+  color: var(--main-text-color);
+  opacity: 0.7;
+  padding: 0.3rem 1rem;
+  border-radius: 1.25rem;
+  font-size: 0.875rem;
+}
+
+.api-details-btn {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 2rem;
 }

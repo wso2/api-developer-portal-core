@@ -45,7 +45,7 @@
 
 .defaultapi-development-label {
     font-weight: 600;
-    color: var(--dp-main-text-color);
+    color: var(--main-text-color);
     margin-bottom: 8px;
     font-size: 14px;
 }
@@ -59,7 +59,7 @@
 
 .defaultapi-endpoint-url {
     font-family: var(--font-family-mono);
-    color: var(--dp-main-text-color);
+    color: var(--main-text-color);
     font-size: 15px;
     flex-grow: 1;
     overflow: hidden;
@@ -68,7 +68,8 @@
 
 .defaultapi-description {
     line-height: 1.7;
-    color: var(--light-text-color);
+    color: var(--main-text-color);
+    opacity: 0.7;
     margin-bottom: 20px;
 }
 
@@ -117,7 +118,7 @@
 .defaultapi-http-method {
     padding: 6px 12px;
     border-radius: 4px;
-    color: var(--lightest-text-color);
+    color: var(--light-text-color);
     font-weight: 500;
     font-size: 14px;
     width: 80px;
@@ -159,7 +160,8 @@
 }
 
 .defaultapi-resource-description {
-    color: var(--light-text-color);
+    color: var(--main-text-color);
+    opacity: 0.7;
     font-size: 14px;
     flex-grow: 1;
     white-space: nowrap;

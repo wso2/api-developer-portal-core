@@ -1,6 +1,6 @@
 .custom-navbar {
   background-color: var(--white-color);
-  padding: 0.5rem 2rem 0.5rem 1rem;
+  padding: 0.5rem;
 }
 
 .navbar-logo {
@@ -8,12 +8,12 @@
 }
 
 .nav-link {
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   margin: 0 0.3125rem;
 }
 
 .nav-item {
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 .nav-link:hover,
@@ -23,7 +23,7 @@
 }
 
 .profile-link {
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   text-decoration: none;
 }
 
@@ -33,12 +33,12 @@
 }
 
 .profile-options {
-  right: 3rem !important;
+  right: 2rem !important;
   font-size: small !important;
 }
 
 .profile-dropdown-link {
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   text-decoration: none;
 }
 

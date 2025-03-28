@@ -7,7 +7,7 @@
 }
 
 .api-banner-content {
-  background-color: var(--secondary-bg-color);
+  background-color: var(--primary-lightest-color);
   border-radius: 0.75rem;
   padding: 2.5rem 3.75rem;
   text-align: left;
@@ -51,6 +51,7 @@
 .api-version {
   font-weight: 700;
   margin-bottom: 0.5rem;
+  color: var(--dark-text-color);
 }
 
 .api-badge-custom1 {
@@ -64,7 +65,7 @@
 
 .api-description {
   margin-bottom: 1rem;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 .api-tags {
@@ -75,9 +76,10 @@
 }
 
 .api-badge-custom2 {
-  border: 1px solid var(--light-text-color);
+  border: 1px solid var(--main-text-color);
   background-color: transparent;
-  color: var(--light-text-color);
+  color: var(--main-text-color);
+  opacity: 0.7;
   padding: 0.3rem 1rem;
   border-radius: 1.25rem;
   font-size: 0.875rem;

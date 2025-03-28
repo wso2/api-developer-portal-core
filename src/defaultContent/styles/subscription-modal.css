@@ -40,7 +40,8 @@
 
 .custom-plans-description {
   font-size: 1rem;
-  color: var(--light-text-color);
+  color: var(--main-text-color);
+  opacity: 0.7;
 }
 
 .custom-modal {
@@ -59,14 +60,7 @@
 }
 
 .subscription-plans-body {
-  background-color: var(--light-bg-color);
   padding: 2rem;
-}
-
-.subscription-plans-rounded-bottom {
-  margin-top: -1rem;
-  border-bottom-left-radius: 24px;
-  border-bottom-right-radius: 24px;
 }
 
 .subscription-plans-title {
@@ -96,7 +90,8 @@
 }
 
 .subscription-plans-card-subtitle {
-  color: var(--light-text-color) !important;
+  color: var(--main-text-color) !important;
+  opacity: 0.7;
   font-size: 0.85rem !important;
   font-weight: 500;
 }

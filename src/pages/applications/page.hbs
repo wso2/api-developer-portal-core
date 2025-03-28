@@ -1,6 +1,7 @@
 <main>
     {{!-- {{> applications-hero-banner}} --}}
     {{> applications-listing }}
+    {{> create-app }}
     {{> alert }}
-    {{> delete-confirmation modalTitle="Delete Application" modalMessage="This Application will be removed" modalFunction="deleteApplication()" }}
+    {{> delete-confirmation modalTitle="Delete Application" modalMessage="Are you sure you want to delete this application? This action cannot be undone and will revoke all associated access tokens and subscriptions." modalFunction="deleteApplication()" }}
 </main>
