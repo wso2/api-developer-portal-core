@@ -79,12 +79,12 @@
             </div>
           </div>
           {{#if ../isAuthenticated}}
-          <hr class="mx-3 my-0" />
+          <hr class="card-separator" />
           {{/if}}
           <div class="api-card-footer">
             <div id="btnSection" class="d-flex align-items-center gap-2 w-100">
               {{#if ../isAuthenticated}}
-              <div id="subscriptionBox" class="subscription-container subscription-box w-100">
+              <div id="subscriptionBox" class="subscription-container w-100">
                 {{> subscription-plans apiInfo=apiInfo apiName=apiInfo.apiName}}
                 {{#if subscriptionPolicies.length}}
 
@@ -116,7 +116,7 @@
                       </div>
                       <div class="create-app-container" style="display: none;">
                         <div class="create-app-option" role="button">
-                          Create application "<span class="search-term"></span>" and Subscribe
+                          Create application "<span class="search-term"></span>"
                         </div>
                       </div>
                     </div>
@@ -128,7 +128,7 @@
                    onclick="showSubscribeButtonLoading(this); subscribe('{{../orgID}}', '', '{{apiID}}', '{{apiReferenceID}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyID"}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyName"}}')"
                    disabled>Subscribe</a>
                  {{else}}
-                 <a type="button" class="common-btn-primary" onclick="showSubscribeButtonLoading(this); loadModal('planModal-{{apiID}}')" disabled>Subscribe</a>
+                 <a type="button" class="common-btn-primary" onclick="loadModal('planModal-{{apiID}}')" disabled>Subscribe</a>
                  {{/if}}
 
                 {{/if}}

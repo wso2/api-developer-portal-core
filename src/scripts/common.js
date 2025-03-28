@@ -186,18 +186,59 @@ document.addEventListener("DOMContentLoaded", function () {
             
             // Select first non-subscribed app by default
             const selectFirstAvailableApp = () => {
-                //check if url queyr params has app id
+                // Check if url query params has app ID
                 let params = new URLSearchParams(window.location.search);
-                let appId, appName = "";
-                // Get application data
-                // if (params.has('appID')) {
-                //      appId = params.get('appID');
-                //      appName  = params.get('appName');
-                // }
+                let appId = "";
+                let appFromParams = false;
+                
+                // Get application ID from URL parameters if available
+                if (params.has('appID')) {
+                    appId = params.get('appID');
+                    appFromParams = true;
+                }
+                
+                // If we have an app ID from params, try to find and select that app
+                if (appFromParams && appId) {
+                    const appItem = dropdown.querySelector(`.select-item[data-value="${appId}"]`);
+                    if (appItem) {
+                        const appName = appItem.getAttribute("data-app-name");
+                        // Update hidden input with selected app ID
+                        const hiddenField = document.getElementById(
+                            dropdown.querySelector("[id^='selectedAppId-']").id
+                        );
+                        if (hiddenField) {
+                            hiddenField.value = appId;
+                        }
+                        
+                        // Update the display text
+                        const selectedText = dropdown.querySelector(".selected-text");
+                        if (selectedText) {
+                            selectedText.textContent = appName;
+                            selectedText.classList.add("selected");
+                        }
+                        
+                        // Check if this app is already subscribed (disabled)
+                        const subscribeButton = card.querySelector(".common-btn-primary[disabled]");
+                        if (appItem.classList.contains("disabled")) {
+                            // Keep the button disabled if the app is already subscribed
+                            if (subscribeButton && !subscribeButton.disabled) {
+                                subscribeButton.setAttribute("disabled", "disabled");
+                            }
+                        } else {
+                            // Enable the Subscribe button if app is not already subscribed
+                            if (subscribeButton) {
+                                subscribeButton.removeAttribute("disabled");
+                            }
+                        }
+                        return; // Exit early as we've handled the app selection from URL params
+                    }
+                }
+                
+                // Fall back to selecting the first available app if no app from params or app from params not found
                 const firstAvailableApp = dropdown.querySelector(".select-item:not(.disabled)");
                 if (firstAvailableApp) {
                     appId = firstAvailableApp.getAttribute("data-value");
-                    appName = firstAvailableApp.getAttribute("data-app-name");
+                    const appName = firstAvailableApp.getAttribute("data-app-name");
                     // Update hidden input with selected app ID
                     const hiddenField = document.getElementById(
                         dropdown.querySelector("[id^='selectedAppId-']").id
@@ -383,43 +424,11 @@ document.addEventListener("DOMContentLoaded", function () {
                                 // Close the dropdown
                                 selectItems.classList.remove("show");
                                 selectSelected.setAttribute("aria-expanded", "false");
-                                
+
                                 const subscribeButton = card.querySelector(".common-btn-primary");
                                 if (subscribeButton) {
                                     // Find and enable the subscribe button if it's disabled
                                     subscribeButton.removeAttribute("disabled");
-                                    
-                                    // Find the subscribe button and click it automatically
-                                    const subscribeBtn = card.querySelector(".common-btn-primary");
-                                    if (subscribeBtn) {
-                                        // Show loading state before performing subscription
-                                        showSubscribeButtonLoading(subscribeBtn);
-                                        
-                                        // Get the onclick attribute value
-                                        const onclickAttr = subscribeBtn.getAttribute('onclick');
-                                        
-                                        if (onclickAttr) {
-                                            // Execute the onclick function directly
-                                            try {
-                                                // Replace the showSubscribeButtonLoading call in the onclick attribute
-                                                // to avoid showing the loading state twice
-                                                let modifiedOnclick = onclickAttr.replace('showSubscribeButtonLoading(this);', '');
-                                                eval(modifiedOnclick);
-                                                
-                                                // Show success state after subscription completes
-                                                setTimeout(() => {
-                                                    showSubscribeSuccess(subscribeBtn);
-                                                }, 1000); // Simulate subscription completion after 1 second
-                                            } catch (err) {
-                                                console.error('Failed to subscribe', err);
-                                                // Reset button if subscription fails
-                                                resetSubscribeButtonState(subscribeBtn);
-                                            }
-                                        } else {
-                                            // No onclick attribute, try direct click
-                                            subscribeBtn.click();
-                                        }
-                                    }
                                 }
                             })
                             .catch(error => {
