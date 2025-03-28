@@ -190,15 +190,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 let params = new URLSearchParams(window.location.search);
                 let appId, appName = "";
                 // Get application data
-                if (params.has('appID')) {
-                     appId = params.get('appID');
-                     appName  = params.get('appName');
-                } else {
-                    const firstAvailableApp = dropdown.querySelector(".select-item:not(.disabled)");
+                // if (params.has('appID')) {
+                //      appId = params.get('appID');
+                //      appName  = params.get('appName');
+                // }
+                const firstAvailableApp = dropdown.querySelector(".select-item:not(.disabled)");
+                if (firstAvailableApp) {
                     appId = firstAvailableApp.getAttribute("data-value");
                     appName = firstAvailableApp.getAttribute("data-app-name");
-                }
-                if (appId && appName) {
                     // Update hidden input with selected app ID
                     const hiddenField = document.getElementById(
                         dropdown.querySelector("[id^='selectedAppId-']").id
