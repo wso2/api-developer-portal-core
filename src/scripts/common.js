@@ -194,8 +194,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 //      appId = params.get('appID');
                 //      appName  = params.get('appName');
                 // }
-                if (appId && appName) {
-                    const firstAvailableApp = dropdown.querySelector(".select-item:not(.disabled)");
+                const firstAvailableApp = dropdown.querySelector(".select-item:not(.disabled)");
+                if (firstAvailableApp) {
                     appId = firstAvailableApp.getAttribute("data-value");
                     appName = firstAvailableApp.getAttribute("data-app-name");
                     // Update hidden input with selected app ID
