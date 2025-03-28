@@ -590,7 +590,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .then(data => {
                 heroImage.innerHTML = data;
                 heroImage.querySelectorAll("#primaryMain").forEach(el => {
-                    el.setAttribute("stop-color", primaryMain);
+                    el.setAttribute("stop-color", primaryLightest);
                 });
                 heroImage.querySelectorAll("#primaryLight").forEach(el => {
                     el.setAttribute("stop-color", primaryLight);
