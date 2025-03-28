@@ -186,11 +186,20 @@ document.addEventListener("DOMContentLoaded", function () {
             
             // Select first non-subscribed app by default
             const selectFirstAvailableApp = () => {
-                const firstAvailableApp = dropdown.querySelector(".select-item:not(.disabled)");
-                if (firstAvailableApp) {
+                //check if url queyr params has app id
+                let params = new URLSearchParams(window.location.search);
+                let appId, appName = "";
+                if (params.has('appID')) {
+                     appId = params.get('appID');
+                     appName  = params.get('appName');
+                } else {
+                    const firstAvailableApp = dropdown.querySelector(".select-item:not(.disabled)");
+                    appId = firstAvailableApp.getAttribute("data-value");
+                    appName = firstAvailableApp.getAttribute("data-app-name");
+                }
+                if (appId && appName) {
                     // Get application data
-                    const appId = firstAvailableApp.getAttribute("data-value");
-                    const appName = firstAvailableApp.getAttribute("data-app-name");
+                    
                     
                     // Update hidden input with selected app ID
                     const hiddenField = document.getElementById(
