@@ -44,7 +44,7 @@ const util = require('./utils/util');
 
 const OAuth2Strategy = require('passport-oauth2');
 const jwt = require('jsonwebtoken');
-// const secret = require(process.cwd() + '/secret.json');
+const secretConf = require(process.cwd() + '/secret.json');
 const { v4: uuidv4 } = require('uuid');
 
 const lock = new AsyncLock();
@@ -58,19 +58,25 @@ const SERVER_ID = uuidv4();
 console.log(`starting server: ${SERVER_ID}`);
 
 //PostgreSQL connection pool for session store
-const pool = new Pool({
-    host: config.db.host,
-    port: config.db.port,
-    database: config.db.database,
-    user: config.db.username,
-    password: config.db.password
-});
+
 
 if (config.advanced.dbSslDialectOption) {
-    pool.ssl = { 
-        require: true, 
-        rejectUnauthorized: false 
-    };
+    pool = new Pool({
+        user: config.db.username,
+        host: config.db.host,
+        database: config.db.database,
+        password: secretConf.dbSecret,
+        port: config.db.port,
+        ssl: { require: true, rejectUnauthorized: false } 
+    });
+} else {
+    pool = new Pool({
+        user: config.db.username,
+        host: config.db.host,
+        database: config.db.database,
+        password: secretConf.dbSecret,
+        port: config.db.port
+    });
 }
 
 app.engine('.hbs', engine({
