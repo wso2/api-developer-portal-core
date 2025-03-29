@@ -262,7 +262,7 @@ passport.use(new OAuth2Strategy({
         'isSuperAdmin': isSuperAdmin,
         [constants.USER_ID]: decodedAccessToken[constants.USER_ID],
         serverId: SERVER_ID,
-        avatar: decodedJWT['picture'],
+        imageURL: decodedJWT['picture'] ? decodedJWT['picture'] : "https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/profile.svg"
     };
 
     console.log('------ verify done ---------');
@@ -273,7 +273,7 @@ passport.use(new OAuth2Strategy({
 // Serialize user into the session
 passport.serializeUser((user, done) => {
 
-    console.log(('>>> Serializing User: ' + JSON.stringify(user, null, 2)))
+    console.log("Serializing user");
     // const profile = {
     //     firstName: user.firstName,
     //     lastName: user.lastName,
@@ -361,7 +361,7 @@ app.use((err, req, res, next) => {
         });
         html = util.renderTemplate('../pages/authentication-error/page.hbs', 'src/pages/error-layout/main.hbs', templateContent, true);
     } else {
-        html = util.renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+        html = util.renderTemplate('../pages/error-page/page.hbs', 'src/pages/error-layout/main.hbs', templateContent, true);
     }
     res.status(err.status || 500).send(`
       ${html}
