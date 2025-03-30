@@ -30,14 +30,21 @@
                             </td>
                             <td class="app-td">{{version}}</td>
                             <td class="app-td">{{policyName}}</td>
-                            <td class="app-td">
+                            <td>
                                 <div class="mt-auto ms-auto">
                                     {{> delete-confirmation modalTitle="Do you really want to remove the subscription?"
                                     modalMessage="This will remove the subscription entry stored in the devportal."
                                     modalFunction="removeSubscription()" }}
                                     <button type="button" class="btn application-btn-icon delete-button" 
                                         onclick="openDeleteModal('{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')"><i
-                                            class="bi bi-trash"></i></button>
+                                            class="bi bi-pencil"></i>Edit</button>
+                                <div class="mt-auto ms-auto">
+                                    {{> delete-confirmation modalTitle="Do you really want to remove the subscription?"
+                                    modalMessage="This will remove the subscription entry stored in the devportal."
+                                    modalFunction="removeSubscription()" }}
+                                    <button type="button" class="btn application-btn-icon delete-button" 
+                                        onclick="openDeleteModal('{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')"><i
+                                            class="bi bi-trash"></i>Delete</button>
                                 </div>
                             </td>
                         </tr>
