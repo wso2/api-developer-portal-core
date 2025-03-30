@@ -31,7 +31,6 @@ const jwt = require('jsonwebtoken');
 
 function enforceSecuirty(scope) {
     return async function (req, res, next) {
-        console.log('enforceSecurity ======================');
         try {
             const rules = util.validateRequestParameters();
             for (let validation of rules) {
@@ -41,32 +40,21 @@ function enforceSecuirty(scope) {
             if (!errors.isEmpty()) {
                 return res.status(400).json(util.getErrors(errors));
             }
-            console.log('check access token');
             const token = accessTokenPresent(req);
-            console.log('token', token);
             if (token) {
-                console.log('>>>>>> has token');
                 //check user belongs to organization
                 if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
-                    console.log('>>>>>> user thr...');
-                    console.log(JSON.stringify(req.user, null, 2));
                     //check if exchanged token has organization identifier
                     //const decodedToken = req.user.exchangeToken ? jwt.decode(req.user.exchangeToken) : null;
                     const authorizedOrgs = req.user.authorizedOrgs;
-                    console.log('allowedOrgs', authorizedOrgs);
                     if ((authorizedOrgs && !(authorizedOrgs.includes(req.user[constants.ORG_IDENTIFIER]))) || !authorizedOrgs) {
                         const err = new Error('Authentication required');
                         err.status = 401; // Unauthorized
-                        console.log('>>>>> unauthorized')
                         return next(err);
-                    } else {
-                        console.log('>>>>> success!!!');
-                    }
+                    } 
                 }
-                console.log('>>>>>> if passed');
                 // TODO: Implement organization extraction logic
                 validateAuthentication(scope)(req, res, next);
-                console.log('>>>>>> validate auth passed');
                 //set user ID
                 const decodedAccessToken = jwt.decode(token);
                 req[constants.USER_ID] = decodedAccessToken[constants.USER_ID];
@@ -82,30 +70,25 @@ function enforceSecuirty(scope) {
             } else if (req.connection.getPeerCertificate(true)) {
                 enforceMTLS(req, res, next);
             } else {
-                console.log('>>>>>> else');
                 req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
                 if (req.params.orgName) {
                     res.redirect(`/${req.params.orgName}/views/${req.session.view}/login`);
                 }
             }
         } catch (err) {
-            console.log('>>>>>> error');
+            console.error("Error checking access token:", err);
             return res.status(500).json({ error: "Internal Server Error" });
         }
-        console.log('>>>>>> exiting...');
     }
 }
 
 function accessTokenPresent(req) {
 
     if (req.user) {
-        console.log('user present');
         accessToken = req.user[constants.ACCESS_TOKEN];
     } else if (req.headers.authorization) {
-        console.log('header present');
         accessToken = req.headers.authorization.split(' ')[1];
     } else {
-        console.log('not present');
         return null;
     }
     return accessToken;
@@ -315,7 +298,7 @@ const validateWithCert = async (token, publicKey) => {
         const { payload } = await jwtVerify(token, publicKey);
         return [true, payload.scope];
     } catch (err) {
-        ("Invalid token:", err.message);
+        console.error("Invalid token:", err.message);
         return [false, ""];
     }
 }
@@ -327,7 +310,7 @@ const validateWithJWKS = async (token, jwksURL) => {
         const { payload } = await jwtVerify(token, jwks);
         return [true, payload.scope];
     } catch (err) {
-        ("Invalid token:", err.message);
+        console.error("Invalid token:", err.message);
         return [false, ""];
     }
 }

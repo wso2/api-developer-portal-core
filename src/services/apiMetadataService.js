@@ -105,7 +105,7 @@ const createAPIMetadata = async (req, res) => {
 
         res.status(201).send(apiMetadata);
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.API_CREATE_ERROR}`, error);
+        console.error(`${constants.ERROR_MESSAGE.API_CREATE_ERROR}`, error);
         util.handleError(res, error);
     }
 };
@@ -159,7 +159,7 @@ const getAPIMetadata = async (req, res) => {
             res.status(404).send("API not found");
         }
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.API_NOT_FOUND}`, error);
+        console.error(`${constants.ERROR_MESSAGE.API_NOT_FOUND}`, error);
         util.handleError(res, error);
     }
 };
@@ -195,7 +195,7 @@ const getAllAPIMetadata = async (req, res) => {
         const retrievedAPIs = await getMetadataListFromDB(orgID, groupList, searchTerm, tags, apiName, apiVersion, viewName);
         res.status(200).send(retrievedAPIs);
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.API_NOT_FOUND}`, error);
+        console.error(`${constants.ERROR_MESSAGE.API_NOT_FOUND}`, error);
         util.handleError(res, error);
     }
 };
@@ -302,7 +302,7 @@ const updateAPIMetadata = async (req, res) => {
             res.status(200).send(new APIDTO(updatedAPI[0].dataValues));
         });
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.API_UPDATE_ERROR}`, error);
+        console.error(`${constants.ERROR_MESSAGE.API_UPDATE_ERROR}`, error);
         util.handleError(res, error);
     }
 };
@@ -328,7 +328,7 @@ const deleteAPIMetadata = async (req, res) => {
                 res.status(200).send("Resouce Deleted Successfully");
             }
         } catch (error) {
-            (`${constants.ERROR_MESSAGE.API_DELETE_ERROR}, ${error}`);
+            console.error(`${constants.ERROR_MESSAGE.API_DELETE_ERROR}, ${error}`);
             util.handleError(res, error);
         }
     });
@@ -365,7 +365,8 @@ const createAPITemplate = async (req, res) => {
                 await fs.access(documentPath);
             }
         } catch (err) {
-            (err);
+            console.log("Error while trying to access directories");
+            console.error(err);
             throw new Error(
                 `Required directories not found after extraction. Content path: ${contentPath}, Images path: ${imagesPath}
                 , Documents path: ${documentPath}`
@@ -418,7 +419,7 @@ const createAPITemplate = async (req, res) => {
         await fs.rm(extractPath, { recursive: true, force: true });
         res.status(201).type("application/json").send({ message: "API Template updated successfully" });
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.API_CONTENT_CREATE_ERROR}`, error);
+        console.error(`${constants.ERROR_MESSAGE.API_CONTENT_CREATE_ERROR}`, error);
         util.handleError(res, error);
     }
 };
@@ -457,7 +458,7 @@ const updateAPITemplate = async (req, res) => {
                 await fs.access(documentPath);
             }
         } catch (err) {
-            (err);
+            console.error(err);
             throw new Error(
                 `Required directories not found after extraction. Content path: ${contentPath}, Images path: ${imagesPath},
                 Documents path: ${documentPath}`
@@ -500,7 +501,7 @@ const updateAPITemplate = async (req, res) => {
         await fs.rm(extractPath, { recursive: true, force: true });
         res.status(201).send({ message: "API Files updated successfully" });
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.API_CONTENT_UPDATE_ERROR}, ${error}`);
+        console.error(`${constants.ERROR_MESSAGE.API_CONTENT_UPDATE_ERROR}, ${error}`);
         util.handleError(res, error);
     }
 };
@@ -549,7 +550,7 @@ const getAPIFile = async (req, res) => {
             }
         }
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.API_CONTENT_NOT_FOUND}, ${error}`);
+        console.error(`${constants.ERROR_MESSAGE.API_CONTENT_NOT_FOUND}, ${error}`);
         util.handleError(res, error);
     }
 };
@@ -561,7 +562,7 @@ const getAPIDocTypes = async (orgID, apiID) => {
         const apiCreationResponse = docTypeResponse.map((doc) => new APIDocDTO(doc.dataValues));
         return apiCreationResponse;
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.API_DOCS_LIST_ERROR}`, error);
+        console.error(`${constants.ERROR_MESSAGE.API_DOCS_LIST_ERROR}`, error);
         util.handleError(res, error);
     }
 }
@@ -588,7 +589,7 @@ const deleteAPIFile = async (req, res) => {
             res.status(404).send("API Content not found");
         }
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.API_CONTENT_DELETE_ERROR}`, error);
+        console.error(`${constants.ERROR_MESSAGE.API_CONTENT_DELETE_ERROR}`, error);
         util.handleError(res, error);
     }
 };
@@ -612,7 +613,7 @@ const createSubscriptionPolicy = async (req, res) => {
             }
         });
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_CREATE_ERROR}, ${error}`);
+        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_CREATE_ERROR}, ${error}`);
         util.handleError(res, error);
     }
 };
@@ -636,7 +637,7 @@ const updateSubscriptionPolicy = async (req, res) => {
             }
         });
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND}, ${error}`);
+        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND}, ${error}`);
         util.handleError(res, error);
     }
 };
@@ -659,7 +660,7 @@ const deleteSubscriptionPolicy = async (req, res) => {
             }
         });
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_DELETE_ERROR}, ${error}`);
+        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_DELETE_ERROR}, ${error}`);
         util.handleError(res, error);
     }
 };
@@ -682,7 +683,7 @@ const getSubscriptionPolicy = async (req, res) => {
             throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
         }
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND}, ${error}`);
+        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND}, ${error}`);
         util.handleError(res, error);
     }
 };
@@ -701,7 +702,7 @@ const createLabels = async (req, res) => {
         await apiDao.createLabels(orgId, labels);
         res.status(201).send(labels);
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.LABEL_CREATE_ERROR}, ${error}`);
+        console.error(`${constants.ERROR_MESSAGE.LABEL_CREATE_ERROR}, ${error}`);
         util.handleError(res, error);
     }
 }
@@ -721,7 +722,7 @@ const updateLabel = async (req, res) => {
         };
         res.status(201).send(labels);
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.LABEL_UPDATE_ERROR}`, error);
+        console.error(`${constants.ERROR_MESSAGE.LABEL_UPDATE_ERROR}`, error);
         util.handleError(res, error);
     }
 }
@@ -740,7 +741,7 @@ const deleteLabels = async (req, res) => {
         await apiDao.deleteLabel(orgId, labelList);
         res.status(204).send();
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.LABEL_DELETE_ERROR}`, error);
+        console.error(`${constants.ERROR_MESSAGE.LABEL_DELETE_ERROR}`, error);
         util.handleError(res, error);
     }
 }
@@ -757,7 +758,7 @@ const retrieveLabels = async (req, res) => {
         const labels = await getOrgLabels(orgId);
         res.status(200).send(labels);
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.LABEL_RETRIEVE_ERROR}`, error);
+        console.error(`${constants.ERROR_MESSAGE.LABEL_RETRIEVE_ERROR}`, error);
         util.handleError(res, error);
     }
 }
@@ -768,7 +769,7 @@ const getOrgLabels = async (orgId) => {
         const labels = await apiDao.getLabels(orgId);
         return labels.map((label) => new LabelDTO(label));
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.LABEL_UPDATE_ERROR}, ${error}`);
+        console.error(`${constants.ERROR_MESSAGE.LABEL_UPDATE_ERROR}, ${error}`);
         util.handleError(res, error);
     }
 }
@@ -790,7 +791,7 @@ const addView = async (req, res) => {
             await apiDao.addViewLabels(orgId, viewID, labels, t);
             res.status(201).send({ message: "View added successfully" });
         } catch (error) {
-            (`${constants.ERROR_MESSAGE.VIEW_CREATE_ERROR}`, error);
+            console.error(`${constants.ERROR_MESSAGE.VIEW_CREATE_ERROR}`, error);
             util.handleError(res, error);
         }
     });
@@ -825,7 +826,7 @@ const updateView = async (req, res) => {
             res.status(200).send(req.body);
         });
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.VIEW_UPDATE_ERROR}`, error);
+        console.error(`${constants.ERROR_MESSAGE.VIEW_UPDATE_ERROR}`, error);
         util.handleError(res, error);
     }
 }
@@ -847,7 +848,7 @@ const deleteView = async (req, res) => {
             res.status(204).send("View Deleted Successfully");
         }
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.VIEW_DELETE_ERROR}`, error);
+        console.error(`${constants.ERROR_MESSAGE.VIEW_DELETE_ERROR}`, error);
         util.handleError(res, error);
     }
 }
@@ -869,7 +870,7 @@ const getView = async (req, res) => {
             res.status(404).send(`View ${name} not found`);
         }
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.VIEW_RETRIEVE_ERROR}`, error);
+        console.error(`${constants.ERROR_MESSAGE.VIEW_RETRIEVE_ERROR}`, error);
         util.handleError(res, error);
     }
 }
@@ -900,7 +901,7 @@ const getAllViews = async (req, res) => {
             res.status(404).send("No views found");
         }
     } catch (error) {
-        (`${constants.ERROR_MESSAGE.VIEW_RETRIEVE_ERROR}`, error);
+        console.error(`${constants.ERROR_MESSAGE.VIEW_RETRIEVE_ERROR}`, error);
         util.handleError(res, error);
     }
 }

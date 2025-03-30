@@ -30,11 +30,11 @@ async function unsubscribe(subscriptionId) {
             window.location.href = url.toString();
         } else {
             const responseData = await response.json();
-            ('Failed to unsubscribe:', responseData);
+            console.error('Failed to unsubscribe:', responseData);
             await showAlert(`Failed to unsubscribe.\n${responseData.description}`, 'error');
         }
     } catch (error) {
-        ('Error:', error);
+        console.error('Error:', error);
         await showAlert(`An error occurred.\n${error.message}`, 'error');
     }
 }
@@ -96,11 +96,11 @@ async function handleCreateSubscribe() {
         if (response.ok) {
             handleSubscribe(responseData.applicationId);
         } else {
-            ('Failed to create application:', responseData);
+            console.error('Failed to create application:', responseData);
             await showAlert(`Failed to create application. Please try again.\n${responseData.description}`, 'error');
         }
     } catch (error) {
-        ('Error:', error);
+        console.error('Error:', error);
         await showAlert(`An error occurred while subscribing: \n${error.message}`, 'error');
     }
 }
@@ -156,11 +156,11 @@ async function handleSubscribe(appId, apiName, apiVersion, apiRefId) {
             const url = new URL(window.location.origin + window.location.pathname);
             window.location.href = url.toString();
         } else {
-            ('Failed to subscribe:', responseData);
+            console.error('Failed to subscribe:', responseData);
             await showAlert(`Failed to subscribe. Please try again.\n${responseData.description}`, 'error');
         }
     } catch (error) {
-        ('Error:', error);
+        console.error('Error:', error);
         await showAlert(`An error occurred while subscribing: \n${error.message}`, 'error');
     }
 }
@@ -296,11 +296,11 @@ async function removeSubscription() {
             window.location.href = url.toString();
         } else {
             const responseData = await response.json();
-            ('Failed to unsubscribe:', responseData);
+            console.error('Failed to unsubscribe:', responseData);
             await showAlert(`Failed to unsubscribe.\n${responseData.description}`, 'error');
         }
     } catch (error) {
-        ('Error:', error);
+        console.error('Error:', error);
         await showAlert(`An error occurred.\n${error.message}`, 'error');
     }
 }

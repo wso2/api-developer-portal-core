@@ -98,11 +98,11 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             const KMURLs = document.getElementById("KMURl_" + keyManager);
             KMURLs.style.display = "block";
         } else {
-            ('Failed to generate keys:', responseData);
+            console.error('Failed to generate keys:', responseData);
             await showAlert(`Failed to generate application keys. Please try again.\n${responseData.description}`, 'error');
         }
     } catch (error) {
-        ('Error:', error);
+        console.error('Error:', error);
         await showAlert(`An error occurred generating application keys: \n${error.message}`, 'error');
     }
 }
@@ -122,11 +122,11 @@ async function cleanUp(applicationId, keyMappingId) {
             const url = new URL(window.location.origin + window.location.pathname);
             window.location.href = url.toString();
         } else {
-            ('Failed to clean up keys:', responseData);
+            console.error('Failed to clean up keys:', responseData);
             await showAlert(`Failed to clean up application keys. Please try again.\n${responseData.description}`, 'error');
         }
     } catch (error) {
-        ('Error:', error);
+        console.error('Error:', error);
         await showAlert(`An error occurred cleaning up application keys: \n${error.message}`, 'error');
     }
 }
@@ -220,11 +220,11 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
             const url = new URL(window.location.origin + window.location.pathname);
             window.location.href = url.toString();
         } else {
-            ('Failed to generate keys:', responseData);
+            console.error('Failed to generate keys:', responseData);
             await showAlert(`Failed to generate application keys. Please try again.\n${responseData.description}`, 'error');
         }
     } catch (error) {
-        ('Error:', error);
+        console.error('Error:', error);
         await showAlert(`An error occurred generating application keys: \n${error.message}`, 'error');
     }
 }
@@ -251,11 +251,11 @@ async function removeApplicationKey() {
             const url = new URL(window.location.origin + window.location.pathname);
             window.location.href = url.toString();
         } else {
-            ('Failed to removed keys:', responseData);
+            console.error('Failed to removed keys:', responseData);
             await showAlert(`Failed to removed application keys. Please try again.\n${responseData.description}`, 'error');
         }
     } catch (error) {
-        ('Error:', error);
+        console.error('Error:', error);
         await showAlert(`An error occurred removing application keys: \n${error.message}`, 'error');
     }
 }
@@ -312,7 +312,7 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
             window.location.href = url.toString();
         }
     } catch (error) {
-        ('Error:', error);
+        console.error('Error:', error);
         await showAlert(`An error occurred while generating OAuth keys: \n${error.message}`, 'error');
     }
 
@@ -343,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 1500);
             })
             .catch(err => {
-                ('Failed to copy: ', err);
+                console.error('Failed to copy: ', err);
             });
     }
  
@@ -444,7 +444,7 @@ async function copyToken(KMName) {
         await navigator.clipboard.writeText(tokenText);
         await showAlert('Token copied to clipboard!');
     } catch (err) {
-        ('Could not copy text:', err);
+        console.error('Could not copy text:', err);
         await showAlert('Failed to copy token', true);
     }
 }
@@ -501,7 +501,7 @@ async function copyConsumerSecret(inputId) {
             iconElement.classList.add('bi-clipboard');
         }, 1500);
     } catch (err) {
-        ('Could not copy text:', err);
+        console.error('Could not copy text:', err);
         await showAlert('Failed to copy Consumer Secret', true);
     }
 }

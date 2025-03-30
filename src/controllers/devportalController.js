@@ -38,7 +38,7 @@ const saveApplication = async (req, res) => {
         const application = await adminDao.createApplication(orgID, req.user.sub, req.body);
         return res.status(201).json(new ApplicationDTO(application.dataValues));
     } catch (error) {
-        ("Error occurred while creating the application", error);
+        console.error("Error occurred while creating the application", error);
         util.handleError(res, error);
     }
 };
@@ -55,7 +55,7 @@ const updateApplication = async (req, res) => {
         }
         res.status(200).send(new ApplicationDTO(updatedApp[0].dataValues));
     } catch (error) {
-        ("Error occurred while updating the application", error);
+        console.error("Error occurred while updating the application", error);
         util.handleError(res, error);
     }
 };
@@ -81,7 +81,7 @@ const deleteApplication = async (req, res) => {
         }
         res.status(200).json({ message: responseData.message });
     } catch (error) {
-        ("Error occurred while deleting the application", error);
+        console.error("Error occurred while deleting the application", error);
         util.handleError(res, error);
     }
 }
@@ -99,7 +99,7 @@ const resetThrottlingPolicy = async (req, res) => {
         });
         res.status(200).json({ message: responseData.message });
     } catch (error) {
-        ("Error occurred while resetting the application", error);
+        console.error("Error occurred while resetting the application", error);
         util.handleError(res, error);
     }
 };
@@ -118,7 +118,7 @@ const generateAPIKeys = async (req, res) => {
         });
         res.status(200).json(responseData);
     } catch (error) {
-        ("Error occurred while deleting the application", error);
+        console.error("Error occurred while deleting the application", error);
         util.handleError(res, error);
     }
 };
@@ -129,7 +129,7 @@ const generateApplicationKeys = async (req, res) => {
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/generate-keys`, {}, req.body);
         res.status(200).json(responseData);
     } catch (error) {
-        ("Error occurred while generating the application keys", error);
+        console.error("Error occurred while generating the application keys", error);
         util.handleError(res, error);
     }
 };
@@ -141,7 +141,7 @@ const generateOAuthKeys = async (req, res) => {
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}/generate-token`, {}, req.body);
         res.status(200).json(responseData);
     } catch (error) {
-        ("Error occurred while generating the OAuth keys", error);
+        console.error("Error occurred while generating the OAuth keys", error);
         util.handleError(res, error);
     }
 };
@@ -153,7 +153,7 @@ const revokeOAuthKeys = async (req, res) => {
         const responseData = await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}`, {}, {});
         res.status(200).json(responseData);
     } catch (error) {
-        ("Error occurred while generating the OAuth keys", error);
+        console.error("Error occurred while generating the OAuth keys", error);
         util.handleError(res, error);
     }
 };
@@ -165,7 +165,7 @@ const cleanUp = async (req, res) => {
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}/clean-up`, {}, req.body);
         res.status(200).json(responseData);
     } catch (error) {
-        ("Error occurred while generating the OAuth keys", error);
+        console.error("Error occurred while generating the OAuth keys", error);
         util.handleError(res, error);
     }
 };
@@ -180,7 +180,7 @@ const updateOAuthKeys = async (req, res) => {
         const responseData = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}`, {}, tokenDetails);
         res.status(200).json(responseData);
     } catch (error) {
-        ("Error occurred while generating the OAuth keys", error);
+        console.error("Error occurred while generating the OAuth keys", error);
         util.handleError(res, error);
     }
 };
@@ -204,7 +204,7 @@ const login = async (req, res) => {
 
     passport.authenticate('default-auth', (err, user, info) => {
         if (err) {
-            ("Error occurred while logging in", err);
+            console.error("Error occurred while logging in", err);
             return util.handleError(res, err);
         }
         if (!user) {

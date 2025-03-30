@@ -106,7 +106,7 @@ applicationForm.addEventListener('submit', async (e) => {
             window.location.href = document.referrer || 'applications';
         }
     } catch (error) {
-        ('Error saving application:', error);
+        console.error('Error saving application:', error);
         await showAlert('Failed to save application.', 'error');
     }
 });

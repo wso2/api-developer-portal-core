@@ -81,7 +81,7 @@ const loadApplications = async (req, res) => {
             }
         }
     } catch (error) {
-        ("Error occurred while loading Applications", error);
+        console.error("Error occurred while loading Applications", error);
         html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
     }
     res.send(html);
@@ -123,7 +123,7 @@ const loadThrottlingPolicies = async (req, res) => {
             }
         }
     } catch (error) {
-        ("Error occurred", error);
+        console.error("Error occurred", error);
         html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
     }
     res.send(html);
@@ -289,7 +289,7 @@ const loadApplication = async (req, res) => {
             }
         }
     } catch (error) {
-        ("Error occurred while loading application", error);
+        console.error("Error occurred while loading application", error);
         html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
     }
     res.send(html);
@@ -303,7 +303,7 @@ async function getApplicationKeys(applicationList, req) {
         try {
             return await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${appRef}/keys`, {}, {});
         } catch (error) {
-            ("Error occurred while generating application keys", error);
+            console.error("Error occurred while generating application keys", error);
             return null;
         }
     }
@@ -313,7 +313,7 @@ async function getAllAPIs(req) {
     try {
         return await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis`);
     } catch (error) {
-        ("Error occurred while loading APIs", error);
+        console.error("Error occurred while loading APIs", error);
         throw error;
     }
 }
@@ -322,7 +322,7 @@ const getSubscribedApis = async (req, appId) => {
     try {
         return await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?applicationId=${appId}`);
     } catch (error) {
-        ("Error occurred while loading subscriptions", error);
+        console.error("Error occurred while loading subscriptions", error);
         throw error;
     }
 }
@@ -364,7 +364,7 @@ const loadApplicationForEdit = async (req, res) => {
             }
         }
     } catch (error) {
-        ("Error occurred while loading application for edit", error);
+        console.error("Error occurred while loading application for edit", error);
         html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
 
     }

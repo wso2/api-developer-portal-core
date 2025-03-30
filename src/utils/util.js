@@ -100,6 +100,7 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
 
     var layoutContent = await loadLayoutFromAPI(orgID, viewName);
     if (layoutContent === "") {
+        console.log("Layout not found for org: " + orgName + " and view: " + viewName);
         //load default org content
         html = renderTemplate(filePrefix + filePath + '/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
         return html;
@@ -232,7 +233,7 @@ const unzipDirectory = async (zipPath, extractPath) => {
                         entry.autodrain();
                     }
                 } catch (err) {
-                    ("Error processing entry. ", err);
+                    console.error("Error processing entry. ", err);
                     entry.autodrain();
                     reject (new Error('Error processing entry.'));
                 }
@@ -352,7 +353,8 @@ async function readDocFiles(directory, baseDir = '') {
 }
 
 const invokeApiRequest = async (req, method, url, headers, body) => {
-
+ 
+    console.log(`Invoking API: ${url}`);
     headers = headers || {};
     headers.Authorization = req.user?.exchangeToken ? `Bearer ${req.user.exchangeToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
     let httpsAgent;
@@ -405,6 +407,7 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
                 throw new CustomError(retryError.response?.status || 500, "Request retry failed", retryMessage);   
             }
         } else {
+            console.log(`Error while invoking API:`, error);
             let message = error.message;
             if (error.response) {
                 message = error.response.data.description;
@@ -594,7 +597,7 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
         }
         return fileDetails;
     } catch (error) {
-        ("Error occurred while reading files in directory", error);
+        console.error("Error occurred while reading files in directory", error);
         throw error;
     }
 }
@@ -625,7 +628,7 @@ function validateScripts(strContent) {
             }
         }
     } catch (error) {
-        ("Error occurred while validating scripts", error);
+        console.error("Error occurred while validating scripts", error);
         throw error;
     }
 }
@@ -714,7 +717,7 @@ async function tokenExchanger(token, orgName) {
                 await new Promise(resolve => setTimeout(resolve, delay));
                 delay *= 2; 
             } else {
-                ('Token exchange failed:', error.message);
+                console.error('Token exchange failed:', error.message);
                 throw new Error('Failed to exchange token');
             }
         }        
@@ -726,8 +729,10 @@ async function listFiles(path) {
     let files = [];
     fs.promises.readdir(path, (err, files) => {
         if (err) {
+            console.error('Error reading directory:', err);
             return;
         }
+        console.log('Files in directory:', files);
     });
     return files;
 }

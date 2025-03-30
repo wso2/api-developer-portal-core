@@ -217,10 +217,9 @@ passport.use(new OAuth2Strategy({
     scope: ['openid', 'profile', 'email'],
 }, async (req, accessToken, refreshToken, params, profile, done) => {
     
-    console.log('verify =================== ');
+    console.log('Loging callback invoked');
     
     if (!accessToken) {
-        ('>>>>>>> No access token received');
         return done(new Error('Access token missing'));
     }
     let orgList;
@@ -271,7 +270,7 @@ passport.use(new OAuth2Strategy({
         imageURL: decodedJWT['picture'] ? decodedJWT['picture'] : "https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/profile.svg"
     };
 
-    console.log('------ verify done ---------');
+    console.log('Retruning profile');
 
     return done(null, profile);
 }));

@@ -54,6 +54,7 @@ const registerPartials = async (req, res, next) => {
         const orgID = await adminDao.getOrgId(req.params.orgName);
         var layoutContent = await loadLayoutFromAPI(orgID, req.params.viewName);
         if (layoutContent === "") {
+          console.log("Layout content not found in the database. Loading from file system");
           await registerAllPartialsFromFile(config.baseUrl + "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName, req, './src/defaultContent');
           //register doc page partials
           if (req.originalUrl.includes(constants.ROUTE.API_DOCS_PATH) && req.params.docType && req.params.docName) {
@@ -67,7 +68,7 @@ const registerPartials = async (req, res, next) => {
         }
       }
     } catch (error) {
-      ('Error while loading organization :', error);
+      console.error('Error while loading organization :', error);
     }
   }
   next();

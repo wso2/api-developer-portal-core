@@ -53,7 +53,7 @@ const fetchAuthJsonContent = async (req, orgName) => {
         }
         return new IdentityProviderDTO(response[0].dataValues);
     } catch (error) {
-        ("Failed to fetch identity provider details", error);
+        console.error("Failed to fetch identity provider details", error);
         return config.identityProvider;
     }
 };
@@ -84,7 +84,6 @@ const login = async (req, res, next) => {
             if (err) {
                 return res.status(500).send('Internal Server Error');
             }
-            // req.session.returnTo = "/sachinisdev/profile";
             req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
             await passport.authenticate('oauth2')(req, res, next);
         });
@@ -114,7 +113,7 @@ const handleCallback = async (req, res, next) => {
             }
         })
         .catch(error => {
-            ("Error validating request parameters: " + error);
+            console.error("Error validating request parameters: " + error);
             return res.status(500).json({ message: 'Internal Server Error' });
         });
     await passport.authenticate(
