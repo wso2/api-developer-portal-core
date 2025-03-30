@@ -174,29 +174,17 @@ function loadModal(modalID) {
 async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, policyName) {
     console.log('Subscribing to API:', apiId);
     try {
+        const card = document.getElementById('apiCard-' + apiId) ? document.getElementById('apiCard-' + apiId) :
+            document.getElementById('subscriptionCard-' + policyId) ? document.getElementById('subscriptionCard-' + policyId) : null;
+
         // Get the subscribe button (we may have already set loading state)
-        const subscribeButton = document.getElementById('apiCard-' + apiId).querySelector(".common-btn-primary");
-        
+        const subscribeButton = card ? card.querySelector(".common-btn-primary") : null;
+
         if (!applicationID) {
-            const hiddenField = document.getElementById('selectedAppId-' + apiId);
+            // get input hidden
+            const hiddenField = card ? card.querySelector('input[type="hidden"]') : null;
             if (hiddenField && hiddenField.value) {
                 applicationID = hiddenField.value;
-            }
-        }
-
-        if (document.getElementById('apiSelect')) {
-            if (!apiId) {
-                apiId = document.getElementById('apiSelect').value;
-            }
-            if (!apiReferenceID) {
-                apiReferenceID = document.getElementById('apiSelect').selectedOptions[0].getAttribute('data-apiRefID');
-            }
-        }
-
-        if (document.getElementById('planSelect')) {
-            policyId = document.getElementById('planSelect').value;
-            if (!policyName) {
-                policyName = planSelect.selectedOptions[0].getAttribute('data-policyName');
             }
         }
 
@@ -214,23 +202,11 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
             // Show success state on the button
             if (subscribeButton && typeof window.showSubscribeSuccess === 'function') {
                 window.showSubscribeSuccess(subscribeButton);
-            } else {
-                const subBtn = document.getElementById('subscribe-btn-' + policyId);
-                if (subBtn) {
-                    subBtn.innerText = 'Subscribed!';
-                    subBtn.disabled = true;
-                    
-                    // Reset after 2 seconds
-                    setTimeout(() => {
-                        subBtn.innerText = 'Subscribe';
-                        subBtn.disabled = false;
-                    }, 2000);
-                }
             }
-            
-            await showAlert('Subscribed successfully!', 'success');
+
             closeModal('planModal-' + apiId);
-            
+            await showAlert('Subscribed successfully!', 'success');
+
             // Redirect after a short delay to show the success state
             setTimeout(() => {
                 const url = new URL(window.location.origin + window.location.pathname);
@@ -238,23 +214,27 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
             }, 2000);
         } else {
             console.error('Failed to create subscription:', responseData);
-            
+
             // Reset button state if subscription fails
             if (subscribeButton && typeof window.resetSubscribeButtonState === 'function') {
                 window.resetSubscribeButtonState(subscribeButton);
             }
-            
+
             await showAlert(`Failed to create subscription. Please try again.\n${responseData.description}`, 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        
+
         // Reset button state on error
-        const subscribeButton = document.getElementById('apiCard-' + apiId).querySelector(".common-btn-primary");
+        const card = document.getElementById('apiCard-' + apiId) ? document.getElementById('apiCard-' + apiId) :
+            document.getElementById('subscriptionCard-' + policyId) ? document.getElementById('subscriptionCard-' + policyId) : null;
+
+        // Get the subscribe button (we may have already set loading state)
+        const subscribeButton = card ? card.querySelector(".common-btn-primary") : null;
         if (subscribeButton && typeof window.resetSubscribeButtonState === 'function') {
             window.resetSubscribeButtonState(subscribeButton);
         }
-        
+
         await showAlert(`An error occurred while subscribing: \n${error.message}`, 'error');
     }
 }
