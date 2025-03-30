@@ -5,7 +5,6 @@
   /* primary colors */
   --primary-main-color: #5952ad;
   --primary-light-color: #f7f7ff;
-  --primary-dark-color: #423c89;
   /* secondary colors */
   --secondary-main-color: #5dc7b1;
   --secondary-light-color: #eef3f2;
@@ -13,7 +12,7 @@
   --secondary-darkest-color: #357b6c;
   /* font colors */
   --white-text-color: #ffffff;
-  --dp-main-text-color: #40404b;
+  --main-text-color: #40404b;
   /* other special colors */
   --success-color: #28a745;
   --danger-color: #dc3545;
@@ -46,7 +45,7 @@ footer {
 }
 
 .common-btn-primary {
-  background-color: var(--primary-dark-color);
+  background-color: var(--primary-main-color);
   color: var(--white-text-color);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
@@ -66,7 +65,7 @@ footer {
 }
 
 .common-btn-primary:active {
-  background-color: var(--primary-dark-color);
+  background-color: var(--primary-main-color);
   box-shadow: 0 0.125rem 0.125rem rgba(0, 0, 0, 0.1);
   color: var(--white-text-color);
 }
@@ -78,7 +77,7 @@ footer {
 
 .common-btn-white {
   background-color: var(--white-color);
-  color: var(--primary-dark-color);
+  color: var(--primary-main-color);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   border: none;
@@ -123,7 +122,7 @@ footer {
 }
 
 .common-btn-link:hover {
-  color: var(--primary-dark-color);
+  color: var(--primary-main-color);
   background-color: var(--primary-main-color);
   color: var(--white-text-color);
 }
@@ -154,11 +153,11 @@ footer {
 .common-btn-outlined:hover {
   background-color: var(--primary-main-color);
   color: var(--white-text-color);
-  border-color: var(--primary-dark-color);
+  border-color: var(--primary-main-color);
 }
 
 .common-btn-outlined:active {
-  background-color: var(--primary-dark-color);
+  background-color: var(--primary-main-color);
   color: var(--white-text-color);
 }
 
@@ -211,13 +210,13 @@ footer {
 /* --Title-- */
 .api-md-content h1 {
   font-size: 30px;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 .api-md-content h3,
 h2 {
   font-size: 24px;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 /* --SubTitle-- */
@@ -225,18 +224,18 @@ h2 {
 h5,
 h6 {
   font-size: 20px;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 /* --Paragraph-- */
 .api-md-content p {
   font-size: 15px;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 .api-md-content li {
   font-size: 15px;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
 }
 
 .api-md-content li::marker {

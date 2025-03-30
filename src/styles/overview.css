@@ -1,5 +1,5 @@
 .app-overview-card {
-  background-color: var(--secondary-bg-color) !important;
+  background-color: var(--primary-lightest-color) !important;
   border-radius: 0.75rem !important;
   padding: 2.5rem 2.5rem !important;
   text-align: left;
@@ -11,7 +11,7 @@
 }
 
 .app-description {
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   font-size: 14px;
   font-weight: 300;
 }
@@ -19,7 +19,7 @@
 .app-subscription-count {
   font-weight: 500;
   font-size: 14px;
-  color: var(--dark-text-color);
+  color: var(--main-text-color);
   opacity: 0.7;
 }
 
@@ -39,7 +39,7 @@
 .edit-button:hover {
   border-color: var(--primary-main-color);
   background-color: var(--primary-main-color);
-  color: var(--lightest-text-color);
+  color: var(--light-text-color);
 }
 
 /* Inline editing styles */
@@ -68,6 +68,7 @@
 
 .edit-actions {
   margin-left: 0.5rem;
+  margin-right: 0.5rem;
   display: inline-block;
   vertical-align: middle;
 }
@@ -87,7 +88,7 @@
 
 /* Error message styling */
 .edit-error-message {
-  color: #dc3545;
+  color: var(--danger-color);
   font-size: 0.75rem;
   margin-top: 0.25rem;
   padding-left: 0.25rem;

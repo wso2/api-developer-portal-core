@@ -1,42 +1,60 @@
+
 <section class="section mt-5 mb-6">
     <div class="container-fluid">
         <div class="d-flex align-items-center justify-content-between mb-3">
-            <div class="container-header">APIs</div>
+            <div class="container-header">Subscribed APIs</div>
             <div class='action-buttons mt-0'>
-                <a class="common-btn-primary" type="button" href="{{baseUrl}}/apis">
-                    <i class="fas fa-external-link-alt me-2"></i> Browse APIs
+                <a class="common-btn-primary" type="button" href="{{baseUrl}}/apis?appID={{applicationMetadata.id}}&appName={{applicationMetadata.name}}">
+                    <i class="fas fa-external-link-alt me-2"></i> Subscribe to more APIs
                 </a>
             </div>
         </div>
         <div class="row row-gap-4">
-            {{#subAPIs}}
-            <div class="col-lg-4 col-md-6">
-                <div class="card dev-card h-auto p-4">
-                    <div class="d-flex flex-wrap align-items-start justify-content-between gap-2">
-                        <div class="d-flex align-items-center gap-2 overflow-hidden">
-                            <img src="{{apiInfo.apiImageMetadata.api-icon}}" class="api-card-img" />
-                            <div class="api-card-body flex-grow-1 p-0 overflow-hidden">
-                                <h5 class="api-card-title mb-1"> <span
-                                        onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
-                                        class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
-                                </h5>
-                                <div class="d-flex gap-2">
-                                    <p class="my-0"> {{version}}</p>
-                                    <div class="badge badge-custom2 m-0"> {{policyName}} </div>
+            {{#if subAPIs}}
+            <div class="app-table-container">
+                <table class="app-table">
+                    <thead>
+                        <tr class="app-tr">
+                            <th class="app-th">API</th>
+                            <th class="app-th">Version</th>
+                            <th class="app-th">Subscription Plan</th>
+                            <th class="app-th">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each subAPIs}}
+                        <tr class="app-tr">
+                            <td class="app-td">
+                                <span onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
+                                    class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
+                            </td>
+                            <td class="app-td">{{version}}</td>
+                            <td class="app-td">{{policyName}}</td>
+                            <td class="app-td">
+                                <div class="mt-auto ms-auto">
+                                    {{> delete-confirmation modalTitle="Do you really want to remove the subscription?"
+                                    modalMessage="This will remove the subscription entry stored in the devportal."
+                                    modalFunction="removeSubscription()" }}
+                                    <button type="button" class="btn application-btn-icon delete-button" 
+                                        onclick="openDeleteModal('{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')"><i
+                                            class="bi bi-trash"></i></button>
                                 </div>
-                            </div>
-                        </div>
-                        <div class="mt-auto ms-auto">
-                            {{> delete-confirmation modalTitle="Do you really want to remove the subscription?"
-                            modalMessage="This will remove the subscription entry stored in the devportal."
-                            modalFunction="removeSubscription()" }}
-                            <a class="common-btn-outlined pt-2 pb-2" type="button"
-                                onclick="openDeleteModal('{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')">Unsubscribe</a>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+            {{else}}
+            <div class="ps-3">
+                <div class="info-box">
+                    <div class="info-content">
+                        <div class="info-title">
+                            No subscriptions available for this application. Please subscribe to an API.
                         </div>
                     </div>
                 </div>
+                {{/if}}
             </div>
-            {{/subAPIs}}
         </div>
-    </div>
 </section>

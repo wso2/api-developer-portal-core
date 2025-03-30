@@ -61,7 +61,7 @@ const Application = sequelize.define('DP_APPLICATION', {
         indexes: [
             {
                 unique: true,
-                fields: ['NAME', 'ORG_ID']
+                fields: ['APP_ID', 'ORG_ID']
             }
         ]
     }

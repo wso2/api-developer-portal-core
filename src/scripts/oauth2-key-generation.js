@@ -303,7 +303,6 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
         const tokenDetails = document.getElementById("tokenDisplay_" + keyManager);
         tokenDetails.style.display = "block";
         //openApiKeyModal(responseData.accessToken, "Generated OAuth Token", "OAuth Token");
-        console.log(document.getElementById("token_" + keyManager))
         document.getElementById("token_" + keyManager).textContent = responseData.accessToken;
         if (response.ok) {
             await showAlert('Token generated successfully!', 'success');

@@ -3,7 +3,7 @@
   flex-direction: column;
   border: 0.0625rem solid var(--border-colour-secondary);
   border-radius: 0.75rem;
-  background-color: var(--light-bg-color);
+  background-color: var(--secondary-bg-color);
   padding: 1.25rem;
   height: 100%;
   box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
@@ -21,14 +21,14 @@
 
 .form-label {
   font-size: 0.8125rem;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   margin: 0.3rem 0;
 }
 
 .form-control,
 .form-select {
   font-size: 0.8125rem;
-  color: var(--dark-text-color);
+  color: var(--main-text-color);
   opacity: 0.7;
 }
 
@@ -133,7 +133,7 @@ input:checked+.slider:before {
 
 /* Add styling for selected checkboxes */
 input[type="checkbox"]:checked {
-  accent-color: var(--primary-dark-color);
+  accent-color: var(--primary-main-color);
 }
 
 .slider.round {
@@ -146,7 +146,7 @@ input[type="checkbox"]:checked {
 
 .callback-header {
   font-size: 0.8125rem;
-  color: var(--dp-main-text-color);
+  color: var(--main-text-color);
   margin: 0.3rem 0;
   font-weight: 400;
 }

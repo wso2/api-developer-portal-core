@@ -1,9 +1,9 @@
 <section class="section mt-5 mb-6">
     <div class="container-fluid">
         <div class="container-header mb-2">Tokens</div>
-        <p class="small mb-3">Click OAuth2 Keys to generate consumer key and secret.</p>
+        <p class="small mb-3">Click Generate Credentials to generate consumer key and secret.</p>
         <button type='button' class='common-btn-primary' onclick='loadKeyGenModal()'>
-            OAuth2 Keys
+            Generate Credentials
         </button>
     </div>
     <div class="modal custom-modal" id='OauthKeyModal'>
@@ -334,7 +334,7 @@
                                     <button class="common-btn-primary" id="applicationKeyGenerateButton" name="http-values"
                                         type="button"
                                         onClick="generateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.id}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', 'consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}')">
-                                        Generate Keys
+                                        Generate Credentials
                                     </button>
                                 </div>
                                 <div id="additionalPropsHeader" class="collapsible-header small"
