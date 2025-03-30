@@ -204,8 +204,8 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
                 window.showSubscribeSuccess(subscribeButton);
             }
 
-            await showAlert('Subscribed successfully!', 'success');
             closeModal('planModal-' + apiId);
+            await showAlert('Subscribed successfully!', 'success');
 
             // Redirect after a short delay to show the success state
             setTimeout(() => {
