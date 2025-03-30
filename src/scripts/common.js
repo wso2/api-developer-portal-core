@@ -182,7 +182,6 @@ document.addEventListener("DOMContentLoaded", function () {
             const searchInput = dropdown.querySelector(".select-search-input");
             const selectItemsContainer = dropdown.querySelector(".select-items-container");
             const createAppOption = dropdown.querySelector(".create-app-option");
-            const searchTermElement = dropdown.querySelector(".search-term");
             
             // Select first non-subscribed app by default
             const selectFirstAvailableApp = () => {
@@ -467,23 +466,42 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const subscriptionCard = document.querySelectorAll(".subscription-card");
     subscriptionCard.forEach(card => {
-        const subscriptionBox = card.querySelector(".subscription-container");
         const dropdown = card.querySelector(".custom-dropdown");
-        const subscribeBtn = card.querySelector(".common-btn-primary.subscription-plan-subscribe-btn");
+        const subscribeBtn = card.querySelector(".common-btn-primary");
 
         if (dropdown && subscribeBtn) {
-            subscribeBtn.addEventListener("click", function (e) {
-                e.preventDefault();
-                dropdown.style.display = "block";
-                dropdown.classList.add("show");
-                subscriptionBox.classList.add("subscription-box");
-            });
-
             // Custom select functionality
             const selectSelected = dropdown.querySelector(".select-selected");
             const selectItems = dropdown.querySelector(".select-items");
-            const selectOptions = dropdown.querySelectorAll(".select-item");
-            const actionItem = dropdown.querySelector(".select-action-item");
+            const hiddenInput = dropdown.querySelector("input[type='hidden']");
+            const searchInput = dropdown.querySelector(".select-search-input");
+            const selectItemsContainer = dropdown.querySelector(".select-items-container");
+            const createAppOption = dropdown.querySelector(".create-app-option");
+            const searchTermElement = dropdown.querySelector(".search-term");
+
+            // Select first non-subscribed app by default
+            const selectFirstAvailableApp = () => {
+                // Select the first available app
+                const firstAvailableApp = dropdown.querySelector(".select-item:not(.disabled)");
+                if (firstAvailableApp) {
+                    appId = firstAvailableApp.getAttribute("data-value");
+                    const appName = firstAvailableApp.getAttribute("data-app-name");
+                    // Update hidden input with selected app ID
+                    if (hiddenInput) {
+                        hiddenInput.value = appId;
+                    }
+                    
+                    // Update the display text
+                    const selectedText = selectSelected.querySelector(".selected-text");
+                    if (selectedText) {
+                        selectedText.textContent = appName;
+                        selectedText.classList.add("selected");
+                    }
+                }
+            };
+            
+            // Call this function when the page loads
+            selectFirstAvailableApp();
 
             // Toggle dropdown when clicking on the selected item
             selectSelected.addEventListener("click", function (e) {
@@ -491,19 +509,150 @@ document.addEventListener("DOMContentLoaded", function () {
                 selectItems.classList.toggle("show");
                 selectSelected.setAttribute("aria-expanded",
                     selectItems.classList.contains("show") ? "true" : "false");
+                
+                // Focus on search input when dropdown is opened
+                if (selectItems.classList.contains("show") && searchInput) {
+                    setTimeout(() => searchInput.focus(), 100);
+                }
             });
 
-            // Handle action item click (Create Application)
-            if (actionItem) {
-                actionItem.addEventListener("click", function (e) {
+            // Add search functionality
+            if (searchInput) {
+                searchInput.addEventListener("input", function(e) {
+                    const searchValue = e.target.value.trim();
+                    const searchValueLower = searchValue.toLowerCase();
+                    const appItems = selectItemsContainer.querySelectorAll(".select-item");
+                    const createAppContainer = dropdown.querySelector(".create-app-container");
+                    let exactMatch = false;
+                    
+                    appItems.forEach(item => {
+                        const appName = item.getAttribute("data-app-name").toLowerCase();
+                        if (appName.includes(searchValueLower)) {
+                            item.style.display = "flex";
+                            if (appName === searchValueLower) {
+                                exactMatch = true;
+                            }
+                        } else {
+                            item.style.display = "none";
+                        }
+                    });
+                    
+                    // Update the search term in the create option and show/hide create option
+                    if (searchValue && searchTermElement) {
+                        searchTermElement.textContent = searchValue;
+                        if (exactMatch || !searchValue) {
+                            createAppContainer.style.display = "none";
+                        } else {
+                            createAppContainer.style.display = "block";
+                        }
+                    } else {
+                        createAppContainer.style.display = "none";
+                    }
+                });
+                
+                // Prevent dropdown from closing when clicking in search input
+                searchInput.addEventListener("click", function(e) {
                     e.stopPropagation();
+                });
+            }
 
-                    // Open the create application modal
-                    loadModal('createAppModal');
-
-                    // Close the dropdown
+            // Handle selection of application items
+            const selectableItems = dropdown.querySelectorAll(".select-item:not(.disabled)");
+            selectableItems.forEach(item => {
+                item.addEventListener("click", function(e) {
+                    e.stopPropagation();
+                    
+                    // Get application data
+                    const appId = this.getAttribute("data-value");
+                    const appName = this.getAttribute("data-app-name");
+                    
+                    // Update hidden input with selected app ID
+                    if (hiddenInput) {
+                        hiddenInput.value = appId;
+                    }
+                    
+                    // Update the display text
+                    const selectedText = selectSelected.querySelector(".selected-text");
+                    if (selectedText) {
+                        selectedText.textContent = appName;
+                        selectedText.classList.add("selected");
+                    }
+                    
+                    // Close dropdown
                     selectItems.classList.remove("show");
+                    
+                    // Update aria-expanded attribute
                     selectSelected.setAttribute("aria-expanded", "false");
+                });
+            });
+
+            // Function to create application directly via API
+            async function createApplicationDirectly(name, description = '') {
+                try {
+                    const response = await fetch('/devportal/applications', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            name,
+                            description,
+                            type: 'WEB',
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+                    }
+
+                    const responseData = await response.json();
+                    await showAlert(responseData.message || 'Application created successfully!', 'success');
+                    
+                    return responseData; // Return the full response to access applicationId
+                } catch (error) {
+                    console.error('Error creating application:', error);
+                    await showAlert(error.message || 'Failed to create application.', 'error');
+                    throw error;
+                }
+            }
+
+            // Handle create app option click
+            if (createAppOption) {
+                createAppOption.addEventListener("click", function(e) {
+                    e.stopPropagation();
+                    
+                    const appName = searchInput.value.trim();
+                    if (appName) {
+                        // Show loading state
+                        createAppOption.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creating...';
+                        createAppOption.classList.add('disabled');
+                        
+                        // Call the API to create the application directly
+                        createApplicationDirectly(appName)
+                            .then(response => {
+                                // Update hidden input with the new application ID
+                                if (hiddenInput) {
+                                    hiddenInput.value = response.id;
+                                }
+                                
+                                // Update the display text to show the new application
+                                const selectedText = selectSelected.querySelector(".selected-text");
+                                if (selectedText) {
+                                    selectedText.textContent = appName;
+                                    selectedText.classList.add("selected");
+                                }
+                                
+                                // Close the dropdown
+                                selectItems.classList.remove("show");
+                                selectSelected.setAttribute("aria-expanded", "false");
+                            })
+                            .catch(error => {
+                                // Reset the button on error
+                                createAppOption.innerHTML = `Create application "<span class="search-term">${appName}</span>"`;
+                                createAppOption.classList.remove('disabled');
+                            });
+                    }
                 });
             }
 
@@ -511,6 +660,23 @@ document.addEventListener("DOMContentLoaded", function () {
             document.addEventListener("click", function () {
                 selectItems.classList.remove("show");
                 selectSelected.setAttribute("aria-expanded", "false");
+                
+                // Clear search input when closing dropdown
+                if (searchInput) {
+                    searchInput.value = '';
+                    
+                    // Reset visibility of all items
+                    const appItems = selectItemsContainer?.querySelectorAll(".select-item");
+                    appItems?.forEach(item => {
+                        item.style.display = "flex";
+                    });
+                    
+                    // Hide create app container
+                    const createAppContainer = dropdown.querySelector(".create-app-container");
+                    if (createAppContainer) {
+                        createAppContainer.style.display = "none";
+                    }
+                }
             });
         }
     });
