@@ -54,9 +54,9 @@
                                     <span class="subscription-plans-card-title">{{displayName}}</h5>
                                     <h1 class="subscription-plans-request-count">{{requestCount}}</h1>
                                     <p class="subscription-plans-card-subtitle pb-4 pt-0">requests per minutes</p>
-                                    <a id="subscribe-btn-{{../apiID}}" type="button"
+                                    <a id="subscribe-btn-{{policyID}}" type="button"
                                         class="common-btn-outlined p-1 ps-2 pe-2 w-100 subscription-plan-subscribe-btn"
-                                        onclick="subscribe('{{@root.orgID}}', '', '{{../apiID}}', '{{../apiReferenceID}}', '{{policyID}}', '{{policyName}}')">Subscribe</a>
+                                        onclick="showSubscribeButtonLoading(this); subscribe('{{@root.orgID}}', '', '{{../apiID}}', '{{../apiReferenceID}}', '{{policyID}}', '{{policyName}}')">Subscribe</a>
                                 </div>
                             </div>
                         </div>

@@ -3,25 +3,12 @@
   /* Custom Dropdown styling for subscription plans */
   .subscription-container {
     padding: 8px;
-  }
-
-  .custom-dropdown {
-    display: none;
-    font-size: small;
-    position: relative;
-    width: 100%;
-  }
-
-  .subscription-box {
-    border-radius: 1rem;
-    background-color: #f8f9fa;
     display: flex;
     gap: 1rem;
     width: 100%;
   }
 
   .custom-dropdown {
-    display: none;
     font-size: small;
     position: relative;
     width: 100%;
@@ -68,6 +55,51 @@
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   }
 
+  /* Search container styling */
+  .select-search-container {
+    padding: 8px;
+    border-bottom: 1px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    background-color: var(--main-bg-color);
+    z-index: 2;
+  }
+
+  .select-search-input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 0.75rem;
+  }
+
+  .select-search-input:focus {
+    outline: none;
+    border-color: var(--primary-main-color);
+    box-shadow: 0 0 0 2px rgba(var(--primary-main-color-rgb), 0.25);
+  }
+
+  .select-items-container {
+    max-height: 150px;
+    overflow-y: auto;
+  }
+
+  .create-app-container {
+    border-top: 1px solid #dee2e6;
+  }
+
+  .create-app-option {
+    padding: 8px 10px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    color: var(--primary-main-color);
+    font-weight: 500;
+  }
+
+  .create-app-option:hover {
+    background-color: #f8f9fa;
+  }
+
   .select-item {
     padding: 8px 10px;
     cursor: pointer;
@@ -89,19 +121,6 @@
 
   .select-item.disabled:hover {
     background-color: #f0f0f0;
-  }
-
-  .select-action-item {
-    padding: 8px 10px;
-    cursor: pointer;
-    font-size: 0.7rem;
-    border-top: 1px solid #dee2e6;
-    color: var(--primary-main-color);
-    font-weight: 500;
-  }
-
-  .select-action-item:hover {
-    background-color: #f8f9fa;
   }
 
   .select-items.show {

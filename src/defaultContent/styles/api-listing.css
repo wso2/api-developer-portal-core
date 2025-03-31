@@ -325,16 +325,22 @@ hr {
 }
 
 .api-card {
+  .card-separator {
+    margin: 0rem 1.25rem;
+  }
+
   .subscription-container {
-    padding: 8px;
+    padding: 8px 0px;
     margin-top: -8px;
     margin-bottom: -8px;
+    display: flex;
+    gap: 1rem;
+    width: 100%;
   }
 
   .subscription-box-label {
     font-size: 0.75rem;
     color: var(--main-text-color);
-    margin-left: 0.5rem;
     display: block;
     align-self: center;
   }
@@ -342,14 +348,6 @@ hr {
   .custom-dropdown {
     font-size: small;
     position: relative;
-    width: 100%;
-  }
-
-  .subscription-box {
-    border-radius: 1rem;
-    background-color: #f8f9fa;
-    display: flex;
-    gap: 1rem;
     width: 100%;
   }
 
