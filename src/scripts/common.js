@@ -497,6 +497,12 @@ document.addEventListener("DOMContentLoaded", function () {
                         selectedText.textContent = appName;
                         selectedText.classList.add("selected");
                     }
+                    
+                    // Check if this app is already subscribed (disabled)
+                    const subscribeButton = card.querySelector(".common-btn-primary[disabled]");
+                    if (subscribeButton) {
+                        subscribeButton.removeAttribute("disabled");
+                    }
                 }
             };
             
@@ -578,6 +584,12 @@ document.addEventListener("DOMContentLoaded", function () {
                         selectedText.classList.add("selected");
                     }
                     
+                    // Enable the Subscribe button by removing the disabled attribute
+                    const subscribeButton = card.querySelector(".common-btn-primary[disabled]");
+                    if (subscribeButton) {
+                        subscribeButton.removeAttribute("disabled");
+                    }
+                    
                     // Close dropdown
                     selectItems.classList.remove("show");
                     
@@ -646,6 +658,11 @@ document.addEventListener("DOMContentLoaded", function () {
                                 // Close the dropdown
                                 selectItems.classList.remove("show");
                                 selectSelected.setAttribute("aria-expanded", "false");
+
+                                const subscribeButton = card.querySelector(".common-btn-primary");
+                                if (subscribeButton) {
+                                    subscribeButton.removeAttribute("disabled");
+                                }
                             })
                             .catch(error => {
                                 // Reset the button on error
