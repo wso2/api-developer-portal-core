@@ -172,7 +172,6 @@ function loadModal(modalID) {
 }
 
 async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, policyName) {
-    console.log('Subscribing to API:', apiId);
     try {
         const card = document.getElementById('apiCard-' + apiId) ? document.getElementById('apiCard-' + apiId) :
             document.getElementById('subscriptionCard-' + policyId) ? document.getElementById('subscriptionCard-' + policyId) : null;

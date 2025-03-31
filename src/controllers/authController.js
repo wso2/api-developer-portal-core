@@ -77,18 +77,16 @@ const login = async (req, res, next) => {
             }
         }
     }
-    req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
     IDP = await fetchAuthJsonContent(req, orgName);
     if (IDP.clientId) {
-        await configurePassport(IDP, claimNames);  // Configure passport dynamically
-        req.session.save((err) => {
+        //await configurePassport(IDP, claimNames);  // Configure passport dynamically
+        await req.session.save(async (err) => {
             if (err) {
-                console.error('Session save error:', err);
-                return res.status(500).send('Session error');
+                return res.status(500).send('Internal Server Error');
             }
-            passport.authenticate('oauth2')(req, res, next);
+            req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
+            await passport.authenticate('oauth2')(req, res, next);
         });
-        console.log("Passport authentication done");
     } else {
         orgName = req.params.orgName;
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'login', 'page.hbs');
@@ -104,7 +102,7 @@ const login = async (req, res, next) => {
     }
 };
 
-const handleCallback = (req, res, next) => {
+const handleCallback = async (req, res, next) => {
     const rules = util.validateRequestParameters();
     const validationPromises = rules.map(validation => validation.run(req));
     Promise.all(validationPromises)
@@ -118,13 +116,13 @@ const handleCallback = (req, res, next) => {
             console.error("Error validating request parameters: " + error);
             return res.status(500).json({ message: 'Internal Server Error' });
         });
-    console.log("Handling callback");
-
-    passport.authenticate('oauth2', {
-        failureRedirect: '/login'
-    }, (err, user) => {
+    await passport.authenticate(
+        'oauth2', 
+        {
+            failureRedirect: '/login'
+        }, 
+        (err, user) => {
         if (err || !user) {
-            console.log("User not present", !user)
             return next(err || new Error('Authentication failed'));
         }
         req.logIn(user, (err) => {
@@ -141,7 +139,6 @@ const handleCallback = (req, res, next) => {
                     returnTo = `/${req.params.orgName}`;
                 }
                 delete req.session.returnTo;
-                console.log("Redirecting to: ", returnTo);
                 res.redirect(returnTo);
             }
         });

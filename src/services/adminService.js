@@ -777,7 +777,6 @@ const deleteSubscription = async (req, res) => {
             } else {
                 //get subscription reference for control plane
                 const subIDList = await adminDao.getAPISubscriptionReference(orgID, subscription.dataValues.APP_ID, subscription.dataValues.REFERENCE_ID, t);
-                console.log("Subscriptipn", subIDList);
                 //delete subscription from control plane
                 for (const subscription of subIDList) {
                     const subscriptionID = subscription.dataValues.SUBSCRIPTION_REF_ID;
@@ -834,7 +833,6 @@ const createAppKeyMapping = async (req, res) => {
             // add subscription to control plane for each api
             const apiSubscriptions = [];
             for (const api of apis) {
-                console.log("API", api);
                 const policyDetails = await apiDao.getSubscriptionPolicy(api.policyID, orgID, t);
                 const cpSubscribeResponse = await createCPSubscription(req, api.apiRefId, cpAppID, policyDetails);
                 apiSubscriptions.push(cpSubscribeResponse);
@@ -934,7 +932,6 @@ const createCPSubscription = async (req, apiId, cpAppID, policyDetails) => {
         return cpSubscribeResponse;
     } catch (error) {
         if (error.statusCode && error.statusCode === 409) {
-            console.log("Subscription already exists, retrieving subscription details");
             const response = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?apiId=${apiId}&applicationId=${cpAppID}`, {});
             return response.list[0];
         }

@@ -49,7 +49,6 @@ const createOrganization = async (orgData, t) => {
         const organization = await Organization.create(createOrgData, { transaction: t });
         return organization;
     } catch (error) {
-        console.log(error)
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
         }
@@ -439,7 +438,6 @@ const createProvider = async (orgID, provider, t) => {
         const provider = await Provider.bulkCreate(providerDataList, { transaction: t });
         return provider;
     } catch (error) {
-        console.log(error)
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
         }
@@ -967,7 +965,6 @@ const createApplicationKeyMapping = async (mappingData, t) => {
         }, { transaction: t });
         return appKeyMapping;
     } catch (error) {
-        console.log(error)
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
         }
@@ -996,7 +993,6 @@ const updateApplicationKeyMapping = async (apiID, mappingData, t) => {
         return [updatedRowsCount, appContent];
 
     } catch (error) {
-        console.log(error)
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
         }

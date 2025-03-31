@@ -27,15 +27,13 @@ const secret = require(process.cwd() + '/secret.json');
 
 
 async function configurePassport(authJsonContent, claimNames) {
-
-    const agent = new https.Agent({
-        rejectUnauthorized: false
-    });    
+  
     //set scopes to call API Manager REST apis
-    const requestedScopes = "openid profile apim:subscribe admin dev";
+    // const requestedScopes = "openid profile apim:subscribe admin dev";
     let scope = requestedScopes.split(" ");
     scope.push(...(authJsonContent.scope ? authJsonContent.scope.split(" ") : ""));
-    const strategy = new OAuth2Strategy({
+    passport.use(new OAuth2Strategy({
+        name: 'Asgardeo',
         issuer: authJsonContent.issuer,
         authorizationURL: authJsonContent.authorizationURL,
         tokenURL: authJsonContent.tokenURL,
@@ -43,74 +41,71 @@ async function configurePassport(authJsonContent, claimNames) {
         clientID: authJsonContent.clientId,
         callbackURL: authJsonContent.callbackURL,
         scope: scope,
+        pkce: true,
+        state: true,
+        logoutURL: process.env.OAUTH2_LOGOUT_ENDPOINT,
+        logoutRedirectURI: process.env.OAUTH2_POST_LOGOUT_REDIRECT_URI,
+        certificate: '',
+        jwksURL: process.env.OAUTH2_JWKS_ENDPOINT,
         passReqToCallback: true,
-        store: true,
-        pkce: true
+        scope: ['openid', 'profile', 'email'],
     }, async (req, accessToken, refreshToken, params, profile, done) => {
+        
         if (!accessToken) {
-            console.error('No access token received');
             return done(new Error('Access token missing'));
         }
-        let orgList;
-        if (config.advanced.tokenExchanger.enabled) {
-            const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
-            const decodedExchangedToken = jwt.decode(exchangedToken);
-            orgList = decodedExchangedToken.organizations;
-            req['exchangedToken'] = exchangedToken;
-        }
-        const decodedJWT = jwt.decode(params.id_token);
-        const decodedAccessToken = jwt.decode(accessToken);
-        const firstName = decodedJWT['given_name'] || decodedJWT['nickname'];
-        const lastName = decodedJWT['family_name'];
-        const organizationID = decodedJWT[claimNames[constants.ROLES.ORGANIZATION_CLAIM]] ? decodedJWT[config.orgIDClaim] : '';
-        const roles = decodedJWT[claimNames[constants.ROLES.ROLE_CLAIM]] ? decodedJWT[config.roleClaim] : '';
-        const groups = decodedJWT[claimNames[constants.ROLES.GROUP_CLAIM]] ? decodedJWT[config.groupsClaim] : '';
-        let isAdmin, isSuperAdmin = false;
-        if (roles.includes(constants.ROLES.SUPER_ADMIN) || roles.includes(constants.ROLES.ADMIN)) {
-            isAdmin = true;
-        }
-        if (roles.includes(constants.ROLES.SUPER_ADMIN)) {
-            isSuperAdmin = true;
-        }
-        const returnTo = req.session.returnTo;
-        let view = '';
-        if (returnTo) {
-            const startIndex = returnTo.indexOf('/views/') + 7;
-            const endIndex = returnTo.indexOf('/', startIndex) !== -1 ? returnTo.indexOf('/', startIndex) : returnTo.length;
-            view = returnTo.substring(startIndex, endIndex);
-        }
-        profile = {
-            'firstName': firstName ? (firstName.includes(" ") ? firstName.split(" ")[0] : firstName) : '',
-            'lastName': lastName ? lastName : (firstName && firstName.includes(" ") ? firstName.split(" ")[1] : ''),
-            'imageURL': decodedJWT['picture'] ? decodedJWT['picture'] : "https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/profile.svg",
-            'view': view,
-            'idToken': params.id_token,
-            'email': decodedJWT['email'],
-            [constants.ROLES.ORGANIZATION_CLAIM]: organizationID,
-            'returnTo': req.session.returnTo,
-            accessToken,
-            'authorizedOrgs': orgList,
-            'exchangeToken': req.exchangedToken,
-            [constants.ROLES.ROLE_CLAIM]: roles,
-            [constants.ROLES.GROUP_CLAIM]: groups,
-            'isAdmin': isAdmin,
-            'isSuperAdmin': isSuperAdmin,
-            [constants.USER_ID]: decodedAccessToken[constants.USER_ID]
-        };
-        return done(null, profile);
-    });
-    strategy._oauth2.setAgent(agent);
+        // let orgList;
+        // if (config.advanced.tokenExchanger.enabled) {
+        //     const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
+        //     const decodedExchangedToken = jwt.decode(exchangedToken);
+        //     orgList = decodedExchangedToken.organizations;
+        //     req['exchangedToken'] = exchangedToken;
+        // }
+        // const decodedJWT = jwt.decode(params.id_token);
+        // const decodedAccessToken = jwt.decode(accessToken);
+        // const firstName = decodedJWT['given_name'] || decodedJWT['nickname'];
+        // const lastName = decodedJWT['family_name'];
+        // const organizationID = decodedJWT[claimNames[constants.ROLES.ORGANIZATION_CLAIM]] ? decodedJWT[config.orgIDClaim] : '';
+        // const roles = decodedJWT[claimNames[constants.ROLES.ROLE_CLAIM]] ? decodedJWT[config.roleClaim] : '';
+        // const groups = decodedJWT[claimNames[constants.ROLES.GROUP_CLAIM]] ? decodedJWT[config.groupsClaim] : '';
+        // let isAdmin, isSuperAdmin = false;
+        // if (roles.includes(constants.ROLES.SUPER_ADMIN) || roles.includes(constants.ROLES.ADMIN)) {
+        //     isAdmin = true;
+        // }
+        // if (roles.includes(constants.ROLES.SUPER_ADMIN)) {
+        //     isSuperAdmin = true;
+        // }
+        // const returnTo = req.session.returnTo;
+        // let view = '';
+        // if (returnTo) {
+        //     const startIndex = returnTo.indexOf('/views/') + 7;
+        //     const endIndex = returnTo.indexOf('/', startIndex) !== -1 ? returnTo.indexOf('/', startIndex) : returnTo.length;
+        //     view = returnTo.substring(startIndex, endIndex);
+        // }
+        // profile = {
+        //     'firstName': firstName ? (firstName.includes(" ") ? firstName.split(" ")[0] : firstName) : '',
+        //     'lastName': lastName ? lastName : (firstName && firstName.includes(" ") ? firstName.split(" ")[1] : ''),
+        //     'view': view,
+        //     'idToken': params.id_token,
+        //     'email': decodedJWT['email'],
+        //     [constants.ROLES.ORGANIZATION_CLAIM]: organizationID,
+        //     'returnTo': req.session.returnTo,
+        //     accessToken,
+        //     'authorizedOrgs': orgList,
+        //     'exchangeToken': req.exchangedToken,
+        //     [constants.ROLES.ROLE_CLAIM]: roles,
+        //     [constants.ROLES.GROUP_CLAIM]: groups,
+        //     'isAdmin': isAdmin,
+        //     'isSuperAdmin': isSuperAdmin,
+        //     [constants.USER_ID]: decodedAccessToken[constants.USER_ID]
+        // };
 
-    const originalGetOAuthAccessToken = strategy._oauth2.getOAuthAccessToken;
-    strategy._oauth2.getOAuthAccessToken = function (code, params, callback) {
-        originalGetOAuthAccessToken.call(this, code, params, (err, accessToken, refreshToken, results) => {
-            if (err) {
-                console.error('Error during token exchange:', err);
-            }
-            callback(err, accessToken, refreshToken, results);
-        });
-    };
-    passport.use(strategy);
+        profile = {
+            accessToken,
+        };
+
+        return done(null, profile);
+    }));
 }
 
 module.exports = configurePassport;

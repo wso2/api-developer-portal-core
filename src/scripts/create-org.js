@@ -99,7 +99,6 @@ async function createOrg() {
 
 async function editOrg(orgID, formID) {
 
-    console.log(document.getElementById(formID));
     const formData = new FormData(document.getElementById(formID));
     const data = {};
     formData.forEach((value, key) => {

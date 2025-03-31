@@ -208,7 +208,6 @@ const loadAPIContent = async (req, res) => {
                 resources: apiDetails,
                 orgID: orgID
             };
-            console.log(apiDetails);
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
             res.send(html);
         } catch (error) {

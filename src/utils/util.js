@@ -353,7 +353,7 @@ async function readDocFiles(directory, baseDir = '') {
 }
 
 const invokeApiRequest = async (req, method, url, headers, body) => {
-
+ 
     console.log(`Invoking API: ${url}`);
     headers = headers || {};
     headers.Authorization = req.user?.exchangeToken ? `Bearer ${req.user.exchangeToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
@@ -674,7 +674,7 @@ const loadSubscriptionPlan = async (orgID, policyName) => {
             throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
         }
     } catch (error) {
-        console.error("Error occurred while loading subscription plans", error);
+        ("Error occurred while loading subscription plans", error);
         util.handleError(res, error);
     }
 }
@@ -683,7 +683,6 @@ async function tokenExchanger(token, orgName) {
     const url = config.advanced.tokenExchanger.url;
     const maxRetries = 3;
     let delay = 1000;
-
     const orgDetails = await adminDao.getOrganization(orgName);
     if (!orgDetails) {
         throw new Error('Organization not found');

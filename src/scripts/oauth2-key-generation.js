@@ -44,7 +44,6 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             await showAlert('Application keys generated successfully!', 'success');
             const consumerKey = responseData.consumerKey;
             const consumerSecret = responseData.consumerSecret;
-            console.log("Keys", responseData);
             document.getElementById(consumerKeyID).value = consumerKey;
             document.getElementById(consumerSecretID).value = consumerSecret;
             const consumerKeyElement = document.getElementById("consumerKeys_" + keyManager);
@@ -271,7 +270,6 @@ async function generateCurl(keyManager, tokenURL) {
 
     const curlDisplay = document.getElementById("curlDisplay_" + keyManager);
     curlDisplay.style.display = "block";
-    console.log(document.getElementById("curl_" + keyManager))
     document.getElementById("curl_" + keyManager).textContent = curl;
   
 }
@@ -296,6 +294,7 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
                 "scopes": [],
                 "validityPeriod": 3600
             }),
+            credentials: 'include'
         });
 
 
@@ -307,7 +306,7 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
         if (response.ok) {
             await showAlert('Token generated successfully!', 'success');
         } else {
-            console.error('Failed to generate access token:', responseData);
+            ('Failed to generate access token:', responseData);
             await showAlert(`Failed to generate access token. Please try again.\n${responseData.description}`, 'error');
             const url = new URL(window.location.origin + window.location.pathname);
             window.location.href = url.toString();
@@ -435,12 +434,10 @@ async function copyToken(KMName) {
     // Copy access token
     const tokenElement = document.getElementById('token_' + KMName);
     if (!tokenElement) {
-        console.error('Token element not found for:', KMName);
         return;
     }
 
     const tokenText = tokenElement.textContent.trim();
-    console.log('Copying token to clipboard:', tokenText);
 
     try {
         // Copy to clipboard
