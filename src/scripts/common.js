@@ -55,23 +55,8 @@ document.addEventListener("DOMContentLoaded", function () {
         if (button) {
             // Store original text
             button.dataset.originalText = button.innerHTML;
-            // Change text to "Subscribing..."
             button.innerHTML = 'Subscribing...';
             button.disabled = true;
-        }
-    };
-
-    // Function to show success state on subscription button
-    window.showSubscribeSuccess = function(button) {
-        if (button) {
-            // Show success message
-            button.innerHTML = 'Subscribed!';
-            button.disabled = true;
-            
-            // Reset back to original text after 2 seconds
-            setTimeout(() => {
-                resetSubscribeButtonState(button);
-            }, 2000);
         }
     };
 
@@ -462,12 +447,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
 
                     const responseData = await response.json();
-                    await showAlert(responseData.message || 'Application created successfully!', 'success');
                     
                     return responseData; // Return the full response to access applicationId
                 } catch (error) {
                     console.error('Error creating application:', error);
-                    await showAlert(error.message || 'Failed to create application.', 'error');
                     throw error;
                 }
             }
@@ -501,6 +484,16 @@ document.addEventListener("DOMContentLoaded", function () {
                                     selectedText.classList.add("selected");
                                 }
                                 
+                                // Find the message overlay of the current card and show success message
+                                const messageOverlay = card.querySelector('.message-overlay');
+                                if (messageOverlay && typeof window.showApiMessage === 'function') {
+                                    window.showApiMessage(
+                                        messageOverlay, 
+                                        `Application "${appName}" created successfully!`, 
+                                        'success'
+                                    );
+                                }
+                                
                                 // Add the new app to all API card dropdowns
                                 addAppToAllDropdowns(response.id, appName, 'api-card');
                                 
@@ -530,9 +523,40 @@ document.addEventListener("DOMContentLoaded", function () {
                                 });
                             })
                             .catch(error => {
-                                // Reset the button on error
+                                // Reset the create app button on error
                                 createAppOption.innerHTML = `Create application "<span class="search-term">${appName}</span>"`;
                                 createAppOption.classList.remove('disabled');
+                                
+                                // Find the message overlay of the current card and show error message
+                                const messageOverlay = card.querySelector('.message-overlay');
+                                if (messageOverlay && typeof window.showApiMessage === 'function') {
+                                    window.showApiMessage(
+                                        messageOverlay, 
+                                        `Failed to create application: ${error.message}`, 
+                                        'error'
+                                    );
+                                }
+                                
+                                // Close the dropdown on error
+                                selectItems.classList.remove("show");
+                                selectSelected.setAttribute("aria-expanded", "false");
+                                
+                                // Reset search field
+                                if (searchInput) {
+                                    searchInput.value = '';
+                                }
+                                
+                                // Reset visibility of all items
+                                const appItems = selectItemsContainer?.querySelectorAll(".select-item");
+                                appItems?.forEach(item => {
+                                    item.style.display = "flex";
+                                });
+                                
+                                // Hide create app container
+                                const createAppContainer = dropdown.querySelector(".create-app-container");
+                                if (createAppContainer) {
+                                    createAppContainer.style.display = "none";
+                                }
                             });
                     }
                 });
@@ -785,6 +809,27 @@ document.addEventListener("DOMContentLoaded", function () {
                                 // Reset the button on error
                                 createAppOption.innerHTML = `Create application "<span class="search-term">${appName}</span>"`;
                                 createAppOption.classList.remove('disabled');
+                                
+                                // Close the dropdown on error
+                                selectItems.classList.remove("show");
+                                selectSelected.setAttribute("aria-expanded", "false");
+                                
+                                // Reset search field
+                                if (searchInput) {
+                                    searchInput.value = '';
+                                }
+                                
+                                // Reset visibility of all items
+                                const appItems = selectItemsContainer?.querySelectorAll(".select-item");
+                                appItems?.forEach(item => {
+                                    item.style.display = "flex";
+                                });
+                                
+                                // Hide create app container
+                                const createAppContainer = dropdown.querySelector(".create-app-container");
+                                if (createAppContainer) {
+                                    createAppContainer.style.display = "none";
+                                }
                             });
                     }
                 });
@@ -814,6 +859,58 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         }
     });
+
+    // Handle API card message overlays
+    const messageOverlays = document.querySelectorAll('.message-overlay');
+    messageOverlays.forEach(overlay => {
+        // Add hidden class initially
+        overlay.classList.add('hidden');
+        
+        // Add click handler to close button
+        const closeBtn = overlay.querySelector('.close-message');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                overlay.classList.add('hidden');
+            });
+        }
+    });
+    
+    // Helper function to show message on an API card
+    window.showApiMessage = function(overlay, message, type = 'success') {
+        if (overlay) {
+            // Clear any existing auto-hide timers
+            if (overlay.hideTimer) {
+                clearTimeout(overlay.hideTimer);
+                overlay.hideTimer = null;
+            }
+            
+            // Set message - keeping it simple and concise
+            const messageText = overlay.querySelector('.message-text');
+            if (messageText) messageText.textContent = message;
+            
+            // Set type (success/error)
+            overlay.classList.remove('success', 'error');
+            overlay.classList.add(type);
+            
+            // Update icon - ensure proper class structure for alignment
+            const icon = overlay.querySelector('.message-icon');
+            if (icon) {
+                icon.className = 'bi message-icon ' + type;
+                icon.classList.add(type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill');
+            }
+            
+            // Show the overlay (remove hidden class if it exists)
+            overlay.classList.remove('hidden');
+            
+            // Auto-hide after the designated time
+            overlay.hideTimer = setTimeout(() => {
+                overlay.classList.add('hidden');
+            }, 5000);
+            
+            return overlay;
+        }
+        return null;
+    };
 
     // Load image vectors and apply theme colors
     let primaryMain = getComputedStyle(document.documentElement).getPropertyValue("--primary-main-color").trim();
