@@ -160,7 +160,6 @@ const registerPartialsFromAPI = async (req) => {
   partials.forEach(file => {
     let fileName = file.FILE_NAME.split(".")[0];
     let content = file.FILE_CONTENT.toString(constants.CHARSET_UTF8);
-    content = content.replaceAll(constants.ROUTE.IMAGES_PATH, `${imageUrl}`)
     partialObject[fileName] = content;
   });
   const hbs = exphbs.create({});
@@ -172,6 +171,7 @@ const registerPartialsFromAPI = async (req) => {
     isAdmin = req.user["isAdmin"];
     isSuperAdmin = req.user["isSuperAdmin"];
   }
+  console.log("Header", partialObject[constants.HEADER_PARTIAL_NAME])
   if (partialObject[constants.HEADER_PARTIAL_NAME]) {
     hbs.handlebars.partials = {
       ...hbs.handlebars.partials,
