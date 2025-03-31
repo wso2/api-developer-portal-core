@@ -277,11 +277,10 @@ async function generateCurl(keyManager, tokenURL) {
 }
 
 
-async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName) {
+async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName, clientSecret) {
     const form = document.getElementById(formId);
     const formData = new FormData(form);
     const jsonObject = getFormData(formData, keyManager, clientName);
-
 
     try {
         const response = await fetch(`/devportal/applications/${appId}/oauth-keys/${keyMappingId}/generate-token`, {
@@ -291,7 +290,7 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
             },
             body: JSON.stringify({
                 "additionalProperties": jsonObject.additionalProperties,
-                "consumerSecret": jsonObject.consumerSecret,
+                "consumerSecret": clientSecret,
                 "revokeToken": null,
                 "scopes": [],
                 "validityPeriod": 3600
@@ -310,7 +309,7 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
             console.error('Failed to generate access token:', responseData);
             await showAlert(`Failed to generate access token. Please try again.\n${responseData.description}`, 'error');
             const url = new URL(window.location.origin + window.location.pathname);
-            window.location.href = url.toString();
+            //window.location.href = url.toString();
         }
     } catch (error) {
         console.error('Error:', error);
