@@ -171,6 +171,87 @@ document.addEventListener("DOMContentLoaded", function () {
     // Call the function when page loads
     setActiveDocLink();
 
+    // Utility function to add a newly created application to all relevant dropdowns
+    function addAppToAllDropdowns(appId, appName, sourceType) {
+        // Determine what type of dropdowns to update based on source
+        const selector = sourceType === 'api-card' ? '.api-card .custom-dropdown' : '.subscription-card .custom-dropdown';
+        const dropdowns = document.querySelectorAll(selector);
+        
+        dropdowns.forEach(dropdown => {
+            const selectItemsContainer = dropdown.querySelector('.select-items-container');
+            if (!selectItemsContainer) return;
+            
+            // Check if this app already exists in this dropdown
+            const existingApp = selectItemsContainer.querySelector(`.select-item[data-value="${appId}"]`);
+            if (existingApp) return; // Skip if app already exists
+            
+            // Create new app item with appropriate structure based on dropdown type
+            const newAppItem = document.createElement('div');
+            newAppItem.className = 'select-item';
+            
+            if (sourceType === 'api-card') {
+                newAppItem.setAttribute('role', 'button');
+                newAppItem.innerHTML = `<span>${appName}</span>`;
+            } else {
+                newAppItem.setAttribute('role', 'option');
+                newAppItem.innerHTML = appName;
+            }
+            
+            newAppItem.setAttribute('data-value', appId);
+            newAppItem.setAttribute('data-app-name', appName);
+            
+            // Add click event listener
+            newAppItem.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                // Get the parent card
+                const parentCard = dropdown.closest('.api-card') || dropdown.closest('.subscription-card');
+                
+                // Update hidden input with selected app ID
+                const hiddenField = sourceType === 'api-card' 
+                    ? document.getElementById(dropdown.querySelector("[id^='selectedAppId-']").id)
+                    : dropdown.querySelector('input[type="hidden"]');
+                    
+                if (hiddenField) {
+                    hiddenField.value = appId;
+                }
+                
+                // Update display text
+                const selectedText = sourceType === 'api-card'
+                    ? dropdown.querySelector('.selected-text')
+                    : dropdown.querySelector('.select-selected .selected-text');
+                    
+                if (selectedText) {
+                    selectedText.textContent = appName;
+                    selectedText.classList.add('selected');
+                }
+                
+                // Enable the Subscribe button
+                const subscribeButton = parentCard.querySelector('.common-btn-primary[disabled]');
+                if (subscribeButton) {
+                    subscribeButton.removeAttribute('disabled');
+                }
+                
+                // Close dropdown
+                const selectItems = dropdown.querySelector('.select-items');
+                selectItems.classList.remove('show');
+                
+                // Update aria-expanded
+                const selectSelected = dropdown.querySelector('.select-selected');
+                if (selectSelected) {
+                    selectSelected.setAttribute('aria-expanded', 'false');
+                }
+            });
+            
+            // Add the new app to the top of the list for better visibility
+            if (selectItemsContainer.firstChild) {
+                selectItemsContainer.insertBefore(newAppItem, selectItemsContainer.firstChild);
+            } else {
+                selectItemsContainer.appendChild(newAppItem);
+            }
+        });
+    }
+
     const apiCards = document.querySelectorAll(".api-card");
     apiCards.forEach(card => {
         const dropdown = card.querySelector(".custom-dropdown");
@@ -420,6 +501,9 @@ document.addEventListener("DOMContentLoaded", function () {
                                     selectedText.classList.add("selected");
                                 }
                                 
+                                // Add the new app to all API card dropdowns
+                                addAppToAllDropdowns(response.id, appName, 'api-card');
+                                
                                 // Close the dropdown
                                 selectItems.classList.remove("show");
                                 selectSelected.setAttribute("aria-expanded", "false");
@@ -429,6 +513,21 @@ document.addEventListener("DOMContentLoaded", function () {
                                     // Find and enable the subscribe button if it's disabled
                                     subscribeButton.removeAttribute("disabled");
                                 }
+
+                                // Reset the create app button
+                                createAppOption.innerHTML = `Create application "<span class="search-term">${appName}</span>"`;
+                                createAppOption.classList.remove('disabled');
+                                
+                                // Reset search field
+                                if (searchInput) {
+                                    searchInput.value = '';
+                                }
+                                
+                                // Reset visibility of all items
+                                const appItems = selectItemsContainer?.querySelectorAll(".select-item");
+                                appItems?.forEach(item => {
+                                    item.style.display = "flex";
+                                });
                             })
                             .catch(error => {
                                 // Reset the button on error
@@ -655,6 +754,9 @@ document.addEventListener("DOMContentLoaded", function () {
                                     selectedText.classList.add("selected");
                                 }
                                 
+                                // Add the new app to all subscription card dropdowns
+                                addAppToAllDropdowns(response.id, appName, 'subscription-card');
+                                
                                 // Close the dropdown
                                 selectItems.classList.remove("show");
                                 selectSelected.setAttribute("aria-expanded", "false");
@@ -663,6 +765,21 @@ document.addEventListener("DOMContentLoaded", function () {
                                 if (subscribeButton) {
                                     subscribeButton.removeAttribute("disabled");
                                 }
+
+                                // Reset the create app button
+                                createAppOption.innerHTML = `Create application "<span class="search-term">${appName}</span>"`;
+                                createAppOption.classList.remove('disabled');
+                                
+                                // Reset search field
+                                if (searchInput) {
+                                    searchInput.value = '';
+                                }
+                                
+                                // Reset visibility of all items
+                                const appItems = selectItemsContainer?.querySelectorAll(".select-item");
+                                appItems?.forEach(item => {
+                                    item.style.display = "flex";
+                                });
                             })
                             .catch(error => {
                                 // Reset the button on error
