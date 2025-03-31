@@ -309,7 +309,7 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
             console.error('Failed to generate access token:', responseData);
             await showAlert(`Failed to generate access token. Please try again.\n${responseData.description}`, 'error');
             const url = new URL(window.location.origin + window.location.pathname);
-            //window.location.href = url.toString();
+            window.location.href = url.toString();
         }
     } catch (error) {
         console.error('Error:', error);
