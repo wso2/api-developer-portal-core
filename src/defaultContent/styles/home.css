@@ -47,6 +47,11 @@
   padding-top: 1rem;
 }
 
+.hero-vector {
+  min-height: 27.8rem;
+  min-width: 33rem;
+}
+
 @media (max-width: 992px) {
   .hero-title {
     font-size: 2rem;
