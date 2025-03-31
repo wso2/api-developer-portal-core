@@ -90,11 +90,10 @@
 }
 
 .application-create-card{
-  height: 100%;
-  width: 100%;
-  padding: 0.25rem;
+  height: 11.25rem;
+  padding: 1.5rem 0 0 0;
   background: var(--main-bg-color);
-  border-radius: 0.75rem;
+  position: relative;
 }
 
 .application-layout {
@@ -159,6 +158,12 @@
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+
+  color: var(--main-text-color);
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  overflow: hidden;
 }
 
 .application-card-footer {

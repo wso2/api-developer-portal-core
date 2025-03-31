@@ -1,22 +1,47 @@
-function showApplicationForm(cardEl) {
-    const defaultView = cardEl.querySelector('.create-project-content');
-    const formView = cardEl.querySelector('.application-create-card');
-  
-    if (defaultView && formView) {
-      defaultView.classList.add('d-none');
-      formView.classList.remove('d-none');
-    }
-  }
-  
-function hideApplicationForm(el) {
-  const cardEl = el.closest('.create-project-card');
-  const defaultView = cardEl.querySelector('.create-project-content');
-  const formView = cardEl.querySelector('.application-create-card');
+function showApplicationForm() {
+    const appCard = document.getElementById('applicationCreateCard');
+    const formView = document.getElementById('applicationCreateForm');
 
-  if (defaultView && formView) {
-    defaultView.classList.remove('d-none');
-    formView.classList.add('d-none');
-  }
+    if (formView) {
+        formView.classList.remove('d-none');
+        appCard.classList.add('d-none')
+    }
+}
+function toggleCreateCard() {
+    const wrapper = document.getElementById('createApplicationCardWrapper');
+    const form = document.getElementById('applicationCreateForm');
+    const plusCard = document.getElementById('applicationCreateCard');
+
+    if (wrapper && form) {
+        wrapper.classList.remove('d-none');
+
+        form.classList.remove('d-none');
+
+        if (plusCard) {
+            plusCard.classList.add('d-none');
+        }
+
+        wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function hideApplicationForm(el) {
+    const hasApps = el.getAttribute('data-has-apps') === 'true';
+    const plusCard = document.getElementById('applicationCreateCard');
+    const formView = document.getElementById('applicationCreateForm');
+    const wrapper = document.getElementById('createApplicationCardWrapper');
+
+    if (wrapper && formView) {
+        formView.classList.add('d-none');
+        if (hasApps) {
+            wrapper.classList.add('d-none');
+            plusCard.classList.add('d-none');
+        } else{
+            wrapper.classList.remove('d-none');
+            plusCard.classList.remove('d-none');
+        }
+
+    }
 }
 
 // Validation of the form
@@ -80,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 event.preventDefault();
             }
         });
-        
+
     // Initialize the character count and form validation on page load
     const remaining = Math.max(
         0,
@@ -123,6 +148,9 @@ applicationForm.addEventListener('submit', async (e) => {
         const responseData = await response.json();
         await showAlert(responseData.message || 'Application saved successfully!', 'success');
         applicationForm.reset();
+        console.log('document.referrer:', document.referrer);
+        console.log('redirect fallback:', '/default/applications');
+
         if (window.location.href.includes('/apis')) {
             window.location.reload();
         } else {
