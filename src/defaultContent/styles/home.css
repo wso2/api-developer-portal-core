@@ -66,21 +66,23 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .hero-title {
-    font-size: 2.5rem;
+    font-size: 4vw; 
+    white-space: normal;  
   }
 
   .hero-description {
-    font-size: 1.125rem;
+    font-size: 2vw; 
+    white-space: normal; 
   }
 
   .hero-buttons {
     flex-direction: column;
   }
 
-  .hero-image {
-    margin-top: 2rem;
+  .hero-image-container {
+    display: none;
   }
 }
 
