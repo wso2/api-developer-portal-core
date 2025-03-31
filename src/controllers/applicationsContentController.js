@@ -30,6 +30,8 @@ const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
 const adminService = require('../services/adminService');
 const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
+const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
+
 
 const orgIDValue = async (orgName) => {
     const organization = await adminDao.getOrganization(orgName);
@@ -192,6 +194,7 @@ const loadApplication = async (req, res) => {
                     if (subPolicy) {
                         apiDTO.policyName = subPolicy.dataValues.POLICY_NAME;
                     }
+                    apiDTO.subscriptionPolicyDetails = new subscriptionPolicyDTO(subPolicy);
                     return apiDTO;
                 }));
             }
@@ -281,6 +284,7 @@ const loadApplication = async (req, res) => {
                 productionKeys: sandboxKeys,
                 isProduction: false
             }
+            console.log("templateContent", templateContent);
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
             if (layoutResponse === "") {

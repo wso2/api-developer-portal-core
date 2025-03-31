@@ -18,11 +18,13 @@
                             <th class="app-th">API</th>
                             <th class="app-th">Version</th>
                             <th class="app-th">Subscription Plan</th>
-                            <th class="app-th">Action</th>
+                            <th class="app-th">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {{#each subAPIs}}
+                        {{> update-plan }}
+
                         <tr class="app-tr">
                             <td class="app-td">
                                 <span onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
@@ -32,12 +34,12 @@
                             <td class="app-td">{{policyName}}</td>
                             <td>
                                 <div class="mt-auto ms-auto">
-                                    {{> delete-confirmation modalTitle="Do you really want to remove the subscription?"
-                                    modalMessage="This will remove the subscription entry stored in the devportal."
-                                    modalFunction="removeSubscription()" }}
-                                    <button type="button" class="btn application-btn-icon delete-button" 
+                                    <a type="button" class="btn application-btn-icon" onclick="loadModal('planModal-{{apiID}}')" disabled>
+                                        <i class="bi bi-pencil"></i>Edit
+                                    </a>
+                                    {{!-- <button type="button" class="btn application-btn-icon delete-button" 
                                         onclick="openDeleteModal('{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')"><i
-                                            class="bi bi-pencil"></i>Edit</button>
+                                            class="bi bi-pencil"></i>Edit</button> --}}
                                 <div class="mt-auto ms-auto">
                                     {{> delete-confirmation modalTitle="Do you really want to remove the subscription?"
                                     modalMessage="This will remove the subscription entry stored in the devportal."
