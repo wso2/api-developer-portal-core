@@ -99,7 +99,7 @@
 }
 
 .advantage-card-image-container {
-  height: auto;
+  height: 220px;
   max-width: 54vw;
   overflow: hidden;
   border-top-left-radius: 0.75rem;
