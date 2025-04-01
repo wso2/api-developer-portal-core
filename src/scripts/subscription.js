@@ -165,7 +165,6 @@ async function handleSubscribe(appId, apiName, apiVersion, apiRefId) {
     }
 }
 
-
 function loadModal(modalID) {
     const modal = document.getElementById(modalID);
     modal.style.display = 'flex';
@@ -199,7 +198,11 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
 
         const responseData = await response.json();
         
-        // Always close modal and reset button state
+        // Always reset button state and close modal
+        const planButton = document.getElementById('subscribe-btn-' + policyId);
+        if (planButton) {
+            resetButtonState(planButton);
+        }
         closeModal('planModal-' + apiId);
         resetButtonState(subscribeButton);
 
@@ -215,6 +218,12 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
     } catch (error) {
         // Handle exceptions
         console.error('Error:', error);
+        
+        // Always reset button state and close modal
+        const planButton = document.getElementById('subscribe-btn-' + policyId);
+        if (planButton) {
+            resetButtonState(planButton);
+        }
         closeModal('planModal-' + apiId);
         resetButtonState(subscribeButton);
         
@@ -237,7 +246,7 @@ function resetButtonState(button) {
 }
 
 function showSubscriptionMessage(messageOverlay, message, type) {
-    if (typeof window.showApiMessage === 'function') {
+    if (messageOverlay && typeof window.showApiMessage === 'function') {
         window.showApiMessage(messageOverlay, message, type);
     } else {
         showAlert(message, type);
@@ -260,7 +269,6 @@ function addAPISubscription(selectElement) {
     });
 
 }
-
 
 async function removeSubscription() {
     const modal = document.getElementById('deleteConfirmation');

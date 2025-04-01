@@ -587,8 +587,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    const subscriptionCard = document.querySelectorAll(".subscription-card");
-    subscriptionCard.forEach(card => {
+    const subscriptionCards = document.querySelectorAll(".subscription-card");
+    subscriptionCards.forEach(card => {
         const dropdown = card.querySelector(".custom-dropdown");
         const subscribeBtn = card.querySelector(".common-btn-primary");
 
@@ -742,12 +742,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
 
                     const responseData = await response.json();
-                    await showAlert(responseData.message || 'Application created successfully!', 'success');
                     
                     return responseData; // Return the full response to access applicationId
                 } catch (error) {
                     console.error('Error creating application:', error);
-                    await showAlert(error.message || 'Failed to create application.', 'error');
                     throw error;
                 }
             }
@@ -776,6 +774,16 @@ document.addEventListener("DOMContentLoaded", function () {
                                 if (selectedText) {
                                     selectedText.textContent = appName;
                                     selectedText.classList.add("selected");
+                                }
+
+                                // Find the message overlay of the current card and show success message
+                                const messageOverlay = card.querySelector('.message-overlay');
+                                if (messageOverlay && typeof window.showApiMessage === 'function') {
+                                    window.showApiMessage(
+                                        messageOverlay, 
+                                        `Application "${appName}" created successfully!`, 
+                                        'success'
+                                    );
                                 }
                                 
                                 // Add the new app to all subscription card dropdowns
@@ -809,6 +817,17 @@ document.addEventListener("DOMContentLoaded", function () {
                                 // Reset the button on error
                                 createAppOption.innerHTML = `Create application "<span class="search-term">${appName}</span>"`;
                                 createAppOption.classList.remove('disabled');
+                                
+                                // Find the message overlay of the current card and show error message
+                                const messageOverlay = card.querySelector('.message-overlay');
+                                
+                                if (messageOverlay && typeof window.showApiMessage === 'function') {
+                                    window.showApiMessage(
+                                        messageOverlay, 
+                                        `Failed to create application: ${error.message}`, 
+                                        'error'
+                                    );
+                                }
                                 
                                 // Close the dropdown on error
                                 selectItems.classList.remove("show");
@@ -875,7 +894,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
     
-    // Helper function to show message on an API card
+    // Helper function to show message on an API card or subscription card
     window.showApiMessage = function(overlay, message, type = 'success') {
         if (overlay) {
             // Clear any existing auto-hide timers
