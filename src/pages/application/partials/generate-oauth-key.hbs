@@ -77,7 +77,7 @@
                                     <button class='common-btn-primary'
                                         id='apiKeyGenerateButton-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
                                         name='http-values' type='button'
-                                        onClick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{keys.clientName}}')">
+                                        onClick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{keys.clientName}}', '{{keys.consumerSecret}}')">
                                         Generate Token
                                     </button>
                                     <button class='common-btn-primary'

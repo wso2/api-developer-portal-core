@@ -145,7 +145,6 @@ async function getAPIMThrottlingPolicies(req) {
 // ***** Load Application *****
 
 const loadApplication = async (req, res) => {
-
     let html, templateContent, metaData, kMmetaData;
     const viewName = req.params.viewName;
     try {

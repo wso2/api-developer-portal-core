@@ -55,23 +55,8 @@ document.addEventListener("DOMContentLoaded", function () {
         if (button) {
             // Store original text
             button.dataset.originalText = button.innerHTML;
-            // Change text to "Subscribing..."
             button.innerHTML = 'Subscribing...';
             button.disabled = true;
-        }
-    };
-
-    // Function to show success state on subscription button
-    window.showSubscribeSuccess = function(button) {
-        if (button) {
-            // Show success message
-            button.innerHTML = 'Subscribed!';
-            button.disabled = true;
-            
-            // Reset back to original text after 2 seconds
-            setTimeout(() => {
-                resetSubscribeButtonState(button);
-            }, 2000);
         }
     };
 
@@ -170,6 +155,87 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Call the function when page loads
     setActiveDocLink();
+
+    // Utility function to add a newly created application to all relevant dropdowns
+    function addAppToAllDropdowns(appId, appName, sourceType) {
+        // Determine what type of dropdowns to update based on source
+        const selector = sourceType === 'api-card' ? '.api-card .custom-dropdown' : '.subscription-card .custom-dropdown';
+        const dropdowns = document.querySelectorAll(selector);
+        
+        dropdowns.forEach(dropdown => {
+            const selectItemsContainer = dropdown.querySelector('.select-items-container');
+            if (!selectItemsContainer) return;
+            
+            // Check if this app already exists in this dropdown
+            const existingApp = selectItemsContainer.querySelector(`.select-item[data-value="${appId}"]`);
+            if (existingApp) return; // Skip if app already exists
+            
+            // Create new app item with appropriate structure based on dropdown type
+            const newAppItem = document.createElement('div');
+            newAppItem.className = 'select-item';
+            
+            if (sourceType === 'api-card') {
+                newAppItem.setAttribute('role', 'button');
+                newAppItem.innerHTML = `<span>${appName}</span>`;
+            } else {
+                newAppItem.setAttribute('role', 'option');
+                newAppItem.innerHTML = appName;
+            }
+            
+            newAppItem.setAttribute('data-value', appId);
+            newAppItem.setAttribute('data-app-name', appName);
+            
+            // Add click event listener
+            newAppItem.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                // Get the parent card
+                const parentCard = dropdown.closest('.api-card') || dropdown.closest('.subscription-card');
+                
+                // Update hidden input with selected app ID
+                const hiddenField = sourceType === 'api-card' 
+                    ? document.getElementById(dropdown.querySelector("[id^='selectedAppId-']").id)
+                    : dropdown.querySelector('input[type="hidden"]');
+                    
+                if (hiddenField) {
+                    hiddenField.value = appId;
+                }
+                
+                // Update display text
+                const selectedText = sourceType === 'api-card'
+                    ? dropdown.querySelector('.selected-text')
+                    : dropdown.querySelector('.select-selected .selected-text');
+                    
+                if (selectedText) {
+                    selectedText.textContent = appName;
+                    selectedText.classList.add('selected');
+                }
+                
+                // Enable the Subscribe button
+                const subscribeButton = parentCard.querySelector('.common-btn-primary[disabled]');
+                if (subscribeButton) {
+                    subscribeButton.removeAttribute('disabled');
+                }
+                
+                // Close dropdown
+                const selectItems = dropdown.querySelector('.select-items');
+                selectItems.classList.remove('show');
+                
+                // Update aria-expanded
+                const selectSelected = dropdown.querySelector('.select-selected');
+                if (selectSelected) {
+                    selectSelected.setAttribute('aria-expanded', 'false');
+                }
+            });
+            
+            // Add the new app to the top of the list for better visibility
+            if (selectItemsContainer.firstChild) {
+                selectItemsContainer.insertBefore(newAppItem, selectItemsContainer.firstChild);
+            } else {
+                selectItemsContainer.appendChild(newAppItem);
+            }
+        });
+    }
 
     const apiCards = document.querySelectorAll(".api-card");
     apiCards.forEach(card => {
@@ -381,12 +447,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
 
                     const responseData = await response.json();
-                    await showAlert(responseData.message || 'Application created successfully!', 'success');
                     
                     return responseData; // Return the full response to access applicationId
                 } catch (error) {
                     console.error('Error creating application:', error);
-                    await showAlert(error.message || 'Failed to create application.', 'error');
                     throw error;
                 }
             }
@@ -420,6 +484,19 @@ document.addEventListener("DOMContentLoaded", function () {
                                     selectedText.classList.add("selected");
                                 }
                                 
+                                // Find the message overlay of the current card and show success message
+                                const messageOverlay = card.querySelector('.message-overlay');
+                                if (messageOverlay && typeof window.showApiMessage === 'function') {
+                                    window.showApiMessage(
+                                        messageOverlay, 
+                                        `Application "${appName}" created successfully!`, 
+                                        'success'
+                                    );
+                                }
+                                
+                                // Add the new app to all API card dropdowns
+                                addAppToAllDropdowns(response.id, appName, 'api-card');
+                                
                                 // Close the dropdown
                                 selectItems.classList.remove("show");
                                 selectSelected.setAttribute("aria-expanded", "false");
@@ -429,11 +506,57 @@ document.addEventListener("DOMContentLoaded", function () {
                                     // Find and enable the subscribe button if it's disabled
                                     subscribeButton.removeAttribute("disabled");
                                 }
+
+                                // Reset the create app button
+                                createAppOption.innerHTML = `Create application "<span class="search-term"></span>"`;
+                                createAppOption.classList.remove('disabled');
+                                
+                                // Reset search field
+                                if (searchInput) {
+                                    searchInput.value = '';
+                                }
+                                
+                                // Reset visibility of all items
+                                const appItems = selectItemsContainer?.querySelectorAll(".select-item");
+                                appItems?.forEach(item => {
+                                    item.style.display = "flex";
+                                });
                             })
                             .catch(error => {
-                                // Reset the button on error
-                                createAppOption.innerHTML = `Create application "<span class="search-term">${appName}</span>"`;
+                                // Reset the create app button on error
+                                createAppOption.innerHTML = `Create application "<span class="search-term"></span>"`;
                                 createAppOption.classList.remove('disabled');
+                                
+                                // Find the message overlay of the current card and show error message
+                                const messageOverlay = card.querySelector('.message-overlay');
+                                if (messageOverlay && typeof window.showApiMessage === 'function') {
+                                    window.showApiMessage(
+                                        messageOverlay, 
+                                        `Failed to create application: ${error.message}`, 
+                                        'error'
+                                    );
+                                }
+                                
+                                // Close the dropdown on error
+                                selectItems.classList.remove("show");
+                                selectSelected.setAttribute("aria-expanded", "false");
+                                
+                                // Reset search field
+                                if (searchInput) {
+                                    searchInput.value = '';
+                                }
+                                
+                                // Reset visibility of all items
+                                const appItems = selectItemsContainer?.querySelectorAll(".select-item");
+                                appItems?.forEach(item => {
+                                    item.style.display = "flex";
+                                });
+                                
+                                // Hide create app container
+                                const createAppContainer = dropdown.querySelector(".create-app-container");
+                                if (createAppContainer) {
+                                    createAppContainer.style.display = "none";
+                                }
                             });
                     }
                 });
@@ -464,8 +587,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    const subscriptionCard = document.querySelectorAll(".subscription-card");
-    subscriptionCard.forEach(card => {
+    const subscriptionCards = document.querySelectorAll(".subscription-card");
+    subscriptionCards.forEach(card => {
         const dropdown = card.querySelector(".custom-dropdown");
         const subscribeBtn = card.querySelector(".common-btn-primary");
 
@@ -473,11 +596,9 @@ document.addEventListener("DOMContentLoaded", function () {
             // Custom select functionality
             const selectSelected = dropdown.querySelector(".select-selected");
             const selectItems = dropdown.querySelector(".select-items");
-            const hiddenInput = dropdown.querySelector("input[type='hidden']");
             const searchInput = dropdown.querySelector(".select-search-input");
             const selectItemsContainer = dropdown.querySelector(".select-items-container");
             const createAppOption = dropdown.querySelector(".create-app-option");
-            const searchTermElement = dropdown.querySelector(".search-term");
 
             // Select first non-subscribed app by default
             const selectFirstAvailableApp = () => {
@@ -487,6 +608,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     appId = firstAvailableApp.getAttribute("data-value");
                     const appName = firstAvailableApp.getAttribute("data-app-name");
                     // Update hidden input with selected app ID
+
+                    const hiddenInput = dropdown.querySelector("input[type='hidden']");
                     if (hiddenInput) {
                         hiddenInput.value = appId;
                     }
@@ -496,6 +619,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (selectedText) {
                         selectedText.textContent = appName;
                         selectedText.classList.add("selected");
+                    }
+                    
+                    // Check if this app is already subscribed (disabled)
+                    const subscribeButton = card.querySelector(".common-btn-primary[disabled]");
+                    if (subscribeButton) {
+                        subscribeButton.removeAttribute("disabled");
                     }
                 }
             };
@@ -523,6 +652,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     const searchValueLower = searchValue.toLowerCase();
                     const appItems = selectItemsContainer.querySelectorAll(".select-item");
                     const createAppContainer = dropdown.querySelector(".create-app-container");
+                    const searchTermElement = dropdown.querySelector(".search-term");
                     let exactMatch = false;
                     
                     appItems.forEach(item => {
@@ -567,6 +697,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     const appName = this.getAttribute("data-app-name");
                     
                     // Update hidden input with selected app ID
+                    const hiddenInput = dropdown.querySelector("input[type='hidden']");
                     if (hiddenInput) {
                         hiddenInput.value = appId;
                     }
@@ -576,6 +707,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (selectedText) {
                         selectedText.textContent = appName;
                         selectedText.classList.add("selected");
+                    }
+                    
+                    // Enable the Subscribe button by removing the disabled attribute
+                    const subscribeButton = card.querySelector(".common-btn-primary[disabled]");
+                    if (subscribeButton) {
+                        subscribeButton.removeAttribute("disabled");
                     }
                     
                     // Close dropdown
@@ -607,12 +744,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
 
                     const responseData = await response.json();
-                    await showAlert(responseData.message || 'Application created successfully!', 'success');
                     
                     return responseData; // Return the full response to access applicationId
                 } catch (error) {
                     console.error('Error creating application:', error);
-                    await showAlert(error.message || 'Failed to create application.', 'error');
                     throw error;
                 }
             }
@@ -632,6 +767,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         createApplicationDirectly(appName)
                             .then(response => {
                                 // Update hidden input with the new application ID
+                                const hiddenInput = dropdown.querySelector("input[type='hidden']");
                                 if (hiddenInput) {
                                     hiddenInput.value = response.id;
                                 }
@@ -642,15 +778,80 @@ document.addEventListener("DOMContentLoaded", function () {
                                     selectedText.textContent = appName;
                                     selectedText.classList.add("selected");
                                 }
+
+                                // Find the message overlay of the current card and show success message
+                                const messageOverlay = card.querySelector('.message-overlay');
+                                if (messageOverlay && typeof window.showApiMessage === 'function') {
+                                    window.showApiMessage(
+                                        messageOverlay, 
+                                        `Application "${appName}" created successfully!`, 
+                                        'success'
+                                    );
+                                }
+                                
+                                // Add the new app to all subscription card dropdowns
+                                addAppToAllDropdowns(response.id, appName, 'subscription-card');
                                 
                                 // Close the dropdown
                                 selectItems.classList.remove("show");
                                 selectSelected.setAttribute("aria-expanded", "false");
+
+                                const subscribeButton = card.querySelector(".common-btn-primary");
+                                if (subscribeButton) {
+                                    subscribeButton.removeAttribute("disabled");
+                                }
+
+                                // Reset the create app button
+                                createAppOption.innerHTML = `Create application "<span class="search-term"></span>"`;
+                                createAppOption.classList.remove('disabled');
+                                
+                                // Reset search field
+                                if (searchInput) {
+                                    searchInput.value = '';
+                                }
+                                
+                                // Reset visibility of all items
+                                const appItems = selectItemsContainer?.querySelectorAll(".select-item");
+                                appItems?.forEach(item => {
+                                    item.style.display = "flex";
+                                });
                             })
                             .catch(error => {
                                 // Reset the button on error
-                                createAppOption.innerHTML = `Create application "<span class="search-term">${appName}</span>"`;
+                                createAppOption.innerHTML = `Create application "<span class="search-term"></span>"`;
                                 createAppOption.classList.remove('disabled');
+                                
+                                // Find the message overlay of the current card and show error message
+                                const messageOverlay = card.querySelector('.message-overlay');
+                                
+                                if (messageOverlay && typeof window.showApiMessage === 'function') {
+                                    window.showApiMessage(
+                                        messageOverlay, 
+                                        `Failed to create application: ${error.message}`, 
+                                        'error'
+                                    );
+                                }
+                                
+                                // Close the dropdown on error
+                                selectItems.classList.remove("show");
+                                selectSelected.setAttribute("aria-expanded", "false");
+                                
+                                // Reset search field
+                                if (searchInput) {
+                                    searchInput.value = '';
+                                }
+                                
+                                // Reset visibility of all items
+                                const appItems = selectItemsContainer?.querySelectorAll(".select-item");
+                                appItems?.forEach(item => {
+                                    item.style.display = "flex";
+                                });
+                                
+                                // Hide create app container
+                                const createAppContainer = dropdown.querySelector(".create-app-container");
+                                if (createAppContainer) {
+                                    createAppContainer.style.display = "none";
+                                }
                             });
                     }
                 });
@@ -680,6 +881,58 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         }
     });
+
+    // Handle API card message overlays
+    const messageOverlays = document.querySelectorAll('.message-overlay');
+    messageOverlays.forEach(overlay => {
+        // Add hidden class initially
+        overlay.classList.add('hidden');
+        
+        // Add click handler to close button
+        const closeBtn = overlay.querySelector('.close-message');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                overlay.classList.add('hidden');
+            });
+        }
+    });
+    
+    // Helper function to show message on an API card or subscription card
+    window.showApiMessage = function(overlay, message, type = 'success') {
+        if (overlay) {
+            // Clear any existing auto-hide timers
+            if (overlay.hideTimer) {
+                clearTimeout(overlay.hideTimer);
+                overlay.hideTimer = null;
+            }
+            
+            // Set message - keeping it simple and concise
+            const messageText = overlay.querySelector('.message-text');
+            if (messageText) messageText.textContent = message;
+            
+            // Set type (success/error)
+            overlay.classList.remove('success', 'error');
+            overlay.classList.add(type);
+            
+            // Update icon - ensure proper class structure for alignment
+            const icon = overlay.querySelector('.message-icon');
+            if (icon) {
+                icon.className = 'bi message-icon ' + type;
+                icon.classList.add(type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill');
+            }
+            
+            // Show the overlay (remove hidden class if it exists)
+            overlay.classList.remove('hidden');
+            
+            // Auto-hide after the designated time
+            overlay.hideTimer = setTimeout(() => {
+                overlay.classList.add('hidden');
+            }, 5000);
+            
+            return overlay;
+        }
+        return null;
+    };
 
     // Load image vectors and apply theme colors
     let primaryMain = getComputedStyle(document.documentElement).getPropertyValue("--primary-main-color").trim();

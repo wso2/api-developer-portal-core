@@ -353,7 +353,7 @@ async function readDocFiles(directory, baseDir = '') {
 }
 
 const invokeApiRequest = async (req, method, url, headers, body) => {
-
+ 
     console.log(`Invoking API: ${url}`);
     headers = headers || {};
     headers.Authorization = req.user?.exchangeToken ? `Bearer ${req.user.exchangeToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
@@ -562,7 +562,8 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                     if (file.name === "main.css") {
                         strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g, `@import url("${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
                     } 
-                    strContent = strContent.replace(/\/images\/([^"]+)/g, `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
+                    strContent = strContent.replace(/"\/images\/([^"]+)/g, `"${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
+                    strContent = strContent.replace(/'\/images\/([^']+)/g, `'${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
                 } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                     fileType = "layout"
@@ -571,7 +572,10 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                         content = Buffer.from(strContent, constants.CHARSET_UTF8);
                     }
                     validateScripts(strContent);
-                } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
+                } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {                    
+                    strContent = strContent.replace(/"\/images\/([^"]+)/g, `"${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
+                    strContent = strContent.replace(/'\/images\/([^']+)/g, `'${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
+                    content = Buffer.from(strContent, constants.CHARSET_UTF8);
                     validateScripts(strContent);
                     fileType = "partial"
                 } else if (file.name.endsWith(".md") && dir.endsWith("content")) {
@@ -674,7 +678,7 @@ const loadSubscriptionPlan = async (orgID, policyName) => {
             throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
         }
     } catch (error) {
-        console.error("Error occurred while loading subscription plans", error);
+        ("Error occurred while loading subscription plans", error);
         util.handleError(res, error);
     }
 }
@@ -683,7 +687,6 @@ async function tokenExchanger(token, orgName) {
     const url = config.advanced.tokenExchanger.url;
     const maxRetries = 3;
     let delay = 1000;
-
     const orgDetails = await adminDao.getOrganization(orgName);
     if (!orgDetails) {
         throw new Error('Organization not found');

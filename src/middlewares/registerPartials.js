@@ -161,7 +161,6 @@ const registerPartialsFromAPI = async (req) => {
   partials.forEach(file => {
     let fileName = file.FILE_NAME.split(".")[0];
     let content = file.FILE_CONTENT.toString(constants.CHARSET_UTF8);
-    content = content.replaceAll(constants.ROUTE.IMAGES_PATH, `${imageUrl}`)
     partialObject[fileName] = content;
   });
   const hbs = exphbs.create({});

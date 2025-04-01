@@ -214,7 +214,6 @@ const login = async (req, res) => {
             if (err) {
                 return util.handleError(res, err);
             }
-            console.log("Login successful", req.user);
             res.status(200).json({ message: 'Login successful' });
         });
     })(req, res);

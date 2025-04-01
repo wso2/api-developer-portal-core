@@ -6,18 +6,65 @@
 
 <section class="section mt-0 mb-6">
   <div class="container-fluid applicationspage-container" id="applicationsContainer">
-    <div class="container-header mb-4">Applications</div>
+    <div class="container-header mb-4 d-flex justify-content-between align-items-center">
+      <span>Applications</span>
+
+      {{#if applicationsMetadata.length}}
+      <!-- Show button if there are applications -->
+      <button class="btn common-btn-primary" onclick="toggleCreateCard()">Create</button>
+      {{/if}}
+    </div>
 
     <div class="row row-gap-4">
-      <!-- Create Project Button -->
-      <div class="col-12 col-md-4 col-lg-3">
-        <div class="card create-project-card" style="cursor: pointer;" onclick="loadModal('createAppModal')">
-          <div class="create-project-content">
-            <span class="plus-icon">+</span>
-            <span class="create-text">Create Application</span>
+
+      <!-- Create application Card -->
+<div class="col-12 col-md-4 col-lg-3 {{#if applicationsMetadata.length}}d-none{{/if}}" id="createApplicationCardWrapper">
+        {{#unless applicationsMetadata.length}}
+        <div class="create-project-content card create-project-card" id="applicationCreateCard" style="cursor: pointer;"
+          onclick="showApplicationForm()">
+          <span class="plus-icon">+</span>
+          <span class="create-text">Create Application</span>
+        </div>
+        {{/unless}}
+        <div class="application-create-card card create-project-card d-none" style="cursor: pointer;"
+          id="applicationCreateForm">
+          <div class="application-layout">
+            <div class="application-icon-container">
+              <img
+                src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/application.svg"
+                alt="Application icon" />
+            </div>
+            <div class="application-content">
+              <form id='applicationForm' class='create-app-form'>
+                <div class="d-flex justify-content-between align-items-start">
+                  <!-- Application Name -->
+                  <div class="me-2 flex-grow-1">
+                    <input type="text" id="applicationName" class="form-control" placeholder="Name" required />
+                  </div>
+
+                  <!-- Close Button -->
+                  <div class="app-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" 
+                     data-has-apps="{{#if applicationsMetadata.length}}true{{else}}false{{/if}}" onclick="event.stopPropagation(); hideApplicationForm(this);"></button>
+                  </div>
+                </div>
+                <div id="nameError" class="error-msg text-danger mt-1" style="visibility: hidden;">
+                  Application name cannot be empty.
+                </div>
+                <!-- Create Button -->
+                <div class="application-card-footer">
+                  <div class='d-flex gap-3 justify-content-end mt-4'>
+                    <button type='submit' class='btn common-btn-primary' id='saveButton' disabled>
+                      Create
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </div>
+
 
       <!-- Application Cards -->
       {{#applicationsMetadata}}
@@ -27,7 +74,9 @@
           onclick="window.location.href='{{../baseUrl}}/applications/{{id}}'">
           <div class="application-layout">
             <div class="application-icon-container">
-              <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/application.svg" alt="Application icon" />
+              <img
+                src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/application.svg"
+                alt="Application icon" />
             </div>
             <div class="application-content">
               <div class="application-card-header">

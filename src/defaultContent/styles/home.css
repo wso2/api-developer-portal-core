@@ -47,35 +47,32 @@
   padding-top: 1rem;
 }
 
+.hero-vector {
+  min-height: 27.8rem;
+  min-width: 33rem;
+}
+
 @media (max-width: 992px) {
-  .hero-title {
-    font-size: 2rem;
-  }
-
-  .hero-description {
-    font-size: 1rem;
-  }
-
   .hero-content {
     padding: 3rem 2rem;
   }
-}
 
-@media (max-width: 768px) {
   .hero-title {
-    font-size: 2.5rem;
+    font-size: 4vw; 
+    white-space: normal;  
   }
 
   .hero-description {
-    font-size: 1.125rem;
+    font-size: 2vw; 
+    white-space: normal; 
   }
 
   .hero-buttons {
     flex-direction: column;
   }
 
-  .hero-image {
-    margin-top: 2rem;
+  .hero-image-container {
+    display: none;
   }
 }
 
@@ -103,6 +100,7 @@
 
 .advantage-card-image-container {
   height: 220px;
+  max-width: 54vw;
   overflow: hidden;
   border-top-left-radius: 0.75rem;
   border-top-right-radius: 0.75rem;

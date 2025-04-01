@@ -1,3 +1,49 @@
+function showApplicationForm() {
+    const appCard = document.getElementById('applicationCreateCard');
+    const formView = document.getElementById('applicationCreateForm');
+
+    if (formView) {
+        formView.classList.remove('d-none');
+        appCard.classList.add('d-none')
+    }
+}
+function toggleCreateCard() {
+    const wrapper = document.getElementById('createApplicationCardWrapper');
+    const form = document.getElementById('applicationCreateForm');
+    const plusCard = document.getElementById('applicationCreateCard');
+
+    if (wrapper && form) {
+        wrapper.classList.remove('d-none');
+
+        form.classList.remove('d-none');
+
+        if (plusCard) {
+            plusCard.classList.add('d-none');
+        }
+
+        wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function hideApplicationForm(el) {
+    const hasApps = el.getAttribute('data-has-apps') === 'true';
+    const plusCard = document.getElementById('applicationCreateCard');
+    const formView = document.getElementById('applicationCreateForm');
+    const wrapper = document.getElementById('createApplicationCardWrapper');
+
+    if (wrapper && formView) {
+        formView.classList.add('d-none');
+        if (hasApps) {
+            wrapper.classList.add('d-none');
+            plusCard.classList.add('d-none');
+        } else{
+            wrapper.classList.remove('d-none');
+            plusCard.classList.remove('d-none');
+        }
+
+    }
+}
+
 // Validation of the form
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -17,14 +63,16 @@ document.addEventListener('DOMContentLoaded', () => {
         let hasError = false;
 
         if (!applicationNameInput.value.trim()) {
-            nameError.style.display = 'block';
+            nameError.style.visibility = 'visible';
             hasError = true;
         } else {
-            nameError.style.display = 'none';
+            nameError.style.visibility = 'hidden';
         }
 
-        const remaining = MAX_CHARACTERS - descriptionTextarea.value.length;
-        if (remaining < 0) {
+        const remaining = descriptionTextarea
+            ? MAX_CHARACTERS - descriptionTextarea.value.length
+            : MAX_CHARACTERS;
+        if (descriptionTextarea && remaining < 0) {
             descriptionError.style.display = 'block';
             hasError = true;
         } else {
@@ -57,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 event.preventDefault();
             }
         });
-        
+
     // Initialize the character count and form validation on page load
     const remaining = Math.max(
         0,
@@ -85,6 +133,7 @@ applicationForm.addEventListener('submit', async (e) => {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
             body: JSON.stringify({
                 name,
                 description,
@@ -99,11 +148,7 @@ applicationForm.addEventListener('submit', async (e) => {
         const responseData = await response.json();
         await showAlert(responseData.message || 'Application saved successfully!', 'success');
         applicationForm.reset();
-        if (window.location.href.includes('/apis')) {
-            window.location.reload();
-        } else {
-            window.location.href = document.referrer || 'applications';
-        }
+        window.location.reload();
     } catch (error) {
         console.error('Error saving application:', error);
         await showAlert('Failed to save application.', 'error');

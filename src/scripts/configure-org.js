@@ -126,7 +126,6 @@ document.addEventListener('DOMContentLoaded', function () {
         // Add event listener to each remove button
         removeLabels.forEach(label => {
             label.addEventListener('click', function() {
-                console.log("label remove")
                 // Remove the parent span item
                 const spanItem = label.closest('.span-tag');
                 if (spanItem) {
@@ -234,7 +233,6 @@ async function uploadContent(orgID) {
     formData.append('file', zipFile.files[0]);
 
     const view = document.getElementById('uploadViewContent').value;
-    console.log(view);
     const response = await fetch(`/devportal/organizations/${orgID}/views/${view}/layout`, {
         method: 'PUT',
         body: formData,
@@ -294,7 +292,6 @@ async function editView(existingLabels, labelsContainerID, displayNameID, nameID
         addedLabels: sanitizAddedLabels,
         removedLabels: sanitizeRemovedLabels
     }
-    console.log(data);
     const response = await fetch(`/devportal/organizations/${orgID}/views/${name}`, {
         method: 'PUT',
         headers: {
@@ -333,7 +330,6 @@ async function addLabels(orgID, orgLabels) {
     if (removedLabels.length > 0) {
         const sanitizeDelete = removedLabels.map(label => sanitizeInput(label));
         const labelName = sanitizeDelete.join(",");
-        console.log('delete labels', labelName);
         const response = await fetch(`/devportal/organizations/${orgID}/labels?names=${labelName}`, {
             method: "DELETE",
             headers: {

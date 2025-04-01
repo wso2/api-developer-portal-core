@@ -117,7 +117,7 @@ const loadMyAPIs = async (req, res) => {
         const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         res.send(html);
     } catch (error) {
-        console.error("Error occurred while loading My APIs", error);
+        ("Error occurred while loading My APIs", error);
         const templatePath = path.join(require.main.filename, '..', 'pages', 'error-page', 'page.hbs');
         const templateResponse = fs.readFileSync(templatePath, constants.CHARSET_UTF8);
         const layoutResponse = await loadLayoutFromAPI(orgId, viewName);
@@ -130,7 +130,7 @@ const loadSubscriptions = async (req, apiId) => {
     try {
         return await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?apiId=${apiId}`);
     } catch (error) {
-        console.error("Error occurred while loading subscriptions", error);
+        ("Error occurred while loading subscriptions", error);
     }
 }
 
@@ -138,7 +138,7 @@ const loadApplications = async (req) => {
     try {
         return await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications?sortBy=name&sortOrder=asc`);
     } catch (error) {
-        console.error("Error occurred while loading applications", error);
+        ("Error occurred while loading applications", error);
         throw error;
     }
 }

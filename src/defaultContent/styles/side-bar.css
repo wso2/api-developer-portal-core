@@ -116,6 +116,9 @@
     transition: opacity 0.2s ease, visibility 0.2s ease, margin 0.2s ease;
     overflow: hidden;
     width: 0; /* Take no space when hidden */
+    font-weight: normal; 
+    color: white;
+    font-size: smaller;
 }
 
 /* Show text only when hovered (and not force-collapsed) or expanded */
@@ -196,6 +199,9 @@
     transition: opacity 0.2s ease, visibility 0.2s ease;
     overflow: hidden;
     width: 0;
+    font-weight: normal; 
+    color: white;
+    font-size: smaller;
 }
 
 /* Show collapse button text when sidebar is hovered (and not force-collapsed) or expanded */
