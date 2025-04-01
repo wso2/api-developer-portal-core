@@ -97,6 +97,17 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
 
             const KMURLs = document.getElementById("KMURl_" + keyManager);
             KMURLs.style.display = "block";
+            
+            // Update UI elements in the overview section
+            const generateKeyContainer = document.getElementById("generateKeyContainer");
+            if (generateKeyContainer) {
+                generateKeyContainer.style.display = "none";
+            }
+            
+            const keyActionsContainer = document.getElementById("keyActionsContainer");
+            if (keyActionsContainer) {
+                keyActionsContainer.style.display = "flex";
+            }
         } else {
             console.error('Failed to generate keys:', responseData);
             await showAlert(`Failed to generate application keys. Please try again.\n${responseData.description}`, 'error');
