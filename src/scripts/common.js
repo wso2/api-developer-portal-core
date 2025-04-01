@@ -508,7 +508,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                 }
 
                                 // Reset the create app button
-                                createAppOption.innerHTML = `Create application "<span class="search-term">${appName}</span>"`;
+                                createAppOption.innerHTML = `Create application "<span class="search-term"></span>"`;
                                 createAppOption.classList.remove('disabled');
                                 
                                 // Reset search field
@@ -524,7 +524,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             })
                             .catch(error => {
                                 // Reset the create app button on error
-                                createAppOption.innerHTML = `Create application "<span class="search-term">${appName}</span>"`;
+                                createAppOption.innerHTML = `Create application "<span class="search-term"></span>"`;
                                 createAppOption.classList.remove('disabled');
                                 
                                 // Find the message overlay of the current card and show error message
@@ -596,11 +596,9 @@ document.addEventListener("DOMContentLoaded", function () {
             // Custom select functionality
             const selectSelected = dropdown.querySelector(".select-selected");
             const selectItems = dropdown.querySelector(".select-items");
-            const hiddenInput = dropdown.querySelector("input[type='hidden']");
             const searchInput = dropdown.querySelector(".select-search-input");
             const selectItemsContainer = dropdown.querySelector(".select-items-container");
             const createAppOption = dropdown.querySelector(".create-app-option");
-            const searchTermElement = dropdown.querySelector(".search-term");
 
             // Select first non-subscribed app by default
             const selectFirstAvailableApp = () => {
@@ -610,6 +608,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     appId = firstAvailableApp.getAttribute("data-value");
                     const appName = firstAvailableApp.getAttribute("data-app-name");
                     // Update hidden input with selected app ID
+
+                    const hiddenInput = dropdown.querySelector("input[type='hidden']");
                     if (hiddenInput) {
                         hiddenInput.value = appId;
                     }
@@ -652,6 +652,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     const searchValueLower = searchValue.toLowerCase();
                     const appItems = selectItemsContainer.querySelectorAll(".select-item");
                     const createAppContainer = dropdown.querySelector(".create-app-container");
+                    const searchTermElement = dropdown.querySelector(".search-term");
                     let exactMatch = false;
                     
                     appItems.forEach(item => {
@@ -696,6 +697,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     const appName = this.getAttribute("data-app-name");
                     
                     // Update hidden input with selected app ID
+                    const hiddenInput = dropdown.querySelector("input[type='hidden']");
                     if (hiddenInput) {
                         hiddenInput.value = appId;
                     }
@@ -765,6 +767,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         createApplicationDirectly(appName)
                             .then(response => {
                                 // Update hidden input with the new application ID
+                                const hiddenInput = dropdown.querySelector("input[type='hidden']");
                                 if (hiddenInput) {
                                     hiddenInput.value = response.id;
                                 }
@@ -799,7 +802,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                 }
 
                                 // Reset the create app button
-                                createAppOption.innerHTML = `Create application "<span class="search-term">${appName}</span>"`;
+                                createAppOption.innerHTML = `Create application "<span class="search-term"></span>"`;
                                 createAppOption.classList.remove('disabled');
                                 
                                 // Reset search field
@@ -815,7 +818,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             })
                             .catch(error => {
                                 // Reset the button on error
-                                createAppOption.innerHTML = `Create application "<span class="search-term">${appName}</span>"`;
+                                createAppOption.innerHTML = `Create application "<span class="search-term"></span>"`;
                                 createAppOption.classList.remove('disabled');
                                 
                                 // Find the message overlay of the current card and show error message
