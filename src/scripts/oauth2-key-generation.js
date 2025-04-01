@@ -41,73 +41,80 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
 
         const responseData = await response.json();
         if (response.ok) {
+            // close modal
+            const modal = document.getElementById('OauthKeyModal');
             await showAlert('Application keys generated successfully!', 'success');
-            const consumerKey = responseData.consumerKey;
-            const consumerSecret = responseData.consumerSecret;
-            document.getElementById(consumerKeyID).value = consumerKey;
-            document.getElementById(consumerSecretID).value = consumerSecret;
-            const consumerKeyElement = document.getElementById("consumerKeys_" + keyManager);
-            consumerKeyElement.style.display = "block";
 
-            // Hide the key action container
-            const keyActionContainer = document.getElementById("key-action-container");
-            keyActionContainer.style.display = "none";
-            const generateKeysButton = document.getElementById("applicationKeyGenerateButton");
-            generateKeysButton.style.display = "none";
-
-            // Move the advanced configuration section to the placeholder
-            const advancedConfig = document.getElementById("KMData_" + keyManager);
-            const advancedConfigPlaceholder = document.getElementById("advanced-config-placeholder");
-            if (advancedConfig && advancedConfigPlaceholder) {
-                advancedConfigPlaceholder.appendChild(advancedConfig);
-                advancedConfig.style.display = "none"; // Keep it hidden initially
-            }
-
-            // Show the advanced config button
-            const advancedConfigButton = document.getElementById("advanced-config-button");
-            if (advancedConfigButton) {
-                advancedConfigButton.style.display = "flex";
-            }
-
-            // Show the token generation buttons
-            const tokenGenerationButtons = document.getElementById("tokenGenerationButtons_" + keyManager);
-            if (tokenGenerationButtons) {
-                tokenGenerationButtons.style.display = "flex";
-                
-                // Get the generate token button and update its onClick handler with correct values
-                const generateTokenButton = tokenGenerationButtons.querySelector(`#apiKeyGenerateButton-${keyType.toLowerCase()}`);
-                if (generateTokenButton) {
-                    generateTokenButton.setAttribute("onClick", 
-                        `generateOauthKey('${formId}', '${responseData.appRefId}', '${responseData.keyMappingId}', '${keyManager}', '${clientName}')`);
-                }
-            }
-
-            // Show the update button container
-            const updateButtonContainer = document.getElementById("applicationKeyUpdateButtonContainer");
-            if (updateButtonContainer) {
-                updateButtonContainer.style.display = "flex";
-                
-                // Get the update button and set its onClick handler with the correct appRefID
-                const updateButton = document.getElementById("applicationKeyUpdateButton");
-                if (updateButton) {
-                    updateButton.setAttribute("onClick", 
-                        `updateApplicationKey('${formId}', '${JSON.stringify([{appRefID: responseData.appRefId}])}', '${keyType}', '${keyManager}', '${responseData.keyMappingId}', '${clientName}')`);
-                }
-            }
-
-            const KMURLs = document.getElementById("KMURl_" + keyManager);
-            KMURLs.style.display = "block";
+            // reload the page to reflect the changes
+            // TODO: update the function to handle the response and update the UI accordingly
+            window.location.reload();
             
-            // Update UI elements in the overview section
-            const generateKeyContainer = document.getElementById("generateKeyContainer");
-            if (generateKeyContainer) {
-                generateKeyContainer.style.display = "none";
-            }
+            // const consumerKey = responseData.consumerKey;
+            // const consumerSecret = responseData.consumerSecret;
+            // document.getElementById(consumerKeyID).value = consumerKey;
+            // document.getElementById(consumerSecretID).value = consumerSecret;
+            // const consumerKeyElement = document.getElementById("consumerKeys_" + keyManager);
+            // consumerKeyElement.style.display = "block";
+
+            // // Hide the key action container
+            // const keyActionContainer = document.getElementById("key-action-container");
+            // keyActionContainer.style.display = "none";
+            // const generateKeysButton = document.getElementById("applicationKeyGenerateButton");
+            // generateKeysButton.style.display = "none";
+
+            // // Move the advanced configuration section to the placeholder
+            // const advancedConfig = document.getElementById("KMData_" + keyManager);
+            // const advancedConfigPlaceholder = document.getElementById("advanced-config-placeholder");
+            // if (advancedConfig && advancedConfigPlaceholder) {
+            //     advancedConfigPlaceholder.appendChild(advancedConfig);
+            //     advancedConfig.style.display = "none"; // Keep it hidden initially
+            // }
+
+            // // Show the advanced config button
+            // const advancedConfigButton = document.getElementById("advanced-config-button");
+            // if (advancedConfigButton) {
+            //     advancedConfigButton.style.display = "flex";
+            // }
+
+            // // Show the token generation buttons
+            // const tokenGenerationButtons = document.getElementById("tokenGenerationButtons_" + keyManager);
+            // if (tokenGenerationButtons) {
+            //     tokenGenerationButtons.style.display = "flex";
+                
+            //     // Get the generate token button and update its onClick handler with correct values
+            //     const generateTokenButton = tokenGenerationButtons.querySelector(`#apiKeyGenerateButton-${keyType.toLowerCase()}`);
+            //     if (generateTokenButton) {
+            //         generateTokenButton.setAttribute("onClick", 
+            //             `generateOauthKey('${formId}', '${responseData.appRefId}', '${responseData.keyMappingId}', '${keyManager}', '${clientName}')`);
+            //     }
+            // }
+
+            // // Show the update button container
+            // const updateButtonContainer = document.getElementById("applicationKeyUpdateButtonContainer");
+            // if (updateButtonContainer) {
+            //     updateButtonContainer.style.display = "flex";
+                
+            //     // Get the update button and set its onClick handler with the correct appRefID
+            //     const updateButton = document.getElementById("applicationKeyUpdateButton");
+            //     if (updateButton) {
+            //         updateButton.setAttribute("onClick", 
+            //             `updateApplicationKey('${formId}', '${JSON.stringify([{appRefID: responseData.appRefId}])}', '${keyType}', '${keyManager}', '${responseData.keyMappingId}', '${clientName}')`);
+            //     }
+            // }
+
+            // const KMURLs = document.getElementById("KMURl_" + keyManager);
+            // KMURLs.style.display = "block";
             
-            const keyActionsContainer = document.getElementById("keyActionsContainer");
-            if (keyActionsContainer) {
-                keyActionsContainer.style.display = "flex";
-            }
+            // // Update UI elements in the overview section
+            // const generateKeyContainer = document.getElementById("generateKeyContainer");
+            // if (generateKeyContainer) {
+            //     generateKeyContainer.style.display = "none";
+            // }
+            
+            // const keyActionsContainer = document.getElementById("keyActionsContainer");
+            // if (keyActionsContainer) {
+            //     keyActionsContainer.style.display = "flex";
+            // }
         } else {
             console.error('Failed to generate keys:', responseData);
             await showAlert(`Failed to generate application keys. Please try again.\n${responseData.description}`, 'error');
