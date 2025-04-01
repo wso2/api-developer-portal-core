@@ -38,7 +38,11 @@
 
 /* Create application form wrapper class for controlling text size */
 .create-app-form {
-  font-size: 0.875rem;
+  color: var(--main-text-color);
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  opacity: 0.7;
 }
 
 .create-app-form .form-label {
@@ -58,4 +62,20 @@
 
 .create-app-form .error-msg {
   font-size: 0.75rem;
+}
+
+.app-header{
+  display: flex;
+  justify-content: right;
+  padding: 0.2rem 0.5rem;
+  flex-shrink: 0;
+  background-color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.app-create-body {
+  flex: 1;
+  padding: 0.75rem;
 }
