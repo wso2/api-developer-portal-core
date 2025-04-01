@@ -279,10 +279,12 @@ async function generateCurl(keyManager, tokenURL) {
     const auth = `consumerKey:consumerSecret`;
     const curl = `curl -k -X POST ${tokenURL} -d "grant_type=client_credentials" -H "Authorization: Basic ${auth}"`;
 
-    const curlDisplay = document.getElementById("curlDisplay_" + keyManager);
-    curlDisplay.style.display = "block";
-    document.getElementById("curl_" + keyManager).textContent = curl;
-  
+    document.querySelectorAll("#curlDisplay_" + keyManager).forEach(curlDisplay => {
+        curlDisplay.style.display = "block";
+    });
+    document.querySelectorAll("#curl_" + keyManager).forEach(curlContent => {
+        curlContent.textContent = curl;
+    });
 }
 
 
@@ -309,10 +311,14 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
 
 
         const responseData = await response.json();
-        const tokenDetails = document.getElementById("tokenDisplay_" + keyManager);
-        tokenDetails.style.display = "block";
+        document.querySelectorAll("#tokenDisplay_" + keyManager).forEach(tokenDetails => {
+            tokenDetails.style.display = "block";
+        });
         //openApiKeyModal(responseData.accessToken, "Generated OAuth Token", "OAuth Token");
-        document.getElementById("token_" + keyManager).textContent = responseData.accessToken;
+        document.querySelectorAll("#token_" + keyManager).forEach(tokenDetails => {
+            tokenDetails.textContent = responseData.accessToken;
+        });
+
         if (response.ok) {
             await showAlert('Token generated successfully!', 'success');
         } else {
@@ -402,41 +408,60 @@ function loadKeyGenModal() {
     }
 }
 
+function loadKeysViewModal() {
+    const modal = document.getElementById('keysViewModal');
+    modal.style.display = 'flex';
+}
+
+function loadKeysModifyModal() {
+    const modal = document.getElementById('keysModifyModal');
+    modal.style.display = 'flex';
+
+    // Collapse all advanced configurations and reset UI state
+    document.querySelectorAll(".KMConfig").forEach(el => el.style.display = "none");
+    document.querySelectorAll(".arrow-icon").forEach(icon => icon.classList.remove('rotated'));
+}
+
+function loadKeysTokenModal() {
+    const modal = document.getElementById('keysTokenModal');
+    modal.style.display = 'flex';
+}
 
 function showAdvanced(configId) {
-    const content = document.getElementById(configId);
-    const isExpanding = content.style.display !== "block";
-    content.style.display = isExpanding ? "block" : "none";
-    
-    // Get the arrow icon from the clicked header and toggle its rotation
-    const headerElement = event.currentTarget;
-    const arrowIcon = headerElement.querySelector('.arrow-icon');
-    if (arrowIcon) {
-        if (isExpanding) {
-            arrowIcon.classList.add('rotated');
-        } else {
-            arrowIcon.classList.remove('rotated');
+    document.querySelectorAll("#" + configId).forEach(content => {
+        const isExpanding = content.style.display !== "block";
+        content.style.display = isExpanding ? "block" : "none";
+
+        // Get the arrow icon from the clicked header and toggle its rotation
+        const headerElement = event.currentTarget;
+        const arrowIcon = headerElement.querySelector('.arrow-icon');
+        if (arrowIcon) {
+            if (isExpanding) {
+                arrowIcon.classList.add('rotated');
+            } else {
+                arrowIcon.classList.remove('rotated');
+            }
         }
-    }
-    
-    // Handle Generate Keys button movement
-    const generateKeysBtn = document.getElementById("applicationKeyGenerateButton");
-    const originalContainer = document.getElementById("generate-keys-btn-container");
-    const advancedContainer = document.getElementById("generate-keys-btn-advanced-container");
-    
-    if (generateKeysBtn && originalContainer && advancedContainer) {
-        if (isExpanding) {
-            // Move Generate Keys button to the advanced container
-            originalContainer.style.display = "none";
-            advancedContainer.style.display = "flex";
-            advancedContainer.appendChild(generateKeysBtn);
-        } else {
-            // Move Generate Keys button back to its original container
-            advancedContainer.style.display = "none";
-            originalContainer.style.display = "flex";
-            originalContainer.appendChild(generateKeysBtn);
+
+        // Handle Generate Keys button movement
+        const generateKeysBtn = content.querySelector("#applicationKeyGenerateButton");
+        const originalContainer = content.querySelector("#generate-keys-btn-container");
+        const advancedContainer = content.querySelector("#generate-keys-btn-advanced-container");
+
+        if (generateKeysBtn && originalContainer && advancedContainer) {
+            if (isExpanding) {
+                // Move Generate Keys button to the advanced container
+                originalContainer.style.display = "none";
+                advancedContainer.style.display = "flex";
+                advancedContainer.appendChild(generateKeysBtn);
+            } else {
+                // Move Generate Keys button back to its original container
+                advancedContainer.style.display = "none";
+                originalContainer.style.display = "flex";
+                originalContainer.appendChild(generateKeysBtn);
+            }
         }
-    }
+    });
 }
 
 
@@ -464,22 +489,23 @@ async function copyToken(KMName) {
  * @param {string} inputId - The ID of the input field
  */
 function togglePasswordVisibility(inputId) {
-    const inputElement = document.getElementById(inputId);
-    const buttonElement = inputElement.nextElementSibling;
-    const iconElement = buttonElement.querySelector('i');
-    
-    // Toggle the input type between password and text
-    if (inputElement.type === 'password') {
-        inputElement.type = 'text';
-        // Change to eye-slash icon
-        iconElement.classList.remove('bi-eye');
-        iconElement.classList.add('bi-eye-slash');
-    } else {
-        inputElement.type = 'password';
-        // Change back to eye icon
-        iconElement.classList.remove('bi-eye-slash');
-        iconElement.classList.add('bi-eye');
-    }
+    document.querySelectorAll('#' + inputId).forEach(inputElement => {
+        const buttonElement = inputElement.nextElementSibling;
+        const iconElement = buttonElement.querySelector('i');
+
+        // Toggle the input type between password and text
+        if (inputElement.type === 'password') {
+            inputElement.type = 'text';
+            // Change to eye-slash icon
+            iconElement.classList.remove('bi-eye');
+            iconElement.classList.add('bi-eye-slash');
+        } else {
+            inputElement.type = 'password';
+            // Change back to eye icon
+            iconElement.classList.remove('bi-eye-slash');
+            iconElement.classList.add('bi-eye');
+        }
+    });
 }
 
 /**

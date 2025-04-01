@@ -66,13 +66,13 @@
         <!-- Action Buttons (hidden initially) -->
         <div id="keyActionsContainer" class="key-actions-container"
           style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
-          <button id="viewKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeyGenModal()">
+          <button id="viewKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal()">
             <i class="bi bi-eye"></i> View
           </button>
-          <button id="modifyKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeyGenModal()">
+          <button id="modifyKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysModifyModal()">
             <i class="bi bi-pencil-square"></i> Modify
           </button>
-          <button id="tokenKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeyGenModal()">
+          <button id="tokenKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysTokenModal()">
             <i class="bi bi-key-fill"></i> Token
           </button>
         </div>
