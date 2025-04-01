@@ -165,28 +165,29 @@ async function handleSubscribe(appId, apiName, apiVersion, apiRefId) {
     }
 }
 
-
 function loadModal(modalID) {
     const modal = document.getElementById(modalID);
     modal.style.display = 'flex';
 }
 
 async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, policyName) {
+    console.log('Subscribing to API:', apiId);
+    
+    // Find the related card and button elements
+    const card = getSubscriptionCard(apiId, policyId);
+    const subscribeButton = card ? card.querySelector(".common-btn-primary") : null;
+    const messageOverlay = card ? card.querySelector(".message-overlay") : null;
+    
     try {
-        const card = document.getElementById('apiCard-' + apiId) ? document.getElementById('apiCard-' + apiId) :
-            document.getElementById('subscriptionCard-' + policyId) ? document.getElementById('subscriptionCard-' + policyId) : null;
-
-        // Get the subscribe button (we may have already set loading state)
-        const subscribeButton = card ? card.querySelector(".common-btn-primary") : null;
-
-        if (!applicationID) {
-            // get input hidden
-            const hiddenField = card ? card.querySelector('input[type="hidden"]') : null;
+        // Get application ID from hidden field if not provided
+        if (!applicationID && card) {
+            const hiddenField = card.querySelector('input[type="hidden"]');
             if (hiddenField && hiddenField.value) {
                 applicationID = hiddenField.value;
             }
         }
-
+        
+        // Make the API request
         const response = await fetch(`/devportal/organizations/${orgID}/subscriptions`, {
             method: 'POST',
             headers: {
@@ -196,45 +197,59 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
         });
 
         const responseData = await response.json();
+        
+        // Always reset button state and close modal
+        const planButton = document.getElementById('subscribe-btn-' + policyId);
+        if (planButton) {
+            resetButtonState(planButton);
+        }
+        closeModal('planModal-' + apiId);
+        resetButtonState(subscribeButton);
 
         if (response.ok) {
-            // Show success state on the button
-            if (subscribeButton && typeof window.showSubscribeSuccess === 'function') {
-                window.showSubscribeSuccess(subscribeButton);
-            }
-
-            closeModal('planModal-' + apiId);
-            await showAlert('Subscribed successfully!', 'success');
-
-            // Redirect after a short delay to show the success state
-            setTimeout(() => {
-                const url = new URL(window.location.origin + window.location.pathname);
-                window.location.href = url.toString();
-            }, 2000);
+            // Show success notification
+            showSubscriptionMessage(messageOverlay, 'Successfully subscribed to API', 'success');
         } else {
+            // Handle API error
             console.error('Failed to create subscription:', responseData);
-
-            // Reset button state if subscription fails
-            if (subscribeButton && typeof window.resetSubscribeButtonState === 'function') {
-                window.resetSubscribeButtonState(subscribeButton);
-            }
-
-            await showAlert(`Failed to create subscription. Please try again.\n${responseData.description}`, 'error');
+            const errorMessage = `Failed to subscribe: ${responseData.description || 'Unknown error'}`;
+            showSubscriptionMessage(messageOverlay, errorMessage, 'error');
         }
     } catch (error) {
+        // Handle exceptions
         console.error('Error:', error);
-
-        // Reset button state on error
-        const card = document.getElementById('apiCard-' + apiId) ? document.getElementById('apiCard-' + apiId) :
-            document.getElementById('subscriptionCard-' + policyId) ? document.getElementById('subscriptionCard-' + policyId) : null;
-
-        // Get the subscribe button (we may have already set loading state)
-        const subscribeButton = card ? card.querySelector(".common-btn-primary") : null;
-        if (subscribeButton && typeof window.resetSubscribeButtonState === 'function') {
-            window.resetSubscribeButtonState(subscribeButton);
+        
+        // Always reset button state and close modal
+        const planButton = document.getElementById('subscribe-btn-' + policyId);
+        if (planButton) {
+            resetButtonState(planButton);
         }
+        closeModal('planModal-' + apiId);
+        resetButtonState(subscribeButton);
+        
+        const errorMessage = `Error while subscribing: ${error.message}`;
+        showSubscriptionMessage(messageOverlay, errorMessage, 'error');
+    }
+}
 
-        await showAlert(`An error occurred while subscribing: \n${error.message}`, 'error');
+// Helper functions for the subscribe function
+function getSubscriptionCard(apiId, policyId) {
+    return document.getElementById('apiCard-' + apiId) || 
+           document.getElementById('subscriptionCard-' + policyId) || 
+           null;
+}
+
+function resetButtonState(button) {
+    if (button && typeof window.resetSubscribeButtonState === 'function') {
+        window.resetSubscribeButtonState(button);
+    }
+}
+
+function showSubscriptionMessage(messageOverlay, message, type) {
+    if (messageOverlay && typeof window.showApiMessage === 'function') {
+        window.showApiMessage(messageOverlay, message, type);
+    } else {
+        showAlert(message, type);
     }
 }
 
@@ -254,7 +269,6 @@ function addAPISubscription(selectElement) {
     });
 
 }
-
 
 async function removeSubscription() {
     const modal = document.getElementById('deleteConfirmation');

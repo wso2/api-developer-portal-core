@@ -30,6 +30,8 @@
                         <span class="subscription-plans-card-title">{{displayName}}</span>
                         <h1 class="subscription-plans-request-count">{{requestCount}}</h1>
                         <p class="subscription-plans-card-subtitle pt-0">requests per minute</p>
+                    </div>
+                    <div class="position-relative">
                         {{#if ../isAuthenticated}}
                         <div id="subscriptionBox" class="subscription-container">
                             <div class="custom-dropdown show" id="customDropdown-{{policyID}}">
@@ -63,12 +65,21 @@
                             </div>
                             <a id="subscribe-btn-{{policyID}}" type="button"
                                  class="common-btn-primary"
-                                 onclick="showSubscribeButtonLoading(this); subscribe('{{@root.orgID}}', '', '{{../apiMetadata.apiID}}', '{{../apiMetadata.apiReferenceID}}', '{{policyID}}', '{{policyName}}')">Subscribe</a>
+                                 onclick="showSubscribeButtonLoading(this); subscribe('{{@root.orgID}}', '', '{{../apiMetadata.apiID}}', '{{../apiMetadata.apiReferenceID}}', '{{policyID}}', '{{policyName}}')"
+                                 disabled>Subscribe</a>
                         </div>
                         {{else}}
                         <a type="button" class="common-btn-primary disabled w-100 subscription-plan-subscribe-btn"
                             disabled>Subscribe</a>
                         {{/if}}
+                        
+                        <div class="message-overlay hidden">
+                            <div class="message-content">
+                                <i class="bi message-icon"></i>
+                                <p class="message-text"></p>
+                            </div>
+                            <button type="button" class="close-message" aria-label="Close message">&times;</button>
+                        </div>
                     </div>
                 </div>
             </div>
