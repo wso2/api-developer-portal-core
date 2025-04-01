@@ -38,6 +38,37 @@
         <div id="descriptionEditError" class="edit-error-message" style="display: none;"></div>
         <p class="app-subscription-count mt-3">Subscriptions: {{subscriptionCount}}</p>
       </div>
+      
+      <!-- OAuth2 Keys Section -->
+      <div class="oauth2-keys-section">
+        <h5 class="oauth2-title mb-2">OAuth2 Keys</h5>
+        
+        <!-- Generate Key Button (shown initially) -->
+        <div id="generateKeyContainer">
+          <div class="d-flex align-items-center">
+            <button id="generateKeyBtn" class="common-btn-primary btn-sm" onclick="this.parentElement.parentElement.style.display='none'; document.getElementById('keyActionsContainer').style.display='flex';">
+              <i class="bi bi-key me-1"></i> Generate
+            </button>
+            <div class="tooltip-container ms-2">
+              <i class="bi bi-info-circle"></i>
+              <span class="tooltip-text">This key is shared among all APIs</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Action Buttons (hidden initially) -->
+        <div id="keyActionsContainer" class="key-actions-container" style="display: none;">
+          <button id="viewKeyBtn" class="common-btn-outlined btn-sm">
+            <i class="bi bi-eye"></i> View
+          </button>
+          <button id="modifyKeyBtn" class="common-btn-outlined btn-sm">
+            <i class="bi bi-pencil-square"></i> Modify
+          </button>
+          <button id="tokenKeyBtn" class="common-btn-outlined btn-sm">
+            <i class="bi bi-key-fill"></i> Token
+          </button>
+        </div>
+      </div>
     </div>
   </div>
   <form id="inlineEditForm" data-application-id="{{id}}" style="display: none;"></form>

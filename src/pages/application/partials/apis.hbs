@@ -18,6 +18,7 @@
                             <th class="app-th">API</th>
                             <th class="app-th">Version</th>
                             <th class="app-th">Subscription Plan</th>
+                            <th class="app-th">API Key</th>
                             <th class="app-th">Action</th>
                         </tr>
                     </thead>
@@ -30,6 +31,18 @@
                             </td>
                             <td class="app-td">{{version}}</td>
                             <td class="app-td">{{policyName}}</td>
+                            <td class="app-td">
+                                <div class="api-key-actions">
+                                    <button class="common-btn-outlined btn-sm me-1" onclick="
+                                        document.getElementById('revokeKeyBtn-{{subID}}').style.display='inline-flex';
+                                    ">
+                                        <i class="bi bi-key me-1"></i> Generate
+                                    </button>
+                                    <button class="common-btn-outlined btn-sm api-key-revoke" id="revokeKeyBtn-{{subID}}" style="display: none;">
+                                        <i class="bi bi-x-circle me-1"></i> Revoke
+                                    </button>
+                                </div>
+                            </td>
                             <td class="app-td">
                                 <div class="mt-auto ms-auto">
                                     {{> delete-confirmation modalTitle="Do you really want to remove the subscription?"
