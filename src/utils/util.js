@@ -562,7 +562,7 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                     if (file.name === "main.css") {
                         strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g, `@import url("${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
                     } 
-                    strContent = strContent.replace(/^\/images\/([^"]+)/g, `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
+                    strContent = strContent.replace(/src="\/images\/([^"]+)/g, `src="${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
                 } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                     fileType = "layout"
@@ -571,8 +571,8 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                         content = Buffer.from(strContent, constants.CHARSET_UTF8);
                     }
                     validateScripts(strContent);
-                } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
-                    strContent = strContent.replace(/^\/images\/([^"]+)/g, `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
+                } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {                    
+                    strContent = strContent.replace(/src="\/images\/([^"]+)/g, `src="${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
                     validateScripts(strContent);
                     fileType = "partial"
