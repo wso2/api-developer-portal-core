@@ -320,6 +320,12 @@ hr {
   }
 }
 
+@media (max-width: 576px) {
+  .api-card-img {
+    display: none;
+  }
+}
+
 .api-card {
   .card-separator {
     margin: 0rem 1.25rem;
