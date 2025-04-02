@@ -68,15 +68,25 @@
         <!-- Action Buttons (hidden initially) -->
         <div id="keyActionsContainer" class="key-actions-container"
           style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
-          <button id="viewKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal()">
-            <i class="bi bi-eye"></i> View
-          </button>
-          <button id="modifyKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysModifyModal()">
-            <i class="bi bi-pencil-square"></i> Modify
-          </button>
-          <button id="tokenKeyBtn" class="common-btn-outlined btn-sm" onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}')">
-            <i class="bi bi-key-fill"></i> Token
-          </button>
+          <div class="key-action-row">
+            <span class="key-action-label">Keys:</span>
+            <div class="key-action-buttons">
+              <button id="viewKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal()">
+                <i class="bi bi-eye"></i> View
+              </button>
+              <button id="modifyKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysModifyModal()">
+                <i class="bi bi-pencil-square"></i> Modify
+              </button>
+            </div>
+          </div>
+          <div class="key-action-row">
+            <span class="key-action-label">Token:</span>
+            <div class="key-action-buttons">
+              <button id="tokenKeyBtn" class="common-btn-outlined btn-sm" onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}')">
+                <i class="bi bi-key-fill"></i> Token
+              </button>
+            </div>
+          </div>
         </div>
 
         {{/let}}
