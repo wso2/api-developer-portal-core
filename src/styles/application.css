@@ -157,9 +157,27 @@ thead tr th {
 
 .key-actions-container {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 0.25rem;
+  flex-direction: column;
+  gap: 0.5rem;
   justify-content: flex-start;
+}
+
+.key-action-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.key-action-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--main-text-color);
+  width: 45px;
+}
+
+.key-action-buttons {
+  display: flex;
+  gap: 0.25rem;
 }
 
 .oauth2-keys-section .btn-sm {
