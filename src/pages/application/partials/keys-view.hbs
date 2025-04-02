@@ -26,6 +26,8 @@
                     {{#each keyManagersMetadata}}
                     {{#if enabled}}
                     {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
+                     <form
+                            id='keysview-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'>
                     <div id="consumerKeys_{{../name}}" style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
                         <h3 class='h6'> Key and Secret </h3>
                         <div class="row mb-3">
@@ -63,7 +65,7 @@
                         </div>
                     </div>
 
-                    <div id="KMURl_{{../name}}" class="mt-4" style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
+                    <div id="KMURl_{{../name}}" class="mt-4" >
                         <div id="header">
                             <h3 class="h6">Identity Provider Connection Data</h3>
                         </div>
@@ -92,6 +94,8 @@
                             </div>
                         </div>
                     </div>
+                    </form>
+                   
 
                     {{/let}}
                     {{/if}}
