@@ -31,6 +31,12 @@
   align-items: center;
 }
 
+@media (max-width: 992px) {
+  .apilist-hero-image {
+    display: none;
+  }
+}
+
 .apilist-hero-content h1,
 .apilist-hero-content span {
   color: var(--primary-main-color);
