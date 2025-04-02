@@ -194,6 +194,7 @@ const loadApplication = async (req, res) => {
                         apiDTO.policyName = subPolicy.dataValues.POLICY_NAME;
                     }
                     apiDTO.subscriptionPolicyDetails = new subscriptionPolicyDTO(subPolicy);
+                    console.log("apiDTO",   apiDTO.subscriptionPolicyDetails);
                     return apiDTO;
                 }));
             }
@@ -283,7 +284,6 @@ const loadApplication = async (req, res) => {
                 productionKeys: sandboxKeys,
                 isProduction: false
             }
-            console.log("templateContent", templateContent);
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
             if (layoutResponse === "") {
