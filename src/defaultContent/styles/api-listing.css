@@ -237,6 +237,10 @@ hr {
   color: var(--main-text-color);
   margin: 0;
   font-weight: 600;
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis;
+  max-width: 95%; 
 }
 
 .api-card p {
