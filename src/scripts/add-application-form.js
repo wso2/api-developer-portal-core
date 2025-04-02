@@ -146,11 +146,61 @@ applicationForm.addEventListener('submit', async (e) => {
         }
 
         const responseData = await response.json();
-        await showAlert(responseData.message || 'Application saved successfully!', 'success');
+        const messageOverlay = document.getElementById('message-overlay');
+        if (messageOverlay && typeof window.showApiMessage === 'function') {
+            window.showApiMessage(
+                messageOverlay,
+                responseData.message || 'Application created successfully!',
+                'success'
+            );
+        }
         applicationForm.reset();
         window.location.reload();
     } catch (error) {
         console.error('Error saving application:', error);
-        await showAlert('Failed to save application.', 'error');
+        const messageOverlay = document.getElementById('message-overlay');
+        if (messageOverlay && typeof window.showApiMessage === 'function') {
+            window.showAppMessage(
+                messageOverlay,
+                'Failed to save application.',
+                'error'
+            );
+        }
     }
 });
+
+window.showAppMessage = function(overlay, message, type = 'success') {
+    if (overlay) {
+        // Clear any existing auto-hide timers
+        if (overlay.hideTimer) {
+            clearTimeout(overlay.hideTimer);
+            overlay.hideTimer = null;
+        }
+
+        // Set message - keeping it simple and concise
+        const messageText = overlay.querySelector('.message-text');
+        if (messageText) messageText.textContent = message;
+
+        // Set type (success/error)
+        overlay.classList.remove('success', 'error');
+        overlay.classList.add(type);
+
+        // Update icon - ensure proper class structure for alignment
+        const icon = overlay.querySelector('.message-icon');
+        if (icon) {
+            icon.className = 'bi message-icon ' + type;
+            icon.classList.add(type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill');
+        }
+
+        // Show the overlay (remove hidden class if it exists)
+        overlay.classList.remove('hidden');
+
+        // Auto-hide after the designated time
+        overlay.hideTimer = setTimeout(() => {
+            overlay.classList.add('hidden');
+        }, 5000);
+
+        return overlay;
+    }
+    return null;
+};
