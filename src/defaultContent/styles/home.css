@@ -52,30 +52,6 @@
   min-width: 33rem;
 }
 
-@media (max-width: 992px) {
-  .hero-content {
-    padding: 3rem 2rem;
-  }
-
-  .hero-title {
-    font-size: 4vw; 
-    white-space: normal;  
-  }
-
-  .hero-description {
-    font-size: 2vw; 
-    white-space: normal; 
-  }
-
-  .hero-buttons {
-    flex-direction: column;
-  }
-
-  .hero-image-container {
-    display: none;
-  }
-}
-
 .ad-container {
   display: flex;
   gap: 6rem;
@@ -151,4 +127,28 @@
 .advantage-card .advantage-card-footer {
   padding: 10px 20px 20px 20px;
   margin-top: auto;
+}
+
+@media (max-width: 992px) {
+  .hero-content {
+    padding: 3rem 2rem;
+  }
+
+  .hero-title {
+    font-size: 4vw; 
+    white-space: normal;  
+  }
+
+  .hero-description {
+    font-size: 2vw; 
+    white-space: normal; 
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+  }
+
+  .hero-image-container {
+    display: none;
+  }
 }
