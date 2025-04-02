@@ -38,6 +38,49 @@
         <div id="descriptionEditError" class="edit-error-message" style="display: none;"></div>
         <p class="app-subscription-count mt-3">Subscriptions: {{subscriptionCount}}</p>
       </div>
+
+      <!-- OAuth2 Keys Section -->
+      <div class="oauth2-keys-section">
+        <h5 class="oauth2-title mb-2">OAuth2 Keys</h5>
+
+        <!-- Generate Key Button (shown initially) -->
+
+        {{#each ../keyManagersMetadata}}
+        {{#if enabled}}
+        {{!-- TODO: double check the "keys" assignment --}}
+        {{#let "keys" (conditionalIf ../../isProduction productionKeys sandboxKeys)}}
+
+        <div id="generateKeyContainer"
+          style="{{#if keys.consumerKey}}display: none;{{/if}}">
+          <div class="d-flex align-items-center">
+            <button id="generateKeyBtn" class="common-btn-primary btn-sm" onclick="loadKeyGenModal()">
+              <i class="bi bi-key me-1"></i> Generate
+            </button>
+            <div class="tooltip-container ms-2">
+              <i class="bi bi-info-circle"></i>
+              <span class="tooltip-text">This key is shared among all APIs</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons (hidden initially) -->
+        <div id="keyActionsContainer" class="key-actions-container"
+          style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
+          <button id="viewKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal()">
+            <i class="bi bi-eye"></i> View
+          </button>
+          <button id="modifyKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysModifyModal()">
+            <i class="bi bi-pencil-square"></i> Modify
+          </button>
+          <button id="tokenKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysTokenModal()">
+            <i class="bi bi-key-fill"></i> Token
+          </button>
+        </div>
+
+        {{/let}}
+        {{/if}}
+        {{/each}}
+      </div>
     </div>
   </div>
   <form id="inlineEditForm" data-application-id="{{id}}" style="display: none;"></form>

@@ -1,0 +1,108 @@
+<div class="modal custom-modal" id='keysTokenModal'>
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content custom-modal-content">
+            <div class="custom-modal-header">
+                <h2 class="custom-modal-title m-0">Generate Tokens</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                    onclick="closeModal('keysTokenModal')"></button>
+            </div>
+            <div class="custom-modal-body">
+                <div style="margin-bottom: 20px;">
+                    <div class="keygen-section-header" style="display: none;">
+                        <h1>Identity Provider</h1>
+                        <p class="keygen-subtitle">Select an Identity Provider to configure</p>
+                    </div>
+                    {{!-- <div class="idp-dropdown">
+                        <select id="select-idp-list" name="selectIdpList">
+                            {{#each keyManagersMetadata}}
+                            {{#if enabled}}
+                            <option value="{{name}}" id="{{name}}">{{name}}</option>
+                            {{/if}}
+                            {{/each}}
+                        </select>
+                    </div> --}}
+                </div>
+                <div class="container">
+                    {{#each keyManagersMetadata}}
+                    {{#if enabled}}
+                    {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
+                    <div id="tokenGenerationButtons_{{../name}}" class="d-flex mb-4" style="{{#unless (contains keys.supportedGrantTypes 'client_credentials')}} display: none !important;{{/unless}}">
+                        <div class="row">
+                            <div class="d-flex gap-2 mb-3">
+                                <button class='common-btn-primary'
+                                    id='apiKeyGenerateButton-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                                    name='http-values' type='button'
+                                    onClick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{keys.clientName}}', '{{keys.consumerSecret}}')">
+                                    Generate Token
+                                </button>
+                                <button class='common-btn-primary'
+                                    id='curl-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                                    name='http-values' type='button'
+                                    onClick="generateCurl('{{../name}}', '{{../tokenEndpoint}}')">
+                                    cURL
+                                </button>
+                            </div>
+                            <div id="tokenDisplay_{{../name}}" style="display: none;">
+                                <div class="info-box">
+                                    <div class="info-content">
+                                        <div class="info-title">Copy the access token</div>
+                                        <p class="info-text">
+                                            Please copy this generated access token as it will not be visible in the UI
+                                            again.
+                                        </p>
+                                    </div>
+                                    <div class="info-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <div class="token-card">
+                                    <pre id="token_{{../name}}" class="token-text"
+                                        style="max-height: 4.5em; overflow-y: auto; overflow-x: auto; line-height: 1.5em;"></pre>
+                                    <button id="copyButton_{{../name}}" class="copy-button" aria-label="Copy token"
+                                        type="button" onclick="copyToken('{{../name}}')">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="curlDisplay_{{../name}}" class="mt-3" style="display: none;">
+                                <div>cURL to Generate Access Token</div>
+                                <p class="curl-description">
+                                    The following cURL command allows you to generate an access token using the
+                                    client
+                                    credentials grant type,
+                                </p>
+                                <div class="code-block">
+                                    <button class="copy-button" aria-label="Copy to clipboard">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1">
+                                            </path>
+                                        </svg>
+                                    </button>
+                                    <code id="curl_{{../name}}"></code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {{/let}}
+                    {{/if}}
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
