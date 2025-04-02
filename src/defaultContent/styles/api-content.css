@@ -19,7 +19,7 @@
 
 .key-benefit-item {
   position: relative;
-  background-color: var(--secondary-light-color);
+  background-color: var(--primary-lightest-color);
   border-radius: 0.75rem;
   padding: 1.875rem;
   text-align: left;
@@ -91,7 +91,7 @@
   padding: 2.5rem;
   overflow: hidden;
   border-radius: 1.5rem;
-  background: var(--primary-gradient);
+  background: var(--primary-lightest-color);
   box-shadow: 0 0.125rem 0.125rem #7d7c7c1a;
 }
 
