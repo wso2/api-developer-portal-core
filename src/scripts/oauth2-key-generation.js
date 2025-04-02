@@ -58,6 +58,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             const consumerSecret = responseData.consumerSecret;
             document.getElementById(consumerKeyID).value = consumerKey;
             document.getElementById(consumerSecretID).value = consumerSecret;
+
             const consumerKeyElement = document.getElementById("consumerKeys_" + keyManager);
             consumerKeyElement.style.display = "block";
 
@@ -81,7 +82,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             // });
             const tokenbtn = document.getElementById('tokenKeyBtn');
             tokenbtn.setAttribute("data-keyMappingId", responseData.keyMappingId);
-            tokenbtn.setAttribute("data-consumerSecret", responseData.consumerSecret);
+            tokenbtn.setAttribute("data-consumerSecretID", consumerSecretID);
             tokenbtn.setAttribute("data-appRefID", responseData.appRefId);
             loadKeysViewModal();
            
@@ -324,7 +325,8 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
 
     if (!keyMappingId) {
         const tokenbtn = document.getElementById('tokenKeyBtn');
-        clientSecret = tokenbtn.getAttribute("data-consumerSecret");
+        let clientSecretID =   tokenbtn.getAttribute("data-consumerSecretID");
+        clientSecret = document.getElementById(clientSecretID).value;
         keyMappingId = tokenbtn.getAttribute("data-keyMappingId");
         appId = tokenbtn.getAttribute("data-appRefID");
     }
