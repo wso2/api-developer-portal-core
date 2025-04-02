@@ -1,4 +1,3 @@
-
 <section class="section mt-5 mb-6">
     <div class="container-fluid">
         <div class="d-flex align-items-center justify-content-between mb-3">
@@ -14,17 +13,17 @@
             <div class="app-table-container">
                 <table class="app-table">
                     <thead>
-                        <tr class="app-tr">
+                        <tr>
                             <th class="app-th">API</th>
                             <th class="app-th">Version</th>
                             <th class="app-th">Subscription Plan</th>
                             <th class="app-th">API Key</th>
-                            <th class="app-th">Action</th>
+                            <th class="app-th action-column" style="padding-right: 2.25rem;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {{#each subAPIs}}
-                        <tr class="app-tr">
+                        <tr class="data-row">
                             <td class="app-td">
                                 <span onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
                                     class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
@@ -43,14 +42,18 @@
                                     </button>
                                 </div>
                             </td>
-                            <td class="app-td">
-                                <div class="mt-auto ms-auto">
+                            <td class="app-td action-column">
+                                <div class="action-buttons-container">
                                     {{> delete-confirmation modalTitle="Do you really want to remove the subscription?"
                                     modalMessage="This will remove the subscription entry stored in the devportal."
                                     modalFunction="removeSubscription()" }}
+                                    <button type="button" class="btn application-btn-icon" onclick="#">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
                                     <button type="button" class="btn application-btn-icon delete-button" 
-                                        onclick="openDeleteModal('{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')"><i
-                                            class="bi bi-trash"></i></button>
+                                        onclick="openDeleteModal('{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
