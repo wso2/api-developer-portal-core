@@ -31,12 +31,6 @@
   align-items: center;
 }
 
-@media (max-width: 992px) {
-  .apilist-hero-image {
-    display: none;
-  }
-}
-
 .apilist-hero-content h1,
 .apilist-hero-content span {
   color: var(--primary-main-color);
@@ -309,28 +303,20 @@ hr {
 }
 
 @media (max-width: 992px) {
-  .apilist-hero-content h1 {
-    font-size: 1.75rem;
+  .apilist-hero-header .apilist-hero-title {
+    font-size: 4vw;
+  }
+  
+  .apilist-hero-header .apilist-hero-title-highlight {
+    font-size: 5vw;
   }
 
-  .apilist-hero-content span {
-    font-size: 2.125rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .apilist-hero-container {
-    margin-top: 0.625rem;
-  }
-}
-
-@media (max-width: 576px) {
-  .apilist-hero-content h1 {
-    font-size: 1.5rem;
+  .apilist-hero-header .apilist-hero-description {
+    font-size: 2.5vw;
   }
 
-  .apilist-hero-content span {
-    font-size: 1.75rem;
+  .apilist-hero-image {
+    display: none;
   }
 }
 
