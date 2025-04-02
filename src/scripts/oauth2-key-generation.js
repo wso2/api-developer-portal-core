@@ -13,12 +13,18 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
     });
     const formData = new FormData(form);
     const jsonObject = getFormData(formData, keyManager, clientName);
+    let grantTypes;
+    if(!jsonObject.grantTypes) {
+        grantTypes = ["client_credentials"];
+    } else {
+        grantTypes = jsonObject.grantTypes;
+    }
     const payload = JSON.stringify({
         "applicationName": clientName,
         "apis": apiList,
         "tokenType": "OAUTH",
         "tokenDetails": {
-            "grantTypesToBeSupported": jsonObject.grantTypes,
+            "grantTypesToBeSupported": grantTypes,
             "keyType": keyType,
             "keyManager": keyManager,
             "callbackUrl": jsonObject.callbackURL,
@@ -41,7 +47,13 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
 
         const responseData = await response.json();
         if (response.ok) {
-            await showAlert('Application keys generated successfully!', 'success');
+            // close modal
+            const modal = document.getElementById('OauthKeyModal');
+            //await showAlert('Application keys generated successfully!', 'success');
+            // reload the page to reflect the changes
+            // TODO: update the function to handle the response and update the UI accordingly
+            //window.location.reload();
+            
             const consumerKey = responseData.consumerKey;
             const consumerSecret = responseData.consumerSecret;
             document.getElementById(consumerKeyID).value = consumerKey;
@@ -49,54 +61,83 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             const consumerKeyElement = document.getElementById("consumerKeys_" + keyManager);
             consumerKeyElement.style.display = "block";
 
-            // Hide the key action container
-            const keyActionContainer = document.getElementById("key-action-container");
-            keyActionContainer.style.display = "none";
-            const generateKeysButton = document.getElementById("applicationKeyGenerateButton");
-            generateKeysButton.style.display = "none";
-
-            // Move the advanced configuration section to the placeholder
-            const advancedConfig = document.getElementById("KMData_" + keyManager);
-            const advancedConfigPlaceholder = document.getElementById("advanced-config-placeholder");
-            if (advancedConfig && advancedConfigPlaceholder) {
-                advancedConfigPlaceholder.appendChild(advancedConfig);
-                advancedConfig.style.display = "none"; // Keep it hidden initially
+            const keyActionsContainer = document.getElementById("keyActionsContainer");
+            if (keyActionsContainer) {
+                keyActionsContainer.style.display = "flex";
+            }
+             // Update UI elements in the overview section
+            const generateKeyContainer = document.getElementById("generateKeyContainer");
+            if (generateKeyContainer) {
+                generateKeyContainer.style.display = "none";
             }
 
-            // Show the advanced config button
-            const advancedConfigButton = document.getElementById("advanced-config-button");
-            if (advancedConfigButton) {
-                advancedConfigButton.style.display = "flex";
-            }
+            //enable token view
+            // document.querySelectorAll("#tokenDisplay_" + keyManager).forEach(tokenDetails => {
+            //     tokenDetails.style.display = "block";
+            // });
+            // //openApiKeyModal(responseData.accessToken, "Generated OAuth Token", "OAuth Token");
+            // document.querySelectorAll("#token_" + keyManager).forEach(tokenDetails => {
+            //     tokenDetails.textContent = responseData.accessToken;
+            // });
+            const tokenbtn = document.getElementById('tokenKeyBtn');
+            tokenbtn.setAttribute("data-keyMappingId", responseData.keyMappingId);
+            tokenbtn.setAttribute("data-consumerSecret", responseData.consumerSecret);
+            tokenbtn.setAttribute("data-appRefID", responseData.appRefId);
+            loadKeysViewModal();
+           
 
-            // Show the token generation buttons
-            const tokenGenerationButtons = document.getElementById("tokenGenerationButtons_" + keyManager);
-            if (tokenGenerationButtons) {
-                tokenGenerationButtons.style.display = "flex";
+            // // Hide the key action container
+            // const keyActionContainer = document.getElementById("key-action-container");
+            // keyActionContainer.style.display = "none";
+            // const generateKeysButton = document.getElementById("applicationKeyGenerateButton");
+            // generateKeysButton.style.display = "none";
+
+            // // Move the advanced configuration section to the placeholder
+            // const advancedConfig = document.getElementById("KMData_" + keyManager);
+            // const advancedConfigPlaceholder = document.getElementById("advanced-config-placeholder");
+            // if (advancedConfig && advancedConfigPlaceholder) {
+            //     advancedConfigPlaceholder.appendChild(advancedConfig);
+            //     advancedConfig.style.display = "none"; // Keep it hidden initially
+            // }
+
+            // // Show the advanced config button
+            // const advancedConfigButton = document.getElementById("advanced-config-button");
+            // if (advancedConfigButton) {
+            //     advancedConfigButton.style.display = "flex";
+            // }
+
+            // // Show the token generation buttons
+            // const tokenGenerationButtons = document.getElementById("tokenGenerationButtons_" + keyManager);
+            // if (tokenGenerationButtons) {
+            //     tokenGenerationButtons.style.display = "flex";
                 
-                // Get the generate token button and update its onClick handler with correct values
-                const generateTokenButton = tokenGenerationButtons.querySelector(`#apiKeyGenerateButton-${keyType.toLowerCase()}`);
-                if (generateTokenButton) {
-                    generateTokenButton.setAttribute("onClick", 
-                        `generateOauthKey('${formId}', '${responseData.appRefId}', '${responseData.keyMappingId}', '${keyManager}', '${clientName}')`);
-                }
-            }
+            //     // Get the generate token button and update its onClick handler with correct values
+            //     const generateTokenButton = tokenGenerationButtons.querySelector(`#apiKeyGenerateButton-${keyType.toLowerCase()}`);
+            //     if (generateTokenButton) {
+            //         generateTokenButton.setAttribute("onClick", 
+            //             `generateOauthKey('${formId}', '${responseData.appRefId}', '${responseData.keyMappingId}', '${keyManager}', '${clientName}')`);
+            //     }
+            // }
 
-            // Show the update button container
-            const updateButtonContainer = document.getElementById("applicationKeyUpdateButtonContainer");
-            if (updateButtonContainer) {
-                updateButtonContainer.style.display = "flex";
+            // // Show the update button container
+            // const updateButtonContainer = document.getElementById("applicationKeyUpdateButtonContainer");
+            // if (updateButtonContainer) {
+            //     updateButtonContainer.style.display = "flex";
                 
-                // Get the update button and set its onClick handler with the correct appRefID
-                const updateButton = document.getElementById("applicationKeyUpdateButton");
-                if (updateButton) {
-                    updateButton.setAttribute("onClick", 
-                        `updateApplicationKey('${formId}', '${JSON.stringify([{appRefID: responseData.appRefId}])}', '${keyType}', '${keyManager}', '${responseData.keyMappingId}', '${clientName}')`);
-                }
-            }
+            //     // Get the update button and set its onClick handler with the correct appRefID
+            //     const updateButton = document.getElementById("applicationKeyUpdateButton");
+            //     if (updateButton) {
+            //         updateButton.setAttribute("onClick", 
+            //             `updateApplicationKey('${formId}', '${JSON.stringify([{appRefID: responseData.appRefId}])}', '${keyType}', '${keyManager}', '${responseData.keyMappingId}', '${clientName}')`);
+            //     }
+            // }
 
-            const KMURLs = document.getElementById("KMURl_" + keyManager);
-            KMURLs.style.display = "block";
+            // const KMURLs = document.getElementById("KMURl_" + keyManager);
+            // KMURLs.style.display = "block";
+            
+           
+            
+           
         } else {
             console.error('Failed to generate keys:', responseData);
             await showAlert(`Failed to generate application keys. Please try again.\n${responseData.description}`, 'error');
@@ -268,16 +309,25 @@ async function generateCurl(keyManager, tokenURL) {
     const auth = `consumerKey:consumerSecret`;
     const curl = `curl -k -X POST ${tokenURL} -d "grant_type=client_credentials" -H "Authorization: Basic ${auth}"`;
 
-    const curlDisplay = document.getElementById("curlDisplay_" + keyManager);
-    curlDisplay.style.display = "block";
-    document.getElementById("curl_" + keyManager).textContent = curl;
-  
+    document.querySelectorAll("#curlDisplay_" + keyManager).forEach(curlDisplay => {
+        curlDisplay.style.display = "block";
+    });
+    document.querySelectorAll("#curl_" + keyManager).forEach(curlContent => {
+        curlContent.textContent = curl;
+    });
 }
 
 
 async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName, clientSecret) {
     const form = document.getElementById(formId);
     const formData = new FormData(form);
+
+    if (!keyMappingId) {
+        const tokenbtn = document.getElementById('tokenKeyBtn');
+        clientSecret = tokenbtn.getAttribute("data-consumerSecret");
+        keyMappingId = tokenbtn.getAttribute("data-keyMappingId");
+        appId = tokenbtn.getAttribute("data-appRefID");
+    }
     const jsonObject = getFormData(formData, keyManager, clientName);
 
     try {
@@ -298,11 +348,25 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
 
 
         const responseData = await response.json();
-        const tokenDetails = document.getElementById("tokenDisplay_" + keyManager);
-        tokenDetails.style.display = "block";
-        //openApiKeyModal(responseData.accessToken, "Generated OAuth Token", "OAuth Token");
-        document.getElementById("token_" + keyManager).textContent = responseData.accessToken;
+       
+
         if (response.ok) {
+            // let tokenDetails = document.getElementById("tokenDisplay_" + keyManager);
+            // tokenDetails.style.display = "block";
+            // tokenDetails.textContent = responseData.accessToken;
+
+            // document.querySelectorAll("#tokenDisplay_" + keyManager).forEach(tokenDetails => {
+            //     tokenDetails.style.display = "block";
+            // });
+            //openApiKeyModal(responseData.accessToken, "Generated OAuth Token", "OAuth Token");
+            // document.querySelectorAll("#token_" + keyManager).forEach(tokenDetails => {
+            //     tokenDetails.textContent = responseData.accessToken;
+            // });
+            let tokenDetails = document.getElementById("tokenDisplay_" + keyManager);
+            tokenDetails.style.display = "block";
+            let tokenText = document.getElementById("token_"+ keyManager);
+            tokenText.textContent = responseData.accessToken;
+            loadKeysTokenModal();
             await showAlert('Token generated successfully!', 'success');
         } else {
             ('Failed to generate access token:', responseData);
@@ -391,41 +455,60 @@ function loadKeyGenModal() {
     }
 }
 
+function loadKeysViewModal() {
+    const modal = document.getElementById('keysViewModal');
+    modal.style.display = 'flex';
+}
+
+function loadKeysModifyModal() {
+    const modal = document.getElementById('keysModifyModal');
+    modal.style.display = 'flex';
+
+    // Collapse all advanced configurations and reset UI state
+    document.querySelectorAll(".KMConfig").forEach(el => el.style.display = "none");
+    document.querySelectorAll(".arrow-icon").forEach(icon => icon.classList.remove('rotated'));
+}
+
+function loadKeysTokenModal() {
+    const modal = document.getElementById('keysTokenModal');
+    modal.style.display = 'flex';
+}
 
 function showAdvanced(configId) {
-    const content = document.getElementById(configId);
-    const isExpanding = content.style.display !== "block";
-    content.style.display = isExpanding ? "block" : "none";
-    
-    // Get the arrow icon from the clicked header and toggle its rotation
-    const headerElement = event.currentTarget;
-    const arrowIcon = headerElement.querySelector('.arrow-icon');
-    if (arrowIcon) {
-        if (isExpanding) {
-            arrowIcon.classList.add('rotated');
-        } else {
-            arrowIcon.classList.remove('rotated');
+    document.querySelectorAll("#" + configId).forEach(content => {
+        const isExpanding = content.style.display !== "block";
+        content.style.display = isExpanding ? "block" : "none";
+
+        // Get the arrow icon from the clicked header and toggle its rotation
+        const headerElement = event.currentTarget;
+        const arrowIcon = headerElement.querySelector('.arrow-icon');
+        if (arrowIcon) {
+            if (isExpanding) {
+                arrowIcon.classList.add('rotated');
+            } else {
+                arrowIcon.classList.remove('rotated');
+            }
         }
-    }
-    
-    // Handle Generate Keys button movement
-    const generateKeysBtn = document.getElementById("applicationKeyGenerateButton");
-    const originalContainer = document.getElementById("generate-keys-btn-container");
-    const advancedContainer = document.getElementById("generate-keys-btn-advanced-container");
-    
-    if (generateKeysBtn && originalContainer && advancedContainer) {
-        if (isExpanding) {
-            // Move Generate Keys button to the advanced container
-            originalContainer.style.display = "none";
-            advancedContainer.style.display = "flex";
-            advancedContainer.appendChild(generateKeysBtn);
-        } else {
-            // Move Generate Keys button back to its original container
-            advancedContainer.style.display = "none";
-            originalContainer.style.display = "flex";
-            originalContainer.appendChild(generateKeysBtn);
+
+        // Handle Generate Keys button movement
+        const generateKeysBtn = content.querySelector("#applicationKeyGenerateButton");
+        const originalContainer = content.querySelector("#generate-keys-btn-container");
+        const advancedContainer = content.querySelector("#generate-keys-btn-advanced-container");
+
+        if (generateKeysBtn && originalContainer && advancedContainer) {
+            if (isExpanding) {
+                // Move Generate Keys button to the advanced container
+                originalContainer.style.display = "none";
+                advancedContainer.style.display = "flex";
+                advancedContainer.appendChild(generateKeysBtn);
+            } else {
+                // Move Generate Keys button back to its original container
+                advancedContainer.style.display = "none";
+                originalContainer.style.display = "flex";
+                originalContainer.appendChild(generateKeysBtn);
+            }
         }
-    }
+    });
 }
 
 
@@ -453,22 +536,23 @@ async function copyToken(KMName) {
  * @param {string} inputId - The ID of the input field
  */
 function togglePasswordVisibility(inputId) {
-    const inputElement = document.getElementById(inputId);
-    const buttonElement = inputElement.nextElementSibling;
-    const iconElement = buttonElement.querySelector('i');
-    
-    // Toggle the input type between password and text
-    if (inputElement.type === 'password') {
-        inputElement.type = 'text';
-        // Change to eye-slash icon
-        iconElement.classList.remove('bi-eye');
-        iconElement.classList.add('bi-eye-slash');
-    } else {
-        inputElement.type = 'password';
-        // Change back to eye icon
-        iconElement.classList.remove('bi-eye-slash');
-        iconElement.classList.add('bi-eye');
-    }
+    document.querySelectorAll('#' + inputId).forEach(inputElement => {
+        const buttonElement = inputElement.nextElementSibling;
+        const iconElement = buttonElement.querySelector('i');
+
+        // Toggle the input type between password and text
+        if (inputElement.type === 'password') {
+            inputElement.type = 'text';
+            // Change to eye-slash icon
+            iconElement.classList.remove('bi-eye');
+            iconElement.classList.add('bi-eye-slash');
+        } else {
+            inputElement.type = 'password';
+            // Change back to eye icon
+            iconElement.classList.remove('bi-eye-slash');
+            iconElement.classList.add('bi-eye');
+        }
+    });
 }
 
 /**
