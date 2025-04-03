@@ -410,7 +410,7 @@ async function getAPIMApplication(req, applicationId) {
 }
 
 async function getAPIMKeyManagers(req) {
-    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers?devPortalAppEnv=sandbox', null, null);
+    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers?devPortalAppEnv=prod', null, null);
     return responseData.list;
 }
 
