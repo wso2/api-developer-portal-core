@@ -56,8 +56,11 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             
             const consumerKey = responseData.consumerKey;
             const consumerSecret = responseData.consumerSecret;
+            const dbAppID = formId.replace("keysview-", "").replace(/-(sandbox|production)$/, "");
             document.getElementById(consumerKeyID).value = consumerKey;
             document.getElementById(consumerSecretID).value = consumerSecret;
+            document.getElementById("app-ref-" + dbAppID).value = responseData.appRefId;
+            document.getElementById("key-map-" + dbAppID).value = responseData.keyMappingId;
 
             const consumerKeyElement = document.getElementById("consumerKeys_" + keyManager);
             consumerKeyElement.style.display = "block";
@@ -174,13 +177,13 @@ async function cleanUp(applicationId, keyMappingId) {
 }
 
 
-function getFormData(formData, keyManager, clientName) {
+function getFormData(formData, keyManager, clientName, appID) {
     let jsonObject = {
         additionalProperties: {},
     };
 
 
-    if (keyManager !== 'Resident Key Manager') {
+    if (keyManager !== 'Resident Key Manager' && !keyManager.includes('_internal_key_manager') && !keyManager.includes('appdev_sts_key_manager')) {
         additionalProperties = {
             "client_id": formData.get('consumerKey'),
             "client_name": clientName,
@@ -189,6 +192,14 @@ function getFormData(formData, keyManager, clientName) {
         }
         jsonObject.additionalProperties = additionalProperties;
     }
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    const appCheckboxes = Array.from(checkboxes).filter(cb => {
+        if (cb.id.includes(appID) && cb.id.includes('additionalProperties')) {
+            return true;
+        }
+        return false;
+    });
+
     formData.forEach((value, key) => {
         if (key.startsWith("additionalProperties.")) {
             const propName = key.replace("additionalProperties.", "");
@@ -223,6 +234,17 @@ function getFormData(formData, keyManager, clientName) {
             }
         }
     });
+    
+    appCheckboxes.forEach(checkbox => {
+        let name = checkbox.name.replace("additionalProperties.", "");
+        let value = checkbox.checked;
+        
+        if (jsonObject.additionalProperties.hasOwnProperty(name)) {
+            delete jsonObject.additionalProperties[name];
+        }
+        jsonObject.additionalProperties[name] = value;
+
+    });
 
 
     return jsonObject;
@@ -232,22 +254,24 @@ function getFormData(formData, keyManager, clientName) {
 async function updateApplicationKey(formId, appMap, keyType, keyManager, keyManagerId, clientName) {
     const form = document.getElementById(formId);
     const formData = new FormData(form);
-    const jsonAppdata = JSON.parse(appMap);
+    const jsonAppdata = appMap ? JSON.parse(appMap) : null;
     //TODO: Handle multiple CP applications
-    const appId = jsonAppdata[0].appRefID;
-    const jsonObject = getFormData(formData, keyManager, clientName);
+    const dbAppID = formId.replace("applicationKeyGenerateForm-", "").replace(/-(sandbox|production)$/, "");
+    const appId = jsonAppdata ? jsonAppdata[0].appRefID : document.getElementById("app-ref-" + dbAppID).value;
+    const keyMappingId = keyManagerId ? keyManagerId : document.getElementById("key-map-" + dbAppID).value;;
+    const jsonObject = getFormData(formData, keyManager, clientName, dbAppID);
     const payload = JSON.stringify({
         "supportedGrantTypes": jsonObject.grantTypes,
         "keyType": keyType,
         "keyManager": keyManager,
         "callbackUrl": jsonObject.callbackURL,
-        "consumerKey": jsonObject.consumerKey,
-        "consumerSecret": jsonObject.consumerSecret,
-        "keyMappingId": keyManagerId,
+        "consumerKey": document.getElementById("consumer-key-" + dbAppID + "-sandbox").value,
+        "consumerSecret": document.getElementById("consumer-secret-"+ dbAppID + "-sandbox").value,
+        "keyMappingId": keyMappingId,
         "additionalProperties": jsonObject.additionalProperties
     });
     try {
-        const response = await fetch(`/devportal/applications/${appId}/oauth-keys/${keyManagerId}`, {
+        const response = await fetch(`/devportal/applications/${appId}/oauth-keys/${keyMappingId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -404,11 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
             el.style.display = "none";
         });
         const selectedValue = selectElement.value;
-        const kmData = document.getElementById("KMData_" + selectedValue);
         const kmURL = document.getElementById("KMURL_" + selectedValue);
-        if (kmData) {
-            kmData.style.display = "block";
-        }
         if (kmURL) {
             kmURL.style.display = "block";
         }
@@ -453,7 +473,6 @@ function loadKeysModifyModal() {
     modal.style.display = 'flex';
 
     // Collapse all advanced configurations and reset UI state
-    document.querySelectorAll(".KMConfig").forEach(el => el.style.display = "none");
     document.querySelectorAll(".arrow-icon").forEach(icon => icon.classList.remove('rotated'));
 }
 

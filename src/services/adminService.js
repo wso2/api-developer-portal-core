@@ -885,7 +885,7 @@ const createAppKeyMapping = async (req, res) => {
 function checkAdditionalValues(additionalValues) {
 
     let defaultConfigs = ["application_access_token_expiry_time", "user_access_token_expiry_time", "id_token_expiry_time", "refresh_token_expiry_time"];
-    const props = {}
+    const props = additionalValues;
     for (const key in additionalValues) {
         if (defaultConfigs.includes(key)) {
             props[key] = parseInt(additionalValues[key]);
