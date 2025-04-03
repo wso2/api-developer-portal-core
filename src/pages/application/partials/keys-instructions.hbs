@@ -25,13 +25,7 @@
                                         data-endpoint="{{../tokenEndpoint}}" data-consumer-key="{{keys.consumerKey}}"
                                         data-consumer-secret="{{keys.consumerSecret}}"
                                         aria-label="Copy to clipboard with real values" onclick="copyRealCurl(this)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" stroke-linejoin="round">
-                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1">
-                                            </path>
-                                        </svg>
+                                        <i class="bi bi-copy"></i>
                                     </button>
                                     <code
                                         id="curl_{{../name}}">curl -k -X POST &lt;TOKEN_ENDPOINT_URL&gt; -d "grant_type=client_credentials" -H "Authorization: Basic Base64(&lt;CONSUMER_KEY&gt;:&lt;CONSUMER_SECRET&gt;)"</code>

@@ -275,6 +275,7 @@ input[type="checkbox"]:checked {
   color: #666;
   line-height: 1;
   font-size: 12px;
+  margin-bottom: 0.25rem;
 }
 
 .info-icon {
@@ -287,8 +288,7 @@ input[type="checkbox"]:checked {
   background-color: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
+  padding: 0.75rem;
   position: relative;
 }
 
@@ -298,19 +298,28 @@ input[type="checkbox"]:checked {
   word-break: break-all;
   font-family: monospace;
   font-size: 0.8125rem;
-  padding: 0.5rem;
-  line-height: 1.5;
+  margin: 0;
+  padding: 0;
+  padding-right: 1.5rem;
+  line-height: 1.5em;
+  max-height: 4.5em;
+  overflow-y: auto;
+  overflow-x: auto;
 }
 
 .copy-button {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
+  top: 0.5rem;
+  right: 0.5rem;
   background: none;
   border: none;
   color: #9ca3af;
   cursor: pointer;
   padding: 0.25rem;
+}
+
+.copy-button:hover {
+  color: #4b5563;
 }
 
 
@@ -323,7 +332,7 @@ input[type="checkbox"]:checked {
 .code-block {
   background-color: #f0f0f0;
   border-radius: 6px;
-  padding: 20px;
+  padding: 1rem;
   position: relative;
   overflow-x: auto;
   font-size: 0.8125rem;
