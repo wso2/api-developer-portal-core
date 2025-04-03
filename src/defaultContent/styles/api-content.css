@@ -751,6 +751,15 @@ hr {
   }
 }
 
+@media (max-width: 1200px) {
+  .custom-modal .modal-dialog {
+    max-width: 85%; 
+    width: 85%; 
+    height: 85%; 
+    margin: auto !important;
+  }
+}
+
 @media (max-width: 1024px) {
   .apibenefits-list {
     flex-direction: column;
@@ -766,6 +775,13 @@ hr {
   .key-benefit-image {
     width: 6rem;
     margin-left: 0.5rem;
+  }
+
+  .custom-modal .modal-dialog {
+    max-width: 75%; 
+    width: 75%; 
+    height: 75%; 
+    margin: auto !important;
   }
 }
 
@@ -836,5 +852,12 @@ hr {
   .faq-badge-custom1 {
     padding: 0.25rem 1rem;
     font-size: 0.625rem;
+  }
+
+  .custom-modal .modal-dialog {
+    max-width: 95%; 
+    width: 95%; 
+    height: 95%; 
+    margin: auto !important;
   }
 }
