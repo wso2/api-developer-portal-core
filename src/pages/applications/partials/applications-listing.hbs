@@ -44,9 +44,6 @@
                   <div id="nameError" class="error-msg text-danger mt-1 d-none">
                     Application name cannot be empty.
                   </div>
-                  <div id="appError" class="error-msg text-danger mt-1">
-                    Failed to create application.
-                  </div>
                 </div>
                 <div class="application-card-footer">
                     <button type='submit' class='btn common-btn-outlined' id='cancelCreateButton' 
@@ -59,6 +56,12 @@
                 </div>
               </form>
           </div>
+           <div class="message-overlay hidden" id="message-overlay">
+              <div class="message-content" >
+                  <i class="bi message-icon"></i>
+                  <p class="message-text"></p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -68,7 +71,7 @@
       {{#applicationsMetadata}}
 
       <div class="col-12 col-md-4 col-lg-3">
-        <div class="card app-card application-card" id="app-card-{{applicationId}}" data-name="{{name}}" style="cursor: pointer;"
+        <div class="card app-card application-card" id="app-card-{{id}}" data-name="{{name}}" style="cursor: pointer;"
           onclick="window.location.href='{{../baseUrl}}/applications/{{id}}'">
           <div class="application-layout">
             <div class="application-icon-container">
@@ -101,11 +104,17 @@
               <div class="application-card-footer">
                 <div class="application-card-actions">
                   <button type="button" class="btn application-btn-icon delete-button" title="Delete"
-                    onclick="event.stopPropagation(); openDeleteModal('{{id}}', '')">
+                      id="trash-btn-{{id}}" onclick="event.stopPropagation(); openDeleteModal('{{id}}', '')">
                     <i class="bi bi-trash"></i>
                   </button>
                 </div>
               </div>
+               <div class="message-overlay hidden" id="message-overlay-{{id}}">
+              <div class="message-content" >
+                  <i class="bi message-icon"></i>
+                  <p class="message-text"></p>
+              </div>
+            </div>
             </div>
           </div>
         </div>
