@@ -180,7 +180,8 @@ thead tr th {
   gap: 0.25rem;
 }
 
-.oauth2-keys-section .btn-sm {
+.oauth2-keys-section .btn-sm,
+.api-key-actions .btn-sm {
   padding: 0.5rem 0.75rem;
   font-size: 0.75rem;
   border-radius: 0.25rem;
@@ -188,14 +189,16 @@ thead tr th {
   line-height: 1.2;
 }
 
-.oauth2-keys-section .common-btn-outlined {
+.oauth2-keys-section .common-btn-outlined,
+.api-key-actions .common-btn-outlined {
   box-sizing: border-box;
   border-width: 1px;
   box-shadow: inset 0 0 0 1px var(--primary-main-color);
   border: none;
 }
 
-.oauth2-keys-section .btn-sm .bi {
+.oauth2-keys-section .btn-sm .bi,
+.api-key-actions .btn-sm .bi {
   vertical-align: middle;
 }
 
