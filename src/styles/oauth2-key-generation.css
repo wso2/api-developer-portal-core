@@ -396,3 +396,35 @@ input[type="checkbox"]:checked {
   width: auto;
   height: auto;
 }
+
+.token-details-card {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.token-details-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail-item {
+  display: flex;
+  align-items: baseline;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.detail-label {
+  font-weight: 500;
+  color: #475569;
+  min-width: 150px;
+}
+
+.detail-value {
+  color: #334155;
+  word-break: break-all;
+}
