@@ -594,7 +594,8 @@ async function copyRealCurl(button) {
     
     try {
         const credentials = `${consumerKey}:${consumerSecret}`;
-        const curlCommand = `curl -k -X POST ${tokenEndpoint} -d "grant_type=client_credentials" -H "Authorization: Basic ${credentials}"`;
+        const encodedCredentials = btoa(credentials);
+        const curlCommand = `curl -k -X POST ${tokenEndpoint} -d "grant_type=client_credentials" -H "Authorization: Basic ${encodedCredentials}"`;
         
         // Copy to clipboard
         await navigator.clipboard.writeText(curlCommand);
