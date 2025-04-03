@@ -362,6 +362,10 @@ input[type="checkbox"]:checked {
   transform: translateY(-50%);
 }
 
+.url-copy-btn {
+  top: 70%;
+}
+
 .password-toggle-btn {
   right: 40px;
 }
