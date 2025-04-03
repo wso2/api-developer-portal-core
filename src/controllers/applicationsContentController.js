@@ -467,7 +467,7 @@ async function mapDefaultValues(applicationConfiguration) {
     let defaultConfigs = ["application_access_token_expiry_time", "user_access_token_expiry_time", "id_token_expiry_time"];
     applicationConfiguration.map(config => {
         if (defaultConfigs.includes(config.name) && config.default == 'N/A') {
-            config.default = 3600;
+            config.default = 900;
         } else if (config.name === 'refresh_token_expiry_time' && config.default == 'N/A') {
             config.default = 86400;
         }

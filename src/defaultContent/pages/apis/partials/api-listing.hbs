@@ -54,7 +54,11 @@
         <div class="card api-card d-flex flex-column">
           <div class="api-card-header d-flex align-items-center gap-3 position-relative overflow-hidden" 
                onclick="window.location.href='{{../baseUrl}}/api/{{apiHandle}}'" style="cursor: pointer;">
-            <img src="{{apiInfo.apiImageMetadata.api-icon}}" class="api-card-img" alt="..." />
+               {{#if apiInfo.apiImageMetadata.api-icon}}
+                  <img src="{{apiInfo.apiImageMetadata.api-icon}}" class="api-card-img" alt="..." />
+                {{else}}
+                  <div class="image-icon">{{firstTwoLetters apiInfo.apiName}}</div>
+                {{/if}}
             <div class="flex-grow-1">
               <h5 class="api-card-title mb-0">{{apiInfo.apiName}}</h5>
               <div class="d-flex align-items-center gap-2">
