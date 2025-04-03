@@ -86,10 +86,6 @@ thead tr th {
   background-color: transparent;
 }
 
-.action-column {
-  text-align: right;
-}
-
 .action-buttons-container {
   display: flex;
   justify-content: flex-end;
