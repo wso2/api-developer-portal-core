@@ -94,12 +94,6 @@ const createAPIMetadata = async (req, res) => {
             // store api definition file
             await apiDao.storeAPIFile(apiDefinitionFile, apiFileName, apiID, constants.DOC_TYPES.API_DEFINITION, t);
             apiMetadata.apiID = apiID;
-
-            const apiImageName = apiMetadata.apiInfo.apiName.toLowerCase().replace(/\s/g, "-") + ".svg";
-            await apiDao.storeAPIImageMetadata({
-                "api-icon": apiImageName,
-            }, apiID, t);
-            await apiDao.storeAPIFile(generateSVG(apiMetadata.apiInfo.apiName.substring(0, 2).toUpperCase(), getRandomDarkColor()), apiImageName, apiID, constants.DOC_TYPES.IMAGES, t);
         });
 
 
@@ -129,18 +123,6 @@ function changeEndpoint(endPoint) {
     }
     return endPoint;
 }
-
-function generateSVG(letter, color) {
-    return `
-    <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-    <rect width="100" height="100" fill="#1A4C6D" rx="10"/>
-    <text x="50%" y="50%" font-size="50" fill="#ffffff" font-family="Arial" text-anchor="middle" alignment-baseline="central">
-        ${letter}
-    </text>
-    </svg>
-    `;
-}
-
 
 const getAPIMetadata = async (req, res) => {
 

@@ -206,6 +206,20 @@ hr {
   object-fit: cover;
 }
 
+.image-icon {
+  width: 60px;
+  height: 60px;
+  background-color: var(--primary-main-color, #1A4C6D); /* Fallback color */
+  color: var(--light-text-color);
+  font-size: 30px;
+  font-family: Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  text-transform: uppercase;
+}
+
 .api-card-header {
   padding: 20px;
   border-top-right-radius: 0.75rem;
