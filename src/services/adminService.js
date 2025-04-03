@@ -669,8 +669,8 @@ const createSubscription = async (req, res) => {
     try {
         const orgID = req.params.orgId;
         sequelize.transaction(async (t) => {
-            const app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
             try {
+                const app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
                 if (app.length > 0) {
                     const response = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, {
                         apiId: req.body.apiReferenceID,
@@ -694,7 +694,7 @@ const createSubscription = async (req, res) => {
                     return res.status(200).json({ message: 'Subscribed successfully' });
                 }
                 console.error("Error occurred while subscribing to API", error);
-                throw error;
+                return util.handleError(res, error);
             }
         });
     } catch (error) {

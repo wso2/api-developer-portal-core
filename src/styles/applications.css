@@ -5,12 +5,12 @@
   font-weight: 600;
 }
 
-.applicationspage-container .card {
+.applicationspage-container .app-card {
   border-radius: 0.75rem;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.applicationspage-container .card:hover {
+.applicationspage-container .app-card:hover {
   transform: translateY(-0.3125rem);
   box-shadow: 0px 0.5rem 1.25rem rgba(0, 0, 0, 0.15);
 }
@@ -22,15 +22,8 @@
   justify-content: flex-start;
 }
 
-.create-project-card {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 11.25rem;
-  background: var(--main-bg-color);
-}
-
-.create-project-content {
+.create-application-card {
+  border-radius: 0.75rem;
   text-align: center;
 }
 
@@ -89,6 +82,13 @@
   position: relative;
 }
 
+.application-create-card {
+  height: 11.25rem;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  background: var(--primary-lightest-color);
+}
+
 .application-layout {
   display: flex;
   height: 100%;
@@ -111,10 +111,19 @@
   height: 100%;
 }
 
+.application-create-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .application-card-footer {
   margin-top: auto;
   display: flex;
   justify-content: flex-end;
+  position: relative;
+  gap: 1rem;
 }
 
 .application-card-header {
@@ -144,6 +153,12 @@
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+
+  color: var(--main-text-color);
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  overflow: hidden;
 }
 
 .application-card-footer {
@@ -198,6 +213,12 @@
   justify-content: flex-end;
 }
 
+.disabled-card-hover {
+  pointer-events: none;
+  box-shadow: none !important;
+  cursor: default !important;
+}
+
 .application-btn-icon {
   display: inline-flex;
   align-items: center;
@@ -249,3 +270,4 @@
     width: 100%;
   }
 }
+

@@ -319,7 +319,7 @@ const deleteAPIMetadata = async (req, res) => {
             //check if subscriptions exist for the application
             const subApis = await adminDao.getSubscriptions(orgId, '', apiId);
             if (subApis.length > 0) {
-                throw new CustomError(401, constants.ERROR_CODE[401], "API has subscriptions.");
+                throw new CustomError(409, constants.ERROR_MESSAGE.ERR_SUB_EXIST, "API has subscriptions.");
             }
             const apiDeleteResponse = await apiDao.deleteAPIMetadata(orgId, apiId, t);
             if (apiDeleteResponse === 0) {
