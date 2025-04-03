@@ -87,6 +87,9 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             tokenbtn.setAttribute("data-keyMappingId", responseData.keyMappingId);
             tokenbtn.setAttribute("data-consumerSecretID", consumerSecretID);
             tokenbtn.setAttribute("data-appRefID", responseData.appRefId);
+
+            const KMDetails = document.getElementById("KMData_" + keyManager);
+            KMDetails.style.display = "none";
             loadKeysViewModal();
            
 
@@ -574,6 +577,7 @@ function togglePasswordVisibility(inputId) {
 async function copyConsumerSecret(inputId) {
     const inputElement = document.getElementById(inputId);
     const buttonElement = inputElement.nextElementSibling.nextElementSibling;
+
     const iconElement = buttonElement.querySelector('i');
     
     try {
@@ -613,7 +617,8 @@ async function copyRealCurl(button) {
     
     try {
         const credentials = `${consumerKey}:${consumerSecret}`;
-        const curlCommand = `curl -k -X POST ${tokenEndpoint} -d "grant_type=client_credentials" -H "Authorization: Basic ${credentials}"`;
+        const encodedCredentials = btoa(credentials);
+        const curlCommand = `curl -k -X POST ${tokenEndpoint} -d "grant_type=client_credentials" -H "Authorization: Basic ${encodedCredentials}"`;
         
         // Copy to clipboard
         await navigator.clipboard.writeText(curlCommand);
@@ -636,6 +641,37 @@ async function copyRealCurl(button) {
     } catch (err) {
         console.error('Could not copy text:', err);
         await showAlert('Failed to copy cURL command: ' + err.message, 'error');
+    }
+}
+
+async function copyOauthURLs(inputId) {
+
+    const inputElement = document.getElementById(inputId);
+    const buttonElement = inputElement.nextElementSibling;
+    const iconElement = buttonElement.querySelector('i');
+    
+    try {
+        // Get the value regardless of whether it's shown as password or text
+        const secretValue = inputElement.value;
+        
+        // Copy to clipboard
+        await navigator.clipboard.writeText(secretValue);
+        
+        // Show visual feedback
+        iconElement.classList.remove('bi-clipboard');
+        iconElement.classList.add('bi-clipboard-check');
+        
+        // Show alert
+        await showAlert('URL copied to clipboard!');
+        
+        // Revert to original icon after 1.5 seconds
+        setTimeout(() => {
+            iconElement.classList.remove('bi-clipboard-check');
+            iconElement.classList.add('bi-clipboard');
+        }, 1500);
+    } catch (err) {
+        console.error('Could not copy text:', err);
+        await showAlert('Failed to copy Consumer Secret', true);
     }
 }
 

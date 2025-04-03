@@ -864,7 +864,7 @@ const createAppKeyMapping = async (req, res) => {
             }
             tokenDetails.additionalProperties = checkAdditionalValues(tokenDetails.additionalProperties);
             //TODO: need to support both key types
-            tokenDetails.keyType = "SANDBOX"
+            tokenDetails.keyType = "PRODUCTION";
             //generate oauth key
             responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${cpAppID}/generate-keys`, {}, tokenDetails);
             

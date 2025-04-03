@@ -263,90 +263,6 @@ hr {
   margin-bottom: 1.25rem;
 }
 
-@media (max-width: 1024px) {
-  .apibenefits-list {
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-
-  .key-benefit-item {
-    max-width: 100%;
-    min-height: auto;
-    padding: 1.5rem;
-  }
-
-  .key-benefit-image {
-    width: 6rem;
-    margin-left: 0.5rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .api-overview-section {
-    margin: 2rem 1.5rem;
-  }
-
-  .api-overview-content {
-    padding: 1.5rem;
-  }
-
-  .overview-title {
-    font-size: 1.5rem;
-  }
-
-  .key-benefit-item h3 {
-    font-size: 0.875rem;
-  }
-
-  .key-benefit-item p {
-    font-size: 0.75rem;
-  }
-
-  .key-benefit-link {
-    font-size: 0.6875rem;
-  }
-
-  .faq-container {
-    padding: 1.5rem;
-  }
-
-  .faq-question {
-    font-size: 1rem;
-  }
-
-  .faq-answer {
-    font-size: 0.875rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .api-overview-section {
-    margin: 1.5rem 1rem;
-  }
-
-  .overview-title {
-    font-size: 1.25rem;
-  }
-
-  .key-benefit-item {
-    padding: 1rem;
-    border-radius: 0.5rem;
-  }
-
-  .key-benefit-image {
-    width: 4.5rem;
-  }
-
-  .faq-question {
-    font-size: 0.875rem;
-  }
-
-  .faq-badge-custom1 {
-    padding: 0.25rem 1rem;
-    font-size: 0.625rem;
-  }
-}
-
 .justified-text {
   text-align: justify;
   
@@ -388,20 +304,6 @@ hr {
   object-fit: cover;
   margin-bottom: 0;
   float: right;
-}
-
-.api-title {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.625rem;
-}
-
-.api-title h4 {
-  font-size: 2.25rem;
-  font-weight: 600;
-  color: var(--primary-main-color);
-  margin: 0;
 }
 
 .api-version {
@@ -448,47 +350,13 @@ hr {
   margin-top: 2rem;
 }
 
-.api-banner-section {
-  display: flex;
-  justify-content: center;
-  margin: 0 1rem 0 0;
-  align-items: center;
-  flex-direction: column;
-}
-
-.api-banner-content {
-  background-color: var(--primary-lightest-color);
-  border-radius: 0.75rem;
-  padding: 2.5rem 3.75rem;
-  text-align: left;
-  min-height: 10rem;
-  display: flex;
-}
-
-.api-image {
-  width: 13.75rem;
-  height: 13.75rem;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-bottom: 0;
-  margin-right: 2.5rem;
-  float: right;
-}
-
-.api-image-small {
-  width: 9.375rem;
-  height: 9.375rem;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-bottom: 0;
-  float: right;
-}
-
 .api-title {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.625rem;
+  gap: 0.2rem;
+  max-width: 100%; 
+  overflow: hidden; 
 }
 
 .api-title h4 {
@@ -496,6 +364,10 @@ hr {
   font-weight: 600;
   color: var(--primary-main-color);
   margin: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;      
+  text-overflow: ellipsis;    
 }
 
 .api-version {
@@ -876,5 +748,116 @@ hr {
 
   .select-items.show {
     display: block;
+  }
+}
+
+@media (max-width: 1200px) {
+  .custom-modal .modal-dialog {
+    max-width: 85%; 
+    width: 85%; 
+    height: 85%; 
+    margin: auto !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .apibenefits-list {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .key-benefit-item {
+    max-width: 100%;
+    min-height: auto;
+    padding: 1.5rem;
+  }
+
+  .key-benefit-image {
+    width: 6rem;
+    margin-left: 0.5rem;
+  }
+
+  .custom-modal .modal-dialog {
+    max-width: 75%; 
+    width: 75%; 
+    height: 75%; 
+    margin: auto !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .api-overview-section {
+    margin: 2rem 1.5rem;
+  }
+
+  .api-overview-content {
+    padding: 1.5rem;
+  }
+
+  .overview-title {
+    font-size: 1.5rem;
+  }
+
+  .key-benefit-item h3 {
+    font-size: 0.875rem;
+  }
+
+  .key-benefit-item p {
+    font-size: 0.75rem;
+  }
+
+  .key-benefit-link {
+    font-size: 0.6875rem;
+  }
+
+  .faq-container {
+    padding: 1.5rem;
+  }
+
+  .faq-question {
+    font-size: 1rem;
+  }
+
+  .faq-answer {
+    font-size: 0.875rem;
+  }
+
+  .api-image-small {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .api-overview-section {
+    margin: 1.5rem 1rem;
+  }
+
+  .overview-title {
+    font-size: 1.25rem;
+  }
+
+  .key-benefit-item {
+    padding: 1rem;
+    border-radius: 0.5rem;
+  }
+
+  .key-benefit-image {
+    width: 4.5rem;
+  }
+
+  .faq-question {
+    font-size: 0.875rem;
+  }
+
+  .faq-badge-custom1 {
+    padding: 0.25rem 1rem;
+    font-size: 0.625rem;
+  }
+
+  .custom-modal .modal-dialog {
+    max-width: 95%; 
+    width: 95%; 
+    height: 95%; 
+    margin: auto !important;
   }
 }
