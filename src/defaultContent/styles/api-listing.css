@@ -238,6 +238,10 @@ hr {
   color: var(--main-text-color);
   margin: 0;
   font-weight: 600;
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis;
+  max-width: 95%; 
 }
 
 .api-card p {
@@ -297,32 +301,6 @@ hr {
 .star.noselected {
   color: var(--main-text-color);
   opacity: 0.7;
-}
-
-@media (max-width: 992px) {
-  .apilist-hero-content h1 {
-    font-size: 1.75rem;
-  }
-
-  .apilist-hero-content span {
-    font-size: 2.125rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .apilist-hero-container {
-    margin-top: 0.625rem;
-  }
-}
-
-@media (max-width: 576px) {
-  .apilist-hero-content h1 {
-    font-size: 1.5rem;
-  }
-
-  .apilist-hero-content span {
-    font-size: 1.75rem;
-  }
 }
 
 .api-card {
@@ -618,5 +596,49 @@ hr {
 
   .close-message:hover {
     opacity: 1;
+  }
+}
+
+@media (max-width: 992px) {
+  .apilist-hero-header .apilist-hero-title {
+    font-size: 4vw;
+  }
+  
+  .apilist-hero-header .apilist-hero-title-highlight {
+    font-size: 5vw;
+  }
+
+  .apilist-hero-header .apilist-hero-description {
+    font-size: 2.5vw;
+  }
+
+  .apilist-hero-image {
+    display: none;
+  }
+
+  .truncate-text {
+    font-size: 1.75vw;
+  }
+}
+
+@media (max-width: 576px) {
+  .api-card-img {
+    display: none;
+  }
+
+  .api-card-title {
+    font-size: 3vw;
+  }
+
+  .apilisting-api-description {
+    font-size: 2vw;
+  }  
+
+  .truncate-text {
+    min-width: 0 !important; 
+    width: auto !important; 
+    max-width: 100%; 
+    white-space: normal !important; 
+    word-break: break-word; 
   }
 }
