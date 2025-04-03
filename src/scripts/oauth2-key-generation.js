@@ -268,8 +268,8 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
         "keyType": keyType,
         "keyManager": keyManager,
         "callbackUrl": jsonObject.callbackURL,
-        "consumerKey": document.getElementById("consumer-key-" + dbAppID + "-sandbox").value,
-        "consumerSecret": document.getElementById("consumer-secret-"+ dbAppID + "-sandbox").value,
+        "consumerKey": document.getElementById("consumer-key-" + formId.replace("applicationKeyGenerateForm-", "")).value,
+        "consumerSecret": document.getElementById("consumer-secret-" + formId.replace("applicationKeyGenerateForm-", "")).value,
         "keyMappingId": keyMappingId,
         "additionalProperties": jsonObject.additionalProperties
     });
