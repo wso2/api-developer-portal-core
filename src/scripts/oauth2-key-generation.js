@@ -13,12 +13,18 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
     });
     const formData = new FormData(form);
     const jsonObject = getFormData(formData, keyManager, clientName);
+    let grantTypes;
+    if(!jsonObject.grantTypes) {
+        grantTypes = ["client_credentials"];
+    } else {
+        grantTypes = jsonObject.grantTypes;
+    }
     const payload = JSON.stringify({
         "applicationName": clientName,
         "apis": apiList,
         "tokenType": "OAUTH",
         "tokenDetails": {
-            "grantTypesToBeSupported": jsonObject.grantTypes,
+            "grantTypesToBeSupported": grantTypes,
             "keyType": keyType,
             "keyManager": keyManager,
             "callbackUrl": jsonObject.callbackURL,
@@ -43,18 +49,43 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
         if (response.ok) {
             // close modal
             const modal = document.getElementById('OauthKeyModal');
-            await showAlert('Application keys generated successfully!', 'success');
-
+            //await showAlert('Application keys generated successfully!', 'success');
             // reload the page to reflect the changes
             // TODO: update the function to handle the response and update the UI accordingly
-            window.location.reload();
+            //window.location.reload();
             
-            // const consumerKey = responseData.consumerKey;
-            // const consumerSecret = responseData.consumerSecret;
-            // document.getElementById(consumerKeyID).value = consumerKey;
-            // document.getElementById(consumerSecretID).value = consumerSecret;
-            // const consumerKeyElement = document.getElementById("consumerKeys_" + keyManager);
-            // consumerKeyElement.style.display = "block";
+            const consumerKey = responseData.consumerKey;
+            const consumerSecret = responseData.consumerSecret;
+            document.getElementById(consumerKeyID).value = consumerKey;
+            document.getElementById(consumerSecretID).value = consumerSecret;
+
+            const consumerKeyElement = document.getElementById("consumerKeys_" + keyManager);
+            consumerKeyElement.style.display = "block";
+
+            const keyActionsContainer = document.getElementById("keyActionsContainer");
+            if (keyActionsContainer) {
+                keyActionsContainer.style.display = "flex";
+            }
+             // Update UI elements in the overview section
+            const generateKeyContainer = document.getElementById("generateKeyContainer");
+            if (generateKeyContainer) {
+                generateKeyContainer.style.display = "none";
+            }
+
+            //enable token view
+            // document.querySelectorAll("#tokenDisplay_" + keyManager).forEach(tokenDetails => {
+            //     tokenDetails.style.display = "block";
+            // });
+            // //openApiKeyModal(responseData.accessToken, "Generated OAuth Token", "OAuth Token");
+            // document.querySelectorAll("#token_" + keyManager).forEach(tokenDetails => {
+            //     tokenDetails.textContent = responseData.accessToken;
+            // });
+            const tokenbtn = document.getElementById('tokenKeyBtn');
+            tokenbtn.setAttribute("data-keyMappingId", responseData.keyMappingId);
+            tokenbtn.setAttribute("data-consumerSecretID", consumerSecretID);
+            tokenbtn.setAttribute("data-appRefID", responseData.appRefId);
+            loadKeysViewModal();
+           
 
             // // Hide the key action container
             // const keyActionContainer = document.getElementById("key-action-container");
@@ -105,16 +136,9 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             // const KMURLs = document.getElementById("KMURl_" + keyManager);
             // KMURLs.style.display = "block";
             
-            // // Update UI elements in the overview section
-            // const generateKeyContainer = document.getElementById("generateKeyContainer");
-            // if (generateKeyContainer) {
-            //     generateKeyContainer.style.display = "none";
-            // }
+           
             
-            // const keyActionsContainer = document.getElementById("keyActionsContainer");
-            // if (keyActionsContainer) {
-            //     keyActionsContainer.style.display = "flex";
-            // }
+           
         } else {
             console.error('Failed to generate keys:', responseData);
             await showAlert(`Failed to generate application keys. Please try again.\n${responseData.description}`, 'error');
@@ -298,6 +322,14 @@ async function generateCurl(keyManager, tokenURL) {
 async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName, clientSecret) {
     const form = document.getElementById(formId);
     const formData = new FormData(form);
+
+    if (!keyMappingId) {
+        const tokenbtn = document.getElementById('tokenKeyBtn');
+        let clientSecretID =   tokenbtn.getAttribute("data-consumerSecretID");
+        clientSecret = document.getElementById(clientSecretID).value;
+        keyMappingId = tokenbtn.getAttribute("data-keyMappingId");
+        appId = tokenbtn.getAttribute("data-appRefID");
+    }
     const jsonObject = getFormData(formData, keyManager, clientName);
 
     try {
@@ -318,15 +350,25 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
 
 
         const responseData = await response.json();
-        document.querySelectorAll("#tokenDisplay_" + keyManager).forEach(tokenDetails => {
-            tokenDetails.style.display = "block";
-        });
-        //openApiKeyModal(responseData.accessToken, "Generated OAuth Token", "OAuth Token");
-        document.querySelectorAll("#token_" + keyManager).forEach(tokenDetails => {
-            tokenDetails.textContent = responseData.accessToken;
-        });
+       
 
         if (response.ok) {
+            // let tokenDetails = document.getElementById("tokenDisplay_" + keyManager);
+            // tokenDetails.style.display = "block";
+            // tokenDetails.textContent = responseData.accessToken;
+
+            // document.querySelectorAll("#tokenDisplay_" + keyManager).forEach(tokenDetails => {
+            //     tokenDetails.style.display = "block";
+            // });
+            //openApiKeyModal(responseData.accessToken, "Generated OAuth Token", "OAuth Token");
+            // document.querySelectorAll("#token_" + keyManager).forEach(tokenDetails => {
+            //     tokenDetails.textContent = responseData.accessToken;
+            // });
+            let tokenDetails = document.getElementById("tokenDisplay_" + keyManager);
+            tokenDetails.style.display = "block";
+            let tokenText = document.getElementById("token_"+ keyManager);
+            tokenText.textContent = responseData.accessToken;
+            loadKeysTokenModal();
             await showAlert('Token generated successfully!', 'success');
         } else {
             ('Failed to generate access token:', responseData);

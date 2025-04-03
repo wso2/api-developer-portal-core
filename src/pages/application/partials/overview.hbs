@@ -3,11 +3,11 @@
 </head>
 
 <section class="section mt-0 mb-6">
-  {{#applicationMetadata}}
   <div class="container-fluid">
     <div class="app-overview-card d-flex justify-content-between align-items-start">
       <div class="me-5 w-75">
-        <div class="d-flex align-items-center edit-container">
+        {{#applicationMetadata}}
+        <div class="d-flex align-items-center edit-container mb-2">
           <h4 class="app-overview-title" id="applicationName" data-original="{{name}}">{{name}}</h4>
           <button class="btn btn-sm edit-inline-btn" id="editNameBtn" title="Edit name">
             <i class="bi bi-pencil"></i>
@@ -18,9 +18,9 @@
           </div>
           <div id="nameEditError" class="edit-error-message" style="display: none;"></div>
         </div>
-        <div class="d-flex align-items-center edit-container">
+        <div class="d-flex align-items-center edit-container mb-2">
           {{#if description}}
-            <p class="app-description" id="applicationDescription" data-original="{{description}}">{{description}}</p>
+            <p class="app-description mb-0" id="applicationDescription" data-original="{{description}}">{{description}}</p>
             <button class="btn btn-sm edit-inline-btn" id="editDescriptionBtn" title="Edit description">
               <i class="bi bi-pencil"></i>
             </button>
@@ -38,6 +38,8 @@
         <div id="descriptionEditError" class="edit-error-message" style="display: none;"></div>
         <p class="app-subscription-count mt-3">Subscriptions: {{subscriptionCount}}</p>
       </div>
+      {{/applicationMetadata}}
+
 
       <!-- OAuth2 Keys Section -->
       <div class="oauth2-keys-section">
@@ -45,15 +47,15 @@
 
         <!-- Generate Key Button (shown initially) -->
 
-        {{#each ../keyManagersMetadata}}
+        {{#each keyManagersMetadata}}
         {{#if enabled}}
         {{!-- TODO: double check the "keys" assignment --}}
-        {{#let "keys" (conditionalIf ../../isProduction productionKeys sandboxKeys)}}
+        {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
 
         <div id="generateKeyContainer"
           style="{{#if keys.consumerKey}}display: none;{{/if}}">
           <div class="d-flex align-items-center">
-            <button id="generateKeyBtn" class="common-btn-primary btn-sm" onclick="loadKeyGenModal()">
+            <button id="generateKeyBtn" class="common-btn-primary btn-sm" onclick="generateApplicationKey('keysview-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.id}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', 'consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}')">
               <i class="bi bi-key me-1"></i> Generate
             </button>
             <div class="tooltip-container ms-2">
@@ -66,15 +68,25 @@
         <!-- Action Buttons (hidden initially) -->
         <div id="keyActionsContainer" class="key-actions-container"
           style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
-          <button id="viewKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal()">
-            <i class="bi bi-eye"></i> View
-          </button>
-          <button id="modifyKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysModifyModal()">
-            <i class="bi bi-pencil-square"></i> Modify
-          </button>
-          <button id="tokenKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysTokenModal()">
-            <i class="bi bi-key-fill"></i> Token
-          </button>
+          <div class="key-action-row">
+            <span class="key-action-label">Keys:</span>
+            <div class="key-action-buttons">
+              <button id="viewKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal()">
+                <i class="bi bi-eye"></i> View
+              </button>
+              <button id="modifyKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysModifyModal()">
+                <i class="bi bi-pencil-square"></i> Modify
+              </button>
+            </div>
+          </div>
+          <div class="key-action-row">
+            <span class="key-action-label">Token:</span>
+            <div class="key-action-buttons">
+              <button id="tokenKeyBtn" class="common-btn-outlined btn-sm" onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}')">
+                <i class="bi bi-key-fill"></i> Token
+              </button>
+            </div>
+          </div>
         </div>
 
         {{/let}}
@@ -83,6 +95,5 @@
       </div>
     </div>
   </div>
-  <form id="inlineEditForm" data-application-id="{{id}}" style="display: none;"></form>
-  {{/applicationMetadata}}
+  <form id="inlineEditForm" data-application-id="{{applicationMetadata.id}}" style="display: none;"></form>
 </section>
