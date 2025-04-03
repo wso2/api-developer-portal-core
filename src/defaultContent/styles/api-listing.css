@@ -315,6 +315,7 @@ hr {
     display: flex;
     gap: 1rem;
     width: 100%;
+    flex-wrap: wrap;
   }
 
   .subscription-box-label {
@@ -327,7 +328,8 @@ hr {
   .custom-dropdown {
     font-size: small;
     position: relative;
-    width: 100%;
+    min-width: 50%;
+    flex-grow: 1;
   }
 
   /* Custom Select styling */
