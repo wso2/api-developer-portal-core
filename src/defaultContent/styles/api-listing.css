@@ -328,7 +328,7 @@ hr {
   .custom-dropdown {
     font-size: small;
     position: relative;
-    min-width: 50%;
+    min-width: 30%;
     flex-grow: 1;
   }
 
