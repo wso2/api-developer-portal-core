@@ -66,20 +66,33 @@ const deleteApplication = async (req, res) => {
     try {
         const orgID = await adminDao.getOrgId(req.user[constants.ORG_IDENTIFIER]);
         const applicationId = req.params.applicationId;
-        //delete the CP application
-        //TODO: handle non-shared scenarios
-        const app = await adminDao.getApplicationKeyMapping(orgID, applicationId, true);
-        if (app.length > 0) {
-            cpAppID = app[0].dataValues.CP_APP_REF;
-            await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${cpAppID}`, {}, {});
+        try {
+            //delete the CP application
+            //TODO: handle non-shared scenarios
+            const app = await adminDao.getApplicationKeyMapping(orgID, applicationId, true);
+            if (app.length > 0) {
+                cpAppID = app[0].dataValues.CP_APP_REF;
+                await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${cpAppID}`, {}, {});
+            }
+            const appDeleteResponse = await adminDao.deleteApplication(orgID, applicationId, req.user.sub);
+            if (appDeleteResponse === 0) {
+                throw new Sequelize.EmptyResultError("Resource not found to delete");
+            } else {
+                res.status(200).send("Resouce Deleted Successfully");
+            }
+            res.status(200).json({ message: responseData.message });
+        } catch (error) {
+            if (error.statusCode === 404) {
+                const appDeleteResponse = await adminDao.deleteApplication(orgID, applicationId, req.user.sub);
+                if (appDeleteResponse === 0) {
+                    throw new Sequelize.EmptyResultError("Resource not found to delete");
+                } else {
+                    res.status(200).send("Resouce Deleted Successfully");
+                }
+            }
+            console.error("Error occurred while deleting the application", error);
+            util.handleError(res, error);
         }
-        const appDeleteResponse = await adminDao.deleteApplication(orgID, applicationId, req.user.sub);
-        if (appDeleteResponse === 0) {
-            throw new Sequelize.EmptyResultError("Resource not found to delete");
-        } else {
-            res.status(200).send("Resouce Deleted Successfully");
-        }
-        res.status(200).json({ message: responseData.message });
     } catch (error) {
         console.error("Error occurred while deleting the application", error);
         util.handleError(res, error);
