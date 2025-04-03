@@ -305,20 +305,6 @@ async function removeApplicationKey() {
 
 
 
-async function generateCurl(keyManager, tokenURL) {
-   
-    const auth = `consumerKey:consumerSecret`;
-    const curl = `curl -k -X POST ${tokenURL} -d "grant_type=client_credentials" -H "Authorization: Basic ${auth}"`;
-
-    document.querySelectorAll("#curlDisplay_" + keyManager).forEach(curlDisplay => {
-        curlDisplay.style.display = "block";
-    });
-    document.querySelectorAll("#curl_" + keyManager).forEach(curlContent => {
-        curlContent.textContent = curl;
-    });
-}
-
-
 async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName, clientSecret) {
     const form = document.getElementById(formId);
     const formData = new FormData(form);
@@ -476,6 +462,11 @@ function loadKeysTokenModal() {
     modal.style.display = 'flex';
 }
 
+function loadKeysInstructionsModal() {
+    const modal = document.getElementById('keysInstructionsModal');
+    modal.style.display = 'flex';
+}
+
 function showAdvanced(configId) {
     document.querySelectorAll("#" + configId).forEach(content => {
         const isExpanding = content.style.display !== "block";
@@ -588,6 +579,44 @@ async function copyConsumerSecret(inputId) {
     } catch (err) {
         console.error('Could not copy text:', err);
         await showAlert('Failed to copy Consumer Secret', true);
+    }
+}
+
+async function copyRealCurl(button) {
+    const tokenEndpoint = button.getAttribute('data-endpoint');
+    const consumerKey = button.getAttribute('data-consumer-key');
+    const consumerSecret = button.getAttribute('data-consumer-secret');
+    
+    if (!consumerKey || !consumerSecret) {
+        await showAlert('Consumer key or secret not available. Please generate keys first.', 'warning');
+        return;
+    }
+    
+    try {
+        const credentials = `${consumerKey}:${consumerSecret}`;
+        const curlCommand = `curl -k -X POST ${tokenEndpoint} -d "grant_type=client_credentials" -H "Authorization: Basic ${credentials}"`;
+        
+        // Copy to clipboard
+        await navigator.clipboard.writeText(curlCommand);
+        
+        // Show visual feedback
+        const originalSvg = button.innerHTML;
+        button.innerHTML = `
+            <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="green" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        `;
+        
+        // Show alert
+        await showAlert('cURL command with your credentials has been copied to clipboard!');
+        
+        // Revert to original icon after 1.5 seconds
+        setTimeout(() => {
+            button.innerHTML = originalSvg;
+        }, 1500);
+    } catch (err) {
+        console.error('Could not copy text:', err);
+        await showAlert('Failed to copy cURL command: ' + err.message, 'error');
     }
 }
 
