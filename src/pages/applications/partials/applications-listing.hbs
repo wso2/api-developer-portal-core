@@ -20,7 +20,7 @@
       <!-- Create application Card -->
       <div class="col-12 col-md-4 col-lg-3 {{#if applicationsMetadata.length}}d-none{{/if}}" id="createApplicationCardWrapper">
         {{#unless applicationsMetadata.length}}
-        <div class="create-project-content card" id="applicationCreateCard" style="cursor: pointer;"
+        <div class="create-application-card card" id="applicationCreateCard" style="cursor: pointer;"
           onclick="showApplicationForm()">
           <span class="plus-icon">+</span>
           <span class="create-text">Create Application</span>
@@ -44,12 +44,12 @@
                   <div id="nameError" class="error-msg text-danger mt-1 d-none">
                     Application name cannot be empty.
                   </div>
-                  <div id="appError" class="error-msg text-danger mt-1 d-none">
+                  <div id="appError" class="error-msg text-danger mt-1">
                     Failed to create application.
                   </div>
                 </div>
                 <div class="application-card-footer">
-                    <button type='submit' class='btn common-btn-primary' id='cancelCreateButton' 
+                    <button type='submit' class='btn common-btn-outlined' id='cancelCreateButton' 
                       data-has-apps="{{#if applicationsMetadata.length}}true{{else}}false{{/if}}" onclick="event.stopPropagation(); hideApplicationForm(this);">
                         Cancel
                       </button>
