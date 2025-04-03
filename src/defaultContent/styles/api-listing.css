@@ -598,3 +598,47 @@ hr {
     opacity: 1;
   }
 }
+
+@media (max-width: 992px) {
+  .apilist-hero-header .apilist-hero-title {
+    font-size: 4vw;
+  }
+  
+  .apilist-hero-header .apilist-hero-title-highlight {
+    font-size: 5vw;
+  }
+
+  .apilist-hero-header .apilist-hero-description {
+    font-size: 2.5vw;
+  }
+
+  .apilist-hero-image {
+    display: none;
+  }
+
+  .truncate-text {
+    font-size: 1.75vw;
+  }
+}
+
+@media (max-width: 576px) {
+  .api-card-img {
+    display: none;
+  }
+
+  .api-card-title {
+    font-size: 3vw;
+  }
+
+  .apilisting-api-description {
+    font-size: 2vw;
+  }  
+
+  .truncate-text {
+    min-width: 0 !important; 
+    width: auto !important; 
+    max-width: 100%; 
+    white-space: normal !important; 
+    word-break: break-word; 
+  }
+}
