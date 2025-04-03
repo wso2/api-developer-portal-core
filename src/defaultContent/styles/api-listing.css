@@ -517,6 +517,10 @@ hr {
   .apilist-hero-image {
     display: none;
   }
+
+  .truncate-text {
+    font-size: 1.75vw;
+  }
 }
 
 @media (max-width: 576px) {
@@ -530,5 +534,13 @@ hr {
 
   .apilisting-api-description {
     font-size: 2vw;
+  }  
+
+  .truncate-text {
+    min-width: 0 !important; 
+    width: auto !important; 
+    max-width: 100%; 
+    white-space: normal !important; 
+    word-break: break-word; 
   }
 }
