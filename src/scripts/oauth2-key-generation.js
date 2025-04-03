@@ -4,6 +4,11 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
     const normalState = generateBtn.querySelector('.button-normal-state');
     const loadingState = generateBtn.querySelector('.button-loading-state');
     
+    // Clear any previous error messages
+    const errorContainer = document.getElementById('keyGenerationErrorContainer');
+    errorContainer.style.display = 'none';
+    errorContainer.textContent = '';
+    
     // Show generating state
     normalState.style.display = 'none';
     loadingState.style.display = 'inline-block';
@@ -152,7 +157,10 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
            
         } else {
             console.error('Failed to generate keys:', responseData);
-            await showAlert(`Failed to generate application keys. Please try again.\n${responseData.description}`, 'error');
+            
+            // Show error in the error container
+            errorContainer.textContent = `Failed to generate application keys: ${responseData.description || 'Unknown error'}`;
+            errorContainer.style.display = 'block';
             
             // Reset button state on error
             normalState.style.display = 'inline-block';
@@ -161,7 +169,10 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
         }
     } catch (error) {
         console.error('Error:', error);
-        await showAlert(`An error occurred generating application keys: \n${error.message}`, 'error');
+        
+        // Show error in the error container
+        errorContainer.textContent = `Error generating application keys: ${error.message || 'Unknown error'}`;
+        errorContainer.style.display = 'block';
         
         // Reset button state on error
         normalState.style.display = 'inline-block';
@@ -332,6 +343,11 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
     const normalState = tokenBtn.querySelector('.button-normal-state');
     const loadingState = tokenBtn.querySelector('.button-loading-state');
     
+    // Clear any previous error messages
+    const errorContainer = document.getElementById('keyGenerationErrorContainer');
+    errorContainer.style.display = 'none';
+    errorContainer.textContent = '';
+    
     // Show generating state
     normalState.style.display = 'none';
     loadingState.style.display = 'inline-block';
@@ -394,19 +410,22 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
             tokenBtn.disabled = false;
         } else {
             console.error('Failed to generate access token:', responseData);
-            await showAlert(`Failed to generate access token. Please try again.\n${responseData.description}`, 'error');
+            
+            // Show error in the error container
+            errorContainer.textContent = `Failed to generate access token: ${responseData.description || 'Unknown error'}`;
+            errorContainer.style.display = 'block';
             
             // Reset button state
             normalState.style.display = 'inline-block';
             loadingState.style.display = 'none';
             tokenBtn.disabled = false;
-            
-            const url = new URL(window.location.origin + window.location.pathname);
-            window.location.href = url.toString();
         }
     } catch (error) {
         console.error('Error:', error);
-        await showAlert(`An error occurred while generating OAuth keys: \n${error.message}`, 'error');
+        
+        // Show error in the error container
+        errorContainer.textContent = `Error generating access token: ${error.message || 'Unknown error'}`;
+        errorContainer.style.display = 'block';
         
         // Reset button state
         normalState.style.display = 'inline-block';
