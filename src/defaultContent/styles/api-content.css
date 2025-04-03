@@ -263,90 +263,6 @@ hr {
   margin-bottom: 1.25rem;
 }
 
-@media (max-width: 1024px) {
-  .apibenefits-list {
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-
-  .key-benefit-item {
-    max-width: 100%;
-    min-height: auto;
-    padding: 1.5rem;
-  }
-
-  .key-benefit-image {
-    width: 6rem;
-    margin-left: 0.5rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .api-overview-section {
-    margin: 2rem 1.5rem;
-  }
-
-  .api-overview-content {
-    padding: 1.5rem;
-  }
-
-  .overview-title {
-    font-size: 1.5rem;
-  }
-
-  .key-benefit-item h3 {
-    font-size: 0.875rem;
-  }
-
-  .key-benefit-item p {
-    font-size: 0.75rem;
-  }
-
-  .key-benefit-link {
-    font-size: 0.6875rem;
-  }
-
-  .faq-container {
-    padding: 1.5rem;
-  }
-
-  .faq-question {
-    font-size: 1rem;
-  }
-
-  .faq-answer {
-    font-size: 0.875rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .api-overview-section {
-    margin: 1.5rem 1rem;
-  }
-
-  .overview-title {
-    font-size: 1.25rem;
-  }
-
-  .key-benefit-item {
-    padding: 1rem;
-    border-radius: 0.5rem;
-  }
-
-  .key-benefit-image {
-    width: 4.5rem;
-  }
-
-  .faq-question {
-    font-size: 0.875rem;
-  }
-
-  .faq-badge-custom1 {
-    padding: 0.25rem 1rem;
-    font-size: 0.625rem;
-  }
-}
-
 .justified-text {
   text-align: justify;
   
@@ -826,5 +742,89 @@ hr {
 
   .select-items.show {
     display: block;
+  }
+}
+
+@media (max-width: 1024px) {
+  .apibenefits-list {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .key-benefit-item {
+    max-width: 100%;
+    min-height: auto;
+    padding: 1.5rem;
+  }
+
+  .key-benefit-image {
+    width: 6rem;
+    margin-left: 0.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .api-overview-section {
+    margin: 2rem 1.5rem;
+  }
+
+  .api-overview-content {
+    padding: 1.5rem;
+  }
+
+  .overview-title {
+    font-size: 1.5rem;
+  }
+
+  .key-benefit-item h3 {
+    font-size: 0.875rem;
+  }
+
+  .key-benefit-item p {
+    font-size: 0.75rem;
+  }
+
+  .key-benefit-link {
+    font-size: 0.6875rem;
+  }
+
+  .faq-container {
+    padding: 1.5rem;
+  }
+
+  .faq-question {
+    font-size: 1rem;
+  }
+
+  .faq-answer {
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .api-overview-section {
+    margin: 1.5rem 1rem;
+  }
+
+  .overview-title {
+    font-size: 1.25rem;
+  }
+
+  .key-benefit-item {
+    padding: 1rem;
+    border-radius: 0.5rem;
+  }
+
+  .key-benefit-image {
+    width: 4.5rem;
+  }
+
+  .faq-question {
+    font-size: 0.875rem;
+  }
+
+  .faq-badge-custom1 {
+    padding: 0.25rem 1rem;
+    font-size: 0.625rem;
   }
 }
