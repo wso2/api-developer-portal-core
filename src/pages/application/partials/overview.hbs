@@ -49,7 +49,6 @@
 
         {{#each keyManagersMetadata}}
         {{#if enabled}}
-        {{!-- TODO: double check the "keys" assignment --}}
         {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
 
         <div id="generateKeyContainer"
@@ -83,7 +82,10 @@
             <span class="key-action-label">Token:</span>
             <div class="key-action-buttons">
               <button id="tokenKeyBtn" class="common-btn-outlined btn-sm" onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}')">
-                <i class="bi bi-key-fill"></i> Token
+                <i class="bi bi-key-fill"></i> Generate
+              </button>
+              <button id="tokenInstructionsBtn" class="common-btn-outlined btn-sm" onclick="loadKeysInstructionsModal()">
+                <i class="bi bi-info-circle"></i> Instructions
               </button>
             </div>
           </div>

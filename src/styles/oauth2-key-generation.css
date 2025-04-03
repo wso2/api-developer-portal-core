@@ -325,7 +325,6 @@ input[type="checkbox"]:checked {
   border-radius: 6px;
   padding: 20px;
   position: relative;
-  margin-bottom: 40px;
   overflow-x: auto;
   font-size: 0.8125rem;
 }
