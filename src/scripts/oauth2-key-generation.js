@@ -279,6 +279,17 @@ function getFormData(formData, keyManager, clientName, appID) {
 
 
 async function updateApplicationKey(formId, appMap, keyType, keyManager, keyManagerId, clientName) {
+    // Get the update button and set loading state
+    const updateBtn = document.getElementById('applicationKeyUpdateButton');
+    const originalContent = updateBtn.innerHTML;
+    updateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
+    updateBtn.disabled = true;
+    
+    // Clear any previous error messages
+    const errorContainer = document.getElementById('keyUpdateErrorContainer');
+    errorContainer.style.display = 'none';
+    errorContainer.textContent = '';
+
     const form = document.getElementById(formId);
     const formData = new FormData(form);
     const jsonAppdata = appMap ? JSON.parse(appMap) : null;
@@ -306,19 +317,44 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
             body: payload,
         });
 
-
         const responseData = await response.json();
         if (response.ok) {
             await showAlert('Application keys generated successfully!', 'success');
             const url = new URL(window.location.origin + window.location.pathname);
             window.location.href = url.toString();
         } else {
-            console.error('Failed to generate keys:', responseData);
-            await showAlert(`Failed to generate application keys. Please try again.\n${responseData.description}`, 'error');
+            console.error('Failed to update keys:', responseData);
+            
+            // Enhanced error message with better formatting
+            let errorMessage = 'Failed to update application credentials';
+            if (responseData.description) {
+                errorMessage += `: ${responseData.description}`;
+            } else if (responseData.message) {
+                errorMessage += `: ${responseData.message}`;
+            }
+            
+            errorContainer.textContent = errorMessage;
+            errorContainer.style.display = 'block';
+            
+            // Restore button state
+            updateBtn.innerHTML = originalContent;
+            updateBtn.disabled = false;
         }
     } catch (error) {
         console.error('Error:', error);
-        await showAlert(`An error occurred generating application keys: \n${error.message}`, 'error');
+        
+        // Display error message in the modal
+        let errorMessage = 'Failed to update application credentials';
+        if (error.message) {
+            errorMessage += `: ${error.message}`;
+        }
+        
+        errorContainer.textContent = errorMessage;
+        errorContainer.style.display = 'block';
+        
+        // Restore button state
+        updateBtn.innerHTML = originalContent;
+        updateBtn.disabled = false;
     }
 }
 
