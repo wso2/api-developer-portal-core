@@ -117,7 +117,7 @@
     overflow: hidden;
     width: 0; /* Take no space when hidden */
     font-weight: normal; 
-    color: white;
+    color: var(--light-text-color);
     font-size: smaller;
 }
 
