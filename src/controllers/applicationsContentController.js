@@ -226,17 +226,11 @@ const loadApplication = async (req, res) => {
                     keyManager.authorizeEndpoint = 'https://sts.preview-dv.choreo.dev/oauth2/authorize';
                     keyManager.revokeEndpoint = 'https://sts.preview-dv.choreo.dev/oauth2/revoke';
                 }
+
                 keyManager.availableGrantTypes = await mapGrants(keyManager.availableGrantTypes);
                 keyManager.applicationConfiguration = await mapDefaultValues(keyManager.applicationConfiguration);
             }
 
-
-            //kMmetaData = kMmetaData.filter(keyManager => keyManager.name.includes("Resident Key Manager"));
-
-            for (const keyManager of kMmetaData) {
-                keyManager.availableGrantTypes = await mapGrants(keyManager.availableGrantTypes);
-                keyManager.applicationConfiguration = await mapDefaultValues(keyManager.applicationConfiguration);
-            }
             const userID = req[constants.USER_ID]
             const applicationList = await adminService.getApplicationKeyMap(orgID, applicationId, userID);
             metaData = applicationList;
