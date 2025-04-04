@@ -18,7 +18,7 @@ async function deleteApplication() {
         // Show loading state
         if (trashButton) {
             trashButton.innerHTML =
-                '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>&nbsp;Deleting...';
+                '<span style="font-size: 0.875rem;"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>&nbsp;Deleting...</span>';
             trashButton.disabled = true;
         }
         const response = await fetch(`/devportal/applications/${applicationId}`, {
@@ -80,11 +80,6 @@ window.showAppDeleteMessage = function (overlay, message, type = 'success') {
 
         // Show the overlay (remove hidden class if it exists)
         overlay.classList.remove('hidden');
-
-        // Auto-hide after the designated time
-        overlay.hideTimer = setTimeout(() => {
-            overlay.classList.add('hidden');
-        }, 5000);
 
         return overlay;
     }

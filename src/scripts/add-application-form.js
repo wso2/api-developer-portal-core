@@ -175,13 +175,14 @@ applicationForm.addEventListener('submit', async (e) => {
                 'success',
             );
         }
+        saveButton.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i>Created`;
         window.location.reload();
     } catch (error) {
         resetButtonState(saveButton);
         console.error('Error saving application:', error);
         const messageOverlay = document.getElementById('message-overlay');
         if (messageOverlay && typeof window.showAppMessage === 'function') {
-            window.showAppMessage(messageOverlay, 'Failed to save application.', 'error');
+            window.showAppMessage(messageOverlay, 'Failed to create application.', 'error');
         }
     }
 });
