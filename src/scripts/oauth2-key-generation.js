@@ -75,9 +75,6 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             document.getElementById("app-ref-" + dbAppID).value = responseData.appRefId;
             document.getElementById("key-map-" + dbAppID).value = responseData.keyMappingId;
 
-            const consumerKeyElement = document.getElementById("consumerKeys_" + keyManager);
-            consumerKeyElement.style.display = "block";
-
             const keyActionsContainer = document.getElementById("keyActionsContainer");
             if (keyActionsContainer) {
                 keyActionsContainer.style.display = "flex";
@@ -101,8 +98,6 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             tokenbtn.setAttribute("data-consumerSecretID", consumerSecretID);
             tokenbtn.setAttribute("data-appRefID", responseData.appRefId);
 
-            const KMDetails = document.getElementById("KMData_" + keyManager);
-            KMDetails.style.display = "none";
             loadKeysViewModal();
            
 

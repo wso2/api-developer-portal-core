@@ -27,8 +27,7 @@
                     {{#if enabled}}
                     {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
                     <form id='keysview-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'>
-                        <div id="consumerKeys_{{../name}}"
-                            style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
+                        <div id="consumerKeys_{{../name}}">
                             <h3 class='h6'> Key and Secret </h3>
                             <div class="row mb-3">
                                 <div class="col-md-6">
@@ -41,12 +40,10 @@
                                         id='consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
                                         class='form-control' name="consumerKey" value='{{keys.consumerKey}}' readonly
                                         disabled />
-                                <input type='hidden'
-                                    id='app-ref-{{../id}}'
-                                    class='form-control' name="appRefId" value='{{keys.appRefId}}' />
-                                <input type='hidden'
-                                    id='key-map-{{../id}}'
-                                    class='form-control' name="keyMappingId" value='{{keys.keyMappingId}}' />
+                                    <input type='hidden' id='app-ref-{{../id}}' class='form-control' name="appRefId"
+                                        value='{{keys.appRefId}}' />
+                                    <input type='hidden' id='key-map-{{../id}}' class='form-control' name="keyMappingId"
+                                        value='{{keys.keyMappingId}}' />
                                 </div>
                                 <div class="col-md-6">
                                     <label
@@ -131,22 +128,19 @@
                                 <div>
                                     <div class="row mb-2">
                                         <div class="col-md-4">
-                                            <div class="callback-header">Grant Types</div>
+                                            <div class="form-label">Grant Types</div>
                                         </div>
                                         <div class="col-md-8">
                                             <div class="d-flex flex-wrap gap-2">
                                                 {{#let "supportedGrantTypes" keys.supportedGrantTypes }}
                                                 {{#each ../../availableGrantTypes}}
-
-                                                {{#if (contains ../supportedGrantTypes name)}}
-
-                                                <label class="form-check-label fw-light ms-0"
-                                                    for="grant-type-{{name}}-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}">
-                                                    {{label}}
-                                                </label>
-                                                {{/if}}
-
+                                                {{#if (contains ../supportedGrantTypes name)}} 
+                                                    <label class="form-label"> {{label}} </label>
+                                                {{/if}} 
                                                 {{/each}}
+                                                {{#unless supportedGrantTypes.length}}
+                                                    <label class="form-label">Client Credentials</label>
+                                                {{/unless}}
                                                 {{/let}}
                                             </div>
                                         </div>
@@ -230,7 +224,8 @@
                                                 <div class="form-check ps-0">
                                                     <input type="checkbox" name="additionalProperties.{{../name}}"
                                                         id="{{../name}}-{{../../../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
-                                                        value="true" {{#if (eq propValue true)}} checked{{/if}} readonly disabled/>
+                                                        value="true" {{#if (eq propValue true)}} checked{{/if}} readonly
+                                                        disabled />
                                                 </div>
                                                 {{/if}}
                                                 <div class='form-text'>{{tooltip}}</div>
