@@ -924,10 +924,13 @@ document.addEventListener("DOMContentLoaded", function () {
             // Show the overlay (remove hidden class if it exists)
             overlay.classList.remove('hidden');
             
-            // Auto-hide after the designated time
-            overlay.hideTimer = setTimeout(() => {
-                overlay.classList.add('hidden');
-            }, 5000);
+            // Auto-hide after the designated time only for success messages
+            // Error messages remain visible until user closes them manually
+            if (type === 'success') {
+                overlay.hideTimer = setTimeout(() => {
+                    overlay.classList.add('hidden');
+                }, 5000);
+            }
             
             return overlay;
         }

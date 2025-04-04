@@ -106,6 +106,10 @@ Handlebars.registerHelper("every", function (array, key, options) {
     return allMatch ? true : false;
 });
 
+Handlebars.registerHelper("firstTwoLetters", function (text) {
+    return text ? text.substring(0, 2).toUpperCase() : "";
+});
+
 Handlebars.registerHelper("some", function (array, key, options) {
     if (!Array.isArray(array)) {
         return options.inverse(this);
@@ -324,7 +328,6 @@ passport.serializeUser((user, done) => {
 // });
 
 passport.deserializeUser((obj, done) => {
-    console.log('deserializeUser');
     done(null, obj)
 });
 

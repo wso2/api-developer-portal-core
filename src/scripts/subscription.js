@@ -201,10 +201,10 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
         // Always reset button state and close modal
         const planButton = document.getElementById('subscribe-btn-' + policyId);
         if (planButton) {
-            resetButtonState(planButton);
+            resetSubscribeButtonState(planButton);
         }
         closeModal('planModal-' + apiId);
-        resetButtonState(subscribeButton);
+        resetSubscribeButtonState(subscribeButton);
 
         if (response.ok) {
             // Show success notification
@@ -222,10 +222,10 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
         // Always reset button state and close modal
         const planButton = document.getElementById('subscribe-btn-' + policyId);
         if (planButton) {
-            resetButtonState(planButton);
+            resetSubscribeButtonState(planButton);
         }
         closeModal('planModal-' + apiId);
-        resetButtonState(subscribeButton);
+        resetSubscribeButtonState(subscribeButton);
         
         const errorMessage = `Error while subscribing: ${error.message}`;
         showSubscriptionMessage(messageOverlay, errorMessage, 'error');
@@ -239,7 +239,7 @@ function getSubscriptionCard(apiId, policyId) {
            null;
 }
 
-function resetButtonState(button) {
+function resetSubscribeButtonState(button) {
     if (button && typeof window.resetSubscribeButtonState === 'function') {
         window.resetSubscribeButtonState(button);
     }
