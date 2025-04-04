@@ -3,11 +3,20 @@ function showAlert(message, type) {
         const modalElement = document.getElementById('alertModal');
         const modalMessage = modalElement.querySelector('.modal-message');
         const modalBody = modalElement.querySelector('.modal-body');
+        const alertIcon = modalElement.querySelector('.alert-icon');
 
         modalMessage.textContent = message;
 
         modalBody.classList.remove('success', 'error');
         modalBody.classList.add(type);
+        
+        // Set appropriate icon based on alert type
+        alertIcon.className = 'alert-icon bi';
+        if (type === 'success') {
+            alertIcon.classList.add('bi-check-circle-fill');
+        } else if (type === 'error') {
+            alertIcon.classList.add('bi-exclamation-circle-fill');
+        }
 
         const bootstrapModal = new bootstrap.Modal(modalElement, { backdrop: false });
         bootstrapModal.show();
@@ -19,6 +28,6 @@ function showAlert(message, type) {
                 modalElement.classList.remove('fade-out');
                 resolve(); 
             }, 500); 
-        }, 2300); 
+        }, 2300);
     });
 }
