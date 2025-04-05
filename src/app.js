@@ -273,10 +273,24 @@ passport.use(new OAuth2Strategy({
         serverId: SERVER_ID,
         imageURL: decodedJWT['picture'] ? decodedJWT['picture'] : "https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/profile.svg"
     };
+    req.session.regenerate((err) => {
+        if (err) {
+          console.error('Session regeneration failed:', err);
+          return done(err);
+        }
+        // Store the new user profile in the session
+        req.login(profile, (err) => {
+          if (err) {
+            console.error('Login failed after session regen:', err);
+            return done(err);
+          }
+          return done(null, profile);
+        });
+    });
 
     console.log('Retruning profile');
 
-    return done(null, profile);
+    //return done(null, profile);
 }));
 
 // Serialize user into the session
