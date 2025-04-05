@@ -24,7 +24,11 @@
         </div>
       </div>
       <div class="col-12 col-md-5 text-md-right">
+        {{#if apiMetadata.apiInfo.apiImageMetadata.api-icon}}
         <img class="img-thumbnail api-image" src="{{apiMetadata.apiInfo.apiImageMetadata.api-icon}}" alt="API Image" />
+        {{else}}
+        <div class="img-thumbnail api-image image-icon d-flex justify-content-center align-items-center">{{firstTwoLetters apiMetadata.apiInfo.apiName}}</div>
+        {{/if}}
       </div>
     </div>
   </div>

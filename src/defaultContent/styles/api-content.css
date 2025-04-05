@@ -288,6 +288,7 @@ hr {
 }
 
 .api-image {
+  font-size: 5rem;
   width: 13.75rem;
   height: 13.75rem;
   border-radius: 50%;
