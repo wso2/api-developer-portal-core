@@ -106,6 +106,10 @@ Handlebars.registerHelper("every", function (array, key, options) {
     return allMatch ? true : false;
 });
 
+Handlebars.registerHelper("firstTwoLetters", function (text) {
+    return text ? text.substring(0, 2).toUpperCase() : "";
+});
+
 Handlebars.registerHelper("some", function (array, key, options) {
     if (!Array.isArray(array)) {
         return options.inverse(this);
@@ -217,10 +221,9 @@ passport.use(new OAuth2Strategy({
     scope: ['openid', 'profile', 'email'],
 }, async (req, accessToken, refreshToken, params, profile, done) => {
     
-    console.log('verify =================== ');
+    console.log('Loging callback invoked');
     
     if (!accessToken) {
-        ('>>>>>>> No access token received');
         return done(new Error('Access token missing'));
     }
     let orgList;
@@ -270,64 +273,77 @@ passport.use(new OAuth2Strategy({
         serverId: SERVER_ID,
         imageURL: decodedJWT['picture'] ? decodedJWT['picture'] : "https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/profile.svg"
     };
+    req.session.regenerate((err) => {
+        if (err) {
+          console.error('Session regeneration failed:', err);
+          return done(err);
+        }
+        // Store the new user profile in the session
+        req.login(profile, (err) => {
+          if (err) {
+            console.error('Login failed after session regen:', err);
+            return done(err);
+          }
+          return done(null, profile);
+        });
+    });
 
-    console.log('------ verify done ---------');
+    console.log('Retruning profile');
 
-    return done(null, profile);
+    //return done(null, profile);
 }));
 
 // Serialize user into the session
 passport.serializeUser((user, done) => {
 
     console.log("Serializing user");
-    // const profile = {
-    //     firstName: user.firstName,
-    //     lastName: user.lastName,
-    //     view: user.view,
-    //     idToken: user.idToken,
-    //     [constants.ROLES.ORGANIZATION_CLAIM]: user[constants.ROLES.ORGANIZATION_CLAIM],
-    //     'returnTo': user.returnTo,
-    //     accessToken: user.accessToken,
-    //     'exchangeToken': user.exchangeToken,
-    //     'organizations': user.authorizedOrgs,
-    //     [constants.ROLES.ROLE_CLAIM]: user.roles,
-    //     [constants.ROLES.GROUP_CLAIM]: user.groups,
-    //     'isAdmin': user.isAdmin,
-    //     'isSuperAdmin': user.isSuperAdmin,
-    //     [constants.USER_ID]: user[constants.USER_ID]
-    // };
-    // lock.acquire('serialize', (release) => {
-    //     release(null, profile);
-    // }, (err, ret) => {
-    //     if (err) {
-    //         return done(err);
-    //     }
-    //     done(null, ret);
-    // });
-    done(null, user);
+    const profile = {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        view: user.view,
+        idToken: user.idToken,
+        [constants.ROLES.ORGANIZATION_CLAIM]: user[constants.ROLES.ORGANIZATION_CLAIM],
+        'returnTo': user.returnTo,
+        accessToken: user.accessToken,
+        'exchangeToken': user.exchangeToken,
+        'authorizedOrgs': user.authorizedOrgs,
+        [constants.ROLES.ROLE_CLAIM]: user.roles,
+        [constants.ROLES.GROUP_CLAIM]: user.groups,
+        'isAdmin': user.isAdmin,
+        'isSuperAdmin': user.isSuperAdmin,
+        [constants.USER_ID]: user[constants.USER_ID]
+    };
+    lock.acquire('serialize', (release) => {
+        release(null, profile);
+    }, (err, ret) => {
+        if (err) {
+            return done(err);
+        }
+        done(null, ret);
+    });
+    //done(null, user);
 });
 
 // Deserialize user from the session
-// passport.deserializeUser(async (sessionData, done) => {
-//     //return done(null, sessionData);
-//     lock.acquire('deserialize', async (release) => {
-//         try {
-//             release(null, sessionData);
-//         } catch (err) {
-//             release(err);
-//         }
-//     }, (err, ret) => {
-//         if (err) {
-//             return done(err);
-//         }
-//         done(null, ret);
-//     });
-// });
-
-passport.deserializeUser((obj, done) => {
-    console.log('deserializeUser');
-    done(null, obj)
+passport.deserializeUser(async (sessionData, done) => {
+    //return done(null, sessionData);
+    lock.acquire('deserialize', async (release) => {
+        try {
+            release(null, sessionData);
+        } catch (err) {
+            release(err);
+        }
+    }, (err, ret) => {
+        if (err) {
+            return done(err);
+        }
+        done(null, ret);
+    });
 });
+
+// passport.deserializeUser((obj, done) => {
+//     done(null, obj)
+// });
 
 app.use(constants.ROUTE.TECHNICAL_STYLES, express.static(path.join(require.main.filename, '../styles')));
 app.use(constants.ROUTE.TECHNICAL_SCRIPTS, express.static(path.join(require.main.filename, '../scripts')));

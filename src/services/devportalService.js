@@ -88,7 +88,7 @@ const getOrgContent = async (req, res) => {
             res.status(400).send('Invalid request');
         }
     } catch (error) {
-        (`Error while fetching organization content:`, error);
+        console.error(`Error while fetching organization content:`, error);
         res.status(404).send(error.message);
     }
 };

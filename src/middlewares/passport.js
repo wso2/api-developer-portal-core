@@ -30,8 +30,8 @@ async function configurePassport(authJsonContent, claimNames) {
   
     //set scopes to call API Manager REST apis
     // const requestedScopes = "openid profile apim:subscribe admin dev";
-    // let scope = requestedScopes.split(" ");
-    // scope.push(...(authJsonContent.scope ? authJsonContent.scope.split(" ") : ""));
+    let scope = requestedScopes.split(" ");
+    scope.push(...(authJsonContent.scope ? authJsonContent.scope.split(" ") : ""));
     passport.use(new OAuth2Strategy({
         name: 'Asgardeo',
         issuer: authJsonContent.issuer,

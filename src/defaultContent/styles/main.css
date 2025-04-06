@@ -3,11 +3,9 @@
 @import "/styles/footer.css";
 @import "/styles/header.css";
 @import "/styles/api-listing.css";
-@import "/styles/subscription.css";
 @import "/styles/api-content.css";
 @import "/styles/doc.css";
 @import "/styles/side-bar.css";
-@import "/styles/subscription-modal.css";
 @import "/styles/default-api.css";
 
 :root {
@@ -59,7 +57,7 @@ html {
   flex: 1;
   margin-top: 4rem;
   font-weight: 500;
-  margin-bottom: 2rem;
+  margin-bottom: 4rem;
   position: relative;
   overflow-x: hidden;
 }
@@ -330,7 +328,7 @@ h6 {
 .container-header {
   display: block;
   color: var(--primary-main-color);
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 600;
 }
 

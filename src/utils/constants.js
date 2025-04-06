@@ -236,7 +236,8 @@ module.exports = {
         SUBSCRIPTION_DELETE_ERROR: "Error while deleting subscription",
         KEY_MAPPING_CREATE_ERROR: "Error while creating key mapping",
         KEY_MAPPING_RETRIEVE_ERROR: "Error while retrieving key mapping",
-        KEY_MAPPING_DELETE_ERROR: "Error while deleting key mapping"
+        KEY_MAPPING_DELETE_ERROR: "Error while deleting key mapping",
+        ERR_SUB_EXIST: "ERR_SUB_EXIST"
     },
     ERROR_CODE: {
         401: "Unauthenticated",

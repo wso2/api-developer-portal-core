@@ -100,6 +100,7 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
 
     var layoutContent = await loadLayoutFromAPI(orgID, viewName);
     if (layoutContent === "") {
+        console.log("Layout not found for org: " + orgName + " and view: " + viewName);
         //load default org content
         html = renderTemplate(filePrefix + filePath + '/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
         return html;
@@ -232,7 +233,7 @@ const unzipDirectory = async (zipPath, extractPath) => {
                         entry.autodrain();
                     }
                 } catch (err) {
-                    ("Error processing entry. ", err);
+                    console.error("Error processing entry. ", err);
                     entry.autodrain();
                     reject (new Error('Error processing entry.'));
                 }
@@ -352,7 +353,8 @@ async function readDocFiles(directory, baseDir = '') {
 }
 
 const invokeApiRequest = async (req, method, url, headers, body) => {
-
+ 
+    console.log(`Invoking API: ${url}`);
     headers = headers || {};
     headers.Authorization = req.user?.exchangeToken ? `Bearer ${req.user.exchangeToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
     let httpsAgent;
@@ -405,6 +407,7 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
                 throw new CustomError(retryError.response?.status || 500, "Request retry failed", retryMessage);   
             }
         } else {
+            console.log(`Error while invoking API:`, error);
             let message = error.message;
             if (error.response) {
                 message = error.response.data.description;
@@ -559,7 +562,8 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                     if (file.name === "main.css") {
                         strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g, `@import url("${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
                     } 
-                    strContent = strContent.replace(/\/images\/([^"]+)/g, `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
+                    strContent = strContent.replace(/"\/images\/([^"]+)/g, `"${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
+                    strContent = strContent.replace(/'\/images\/([^']+)/g, `'${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
                 } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                     fileType = "layout"
@@ -568,7 +572,10 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                         content = Buffer.from(strContent, constants.CHARSET_UTF8);
                     }
                     validateScripts(strContent);
-                } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
+                } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {                    
+                    strContent = strContent.replace(/"\/images\/([^"]+)/g, `"${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
+                    strContent = strContent.replace(/'\/images\/([^']+)/g, `'${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
+                    content = Buffer.from(strContent, constants.CHARSET_UTF8);
                     validateScripts(strContent);
                     fileType = "partial"
                 } else if (file.name.endsWith(".md") && dir.endsWith("content")) {
@@ -594,7 +601,7 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
         }
         return fileDetails;
     } catch (error) {
-        ("Error occurred while reading files in directory", error);
+        console.error("Error occurred while reading files in directory", error);
         throw error;
     }
 }
@@ -625,7 +632,7 @@ function validateScripts(strContent) {
             }
         }
     } catch (error) {
-        ("Error occurred while validating scripts", error);
+        console.error("Error occurred while validating scripts", error);
         throw error;
     }
 }
@@ -714,7 +721,7 @@ async function tokenExchanger(token, orgName) {
                 await new Promise(resolve => setTimeout(resolve, delay));
                 delay *= 2; 
             } else {
-                ('Token exchange failed:', error.message);
+                console.error('Token exchange failed:', error.message);
                 throw new Error('Failed to exchange token');
             }
         }        
@@ -726,8 +733,10 @@ async function listFiles(path) {
     let files = [];
     fs.promises.readdir(path, (err, files) => {
         if (err) {
+            console.error('Error reading directory:', err);
             return;
         }
+        console.log('Files in directory:', files);
     });
     return files;
 }

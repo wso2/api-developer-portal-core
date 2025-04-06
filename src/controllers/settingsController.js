@@ -96,7 +96,7 @@ const loadSettingPage = async (req, res) => {
         let html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         res.send(html);
     } catch (error) {
-        (`Error while loading content from DB: ${error}`);
+        console.error(`Error while loading content from DB: ${error}`);
     }
 }
 
@@ -147,7 +147,7 @@ const loadPortalPage = async (req, res) => {
         res.send(html);
 
     } catch (error) {
-        (`Error while loading setting page:`, error);
+        console.error(`Error while loading setting page:`, error);
     }
 }
 
@@ -181,7 +181,7 @@ const loadEditOrganizationPage = async (req, res) => {
         const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         res.send(html);
     } catch (error) {
-        (`Error while loading setting page :`, error);
+        console.error(`Error while loading setting page :`, error);
     }
 }
 
@@ -196,7 +196,7 @@ const loadCreateOrganizationPage = async (req, res) => {
         const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         res.send(html);
     } catch (error) {
-        (`Error while loading setting page :`, error);
+        console.error(`Error while loading setting page :`, error);
     }
 }
 

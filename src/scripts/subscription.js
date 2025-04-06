@@ -30,11 +30,11 @@ async function unsubscribe(subscriptionId) {
             window.location.href = url.toString();
         } else {
             const responseData = await response.json();
-            ('Failed to unsubscribe:', responseData);
+            console.error('Failed to unsubscribe:', responseData);
             await showAlert(`Failed to unsubscribe.\n${responseData.description}`, 'error');
         }
     } catch (error) {
-        ('Error:', error);
+        console.error('Error:', error);
         await showAlert(`An error occurred.\n${error.message}`, 'error');
     }
 }
@@ -96,11 +96,11 @@ async function handleCreateSubscribe() {
         if (response.ok) {
             handleSubscribe(responseData.applicationId);
         } else {
-            ('Failed to create application:', responseData);
+            console.error('Failed to create application:', responseData);
             await showAlert(`Failed to create application. Please try again.\n${responseData.description}`, 'error');
         }
     } catch (error) {
-        ('Error:', error);
+        console.error('Error:', error);
         await showAlert(`An error occurred while subscribing: \n${error.message}`, 'error');
     }
 }
@@ -156,15 +156,14 @@ async function handleSubscribe(appId, apiName, apiVersion, apiRefId) {
             const url = new URL(window.location.origin + window.location.pathname);
             window.location.href = url.toString();
         } else {
-            ('Failed to subscribe:', responseData);
+            console.error('Failed to subscribe:', responseData);
             await showAlert(`Failed to subscribe. Please try again.\n${responseData.description}`, 'error');
         }
     } catch (error) {
-        ('Error:', error);
+        console.error('Error:', error);
         await showAlert(`An error occurred while subscribing: \n${error.message}`, 'error');
     }
 }
-
 
 function loadModal(modalID) {
     const modal = document.getElementById(modalID);
@@ -172,33 +171,23 @@ function loadModal(modalID) {
 }
 
 async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, policyName) {
+    console.log('Subscribing to API:', apiId);
+    
+    // Find the related card and button elements
+    const card = getSubscriptionCard(apiId, policyId);
+    const subscribeButton = card ? card.querySelector(".common-btn-primary") : null;
+    const messageOverlay = card ? card.querySelector(".message-overlay") : null;
+    
     try {
-        // Get the subscribe button (we may have already set loading state)
-        const subscribeButton = document.getElementById('apiCard-' + apiId).querySelector(".common-btn-primary");
-        
-        if (!applicationID) {
-            const hiddenField = document.getElementById('selectedAppId-' + apiId);
+        // Get application ID from hidden field if not provided
+        if (!applicationID && card) {
+            const hiddenField = card.querySelector('input[type="hidden"]');
             if (hiddenField && hiddenField.value) {
                 applicationID = hiddenField.value;
             }
         }
-
-        if (document.getElementById('apiSelect')) {
-            if (!apiId) {
-                apiId = document.getElementById('apiSelect').value;
-            }
-            if (!apiReferenceID) {
-                apiReferenceID = document.getElementById('apiSelect').selectedOptions[0].getAttribute('data-apiRefID');
-            }
-        }
-
-        if (document.getElementById('planSelect')) {
-            policyId = document.getElementById('planSelect').value;
-            if (!policyName) {
-                policyName = planSelect.selectedOptions[0].getAttribute('data-policyName');
-            }
-        }
-
+        
+        // Make the API request
         const response = await fetch(`/devportal/organizations/${orgID}/subscriptions`, {
             method: 'POST',
             headers: {
@@ -208,53 +197,59 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
         });
 
         const responseData = await response.json();
+        
+        // Always reset button state and close modal
+        const planButton = document.getElementById('subscribe-btn-' + policyId);
+        if (planButton) {
+            resetSubscribeButtonState(planButton);
+        }
+        closeModal('planModal-' + apiId);
+        resetSubscribeButtonState(subscribeButton);
 
         if (response.ok) {
-            // Show success state on the button
-            if (subscribeButton && typeof window.showSubscribeSuccess === 'function') {
-                window.showSubscribeSuccess(subscribeButton);
-            } else {
-                const subBtn = document.getElementById('subscribe-btn-' + policyId);
-                if (subBtn) {
-                    subBtn.innerText = 'Subscribed!';
-                    subBtn.disabled = true;
-                    
-                    // Reset after 2 seconds
-                    setTimeout(() => {
-                        subBtn.innerText = 'Subscribe';
-                        subBtn.disabled = false;
-                    }, 2000);
-                }
-            }
-            
-            await showAlert('Subscribed successfully!', 'success');
-            closeModal('planModal-' + apiId);
-            
-            // Redirect after a short delay to show the success state
-            setTimeout(() => {
-                const url = new URL(window.location.origin + window.location.pathname);
-                window.location.href = url.toString();
-            }, 2000);
+            // Show success notification
+            showSubscriptionMessage(messageOverlay, 'Successfully subscribed to API', 'success');
         } else {
+            // Handle API error
             console.error('Failed to create subscription:', responseData);
-            
-            // Reset button state if subscription fails
-            if (subscribeButton && typeof window.resetSubscribeButtonState === 'function') {
-                window.resetSubscribeButtonState(subscribeButton);
-            }
-            
-            await showAlert(`Failed to create subscription. Please try again.\n${responseData.description}`, 'error');
+            const errorMessage = `Failed to subscribe: ${responseData.description || 'Unknown error'}`;
+            showSubscriptionMessage(messageOverlay, errorMessage, 'error');
         }
     } catch (error) {
+        // Handle exceptions
         console.error('Error:', error);
         
-        // Reset button state on error
-        const subscribeButton = document.getElementById('apiCard-' + apiId).querySelector(".common-btn-primary");
-        if (subscribeButton && typeof window.resetSubscribeButtonState === 'function') {
-            window.resetSubscribeButtonState(subscribeButton);
+        // Always reset button state and close modal
+        const planButton = document.getElementById('subscribe-btn-' + policyId);
+        if (planButton) {
+            resetSubscribeButtonState(planButton);
         }
+        closeModal('planModal-' + apiId);
+        resetSubscribeButtonState(subscribeButton);
         
-        await showAlert(`An error occurred while subscribing: \n${error.message}`, 'error');
+        const errorMessage = `Error while subscribing: ${error.message}`;
+        showSubscriptionMessage(messageOverlay, errorMessage, 'error');
+    }
+}
+
+// Helper functions for the subscribe function
+function getSubscriptionCard(apiId, policyId) {
+    return document.getElementById('apiCard-' + apiId) || 
+           document.getElementById('subscriptionCard-' + policyId) || 
+           null;
+}
+
+function resetSubscribeButtonState(button) {
+    if (button && typeof window.resetSubscribeButtonState === 'function') {
+        window.resetSubscribeButtonState(button);
+    }
+}
+
+function showSubscriptionMessage(messageOverlay, message, type) {
+    if (messageOverlay && typeof window.showApiMessage === 'function') {
+        window.showApiMessage(messageOverlay, message, type);
+    } else {
+        showAlert(message, type);
     }
 }
 
@@ -274,7 +269,6 @@ function addAPISubscription(selectElement) {
     });
 
 }
-
 
 async function removeSubscription() {
     const modal = document.getElementById('deleteConfirmation');
@@ -296,11 +290,11 @@ async function removeSubscription() {
             window.location.href = url.toString();
         } else {
             const responseData = await response.json();
-            ('Failed to unsubscribe:', responseData);
+            console.error('Failed to unsubscribe:', responseData);
             await showAlert(`Failed to unsubscribe.\n${responseData.description}`, 'error');
         }
     } catch (error) {
-        ('Error:', error);
+        console.error('Error:', error);
         await showAlert(`An error occurred.\n${error.message}`, 'error');
     }
 }

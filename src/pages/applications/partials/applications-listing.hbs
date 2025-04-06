@@ -6,28 +6,79 @@
 
 <section class="section mt-0 mb-6">
   <div class="container-fluid applicationspage-container" id="applicationsContainer">
-    <div class="container-header mb-4">Applications</div>
+    <div class="container-header mb-4 d-flex justify-content-between align-items-center">
+      <span>Applications</span>
+
+      {{#if applicationsMetadata.length}}
+      <!-- Show button if there are applications -->
+      <button class="btn common-btn-primary" onclick="toggleCreateCard()" id="createButton">Create</button>
+      {{/if}}
+    </div>
 
     <div class="row row-gap-4">
-      <!-- Create Project Button -->
-      <div class="col-12 col-md-4 col-lg-3">
-        <div class="card create-project-card" style="cursor: pointer;" onclick="loadModal('createAppModal')">
-          <div class="create-project-content">
-            <span class="plus-icon">+</span>
-            <span class="create-text">Create Application</span>
+
+      <!-- Create application Card -->
+      <div class="col-12 col-md-4 col-lg-3 {{#if applicationsMetadata.length}}d-none{{/if}}" id="createApplicationCardWrapper">
+        {{#unless applicationsMetadata.length}}
+        <div class="create-application-card card" id="applicationCreateCard" style="cursor: pointer;"
+          onclick="showApplicationForm()">
+          <span class="plus-icon">+</span>
+          <span class="create-text">Create Application</span>
+        </div>
+        {{/unless}}
+        <div class="application-create-card card d-none" style=" cursor: pointer;"
+          id="applicationCreateForm">
+          <div class="application-layout">
+            <div class="application-icon-container">
+              <img
+                src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/application.svg"
+                alt="Application icon" />
+            </div>
+            <div class="application-content">
+              <form id='applicationForm' class='create-app-form'>
+                <div class="flex-grow-1 application-card-body">
+                  <!-- Application Name -->
+                  <div class="w-100">
+                    <input type="text" id="applicationName" class="form-control" placeholder="Name" required />
+                  </div>
+                  <div id="nameError" class="error-msg text-danger mt-1 d-none">
+                    Application name cannot be empty.
+                  </div>
+                </div>
+                <div class="application-card-footer">
+                    <button type='button' class='btn common-btn-outlined' id='cancelCreateButton' 
+                      data-has-apps="{{#if applicationsMetadata.length}}true{{else}}false{{/if}}" onclick="event.stopPropagation(); hideApplicationForm(this);">
+                        Cancel
+                      </button>
+                    <button type='submit' class='btn common-btn-primary' id='createAppButton'>
+                      Create  
+                    </button>
+                </div>
+              </form>
+          </div>
+           <div class="message-overlay hidden" id="message-overlay">
+              <div class="message-content" >
+                  <i class="bi message-icon"></i>
+                  <p class="message-text"></p>
+              </div>
+              <button type="button" class="close-message" aria-label="Close message">&times;</button>
+            </div>
           </div>
         </div>
       </div>
+
 
       <!-- Application Cards -->
       {{#applicationsMetadata}}
 
       <div class="col-12 col-md-4 col-lg-3">
-        <div class="card application-card" id="app-card-{{applicationId}}" data-name="{{name}}" style="cursor: pointer;"
+        <div class="card app-card application-card" id="app-card-{{id}}" data-name="{{name}}" style="cursor: pointer;"
           onclick="window.location.href='{{../baseUrl}}/applications/{{id}}'">
           <div class="application-layout">
             <div class="application-icon-container">
-              <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/application.svg" alt="Application icon" />
+              <img
+                src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/application.svg"
+                alt="Application icon" />
             </div>
             <div class="application-content">
               <div class="application-card-header">
@@ -54,11 +105,18 @@
               <div class="application-card-footer">
                 <div class="application-card-actions">
                   <button type="button" class="btn application-btn-icon delete-button" title="Delete"
-                    onclick="event.stopPropagation(); openDeleteModal('{{id}}', '')">
+                      id="trash-btn-{{id}}" onclick="event.stopPropagation(); openDeleteModal('{{id}}', '')">
                     <i class="bi bi-trash"></i>
                   </button>
                 </div>
               </div>
+               <div class="message-overlay hidden" id="message-overlay-{{id}}">
+                <div class="message-content" >
+                    <i class="bi message-icon"></i>
+                    <p class="message-text"></p>
+                </div>
+                <button type="button" class="close-message" aria-label="Close message">&times;</button>
+            </div>
             </div>
           </div>
         </div>
