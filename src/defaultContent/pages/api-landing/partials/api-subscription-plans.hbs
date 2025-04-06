@@ -29,10 +29,10 @@
                                         </div>
                                         <div class="select-items-container">
                                             {{#each ../applications}}
-                                            <div class="select-item {{#if subscribed}}disabled{{/if}}" role="option" data-value="{{id}}" data-app-name="{{name}}">
-                                                {{name}}
-                                                {{#if subscribed}}<img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg" alt="Subscribed"
-                                                        class="subscription-icon" />{{/if}}
+                                            <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}" data-app-name="{{name}}">
+                                                <span>{{name}}</span>
+                                                <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
+                                                    alt="Subscribed" class="subscription-icon" style="display: {{#if subscribed}}inline-block{{else}}none{{/if}};" />
                                             </div>
                                             {{/each}}
                                         </div>

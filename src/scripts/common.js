@@ -166,24 +166,14 @@ document.addEventListener("DOMContentLoaded", function () {
             const selectItemsContainer = dropdown.querySelector('.select-items-container');
             if (!selectItemsContainer) return;
             
-            // Check if this app already exists in this dropdown
-            const existingApp = selectItemsContainer.querySelector(`.select-item[data-value="${appId}"]`);
-            if (existingApp) return; // Skip if app already exists
-            
             // Create new app item with appropriate structure based on dropdown type
-            const newAppItem = document.createElement('div');
-            newAppItem.className = 'select-item';
-            
-            if (sourceType === 'api-card') {
-                newAppItem.setAttribute('role', 'button');
-                newAppItem.innerHTML = `<span>${appName}</span>`;
-            } else {
-                newAppItem.setAttribute('role', 'option');
-                newAppItem.innerHTML = appName;
-            }
-            
-            newAppItem.setAttribute('data-value', appId);
-            newAppItem.setAttribute('data-app-name', appName);
+            const newAppItem = `
+                <div class="select-item" role="button" data-value="${{ appId }}" data-app-name="${{ appName }}">
+                    <span>${{ appName }}</span>
+                    <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
+                        alt="Subscribed" class="subscription-icon" style="display: none;" />
+                </div>
+            `;
             
             // Add click event listener
             newAppItem.addEventListener('click', function(e) {
@@ -202,10 +192,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
                 
                 // Update display text
-                const selectedText = sourceType === 'api-card'
-                    ? dropdown.querySelector('.selected-text')
-                    : dropdown.querySelector('.select-selected .selected-text');
-                    
+                const selectedText = dropdown.querySelector('.selected-text');
                 if (selectedText) {
                     selectedText.textContent = appName;
                     selectedText.classList.add('selected');
