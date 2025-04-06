@@ -251,8 +251,8 @@ input[type="checkbox"]:checked {
 
 
 .info-box {
-  background-color: #f0f4ff;
-  border-left: 4px solid #3b82f6;
+  background-color: var(--primary-lightest-color);
+  border-left: 4px solid var(--primary-light-color);
   padding: 1rem;
   margin-bottom: 1rem;
   border-radius: 0 0.375rem 0.375rem 0;
