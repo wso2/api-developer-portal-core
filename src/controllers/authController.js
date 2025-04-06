@@ -98,6 +98,7 @@ const login = async (req, res, next) => {
         };
 
         const html = await renderGivenTemplate(layoutResponse, templateResponse, templateContent);
+        res.set('Cache-Control', 'no-store');
         res.send(html);
     }
 };
@@ -129,6 +130,7 @@ const handleCallback = async (req, res, next) => {
             if (err) {
                 return next(err);
             }
+            res.set('Cache-Control', 'no-store');
             if (config.mode === constants.DEV_MODE) {
                 const returnTo = req.user.returnTo || config.baseUrl;
                 delete req.session.returnTo;
@@ -184,6 +186,7 @@ const handleLogOut = async (req, res) => {
         idToken = req.user.idToken;
     }
     const currentPathURI = req.originalUrl.replace('/logout', '');
+    res.set('Cache-Control', 'no-store');
     if (req.user && req.user.accessToken) {
         const referer = req.get('referer');
         const regex = /(.+\/views\/[^\/]+)\/?/;
