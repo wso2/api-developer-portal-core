@@ -69,6 +69,7 @@ const registerPartials = async (req, res, next) => {
       }
     } catch (error) {
       console.error('Error while loading organization :', error);
+      next(error);
     }
   }
   next();
@@ -107,7 +108,7 @@ const registerInternalPartials = async (req) => {
               header: hbs.handlebars.compile(partialContent)({
                 isAdmin: isAdmin,
                 isSuperAdmin: isSuperAdmin,
-                profile: req.user,
+                profile: req.isAuthenticated() ? req.user: {},
                 baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
               }),
             };
@@ -117,7 +118,7 @@ const registerInternalPartials = async (req) => {
             hbs.handlebars.partials = {
               ...hbs.handlebars.partials,
               sidebar: hbs.handlebars.compile(partialContent)({
-                profile: req.user,
+                profile: req.isAuthenticated() ? req.user: {},
                 baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
                 hasWSO2APIs: hasWSO2API
               }),
@@ -132,14 +133,14 @@ const registerInternalPartials = async (req) => {
 const registerAllPartialsFromFile = async (baseURL, req, filePrefix) => {
 
   const filePath = req.originalUrl.split(baseURL).pop();
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "partials"), req.user);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "home", "partials"), req.user);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req.user);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "apis", "partials"), req.user);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "docs", "partials"), req.user);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "partials"), req);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "home", "partials"), req);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "apis", "partials"), req);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "docs", "partials"), req);
 
   if (fs.existsSync(path.join(process.cwd(), filePrefix + "pages", filePath, "partials"))) {
-    registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix + "pages", filePath, "partials"), req.user);
+    registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix + "pages", filePath, "partials"), req);
   }
 }
 
@@ -176,7 +177,7 @@ const registerPartialsFromAPI = async (req) => {
       ...hbs.handlebars.partials,
       header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
         baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-        profile: req.user,
+        profile: req.isAuthenticated() ? req.user: {},        
         isAdmin: isAdmin,
         isSuperAdmin: isSuperAdmin,
         hasWSO2APIs: hasWSO2APIs
@@ -272,7 +273,7 @@ async function checkWSO2APIAvailability() {
   return await apiDao.getAPIMetadataByCondition(condition).then(apis => apis.length > 0);
 }
 
-function registerPartialsFromFile(baseURL, dir, profile) {
+function registerPartialsFromFile(baseURL, dir, req) {
 
   const filenames = fs.readdirSync(dir);
   filenames.forEach((filename) => {
@@ -284,7 +285,7 @@ function registerPartialsFromFile(baseURL, dir, profile) {
           ...hbs.handlebars.partials,
           header: hbs.handlebars.compile(template)({
             baseUrl: baseURL,
-            profile: profile,
+            profile: req.isAuthenticated() ? req.user : {},
             hasWSO2APIs: true
           }),
         };
