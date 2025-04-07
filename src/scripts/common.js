@@ -166,16 +166,20 @@ document.addEventListener("DOMContentLoaded", function () {
             const selectItemsContainer = dropdown.querySelector('.select-items-container');
             if (!selectItemsContainer) return;
             
-            // Create new app item with appropriate structure based on dropdown type
-            const newAppItem = `
-                <div class="select-item" role="button" data-value="${{ appId }}" data-app-name="${{ appName }}">
-                    <span>${{ appName }}</span>
+            // Create a temporary container to convert HTML string to DOM element
+            const tempContainer = document.createElement('div');
+            tempContainer.innerHTML = `
+                <div class="select-item" role="button" data-value="${appId}" data-app-name="${appName}">
+                    <span>${appName}</span>
                     <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
                         alt="Subscribed" class="subscription-icon" style="display: none;" />
                 </div>
             `;
             
-            // Add click event listener
+            // Get the actual DOM element
+            const newAppItem = tempContainer.firstElementChild;
+            
+            // Add click event listener to the DOM element
             newAppItem.addEventListener('click', function(e) {
                 e.stopPropagation();
                 
