@@ -154,14 +154,14 @@ thead tr th {
 .key-actions-container {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.5rem;
   justify-content: flex-start;
 }
 
 .key-action-row {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.5rem;
 }
 
 .key-action-label {
@@ -173,7 +173,11 @@ thead tr th {
 
 .key-action-buttons {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.5rem;
+}
+
+.key-action-buttons .btn-sm {
+  width: 7rem;
 }
 
 .oauth2-keys-section .btn-sm,
