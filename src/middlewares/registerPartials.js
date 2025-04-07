@@ -69,6 +69,7 @@ const registerPartials = async (req, res, next) => {
       }
     } catch (error) {
       console.error('Error while loading organization :', error);
+      next(error);
     }
   }
   next();
@@ -115,7 +116,7 @@ const registerInternalPartials = async (req) => {
               header: hbs.handlebars.compile(partialContent)({
                 isAdmin: isAdmin,
                 isSuperAdmin: isSuperAdmin,
-                profile: profile,
+                profile: req.isAuthenticated() ? profile: {},
                 baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
               }),
             };
@@ -125,7 +126,7 @@ const registerInternalPartials = async (req) => {
             hbs.handlebars.partials = {
               ...hbs.handlebars.partials,
               sidebar: hbs.handlebars.compile(partialContent)({
-                profile: profile,
+                profile: req.isAuthenticated() ? profile: {},
                 baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
                 hasWSO2APIs: hasWSO2API
               }),
@@ -140,14 +141,14 @@ const registerInternalPartials = async (req) => {
 const registerAllPartialsFromFile = async (baseURL, req, filePrefix) => {
 
   const filePath = req.originalUrl.split(baseURL).pop();
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "partials"), req.user);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "home", "partials"), req.user);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req.user);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "apis", "partials"), req.user);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "docs", "partials"), req.user);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "partials"), req);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "home", "partials"), req);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "apis", "partials"), req);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "docs", "partials"), req);
 
   if (fs.existsSync(path.join(process.cwd(), filePrefix + "pages", filePath, "partials"))) {
-    registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix + "pages", filePath, "partials"), req.user);
+    registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix + "pages", filePath, "partials"), req);
   }
 }
 
@@ -190,7 +191,7 @@ const registerPartialsFromAPI = async (req) => {
       ...hbs.handlebars.partials,
       header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
         baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-        profile: profile,
+        profile: req.isAuthenticated() ? profile: {},        
         isAdmin: isAdmin,
         isSuperAdmin: isSuperAdmin,
         hasWSO2APIs: hasWSO2APIs
@@ -286,20 +287,24 @@ async function checkWSO2APIAvailability() {
   return await apiDao.getAPIMetadataByCondition(condition).then(apis => apis.length > 0);
 }
 
-function registerPartialsFromFile(baseURL, dir, profile) {
+function registerPartialsFromFile(baseURL, dir, req) {
 
   const filenames = fs.readdirSync(dir);
   filenames.forEach((filename) => {
     if (filename.endsWith(".hbs")) {
       const template = fs.readFileSync(path.join(dir, filename), constants.CHARSET_UTF8);
       hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
-      if (filename === constants.FILE_NAME.PARTIAL_HEADER_FILE_NAME && profile) {
+
+      let profile;
+      if (req.isAuthenticated()) {
         profile = {
-          imageURL: profile.imageURL,
-          firstName: profile.firstName,
-          lastName: profile.lastName,
-          email: profile.email
+          imageURL: req.user.imageURL,
+          firstName: req.user.firstName,
+          lastName: req.user.lastName,
+          email: req.user.email
         }
+      }
+      if (filename === constants.FILE_NAME.PARTIAL_HEADER_FILE_NAME ) {
         hbs.handlebars.partials = {
           ...hbs.handlebars.partials,
           header: hbs.handlebars.compile(template)({

@@ -110,6 +110,13 @@ Handlebars.registerHelper("firstTwoLetters", function (text) {
     return text ? text.substring(0, 2).toUpperCase() : "";
 });
 
+Handlebars.registerHelper('beforeSeparator', function (value, separator) {
+    if (typeof value === 'string' && typeof separator === 'string') {
+        return value.split(separator)[0];
+    }
+    return value;
+});
+
 Handlebars.registerHelper("some", function (array, key, options) {
     if (!Array.isArray(array)) {
         return options.inverse(this);
