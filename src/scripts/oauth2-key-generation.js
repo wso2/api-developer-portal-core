@@ -601,12 +601,15 @@ function loadKeysModifyModal() {
         const callbackUrlRow = modal.querySelector('#callback-url-row');
         // Find PKCE-related configuration fields
         const pkceFields = modal.querySelectorAll('#row-pkceMandatory, #row-pkceSupportPlain');
-        console.log(pkceFields);
         
         // Handle callback URL visibility
         if (callbackUrlRow) {
             // Set initial visibility based on checkbox state
             callbackUrlRow.style.display = authorizationCodeCheckbox.checked ? 'flex' : 'none';
+            const callbackUrlInput = callbackUrlRow.querySelector('input');
+            if (callbackUrlInput) {
+                callbackUrlInput.required = authorizationCodeCheckbox.checked;
+            }
         }
         
         // Handle PKCE fields visibility
@@ -619,6 +622,10 @@ function loadKeysModifyModal() {
             // Toggle callback URL row
             if (callbackUrlRow) {
                 callbackUrlRow.style.display = this.checked ? 'flex' : 'none';
+                const callbackUrlInput = callbackUrlRow.querySelector('input');
+                if (callbackUrlInput) {
+                    callbackUrlInput.required = this.checked;
+                }
             }
             
             // Toggle PKCE fields
