@@ -371,7 +371,6 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
 
 function validateOauthUpdate(payload) {
 
-    console.log("Validating payload:", payload);
     if (!payload.grantTypes) {
         return {
             valid: false,
@@ -379,13 +378,18 @@ function validateOauthUpdate(payload) {
         };
     }
     if (payload.grantTypes.includes("authorization_code") && payload.callbackURL === "") {
-        console.log("Callback URL is required for Authorization Code Grant Type.");
         return {
             valid: false,
-            message: "Callback URL is required for Authorization Code Grant Type."
+            message: "Callback URL is required for authorization code grant type."
         };
     }
-    console.log(payload.additionalProperties);
+    if (payload.additionalProperties.bypassClientCredentials && payload.grantTypes.includes("authorization_code")
+        && !payload.additionalProperties.pkceMandatory) {
+        return {
+            valid: false,
+            message: "PKCE is mandatory for authorization code grant type when using a public client."
+        };
+    }
     return {
         valid: true
     }
