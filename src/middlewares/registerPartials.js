@@ -28,7 +28,6 @@ const apiMetadataService = require('../services/apiMetadataService');
 const { loadLayoutFromAPI } = require('../utils/util');
 const util = require('../utils/util');
 const { validationResult } = require('express-validator');
-const { profile } = require('console');
 const filePrefix = config.pathToContent;
 const hbs = exphbs.create({});
 
