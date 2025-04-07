@@ -377,19 +377,6 @@ function validateOauthUpdate(payload) {
             message: "Grant types cannot be empty"
         };
     }
-    if (payload.grantTypes.includes("authorization_code") && payload.callbackURL === "") {
-        return {
-            valid: false,
-            message: "Callback URL is required for authorization code grant type."
-        };
-    }
-    if (payload.additionalProperties.bypassClientCredentials && payload.grantTypes.includes("authorization_code")
-        && !payload.additionalProperties.pkceMandatory) {
-        return {
-            valid: false,
-            message: "PKCE is mandatory for authorization code grant type when using a public client."
-        };
-    }
     return {
         valid: true
     }
