@@ -74,7 +74,7 @@
         <div id="keyActionsContainer" class="key-actions-container"
           style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
           <div class="key-action-row">
-            <span class="key-action-label">Keys:</span>
+            <span class="key-action-label">Key: </span>
             <div class="key-action-buttons">
               <button id="viewKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal()">
                 <i class="bi bi-eye"></i> View
@@ -85,7 +85,7 @@
             </div>
           </div>
           <div class="key-action-row">
-            <span class="key-action-label">Token:</span>
+            <span class="key-action-label">Token: </span>
             <div class="key-action-buttons">
               <button id="tokenKeyBtn" class="common-btn-outlined btn-sm" onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}')">
                 <span class="button-normal-state">

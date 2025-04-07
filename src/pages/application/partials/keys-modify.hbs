@@ -21,7 +21,9 @@
                             <div>
                                 <div class="row mb-2">
                                     <div class="col-md-4">
-                                        <div class="form-label">Grant Types</div>
+                                        <div class="form-label">
+                                            Grant Types <span class="text-danger">*</span>
+                                        </div>
                                     </div>
                                     <div class="col-md-8">
                                         <div class="d-flex flex-wrap gap-2">
@@ -45,10 +47,13 @@
                                             {{/each}}
                                             {{/let}}
                                         </div>
+                                        <div id="grantTypeValidationMsg" class="text-danger small mt-1" style="display: none;">
+                                            Please select at least one grant type.
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="row mb-2">
+                                <div class="row mb-2" id="callback-url-row">
                                     <div class="col-md-4">
                                         <div class="form-label">Callback URL</div>
                                     </div>
@@ -67,7 +72,7 @@
                                     {{#each ../../applicationConfiguration}}
                                     {{#let "propValue" (conditionalIf (getValue ../additionalProperties name)
                                     (getValue ../additionalProperties name) default)}}
-                                    <div class="row mb-2">
+                                    <div class="row mb-2" id="row-{{../name}}">
                                         <!-- Label -->
                                         <div class="col-md-4">
                                             <label
@@ -84,23 +89,22 @@
                                             <input type="text" name="additionalProperties.{{{../name}}}"
                                                 id="{{../name}}-{{../../../../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
                                                 class="form-control" value="{{propValue}}" {{#if
-                                                required}}required{{/if}} />
+                                                ../required}}required{{/if}} />
                                             {{/if}}
 
                                             {{#if (eq ../type 'text')}}
                                             <input type="text" name="additionalProperties.{{../name}}"
                                                 id="{{../name}}-{{../../../../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
                                                 class="form-control" value="{{propValue}}" {{#if
-                                                required}}required{{/if}} />
+                                                ../required}}required{{/if}} />
                                             {{/if}}
 
                                             {{#and (eq ../type 'select') (eq ../multiple false)}}
                                             <select
                                                 id="{{../name}}-{{../../../../../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
-                                                class="form-control" {{#if required}}required{{/if}}
+                                                class="form-control" {{#if ../required}}required{{/if}}
                                                 name="additionalProperties.{{../name}}">
                                                 {{#each ../values}}
-                                                {{#if (eq this ../propValue)}}cedce {{/if}}
                                                 <option value="{{this}}" {{#if (eq ../propValue this)}}selected{{/if}}>
                                                     {{this}}
                                                 </option>

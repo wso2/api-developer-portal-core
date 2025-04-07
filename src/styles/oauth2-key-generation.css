@@ -251,8 +251,8 @@ input[type="checkbox"]:checked {
 
 
 .info-box {
-  background-color: #f0f4ff;
-  border-left: 4px solid #3b82f6;
+  background-color: var(--primary-lightest-color);
+  border-left: 4px solid var(--primary-light-color);
   padding: 1rem;
   margin-bottom: 1rem;
   border-radius: 0 0.375rem 0.375rem 0;
@@ -325,7 +325,7 @@ input[type="checkbox"]:checked {
 
 .curl-description {
   color: #666;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.6;
 }
 
@@ -335,7 +335,7 @@ input[type="checkbox"]:checked {
   padding: 1rem;
   position: relative;
   overflow-x: auto;
-  font-size: 0.8125rem;
+  font-size: 14px;
 }
 
 .key-action-container {
@@ -414,17 +414,21 @@ input[type="checkbox"]:checked {
 .detail-item {
   display: flex;
   align-items: baseline;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.5;
 }
 
 .detail-label {
   font-weight: 500;
   color: #475569;
-  min-width: 150px;
+  min-width: 170px;
 }
 
 .detail-value {
   color: #334155;
   word-break: break-all;
+}
+
+.instruction-text {
+  font-size: 16px;
 }

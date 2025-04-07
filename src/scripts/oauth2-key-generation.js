@@ -594,6 +594,76 @@ function loadKeysModifyModal() {
 
     // Collapse all advanced configurations and reset UI state
     document.querySelectorAll(".arrow-icon").forEach(icon => icon.classList.remove('rotated'));
+    
+    // Find the authorization_code checkbox inside this specific modal
+    const authorizationCodeCheckbox = modal.querySelector('input[id^="grant-type-authorization_code-"]');
+    if (authorizationCodeCheckbox) {
+        const callbackUrlRow = modal.querySelector('#callback-url-row');
+        // Find PKCE-related configuration fields
+        const pkceFields = modal.querySelectorAll('#row-pkceMandatory, #row-pkceSupportPlain');
+        console.log(pkceFields);
+        
+        // Handle callback URL visibility
+        if (callbackUrlRow) {
+            // Set initial visibility based on checkbox state
+            callbackUrlRow.style.display = authorizationCodeCheckbox.checked ? 'flex' : 'none';
+        }
+        
+        // Handle PKCE fields visibility
+        pkceFields.forEach(field => {
+            field.style.display = authorizationCodeCheckbox.checked ? 'flex' : 'none';
+        });
+        
+        // Add event listener to toggle visibility when checkbox changes
+        authorizationCodeCheckbox.addEventListener('change', function() {
+            // Toggle callback URL row
+            if (callbackUrlRow) {
+                callbackUrlRow.style.display = this.checked ? 'flex' : 'none';
+            }
+            
+            // Toggle PKCE fields
+            pkceFields.forEach(field => {
+                field.style.display = this.checked ? 'flex' : 'none';
+            });
+        });
+    }
+    
+    // Add validation for grant types
+    validateGrantTypes(modal);
+    
+    // Add event listeners to all grant type checkboxes
+    const grantTypeCheckboxes = modal.querySelectorAll('input[name="grantTypes"]');
+    grantTypeCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            validateGrantTypes(modal);
+        });
+    });
+}
+
+function validateGrantTypes(modal) {
+    // Find the update button
+    const updateButton = modal.querySelector('#applicationKeyUpdateButton');
+    if (!updateButton) return;
+    
+    // Find all grant type checkboxes
+    const grantTypeCheckboxes = modal.querySelectorAll('input[name="grantTypes"]');
+    
+    // Check if any checkbox is checked
+    let isAnyChecked = false;
+    grantTypeCheckboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+            isAnyChecked = true;
+        }
+    });
+    
+    // Update the button state
+    updateButton.disabled = !isAnyChecked;
+    
+    // Show/hide validation message
+    const validationMsg = modal.querySelector('#grantTypeValidationMsg');
+    if (validationMsg) {
+        validationMsg.style.display = isAnyChecked ? 'none' : 'block';
+    }
 }
 
 function loadKeysTokenModal() {
