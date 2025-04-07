@@ -30,15 +30,16 @@ const util = require('../utils/util');
 const { validationResult } = require('express-validator');
 const filePrefix = config.pathToContent;
 const hbs = exphbs.create({});
+
 const registerPartials = async (req, res, next) => {
 
   const rules = util.validateRequestParameters();
   for (let validation of rules) {
-      await validation.run(req);
+    await validation.run(req);
   }
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-      return res.status(400).json(util.getErrors(errors));
+    return res.status(400).json(util.getErrors(errors));
   }
   registerInternalPartials(req);
   if (config.mode === constants.DEV_MODE) {
@@ -62,7 +63,6 @@ const registerPartials = async (req, res, next) => {
           } else if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
             await registerAPILandingContent(req, orgID, {});
           }
-
         } else {
           await registerPartialsFromAPI(req);
         }
@@ -100,14 +100,22 @@ const registerInternalPartials = async (req) => {
           const partialName = path.basename(file, '.hbs');
           const partialContent = fs.readFileSync(path.join(dir, file), 'utf8');
           hbs.handlebars.registerPartial(partialName, partialContent);
-
+          let profile = {};
+          if (req.user) {
+            profile = {
+              imageURL: req.user.imageURL,
+              firstName: req.user.firstName,
+              lastName: req.user.lastName,
+              email: req.user.email,
+            }
+          }
           if (partialName === constants.HEADER_PARTIAL_NAME) {
             hbs.handlebars.partials = {
               ...hbs.handlebars.partials,
               header: hbs.handlebars.compile(partialContent)({
                 isAdmin: isAdmin,
                 isSuperAdmin: isSuperAdmin,
-                profile: req.user,
+                profile: profile,
                 baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
               }),
             };
@@ -117,7 +125,7 @@ const registerInternalPartials = async (req) => {
             hbs.handlebars.partials = {
               ...hbs.handlebars.partials,
               sidebar: hbs.handlebars.compile(partialContent)({
-                profile: req.user,
+                profile: profile,
                 baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
                 hasWSO2APIs: hasWSO2API
               }),
@@ -171,12 +179,18 @@ const registerPartialsFromAPI = async (req) => {
     isAdmin = req.user["isAdmin"];
     isSuperAdmin = req.user["isSuperAdmin"];
   }
-  if (partialObject[constants.HEADER_PARTIAL_NAME]) {
+  if (partialObject[constants.HEADER_PARTIAL_NAME] && req.user) {
+    const profile = {
+      imageURL: req.user.imageURL,
+      firstName: req.user.firstName,
+      lastName: req.user.lastName,
+      email: req.user.email
+    }
     hbs.handlebars.partials = {
       ...hbs.handlebars.partials,
       header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
         baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-        profile: req.user,
+        profile: profile,
         isAdmin: isAdmin,
         isSuperAdmin: isSuperAdmin,
         hasWSO2APIs: hasWSO2APIs
@@ -279,7 +293,13 @@ function registerPartialsFromFile(baseURL, dir, profile) {
     if (filename.endsWith(".hbs")) {
       const template = fs.readFileSync(path.join(dir, filename), constants.CHARSET_UTF8);
       hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
-      if (filename === constants.FILE_NAME.PARTIAL_HEADER_FILE_NAME) {
+      if (filename === constants.FILE_NAME.PARTIAL_HEADER_FILE_NAME && profile) {
+        profile = {
+          imageURL: profile.imageURL,
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          email: profile.email
+        }
         hbs.handlebars.partials = {
           ...hbs.handlebars.partials,
           header: hbs.handlebars.compile(template)({
