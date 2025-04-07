@@ -295,18 +295,22 @@ function registerPartialsFromFile(baseURL, dir, req) {
     if (filename.endsWith(".hbs")) {
       const template = fs.readFileSync(path.join(dir, filename), constants.CHARSET_UTF8);
       hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
-      if (filename === constants.FILE_NAME.PARTIAL_HEADER_FILE_NAME && profile) {
+
+      let profile;
+      if (req.isAuthenticated()) {
         profile = {
-          imageURL: profile.imageURL,
-          firstName: profile.firstName,
-          lastName: profile.lastName,
-          email: profile.email
+          imageURL: req.user.imageURL,
+          firstName: req.user.firstName,
+          lastName: req.user.lastName,
+          email: req.user.email
         }
+      }
+      if (filename === constants.FILE_NAME.PARTIAL_HEADER_FILE_NAME ) {
         hbs.handlebars.partials = {
           ...hbs.handlebars.partials,
           header: hbs.handlebars.compile(template)({
             baseUrl: baseURL,
-            profile: req.isAuthenticated() ? profile : {},
+            profile: profile,
             hasWSO2APIs: true
           }),
         };
