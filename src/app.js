@@ -67,7 +67,7 @@ if (config.advanced.dbSslDialectOption) {
         database: config.db.database,
         password: secretConf.dbSecret,
         port: config.db.port,
-        ssl: { require: true, rejectUnauthorized: false } 
+        ssl: { require: true, rejectUnauthorized: false }
     });
 } else {
     pool = new Pool({
@@ -166,9 +166,9 @@ Handlebars.registerHelper('isMiddle', function (index, length) {
 
 Handlebars.registerHelper('startsWith', function (str, includeStr, options) {
     if (str && str.startsWith(includeStr)) {
-        return options.fn(this);  
+        return options.fn(this);
     } else {
-        return options.inverse(this); 
+        return options.inverse(this);
     }
 });
 
@@ -185,7 +185,7 @@ app.use(session({
     resave: false,
     saveUninitialized: true,
     cookie: {
-        secure:false,
+        secure: false,
         maxAge: 60 * 60 * 1000,
     },
 }));
@@ -220,17 +220,15 @@ passport.use(new OAuth2Strategy({
     passReqToCallback: true,
     scope: ['openid', 'profile', 'email'],
 }, async (req, accessToken, refreshToken, params, profile, done) => {
-    
-    console.log('Loging callback invoked');
-    
     if (!accessToken) {
         return done(new Error('Access token missing'));
     }
-    let orgList;
+    let orgList, userOrg;
     if (config.advanced.tokenExchanger.enabled) {
         const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
         const decodedExchangedToken = jwt.decode(exchangedToken);
         orgList = decodedExchangedToken.organizations;
+        userOrg = decodedExchangedToken.organization.uuid;
         req['exchangedToken'] = exchangedToken;
     }
     const decodedJWT = jwt.decode(params.id_token);
@@ -254,6 +252,12 @@ passport.use(new OAuth2Strategy({
         const endIndex = returnTo.indexOf('/', startIndex) !== -1 ? returnTo.indexOf('/', startIndex) : returnTo.length;
         view = returnTo.substring(startIndex, endIndex);
     }
+    let imageURL = "https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/profile.svg";
+    if (decodedJWT['google_pic_url']) {
+        imageURL = decodedJWT['google_pic_url'];
+    } else {
+        imageURL = decodedJWT['picture'] ? decodedJWT['picture'] : imageURL;
+    }
     profile = {
         'firstName': firstName ? (firstName.includes(" ") ? firstName.split(" ")[0] : firstName) : '',
         'lastName': lastName ? lastName : (firstName && firstName.includes(" ") ? firstName.split(" ")[1] : ''),
@@ -271,21 +275,40 @@ passport.use(new OAuth2Strategy({
         'isSuperAdmin': isSuperAdmin,
         [constants.USER_ID]: decodedAccessToken[constants.USER_ID],
         serverId: SERVER_ID,
-        imageURL: decodedJWT['picture'] ? decodedJWT['picture'] : "https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/profile.svg"
+        imageURL: imageURL,
+        userOrg: userOrg
     };
+    req.session.regenerate((err) => {
+        if (err) {
+            console.error('Session regeneration failed:', err);
+            return done(err);
+        }
+        // Store the new user profile in the session
+        req.login(profile, (err) => {
+            if (err) {
+                console.error('Login failed after session regen:', err);
+                return done(err);
+            }
+            console.log('User profile stored in session:', profile);
+            return done(null, profile);
+        });
+    });
 
     console.log('Retruning profile');
 
-    return done(null, profile);
+    //return done(null, profile);
 }));
 
 // Serialize user into the session
 passport.serializeUser((user, done) => {
 
     console.log("Serializing user");
+    console.log(user);
     const profile = {
         firstName: user.firstName,
         lastName: user.lastName,
+        email: user.email,
+        imageURL: user.imageURL,
         view: user.view,
         idToken: user.idToken,
         [constants.ROLES.ORGANIZATION_CLAIM]: user[constants.ROLES.ORGANIZATION_CLAIM],
@@ -297,7 +320,8 @@ passport.serializeUser((user, done) => {
         [constants.ROLES.GROUP_CLAIM]: user.groups,
         'isAdmin': user.isAdmin,
         'isSuperAdmin': user.isSuperAdmin,
-        [constants.USER_ID]: user[constants.USER_ID]
+        [constants.USER_ID]: user[constants.USER_ID],
+        'userOrg': user.userOrg
     };
     lock.acquire('serialize', (release) => {
         release(null, profile);
