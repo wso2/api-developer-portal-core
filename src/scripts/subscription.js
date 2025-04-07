@@ -49,9 +49,6 @@ function hideElementById(elementId) {
 function closeModal(elementId) {
     hideElementById(elementId);
     document.querySelector("form").reset();
-    document.querySelectorAll('[style*="display: block"]').forEach(element => {
-        element.style.display = "none";
-    });
 }
 
 window.onclick = function (event) {
