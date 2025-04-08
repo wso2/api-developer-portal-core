@@ -161,12 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
             
-            const responseData = await response.json();
-            await showAlert(
-                responseData.message || 'Application updated successfully!',
-                'success'
-            );
-            
             return true;
         } catch (error) {
             console.error('Error saving application:', error);

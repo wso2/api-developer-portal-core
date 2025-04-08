@@ -86,7 +86,7 @@
 }
 
 [contenteditable="true"] {
-  border: 1px dashed var(--primary-main-color);
+  border: 1.5px solid var(--primary-main-color);
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
   margin-bottom: 0;
