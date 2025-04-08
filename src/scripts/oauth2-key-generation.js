@@ -586,6 +586,15 @@ function loadKeyGenModal() {
 function loadKeysViewModal() {
     const modal = document.getElementById('keysViewModal');
     modal.style.display = 'flex';
+
+    const authorizationCodeCheckbox = modal.querySelector('input[id^="grant-type-view-authorization_code-"]');
+    if (authorizationCodeCheckbox) {
+        const pkceFields = modal.querySelectorAll('#row-pkceMandatory, #row-pkceSupportPlain');
+        // Handle PKCE fields visibility
+        pkceFields.forEach(field => {
+            field.style.display = authorizationCodeCheckbox.checked ? 'flex' : 'none';
+        });
+    }
 }
 
 function loadKeysModifyModal() {
@@ -796,6 +805,36 @@ async function copyConsumerSecret(inputId) {
     } catch (err) {
         console.error('Could not copy text:', err);
         await showAlert('Failed to copy Consumer Secret', true);
+    }
+}
+
+async function copyConsumerKey(inputId) {
+    const inputElement = document.getElementById(inputId);
+    const buttonElement = inputElement.nextElementSibling;
+    const iconElement = buttonElement.querySelector('i');
+
+    try {
+        // Get the value
+        const keyValue = inputElement.value;
+
+        // Copy to clipboard
+        await navigator.clipboard.writeText(keyValue);
+
+        // Show visual feedback
+        iconElement.classList.remove('bi-clipboard');
+        iconElement.classList.add('bi-clipboard-check');
+
+        // Show alert
+        await showAlert('Consumer Key copied to clipboard!');
+
+        // Revert to original icon after 1.5 seconds
+        setTimeout(() => {
+            iconElement.classList.remove('bi-clipboard-check');
+            iconElement.classList.add('bi-clipboard');
+        }, 1500);
+    } catch (err) {
+        console.error('Could not copy text:', err);
+        await showAlert('Failed to copy Consumer Key', true);
     }
 }
 
