@@ -39,10 +39,8 @@
 }
 
 .hero-image-container {
-  width: 80vw; 
-  max-width: 100%; 
+  width: 100%; 
   overflow: hidden; 
-  display: flex;
   justify-content: center;
 }
 
