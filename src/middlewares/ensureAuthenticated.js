@@ -51,7 +51,7 @@ function enforceSecuirty(scope) {
                         const err = new Error('Authentication required');
                         err.status = 401; // Unauthorized
                         return next(err);
-                    } 
+                    }
                 }
                 // TODO: Implement organization extraction logic
                 validateAuthentication(scope)(req, res, next);
@@ -179,7 +179,7 @@ const ensureAuthenticated = async (req, res, next) => {
                                 return next(err);
                             }
                         }
-                        
+
                     }
                 }
                 if (!config.advanced.disabledRoleValidation) {
@@ -196,12 +196,17 @@ const ensureAuthenticated = async (req, res, next) => {
             }
             return next();
         } else {
+        await req.session.save(async (err) => {
+            if (err) {
+                return res.status(500).send('Internal Server Error');
+            }
             req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
             if (req.params.orgName) {
                 res.redirect(`/${req.params.orgName}/views/${req.params.viewName}/login`);
             } else {
                 res.redirect(303, `/portal/login`);
             }
+        });
         }
     } else {
         return next();
