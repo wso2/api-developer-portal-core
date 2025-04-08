@@ -67,9 +67,7 @@
               </div>
             </div>
             {{#if ../isAuthenticated}}
-            {{#if (some applications "subscribed")}}
-            <div class="subscription-flag fw-bold">Subscribed</div>
-            {{/if}}
+            <div class="subscription-flag fw-bold" style="display: {{#if (some applications "subscribed")}}block{{else}}none{{/if}};">Subscribed</div>
             {{/if}}
           </div>
           <div class="api-card-body flex-grow-1" onclick="window.location.href='{{../baseUrl}}/api/{{apiHandle}}'" style="cursor: pointer;">
@@ -111,9 +109,8 @@
                         <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}"
                           data-app-name="{{name}}">
                           <span>{{name}}</span>
-                          {{#if subscribed}}<img
-                            src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
-                            alt="Subscribed" class="subscription-icon" />{{/if}}
+                          <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
+                            alt="Subscribed" class="subscription-icon" style="display: {{#if subscribed}}inline-block{{else}}none{{/if}};" />
                         </div>
 
                         {{/each}}

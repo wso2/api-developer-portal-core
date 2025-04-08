@@ -17,11 +17,16 @@
                     {{!-- Advanced configurations section --}}
                     <div class="container KMConfig mt-4" id="KMData_{{../name}}">
                         <form
-                            id='applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'>
+                            id='applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                            onsubmit="event.preventDefault(); updateApplicationKey(this.id,
+                                '{{json ../../applicationMetadata.appMap}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}',
+                                '{{keys.keyMappingId}}', '{{keys.clientName}}');">
                             <div>
                                 <div class="row mb-2">
                                     <div class="col-md-4">
-                                        <div class="form-label">Grant Types</div>
+                                        <div class="form-label">
+                                            Grant Types <span class="text-danger">*</span>
+                                        </div>
                                     </div>
                                     <div class="col-md-8">
                                         <div class="d-flex flex-wrap gap-2">
@@ -45,16 +50,19 @@
                                             {{/each}}
                                             {{/let}}
                                         </div>
+                                        <div id="grantTypeValidationMsg" class="text-danger small mt-1" style="display: none;">
+                                            Please select at least one grant type.
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="row mb-2">
+                                <div class="row mb-2" id="callback-url-row">
                                     <div class="col-md-4">
                                         <div class="form-label">Callback URL</div>
                                     </div>
                                     <div class="col-md-8">
                                         <div class="keygen-input-container">
-                                            <input type="text" name="callbackURL" placeholder="Callback URLs"
+                                            <input type="url" name="callbackURL" placeholder="Callback URLs"
                                                 value="{{keys.callbackUrl}}" class="form-control" />
                                         </div>
                                     </div>
@@ -67,7 +75,7 @@
                                     {{#each ../../applicationConfiguration}}
                                     {{#let "propValue" (conditionalIf (getValue ../additionalProperties name)
                                     (getValue ../additionalProperties name) default)}}
-                                    <div class="row mb-2">
+                                    <div class="row mb-2" id="row-{{../name}}">
                                         <!-- Label -->
                                         <div class="col-md-4">
                                             <label
@@ -84,23 +92,22 @@
                                             <input type="text" name="additionalProperties.{{{../name}}}"
                                                 id="{{../name}}-{{../../../../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
                                                 class="form-control" value="{{propValue}}" {{#if
-                                                required}}required{{/if}} />
+                                                ../required}}required{{/if}} />
                                             {{/if}}
 
                                             {{#if (eq ../type 'text')}}
                                             <input type="text" name="additionalProperties.{{../name}}"
                                                 id="{{../name}}-{{../../../../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
                                                 class="form-control" value="{{propValue}}" {{#if
-                                                required}}required{{/if}} />
+                                                ../required}}required{{/if}} />
                                             {{/if}}
 
                                             {{#and (eq ../type 'select') (eq ../multiple false)}}
                                             <select
                                                 id="{{../name}}-{{../../../../../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
-                                                class="form-control" {{#if required}}required{{/if}}
+                                                class="form-control" {{#if ../required}}required{{/if}}
                                                 name="additionalProperties.{{../name}}">
                                                 {{#each ../values}}
-                                                {{#if (eq this ../propValue)}}cedce {{/if}}
                                                 <option value="{{this}}" {{#if (eq ../propValue this)}}selected{{/if}}>
                                                     {{this}}
                                                 </option>
@@ -142,9 +149,7 @@
                                 Cancel
                             </button>
                             <button class="common-btn-primary" id="applicationKeyUpdateButton" name="http-values"
-                                type="button" onClick="updateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}',
-                                '{{json ../../applicationMetadata.appMap}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}',
-                                '{{keys.keyMappingId}}', '{{keys.clientName}}')">
+                                type="submit" form="applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}">
                                 Update
                             </button>
                         </div>

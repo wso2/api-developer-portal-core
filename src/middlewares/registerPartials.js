@@ -116,7 +116,7 @@ const registerInternalPartials = async (req) => {
               header: hbs.handlebars.compile(partialContent)({
                 isAdmin: isAdmin,
                 isSuperAdmin: isSuperAdmin,
-                profile: req.isAuthenticated() ? profile: {},
+                profile: req.isAuthenticated() ? profile : {},
                 baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
               }),
             };
@@ -126,7 +126,7 @@ const registerInternalPartials = async (req) => {
             hbs.handlebars.partials = {
               ...hbs.handlebars.partials,
               sidebar: hbs.handlebars.compile(partialContent)({
-                profile: req.isAuthenticated() ? profile: {},
+                profile: req.isAuthenticated() ? profile : {},
                 baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
                 hasWSO2APIs: hasWSO2API
               }),
@@ -191,7 +191,7 @@ const registerPartialsFromAPI = async (req) => {
       ...hbs.handlebars.partials,
       header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
         baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-        profile: req.isAuthenticated() ? profile: {},        
+        profile: req.isAuthenticated() ? profile : {},
         isAdmin: isAdmin,
         isSuperAdmin: isSuperAdmin,
         hasWSO2APIs: hasWSO2APIs
@@ -229,12 +229,6 @@ async function registerAPILandingContent(req, orgID, partialObject) {
   const markdownContent = markdownResponse !== null ? markdownResponse.API_FILE.toString("utf8") : "";
   const markdownHtml = markdownContent ? markdown.parse(markdownContent) : "";
 
-  //if hbs content available for API, render the hbs page
-  let additionalAPIContentResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME, constants.DOC_TYPES.API_LANDING, orgID, apiID);
-  if (additionalAPIContentResponse !== null) {
-    let additionalAPIContent = additionalAPIContentResponse.API_FILE.toString("utf8");
-    partialObject[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME] = additionalAPIContent ? additionalAPIContent : "";
-  }
   metaData = await apiMetadataService.getMetadataFromDB(orgID, apiID);
   if (metaData !== "") {
     const data = metaData ? JSON.stringify(metaData) : {};
@@ -247,11 +241,18 @@ async function registerAPILandingContent(req, orgID, partialObject) {
       images[key] = modifiedApiImageURL;
     }
   }
-  hbs.handlebars.partials[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME] = hbs.handlebars.compile(
-    partialObject[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME])({
-      apiContent: markdownHtml,
-      apiMetadata: metaData
-    });
+  //if hbs content available for API, render the hbs page
+  let additionalAPIContentResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME, constants.DOC_TYPES.API_LANDING, orgID, apiID);
+  if (additionalAPIContentResponse !== null) {
+    let additionalAPIContent = additionalAPIContentResponse.API_FILE.toString("utf8");
+    partialObject[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME] = additionalAPIContent ? additionalAPIContent : "";
+    hbs.handlebars.partials[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME] = hbs.handlebars.compile(
+      partialObject[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME])({
+        apiContent: markdownHtml,
+        apiMetadata: metaData
+      });
+  }
+
 }
 
 async function registerDocsPageContent(req, orgID, partialObject) {
@@ -304,7 +305,7 @@ function registerPartialsFromFile(baseURL, dir, req) {
           email: req.user.email
         }
       }
-      if (filename === constants.FILE_NAME.PARTIAL_HEADER_FILE_NAME ) {
+      if (filename === constants.FILE_NAME.PARTIAL_HEADER_FILE_NAME) {
         hbs.handlebars.partials = {
           ...hbs.handlebars.partials,
           header: hbs.handlebars.compile(template)({

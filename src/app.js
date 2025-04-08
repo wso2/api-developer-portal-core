@@ -296,7 +296,6 @@ const strategy = new OAuth2Strategy({
                 console.error('Login failed after session regen:', err);
                 return done(err);
             }
-            console.log('User profile stored in session:', profile);
             return done(null, profile);
         });
     });
@@ -320,7 +319,6 @@ passport.use(strategy);
 passport.serializeUser((user, done) => {
 
     console.log("Serializing user");
-    console.log(user);
     const profile = {
         firstName: user.firstName,
         lastName: user.lastName,

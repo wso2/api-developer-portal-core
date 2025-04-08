@@ -49,9 +49,6 @@ function hideElementById(elementId) {
 function closeModal(elementId) {
     hideElementById(elementId);
     document.querySelector("form").reset();
-    document.querySelectorAll('[style*="display: block"]').forEach(element => {
-        element.style.display = "none";
-    });
 }
 
 window.onclick = function (event) {
@@ -209,6 +206,41 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
         if (response.ok) {
             // Show success notification
             showSubscriptionMessage(messageOverlay, 'Successfully subscribed to API', 'success');
+
+            if (card) {
+                // Show "Subscribed" label
+                const subscriptionFlag = card.querySelector('.subscription-flag');
+                if (subscriptionFlag) {
+                    subscriptionFlag.style.display = 'block';
+                }
+
+                // Mark the application as subscribed
+                const dropdown = card.querySelector('.custom-dropdown');
+                if (dropdown) {        
+                    // Mark the application as subscribed in the dropdown
+                    const appOption = dropdown.querySelector(`.select-item[data-value="${applicationID}"]`);
+                    if (appOption) {
+                        // Show the subscription icon by changing display style
+                        let subscriptionIcon = appOption.querySelector('.subscription-icon');
+                        if (subscriptionIcon) {
+                            subscriptionIcon.style.display = 'inline-block';
+                        } else {
+                            subscriptionIcon = `<img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
+                                        alt="Subscribed" class="subscription-icon" style="display: inline-block;" />`;
+                            appOption.appendChild(subscriptionIcon);
+                        }
+                        
+                        // Mark option as disabled
+                        appOption.classList.add('disabled');
+                    }
+                    
+                    // Disable the subscribe button
+                    const subscribeButton = card.querySelector('.common-btn-primary');
+                    if (subscribeButton) {
+                        subscribeButton.setAttribute('disabled', 'disabled');
+                    }
+                }
+            }
         } else {
             // Handle API error
             console.error('Failed to create subscription:', responseData);
