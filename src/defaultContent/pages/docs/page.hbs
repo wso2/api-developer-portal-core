@@ -28,9 +28,7 @@
                     </div>
                     <div class="doc-links">
                         <a href="{{../baseUrl}}/docs/specification" class="doc-link">
-                            <div class="doc-icon">
-                                <img class="align-top" src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/api-definition.svg" alt="doc" />
-                            </div>
+                            <i class="bi bi-code"></i>
                             <div class="doc-title">
                                 API Definition
                             </div>
@@ -45,9 +43,7 @@
                     <div class="doc-links">
                         {{#names}}
                         <a href="{{../../baseUrl}}/docs/{{../type}}/{{this}}" class="doc-link">
-                            <div class="doc-icon">
-                                <img class="align-top" src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/docs-icon.svg" alt="doc" />
-                            </div>
+                            <i class="bi bi-file-text"></i>
                             <div class="doc-title">
                                 {{beforeSeparator this "."}}
                             </div>
@@ -58,7 +54,11 @@
                 {{/if}}
                 {{/docTypes}}
             </aside>
-            {{> api-doc}}
+            <div class="doc-content-wrapper">
+                <section class="doc-section">
+                    {{> api-doc}}
+                </section>
+            </div>
         </div>
     </div>
 </main>

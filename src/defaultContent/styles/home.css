@@ -27,11 +27,6 @@
   max-width: 600px;
 }
 
-.hero-img-container {
-  display: flex;
-  justify-content: center;
-}
-
 .hero {
   background: var(--primary-gradient);
   background-size: cover;
@@ -39,17 +34,19 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  padding-top: 2rem; 
+  padding-bottom: 2rem; 
 }
 
-.hero-image {
-  max-width: 100%;
+.hero-image-container {
+  width: 100%; 
+  overflow: hidden; 
+  justify-content: center;
+}
+
+.hero-banner-image {
+  width: 100%; 
   height: auto;
-  padding-top: 1rem;
-}
-
-.hero-vector {
-  min-height: 27.8rem;
-  min-width: 33rem;
 }
 
 .ad-container {
@@ -135,13 +132,13 @@
   }
 
   .hero-title {
-    font-size: 4vw; 
-    white-space: normal;  
+    font-size: 4vw;
+    white-space: normal;
   }
 
   .hero-description {
-    font-size: 2vw; 
-    white-space: normal; 
+    font-size: 2vw;
+    white-space: normal;
   }
 
   .hero-buttons {
@@ -149,6 +146,6 @@
   }
 
   .hero-image-container {
-    display: none;
+    display: none; 
   }
 }
