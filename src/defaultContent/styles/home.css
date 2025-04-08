@@ -34,8 +34,11 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding-top: 2rem; 
-  padding-bottom: 2rem; 
+}
+
+.hero-left-content {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
 }
 
 .hero-image-container {
