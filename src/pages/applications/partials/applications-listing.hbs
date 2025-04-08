@@ -24,6 +24,7 @@
           <span class="plus-icon">+</span>
           <span class="create-text">Create Application</span>
         </div>
+
         <div class="application-create-card card d-none" style=" cursor: pointer;"
           id="applicationCreateForm">
           <div class="application-layout">
@@ -44,11 +45,11 @@
                   </div>
                 </div>
                 <div class="application-card-footer">
-                    <button type='button' class='btn common-btn-outlined' id='cancelCreateButton' 
+                    <button type='button' class='btn common-btn-outlined add-application-action-btn' id='cancelCreateButton' 
                       data-has-apps="{{#if applicationsMetadata.length}}true{{else}}false{{/if}}" onclick="event.stopPropagation(); hideApplicationForm(this);">
                         Cancel
                       </button>
-                    <button type='submit' class='btn common-btn-primary' id='createAppButton'>
+                    <button type='submit' class='btn common-btn-primary add-application-action-btn' id='createAppButton'>
                       Create  
                     </button>
                 </div>
