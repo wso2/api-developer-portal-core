@@ -32,7 +32,7 @@ async function configurePassport(authJsonContent, claimNames) {
     // const requestedScopes = "openid profile apim:subscribe admin dev";
     let scope = requestedScopes.split(" ");
     scope.push(...(authJsonContent.scope ? authJsonContent.scope.split(" ") : ""));
-    passport.use(new OAuth2Strategy({
+    const strategy = new OAuth2Strategy({
         name: 'Asgardeo',
         issuer: authJsonContent.issuer,
         authorizationURL: authJsonContent.authorizationURL,
@@ -105,7 +105,17 @@ async function configurePassport(authJsonContent, claimNames) {
         };
 
         return done(null, profile);
-    }));
+    });
+
+    strategy.authorizationParams = function(options) {
+        const params = {};
+        if (options.prompt) {
+            params.prompt = options.prompt;
+        }
+        return params;
+    };
+
+    passport.use(strategy);
 }
 
 module.exports = configurePassport;

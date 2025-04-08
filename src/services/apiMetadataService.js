@@ -165,10 +165,10 @@ const getAllAPIMetadata = async (req, res) => {
         const apiName = req.query.apiName;
         const apiVersion = req.query.version;
         const tags = req.query.tags;
-        const viewName = req.params.viewName;
+        const view = req.query.view;
         let groupList = [];
 
-        const allowedQueryParams = ['query', 'apiName', 'version', 'tags', 'groups'];
+        const allowedQueryParams = ['query', 'apiName', 'version', 'tags', 'groups', 'view'];
         const invalidParams = Object.keys(req.query).filter(param => !allowedQueryParams.includes(param));
 
         if (invalidParams.length > 0) {
@@ -184,7 +184,7 @@ const getAllAPIMetadata = async (req, res) => {
         if (!orgID) {
             throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
         }
-        const retrievedAPIs = await getMetadataListFromDB(orgID, groupList, searchTerm, tags, apiName, apiVersion, viewName);
+        const retrievedAPIs = await getMetadataListFromDB(orgID, groupList, searchTerm, tags, apiName, apiVersion, view);
         res.status(200).send(retrievedAPIs);
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.API_NOT_FOUND}`, error);
@@ -205,11 +205,11 @@ const getMetadataListFromDB = async (orgID, groups, searchTerm, tags, apiName, a
             retrievedAPIs = await apiDao.getAPIMetadataByCondition(condition);
         } else if (searchTerm) {
             retrievedAPIs = await apiDao.searchAPIMetadata(orgID, groups, searchTerm, viewName, t);
-        } else {
+        } else if (viewName) {
             retrievedAPIs = await apiDao.getAllAPIMetadata(orgID, groups, viewName, t);
         }
         // Create response object
-        const apiCreationResponse = retrievedAPIs.map((api) => new APIDTO(api));
+        const apiCreationResponse = retrievedAPIs ? retrievedAPIs.map((api) => new APIDTO(api)) : [];
         return apiCreationResponse;
     });
 };

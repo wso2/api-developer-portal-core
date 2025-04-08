@@ -112,33 +112,37 @@ const handleCallback = async (req, res, next) => {
             return res.status(500).json({ message: 'Internal Server Error' });
         });
     await passport.authenticate(
-        'oauth2', 
+        'oauth2',
         {
             failureRedirect: '/login'
-        }, 
+        },
         (err, user) => {
-        if (err || !user) {
-            return next(err || new Error('Authentication failed'));
-        }
-        req.logIn(user, (err) => {
-            if (err) {
-                return next(err);
-            }
-            res.set('Cache-Control', 'no-store');
-            if (config.mode === constants.DEV_MODE) {
-                const returnTo = req.user.returnTo || config.baseUrl;
-                delete req.session.returnTo;
-                res.redirect(returnTo);
-            } else {
-                let returnTo = req.user.returnTo;
-                if (!config.advanced.disableOrgCallback && returnTo == null) {
-                    returnTo = `/${req.params.orgName}`;
+            if (err || !user) {
+                if (err.name === 'AuthorizationError' && err.code === 'login_required') {
+                    return res.redirect(req.session.returnTo);
+                } else {
+                    return next(err || new Error('Authentication failed'));
                 }
-                delete req.session.returnTo;
-                res.redirect(returnTo);
             }
-        });
-    })(req, res, next);
+            req.logIn(user, (err) => {
+                if (err) {
+                    return next(err);
+                }
+                res.set('Cache-Control', 'no-store');
+                if (config.mode === constants.DEV_MODE) {
+                    const returnTo = req.user.returnTo || config.baseUrl;
+                    delete req.session.returnTo;
+                    res.redirect(returnTo);
+                } else {
+                    let returnTo = req.user.returnTo;
+                    if (!config.advanced.disableOrgCallback && returnTo == null) {
+                        returnTo = `/${req.params.orgName}`;
+                    }
+                    delete req.session.returnTo;
+                    res.redirect(returnTo);
+                }
+            });
+        })(req, res, next);
 };
 
 const handleSignUp = async (req, res) => {
@@ -204,10 +208,25 @@ const handleLogOutLanding = async (req, res) => {
     res.redirect(currentPathURI);
 }
 
+const handleSilentSSO = async (req, res, next) => {
+    
+    await req.session.save((err) => {
+        req.session.returnTo = req.originalUrl;
+
+        if (req.isAuthenticated() || req.session.silentAuthRedirected) {
+            return next();
+        } else {
+            passport.authenticate('oauth2', { prompt: 'none' })(req, res, () => {});
+            req.session.silentAuthRedirected = true;
+        }
+    });
+};
+
 module.exports = {
     login,
     handleCallback,
     handleSignUp,
     handleLogOut,
-    handleLogOutLanding
+    handleLogOutLanding,
+    handleSilentSSO
 };

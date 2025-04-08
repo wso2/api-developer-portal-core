@@ -210,7 +210,7 @@ let claimNames = {
 };
 // configurePassport(config.identityProvider, claimNames);
 
-passport.use(new OAuth2Strategy({
+const strategy = new OAuth2Strategy({
     name: 'Asgardeo',
     issuer: config.identityProvider.issuer,
     authorizationURL: config.identityProvider.authorizationURL,
@@ -303,7 +303,17 @@ passport.use(new OAuth2Strategy({
     console.log('Retruning profile');
 
     //return done(null, profile);
-}));
+});
+
+strategy.authorizationParams = function(options) {
+    const params = {};
+    if (options.prompt) {
+        params.prompt = options.prompt;
+    }
+    return params;
+};
+
+passport.use(strategy);
 
 // Serialize user into the session
 passport.serializeUser((user, done) => {
