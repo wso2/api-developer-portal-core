@@ -27,6 +27,5 @@ router.get('/:orgName/views/:viewName', (req, res, next) => {
     }
     next();
 }, authController.handleSilentSSO, registerPartials, orgController.loadOrganizationContent);
-// }, registerPartials, orgController.loadOrganizationContent);
 
 module.exports = router;
