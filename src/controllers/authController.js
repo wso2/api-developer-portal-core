@@ -80,13 +80,7 @@ const login = async (req, res, next) => {
     IDP = await fetchAuthJsonContent(req, orgName);
     if (IDP.clientId) {
         //await configurePassport(IDP, claimNames);  // Configure passport dynamically
-        await req.session.save(async (err) => {
-            if (err) {
-                return res.status(500).send('Internal Server Error');
-            }
-            req.session.returnTo = req.session.returnTo ? req.session.returnTo : req.originalUrl ? req.originalUrl.replace('/login', '') : '';
-            await passport.authenticate('oauth2')(req, res, next);
-        });
+        await passport.authenticate('oauth2')(req, res, next);
     } else {
         orgName = req.params.orgName;
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'login', 'page.hbs');
