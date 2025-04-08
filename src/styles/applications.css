@@ -93,6 +93,18 @@
   position: relative;
 }
 
+.create-application-card,
+.application-create-card {
+  overflow: hidden;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.add-application-action-btn {
+  width: 80px;
+  font-size: 0.6875rem;
+}
+
 .application-layout {
   display: flex;
   height: 100%;
@@ -124,10 +136,12 @@
 
 .application-card-footer {
   margin-top: auto;
+  padding-top: 1rem;
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   position: relative;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 .application-card-header {
@@ -370,5 +384,9 @@
 
 .close-message:hover {
   opacity: 1;
+}
+
+.create-application-btn {
+  text-align: right;
 }
 
