@@ -227,7 +227,6 @@ const strategy = new OAuth2Strategy({
     passReqToCallback: true,
     scope: ['openid', 'profile', 'email'],
 }, async (req, accessToken, refreshToken, params, profile, done) => {
-    console.log('Inside passport strategy');
     if (!accessToken) {
         return done(new Error('Access token missing'));
     }

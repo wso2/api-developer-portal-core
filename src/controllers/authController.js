@@ -215,20 +215,17 @@ const handleLogOutLanding = async (req, res) => {
 }
 
 const handleSilentSSO = async (req, res, next) => {
-    await req.session.save(async (err) => {
+    
+    await req.session.save((err) => {
         req.session.returnTo = req.originalUrl;
+
+        if (req.isAuthenticated() || req.session.silentAuthRedirected) {
+            return next();
+        } else {
+            passport.authenticate('oauth2', { prompt: 'none' })(req, res, () => {});
+            req.session.silentAuthRedirected = true;
+        }
     });
-
-    if (req.isAuthenticated() || req.session.silentAuthRedirected) {
-        return next();
-    } else {
-        passport.authenticate('oauth2', {
-            prompt: 'none',
-        })(req, res, () => {
-        });
-
-        req.session.silentAuthRedirected = true;
-    }
 };
 
 module.exports = {
