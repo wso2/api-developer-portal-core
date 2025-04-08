@@ -159,21 +159,31 @@ const getMetadataFromDB = async (orgID, apiID) => {
 };
 
 const getAllAPIMetadata = async (req, res) => {
-
-    const orgID = req.params.orgId;
-    const searchTerm = req.query.query;
-    const apiName = req.query.name;
-    const apiVersion = req.query.version;
-    const tags = req.query.tags;
-    const viewName = req.params.viewName;
-    let groupList = [];
-    if (req.query.groups) {
-        groupList.push(req.query.groups.split(" "));
-    }
-    if (!orgID) {
-        throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
-    }
     try {
+        const orgID = req.params.orgId;
+        const searchTerm = req.query.query;
+        const apiName = req.query.apiName;
+        const apiVersion = req.query.version;
+        const tags = req.query.tags;
+        const viewName = req.params.viewName;
+        let groupList = [];
+
+        const allowedQueryParams = ['query', 'apiName', 'version', 'tags', 'groups'];
+        const invalidParams = Object.keys(req.query).filter(param => !allowedQueryParams.includes(param));
+
+        if (invalidParams.length > 0) {
+            const parameterMessage = invalidParams.length === 1
+                ? `Invalid query parameter: ${invalidParams.join(', ')}`
+                : `Invalid query parameters: ${invalidParams.join(', ')}`;
+            throw new Sequelize.ValidationError(parameterMessage);
+        }
+
+        if (req.query.groups) {
+            groupList.push(req.query.groups.split(" "));
+        }
+        if (!orgID) {
+            throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
+        }
         const retrievedAPIs = await getMetadataListFromDB(orgID, groupList, searchTerm, tags, apiName, apiVersion, viewName);
         res.status(200).send(retrievedAPIs);
     } catch (error) {
