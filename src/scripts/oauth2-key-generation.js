@@ -329,6 +329,11 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
 
             const responseData = await response.json();
             if (response.ok) {
+                // Restore button state
+                updateBtn.innerHTML = originalContent;
+                updateBtn.disabled = false;
+
+                closeModal('keysModifyModal')
                 await showAlert('Updated Oauth application successfully!', 'success');
                 const url = new URL(window.location.origin + window.location.pathname);
                 window.location.href = url.toString();
@@ -480,12 +485,13 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
             let tokenText = document.getElementById("token_" + keyManager);
             tokenText.textContent = responseData.accessToken;
             loadKeysTokenModal();
-            await showAlert('Token generated successfully!', 'success');
 
             // Reset button state
             normalState.style.display = 'inline-block';
             loadingState.style.display = 'none';
             tokenBtn.disabled = false;
+
+            await showAlert('Token generated successfully!', 'success');
         } else {
             console.error('Failed to generate access token:', responseData);
 
