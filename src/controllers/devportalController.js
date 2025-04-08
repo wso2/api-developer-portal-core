@@ -186,7 +186,6 @@ const cleanUp = async (req, res) => {
 const updateOAuthKeys = async (req, res) => {
 
     let tokenDetails = req.body;
-    tokenDetails.additionalProperties = checkAdditionalValues(tokenDetails.additionalProperties);
     try {
         const applicationId = req.params.applicationId;
         const keyMappingId = req.params.keyMappingId;
