@@ -16,10 +16,8 @@
  * under the License.
  */
  -->
-<section class="doc-section">
-    {{#if isAPIDefinition}}
-    {{> api-specification}}
-    {{else}}
-    {{{apiMD}}}
-    {{/if}}
-</section>
+{{#if isAPIDefinition}}
+{{> api-specification}}
+{{else}}
+{{{apiMD}}}
+{{/if}}

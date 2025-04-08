@@ -53,11 +53,19 @@
     opacity: 0.5;
 }
 
-.doc-section {
-    padding: 1rem;
+.doc-content-wrapper {
+    width: 100%;
+    overflow-x: auto;
     border: 0.5px solid #e0e2e9;
     border-radius: 16px;
     box-shadow: 0px 2px 4px #0000000a;
+    display: flex;
+}
+
+.doc-section {
+    flex: 1;
+    padding: 2rem;
+    max-height: 100%;
 }
 
 .doc-section-title {
@@ -94,15 +102,10 @@
     background-color: var(--secondary-bg-color);
 }
 
-.doc-icon {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-}
-
-.doc-icon img {
-    width: 100%;
-    height: 100%;
+.doc-link i {
+    width: auto;
+    height: auto;
+    color: var(--primary-main-color);
 }
 
 .doc-title {
@@ -130,5 +133,7 @@
 
     .documents-sidebar {
         width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #e0e2e9;
     }
 }
