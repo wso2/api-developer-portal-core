@@ -21,6 +21,22 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const applicationId = inlineEditForm.dataset.applicationId;
         
+        // Function to set loading state
+        const setButtonLoadingState = (button, isLoading) => {
+            const normalState = button.querySelector('.button-normal-state');
+            const loadingState = button.querySelector('.button-loading-state');
+            
+            if (isLoading) {
+                button.disabled = true;
+                if (normalState) normalState.style.display = 'none';
+                if (loadingState) loadingState.style.display = 'inline-block';
+            } else {
+                button.disabled = false;
+                if (normalState) normalState.style.display = 'inline-block';
+                if (loadingState) loadingState.style.display = 'none';
+            }
+        };
+        
         // Make name editable
         editNameBtn.addEventListener('click', () => {
             applicationName.contentEditable = true;
@@ -68,10 +84,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             
+            // Enable loading state
+            setButtonLoadingState(saveNameBtn, true);
+            cancelNameBtn.disabled = true;
+            
             const result = await saveApplicationChanges(applicationId, {
                 name: newName,
                 description: applicationDescription.dataset.original
             }, nameEditError);
+            
+            // Reset loading state
+            setButtonLoadingState(saveNameBtn, false);
+            cancelNameBtn.disabled = false;
             
             if (result) {
                 applicationName.dataset.original = newName;
@@ -91,10 +115,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             
+            // Enable loading state
+            setButtonLoadingState(saveDescriptionBtn, true);
+            cancelDescriptionBtn.disabled = true;
+            
             const result = await saveApplicationChanges(applicationId, {
                 name: applicationName.dataset.original,
                 description: newDescription
             }, descriptionEditError);
+            
+            // Reset loading state
+            setButtonLoadingState(saveDescriptionBtn, false);
+            cancelDescriptionBtn.disabled = false;
             
             if (result) {
                 document.location.reload();

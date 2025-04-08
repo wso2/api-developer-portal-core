@@ -13,8 +13,13 @@
             <i class="bi bi-pencil"></i>
           </button>
           <div class="edit-actions" id="nameEditActions" style="display: none;">
-            <button class="btn btn-sm btn-success save-btn" id="saveNameBtn"><i class="bi bi-check"></i></button>
-            <button class="btn btn-sm btn-danger cancel-btn" id="cancelNameBtn"><i class="bi bi-x"></i></button>
+            <button class="btn btn-sm common-btn-primary save-btn" id="saveNameBtn" title="Save">
+              <span class="button-normal-state"><i class="bi bi-check"></i></span>
+              <span class="button-loading-state" style="display: none;">
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+              </span>
+            </button>
+            <button class="btn btn-sm common-btn-outlined cancel-btn" id="cancelNameBtn" title="Cancel"><i class="bi bi-x"></i></button>
           </div>
           <div id="nameEditError" class="edit-error-message" style="display: none;"></div>
         </div>
@@ -31,8 +36,13 @@
             <p class="app-description" id="applicationDescription" data-original="{{null}}"></p>
           {{/if}}
           <div class="edit-actions" id="descriptionEditActions" style="display: none;">
-            <button class="btn btn-sm btn-success save-btn" id="saveDescriptionBtn"><i class="bi bi-check"></i></button>
-            <button class="btn btn-sm btn-danger cancel-btn" id="cancelDescriptionBtn"><i class="bi bi-x"></i></button>
+            <button class="btn btn-sm common-btn-primary save-btn" id="saveDescriptionBtn" title="Save">
+              <span class="button-normal-state"><i class="bi bi-check"></i></span>
+              <span class="button-loading-state" style="display: none;">
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+              </span>
+            </button>
+            <button class="btn btn-sm common-btn-outlined cancel-btn" id="cancelDescriptionBtn" title="Cancel"><i class="bi bi-x"></i></button>
           </div>
         </div>
         <div id="descriptionEditError" class="edit-error-message" style="display: none;"></div>
