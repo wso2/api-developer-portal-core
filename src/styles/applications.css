@@ -25,6 +25,9 @@
 .create-application-card {
   border-radius: 0.75rem;
   text-align: center;
+  padding: 3.5rem;
+  background: var(--primary-lightest-color);
+  height: 11.25rem;
 }
 
 .plus-icon {

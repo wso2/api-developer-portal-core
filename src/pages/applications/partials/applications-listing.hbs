@@ -19,13 +19,11 @@
 
       <!-- Create application Card -->
       <div class="col-12 col-md-4 col-lg-3 {{#if applicationsMetadata.length}}d-none{{/if}}" id="createApplicationCardWrapper">
-        {{#unless applicationsMetadata.length}}
-        <div class="create-application-card card" id="applicationCreateCard" style="cursor: pointer;"
+        <div class="create-application-card card {{#if applicationsMetadata.length}}d-none{{/if}}" id="applicationCreateCard" style="cursor: pointer;"
           onclick="showApplicationForm()">
           <span class="plus-icon">+</span>
           <span class="create-text">Create Application</span>
         </div>
-        {{/unless}}
         <div class="application-create-card card d-none" style=" cursor: pointer;"
           id="applicationCreateForm">
           <div class="application-layout">
