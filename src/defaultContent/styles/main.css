@@ -3,11 +3,9 @@
 @import "/styles/footer.css";
 @import "/styles/header.css";
 @import "/styles/api-listing.css";
-@import "/styles/subscription.css";
 @import "/styles/api-content.css";
 @import "/styles/doc.css";
 @import "/styles/side-bar.css";
-@import "/styles/subscription-modal.css";
 @import "/styles/default-api.css";
 
 :root {

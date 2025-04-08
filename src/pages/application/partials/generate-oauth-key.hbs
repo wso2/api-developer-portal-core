@@ -275,7 +275,6 @@
                                                     class="form-control" {{#if required}}required{{/if}}
                                                     name="additionalProperties.{{../name}}">
                                                     {{#each ../values}}
-                                                    {{#if (eq this ../propValue)}}cedce {{/if}}
                                                     <option value="{{this}}" {{#if (eq ../propValue this)}}selected{{/if}}>
                                                         {{this}}
                                                     </option>
@@ -436,7 +435,6 @@
                                                         class="form-control" {{#if required}}required{{/if}}
                                                         name="additionalProperties.{{../name}}">
                                                         {{#each ../values}}
-                                                        {{#if (eq this ../propValue)}}cedce {{/if}}
                                                         <option value="{{this}}" {{#if (eq ../propValue
                                                             this)}}selected{{/if}}>
                                                             {{this}}

@@ -189,6 +189,10 @@ const loadApplication = async (req, res) => {
                     apiDTO.policyID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.POLICY_ID;
                     apiDTO.refID = api.apiReferenceID;
                     apiDTO.apiHandle = api.apiHandle;
+                    const apiDetails = await getAPIDetails(req, api.apiReferenceID);
+                    if (apiDetails) {
+                        apiDTO.security = apiDetails.securityScheme;
+                    }
                     const subPolicy = await apiMetadata.getSubscriptionPolicy(apiDTO.policyID, orgID);
                     if (subPolicy) {
                         apiDTO.policyName = subPolicy.dataValues.POLICY_NAME;
@@ -197,6 +201,11 @@ const loadApplication = async (req, res) => {
                     console.log("apiDTO",   apiDTO.subscriptionPolicyDetails);
                     return apiDTO;
                 }));
+            }
+            let apiKey = false
+            let apiKeyList = subList.filter(api => api.security !== null && api.security.includes('api_key'));
+            if (apiKeyList.length > 0) {
+                apiKey = true;
             }
             util.appendAPIImageURL(subList, req, orgID);
 
@@ -208,18 +217,24 @@ const loadApplication = async (req, res) => {
 
             //TODO: handle multiple KM scenarios
             //select only one KM for chroeo.
+
             kMmetaData = kMmetaData.filter(keyManager =>
                 keyManager.name.includes("_internal_key_manager_") ||
                 (!kMmetaData.some(km => km.name.includes("_internal_key_manager_")) && keyManager.name.includes("Resident Key Manager")) ||
                 (!kMmetaData.some(km => km.name.includes("_internal_key_manager_") || km.name.includes("Resident Key Manager")) && keyManager.name.includes("_appdev_sts_key_manager_") && keyManager.name.endsWith("_prod"))
             );
 
-            //kMmetaData = kMmetaData.filter(keyManager => keyManager.name.includes("Resident Key Manager"));
+            for(var keyManager of kMmetaData) {
+                if (keyManager.name === 'Resident Key Manager') {
+                    keyManager.tokenEndpoint = 'https://sts.preview-dv.choreo.dev/oauth2/token';
+                    keyManager.authorizeEndpoint = 'https://sts.preview-dv.choreo.dev/oauth2/authorize';
+                    keyManager.revokeEndpoint = 'https://sts.preview-dv.choreo.dev/oauth2/revoke';
+                }
 
-            for (const keyManager of kMmetaData) {
                 keyManager.availableGrantTypes = await mapGrants(keyManager.availableGrantTypes);
                 keyManager.applicationConfiguration = await mapDefaultValues(keyManager.applicationConfiguration);
             }
+
             const userID = req[constants.USER_ID]
             const applicationList = await adminService.getApplicationKeyMap(orgID, applicationId, userID);
             metaData = applicationList;
@@ -281,8 +296,8 @@ const loadApplication = async (req, res) => {
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 subAPIs: subList,
                 nonSubAPIs: nonSubscribedAPIs,
-                productionKeys: sandboxKeys,
-                isProduction: false
+                productionKeys: productionKeys,
+                isProduction: true
             }
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
@@ -393,8 +408,13 @@ async function getAPIMApplication(req, applicationId) {
 }
 
 async function getAPIMKeyManagers(req) {
-    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers?devPortalAppEnv=sandbox', null, null);
+    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers?devPortalAppEnv=prod', null, null);
     return responseData.list;
+}
+
+async function getAPIDetails(req, apiId) {
+    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiId}`, null, null);
+    return responseData;
 }
 
 async function mapGrants(grantTypes) {
@@ -445,7 +465,7 @@ async function mapDefaultValues(applicationConfiguration) {
     let defaultConfigs = ["application_access_token_expiry_time", "user_access_token_expiry_time", "id_token_expiry_time"];
     applicationConfiguration.map(config => {
         if (defaultConfigs.includes(config.name) && config.default == 'N/A') {
-            config.default = 3600;
+            config.default = 900;
         } else if (config.name === 'refresh_token_expiry_time' && config.default == 'N/A') {
             config.default = 86400;
         }

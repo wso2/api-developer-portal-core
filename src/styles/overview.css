@@ -59,7 +59,7 @@
   transition: opacity 0.2s;
   color: var(--primary-main-color);
   padding: 0.25rem 0.5rem;
-  align-self: flex-start;
+  align-self: center;
 }
 
 .edit-container:hover .edit-inline-btn {

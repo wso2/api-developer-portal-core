@@ -170,15 +170,16 @@ const ensureAuthenticated = async (req, res, next) => {
                         //check if exchanged token has organization identifier
                         //const decodedToken = req.user.exchangeToken ? jwt.decode(req.user.exchangeToken) : null;
                         const allowedOrgs = req.user.authorizedOrgs;
-                        if (allowedOrgs && !(allowedOrgs.includes(req.user[constants.ORG_IDENTIFIER]))) {
-                            const err = new Error('Authentication required');
-                            err.status = 401; // Unauthorized
-                            return next(err);
-                        } else if (!allowedOrgs) {
-                            const err = new Error('Authentication required');
-                            err.status = 401; // Unauthorized
-                            return next(err);
+                        if (req.user.userOrg !== req.user[constants.ORG_IDENTIFIER]) {
+                            if (allowedOrgs && (allowedOrgs.includes(req.user[constants.ORG_IDENTIFIER]))) {
+                                res.redirect(`/${req.params.orgName}/views/${req.params.viewName}/login`);
+                            } else {
+                                const err = new Error('Authentication required');
+                                err.status = 401; // Unauthorized
+                                return next(err);
+                            }
                         }
+                        
                     }
                 }
                 if (!config.advanced.disabledRoleValidation) {
