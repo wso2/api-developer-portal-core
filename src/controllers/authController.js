@@ -139,7 +139,9 @@ const handleCallback = async (req, res, next) => {
                         returnTo = `/${req.params.orgName}`;
                     }
                     delete req.session.returnTo;
-                    res.redirect(returnTo);
+                    req.session.save(() => {
+                        res.redirect(returnTo);
+                    })
                 }
             });
         })(req, res, next);
@@ -209,14 +211,14 @@ const handleLogOutLanding = async (req, res) => {
 }
 
 const handleSilentSSO = async (req, res, next) => {
-    
+
     await req.session.save((err) => {
         req.session.returnTo = req.originalUrl;
 
         if (req.isAuthenticated() || req.session.silentAuthRedirected) {
             return next();
         } else {
-            passport.authenticate('oauth2', { prompt: 'none' })(req, res, () => {});
+            passport.authenticate('oauth2', { prompt: 'none' })(req, res, () => { });
             req.session.silentAuthRedirected = true;
         }
     });
