@@ -530,6 +530,19 @@ hr {
   margin-top: 1.5rem;
 }
 
+.subscription-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem; 
+  align-items: flex-start;
+}
+
+.subscription-card {
+  overflow: hidden;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
 /* Message Overlay for subscription cards */
 .subscription-card .message-overlay {
   position: absolute;
@@ -647,7 +660,7 @@ hr {
 
   .custom-select-container {
     position: relative;
-    width: 12rem;
+    width: 5rem;
   }
 
   .select-selected {
