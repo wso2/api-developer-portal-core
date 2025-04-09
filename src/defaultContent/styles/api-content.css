@@ -627,6 +627,7 @@ hr {
 
   /* Custom Dropdown styling for subscription plans */
   .subscription-container {
+    justify-content: center;
     padding: 8px;
     display: flex;
     gap: 1rem;
@@ -636,12 +637,11 @@ hr {
   .custom-dropdown {
     font-size: small;
     position: relative;
-    width: 100%;
   }
 
   .custom-select-container {
     position: relative;
-    width: 100%;
+    width: 12rem;
   }
 
   .select-selected {
@@ -654,6 +654,13 @@ hr {
     background-color: var(--main-bg-color);
     cursor: pointer;
     font-size: 0.875rem;
+  }
+
+  .selected-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #6c757d;
   }
 
   .select-arrow {
