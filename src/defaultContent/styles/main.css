@@ -31,8 +31,7 @@
   --Black-color: #000000;
   --subscribed-color: #0c7838;
   /* Gradient */
-  --primary-gradient: radial-gradient(circle at 40% 30%, rgba(0, 0, 0, 0.3), transparent 60%), linear-gradient(135deg, #3d6b8a, #1c3b52);
-  --dark-gradient: linear-gradient(to right, #50c9c3, #4a6fa1);
+  --primary-gradient: linear-gradient(135deg, #3d6b8a, #1c3b52);
 
   --font-family-sans: "Montserrat", "Quicksand", "Noto Sans", "Poppins", sans-serif;
   --font-family-mono: "Roboto", monospace;
