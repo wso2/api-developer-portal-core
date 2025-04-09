@@ -1118,7 +1118,7 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
             STATUS: apiInfo.apiStatus,
             PROVIDER: apiInfo.provider,
             API_NAME: apiInfo.apiName,
-            API_HANDLE: `${apiInfo.apiName.toLowerCase().replace(/\s+/g, '')}-v${apiInfo.apiVersion}`,
+            API_HANDLE: apiInfo.apiHandle ? apiInfo.apiHandle : `${apiInfo.apiName.toLowerCase().replace(/\s+/g, '')}-v${apiInfo.apiVersion}`,
             API_DESCRIPTION: apiInfo.apiDescription,
             API_VERSION: apiInfo.apiVersion,
             API_TYPE: apiInfo.apiType,
