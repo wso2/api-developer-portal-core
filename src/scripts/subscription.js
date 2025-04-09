@@ -169,12 +169,12 @@ function loadModal(modalID) {
 
 async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, policyName) {
     console.log('Subscribing to API:', apiId);
-    
+
     // Find the related card and button elements
     const card = getSubscriptionCard(apiId, policyId);
     const subscribeButton = card ? card.querySelector(".common-btn-primary") : null;
     const messageOverlay = card ? card.querySelector(".message-overlay") : null;
-    
+
     try {
         // Get application ID from hidden field if not provided
         if (!applicationID && card) {
@@ -183,7 +183,7 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
                 applicationID = hiddenField.value;
             }
         }
-        
+
         // Make the API request
         const response = await fetch(`/devportal/organizations/${orgID}/subscriptions`, {
             method: 'POST',
@@ -194,7 +194,7 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
         });
 
         const responseData = await response.json();
-        
+
         // Always reset button state and close modal
         const planButton = document.getElementById('subscribe-btn-' + policyId);
         if (planButton) {
@@ -216,7 +216,7 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
 
                 // Mark the application as subscribed
                 const dropdown = card.querySelector('.custom-dropdown');
-                if (dropdown) {        
+                if (dropdown) {
                     // Mark the application as subscribed in the dropdown
                     const appOption = dropdown.querySelector(`.select-item[data-value="${applicationID}"]`);
                     if (appOption) {
@@ -225,15 +225,18 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
                         if (subscriptionIcon) {
                             subscriptionIcon.style.display = 'inline-block';
                         } else {
-                            subscriptionIcon = `<img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
-                                        alt="Subscribed" class="subscription-icon" style="display: inline-block;" />`;
+                            const subscriptionIconHtml = `<img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
+                            alt="Subscribed" class="subscription-icon" style="display: inline-block;" />`;
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = subscriptionIconHtml;
+                            subscriptionIcon = tempDiv.firstElementChild;
                             appOption.appendChild(subscriptionIcon);
                         }
-                        
+
                         // Mark option as disabled
                         appOption.classList.add('disabled');
                     }
-                    
+
                     // Disable the subscribe button
                     const subscribeButton = card.querySelector('.common-btn-primary');
                     if (subscribeButton) {
@@ -250,7 +253,7 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
     } catch (error) {
         // Handle exceptions
         console.error('Error:', error);
-        
+
         // Always reset button state and close modal
         const planButton = document.getElementById('subscribe-btn-' + policyId);
         if (planButton) {
@@ -258,7 +261,7 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
         }
         closeModal('planModal-' + apiId);
         resetSubscribeButtonState(subscribeButton);
-        
+
         const errorMessage = `Error while subscribing: ${error.message}`;
         showSubscriptionMessage(messageOverlay, errorMessage, 'error');
     }
@@ -266,9 +269,9 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
 
 // Helper functions for the subscribe function
 function getSubscriptionCard(apiId, policyId) {
-    return document.getElementById('apiCard-' + apiId) || 
-           document.getElementById('subscriptionCard-' + policyId) || 
-           null;
+    return document.getElementById('apiCard-' + apiId) ||
+        document.getElementById('subscriptionCard-' + policyId) ||
+        null;
 }
 
 function resetSubscribeButtonState(button) {
