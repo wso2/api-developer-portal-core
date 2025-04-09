@@ -1,0 +1,99 @@
+{
+  "baseUrl": "https://localhost:3000",
+  "defaultPort": 3000,
+  "advanced": {
+    "http": false,
+    "dbSslDialectOption": false,
+    "resourceLoadFromBaseUrl": false,
+    "apiKey": {
+      "enabled": true,
+      "keyType": "x-wso2-api-key",
+      "keyValue": "x-wso2-api-key"
+    },
+    "disabledRoleValidation": true,
+    "disableOrgCallback": true,
+    "disableScopeValidation": true
+  },
+  "pathToContent": "./resources/default-layout/",
+  "pathToDBCert": "./resources/security/ca.pem",
+  "mode": "production",
+  "controlPlane": {
+    "url": "https://sts.preview-dv.choreo.dev/api/am/devportal/v2",
+    "disableCertValidation": true,
+    "pathToCertificate": "./resources/security/client-truststore.pem"
+  },
+  "serverCerts": {
+    "pathToCert": "./resources/security/client-truststore.pem",
+    "pathToPK": "./resources/security/private-key.pem",
+    "pathToCA": "./resources/security/client-truststore.pem"
+  },
+  "db": {
+    "username": "postgres",
+    "password": "postgres",
+    "database": "devportal",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres"
+  },
+  "providerURL": {
+    "AWS": "https://aws.amazon.com"
+  },
+  "defaultAuth": {
+    "users": [
+      {
+        "username": "admin",
+        "password": "admin",
+        "roles": [
+          "admin"
+        ],
+        "orgClaimName": "ACME",
+        "organizationIdentifier": "ACME"
+      }
+    ]
+  },
+  "identityProvider": {
+    "name": "IS",
+    "issuer": "https://127.0.0.1:9443/oauth2/token",
+    "authorizationURL": "https://localhost:9443/oauth2/authorize",
+    "tokenURL": "https://127.0.0.1:9443/oauth2/token",
+    "userInfoURL": "https://localhost:9443/oauth2/userinfo",
+    "clientId": "",
+    "callbackURL": "https://localhost:3000/ACME/callback",
+    "scope": "openid profile",
+    "signUpURL": "",
+    "logoutURL": "https://localhost:9443/oidc/logout",
+    "logoutRedirectURI": "https://localhost:3000/ACME",
+    "certificate": "",
+    "jwksURL": "https://localhost:9443/oauth2/jwks"
+  },
+  "tokenExchange": true,
+  "disableTLS": true,
+  "roleClaim": "roles",
+  "orgIDClaim": "organization.uuid",
+  "groupsClaim": "groups",
+  "adminRole": "admin",
+  "subscriberRole": "Internal/subscriber",
+  "superAdminRole": "superAdmin",
+  "authenticatedPages": [
+    "/portal/*/edit",
+    "/portal",
+    "/*/configure",
+    "**/applications",
+    "**/applications/**",
+    "**/api/**",
+    "**/myapis",
+    "**/myapis/**",
+    "**/myapis?**"
+  ],
+  "authorizedPages": [
+    "**/applications",
+    "**/applications/**",
+    "/*/configure",
+    "/portal/*/edit",
+    "/portal",
+    "**/api/**",
+    "**/myapis",
+    "**/myapis/**",
+    "**/myapis?**"
+  ]
+}

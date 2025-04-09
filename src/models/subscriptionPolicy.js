@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,23 +16,44 @@
  * under the License.
  */
 const { Sequelize, DataTypes } = require('sequelize');
-const sequelize = require('../db/sequelize')
+const sequelize = require('../db/sequelize');
+const { Organization } = require('./organization');
 
-const SubscriptionPolicy = sequelize.define('DP_API_SUBSCRIPTION_POLICY', {
-    API_ID: {
+const SubscriptionPolicy = sequelize.define('DP_SUBSCRIPTION_POLICY', {
+    POLICY_ID: {
         type: DataTypes.UUID,
         defaultValue: Sequelize.UUIDV4,
+        allowNull: false,
         primaryKey: true
     },
     POLICY_NAME: {
         type: DataTypes.STRING,
-        allowNull: false,
-        primaryKey: true
+        allowNull: false
+    },
+    DISPLAY_NAME: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    BILLING_PLAN: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    DESCRIPTION: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    REQUEST_COUNT: {
+        type: DataTypes.STRING,
+        allowNull: true
     }
 }, {
     timestamps: false,
-    tableName: 'DP_API_SUBSCRIPTION_POLICY',
+    tableName: 'DP_SUBSCRIPTION_POLICY',
     returning: true
+});
+
+SubscriptionPolicy.belongsTo(Organization, {
+    foreignKey: 'ORG_ID'
 });
 
 module.exports = SubscriptionPolicy;

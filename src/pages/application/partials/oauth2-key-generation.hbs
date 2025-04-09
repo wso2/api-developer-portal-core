@@ -6,7 +6,15 @@
 <body>
     <section>
         <div class="app-header mb-4 pt-4">
-            <h3 class="app-title">{{applicationMetadata.name}}</h3>
+            <h1 class='app-title'>{{applicationMetadata.name}}</h1>
+            <div class="d-flex justify-content-between align-items-center">
+                <p>Subscriptions: {{applicationMetadata.subscriptionCount}}</p>
+                <div class='action-buttons'>
+                <button class='btn btn-sm' title='Edit' onclick="window.location.href='{{../baseUrl}}/applications/{{applicationId}}/edit'">
+                    <i class='bi bi-pencil-square'></i>
+                </button>
+                </div>
+            </div>
         </div>
         <ul class="nav nav-tabs" id="keyManagerTabs" role="tablist">
             {{#each keyManagersMetadata}}
@@ -178,11 +186,14 @@
                                 {{#let "propValue" (conditionalIf (getValue ../additionalProperties name) (getValue ../additionalProperties name)
                                 default)}}
                                 <div class="mb-3">
+                                    {{#if (eq ../type 'checkbox')}}
+                                    {{else}}
                                     <label for="{{../name}}-{{../../../../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
                                         class="form-label">
                                         {{../label}}
                                         {{#if required}}<span class="text-danger">*</span>{{/if}}
                                     </label>
+                                    {{/if}}
 
                                     {{#if (eq ../type 'input')}}
                                     <input type="text" name="additionalProperties.{{{../name}}}"
@@ -201,7 +212,6 @@
                                         class="form-control" {{#if required}}required{{/if}}
                                         name="additionalProperties.{{../name}}" >
                                         {{#each ../values}}
-                                        {{#if (eq this ../propValue)}}cedce {{/if}}
                                         <option value="{{this}}" {{#if (eq ../propValue this)}}selected{{/if}}>{{this}}
                                         </option>
                                         {{/each}}
@@ -221,14 +231,16 @@
                                     {{/and}}
 
                                     {{#if (eq ../type 'checkbox')}}
-                                    <div class="form-check">
-                                        <input type="checkbox" name="additionalProperties.{{../name}}"
-                                            id="{{../name}}-{{../../../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
-                                            class="form-check-input" value="true"{{#if (eq propValue true)}} checked{{/if}} />
-                                        <label class="form-check-label"
-                                            for="{{../name}}-{{../../../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}">
-                                            {{label}}
-                                        </label>
+                                    <div class="col-md-4 mb-2">
+                                        <div class="form-check">
+                                            <input type="checkbox" name="additionalProperties.{{../name}}"
+                                                id="{{../name}}-{{../../../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
+                                                class="form-check-input" value="true"{{#if (eq propValue true)}} checked{{/if}} />
+                                            <label class="form-check-label"
+                                                for="{{../name}}-{{../../../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}">
+                                                {{../label}}
+                                            </label>
+                                        </div>
                                     </div>
                                     {{/if}}
 

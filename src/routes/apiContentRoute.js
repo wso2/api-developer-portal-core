@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,11 +21,32 @@ const apiController = require('../controllers/apiContentController');
 const registerPartials = require('../middlewares/registerPartials');
 const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
 
+router.get('/:orgName/views/:viewName/apis', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, registerPartials, ensureAuthenticated, apiController.loadAPIs);
 
-router.get('/((?!favicon.ico)):orgName/apis', ensureAuthenticated, registerPartials, apiController.loadAPIs);
+router.get('/:orgName/views/:viewName/api/:apiHandle', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, registerPartials, ensureAuthenticated, apiController.loadAPIContent);
 
-router.get('/((?!favicon.ico)):orgName/api/:apiName', ensureAuthenticated, registerPartials, apiController.loadAPIContent);
+router.get('/:orgName/views/:viewName/api/:apiHandle/docs/specification', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, registerPartials, ensureAuthenticated, apiController.loadDocument);
 
-router.get('/((?!favicon.ico)):orgName/api/:apiName/tryout', ensureAuthenticated, registerPartials, apiController.loadTryOutPage);
+router.get('/:orgName/views/:viewName/api/:apiHandle/docs/:docType/:docName', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, registerPartials, ensureAuthenticated, apiController.loadDocument);
 
 module.exports = router;

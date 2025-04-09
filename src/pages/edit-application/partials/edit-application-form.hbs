@@ -8,12 +8,8 @@
     <div class="container my-5">
       <div class="form-card p-5">
         <h2 class="title mb-4">Edit Application</h2>
-        <p class="text-muted mb-4">
-          Edit this application. Name and quota are mandatory parameters and description
-          is optional. Required fields are marked with an asterisk (<span class="text-danger">*</span>).
-        </p>
         {{#applicationMetadata}}
-        <form id="editApplicationForm" data-application-id="{{applicationId}}">
+        <form id="editApplicationForm" data-application-id="{{id}}">
           <!-- Application Name -->
           <div class="mb-3">
             <label for="applicationName" class="form-label">Application Name <span class="text-danger">*</span></label>
@@ -25,12 +21,11 @@
               value="{{name}}"
               required
             />
-            <div class="form-text">Enter a name to identify the application. You will be able to pick this application when subscribing to APIs.</div>
             <div id="editApplicationNameError" class="error-msg text-danger mt-1" style="display: none;">Application name cannot be empty.</div>
           </div>
 
           <!-- Shared Quota -->   
-          <div class="mb-3">
+          <div class="mb-3" style="display: none;">
             <label for="throttlingPolicy" class="form-label">Shared Quota for Application Tokens <span class="text-danger">*</span></label>
             <select id="editApplicationThrottlingPolicy" class="form-select">
               <option selected disabled value="{{throttlingPolicy}}">{{throttlingPolicy}}</option>
@@ -38,7 +33,6 @@
               <option value="{{name}}">{{name}}</option>
               {{/../throttlingPoliciesMetadata}}
             </select>
-            <div class="form-text">Assign API request quota per access token. Allocated quota will be shared among all the subscribed APIs of the application.</div>
           </div>
           
           <!-- Application Description -->
@@ -49,10 +43,10 @@
               class="form-control"
               rows="4"
               placeholder="Provide a brief description of the application"
-              maxlength="512"
+              maxlength="256"
             >{{description}}</textarea>
             <div class="form-text">
-              <span id="editApplicationRemainingCharacters">512</span> characters remaining
+              <span id="editApplicationRemainingCharacters">256</span> characters remaining
             </div>
             <div id="editApplicationDescriptionError" class="text-danger mt-1" style="display: none;">Description exceeds the character limit.</div>
           </div>

@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,15 +20,17 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const registerPartials = require('../middlewares/registerPartials');
 
-router.get('/portal/login', registerPartials, authController.login);
-router.get('/portal/callback', authController.handleCallback);
-router.get('/portal/logout', authController.handleLogOut);
-router.get('/portal/signup', authController.handleSignUp);
+// router.get('/portal/login', registerPartials, authController.login);
+// router.get('/portal/callback', authController.handleCallback);
+// router.get('/portal/logout', authController.handleLogOut);
+// router.get('/portal/signup', authController.handleSignUp);
 
-router.get('/:orgName/login', registerPartials, authController.login);
+router.get('/:orgName/views/:viewName/login', registerPartials, authController.login);
 router.get('/:orgName/callback', authController.handleCallback);
-router.get('/:orgName/logout', authController.handleLogOut);
-router.get('/:orgName/signup', authController.handleSignUp);
+router.get('/signin', authController.handleCallback);
+router.get('/:orgName/views/:viewName/logout', authController.handleLogOut);
+router.get('/:orgName/views/:viewName/signup', authController.handleSignUp);
+router.get('/logout', authController.handleLogOutLanding);
 
 
 

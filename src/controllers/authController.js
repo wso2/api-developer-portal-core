@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,11 +22,12 @@ const config = require(process.cwd() + '/config.json');
 const fs = require('fs');
 const path = require('path');
 const constants = require('../utils/constants');
+const util = require('../utils/util');
 const adminDao = require('../dao/admin');
 const IdentityProviderDTO = require("../dto/identityProvider");
 const minimatch = require('minimatch');
+const { validationResult } = require('express-validator');
 const { renderGivenTemplate } = require('../utils/util');
-const { profile } = require('console');
 
 const filePrefix = config.pathToContent;
 
@@ -34,7 +35,7 @@ const fetchAuthJsonContent = async (req, orgName) => {
 
     //use super admin for org creation page login
     if (req.session.returnTo) {
-        if (minimatch.minimatch(req.session.returnTo, constants.ROUTE.DEVPORTAL_ROOT)) {
+        if (constants.ROUTE.DEVPORTAL_ROOT.some(pattern => minimatch.minimatch(req.session.returnTo, pattern))) {
             return config.identityProvider;
         }
     }
@@ -60,30 +61,26 @@ const fetchAuthJsonContent = async (req, orgName) => {
 const login = async (req, res, next) => {
 
     let orgName, IDP;
-    let claimNames = {};
+    let claimNames = {
+        [constants.ROLES.ROLE_CLAIM]: config.roleClaim,
+        [constants.ROLES.GROUP_CLAIM]: config.groupsClaim,
+        [constants.ROLES.ORGANIZATION_CLAIM]: config.orgIDClaim
+    };
     if (req.params.orgName) {
         orgName = req.params.orgName;
-        console.log(orgName)
-        if(orgName !== 'portal') {
-        const orgDetails = await adminDao.getOrganization(orgName);
-        if (orgDetails) {
-            claimNames[constants.ROLES.ROLE_CLAIM] = orgDetails.ROLE_CLAIM_NAME;
-            claimNames[constants.ROLES.GROUP_CLAIM] = orgDetails.GROUPS_CLAIM_NAME;
-            claimNames[constants.ROLES.ORGANIZATION_CLAIM] = orgDetails.ORGANIZATION_CLAIM_NAME;
+        if (orgName !== 'portal') {
+            const orgDetails = await adminDao.getOrganization(orgName);
+            if (orgDetails) {
+                claimNames[constants.ROLES.ROLE_CLAIM] = orgDetails.ROLE_CLAIM_NAME || config.roleClaim;
+                claimNames[constants.ROLES.GROUP_CLAIM] = orgDetails.GROUPS_CLAIM_NAME || config.groupsClaim;
+                claimNames[constants.ROLES.ORGANIZATION_CLAIM] = orgDetails.ORGANIZATION_CLAIM_NAME || config.orgIDClaim;
+            }
         }
-    }
     }
     IDP = await fetchAuthJsonContent(req, orgName);
     if (IDP.clientId) {
-        //fetch claim names from DB
-        if (Object.keys(claimNames).length === 0) {
-            claimNames[constants.ROLES.ROLE_CLAIM] = config.roleClaim;
-            claimNames[constants.ROLES.GROUP_CLAIM] = config.groupsClaim;
-            claimNames[constants.ROLES.ORGANIZATION_CLAIM] = config.orgIDClaim;
-        }
-        configurePassport(IDP, claimNames);  // Configure passport dynamically
-        passport.authenticate('oauth2')(req, res, next);
-        next();
+        //await configurePassport(IDP, claimNames);  // Configure passport dynamically
+        await passport.authenticate('oauth2')(req, res, next);
     } else {
         orgName = req.params.orgName;
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'login', 'page.hbs');
@@ -95,44 +92,74 @@ const login = async (req, res, next) => {
         };
 
         const html = await renderGivenTemplate(layoutResponse, templateResponse, templateContent);
+        res.set('Cache-Control', 'no-store');
         res.send(html);
     }
 };
 
-const handleCallback = (req, res, next) => {
-
-    passport.authenticate('oauth2', {
-        failureRedirect: '/login',
-        keepSessionInfo: true
-    }, (err, user) => {
-        if (err || !user) {
-            return next(err || new Error('Authentication failed'));
-        }
-        req.logIn(user, (err) => {
-            if (err) {
-                return next(err);
+const handleCallback = async (req, res, next) => {
+    const rules = util.validateRequestParameters();
+    const validationPromises = rules.map(validation => validation.run(req));
+    Promise.all(validationPromises)
+        .then(() => {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json(util.getErrors(errors));
             }
-            if (config.mode === constants.DEV_MODE) {
-                const returnTo = req.user.returnTo || constants.BASE_URL + config.port;
-                delete req.session.returnTo;
-                res.redirect(returnTo);
-            } else {
-                const returnTo = req.user.returnTo || `/${req.params.orgName}`;
-                delete req.session.returnTo;
-                res.redirect(returnTo);
-            }
+        })
+        .catch(error => {
+            console.error("Error validating request parameters: " + error);
+            return res.status(500).json({ message: 'Internal Server Error' });
         });
-    })(req, res, next);
+    await passport.authenticate(
+        'oauth2',
+        {
+            failureRedirect: '/login'
+        },
+        (err, user) => {
+            if (err || !user) {
+                if (err.name === 'AuthorizationError' && err.code === 'login_required') {
+                    return res.redirect(req.session.returnTo);
+                } else {
+                    return next(err || new Error('Authentication failed'));
+                }
+            }
+            req.logIn(user, (err) => {
+                if (err) {
+                    return next(err);
+                }
+                res.set('Cache-Control', 'no-store');
+                if (config.mode === constants.DEV_MODE) {
+                    const returnTo = req.user.returnTo || config.baseUrl;
+                    delete req.session.returnTo;
+                    res.redirect(returnTo);
+                } else {
+                    let returnTo = req.user.returnTo;
+                    if (!config.advanced.disableOrgCallback && returnTo == null) {
+                        returnTo = `/${req.params.orgName}`;
+                    }
+                    delete req.session.returnTo;
+                    res.redirect(returnTo);
+                }
+            });
+        })(req, res, next);
 };
 
 const handleSignUp = async (req, res) => {
-
+    const rules = util.validateRequestParameters();
+    for (let validation of rules) {
+        await validation.run(req);
+    }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json(util.getErrors(errors));
+    }
     const authJsonContent = await fetchAuthJsonContent(req.params.orgName);
     if (authJsonContent.signUpURL) {
         res.redirect(authJsonContent.signUpURL);
     } else {
         if (config.mode === constants.DEV_MODE) {
-            const returnTo = req.session.returnTo || constants.BASE_URL + config.port;
+            const returnTo = req.session.returnTo || config.baseUrl;
             delete req.session.returnTo;
             res.redirect(returnTo);
         } else {
@@ -143,25 +170,63 @@ const handleSignUp = async (req, res) => {
 };
 
 const handleLogOut = async (req, res) => {
-
+    const rules = util.validateRequestParameters();
+    for (let validation of rules) {
+        await validation.run(req);
+    }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json(util.getErrors(errors));
+    }
     const authJsonContent = await fetchAuthJsonContent(req, req.params.orgName);
     let idToken = ''
     if (req.user != null) {
         idToken = req.user.idToken;
     }
-    req.session.destroy();
+    const currentPathURI = req.originalUrl.replace('/logout', '');
+    res.set('Cache-Control', 'no-store');
     if (req.user && req.user.accessToken) {
-    req.logout(
-        () => res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${authJsonContent.logoutRedirectURI}&id_token_hint=${idToken}`)
-    );
+        const referer = req.get('referer');
+        const regex = /(.+\/views\/[^\/]+)\/?/;
+        const match = referer.match(regex);
+        const logoutURL = match ? match[1] : null;
+        req.logout((err) => {
+            if (err) {
+                console.error("Logout error:", err);
+            }
+            req.session.currentPathURI = currentPathURI;
+            res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${authJsonContent.logoutRedirectURI}&id_token_hint=${idToken}`);
+        });
     } else {
         res.redirect(req.originalUrl.replace('/logout', ''));
     }
+};
+
+const handleLogOutLanding = async (req, res) => {
+    const currentPathURI = req.session.currentPathURI;
+    req.session.destroy();
+    res.redirect(currentPathURI);
+}
+
+const handleSilentSSO = async (req, res, next) => {
+    
+    await req.session.save((err) => {
+        req.session.returnTo = req.originalUrl;
+
+        if (req.isAuthenticated() || req.session.silentAuthRedirected) {
+            return next();
+        } else {
+            passport.authenticate('oauth2', { prompt: 'none' })(req, res, () => {});
+            req.session.silentAuthRedirected = true;
+        }
+    });
 };
 
 module.exports = {
     login,
     handleCallback,
     handleSignUp,
-    handleLogOut
+    handleLogOut,
+    handleLogOutLanding,
+    handleSilentSSO
 };

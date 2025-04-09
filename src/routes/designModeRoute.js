@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -27,22 +27,26 @@ const myAPIsController = require('../controllers/myAPIsController');
 const settingsController = require('../controllers//settingsController');
 
 
-router.get('/', registerPartials, orgController.loadOrganizationContent);
+router.get('/views/:viewName', registerPartials, orgController.loadOrganizationContent);
 
-router.get('/apis', registerPartials, apiController.loadAPIs);
+router.get('/views/:viewName/apis', registerPartials, apiController.loadAPIs);
 
-router.get('/api/:apiName', registerPartials, apiController.loadAPIContent);
+router.get('/views/:viewName/api/:apiHandle', registerPartials, apiController.loadAPIContent);
 
-router.get('/api/:apiName/tryout', registerPartials, apiController.loadTryOutPage);
+router.get('/views/:viewName/api/:apiHandle/docs/specification', registerPartials, apiController.loadDocument);
 
-router.get('/applications', registerPartials, applicationController.loadApplications);
-router.get('/applications/create', registerPartials, applicationController.loadThrottlingPolicies);
-router.get('/applications/:applicationid', registerPartials, applicationController.loadApplication);
-router.get('/applications/:applicationid/edit', registerPartials, applicationController.loadApplicationForEdit);
-router.get('/myAPIs', registerPartials, myAPIsController.loadDefaultContent);
+//router.get('/views/:viewName/api/:apiHandle/docs', registerPartials, apiController.loadDocsPage);
+
+router.get('/views/:viewName/api/:apiHandle/docs/:docType/:docName', registerPartials, apiController.loadDocument);
+
+
+router.get('/views/:viewName/applications', registerPartials, applicationController.loadApplications);
+router.get('/views/:viewName/applications/create', registerPartials, applicationController.loadThrottlingPolicies);
+router.get('/views/:viewName/applications/:applicationid', registerPartials, applicationController.loadApplication);
+router.get('/views/:viewName/applications/:applicationid/edit', registerPartials, applicationController.loadApplicationForEdit);
+router.get('/views/:viewName/myAPIs', registerPartials, myAPIsController.loadDefaultContent);
 
 router.get('/configure', registerPartials, settingsController.loadSettingPage);
-router.get('/portal', registerPartials, settingsController.createorganization);
 
 router.get('/login', registerPartials, authController.login);
 router.get('/callback', registerPartials, authController.handleCallback);
@@ -50,6 +54,11 @@ router.get('/logout', registerPartials, authController.handleLogOut);
 router.get('/signup', registerPartials, authController.handleSignUp);
 
 // eslint-disable-next-line no-useless-escape
-router.get('(^(?!\/(favicon\.ico|images\/|styles\/|*login*|devportal\/)))/*', registerPartials,  contentController.loadCustomContent);
+// Exclude specific paths
+router.get(['/favicon.ico', '/images/*', '/styles/*', '/login*', '/devportal/*', '/views/*'], (req, res) => {
+    res.status(404).send('Not found');
+});
+  
+router.get('/:path/*', registerPartials, contentController.loadCustomContent);
 
 module.exports = router;

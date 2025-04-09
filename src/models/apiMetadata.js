@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,8 +19,8 @@ const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../db/sequelize')
 const APIContent = require('../models/apiContent')
 const APIImages = require('./apiImages')
-const SubscriptionPolicy = require('./subscriptionPolicy')
-const { Organization } = require('./orgModels')
+const { Organization } = require('./organization')
+const Labels = require('./labels');
 
 const APIMetadata = sequelize.define('DP_API_METADATA', {
   API_ID: {
@@ -28,12 +28,16 @@ const APIMetadata = sequelize.define('DP_API_METADATA', {
     defaultValue: Sequelize.UUIDV4,
     primaryKey: true
   },
-  REFERENCE_ID : {
+  REFERENCE_ID: {
     type: DataTypes.UUID,
     allowNull: true,
     unique: true
   },
   API_NAME: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  STATUS: {
     type: DataTypes.STRING,
     allowNull: false
   },
@@ -90,11 +94,67 @@ const APIMetadata = sequelize.define('DP_API_METADATA', {
   METADATA_SEARCH: {
     type: DataTypes.JSON,
     allowNull: true
-  }
+  },
+  TAGS: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  API_HANDLE: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
 }, {
   timestamps: false,
   tableName: 'DP_API_METADATA',
   returning: true
+},
+{
+  indexes: [
+      {
+          unique: true,
+          fields: ['API_NAME', 'API_VERSION', 'ORG_ID']
+      }
+  ]
+});
+
+const APILabels = sequelize.define('DP_API_LABELS', {
+
+  ID: {
+      type: DataTypes.UUID,
+      defaultValue: Sequelize.UUIDV4,
+      primaryKey: true
+  },
+  ORG_ID: {
+      type: DataTypes.UUID,
+      defaultValue: Sequelize.UUIDV4
+  },
+  API_ID: {
+      type: DataTypes.UUID,
+      references: {
+          model: APIMetadata,
+          key: 'API_ID',
+      }
+  },
+  LABEL_ID: {
+      type: DataTypes.UUID,
+      references: {
+          model: Labels,
+          key: 'LABEL_ID',
+      }
+  }
+}, {
+  timestamps: false,
+  tableName: 'DP_API_LABELS',
+  returning: true,
+  unique: false
+});
+
+APILabels.belongsTo(Organization, {
+  foreignKey: 'ORG_ID'
+});
+
+APILabels.belongsTo(APIMetadata, {
+  foreignKey: 'API_ID'
 });
 
 APIContent.belongsTo(APIMetadata, {
@@ -103,28 +163,30 @@ APIContent.belongsTo(APIMetadata, {
 APIImages.belongsTo(APIMetadata, {
   foreignKey: 'API_ID',
 });
-SubscriptionPolicy.belongsTo(APIMetadata, {
-  foreignKey: 'API_ID',
-});
 APIMetadata.belongsTo(Organization, {
   foreignKey: 'ORG_ID'
-})
-
-APIMetadata.hasMany(SubscriptionPolicy, { 
+});
+APIMetadata.hasMany(APIImages, {
   foreignKey: 'API_ID',
   onDelete: 'CASCADE'
 });
-APIMetadata.hasMany(APIImages, { 
-  foreignKey: 'API_ID',
-  onDelete: 'CASCADE'
-});
-APIMetadata.hasMany(APIContent, { 
+APIMetadata.hasMany(APIContent, {
   foreignKey: 'API_ID',
   onDelete: 'CASCADE'
 });
 
+APIMetadata.belongsToMany(Labels, { 
+  through: APILabels, 
+  foreignKey: "API_ID",
+  otherKey: "LABEL_ID"
+});
+Labels.belongsToMany(APIMetadata, { 
+  through: APILabels,
+  foreignKey: "LABEL_ID",
+  otherKey: "API_ID"
+ });
 
-// Export both models
 module.exports = {
-  APIMetadata
+  APIMetadata,
+  APILabels
 };

@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,18 +22,43 @@ module.exports = {
     TEXT: 'text',
     CHARSET_UTF8: 'utf-8',
     FILE_NAME_PARAM: '&fileName=',
-    API_TEMPLATE_FILE_NAME: '/template?fileName=',
+    API_ICON: 'api-icon',
+    API_TEMPLATE_FILE_NAME: '/template?type=IMAGE&fileName=',
+    API_TYPE_QUERY: '/template?type=',
     HEADER_PARTIAL_NAME: 'header',
-    HERO_PARTIAL_NAME: 'hero',
-    BASE_URL: 'http://localhost:',
+    SIDEBAR_PARTIAL_NAME: 'sidebar',
+    BASE_URL: 'https://localhost:',
     BASE_URL_NAME: 'baseUrl',
     ORG_ID: 'orgID',
     ORG_IDENTIFIER: 'organizationIdentifier',
+    ORG_HANDLE: 'orgHandle',
     ACCESS_TOKEN: 'accessToken',
+    USER_ID: 'sub',
     BASIC_HEADER: 'basicAuthHeader',
     API_VISIBILITY: {
         PUBLIC: 'PUBLIC',
-        PRIVATE: 'PRIVATE'    
+        PRIVATE: 'PRIVATE'
+    },
+    API_STATUS: {
+        PUBLISHED: "PUBLISHED",
+        UNPUBLISHED: "CREATED"
+    },
+    DOC_TYPES: {
+        DOC_ID: 'DOC_',
+        DOCLINK_ID: 'LINK_',
+        API_LANDING: 'MARKETING',
+        API_DEFINITION: 'API_DEFINITION',
+        IMAGES: 'IMAGE',
+        DOCUMENT: 'DOCUMENT',
+        LINK: "DOC_LINK",
+        DOCS: {
+            HOW_TO: 'HowTo',
+            SAMPLES: 'Samples',
+            PUBLIC_FORUM: 'PublicForum',
+            SUPPORT_FORUM: 'SupportForum',
+            OTHER: 'Other',
+            API_DEFINITION: 'Specification'
+        }
     },
     MIME_TYPES: {
         HTML: 'text/html',
@@ -75,7 +100,11 @@ module.exports = {
         YML: '.yml',
         XML: '.xml'
     },
-
+    TOKEN_TYPES: {
+        API_KEY: 'API_KEY',
+        OAUTH: 'OAUTH',
+        BASIC: 'BASIC'
+    },
     ROUTE: {
         DEV_PORTAL: '/devportal',
         STYLES: '/styles',
@@ -88,11 +117,13 @@ module.exports = {
         API_LISTING_PAGE: '/apis',
         API_FILE_PATH: '/apis/',
         API_LANDING_PAGE_PATH: '/api/',
+        API_DOCS_PATH: '/docs/',
         DEVPORTAL_ASSETS_BASE_PATH: '/devportal/organizations/',
         DEVPORTAL_CONFIGURE: '/*/configure',
-        DEVPORTAL_ROOT: '/portal',
+        DEVPORTAL_ROOT: ['/portal', '/portal/*/edit', '/devportal'],
         DEVPORTAL_API_LISTING: '/*/apis',
-        DEVPORTAL_TECHNICAL_PAGES: ['*/application']
+        DEVPORTAL_TECHNICAL_PAGES: ['*/application'],
+        VIEWS_PATH: "/views/"
     },
     ROLES: {
         ADMIN: 'admin',
@@ -115,12 +146,47 @@ module.exports = {
         PAGE: 'page.hbs',
         API_MD_CONTENT_FILE_NAME: 'apiContent.md',
         API_HBS_CONTENT_FILE_NAME: 'api-content.hbs',
+        API_DOC_MD: 'api-doc.md',
+        API_DOC_HBS: 'api-doc.hbs',
         API_CONTENT_PARTIAL_NAME: "api-content",
+        API_DOC_PARTIAL_NAME: "api-doc",
         API_DEFINITION_FILE_NAME: 'apiDefinition.json',
+        API_SPECIFICATION_PATH: 'specification',
         API_DEFINITION_GRAPHQL: 'apiDefinition.graphql',
         API_DEFINITION_XML: 'apiDefinition.xml',
         PARTIAL_HEADER_FILE_NAME: 'header.hbs',
+        PARTIAL_SIDEBAR_FILE_NAME: 'sidebar.hbs',
     },
+    DEFAULT_SUBSCRIPTION_PLANS: [
+            {
+                "policyName": "Bronze",
+                "description": "Allows 1000 requests per minute",
+                "requestCount": 1000,
+                "displayName": "Bronze",
+                "billingPlan": "FREE"
+            },
+            {
+                "policyName": "Gold",
+                "description": "Allows 5000 requests per minute",
+                "displayName": "Gold",
+                "requestCount": 5000,
+                "billingPlan": "FREE"
+            },
+            {
+                "policyName": "Silver",
+                "description": "Allows 2000 requests per minute",
+                "displayName": "Silver",
+                "requestCount": 2000,
+                "billingPlan": "FREE"
+            },
+            {
+                "policyName": "Unlimited",
+                "description": "Allows unlimited requests",
+                "displayName": "Unlimited",
+                "requestCount": "Unlimited",
+                "billingPlan": "FREE"
+            }
+    ],
     ERROR_MESSAGE: {
         ORG_NOT_FOUND: "Failed to load organization",
         ORG_CREATE_ERROR: "Error while creating organization",
@@ -138,6 +204,7 @@ module.exports = {
         API_CONTENT_UPDATE_ERROR: "Error while updating API content",
         API_CONTENT_DELETE_ERROR: "Error while deleting API content",
         API_CONTENT_CREATE_ERROR: "Error while creating API content",
+        API_DOCS_LIST_ERROR: "Error while fetching API docs",
         API_LISTING_LOAD_ERROR: "Error while loading API listing",
         IDP_NOT_FOUND: "Failed to load IDP",
         IDP_CREATE_ERROR: "Error while creating IDP",
@@ -149,10 +216,32 @@ module.exports = {
         PROVIDER_CREATE_ERROR: "Error while creating provider",
         PROVIDER_UPDATE_ERROR: "Error while updating provider",
         PROVIDER_DELETE_ERROR: "Error while deleting provider",
-        PROVIDER_FETCH_ERROR: "Error while fetching providers"
+        PROVIDER_FETCH_ERROR: "Error while fetching providers",
+        LABEL_DELETE_ERROR: "Error while deleting label",
+        LABEL_RETRIEVE_ERROR: "Error while deleting label",
+        LABEL_CREATE_ERROR: "Error while creating labels",
+        LABEL_UPDATE_ERROR: "Error while updating labels",
+        VIEW_CREATE_ERROR: "Error while creating view",
+        VIEW_UPDATE_ERROR: "Error while updating view",
+        VIEW_DELETE_ERROR: "Error while deleting view",
+        VIEW_RETRIEVE_ERROR: "Error while fetching view",
+        SUBSCRIPTION_POLICY_CREATE_ERROR: "Error while creating subscription policy",
+        SUBSCRIPTION_POLICY_NOT_FOUND: "Subscription policy not found",
+        APPLICATION_CREATE_ERROR: "Error while creating application",
+        APPLICATION_UPDATE_ERROR: "Error while updating application",
+        APPLICATION_DELETE_ERROR: "Error while deleting application",
+        APPLICATION_RETRIEVE_ERROR: "Error while fetching application",
+        SUBSCRIPTION_CREATE_ERROR: "Error while creating subscription",
+        SUBSCRIPTION_RETRIEVE_ERROR: "Error while retrieving subscription",
+        SUBSCRIPTION_DELETE_ERROR: "Error while deleting subscription",
+        KEY_MAPPING_CREATE_ERROR: "Error while creating key mapping",
+        KEY_MAPPING_RETRIEVE_ERROR: "Error while retrieving key mapping",
+        KEY_MAPPING_DELETE_ERROR: "Error while deleting key mapping",
+        ERR_SUB_EXIST: "ERR_SUB_EXIST"
     },
     ERROR_CODE: {
         401: "Unauthenticated",
-        403: "Forbidden"
+        403: "Forbidden",
+        404: "Not Found"
     }
 }

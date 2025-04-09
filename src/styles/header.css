@@ -188,7 +188,7 @@
 
 .user-status {
   font-size: 10px;
-  color: var(--light-bg-color);
+  color: var(--secondary-bg-color);
   background-color: var(--primary-color);
   padding: 2px 6px;
   border-radius: 12px;

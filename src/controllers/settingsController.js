@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,7 +16,7 @@
  * under the License.
  */
 /* eslint-disable no-undef */
-const { renderGivenTemplate, loadLayoutFromAPI } = require('../utils/util');
+const { renderGivenTemplate } = require('../utils/util');
 const fs = require('fs');
 const path = require('path');
 const adminDao = require('../dao/admin');
@@ -24,6 +24,9 @@ const IdentityProviderDTO = require("../dto/identityProvider");
 const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
 const adminService = require('../services/adminService');
+const apiMetadataService = require('../services/apiMetadataService');
+const devPortalService = require('../services/devportalService');
+
 const filePrefix = config.pathToContent;
 
 
@@ -34,7 +37,7 @@ const loadSettingPage = async (req, res) => {
     const layoutPath = path.join(require.main.filename, '..', 'pages', 'layout', 'main.hbs');
 
     let templateContent = {
-        baseUrl: req.params.orgName,
+        baseUrl: req.params.orgName+'/views/default',
         orgContent: true
     }
     let layoutResponse = "";
@@ -52,45 +55,43 @@ const loadSettingPage = async (req, res) => {
             templateContent.views = views;
             templateContent.apiProviders = getMockAPIProviders();
         } else {
+            let orgName = req.params.orgName;
+            templateContent.loggedOrg = orgName;
             //retrieve orgID from the user object
             if (req.user) {
                 orgID = req.user[constants.ORG_ID];
             } else {
-                let orgName = req.params.orgName;
                 orgID = await adminDao.getOrgId(orgName);
-                const templatePath = path.join(require.main.filename, '..', 'pages', 'error-page', 'page.hbs');
-                const templateResponse = fs.readFileSync(templatePath, constants.CHARSET_UTF8);
-                const layoutResponse = await loadLayoutFromAPI(orgID);
-                let html = await renderGivenTemplate(templateResponse, layoutResponse, {});
-                return res.send(html);
             }
             templateContent.orgID = orgID;
+            const organizations = await adminService.getAllOrganizations();
+            let orgs = organizations.length;
+            if (orgs !== 0) {
+                templateContent.organizations = organizations;
+            }
             const retrievedIDP = await adminDao.getIdentityProvider(orgID);
             if (retrievedIDP.length > 0) {
                 templateContent.idp = new IdentityProviderDTO(retrievedIDP[0]);
             } else {
                 templateContent.createIDP = true;
             }
-            //TODO: fetch view names from DB
-            const file = await adminService.getOrgContent(orgID, 'layout', 'main.hbs', 'layout');
-            if (file !== null) {
-                views = [{
-                    'name': 'Default'
-                }]
+            templateContent.viewCreate = true;
+            const views = await apiMetadataService.getViewsFromDB(orgID);
+            if (views.length > 0) {
                 templateContent.content = true;
                 templateContent.views = views;
+                templateContent.viewCreate = false;
                 templateContent.orgContent = false;
             }
+            const orgLabels = await apiMetadataService.getOrgLabels(orgID);
+            templateContent.orgLabels = orgLabels;
             //get api providers
             const apiProviders = await getAPIProviders(orgID);
             if (apiProviders.length > 0) {
                 templateContent.apiProviders = apiProviders;
             }
-            layoutResponse = await loadLayoutFromAPI(orgID);
         }
-        if (layoutResponse === "") {
-            layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
-        }
+        layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
         const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
         let html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         res.send(html);
@@ -119,7 +120,7 @@ async function getMockIdentityProvider() {
     return mockIDPaData;
 }
 
-const createOrganization = async (req, res) => {
+const loadPortalPage = async (req, res) => {
 
     let templateContent = {};
     try {
@@ -128,7 +129,6 @@ const createOrganization = async (req, res) => {
             templateContent.organizations = organizations;
         } else {
             templateContent = {
-                'orgID': req.user[constants.ORG_ID],
                 'profile': req.user
             }
             //fetch all created organizations
@@ -136,6 +136,7 @@ const createOrganization = async (req, res) => {
             let orgs = organizations.length;
             if (orgs !== 0) {
                 templateContent.organizations = organizations;
+                templateContent.create = true;
             }
         }
         const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'portal', 'page.hbs');
@@ -146,7 +147,56 @@ const createOrganization = async (req, res) => {
         res.send(html);
 
     } catch (error) {
-        console.error(`Error while loading setting page: ${error}`);
+        console.error(`Error while loading setting page:`, error);
+    }
+}
+
+const loadEditOrganizationPage = async (req, res) => {
+
+    let templateContent = {};
+    let orgID = "";
+    try {
+        if (config.mode === constants.DEV_MODE) {
+            const organizations = await getMockOrganizations();
+            templateContent.organizations = organizations;
+        } else {
+            const orgName = req.params.orgName;
+            if (req.params.orgId !== 'create') {
+                orgID = await adminDao.getOrgId(orgName);
+
+                //orgID = req.params.orgId;
+                const organization = await devPortalService.getOrganizationDetails(orgID);
+                templateContent = {
+                    'orgID': orgID,
+                    'profile': req.user,
+                    'organization': organization,
+                    'edit': true
+                }
+            }
+        }
+        const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'edit-organization', 'page.hbs');
+        const layoutPath = path.join(require.main.filename, '..', 'pages', 'layout', 'main.hbs');
+        const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
+        const layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
+        const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        res.send(html);
+    } catch (error) {
+        console.error(`Error while loading setting page :`, error);
+    }
+}
+
+const loadCreateOrganizationPage = async (req, res) => {
+
+    let templateContent = {};
+    try {
+        const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'add-organization', 'page.hbs');
+        const layoutPath = path.join(require.main.filename, '..', 'pages', 'layout', 'main.hbs');
+        const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
+        const layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
+        const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        res.send(html);
+    } catch (error) {
+        console.error(`Error while loading setting page :`, error);
     }
 }
 
@@ -160,5 +210,7 @@ async function getMockOrganizations() {
 
 module.exports = {
     loadSettingPage,
-    createorganization: createOrganization
+    loadPortalPage,
+    loadEditOrganizationPage,
+    loadCreateOrganizationPage
 };

@@ -4,11 +4,32 @@ const applicationsController = require('../controllers/applicationsContentContro
 const registerPartials = require('../middlewares/registerPartials');
 const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
 
+router.get('/:orgName/views/:viewName/applications', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, registerPartials, ensureAuthenticated, applicationsController.loadApplications);
 
+router.get('/:orgName/views/:viewName/applications/create', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, registerPartials, ensureAuthenticated, applicationsController.loadThrottlingPolicies);
 
-router.get('/((?!favicon.ico)):orgName/applications', ensureAuthenticated, registerPartials, applicationsController.loadApplications);
-router.get('/((?!favicon.ico)):orgName/applications/create', ensureAuthenticated, registerPartials, applicationsController.loadThrottlingPolicies);
-router.get('/((?!favicon.ico)):orgName/applications/:applicationid', ensureAuthenticated, registerPartials, applicationsController.loadApplication);
-router.get('/((?!favicon.ico)):orgName/applications/:applicationid/edit', ensureAuthenticated, registerPartials, applicationsController.loadApplicationForEdit);
+router.get('/:orgName/views/:viewName/applications/:applicationId', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, registerPartials, ensureAuthenticated, applicationsController.loadApplication);
+  
+router.get('/:orgName/views/:viewName/applications/:applicationId/edit', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, registerPartials, ensureAuthenticated, applicationsController.loadApplicationForEdit);
 
 module.exports = router;

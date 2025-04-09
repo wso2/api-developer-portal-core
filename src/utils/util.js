@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,13 +25,18 @@ const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 const unzipper = require('unzipper');
 const axios = require('axios');
+const qs = require('qs');
 const https = require('https');
 const config = require(process.cwd() + '/config.json');
-const { body } = require('express-validator');
+const { body, param, query } = require('express-validator');
 const { Sequelize } = require('sequelize');
+const apiDao = require('../dao/apiMetadata');
+const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
+const jwt = require('jsonwebtoken');
+const filePrefix = '/src/defaultContent/';
 
 // Function to load and convert markdown file to HTML
-function loadMarkdown(filename, dirName) {
+async function loadMarkdown(filename, dirName) {
 
     const filePath = path.join(process.cwd(), dirName, filename);
     if (fs.existsSync(filePath)) {
@@ -64,12 +69,13 @@ function renderTemplate(templatePath, layoutPath, templateContent, isTechnical) 
     });
 }
 
-async function loadLayoutFromAPI(orgID) {
+async function loadLayoutFromAPI(orgID, viewName) {
 
     var layoutContent = await adminDao.getOrgContent({
         orgId: orgID,
         fileType: constants.FILE_TYPE.LAYOUT,
-        fileName: constants.FILE_NAME.MAIN
+        fileName: constants.FILE_NAME.MAIN,
+        viewName: viewName
     });
     if (layoutContent) {
         return layoutContent.FILE_CONTENT.toString(constants.CHARSET_UTF8);
@@ -78,35 +84,34 @@ async function loadLayoutFromAPI(orgID) {
     }
 }
 
-async function loadTemplateFromAPI(orgID, filePath) {
+async function loadTemplateFromAPI(orgID, filePath, viewName) {
 
     var templateContent = await adminDao.getOrgContent({
         orgId: orgID,
         filePath: filePath,
         fileType: constants.FILE_TYPE.TEMPLATE,
-        fileName: constants.FILE_NAME.PAGE
+        fileName: constants.FILE_NAME.PAGE,
+        viewName: viewName
     });
     return templateContent ? templateContent.FILE_CONTENT.toString(constants.CHARSET_UTF8) : "";
 }
 
-async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath) {
+async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, viewName) {
 
-    var templatePage = await loadTemplateFromAPI(orgID, filePath);
-    var layoutContent = await loadLayoutFromAPI(orgID);
-
+    var layoutContent = await loadLayoutFromAPI(orgID, viewName);
+    if (layoutContent === "") {
+        console.log("Layout not found for org: " + orgName + " and view: " + viewName);
+        //load default org content
+        html = renderTemplate(filePrefix + filePath + '/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
+        return html;
+    }
+    var templatePage = await loadTemplateFromAPI(orgID, filePath, viewName);
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutContent.toString());
-    if (Object.keys(templateContent).length === 0 && templateContent.constructor === Object) {
-        return layout({
-            body: template({
-                baseUrl: '/' + orgName
-            }),
-        });
-    } else {
-        return layout({
-            body: template(templateContent),
-        });
-    }
+    return layout({
+        body: template(templateContent),
+    });
+
 }
 
 async function renderGivenTemplate(templatePage, layoutPage, templateContent) {
@@ -169,36 +174,85 @@ function handleError(res, error) {
     }
 };
 
-const unzipFile = async (zipPath, extractPath) => {
+const unzipDirectory = async (zipPath, extractPath) => {
+    if (typeof zipPath !== 'string' || typeof extractPath !== 'string' || !zipPath || !extractPath) {
+        throw new CustomError(400, 'Error unzipping directory', 'Invalid zip path or extract path.');
+    }
     const extractedFiles = [];
+    const maxFileSize = 50 * 1024 * 1024; // 50MB (limit for individual file size)
+    const maxTotalSize = 100 * 1024 * 1024; // 100MB (limit for total extracted data)
+    const maxDepth = 10; // Limit to prevent excessive nesting
+    let totalExtractedSize = 0; // Total extracted data size
+
     await new Promise((resolve, reject) => {
+        const streams = [];
         fs.createReadStream(zipPath)
             .pipe(unzipper.Parse())
             .on('entry', entry => {
-                const entryPath = entry.path;
+                try {
+                    const entryPath = entry.path;
+                    const entrySize = entry.size;
+                    const entryDepth = entryPath.split(path.sep).length;
 
-                if (!entryPath.includes('__MACOSX')) {
-                    const filePath = path.join(extractPath, entryPath);
+                    if (!entryPath.includes('__MACOSX')) {
+                        const filePath = path.resolve(extractPath, entryPath);
+                        // Prevent path traversal
+                        const normalizedFilePath = path.normalize(filePath);
+                        if (!normalizedFilePath.startsWith(path.resolve(extractPath))) {
+                            entry.autodrain();
+                            return reject (new CustomError(400, 'Error unzipping directory'
+                                , 'File access outside working directory detected.'));
+                        }
 
-                    if (entry.type === 'Directory') {
-                        fs.mkdirSync(filePath, { recursive: true });
-                        entry.autodrain();
+                        // Validate depth (to avoid zip bombs with excessive nesting)
+                        // and reject files that are too large
+                        // and check if adding this file would exceed the total size limit
+                        if ((entryDepth > maxDepth) || (entrySize > maxFileSize) 
+                            || (totalExtractedSize + entrySize > maxTotalSize)) {
+                            entry.autodrain();
+                            return reject (new CustomError(400, 'Error unzipping directory'
+                                , 'File size exceeded the limit of 100 MB'));
+                        }
+
+                        const dirName = path.dirname(normalizedFilePath);
+                        fs.mkdirSync(dirName, { recursive: true });
+                        if (entry.type === 'Directory') {
+                            entry.autodrain();
+                        } else {
+                            extractedFiles.push(normalizedFilePath);
+                            const stream = new Promise((resolve, reject) => {
+                                entry.pipe(fs.createWriteStream(normalizedFilePath))
+                                    .on('finish', resolve)
+                                    .on('error', reject);
+                            });
+                            streams.push(stream);
+                            // Update the total extracted size
+                            totalExtractedSize += entrySize;
+                        }
                     } else {
-                        extractedFiles.push(filePath);
-                        entry.pipe(fs.createWriteStream(filePath));
+                        entry.autodrain();
                     }
-                } else {
+                } catch (err) {
+                    console.error("Error processing entry. ", err);
                     entry.autodrain();
+                    reject (new Error('Error processing entry.'));
                 }
             })
             .on('close', async () => {
-                extractedFiles.length > 0 ? resolve() : reject(new Error('No files were extracted'));
+                try {
+                    await Promise.all(streams); // Wait for all files to finish writing
+                    extractedFiles.length > 0 ? resolve() : reject(new Error('No files were extracted'));
+                } catch (err) {
+                    reject(new Error(`Unzip failed: ${err.message}`));
+                }
             })
             .on('error', err => {
                 reject(new Error(`Unzip failed: ${err.message}`));
             });
-    });
-};
+    }).catch ((err) => {
+        throw err;
+    });  
+}
 
 const imageMapping = {
     [constants.FILE_EXTENSIONS.SVG]: constants.MIME_TYPES.SVG,
@@ -245,7 +299,7 @@ const getAPIFileContent = (directory) => {
     filenames.forEach((filename) => {
         if (!(filename === '.DS_Store')) {
             let fileContent = fs.readFileSync(path.join(directory, filename), 'utf8');
-            files.push({ fileName: filename, content: fileContent });
+            files.push({ fileName: filename, content: fileContent, type: constants.DOC_TYPES.API_LANDING });
         }
     });
     return files;
@@ -257,19 +311,52 @@ const getAPIImages = async (directory) => {
     for (const filename of filenames) {
         if (!(filename === '.DS_Store')) {
             let fileContent = await fs.promises.readFile(path.join(directory, filename.name));
-            files.push({ fileName: filename.name, content: fileContent });
+            files.push({ fileName: filename.name, content: fileContent, type: constants.DOC_TYPES.IMAGES });
         }
     }
     return files;
 };
 
-const invokeApiRequest = async (req, method, url, headers, body) => {
+const getAPIDocLinks = (documentMetadata) => {
 
+    let files = [];
+    documentMetadata.forEach((doc) => {
+        doc.links.forEach((link) => {
+            files.push({ fileName: constants.DOC_TYPES.DOCLINK_ID + link.displayName, content: link.url, type: doc.type });
+        });
+    });
+    return files;
+};
+
+async function readDocFiles(directory, baseDir = '') {
+
+    const files = await fs.promises.readdir(directory, { withFileTypes: true });
+    let fileDetails = [];
+    for (const file of files) {
+        const filePath = path.join(directory, file.name);
+        const relativePath = path.join(baseDir, file.name);
+        if (file.isDirectory()) {
+            const subDirContents = await readDocFiles(filePath, relativePath);
+            fileDetails = fileDetails.concat(subDirContents);
+        } else {
+            if (!(file.name === '.DS_Store')) {
+                let content = await fs.promises.readFile(filePath);
+                fileDetails.push({
+                    type: constants.DOC_TYPES.DOC_ID + baseDir,
+                    fileName: file.name,
+                    content: content,
+                });
+            }
+        }
+    }
+    return fileDetails;
+}
+
+const invokeApiRequest = async (req, method, url, headers, body) => {
+ 
     console.log(`Invoking API: ${url}`);
     headers = headers || {};
-    if (req.user) {
-        headers.Authorization = "Bearer " + req.user.accessToken;
-    }
+    headers.Authorization = req.user?.exchangeToken ? `Bearer ${req.user.exchangeToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
     let httpsAgent;
 
     if (config.controlPlane.disableCertValidation) {
@@ -283,27 +370,50 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
             rejectUnauthorized: true,
         });
     }
-    try {
-        const options = {
-            method,
-            headers,
-            httpsAgent,
-        };
 
+    const options = {
+        method,
+        headers,
+        httpsAgent,
+    };
+
+    try { 
         if (body) {
             options.data = body;
+        }
+
+        if (config.advanced.tokenExchanger.enabled) {
+            const decodedToken = jwt.decode(req.user.exchangeToken);
+            const orgId = decodedToken.organization.uuid;
+            url = url.includes("?") ? `${url}&organizationId=${orgId}` : `${url}?organizationId=${orgId}`;
         }
 
         const response = await axios(url, options);
         return response.data;
     } catch (error) {
-
-        console.log(`Error while invoking API: ${error}`);
-        let message = error.message;
-        if (error.response) {
-            message = error.response.data.description;
-        }
-        throw new CustomError(error.status, 'Request failed', message);
+        if (error.response?.status === 401 && req.user?.exchangeToken) {
+            try {
+                const newExchangedToken = await tokenExchanger(req.user.accessToken, req.user.returnTo.split("/")[1]);
+                req.user.exchangeToken = newExchangedToken;
+                headers.Authorization = `Bearer ${newExchangedToken}`;
+                options.headers = headers;
+                const response = await axios(url, options);
+                return response.data;
+            } catch (retryError) {
+                let retryMessage;
+                if (retryError.response) {
+                    retryMessage = retryError.response.data.description;
+                }
+                throw new CustomError(retryError.response?.status || 500, "Request retry failed", retryMessage);   
+            }
+        } else {
+            console.log(`Error while invoking API:`, error);
+            let message = error.message;
+            if (error.response) {
+                message = error.response.data.description;
+            }
+            throw new CustomError(error.status, 'Request failed', message);
+        }      
     }
 };
 
@@ -371,13 +481,13 @@ const validateOrganization = () => {
 
     const validations = [
         body('businessOwnerEmail')
-            .notEmpty()
+            .optional({ checkFalsy: true })
             .isEmail(),
         body('*')
-            .if(body('*').not().equals('devPortalURLIdentifier'))
+            .if(body('*').not().equals('orgHandle'))
+            .optional()
             .customSanitizer(value => value.replace(/[<>"'&]/g, ''))
             .trim()
-            .notEmpty()
     ]
     return validations;
 }
@@ -399,6 +509,19 @@ const validateProvider = () => {
     return validations;
 }
 
+const validateRequestParameters = () => {
+
+    const validations = [
+        param('*')
+            .trim()
+            .escape(),
+        query('*')
+            .trim()
+            .escape(),
+    ]
+    return validations;
+}
+
 const rejectExtraProperties = (allowedKeys, payload) => {
 
     const extraKeys = Object.keys(payload).filter(
@@ -407,53 +530,215 @@ const rejectExtraProperties = (allowedKeys, payload) => {
     return extraKeys;
 };
 
-async function readFilesInDirectory(directory, orgId, protocol, host, baseDir = '') {
+async function readFilesInDirectory(directory, orgId, protocol, host, viewName, baseDir = '') {
+    try {
+        const files = await fs.promises.readdir(directory, { withFileTypes: true });
+        let fileDetails = [];
+        for (const file of files) {
+            const filePath = path.join(directory, file.name);
+            const relativePath = path.join(baseDir, file.name);
 
-    const files = await fs.promises.readdir(directory, { withFileTypes: true });
-    let fileDetails = [];
-    for (const file of files) {
-        const filePath = path.join(directory, file.name);
-        const relativePath = path.join(baseDir, file.name);
-        if (file.isDirectory()) {
-            const subDirContents = await readFilesInDirectory(filePath, orgId, protocol, host, relativePath);
-            fileDetails = fileDetails.concat(subDirContents);
-        } else {
-            let content = await fs.promises.readFile(filePath);
-            let strContent = await fs.promises.readFile(filePath, constants.CHARSET_UTF8);
-            let dir = baseDir.replace(/^[^/]+\/?/, '') || '/';
-            let fileType;
-            if (file.name.endsWith(".css")) {
-                fileType = "style"
-                if (file.name === "main.css") {
-                    strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g,
-                        `@import url("${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/layout?fileType=style&fileName=$1");`);
-                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
-                }
-            } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
-                fileType = "layout"
-                if (file.name === "main.hbs") {
-                    strContent = strContent.replace(/\/styles\//g, `${protocol}://${host}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/layout?fileType=style&fileName=`);
-                    content = Buffer.from(strContent, constants.CHARSET_UTF8);
-                }
-            } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
-                fileType = "partial"
-            } else if (file.name.endsWith(".md") && dir.endsWith("content")) {
-                fileType = "markDown";
-            } else if (file.name.endsWith(".hbs")) {
-                fileType = "template";
-            } else {
-                fileType = "image";
+            // Normalize and resolve filePath to ensure it stays within the intended directory
+            const resolvedFilePath = path.resolve(filePath);
+            const resolvedBaseDir = path.resolve(directory);
+
+            // Ensure the file path is within the target directory
+            if (!resolvedFilePath.startsWith(resolvedBaseDir + path.sep)) {
+                throw new Error(`Invalid file path: ${filePath}`);
             }
 
-            fileDetails.push({
-                filePath: dir,
-                fileName: file.name,
-                fileContent: content,
-                fileType: fileType
+            if (file.isDirectory()) {
+                const subDirContents = await readFilesInDirectory(filePath, orgId, protocol, host, viewName, relativePath);
+                fileDetails = fileDetails.concat(subDirContents);
+            } else {
+                let content = await fs.promises.readFile(filePath);
+                let strContent = await fs.promises.readFile(filePath, constants.CHARSET_UTF8);
+                let dir = baseDir.replace(/^[^/]+\/?/, '') || '/';
+                const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.svg'];
+                const fileExtension = path.extname(file.name).toLowerCase();
+                let fileType;
+                if (file.name.endsWith(".css")) {
+                    fileType = "style"
+                    if (file.name === "main.css") {
+                        strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g, `@import url("${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
+                    } 
+                    strContent = strContent.replace(/"\/images\/([^"]+)/g, `"${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
+                    strContent = strContent.replace(/'\/images\/([^']+)/g, `'${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
+                    content = Buffer.from(strContent, constants.CHARSET_UTF8);
+                } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
+                    fileType = "layout"
+                    if (file.name === "main.hbs") {
+                        strContent = strContent.replace(/\/styles\//g, `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=`);
+                        content = Buffer.from(strContent, constants.CHARSET_UTF8);
+                    }
+                    validateScripts(strContent);
+                } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {                    
+                    strContent = strContent.replace(/"\/images\/([^"]+)/g, `"${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
+                    strContent = strContent.replace(/'\/images\/([^']+)/g, `'${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
+                    content = Buffer.from(strContent, constants.CHARSET_UTF8);
+                    validateScripts(strContent);
+                    fileType = "partial"
+                } else if (file.name.endsWith(".md") && dir.endsWith("content")) {
+                    fileType = "markDown";
+                } else if (file.name.endsWith(".hbs")) {
+                    validateScripts(strContent);
+                    fileType = "template";
+                } else if (imageExtensions.includes(fileExtension)) {
+                    fileType = "image";
+                } else {
+                    // Unexpected file type
+                    console.warn(`Unexpected file type detected: ${file.name}`);
+                    continue;
+                }
+
+                fileDetails.push({
+                    filePath: dir,
+                    fileName: file.name,
+                    fileContent: content,
+                    fileType: fileType
+                });
+            }
+        }
+        return fileDetails;
+    } catch (error) {
+        console.error("Error occurred while reading files in directory", error);
+        throw error;
+    }
+}
+
+
+function validateScripts(strContent) {
+    try {
+        const allowedScripts = new Set([
+            "<script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'></script>",
+            "<script src='/technical-scripts/search.js' defer></script>",
+            "<script src='/technical-scripts/filter.js' defer></script>",
+            "<script src='/technical-scripts/common.js' defer></script>",
+            "<script src='/technical-scripts/subscription.js' defer></script>",
+            "<script src='/technical-scripts/add-application-form.js' defer></script>"
+        ]);
+
+        const scriptRegex = /<script(?:\s+[^>]*)?>[\s\S]*?<\/script>/g;
+        let match;
+        const extractedScripts = new Set();
+
+        while ((match = scriptRegex.exec(strContent)) !== null) {
+            extractedScripts.add(match[0].trim());
+        }
+
+        for (const script of extractedScripts) {
+            if (!allowedScripts.has(script)) {
+                throw new CustomError(400, constants.ERROR_CODE[400], `Additional scripts not allowed`);
+            }
+        }
+    } catch (error) {
+        console.error("Error occurred while validating scripts", error);
+        throw error;
+    }
+}
+
+function appendAPIImageURL(subList, req, orgID) {
+
+    subList.forEach(element => {
+        const images = element.apiInfo.apiImageMetadata;
+        let apiImageUrl = '';
+        for (const key in images) {
+            apiImageUrl = `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${element.apiID}${constants.API_TEMPLATE_FILE_NAME}`;
+            const modifiedApiImageURL = apiImageUrl + images[key];
+            element.apiInfo.apiImageMetadata[key] = modifiedApiImageURL;
+        }
+    });
+}
+
+async function appendSubscriptionPlanDetails(orgID, subscriptionPolicies) {
+    let subscriptionPlans = [];
+    if (subscriptionPolicies) {
+        for (const policy of subscriptionPolicies) {
+            const subscriptionPlan = await loadSubscriptionPlan(orgID, policy.policyName);
+            subscriptionPlans.push({
+                policyID: subscriptionPlan.policyID,
+                displayName: subscriptionPlan.displayName,
+                policyName: subscriptionPlan.policyName,
+                description: subscriptionPlan.description,
+                billingPlan: subscriptionPlan.billingPlan,
+                requestCount: subscriptionPlan.requestCount,
             });
         }
     }
-    return fileDetails;
+    return subscriptionPlans;
+}
+
+const loadSubscriptionPlan = async (orgID, policyName) => {
+
+    try {
+        const policyData = await apiDao.getSubscriptionPolicyByName(orgID, policyName);
+        if (policyData) {
+            return new subscriptionPolicyDTO(policyData);
+        } else {
+            throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
+        }
+    } catch (error) {
+        ("Error occurred while loading subscription plans", error);
+        util.handleError(res, error);
+    }
+}
+
+async function tokenExchanger(token, orgName) {
+    const url = config.advanced.tokenExchanger.url;
+    const maxRetries = 3;
+    let delay = 1000;
+    const orgDetails = await adminDao.getOrganization(orgName);
+    if (!orgDetails) {
+        throw new Error('Organization not found');
+    } else if (!orgDetails.ORGANIZATION_IDENTIFIER) {
+        throw new Error('Organization Identifier not found');
+    }
+
+    const data = qs.stringify({
+        client_id: config.advanced.tokenExchanger.client_id,
+        grant_type: config.advanced.tokenExchanger.grant_type,
+        subject_token_type: config.advanced.tokenExchanger.subject_token_type,
+        requested_token_type: config.advanced.tokenExchanger.requested_token_type,
+        scope: config.advanced.tokenExchanger.scope,
+        subject_token: token,
+        orgHandle: orgDetails.ORG_HANDLE
+    });
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await axios.post(url, data, {
+                headers: {
+                    'Referer': '',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+
+            return response.data.access_token;
+        } catch (error) {
+            if (error.response?.status >= 500 && error.response?.status < 600 && attempt < maxRetries) {
+                console.warn(`Token exchange failed. Retrying in ${delay}ms... (Attempt ${attempt + 1}/${maxRetries})`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                delay *= 2; 
+            } else {
+                console.error('Token exchange failed:', error.message);
+                throw new Error('Failed to exchange token');
+            }
+        }        
+    }
+}
+
+async function listFiles(path) {
+
+    let files = [];
+    fs.promises.readdir(path, (err, files) => {
+        if (err) {
+            console.error('Error reading directory:', err);
+            return;
+        }
+        console.log('Files in directory:', files);
+    });
+    return files;
 }
 
 module.exports = {
@@ -464,16 +749,23 @@ module.exports = {
     renderTemplateFromAPI,
     renderGivenTemplate,
     handleError,
-    unzipFile,
     retrieveContentType,
     getAPIFileContent,
     getAPIImages,
+    getAPIDocLinks,
     isTextFile,
     invokeApiRequest,
     validateIDP,
     validateOrganization,
     getErrors,
     validateProvider,
+    validateRequestParameters,
     rejectExtraProperties,
-    readFilesInDirectory
+    readFilesInDirectory,
+    appendAPIImageURL,
+    appendSubscriptionPlanDetails,
+    tokenExchanger,
+    listFiles,
+    readDocFiles,
+    unzipDirectory
 }

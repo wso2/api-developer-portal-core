@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,8 +20,13 @@ const express = require('express');
 const { engine } = require('express-handlebars');
 const passport = require('passport');
 const session = require('express-session');
-const crypto = require('crypto');
+const pgSession = require('connect-pg-simple')(session);
+const { Pool } = require('pg');
 const path = require('path');
+const http = require('http');
+const https = require('https');
+const fs = require('fs');
+const chalk = require('chalk');
 const authRoute = require('./routes/authRoute');
 const devportalRoute = require('./routes/devportalRoute');
 const orgContent = require('./routes/orgContentRoute');
@@ -34,13 +39,44 @@ const Handlebars = require('handlebars');
 const constants = require("./utils/constants");
 const designRoute = require('./routes/designModeRoute');
 const settingsRoute = require('./routes/configureRoute');
+const AsyncLock = require('async-lock');
+const util = require('./utils/util');
 
+const OAuth2Strategy = require('passport-oauth2');
+const jwt = require('jsonwebtoken');
+const secretConf = require(process.cwd() + '/secret.json');
+const { v4: uuidv4 } = require('uuid');
+
+const lock = new AsyncLock();
 const app = express();
-const secret = crypto.randomBytes(64).toString('hex');
+// const secret = crypto.randomBytes(64).toString('hex');
+const sessionSecret = 'my-secret';
 const filePrefix = config.pathToContent;
 
-if (config.disableTLS) {
-    process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+const SERVER_ID = uuidv4();
+
+console.log(`starting server: ${SERVER_ID}`);
+
+//PostgreSQL connection pool for session store
+
+
+if (config.advanced.dbSslDialectOption) {
+    pool = new Pool({
+        user: config.db.username,
+        host: config.db.host,
+        database: config.db.database,
+        password: secretConf.dbSecret,
+        port: config.db.port,
+        ssl: { require: true, rejectUnauthorized: false }
+    });
+} else {
+    pool = new Pool({
+        user: config.db.username,
+        host: config.db.host,
+        database: config.db.database,
+        password: secretConf.dbSecret,
+        port: config.db.port
+    });
 }
 
 app.engine('.hbs', engine({
@@ -48,6 +84,48 @@ app.engine('.hbs', engine({
 }));
 
 app.set('view engine', 'hbs');
+
+// #region Register Handlebars helpers
+
+Handlebars.registerHelper('json', function (context) {
+
+    if (context) {
+        return JSON.stringify(context);
+    } else {
+        return JSON.stringify();
+    }
+});
+
+Handlebars.registerHelper("every", function (array, key, options) {
+    if (!Array.isArray(array)) {
+        return options.inverse(this);
+    }
+
+    const allMatch = array.every(item => item[key]);
+
+    return allMatch ? true : false;
+});
+
+Handlebars.registerHelper("firstTwoLetters", function (text) {
+    return text ? text.substring(0, 2).toUpperCase() : "";
+});
+
+Handlebars.registerHelper('beforeSeparator', function (value, separator) {
+    if (typeof value === 'string' && typeof separator === 'string') {
+        return value.split(separator)[0];
+    }
+    return value;
+});
+
+Handlebars.registerHelper("some", function (array, key, options) {
+    if (!Array.isArray(array)) {
+        return options.inverse(this);
+    }
+
+    const someMatch = array.some(item => item[key]);
+
+    return someMatch ? true : false;
+});
 
 Handlebars.registerHelper('eq', function (a, b) {
     return (a === b || (a != null && b != null && (a === b.toString() || a.toString() === b)));
@@ -84,31 +162,214 @@ Handlebars.registerHelper('getValue', function (obj, key) {
     return obj[key];
 });
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+Handlebars.registerHelper('lowercase', function (str) {
+    return typeof str === 'string' ? str.toLowerCase() : str;
+});
+
+Handlebars.registerHelper('isMiddle', function (index, length) {
+    const middleIndex = Math.floor(length / 2);
+    return index === middleIndex;
+});
+
+Handlebars.registerHelper('startsWith', function (str, includeStr, options) {
+    if (str && str.startsWith(includeStr)) {
+        return options.fn(this);
+    } else {
+        return options.inverse(this);
+    }
+});
+
+// #endregion
 
 app.use(session({
-    secret: secret,
+    store: new pgSession({
+        pool: pool,
+        tableName: 'session',
+        pruneSessionInterval: 3600,
+        debug: console.log,
+    }),
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false } // Set to true if using HTTPS
+    cookie: {
+        secure: false,
+        maxAge: 60 * 60 * 1000,
+    },
 }));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use(passport.initialize());
 app.use(passport.session());
 
+let claimNames = {
+    [constants.ROLES.ROLE_CLAIM]: config.roleClaim,
+    [constants.ROLES.GROUP_CLAIM]: config.groupsClaim,
+    [constants.ROLES.ORGANIZATION_CLAIM]: config.orgIDClaim
+};
+// configurePassport(config.identityProvider, claimNames);
+
+const strategy = new OAuth2Strategy({
+    name: 'Asgardeo',
+    issuer: config.identityProvider.issuer,
+    authorizationURL: config.identityProvider.authorizationURL,
+    tokenURL: config.identityProvider.tokenURL,
+    userInfoURL: config.identityProvider.userInfoURL,
+    clientID: config.identityProvider.clientId,
+    callbackURL: config.identityProvider.callbackURL,
+    pkce: true,
+    state: true,
+    logoutURL: process.env.OAUTH2_LOGOUT_ENDPOINT,
+    logoutRedirectURI: process.env.OAUTH2_POST_LOGOUT_REDIRECT_URI,
+    certificate: '',
+    jwksURL: process.env.OAUTH2_JWKS_ENDPOINT,
+    passReqToCallback: true,
+    scope: ['openid', 'profile', 'email'],
+}, async (req, accessToken, refreshToken, params, profile, done) => {
+    if (!accessToken) {
+        return done(new Error('Access token missing'));
+    }
+    let orgList, userOrg;
+    if (config.advanced.tokenExchanger.enabled) {
+        const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
+        const decodedExchangedToken = jwt.decode(exchangedToken);
+        orgList = decodedExchangedToken.organizations;
+        userOrg = decodedExchangedToken.organization.uuid;
+        req['exchangedToken'] = exchangedToken;
+    }
+    const decodedJWT = jwt.decode(params.id_token);
+    const decodedAccessToken = jwt.decode(accessToken);
+    const firstName = decodedJWT['given_name'] || decodedJWT['nickname'];
+    const lastName = decodedJWT['family_name'];
+    const organizationID = decodedJWT[claimNames[constants.ROLES.ORGANIZATION_CLAIM]] ? decodedJWT[config.orgIDClaim] : '';
+    const roles = decodedJWT[claimNames[constants.ROLES.ROLE_CLAIM]] ? decodedJWT[config.roleClaim] : '';
+    const groups = decodedJWT[claimNames[constants.ROLES.GROUP_CLAIM]] ? decodedJWT[config.groupsClaim] : '';
+    let isAdmin, isSuperAdmin = false;
+    if (roles.includes(constants.ROLES.SUPER_ADMIN) || roles.includes(constants.ROLES.ADMIN)) {
+        isAdmin = true;
+    }
+    if (roles.includes(constants.ROLES.SUPER_ADMIN)) {
+        isSuperAdmin = true;
+    }
+    const returnTo = req.session.returnTo;
+    let view = '';
+    if (returnTo) {
+        const startIndex = returnTo.indexOf('/views/') + 7;
+        const endIndex = returnTo.indexOf('/', startIndex) !== -1 ? returnTo.indexOf('/', startIndex) : returnTo.length;
+        view = returnTo.substring(startIndex, endIndex);
+    }
+    let imageURL = "https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/profile.svg";
+    if (decodedJWT['google_pic_url']) {
+        imageURL = decodedJWT['google_pic_url'];
+    } else {
+        imageURL = decodedJWT['picture'] ? decodedJWT['picture'] : imageURL;
+    }
+    profile = {
+        'firstName': firstName ? (firstName.includes(" ") ? firstName.split(" ")[0] : firstName) : '',
+        'lastName': lastName ? lastName : (firstName && firstName.includes(" ") ? firstName.split(" ")[1] : ''),
+        'view': view,
+        'idToken': params.id_token,
+        'email': decodedJWT['email'],
+        [constants.ROLES.ORGANIZATION_CLAIM]: organizationID,
+        'returnTo': req.session.returnTo,
+        accessToken,
+        'authorizedOrgs': orgList,
+        'exchangeToken': req.exchangedToken,
+        [constants.ROLES.ROLE_CLAIM]: roles,
+        [constants.ROLES.GROUP_CLAIM]: groups,
+        'isAdmin': isAdmin,
+        'isSuperAdmin': isSuperAdmin,
+        [constants.USER_ID]: decodedAccessToken[constants.USER_ID],
+        serverId: SERVER_ID,
+        imageURL: imageURL,
+        userOrg: userOrg
+    };
+    req.session.regenerate((err) => {
+        if (err) {
+            console.error('Session regeneration failed:', err);
+            return done(err);
+        }
+        // Store the new user profile in the session
+        req.login(profile, (err) => {
+            if (err) {
+                console.error('Login failed after session regen:', err);
+                return done(err);
+            }
+            return done(null, profile);
+        });
+    });
+
+    console.log('Retruning profile');
+
+    //return done(null, profile);
+});
+
+strategy.authorizationParams = function(options) {
+    const params = {};
+    if (options.prompt) {
+        params.prompt = options.prompt;
+    }
+    return params;
+};
+
+passport.use(strategy);
+
 // Serialize user into the session
 passport.serializeUser((user, done) => {
-    done(null, user);
+
+    console.log("Serializing user");
+    const profile = {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        imageURL: user.imageURL,
+        view: user.view,
+        idToken: user.idToken,
+        [constants.ROLES.ORGANIZATION_CLAIM]: user[constants.ROLES.ORGANIZATION_CLAIM],
+        'returnTo': user.returnTo,
+        accessToken: user.accessToken,
+        'exchangeToken': user.exchangeToken,
+        'authorizedOrgs': user.authorizedOrgs,
+        [constants.ROLES.ROLE_CLAIM]: user.roles,
+        [constants.ROLES.GROUP_CLAIM]: user.groups,
+        'isAdmin': user.isAdmin,
+        'isSuperAdmin': user.isSuperAdmin,
+        [constants.USER_ID]: user[constants.USER_ID],
+        'userOrg': user.userOrg
+    };
+    lock.acquire('serialize', (release) => {
+        release(null, profile);
+    }, (err, ret) => {
+        if (err) {
+            return done(err);
+        }
+        done(null, ret);
+    });
+    //done(null, user);
 });
 
 // Deserialize user from the session
-passport.deserializeUser((user, done) => {
-    done(null, user);
+passport.deserializeUser(async (sessionData, done) => {
+    //return done(null, sessionData);
+    lock.acquire('deserialize', async (release) => {
+        try {
+            release(null, sessionData);
+        } catch (err) {
+            release(err);
+        }
+    }, (err, ret) => {
+        if (err) {
+            return done(err);
+        }
+        done(null, ret);
+    });
 });
 
-app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), filePrefix + 'styles')));
-app.use(constants.ROUTE.IMAGES, express.static(path.join(process.cwd(), filePrefix + 'images')));
+// passport.deserializeUser((obj, done) => {
+//     done(null, obj)
+// });
+
 app.use(constants.ROUTE.TECHNICAL_STYLES, express.static(path.join(require.main.filename, '../styles')));
 app.use(constants.ROUTE.TECHNICAL_SCRIPTS, express.static(path.join(require.main.filename, '../scripts')));
 
@@ -116,9 +377,13 @@ app.use(constants.ROUTE.TECHNICAL_SCRIPTS, express.static(path.join(require.main
 app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
 
 if (config.mode === constants.DEV_MODE) {
+    app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), filePrefix + 'styles')));
+    app.use(constants.ROUTE.IMAGES, express.static(path.join(process.cwd(), filePrefix + 'images')));
     app.use(constants.ROUTE.MOCK, express.static(path.join(process.cwd(), filePrefix + 'mock')));
     app.use(constants.ROUTE.DEFAULT, designRoute);
 } else {
+    app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), './src/defaultContent/' + 'styles')));
+    app.use(constants.ROUTE.IMAGES, express.static(path.join(process.cwd(), './src/defaultContent/' + 'images')));
     app.use(constants.ROUTE.DEFAULT, authRoute);
     app.use(constants.ROUTE.DEFAULT, apiContent);
     app.use(constants.ROUTE.DEFAULT, applicationContent);
@@ -128,4 +393,79 @@ if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.DEFAULT, customContent);
 }
 
-app.listen(config.port);
+
+app.use((err, req, res, next) => {
+
+    console.log(err) // Log error for debugging
+    const templateContent = {
+        baseUrl: '/' + req.params.orgName + '/' + constants.ROUTE.VIEWS_PATH + "default"
+    }
+    if (err.status === 401) {
+        req.session.destroy((err) => {
+            if (err) {
+                return res.status(500).send("Logout failed");
+            }
+        });
+        html = util.renderTemplate('../pages/authentication-error/page.hbs', 'src/pages/error-layout/main.hbs', templateContent, true);
+    } else {
+        html = util.renderTemplate('../pages/error-page/page.hbs', 'src/pages/error-layout/main.hbs', templateContent, true);
+    }
+    res.status(err.status || 500).send(`
+      ${html}
+    `);
+});
+
+
+const PORT = process.env.PORT || config.defaultPort;
+if (config.advanced.http) {
+    http.createServer(app).listen(PORT, '0.0.0.0', () => {
+        logStartupInfo();
+    });
+
+} else {
+    try {
+        const certPath = path.join(process.cwd(), config.serverCerts.pathToCert);
+        const keyPath = path.join(process.cwd(), config.serverCerts.pathToPK);
+        const caPath = path.join(process.cwd(), config.serverCerts.pathToCA);
+
+        const serverCert = fs.readFileSync(certPath);
+        const serverKey = fs.readFileSync(keyPath);
+        const caCert = fs.readFileSync(caPath);
+
+        https.createServer({
+            key: serverKey,
+            cert: serverCert,
+            ca: caCert,
+            requestCert: true,
+            rejectUnauthorized: false
+        }, app).listen(PORT, () => {
+            logStartupInfo();
+        });
+
+    } catch (err) {
+        ('\n' + chalk.red.bold('Error setting up HTTPS server:') + '\n', chalk.red(err.message) + '\n');
+    }
+}
+
+const logStartupInfo = () => {
+    console.log('\n' + chalk.green.bold(`Developer Portal V2 is running on port ${PORT}`) + '\n');
+    console.log('\n' + chalk.cyan.bold(`Mode: ${config.mode}`) + '\n');
+
+    if (config.mode === constants.DEV_MODE) {
+        console.log('\n' + chalk.yellow('⚠️  Since you are in DEV mode...') + '\n');
+        console.log(chalk.greenBright('✅ Ensure that the default content is correctly available at the configured "pathToContent".') + '\n');
+        console.log(chalk.greenBright('✅ The "Mock" folder must exist in the same root directory as "pathToContent".') + '\n');
+    }
+
+    console.log(chalk.blue(`🔗 Visit: ${chalk.underline(config.baseUrl + (config.mode === constants.DEV_MODE ? "/views/default" : "/<organization>/views/default"))}`) + '\n');
+};
+
+// Handle Uncaught Exceptions
+process.on('uncaughtException', (err) => {
+    ('\n' + chalk.bgRed.white.bold(' Uncaught Exception ') + '\n', chalk.red(err.stack || err.message) + '\n');
+});
+
+// Handle Unhandled Rejections
+process.on('unhandledRejection', (reason, promise) => {
+    ('\n' + chalk.bgRed.white.bold(' Unhandled Rejection ') + '\n', chalk.red('Promise:', promise, '\nReason:', reason) + '\n');
+});

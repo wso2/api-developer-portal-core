@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,8 +19,13 @@ const express = require('express');
 const router = express.Router();
 const orgController = require('../controllers/orgContentController');
 const registerPartials = require('../middlewares/registerPartials');
+const authController = require('../controllers/authController');
 
-router.get('/(((?!favicon.ico|images|portal)):orgName)', registerPartials, orgController.loadOrganizationContent);
-
+router.get('/:orgName/views/:viewName', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico' || req.params.orgName === 'images' || req.params.orgName === 'portal') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, authController.handleSilentSSO, registerPartials, orgController.loadOrganizationContent);
 
 module.exports = router;

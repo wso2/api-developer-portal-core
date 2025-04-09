@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,9 +22,14 @@ const constants = require('../utils/constants');
 const path = require('path');
 const fs = require('fs');
 const adminDao = require('../dao/admin');
+const apiMetadata = require('../dao/apiMetadata');
 const util = require('../utils/util');
 const filePrefix = config.pathToContent;
 const controlPlaneUrl = config.controlPlane.url;
+const { ApplicationDTO } = require('../dto/application');
+const APIDTO = require('../dto/apiDTO');
+const adminService = require('../services/adminService');
+const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
 
 const orgIDValue = async (orgName) => {
     const organization = await adminDao.getOrganization(orgName);
@@ -39,39 +44,47 @@ const templateResponseValue = async (pageName) => {
 // ***** Load Applications *****
 
 const loadApplications = async (req, res) => {
+
+    const viewName = req.params.viewName;
+    let html, metaData, templateContent;
     try {
-        let html, metaData, templateContent;
         if (config.mode === constants.DEV_MODE) {
             metaData = await getMockApplications();
             templateContent = {
                 applicationsMetadata: metaData,
-                baseUrl: constants.BASE_URL + config.port
+                baseUrl: baseURLDev + viewName
             }
             html = renderTemplate('../pages/applications/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
         } else {
             const orgName = req.params.orgName;
             const orgID = await orgIDValue(orgName);
-            metaData = await getAPIMApplications(req);
+            const applications = await adminDao.getApplications(orgID, req.user.sub)
+            const metaData = await Promise.all(
+                applications.map(async (application) => {
+                    const subApis = await adminDao.getSubscriptions(orgID, application.APP_ID, '');
+                    return {
+                        ...new ApplicationDTO(application),
+                        subscriptionCount: subApis.length
+                    };
+                })
+            );
             templateContent = {
                 applicationsMetadata: metaData,
-                baseUrl: '/' + orgName
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
             }
             const templateResponse = await templateResponseValue('applications');
-            const layoutResponse = await loadLayoutFromAPI(orgID);
-            html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+            const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
+            if (layoutResponse === "") {
+                html = renderTemplate('../pages/applications/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+            } else {
+                html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+            }
         }
-        res.send(html);
     } catch (error) {
         console.error("Error occurred while loading Applications", error);
-        const orgName = req.params.orgName;
-        const orgId = await orgIDValue(orgName);
-        
-        const templatePath = path.join(require.main.filename, '..', 'pages', 'error-page', 'page.hbs');
-        const templateResponse = fs.readFileSync(templatePath, constants.CHARSET_UTF8);
-        const layoutResponse = await loadLayoutFromAPI(orgId);
-        let html = await renderGivenTemplate(templateResponse, layoutResponse, {});
-        res.send(html);
+        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
     }
+    res.send(html);
 }
 
 async function getMockApplications() {
@@ -80,36 +93,39 @@ async function getMockApplications() {
     return mockApplicationsMetaData.list;
 }
 
-async function getAPIMApplications(req) {
-    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/applications', null, null);
-    return responseData.list;
-}
-
 // ***** Load Throttling Policies *****
 
 const loadThrottlingPolicies = async (req, res) => {
-    let html, metaData, templateContent;
-    if (config.mode === constants.DEV_MODE) {
-        metaData = await getMockThrottlingPolicies();
-        templateContent = {
-            throttlingPoliciesMetadata: metaData,
-            baseUrl: constants.BASE_URL + config.port
-        }
-        html = renderTemplate('../pages/add-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
-    }
-    else {
-        const orgName = req.params.orgName;
-        const orgID = await orgIDValue(orgName);
-        metaData = await getAPIMThrottlingPolicies(req);
-        templateContent = {
-            throttlingPoliciesMetadata: metaData,
-            baseUrl: '/' + orgName
-        }
-        const templateResponse = await templateResponseValue('add-application');
-        const layoutResponse = await loadLayoutFromAPI(orgID);
-        html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
-    }
 
+    let html, metaData, templateContent;
+    try {
+        const viewName = req.params.viewName;
+        if (config.mode === constants.DEV_MODE) {
+            metaData = await getMockThrottlingPolicies();
+            templateContent = {
+                throttlingPoliciesMetadata: metaData,
+                baseUrl: baseURLDev + viewName
+            }
+            html = renderTemplate('../pages/add-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
+        }
+        else {
+            const orgName = req.params.orgName;
+            const orgID = await orgIDValue(orgName);
+            templateContent = {
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
+            }
+            const templateResponse = await templateResponseValue('add-application');
+            const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
+            if (layoutResponse === "") {
+                html = renderTemplate('../pages/add-application/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+            } else {
+                html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+            }
+        }
+    } catch (error) {
+        console.error("Error occurred", error);
+        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
+    }
     res.send(html);
 }
 
@@ -127,53 +143,103 @@ async function getAPIMThrottlingPolicies(req) {
 // ***** Load Application *****
 
 const loadApplication = async (req, res) => {
+    let html, templateContent, metaData, kMmetaData;
+    const viewName = req.params.viewName;
     try {
-        const applicationId = req.params.applicationid;
-        let html, templateContent, metaData, kMmetaData;
+        const applicationId = req.params.applicationId;
         if (config.mode === constants.DEV_MODE) {
             metaData = await getMockApplication();
             kMmetaData = await getMockKeyManagers();
             templateContent = {
                 applicationMetadata: metaData,
                 keyManagersMetadata: kMmetaData,
-                baseUrl: constants.BASE_URL + config.port
+                baseUrl: baseURLDev + viewName
             }
             html = renderTemplate('../pages/application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
         } else {
             const orgName = req.params.orgName;
             const orgID = await orgIDValue(orgName);
-            metaData = await getAPIMApplication(req, applicationId);
-            const allApis = await getAllAPIs(req);
-            const subApis = await getSubscribedApis(req, applicationId);
-            const subApiMap = new Map();
-            subApis.list.forEach(subApi => subApiMap.set(subApi.apiId, { policy: subApi.throttlingPolicy, id: subApi.subscriptionId }));
-            const apiList = [];
+            let groupList = [];
+            if (req.query.groups) {
+                groupList.push(req.query.groups.split(" "));
+            }
+            const subAPIs = await adminDao.getSubscribedAPIs(orgID, applicationId);
+            const allAPIs = await apiMetadata.getAllAPIMetadata(orgID, groupList, viewName);
 
-            allApis.list.forEach(api => {
-                let subscriptionPolicies = [];
-                let subscribedPolicy;
+            const subscribedAPIIds = new Set(subAPIs.map(api => api.API_ID));
+            const nonSubscribedAPIs = allAPIs
+                .filter(api => !subscribedAPIIds.has(api.API_ID) && api.DP_SUBSCRIPTION_POLICies.length > 0)
+                .map(api => new APIDTO(api));
 
-                if (subApiMap.has(api.id)) {
-                    subscribedPolicy = subApiMap.get(api.id)
-                } else {
-                    api.throttlingPolicies.forEach(policy => {
-                        subscriptionPolicies.push(policy);
-                    });
-                }
+            let subList = [];
+            if (subAPIs.length > 0) {
 
-                apiList.push({
-                    name: api.name,
-                    id: api.id,
-                    isSubAvailable: api.isSubscriptionAvailable,
-                    subscriptionPolicies: subscriptionPolicies,
-                    subscribedPolicy: subscribedPolicy
-                });
+                subList = await Promise.all(subAPIs.map(async (sub) => {
+                    const api = new APIDTO(sub);
+                    let apiDTO = {};
+                    apiDTO.apiInfo = {};
+                    apiDTO.name = api.apiInfo.apiName;
+                    apiDTO.apiID = api.apiID;
+                    apiDTO.version = api.apiInfo.apiVersion;
+                    apiDTO.apiInfo.apiImageMetadata = api.apiInfo.apiImageMetadata;
+                    apiDTO.image = api.apiInfo.apiImageMetadata["api-icon"];
+                    apiDTO.subID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.SUB_ID;
+                    apiDTO.policyID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.POLICY_ID;
+                    apiDTO.refID = api.apiReferenceID;
+                    apiDTO.apiHandle = api.apiHandle;
+                    const apiDetails = await getAPIDetails(req, api.apiReferenceID);
+                    if (apiDetails) {
+                        apiDTO.security = apiDetails.securityScheme;
+                    }
+                    const subPolicy = await apiMetadata.getSubscriptionPolicy(apiDTO.policyID, orgID);
+                    if (subPolicy) {
+                        apiDTO.policyName = subPolicy.dataValues.POLICY_NAME;
+                    }
+                    return apiDTO;
+                }));
+            }
+            let apiKey = false
+            let apiKeyList = subList.filter(api => api.security !== null && api.security.includes('api_key'));
+            if (apiKeyList.length > 0) {
+                apiKey = true;
+            }
+            util.appendAPIImageURL(subList, req, orgID);
 
-            });
-
+            await Promise.all(nonSubscribedAPIs.map(async (api) => {
+                api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
+            }));
             kMmetaData = await getAPIMKeyManagers(req);
             kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
-            let applicationKeyList = await getApplicationKeys(req, applicationId);
+
+            //TODO: handle multiple KM scenarios
+            //select only one KM for chroeo.
+
+            kMmetaData = kMmetaData.filter(keyManager =>
+                keyManager.name.includes("_internal_key_manager_") ||
+                (!kMmetaData.some(km => km.name.includes("_internal_key_manager_")) && keyManager.name.includes("Resident Key Manager")) ||
+                (!kMmetaData.some(km => km.name.includes("_internal_key_manager_") || km.name.includes("Resident Key Manager")) && keyManager.name.includes("_appdev_sts_key_manager_") && keyManager.name.endsWith("_prod"))
+            );
+
+            for(var keyManager of kMmetaData) {
+                if (keyManager.name === 'Resident Key Manager') {
+                    keyManager.tokenEndpoint = 'https://sts.preview-dv.choreo.dev/oauth2/token';
+                    keyManager.authorizeEndpoint = 'https://sts.preview-dv.choreo.dev/oauth2/authorize';
+                    keyManager.revokeEndpoint = 'https://sts.preview-dv.choreo.dev/oauth2/revoke';
+                }
+
+                keyManager.availableGrantTypes = await mapGrants(keyManager.availableGrantTypes);
+                keyManager.applicationConfiguration = await mapDefaultValues(keyManager.applicationConfiguration);
+            }
+
+            const userID = req[constants.USER_ID]
+            const applicationList = await adminService.getApplicationKeyMap(orgID, applicationId, userID);
+            metaData = applicationList;
+            let applicationReference = "";
+            let applicationKeyList;
+            if (applicationList.appMap) {
+                applicationReference = applicationList.appMap[0].appRefID;
+                applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
+            }
             let productionKeys = [];
             let sandboxKeys = [];
 
@@ -190,7 +256,9 @@ const loadApplication = async (req, res) => {
                     keyType: key.keyType,
                     supportedGrantTypes: key.supportedGrantTypes,
                     additionalProperties: key.additionalProperties,
-                    clientName: client_name
+                    clientName: client_name,
+                    callbackUrl: key.callbackUrl,
+                    appRefID: applicationReference
                 };
                 if (key.keyType === constants.KEY_TYPE.PRODUCTION) {
                     productionKeys.push(keyData);
@@ -199,7 +267,6 @@ const loadApplication = async (req, res) => {
                 }
                 return keyData;
             }) || [];
-
 
             kMmetaData.forEach(keyManager => {
                 productionKeys.forEach(productionKey => {
@@ -213,34 +280,47 @@ const loadApplication = async (req, res) => {
                     }
                 });
             });
-
+            //display only one key type (SANBOX).
+            //TODO: handle multiple key types
             templateContent = {
-                applicationMetadata: metaData,
+                orgID: orgID,
+                applicationMetadata: {
+                    ...metaData,
+                    subscriptionCount: subList.length
+                },
                 keyManagersMetadata: kMmetaData,
-                baseUrl: '/' + orgName,
-                apis: apiList,
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+                subAPIs: subList,
+                nonSubAPIs: nonSubscribedAPIs,
                 productionKeys: productionKeys,
-                sandboxKeys: sandboxKeys
+                isProduction: true
             }
-
             const templateResponse = await templateResponseValue('application');
-            const layoutResponse = await loadLayoutFromAPI(orgID);
-            html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+            const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
+            if (layoutResponse === "") {
+                html = renderTemplate('../pages/application/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+            } else {
+                html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+            }
         }
-
-        res.send(html);
     } catch (error) {
         console.error("Error occurred while loading application", error);
-        util.handleError(res, error);
+        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
     }
+    res.send(html);
 }
 
-async function getApplicationKeys(req, applicationId) {
-    try {
-        return await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${applicationId}/keys`, {}, {});
-    } catch (error) {
-        console.error("Error occurred while generating application keys", error);
-        return null;
+async function getApplicationKeys(applicationList, req) {
+
+    //TODO: handle multiple CP applications
+    for (const application of applicationList) {
+        const appRef = application.appRefID;
+        try {
+            return await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${appRef}/keys`, {}, {});
+        } catch (error) {
+            console.error("Error occurred while generating application keys", error);
+            return null;
+        }
     }
 }
 
@@ -264,30 +344,43 @@ const getSubscribedApis = async (req, appId) => {
 
 const loadApplicationForEdit = async (req, res) => {
 
-    const applicationId = req.params.applicationid;
     let html, templateContent, metaData, throttlingMetaData;
-    if (config.mode === constants.DEV_MODE) {
-        metaData = await getMockApplication();
-        throttlingMetaData = await getMockThrottlingPolicies();
-        templateContent = {
-            applicationMetadata: metaData,
-            throttlingPoliciesMetadata: throttlingMetaData,
-            baseUrl: constants.BASE_URL + config.port
+    try {
+        const { orgName, viewName, applicationId } = req.params;
+        if (config.mode === constants.DEV_MODE) {
+            metaData = await getMockApplication();
+            throttlingMetaData = await getMockThrottlingPolicies();
+            templateContent = {
+                applicationMetadata: metaData,
+                throttlingPoliciesMetadata: throttlingMetaData,
+                baseUrl: baseURLDev + viewName
+            }
+            html = renderTemplate('../pages/edit-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
+        } else {
+            const orgID = await orgIDValue(orgName);
+            const application = await adminDao.getApplication(orgID, applicationId, req.user.sub)
+            if (application) {
+                const appResponse = new ApplicationDTO(application.dataValues);
+                metaData = appResponse;
+            }
+            //metaData = await getAPIMApplication(req, applicationId);
+            throttlingMetaData = await getAPIMThrottlingPolicies(req);
+            templateContent = {
+                applicationMetadata: metaData,
+                throttlingPoliciesMetadata: throttlingMetaData,
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
+            }
+            const templateResponse = await templateResponseValue('edit-application');
+            const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
+            if (layoutResponse === "") {
+                html = renderTemplate('../pages/edit-application/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+            } else {
+                html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+            }
         }
-        html = renderTemplate('../pages/edit-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
-    } else {
-        const orgName = req.params.orgName;
-        const orgID = await orgIDValue(orgName);
-        metaData = await getAPIMApplication(req, applicationId);
-        throttlingMetaData = await getAPIMThrottlingPolicies(req);        
-        templateContent = {
-            applicationMetadata: metaData,
-            throttlingPoliciesMetadata: throttlingMetaData,
-            baseUrl: '/' + orgName
-        }
-        const templateResponse = await templateResponseValue('edit-application');
-        const layoutResponse = await loadLayoutFromAPI(orgID);
-        html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+    } catch (error) {
+        console.error("Error occurred while loading application for edit", error);
+        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
 
     }
     res.send(html);
@@ -311,8 +404,70 @@ async function getAPIMApplication(req, applicationId) {
 }
 
 async function getAPIMKeyManagers(req) {
-    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers', null, null);
+    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers?devPortalAppEnv=prod', null, null);
     return responseData.list;
+}
+
+async function getAPIDetails(req, apiId) {
+    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiId}`, null, null);
+    return responseData;
+}
+
+async function mapGrants(grantTypes) {
+
+    let mappedGrantTypes = [];
+    grantTypes.map(grantType => {
+        if (grantType === 'password') {
+            mappedGrantTypes.push({
+                label: 'Password',
+                name: grantType
+            });
+        } else if (grantType === 'client_credentials') {
+            mappedGrantTypes.push(
+                {
+                    label: 'Client Credentials',
+                    name: grantType
+                }
+            );
+        } else if (grantType === 'refresh_token') {
+            mappedGrantTypes.push(
+                {
+                    label: 'Refresh Token',
+                    name: grantType
+                }
+            );
+        } else if (grantType === 'authorization_code') {
+            mappedGrantTypes.push(
+                {
+                    label: 'Authorization Code',
+                    name: grantType
+                }
+            );
+        } else if (grantType === 'implicit') {
+            mappedGrantTypes.push(
+                {
+                    label: 'Implicit',
+                    name: grantType
+                }
+            );
+        }
+    });
+    return mappedGrantTypes;
+}
+
+async function mapDefaultValues(applicationConfiguration) {
+
+    let appConfigs = [];
+    let defaultConfigs = ["application_access_token_expiry_time", "user_access_token_expiry_time", "id_token_expiry_time"];
+    applicationConfiguration.map(config => {
+        if (defaultConfigs.includes(config.name) && config.default == 'N/A') {
+            config.default = 900;
+        } else if (config.name === 'refresh_token_expiry_time' && config.default == 'N/A') {
+            config.default = 86400;
+        }
+        appConfigs.push(config);
+    });
+    return appConfigs;
 }
 
 module.exports = {

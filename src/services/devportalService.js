@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,42 +20,60 @@ const adminService = require('../services/adminService');
 const adminDao = require('../dao/admin');
 const util = require('../utils/util');
 const constants = require('../utils/constants');
+const { validationResult } = require('express-validator');
 const { retrieveContentType } = require('../utils/util');
 
 const getOrganization = async (req, res) => {
 
     try {
-        const organization = await adminDao.getOrganization(req.params.orgId);
-        res.status(200).json({
-            orgId: organization.ORG_ID,
-            orgName: organization.ORG_NAME,
-            businessOwner: organization.BUSINESS_OWNER,
-            businessOwnerContact: organization.BUSINESS_OWNER_CONTACT,
-            businessOwnerEmail: organization.BUSINESS_OWNER_EMAIL,
-            devPortalURLIdentifier: organization.DEV_PORTAL_URL_IDENTIFIER,
-            roleClaimName: organization.ROLE_CLAIM_NAME,
-            groupsClaimName: organization.GROUPS_CLAIM_NAME,
-            organizationClaimName: organization.ORGANIZATION_CLAIM_NAME,
-            organizationIdentifier: organization.ORGANIZATION_IDENTIFIER,
-            adminRole: organization.ADMIN_ROLE,
-            subscriberRole: organization.SUBSCRIBER_ROLE,
-            groupClaimName: organization.GROUP_CLAIM_NAME
-        });
+        const organization = await getOrganizationDetails(req.params.orgId);
+        res.status(200).json(organization);
     } catch (error) {
         util.handleError(res, error);
     }
 };
 
+const getOrganizationDetails = async (orgId) => {
+
+    const organization = await adminDao.getOrganization(orgId);
+    return {
+        orgId: organization.ORG_ID,
+        orgName: organization.ORG_NAME,
+        businessOwner: organization.BUSINESS_OWNER,
+        businessOwnerContact: organization.BUSINESS_OWNER_CONTACT,
+        businessOwnerEmail: organization.BUSINESS_OWNER_EMAIL,
+        orgHandle: organization.ORG_HANDLE,
+        roleClaimName: organization.ROLE_CLAIM_NAME,
+        groupsClaimName: organization.GROUPS_CLAIM_NAME,
+        organizationClaimName: organization.ORGANIZATION_CLAIM_NAME,
+        organizationIdentifier: organization.ORGANIZATION_IDENTIFIER,
+        adminRole: organization.ADMIN_ROLE,
+        superAdminRole: organization.SUPER_ADMIN_ROLE,
+        subscriberRole: organization.SUBSCRIBER_ROLE,
+        groupClaimName: organization.GROUP_CLAIM_NAME
+    };
+}
+
 const getOrgContent = async (req, res) => {
 
     try {
+        const rules = util.validateRequestParameters();
+        for (let validation of rules) {
+            await validation.run(req);
+        }
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json(util.getErrors(errors));
+        }
         if (req.query.fileType && req.query.fileName) {
-            const asset = await adminService.getOrgContent(req.params.orgId, req.query.fileType, req.query.fileName, req.query.filePath);
-            const contentType = retrieveContentType(asset.FILE_NAME, asset.FILE_TYPE);
-            res.set(constants.MIME_TYPES.CONYEMT_TYPE, contentType);
-            return res.status(200).send(Buffer.isBuffer(asset.FILE_CONTENT) ? asset.FILE_CONTENT : constants.CHARSET_UTF8);
+            const asset = await adminService.getOrgContent(req.params.orgId, req.params.name, req.query.fileType, req.query.fileName, req.query.filePath);
+            if (asset) {
+                const contentType = asset ? retrieveContentType(asset.FILE_NAME, asset.FILE_TYPE) : "";
+                res.set(constants.MIME_TYPES.CONYEMT_TYPE, contentType);
+                return res.status(200).send(Buffer.isBuffer(asset.FILE_CONTENT) ? asset.FILE_CONTENT : constants.CHARSET_UTF8);
+            }
         } else if (req.params.fileType) {
-            const assets = await adminService.getOrgContent(req.params.orgId, req.params.fileType);
+            const assets = await adminService.getOrgContent(req.params.orgId, req.params.name, req.params.fileType);
             const results = [];
             for (const asset of assets) {
                 const resp = {
@@ -66,15 +84,17 @@ const getOrgContent = async (req, res) => {
                 results.push(resp);
             }
             return res.status(200).send(results);
-        } else {        
+        } else {
             res.status(400).send('Invalid request');
         }
     } catch (error) {
+        console.error(`Error while fetching organization content:`, error);
         res.status(404).send(error.message);
     }
 };
 
 module.exports = {
     getOrgContent,
-    getOrganization
+    getOrganization,
+    getOrganizationDetails
 };

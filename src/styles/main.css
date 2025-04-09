@@ -1,12 +1,10 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
 @import "/technical-styles/header.css";
 :root {
   --main-bg-color: #ffffff;
   /* primary colors */
   --primary-main-color: #5952ad;
   --primary-light-color: #f7f7ff;
-  --primary-dark-color: #423c89;
-  --primary-darkest-color: #302c6a;
   /* secondary colors */
   --secondary-main-color: #5dc7b1;
   --secondary-light-color: #eef3f2;
@@ -15,7 +13,6 @@
   /* font colors */
   --white-text-color: #ffffff;
   --main-text-color: #40404b;
-  --light-text-color: #6b7280;
   /* other special colors */
   --success-color: #28a745;
   --danger-color: #dc3545;
@@ -38,10 +35,6 @@ body {
   flex-direction: column;
 }
 
-body {
-  padding-top: 3rem;
-}
-
 footer {
   margin-top: auto;
   width: 100%;
@@ -52,7 +45,7 @@ footer {
 }
 
 .common-btn-primary {
-  background-color: var(--primary-dark-color);
+  background-color: var(--primary-main-color);
   color: var(--white-text-color);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
@@ -72,7 +65,7 @@ footer {
 }
 
 .common-btn-primary:active {
-  background-color: var(--primary-darkest-color);
+  background-color: var(--primary-main-color);
   box-shadow: 0 0.125rem 0.125rem rgba(0, 0, 0, 0.1);
   color: var(--white-text-color);
 }
@@ -84,7 +77,7 @@ footer {
 
 .common-btn-white {
   background-color: var(--white-color);
-  color: var(--primary-dark-color);
+  color: var(--primary-main-color);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   border: none;
@@ -129,7 +122,7 @@ footer {
 }
 
 .common-btn-link:hover {
-  color: var(--primary-dark-color);
+  color: var(--primary-main-color);
   background-color: var(--primary-main-color);
   color: var(--white-text-color);
 }
@@ -160,11 +153,11 @@ footer {
 .common-btn-outlined:hover {
   background-color: var(--primary-main-color);
   color: var(--white-text-color);
-  border-color: var(--primary-dark-color);
+  border-color: var(--primary-main-color);
 }
 
 .common-btn-outlined:active {
-  background-color: var(--primary-dark-color);
+  background-color: var(--primary-main-color);
   color: var(--white-text-color);
 }
 
@@ -199,6 +192,7 @@ footer {
 
 /* common-card-style */
 .dev-card {
+  height: 100%;
   background-color: var(--light-bg-color);
   border-radius: 12px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -255,4 +249,12 @@ h6 {
 .custom-modal-btn-section {
   padding: 0 1rem 1rem 1rem;
   display: flex;
+}
+
+/* header styles */
+.container-header {
+  display: block;
+  color: var(--primary-main-color);
+  font-size: 1.5rem;
+  font-weight: 600;
 }

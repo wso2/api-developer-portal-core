@@ -2,7 +2,6 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 3rem 3.75rem;
   flex-direction: column;
 }
 
@@ -84,6 +83,6 @@
 }
 
 #query::placeholder {
-  color: var(--light-text-color);
-  opacity: 0.5;
+  color: var(--main-text-color);
+  opacity: 0.8;
 }

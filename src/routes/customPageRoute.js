@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,5 +22,19 @@ const registerPartials = require('../middlewares/registerPartials');
 const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
 
 // eslint-disable-next-line no-useless-escape
-router.get('(^(?!\/(favicon\.ico|images\/|technical-styles\/|styles\/|*login*|*portal*|devportal\/))/:orgName/*)', ensureAuthenticated, registerPartials, contentController.loadCustomContent);
+// Exclude specific paths
+router.get([
+    '/favicon.ico',
+    '/images/*',
+    '/technical-styles/*',
+    '/styles/*',
+    '/login*',
+    '/portal*',
+    '/devportal/*'
+  ], (req, res) => {
+    res.status(404).send('Not found');
+  });
+  
+router.get('/:orgName/views/:viewName/*', registerPartials, ensureAuthenticated, contentController.loadCustomContent);
+
 module.exports = router;
