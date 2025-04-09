@@ -287,10 +287,16 @@ hr {
   display: flex;
 }
 
+.api-banner-icon {
+  overflow: hidden;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .api-image {
   font-size: 5rem;
-  width: 13.75rem;
-  height: 13.75rem;
+  width: 18vw;
+  height: 18vw;
   border-radius: 50%;
   object-fit: cover;
   margin-bottom: 0;
