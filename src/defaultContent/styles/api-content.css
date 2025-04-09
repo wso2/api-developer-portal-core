@@ -299,6 +299,7 @@ hr {
 }
 
 .api-image-small {
+  font-size: 2.5rem;
   width: 9.375rem;
   height: 9.375rem;
   border-radius: 50%;
