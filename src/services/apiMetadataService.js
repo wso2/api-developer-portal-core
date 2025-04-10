@@ -124,6 +124,18 @@ function changeEndpoint(endPoint) {
     return endPoint;
 }
 
+async function allowAPIStatusChange(apiStatus, orgId, apiId) {
+    
+    if (apiStatus === constants.API_STATUS.UNPUBLISHED) {
+
+        const subApis = await adminDao.getSubscriptions(orgId, '', apiId);
+        if (subApis.length > 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
 const getAPIMetadata = async (req, res) => {
 
     const { orgId, apiId } = req.params;
@@ -235,6 +247,10 @@ const updateAPIMetadata = async (req, res) => {
         apiMetadata.endPoints.productionURL = changeEndpoint(apiMetadata.endPoints.productionURL);
         apiMetadata.endPoints.sandboxURL = changeEndpoint(apiMetadata.endPoints.sandboxURL);
 
+        let allowStatusChange = await allowAPIStatusChange(apiMetadata.apiInfo.apiStatus, orgId, apiId);
+        if (!allowStatusChange) {
+            throw new CustomError(409, constants.ERROR_MESSAGE.ERR_SUB_EXIST, "API has subscriptions.");
+        }
         await sequelize.transaction(async (t) => {
             // Create apimetadata record
             console.log("Updating metadata", apiId);
