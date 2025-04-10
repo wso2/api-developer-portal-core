@@ -124,6 +124,18 @@ function changeEndpoint(endPoint) {
     return endPoint;
 }
 
+async function allowAPIStatusChange(apiStatus, orgId, apiId) {
+    
+    if (apiStatus === constants.API_STATUS.UNPUBLISHED) {
+
+        const subApis = await adminDao.getSubscriptions(orgId, '', apiId);
+        if (subApis.length > 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
 const getAPIMetadata = async (req, res) => {
 
     const { orgId, apiId } = req.params;
@@ -235,6 +247,10 @@ const updateAPIMetadata = async (req, res) => {
         apiMetadata.endPoints.productionURL = changeEndpoint(apiMetadata.endPoints.productionURL);
         apiMetadata.endPoints.sandboxURL = changeEndpoint(apiMetadata.endPoints.sandboxURL);
 
+        let allowStatusChange = await allowAPIStatusChange(apiMetadata.apiInfo.apiStatus, orgId, apiId);
+        if (!allowStatusChange) {
+            throw new CustomError(409, constants.ERROR_MESSAGE.ERR_SUB_EXIST, "API has subscriptions.");
+        }
         await sequelize.transaction(async (t) => {
             // Create apimetadata record
             console.log("Updating metadata", apiId);
@@ -563,6 +579,7 @@ const deleteAPIFile = async (req, res) => {
 
     const { orgId, apiId } = req.params;
     const apiFileName = req.query.fileName;
+    const fileType = req.query.type;
     if (!orgId || !apiId) {
         throw new Sequelize.ValidationError(
             "Missing or Invalid fields in the request payload"
@@ -571,11 +588,11 @@ const deleteAPIFile = async (req, res) => {
     try {
         let apiFileResponse;
         if (apiFileName) {
-            apiFileResponse = await apiDao.deleteAPIFile(apiFileName, orgId, apiId);
+            apiFileResponse = await apiDao.deleteAPIFile(apiFileName, fileType, orgId, apiId);
         } else {
-            apiFileResponse = await apiDao.deleteAllAPIFiles(orgId, apiId);
+            apiFileResponse = await apiDao.deleteAllAPIFiles(fileType, orgId, apiId);
         }
-        if (apiFileResponse) {
+        if (!apiFileResponse) {
             res.status(204).send();
         } else {
             res.status(404).send("API Content not found");
