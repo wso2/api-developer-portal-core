@@ -1443,6 +1443,7 @@ const deleteAllAPIFiles = async (type, orgID, apiID, t) => {
                 }
             });
         }
+        console.log("apiFileResponse", apiFileResponse);
         return apiFileResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
