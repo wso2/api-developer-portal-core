@@ -74,8 +74,6 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             document.getElementById(consumerSecretID).value = consumerSecret;
             document.getElementById("app-ref-" + keyManagerId).value = responseData.appRefId;
             document.getElementById("key-map-" + keyManagerId).value = responseData.keyMappingId;
-            document.getElementById("curl-copy-" + keyManagerId).setAttribute("data-consumer-key", consumerKey);
-            document.getElementById("curl-copy-" + keyManagerId).setAttribute("data-consumer-secret", consumerSecret);
 
             const keyActionsContainer = document.getElementById("keyActionsContainer");
             if (keyActionsContainer) {
@@ -297,9 +295,9 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
     const formData = new FormData(form);
     const jsonAppdata = appMap ? JSON.parse(appMap) : null;
     //TODO: Handle multiple CP applications
-    const keyManagerId = formId.replace("applicationKeyGenerateForm-", "").replace(/-(sandbox|production)$/, "");
-    const appId = jsonAppdata ? jsonAppdata[0].appRefID : document.getElementById("app-ref-" + keyManagerId).value;
-    const keyMappingId = keyManagerId ? keyManagerId : document.getElementById("key-map-" + keyManagerId).value;
+    const appKeyManagerId = formId.replace("applicationKeyGenerateForm-", "").replace(/-(sandbox|production)$/, "");
+    const appId = jsonAppdata ? jsonAppdata[0].appRefID : document.getElementById("app-ref-" + appKeyManagerId).value;
+    const keyMappingId = keyManagerId ? keyManagerId : document.getElementById("key-map-" + appKeyManagerId).value;
     const jsonObject = getFormData(formData, keyManager, clientName, keyManagerId);
     const validationResponse = validateOauthUpdate(jsonObject);
     if (!validationResponse.valid) {
@@ -847,10 +845,15 @@ async function copyConsumerKey(inputId) {
 }
 
 async function copyRealCurl(button) {
+    console.log("Copying cURL command...", button);
+    const keyManagerId = button.id.replace("curl-copy-", "");
+    console.log("Key Manager ID:", keyManagerId);
     const tokenEndpoint = button.getAttribute('data-endpoint');
-    const consumerKey = button.getAttribute('data-consumer-key');
-    const consumerSecret = button.getAttribute('data-consumer-secret');
+    const consumerKey = document.getElementById("consumer-key-" + keyManagerId).value;
+    const consumerSecret = document.getElementById("consumer-secret-" + keyManagerId).value;
 
+    console.log("Consumer Key:", consumerKey);
+    console.log("Consumer Secret:", consumerSecret);
     if (!consumerKey || !consumerSecret) {
         await showAlert('Consumer key or secret not available. Please generate keys first.', 'warning');
         return;
