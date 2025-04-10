@@ -297,7 +297,7 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
     //TODO: Handle multiple CP applications
     const dbAppID = formId.replace("applicationKeyGenerateForm-", "").replace(/-(sandbox|production)$/, "");
     const appId = jsonAppdata ? jsonAppdata[0].appRefID : document.getElementById("app-ref-" + dbAppID).value;
-    const keyMappingId = keyManagerId ? keyManagerId : document.getElementById("key-map-" + dbAppID).value;;
+    const keyMappingId = keyManagerId ? keyManagerId : document.getElementById("key-map-" + dbAppID).value;
     const jsonObject = getFormData(formData, keyManager, clientName, dbAppID);
     const validationResponse = validateOauthUpdate(jsonObject);
     if (!validationResponse.valid) {

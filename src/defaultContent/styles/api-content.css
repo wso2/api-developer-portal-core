@@ -294,9 +294,9 @@ hr {
 }
 
 .api-image {
-  font-size: 5rem;
-  width: 18vw;
-  height: 18vw;
+  font-size: 5vw;
+  width: 15vw;
+  height: 15vw;
   border-radius: 50%;
   object-fit: cover;
   margin-bottom: 0;
@@ -647,7 +647,7 @@ hr {
   /* Custom Dropdown styling for subscription plans */
   .subscription-container {
     justify-content: center;
-    padding: 8px;
+    padding: 1px;
     display: flex;
     gap: 1rem;
     width: 100%;
@@ -660,7 +660,7 @@ hr {
 
   .custom-select-container {
     position: relative;
-    width: 5rem;
+    width: 10rem;
   }
 
   .select-selected {
