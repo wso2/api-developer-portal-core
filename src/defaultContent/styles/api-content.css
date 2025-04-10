@@ -538,7 +538,6 @@ hr {
 }
 
 .subscription-card {
-  overflow: hidden;
   overflow-wrap: break-word;
   word-break: break-word;
 }
@@ -656,6 +655,7 @@ hr {
   .custom-dropdown {
     font-size: small;
     position: relative;
+    z-index: 999;
   }
 
   .custom-select-container {
