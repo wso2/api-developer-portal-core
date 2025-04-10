@@ -663,6 +663,12 @@ hr {
     width: 10rem;
   }
 
+  .subscribe-btn {
+    flex: 1;
+    min-width: 7rem;
+    max-width: 10rem;
+  }
+
   .select-selected {
     display: flex;
     justify-content: space-between;
