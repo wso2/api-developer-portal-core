@@ -1378,7 +1378,7 @@ const deleteAPIFile = async (fileName, type, orgID, apiID, t) => {
             where: {
                 FILE_NAME: fileName,
                 API_ID: apiID,
-                TYPE: { [Op.like]: type }
+                TYPE: { [Op.like]: `%${type}%`  }
             },
             include: [
                 {
@@ -1392,7 +1392,6 @@ const deleteAPIFile = async (fileName, type, orgID, apiID, t) => {
         });
         let apiFileResponse;
         for (const content of contentsToDelete) {
-            console.log("Name", content.dataValues.FILE_NAME)
             apiFileResponse = await APIContent.destroy({
                 where: {
                     FILE_NAME: content.dataValues.FILE_NAME
@@ -1418,7 +1417,7 @@ const deleteAllAPIFiles = async (type, orgID, apiID, t) => {
             where: {
                 API_ID: apiID,
                 TYPE: {
-                    [Op.like]: `%${type}%` // or 'swagger' for exact match
+                    [Op.like]: `%${type}%` 
                 }
             },
             include: [
@@ -1431,19 +1430,14 @@ const deleteAllAPIFiles = async (type, orgID, apiID, t) => {
             ],
             transaction: t
         });
-        console.log("contentsToDelete", contentsToDelete);
-        // Step 2: Delete the found entries
         let apiFileResponse;
         for (const content of contentsToDelete) {
-            console.log("Name", content.dataValues.FILE_NAME)
             apiFileResponse = await APIContent.destroy({
                 where: {
                     FILE_NAME: content.dataValues.FILE_NAME
-
                 }
             });
         }
-        console.log("apiFileResponse", apiFileResponse);
         return apiFileResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
