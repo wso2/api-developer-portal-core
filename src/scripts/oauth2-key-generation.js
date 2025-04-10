@@ -69,11 +69,13 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
 
             const consumerKey = responseData.consumerKey;
             const consumerSecret = responseData.consumerSecret;
-            const dbAppID = formId.replace("keysview-", "").replace(/-(sandbox|production)$/, "");
+            const keyManagerId = formId.replace("keysview-", "").replace(/-(sandbox|production)$/, "");
             document.getElementById(consumerKeyID).value = consumerKey;
             document.getElementById(consumerSecretID).value = consumerSecret;
-            document.getElementById("app-ref-" + dbAppID).value = responseData.appRefId;
-            document.getElementById("key-map-" + dbAppID).value = responseData.keyMappingId;
+            document.getElementById("app-ref-" + keyManagerId).value = responseData.appRefId;
+            document.getElementById("key-map-" + keyManagerId).value = responseData.keyMappingId;
+            document.getElementById("curl-copy-" + keyManagerId).setAttribute("data-consumer-key", consumerKey);
+            document.getElementById("curl-copy-" + keyManagerId).setAttribute("data-consumer-secret", consumerSecret);
 
             const keyActionsContainer = document.getElementById("keyActionsContainer");
             if (keyActionsContainer) {
@@ -295,10 +297,10 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
     const formData = new FormData(form);
     const jsonAppdata = appMap ? JSON.parse(appMap) : null;
     //TODO: Handle multiple CP applications
-    const dbAppID = formId.replace("applicationKeyGenerateForm-", "").replace(/-(sandbox|production)$/, "");
-    const appId = jsonAppdata ? jsonAppdata[0].appRefID : document.getElementById("app-ref-" + dbAppID).value;
-    const keyMappingId = keyManagerId ? keyManagerId : document.getElementById("key-map-" + dbAppID).value;
-    const jsonObject = getFormData(formData, keyManager, clientName, dbAppID);
+    const keyManagerId = formId.replace("applicationKeyGenerateForm-", "").replace(/-(sandbox|production)$/, "");
+    const appId = jsonAppdata ? jsonAppdata[0].appRefID : document.getElementById("app-ref-" + keyManagerId).value;
+    const keyMappingId = keyManagerId ? keyManagerId : document.getElementById("key-map-" + keyManagerId).value;
+    const jsonObject = getFormData(formData, keyManager, clientName, keyManagerId);
     const validationResponse = validateOauthUpdate(jsonObject);
     if (!validationResponse.valid) {
         errorContainer.textContent = validationResponse.message;

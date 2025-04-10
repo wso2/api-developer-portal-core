@@ -10,7 +10,7 @@
 }
 
 .documents-sidebar {
-    padding: 1rem 2rem 1rem 1rem;
+    padding: 1rem 2rem 1rem 0rem;
     flex-shrink: 0;
     border-right: 1px solid #e0e2e9;
 }
