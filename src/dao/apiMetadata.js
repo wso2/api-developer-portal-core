@@ -1401,7 +1401,6 @@ const deleteAPIFile = async (fileName, type, orgID, apiID, t) => {
         }
         return apiFileResponse;
     } catch (error) {
-        console.log(error);
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
         }
@@ -1411,7 +1410,6 @@ const deleteAPIFile = async (fileName, type, orgID, apiID, t) => {
 
 const deleteAllAPIFiles = async (type, orgID, apiID, t) => {
 
-    console.log(type)
     try {
         const contentsToDelete = await APIContent.findAll({
             where: {
