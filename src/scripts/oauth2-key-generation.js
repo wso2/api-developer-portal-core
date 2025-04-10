@@ -852,8 +852,6 @@ async function copyRealCurl(button) {
     const consumerKey = document.getElementById("consumer-key-" + keyManagerId).value;
     const consumerSecret = document.getElementById("consumer-secret-" + keyManagerId).value;
 
-    console.log("Consumer Key:", consumerKey);
-    console.log("Consumer Secret:", consumerSecret);
     if (!consumerKey || !consumerSecret) {
         await showAlert('Consumer key or secret not available. Please generate keys first.', 'warning');
         return;
