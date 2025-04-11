@@ -802,12 +802,17 @@ const createAppKeyMapping = async (req, res) => {
         await sequelize.transaction(async (t) => {
             const { applicationName, apis, tokenType, tokenDetails, provider } = req.body;
             const appIDResponse = await adminDao.getApplicationID(orgID, userID, applicationName);
-            const appID = appIDResponse.dataValues.APP_ID;
+            let appID;
+            if (appIDResponse) {
+                appID = appIDResponse.dataValues.APP_ID;
+            } else {
+                return util.handleError(res, new CustomError(404, constants.ERROR_CODE[404], "Application not found"));
+            }
             let cpApplicationName;
             //all token types bound to one app if shared
 
-            //when token is share, control plane app name and devportal app name is same
-            cpApplicationName = applicationName
+            //unique app name for control plane application
+            cpApplicationName = `${applicationName}_${appID}`;
             //TODO - handel non-shared token types scenarios
             //create control plane application
             const cpAppCreationResponse = await createCPApplication(req, cpApplicationName);
@@ -815,7 +820,12 @@ const createAppKeyMapping = async (req, res) => {
             if (cpAppCreationResponse === "Application already exists") {
                 //get CP app id
                 const sharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, true);
-                cpAppID = sharedToken[0].dataValues.CP_APP_REF;
+                if (sharedToken.length !== 0) {
+                    cpAppID = sharedToken[0].dataValues.CP_APP_REF;
+                } else {
+                    console.log("Application with the same name already exists in control plane");
+                    return util.handleError(res, new CustomError(500, constants.ERROR_CODE[500], "Internal server error"));
+                }
             } else {
                 cpAppID = cpAppCreationResponse.applicationId;
                 //create application mapping entry
