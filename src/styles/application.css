@@ -168,7 +168,7 @@ thead tr th {
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--main-text-color);
-  width: 45px;
+  min-width: 75px;
 }
 
 .key-action-buttons {

@@ -69,11 +69,11 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
 
             const consumerKey = responseData.consumerKey;
             const consumerSecret = responseData.consumerSecret;
-            const dbAppID = formId.replace("keysview-", "").replace(/-(sandbox|production)$/, "");
+            const keyManagerId = formId.replace("keysview-", "").replace(/-(sandbox|production)$/, "");
             document.getElementById(consumerKeyID).value = consumerKey;
             document.getElementById(consumerSecretID).value = consumerSecret;
-            document.getElementById("app-ref-" + dbAppID).value = responseData.appRefId;
-            document.getElementById("key-map-" + dbAppID).value = responseData.keyMappingId;
+            document.getElementById("app-ref-" + keyManagerId).value = responseData.appRefId;
+            document.getElementById("key-map-" + keyManagerId).value = responseData.keyMappingId;
 
             const keyActionsContainer = document.getElementById("keyActionsContainer");
             if (keyActionsContainer) {
@@ -295,10 +295,10 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
     const formData = new FormData(form);
     const jsonAppdata = appMap ? JSON.parse(appMap) : null;
     //TODO: Handle multiple CP applications
-    const dbAppID = formId.replace("applicationKeyGenerateForm-", "").replace(/-(sandbox|production)$/, "");
-    const appId = jsonAppdata ? jsonAppdata[0].appRefID : document.getElementById("app-ref-" + dbAppID).value;
-    const keyMappingId = keyManagerId ? keyManagerId : document.getElementById("key-map-" + dbAppID).value;;
-    const jsonObject = getFormData(formData, keyManager, clientName, dbAppID);
+    const appKeyManagerId = formId.replace("applicationKeyGenerateForm-", "").replace(/-(sandbox|production)$/, "");
+    const appId = jsonAppdata ? jsonAppdata[0].appRefID : document.getElementById("app-ref-" + appKeyManagerId).value;
+    const keyMappingId = keyManagerId ? keyManagerId : document.getElementById("key-map-" + appKeyManagerId).value;
+    const jsonObject = getFormData(formData, keyManager, clientName, keyManagerId);
     const validationResponse = validateOauthUpdate(jsonObject);
     if (!validationResponse.valid) {
         errorContainer.textContent = validationResponse.message;
@@ -329,6 +329,11 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
 
             const responseData = await response.json();
             if (response.ok) {
+                // Restore button state
+                updateBtn.innerHTML = originalContent;
+                updateBtn.disabled = false;
+
+                closeModal('keysModifyModal')
                 await showAlert('Updated Oauth application successfully!', 'success');
                 const url = new URL(window.location.origin + window.location.pathname);
                 window.location.href = url.toString();
@@ -480,12 +485,13 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
             let tokenText = document.getElementById("token_" + keyManager);
             tokenText.textContent = responseData.accessToken;
             loadKeysTokenModal();
-            await showAlert('Token generated successfully!', 'success');
 
             // Reset button state
             normalState.style.display = 'inline-block';
             loadingState.style.display = 'none';
             tokenBtn.disabled = false;
+
+            await showAlert('Token generated successfully!', 'success');
         } else {
             console.error('Failed to generate access token:', responseData);
 
@@ -586,6 +592,15 @@ function loadKeyGenModal() {
 function loadKeysViewModal() {
     const modal = document.getElementById('keysViewModal');
     modal.style.display = 'flex';
+
+    const authorizationCodeCheckbox = modal.querySelector('input[id^="grant-type-view-authorization_code-"]');
+    if (authorizationCodeCheckbox) {
+        const pkceFields = modal.querySelectorAll('#row-pkceMandatory, #row-pkceSupportPlain');
+        // Handle PKCE fields visibility
+        pkceFields.forEach(field => {
+            field.style.display = authorizationCodeCheckbox.checked ? 'flex' : 'none';
+        });
+    }
 }
 
 function loadKeysModifyModal() {
@@ -601,12 +616,15 @@ function loadKeysModifyModal() {
         const callbackUrlRow = modal.querySelector('#callback-url-row');
         // Find PKCE-related configuration fields
         const pkceFields = modal.querySelectorAll('#row-pkceMandatory, #row-pkceSupportPlain');
-        console.log(pkceFields);
         
         // Handle callback URL visibility
         if (callbackUrlRow) {
             // Set initial visibility based on checkbox state
             callbackUrlRow.style.display = authorizationCodeCheckbox.checked ? 'flex' : 'none';
+            const callbackUrlInput = callbackUrlRow.querySelector('input');
+            if (callbackUrlInput) {
+                callbackUrlInput.required = authorizationCodeCheckbox.checked;
+            }
         }
         
         // Handle PKCE fields visibility
@@ -619,6 +637,10 @@ function loadKeysModifyModal() {
             // Toggle callback URL row
             if (callbackUrlRow) {
                 callbackUrlRow.style.display = this.checked ? 'flex' : 'none';
+                const callbackUrlInput = callbackUrlRow.querySelector('input');
+                if (callbackUrlInput) {
+                    callbackUrlInput.required = this.checked;
+                }
             }
             
             // Toggle PKCE fields
@@ -792,10 +814,43 @@ async function copyConsumerSecret(inputId) {
     }
 }
 
+async function copyConsumerKey(inputId) {
+    const inputElement = document.getElementById(inputId);
+    const buttonElement = inputElement.nextElementSibling;
+    const iconElement = buttonElement.querySelector('i');
+
+    try {
+        // Get the value
+        const keyValue = inputElement.value;
+
+        // Copy to clipboard
+        await navigator.clipboard.writeText(keyValue);
+
+        // Show visual feedback
+        iconElement.classList.remove('bi-clipboard');
+        iconElement.classList.add('bi-clipboard-check');
+
+        // Show alert
+        await showAlert('Consumer Key copied to clipboard!');
+
+        // Revert to original icon after 1.5 seconds
+        setTimeout(() => {
+            iconElement.classList.remove('bi-clipboard-check');
+            iconElement.classList.add('bi-clipboard');
+        }, 1500);
+    } catch (err) {
+        console.error('Could not copy text:', err);
+        await showAlert('Failed to copy Consumer Key', true);
+    }
+}
+
 async function copyRealCurl(button) {
+    console.log("Copying cURL command...", button);
+    const keyManagerId = button.id.replace("curl-copy-", "");
+    console.log("Key Manager ID:", keyManagerId);
     const tokenEndpoint = button.getAttribute('data-endpoint');
-    const consumerKey = button.getAttribute('data-consumer-key');
-    const consumerSecret = button.getAttribute('data-consumer-secret');
+    const consumerKey = document.getElementById("consumer-key-" + keyManagerId).value;
+    const consumerSecret = document.getElementById("consumer-secret-" + keyManagerId).value;
 
     if (!consumerKey || !consumerSecret) {
         await showAlert('Consumer key or secret not available. Please generate keys first.', 'warning');

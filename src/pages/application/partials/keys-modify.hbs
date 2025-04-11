@@ -17,7 +17,10 @@
                     {{!-- Advanced configurations section --}}
                     <div class="container KMConfig mt-4" id="KMData_{{../name}}">
                         <form
-                            id='applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'>
+                            id='applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
+                            onsubmit="event.preventDefault(); updateApplicationKey(this.id,
+                                '{{json ../../applicationMetadata.appMap}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}',
+                                '{{keys.keyMappingId}}', '{{keys.clientName}}');">
                             <div>
                                 <div class="row mb-2">
                                     <div class="col-md-4">
@@ -55,11 +58,13 @@
 
                                 <div class="row mb-2" id="callback-url-row">
                                     <div class="col-md-4">
-                                        <div class="form-label">Callback URL</div>
+                                        <div class="form-label">
+                                            Callback URL <span class="text-danger">*</span>
+                                        </div>
                                     </div>
                                     <div class="col-md-8">
                                         <div class="keygen-input-container">
-                                            <input type="text" name="callbackURL" placeholder="Callback URLs"
+                                            <input type="url" name="callbackURL" placeholder="Callback URL"
                                                 value="{{keys.callbackUrl}}" class="form-control" />
                                         </div>
                                     </div>
@@ -146,9 +151,7 @@
                                 Cancel
                             </button>
                             <button class="common-btn-primary" id="applicationKeyUpdateButton" name="http-values"
-                                type="button" onClick="updateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}',
-                                '{{json ../../applicationMetadata.appMap}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}',
-                                '{{keys.keyMappingId}}', '{{keys.clientName}}')">
+                                type="submit" form="applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}">
                                 Update
                             </button>
                         </div>

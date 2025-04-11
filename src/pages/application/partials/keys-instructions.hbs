@@ -38,17 +38,15 @@
                             </div>
                             
                             <div id="curlDisplay_{{../name}}">
-                                <p class="small mb-2 instruction-text">cURL to Generate Access Token</p>
+                                <p class="small mb-2 instruction-header">cURL to Generate Access Token</p>
                                 <p class="curl-description">
                                     The following cURL command template allows you to generate an access token using the
                                     client credentials grant type. Click the copy button to copy the command with your
                                     actual credentials inserted.
                                 </p>
                                 <div class="code-block">
-                                    <button class="copy-button" id="curl-copy-{{../name}}"
-                                        data-endpoint="{{../tokenEndpoint}}" data-consumer-key="{{keys.consumerKey}}"
-                                        data-consumer-secret="{{keys.consumerSecret}}"
-                                        aria-label="Copy to clipboard with real values" onclick="copyRealCurl(this)">
+                                    <button class="copy-button" id="curl-copy-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}"
+                                        data-endpoint="{{../tokenEndpoint}}" aria-label="Copy to clipboard with real values" onclick="copyRealCurl(this)">
                                         <i class="bi bi-copy"></i>
                                     </button>
                                     <code

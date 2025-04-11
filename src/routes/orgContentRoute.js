@@ -19,12 +19,13 @@ const express = require('express');
 const router = express.Router();
 const orgController = require('../controllers/orgContentController');
 const registerPartials = require('../middlewares/registerPartials');
+const authController = require('../controllers/authController');
 
 router.get('/:orgName/views/:viewName', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico' || req.params.orgName === 'images' || req.params.orgName === 'portal') {
         return res.status(404).send('Not Found');
     }
     next();
-}, registerPartials, orgController.loadOrganizationContent);
+}, authController.handleSilentSSO, registerPartials, orgController.loadOrganizationContent);
 
 module.exports = router;

@@ -430,5 +430,9 @@ input[type="checkbox"]:checked {
 }
 
 .instruction-text {
+  font-size: 14px;
+}
+
+.instruction-header {
   font-size: 16px;
 }

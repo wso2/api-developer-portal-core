@@ -8,6 +8,7 @@ function openDeleteModal(param1, param2, param3, param4) {
     bootstrapModal.show();
 }
 
+
 async function deleteApplication() {
     const modal = document.getElementById('deleteConfirmation');
     const applicationId = modal.dataset.param1;
@@ -33,6 +34,21 @@ async function deleteApplication() {
                     colElement.remove();
                 } else {
                     cardWrapper.remove();
+                }
+            }
+            const remainingCards = document.querySelectorAll('[id^="app-card-"]');
+            if (remainingCards.length === 0) {
+                const createButton = document.getElementById('createButton');
+                if (createButton) {
+                    createButton.classList.add('d-none');
+                }
+                const plusCardWrapper = document.getElementById('createApplicationCardWrapper');
+                if (plusCardWrapper) {
+                    plusCardWrapper.classList.remove('d-none');
+                }
+                const plusCard = document.getElementById('applicationCreateCard');
+                  if (plusCard) {
+                      plusCard.classList.remove('d-none');
                 }
             }
         } else {

@@ -35,14 +35,21 @@
                             </div>
                         </div>
                         <div class="col-12 col-md-5 text-md-right">
+                            {{#if apiInfo.apiImageMetadata.api-icon}}
                             <img class="img-thumbnail api-image-small" src="{{apiInfo.apiImageMetadata.api-icon}}"
                                 alt="API Image" />
+                            {{else}}
+                            <div
+                                class="img-thumbnail api-image-small image-icon d-flex justify-content-center align-items-center">
+                                {{firstTwoLetters apiInfo.apiName}}</div>
+                            {{/if}}
                         </div>
                     </div>
                 </div>
                 <div class="subscription-plans-body pb-4">
                     <div class="subscription-plans-title small">Subscription Plans</div>
-                    <p class="subscription-plans-subtitle">Please select the most suitable subscription plan from the options
+                    <p class="subscription-plans-subtitle">Please select the most suitable subscription plan from the
+                        options
                         available for this API</p>
                     <div class="row row-gap-4 pt-3">
                         {{#each subscriptionPolicyDetails}}
@@ -50,11 +57,11 @@
                             <div class="card dev-card">
                                 <div class="card-body align-items-center text-center p-0">
                                     <span class="subscription-plans-card-title">{{displayName}}</h5>
-                                    <h1 class="subscription-plans-request-count">{{requestCount}}</h1>
-                                    <p class="subscription-plans-card-subtitle pb-4 pt-0">requests per minutes</p>
-                                    <a id="subscribe-btn-{{policyID}}" type="button"
-                                        class="common-btn-outlined p-1 ps-2 pe-2 w-100 subscription-plan-subscribe-btn"
-                                        onclick="showSubscribeButtonLoading(this); subscribe('{{@root.orgID}}', '', '{{../apiID}}', '{{../apiReferenceID}}', '{{policyID}}', '{{policyName}}')">Subscribe</a>
+                                        <h1 class="subscription-plans-request-count">{{requestCount}}</h1>
+                                        <p class="subscription-plans-card-subtitle pb-4 pt-0">requests per minutes</p>
+                                        <a id="subscribe-btn-{{policyID}}" type="button"
+                                            class="common-btn-outlined p-1 ps-2 pe-2 w-100 subscription-plan-subscribe-btn"
+                                            onclick="showSubscribeButtonLoading(this); subscribe('{{@root.orgID}}', '', '{{../apiID}}', '{{../apiReferenceID}}', '{{policyID}}', '{{policyName}}')">Subscribe</a>
                                 </div>
                             </div>
                         </div>

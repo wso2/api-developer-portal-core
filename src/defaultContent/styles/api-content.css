@@ -287,10 +287,16 @@ hr {
   display: flex;
 }
 
+.api-banner-icon {
+  overflow: hidden;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .api-image {
-  font-size: 5rem;
-  width: 13.75rem;
-  height: 13.75rem;
+  font-size: 5vw;
+  width: 15vw;
+  height: 15vw;
   border-radius: 50%;
   object-fit: cover;
   margin-bottom: 0;
@@ -299,6 +305,7 @@ hr {
 }
 
 .api-image-small {
+  font-size: 2.5rem;
   width: 9.375rem;
   height: 9.375rem;
   border-radius: 50%;
@@ -523,6 +530,18 @@ hr {
   margin-top: 1.5rem;
 }
 
+.subscription-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem; 
+  align-items: flex-start;
+}
+
+.subscription-card {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
 /* Message Overlay for subscription cards */
 .subscription-card .message-overlay {
   position: absolute;
@@ -626,7 +645,8 @@ hr {
 
   /* Custom Dropdown styling for subscription plans */
   .subscription-container {
-    padding: 8px;
+    justify-content: center;
+    padding: 1px;
     display: flex;
     gap: 1rem;
     width: 100%;
@@ -635,12 +655,18 @@ hr {
   .custom-dropdown {
     font-size: small;
     position: relative;
-    width: 100%;
+    z-index: 999;
   }
 
   .custom-select-container {
     position: relative;
-    width: 100%;
+    width: 10rem;
+  }
+
+  .subscribe-btn {
+    flex: 1;
+    min-width: 7rem;
+    max-width: 10rem;
   }
 
   .select-selected {
@@ -653,6 +679,13 @@ hr {
     background-color: var(--main-bg-color);
     cursor: pointer;
     font-size: 0.875rem;
+  }
+
+  .selected-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #6c757d;
   }
 
   .select-arrow {

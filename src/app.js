@@ -210,7 +210,7 @@ let claimNames = {
 };
 // configurePassport(config.identityProvider, claimNames);
 
-passport.use(new OAuth2Strategy({
+const strategy = new OAuth2Strategy({
     name: 'Asgardeo',
     issuer: config.identityProvider.issuer,
     authorizationURL: config.identityProvider.authorizationURL,
@@ -296,7 +296,6 @@ passport.use(new OAuth2Strategy({
                 console.error('Login failed after session regen:', err);
                 return done(err);
             }
-            console.log('User profile stored in session:', profile);
             return done(null, profile);
         });
     });
@@ -304,13 +303,22 @@ passport.use(new OAuth2Strategy({
     console.log('Retruning profile');
 
     //return done(null, profile);
-}));
+});
+
+strategy.authorizationParams = function(options) {
+    const params = {};
+    if (options.prompt) {
+        params.prompt = options.prompt;
+    }
+    return params;
+};
+
+passport.use(strategy);
 
 // Serialize user into the session
 passport.serializeUser((user, done) => {
 
     console.log("Serializing user");
-    console.log(user);
     const profile = {
         firstName: user.firstName,
         lastName: user.lastName,

@@ -13,11 +13,16 @@
             <i class="bi bi-pencil"></i>
           </button>
           <div class="edit-actions" id="nameEditActions" style="display: none;">
-            <button class="btn btn-sm btn-success save-btn" id="saveNameBtn"><i class="bi bi-check"></i></button>
-            <button class="btn btn-sm btn-danger cancel-btn" id="cancelNameBtn"><i class="bi bi-x"></i></button>
+            <button class="btn btn-sm common-btn-primary save-btn" id="saveNameBtn" title="Save">
+              <span class="button-normal-state"><i class="bi bi-check"></i></span>
+              <span class="button-loading-state" style="display: none;">
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+              </span>
+            </button>
+            <button class="btn btn-sm common-btn-outlined cancel-btn" id="cancelNameBtn" title="Cancel"><i class="bi bi-x"></i></button>
           </div>
-          <div id="nameEditError" class="edit-error-message" style="display: none;"></div>
         </div>
+        <div id="nameEditError" class="edit-error-message mb-2" style="display: none;"></div>
         <div class="d-flex align-items-center edit-container mb-2">
           {{#if description}}
             <p class="app-description mb-0" id="applicationDescription" data-original="{{description}}">{{description}}</p>
@@ -31,8 +36,13 @@
             <p class="app-description" id="applicationDescription" data-original="{{null}}"></p>
           {{/if}}
           <div class="edit-actions" id="descriptionEditActions" style="display: none;">
-            <button class="btn btn-sm btn-success save-btn" id="saveDescriptionBtn"><i class="bi bi-check"></i></button>
-            <button class="btn btn-sm btn-danger cancel-btn" id="cancelDescriptionBtn"><i class="bi bi-x"></i></button>
+            <button class="btn btn-sm common-btn-primary save-btn" id="saveDescriptionBtn" title="Save">
+              <span class="button-normal-state"><i class="bi bi-check"></i></span>
+              <span class="button-loading-state" style="display: none;">
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+              </span>
+            </button>
+            <button class="btn btn-sm common-btn-outlined cancel-btn" id="cancelDescriptionBtn" title="Cancel"><i class="bi bi-x"></i></button>
           </div>
         </div>
         <div id="descriptionEditError" class="edit-error-message" style="display: none;"></div>
@@ -56,7 +66,7 @@
           <div class="d-flex align-items-center">
             <button id="generateKeyBtn" class="common-btn-primary btn-sm" onclick="generateApplicationKey('keysview-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.id}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', 'consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}')">
               <span class="button-normal-state">
-                <i class="bi bi-key me-1"></i> Generate Keys
+                <i class="bi bi-key me-1"></i> Generate Key
               </span>
               <span class="button-loading-state" style="display: none;">
                 <span class="spinner-border spinner-border-sm me-1" role="status"></span>
@@ -74,7 +84,7 @@
         <div id="keyActionsContainer" class="key-actions-container"
           style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
           <div class="key-action-row">
-            <span class="key-action-label">Key: </span>
+            <span class="key-action-label">Credentials: </span>
             <div class="key-action-buttons">
               <button id="viewKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal()">
                 <i class="bi bi-eye"></i> View

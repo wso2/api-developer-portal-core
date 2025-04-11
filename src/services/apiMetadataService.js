@@ -124,6 +124,18 @@ function changeEndpoint(endPoint) {
     return endPoint;
 }
 
+async function allowAPIStatusChange(apiStatus, orgId, apiId) {
+    
+    if (apiStatus === constants.API_STATUS.UNPUBLISHED) {
+
+        const subApis = await adminDao.getSubscriptions(orgId, '', apiId);
+        if (subApis.length > 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
 const getAPIMetadata = async (req, res) => {
 
     const { orgId, apiId } = req.params;
@@ -159,22 +171,32 @@ const getMetadataFromDB = async (orgID, apiID) => {
 };
 
 const getAllAPIMetadata = async (req, res) => {
-
-    const orgID = req.params.orgId;
-    const searchTerm = req.query.query;
-    const apiName = req.query.name;
-    const apiVersion = req.query.version;
-    const tags = req.query.tags;
-    const viewName = req.params.viewName;
-    let groupList = [];
-    if (req.query.groups) {
-        groupList.push(req.query.groups.split(" "));
-    }
-    if (!orgID) {
-        throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
-    }
     try {
-        const retrievedAPIs = await getMetadataListFromDB(orgID, groupList, searchTerm, tags, apiName, apiVersion, viewName);
+        const orgID = req.params.orgId;
+        const searchTerm = req.query.query;
+        const apiName = req.query.apiName;
+        const apiVersion = req.query.version;
+        const tags = req.query.tags;
+        const view = req.query.view;
+        let groupList = [];
+
+        const allowedQueryParams = ['query', 'apiName', 'version', 'tags', 'groups', 'view'];
+        const invalidParams = Object.keys(req.query).filter(param => !allowedQueryParams.includes(param));
+
+        if (invalidParams.length > 0) {
+            const parameterMessage = invalidParams.length === 1
+                ? `Invalid query parameter: ${invalidParams.join(', ')}`
+                : `Invalid query parameters: ${invalidParams.join(', ')}`;
+            throw new Sequelize.ValidationError(parameterMessage);
+        }
+
+        if (req.query.groups) {
+            groupList.push(req.query.groups.split(" "));
+        }
+        if (!orgID) {
+            throw new Sequelize.ValidationError("Missing or Invalid fields in the request payload");
+        }
+        const retrievedAPIs = await getMetadataListFromDB(orgID, groupList, searchTerm, tags, apiName, apiVersion, view);
         res.status(200).send(retrievedAPIs);
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.API_NOT_FOUND}`, error);
@@ -195,11 +217,11 @@ const getMetadataListFromDB = async (orgID, groups, searchTerm, tags, apiName, a
             retrievedAPIs = await apiDao.getAPIMetadataByCondition(condition);
         } else if (searchTerm) {
             retrievedAPIs = await apiDao.searchAPIMetadata(orgID, groups, searchTerm, viewName, t);
-        } else {
+        } else if (viewName) {
             retrievedAPIs = await apiDao.getAllAPIMetadata(orgID, groups, viewName, t);
         }
         // Create response object
-        const apiCreationResponse = retrievedAPIs.map((api) => new APIDTO(api));
+        const apiCreationResponse = retrievedAPIs ? retrievedAPIs.map((api) => new APIDTO(api)) : [];
         return apiCreationResponse;
     });
 };
@@ -225,6 +247,10 @@ const updateAPIMetadata = async (req, res) => {
         apiMetadata.endPoints.productionURL = changeEndpoint(apiMetadata.endPoints.productionURL);
         apiMetadata.endPoints.sandboxURL = changeEndpoint(apiMetadata.endPoints.sandboxURL);
 
+        let allowStatusChange = await allowAPIStatusChange(apiMetadata.apiInfo.apiStatus, orgId, apiId);
+        if (!allowStatusChange) {
+            throw new CustomError(409, constants.ERROR_MESSAGE.ERR_SUB_EXIST, "API has subscriptions.");
+        }
         await sequelize.transaction(async (t) => {
             // Create apimetadata record
             console.log("Updating metadata", apiId);
@@ -553,6 +579,7 @@ const deleteAPIFile = async (req, res) => {
 
     const { orgId, apiId } = req.params;
     const apiFileName = req.query.fileName;
+    const fileType = req.query.type;
     if (!orgId || !apiId) {
         throw new Sequelize.ValidationError(
             "Missing or Invalid fields in the request payload"
@@ -561,11 +588,11 @@ const deleteAPIFile = async (req, res) => {
     try {
         let apiFileResponse;
         if (apiFileName) {
-            apiFileResponse = await apiDao.deleteAPIFile(apiFileName, orgId, apiId);
+            apiFileResponse = await apiDao.deleteAPIFile(apiFileName, fileType, orgId, apiId);
         } else {
-            apiFileResponse = await apiDao.deleteAllAPIFiles(orgId, apiId);
+            apiFileResponse = await apiDao.deleteAllAPIFiles(fileType, orgId, apiId);
         }
-        if (apiFileResponse) {
+        if (!apiFileResponse) {
             res.status(204).send();
         } else {
             res.status(404).send("API Content not found");
