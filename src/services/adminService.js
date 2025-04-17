@@ -812,7 +812,7 @@ const createAppKeyMapping = async (req, res) => {
             //all token types bound to one app if shared
 
             //unique app name for control plane application
-            cpApplicationName = `${applicationName}_${appID}`;
+            cpApplicationName = `${appID}`;
             //TODO - handel non-shared token types scenarios
             //create control plane application
             const cpAppCreationResponse = await createCPApplication(req, cpApplicationName);
