@@ -178,6 +178,7 @@ const loadApplication = async (req, res) => {
 
                 subList = await Promise.all(subAPIs.map(async (sub) => {
                     const api = new APIDTO(sub);
+                    console.log("sub", sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION);
                     let apiDTO = {};
                     apiDTO.apiInfo = {};
                     apiDTO.name = api.apiInfo.apiName;
@@ -197,9 +198,9 @@ const loadApplication = async (req, res) => {
                     if (subPolicy) {
                         apiDTO.policyName = subPolicy.dataValues.POLICY_NAME;
                     }
-                    apiDTO.subscriptionPolicyDetails = new subscriptionPolicyDTO(subPolicy);
-                    console.log("apiDTO",   apiDTO.subscriptionPolicyDetails);
-                    return apiDTO;
+                    apiDTO.subscriptionPolicyDetails = api.subscriptionPolicies;
+                    //console.log("apiDTO",   apiDTO.subscriptionPolicyDetails);
+                    return apiDTO
                 }));
             }
             let apiKey = false

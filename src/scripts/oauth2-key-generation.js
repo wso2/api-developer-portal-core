@@ -917,4 +917,10 @@ async function copyOauthURLs(inputId) {
     }
 }
 
+function loadModal(modalID) {
+    console.log(modalID)
+    const modal = document.getElementById(modalID);
+    modal.style.display = 'flex';
+}
+
 

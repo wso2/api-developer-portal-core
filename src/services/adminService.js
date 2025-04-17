@@ -703,6 +703,36 @@ const createSubscription = async (req, res) => {
     }
 }
 
+const updateSubscription = async (req, res) => {
+
+    try {
+        const orgID = req.params.orgId;
+        sequelize.transaction(async (t) => {
+            try {
+                const app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
+                if (app.length > 0) {
+                    const subscriptionID = req.body.subscriptionId;
+                    const response = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/subscriptions/${subscriptionID}`, {}, {
+                        apiId: req.body.apiReferenceID,
+                        applicationId: app[0].dataValues.CP_APP_REF,
+                        throttlingPolicy: req.body.policyName
+                    });
+                    console.log("Response from control plane", response);
+                    //await handleSubscribe(orgID, req.body.applicationID, null, null, response, t);
+                }
+                await adminDao.updateSubscription(orgID, req.body, t);
+                return res.status(201).json({ message: 'Updated subscription successfully' });
+            } catch (error) {
+                console.error("Error occurred while subscribing to API", error);
+                return util.handleError(res, error);
+            }
+        });
+    } catch (error) {
+        console.error("Error occurred while subscribing to API", error);
+        return util.handleError(res, error);
+    }
+}
+
 async function handleSubscribe(orgID, applicationID, apiRefID, subRefID, response, t) {
     if (apiRefID && subRefID) {
         await adminDao.createApplicationKeyMapping({
@@ -1070,6 +1100,7 @@ module.exports = {
     deleteDevPortalApplication,
     getAllApplications,
     createSubscription,
+    updateSubscription,
     getSubscription,
     getAllSubscriptions,
     deleteSubscription,
