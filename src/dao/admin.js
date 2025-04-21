@@ -16,7 +16,7 @@
  * under the License.
  */
 const { Organization, OrgContent } = require('../models/organization');
-const { Sequelize, where } = require('sequelize');
+const { Sequelize } = require('sequelize');
 const { IdentityProvider } = require('../models/identityProvider');
 const { Application, ApplicationKeyMapping, SubscriptionMapping } = require('../models/application');
 const Provider = require('../models/provider');
