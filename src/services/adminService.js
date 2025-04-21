@@ -371,9 +371,9 @@ const deleteOrgContent = async (req, res) => {
         const fileName = req.query.fileName;
         let deletedRowsCount;
         if (!req.query.fileName) {
-           deletedRowsCount = await adminDao.deleteAllOrgContent(req.params.orgId, req.params.name);
+            deletedRowsCount = await adminDao.deleteAllOrgContent(req.params.orgId, req.params.name);
         } else {
-           deletedRowsCount = await adminDao.deleteOrgContent(req.params.orgId, req.params.name, fileName);
+            deletedRowsCount = await adminDao.deleteOrgContent(req.params.orgId, req.params.name, fileName);
         }
         if (deletedRowsCount > 0) {
             res.status(204).send();
@@ -389,7 +389,7 @@ const deleteOrgContent = async (req, res) => {
 const deleteAllOrgContent = async (req, res) => {
 
     try {
-       
+
         const deletedRowsCount = await adminDao.deleteAllOrgContent(req.params.orgId, req.params.name, fileName);
         if (deletedRowsCount > 0) {
             res.status(204).send();
@@ -707,18 +707,25 @@ const updateSubscription = async (req, res) => {
 
     try {
         const orgID = req.params.orgId;
+        console.log("Update body", req.body)
         sequelize.transaction(async (t) => {
             try {
-                const app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
+                const app =  await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
                 if (app.length > 0) {
-                    const subscriptionID = req.body.subscriptionId;
+                    let throttlingPolicy = "";
+                    const subscruibedPolicy = await apiDao.getSubscriptionPolicy(req.body.policyId, orgID);
+                    if (subscruibedPolicy) {
+                        throttlingPolicy = subscruibedPolicy.dataValues.POLICY_NAME;
+                    }
+                    const subscriptionID = app[0].dataValues.SUBSCRIPTION_REF_ID;
                     const response = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/subscriptions/${subscriptionID}`, {}, {
                         apiId: req.body.apiReferenceID,
                         applicationId: app[0].dataValues.CP_APP_REF,
-                        throttlingPolicy: req.body.policyName
+                        requestedThrottlingPolicy: req.body.policyName,
+                        subscriptionId: subscriptionID,
+                        status: 'UNBLOCKED',
+                        throttlingPolicy: throttlingPolicy
                     });
-                    console.log("Response from control plane", response);
-                    //await handleSubscribe(orgID, req.body.applicationID, null, null, response, t);
                 }
                 await adminDao.updateSubscription(orgID, req.body, t);
                 return res.status(201).json({ message: 'Updated subscription successfully' });
@@ -895,19 +902,19 @@ const createAppKeyMapping = async (req, res) => {
                     await adminDao.createApplicationKeyMapping(appKeyMappping, t);
                 }
             }
-            //check if more than one mapping en
-            const appKeyMapping = await adminDao.getApplicationKeyMapping(orgID, appID, true);
+
             //delete app key mapping entries with no api id ref
-            if (appKeyMapping.length > 1) {
+            if (apiSubscriptions.length > 0) {
                 console.log("Delete app key mapping entries with no api id ref");
                 await adminDao.deleteAppKeyMapping(orgID, appID, null, t);
             }
+
             tokenDetails.additionalProperties = checkAdditionalValues(tokenDetails.additionalProperties);
             //TODO: need to support both key types
             tokenDetails.keyType = "PRODUCTION";
             //generate oauth key
             responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${cpAppID}/generate-keys`, {}, tokenDetails);
-            
+
             // Add the appRefId to the response data
             responseData.appRefId = cpAppID;
         });

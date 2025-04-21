@@ -80,7 +80,6 @@ const deleteApplication = async (req, res) => {
             } else {
                 res.status(200).send("Resouce Deleted Successfully");
             }
-            res.status(200).json({ message: responseData.message });
         } catch (error) {
             if (error.statusCode === 404) {
                 const appDeleteResponse = await adminDao.deleteApplication(orgID, applicationId, req.user.sub);
