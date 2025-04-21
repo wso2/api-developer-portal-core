@@ -193,7 +193,6 @@ const registerPartialsFromAPI = async (req) => {
         baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
         profile: req.isAuthenticated() ? profile : {},
         isAdmin: isAdmin,
-        logo: constants.LOGO,
         isSuperAdmin: isSuperAdmin,
         hasWSO2APIs: hasWSO2APIs
       })
@@ -312,7 +311,6 @@ function registerPartialsFromFile(baseURL, dir, req) {
           header: hbs.handlebars.compile(template)({
             baseUrl: baseURL,
             profile: profile,
-            logo: constants.LOGO,
             hasWSO2APIs: true
           }),
         };
