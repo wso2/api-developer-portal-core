@@ -40,7 +40,7 @@
                                     <a id="subscribe-btn-{{policyID}}" type="button"
                                         class="common-btn-outlined p-1 ps-2 pe-2 w-100 subscription-plan-subscribe-btn {{#if (eq displayName ../selectedPlan)}} disabled {{/if}}"
                                         {{#if (eq displayName ../selectedPlan)}} style="pointer-events: none;" {{/if}}
-                                        onclick="showSubscribeButtonLoading(this); updateSubscription('{{@root.orgID}}', '', '{{../apiID}}', '{{../apiReferenceID}}', '{{policyID}}', '{{policyName}}')">Update</a>
+                                        onclick="showSubscribeButtonLoading(this); updateSubscription('{{@root.orgID}}', '{{../appID}}', '{{../apiID}}', '{{../apiReferenceID}}', '{{policyID}}', '{{policyName}}')">Update</a>
                                 </div>
                             </div>
                         </div>

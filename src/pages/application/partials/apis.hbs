@@ -25,7 +25,7 @@
                     </thead>
                     <tbody>
                         {{#each subAPIs}}
-                        {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName}}
+                        {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName appID=../applicationMetadata.id}}
                         <tr class="data-row">
                             <td class="app-td">
                                 <span onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"

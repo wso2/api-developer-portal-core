@@ -268,7 +268,6 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
 }
 
 async function updateSubscription(orgID, applicationID, apiId, apiReferenceID, policyId, policyName) {
-    console.log('Subscribing to API:', apiId);
 
     // Find the related card and button elements
     const card = getSubscriptionCard(apiId, policyId);
@@ -306,44 +305,8 @@ async function updateSubscription(orgID, applicationID, apiId, apiReferenceID, p
         if (response.ok) {
             // Show success notification
             showSubscriptionMessage(messageOverlay, 'Successfully updated API subscription', 'success');
-
-            if (card) {
-                // Show "Subscribed" label
-                const subscriptionFlag = card.querySelector('.subscription-flag');
-                if (subscriptionFlag) {
-                    subscriptionFlag.style.display = 'block';
-                }
-
-                // Mark the application as subscribed
-                const dropdown = card.querySelector('.custom-dropdown');
-                if (dropdown) {
-                    // Mark the application as subscribed in the dropdown
-                    const appOption = dropdown.querySelector(`.select-item[data-value="${applicationID}"]`);
-                    if (appOption) {
-                        // Show the subscription icon by changing display style
-                        let subscriptionIcon = appOption.querySelector('.subscription-icon');
-                        if (subscriptionIcon) {
-                            subscriptionIcon.style.display = 'inline-block';
-                        } else {
-                            const subscriptionIconHtml = `<img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
-                            alt="Subscribed" class="subscription-icon" style="display: inline-block;" />`;
-                            const tempDiv = document.createElement('div');
-                            tempDiv.innerHTML = subscriptionIconHtml;
-                            subscriptionIcon = tempDiv.firstElementChild;
-                            appOption.appendChild(subscriptionIcon);
-                        }
-
-                        // Mark option as disabled
-                        appOption.classList.add('disabled');
-                    }
-
-                    // Disable the subscribe button
-                    const subscribeButton = card.querySelector('.common-btn-primary');
-                    if (subscribeButton) {
-                        subscribeButton.setAttribute('disabled', 'disabled');
-                    }
-                }
-            }
+            const url = new URL(window.location.origin + window.location.pathname);
+            window.location.href = url.toString();
         } else {
             // Handle API error
             console.error('Failed to create subscription:', responseData);
@@ -362,7 +325,7 @@ async function updateSubscription(orgID, applicationID, apiId, apiReferenceID, p
         closeModal('planModal-' + apiId);
         resetSubscribeButtonState(subscribeButton);
 
-        const errorMessage = `Error while subscribing: ${error.message}`;
+        const errorMessage = `Error while updating subscription: ${error.message}`;
         showSubscriptionMessage(messageOverlay, errorMessage, 'error');
     }
 }
