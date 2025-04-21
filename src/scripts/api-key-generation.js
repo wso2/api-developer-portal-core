@@ -159,140 +159,19 @@ function validateGenerateButton(isProduction) {
   };
 })();
 
-function openApiKeyModal(apiKey, title, subTitle) {
-  const apiKeyInput = document.getElementById('apiKeyModalField');
-  apiKeyInput.value = apiKey;
-  const modal = document.getElementById('apiKeyModal');
-  const modalTitle = document.getElementById('keyModalTitle');
-  modalTitle.textContent = title;
-  const modaSublTitle = document.getElementById('keyModalSubTitle');
-  modaSublTitle.textContent = subTitle;
-  if (title.includes('CURL')) {
-    const modalDescription = document.getElementById('modalDescription');
-    modalDescription.textContent = '';
-  }
-  const bootstrapModal = new bootstrap.Modal(modal);
-  bootstrapModal.show();
-}
+async function generateAPIKey(projectID, apiID, subPlan, appID, subID) {
 
-async function apiKeyCopyToClipboard() {
-  const apiKeyInput = document.getElementById('apiKeyModalField');
-  apiKeyInput.select();
-  apiKeyInput.setSelectionRange(0, 99999);
+  const uri = `/devportal/applications/${appID}/api-keys/generate`;
 
-  try {
-    const success = document.execCommand('copy');
-    if (success) {
-      await showAlert('Copied to clipboard!', 'success');
-    } else {
-      await showAlert('Failed to copy!', 'error');
-    }
-  } catch (err) {
-    await showAlert('Failed to copy!', 'error');
-  }
-  window.getSelection().removeAllRanges();
-}
-
-function cleanForms(isProduction) {
-  const ipValuesInput = document.getElementById(
-    'ip-values-' + (isProduction ? 'production' : 'sandbox')
-  );
-  const ipInput = document.getElementById(
-    'ip-input-' + (isProduction ? 'production' : 'sandbox')
-  );
-  const httpValuesInput = document.getElementById(
-    'http-values-' + (isProduction ? 'production' : 'sandbox')
-  );
-  const httpInput = document.getElementById(
-    'http-input-' + (isProduction ? 'production' : 'sandbox')
-  );
-  const validityInput = document.getElementById(
-    'validity-' + (isProduction ? 'production' : 'sandbox')
-  );
-
-  ipValuesInput.value = '';
-  httpValuesInput.value = '';
-  validityInput.value = '-1';
-
-  const ipContainer = document.getElementById(
-    'ip-container-' + (isProduction ? 'production' : 'sandbox')
-  );
-  const httpContainer = document.getElementById(
-    'http-container-' + (isProduction ? 'production' : 'sandbox')
-  );
-
-  const iPchips = Array.from(ipContainer.children);
-
-  iPchips.forEach(child => {
-    if (child !== ipInput) {
-      ipContainer.removeChild(child);
-    }
-  });
-
-  const httpChips = Array.from(httpContainer.children);
-
-  httpChips.forEach((child) => {
-    if (child !== httpInput) {
-      httpContainer.removeChild(child);
-    }
-  });
-
-  const noneRadio = document.getElementById(
-    'noneCheck-' + (isProduction ? 'production' : 'sandbox')
-  );
-  noneRadio.checked = true;
-
-  if (isProduction) {
-    updateProductionSections();
-  } else {
-    updateSandboxSections();
-  }
-}
-
-async function generateAPIKey(applicationID, isProduction) {
-  const ipValuesInput = document.getElementById(
-    'ip-values-' + (isProduction ? 'production' : 'sandbox')
-  );
-  const httpValuesInput = document.getElementById(
-    'http-values-' + (isProduction ? 'production' : 'sandbox')
-  );
-  const validityInput = document.getElementById(
-    'validity-' + (isProduction ? 'production' : 'sandbox')
-  );
-
-  const noneRadio = document.getElementById(
-    'noneCheck-' + (isProduction ? 'production' : 'sandbox')
-  );
-  const ipRadio = document.getElementById(
-    'ipCheck-' + (isProduction ? 'production' : 'sandbox')
-  );
-  const httpRadio = document.getElementById(
-    'httpCheck-' + (isProduction ? 'production' : 'sandbox')
-  );
-
-  const validityPeriod = validityInput.value;
-  let JSONbody;
-  const environment = isProduction ? 'PRODUCTION' : 'SANDBOX';
-  const uri = `/devportal/applications/${applicationID}/api-keys/${environment}/generate`;
-
-  if (noneRadio.checked) {
-    JSONbody = JSON.stringify({
-      validityPeriod,
-      additionalProperties: { permittedIP: '', permittedReferer: '' },
+  JSONbody = JSON.stringify(
+    {
+      "applicationId": `${appID}`,
+      "apiId": `${apiID}`,
+      "subscriptionPlan": `${subPlan}`,
+      "scopes": [],
+      "keyType": "PRODUCTION",
+      "projectID": `${projectID}`,
     });
-  } else if (ipRadio.checked) {
-    const ipValues = ipValuesInput.value;
-    JSONbody = JSON.stringify({
-      validityPeriod,
-      additionalProperties: { permittedIP: ipValues, permittedReferer: '' },
-    });
-  } else if (httpRadio.checked) {
-    const httpValues = httpValuesInput.value;
-    JSONbody = JSON.stringify({
-      validityPeriod,
-      additionalProperties: { permittedIP: '', permittedReferer: httpValues },
-    });
-  }
 
   try {
     const response = await fetch(uri, {
@@ -308,9 +187,24 @@ async function generateAPIKey(applicationID, isProduction) {
     }
 
     const responseData = await response.json();
-    cleanForms(isProduction);
-    openApiKeyModal(responseData.apikey, 'Generated API Key', 'API Key');
-    await showAlert('API Key generated successfully!', 'success');
+    console.log('API Key generated successfully:', responseData.value);
+
+    const modal = document.getElementById('apiKeyModal');
+    modal.style.display = 'flex';
+
+    let keyText = document.getElementById("token_apiKeyText");
+    keyText.textContent = responseData.value;
+
+    let generateBtn = document.getElementById('generateKeyBtn-' + subID);
+    generateBtn.style.display = 'none';
+
+    let regenerateBtn = document.getElementById('regenerateKeyBtn-' + subID);
+    regenerateBtn.style.display = 'inline-flex';
+    regenerateBtn.setAttribute('data-api-key-id', responseData.id);
+
+    let revokeBtn = document.getElementById('revokeKeyBtn-' + subID);
+    revokeBtn.style.display = 'inline-flex';
+    
   } catch (error) {
     console.error('Error:', error);
   }

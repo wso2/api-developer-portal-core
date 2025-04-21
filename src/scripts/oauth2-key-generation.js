@@ -748,10 +748,10 @@ async function copyToken(KMName) {
     try {
         // Copy to clipboard
         await navigator.clipboard.writeText(tokenText);
-        await showAlert('Token copied to clipboard!');
+        await showAlert('Copied to clipboard!');
     } catch (err) {
         console.error('Could not copy text:', err);
-        await showAlert('Failed to copy token', true);
+        await showAlert('Failed to copy', true);
     }
 }
 

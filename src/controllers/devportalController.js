@@ -16,9 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-const { invokeApiRequest } = require('../utils/util');
+const { invokeApiRequest, invokeGraphQLRequest } = require('../utils/util');
 const config = require(process.cwd() + '/config');
 const controlPlaneUrl = config.controlPlane.url;
+const controlPlaneGraphqlUrl = config.controlPlane.graphqlURL;
 const util = require('../utils/util');
 const passport = require('passport');
 const { Strategy: CustomStrategy } = require('passport-custom');
@@ -27,6 +28,7 @@ const constants = require('../utils/constants');
 const { ApplicationDTO } = require('../dto/application');
 const { Sequelize } = require("sequelize");
 const { checkAdditionalValues } = require('../services/adminService');
+const apiDao = require('../dao/apiMetadata');
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
 
@@ -120,15 +122,36 @@ const resetThrottlingPolicy = async (req, res) => {
 // ***** Generate API Keys *****
 
 const generateAPIKeys = async (req, res) => {
+    const orgID = await adminDao.getOrgId(req.user[constants.ORG_IDENTIFIER]);
+
     try {
-        const applicationId = req.params.applicationId;
-        const environment = req.params.env;
-        const { validityPeriod, additionalProperties } = req.body;
-        const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/api-keys/${environment}/generate`, {
+        const query = `
+        query ($orgUuid: String!, $projectId: String!) {
+          environments(orgUuid: $orgUuid, projectId: $projectId) {
+            name
+            templateId
+          }
+        }
+      `;
+
+        const variables = {
+            orgUuid: req.user[constants.ORG_IDENTIFIER],
+            projectId: req.body.projectID
+        };
+
+        const orgDetails = await invokeGraphQLRequest(req, `${controlPlaneGraphqlUrl}`, query, variables, {});
+        const environments = orgDetails?.data?.environments || [];
+        const apiHandle = await apiDao.getAPIHandle(orgID, req.body.apiId);
+
+        let requestBody = req.body;
+        requestBody.name = apiHandle + "-" + requestBody.applicationId.split("-")[0];
+        requestBody.environmentTemplateId = environments.find(env => env.name === 'Production').templateId;
+        delete requestBody.projectID;
+
+        const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/api-keys/generate`, {
             'Content-Type': 'application/json'
-        }, {
-            validityPeriod, additionalProperties
-        });
+        }, requestBody);
+        console.log("API Key generated successfully:", responseData);
         res.status(200).json(responseData);
     } catch (error) {
         console.error("Error occurred while deleting the application", error);
