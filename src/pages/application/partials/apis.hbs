@@ -37,17 +37,41 @@
                             {{#if (contains security 'api_key')}}
                             <td class="app-td">
                                 <div class="api-key-actions">
-                                    <button class="common-btn-outlined btn-sm me-1" id="regenerateKeyBtn-{{subID}}" data-api-key-id="'{{apiKeys.[0].id}}'"
-                                        onclick="openWarningModal('regenerate', this.dataset.apiKeyId)" style="{{#if apiKeys}}display: inline-flex;{{else}}display: none;{{/if}}">
-                                        <i class="bi bi-key me-1"></i> Regenerate
+                                    <button class="common-btn-outlined btn-sm me-1" id="regenerateKeyBtn-{{subID}}"
+                                        data-api-key-id="'{{apiKeys.[0].id}}'"
+                                        onclick="openWarningModal('regenerate', this.dataset.apiKeyId, '{{subID}}')"
+                                        style="{{#if apiKeys}}display: inline-flex;{{else}}display: none;{{/if}}">
+                                        <span class="button-normal-state">
+                                            <i class="bi bi-key me-1"></i> Regenerate
+                                        </span>
+                                        <span class="button-loading-state" style="display: none;">
+                                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                            Regenerate...
+                                        </span>
                                     </button>
-                                    <button class="common-btn-outlined btn-sm api-key-revoke" data-api-key-id="'{{apiKeys.[0].id}}'" 
-                                        onclick="openWarningModal('revoke', this.dataset.apiKeyId, '{{subID}}')" id="revokeKeyBtn-{{subID}}" style="{{#if apiKeys}}display: inline-flex;{{else}}display: none;{{/if}}">
-                                        <i class="bi bi-x-circle me-1"></i> Revoke
+                                    <button class="common-btn-outlined btn-sm api-key-revoke"
+                                        data-api-key-id="'{{apiKeys.[0].id}}'"
+                                        onclick="openWarningModal('revoke', this.dataset.apiKeyId, '{{subID}}')"
+                                        id="revokeKeyBtn-{{subID}}"
+                                        style="{{#if apiKeys}}display: inline-flex;{{else}}display: none;{{/if}}">
+                                        <span class="button-normal-state">
+                                            <i class="bi bi-key me-1"></i> Revoke
+                                        </span>
+                                        <span class="button-loading-state" style="display: none;">
+                                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                            Revoking...
+                                        </span>
                                     </button>
-                                    <button class="common-btn-outlined btn-sm me-1" id="generateKeyBtn-{{subID}}" style="{{#if apiKeys}}display: none;{{else}}display: inline-flex;{{/if}}"
+                                    <button class="common-btn-outlined btn-sm me-1" id="generateKeyBtn-{{subID}}"
+                                        style="{{#if apiKeys}}display: none;{{else}}display: inline-flex;{{/if}}"
                                         onclick="generateAPIKey('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{subID}}')">
-                                        <i class="bi bi-key me-1"></i> Generate
+                                        <span class="button-normal-state">
+                                            <i class="bi bi-key me-1"></i> Generate Key
+                                        </span>
+                                        <span class="button-loading-state" style="display: none;">
+                                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                            Generating...
+                                        </span>
                                     </button>
                                 </div>
                             </td>
