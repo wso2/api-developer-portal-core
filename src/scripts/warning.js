@@ -1,5 +1,5 @@
-function openDeleteModal(param1, param2, param3, param4) {
-    const modal = document.getElementById('deleteConfirmation');
+function openWarningModal(param1, param2, param3, param4) {
+    const modal = document.getElementById('warningModal');
     modal.dataset.param1 = param1;
     modal.dataset.param2 = param2;
     modal.dataset.param3 = param3;
