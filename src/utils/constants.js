@@ -35,7 +35,6 @@ module.exports = {
     ACCESS_TOKEN: 'accessToken',
     USER_ID: 'sub',
     BASIC_HEADER: 'basicAuthHeader',
-    LOGO: "https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/devportalLogo.png",
     API_VISIBILITY: {
         PUBLIC: 'PUBLIC',
         PRIVATE: 'PRIVATE'
