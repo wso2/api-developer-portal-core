@@ -243,6 +243,7 @@ module.exports = {
     ERROR_CODE: {
         401: "Unauthenticated",
         403: "Forbidden",
-        404: "Not Found"
+        404: "Not Found",
+        500: "Internal Server Error"
     }
 }
