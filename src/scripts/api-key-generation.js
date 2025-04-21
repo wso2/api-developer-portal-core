@@ -54,7 +54,6 @@ async function generateAPIKey(projectID, apiID, subPlan, appID, subID) {
 
 async function revokeAPIKey(apiKeyID, subID) {
 
-  console.log(apiKeyID);
   const uri = `/devportal/api-keys/${apiKeyID}/revoke`;
 
   try {
@@ -79,6 +78,37 @@ async function revokeAPIKey(apiKeyID, subID) {
 
     } else {
       await showAlert(`Failed to revoke API Key. Please try again.\n${response.description}`, 'error');
+    }
+  } catch (error) {
+    await showAlert(`Failed to generate API Key. Please try again.\n${error}`, 'error');
+  }
+}
+
+async function regenerateAPIKey(apiKeyID) {
+
+  const uri = `/devportal/api-keys/${apiKeyID}/regenerate`;
+
+  try {
+    const response = await fetch(uri, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.ok) {
+      const responseData = await response.json();
+
+      const modal = document.getElementById('apiKeyModal');
+      modal.style.display = 'flex';
+
+      let keyText = document.getElementById("token_apiKeyText");
+      keyText.textContent = responseData.value;
+
+      await showAlert('API Key regenerated successfully!', 'success');
+
+    } else {
+      await showAlert(`Failed to regenerate API Key. Please try again.\n${response.description}`, 'error');
     }
   } catch (error) {
     await showAlert(`Failed to generate API Key. Please try again.\n${error}`, 'error');

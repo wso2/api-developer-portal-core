@@ -116,6 +116,7 @@ router.post('/applications/:applicationId/oauth-keys/:keyMappingId/clean-up', en
 
 router.post('/api-keys/generate', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.generateAPIKeys);
 router.post('/api-keys/:apiKeyID/revoke', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.revokeAPIKeys);
+router.post('/api-keys/:apiKeyID/regenerate', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.regenerateAPIKeys);
 
 router.post('/login', devportalController.login);
 module.exports = router;

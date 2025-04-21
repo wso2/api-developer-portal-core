@@ -12,7 +12,7 @@ function openWarningModal(param1, param2, param3, param4) {
         document.getElementById('modalMessage').innerText = "Regenerating the API key will impact applications using the current key. \nThe current key will expire in 1 hour. To avoid service disruptions, copy the new key and update it in your applications immediately.";
         const regenerateBtn = document.getElementById('modalFunction');
         regenerateBtn.innerText = "Regenerate";
-        regenerateBtn.setAttribute('onclick', `regenerateAPIKey('${param2}')`);
+        regenerateBtn.setAttribute('onclick', `regenerateAPIKey(${param2})`);
     } else if (param1 === 'revoke') {
         document.getElementById('modalTitle').innerText = "Revoke API Key";
         document.getElementById('modalMessage').innerText = "Revoking the API key will impact applications using the current key. Are you sure you want to proceed? This action cannot be undone.";
