@@ -159,6 +159,18 @@ const generateAPIKeys = async (req, res) => {
     }
 };
 
+const revokeAPIKeys = async (req, res) => {
+    const apiKeyID = req.params.apiKeyID;
+    try {
+        const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/api-keys/${apiKeyID}/revoke`, {}, {});
+        console.log("API Key revoked successfully:", responseData);
+        res.status(200).json(responseData);
+    } catch (error) {
+        console.error("Error occurred while revoking the API key", error);
+        util.handleError(res, error);
+    }
+}
+
 const generateApplicationKeys = async (req, res) => {
     try {
         const applicationId = req.params.applicationId;
@@ -265,5 +277,6 @@ module.exports = {
     revokeOAuthKeys,
     updateOAuthKeys,
     cleanUp,
-    login
+    login,
+    revokeAPIKeys
 };
