@@ -1,9 +1,10 @@
-function openWarningModal(param1, param2, param3, param4) {
+function openWarningModal(param1, param2, param3, param4, param5) {
     const modal = document.getElementById('warningModal');
     modal.dataset.param1 = param1;
     modal.dataset.param2 = param2;
     modal.dataset.param3 = param3;
     modal.dataset.param4 = param4;
+    modal.dataset.param5 = param5;
     const bootstrapModal = new bootstrap.Modal(modal);
     bootstrapModal.show();
 
@@ -18,7 +19,7 @@ function openWarningModal(param1, param2, param3, param4) {
         document.getElementById('modalMessage').innerText = "Revoking the API key will impact applications using the current key. Are you sure you want to proceed? This action cannot be undone.";
         const revokeBtn = document.getElementById('modalFunction');
         revokeBtn.innerText = "Revoke";
-        revokeBtn.setAttribute('onclick', `revokeAPIKey(${param2}, '${param3}')`);
+        revokeBtn.setAttribute('onclick', `revokeAPIKey(${param2}, '${param3}', '${param4}', '${param5}')`);
     }
 }
 

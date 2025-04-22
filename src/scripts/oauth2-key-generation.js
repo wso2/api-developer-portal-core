@@ -96,8 +96,12 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             const tokenbtn = document.getElementById('tokenKeyBtn');
             tokenbtn.setAttribute("data-keyMappingId", responseData.keyMappingId);
             tokenbtn.setAttribute("data-consumerSecretID", consumerSecretID);
-            tokenbtn.setAttribute("data-appRefID", responseData.appRefId);
+            tokenbtn.setAttribute("data-app-ref-id", responseData.appRefId);
 
+            subList.forEach(subscription => {
+                document.getElementById("generateKeyBtn-" + subscription.subID).setAttribute('data-app-ref-id', `${responseData.appRefId}`);
+            })
+            
             loadKeysViewModal();
 
 
@@ -444,7 +448,7 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
         let clientSecretID = tokenbtn.getAttribute("data-consumerSecretID");
         clientSecret = document.getElementById(clientSecretID).value;
         keyMappingId = tokenbtn.getAttribute("data-keyMappingId");
-        appId = tokenbtn.getAttribute("data-appRefID");
+        appId = tokenbtn.getAttribute("data-app-ref-id");
     }
     const jsonObject = getFormData(formData, keyManager, clientName);
 

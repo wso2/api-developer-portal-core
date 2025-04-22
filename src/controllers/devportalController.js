@@ -27,7 +27,7 @@ const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 const { ApplicationDTO } = require('../dto/application');
 const { Sequelize } = require("sequelize");
-const { checkAdditionalValues } = require('../services/adminService');
+const adminService = require('../services/adminService');
 const apiDao = require('../dao/apiMetadata');
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
@@ -122,9 +122,45 @@ const resetThrottlingPolicy = async (req, res) => {
 // ***** Generate API Keys *****
 
 const generateAPIKeys = async (req, res) => {
-    const orgID = await adminDao.getOrgId(req.user[constants.ORG_IDENTIFIER]);
-
     try {
+        const requestBody = req.body;
+        const apiID = requestBody.apiId;
+        const orgID = await adminDao.getOrgId(req.user[constants.ORG_IDENTIFIER]);
+        let cpAppID = requestBody.applicationId;
+
+        const nonSharedKeyMapping = await adminDao.getApplicationAPIMapping(orgID, requestBody.devportalAppId, apiID, cpAppID, false);
+        const sharedKeyMapping = await adminDao.getApplicationAPIMapping(orgID, requestBody.devportalAppId, apiID, cpAppID, true);
+
+        if (!(cpAppID || nonSharedKeyMapping.length > 0 || sharedKeyMapping.length > 0)) { 
+            const cpApp = await adminService.createCPApplication(req, requestBody.devportalAppId);
+            cpAppID = cpApp.applicationId;
+
+            const apiSubscription = await adminService.createCPSubscription(req, apiID, cpAppID, requestBody.subscriptionPlan);
+
+            const appKeyMappping = {
+                orgID: orgID,
+                appID: requestBody.devportalAppId,
+                cpAppRef: cpAppID,
+                apiRefID: apiSubscription.apiId,
+                subscriptionRefID: apiSubscription.subscriptionId,
+                sharedToken: false,
+                tokenType: constants.TOKEN_TYPES.API_KEY
+            }
+            await adminDao.createApplicationKeyMapping(appKeyMappping);
+        } else if (!(nonSharedKeyMapping[0]?.dataValues.SUBSCRIPTION_REF_ID || sharedKeyMapping[0]?.dataValues.SUBSCRIPTION_REF_ID)) {
+            const apiSubscription = await adminService.createCPSubscription(req, apiID, cpAppID, requestBody.subscriptionPlan);
+            const appKeyMappping = {
+                orgID: orgID,
+                appID: requestBody.devportalAppId,
+                cpAppRef: cpAppID,
+                apiRefID: apiSubscription.apiId,
+                subscriptionRefID: apiSubscription.subscriptionId,
+                sharedToken: false,
+                tokenType: constants.TOKEN_TYPES.API_KEY
+            }
+            await adminDao.updateApplicationKeyMapping(apiSubscription.apiId, appKeyMappping);
+        }
+        
         const query = `
         query ($orgUuid: String!, $projectId: String!) {
           environments(orgUuid: $orgUuid, projectId: $projectId) {
@@ -136,22 +172,22 @@ const generateAPIKeys = async (req, res) => {
 
         const variables = {
             orgUuid: req.user[constants.ORG_IDENTIFIER],
-            projectId: req.body.projectID
+            projectId: requestBody.projectID
         };
 
         const orgDetails = await invokeGraphQLRequest(req, `${controlPlaneGraphqlUrl}`, query, variables, {});
         const environments = orgDetails?.data?.environments || [];
         const apiHandle = await apiDao.getAPIHandle(orgID, req.body.apiId);
 
-        let requestBody = req.body;
         requestBody.name = apiHandle + "-" + requestBody.applicationId.split("-")[0];
         requestBody.environmentTemplateId = environments.find(env => env.name === 'Production').templateId;
+        requestBody.applicationId = cpAppID;
         delete requestBody.projectID;
+        delete requestBody.devportalAppId;
 
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/api-keys/generate`, {
             'Content-Type': 'application/json'
         }, requestBody);
-        console.log("API Key generated successfully:", responseData);
         res.status(200).json(responseData);
     } catch (error) {
         console.error("Error occurred while deleting the application", error);
@@ -163,7 +199,7 @@ const revokeAPIKeys = async (req, res) => {
     const apiKeyID = req.params.apiKeyID;
     try {
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/api-keys/${apiKeyID}/revoke`, {}, {});
-        console.log("API Key revoked successfully:", responseData);
+        await adminDao.deleteAppKeyMapping(await adminDao.getOrgId((req.user[constants.ORG_IDENTIFIER])), req.body.applicationId, req.body.apiRefID);
         res.status(200).json(responseData);
     } catch (error) {
         console.error("Error occurred while revoking the API key", error);

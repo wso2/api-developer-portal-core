@@ -1,6 +1,6 @@
 const e = require("express");
 
-async function generateAPIKey(projectID, apiID, subPlan, appID, subID) {
+async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID) {
 
   const tokenBtn = document.getElementById('generateKeyBtn-' + subID);
   const normalState = tokenBtn.querySelector('.button-normal-state');
@@ -13,12 +13,13 @@ async function generateAPIKey(projectID, apiID, subPlan, appID, subID) {
 
   JSONbody = JSON.stringify(
     {
-      "applicationId": `${appID}`,
+      "applicationId": cpAppID ? `${cpAppID}`: tokenBtn.getAttribute('data-app-ref-id'),
       "apiId": `${apiID}`,
       "subscriptionPlan": `${subPlan}`,
       "scopes": [],
       "keyType": "PRODUCTION",
       "projectID": `${projectID}`,
+      "devportalAppId": `${appID}`,
     });
 
   try {
@@ -63,7 +64,7 @@ async function generateAPIKey(projectID, apiID, subPlan, appID, subID) {
   loadingState.style.display = 'none';
 }
 
-async function revokeAPIKey(apiKeyID, subID) {
+async function revokeAPIKey(apiKeyID, subID, appID, apiRefID) {
 
   let revokeBtn = document.getElementById('revokeKeyBtn-' + subID);
   const normalState = revokeBtn.querySelector('.button-normal-state');
@@ -80,6 +81,10 @@ async function revokeAPIKey(apiKeyID, subID) {
       headers: {
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        "applicationId": `${appID}`,
+        "apiRefID": `${apiRefID}`,
+      }),
     });
 
     const responseData = await response.json();
@@ -126,8 +131,6 @@ async function regenerateAPIKey(apiKeyID, subID) {
     const responseData = await response.json();
 
     if (response.ok) {
-      const responseData = await response.json();
-
       const modal = document.getElementById('apiKeyModal');
       modal.style.display = 'flex';
 
@@ -136,11 +139,16 @@ async function regenerateAPIKey(apiKeyID, subID) {
 
       await showAlert('API Key regenerated successfully!', 'success');
     } else {
+      console.log('Here')
       await showAlert(`Failed to regenerate API Key. Please try again.\n${responseData.description}`, 'error');
     }
   } catch (error) {
+    console.log('Here2')
+
     await showAlert(`Failed to generate API Key. Please try again.\n${error}`, 'error');
   }
+  console.log('Here3')
+
   normalState.style.display = 'inline-block';
   loadingState.style.display = 'none';
 }

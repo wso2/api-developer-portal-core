@@ -936,7 +936,7 @@ const createCPSubscription = async (req, apiId, cpAppID, policyDetails) => {
         const requestBody = {
             apiId: apiId,
             applicationId: cpAppID,
-            throttlingPolicy: policyDetails.dataValues.POLICY_NAME
+            throttlingPolicy: policyDetails.dataValues ? policyDetails.dataValues.POLICY_NAME : policyDetails
         };
         const cpSubscribeResponse = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, requestBody);
         return cpSubscribeResponse;
@@ -1087,5 +1087,7 @@ module.exports = {
     createAppKeyMapping,
     retriveAppKeyMappings,
     getApplicationKeyMap,
-    checkAdditionalValues
+    checkAdditionalValues,
+    createCPApplication,
+    createCPSubscription
 };

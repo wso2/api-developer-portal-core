@@ -51,7 +51,7 @@
                                     </button>
                                     <button class="common-btn-outlined btn-sm api-key-revoke"
                                         data-api-key-id="'{{apiKeys.[0].id}}'"
-                                        onclick="openWarningModal('revoke', this.dataset.apiKeyId, '{{subID}}')"
+                                        onclick="openWarningModal('revoke', this.dataset.apiKeyId, '{{subID}}', '{{../applicationMetadata.id}}', '{{refID}}')"
                                         id="revokeKeyBtn-{{subID}}"
                                         style="{{#if apiKeys}}display: inline-flex;{{else}}display: none;{{/if}}">
                                         <span class="button-normal-state">
@@ -64,7 +64,8 @@
                                     </button>
                                     <button class="common-btn-outlined btn-sm me-1" id="generateKeyBtn-{{subID}}"
                                         style="{{#if apiKeys}}display: none;{{else}}display: inline-flex;{{/if}}"
-                                        onclick="generateAPIKey('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{subID}}')">
+                                        data-app-ref-id=""
+                                        onclick="generateAPIKey('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}')">
                                         <span class="button-normal-state">
                                             <i class="bi bi-key me-1"></i> Generate Key
                                         </span>
