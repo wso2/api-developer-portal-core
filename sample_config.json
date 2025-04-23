@@ -19,6 +19,7 @@
   "mode": "production",
   "controlPlane": {
     "url": "https://sts.preview-dv.choreo.dev/api/am/devportal/v2",
+    "graphqlURL": "https://app.preview-dv.choreo.dev/graphql",
     "disableCertValidation": true,
     "pathToCertificate": "./resources/security/client-truststore.pem"
   },

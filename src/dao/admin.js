@@ -931,7 +931,6 @@ const getApplicationKeyMapping = async (orgID, appID, isSharedToken) => {
 }
 
 const  getApplicationAPIMapping = async (orgID, appID, apiID, appRefID ,isSharedToken) => {
-    console.log("orgID", orgID, "appID", appID, "apiID", apiID, "appRefID", appRefID, "isSharedToken", isSharedToken);
 
     try {
         return await ApplicationKeyMapping.findAll(

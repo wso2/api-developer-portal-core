@@ -431,7 +431,6 @@ async function getAPIKeys(req, apiId, applicationId) {
             apiKeys = key.keys;
         }
     }
-    console.log("API Keys", apiKeys);
     return apiKeys;
 }
 

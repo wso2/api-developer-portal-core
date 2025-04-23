@@ -896,7 +896,7 @@ async function generateOAuthKey(req, cpAppID, tokenDetails) {
     } catch (error) {
         try {
             if (error.statusCode && error.statusCode === 409) {
-                console.log("Key already exists in control plane, retrieving the existing key");
+                console.log("OAuth key already exists in control plane, retrieving the existing key");
                 const response = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${cpAppID}/keys`, {});
                 return response.list[0];
             } else {
