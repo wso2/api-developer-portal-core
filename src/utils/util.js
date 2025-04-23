@@ -383,9 +383,15 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         }
 
         if (config.advanced.tokenExchanger.enabled) {
-            const decodedToken = jwt.decode(req.user.exchangeToken);
-            const orgId = decodedToken.organization.uuid;
-            url = url.includes("?") ? `${url}&organizationId=${orgId}` : `${url}?organizationId=${orgId}`;
+            let orgId = "";
+            if (req.cpOrgID) {
+                orgId = req.cpOrgID;
+                url = url.includes("?") ? `${url}&organizationId=${orgId}` : `${url}?organizationId=${orgId}`;
+            } else {
+                orgId = decodedToken?.organization.uuid;
+                url = url.includes("?") ? `${url}&organizationId=${orgId}` : `${url}?organizationId=${orgId}`;
+            }
+        
         }
 
         const response = await axios(url, options);
@@ -741,6 +747,14 @@ async function listFiles(path) {
     return files;
 }
 
+function filterAllowedAPIs (searchResults, allowedAPIs) {
+
+    searchResults = searchResults.filter(api =>
+        allowedAPIs.some(allowedAPI => api.apiReferenceID === allowedAPI.id)
+    );
+    return searchResults;
+}
+
 module.exports = {
     loadMarkdown,
     renderTemplate,
@@ -767,5 +781,6 @@ module.exports = {
     tokenExchanger,
     listFiles,
     readDocFiles,
-    unzipDirectory
+    unzipDirectory,
+    filterAllowedAPIs
 }

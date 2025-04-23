@@ -29,6 +29,7 @@ const apiMetadataService = require('../services/apiMetadataService');
 const adminService = require('../services/adminService');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const { ApplicationDTO } = require('../dto/application');
+const controlPlaneUrl = config.controlPlane.url;
 
 const filePrefix = config.pathToContent;
 const generateArray = (length) => Array.from({ length });
@@ -58,10 +59,13 @@ const loadAPIs = async (req, res) => {
         html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
     } else {
         try {
-            const orgID = await adminDao.getOrgId(orgName);
+            const orgDetails = await adminDao.getOrganization(orgName);
+            const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
+            req.cpOrgID = cpOrgID;
+            const orgID = orgDetails.ORG_ID;
             const searchTerm = req.query.query;
             const tags = req.query.tags;
-            const metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
+            let metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
             const apiData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
             let appList = [];
             let apiTags = [];
@@ -93,7 +97,15 @@ const loadAPIs = async (req, res) => {
                 }
                 metaData.applications = appList;
             }
-
+            //retrieve api list from control plane
+            const allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis`, {}, {});
+            if (allowedAPIList) {
+                //filter apis based on the roles
+                metaDataList = util.filterAllowedAPIs(metaDataList, allowedAPIList.list);
+            } else {
+                console.log("Cannot retrieve allowed API list from control plane");
+                metaDataList = [];
+            }
             const templateContent = {
                 isAuthenticated: req.isAuthenticated(),
                 apiMetadata: metaDataList,
@@ -145,11 +157,21 @@ const loadAPIContent = async (req, res) => {
         res.send(html);
     } else {
         try {
-            const orgID = await adminDao.getOrgId(orgName);
+            const orgDetails = await adminDao.getOrganization(orgName);
+            const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
+            req.cpOrgID = cpOrgID;
+            const orgID = orgDetails.ORG_ID;
             const apiID = await apiDao.getAPIId(orgID, apiHandle);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
+            const apiName = metaData? metaData.apiInfo.apiName : "";
+            const version = metaData? metaData.apiInfo.apiVersion : "";
+            //check whether user has access to the API
+            const allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:${apiName}+version:${version}`, {}, {});
+            if (allowedAPIList.count === 0) {
+                html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
+                res.send(html);
+            }
             let subscriptionPlans = await util.appendSubscriptionPlanDetails(orgID, metaData.subscriptionPolicies);
-
             let providerUrl;
             if (metaData.provider === "WSO2") {
                 providerUrl = '#subscriptionPlans';
@@ -213,6 +235,7 @@ const loadAPIContent = async (req, res) => {
         } catch (error) {
             console.error(`Failed to load api content:`, error);
             html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
+            res.send(html);
         }
     }
 }
@@ -332,6 +355,17 @@ const loadDocument = async (req, res) => {
         const definitionResponse = await loadAPIDefinition(orgName, viewName, apiHandle);
         templateContent.apiType = definitionResponse.apiType;
         let apiMetadata = definitionResponse.metaData;
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
+        req.cpOrgID = cpOrgID;
+        const apiName = apiMetadata? apiMetadata.apiInfo.apiName : "";
+        const version = apiMetadata? apiMetadata.apiInfo.apiVersion : "";
+        //check whether user has access to the API
+        const allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:${apiName}+version:${version}`, {}, {});
+        if (allowedAPIList.count === 0) {
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
+            res.send(html);
+        }
         let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
         templateContent.swagger = JSON.stringify(modifiedSwagger);
         templateContent.isAPIDefinition = true;
