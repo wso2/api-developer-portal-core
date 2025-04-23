@@ -1,6 +1,6 @@
 const e = require("express");
 
-async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID) {
+async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, subIDs) {
 
   const tokenBtn = document.getElementById('generateKeyBtn-' + subID);
   const normalState = tokenBtn.querySelector('.button-normal-state');
@@ -51,6 +51,11 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID) 
       let revokeBtn = document.getElementById('revokeKeyBtn-' + subID);
       revokeBtn.style.display = 'inline-flex';
       revokeBtn.setAttribute('data-api-key-id', `'${responseData.id}'`);
+
+      const subList = JSON.parse(subIDs);
+      subList.forEach(subID => {
+        document.getElementById("generateKeyBtn-" + subID).setAttribute('data-app-ref-id', `${responseData.appRefId}`);
+      })
 
       await showAlert('Token generated successfully!', 'success');
 

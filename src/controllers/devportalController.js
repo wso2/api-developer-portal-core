@@ -187,6 +187,7 @@ const generateAPIKeys = async (req, res) => {
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/api-keys/generate`, {
             'Content-Type': 'application/json'
         }, requestBody);
+        responseData.appRefId = cpAppID;
         res.status(200).json(responseData);
     } catch (error) {
         console.error("Error occurred while deleting the application", error);

@@ -65,7 +65,7 @@
                                     <button class="common-btn-outlined btn-sm me-1" id="generateKeyBtn-{{subID}}"
                                         style="{{#if apiKeys}}display: none;{{else}}display: inline-flex;{{/if}}"
                                         data-app-ref-id=""
-                                        onclick="generateAPIKey('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}')">
+                                        onclick="generateAPIKey('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIs}}')">
                                         <span class="button-normal-state">
                                             <i class="bi bi-key me-1"></i> Generate Key
                                         </span>
