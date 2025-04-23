@@ -31,6 +31,7 @@ const config = require(process.cwd() + '/config.json');
 const controlPlaneUrl = config.controlPlane.url;
 const { invokeApiRequest } = require('../utils/util');
 const { Sequelize } = require("sequelize");
+const { cat } = require('shelljs');
 
 const createOrganization = async (req, res) => {
 
@@ -371,9 +372,9 @@ const deleteOrgContent = async (req, res) => {
         const fileName = req.query.fileName;
         let deletedRowsCount;
         if (!req.query.fileName) {
-           deletedRowsCount = await adminDao.deleteAllOrgContent(req.params.orgId, req.params.name);
+            deletedRowsCount = await adminDao.deleteAllOrgContent(req.params.orgId, req.params.name);
         } else {
-           deletedRowsCount = await adminDao.deleteOrgContent(req.params.orgId, req.params.name, fileName);
+            deletedRowsCount = await adminDao.deleteOrgContent(req.params.orgId, req.params.name, fileName);
         }
         if (deletedRowsCount > 0) {
             res.status(204).send();
@@ -389,7 +390,7 @@ const deleteOrgContent = async (req, res) => {
 const deleteAllOrgContent = async (req, res) => {
 
     try {
-       
+
         const deletedRowsCount = await adminDao.deleteAllOrgContent(req.params.orgId, req.params.name, fileName);
         if (deletedRowsCount > 0) {
             res.status(204).send();
@@ -815,18 +816,15 @@ const createAppKeyMapping = async (req, res) => {
             cpApplicationName = `${appID}`;
             //TODO - handel non-shared token types scenarios
             //create control plane application
-            const cpAppCreationResponse = await createCPApplication(req, cpApplicationName);
+            const sharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, true);
+            const nonSharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, false);
 
-            if (cpAppCreationResponse === "Application already exists") {
-                //get CP app id
-                const sharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, true);
-                if (sharedToken.length !== 0) {
-                    cpAppID = sharedToken[0].dataValues.CP_APP_REF;
-                } else {
-                    console.log("Application with the same name already exists in control plane");
-                    return util.handleError(res, new CustomError(500, constants.ERROR_CODE[500], "Internal server error"));
-                }
+            if (sharedToken.length !== 0) {
+                cpAppID = sharedToken[0].dataValues.CP_APP_REF;
+            } else if (nonSharedToken.length !== 0) {
+                cpAppID = nonSharedToken[0].dataValues.CP_APP_REF;
             } else {
+                const cpAppCreationResponse = await createCPApplication(req, cpApplicationName);
                 cpAppID = cpAppCreationResponse.applicationId;
                 //create application mapping entry
                 const appKeyMappping = {
@@ -876,8 +874,8 @@ const createAppKeyMapping = async (req, res) => {
             //TODO: need to support both key types
             tokenDetails.keyType = "PRODUCTION";
             //generate oauth key
-            responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${cpAppID}/generate-keys`, {}, tokenDetails);
-            
+            responseData = await generateOAuthKey(req, cpAppID, tokenDetails);
+
             // Add the appRefId to the response data
             responseData.appRefId = cpAppID;
         });
@@ -889,6 +887,25 @@ const createAppKeyMapping = async (req, res) => {
             await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${cpAppID}`, {}, {});
         }
         return util.handleError(res, error);
+    }
+}
+
+async function generateOAuthKey(req, cpAppID, tokenDetails) {
+    try {
+        return await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${cpAppID}/generate-keys`, {}, tokenDetails);
+    } catch (error) {
+        try {
+            if (error.statusCode && error.statusCode === 409) {
+                console.log("Key already exists in control plane, retrieving the existing key");
+                const response = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${cpAppID}/keys`, {});
+                return response.list[0];
+            } else {
+                throw error;
+            }
+        } catch (error) {
+            console.error("Error occurred while generating API key", error);
+            throw error;
+        }
     }
 }
 
@@ -924,9 +941,17 @@ const createCPApplication = async (req, cpApplicationName) => {
         //application already exists
         console.error(`${constants.ERROR_MESSAGE.KEY_MAPPING_CREATE_ERROR}`, error);
         if (error.statusCode && error.statusCode === 409) {
-            return "Application already exists";
+            try {
+                console.log("Application already exists in control plane, retrieving the existing application");
+                const cpAppResponse = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications?query=${cpApplicationName}`, {}, {});
+                return cpAppResponse.list[0];
+            } catch (error) {
+                console.error("Error occurred while fetching the application", error);
+                throw error;
+            }
+        } else {
+            throw error;
         }
-        throw error;
     }
 }
 
