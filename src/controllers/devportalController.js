@@ -178,7 +178,7 @@ const generateAPIKeys = async (req, res) => {
         const environments = orgDetails?.data?.environments || [];
         const apiHandle = await apiDao.getAPIHandle(orgID, req.body.apiId);
 
-        requestBody.name = apiHandle + "-" + requestBody.applicationId.split("-")[0];
+        requestBody.name = apiHandle + "-" + cpAppID.split("-")[0];
         requestBody.environmentTemplateId = environments.find(env => env.name === 'Production').templateId;
         requestBody.applicationId = cpAppID;
         delete requestBody.projectID;
@@ -198,7 +198,7 @@ const revokeAPIKeys = async (req, res) => {
     const apiKeyID = req.params.apiKeyID;
     try {
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/api-keys/${apiKeyID}/revoke`, {}, {});
-        await adminDao.deleteAppKeyMapping(await adminDao.getOrgId((req.user[constants.ORG_IDENTIFIER])), req.body.applicationId, req.body.apiRefID);
+        // await adminDao.deleteAppKeyMapping(await adminDao.getOrgId((req.user[constants.ORG_IDENTIFIER])), req.body.applicationId, req.body.apiRefID);
         res.status(200).json(responseData);
     } catch (error) {
         console.error("Error occurred while revoking the API key", error);
