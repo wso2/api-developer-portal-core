@@ -267,6 +267,84 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
     }
 }
 
+async function updateSubscription(orgID, applicationID, apiId, apiReferenceID, policyId, policyName, oldPolicyName, subID) {
+
+    // Find the related card and button elements
+    const card = getSubscriptionCard(apiId, policyId);
+    const subscribeButton = card ? card.querySelector(".common-btn-primary") : null;
+    const messageOverlay = card ? card.querySelector(".message-overlay") : null;
+
+    try {
+        // Get application ID from hidden field if not provided
+        if (!applicationID && card) {
+            const hiddenField = card.querySelector('input[type="hidden"]');
+            if (hiddenField && hiddenField.value) {
+                applicationID = hiddenField.value;
+            }
+        }
+
+        // Make the API request
+        const response = await fetch(`/devportal/organizations/${orgID}/subscriptions`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ applicationID, apiId, apiReferenceID, policyId, policyName }),
+        });
+
+        const responseData = await response.json();
+
+        // Always reset button state and close modal
+        const planButton = document.getElementById('subscribe-btn-' + policyId);
+        if (planButton) {
+            resetSubscribeButtonState(planButton);
+        }
+        closeModal('planModal-' + apiId);
+        resetSubscribeButtonState(subscribeButton);
+
+        if (response.ok) {
+            // Show success notification
+            showSubscriptionMessage(messageOverlay, 'Successfully updated API subscription', 'success');
+            document.getElementById(`policy_${subID}`).innerText = policyName; 
+            const elements = document.querySelectorAll('[style]');
+
+            elements.forEach(el => {
+                if (el.style.borderColor === 'var(--primary-main-color)') {
+                    el.style.borderColor = '';
+                    const updateButton = el.querySelector('a[type="button"]');
+                    console.log('updateButton', updateButton)
+                    updateButton.removeAttribute('disabled');
+                    updateButton.style.pointerEvents = 'auto';
+                }
+            });
+            const selectedPolicy = document.getElementById(`apiCard_${policyName}`);
+            selectedPolicy.style.borderColor = 'var(--primary-main-color)';
+            //disable the subscribe button
+            const currentUpdateButton = selectedPolicy.querySelector('a[type="button"]');
+            currentUpdateButton.style.pointerEvents = 'none';
+        } else {
+            // Handle API error
+            console.error('Failed to create subscription:', responseData);
+            const errorMessage = `Failed to subscribe: ${responseData.description || 'Unknown error'}`;
+            showSubscriptionMessage(messageOverlay, errorMessage, 'error');
+        }
+    } catch (error) {
+        // Handle exceptions
+        console.error('Error:', error);
+
+        // Always reset button state and close modal
+        const planButton = document.getElementById('subscribe-btn-' + policyId);
+        if (planButton) {
+            resetSubscribeButtonState(planButton);
+        }
+        closeModal('planModal-' + apiId);
+        resetSubscribeButtonState(subscribeButton);
+
+        const errorMessage = `Error while updating subscription: ${error.message}`;
+        showSubscriptionMessage(messageOverlay, errorMessage, 'error');
+    }
+}
+
 // Helper functions for the subscribe function
 function getSubscriptionCard(apiId, policyId) {
     return document.getElementById('apiCard-' + apiId) ||

@@ -30,6 +30,8 @@ const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
 const adminService = require('../services/adminService');
 const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
+const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
+
 
 const orgIDValue = async (orgName) => {
     const organization = await adminDao.getOrganization(orgName);
@@ -195,7 +197,8 @@ const loadApplication = async (req, res) => {
                     if (subPolicy) {
                         apiDTO.policyName = subPolicy.dataValues.POLICY_NAME;
                     }
-                    return apiDTO;
+                    apiDTO.subscriptionPolicyDetails = api.subscriptionPolicies;
+                    return apiDTO
                 }));
             }
             let apiKey = false
