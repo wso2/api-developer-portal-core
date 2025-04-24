@@ -25,14 +25,14 @@
                     </thead>
                     <tbody>
                         {{#each subAPIs}}
-                        {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName appID=../applicationMetadata.id}}
+                        {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
                         <tr class="data-row">
                             <td class="app-td">
                                 <span onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
                                     class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
                             </td>
                             <td class="app-td">{{version}}</td>
-                            <td class="app-td">{{policyName}}</td>
+                            <td id="policy_{{subID}}" class="app-td">{{policyName}}</td>
                             {{!-- {{#if (contains security 'api_key')}}
                             <td class="app-td">
                                 <div class="api-key-actions">

@@ -267,7 +267,7 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
     }
 }
 
-async function updateSubscription(orgID, applicationID, apiId, apiReferenceID, policyId, policyName) {
+async function updateSubscription(orgID, applicationID, apiId, apiReferenceID, policyId, policyName, oldPolicyName, subID) {
 
     // Find the related card and button elements
     const card = getSubscriptionCard(apiId, policyId);
@@ -305,8 +305,23 @@ async function updateSubscription(orgID, applicationID, apiId, apiReferenceID, p
         if (response.ok) {
             // Show success notification
             showSubscriptionMessage(messageOverlay, 'Successfully updated API subscription', 'success');
-            const url = new URL(window.location.origin + window.location.pathname);
-            window.location.href = url.toString();
+            document.getElementById(`policy_${subID}`).innerText = policyName; 
+            const elements = document.querySelectorAll('[style]');
+
+            elements.forEach(el => {
+                if (el.style.borderColor === 'var(--primary-main-color)') {
+                    el.style.borderColor = '';
+                    const updateButton = el.querySelector('a[type="button"]');
+                    console.log('updateButton', updateButton)
+                    updateButton.removeAttribute('disabled');
+                    updateButton.style.pointerEvents = 'auto';
+                }
+            });
+            const selectedPolicy = document.getElementById(`apiCard_${policyName}`);
+            selectedPolicy.style.borderColor = 'var(--primary-main-color)';
+            //disable the subscribe button
+            const currentUpdateButton = selectedPolicy.querySelector('a[type="button"]');
+            currentUpdateButton.style.pointerEvents = 'none';
         } else {
             // Handle API error
             console.error('Failed to create subscription:', responseData);

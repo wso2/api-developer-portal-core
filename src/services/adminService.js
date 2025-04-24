@@ -27,6 +27,7 @@ const constants = require('../utils/constants');
 const { validationResult } = require('express-validator');
 const sequelize = require("../db/sequelize");
 const { ApplicationDTO, SubscriptionDTO } = require('../dto/application');
+const APIDTO = require('../dto/apiDTO');
 const config = require(process.cwd() + '/config.json');
 const controlPlaneUrl = config.controlPlane.url;
 const { invokeApiRequest } = require('../utils/util');
@@ -707,7 +708,6 @@ const updateSubscription = async (req, res) => {
 
     try {
         const orgID = req.params.orgId;
-        console.log("Update body", req.body)
         sequelize.transaction(async (t) => {
             try {
                 const app =  await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
@@ -879,9 +879,11 @@ const createAppKeyMapping = async (req, res) => {
             }
             // add subscription to control plane for each api
             const apiSubscriptions = [];
-            for (const api of apis) {
+            const subAPIs = await adminDao.getSubscribedAPIs(orgID, appID);
+            for (const sub of subAPIs) {
+                const api = new APIDTO(sub);
                 const policyDetails = await apiDao.getSubscriptionPolicy(api.policyID, orgID, t);
-                const cpSubscribeResponse = await createCPSubscription(req, api.apiRefId, cpAppID, policyDetails);
+                const cpSubscribeResponse = await createCPSubscription(req, api.apiReferenceID, cpAppID, policyDetails);
                 apiSubscriptions.push(cpSubscribeResponse);
             }
             //create app key mapping

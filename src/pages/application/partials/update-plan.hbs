@@ -32,7 +32,7 @@
                     <div class="row row-gap-4 pt-3">
                         {{#each subscriptionPolicyDetails}}
                         <div class="col-lg-4">
-                            <div class="card dev-card" {{#if (eq displayName ../selectedPlan)}} style="border-color: var(--primary-main-color);" {{/if}}>
+                            <div id="apiCard_{{displayName}}" class="card dev-card" {{#if (eq displayName ../selectedPlan)}} style="border-color: var(--primary-main-color);" {{/if}}>
                                 <div class="card-body align-items-center text-center p-0">
                                     <span class="subscription-plans-card-title">{{displayName}}</h5>
                                     <h1 class="subscription-plans-request-count">{{requestCount}}</h1>
@@ -40,7 +40,7 @@
                                     <a id="subscribe-btn-{{policyID}}" type="button"
                                         class="common-btn-outlined p-1 ps-2 pe-2 w-100 subscription-plan-subscribe-btn {{#if (eq displayName ../selectedPlan)}} disabled {{/if}}"
                                         {{#if (eq displayName ../selectedPlan)}} style="pointer-events: none;" {{/if}}
-                                        onclick="showSubscribeButtonLoading(this); updateSubscription('{{@root.orgID}}', '{{../appID}}', '{{../apiID}}', '{{../refID}}', '{{policyID}}', '{{policyName}}')">Update</a>
+                                        onclick="showSubscribeButtonLoading(this); updateSubscription('{{@root.orgID}}', '{{../appID}}', '{{../apiID}}', '{{../refID}}', '{{policyID}}', '{{policyName}}', '{{../selectedPlan}}', '{{../subID}}')">Update</a>
                                 </div>
                             </div>
                         </div>
