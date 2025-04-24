@@ -60,7 +60,7 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
       await showAlert('Token generated successfully!', 'success');
 
     } else {
-      await showAlert(`Failed to generate API Key. Please try again.\n${responseData.description}`, 'error');
+      await showAlert(`Failed to generate API Key. Please try again.\n${responseData?.description || ''}`, 'error');
     }
   } catch (error) {
     await showAlert(`Failed to generate API Key. Please try again.\n${error}`, 'error');
@@ -105,7 +105,7 @@ async function revokeAPIKey(apiKeyID, subID, appID, apiRefID) {
       await showAlert('API Key revoked successfully!', 'success');
 
     } else {
-      await showAlert(`Failed to revoke API Key. Please try again.\n${responseData.description}`, 'error');
+      await showAlert(`Failed to revoke API Key. Please try again.\n${responseData?.description || ''}`, 'error');
     }
   } catch (error) {
     await showAlert(`Failed to generate API Key. Please try again.\n${error}`, 'error');
@@ -142,10 +142,10 @@ async function regenerateAPIKey(apiKeyID, subID) {
       let keyText = document.getElementById("token_apiKeyText");
       keyText.textContent = responseData.value;
 
-      await showAlert('API Key regenerated successfully!', 'success');
+      await showAlert('API Key regenerated successfully!,', 'success');
     } else {
       console.log('Here')
-      await showAlert(`Failed to regenerate API Key. Please try again.\n${responseData.description}`, 'error');
+      await showAlert(`Failed to regenerate API Key. Please try again.\n${responseData?.description || ''}`, 'error');
     }
   } catch (error) {
     console.log('Here2')
