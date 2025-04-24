@@ -921,4 +921,9 @@ async function copyOauthURLs(inputId) {
     }
 }
 
+function loadModal(modalID) {
+    const modal = document.getElementById(modalID);
+    modal.style.display = 'flex';
+}
+
 

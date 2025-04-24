@@ -27,6 +27,7 @@ const constants = require('../utils/constants');
 const { validationResult } = require('express-validator');
 const sequelize = require("../db/sequelize");
 const { ApplicationDTO, SubscriptionDTO } = require('../dto/application');
+const APIDTO = require('../dto/apiDTO');
 const config = require(process.cwd() + '/config.json');
 const controlPlaneUrl = config.controlPlane.url;
 const { invokeApiRequest } = require('../utils/util');
@@ -372,9 +373,9 @@ const deleteOrgContent = async (req, res) => {
         const fileName = req.query.fileName;
         let deletedRowsCount;
         if (!req.query.fileName) {
-            deletedRowsCount = await adminDao.deleteAllOrgContent(req.params.orgId, req.params.name);
+             deletedRowsCount = await adminDao.deleteAllOrgContent(req.params.orgId, req.params.name);
         } else {
-            deletedRowsCount = await adminDao.deleteOrgContent(req.params.orgId, req.params.name, fileName);
+             deletedRowsCount = await adminDao.deleteOrgContent(req.params.orgId, req.params.name, fileName);
         }
         if (deletedRowsCount > 0) {
             res.status(204).send();
@@ -704,6 +705,42 @@ const createSubscription = async (req, res) => {
     }
 }
 
+const updateSubscription = async (req, res) => {
+
+    try {
+        const orgID = req.params.orgId;
+        sequelize.transaction(async (t) => {
+            try {
+                const app =  await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
+                if (app.length > 0) {
+                    let throttlingPolicy = "";
+                    const subscruibedPolicy = await apiDao.getSubscriptionPolicy(req.body.policyId, orgID);
+                    if (subscruibedPolicy) {
+                        throttlingPolicy = subscruibedPolicy.dataValues.POLICY_NAME;
+                    }
+                    const subscriptionID = app[0].dataValues.SUBSCRIPTION_REF_ID;
+                    const response = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/subscriptions/${subscriptionID}`, {}, {
+                        apiId: req.body.apiReferenceID,
+                        applicationId: app[0].dataValues.CP_APP_REF,
+                        requestedThrottlingPolicy: req.body.policyName,
+                        subscriptionId: subscriptionID,
+                        status: 'UNBLOCKED',
+                        throttlingPolicy: throttlingPolicy
+                    });
+                }
+                await adminDao.updateSubscription(orgID, req.body, t);
+                return res.status(201).json({ message: 'Updated subscription successfully' });
+            } catch (error) {
+                console.error("Error occurred while subscribing to API", error);
+                return util.handleError(res, error);
+            }
+        });
+    } catch (error) {
+        console.error("Error occurred while subscribing to API", error);
+        return util.handleError(res, error);
+    }
+}
+
 async function handleSubscribe(orgID, applicationID, apiRefID, subRefID, response, t) {
     if (apiRefID && subRefID) {
         await adminDao.createApplicationKeyMapping({
@@ -840,9 +877,11 @@ const createAppKeyMapping = async (req, res) => {
             }
             // add subscription to control plane for each api
             const apiSubscriptions = [];
-            for (const api of apis) {
+            const subAPIs = await adminDao.getSubscribedAPIs(orgID, appID);
+            for (const sub of subAPIs) {
+                const api = new APIDTO(sub);
                 const policyDetails = await apiDao.getSubscriptionPolicy(api.policyID, orgID, t);
-                const cpSubscribeResponse = await createCPSubscription(req, api.apiRefId, cpAppID, policyDetails);
+                const cpSubscribeResponse = await createCPSubscription(req, api.apiReferenceID, cpAppID, policyDetails);
                 apiSubscriptions.push(cpSubscribeResponse);
             }
             //create app key mapping
@@ -863,13 +902,13 @@ const createAppKeyMapping = async (req, res) => {
                     await adminDao.createApplicationKeyMapping(appKeyMappping, t);
                 }
             }
-            //check if more than one mapping en
-            const appKeyMapping = await adminDao.getApplicationKeyMapping(orgID, appID, true);
+
             //delete app key mapping entries with no api id ref
-            if (appKeyMapping.length > 1) {
+            if (apiSubscriptions.length > 0) {
                 console.log("Delete app key mapping entries with no api id ref");
                 await adminDao.deleteAppKeyMapping(orgID, appID, null, t);
             }
+
             tokenDetails.additionalProperties = checkAdditionalValues(tokenDetails.additionalProperties);
             //TODO: need to support both key types
             tokenDetails.keyType = "PRODUCTION";
@@ -1105,6 +1144,7 @@ module.exports = {
     deleteDevPortalApplication,
     getAllApplications,
     createSubscription,
+    updateSubscription,
     getSubscription,
     getAllSubscriptions,
     deleteSubscription,

@@ -27,13 +27,14 @@
                     </thead>
                     <tbody>
                         {{#each subAPIs}}
+                        {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
                         <tr class="data-row">
                             <td class="app-td">
                                 <span onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
                                     class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
                             </td>
                             <td class="app-td">{{version}}</td>
-                            <td class="app-td">{{policyName}}</td>
+                            <td id="policy_{{subID}}" class="app-td">{{policyName}}</td>
                             {{#if (contains security 'api_key')}}
                             <td class="app-td">
                                 <div class="api-key-actions">
@@ -82,9 +83,9 @@
                                     {{> warning modalTitle="Do you really want to remove the subscription?"
                                     modalMessage="This will remove the subscription entry stored in the devportal."
                                     modalFunction="removeSubscription()" }}
-                                    {{!-- <button type="button" class="btn application-btn-icon" onclick="#">
+                                    <button type="button" class="btn application-btn-icon" onclick="loadModal('planModal-{{apiID}}')">
                                         <i class="bi bi-pencil"></i>
-                                    </button> --}}
+                                    </button>
                                     <button type="button" class="btn application-btn-icon delete-button"
                                         onclick="openWarningModal('{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')">
                                         <i class="bi bi-trash"></i>
