@@ -309,7 +309,7 @@ async function updateSubscription(orgID, applicationID, apiId, apiReferenceID, p
             const elements = document.querySelectorAll('[style]');
 
             elements.forEach(el => {
-                if (el.style.borderColor === 'var(--primary-main-color)') {
+                if (el.style.borderColor === 'var(--primary-main-color)' && el.id.includes(`${subID}`)) {
                     el.style.borderColor = '';
                     const updateButton = el.querySelector('a[type="button"]');
                     console.log('updateButton', updateButton)
@@ -317,7 +317,7 @@ async function updateSubscription(orgID, applicationID, apiId, apiReferenceID, p
                     updateButton.style.pointerEvents = 'auto';
                 }
             });
-            const selectedPolicy = document.getElementById(`apiCard_${policyName}`);
+            const selectedPolicy = document.getElementById(`${subID}_${policyName}`);
             selectedPolicy.style.borderColor = 'var(--primary-main-color)';
             //disable the subscribe button
             const currentUpdateButton = selectedPolicy.querySelector('a[type="button"]');
