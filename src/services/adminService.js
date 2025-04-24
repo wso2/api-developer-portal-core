@@ -32,7 +32,6 @@ const config = require(process.cwd() + '/config.json');
 const controlPlaneUrl = config.controlPlane.url;
 const { invokeApiRequest } = require('../utils/util');
 const { Sequelize } = require("sequelize");
-const { cat } = require('shelljs');
 
 const createOrganization = async (req, res) => {
 
