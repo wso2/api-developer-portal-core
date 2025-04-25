@@ -610,6 +610,41 @@ const createSubscriptionPolicy = async (req, res) => {
     }
 };
 
+const createDefaultSubscriptionPolicies = async (req, res) => {
+    try {
+        const { orgId } = req.params;
+        const subscriptionPolicies = req.body;
+
+        if (!orgId || !subscriptionPolicies || typeof subscriptionPolicies !== "object") {
+            return res.status(400).send({ message: "Missing or invalid fields in the request payload" });
+        }
+
+        const createdPolicies = [];
+
+        await sequelize.transaction(async (t) => {
+            for (const policyKey of Object.keys(subscriptionPolicies)) {
+                const policy = subscriptionPolicies[policyKey];
+
+                const created = await apiDao.createSubscriptionPolicy(orgId, policy, t);
+                if (!created) {
+                    throw new CustomError(
+                        500,
+                        constants.ERROR_CODE[500],
+                        `Failed to create policy: ${policyKey}`
+                    );
+                }
+                createdPolicies.push(new subscriptionPolicyDTO(created));
+            }
+        });
+
+        res.status(201).send(createdPolicies);
+
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_CREATE_ERROR}, ${error}`);
+        util.handleError(res, error);
+    }
+};
+
 const updateSubscriptionPolicy = async (req, res) => {
 
     const { orgId, policyID } = req.params;
@@ -922,6 +957,7 @@ module.exports = {
     getMetadataListFromDB,
     getMetadataFromDB,
     createSubscriptionPolicy,
+    createDefaultSubscriptionPolicies,
     updateSubscriptionPolicy,
     deleteSubscriptionPolicy,
     getSubscriptionPolicy,

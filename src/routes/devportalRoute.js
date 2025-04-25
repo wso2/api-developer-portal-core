@@ -72,6 +72,7 @@ router.post('/apis', enforceSecuirty(constants.SCOPES.DEVELOPER), apiDefinition.
 router.get('/apis', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.getAllAPIMetadata); // s2s applied
 router.put('/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.updateAPIMetadata); // s2s applied
 router.delete('/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIMetadata); // s2s applied
+router.post('/subscription-policy/default-policies', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.createDefaultSubscriptionPolicies); // s2s applied
 
 router.post('/organizations/:orgId/labels', enforceSecuirty(constants.SCOPES.ADMIN), apiMetadataService.createLabels);
 router.put('/organizations/:orgId/labels', enforceSecuirty(constants.SCOPES.ADMIN), apiMetadataService.updateLabel);
