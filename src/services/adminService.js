@@ -916,6 +916,7 @@ const createAppKeyMapping = async (req, res) => {
 
             // Add the appRefId to the response data
             responseData.appRefId = cpAppID;
+            responseData.subscriptionScopes = cpAppCreationResponse.subscriptionScopes;
         });
         return res.status(200).json(responseData);
     } catch (error) {

@@ -292,6 +292,14 @@ const loadApplication = async (req, res) => {
                     }
                 });
             });
+
+            let cpApplication = await getAPIMApplication(req, applicationReference);
+            let subscriptionScopes = [];
+            if (Array.isArray(cpApplication?.subscriptionScopes)) {
+                for (const scope of cpApplication?.subscriptionScopes) {
+                    subscriptionScopes.push(scope.key);
+                }
+            }
             //display only one key type (SANBOX).
             //TODO: handle multiple key types
             templateContent = {
@@ -307,6 +315,7 @@ const loadApplication = async (req, res) => {
                 productionKeys: productionKeys,
                 isProduction: true,
                 isApiKey: isApiKey,
+                subscriptionScopes: subscriptionScopes,
             }
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);

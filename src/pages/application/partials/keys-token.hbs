@@ -11,9 +11,12 @@
                     {{#each keyManagersMetadata}}
                     {{#if enabled}}
                     {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
-                    <div id="tokenGenerationButtons_{{../name}}" class="d-flex mb-4">
+                    <div id="regenerateKeyBtn" class="d-flex">
                         <div class="row">
                             <div id="tokenDisplay_{{../name}}" style="display: none;">
+                                <div class="input-scopes" id="scopeContainer-{{keys.appRefID}}" data-scopes="{{json @root.subscriptionScopes}}">
+                                    <input type="text" class="text-input" id="scope-{{keys.appRefID}}" placeholder="Type scope and press Enter...">
+                                </div>
                                 <div class="info-box">
                                     <div class="info-content">
                                         <div class="info-title">Copy the access token</div>
@@ -26,12 +29,28 @@
                                         <i class="bi bi-info-circle"></i>
                                     </div>
                                 </div>
-
                                 <div class="token-card">
                                     <pre id="token_{{../name}}" class="token-text"></pre>
                                     <button id="copyButton_{{../name}}" class="copy-button" aria-label="Copy token"
                                         type="button" onclick="copyToken('{{../name}}')">
                                         <i class="bi bi-copy"></i>
+                                    </button>
+                                </div>
+                                <div class="d-flex justify-content-end mt-4 mb-3"
+                                    id="applicationKeyUpdateButtonContainer">
+                                    <button class="common-btn-outlined pr-3 me-3" type="button"
+                                        onClick="closeModal('keysTokenModal')">
+                                        Cancel
+                                    </button>
+                                    <button class="common-btn-primary btn-sm me-1" id="regenerateButton_{{../name}}"
+                                        onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}')">
+                                        <span class="button-normal-state">
+                                            <i class="bi bi-arrow-clockwise"></i> Regenerate
+                                        </span>
+                                        <span class="button-loading-state" style="display: none;">
+                                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                            Regenerating...
+                                        </span>
                                     </button>
                                 </div>
                             </div>

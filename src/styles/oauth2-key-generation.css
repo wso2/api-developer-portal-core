@@ -255,10 +255,62 @@ input[type="checkbox"]:checked {
   border-left: 4px solid var(--primary-light-color);
   padding: 1rem;
   margin-bottom: 1rem;
+  margin-top: 1rem;
   border-radius: 0 0.375rem 0.375rem 0;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+}
+
+.badge-custom4 {
+  display: inline-block;
+  border: 1px solid var(--main-text-color);
+  opacity: 0.7;
+  background-color: var(--main-bg-color);
+  color: var(--main-text-color);
+  margin: 0.125rem 0.3125rem 0 0;
+  font-size: 0.8125rem;
+}
+
+.input-scopes {
+  display: flex;
+  flex-wrap: wrap;
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  position: relative;
+}
+
+.text-input {
+  flex-grow: 1;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  padding: 0.25rem;
+  min-width: 260px;
+}
+
+.span-tag {
+  opacity: 0.7;
+  border: 1px solid var(--main-text-color);
+  display: inline-block;
+  margin: 2px;
+  padding: 2px 8px;
+  background-color: var(--main-bg-color);
+  border-radius: 5px;
+  font-size: 0.875rem;
+  transition: background-color 0.2s ease;
+}
+
+.span-tag:hover {
+  background-color: var(--primary-main-color);
+  color: var(--light-text-color);
+}
+
+.span-tag .remove {
+  margin-left: 5px;
+  cursor: pointer;
 }
 
 .info-content {
@@ -283,6 +335,13 @@ input[type="checkbox"]:checked {
   margin-left: 1rem;
 }
 
+.scope-card {
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  position: relative;
+}
 
 .token-card {
   background-color: #fff;

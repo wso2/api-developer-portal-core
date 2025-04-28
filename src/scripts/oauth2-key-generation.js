@@ -99,9 +99,11 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             tokenbtn.setAttribute("data-app-ref-id", responseData.appRefId);
 
             subList.forEach(subscription => {
-                document.getElementById("generateKeyBtn-" + subscription.subID).setAttribute('data-app-ref-id', `${responseData.appRefId}`);
+                document.getElementById("generateKeyBtn-" + subscription.subID)?.setAttribute('data-app-ref-id', `${responseData.appRefId}`);
             })
-            
+
+            document.getElementById("scope-" + appId).setAttribute("data-scopes", responseData.subscriptionScopes);
+
             loadKeysViewModal();
 
 
@@ -421,12 +423,65 @@ async function removeApplicationKey() {
     }
 }
 
-
-
-
-async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName, clientSecret) {
+async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName, clientSecret, subscribedScopes) {
     // Get the token button and set generating state
-    const tokenBtn = document.getElementById('tokenKeyBtn');
+    let tokenBtn = document.getElementById('tokenKeyBtn');
+
+    const scopeContainer = document.getElementById('scopeContainer-' + appId);
+    const scopesData = scopeContainer?.dataset?.scopes;
+    const scopeInput = document.getElementById('scope-' + appId);
+
+
+    if (scopesData) {
+        const scopes = JSON.parse(scopesData);
+
+        scopes.forEach(scope => {
+            addScope(scope);
+        });
+    }
+
+    if (!(subscribedScopes)) {
+        const scopeElements = document.querySelectorAll(`#scopeContainer-${appId} .span-tag`);
+        subscribedScopes = Array.from(scopeElements).map(el => el.textContent.replace('×', '').trim());
+        tokenBtn = document.getElementById('regenerateKeyBtn');
+    } else {
+        subscribedScopes = JSON.parse(subscribedScopes);
+        tokenBtn = document.getElementById('tokenKeyBtn');
+    }
+
+    scopeContainer?.addEventListener('keypress', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            const input = scopeContainer.querySelector('input');
+            const scope = input.value.trim();
+            const existingScopes = Array.from(scopeContainer.querySelectorAll('.span-tag'))
+                .map(el => el.textContent.replace('×', '').trim());
+
+            if (scope && !existingScopes.includes(scope)) {
+                addScope(scope);
+                this.value = '';
+            }
+        }
+    });
+
+    function addScope(scope) {
+        const span = document.createElement('span');
+        span.className = 'span-tag';
+        span.innerHTML = `${scope}<span class="remove">&times;</span>`;
+
+        span.querySelector('.remove').addEventListener('click', function () {
+            scopeContainer.removeChild(span);
+        });
+
+        scopeContainer.insertBefore(span, scopeInput);
+        scopeInput.value = '';
+    }
+
+    // Ensure the input is always visible
+    scopeContainer?.addEventListener('click', function () {
+        scopeInput.focus();
+    });
+
     const normalState = tokenBtn.querySelector('.button-normal-state');
     const loadingState = tokenBtn.querySelector('.button-loading-state');
 
@@ -462,7 +517,7 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
                 "additionalProperties": jsonObject.additionalProperties,
                 "consumerSecret": clientSecret,
                 "revokeToken": null,
-                "scopes": [],
+                "scopes": subscribedScopes,
                 "validityPeriod": 3600
             }),
             credentials: 'include'
@@ -523,9 +578,6 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
 
 
 }
-
-
-
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -613,14 +665,14 @@ function loadKeysModifyModal() {
 
     // Collapse all advanced configurations and reset UI state
     document.querySelectorAll(".arrow-icon").forEach(icon => icon.classList.remove('rotated'));
-    
+
     // Find the authorization_code checkbox inside this specific modal
     const authorizationCodeCheckbox = modal.querySelector('input[id^="grant-type-authorization_code-"]');
     if (authorizationCodeCheckbox) {
         const callbackUrlRow = modal.querySelector('#callback-url-row');
         // Find PKCE-related configuration fields
         const pkceFields = modal.querySelectorAll('#row-pkceMandatory, #row-pkceSupportPlain');
-        
+
         // Handle callback URL visibility
         if (callbackUrlRow) {
             // Set initial visibility based on checkbox state
@@ -630,14 +682,14 @@ function loadKeysModifyModal() {
                 callbackUrlInput.required = authorizationCodeCheckbox.checked;
             }
         }
-        
+
         // Handle PKCE fields visibility
         pkceFields.forEach(field => {
             field.style.display = authorizationCodeCheckbox.checked ? 'flex' : 'none';
         });
-        
+
         // Add event listener to toggle visibility when checkbox changes
-        authorizationCodeCheckbox.addEventListener('change', function() {
+        authorizationCodeCheckbox.addEventListener('change', function () {
             // Toggle callback URL row
             if (callbackUrlRow) {
                 callbackUrlRow.style.display = this.checked ? 'flex' : 'none';
@@ -646,21 +698,21 @@ function loadKeysModifyModal() {
                     callbackUrlInput.required = this.checked;
                 }
             }
-            
+
             // Toggle PKCE fields
             pkceFields.forEach(field => {
                 field.style.display = this.checked ? 'flex' : 'none';
             });
         });
     }
-    
+
     // Add validation for grant types
     validateGrantTypes(modal);
-    
+
     // Add event listeners to all grant type checkboxes
     const grantTypeCheckboxes = modal.querySelectorAll('input[name="grantTypes"]');
     grantTypeCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
+        checkbox.addEventListener('change', function () {
             validateGrantTypes(modal);
         });
     });
@@ -670,10 +722,10 @@ function validateGrantTypes(modal) {
     // Find the update button
     const updateButton = modal.querySelector('#applicationKeyUpdateButton');
     if (!updateButton) return;
-    
+
     // Find all grant type checkboxes
     const grantTypeCheckboxes = modal.querySelectorAll('input[name="grantTypes"]');
-    
+
     // Check if any checkbox is checked
     let isAnyChecked = false;
     grantTypeCheckboxes.forEach(checkbox => {
@@ -681,10 +733,10 @@ function validateGrantTypes(modal) {
             isAnyChecked = true;
         }
     });
-    
+
     // Update the button state
     updateButton.disabled = !isAnyChecked;
-    
+
     // Show/hide validation message
     const validationMsg = modal.querySelector('#grantTypeValidationMsg');
     if (validationMsg) {
