@@ -312,7 +312,6 @@ async function updateSubscription(orgID, applicationID, apiId, apiReferenceID, p
                 if (el.style.borderColor === 'var(--primary-main-color)' && el.id.includes(`${subID}`)) {
                     el.style.borderColor = '';
                     const updateButton = el.querySelector('a[type="button"]');
-                    console.log('updateButton', updateButton)
                     updateButton.removeAttribute('disabled');
                     updateButton.style.pointerEvents = 'auto';
                 }
