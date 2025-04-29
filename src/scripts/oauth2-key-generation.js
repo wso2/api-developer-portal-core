@@ -102,7 +102,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
                 document.getElementById("generateKeyBtn-" + subscription.subID)?.setAttribute('data-app-ref-id', `${responseData.appRefId}`);
             })
 
-            document.getElementById("scope-" + appId).setAttribute("data-scopes", responseData.subscriptionScopes);
+            document.getElementById("scopeContainer-" + appId)?.setAttribute("data-scopes", JSON.stringify(responseData.subscriptionScopes));
 
             loadKeysViewModal();
 
@@ -426,10 +426,10 @@ async function removeApplicationKey() {
 async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName, clientSecret, subscribedScopes) {
     // Get the token button and set generating state
     let tokenBtn = document.getElementById('tokenKeyBtn');
-
-    const scopeContainer = document.getElementById('scopeContainer-' + appId);
+    const devappId = tokenBtn?.dataset?.appId
+    const scopeContainer = document.getElementById('scopeContainer-' + devappId);
     const scopesData = scopeContainer?.dataset?.scopes;
-    const scopeInput = document.getElementById('scope-' + appId);
+    const scopeInput = document.getElementById('scope-' + devappId);
 
 
     if (scopesData) {
@@ -454,10 +454,8 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
             event.preventDefault();
             const input = scopeContainer.querySelector('input');
             const scope = input.value.trim();
-            const existingScopes = Array.from(scopeContainer.querySelectorAll('.span-tag'))
-                .map(el => el.textContent.replace('×', '').trim());
 
-            if (scope && !existingScopes.includes(scope)) {
+            if (scope) {
                 addScope(scope);
                 this.value = '';
             }
@@ -469,12 +467,17 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
         span.className = 'span-tag';
         span.innerHTML = `${scope}<span class="remove">&times;</span>`;
 
-        span.querySelector('.remove').addEventListener('click', function () {
-            scopeContainer.removeChild(span);
-        });
+        const existingScopes = Array.from(scopeContainer.querySelectorAll('.span-tag'))
+            .map(el => el.textContent.replace('×', '').trim());
 
-        scopeContainer.insertBefore(span, scopeInput);
-        scopeInput.value = '';
+        if (!existingScopes.includes(scope)) {
+            span.querySelector('.remove').addEventListener('click', function () {
+                scopeContainer.removeChild(span);
+            });
+
+            scopeContainer.insertBefore(span, scopeInput);
+            scopeInput.value = '';
+        }
     }
 
     // Ensure the input is always visible

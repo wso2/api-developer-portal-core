@@ -97,7 +97,8 @@
           <div class="key-action-row">
             <span class="key-action-label">Token: </span>
             <div class="key-action-buttons">
-              <button id="tokenKeyBtn" class="common-btn-outlined btn-sm" onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}', '{{json @root.subscriptionScopes}}')">
+              <button id="tokenKeyBtn" class="common-btn-outlined btn-sm" data-app-id="{{@root.applicationMetadata.id}}"
+              onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}', '{{json @root.subscriptionScopes}}')">
                 <span class="button-normal-state">
                   <i class="bi bi-key-fill"></i> Generate
                 </span>

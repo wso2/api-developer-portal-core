@@ -14,8 +14,8 @@
                     <div id="regenerateKeyBtn" class="d-flex">
                         <div class="row">
                             <div id="tokenDisplay_{{../name}}" style="display: none;">
-                                <div class="input-scopes" id="scopeContainer-{{keys.appRefID}}" data-scopes="{{json @root.subscriptionScopes}}">
-                                    <input type="text" class="text-input" id="scope-{{keys.appRefID}}" placeholder="Type scope and press Enter...">
+                                <div class="input-scopes" id="scopeContainer-{{@root.applicationMetadata.id}}" data-scopes="{{json @root.subscriptionScopes}}">
+                                    <input type="text" class="text-input" id="scope-{{@root.applicationMetadata.id}}" placeholder="Type scope and press Enter...">
                                 </div>
                                 <div class="info-box">
                                     <div class="info-content">
