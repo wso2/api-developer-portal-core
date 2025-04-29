@@ -102,7 +102,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
                 document.getElementById("generateKeyBtn-" + subscription.subID)?.setAttribute('data-app-ref-id', `${responseData.appRefId}`);
             })
 
-            document.getElementById("scopeContainer-" + appId)?.setAttribute("data-scopes", JSON.stringify(responseData.subscriptionScopes));
+            document.getElementById("tokenKeyBtn")?.setAttribute("data-scopes", JSON.stringify(responseData.subscriptionScopes));
 
             loadKeysViewModal();
 
@@ -426,27 +426,42 @@ async function removeApplicationKey() {
 async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName, clientSecret, subscribedScopes) {
     // Get the token button and set generating state
     let tokenBtn = document.getElementById('tokenKeyBtn');
-    const devappId = tokenBtn?.dataset?.appId
-    const scopeContainer = document.getElementById('scopeContainer-' + devappId);
-    const scopesData = scopeContainer?.dataset?.scopes;
-    const scopeInput = document.getElementById('scope-' + devappId);
+    const devAppId = tokenBtn?.dataset?.appId
+    const scopeContainer = document.getElementById('scopeContainer-' + devAppId);
+    const scopeInput = document.getElementById('scope-' + devAppId);
 
+    if (!(subscribedScopes)) {
+        console.log("subscribedScopes is null");
+        // In the regenerate token request, the scopes are fetched from the UI
+        const scopeElements = document.querySelectorAll(`#scopeContainer-${devAppId} .span-tag`);
+        subscribedScopes = Array.from(scopeElements).map(el => el.textContent.replace('×', '').trim());
+        scopeContainer.setAttribute('data-scopes', JSON.stringify(subscribedScopes));
+        tokenBtn = document.getElementById('regenerateKeyBtn');
+    } else {
+        /**
+         * During the intial generate token request, the data-scopes attribute is set with subcribed scopes
+         * after the reload the scopes are fetched from the backend
+        */ 
+        if (subscribedScopes === '[]') {
+            scopeContainer.setAttribute('data-scopes', tokenBtn?.dataset?.scopes);
+            subscribedScopes = JSON.parse(tokenBtn?.dataset?.scopes);
+        } else { 
+            scopeContainer.setAttribute('data-scopes', subscribedScopes);
+            subscribedScopes = JSON.parse(subscribedScopes);
+        }
+        tokenBtn = document.getElementById('tokenKeyBtn');
+    }
+
+    const scopesData = scopeContainer?.dataset?.scopes;
 
     if (scopesData) {
+        // Clear existing scopes
+        scopeContainer.querySelectorAll('.span-tag').forEach(el => el.remove());
         const scopes = JSON.parse(scopesData);
 
         scopes.forEach(scope => {
             addScope(scope);
         });
-    }
-
-    if (!(subscribedScopes)) {
-        const scopeElements = document.querySelectorAll(`#scopeContainer-${appId} .span-tag`);
-        subscribedScopes = Array.from(scopeElements).map(el => el.textContent.replace('×', '').trim());
-        tokenBtn = document.getElementById('regenerateKeyBtn');
-    } else {
-        subscribedScopes = JSON.parse(subscribedScopes);
-        tokenBtn = document.getElementById('tokenKeyBtn');
     }
 
     scopeContainer?.addEventListener('keypress', function (event) {
@@ -455,6 +470,7 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
             const input = scopeContainer.querySelector('input');
             const scope = input.value.trim();
 
+            // Add additional scopes
             if (scope) {
                 addScope(scope);
                 this.value = '';
@@ -463,10 +479,12 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
     });
 
     function addScope(scope) {
+        // Create a new span element for the scope
         const span = document.createElement('span');
         span.className = 'span-tag';
         span.innerHTML = `${scope}<span class="remove">&times;</span>`;
 
+        // Append the new span to the scope container only if it doesn't already exist
         const existingScopes = Array.from(scopeContainer.querySelectorAll('.span-tag'))
             .map(el => el.textContent.replace('×', '').trim());
 
@@ -474,10 +492,12 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
             span.querySelector('.remove').addEventListener('click', function () {
                 scopeContainer.removeChild(span);
             });
-
-            scopeContainer.insertBefore(span, scopeInput);
-            scopeInput.value = '';
         }
+
+        // Append the new span to the scope container
+        scopeContainer.setAttribute('data-scopes', JSON.stringify(subscribedScopes));
+        scopeContainer.insertBefore(span, scopeInput);
+        scopeInput.value = '';
     }
 
     // Ensure the input is always visible
@@ -552,6 +572,24 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
             normalState.style.display = 'inline-block';
             loadingState.style.display = 'none';
             tokenBtn.disabled = false;
+
+            const responseScopeContainer = document.getElementById('responseScopeContainer-' + devAppId);
+            responseScopeContainer.innerHTML = '';
+            for (const scope of responseData.tokenScopes) {
+                const span = document.createElement('span');
+                span.className = 'span-tag';
+                span.innerHTML = `${scope}`;
+
+                console.log("responseScopeContainer", responseData.tokenScopes);
+                responseScopeContainer.appendChild(span);
+            }
+
+            // If no scopes are present, hide the title
+            if (responseScopeContainer.innerHTML === '') {
+                document.getElementById('resScopeTitle').style.display = 'none';
+            } else {
+                document.getElementById('resScopeTitle').style.display = 'block';
+            }
 
             await showAlert('Token generated successfully!', 'success');
         } else {

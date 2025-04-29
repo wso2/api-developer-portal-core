@@ -14,10 +14,13 @@
                     <div id="regenerateKeyBtn" class="d-flex">
                         <div class="row">
                             <div id="tokenDisplay_{{../name}}" style="display: none;">
-                                <div class="input-scopes" id="scopeContainer-{{@root.applicationMetadata.id}}" data-scopes="{{json @root.subscriptionScopes}}">
-                                    <input type="text" class="text-input" id="scope-{{@root.applicationMetadata.id}}" placeholder="Type scope and press Enter...">
+                                <div class="info-title pb-2">Request Permisssions (Scopes)</div>
+                                <div class="input-scopes" id="scopeContainer-{{@root.applicationMetadata.id}}"
+                                    data-scopes="{{json @root.subscriptionScopes}}">
+                                    <input type="text" class="text-input" id="scope-{{@root.applicationMetadata.id}}"
+                                        placeholder="Type scope and press Enter...">
                                 </div>
-                                <div class="info-box">
+                                <div class="info-box mt-5">
                                     <div class="info-content">
                                         <div class="info-title">Copy the access token</div>
                                         <p class="info-text">
@@ -35,6 +38,9 @@
                                         type="button" onclick="copyToken('{{../name}}')">
                                         <i class="bi bi-copy"></i>
                                     </button>
+                                </div>
+                                <div class="info-title pt-2 pb-2" id="resScopeTitle">Response Permisssions (Scopes)</div>
+                                <div id="responseScopeContainer-{{@root.applicationMetadata.id}}" data-response-scopes="">
                                 </div>
                                 <div class="d-flex justify-content-end mt-4 mb-3"
                                     id="applicationKeyUpdateButtonContainer">
