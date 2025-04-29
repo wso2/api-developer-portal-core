@@ -443,8 +443,12 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
          * after the reload the scopes are fetched from the backend
         */ 
         if (subscribedScopes === '[]') {
-            scopeContainer.setAttribute('data-scopes', tokenBtn?.dataset?.scopes);
-            subscribedScopes = JSON.parse(tokenBtn?.dataset?.scopes);
+            // If the scopes are empty, set it to an empty array
+            subscribedScopes = [];
+            if (tokenBtn?.dataset?.scopes) {
+                scopeContainer.setAttribute('data-scopes', tokenBtn?.dataset?.scopes);
+                subscribedScopes = JSON.parse(tokenBtn.dataset.scopes);
+            }
         } else { 
             scopeContainer.setAttribute('data-scopes', subscribedScopes);
             subscribedScopes = JSON.parse(subscribedScopes);
