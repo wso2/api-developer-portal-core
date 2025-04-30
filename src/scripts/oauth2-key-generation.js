@@ -431,7 +431,6 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
     const scopeInput = document.getElementById('scope-' + devAppId);
 
     if (!(subscribedScopes)) {
-        console.log("subscribedScopes is null");
         // In the regenerate token request, the scopes are fetched from the UI
         const scopeElements = document.querySelectorAll(`#scopeContainer-${devAppId} .span-tag`);
         subscribedScopes = Array.from(scopeElements).map(el => el.textContent.replace('×', '').trim());
@@ -584,7 +583,6 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
                 span.className = 'span-tag';
                 span.innerHTML = `${scope}`;
 
-                console.log("responseScopeContainer", responseData.tokenScopes);
                 responseScopeContainer.appendChild(span);
             }
 
