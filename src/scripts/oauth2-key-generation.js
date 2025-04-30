@@ -424,14 +424,13 @@ async function removeApplicationKey() {
 }
 
 async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName, clientSecret, subscribedScopes) {
-    // Get the token button and set generating state
     let tokenBtn = document.getElementById('tokenKeyBtn');
     const devAppId = tokenBtn?.dataset?.appId
     const scopeContainer = document.getElementById('scopeContainer-' + devAppId);
     const scopeInput = document.getElementById('scope-' + devAppId);
 
     if (!(subscribedScopes)) {
-        // In the regenerate token request, the scopes are fetched from the UI
+        // In the regenerate token request, the scopes are fetched from the span tags
         const scopeElements = document.querySelectorAll(`#scopeContainer-${devAppId} .span-tag`);
         subscribedScopes = Array.from(scopeElements).map(el => el.textContent.replace('×', '').trim());
         scopeContainer.setAttribute('data-scopes', JSON.stringify(subscribedScopes));
