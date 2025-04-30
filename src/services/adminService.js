@@ -916,6 +916,16 @@ const createAppKeyMapping = async (req, res) => {
 
             // Add the appRefId to the response data
             responseData.appRefId = cpAppID;
+            const cpApp = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${cpAppID}`, {}, {});
+            responseData.subscriptionScopes = cpApp.subscriptionScopes;
+
+            let subscriptionScopes = [];
+            if (Array.isArray(cpApp?.subscriptionScopes)) {
+                for (const scope of cpApp?.subscriptionScopes) {
+                    subscriptionScopes.push(scope.key);
+                }
+            }
+            responseData.subscriptionScopes = subscriptionScopes;
         });
         return res.status(200).json(responseData);
     } catch (error) {

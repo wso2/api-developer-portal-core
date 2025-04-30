@@ -99,9 +99,11 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             tokenbtn.setAttribute("data-app-ref-id", responseData.appRefId);
 
             subList.forEach(subscription => {
-                document.getElementById("generateKeyBtn-" + subscription.subID).setAttribute('data-app-ref-id', `${responseData.appRefId}`);
+                document.getElementById("generateKeyBtn-" + subscription.subID)?.setAttribute('data-app-ref-id', `${responseData.appRefId}`);
             })
-            
+
+            document.getElementById("tokenKeyBtn")?.setAttribute("data-scopes", JSON.stringify(responseData.subscriptionScopes));
+
             loadKeysViewModal();
 
 
@@ -421,12 +423,90 @@ async function removeApplicationKey() {
     }
 }
 
+async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName, clientSecret, subscribedScopes) {
+    let tokenBtn = document.getElementById('tokenKeyBtn');
+    const devAppId = tokenBtn?.dataset?.appId
+    const scopeContainer = document.getElementById('scopeContainer-' + devAppId);
+    const scopeInput = document.getElementById('scope-' + devAppId);
 
+    if (!(subscribedScopes)) {
+        // In the regenerate token request, the scopes are fetched from the span tags
+        const scopeElements = document.querySelectorAll(`#scopeContainer-${devAppId} .span-tag`);
+        subscribedScopes = Array.from(scopeElements).map(el => el.textContent.replace('×', '').trim());
+        scopeContainer.setAttribute('data-scopes', JSON.stringify(subscribedScopes));
+        tokenBtn = document.getElementById('regenerateKeyBtn');
+    } else {
+        /**
+         * During the intial generate token request, the data-scopes attribute is set with subcribed scopes
+         * after the reload the scopes are fetched from the backend
+        */ 
+        if (subscribedScopes === '[]') {
+            // If the scopes are empty, set it to an empty array
+            subscribedScopes = [];
+            if (tokenBtn?.dataset?.scopes) {
+                scopeContainer.setAttribute('data-scopes', tokenBtn?.dataset?.scopes);
+                subscribedScopes = JSON.parse(tokenBtn.dataset.scopes);
+            }
+        } else { 
+            scopeContainer.setAttribute('data-scopes', subscribedScopes);
+            subscribedScopes = JSON.parse(subscribedScopes);
+        }
+        tokenBtn = document.getElementById('tokenKeyBtn');
+    }
 
+    const scopesData = scopeContainer?.dataset?.scopes;
 
-async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName, clientSecret) {
-    // Get the token button and set generating state
-    const tokenBtn = document.getElementById('tokenKeyBtn');
+    if (scopesData) {
+        // Clear existing scopes
+        scopeContainer.querySelectorAll('.span-tag').forEach(el => el.remove());
+        const scopes = JSON.parse(scopesData);
+
+        scopes.forEach(scope => {
+            addScope(scope);
+        });
+    }
+
+    scopeContainer?.addEventListener('keypress', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            const input = scopeContainer.querySelector('input');
+            const scope = input.value.trim();
+
+            // Add additional scopes
+            if (scope) {
+                addScope(scope);
+                this.value = '';
+            }
+        }
+    });
+
+    function addScope(scope) {
+        // Create a new span element for the scope
+        const span = document.createElement('span');
+        span.className = 'span-tag';
+        span.innerHTML = `${scope}<span class="remove">&times;</span>`;
+
+        // Append the new span to the scope container only if it doesn't already exist
+        const existingScopes = Array.from(scopeContainer.querySelectorAll('.span-tag'))
+            .map(el => el.textContent.replace('×', '').trim());
+
+        if (!existingScopes.includes(scope)) {
+            span.querySelector('.remove').addEventListener('click', function () {
+                scopeContainer.removeChild(span);
+            });
+        }
+
+        // Append the new span to the scope container
+        scopeContainer.setAttribute('data-scopes', JSON.stringify(subscribedScopes));
+        scopeContainer.insertBefore(span, scopeInput);
+        scopeInput.value = '';
+    }
+
+    // Ensure the input is always visible
+    scopeContainer?.addEventListener('click', function () {
+        scopeInput.focus();
+    });
+
     const normalState = tokenBtn.querySelector('.button-normal-state');
     const loadingState = tokenBtn.querySelector('.button-loading-state');
 
@@ -462,7 +542,7 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
                 "additionalProperties": jsonObject.additionalProperties,
                 "consumerSecret": clientSecret,
                 "revokeToken": null,
-                "scopes": [],
+                "scopes": subscribedScopes,
                 "validityPeriod": 3600
             }),
             credentials: 'include'
@@ -495,6 +575,23 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
             loadingState.style.display = 'none';
             tokenBtn.disabled = false;
 
+            const responseScopeContainer = document.getElementById('responseScopeContainer-' + devAppId);
+            responseScopeContainer.innerHTML = '';
+            for (const scope of responseData.tokenScopes) {
+                const span = document.createElement('span');
+                span.className = 'span-tag';
+                span.innerHTML = `${scope}`;
+
+                responseScopeContainer.appendChild(span);
+            }
+
+            // If no scopes are present, hide the title
+            if (responseScopeContainer.innerHTML === '') {
+                document.getElementById('resScopeTitle').style.display = 'none';
+            } else {
+                document.getElementById('resScopeTitle').style.display = 'block';
+            }
+
             await showAlert('Token generated successfully!', 'success');
         } else {
             console.error('Failed to generate access token:', responseData);
@@ -523,9 +620,6 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
 
 
 }
-
-
-
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -613,14 +707,14 @@ function loadKeysModifyModal() {
 
     // Collapse all advanced configurations and reset UI state
     document.querySelectorAll(".arrow-icon").forEach(icon => icon.classList.remove('rotated'));
-    
+
     // Find the authorization_code checkbox inside this specific modal
     const authorizationCodeCheckbox = modal.querySelector('input[id^="grant-type-authorization_code-"]');
     if (authorizationCodeCheckbox) {
         const callbackUrlRow = modal.querySelector('#callback-url-row');
         // Find PKCE-related configuration fields
         const pkceFields = modal.querySelectorAll('#row-pkceMandatory, #row-pkceSupportPlain');
-        
+
         // Handle callback URL visibility
         if (callbackUrlRow) {
             // Set initial visibility based on checkbox state
@@ -630,14 +724,14 @@ function loadKeysModifyModal() {
                 callbackUrlInput.required = authorizationCodeCheckbox.checked;
             }
         }
-        
+
         // Handle PKCE fields visibility
         pkceFields.forEach(field => {
             field.style.display = authorizationCodeCheckbox.checked ? 'flex' : 'none';
         });
-        
+
         // Add event listener to toggle visibility when checkbox changes
-        authorizationCodeCheckbox.addEventListener('change', function() {
+        authorizationCodeCheckbox.addEventListener('change', function () {
             // Toggle callback URL row
             if (callbackUrlRow) {
                 callbackUrlRow.style.display = this.checked ? 'flex' : 'none';
@@ -646,21 +740,21 @@ function loadKeysModifyModal() {
                     callbackUrlInput.required = this.checked;
                 }
             }
-            
+
             // Toggle PKCE fields
             pkceFields.forEach(field => {
                 field.style.display = this.checked ? 'flex' : 'none';
             });
         });
     }
-    
+
     // Add validation for grant types
     validateGrantTypes(modal);
-    
+
     // Add event listeners to all grant type checkboxes
     const grantTypeCheckboxes = modal.querySelectorAll('input[name="grantTypes"]');
     grantTypeCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
+        checkbox.addEventListener('change', function () {
             validateGrantTypes(modal);
         });
     });
@@ -670,10 +764,10 @@ function validateGrantTypes(modal) {
     // Find the update button
     const updateButton = modal.querySelector('#applicationKeyUpdateButton');
     if (!updateButton) return;
-    
+
     // Find all grant type checkboxes
     const grantTypeCheckboxes = modal.querySelectorAll('input[name="grantTypes"]');
-    
+
     // Check if any checkbox is checked
     let isAnyChecked = false;
     grantTypeCheckboxes.forEach(checkbox => {
@@ -681,10 +775,10 @@ function validateGrantTypes(modal) {
             isAnyChecked = true;
         }
     });
-    
+
     // Update the button state
     updateButton.disabled = !isAnyChecked;
-    
+
     // Show/hide validation message
     const validationMsg = modal.querySelector('#grantTypeValidationMsg');
     if (validationMsg) {
