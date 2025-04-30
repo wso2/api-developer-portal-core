@@ -385,12 +385,7 @@ function addAPISubscription(selectElement) {
 
 }
 
-async function removeSubscription() {
-    const modal = document.getElementById('warningModal');
-    const orgID = modal.dataset.param1;
-    const appID = modal.dataset.param2;
-    const apiRefID = modal.dataset.param3;
-    const subID = modal.dataset.param4;
+async function removeSubscription(orgID, appID, apiRefID, subID) {
 
     try {
         const response = await fetch(`/devportal/organizations/${orgID}/subscriptions?appID=${appID}&apiReferenceID=${apiRefID}&subscriptionID=${subID}`, {
