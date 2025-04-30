@@ -498,8 +498,9 @@ const deleteSubscriptionPolicy = async (orgID, policyID, t) => {
             where: {
                 POLICY_ID: policyID,
                 ORG_ID: orgID
-            }
-        }, { transaction: t });
+            },
+            transaction: t 
+        });
         return subscriptionPolicyResponse;
     } catch (error) {
         if (error instanceof Sequelize.ValidationError) {
@@ -517,8 +518,9 @@ const getSubscriptionPolicyByName = async (orgID, policyName, t) => {
             where: {
                 POLICY_NAME: policyName,
                 ORG_ID: orgID
-            }
-        }, { transaction: t });
+            },
+            transaction: t 
+        });
         return subscriptionPolicyResponse;
     } catch (error) {
         if (error instanceof Sequelize.ValidationError) {
@@ -657,8 +659,9 @@ const getAPIFile = async (fileName, type, orgID, apiID, t) => {
                         ORG_ID: orgID
                     }
                 }
-            ]
-        }, { transaction: t });
+            ],
+            transaction: t 
+        });
         return apiFileResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -683,8 +686,9 @@ const getAPIDoc = async (type, orgID, apiID, t) => {
                         ORG_ID: orgID
                     }
                 }
-            ]
-        }, { transaction: t });
+            ],
+            transaction: t 
+        });
         return apiFileResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -710,8 +714,8 @@ const getAPIDocByName = async (type, name, orgID, apiID, t) => {
                         ORG_ID: orgID
                     }
                 }
-            ]
-        }, { transaction: t });
+            ], transaction: t 
+        });
         return apiFileResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -870,8 +874,9 @@ const getAPIMetadataByCondition = async (condition, t) => {
                 required: false
             }
             ],
-            where: condition
-        }, { transaction: t });
+            where: condition,
+            transaction: t 
+        });
         return apiMetadataResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -906,8 +911,9 @@ const getAPIMetadata = async (orgID, apiID, t) => {
                 ORG_ID: orgID,
                 API_ID: apiID,
                 STATUS: constants.API_STATUS.PUBLISHED
-            }
-        }, { transaction: t });
+            }, 
+            transaction: t 
+        });
         return apiMetadataResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -951,7 +957,8 @@ const getAllAPIMetadata = async (orgID, groups, viewName, t) => {
                     }
                 }
                 ],
-            }, { transaction: t });
+            transaction: t
+        });
             if (apiMetadataResponse) {
                 apiList.push(...apiMetadataResponse);
             }
@@ -991,7 +998,8 @@ const getAllAPIMetadata = async (orgID, groups, viewName, t) => {
                 }
             }
             ],
-        }, { transaction: t });
+            transaction: t 
+        });
         apiList.push(...publicAPIS);
     } catch (error) {
         {
@@ -1093,8 +1101,9 @@ const deleteAPIMetadata = async (orgID, apiID, t) => {
             where: {
                 API_ID: apiID,
                 ORG_ID: orgID
-            }
-        }, { transaction: t });
+            },
+            transaction: t 
+        });
         return apiMetadataResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -1138,7 +1147,8 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
                 ORG_ID: orgID,
             },
             returning: true,
-        }, { transaction: t });
+            transaction: t 
+        });
         return [updateCount, apiMetadataResponse];
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -1160,10 +1170,11 @@ async function updateAPISubscriptionPolicy(subscriptionPolicies, apiID, t) {
         }
         if (policiesToCreate.length > 0) {
             await APISubscriptionPolicy.destroy({
-                where: {
-                    API_ID: apiID
-                }
-            }, { transaction: t });
+                where: { 
+                    API_ID: apiID 
+                },
+                transaction: t
+            });
             return await APISubscriptionPolicy.bulkCreate(policiesToCreate, { transaction: t });
         } else {
             return policiesToCreate;
@@ -1182,8 +1193,9 @@ const getSubscriptionPolicy = async (policyID, orgID, t) => {
             where: {
                 ORG_ID: orgID,
                 POLICY_ID: policyID
-            }
-        }, { transaction: t });
+            },
+            transaction: t
+        });
         return subscriptionPolicyResponse;
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
@@ -1205,7 +1217,7 @@ const getSubscriptionPolicies = async (apiID, t) => {
                 }
             ],
             transaction: t
-        }, { transaction: t });
+        });
         return subscriptionPolicyResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -1246,8 +1258,9 @@ const updateAPIImageMetadata = async (apiImages, orgID, apiID, t) => {
                                 ORG_ID: orgID
                             }
                         }
-                    ]
-                }, { transaction: t });
+                    ],
+                    transaction: t 
+                });
                 if (!apiImageDataUpdate) {
                     throw new Sequelize.EmptyResultError("Error updating API Image Metadata");
                 }
@@ -1282,8 +1295,9 @@ const getImageMetadata = async (imageTag, imageName, orgID, apiID, t) => {
                         ORG_ID: orgID
                     }
                 }
-            ]
-        }, { transaction: t });
+            ],
+            transaction: t 
+        });
         return apiImageData;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -1299,8 +1313,9 @@ const getImage = async (imageTag, apiID, t) => {
             where: {
                 IMAGE_TAG: imageTag,
                 API_ID: apiID
-            }
-        }, { transaction: t });
+            },
+            transaction: t 
+        });
         return apiImageData;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -1316,8 +1331,9 @@ const deleteImage = async (imageTag, apiID, t) => {
             where: {
                 IMAGE_TAG: imageTag,
                 API_ID: apiID
-            }
-        }, { transaction: t });
+            },
+            transaction: t 
+        });
         return apiImageData;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
