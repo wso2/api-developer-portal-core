@@ -262,16 +262,6 @@ input[type="checkbox"]:checked {
   align-items: flex-start;
 }
 
-.badge-custom4 {
-  display: inline-block;
-  border: 1px solid var(--main-text-color);
-  opacity: 0.7;
-  background-color: var(--main-bg-color);
-  color: var(--main-text-color);
-  margin: 0.125rem 0.3125rem 0 0;
-  font-size: 0.8125rem;
-}
-
 .input-scopes {
   display: flex;
   flex-wrap: wrap;
@@ -333,14 +323,6 @@ input[type="checkbox"]:checked {
 .info-icon {
   color: #3b82f6;
   margin-left: 1rem;
-}
-
-.scope-card {
-  background-color: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 0.75rem;
-  position: relative;
 }
 
 .token-card {
