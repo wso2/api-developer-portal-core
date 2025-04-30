@@ -58,9 +58,11 @@ const createOrganization = async (req, res) => {
             //create default provider
             await adminDao.createProvider(organization.ORG_ID, { name: 'WSO2', providerURL: config.controlPlane.url }, t);
             //store default subscription policies
-            const storagePlans = constants.DEFAULT_SUBSCRIPTION_PLANS;
-            for (const plan of storagePlans) {
-                await apiDao.createSubscriptionPolicy(orgId, plan, t);
+            if (config.generateDefaultSubPolicies) {
+                const storagePlans = constants.DEFAULT_SUBSCRIPTION_PLANS;
+                for (const plan of storagePlans) {
+                    await apiDao.createSubscriptionPolicy(orgId, plan, t);
+                }
             }
         });
         const orgCreationResponse = {

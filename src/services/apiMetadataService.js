@@ -21,6 +21,7 @@ const sequelize = require("../db/sequelize");
 const apiDao = require("../dao/apiMetadata");
 const adminDao = require("../dao/admin");
 const util = require("../utils/util");
+const config = require(process.cwd() + '/config.json');
 const path = require("path");
 const fs = require("fs").promises;
 const fsDir = require("fs");
@@ -586,6 +587,14 @@ const deleteAPIFile = async (req, res) => {
     }
 };
 
+const addSubscriptionPolicies = async (req, res) => {
+    if (Array.isArray(req.body)) {
+        await createSubscriptionPolicies(req, res);
+    } else {
+        await createSubscriptionPolicy(req, res);
+    }
+}
+
 const createSubscriptionPolicy = async (req, res) => {
 
     const { orgId } = req.params;
@@ -610,35 +619,40 @@ const createSubscriptionPolicy = async (req, res) => {
     }
 };
 
-const createDefaultSubscriptionPolicies = async (req, res) => {
+const createSubscriptionPolicies = async (req, res) => {
     try {
-        const { orgId } = req.params;
-        const subscriptionPolicies = req.body;
+        if (config.generateDefaultSubPolicies) {
+            const msg = "Bulk creation of subscription policies is not allowed because 'generateDefaultSubPolicies' is enabled in the Developer Portal."
+            console.log(msg)
+            res.status(403).send(msg);
+        } else {
+            const { orgId } = req.params;
+            const subscriptionPolicies = req.body;
 
-        if (!orgId || !subscriptionPolicies || typeof subscriptionPolicies !== "object") {
-            return res.status(400).send({ message: "Missing or invalid fields in the request payload" });
-        }
-
-        const createdPolicies = [];
-
-        await sequelize.transaction(async (t) => {
-            for (const policyKey of Object.keys(subscriptionPolicies)) {
-                const policy = subscriptionPolicies[policyKey];
-
-                const created = await apiDao.createSubscriptionPolicy(orgId, policy, t);
-                if (!created) {
-                    throw new CustomError(
-                        500,
-                        constants.ERROR_CODE[500],
-                        `Failed to create policy: ${policyKey}`
-                    );
-                }
-                createdPolicies.push(new subscriptionPolicyDTO(created));
+            if (!orgId || !Array.isArray(subscriptionPolicies) || subscriptionPolicies.length === 0) {
+                return res.status(400).send({ message: "Missing or invalid fields in the request payload" });
             }
-        });
 
-        res.status(201).send(createdPolicies);
+            const createdPolicies = [];
 
+            await sequelize.transaction(async (t) => {
+                for (const policy of subscriptionPolicies) {
+                    if (policy.type == "requestCount") {
+                        const created = await apiDao.createSubscriptionPolicy(orgId, policy, t);
+                        if (!created) {
+                            throw new CustomError(
+                                500,
+                                constants.ERROR_CODE[500],
+                                `Failed to create policy: ${policy.policyName || "unknown"}`
+                            );
+                        }
+                        createdPolicies.push(new subscriptionPolicyDTO(created));
+                    }
+                }
+            });
+
+            res.status(201).send(createdPolicies);
+        }
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_CREATE_ERROR}, ${error}`);
         util.handleError(res, error);
@@ -956,8 +970,7 @@ module.exports = {
     deleteAPIFile,
     getMetadataListFromDB,
     getMetadataFromDB,
-    createSubscriptionPolicy,
-    createDefaultSubscriptionPolicies,
+    addSubscriptionPolicies,
     updateSubscriptionPolicy,
     deleteSubscriptionPolicy,
     getSubscriptionPolicy,
