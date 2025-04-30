@@ -20,6 +20,12 @@ function openWarningModal(param1, param2, param3, param4, param5) {
         const revokeBtn = document.getElementById('modalFunction');
         revokeBtn.innerText = "Revoke";
         revokeBtn.setAttribute('onclick', `revokeAPIKey(${param2}, '${param3}', '${param4}', '${param5}')`);
+    } else if (param1 === 'Unsubscribe') {
+        document.getElementById('modalTitle').innerText = "Do you really want to remove the subscription?";
+        document.getElementById('modalMessage').innerText = "This will remove the subscription entry stored in the devportal.";
+        const unsubscribeBtn = document.getElementById('modalFunction');
+        unsubscribeBtn.innerText = "Confirm";
+        unsubscribeBtn.setAttribute('onclick', `removeSubscription('${param2}', '${param3}', '${param4}', '${param5}')`);
     }
 }
 

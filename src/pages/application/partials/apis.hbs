@@ -82,14 +82,12 @@
                             </td>
                             <td class="app-td action-column">
                                 <div class="action-buttons-container">
-                                    {{> warning modalTitle="Do you really want to remove the subscription?"
-                                    modalMessage="This will remove the subscription entry stored in the devportal."
-                                    modalFunction="removeSubscription()" }}
+                                    {{> warning }}
                                     <button type="button" class="btn application-btn-icon" onclick="loadModal('planModal-{{apiID}}')">
                                         <i class="bi bi-pencil"></i>
                                     </button>
                                     <button type="button" class="btn application-btn-icon delete-button"
-                                        onclick="openWarningModal('{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')">
+                                        onclick="openWarningModal('Unsubscribe', '{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
