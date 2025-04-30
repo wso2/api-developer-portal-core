@@ -231,6 +231,11 @@ html {
   outline: none;
 }
 
+.common-btn-outlined disabled,
+.common-btn-outlined.disabled {
+  opacity: 0.5;
+}
+
 .common-btn-danger {
   background-color: var(--danger-color);
   color: var(--light-text-color);
