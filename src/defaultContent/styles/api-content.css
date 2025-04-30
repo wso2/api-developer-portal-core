@@ -655,7 +655,6 @@ hr {
   .custom-dropdown {
     font-size: small;
     position: relative;
-    z-index: 999;
   }
 
   .custom-select-container {
