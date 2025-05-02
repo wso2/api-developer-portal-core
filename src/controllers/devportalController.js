@@ -32,6 +32,30 @@ const apiDao = require('../dao/apiMetadata');
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
 
+// ***** Get CP Subscription Policies for Organization *****
+
+// const policies = await getCPSubPolicies(req, res);
+// console.log(policies);
+
+const getCPSubPolicies = async (req) => {
+    const orgID = req.user[constants.ORG_ID];
+    const subPoliciesUrl = `${controlPlaneUrl}/throttling-policies/subscription?organizationId=${req.user[constants.ORG_IDENTIFIER]}`
+    const responseData = await invokeApiRequest(req, 'GET', subPoliciesUrl, null, null);
+    return responseData.list.map(item => ({
+        policyName: item.name,
+        displayName: item.displayName,
+        billingPlan: item.tierPlan,
+        description: item.description,
+        type: item.quotaPolicyType,
+        timeUnit: item.timeUnit,
+        unitTime: item.unitTime,
+        requestCount: item.requestCount,
+        dataAmount: null,
+        dataUnit: item.dataUnit,
+        EventCount: null
+    }));
+}
+
 // ***** Save Application *****
 
 const saveApplication = async (req, res) => {
