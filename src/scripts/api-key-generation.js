@@ -54,10 +54,10 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
 
       const subList = JSON.parse(subIDs);
       subList.forEach(subID => {
-        document.getElementById("generateKeyBtn-" + subID).setAttribute('data-app-ref-id', `${responseData.appRefId}`);
+        document.getElementById("generateKeyBtn-" + subID)?.setAttribute('data-app-ref-id', `${responseData.appRefId}`);
       })
 
-      await showAlert('Token generated successfully!', 'success');
+      await showAlert('API Key generated successfully!', 'success');
 
     } else {
       await showAlert(`Failed to generate API Key. Please try again.\n${responseData?.description || ''}`, 'error');

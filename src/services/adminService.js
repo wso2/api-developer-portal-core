@@ -671,14 +671,23 @@ const createSubscription = async (req, res) => {
         const orgID = req.params.orgId;
         sequelize.transaction(async (t) => {
             try {
-                const app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
-                if (app.length > 0) {
+                const sharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
+                const nonSharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, false);
+                
+                if (sharedApp.length > 0) {
                     const response = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, {
                         apiId: req.body.apiReferenceID,
-                        applicationId: app[0].dataValues.CP_APP_REF,
+                        applicationId: sharedApp[0].dataValues.CP_APP_REF,
                         throttlingPolicy: req.body.policyName
                     });
-                    await handleSubscribe(orgID, req.body.applicationID, app[0].dataValues.API_REF_ID, app[0].dataValues.SUBSCRIPTION_REF_ID, response, t);
+                    await handleSubscribe(orgID, req.body.applicationID, sharedApp[0].dataValues.API_REF_ID, sharedApp[0].dataValues.SUBSCRIPTION_REF_ID, response, t);
+                } else if (nonSharedApp.length > 0) {
+                    const response = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, {
+                        apiId: req.body.apiReferenceID,
+                        applicationId: nonSharedApp[0].dataValues.CP_APP_REF,
+                        throttlingPolicy: req.body.policyName
+                    });
+                    await handleSubscribe(orgID, req.body.applicationID, nonSharedApp[0].dataValues.API_REF_ID, nonSharedApp[0].dataValues.SUBSCRIPTION_REF_ID, response, t);
                 }
                 await adminDao.createSubscription(orgID, req.body, t);
                 return res.status(200).json({ message: 'Subscribed successfully' });
@@ -816,7 +825,7 @@ const deleteSubscription = async (req, res) => {
                 const subIDList = await adminDao.getAPISubscriptionReference(orgID, subscription.dataValues.APP_ID, subscription.dataValues.REFERENCE_ID, t);
                 //delete subscription from control plane
                 for (const subscription of subIDList) {
-                    const subscriptionID = subscription.dataValues.SUBSCRIPTION_REF_ID;
+                    const subscriptionID = subscription.dataValues?.SUBSCRIPTION_REF_ID;
                     await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${subscriptionID}`, {}, {})
                     await adminDao.deleteAppKeyMapping(orgID, subDeleteResponse.APP_ID, subscriptionID, t);
                 }
@@ -872,7 +881,9 @@ const createAppKeyMapping = async (req, res) => {
                     sharedToken: true,
                     tokenType: constants.TOKEN_TYPES.OAUTH
                 }
-                await adminDao.createApplicationKeyMapping(appKeyMappping, t);
+                if (sharedToken.length === 0 && nonSharedToken.length === 0) {
+                    await adminDao.createApplicationKeyMapping(appKeyMappping, t);
+                }
             }
             // add subscription to control plane for each api
             const apiSubscriptions = [];
@@ -896,8 +907,10 @@ const createAppKeyMapping = async (req, res) => {
                     tokenType: constants.TOKEN_TYPES.OAUTH
                 }
                 //check whether key mapping exists
-                const mappingResponse = await adminDao.getApplicationAPIMapping(orgID, appID, apiSubscription.apiId, cpAppID, true, t);
-                if (mappingResponse.length === 0) {
+                const sharedKeyMapping = await adminDao.getApplicationAPIMapping(orgID, appID, apiSubscription.apiId, cpAppID, true, t);
+                const nonSharedKeyMapping = await adminDao.getApplicationAPIMapping(orgID, appID, apiSubscription.apiId, cpAppID, false, t);
+                
+                if (sharedKeyMapping.length === 0 && nonSharedKeyMapping.length === 0) {
                     await adminDao.createApplicationKeyMapping(appKeyMappping, t);
                 }
             }
@@ -916,6 +929,16 @@ const createAppKeyMapping = async (req, res) => {
 
             // Add the appRefId to the response data
             responseData.appRefId = cpAppID;
+            const cpApp = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${cpAppID}`, {}, {});
+            responseData.subscriptionScopes = cpApp.subscriptionScopes;
+
+            let subscriptionScopes = [];
+            if (Array.isArray(cpApp?.subscriptionScopes)) {
+                for (const scope of cpApp?.subscriptionScopes) {
+                    subscriptionScopes.push(scope.key);
+                }
+            }
+            responseData.subscriptionScopes = subscriptionScopes;
         });
         return res.status(200).json(responseData);
     } catch (error) {
@@ -1057,11 +1080,15 @@ const unsubscribeAPI = async (req, res) => {
         await sequelize.transaction(async (t) => {
             try {
                 if (nonSharedToken.length > 0) {
-                    await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${nonSharedToken.dataValues.SUBSCRIPTION_REF_ID}`, {}, {})
+                    console.log("Delete non-shared app key mapping entries with api ref id: ", apiReferenceID);
+                    for (const dataValues of nonSharedToken) {
+                        if (dataValues.API_REF_ID === apiReferenceID) {
+                            await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${dataValues.SUBSCRIPTION_REF_ID}`, {}, {})
+                        }
+                    }
                 }
-                if (sharedToken.length === 1) {
-                    await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${sharedToken[0].dataValues.SUBSCRIPTION_REF_ID}`, {}, {})
-                } else {
+                if (sharedToken.length > 0) {
+                    console.log("Delete shared app key mapping entries with api ref id: ", apiReferenceID);
                     for (const dataValues of sharedToken) {
                         if (dataValues.API_REF_ID === apiReferenceID) {
                             await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${dataValues.SUBSCRIPTION_REF_ID}`, {}, {})
@@ -1088,11 +1115,7 @@ const unsubscribeAPI = async (req, res) => {
 async function handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiRefID, subID, t) {
     try {
         await sequelize.transaction(async (t) => {
-
-            if (nonSharedToken.length > 0) {
-                await adminDao.deleteAppKeyMapping(orgID, appID, apiRefID);
-            }
-            if (sharedToken.length === 1) {
+            if (sharedToken.length === 1 && nonSharedToken.length === 0) {
                 await adminDao.updateApplicationKeyMapping(apiRefID, {
                     orgID: sharedToken[0].dataValues.ORG_ID,
                     appID: sharedToken[0].dataValues.APP_ID,
@@ -1102,8 +1125,18 @@ async function handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiR
                     sharedToken: true,
                     tokenType: constants.TOKEN_TYPES.OAUTH
                 });
+            } else if (nonSharedToken.length === 1 && sharedToken.length === 0) {
+                await adminDao.updateApplicationKeyMapping(apiRefID, {
+                    orgID: nonSharedToken[0].dataValues.ORG_ID,
+                    appID: nonSharedToken[0].dataValues.APP_ID,
+                    cpAppRef: nonSharedToken[0].dataValues.CP_APP_REF,
+                    apiRefID: null,
+                    subscriptionRefID: null,
+                    sharedToken: false,
+                    tokenType: constants.TOKEN_TYPES.OAUTH
+                });
             } else {
-                if (sharedToken.length > 1) {
+                if (sharedToken.length > 0 || nonSharedToken.length > 0) {
                     await adminDao.deleteAppKeyMapping(orgID, appID, apiRefID, t);
                 }
             }

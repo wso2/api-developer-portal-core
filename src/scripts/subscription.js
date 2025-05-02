@@ -295,32 +295,35 @@ async function updateSubscription(orgID, applicationID, apiId, apiReferenceID, p
         const responseData = await response.json();
 
         // Always reset button state and close modal
-        const planButton = document.getElementById('subscribe-btn-' + policyId);
-        if (planButton) {
-            resetSubscribeButtonState(planButton);
+        const updatedButton = document.getElementById('subscribe-btn-' + apiId + "-" + policyName);
+        if (updatedButton) {
+            resetSubscribeButtonState(updatedButton);
         }
-        closeModal('planModal-' + apiId);
+        // closeModal('planModal-' + apiId);
         resetSubscribeButtonState(subscribeButton);
 
         if (response.ok) {
             // Show success notification
-            showSubscriptionMessage(messageOverlay, 'Successfully updated API subscription', 'success');
-            document.getElementById(`policy_${subID}`).innerText = policyName; 
-            const elements = document.querySelectorAll('[style]');
+            const updatedPlanCard = document.getElementById('api-card-' + apiId + "-" + policyName);
+            updatedPlanCard.style.borderColor = 'var(--primary-main-color)';
+            console.log('updatedPlanCard', updatedPlanCard);
 
-            elements.forEach(el => {
-                if (el.style.borderColor === 'var(--primary-main-color)' && el.id.includes(`${subID}`)) {
-                    el.style.borderColor = '';
-                    const updateButton = el.querySelector('a[type="button"]');
-                    updateButton.removeAttribute('disabled');
-                    updateButton.style.pointerEvents = 'auto';
+            updatedButton.setAttribute('disabled', 'disabled');
+            updatedButton.classList.add('disabled');
+            updatedButton.style.setProperty('pointer-events', 'none', 'important');
+            updatedButton.textContent = 'Update';
+
+            const apiCards = document.querySelectorAll(`[id^="api-card-${apiId}-"]`);
+            apiCards.forEach(card => {
+                if (card.id !== `api-card-${apiId}-${policyName}`) {
+                    card.style.borderColor = '';
+                    const cardButton = card.querySelector('a[type="button"]');
+                    cardButton.style.pointerEvents = 'auto';
+                    cardButton.removeAttribute('disabled');
+                    cardButton.classList.remove('disabled');
                 }
             });
-            const selectedPolicy = document.getElementById(`${subID}_${policyName}`);
-            selectedPolicy.style.borderColor = 'var(--primary-main-color)';
-            //disable the subscribe button
-            const currentUpdateButton = selectedPolicy.querySelector('a[type="button"]');
-            currentUpdateButton.style.pointerEvents = 'none';
+            showSubscriptionMessage(messageOverlay, 'Successfully updated API subscription', 'success');
         } else {
             // Handle API error
             console.error('Failed to create subscription:', responseData);
@@ -382,12 +385,7 @@ function addAPISubscription(selectElement) {
 
 }
 
-async function removeSubscription() {
-    const modal = document.getElementById('deleteConfirmation');
-    const orgID = modal.dataset.param1;
-    const appID = modal.dataset.param2;
-    const apiRefID = modal.dataset.param3;
-    const subID = modal.dataset.param4;
+async function removeSubscription(orgID, appID, apiRefID, subID) {
 
     try {
         const response = await fetch(`/devportal/organizations/${orgID}/subscriptions?appID=${appID}&apiReferenceID=${apiRefID}&subscriptionID=${subID}`, {
