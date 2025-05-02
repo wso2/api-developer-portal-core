@@ -130,7 +130,7 @@ const generateAPIKeys = async (req, res) => {
         const nonSharedKeyMapping = await adminDao.getApplicationAPIMapping(orgID, requestBody.devportalAppId, apiID, cpAppID, false);
         const sharedKeyMapping = await adminDao.getApplicationAPIMapping(orgID, requestBody.devportalAppId, apiID, cpAppID, true);
 
-        if (!(nonSharedKeyMapping.length > 0 || sharedKeyMapping.length > 0)) { 
+        if (!(cpAppID || nonSharedKeyMapping.length > 0 || sharedKeyMapping.length > 0)) { 
             const cpApp = await adminService.createCPApplication(req, requestBody.devportalAppId);
             cpAppID = cpApp.applicationId;
 
