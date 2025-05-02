@@ -372,9 +372,9 @@ const deleteOrgContent = async (req, res) => {
         const fileName = req.query.fileName;
         let deletedRowsCount;
         if (!req.query.fileName) {
-             deletedRowsCount = await adminDao.deleteAllOrgContent(req.params.orgId, req.params.name);
+            deletedRowsCount = await adminDao.deleteAllOrgContent(req.params.orgId, req.params.name);
         } else {
-             deletedRowsCount = await adminDao.deleteOrgContent(req.params.orgId, req.params.name, fileName);
+            deletedRowsCount = await adminDao.deleteOrgContent(req.params.orgId, req.params.name, fileName);
         }
         if (deletedRowsCount > 0) {
             res.status(204).send();
@@ -669,25 +669,28 @@ const createSubscription = async (req, res) => {
 
     try {
         const orgID = req.params.orgId;
+        let isShared;
         sequelize.transaction(async (t) => {
             try {
                 const sharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
                 const nonSharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, false);
-                
+
                 if (sharedApp.length > 0) {
+                    isShared = true;
                     const response = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, {
                         apiId: req.body.apiReferenceID,
                         applicationId: sharedApp[0].dataValues.CP_APP_REF,
                         throttlingPolicy: req.body.policyName
                     });
-                    await handleSubscribe(orgID, req.body.applicationID, sharedApp[0].dataValues.API_REF_ID, sharedApp[0].dataValues.SUBSCRIPTION_REF_ID, response, t);
+                    await handleSubscribe(orgID, req.body.applicationID, sharedApp[0].dataValues.API_REF_ID, sharedApp[0].dataValues.SUBSCRIPTION_REF_ID, response, isShared, t);
                 } else if (nonSharedApp.length > 0) {
+                    isShared = false;
                     const response = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, {
                         apiId: req.body.apiReferenceID,
                         applicationId: nonSharedApp[0].dataValues.CP_APP_REF,
                         throttlingPolicy: req.body.policyName
                     });
-                    await handleSubscribe(orgID, req.body.applicationID, nonSharedApp[0].dataValues.API_REF_ID, nonSharedApp[0].dataValues.SUBSCRIPTION_REF_ID, response, t);
+                    await handleSubscribe(orgID, req.body.applicationID, nonSharedApp[0].dataValues.API_REF_ID, nonSharedApp[0].dataValues.SUBSCRIPTION_REF_ID, response, isShared, t);
                 }
                 await adminDao.createSubscription(orgID, req.body, t);
                 return res.status(200).json({ message: 'Subscribed successfully' });
@@ -699,7 +702,7 @@ const createSubscription = async (req, res) => {
                     /** Handle both scenario where a reference application in cp is created but no subscriptions avaiable 
                      * (update existing row) & a reference application in cp is created & a subscriptions for a different 
                      * API already exisits (create new row) **/
-                    await handleSubscribe(orgID, req.applicationID, app.API_REF_ID, app.SUBSCRIPTION_REF_ID, response, t);
+                    await handleSubscribe(orgID, req.applicationID, app.API_REF_ID, app.SUBSCRIPTION_REF_ID, response, isShared, t);
                     await adminDao.createSubscription(orgID, req.body, t);
                     return res.status(200).json({ message: 'Subscribed successfully' });
                 }
@@ -719,7 +722,7 @@ const updateSubscription = async (req, res) => {
         const orgID = req.params.orgId;
         sequelize.transaction(async (t) => {
             try {
-                const app =  await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
+                const app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
                 if (app.length > 0) {
                     let throttlingPolicy = "";
                     const subscruibedPolicy = await apiDao.getSubscriptionPolicy(req.body.policyId, orgID);
@@ -749,7 +752,7 @@ const updateSubscription = async (req, res) => {
     }
 }
 
-async function handleSubscribe(orgID, applicationID, apiRefID, subRefID, response, t) {
+async function handleSubscribe(orgID, applicationID, apiRefID, subRefID, response, isShared, t) {
     if (apiRefID && subRefID) {
         await adminDao.createApplicationKeyMapping({
             orgID: orgID,
@@ -757,8 +760,8 @@ async function handleSubscribe(orgID, applicationID, apiRefID, subRefID, respons
             cpAppRef: response.applicationId,
             apiRefID: response.apiId,
             subscriptionRefID: response.subscriptionId,
-            sharedToken: true,
-            tokenType: constants.TOKEN_TYPES.OAUTH
+            sharedToken: isShared,
+            tokenType: isShared ? constants.TOKEN_TYPES.OAUTH : constants.TOKEN_TYPES.API_KEY
         }, t);
     } else {
         await adminDao.updateApplicationKeyMapping(null, {
@@ -767,9 +770,10 @@ async function handleSubscribe(orgID, applicationID, apiRefID, subRefID, respons
             cpAppRef: response.applicationId,
             apiRefID: response.apiId,
             subscriptionRefID: response.subscriptionId,
-            sharedToken: true,
-            tokenType: constants.TOKEN_TYPES.OAUTH
+            sharedToken: isShared,
+            tokenType: isShared ? constants.TOKEN_TYPES.OAUTH : constants.TOKEN_TYPES.API_KEY
         }, t);
+
     }
 }
 
@@ -909,7 +913,7 @@ const createAppKeyMapping = async (req, res) => {
                 //check whether key mapping exists
                 const sharedKeyMapping = await adminDao.getApplicationAPIMapping(orgID, appID, apiSubscription.apiId, cpAppID, true, t);
                 const nonSharedKeyMapping = await adminDao.getApplicationAPIMapping(orgID, appID, apiSubscription.apiId, cpAppID, false, t);
-                
+
                 if (sharedKeyMapping.length === 0 && nonSharedKeyMapping.length === 0) {
                     await adminDao.createApplicationKeyMapping(appKeyMappping, t);
                 }
@@ -1124,7 +1128,7 @@ async function handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiR
                     subscriptionRefID: null,
                     sharedToken: true,
                     tokenType: constants.TOKEN_TYPES.OAUTH
-                });
+                }, t);
             } else if (nonSharedToken.length === 1 && sharedToken.length === 0) {
                 await adminDao.updateApplicationKeyMapping(apiRefID, {
                     orgID: nonSharedToken[0].dataValues.ORG_ID,
@@ -1133,8 +1137,8 @@ async function handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiR
                     apiRefID: null,
                     subscriptionRefID: null,
                     sharedToken: false,
-                    tokenType: constants.TOKEN_TYPES.OAUTH
-                });
+                    tokenType: constants.TOKEN_TYPES.API_KEY
+                }, t);
             } else {
                 if (sharedToken.length > 0 || nonSharedToken.length > 0) {
                     await adminDao.deleteAppKeyMapping(orgID, appID, apiRefID, t);
