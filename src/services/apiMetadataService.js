@@ -32,7 +32,7 @@ const constants = require("../utils/constants");
 const subscriptionPolicyDTO = require("../dto/subscriptionPolicy");
 const { CustomError } = require("../utils/errors/customErrors");
 const LabelDTO = require("../dto/label");
-const { getSubPolicyByName } = require('../service/devportalService');
+const { getSubPolicyByName } = require('../services/devportalService');
 
 const createAPIMetadata = async (req, res) => {
 

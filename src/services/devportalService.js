@@ -20,6 +20,7 @@ const adminService = require('../services/adminService');
 const adminDao = require('../dao/admin');
 const apiDao = require("../dao/apiMetadata");
 const util = require('../utils/util');
+const config = require(process.cwd() + '/config');
 const controlPlaneUrl = config.controlPlane.url;
 const constants = require('../utils/constants');
 const { validationResult } = require('express-validator');
