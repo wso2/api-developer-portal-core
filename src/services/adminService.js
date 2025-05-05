@@ -1088,7 +1088,7 @@ const unsubscribeAPI = async (req, res) => {
                     for (const dataValues of nonSharedToken) {
                         if (dataValues.API_REF_ID === apiReferenceID) {
                             await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${dataValues.SUBSCRIPTION_REF_ID}`, {}, {})
-                            await handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiReferenceID, subscriptionID, t);
+                            await handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiReferenceID, t);
                         }
                     }
                 }
@@ -1097,7 +1097,7 @@ const unsubscribeAPI = async (req, res) => {
                     for (const dataValues of sharedToken) {
                         if (dataValues.API_REF_ID === apiReferenceID) {
                             await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${dataValues.SUBSCRIPTION_REF_ID}`, {}, {})
-                            await handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiReferenceID, subscriptionID, t);
+                            await handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiReferenceID, t);
                         }
                     };
                 }
@@ -1105,7 +1105,7 @@ const unsubscribeAPI = async (req, res) => {
                 return res.status(204).send();
             } catch (error) {
                 if (error.statusCode && error.statusCode === 404) {
-                    await handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiReferenceID, subscriptionID, t);
+                    await handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiReferenceID, t);
                     await adminDao.deleteSubscription(orgID, subscriptionID, t);
                     return res.status(204).send();
                 }
@@ -1119,35 +1119,33 @@ const unsubscribeAPI = async (req, res) => {
     }
 }
 
-async function handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiRefID, subID, t) {
+async function handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiRefID, t) {
     try {
-        await sequelize.transaction(async (t) => {
-            if (sharedToken.length === 1 && nonSharedToken.length === 0) {
-                await adminDao.updateApplicationKeyMapping(apiRefID, {
-                    orgID: sharedToken[0].dataValues.ORG_ID,
-                    appID: sharedToken[0].dataValues.APP_ID,
-                    cpAppRef: sharedToken[0].dataValues.CP_APP_REF,
-                    apiRefID: null,
-                    subscriptionRefID: null,
-                    sharedToken: true,
-                    tokenType: constants.TOKEN_TYPES.OAUTH
-                }, t);
-            } else if (nonSharedToken.length === 1 && sharedToken.length === 0) {
-                await adminDao.updateApplicationKeyMapping(apiRefID, {
-                    orgID: nonSharedToken[0].dataValues.ORG_ID,
-                    appID: nonSharedToken[0].dataValues.APP_ID,
-                    cpAppRef: nonSharedToken[0].dataValues.CP_APP_REF,
-                    apiRefID: null,
-                    subscriptionRefID: null,
-                    sharedToken: false,
-                    tokenType: constants.TOKEN_TYPES.API_KEY
-                }, t);
-            } else {
-                if (sharedToken.length > 0 || nonSharedToken.length > 0) {
-                    await adminDao.deleteAppKeyMapping(orgID, appID, apiRefID, t);
-                }
+        if (sharedToken.length === 1 && nonSharedToken.length === 0) {
+            await adminDao.updateApplicationKeyMapping(apiRefID, {
+                orgID: sharedToken[0].dataValues.ORG_ID,
+                appID: sharedToken[0].dataValues.APP_ID,
+                cpAppRef: sharedToken[0].dataValues.CP_APP_REF,
+                apiRefID: null,
+                subscriptionRefID: null,
+                sharedToken: true,
+                tokenType: constants.TOKEN_TYPES.OAUTH
+            }, t);
+        } else if (nonSharedToken.length === 1 && sharedToken.length === 0) {
+            await adminDao.updateApplicationKeyMapping(apiRefID, {
+                orgID: nonSharedToken[0].dataValues.ORG_ID,
+                appID: nonSharedToken[0].dataValues.APP_ID,
+                cpAppRef: nonSharedToken[0].dataValues.CP_APP_REF,
+                apiRefID: null,
+                subscriptionRefID: null,
+                sharedToken: false,
+                tokenType: constants.TOKEN_TYPES.API_KEY
+            }, t);
+        } else {
+            if (sharedToken.length > 0 || nonSharedToken.length > 0) {
+                await adminDao.deleteAppKeyMapping(orgID, appID, apiRefID, t);
             }
-        });
+        }
     } catch (error) {
         console.error("Transaction failed during unsubscribing", error);
         throw error;
