@@ -32,7 +32,6 @@ const constants = require("../utils/constants");
 const subscriptionPolicyDTO = require("../dto/subscriptionPolicy");
 const { CustomError } = require("../utils/errors/customErrors");
 const LabelDTO = require("../dto/label");
-const { getSubPolicyByName } = require('../services/devportalService');
 
 const createAPIMetadata = async (req, res) => {
 
@@ -70,7 +69,7 @@ const createAPIMetadata = async (req, res) => {
                     );
                 } else {
                     for (const policy of apiSubscriptionPolicies) {
-                        const subscriptionPolicy = await getSubPolicyByName(req, orgId, policy.policyName);
+                        const subscriptionPolicy = await util.getSubPolicyByName(req, orgId, policy.policyName);
                         if (!subscriptionPolicy) {
                             throw new Sequelize.EmptyResultError("Subscription policy not found");
                         } else {
@@ -291,7 +290,7 @@ const updateAPIMetadata = async (req, res) => {
                     );
                 } else {
                     for (const policy of apiSubscriptionPolicies) {
-                        const subscriptionPolicy = await getSubPolicyByName(req, orgId, policy.policyName);
+                        const subscriptionPolicy = await util.getSubPolicyByName(req, orgId, policy.policyName);
                         if (!subscriptionPolicy) {
                             throw new Sequelize.EmptyResultError("Subscription policy not found");
                         } else {

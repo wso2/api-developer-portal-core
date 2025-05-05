@@ -18,16 +18,10 @@
 /* eslint-disable no-undef */
 const adminService = require('../services/adminService');
 const adminDao = require('../dao/admin');
-const apiDao = require("../dao/apiMetadata");
 const util = require('../utils/util');
-const config = require(process.cwd() + '/config');
-const controlPlaneUrl = config.controlPlane.url;
 const constants = require('../utils/constants');
 const { validationResult } = require('express-validator');
 const { retrieveContentType } = require('../utils/util');
-const sequelize = require("../db/sequelize");
-const { CustomError } = require("../utils/errors/customErrors");
-const subscriptionPolicyDTO = require("../dto/subscriptionPolicy");
 
 const getOrganization = async (req, res) => {
 
@@ -99,81 +93,8 @@ const getOrgContent = async (req, res) => {
     }
 };
 
-const createSubscriptionPolicyFromListByName = async (subscriptionPolicies, policyName) => {
-    let createdPolicy;
-    await sequelize.transaction(async (t) => {
-        for (const policy of subscriptionPolicies) {
-            if (policy.policyName === policyName) {
-                const created = await apiDao.createSubscriptionPolicy(orgId, policy, t);
-                if (!created) {
-                    throw new CustomError(
-                        500,
-                        constants.ERROR_CODE[500],
-                        `Failed to create policy: ${policy.policyName || "unknown"}`
-                    );
-                }
-                createdPolicy = new subscriptionPolicyDTO(created);
-                break;
-            }
-        }
-    });
-    return createdPolicy;
-};
-
-// ***** Get CP Subscription Policies for Organization *****
-
-const getCPSubPolicies = async (req, orgIdentifier) => {
-    const subPoliciesUrl = `${controlPlaneUrl}/throttling-policies/subscription?organizationId=${orgIdentifier}`
-    const responseData = await invokeApiRequest(req, 'GET', subPoliciesUrl, null, null);
-    if (!responseData?.list || !Array.isArray(responseData.list)) {
-        throw new Error("Invalid subscription policies response format");
-    }
-    return responseData.list.map(item => ({
-        policyName: item.name,
-        displayName: item.displayName,
-        billingPlan: item.tierPlan,
-        description: item.description,
-        type: item.quotaPolicyType,
-        timeUnit: item.timeUnit,
-        unitTime: item.unitTime,
-        requestCount: item.requestCount,
-        dataAmount: null,
-        dataUnit: item.dataUnit,
-        EventCount: null
-    }));   
-}
-
-// ***** getSubscriptionPolicyByName Interceptor *****
-
-const getSubPolicyByName = async (req, orgId, policyName) => {
-    try {
-        let subscriptionPolicy = await apiDao.getSubscriptionPolicyByName(orgId, policyName);
-        if (!subscriptionPolicy) {
-            // Since sub-policy cannot be found, check CP for the sub-policy
-            const { ORGANIZATION_IDENTIFIER: orgIdentifier } = await adminDao.getOrganization(orgId);
-            const cPSubPolicies = await getCPSubPolicies(req, orgIdentifier);
-            if (!cPSubPolicies) {
-                // Sub-policies not available in CP for the org
-                return null;
-            }
-            const response = await createSubscriptionPolicyFromListByName(cPSubPolicies, policyName);
-            if (!response) {
-                // Matching sub-policy (name) was not found from CP to add
-                return null;
-            }
-            // Again get sub-policy since matching Sub-policy was added from CP
-            subscriptionPolicy = await apiDao.getSubscriptionPolicyByName(orgId, policyName);       
-        } 
-        return subscriptionPolicy;
-    } catch (error) {
-        console.error("Error occurred while getting Subscription Policy by name", error);
-        util.handleError(res, error);
-    }
-}
-
 module.exports = {
     getOrgContent,
     getOrganization,
-    getOrganizationDetails,
-    getSubPolicyByName
+    getOrganizationDetails
 };

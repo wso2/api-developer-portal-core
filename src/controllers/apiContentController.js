@@ -76,7 +76,7 @@ const loadAPIs = async (req, res) => {
             });
 
             for (const metaData of metaDataList) {
-                metaData.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, metaData.subscriptionPolicies);
+                metaData.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(req, orgID, metaData.subscriptionPolicies);
                 if (req.user) {
                     let applications = await adminDao.getApplications(orgID, req.user.sub);
                     if (applications.length > 0) {
@@ -148,7 +148,7 @@ const loadAPIContent = async (req, res) => {
             const orgID = await adminDao.getOrgId(orgName);
             const apiID = await apiDao.getAPIId(orgID, apiHandle);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
-            let subscriptionPlans = await util.appendSubscriptionPlanDetails(orgID, metaData.subscriptionPolicies);
+            let subscriptionPlans = await util.appendSubscriptionPlanDetails(req, orgID, metaData.subscriptionPolicies);
 
             let providerUrl;
             if (metaData.provider === "WSO2") {
