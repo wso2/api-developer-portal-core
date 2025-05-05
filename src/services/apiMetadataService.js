@@ -33,27 +33,6 @@ const subscriptionPolicyDTO = require("../dto/subscriptionPolicy");
 const { CustomError } = require("../utils/errors/customErrors");
 const LabelDTO = require("../dto/label");
 
-const addMissingSubscriptionPolicyToDB = async (cpSubscriptionPolicies, policyName) => {
-    let createdPolicy;
-    await sequelize.transaction(async (t) => {
-        for (const policy of cpSubscriptionPolicies) {
-            if (policy.policyName === policyName) {
-                const created = await apiDao.createSubscriptionPolicy(orgId, policy, t);
-                if (!created) {
-                    throw new CustomError(
-                        500,
-                        constants.ERROR_CODE[500],
-                        `Failed to create policy: ${policy.policyName || "unknown"}`
-                    );
-                }
-                createdPolicy = new subscriptionPolicyDTO(created);
-                break;
-            }
-        }
-    });
-    return createdPolicy;
-};
-
 const createAPIMetadata = async (req, res) => {
 
     const apiMetadata = JSON.parse(req.body.apiMetadata);

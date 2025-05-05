@@ -26,6 +26,7 @@ const { Strategy: CustomStrategy } = require('passport-custom');
 const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 const { ApplicationDTO } = require('../dto/application');
+const subscriptionPolicyDTO = require("../dto/subscriptionPolicy");
 const { Sequelize } = require("sequelize");
 const adminService = require('../services/adminService');
 const apiDao = require('../dao/apiMetadata');
@@ -34,26 +35,77 @@ const apiDao = require('../dao/apiMetadata');
 
 // ***** Get CP Subscription Policies for Organization *****
 
-// const policies = await getCPSubPolicies(req, res);
-// console.log(policies);
-
 const getCPSubPolicies = async (req) => {
-    const orgID = req.user[constants.ORG_ID];
-    const subPoliciesUrl = `${controlPlaneUrl}/throttling-policies/subscription?organizationId=${req.user[constants.ORG_IDENTIFIER]}`
-    const responseData = await invokeApiRequest(req, 'GET', subPoliciesUrl, null, null);
-    return responseData.list.map(item => ({
-        policyName: item.name,
-        displayName: item.displayName,
-        billingPlan: item.tierPlan,
-        description: item.description,
-        type: item.quotaPolicyType,
-        timeUnit: item.timeUnit,
-        unitTime: item.unitTime,
-        requestCount: item.requestCount,
-        dataAmount: null,
-        dataUnit: item.dataUnit,
-        EventCount: null
-    }));
+    try {
+        // const orgID = req.user[constants.ORG_ID];
+        const subPoliciesUrl = `${controlPlaneUrl}/throttling-policies/subscription?organizationId=${req.user[constants.ORG_IDENTIFIER]}`
+        const responseData = await invokeApiRequest(req, 'GET', subPoliciesUrl, null, null);
+        if (!responseData?.list || !Array.isArray(responseData.list)) {
+            throw new Error("Invalid subscription policies response format");
+        }
+        return responseData.list.map(item => ({
+            policyName: item.name,
+            displayName: item.displayName,
+            billingPlan: item.tierPlan,
+            description: item.description,
+            type: item.quotaPolicyType,
+            timeUnit: item.timeUnit,
+            unitTime: item.unitTime,
+            requestCount: item.requestCount,
+            dataAmount: null,
+            dataUnit: item.dataUnit,
+            EventCount: null
+        }));
+    } catch (error) {
+        console.error("Error occurred while retrieving org level subscription policies from CP", error);
+        util.handleError(res, error);
+    }
+    
+}
+
+// ***** Add Subscription Policy (By Name) to DB from a Policy List *****
+
+const addSubscriptionPolicyFromListByNameToDB = async (subscriptionPolicies, policyName) => {
+    let createdPolicy;
+    await sequelize.transaction(async (t) => {
+        for (const policy of subscriptionPolicies) {
+            if (policy.policyName === policyName) {
+                const created = await apiDao.createSubscriptionPolicy(orgId, policy, t);
+                if (!created) {
+                    throw new CustomError(
+                        500,
+                        constants.ERROR_CODE[500],
+                        `Failed to create policy: ${policy.policyName || "unknown"}`
+                    );
+                }
+                createdPolicy = new subscriptionPolicyDTO (created);
+                break;
+            }
+        }
+    });
+    return createdPolicy;
+};
+
+// ***** getSubscriptionPolicyByName Interceptor *****
+
+const getSubscriptionPolicyByName = async (req, orgId, policyName) => {
+    let subscriptionPolicy = await apiDao.getSubscriptionPolicyByName(orgId, policyName);
+    if (!subscriptionPolicy) {
+        // Since sub-policy cannot be found, check CP for the sub-policy
+        const cPSubPolicies = await getCPSubPolicies(req);
+        if (!cPSubPolicies) {
+            // Sub-policies not available in CP for the org
+            throw new Sequelize.EmptyResultError("Subscription policy not found");
+        }
+        const response = await addSubscriptionPolicyFromListByNameToDB(cPSubPolicies, policyName);
+        if (!response) {
+            // Matching sub-policy (name) was not found from CP to add
+            throw new Sequelize.EmptyResultError("Subscription policy not found");
+        }
+        // Again get sub-policy since matching Sub-policy was added from CP
+        subscriptionPolicy = await apiDao.getSubscriptionPolicyByName(orgId, policyName); 
+    } 
+    return subscriptionPolicy;
 }
 
 // ***** Save Application *****
