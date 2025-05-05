@@ -81,7 +81,7 @@
     "/*/configure",
     "**/applications",
     "**/applications/**",
-    "**/api/**",
+
     "**/myapis",
     "**/myapis/**",
     "**/myapis?**"
@@ -92,7 +92,6 @@
     "/*/configure",
     "/portal/*/edit",
     "/portal",
-    "**/api/**",
     "**/myapis",
     "**/myapis/**",
     "**/myapis?**"

@@ -403,7 +403,8 @@ app.use((err, req, res, next) => {
 
     console.log(err) // Log error for debugging
     const templateContent = {
-        baseUrl: '/' + req.params.orgName + '/' + constants.ROUTE.VIEWS_PATH + "default"
+        baseUrl: '/' + req.params.orgName + '/' + constants.ROUTE.VIEWS_PATH + "default",
+        errorMessage: "Oops! Something went wrong"
     }
     if (err.status === 401) {
         req.session.destroy((err) => {
@@ -411,7 +412,7 @@ app.use((err, req, res, next) => {
                 return res.status(500).send("Logout failed");
             }
         });
-        html = util.renderTemplate('../pages/authentication-error/page.hbs', 'src/pages/error-layout/main.hbs', templateContent, true);
+        html = util.renderTemplate('../pages/error-page/page.hbs', 'src/pages/error-layout/main.hbs', templateContent, true);
     } else {
         html = util.renderTemplate('../pages/error-page/page.hbs', 'src/pages/error-layout/main.hbs', templateContent, true);
     }

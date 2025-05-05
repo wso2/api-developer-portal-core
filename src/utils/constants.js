@@ -237,7 +237,13 @@ module.exports = {
         KEY_MAPPING_CREATE_ERROR: "Error while creating key mapping",
         KEY_MAPPING_RETRIEVE_ERROR: "Error while retrieving key mapping",
         KEY_MAPPING_DELETE_ERROR: "Error while deleting key mapping",
-        ERR_SUB_EXIST: "ERR_SUB_EXIST"
+        ERR_SUB_EXIST: "ERR_SUB_EXIST",
+        COMMON_ERR: "Oops! Something went wrong",
+        UNAUTHORIZED_ORG: "You are not authorized to access this organization",
+        UNAUTHORIZED_API: "You are not authorized to access this API"
+    },
+    COMMON_ERROR_MESSAGE: {
+        errorMessage: "Oops! Something went wrong",
     },
     ERROR_CODE: {
         401: "Unauthenticated",

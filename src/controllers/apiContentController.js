@@ -116,7 +116,8 @@ const loadAPIs = async (req, res) => {
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
         } catch (error) {
             console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs',
+            constants.COMMON_ERROR_MESSAGE , true);
         }
     }
     res.send(html);
@@ -167,8 +168,11 @@ const loadAPIContent = async (req, res) => {
             const version = metaData? metaData.apiInfo.apiVersion : "";
             //check whether user has access to the API
             const allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:${apiName}+version:${version}`, {}, {});
+            let templateContent = {
+                errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API
+            }
             if (allowedAPIList.count === 0) {
-                html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
+                html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
                 res.send(html);
             }
             let subscriptionPlans = await util.appendSubscriptionPlanDetails(orgID, metaData.subscriptionPolicies);
@@ -216,8 +220,7 @@ const loadAPIContent = async (req, res) => {
                     );
                 }
             }
-
-            const templateContent = {
+            templateContent = {
                 isAuthenticated: req.isAuthenticated(),
                 applications: appList,
                 provider: metaData.provider,
@@ -231,12 +234,13 @@ const loadAPIContent = async (req, res) => {
                 orgID: orgID
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
-            res.send(html);
         } catch (error) {
             console.error(`Failed to load api content:`, error);
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
+            constants.COMMON_ERROR_MESSAGE, true);
             res.send(html);
         }
+        res.send(html);
     }
 }
 
@@ -305,7 +309,9 @@ const loadTryOutPage = async (req, res) => {
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
             html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         } catch (error) {
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
+            console.error(`Failed to load tryout page:`, error);
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
+            constants.COMMON_ERROR_MESSAGE, true);
         }
     }
     res.send(html);
@@ -337,7 +343,8 @@ const loadDocsPage = async (req, res) => {
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
         } catch (error) {
             console.error(`Failed to load api docs:`, error);
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
+            constants.COMMON_ERROR_MESSAGE, true);
         }
     }
     res.send(html);
@@ -347,7 +354,7 @@ const loadDocument = async (req, res) => {
 
     const { orgName, apiHandle, viewName, docType, docName } = req.params;
     const hbs = exphbs.create({});
-    const templateContent = {
+    let templateContent = {
         "isAPIDefinition": false
     };
     //load API definition
@@ -363,7 +370,10 @@ const loadDocument = async (req, res) => {
         //check whether user has access to the API
         const allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:${apiName}+version:${version}`, {}, {});
         if (allowedAPIList.count === 0) {
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
+            templateContent = {
+                errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API
+            }
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
             res.send(html);
         }
         let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
@@ -396,7 +406,8 @@ const loadDocument = async (req, res) => {
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
         } catch (error) {
             console.error(`Failed to load api content :`, error);
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
+            constants.COMMON_ERROR_MESSAGE, true);
         }
     }
     res.send(html);
