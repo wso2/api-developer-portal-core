@@ -26,7 +26,6 @@ const { Strategy: CustomStrategy } = require('passport-custom');
 const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 const { ApplicationDTO } = require('../dto/application');
-const subscriptionPolicyDTO = require("../dto/subscriptionPolicy");
 const { Sequelize } = require("sequelize");
 const adminService = require('../services/adminService');
 const apiDao = require('../dao/apiMetadata');
