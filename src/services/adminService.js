@@ -946,6 +946,7 @@ const createAppKeyMapping = async (req, res) => {
         //delete control plane application
         if (cpAppID) {
             await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${cpAppID}`, {}, {});
+            await adminDao.deleteAppMappings(orgID, cpAppID);
         }
         return util.handleError(res, error);
     }
