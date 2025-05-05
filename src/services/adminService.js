@@ -670,10 +670,12 @@ const createSubscription = async (req, res) => {
     try {
         const orgID = req.params.orgId;
         let isShared;
+        let sharedApp = [];
+        let nonSharedApp = [];
         sequelize.transaction(async (t) => {
             try {
-                const sharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
-                const nonSharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, false);
+                sharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
+                nonSharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, false);
 
                 if (sharedApp.length > 0) {
                     isShared = true;
@@ -696,16 +698,27 @@ const createSubscription = async (req, res) => {
                 return res.status(200).json({ message: 'Subscribed successfully' });
 
             } catch (error) {
-                if (error.statusCode && error.statusCode === 409) {
-                    const response = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?apiId=${req.body.apiReferenceID}&applicationId=${app[0].dataValues.CP_APP_REF}`, {});
-
-                    /** Handle both scenario where a reference application in cp is created but no subscriptions avaiable 
-                     * (update existing row) & a reference application in cp is created & a subscriptions for a different 
-                     * API already exisits (create new row) **/
-                    await handleSubscribe(orgID, req.applicationID, app.API_REF_ID, app.SUBSCRIPTION_REF_ID, response, isShared, t);
-                    await adminDao.createSubscription(orgID, req.body, t);
-                    return res.status(200).json({ message: 'Subscribed successfully' });
+                try {
+                    if (error.statusCode && error.statusCode === 409) {
+                        console.log("Subscription  in cp already exists, hence creating/updating the subscription in db");
+                        const appRef = sharedApp.length > 0 ? sharedApp[0] : nonSharedApp[0];
+                        const response = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?applicationId=${appRef.dataValues.CP_APP_REF}`, {}, {});
+                        /** Handle both scenario where a reference application in cp is created but no subscriptions avaiable 
+                         * (update existing row) & a reference application in cp is created & a subscriptions for a different 
+                         * API already exisits (create new row) **/
+                        for (const subscription of response.list) {
+                            if (subscription.apiId === req.body.apiReferenceID) {
+                                await handleSubscribe(orgID, req.body.applicationID, subscription.apiId, subscription.subscriptionId, subscription, sharedApp.length > 0 ? true:false, t);
+                                await adminDao.createSubscription(orgID, req.body, t);
+                                return res.status(200).json({ message: 'Subscribed successfully' });
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error occurred while retrieving subscribing to API", error);
+                    return util.handleError(res, error);
                 }
+
                 console.error("Error occurred while subscribing to API", error);
                 return util.handleError(res, error);
             }
@@ -1104,10 +1117,16 @@ const unsubscribeAPI = async (req, res) => {
                 await adminDao.deleteSubscription(orgID, subscriptionID, t);
                 return res.status(204).send();
             } catch (error) {
-                if (error.statusCode && error.statusCode === 404) {
-                    await handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiReferenceID, t);
-                    await adminDao.deleteSubscription(orgID, subscriptionID, t);
-                    return res.status(204).send();
+                try {
+                    if (error.statusCode && error.statusCode === 404) {
+                        console.log("Subscription not found in control plane, deleting the subscription from database");
+                        await handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiReferenceID, t);
+                        await adminDao.deleteSubscription(orgID, subscriptionID, t);
+                        return res.status(204).send();
+                    }
+                } catch (error) {
+                    console.error("Error occurred while deleting subscription", error);
+                    return util.handleError(res, error);
                 }
                 console.error("Error occurred while unsubscribing from API", error);
                 return util.handleError(res, error);
