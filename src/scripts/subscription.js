@@ -267,6 +267,87 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
     }
 }
 
+async function updateSubscription(orgID, applicationID, apiId, apiReferenceID, policyId, policyName, oldPolicyName, subID) {
+
+    // Find the related card and button elements
+    const card = getSubscriptionCard(apiId, policyId);
+    const subscribeButton = card ? card.querySelector(".common-btn-primary") : null;
+    const messageOverlay = card ? card.querySelector(".message-overlay") : null;
+
+    try {
+        // Get application ID from hidden field if not provided
+        if (!applicationID && card) {
+            const hiddenField = card.querySelector('input[type="hidden"]');
+            if (hiddenField && hiddenField.value) {
+                applicationID = hiddenField.value;
+            }
+        }
+
+        // Make the API request
+        const response = await fetch(`/devportal/organizations/${orgID}/subscriptions`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ applicationID, apiId, apiReferenceID, policyId, policyName }),
+        });
+
+        const responseData = await response.json();
+
+        // Always reset button state and close modal
+        const updatedButton = document.getElementById('subscribe-btn-' + apiId + "-" + policyName);
+        if (updatedButton) {
+            resetSubscribeButtonState(updatedButton);
+        }
+        // closeModal('planModal-' + apiId);
+        resetSubscribeButtonState(subscribeButton);
+
+        if (response.ok) {
+            // Show success notification
+            const updatedPlanCard = document.getElementById('api-card-' + apiId + "-" + policyName);
+            updatedPlanCard.style.borderColor = 'var(--primary-main-color)';
+            console.log('updatedPlanCard', updatedPlanCard);
+
+            updatedButton.setAttribute('disabled', 'disabled');
+            updatedButton.classList.add('disabled');
+            updatedButton.style.setProperty('pointer-events', 'none', 'important');
+            updatedButton.textContent = 'Update';
+
+            const apiCards = document.querySelectorAll(`[id^="api-card-${apiId}-"]`);
+            apiCards.forEach(card => {
+                if (card.id !== `api-card-${apiId}-${policyName}`) {
+                    card.style.borderColor = '';
+                    const cardButton = card.querySelector('a[type="button"]');
+                    cardButton.style.pointerEvents = 'auto';
+                    cardButton.removeAttribute('disabled');
+                    cardButton.classList.remove('disabled');
+                }
+            });
+            document.getElementById('policy_' + subID).textContent = policyName;
+            showSubscriptionMessage(messageOverlay, 'Successfully updated API subscription', 'success');
+        } else {
+            // Handle API error
+            console.error('Failed to create subscription:', responseData);
+            const errorMessage = `Failed to subscribe: ${responseData.description || 'Unknown error'}`;
+            showSubscriptionMessage(messageOverlay, errorMessage, 'error');
+        }
+    } catch (error) {
+        // Handle exceptions
+        console.error('Error:', error);
+
+        // Always reset button state and close modal
+        const planButton = document.getElementById('subscribe-btn-' + policyId);
+        if (planButton) {
+            resetSubscribeButtonState(planButton);
+        }
+        closeModal('planModal-' + apiId);
+        resetSubscribeButtonState(subscribeButton);
+
+        const errorMessage = `Error while updating subscription: ${error.message}`;
+        showSubscriptionMessage(messageOverlay, errorMessage, 'error');
+    }
+}
+
 // Helper functions for the subscribe function
 function getSubscriptionCard(apiId, policyId) {
     return document.getElementById('apiCard-' + apiId) ||
@@ -305,12 +386,7 @@ function addAPISubscription(selectElement) {
 
 }
 
-async function removeSubscription() {
-    const modal = document.getElementById('deleteConfirmation');
-    const orgID = modal.dataset.param1;
-    const appID = modal.dataset.param2;
-    const apiRefID = modal.dataset.param3;
-    const subID = modal.dataset.param4;
+async function removeSubscription(orgID, appID, apiRefID, subID) {
 
     try {
         const response = await fetch(`/devportal/organizations/${orgID}/subscriptions?appID=${appID}&apiReferenceID=${apiRefID}&subscriptionID=${subID}`, {

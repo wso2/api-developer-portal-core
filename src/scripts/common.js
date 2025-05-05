@@ -55,8 +55,13 @@ document.addEventListener("DOMContentLoaded", function () {
         if (button) {
             // Store original text
             button.dataset.originalText = button.innerHTML;
-            button.innerHTML = 'Subscribing...';
             button.disabled = true;
+
+            if (button.textContent === 'Subscribe') {
+                button.textContent = 'Subscribing...';
+            } else if (button.textContent === 'Update') {
+                button.textContent = 'Updating...';
+            }
         }
     };
 

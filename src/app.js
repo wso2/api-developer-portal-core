@@ -110,6 +110,11 @@ Handlebars.registerHelper("firstTwoLetters", function (text) {
     return text ? text.substring(0, 2).toUpperCase() : "";
 });
 
+Handlebars.registerHelper('getSubIDs', function (subAPIs) {
+    const subIDs = subAPIs.map(api => api.subID);
+    return JSON.stringify(subIDs);
+});
+
 Handlebars.registerHelper('beforeSeparator', function (value, separator) {
     if (typeof value === 'string' && typeof separator === 'string') {
         return value.split(separator)[0];

@@ -3,7 +3,8 @@
         <div class="d-flex align-items-center justify-content-between mb-3">
             <div class="container-header">Subscribed APIs</div>
             <div class='action-buttons mt-0'>
-                <a class="common-btn-primary" type="button" href="{{baseUrl}}/apis?appID={{applicationMetadata.id}}&appName={{applicationMetadata.name}}">
+                <a class="common-btn-primary" type="button"
+                    href="{{baseUrl}}/apis?appID={{applicationMetadata.id}}&appName={{applicationMetadata.name}}">
                     <i class="fas fa-external-link-alt me-2"></i> Subscribe to more APIs
                 </a>
             </div>
@@ -17,45 +18,76 @@
                             <th class="app-th">API</th>
                             <th class="app-th">Version</th>
                             <th class="app-th">Subscription Plan</th>
-                            {{!-- {{#if apiKey}}
-                            <th class="app-th">API Key</th>
-                            {{/if}} --}}
-                            <th class="app-th action-column" style="padding-right: 2.25rem; text-align: right;">Action</th>
+                            <th class="app-th">
+                                {{#if isApiKey}}
+                                API Key
+                                {{/if}}
+                            </th>
+                            <th class="app-th action-column" style="padding-right: 2.25rem; text-align: right;">Action
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         {{#each subAPIs}}
+                        {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
                         <tr class="data-row">
                             <td class="app-td">
                                 <span onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
                                     class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
                             </td>
                             <td class="app-td">{{version}}</td>
-                            <td class="app-td">{{policyName}}</td>
-                            {{!-- {{#if (contains security 'api_key')}}
+                            <td id="policy_{{subID}}" class="app-td">{{policyName}}</td>
                             <td class="app-td">
+                                {{#if (contains security 'api_key')}}
                                 <div class="api-key-actions">
-                                    <button class="common-btn-outlined btn-sm me-1" onclick="
-                                        document.getElementById('revokeKeyBtn-{{subID}}').style.display='inline-flex';
-                                    ">
-                                        <i class="bi bi-key me-1"></i> Generate
+                                    <button class="common-btn-outlined btn-sm me-1" id="regenerateKeyBtn-{{subID}}"
+                                        data-api-key-id="'{{apiKeys.[0].id}}'"
+                                        onclick="openWarningModal('regenerate', this.dataset.apiKeyId, '{{subID}}')"
+                                        style="{{#if apiKeys}}display: inline-flex;{{else}}display: none;{{/if}}">
+                                        <span class="button-normal-state">
+                                            <i class="bi bi-key me-1"></i> Regenerate
+                                        </span>
+                                        <span class="button-loading-state" style="display: none;">
+                                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                            Regenerate...
+                                        </span>
                                     </button>
-                                    <button class="common-btn-outlined btn-sm api-key-revoke" id="revokeKeyBtn-{{subID}}" style="display: none;">
-                                        <i class="bi bi-x-circle me-1"></i> Revoke
+                                    <button class="common-btn-outlined btn-sm api-key-revoke"
+                                        data-api-key-id="'{{apiKeys.[0].id}}'"
+                                        onclick="openWarningModal('revoke', this.dataset.apiKeyId, '{{subID}}', '{{../applicationMetadata.id}}', '{{refID}}')"
+                                        id="revokeKeyBtn-{{subID}}"
+                                        style="{{#if apiKeys}}display: inline-flex;{{else}}display: none;{{/if}}">
+                                        <span class="button-normal-state">
+                                            <i class="bi bi-key me-1"></i> Revoke
+                                        </span>
+                                        <span class="button-loading-state" style="display: none;">
+                                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                            Revoking...
+                                        </span>
+                                    </button>
+                                    <button class="common-btn-outlined btn-sm me-1" id="generateKeyBtn-{{subID}}"
+                                        style="{{#if apiKeys}}display: none;{{else}}display: inline-flex;{{/if}}"
+                                        data-app-ref-id=""
+                                        onclick="generateAPIKey('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIs}}')">
+                                        <span class="button-normal-state">
+                                            <i class="bi bi-key me-1"></i> Generate Key
+                                        </span>
+                                        <span class="button-loading-state" style="display: none;">
+                                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                            Generating...
+                                        </span>
                                     </button>
                                 </div>
+                                {{/if}}
                             </td>
-                            {{/if}} --}}
                             <td class="app-td action-column">
                                 <div class="action-buttons-container">
-                                    {{> delete-confirmation modalTitle="Do you really want to remove the subscription?"
-                                    modalMessage="This will remove the subscription entry stored in the devportal."
-                                    modalFunction="removeSubscription()" }}
-                                    {{!-- <button type="button" class="btn application-btn-icon" onclick="#">
+                                    {{> warning }}
+                                    <button type="button" class="btn application-btn-icon" onclick="loadModal('planModal-{{apiID}}')">
                                         <i class="bi bi-pencil"></i>
-                                    </button> --}}
-                                    <button type="button" class="btn application-btn-icon delete-button" 
-                                        onclick="openDeleteModal('{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')">
+                                    </button>
+                                    <button type="button" class="btn application-btn-icon delete-button"
+                                        onclick="openWarningModal('Unsubscribe', '{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>

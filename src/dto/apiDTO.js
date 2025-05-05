@@ -80,6 +80,9 @@ class APIInfo {
 class APISubscriptionPolicy {
     constructor(apiSubscriptionPolicy) {
         this.policyName = apiSubscriptionPolicy.POLICY_NAME;
+        this.displayName = apiSubscriptionPolicy.DISPLAY_NAME;
+        this.requestCount = apiSubscriptionPolicy.REQUEST_COUNT;
+        this.policyID = apiSubscriptionPolicy.POLICY_ID;
     }
 }
 

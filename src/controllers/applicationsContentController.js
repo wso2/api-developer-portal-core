@@ -30,6 +30,8 @@ const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
 const adminService = require('../services/adminService');
 const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
+const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
+
 
 const orgIDValue = async (orgName) => {
     const organization = await adminDao.getOrganization(orgName);
@@ -171,6 +173,16 @@ const loadApplication = async (req, res) => {
                 .filter(api => !subscribedAPIIds.has(api.API_ID) && api.DP_SUBSCRIPTION_POLICies.length > 0)
                 .map(api => new APIDTO(api));
 
+            const userID = req[constants.USER_ID]
+            const applicationList = await adminService.getApplicationKeyMap(orgID, applicationId, userID);
+            metaData = applicationList;
+            let applicationReference = "";
+            let applicationKeyList;
+            if (applicationList.appMap) {
+                applicationReference = applicationList.appMap[0].appRefID;
+                applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
+            }
+
             let subList = [];
             if (subAPIs.length > 0) {
 
@@ -188,20 +200,29 @@ const loadApplication = async (req, res) => {
                     apiDTO.refID = api.apiReferenceID;
                     apiDTO.apiHandle = api.apiHandle;
                     const apiDetails = await getAPIDetails(req, api.apiReferenceID);
+                    const projectIdEntry = apiDetails?.additionalProperties?.find(item => item.name === 'projectId');
+                    const projectId = projectIdEntry?.value;
                     if (apiDetails) {
                         apiDTO.security = apiDetails.securityScheme;
+                    }
+                    if (projectId) {
+                        apiDTO.projectId = projectId;
                     }
                     const subPolicy = await apiMetadata.getSubscriptionPolicy(apiDTO.policyID, orgID);
                     if (subPolicy) {
                         apiDTO.policyName = subPolicy.dataValues.POLICY_NAME;
                     }
-                    return apiDTO;
+
+                    const apiKeys = await getAPIKeys(req, api.apiReferenceID, applicationReference);
+                    apiDTO.apiKeys = apiKeys;
+                    apiDTO.subscriptionPolicyDetails = api.subscriptionPolicies;
+                    return apiDTO
                 }));
             }
-            let apiKey = false
+            let isApiKey = false
             let apiKeyList = subList.filter(api => api.security !== null && api.security.includes('api_key'));
             if (apiKeyList.length > 0) {
-                apiKey = true;
+                isApiKey = true;
             }
             util.appendAPIImageURL(subList, req, orgID);
 
@@ -220,7 +241,7 @@ const loadApplication = async (req, res) => {
                 (!kMmetaData.some(km => km.name.includes("_internal_key_manager_") || km.name.includes("Resident Key Manager")) && keyManager.name.includes("_appdev_sts_key_manager_") && keyManager.name.endsWith("_prod"))
             );
 
-            for(var keyManager of kMmetaData) {
+            for (var keyManager of kMmetaData) {
                 if (keyManager.name === 'Resident Key Manager') {
                     keyManager.tokenEndpoint = 'https://sts.preview-dv.choreo.dev/oauth2/token';
                     keyManager.authorizeEndpoint = 'https://sts.preview-dv.choreo.dev/oauth2/authorize';
@@ -231,15 +252,6 @@ const loadApplication = async (req, res) => {
                 keyManager.applicationConfiguration = await mapDefaultValues(keyManager.applicationConfiguration);
             }
 
-            const userID = req[constants.USER_ID]
-            const applicationList = await adminService.getApplicationKeyMap(orgID, applicationId, userID);
-            metaData = applicationList;
-            let applicationReference = "";
-            let applicationKeyList;
-            if (applicationList.appMap) {
-                applicationReference = applicationList.appMap[0].appRefID;
-                applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
-            }
             let productionKeys = [];
             let sandboxKeys = [];
 
@@ -280,6 +292,14 @@ const loadApplication = async (req, res) => {
                     }
                 });
             });
+
+            let cpApplication = await getAPIMApplication(req, applicationReference);
+            let subscriptionScopes = [];
+            if (Array.isArray(cpApplication?.subscriptionScopes)) {
+                for (const scope of cpApplication?.subscriptionScopes) {
+                    subscriptionScopes.push(scope.key);
+                }
+            }
             //display only one key type (SANBOX).
             //TODO: handle multiple key types
             templateContent = {
@@ -293,7 +313,9 @@ const loadApplication = async (req, res) => {
                 subAPIs: subList,
                 nonSubAPIs: nonSubscribedAPIs,
                 productionKeys: productionKeys,
-                isProduction: true
+                isProduction: true,
+                isApiKey: isApiKey,
+                subscriptionScopes: subscriptionScopes,
             }
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
@@ -411,6 +433,17 @@ async function getAPIMKeyManagers(req) {
 async function getAPIDetails(req, apiId) {
     const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiId}`, null, null);
     return responseData;
+}
+
+async function getAPIKeys(req, apiId, applicationId) {
+    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + `/api-keys?apiId=${apiId}&keyType=PRODUCTION`, null, null);
+    let apiKeys;
+    for (const key of responseData) {
+        if (key.application.id === applicationId) {
+            apiKeys = key.keys;
+        }
+    }
+    return apiKeys;
 }
 
 async function mapGrants(grantTypes) {

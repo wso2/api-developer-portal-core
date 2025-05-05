@@ -65,7 +65,7 @@ const getOrganization = async (param) => {
                     { ORG_NAME: param },
                     { ORG_HANDLE: param },
                     { ORG_ID: param },
-                    { ORGANIZATION_IDENTIFIER: param}
+                    { ORGANIZATION_IDENTIFIER: param }
                 ]
             }
         });
@@ -624,7 +624,7 @@ const updateApplication = async (orgID, appID, userID, appData) => {
 const getApplication = async (orgID, appID, userID) => {
 
     try {
-        const application =  await Application.findOne(
+        const application = await Application.findOne(
             {
                 where: {
                     ORG_ID: orgID,
@@ -645,7 +645,7 @@ const getApplicationID = async (orgID, userID, appName) => {
 
     try {
         return await Application.findOne(
-            {   
+            {
                 attributes: ['APP_ID'],
                 where: {
                     ORG_ID: orgID,
@@ -709,6 +709,26 @@ const createSubscription = async (orgID, subscription, t) => {
             API_ID: subscription.apiId,
             POLICY_ID: subscription.policyId,
             ORG_ID: orgID,
+        }, { transaction: t });
+        return subMapping;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
+const updateSubscription = async (orgID, subscription, t) => {
+    try {
+        const subMapping = await SubscriptionMapping.update({
+            POLICY_ID: subscription.policyId
+        }, {
+            where: {
+                ORG_ID: orgID,
+                APP_ID: subscription.applicationID,
+                API_ID: subscription.apiId
+            }
         }, { transaction: t });
         return subMapping;
     } catch (error) {
@@ -808,8 +828,8 @@ const deleteAppKeyMapping = async (orgID, appID, apiID, t) => {
                 APP_ID: appID,
                 API_REF_ID: apiID
             }, transaction: t
-        }, { transaction: t });
-        if (deletedRowsCount < 1) {
+        });
+        if (deletedRowsCount < 1 && apiID !== null) {
             throw Object.assign(new Sequelize.EmptyResultError('Application Key Mapping not found'));
         } else {
             return deletedRowsCount;
@@ -844,7 +864,7 @@ const getAPISubscriptionReference = async (orgID, appID, apiID, t) => {
 }
 
 const createAppKeyMapping = async (appKeyMap, t) => {
-    
+
     try {
         const appKeyMapping = await ApplicationKeyMapping.create(appKeyMap, { transaction: t });
         return appKeyMapping;
@@ -930,7 +950,7 @@ const getApplicationKeyMapping = async (orgID, appID, isSharedToken) => {
     }
 }
 
-const  getApplicationAPIMapping = async (orgID, appID, apiID, appRefID ,isSharedToken) => {
+const getApplicationAPIMapping = async (orgID, appID, apiID, appRefID, isSharedToken) => {
 
     try {
         return await ApplicationKeyMapping.findAll(
@@ -1028,6 +1048,7 @@ module.exports = {
     getApplications,
     deleteApplication,
     createSubscription,
+    updateSubscription,
     getSubscription,
     getSubscriptions,
     deleteSubscription,

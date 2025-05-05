@@ -352,6 +352,77 @@ async function readDocFiles(directory, baseDir = '') {
     return fileDetails;
 }
 
+
+const invokeGraphQLRequest = async (req, url, query, variables, headers) => {
+    console.log(`Invoking GraphQL API: ${url}`);
+
+    headers = {
+        ...headers,
+        'Content-Type': 'application/json',
+        Authorization: req.user?.exchangeToken
+            ? `Bearer ${req.user.exchangeToken}`
+            : req.user
+            ? `Bearer ${req.user.accessToken}`
+            : req.headers.authorization
+    };
+
+    let httpsAgent;
+
+    if (config.controlPlane.disableCertValidation) {
+        httpsAgent = new https.Agent({
+            rejectUnauthorized: false,
+        });
+    } else {
+        const certPath = path.join(process.cwd(), config.controlPlane.pathToCertificate);
+        httpsAgent = new https.Agent({
+            ca: fs.readFileSync(certPath),
+            rejectUnauthorized: true,
+        });
+    }
+
+    let graphqlPayload = {
+        query,
+        variables
+    };
+
+    try {
+        if (config.advanced.tokenExchanger.enabled) {
+            const decodedToken = jwt.decode(req.user.exchangeToken);
+            const orgId = decodedToken.organization.uuid;
+            url = url.includes("?") ? `${url}&organizationId=${orgId}` : `${url}?organizationId=${orgId}`;
+        }
+
+        const response = await axios.post(url, graphqlPayload, {
+            headers,
+            httpsAgent
+        });
+
+        return response.data;
+    } catch (error) {
+        if (error.response?.status === 401 && req.user?.exchangeToken) {
+            try {
+                const newExchangedToken = await tokenExchanger(req.user.accessToken, req.user.returnTo.split("/")[1]);
+                req.user.exchangeToken = newExchangedToken;
+                headers.Authorization = `Bearer ${newExchangedToken}`;
+                
+                const retryResponse = await axios.post(url, graphqlPayload, {
+                    headers,
+                    httpsAgent
+                });
+
+                return retryResponse.data;
+            } catch (retryError) {
+                let retryMessage = retryError.response?.data?.description || retryError.message;
+                throw new CustomError(retryError.response?.status || 500, "Request retry failed", retryMessage);
+            }
+        } else {
+            console.error(`GraphQL Request Error:`, error);
+            let message = error.response?.data?.description || error.message;
+            throw new CustomError(error.response?.status || 500, 'GraphQL request failed', message);
+        }
+    }
+};
+
 const invokeApiRequest = async (req, method, url, headers, body) => {
  
     console.log(`Invoking API: ${url}`);
@@ -769,6 +840,7 @@ module.exports = {
     getAPIDocLinks,
     isTextFile,
     invokeApiRequest,
+    invokeGraphQLRequest,
     validateIDP,
     validateOrganization,
     getErrors,
