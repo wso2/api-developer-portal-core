@@ -397,8 +397,12 @@ async function removeSubscription(orgID, appID, apiRefID, subID) {
         });
         if (response.ok) {
             await showAlert(`Unsubscribed successfully!`, 'success');
-            const url = new URL(window.location.origin + window.location.pathname);
-            window.location.href = url.toString();
+            document.getElementById(`data-row-${subID}`)?.remove();
+            const rowCount = document.getElementById(`app-table-${appID}`).rows.length;
+            if (rowCount === 1) {
+                document.getElementById(`app-table-${appID}`).remove();
+                document.getElementById('no-subscription').style.display = 'block';
+            }
         } else {
             const responseData = await response.json();
             console.error('Failed to unsubscribe:', responseData);

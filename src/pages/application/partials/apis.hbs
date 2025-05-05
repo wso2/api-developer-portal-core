@@ -12,7 +12,7 @@
         <div class="row row-gap-4">
             {{#if subAPIs}}
             <div class="app-table-container">
-                <table class="app-table">
+                <table class="app-table" id="app-table-{{applicationMetadata.id}}">
                     <thead>
                         <tr>
                             <th class="app-th">API</th>
@@ -30,7 +30,7 @@
                     <tbody>
                         {{#each subAPIs}}
                         {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
-                        <tr class="data-row">
+                        <tr class="data-row" id="data-row-{{subID}}">
                             <td class="app-td">
                                 <span onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
                                     class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
@@ -97,8 +97,8 @@
                     </tbody>
                 </table>
             </div>
-            {{else}}
-            <div class="ps-3">
+            {{/if}}
+            <div class="ps-3" id="no-subscription" style="{{#if subAPIs.length}}display:none{{/if}}">
                 <div class="info-box">
                     <div class="info-content">
                         <div class="info-title">
@@ -106,7 +106,6 @@
                         </div>
                     </div>
                 </div>
-                {{/if}}
             </div>
         </div>
 </section>
