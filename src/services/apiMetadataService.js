@@ -69,7 +69,7 @@ const createAPIMetadata = async (req, res) => {
                     );
                 } else {
                     for (const policy of apiSubscriptionPolicies) {
-                        const subscriptionPolicy = await apiDao.getSubscriptionPolicyByName(orgId, policy.policyName);
+                        const subscriptionPolicy = await util.getSubPolicyByName(req, orgId, policy.policyName);
                         if (!subscriptionPolicy) {
                             throw new Sequelize.EmptyResultError("Subscription policy not found");
                         } else {
@@ -290,7 +290,7 @@ const updateAPIMetadata = async (req, res) => {
                     );
                 } else {
                     for (const policy of apiSubscriptionPolicies) {
-                        const subscriptionPolicy = await apiDao.getSubscriptionPolicyByName(orgId, policy.policyName);
+                        const subscriptionPolicy = await util.getSubPolicyByName(req, orgId, policy.policyName);
                         if (!subscriptionPolicy) {
                             throw new Sequelize.EmptyResultError("Subscription policy not found");
                         } else {

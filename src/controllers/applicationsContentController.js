@@ -227,7 +227,7 @@ const loadApplication = async (req, res) => {
             util.appendAPIImageURL(subList, req, orgID);
 
             await Promise.all(nonSubscribedAPIs.map(async (api) => {
-                api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
+                api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(req, orgID, api.subscriptionPolicies);
             }));
             kMmetaData = await getAPIMKeyManagers(req);
             kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
