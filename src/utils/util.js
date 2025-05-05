@@ -34,7 +34,6 @@ const apiDao = require('../dao/apiMetadata');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const jwt = require('jsonwebtoken');
 const filePrefix = '/src/defaultContent/';
-const { getSubPolicyByName } = require('../services/devportalService');
 
 // Function to load and convert markdown file to HTML
 async function loadMarkdown(filename, dirName) {
