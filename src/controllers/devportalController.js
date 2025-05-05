@@ -30,59 +30,8 @@ const subscriptionPolicyDTO = require("../dto/subscriptionPolicy");
 const { Sequelize } = require("sequelize");
 const adminService = require('../services/adminService');
 const apiDao = require('../dao/apiMetadata');
-const devportalService = require('../services/devportalService');
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
-
-// ***** Get CP Subscription Policies for Organization *****
-
-const getCPSubPolicies = async (req) => {
-    const subPoliciesUrl = `${controlPlaneUrl}/throttling-policies/subscription?organizationId=${req.user[constants.ORG_IDENTIFIER]}`
-    const responseData = await invokeApiRequest(req, 'GET', subPoliciesUrl, null, null);
-    if (!responseData?.list || !Array.isArray(responseData.list)) {
-        throw new Error("Invalid subscription policies response format");
-    }
-    return responseData.list.map(item => ({
-        policyName: item.name,
-        displayName: item.displayName,
-        billingPlan: item.tierPlan,
-        description: item.description,
-        type: item.quotaPolicyType,
-        timeUnit: item.timeUnit,
-        unitTime: item.unitTime,
-        requestCount: item.requestCount,
-        dataAmount: null,
-        dataUnit: item.dataUnit,
-        EventCount: null
-    }));   
-}
-
-// ***** getSubscriptionPolicyByName Interceptor *****
-
-const getSubscriptionPolicyByName = async (req, res, orgId, policyName) => {
-    try {
-        let subscriptionPolicy = await apiDao.getSubscriptionPolicyByName(orgId, policyName);
-        if (!subscriptionPolicy) {
-            // Since sub-policy cannot be found, check CP for the sub-policy
-            const cPSubPolicies = await getCPSubPolicies(req);
-            if (!cPSubPolicies) {
-                // Sub-policies not available in CP for the org
-                return null;
-            }
-            const response = await devportalService.createSubscriptionPolicyFromListByName(cPSubPolicies, policyName);
-            if (!response) {
-                // Matching sub-policy (name) was not found from CP to add
-                return null;
-            }
-            // Again get sub-policy since matching Sub-policy was added from CP
-            subscriptionPolicy = await apiDao.getSubscriptionPolicyByName(orgId, policyName);       
-        } 
-        return subscriptionPolicy;
-    } catch (error) {
-        console.error("Error occurred while getting Subscription Policy by name", error);
-        util.handleError(res, error);
-    }
-}
 
 // ***** Save Application *****
 
@@ -378,6 +327,5 @@ module.exports = {
     cleanUp,
     login,
     revokeAPIKeys,
-    regenerateAPIKeys,
-    getSubscriptionPolicyByName
+    regenerateAPIKeys
 };
