@@ -828,7 +828,7 @@ const deleteAppKeyMapping = async (orgID, appID, apiID, t) => {
                 APP_ID: appID,
                 API_REF_ID: apiID
             }, transaction: t
-        }, { transaction: t });
+        });
         if (deletedRowsCount < 1 && apiID !== null) {
             throw Object.assign(new Sequelize.EmptyResultError('Application Key Mapping not found'));
         } else {

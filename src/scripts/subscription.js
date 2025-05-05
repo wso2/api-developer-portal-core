@@ -324,6 +324,7 @@ async function updateSubscription(orgID, applicationID, apiId, apiReferenceID, p
                     cardButton.classList.remove('disabled');
                 }
             });
+            document.getElementById('policy_' + subID).textContent = policyName;
             showSubscriptionMessage(messageOverlay, 'Successfully updated API subscription', 'success');
         } else {
             // Handle API error
