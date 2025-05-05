@@ -1088,6 +1088,7 @@ const unsubscribeAPI = async (req, res) => {
                     for (const dataValues of nonSharedToken) {
                         if (dataValues.API_REF_ID === apiReferenceID) {
                             await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${dataValues.SUBSCRIPTION_REF_ID}`, {}, {})
+                            await handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiReferenceID, subscriptionID, t);
                         }
                     }
                 }
@@ -1096,14 +1097,16 @@ const unsubscribeAPI = async (req, res) => {
                     for (const dataValues of sharedToken) {
                         if (dataValues.API_REF_ID === apiReferenceID) {
                             await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${dataValues.SUBSCRIPTION_REF_ID}`, {}, {})
+                            await handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiReferenceID, subscriptionID, t);
                         }
                     };
                 }
-                await handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiReferenceID, subscriptionID, t);
+                await adminDao.deleteSubscription(orgID, subscriptionID, t);
                 return res.status(204).send();
             } catch (error) {
                 if (error.statusCode && error.statusCode === 404) {
                     await handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiReferenceID, subscriptionID, t);
+                    await adminDao.deleteSubscription(orgID, subscriptionID, t);
                     return res.status(204).send();
                 }
                 console.error("Error occurred while unsubscribing from API", error);
@@ -1144,7 +1147,6 @@ async function handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiR
                     await adminDao.deleteAppKeyMapping(orgID, appID, apiRefID, t);
                 }
             }
-            await adminDao.deleteSubscription(orgID, subID, t);
         });
     } catch (error) {
         console.error("Transaction failed during unsubscribing", error);

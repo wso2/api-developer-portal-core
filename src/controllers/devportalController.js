@@ -130,7 +130,7 @@ const generateAPIKeys = async (req, res) => {
         const nonSharedKeyMapping = await adminDao.getApplicationAPIMapping(orgID, requestBody.devportalAppId, apiID, cpAppID, false);
         const sharedKeyMapping = await adminDao.getApplicationAPIMapping(orgID, requestBody.devportalAppId, apiID, cpAppID, true);
 
-        if (!(cpAppID || nonSharedKeyMapping.length > 0 || sharedKeyMapping.length > 0)) { 
+        if (!(nonSharedKeyMapping.length > 0 || sharedKeyMapping.length > 0)) { 
             const cpApp = await adminService.createCPApplication(req, requestBody.devportalAppId);
             cpAppID = cpApp.applicationId;
 
@@ -178,7 +178,7 @@ const generateAPIKeys = async (req, res) => {
         const environments = orgDetails?.data?.environments || [];
         const apiHandle = await apiDao.getAPIHandle(orgID, req.body.apiId);
 
-        requestBody.name = apiHandle + "-" + cpAppID.split("-")[0];
+        requestBody.name = apiHandle + "-" + cpAppID;
         requestBody.environmentTemplateId = environments.find(env => env.name === 'Production').templateId;
         requestBody.applicationId = cpAppID;
         delete requestBody.projectID;
