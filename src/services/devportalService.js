@@ -22,6 +22,10 @@ const util = require('../utils/util');
 const constants = require('../utils/constants');
 const { validationResult } = require('express-validator');
 const { retrieveContentType } = require('../utils/util');
+const sequelize = require("../db/sequelize");
+const apiDao = require("../dao/apiMetadata");
+const { CustomError } = require("../utils/errors/customErrors");
+const subscriptionPolicyDTO = require("../dto/subscriptionPolicy");
 
 const getOrganization = async (req, res) => {
 
@@ -93,8 +97,30 @@ const getOrgContent = async (req, res) => {
     }
 };
 
+const createSubscriptionPolicyFromListByName = async (subscriptionPolicies, policyName) => {
+    let createdPolicy;
+    await sequelize.transaction(async (t) => {
+        for (const policy of subscriptionPolicies) {
+            if (policy.policyName === policyName) {
+                const created = await apiDao.createSubscriptionPolicy(orgId, policy, t);
+                if (!created) {
+                    throw new CustomError(
+                        500,
+                        constants.ERROR_CODE[500],
+                        `Failed to create policy: ${policy.policyName || "unknown"}`
+                    );
+                }
+                createdPolicy = new subscriptionPolicyDTO(created);
+                break;
+            }
+        }
+    });
+    return createdPolicy;
+};
+
 module.exports = {
     getOrgContent,
     getOrganization,
-    getOrganizationDetails
+    getOrganizationDetails,
+    createSubscriptionPolicyFromListByName
 };
