@@ -303,10 +303,10 @@ async function updateSubscription(orgID, applicationID, apiId, apiReferenceID, p
         resetSubscribeButtonState(subscribeButton);
 
         if (response.ok) {
+
             // Show success notification
             const updatedPlanCard = document.getElementById('api-card-' + apiId + "-" + policyName);
             updatedPlanCard.style.borderColor = 'var(--primary-main-color)';
-            console.log('updatedPlanCard', updatedPlanCard);
 
             updatedButton.setAttribute('disabled', 'disabled');
             updatedButton.classList.add('disabled');

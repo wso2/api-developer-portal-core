@@ -842,6 +842,29 @@ const deleteAppKeyMapping = async (orgID, appID, apiID, t) => {
     }
 }
 
+const deleteAppMappings = async (orgID, appID, t) => {
+
+    try {
+        const deletedRowsCount = await ApplicationKeyMapping.destroy({
+            where: {
+                ORG_ID: orgID,
+                APP_ID: appID
+            }, transaction: t
+        }, { transaction: t });
+        if (deletedRowsCount < 1) {
+            console.log("No Application Key Mapping found");
+            return deletedRowsCount;
+        } else {
+            return deletedRowsCount;
+        }
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
 const getAPISubscriptionReference = async (orgID, appID, apiID, t) => {
 
     try {
@@ -1062,5 +1085,6 @@ module.exports = {
     getApplicationKeyMapping,
     createApplicationKeyMapping,
     updateApplicationKeyMapping,
-    getApplicationAPIMapping
+    getApplicationAPIMapping,
+    deleteAppMappings
 };
