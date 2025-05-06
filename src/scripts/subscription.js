@@ -304,7 +304,6 @@ async function updateSubscription(orgID, applicationID, apiId, apiReferenceID, p
 
         if (response.ok) {
 
-            document.getElementById(`policy_${subID}`).innerText = policyName;
             // Show success notification
             const updatedPlanCard = document.getElementById('api-card-' + apiId + "-" + policyName);
             updatedPlanCard.style.borderColor = 'var(--primary-main-color)';
