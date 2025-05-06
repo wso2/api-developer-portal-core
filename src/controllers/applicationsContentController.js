@@ -84,7 +84,8 @@ const loadApplications = async (req, res) => {
         }
     } catch (error) {
         console.error("Error occurred while loading Applications", error);
-        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
+        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
+        constants.COMMON_ERROR_MESSAGE, true);
     }
     res.send(html);
 }
@@ -126,7 +127,8 @@ const loadThrottlingPolicies = async (req, res) => {
         }
     } catch (error) {
         console.error("Error occurred", error);
-        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
+        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
+        constants.COMMON_ERROR_MESSAGE, true);
     }
     res.send(html);
 }
@@ -327,7 +329,8 @@ const loadApplication = async (req, res) => {
         }
     } catch (error) {
         console.error("Error occurred while loading application", error);
-        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
+        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
+        constants.COMMON_ERROR_MESSAGE, true);
     }
     res.send(html);
 }
@@ -402,7 +405,8 @@ const loadApplicationForEdit = async (req, res) => {
         }
     } catch (error) {
         console.error("Error occurred while loading application for edit", error);
-        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', '', true);
+        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
+        constants.COMMON_ERROR_MESSAGE, true);
 
     }
     res.send(html);
