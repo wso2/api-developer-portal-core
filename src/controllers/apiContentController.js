@@ -164,10 +164,16 @@ const loadAPIContent = async (req, res) => {
             const orgID = orgDetails.ORG_ID;
             const apiID = await apiDao.getAPIId(orgID, apiHandle);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
-            const apiName = metaData? metaData.apiInfo.apiName : "";
+            let apiName = metaData? metaData.apiHandle : "";
+            apiName = apiName.split('-v')[0];
             const version = metaData? metaData.apiInfo.apiVersion : "";
             //check whether user has access to the API
-            const allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:${apiName}+version:${version}`, {}, {});
+            let allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:${apiName}+version:${version}`, {}, {});
+            if (allowedAPIList.count === 0) {
+                apiName = metaData.apiInfo.apiName;
+                allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:${apiName}+version:${version}`, {}, {});
+                
+            }
             let templateContent = {
                 errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API
             }
@@ -357,25 +363,34 @@ const loadDocument = async (req, res) => {
     let templateContent = {
         "isAPIDefinition": false
     };
+    const orgDetails = await adminDao.getOrganization(orgName);
+    const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
+    req.cpOrgID = cpOrgID;
+    const definitionResponse = await loadAPIDefinition(orgName, viewName, apiHandle);
+    templateContent.apiType = definitionResponse.apiType;
+    let apiMetadata = definitionResponse.metaData;
+    let apiName = apiMetadata ? apiMetadata.apiHandle : "";
+    apiName = apiName.split('-v')[0];
+    const version = apiMetadata ? apiMetadata.apiInfo.apiVersion : "";
+    //check whether user has access to the API
+
+    let allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:${apiName}+version:${version}`, {}, {});
+    console.log("Allowed API List docs: ", allowedAPIList);
+    if (allowedAPIList.count == 0) {
+        apiName = apiMetadata.apiInfo.apiName;
+        allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:${apiName}+version:${version}`, {}, {});
+    }
+    if (allowedAPIList.count === 0) {
+        templateContent = {
+            errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API
+        }
+        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+        res.send(html);
+    }
     //load API definition
     if (req.originalUrl.includes(constants.FILE_NAME.API_SPECIFICATION_PATH)) {
-        const definitionResponse = await loadAPIDefinition(orgName, viewName, apiHandle);
-        templateContent.apiType = definitionResponse.apiType;
-        let apiMetadata = definitionResponse.metaData;
-        const orgDetails = await adminDao.getOrganization(orgName);
-        const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
-        req.cpOrgID = cpOrgID;
-        const apiName = apiMetadata? apiMetadata.apiInfo.apiName : "";
-        const version = apiMetadata? apiMetadata.apiInfo.apiVersion : "";
-        //check whether user has access to the API
-        const allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:${apiName}+version:${version}`, {}, {});
-        if (allowedAPIList.count === 0) {
-            templateContent = {
-                errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API
-            }
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
-            res.send(html);
-        }
+       
+      
         let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
         templateContent.swagger = JSON.stringify(modifiedSwagger);
         templateContent.isAPIDefinition = true;
