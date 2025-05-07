@@ -459,12 +459,12 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
                 orgId = req.cpOrgID;
                 url = url.includes("?") ? `${url}&organizationId=${orgId}` : `${url}?organizationId=${orgId}`;
             } else {
+                const decodedToken = jwt.decode(req.user.exchangeToken);
                 orgId = decodedToken?.organization.uuid;
                 url = url.includes("?") ? `${url}&organizationId=${orgId}` : `${url}?organizationId=${orgId}`;
             }
         
         }
-
         const response = await axios(url, options);
         return response.data;
     } catch (error) {
