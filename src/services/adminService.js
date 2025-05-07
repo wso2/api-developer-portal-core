@@ -672,7 +672,7 @@ const createSubscription = async (req, res) => {
         let isShared;
         let sharedApp = [];
         let nonSharedApp = [];
-        sequelize.transaction(async (t) => {
+        await sequelize.transaction(async (t) => {
             try {
                 sharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
                 nonSharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, false);
@@ -733,7 +733,7 @@ const updateSubscription = async (req, res) => {
 
     try {
         const orgID = req.params.orgId;
-        sequelize.transaction(async (t) => {
+        await sequelize.transaction(async (t) => {
             try {
                 const app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
                 if (app.length > 0) {
