@@ -164,8 +164,7 @@ const loadAPIContent = async (req, res) => {
             const orgID = orgDetails.ORG_ID;
             const apiID = await apiDao.getAPIId(orgID, apiHandle);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
-            let apiName = metaData? metaData.apiHandle : "";
-            apiName = apiName.split('-v')[0];
+            let apiName = metaData? metaData.apiHandle?.split('-v')[0] : "";
             const version = metaData? metaData.apiInfo.apiVersion : "";
             //check whether user has access to the API
             let allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:${apiName}+version:${version}`, {}, {});
@@ -369,13 +368,11 @@ const loadDocument = async (req, res) => {
     const definitionResponse = await loadAPIDefinition(orgName, viewName, apiHandle);
     templateContent.apiType = definitionResponse.apiType;
     let apiMetadata = definitionResponse.metaData;
-    let apiName = apiMetadata ? apiMetadata.apiHandle : "";
-    apiName = apiName.split('-v')[0];
+    let apiName = apiMetadata ? apiMetadata.apiHandle?.split('-v')[0] : "";
     const version = apiMetadata ? apiMetadata.apiInfo.apiVersion : "";
     //check whether user has access to the API
 
     let allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:${apiName}+version:${version}`, {}, {});
-    console.log("Allowed API List docs: ", allowedAPIList);
     if (allowedAPIList.count == 0) {
         apiName = apiMetadata.apiInfo.apiName;
         allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:${apiName}+version:${version}`, {}, {});
