@@ -29,6 +29,7 @@ const apiMetadataService = require('../services/apiMetadataService');
 const adminService = require('../services/adminService');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const { ApplicationDTO } = require('../dto/application');
+const controlPlaneUrl = config.controlPlane.url;
 
 const filePrefix = config.pathToContent;
 const generateArray = (length) => Array.from({ length });
@@ -333,6 +334,18 @@ const loadDocument = async (req, res) => {
         templateContent.apiType = definitionResponse.apiType;
         let apiMetadata = definitionResponse.metaData;
         let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
+        const response = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiMetadata.apiReferenceID}`, null, null);
+        if (response.securityScheme.includes("api_key")) {
+            modifiedSwagger.components.securitySchemes.ApiKeyAuth = { "type": "apiKey", "name": `${response.apiKeyHeader}`, "in": "header" };
+            modifiedSwagger.security[0].ApiKeyAuth = [];
+            for (let path in modifiedSwagger.paths) {
+                for (let method in modifiedSwagger.paths[path]) {
+                    if (modifiedSwagger.paths[path].hasOwnProperty(method)) {
+                        modifiedSwagger.paths[path][method].security[0].ApiKeyAuth = [];
+                    }
+                }
+            }
+        }
         templateContent.swagger = JSON.stringify(modifiedSwagger);
         templateContent.isAPIDefinition = true;
     }
