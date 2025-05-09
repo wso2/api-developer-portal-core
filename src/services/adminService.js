@@ -735,29 +735,33 @@ const updateSubscription = async (req, res) => {
         const orgID = req.params.orgId;
         await sequelize.transaction(async (t) => {
             try {
-                const app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
-                if (app.length > 0) {
-                    let throttlingPolicy = "";
-                    const subscruibedPolicy = await apiDao.getSubscriptionPolicy(req.body.policyId, orgID);
-                    if (subscruibedPolicy) {
-                        throttlingPolicy = subscruibedPolicy.dataValues.POLICY_NAME;
-                    }
-                    const cpAppRef = app[0].dataValues.CP_APP_REF;
-                    let appAPIMapping;
-                    appAPIMapping = await adminDao.getApplicationAPIMapping(orgID, req.body.applicationID, req.body.apiReferenceID, cpAppRef, true);
-                    if (!appAPIMapping.length > 0) {
-                        appAPIMapping = await adminDao.getApplicationAPIMapping(orgID, req.body.applicationID, req.body.apiReferenceID, cpAppRef, false);
-                    }
-                    const subscriptionID = appAPIMapping[0].dataValues.SUBSCRIPTION_REF_ID;
-                    const response = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/subscriptions/${subscriptionID}`, {}, {
-                        apiId: req.body.apiReferenceID,
-                        applicationId: cpAppRef,
-                        requestedThrottlingPolicy: req.body.policyName,
-                        subscriptionId: subscriptionID,
-                        status: 'UNBLOCKED',
-                        throttlingPolicy: throttlingPolicy
-                    });
+                let app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
+                if (app.length === 0) {
+                    app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, false);
                 }
+                let throttlingPolicy = "";
+                const subscruibedPolicy = await apiDao.getSubscriptionPolicy(req.body.policyId, orgID);
+                if (subscruibedPolicy) {
+                    throttlingPolicy = subscruibedPolicy.dataValues.POLICY_NAME;
+                }
+                const cpAppRef = app[0].dataValues.CP_APP_REF;
+                let appAPIMapping;
+                appAPIMapping = await adminDao.getApplicationAPIMapping(orgID, req.body.applicationID, req.body.apiReferenceID, cpAppRef, true);
+                console.log("appAPIMapping", appAPIMapping);
+                if (!appAPIMapping.length > 0) {
+                    console.log("Non shared token")
+                    appAPIMapping = await adminDao.getApplicationAPIMapping(orgID, req.body.applicationID, req.body.apiReferenceID, cpAppRef, false);
+                    console.log("appAPIMapping", appAPIMapping);
+                }
+                const subscriptionID = appAPIMapping[0].dataValues.SUBSCRIPTION_REF_ID;
+                const response = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/subscriptions/${subscriptionID}`, {}, {
+                    apiId: req.body.apiReferenceID,
+                    applicationId: cpAppRef,
+                    requestedThrottlingPolicy: req.body.policyName,
+                    subscriptionId: subscriptionID,
+                    status: 'UNBLOCKED',
+                    throttlingPolicy: throttlingPolicy
+                });
                 await adminDao.updateSubscription(orgID, req.body, t);
                 return res.status(201).json({ message: 'Updated subscription successfully' });
             } catch (error) {
