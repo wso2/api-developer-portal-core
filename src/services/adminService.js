@@ -751,7 +751,7 @@ const updateSubscription = async (req, res) => {
                     const subscriptionID = appAPIMapping[0].dataValues.SUBSCRIPTION_REF_ID;
                     const response = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/subscriptions/${subscriptionID}`, {}, {
                         apiId: req.body.apiReferenceID,
-                        applicationId: app[0].dataValues.CP_APP_REF,
+                        applicationId: cpAppRef,
                         requestedThrottlingPolicy: req.body.policyName,
                         subscriptionId: subscriptionID,
                         status: 'UNBLOCKED',
