@@ -5,6 +5,7 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
   const tokenBtn = document.getElementById('generateKeyBtn-' + subID);
   const normalState = tokenBtn.querySelector('.button-normal-state');
   const loadingState = tokenBtn.querySelector('.button-loading-state');
+  const subscriptionPlan = document.getElementById('policy_' + subID).textContent;
 
   normalState.style.display = 'none';
   loadingState.style.display = 'inline-block';
@@ -15,7 +16,7 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
     {
       "applicationId": cpAppID ? `${cpAppID}`: tokenBtn.getAttribute('data-app-ref-id'),
       "apiId": `${apiID}`,
-      "subscriptionPlan": `${subPlan}`,
+      "subscriptionPlan": `${subscriptionPlan}`,
       "scopes": [],
       "keyType": "PRODUCTION",
       "projectID": `${projectID}`,
