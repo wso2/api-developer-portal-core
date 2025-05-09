@@ -700,7 +700,6 @@ const createSubscription = async (req, res) => {
             } catch (error) {
                 try {
                     if (error.statusCode && error.statusCode === 409) {
-                        console.log("Subscription  in cp already exists, hence creating/updating the subscription in db");
                         const appRef = sharedApp.length > 0 ? sharedApp[0] : nonSharedApp[0];
                         const response = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?applicationId=${appRef.dataValues.CP_APP_REF}`, {}, {});
                         /** Handle both scenario where a reference application in cp is created but no subscriptions avaiable 
@@ -708,7 +707,8 @@ const createSubscription = async (req, res) => {
                          * API already exisits (create new row) **/
                         for (const subscription of response.list) {
                             if (subscription.apiId === req.body.apiReferenceID) {
-                                await handleSubscribe(orgID, req.body.applicationID, subscription.apiId, subscription.subscriptionId, subscription, sharedApp.length > 0 ? true:false, t);
+                                console.log("Subscription already exists in cp, hence creating/updating the subscription in db");
+                                await handleSubscribe(orgID, req.body.applicationID, appRef.dataValues.API_REF_ID, appRef.dataValues.SUBSCRIPTION_REF_ID, subscription, sharedApp.length > 0 ? true:false, t);
                                 await adminDao.createSubscription(orgID, req.body, t);
                                 return res.status(200).json({ message: 'Subscribed successfully' });
                             }
@@ -1092,10 +1092,13 @@ const unsubscribeAPI = async (req, res) => {
     try {
         const orgID = req.params.orgId;;
         const { appID, apiReferenceID, subscriptionID } = req.query;
-        const sharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, true);
-        const nonSharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, false);
-
+        
         await sequelize.transaction(async (t) => {
+            const sharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, true);
+            const nonSharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, false);
+            console.log("Unsubscribing from API with api ref id: ", apiReferenceID);
+            console.log("Shared token length: ", sharedToken.length);
+            console.log("Non-shared token length: ", nonSharedToken.length);
             try {
                 if (nonSharedToken.length > 0) {
                     console.log("Delete non-shared app key mapping entries with api ref id: ", apiReferenceID);
@@ -1142,6 +1145,7 @@ const unsubscribeAPI = async (req, res) => {
 async function handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiRefID, t) {
     try {
         if (sharedToken.length === 1 && nonSharedToken.length === 0) {
+            console.log("Update shared app key mapping entries with api ref id: ", apiRefID);
             await adminDao.updateApplicationKeyMapping(apiRefID, {
                 orgID: sharedToken[0].dataValues.ORG_ID,
                 appID: sharedToken[0].dataValues.APP_ID,
@@ -1152,6 +1156,7 @@ async function handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiR
                 tokenType: constants.TOKEN_TYPES.OAUTH
             }, t);
         } else if (nonSharedToken.length === 1 && sharedToken.length === 0) {
+            console.log("Update non-shared app key mapping entries with api ref id: ", apiRefID);
             await adminDao.updateApplicationKeyMapping(apiRefID, {
                 orgID: nonSharedToken[0].dataValues.ORG_ID,
                 appID: nonSharedToken[0].dataValues.APP_ID,

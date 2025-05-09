@@ -1018,8 +1018,6 @@ const createApplicationKeyMapping = async (mappingData, t) => {
 const updateApplicationKeyMapping = async (apiID, mappingData, t) => {
     try {
         const [updatedRowsCount, appContent] = await ApplicationKeyMapping.update({
-            ORG_ID: mappingData.orgID,
-            APP_ID: mappingData.appID,
             API_REF_ID: mappingData.apiRefID,
             CP_APP_REF: mappingData.cpAppRef,
             SUBSCRIPTION_REF_ID: mappingData.subscriptionRefID,
@@ -1028,13 +1026,14 @@ const updateApplicationKeyMapping = async (apiID, mappingData, t) => {
         },
             {
                 where: {
+                    ORG_ID: mappingData.orgID,
+                    APP_ID: mappingData.appID,
                     API_REF_ID: apiID
                 },
                 transaction: t
             });
 
         return [updatedRowsCount, appContent];
-
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
