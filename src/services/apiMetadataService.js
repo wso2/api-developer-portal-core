@@ -65,7 +65,7 @@ const createAPIMetadata = async (req, res) => {
 
     if (!isPolicyNamesAvailableFlag) {
         res.status(400).json({
-            // msg used to identify the scenario in CP, hence change with caution
+            // 'msg' is used to identify the scenario in CP; change it with caution.
             message: "MISSING_SUBSCRIPTION_POLICIES_IN_DEVPORTAL",
             missingPolicies,
         });
