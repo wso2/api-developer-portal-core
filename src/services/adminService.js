@@ -1097,8 +1097,6 @@ const unsubscribeAPI = async (req, res) => {
             const sharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, true);
             const nonSharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, false);
             console.log("Unsubscribing from API with api ref id: ", apiReferenceID);
-            console.log("Shared token length: ", sharedToken.length);
-            console.log("Non-shared token length: ", nonSharedToken.length);
             try {
                 if (nonSharedToken.length > 0) {
                     console.log("Delete non-shared app key mapping entries with api ref id: ", apiReferenceID);
