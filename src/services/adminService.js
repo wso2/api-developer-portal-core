@@ -742,7 +742,14 @@ const updateSubscription = async (req, res) => {
                     if (subscruibedPolicy) {
                         throttlingPolicy = subscruibedPolicy.dataValues.POLICY_NAME;
                     }
-                    const subscriptionID = app[0].dataValues.SUBSCRIPTION_REF_ID;
+                    const cpAppRef = app[0].dataValues.CP_APP_REF;
+                    let appAPIMapping;
+                    appAPIMapping = await adminDao.getApplicationAPIMapping(orgID, req.body.applicationID, req.body.apiReferenceID, cpAppRef, true);
+                    if (!appAPIMapping.length > 0) {
+                        appAPIMapping = await adminDao.getApplicationAPIMapping(orgID, req.body.applicationID, req.body.apiReferenceID, cpAppRef, false);
+                    }
+                    const subscriptionID = appAPIMapping[0].dataValues.SUBSCRIPTION_REF_ID;
+                    console.log("Updating subs", req.body);
                     const response = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/subscriptions/${subscriptionID}`, {}, {
                         apiId: req.body.apiReferenceID,
                         applicationId: app[0].dataValues.CP_APP_REF,
@@ -751,6 +758,7 @@ const updateSubscription = async (req, res) => {
                         status: 'UNBLOCKED',
                         throttlingPolicy: throttlingPolicy
                     });
+                    console.log("Response from cp", response);
                 }
                 await adminDao.updateSubscription(orgID, req.body, t);
                 return res.status(201).json({ message: 'Updated subscription successfully' });
