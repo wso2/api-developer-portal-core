@@ -61,7 +61,6 @@ const createAPIMetadata = async (req, res) => {
     const policyNames = apiSubscriptionPolicies.map(p => p.policyName);
     const orgId = req.params.orgId;
     const { isPolicyNamesAvailableFlag, missingPolicies } = await isPolicyNamesAvailable(policyNames, orgId);
-    console.log("isPolicyNamesAvailableFlag", isPolicyNamesAvailableFlag);
 
     if (!isPolicyNamesAvailableFlag) {
         res.status(400).json({
@@ -246,13 +245,30 @@ const getMetadataListFromDB = async (orgID, groups, searchTerm, tags, apiName, a
 const updateAPIMetadata = async (req, res) => {
 
     const apiMetadata = JSON.parse(req.body.apiMetadata);
+    const apiSubscriptionPolicies = apiMetadata.subscriptionPolicies;
+    if (!Array.isArray(apiSubscriptionPolicies)) {
+        throw new Sequelize.ValidationError(
+            "Missing or Invalid fields in the request payload"
+        );
+    }
+    const policyNames = apiSubscriptionPolicies.map(p => p.policyName);
+    //TODO: Get orgId from the orgName
+    const { orgId, apiId } = req.params;
+    const { isPolicyNamesAvailableFlag, missingPolicies } = await isPolicyNamesAvailable(policyNames, orgId);
+    if (!isPolicyNamesAvailableFlag) {
+        res.status(400).json({
+            // 'msg' is used to identify the scenario in CP; change it with caution.
+            message: "MISSING_SUBSCRIPTION_POLICIES_IN_DEVPORTAL",
+            missingPolicies,
+        });
+        return;
+    }
+    
     let apiDefinitionFile, apiFileName = "";
     if (req.file) {
         apiDefinitionFile = req.file.buffer;
         apiFileName = req.file.originalname;
     }
-    //TODO: Get orgId from the orgName
-    const { orgId, apiId } = req.params;
 
     try {
         // Validate input
@@ -296,21 +312,15 @@ const updateAPIMetadata = async (req, res) => {
             }
             if (apiMetadata.subscriptionPolicies) {
                 const subscriptionPolicies = [];
-                const apiSubscriptionPolicies = apiMetadata.subscriptionPolicies;
-                if (!Array.isArray(apiSubscriptionPolicies)) {
-                    throw new Sequelize.ValidationError(
-                        "Missing or Invalid fields in the request payload"
-                    );
-                } else {
-                    for (const policy of apiSubscriptionPolicies) {
-                        const subscriptionPolicy = await apiDao.getSubscriptionPolicyByName(orgId, policy.policyName);
-                        if (!subscriptionPolicy) {
-                            throw new Sequelize.EmptyResultError("Subscription policy not found");
-                        } else {
-                            subscriptionPolicies.push({ apiID: apiId, policyID: subscriptionPolicy.POLICY_ID });
-                        }
-                    };
-                }
+                for (const policy of apiSubscriptionPolicies) {
+                    const subscriptionPolicy = await apiDao.getSubscriptionPolicyByName(orgId, policy.policyName);
+                    if (!subscriptionPolicy) {
+                        throw new Sequelize.EmptyResultError("Subscription policy not found");
+                    } else {
+                        subscriptionPolicies.push({ apiID: apiId, policyID: subscriptionPolicy.POLICY_ID });
+                    }
+                };
+                
                 // Get subscription policy IDs and fail if any policy is not found
                 await apiDao.updateAPISubscriptionPolicy(subscriptionPolicies, apiId, t);
                 updatedAPI[0].dataValues["DP_SUBSCRIPTION_POLICies"] = await apiDao.getSubscriptionPolicies(apiId, t);
