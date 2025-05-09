@@ -708,7 +708,7 @@ const createSubscription = async (req, res) => {
                         for (const subscription of response.list) {
                             if (subscription.apiId === req.body.apiReferenceID) {
                                 console.log("Subscription already exists in cp, hence creating/updating the subscription in db");
-                                await handleSubscribe(orgID, req.body.applicationID, appRef.dataValues.API_REF_ID, appRef.dataValues.SUBSCRIPTION_REF_ID, subscription, sharedApp.length > 0 ? true:false, t);
+                                await handleSubscribe(orgID, req.body.applicationID, appRef.dataValues.API_REF_ID, appRef.dataValues.SUBSCRIPTION_REF_ID, subscription, sharedApp.length > 0 ? true : false, t);
                                 await adminDao.createSubscription(orgID, req.body, t);
                                 return res.status(200).json({ message: 'Subscribed successfully' });
                             }
@@ -740,29 +740,28 @@ const updateSubscription = async (req, res) => {
                     app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, false);
                 }
                 if (app.length > 0) {
-                    let throttlingPolicy = "";
-                    const subscruibedPolicy = await apiDao.getSubscriptionPolicy(req.body.policyId, orgID);
-                    if (subscruibedPolicy) {
-                        throttlingPolicy = subscruibedPolicy.dataValues.POLICY_NAME;
-                    }
                     const cpAppRef = app[0].dataValues.CP_APP_REF;
                     let appAPIMapping;
                     appAPIMapping = await adminDao.getApplicationAPIMapping(orgID, req.body.applicationID, req.body.apiReferenceID, cpAppRef, true);
-                    console.log("appAPIMapping", appAPIMapping);
                     if (!appAPIMapping.length > 0) {
-                        console.log("Non shared token")
                         appAPIMapping = await adminDao.getApplicationAPIMapping(orgID, req.body.applicationID, req.body.apiReferenceID, cpAppRef, false);
-                        console.log("appAPIMapping", appAPIMapping);
                     }
-                    const subscriptionID = appAPIMapping[0].dataValues.SUBSCRIPTION_REF_ID;
-                    const response = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/subscriptions/${subscriptionID}`, {}, {
-                        apiId: req.body.apiReferenceID,
-                        applicationId: cpAppRef,
-                        requestedThrottlingPolicy: req.body.policyName,
-                        subscriptionId: subscriptionID,
-                        status: 'UNBLOCKED',
-                        throttlingPolicy: throttlingPolicy
-                    });
+                    if (appAPIMapping.length > 0) {
+                        let throttlingPolicy = "";
+                        const subscruibedPolicy = await apiDao.getSubscriptionPolicy(req.body.policyId, orgID);
+                        if (subscruibedPolicy) {
+                            throttlingPolicy = subscruibedPolicy.dataValues.POLICY_NAME;
+                        }
+                        const subscriptionID = appAPIMapping[0].dataValues.SUBSCRIPTION_REF_ID;
+                        const response = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/subscriptions/${subscriptionID}`, {}, {
+                            apiId: req.body.apiReferenceID,
+                            applicationId: cpAppRef,
+                            requestedThrottlingPolicy: req.body.policyName,
+                            subscriptionId: subscriptionID,
+                            status: 'UNBLOCKED',
+                            throttlingPolicy: throttlingPolicy
+                        });
+                    }
                 }
                 await adminDao.updateSubscription(orgID, req.body, t);
                 return res.status(201).json({ message: 'Updated subscription successfully' });
@@ -1104,7 +1103,7 @@ const unsubscribeAPI = async (req, res) => {
     try {
         const orgID = req.params.orgId;;
         const { appID, apiReferenceID, subscriptionID } = req.query;
-        
+
         await sequelize.transaction(async (t) => {
             const sharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, true);
             const nonSharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, false);
