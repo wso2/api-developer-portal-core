@@ -43,11 +43,15 @@ module.exports = {
         PUBLISHED: "PUBLISHED",
         UNPUBLISHED: "CREATED"
     },
+    API_TYPE: {
+        MCP: "MCP"
+    },
     DOC_TYPES: {
         DOC_ID: 'DOC_',
         DOCLINK_ID: 'LINK_',
         API_LANDING: 'MARKETING',
         API_DEFINITION: 'API_DEFINITION',
+        SCHEMA_DEFINITION: 'SCHEMA_DEFINITION',
         IMAGES: 'IMAGE',
         DOCUMENT: 'DOCUMENT',
         LINK: "DOC_LINK",

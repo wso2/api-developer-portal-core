@@ -38,9 +38,10 @@ const createAPIMetadata = async (req, res) => {
 
     const apiMetadata = JSON.parse(req.body.apiMetadata);
     let apiDefinitionFile, apiFileName = "";
-    if (req.file) {
-        apiDefinitionFile = req.file.buffer;
-        apiFileName = req.file.originalname;
+    if (req.files?.apiDefinition?.[0]) {
+        const file = req.files.apiDefinition[0];
+        apiDefinitionFile = file.buffer;
+        apiFileName = file.originalname;
     }
     const orgId = req.params.orgId;
     try {
@@ -94,6 +95,14 @@ const createAPIMetadata = async (req, res) => {
             }
             // store api definition file
             await apiDao.storeAPIFile(apiDefinitionFile, apiFileName, apiID, constants.DOC_TYPES.API_DEFINITION, t);
+            // Save MCP tools as schema definition if the API type is MCP
+            if (constants.API_TYPE.MCP === apiMetadata.apiInfo.apiType && req.files?.schemaDefinition?.[0]) {
+                const file = req.files.schemaDefinition[0];
+                const schemaDefinitionFile = file.buffer;
+                const schemaFileName = file.originalname;
+                await apiDao.storeAPIFile(schemaDefinitionFile, schemaFileName, apiID,
+                    constants.DOC_TYPES.SCHEMA_DEFINITION, t);
+            }
             apiMetadata.apiID = apiID;
         });
 
@@ -231,9 +240,10 @@ const updateAPIMetadata = async (req, res) => {
 
     const apiMetadata = JSON.parse(req.body.apiMetadata);
     let apiDefinitionFile, apiFileName = "";
-    if (req.file) {
-        apiDefinitionFile = req.file.buffer;
-        apiFileName = req.file.originalname;
+    if (req.files?.apiDefinition?.[0]) {
+        const file = req.files.apiDefinition[0];
+        apiDefinitionFile = file.buffer;
+        apiFileName = file.originalname;
     }
     //TODO: Get orgId from the orgName
     const { orgId, apiId } = req.params;
@@ -304,9 +314,18 @@ const updateAPIMetadata = async (req, res) => {
                 updatedAPI[0].dataValues["DP_SUBSCRIPTION_POLICies"] = await apiDao.getSubscriptionPolicies(apiId, t);
             }
             // update api definition file
-            const updatedFileCount = await apiDao.updateAPIFile(apiDefinitionFile, apiFileName, apiId, orgId, t);
+            const updatedFileCount = await apiDao.updateAPIFile(apiDefinitionFile, apiFileName, apiId, orgId,
+                constants.DOC_TYPES.API_DEFINITION, t);
             if (!updatedFileCount) {
                 throw new Sequelize.EmptyResultError("No record found to update");
+            }
+            // Update MCP tools schema definition if the API type is MCP
+            if (constants.API_TYPE.MCP === apiMetadata.apiInfo.apiType && req.files?.schemaDefinition?.[0]) {
+                const file = req.files.schemaDefinition[0];
+                const schemaDefinitionFile = file.buffer;
+                const schemaFileName = file.originalname;
+                await apiDao.updateAPIFile(schemaDefinitionFile, schemaFileName, apiId, orgId,
+                    constants.DOC_TYPES.SCHEMA_DEFINITION, t);
             }
             res.status(200).send(new APIDTO(updatedAPI[0].dataValues));
         });
