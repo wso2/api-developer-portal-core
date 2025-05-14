@@ -23,7 +23,7 @@ const adminService = require('../services/adminService');
 const devportalController = require('../controllers/devportalController');
 const multer = require('multer');
 const storage = multer.memoryStorage()
-const apiDefinition = multer({ storage: storage })
+const multipartHandler = multer({storage: storage})
 const { ensureAuthenticated, validateAuthentication, enforceSecuirty } = require('../middlewares/ensureAuthenticated');
 const constants = require('../utils/constants');
 
@@ -50,10 +50,24 @@ router.put('/organizations/:orgId/provider', enforceSecuirty(constants.SCOPES.AD
 router.get('/organizations/:orgId/provider', enforceSecuirty(constants.SCOPES.ADMIN), adminService.getProviders);
 router.delete('/organizations/:orgId/provider', enforceSecuirty(constants.SCOPES.ADMIN), adminService.deleteProvider);
 
-router.post('/organizations/:orgId/apis', enforceSecuirty(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.createAPIMetadata);
+router.post(
+    '/organizations/:orgId/apis',
+    enforceSecuirty(constants.SCOPES.DEVELOPER),
+    multipartHandler.fields([
+        {name: 'apiDefinition', maxCount: 1},
+        {name: 'schemaDefinition', maxCount: 1},
+    ]),
+    apiMetadataService.createAPIMetadata);
 router.get('/organizations/:orgId/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.getAPIMetadata);
 router.get('/organizations/:orgId/apis', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.getAllAPIMetadata);
-router.put('/organizations/:orgId/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.updateAPIMetadata);
+router.put(
+    '/organizations/:orgId/apis/:apiId',
+    enforceSecuirty(constants.SCOPES.DEVELOPER),
+    multipartHandler.fields([
+        {name: 'apiDefinition', maxCount: 1},
+        {name: 'schemaDefinition', maxCount: 1},
+    ]),
+    apiMetadataService.updateAPIMetadata);
 router.delete('/organizations/:orgId/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIMetadata);
 
 router.post('/organizations/:orgId/subscription-policies', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.addSubscriptionPolicies);
@@ -68,9 +82,23 @@ router.get('/organizations/:orgId/apis/:apiId/template', apiMetadataService.getA
 router.delete('/organizations/:orgId/apis/:apiId/template', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIFile);
 
 // S2S Applied APIS
-router.post('/apis', enforceSecuirty(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.createAPIMetadata); // s2s applied
+router.post(
+    '/apis',
+    enforceSecuirty(constants.SCOPES.DEVELOPER),
+    multipartHandler.fields([
+        {name: 'apiDefinition', maxCount: 1},
+        {name: 'schemaDefinition', maxCount: 1},
+    ]),
+    apiMetadataService.createAPIMetadata); // s2s applied
 router.get('/apis', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.getAllAPIMetadata); // s2s applied
-router.put('/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiDefinition.single('apiDefinition'), apiMetadataService.updateAPIMetadata); // s2s applied
+router.put(
+    '/apis/:apiId',
+    enforceSecuirty(constants.SCOPES.DEVELOPER),
+    multipartHandler.fields([
+        {name: 'apiDefinition', maxCount: 1},
+        {name: 'schemaDefinition', maxCount: 1},
+    ]),
+    apiMetadataService.updateAPIMetadata); // s2s applied
 router.delete('/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIMetadata); // s2s applied
 
 router.post('/organizations/:orgId/labels', enforceSecuirty(constants.SCOPES.ADMIN), apiMetadataService.createLabels);

@@ -562,11 +562,11 @@ const storeAPIImageMetadata = async (apiImages, apiID, t) => {
     }
 }
 
-const storeAPIFile = async (apiDefinition, fileName, apiID, type, t) => {
+const storeAPIFile = async (apiFile, fileName, apiID, type, t) => {
 
     try {
         const apiFileResponse = await APIContent.create({
-            API_FILE: apiDefinition,
+            API_FILE: apiFile,
             FILE_NAME: fileName,
             API_ID: apiID,
             TYPE: type
@@ -1353,17 +1353,17 @@ const deleteImage = async (imageTag, apiID, t) => {
     }
 }
 
-const updateAPIFile = async (apiFile, fileName, apiID, orgID, t) => {
+const updateAPIFile = async (apiFile, fileName, apiID, orgID, type, t) => {
 
     try {
-        const apiFileResponse = await getAPIFile(fileName, constants.DOC_TYPES.API_DEFINITION, orgID, apiID, t);
+        const apiFileResponse = await getAPIFile(fileName, type, orgID, apiID, t);
         let fileUpdateResponse;
         if (apiFileResponse == null || apiFileResponse == undefined) {
             fileUpdateResponse = await APIContent.create({
                 API_FILE: apiFile,
                 FILE_NAME: fileName,
                 API_ID: apiID,
-                TYPE: constants.DOC_TYPES.API_DEFINITION
+                TYPE: type
             }, { transaction: t });
         } else {
             fileUpdateResponse = await APIContent.update({
@@ -1374,7 +1374,7 @@ const updateAPIFile = async (apiFile, fileName, apiID, orgID, t) => {
                     where: {
                         API_ID: apiID,
                         FILE_NAME: fileName,
-                        TYPE: constants.DOC_TYPES.API_DEFINITION
+                        TYPE: type
                     },
                     include: [
                         {
