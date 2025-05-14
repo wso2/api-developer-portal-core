@@ -49,6 +49,17 @@
       </div>
     </div>
     <div class="row row-gap-4">
+      {{#if (eq apiMetadata.length 0)}}
+      <div class="ps-3" id="no-subscription">
+        <div class="info-box">
+          <div class="info-content">
+            <div class="info-title">
+              No APIs available.
+            </div>
+          </div>
+        </div>
+      </div>
+      {{/if}}
       {{#apiMetadata}}
       <div class="col-lg-4 col-md-6 col-sm-12" id="apiCard-{{apiID}}">
         <div class="card api-card d-flex flex-column">
