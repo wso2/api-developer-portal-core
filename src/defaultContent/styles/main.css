@@ -7,6 +7,7 @@
 @import "/styles/doc.css";
 @import "/styles/side-bar.css";
 @import "/styles/default-api.css";
+@import "/styles/default-home.css";
 
 :root {
   --main-bg-color: #ffffff;
