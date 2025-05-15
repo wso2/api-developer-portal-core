@@ -30,7 +30,6 @@ const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
 const adminService = require('../services/adminService');
 const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
-const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 
 
 const orgIDValue = async (orgName) => {
@@ -94,54 +93,6 @@ async function getMockApplications() {
     const mockApplicationsMetaDataPath = path.join(process.cwd(), filePrefix + '../mock/Applications', 'applications.json');
     const mockApplicationsMetaData = JSON.parse(fs.readFileSync(mockApplicationsMetaDataPath, 'utf-8'));
     return mockApplicationsMetaData.list;
-}
-
-// ***** Load Throttling Policies *****
-
-const loadThrottlingPolicies = async (req, res) => {
-
-    let html, metaData, templateContent;
-    try {
-        const viewName = req.params.viewName;
-        if (config.mode === constants.DEV_MODE) {
-            metaData = await getMockThrottlingPolicies();
-            templateContent = {
-                throttlingPoliciesMetadata: metaData,
-                baseUrl: baseURLDev + viewName
-            }
-            html = renderTemplate('../pages/add-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
-        }
-        else {
-            const orgName = req.params.orgName;
-            const orgID = await orgIDValue(orgName);
-            templateContent = {
-                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
-            }
-            const templateResponse = await templateResponseValue('add-application');
-            const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
-            if (layoutResponse === "") {
-                html = renderTemplate('../pages/add-application/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
-            } else {
-                html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
-            }
-        }
-    } catch (error) {
-        console.error("Error occurred", error);
-        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
-        constants.COMMON_ERROR_MESSAGE, true);
-    }
-    res.send(html);
-}
-
-async function getMockThrottlingPolicies() {
-    const mockThrottlingPoliciesMetaDataPath = path.join(process.cwd(), filePrefix + '../mock/Applications', 'throttlingPolicies.json');
-    const mockThrottlingPoliciesMetaData = JSON.parse(fs.readFileSync(mockThrottlingPoliciesMetaDataPath, 'utf-8'));
-    return mockThrottlingPoliciesMetaData.list;
-}
-
-async function getAPIMThrottlingPolicies(req) {
-    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/throttling-policies/application', null, null);
-    return responseData.list;
 }
 
 // ***** Load Application *****
@@ -366,52 +317,6 @@ const getSubscribedApis = async (req, appId) => {
         throw error;
     }
 }
-
-const loadApplicationForEdit = async (req, res) => {
-
-    let html, templateContent, metaData, throttlingMetaData;
-    try {
-        const { orgName, viewName, applicationId } = req.params;
-        if (config.mode === constants.DEV_MODE) {
-            metaData = await getMockApplication();
-            throttlingMetaData = await getMockThrottlingPolicies();
-            templateContent = {
-                applicationMetadata: metaData,
-                throttlingPoliciesMetadata: throttlingMetaData,
-                baseUrl: baseURLDev + viewName
-            }
-            html = renderTemplate('../pages/edit-application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
-        } else {
-            const orgID = await orgIDValue(orgName);
-            const application = await adminDao.getApplication(orgID, applicationId, req.user.sub)
-            if (application) {
-                const appResponse = new ApplicationDTO(application.dataValues);
-                metaData = appResponse;
-            }
-            //metaData = await getAPIMApplication(req, applicationId);
-            throttlingMetaData = await getAPIMThrottlingPolicies(req);
-            templateContent = {
-                applicationMetadata: metaData,
-                throttlingPoliciesMetadata: throttlingMetaData,
-                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
-            }
-            const templateResponse = await templateResponseValue('edit-application');
-            const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
-            if (layoutResponse === "") {
-                html = renderTemplate('../pages/edit-application/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
-            } else {
-                html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
-            }
-        }
-    } catch (error) {
-        console.error("Error occurred while loading application for edit", error);
-        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
-        constants.COMMON_ERROR_MESSAGE, true);
-
-    }
-    res.send(html);
-}
-
 async function getMockApplication() {
     const mockApplicationMetaDataPath = path.join(process.cwd(), filePrefix + '../mock/Applications/DefaultApplication', 'DefaultApplication.json');
     const mockApplicationMetaData = JSON.parse(fs.readFileSync(mockApplicationMetaDataPath, 'utf-8'));
@@ -509,7 +414,5 @@ async function mapDefaultValues(applicationConfiguration) {
 
 module.exports = {
     loadApplications,
-    loadThrottlingPolicies,
     loadApplication,
-    loadApplicationForEdit
 };
