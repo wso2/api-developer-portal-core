@@ -18,6 +18,7 @@
 /* eslint-disable no-undef */
 const path = require('path');
 const fs = require('fs');
+const Handlebars = require('handlebars');
 const { renderTemplate, renderTemplateFromAPI } = require('../utils/util');
 const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
@@ -36,7 +37,15 @@ const loadOrganizationContent = async (req, res) => {
     }
     res.send(html);
 }
+const loadDefaultLandingPage = async (req, res) => {
 
+    let html = "";
+    const completeTemplatePath = path.join(require.main.filename, '../pages/default-home/page.hbs');
+    const templateResponse = await fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
+    const template = await Handlebars.compile(templateResponse);
+    html = template();
+    res.send(html);
+}
 const loadOrgContentFromFile = async (req, res) => {
 
     //TODO fetch from DB
@@ -71,5 +80,6 @@ const loadOrgContentFromAPI = async (req, res) => {
 module.exports = {
     loadOrgContentFromFile,
     loadOrgContentFromAPI,
-    loadOrganizationContent
+    loadOrganizationContent,
+    loadDefaultLandingPage
 };

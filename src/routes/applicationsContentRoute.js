@@ -11,12 +11,7 @@ router.get('/:orgName/views/:viewName/applications', (req, res, next) => {
     next();
 }, registerPartials, ensureAuthenticated, applicationsController.loadApplications);
 
-router.get('/:orgName/views/:viewName/applications/create', (req, res, next) => {
-    if (req.params.orgName === 'favicon.ico') {
-        return res.status(404).send('Not Found');
-    }
-    next();
-}, registerPartials, ensureAuthenticated, applicationsController.loadThrottlingPolicies);
+
 
 router.get('/:orgName/views/:viewName/applications/:applicationId', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
@@ -24,12 +19,5 @@ router.get('/:orgName/views/:viewName/applications/:applicationId', (req, res, n
     }
     next();
 }, registerPartials, ensureAuthenticated, applicationsController.loadApplication);
-  
-router.get('/:orgName/views/:viewName/applications/:applicationId/edit', (req, res, next) => {
-    if (req.params.orgName === 'favicon.ico') {
-        return res.status(404).send('Not Found');
-    }
-    next();
-}, registerPartials, ensureAuthenticated, applicationsController.loadApplicationForEdit);
 
 module.exports = router;
