@@ -615,7 +615,7 @@ hr {
   }
 }
 
-.info-box {
+.api-info-box {
   background-color: var(--primary-lightest-color);
   border-left: 4px solid var(--primary-light-color);
   padding: 1rem;
@@ -627,11 +627,11 @@ hr {
   align-items: flex-start;
 }
 
-.info-content {
+.api-info-content {
   flex: 1;
 }
 
-.info-title {
+.api-info-title {
   font-size: 0.9rem;
   font-weight: 500;
   color: #333;
