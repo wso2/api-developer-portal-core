@@ -28,4 +28,18 @@ router.get('/:orgName/views/:viewName', (req, res, next) => {
     next();
 }, authController.handleSilentSSO, registerPartials, orgController.loadOrganizationContent);
 
+router.get('/:orgName', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico' || req.params.orgName === 'images' || req.params.orgName === 'portal') {
+        return res.status(404).send('Not Found');
+    }
+    return res.redirect(`${req.params.orgName}/views/default`);
+}, authController.handleSilentSSO, registerPartials, orgController.loadOrganizationContent);
+
+router.get('/', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico' || req.params.orgName === 'images' || req.params.orgName === 'portal') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, orgController.loadDefaultLandingPage);
+
 module.exports = router;

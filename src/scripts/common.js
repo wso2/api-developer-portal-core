@@ -1034,3 +1034,11 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
+function getOrgName() {
+
+    const orgName = document.getElementById("organization-name").value;
+    const url = new URL(window.location.origin + '/'+ orgName);
+    window.location.href = url.toString();
+
+}
+
