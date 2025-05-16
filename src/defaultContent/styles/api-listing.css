@@ -615,6 +615,28 @@ hr {
   }
 }
 
+.api-info-box {
+  background-color: var(--primary-lightest-color);
+  border-left: 4px solid var(--primary-light-color);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  margin-top: 1rem;
+  border-radius: 0 0.375rem 0.375rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.api-info-content {
+  flex: 1;
+}
+
+.api-info-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+}
+
 @media (max-width: 992px) {
   .apilist-hero-header .apilist-hero-title {
     font-size: 4vw;
