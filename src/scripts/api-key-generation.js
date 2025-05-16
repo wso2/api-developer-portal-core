@@ -1,8 +1,71 @@
 const e = require("express");
 
-async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, subIDs) {
+function openApiKeyModal(projectID, apiRefID, subPlan, cpAppID, appID, subID, subIDs, subscribedScopes) {
+  const modal = document.getElementById('apiKeyModal-' + subID);
+  modal.style.display = 'flex';
 
-  const tokenBtn = document.getElementById('generateKeyBtn-' + subID);
+  document.getElementById('apiKeyCard-' + subID).classList.add('d-none');
+  document.getElementById('apiKeyInfo-' + subID).classList.add('d-none');
+
+  const scopeContainer = document.getElementById('scopeContainer-' + subID);
+  const scopeInput = document.getElementById('scope-' + subID);
+  scopeContainer.setAttribute('data-scopes', subscribedScopes);
+
+  document.getElementById('generateAPIKeyBtn-' + subID).setAttribute('onclick', `generateAPIKey('${projectID}', '${apiRefID}', '${subPlan}', '${cpAppID}', '${appID}', '${subID}', '${subIDs}', '${subscribedScopes}')`);
+  const scopesData = scopeContainer?.dataset?.scopes;
+
+  if (scopesData) {
+    // Clear existing scopes
+    scopeContainer.querySelectorAll('.span-tag').forEach(el => el.remove());
+    const scopes = JSON.parse(scopesData);
+
+    scopes.forEach(scope => {
+      addScope(scope);
+    });
+  }
+
+  scopeContainer?.addEventListener('keypress', function (event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      const input = scopeContainer.querySelector('input');
+      const scope = input.value.trim();
+
+      // Add additional scopes
+      if (scope) {
+        addScope(scope);
+        this.value = '';
+      }
+    }
+  });
+
+  function addScope(scope) {
+    // Create a new span element for the scope
+    const span = document.createElement('span');
+    span.className = 'span-tag';
+    span.innerHTML = `${scope}<span class="remove">&times;</span>`;
+
+    // Append the new span to the scope container only if it doesn't already exist
+    const existingScopes = Array.from(scopeContainer.querySelectorAll('.span-tag'))
+      .map(el => el.textContent.replace('×', '').trim());
+
+    if (!existingScopes.includes(scope)) {
+      span.querySelector('.remove').addEventListener('click', function () {
+        scopeContainer.removeChild(span);
+      });
+    }
+
+    // Append the new span to the scope container
+    scopeContainer.setAttribute('data-scopes', JSON.stringify(subscribedScopes));
+    scopeContainer.insertBefore(span, scopeInput);
+    scopeInput.value = '';
+  }
+
+}
+
+async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, subIDs, scopes) {
+  console.log(projectID, apiID, subPlan, cpAppID, appID, subID, subIDs);
+
+  const tokenBtn = document.getElementById('generateAPIKeyBtn-' + subID);
   const normalState = tokenBtn.querySelector('.button-normal-state');
   const loadingState = tokenBtn.querySelector('.button-loading-state');
   const subscriptionPlan = document.getElementById('policy_' + subID).textContent;
@@ -14,10 +77,10 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
 
   JSONbody = JSON.stringify(
     {
-      "applicationId": cpAppID ? `${cpAppID}`: tokenBtn.getAttribute('data-app-ref-id'),
+      "applicationId": cpAppID ? `${cpAppID}` : tokenBtn.getAttribute('data-app-ref-id'),
       "apiId": `${apiID}`,
       "subscriptionPlan": `${subscriptionPlan}`,
-      "scopes": [],
+      "scopes": JSON.parse(scopes),
       "keyType": "PRODUCTION",
       "projectID": `${projectID}`,
       "devportalAppId": `${appID}`,
@@ -36,14 +99,11 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
 
     if (response.ok) {
 
-      const modal = document.getElementById('apiKeyModal');
-      modal.style.display = 'flex';
-
-      let keyText = document.getElementById("token_apiKeyText");
-      keyText.textContent = responseData.value;
-
-      let generateBtn = document.getElementById('generateKeyBtn-' + subID);
-      generateBtn.style.display = 'none';
+      document.getElementById('apiKeyCard-' + subID).classList.remove('d-none');
+      document.getElementById('apiKeyInfo-' + subID).classList.remove('d-none');
+      document.getElementById("token_apiKeyText-" + subID).textContent = responseData.value;
+      document.getElementById('generateKeyBtn-' + subID).style.display = 'none';
+      document.getElementById('generateAPIKeyBtn-' + subID).style.display = 'none';
 
       let regenerateBtn = document.getElementById('regenerateKeyBtn-' + subID);
       regenerateBtn.style.display = 'inline-flex';
@@ -53,9 +113,18 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
       revokeBtn.style.display = 'inline-flex';
       revokeBtn.setAttribute('data-api-key-id', `'${responseData.id}'`);
 
+      const scopeInput = document.getElementById(`scope-${subID}`);
+      scopeInput.disabled = true;
+      scopeInput.style.display = 'none';
+
+      const scopeContainer = document.getElementById('scopeContainer-' + subID);
+      scopeContainer.querySelectorAll('.remove').forEach(el => {
+        el.style.display = 'none';
+      });
+
       const subList = JSON.parse(subIDs);
       subList.forEach(subID => {
-        document.getElementById("generateKeyBtn-" + subID)?.setAttribute('data-app-ref-id', `${responseData.appRefId}`);
+        document.getElementById("generateAPIKeyBtn-" + subID)?.setAttribute('data-app-ref-id', `${responseData.appRefId}`);
       })
 
       await showAlert('API Key generated successfully!', 'success');
@@ -136,25 +205,23 @@ async function regenerateAPIKey(apiKeyID, subID) {
 
     const responseData = await response.json();
 
+    console.log(responseData);
     if (response.ok) {
-      const modal = document.getElementById('apiKeyModal');
-      modal.style.display = 'flex';
+      
+      document.getElementById('apiKeyModal-' + subID).style.display = 'flex';
+      document.getElementById("token_apiKeyText-" + subID).textContent = responseData.value;
+      document.getElementById("generateAPIKeyBtn-" + subID).style.display = 'none'
+      document.getElementById("scopeContainer-" + subID).style.display = 'none'
+      document.getElementById("scopeTitle-" + subID).style.display = 'none'
 
-      let keyText = document.getElementById("token_apiKeyText");
-      keyText.textContent = responseData.value;
-
-      await showAlert('API Key regenerated successfully!,', 'success');
+      await showAlert('API Key regenerated successfully!', 'success');
     } else {
-      console.log('Here')
       await showAlert(`Failed to regenerate API Key. Please try again.\n${responseData?.description || ''}`, 'error');
     }
   } catch (error) {
-    console.log('Here2')
-
+    console.log(error);
     await showAlert(`Failed to generate API Key. Please try again.\n${error}`, 'error');
   }
-  console.log('Here3')
-
   normalState.style.display = 'inline-block';
   loadingState.style.display = 'none';
 }

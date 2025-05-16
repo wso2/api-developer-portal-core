@@ -184,6 +184,7 @@ const generateAPIKeys = async (req, res) => {
         delete requestBody.projectID;
         delete requestBody.devportalAppId;
 
+        console.log('requestBody', requestBody)
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/api-keys/generate`, {
             'Content-Type': 'application/json'
         }, requestBody);

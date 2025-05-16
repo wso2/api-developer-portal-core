@@ -29,6 +29,7 @@
                     </thead>
                     <tbody>
                         {{#each subAPIs}}
+                        {{> api-key apiID=apiID}}
                         {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
                         <tr class="data-row" id="data-row-{{subID}}">
                             <td class="app-td">
@@ -68,7 +69,7 @@
                                     <button class="common-btn-outlined btn-sm me-1" id="generateKeyBtn-{{subID}}"
                                         style="{{#if apiKeys}}display: none;{{else}}display: inline-flex;{{/if}}"
                                         data-app-ref-id=""
-                                        onclick="generateAPIKey('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIs}}')">
+\                                        onclick="openApiKeyModal('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIs}}', '{{json scopes}}')">
                                         <span class="button-normal-state">
                                             <i class="bi bi-key me-1"></i> Generate Key
                                         </span>

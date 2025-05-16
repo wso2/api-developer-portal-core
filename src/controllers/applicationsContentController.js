@@ -218,6 +218,7 @@ const loadApplication = async (req, res) => {
                     const apiKeys = await getAPIKeys(req, api.apiReferenceID, applicationReference);
                     apiDTO.apiKeys = apiKeys;
                     apiDTO.subscriptionPolicyDetails = api.subscriptionPolicies;
+                    apiDTO.scopes = apiDetails.scopes.map(scope => scope.key);
                     return apiDTO
                 }));
             }
