@@ -347,10 +347,11 @@ async function getAPIDetails(req, apiId) {
 
 async function getAPIKeys(req, apiId, applicationId) {
     const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + `/api-keys?apiId=${apiId}&keyType=PRODUCTION`, null, null);
-    let apiKeys;
+    let apiKeys = {};
     for (const key of responseData) {
         if (key.application.id === applicationId) {
-            apiKeys = key.keys;
+            apiKeys.key = key.keys;
+            apiKeys.scopes = key.scopes;
         }
     }
     return apiKeys;

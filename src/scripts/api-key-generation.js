@@ -4,6 +4,7 @@ function openApiKeyModal(projectID, apiRefID, subPlan, cpAppID, appID, subID, su
   const modal = document.getElementById('apiKeyModal-' + subID);
   modal.style.display = 'flex';
 
+  document.getElementById("generateAPIKeyBtn-" + subID).style.display = 'block';
   document.getElementById('apiKeyCard-' + subID).classList.add('d-none');
   document.getElementById('apiKeyInfo-' + subID).classList.add('d-none');
 
@@ -64,7 +65,6 @@ function openApiKeyModal(projectID, apiRefID, subPlan, cpAppID, appID, subID, su
 }
 
 async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, subIDs) {
-  console.log(projectID, apiID, subPlan, cpAppID, appID, subID, subIDs);
 
   const tokenBtn = document.getElementById('generateAPIKeyBtn-' + subID);
   const normalState = tokenBtn.querySelector('.button-normal-state');
@@ -73,6 +73,7 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
   const scopeContainer = document.getElementById('scopeContainer-' + subID);
   const scopeTags = scopeContainer.querySelectorAll('.span-tag');
   const scopes = Array.from(scopeTags).map(el => el.textContent.replace('×', '').trim());
+  scopeContainer.setAttribute('data-scopes', [scopes]);
 
   normalState.style.display = 'none';
   loadingState.style.display = 'inline-block';
@@ -215,14 +216,25 @@ async function regenerateAPIKey(apiKeyID, subID) {
 
     const responseData = await response.json();
 
-    console.log(responseData);
     if (response.ok) {
 
       document.getElementById('apiKeyModal-' + subID).style.display = 'flex';
       document.getElementById("token_apiKeyText-" + subID).textContent = responseData.value;
-      document.getElementById("generateAPIKeyBtn-" + subID).style.display = 'none'
-      document.getElementById("scopeContainer-" + subID).style.display = 'none'
-      document.getElementById("scopeTitle-" + subID).style.display = 'none'
+      document.getElementById("generateAPIKeyBtn-" + subID).style.display = 'none';
+
+      const regenerateBtn = document.getElementById("regenerateKeyBtn-" + subID);
+      const scopeContainer = document.getElementById('scopeContainer-' + subID);
+      const scopes = regenerateBtn?.dataset?.scopes || '[]';
+      JSON.parse(scopes).forEach(scope => {
+        const span = document.createElement('span');
+        span.className = 'span-tag';
+        span.innerHTML = `${scope}`;
+        scopeContainer.insertBefore(span, scopeContainer.querySelector('input'));
+      });
+
+      const scopeInput = document.getElementById(`scope-${subID}`);
+      scopeInput.disabled = true;
+      scopeInput.style.display = 'none';
 
       await showAlert('API Key regenerated successfully!', 'success');
     } else {

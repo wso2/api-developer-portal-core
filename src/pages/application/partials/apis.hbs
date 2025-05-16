@@ -42,7 +42,8 @@
                                 {{#if (contains security 'api_key')}}
                                 <div class="api-key-actions">
                                     <button class="common-btn-outlined btn-sm me-1" id="regenerateKeyBtn-{{subID}}"
-                                        data-api-key-id="'{{apiKeys.[0].id}}'"
+                                        data-scopes="{{json apiKeys.scopes}}"
+                                        data-api-key-id="'{{apiKeys.key.[0].id}}'"
                                         onclick="openWarningModal('regenerate', this.dataset.apiKeyId, '{{subID}}')"
                                         style="{{#if apiKeys}}display: inline-flex;{{else}}display: none;{{/if}}">
                                         <span class="button-normal-state">
@@ -54,7 +55,7 @@
                                         </span>
                                     </button>
                                     <button class="common-btn-outlined btn-sm api-key-revoke"
-                                        data-api-key-id="'{{apiKeys.[0].id}}'"
+                                        data-api-key-id="'{{apiKeys.key.[0].id}}'"
                                         onclick="openWarningModal('revoke', this.dataset.apiKeyId, '{{subID}}', '{{../applicationMetadata.id}}', '{{refID}}')"
                                         id="revokeKeyBtn-{{subID}}"
                                         style="{{#if apiKeys}}display: inline-flex;{{else}}display: none;{{/if}}">
