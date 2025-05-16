@@ -447,14 +447,14 @@ const createAPISubscriptionPolicy = async (apiSubscriptionPolicies, apiID, t) =>
 }
 
 const createSubscriptionPolicy = async (orgID, policy, t) => {
-
+    const requestCount = policy.requestCount === -1 ? "Unlimited" : policy.requestCount;
     try {
         const subscriptionPolicyResponse = await SubscriptionPolicy.create({
             POLICY_NAME: policy.policyName,
             DISPLAY_NAME: policy.displayName,
             BILLING_PLAN: policy.billingPlan,
             DESCRIPTION: policy.description,
-            REQUEST_COUNT: policy.requestCount,
+            REQUEST_COUNT: requestCount,
             ORG_ID: orgID
         }, { transaction: t });
         return subscriptionPolicyResponse;

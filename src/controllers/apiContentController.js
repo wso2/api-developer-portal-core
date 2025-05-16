@@ -275,53 +275,6 @@ const loadAPIDefinition = async (orgName, viewName, apiHandle) => {
     return templateContent;
 }
 
-const loadTryOutPage = async (req, res) => {
-
-    const { orgName, apiHandle, viewName } = req.params;
-    let html = "";
-    if (config.mode === constants.DEV_MODE) {
-        const metaData = loadAPIMetaDataFromFile(apiHandle);
-        let apiDefinition = path.join(process.cwd(), filePrefix + '../mock', apiHandle + '/apiDefinition.json');
-        if (fs.existsSync(apiDefinition)) {
-            apiDefinition = await fs.readFileSync(apiDefinition, constants.CHARSET_UTF8);
-        }
-        const templateContent = {
-            apiMetadata: metaData,
-            baseUrl: baseURLDev + viewName,
-            apiType: metaData.apiInfo.apiType,
-            swagger: apiDefinition
-        }
-        html = renderTemplate('../pages/tryout/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
-    } else {
-        try {
-            const orgID = await adminDao.getOrgId(orgName);
-            const apiID = await apiDao.getAPIId(orgID, apiHandle);
-            const metaData = await loadAPIMetaData(req, orgID, apiID);
-            let apiDefinition;
-            if (metaData.apiInfo.apiType !== "GraphQL") {
-                apiDefinition = "";
-                apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
-                apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
-            }
-            const templateContent = {
-                apiMetadata: metaData,
-                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-                apiType: metaData.apiInfo.apiType,
-                swagger: apiDefinition
-            };
-            const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'tryout', 'page.hbs');
-            const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
-            const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
-            html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
-        } catch (error) {
-            console.error(`Failed to load tryout page:`, error);
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
-            constants.COMMON_ERROR_MESSAGE, true);
-        }
-    }
-    res.send(html);
-}
-
 const loadDocsPage = async (req, res) => {
 
     const { orgName, apiHandle, viewName, docType } = req.params;
@@ -392,7 +345,6 @@ const loadDocument = async (req, res) => {
         const response = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiMetadata.apiReferenceID}`, null, null);
         if (response.securityScheme.includes("api_key")) {
             modifiedSwagger.components.securitySchemes.ApiKeyAuth = { "type": "apiKey", "name": `${response.apiKeyHeader}`, "in": "header" };
-            modifiedSwagger.security[0].ApiKeyAuth = [];
             for (let path in modifiedSwagger.paths) {
                 for (let method in modifiedSwagger.paths[path]) {
                     if (modifiedSwagger.paths[path].hasOwnProperty(method)) {
@@ -537,7 +489,6 @@ function replaceEndpointParams(apiDefinition, prodEndpoint, sandboxEndpoint) {
 module.exports = {
     loadAPIs,
     loadAPIContent,
-    loadTryOutPage,
     loadDocsPage,
     loadDocument
 };
