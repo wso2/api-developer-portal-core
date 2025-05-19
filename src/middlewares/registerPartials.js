@@ -223,7 +223,6 @@ const registerPartialsFromAPI = async (req) => {
 async function registerAPILandingContent(req, orgID, partialObject) {
 
   const apiHandle = req.params.apiHandle;
-  console.log("API handle: ", apiHandle);
   const apiID = await apiDao.getAPIId(orgID, apiHandle);
   //fetch markdown content for API if exists
   const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, constants.DOC_TYPES.API_LANDING, orgID, apiID);
