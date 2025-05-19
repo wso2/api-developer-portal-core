@@ -446,6 +446,15 @@ const createAPISubscriptionPolicy = async (apiSubscriptionPolicies, apiID, t) =>
     }
 }
 
+const postSubscriptionPolicy = async (orgID, policy, t) => {
+    const currentSubscriptionPolicy = await getSubscriptionPolicyByName(orgID, policy.policyName, t);
+    if (currentSubscriptionPolicy) {
+        return updateSubscriptionPolicy(orgID, currentSubscriptionPolicy.POLICY_ID, policy, t); 
+    } else {
+        return createSubscriptionPolicy(orgID, policy, t);
+    }
+};
+
 const createSubscriptionPolicy = async (orgID, policy, t) => {
     const requestCount = policy.requestCount === -1 ? "Unlimited" : policy.requestCount;
     try {
@@ -482,7 +491,7 @@ const updateSubscriptionPolicy = async (orgID, policyID, policy, t) => {
             returning: true,
             transaction: t
         });
-        return updatedRows;
+        return updatedRows[0];
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError || error instanceof Sequelize.ValidationError) {
             throw error;
@@ -1525,6 +1534,7 @@ module.exports = {
     getAPIHandle,
     getAPIMetadataByCondition,
     searchAPIMetadata,
+    postSubscriptionPolicy,
     createSubscriptionPolicy,
     getSubscriptionPolicyByName,
     getSubscriptionPolicy,
