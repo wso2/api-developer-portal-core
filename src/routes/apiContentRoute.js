@@ -20,6 +20,7 @@ const router = express.Router();
 const apiController = require('../controllers/apiContentController');
 const registerPartials = require('../middlewares/registerPartials');
 const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
+const authController = require('../controllers/authController');
 
 router.get('/:orgName/views/:viewName/apis', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
@@ -33,20 +34,20 @@ router.get('/:orgName/views/:viewName/api/:apiHandle', (req, res, next) => {
         return res.status(404).send('Not Found');
     }
     next();
-}, registerPartials, ensureAuthenticated, apiController.loadAPIContent);
+}, authController.handleSilentSSO, registerPartials, ensureAuthenticated, apiController.loadAPIContent);
 
 router.get('/:orgName/views/:viewName/api/:apiHandle/docs/specification', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
         return res.status(404).send('Not Found');
     }
     next();
-}, registerPartials, ensureAuthenticated, apiController.loadDocument);
+}, authController.handleSilentSSO, registerPartials, ensureAuthenticated, apiController.loadDocument);
 
 router.get('/:orgName/views/:viewName/api/:apiHandle/docs/:docType/:docName', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
         return res.status(404).send('Not Found');
     }
     next();
-}, registerPartials, ensureAuthenticated, apiController.loadDocument);
+}, authController.handleSilentSSO, registerPartials, ensureAuthenticated, apiController.loadDocument);
 
 module.exports = router;
