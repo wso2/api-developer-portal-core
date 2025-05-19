@@ -4,7 +4,6 @@ function openApiKeyModal(projectID, apiRefID, subPlan, cpAppID, appID, subID, su
 
   let scopes = Array.isArray(subscribedScopes) ? subscribedScopes : JSON.parse(subscribedScopes);
 
-  console.log('subscribedScopes', JSON.parse(subscribedScopes).length);
   if (scopes.length < 1) {
     return generateAPIKey(projectID, apiRefID, subPlan, cpAppID, appID, subID, subIDs, 'generateKeyBtn-')
   }
@@ -18,8 +17,6 @@ function openApiKeyModal(projectID, apiRefID, subPlan, cpAppID, appID, subID, su
   const scopeContainer = document.getElementById('scopeContainer-' + subID);
   scopeContainer.setAttribute('data-scopes', subscribedScopes);
 
-  const tokenBtn = document.getElementById('generateAPIKeyBtn-' + subID);
-  console.log('tokenBtn', tokenBtn);
   const scopesData = scopeContainer?.dataset?.scopes;
 
   if (scopesData) {
