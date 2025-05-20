@@ -25,7 +25,7 @@ const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const constants = require('../utils/constants');
 const apiMetadataService = require('../services/apiMetadataService');
-const { loadLayoutFromAPI } = require('../utils/util');
+const { loadLayoutFromAPI, renderTemplate } = require('../utils/util');
 const util = require('../utils/util');
 const { validationResult } = require('express-validator');
 const filePrefix = config.pathToContent;
@@ -69,6 +69,13 @@ const registerPartials = async (req, res, next) => {
       }
     } catch (error) {
       console.error('Error while loading organization :', error);
+      if (error.message === "API not found") {
+        let templateContent = {
+          errorMessage: constants.ERROR_MESSAGE.API_NOT_FOUND
+        }
+        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+        return res.send(html);
+      }
       next(error);
     }
   }
@@ -224,6 +231,9 @@ async function registerAPILandingContent(req, orgID, partialObject) {
 
   const apiHandle = req.params.apiHandle;
   const apiID = await apiDao.getAPIId(orgID, apiHandle);
+  if (apiID === undefined || apiID === null) {
+    throw new Error("API not found");
+  }
   //fetch markdown content for API if exists
   const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, constants.DOC_TYPES.API_LANDING, orgID, apiID);
   const markdownContent = markdownResponse !== null ? markdownResponse.API_FILE.toString("utf8") : "";
