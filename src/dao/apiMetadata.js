@@ -476,13 +476,14 @@ const createSubscriptionPolicy = async (orgID, policy, t) => {
 };
 
 const updateSubscriptionPolicy = async (orgID, policyID, policy, t) => {
+    const requestCount = policy.requestCount === -1 ? "Unlimited" : policy.requestCount;
     try {
         const [affectedCount, updatedRows] = await SubscriptionPolicy.update({
             POLICY_NAME: policy.policyName,
             DISPLAY_NAME: policy.displayName,
             BILLING_PLAN: policy.billingPlan,
             DESCRIPTION: policy.description,
-            REQUEST_COUNT: policy.requestCount,
+            REQUEST_COUNT: requestCount,
         }, {
             where: {
                 POLICY_ID: policyID,
@@ -1539,7 +1540,6 @@ module.exports = {
     getSubscriptionPolicyByName,
     getSubscriptionPolicy,
     getSubscriptionPolicies,
-    updateSubscriptionPolicy,
     deleteSubscriptionPolicy,
     createLabels,
     getLabelID,
