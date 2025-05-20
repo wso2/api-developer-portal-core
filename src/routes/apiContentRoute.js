@@ -27,7 +27,7 @@ router.get('/:orgName/views/:viewName/apis', (req, res, next) => {
         return res.status(404).send('Not Found');
     }
     next();
-}, registerPartials, ensureAuthenticated, apiController.loadAPIs);
+}, authController.handleSilentSSO, registerPartials, ensureAuthenticated, apiController.loadAPIs);
 
 router.get('/:orgName/views/:viewName/api/:apiHandle', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
