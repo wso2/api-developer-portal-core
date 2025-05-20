@@ -240,7 +240,8 @@ module.exports = {
         ERR_SUB_EXIST: "ERR_SUB_EXIST",
         COMMON_ERR: "Oops! Something went wrong",
         UNAUTHORIZED_ORG: "You are not authorized to access this organization",
-        UNAUTHORIZED_API: "You are not authorized to access this API"
+        UNAUTHORIZED_API: "You are not authorized to access this API",
+        API_NOT_FOUND: "Requested API not found",
     },
     COMMON_ERROR_MESSAGE: {
         errorMessage: "Oops! Something went wrong",
