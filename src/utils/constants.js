@@ -155,6 +155,7 @@ module.exports = {
         API_CONTENT_PARTIAL_NAME: "api-content",
         API_DOC_PARTIAL_NAME: "api-doc",
         API_DEFINITION_FILE_NAME: 'apiDefinition.json',
+        SCHEMA_DEFINITION_FILE_NAME: 'schemaDefinition.json',
         API_SPECIFICATION_PATH: 'specification',
         API_DEFINITION_GRAPHQL: 'apiDefinition.graphql',
         API_DEFINITION_XML: 'apiDefinition.xml',
