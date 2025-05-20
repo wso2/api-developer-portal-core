@@ -107,13 +107,6 @@ const loadAPIs = async (req, res) => {
                 metaDataList = [];
             }
 
-            if (metaDataList.length === 0) {
-                if (!(req.user)) {
-                    console.log("User is not authorized to access the APIs or user session expired, hence redirecting to login page");
-                    res.redirect(req.originalUrl.split("/apis")[0] + '/login');
-                }
-            }
-
             const templateContent = {
                 isAuthenticated: req.isAuthenticated(),
                 apiMetadata: metaDataList,
