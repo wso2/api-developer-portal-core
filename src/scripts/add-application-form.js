@@ -105,7 +105,9 @@ document.addEventListener('DOMContentLoaded', () => {
             descriptionError.style.display = 'none';
         }
 
-        saveButton.disabled = hasError;
+        if (saveButton) {
+            saveButton.disabled = hasError;
+        }
     };
 
     descriptionTextarea.addEventListener('input', () => {
@@ -117,17 +119,19 @@ document.addEventListener('DOMContentLoaded', () => {
         validateForm();
     });
 
-    cancelButton.addEventListener('click', () => {
-        closeModal('createAppModal');
-    });
+    if (createButton) {
+        cancelButton.addEventListener('click', () => {
+            closeModal('createAppModal');
+        });
+    }
 
     document
         .getElementById('applicationForm')
         .addEventListener('submit', (event) => {
-        if (saveButton.disabled) {
-            event.preventDefault();
-        }
-    });
+            if (saveButton.disabled) {
+                event.preventDefault();
+            }
+        });
 
     // Initialize the character count and form validation on page load
     const remaining = Math.max(
