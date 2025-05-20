@@ -449,7 +449,7 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
     };
 
     try { 
-        if (body) {
+        if (!(body == null || body === '' || (Array.isArray(body) && body.length === 0) || (typeof body === 'object' && !Array.isArray(body) && Object.keys(body).length === 0))) {
             options.data = body;
         }
 
