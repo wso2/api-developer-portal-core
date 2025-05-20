@@ -446,7 +446,7 @@ const createAPISubscriptionPolicy = async (apiSubscriptionPolicies, apiID, t) =>
     }
 }
 
-const postSubscriptionPolicy = async (orgID, policy, t) => {
+const putSubscriptionPolicy = async (orgID, policy, t) => {
     const currentSubscriptionPolicy = await getSubscriptionPolicyByName(orgID, policy.policyName, t);
     if (currentSubscriptionPolicy) {
         return updateSubscriptionPolicy(orgID, currentSubscriptionPolicy.POLICY_ID, policy, t); 
@@ -1534,7 +1534,7 @@ module.exports = {
     getAPIHandle,
     getAPIMetadataByCondition,
     searchAPIMetadata,
-    postSubscriptionPolicy,
+    putSubscriptionPolicy,
     createSubscriptionPolicy,
     getSubscriptionPolicyByName,
     getSubscriptionPolicy,

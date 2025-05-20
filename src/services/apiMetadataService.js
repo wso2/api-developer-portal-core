@@ -612,6 +612,14 @@ const addSubscriptionPolicies = async (req, res) => {
     }
 }
 
+const putSubscriptionPolicies = async (req, res) => {
+    if (Array.isArray(req.body)) {
+        await updateSubscriptionPolicies(req, res);
+    } else {
+        await updateSubscriptionPolicy(req, res);
+    }
+}
+
 const createSubscriptionPolicy = async (req, res) => {
 
     const { orgId } = req.params;
@@ -623,7 +631,7 @@ const createSubscriptionPolicy = async (req, res) => {
     }
     try {
         await sequelize.transaction(async (t) => {
-            const subscriptionPolicyResponse = await apiDao.postSubscriptionPolicy(orgId, subscriptionPolicy, t);
+            const subscriptionPolicyResponse = await apiDao.createSubscriptionPolicy(orgId, subscriptionPolicy, t);
             if (subscriptionPolicyResponse) {
                 console.log(`Created subscription policy for orgId: ${orgId}`);
                 res.status(201).send(new subscriptionPolicyDTO(subscriptionPolicyResponse));
@@ -656,7 +664,7 @@ const createSubscriptionPolicies = async (req, res) => {
             await sequelize.transaction(async (t) => {
                 for (const policy of subscriptionPolicies) {
                     if (policy.type == "requestCount") {
-                        const created = await apiDao.postSubscriptionPolicy(orgId, policy, t);
+                        const created = await apiDao.createSubscriptionPolicy(orgId, policy, t);
                         if (!created) {
                             throw new CustomError(
                                 500,
@@ -679,16 +687,16 @@ const createSubscriptionPolicies = async (req, res) => {
 
 const updateSubscriptionPolicy = async (req, res) => {
 
-    const { orgId, policyID } = req.params;
+    const { orgId } = req.params;
     const subscriptionPolicy = req.body;
-    if (!orgId || !policyID || !subscriptionPolicy) {
+    if (!orgId || !subscriptionPolicy) {
         throw new Sequelize.ValidationError(
             "Missing or Invalid fields in the request payload"
         );
     }
     try {
         await sequelize.transaction(async (t) => {
-            const subscriptionPolicyResponse = await apiDao.updateSubscriptionPolicy(orgId, policyID, subscriptionPolicy, t);
+            const subscriptionPolicyResponse = await apiDao.putSubscriptionPolicy(orgId, subscriptionPolicy, t);
             if (subscriptionPolicyResponse) {
                 res.status(200).send(new subscriptionPolicyDTO(subscriptionPolicyResponse));
             } else {
@@ -697,6 +705,46 @@ const updateSubscriptionPolicy = async (req, res) => {
         });
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND}, ${error}`);
+        util.handleError(res, error);
+    }
+};
+
+const updateSubscriptionPolicies = async (req, res) => {
+    try {
+        if (config.generateDefaultSubPolicies) {
+            const msg = "Bulk updating of subscription policies is not allowed because 'generateDefaultSubPolicies' is enabled in the Developer Portal."
+            console.log(msg)
+            res.status(403).send(msg);
+        } else {
+            const { orgId } = req.params;
+            const subscriptionPolicies = req.body;
+
+            if (!orgId || !Array.isArray(subscriptionPolicies) || subscriptionPolicies.length === 0) {
+                return res.status(400).send({ message: "Missing or invalid fields in the request payload" });
+            }
+
+            const updatedPolicies = [];
+
+            await sequelize.transaction(async (t) => {
+                for (const policy of subscriptionPolicies) {
+                    if (policy.type == "requestCount") {
+                        const created = await apiDao.putSubscriptionPolicy(orgId, policy, t);
+                        if (!created) {
+                            throw new CustomError(
+                                500,
+                                constants.ERROR_CODE[500],
+                                `Failed to create policy: ${policy.policyName || "unknown"}`
+                            );
+                        }
+                        updatedPolicies.push(new subscriptionPolicyDTO(created));
+                    }
+                }
+            });
+
+            res.status(201).send(updatedPolicies);
+        }
+    } catch (error) {
+        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_CREATE_ERROR}, ${error}`);
         util.handleError(res, error);
     }
 };
@@ -989,7 +1037,7 @@ module.exports = {
     getMetadataListFromDB,
     getMetadataFromDB,
     addSubscriptionPolicies,
-    updateSubscriptionPolicy,
+    putSubscriptionPolicies,
     deleteSubscriptionPolicy,
     getSubscriptionPolicy,
     createLabels,
