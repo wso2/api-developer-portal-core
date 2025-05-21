@@ -662,6 +662,7 @@ const createSubscriptionPolicies = async (req, res) => {
             const createdPolicies = [];
 
             await sequelize.transaction(async (t) => {
+                // TODO: Try using SubscriptionPolicy.bulkCreate() once Table is finalised and manipulating each data is not needed
                 for (const policy of subscriptionPolicies) {
                     if (policy.type == "requestCount") {
                         const created = await apiDao.createSubscriptionPolicy(orgId, policy, t);
