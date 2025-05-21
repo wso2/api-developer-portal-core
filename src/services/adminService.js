@@ -81,7 +81,7 @@ const createOrganization = async (req, res) => {
             subscriberRole: organization.SUBSCRIBER_ROLE,
             groupClaimName: organization.GROUP_CLAIM_NAME
         };
-        console.log(`Organization created successfully. orgId: ${orgId}, orgName: ${orgName}`);
+        console.log(`Organization created successfully. orgId: ${orgCreationResponse.orgId}, orgName: ${orgCreationResponse.orgName}`);
         res.status(201).send(orgCreationResponse);
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.ORG_CREATE_ERROR}`, error);
