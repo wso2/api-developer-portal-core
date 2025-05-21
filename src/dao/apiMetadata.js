@@ -446,6 +446,15 @@ const createAPISubscriptionPolicy = async (apiSubscriptionPolicies, apiID, t) =>
     }
 }
 
+const putSubscriptionPolicy = async (orgID, policy, t) => {
+    const currentSubscriptionPolicy = await getSubscriptionPolicyByName(orgID, policy.policyName, t);
+    if (currentSubscriptionPolicy) {
+        return updateSubscriptionPolicy(orgID, currentSubscriptionPolicy.POLICY_ID, policy, t); 
+    } else {
+        return createSubscriptionPolicy(orgID, policy, t);
+    }
+};
+
 const createSubscriptionPolicy = async (orgID, policy, t) => {
     const requestCount = policy.requestCount === -1 ? "Unlimited" : policy.requestCount;
     try {
@@ -467,13 +476,14 @@ const createSubscriptionPolicy = async (orgID, policy, t) => {
 };
 
 const updateSubscriptionPolicy = async (orgID, policyID, policy, t) => {
+    const requestCount = policy.requestCount === -1 ? "Unlimited" : policy.requestCount;
     try {
         const [affectedCount, updatedRows] = await SubscriptionPolicy.update({
             POLICY_NAME: policy.policyName,
             DISPLAY_NAME: policy.displayName,
             BILLING_PLAN: policy.billingPlan,
             DESCRIPTION: policy.description,
-            REQUEST_COUNT: policy.requestCount,
+            REQUEST_COUNT: requestCount,
         }, {
             where: {
                 POLICY_ID: policyID,
@@ -482,7 +492,7 @@ const updateSubscriptionPolicy = async (orgID, policyID, policy, t) => {
             returning: true,
             transaction: t
         });
-        return updatedRows;
+        return updatedRows[0];
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError || error instanceof Sequelize.ValidationError) {
             throw error;
@@ -1525,11 +1535,11 @@ module.exports = {
     getAPIHandle,
     getAPIMetadataByCondition,
     searchAPIMetadata,
+    putSubscriptionPolicy,
     createSubscriptionPolicy,
     getSubscriptionPolicyByName,
     getSubscriptionPolicy,
     getSubscriptionPolicies,
-    updateSubscriptionPolicy,
     deleteSubscriptionPolicy,
     createLabels,
     getLabelID,
