@@ -625,7 +625,7 @@ const createSubscriptionPolicy = async (req, res) => {
         await sequelize.transaction(async (t) => {
             const subscriptionPolicyResponse = await apiDao.createSubscriptionPolicy(orgId, subscriptionPolicy, t);
             if (subscriptionPolicyResponse) {
-                console.log(`Created subscription policy for orgId: ${orgId}, Policy:`, subscriptionPolicyResponse);
+                console.log(`Created subscription policy for orgId: ${orgId}`);
                 res.status(201).send(new subscriptionPolicyDTO(subscriptionPolicyResponse));
             } else {
                 throw new CustomError(500, constants.ERROR_CODE[500], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_CREATE_ERROR);
@@ -668,7 +668,7 @@ const createSubscriptionPolicies = async (req, res) => {
                     }
                 }
             });
-            console.log(`Created subscription policies for orgId: ${orgId}, Policies:`, createdPolicies);
+            console.log(`Created subscription policies for orgId: ${orgId}`);
             res.status(201).send(createdPolicies);
         }
     } catch (error) {
