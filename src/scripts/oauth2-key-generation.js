@@ -99,7 +99,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             tokenbtn.setAttribute("data-app-ref-id", responseData.appRefId);
 
             subList.forEach(subscription => {
-                document.getElementById("generateKeyBtn-" + subscription.subID)?.setAttribute('data-app-ref-id', `${responseData.appRefId}`);
+                document.getElementById("generateApiKey_" + subscription.subID)?.setAttribute('data-app-ref-id', `${responseData.appRefId}`);
             })
 
             document.getElementById("tokenKeyBtn")?.setAttribute("data-scopes", JSON.stringify(responseData.subscriptionScopes));
