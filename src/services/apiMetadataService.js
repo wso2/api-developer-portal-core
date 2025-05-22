@@ -624,11 +624,19 @@ const createSubscriptionPolicy = async (req, res) => {
 
     const { orgId } = req.params;
     const subscriptionPolicy = req.body;
-    if (!orgId || !subscriptionPolicy || subscriptionPolicy.type !== "requestCount") {
-        throw new Sequelize.ValidationError(
-            "Missing or Invalid fields in the request payload"
-        );
+
+    if (!orgId) {
+        return res.status(400).json({ message: "Organization ID is missing" });
     }
+
+    if (!subscriptionPolicy || typeof subscriptionPolicy !== "object") {
+        return res.status(400).json({ message: "Request body is missing or invalid" });
+    }
+
+    if (subscriptionPolicy.type !== "requestCount") {
+        return res.status(400).json({ message: "Invalid or missing subscription policy type" });
+    }
+
     try {
         await sequelize.transaction(async (t) => {
             const subscriptionPolicyResponse = await apiDao.createSubscriptionPolicy(orgId, subscriptionPolicy, t);
@@ -648,15 +656,19 @@ const createSubscriptionPolicy = async (req, res) => {
 const createSubscriptionPolicies = async (req, res) => {
     try {
         if (config.generateDefaultSubPolicies) {
-            const msg = "Bulk creation of subscription policies is not allowed because 'generateDefaultSubPolicies' is enabled in the Developer Portal."
-            console.log(msg)
-            res.status(403).send(msg);
+            const msg = "Bulk creation of subscription policies is not allowed because 'generateDefaultSubPolicies' is enabled in the Developer Portal.";
+            console.log(msg);
+            res.status(403).json({ message: msg });
         } else {
             const { orgId } = req.params;
             const subscriptionPolicies = req.body;
 
-            if (!orgId || !Array.isArray(subscriptionPolicies) || subscriptionPolicies.length === 0) {
-                return res.status(400).send({ message: "Missing or invalid fields in the request payload" });
+            if (!orgId) {
+                return res.status(400).json({ message: "Organization ID is missing" });
+            }
+
+            if (!Array.isArray(subscriptionPolicies) || subscriptionPolicies.length === 0) {
+                return res.status(400).json({ message: "Missing or invalid fields in the request payload" });
             }
 
             const createdPolicies = [];
@@ -690,11 +702,19 @@ const updateSubscriptionPolicy = async (req, res) => {
 
     const { orgId } = req.params;
     const subscriptionPolicy = req.body;
-    if (!orgId || !subscriptionPolicy || subscriptionPolicy.type !== "requestCount") {
-        throw new Sequelize.ValidationError(
-            "Missing or Invalid fields in the request payload"
-        );
+
+    if (!orgId) {
+        return res.status(400).json({ message: "Organization ID is missing" });
     }
+
+    if (!subscriptionPolicy || typeof subscriptionPolicy !== "object") {
+        return res.status(400).json({ message: "Request body is missing or invalid" });
+    }
+
+    if (subscriptionPolicy.type !== "requestCount") {
+        return res.status(400).json({ message: "Invalid or missing subscription policy type" });
+    }
+    
     try {
         await sequelize.transaction(async (t) => {
             const subscriptionPolicyResponse = await apiDao.putSubscriptionPolicy(orgId, subscriptionPolicy, t);
@@ -715,13 +735,17 @@ const updateSubscriptionPolicies = async (req, res) => {
         if (config.generateDefaultSubPolicies) {
             const msg = "Bulk updating of subscription policies is not allowed because 'generateDefaultSubPolicies' is enabled in the Developer Portal."
             console.log(msg)
-            res.status(403).send(msg);
+            res.status(403).json({ message: msg });
         } else {
             const { orgId } = req.params;
             const subscriptionPolicies = req.body;
 
-            if (!orgId || !Array.isArray(subscriptionPolicies) || subscriptionPolicies.length === 0) {
-                return res.status(400).send({ message: "Missing or invalid fields in the request payload" });
+            if (!orgId) {
+                return res.status(400).json({ message: "Organization ID is missing" });
+            }
+
+            if (!Array.isArray(subscriptionPolicies) || subscriptionPolicies.length === 0) {
+                return res.status(400).json({ message: "Missing or invalid fields in the request payload" });
             }
 
             const updatedPolicies = [];
