@@ -106,6 +106,7 @@ const loadAPIs = async (req, res) => {
                 console.log("Cannot retrieve allowed API list from control plane");
                 metaDataList = [];
             }
+
             const templateContent = {
                 isAuthenticated: req.isAuthenticated(),
                 apiMetadata: metaDataList,
@@ -177,8 +178,13 @@ const loadAPIContent = async (req, res) => {
                 errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API
             }
             if (allowedAPIList.count === 0) {
-                html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
-                res.send(html);
+                if (!(req.user)) {
+                    console.log("User is not authorized to access the API or user session expired, hence redirecting to login page");
+                    res.redirect(req.originalUrl.split("/api/")[0] + '/login');
+                } else {
+                    html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+                    res.send(html);
+                }
             }
             let subscriptionPlans = await util.appendSubscriptionPlanDetails(orgID, metaData.subscriptionPolicies);
             let providerUrl;

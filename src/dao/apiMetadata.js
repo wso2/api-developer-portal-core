@@ -1482,7 +1482,7 @@ const getAPIId = async (orgID, apiHandle) => {
                 ORG_ID: orgID
             }
         })
-        return api.API_ID;
+        return api?.API_ID;
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
