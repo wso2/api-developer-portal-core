@@ -733,8 +733,8 @@ const updateSubscriptionPolicy = async (req, res) => {
 const updateSubscriptionPolicies = async (req, res) => {
     try {
         if (config.generateDefaultSubPolicies) {
-            const msg = "Bulk updating of subscription policies is not allowed because 'generateDefaultSubPolicies' is enabled in the Developer Portal."
-            console.log(msg)
+            const msg = "Bulk updating of subscription policies is not allowed because 'generateDefaultSubPolicies' is enabled in the Developer Portal.";
+            console.log(msg);
             res.status(403).json({ message: msg });
         } else {
             const { orgId } = req.params;
