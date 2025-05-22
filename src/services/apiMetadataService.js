@@ -624,7 +624,7 @@ const createSubscriptionPolicy = async (req, res) => {
 
     const { orgId } = req.params;
     const subscriptionPolicy = req.body;
-    if (!orgId || !subscriptionPolicy) {
+    if (!orgId || !subscriptionPolicy || subscriptionPolicy.type !== "requestCount") {
         throw new Sequelize.ValidationError(
             "Missing or Invalid fields in the request payload"
         );
@@ -690,7 +690,7 @@ const updateSubscriptionPolicy = async (req, res) => {
 
     const { orgId } = req.params;
     const subscriptionPolicy = req.body;
-    if (!orgId || !subscriptionPolicy) {
+    if (!orgId || !subscriptionPolicy || subscriptionPolicy.type !== "requestCount") {
         throw new Sequelize.ValidationError(
             "Missing or Invalid fields in the request payload"
         );
