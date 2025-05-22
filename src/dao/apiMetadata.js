@@ -446,6 +446,15 @@ const createAPISubscriptionPolicy = async (apiSubscriptionPolicies, apiID, t) =>
     }
 }
 
+const putSubscriptionPolicy = async (orgID, policy, t) => {
+    const currentSubscriptionPolicy = await getSubscriptionPolicyByName(orgID, policy.policyName, t);
+    if (currentSubscriptionPolicy) {
+        return updateSubscriptionPolicy(orgID, currentSubscriptionPolicy.POLICY_ID, policy, t); 
+    } else {
+        return createSubscriptionPolicy(orgID, policy, t);
+    }
+};
+
 const createSubscriptionPolicy = async (orgID, policy, t) => {
     const requestCount = policy.requestCount === -1 ? "Unlimited" : policy.requestCount;
     try {
@@ -467,13 +476,14 @@ const createSubscriptionPolicy = async (orgID, policy, t) => {
 };
 
 const updateSubscriptionPolicy = async (orgID, policyID, policy, t) => {
+    const requestCount = policy.requestCount === -1 ? "Unlimited" : policy.requestCount;
     try {
         const [affectedCount, updatedRows] = await SubscriptionPolicy.update({
             POLICY_NAME: policy.policyName,
             DISPLAY_NAME: policy.displayName,
             BILLING_PLAN: policy.billingPlan,
             DESCRIPTION: policy.description,
-            REQUEST_COUNT: policy.requestCount,
+            REQUEST_COUNT: requestCount,
         }, {
             where: {
                 POLICY_ID: policyID,
@@ -482,7 +492,7 @@ const updateSubscriptionPolicy = async (orgID, policyID, policy, t) => {
             returning: true,
             transaction: t
         });
-        return updatedRows;
+        return updatedRows[0];
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError || error instanceof Sequelize.ValidationError) {
             throw error;
@@ -552,11 +562,11 @@ const storeAPIImageMetadata = async (apiImages, apiID, t) => {
     }
 }
 
-const storeAPIFile = async (apiDefinition, fileName, apiID, type, t) => {
+const storeAPIFile = async (apiFile, fileName, apiID, type, t) => {
 
     try {
         const apiFileResponse = await APIContent.create({
-            API_FILE: apiDefinition,
+            API_FILE: apiFile,
             FILE_NAME: fileName,
             API_ID: apiID,
             TYPE: type
@@ -1343,17 +1353,17 @@ const deleteImage = async (imageTag, apiID, t) => {
     }
 }
 
-const updateAPIFile = async (apiFile, fileName, apiID, orgID, t) => {
+const updateAPIFile = async (apiFile, fileName, apiID, orgID, type, t) => {
 
     try {
-        const apiFileResponse = await getAPIFile(fileName, constants.DOC_TYPES.API_DEFINITION, orgID, apiID, t);
+        const apiFileResponse = await getAPIFile(fileName, type, orgID, apiID, t);
         let fileUpdateResponse;
         if (apiFileResponse == null || apiFileResponse == undefined) {
             fileUpdateResponse = await APIContent.create({
                 API_FILE: apiFile,
                 FILE_NAME: fileName,
                 API_ID: apiID,
-                TYPE: constants.DOC_TYPES.API_DEFINITION
+                TYPE: type
             }, { transaction: t });
         } else {
             fileUpdateResponse = await APIContent.update({
@@ -1364,7 +1374,7 @@ const updateAPIFile = async (apiFile, fileName, apiID, orgID, t) => {
                     where: {
                         API_ID: apiID,
                         FILE_NAME: fileName,
-                        TYPE: constants.DOC_TYPES.API_DEFINITION
+                        TYPE: type
                     },
                     include: [
                         {
@@ -1525,11 +1535,11 @@ module.exports = {
     getAPIHandle,
     getAPIMetadataByCondition,
     searchAPIMetadata,
+    putSubscriptionPolicy,
     createSubscriptionPolicy,
     getSubscriptionPolicyByName,
     getSubscriptionPolicy,
     getSubscriptionPolicies,
-    updateSubscriptionPolicy,
     deleteSubscriptionPolicy,
     createLabels,
     getLabelID,

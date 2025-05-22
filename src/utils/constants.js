@@ -43,11 +43,15 @@ module.exports = {
         PUBLISHED: "PUBLISHED",
         UNPUBLISHED: "CREATED"
     },
+    API_TYPE: {
+        MCP: "MCP"
+    },
     DOC_TYPES: {
         DOC_ID: 'DOC_',
         DOCLINK_ID: 'LINK_',
         API_LANDING: 'MARKETING',
         API_DEFINITION: 'API_DEFINITION',
+        SCHEMA_DEFINITION: 'SCHEMA_DEFINITION',
         IMAGES: 'IMAGE',
         DOCUMENT: 'DOCUMENT',
         LINK: "DOC_LINK",
@@ -151,6 +155,7 @@ module.exports = {
         API_CONTENT_PARTIAL_NAME: "api-content",
         API_DOC_PARTIAL_NAME: "api-doc",
         API_DEFINITION_FILE_NAME: 'apiDefinition.json',
+        SCHEMA_DEFINITION_FILE_NAME: 'schemaDefinition.json',
         API_SPECIFICATION_PATH: 'specification',
         API_DEFINITION_GRAPHQL: 'apiDefinition.graphql',
         API_DEFINITION_XML: 'apiDefinition.xml',

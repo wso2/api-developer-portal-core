@@ -146,6 +146,7 @@ const loadApplication = async (req, res) => {
                     apiDTO.name = api.apiInfo.apiName;
                     apiDTO.apiID = api.apiID;
                     apiDTO.version = api.apiInfo.apiVersion;
+                    apiDTO.apiType = api.apiInfo.apiType;
                     apiDTO.apiInfo.apiImageMetadata = api.apiInfo.apiImageMetadata;
                     apiDTO.image = api.apiInfo.apiImageMetadata["api-icon"];
                     apiDTO.subID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.SUB_ID;
@@ -169,6 +170,7 @@ const loadApplication = async (req, res) => {
                     const apiKeys = await getAPIKeys(req, api.apiReferenceID, applicationReference);
                     apiDTO.apiKeys = apiKeys;
                     apiDTO.subscriptionPolicyDetails = api.subscriptionPolicies;
+                    apiDTO.scopes = apiDetails.scopes.map(scope => scope.key);
                     return apiDTO
                 }));
             }
@@ -346,10 +348,11 @@ async function getAPIDetails(req, apiId) {
 
 async function getAPIKeys(req, apiId, applicationId) {
     const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + `/api-keys?apiId=${apiId}&keyType=PRODUCTION`, null, null);
-    let apiKeys;
+    let apiKeys = {};
     for (const key of responseData) {
         if (key.application.id === applicationId) {
-            apiKeys = key.keys;
+            apiKeys.key = key.keys;
+            apiKeys.scopes = key.scopes;
         }
     }
     return apiKeys;

@@ -197,6 +197,7 @@ const loadAPIContent = async (req, res) => {
             //check whether api content exists
             let loadDefault = false
             let apiDetails = "";
+            let schemaDefinition = "";
             let apiDefinition = {};
             const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, constants.DOC_TYPES.API_LANDING, orgID, apiID);
             if (!markdownResponse) {
@@ -212,6 +213,21 @@ const loadAPIContent = async (req, res) => {
                             apiDetails["serverDetails"] = "";
                         } else {
                             apiDetails["serverDetails"] = metaData.endPoints;
+                        }
+                    }
+                    if (constants.API_TYPE.MCP === metaData.apiInfo?.apiType) {
+                        try {
+                            let rawSchema = await apiDao.getAPIFile(
+                                constants.FILE_NAME.SCHEMA_DEFINITION_FILE_NAME,
+                                constants.DOC_TYPES.SCHEMA_DEFINITION,
+                                orgID,
+                                apiID
+                            );
+                            const schemaString = rawSchema.toString(constants.CHARSET_UTF8);
+                            schemaDefinition = JSON.parse(schemaString);
+                        } catch (err) {
+                            console.error("Failed to load or parse schema definition:", err);
+                            throw err;
                         }
                     }
                 }
@@ -242,7 +258,8 @@ const loadAPIContent = async (req, res) => {
                 schemaUrl: `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${constants.FILE_NAME.API_DEFINITION_XML}`,
                 loadDefault: loadDefault,
                 resources: apiDetails,
-                orgID: orgID
+                orgID: orgID,
+                schemaDefinition: schemaDefinition,
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
         } catch (error) {
