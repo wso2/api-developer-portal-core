@@ -501,12 +501,12 @@ const updateSubscriptionPolicy = async (orgID, policyID, policy, t) => {
     }
 };
 
-const deleteSubscriptionPolicy = async (orgID, policyID, t) => {
+const deleteSubscriptionPolicy = async (orgID, policyName, t) => {
 
     try {
         const subscriptionPolicyResponse = await SubscriptionPolicy.destroy({
             where: {
-                POLICY_ID: policyID,
+                POLICY_NAME: policyName,
                 ORG_ID: orgID
             },
             transaction: t 
