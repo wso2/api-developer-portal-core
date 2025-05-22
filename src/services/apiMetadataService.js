@@ -752,15 +752,15 @@ const updateSubscriptionPolicies = async (req, res) => {
 
 const deleteSubscriptionPolicy = async (req, res) => {
 
-    const { orgId, policyID } = req.params;
-    if (!orgId || !policyID) {
+    const { orgId, policyName } = req.params;
+    if (!orgId || !policyName) {
         throw new Sequelize.ValidationError(
             "Missing or Invalid fields in the request payload"
         );
     }
     try {
         await sequelize.transaction(async (t) => {
-            const deleteCount = await apiDao.deleteSubscriptionPolicy(orgId, policyID, t);
+            const deleteCount = await apiDao.deleteSubscriptionPolicy(orgId, policyName, t);
             if (deleteCount === 0) {
                 throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
             } else {
