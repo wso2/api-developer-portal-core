@@ -9,13 +9,33 @@
     <elements-api apiDescriptionDocument='{{swagger}}' router="hash" layout="sidebar" />
   </div>
   <style>
-    .sl-w-2\/5 {
-      width: 100%;
+    .sl-py-16 {
+      max-width: 900px !important;
     }
+
+    @media (max-width: 1700px) {
+      .sl-py-16 {
+        max-width: 800px !important;
+      }
+    }
+
+    @media (max-width: 1600px) {
+      .sl-py-16 {
+        max-width: 700px !important;
+      }
+    }
+
+    @media (max-width: 1500px) {
+      .sl-py-16 {
+        max-width: 600px !important;
+      }
+    }
+
     .sl-px-24 {
       padding-right: 0px;
       padding-left: 30px;
     }
+
     .sl-border-t {
       display: none;
     }
