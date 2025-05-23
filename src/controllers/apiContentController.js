@@ -29,6 +29,7 @@ const apiMetadataService = require('../services/apiMetadataService');
 const adminService = require('../services/adminService');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const { ApplicationDTO } = require('../dto/application');
+const APIDTO = require('../dto/apiDTO');
 const controlPlaneUrl = config.controlPlane.url;
 
 const filePrefix = config.pathToContent;
@@ -114,7 +115,13 @@ const loadAPIs = async (req, res) => {
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 orgID: orgID,
             };
-            html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
+
+            if (req.originalUrl.includes("/mcps")) {
+                console.log
+                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp", viewName);
+            } else {
+                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
+            }
         } catch (error) {
             console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
             html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs',
@@ -223,7 +230,7 @@ const loadAPIContent = async (req, res) => {
                                 orgID,
                                 apiID
                             );
-                            const schemaString = rawSchema.toString(constants.CHARSET_UTF8);
+                            const schemaString = rawSchema.API_FILE.toString(constants.CHARSET_UTF8);
                             schemaDefinition = JSON.parse(schemaString);
                         } catch (err) {
                             console.error("Failed to load or parse schema definition:", err);
@@ -261,7 +268,11 @@ const loadAPIContent = async (req, res) => {
                 orgID: orgID,
                 schemaDefinition: schemaDefinition,
             };
-            html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
+            if (schemaDefinition) {
+                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp-landing", viewName);
+            } else {
+                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
+            }
         } catch (error) {
             console.error(`Failed to load api content:`, error);
             html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
@@ -399,8 +410,14 @@ const loadDocument = async (req, res) => {
             const orgID = await adminDao.getOrgId(orgName);
             const apiID = await apiDao.getAPIId(orgID, apiHandle);
             const viewName = req.params.viewName;
-            const docNames = await apiMetadataService.getAPIDocTypes(orgID, apiID)
-            templateContent.baseUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle;
+            const docNames = await apiMetadataService.getAPIDocTypes(orgID, apiID);
+            const apiMetadata = await apiDao.getAPIMetadata(orgID, apiID);
+            let apiType = apiMetadata[0].dataValues.API_TYPE;
+            if (apiType === constants.API_TYPE.MCP) {
+                templateContent.baseUrl = '/' + orgName + '/views/' + viewName + "/mcp/" + apiHandle;
+            } else {
+                templateContent.baseUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle;
+            }
             templateContent.docTypes = docNames;
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
         } catch (error) {
@@ -513,5 +530,5 @@ module.exports = {
     loadAPIs,
     loadAPIContent,
     loadDocsPage,
-    loadDocument
+    loadDocument,
 };

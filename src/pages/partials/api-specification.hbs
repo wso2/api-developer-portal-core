@@ -1,4 +1,4 @@
-{{#if (eq apiType "REST")}}
+{{#in apiType values="REST,MCP"}}
 
 <head>
   <link rel="stylesheet" href="https://unpkg.com/@stoplight/elements/styles.min.css">
@@ -41,8 +41,8 @@
     }
   </style>
 </main>
-
-{{else if (eq apiType "AsyncAPI")}}
+{{/in}}
+{{#if (eq apiType "AsyncAPI")}}
 
 <head>
   <link rel="stylesheet" href="/technical-styles/async-tryout.css">

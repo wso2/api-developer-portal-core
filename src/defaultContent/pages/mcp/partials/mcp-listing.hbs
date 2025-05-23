@@ -1,4 +1,4 @@
-<!--
+{{!--
  * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
- -->
+--}}
 
 <section class="apis-section">
   <div class="container-fluid">
@@ -23,17 +23,17 @@
       <div class="apilist-hero-content">
         <div class="apilist-hero-header">
           <h1 class="apilist-hero-title">
-            Discover, Integrate, and Innovate with Scalable APIs
+            Discover, integrate, and innovate with MCP-powered tools for your agents.
           </h1>
           <div class="apilist-hero-description">
-            Explore our extensive API catalog and discover how to integrate them seamlessly into your application.
+            Explore our extensive MCP catalog and discover how to integrate them seamlessly into your application.
           </div>
         </div>
       </div>
       <div class="col-lg-6 col-md-12 apilist-hero-image">
         <img
-          src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/apisHeroImg.png"
-          alt="Hero Image" class="img-fluid" />
+          src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/mcphero.svg"
+          alt="Hero Image" class="img-fluid" style="max-width: 65%;"/>
       </div>
     </div>
   </div>
@@ -42,27 +42,16 @@
       <div class="search-input">
         <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/search.svg"
           alt="search" class="search-icon" />
-        <input type="text" id="query" placeholder="Search APIs" autocomplete="off" />
+        <input type="text" id="query" placeholder="Search MCP Proxies" autocomplete="off" />
       </div>
     </div>
     <div class="row row-gap-4">
-      {{#if (eq apiMetadata.length 0)}}
-      <div class="ps-3" id="no-subscription">
-        <div class="api-info-box">
-          <div class="api-info-content">
-            <div class="api-info-title">
-              No APIs available.
-            </div>
-          </div>
-        </div>
-      </div>
-      {{/if}}
       {{#apiMetadata}}
-      {{#unless (eq apiInfo.apiType "MCP")}}
+      {{#if (eq apiInfo.apiType "MCP")}}
       <div class="col-lg-4 col-md-6 col-sm-12" id="apiCard-{{apiID}}">
         <div class="card api-card d-flex flex-column">
           <div class="api-card-header d-flex align-items-center gap-3 position-relative overflow-hidden" 
-               onclick="window.location.href='{{../baseUrl}}/api/{{apiHandle}}'" style="cursor: pointer;">
+               onclick="window.location.href='{{../baseUrl}}/mcp/{{apiHandle}}'" style="cursor: pointer;">
                {{#if apiInfo.apiImageMetadata.api-icon}}
                   <img src="{{apiInfo.apiImageMetadata.api-icon}}" class="api-card-img" alt="..." />
                 {{else}}
@@ -79,7 +68,7 @@
             <div class="subscription-flag fw-bold" style="display: {{#if (some applications "subscribed")}}block{{else}}none{{/if}};">Subscribed</div>
             {{/if}}
           </div>
-          <div class="api-card-body flex-grow-1" onclick="window.location.href='{{../baseUrl}}/api/{{apiHandle}}'" style="cursor: pointer;">
+          <div class="api-card-body flex-grow-1" onclick="window.location.href='{{../baseUrl}}/mcp/{{apiHandle}}'" style="cursor: pointer;">
             <div class="truncate-text fw-light apilisting-api-description small mb-3">{{apiInfo.apiDescription}}</div>
             <div class="row">
               <div class="apilisting-tags">
@@ -156,7 +145,7 @@
           </div>
         </div>
       </div>
-      {{/unless}}
+      {{/if}}
       {{/apiMetadata}}
     </div>
   </div>

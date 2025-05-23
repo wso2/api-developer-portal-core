@@ -403,6 +403,11 @@ async function removeSubscription(orgID, appID, apiRefID, subID) {
                 document.getElementById(`app-table-${appID}`).remove();
                 document.getElementById('no-subscription').style.display = 'block';
             }
+            const mcpTable = document.getElementById(`app-table-mcp-${appID}`);
+            if (mcpTable && mcpTable.rows.length === 1) {
+                mcpTable.remove();
+                document.getElementById('no-subscription-mcp').style.display = 'block';
+            }
         } else {
             const responseData = await response.json();
             console.error('Failed to unsubscribe:', responseData);

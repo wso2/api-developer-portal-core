@@ -135,7 +135,8 @@ const loadApplication = async (req, res) => {
                 applicationReference = applicationList.appMap[0].appRefID;
                 applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
             }
-
+            let otherAPICount = 0;
+            let mcpAPICount = 0;
             let subList = [];
             if (subAPIs.length > 0) {
 
@@ -166,7 +167,11 @@ const loadApplication = async (req, res) => {
                     if (subPolicy) {
                         apiDTO.policyName = subPolicy.dataValues.POLICY_NAME;
                     }
-
+                    if (constants.API_TYPE.MCP === api.apiInfo.apiType) {
+                        mcpAPICount++;
+                    } else {
+                        otherAPICount++;
+                    }
                     const apiKeys = await getAPIKeys(req, api.apiReferenceID, applicationReference);
                     apiDTO.apiKeys = apiKeys;
                     apiDTO.subscriptionPolicyDetails = api.subscriptionPolicies;
@@ -271,6 +276,8 @@ const loadApplication = async (req, res) => {
                 isProduction: true,
                 isApiKey: isApiKey,
                 subscriptionScopes: subscriptionScopes,
+                otherAPICount: otherAPICount,
+                mcpAPICount: mcpAPICount,
             }
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);

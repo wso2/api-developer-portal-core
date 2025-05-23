@@ -56,7 +56,7 @@
 .apilist-hero-header .apilist-hero-title {
   font-size: 2rem;
   font-weight: 600;
-  color: var(--main-text-color);
+  color: var(--primary-main-color);
 }
 
 .apilist-hero-header .apilist-hero-title-highlight {
