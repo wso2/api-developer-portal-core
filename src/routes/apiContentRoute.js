@@ -34,7 +34,7 @@ router.get('/:orgName/views/:viewName/mcps', (req, res, next) => {
         return res.status(404).send('Not Found');
     }
     next();
-}, registerPartials, ensureAuthenticated, apiController.loadMCPs);
+}, registerPartials, ensureAuthenticated, apiController.loadAPIs);
 
 router.get('/:orgName/views/:viewName/api/:apiHandle', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {

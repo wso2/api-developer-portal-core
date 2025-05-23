@@ -66,6 +66,7 @@ const loadAPIs = async (req, res) => {
             const orgID = orgDetails.ORG_ID;
             const searchTerm = req.query.query;
             const tags = req.query.tags;
+            let mcpAPIExists = false;
             let metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
             const apiData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
             let appList = [];
@@ -115,7 +116,13 @@ const loadAPIs = async (req, res) => {
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 orgID: orgID,
             };
-            html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
+
+            if (req.originalUrl.includes("/mcps")) {
+                console.log
+                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp", viewName);
+            } else {
+                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
+            }
         } catch (error) {
             console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
             html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs',
