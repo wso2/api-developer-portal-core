@@ -71,4 +71,11 @@ router.get('/:orgName/views/:viewName/api/:apiHandle/docs/:docType/:docName', (r
     next();
 }, authController.handleSilentSSO, registerPartials, ensureAuthenticated, apiController.loadDocument);
 
+router.get('/:orgName/views/:viewName/mcp/:apiHandle/docs/:docType/:docName', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, authController.handleSilentSSO, registerPartials, ensureAuthenticated, apiController.loadDocument);
+
 module.exports = router;

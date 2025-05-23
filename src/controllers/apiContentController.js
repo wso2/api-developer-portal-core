@@ -66,7 +66,6 @@ const loadAPIs = async (req, res) => {
             const orgID = orgDetails.ORG_ID;
             const searchTerm = req.query.query;
             const tags = req.query.tags;
-            let mcpAPIExists = false;
             let metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
             const apiData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
             let appList = [];
