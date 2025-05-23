@@ -97,7 +97,7 @@ const createAPIMetadata = async (req, res) => {
             // store api definition file
             await apiDao.storeAPIFile(apiDefinitionFile, apiFileName, apiID, constants.DOC_TYPES.API_DEFINITION, t);
             // Save MCP tools as schema definition if the API type is MCP
-            if (constants.API_TYPE.MCP === apiMetadata.apiInfo.apiType && req.files?.schemaDefinition?.[0]) {
+            // if (constants.API_TYPE.MCP === apiMetadata.apiInfo.apiType && req.files?.schemaDefinition?.[0]) {
                 const file = req.files.schemaDefinition[0];
                 const schemaDefinitionFile = file.buffer;
                 console.log("Schema definition file", schemaDefinitionFile);
@@ -105,7 +105,7 @@ const createAPIMetadata = async (req, res) => {
                 await apiDao.storeAPIFile(schemaDefinitionFile, schemaFileName, apiID,
                     constants.DOC_TYPES.SCHEMA_DEFINITION, t);
                 console.log("Schema definition file stored");
-            }
+            // }
             apiMetadata.apiID = apiID;
         });
 
@@ -326,7 +326,7 @@ const updateAPIMetadata = async (req, res) => {
             }
             // Update MCP tools schema definition if the API type is MCP
             console.log("MCP API Definition", req.files?.schemaDefinition?.[0]);
-            if (constants.API_TYPE.MCP === apiMetadata.apiInfo.apiType && req.files?.schemaDefinition?.[0]) {
+            // if (constants.API_TYPE.MCP === apiMetadata.apiInfo.apiType && req.files?.schemaDefinition?.[0]) {
                 const file = req.files.schemaDefinition[0];
                 const schemaDefinitionFile = file.buffer;
                 const schemaFileName = file.originalname;
@@ -334,7 +334,7 @@ const updateAPIMetadata = async (req, res) => {
                 await apiDao.updateAPIFile(schemaDefinitionFile, schemaFileName, apiId, orgId,
                     constants.DOC_TYPES.SCHEMA_DEFINITION, t);
                 console.log("Schema definition file stored");
-            }
+            // }
             res.status(200).send(new APIDTO(updatedAPI[0].dataValues));
         });
     } catch (error) {
