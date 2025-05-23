@@ -132,94 +132,6 @@ const loadAPIs = async (req, res) => {
     res.send(html);
 }
 
-const loadMCPs = async (req, res) => {
-
-    const { orgName, viewName } = req.params;
-    let html;
-    if (config.mode === constants.DEV_MODE) {
-        const metaDataList = await loadAPIMetaDataList();
-        for (const metaData of metaDataList) {
-            let subscriptionPlans = [];
-            subscriptionPlans.push({
-                displayName: "Sample",
-                policyName: "Sample",
-                description: "Sample",
-                billingPlan: "Sample",
-                requestCount: "1000",
-            });
-            metaData.subscriptionPolicyDetails = subscriptionPlans;
-        }
-        const templateContent = {
-            apiMetadata: metaDataList,
-            baseUrl: baseURLDev + viewName
-        }
-        html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
-    } else {
-        try {
-            const orgDetails = await adminDao.getOrganization(orgName);
-            const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
-            req.cpOrgID = cpOrgID;
-            const orgID = orgDetails.ORG_ID;
-            const searchTerm = req.query.query;
-            const tags = req.query.tags;
-            let metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
-            const apiData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
-            let appList = [];
-            let apiTags = [];
-            apiData.forEach(api => {
-                if (api.apiInfo.tags) {
-                    api.apiInfo.tags.forEach(tag => {
-                        if (!apiTags.includes(tag)) {
-                            apiTags.push(tag);
-                        }
-                    });
-                }
-            });
-
-            for (const metaData of metaDataList) {
-                metaData.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, metaData.subscriptionPolicies);
-                if (req.user) {
-                    let applications = await adminDao.getApplications(orgID, req.user.sub);
-                    if (applications.length > 0) {
-                        appList = await Promise.all(
-                            applications.map(async (app) => {
-                                const subscription = await adminDao.getAppApiSubscription(orgID, app.APP_ID, metaData.apiID);
-                                return {
-                                    ...new ApplicationDTO(app),
-                                    subscribed: subscription.length > 0,
-                                };
-                            })
-                        );
-                    }
-                }
-                metaData.applications = appList;
-            }
-            //retrieve api list from control plane
-            const allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis`, {}, {});
-            if (allowedAPIList) {
-                //filter apis based on the roles
-                metaDataList = util.filterAllowedAPIs(metaDataList, allowedAPIList.list);
-            } else {
-                console.log("Cannot retrieve allowed API list from control plane");
-                metaDataList = [];
-            }
-            const templateContent = {
-                isAuthenticated: req.isAuthenticated(),
-                apiMetadata: metaDataList,
-                tags: apiTags,
-                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-                orgID: orgID,
-            };
-            html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp", viewName);
-        } catch (error) {
-            console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs',
-            constants.COMMON_ERROR_MESSAGE , true);
-        }
-    }
-    res.send(html);
-}
-
 const loadAPIContent = async (req, res) => {
 
     let html;
@@ -620,5 +532,4 @@ module.exports = {
     loadAPIContent,
     loadDocsPage,
     loadDocument,
-    loadMCPs,
 };
