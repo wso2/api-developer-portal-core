@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("query").value = decodeURIComponent(query);        
     } else {
         if (queryId) {
-            document.getElementById("query").placeholder="Search APIs";
+            document.getElementById("query");
         }
     }
 

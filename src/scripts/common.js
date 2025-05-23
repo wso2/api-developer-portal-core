@@ -78,7 +78,9 @@ document.addEventListener("DOMContentLoaded", function () {
         const currentPath = window.location.pathname;
         const navLinks = document.querySelectorAll('.nav-link');
         const apiSubmenu = document.getElementById('api-submenu');
+        const mcpSubmenu = document.getElementById('mcp-submenu');
         const apisLink = document.getElementById('apis');
+        const mcpLink = document.getElementById('mcps');
 
         // Function to extract base path from links in the sidebar
         const extractBasePath = () => {
@@ -130,6 +132,31 @@ document.addEventListener("DOMContentLoaded", function () {
             document.getElementById('applications')?.classList.add('active');
             apiSubmenu.classList.remove('show');
             apisLink?.classList.remove('has-active-submenu');
+        } else if (currentPath.includes('/mcps')) {
+            document.getElementById('mcps')?.classList.add('active');
+            mcpSubmenu.classList.remove('show');
+            mcpLink?.classList.remove('has-active-submenu');
+        } else if (currentPath.includes('/mcp/')) {
+            mcpSubmenu.classList.add('show');
+            mcpLink?.classList.add('active');
+            mcpLink?.classList.add('has-active-submenu');
+
+            // Extract API ID from URL path and update submenu links
+            const apiIdMatch = currentPath.match(/\/mcp\/([^\/]+)/);
+            if (apiIdMatch && apiIdMatch[1]) {
+                const apiId = apiIdMatch[1];
+
+                // Update the submenu links with the correct API ID and base path
+                document.getElementById('mcp-overview').href = `${basePath}/mcp/${apiId}`;
+                document.getElementById('mcp-docs').href = `${basePath}/mcp/${apiId}/docs/specification`;
+
+                // Set active submenu item
+                if (currentPath.includes('/docs')) {
+                    document.getElementById('mcp-docs')?.classList.add('active');
+                } else {
+                    document.getElementById('mcp-overview')?.classList.add('active');
+                }
+            }
         }
     };
 
@@ -878,6 +905,58 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
+    // Add pagination for subscription table
+    (function setupSubscriptionPagination() {
+            const apisTableContainer = document.getElementById('app-table-container')      
+            const rows = Array.from(apisTableContainer.querySelectorAll('tr.data-row'));
+            const pageSize = 5;
+            let currentPage = 1;
+        
+            function showPage(page) {
+                const start = (page - 1) * pageSize;
+                const end = start + pageSize;
+        
+                rows.forEach((row, index) => {
+                    row.style.display = index >= start && index < end ? '' : 'none';
+                });
+        
+                renderPagination(page);
+            }
+        
+            function renderPagination(page) {
+                const totalPages = Math.ceil(rows.length / pageSize);
+                const container = apisTableContainer.querySelector('#subscription-pagination');
+                container.innerHTML = '';
+        
+                if (totalPages <= 1) return;
+        
+                for (let i = 1; i <= totalPages; i++) {
+                    const btn = document.createElement('button');
+                    btn.textContent = i;
+                    btn.className = `pagination-btn btn btn-sm ${i === page ? 'common-btn-primary' : 'common-btn-outlined'}`;
+                    btn.onclick = () => {
+                        currentPage = i;
+                        showPage(currentPage);
+                    };
+                    container.appendChild(btn);
+                }
+            }
+            let paginationDiv = apisTableContainer.querySelector('#subscription-pagination');
+            if (!paginationDiv) {
+                paginationDiv = document.createElement('div');
+                paginationDiv.id = 'subscription-pagination';
+                paginationDiv.className = 'd-flex justify-content-end gap-2 mt-3';
+                const rowWrapper = apisTableContainer.querySelector('.row.row-gap-4');
+                const noSubs = apisTableContainer.querySelector('#no-subscription');
+                apisTableContainer.appendChild(paginationDiv);
+                if (rowWrapper && noSubs) {
+                    rowWrapper.insertBefore(paginationDiv, noSubs);
+                }
+            }
+        
+            showPage(currentPage);
+    })(); 
+    
     // Handle API card message overlays
     const messageOverlays = document.querySelectorAll('.message-overlay');
     messageOverlays.forEach(overlay => {
@@ -932,6 +1011,15 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         return null;
     };
+
+    // Toggle accordion chevron icons
+    document.querySelectorAll('.accordion-header').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const icon = this.querySelector('.chevron-icon');
+            icon.classList.toggle('bi-chevron-down');
+            icon.classList.toggle('bi-chevron-up');
+        });
+    });
 
     // Load image vectors and apply theme colors
     let primaryMain = getComputedStyle(document.documentElement).getPropertyValue("--primary-main-color").trim();
