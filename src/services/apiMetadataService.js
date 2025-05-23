@@ -36,6 +36,7 @@ const LabelDTO = require("../dto/label");
 
 const createAPIMetadata = async (req, res) => {
 
+    console.log("Creating API metadata");
     const apiMetadata = JSON.parse(req.body.apiMetadata);
     let apiDefinitionFile, apiFileName = "";
     if (req.files?.apiDefinition?.[0]) {
@@ -99,9 +100,11 @@ const createAPIMetadata = async (req, res) => {
             if (constants.API_TYPE.MCP === apiMetadata.apiInfo.apiType && req.files?.schemaDefinition?.[0]) {
                 const file = req.files.schemaDefinition[0];
                 const schemaDefinitionFile = file.buffer;
+                console.log("Schema definition file", schemaDefinitionFile);
                 const schemaFileName = file.originalname;
                 await apiDao.storeAPIFile(schemaDefinitionFile, schemaFileName, apiID,
                     constants.DOC_TYPES.SCHEMA_DEFINITION, t);
+                console.log("Schema definition file stored");
             }
             apiMetadata.apiID = apiID;
         });
