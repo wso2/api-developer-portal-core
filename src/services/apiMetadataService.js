@@ -241,6 +241,7 @@ const getMetadataListFromDB = async (orgID, groups, searchTerm, tags, apiName, a
 
 const updateAPIMetadata = async (req, res) => {
 
+    console.log("Updating API metadata");
     const apiMetadata = JSON.parse(req.body.apiMetadata);
     let apiDefinitionFile, apiFileName = "";
     if (req.files?.apiDefinition?.[0]) {
@@ -248,6 +249,7 @@ const updateAPIMetadata = async (req, res) => {
         apiDefinitionFile = file.buffer;
         apiFileName = file.originalname;
     }
+    console.log("MCP API Definition file name", apiFileName);
     //TODO: Get orgId from the orgName
     const { orgId, apiId } = req.params;
 
@@ -323,12 +325,15 @@ const updateAPIMetadata = async (req, res) => {
                 throw new Sequelize.EmptyResultError("No record found to update");
             }
             // Update MCP tools schema definition if the API type is MCP
+            console.log("MCP API Definition", req.files?.schemaDefinition?.[0]);
             if (constants.API_TYPE.MCP === apiMetadata.apiInfo.apiType && req.files?.schemaDefinition?.[0]) {
                 const file = req.files.schemaDefinition[0];
                 const schemaDefinitionFile = file.buffer;
                 const schemaFileName = file.originalname;
+                console.log("Schema definition file", schemaDefinitionFile);
                 await apiDao.updateAPIFile(schemaDefinitionFile, schemaFileName, apiId, orgId,
                     constants.DOC_TYPES.SCHEMA_DEFINITION, t);
+                console.log("Schema definition file stored");
             }
             res.status(200).send(new APIDTO(updatedAPI[0].dataValues));
         });
