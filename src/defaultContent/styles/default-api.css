@@ -79,6 +79,11 @@
   display: flex;
   flex-direction: column;
 }
+.defaultapi-resources-mcp {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 
 .defaultapi-resource-item {
   display: flex;
@@ -222,6 +227,17 @@
   white-space: pre-wrap; 
   max-height: 400px;    
 }
+.mcp-json-block {
+  background: #f7f7f7;
+  padding: 12px 18px;
+  border-radius: 0 0 6px 6px;
+  border: 1px solid #bfbebe;
+  font-family: monospace;
+  font-size: 13px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  margin-bottom: 8px;
+}
 .accordion-header {
   display: flex;
   justify-content: space-between;
@@ -234,4 +250,17 @@
   font-size: 16px;
   cursor: pointer;
   transition: background-color 0.2s;
+}
+.schema-title{
+  color: #bf7f4c;
+}
+.schema-content{
+  color: #992e3c;
+}
+.mcp-json-block-header{
+  background: #e3e3e3;
+  padding: 12px 18px;
+  border-radius: 6px 6px 0 0;
+  border: 1px solid #bfbebe;
+  border-bottom: none;
 }
