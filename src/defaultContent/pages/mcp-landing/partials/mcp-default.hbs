@@ -42,7 +42,7 @@
     </div>
     <div class="defaultapi-section">
       <div class="row">
-        <div class="container-header mb-4">MCP Tools</div>
+        <div class="container-header mb-4">Tools</div>
         <div class="defaultapi-resources col-12 col-lg-6 mb-4" style="margin-right: 30px;">
           {{#each schemaDefinition}}
             <div class="accordion-set">
@@ -60,9 +60,7 @@
                   <p class="accordion-summary">No summary available.</p>
                 {{/if}}
                 {{#if this.inputSchema}}
-                  <pre class="json-block"><code>{{{json
-                        this.inputSchema
-                      }}}</code></pre>
+                    <pre class="json-block"><code>    {{{jsonBeautify this.inputSchema}}}</code></pre>
                 {{/if}}
               </div>
             </div>

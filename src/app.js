@@ -95,6 +95,14 @@ Handlebars.registerHelper('json', function (context) {
     }
 });
 
+Handlebars.registerHelper('jsonBeautify', function (context) {
+    if (context) {
+        return JSON.stringify(context, null, 2); 
+    } else {
+        return '{}'; 
+    }
+});
+
 Handlebars.registerHelper("every", function (array, key, options) {
     if (!Array.isArray(array)) {
         return options.inverse(this);

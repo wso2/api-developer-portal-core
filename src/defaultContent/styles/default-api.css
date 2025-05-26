@@ -223,8 +223,9 @@
   border-radius: 6px;
   font-family: monospace;
   font-size: 13px;
-  overflow-x: auto;
-  white-space: pre-wrap;
+  overflow: auto;       
+  white-space: pre-wrap; 
+  max-height: 400px;    
 }
 .mcp-json-block {
   background: #f7f7f7;
