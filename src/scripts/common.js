@@ -905,6 +905,30 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
+    // Copy MCP Server Config JSON to clipboard
+    window.copyServerConfig = async function(apiID) {
+        const preBlock = document.getElementById(`server-config-${apiID}`);
+        const buttonElement = preBlock.nextElementSibling;
+        const iconElement = buttonElement.querySelector('i');
+
+        try {
+            const text = preBlock.innerText.trim();
+            await navigator.clipboard.writeText(text);
+
+            iconElement.classList.remove('bi-clipboard');
+            iconElement.classList.add('bi-clipboard-check');
+            await showAlert('Server config copied to clipboard!', `success`);
+
+            setTimeout(() => {
+                iconElement.classList.remove('bi-clipboard-check');
+                iconElement.classList.add('bi-clipboard');
+            }, 1500);
+        } catch (err) {
+            console.error('Failed to copy server config:', err);
+            await showAlert('Failed to copy server config', true);
+        }
+    };
+
     // Add pagination for subscription table
     (function setupSubscriptionPagination() {
             const apisTableContainer = document.getElementById('app-table-container')      
