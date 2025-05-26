@@ -917,7 +917,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             iconElement.classList.remove('bi-clipboard');
             iconElement.classList.add('bi-clipboard-check');
-            await showAlert('Server config copied to clipboard!', `success`);
+            await showAlert('Server config copied to clipboard!', `default`);
 
             setTimeout(() => {
                 iconElement.classList.remove('bi-clipboard-check');
