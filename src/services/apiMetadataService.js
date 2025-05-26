@@ -744,9 +744,9 @@ const updateSubscriptionPolicy = async (req, res) => {
     
     try {
         await sequelize.transaction(async (t) => {
-            const subscriptionPolicyResponse = await apiDao.putSubscriptionPolicy(orgId, subscriptionPolicy, t);
+            const { subscriptionPolicyResponse, statusCode } =  await apiDao.putSubscriptionPolicy(orgId, subscriptionPolicy, t);
             if (subscriptionPolicyResponse) {
-                res.status(200).send(new subscriptionPolicyDTO(subscriptionPolicyResponse));
+                res.status(statusCode).send(new subscriptionPolicyDTO(subscriptionPolicyResponse));
             } else {
                 throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
             }
