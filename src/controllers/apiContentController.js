@@ -61,6 +61,8 @@ const loadAPIs = async (req, res) => {
         try {
             const orgDetails = await adminDao.getOrganization(orgName);
             const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
+            console.log('================ load apis ================');
+            console.log('cpOrgID: ', cpOrgID);
             req.cpOrgID = cpOrgID;
             const orgID = orgDetails.ORG_ID;
             const searchTerm = req.query.query;
@@ -99,6 +101,8 @@ const loadAPIs = async (req, res) => {
             }
             //retrieve api list from control plane
             const allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis`, {}, {});
+            console.log("Allowed API List: ", JSON.stringify(allowedAPIList));
+            console.log("Meta Data List: ", JSON.stringify(metaDataList));
             if (allowedAPIList) {
                 //filter apis based on the roles
                 metaDataList = util.filterAllowedAPIs(metaDataList, allowedAPIList.list);
@@ -106,6 +110,7 @@ const loadAPIs = async (req, res) => {
                 console.log("Cannot retrieve allowed API list from control plane");
                 metaDataList = [];
             }
+            console.log("Filtered Meta Data List: ", JSON.stringify(metaDataList));
             const templateContent = {
                 isAuthenticated: req.isAuthenticated(),
                 apiMetadata: metaDataList,
@@ -113,6 +118,8 @@ const loadAPIs = async (req, res) => {
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 orgID: orgID,
             };
+            console.log("Template Content: ", JSON.stringify(templateContent));
+            console.log('// ============= load apis ================');
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
         } catch (error) {
             console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
