@@ -101,7 +101,7 @@ const loadAPIs = async (req, res) => {
                 metaData.applications = appList;
             }
             //retrieve api list from control plane
-            const allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis`, {}, {});
+            const allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?limit=1000`, {}, {});
             console.log("Allowed API List: ", JSON.stringify(allowedAPIList));
             console.log("Meta Data List: ", JSON.stringify(metaDataList));
             if (allowedAPIList) {
