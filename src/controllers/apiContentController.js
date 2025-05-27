@@ -62,6 +62,7 @@ const loadAPIs = async (req, res) => {
             const orgDetails = await adminDao.getOrganization(orgName);
             const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
             console.log('================ load apis ================');
+            console.log('organization: ' + JSON.stringify(orgDetails));
             console.log('cpOrgID: ', cpOrgID);
             req.cpOrgID = cpOrgID;
             const orgID = orgDetails.ORG_ID;
