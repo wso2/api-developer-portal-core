@@ -465,6 +465,10 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
             }
         
         }
+        console.log('=================== API Request Details ===================');
+        console.log(`Request URL: ${url}`);
+        console.log('Options: ' + JSON.stringify(options));
+        console.log('// ================ API Request Details ===================');
         const response = await axios(url, options);
         return response.data;
     } catch (error) {
