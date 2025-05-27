@@ -99,7 +99,7 @@ const loadAPIs = async (req, res) => {
                 metaData.applications = appList;
             }
             //retrieve api list from control plane
-            const allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis`, {}, {});
+            const allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?limit=1000`, {}, {});
             if (allowedAPIList) {
                 //filter apis based on the roles
                 metaDataList = util.filterAllowedAPIs(metaDataList, allowedAPIList.list);
