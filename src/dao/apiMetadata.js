@@ -449,13 +449,13 @@ const createAPISubscriptionPolicy = async (apiSubscriptionPolicies, apiID, t) =>
 const putSubscriptionPolicy = async (orgID, policy, t) => {
     const currentSubscriptionPolicy = await getSubscriptionPolicyByName(orgID, policy.policyName, t);
     if (currentSubscriptionPolicy) {
-        const updatedPolicy = updateSubscriptionPolicy(orgID, currentSubscriptionPolicy.POLICY_ID, policy, t); 
+        const updatedPolicy = await updateSubscriptionPolicy(orgID, currentSubscriptionPolicy.POLICY_ID, policy, t); 
         return {
             subscriptionPolicyResponse: updatedPolicy,
             statusCode: 200
         };
     } else {
-        const createdPolicy = createSubscriptionPolicy(orgID, policy, t);
+        const createdPolicy = await createSubscriptionPolicy(orgID, policy, t);
         return {
             subscriptionPolicyResponse: createdPolicy,
             statusCode: 201
