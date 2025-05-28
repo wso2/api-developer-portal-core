@@ -76,8 +76,6 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             document.getElementById("app-ref-" + keyManagerId).value = responseData.appRefId;
             document.getElementById("key-map-" + keyManagerId).value = responseData.keyMappingId;
 
-            console.log("Response Data:", document.getElementById("curlDisplay_" + keyManager));
-            console.log("curlDisplay_" + keyManager);
             if (consumerSecret) {
                 document.getElementById("keysViewModalBody").removeAttribute("style");
                 document.getElementById("consumerKey").removeAttribute("class");
