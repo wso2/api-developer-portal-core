@@ -51,7 +51,7 @@
                                     <input type='hidden' id='key-map-{{../id}}' class='form-control' name="keyMappingId"
                                         value='{{keys.keyMappingId}}' />
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-6" style="{{#unless keys.consumerSecret}} display: none; {{/unless}}">
                                     <label
                                         for='consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
                                         class='form-label'>
@@ -128,7 +128,7 @@
                             </div>
                         </div>
 
-                        <div class="container KMConfig mt-4 px-0" id="KMData_{{../name}}">
+                        <div class="container KMConfig mt-4 px-0" id="KMData_{{../name}}" style="{{#unless keys.consumerSecret}} display: none; {{/unless}}">
                             <form
                                 id='applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'>
                                 <div>

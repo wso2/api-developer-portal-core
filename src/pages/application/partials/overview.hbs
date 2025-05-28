@@ -19,21 +19,23 @@
                 <span class="spinner-border spinner-border-sm" role="status"></span>
               </span>
             </button>
-            <button class="btn btn-sm common-btn-outlined cancel-btn" id="cancelNameBtn" title="Cancel"><i class="bi bi-x"></i></button>
+            <button class="btn btn-sm common-btn-outlined cancel-btn" id="cancelNameBtn" title="Cancel"><i
+                class="bi bi-x"></i></button>
           </div>
         </div>
         <div id="nameEditError" class="edit-error-message mb-2" style="display: none;"></div>
         <div class="d-flex align-items-center edit-container mb-2">
           {{#if description}}
-            <p class="app-description mb-0" id="applicationDescription" data-original="{{description}}">{{description}}</p>
-            <button class="btn btn-sm edit-inline-btn" id="editDescriptionBtn" title="Edit description">
-              <i class="bi bi-pencil"></i>
-            </button>
+          <p class="app-description mb-0" id="applicationDescription" data-original="{{description}}">{{description}}
+          </p>
+          <button class="btn btn-sm edit-inline-btn" id="editDescriptionBtn" title="Edit description">
+            <i class="bi bi-pencil"></i>
+          </button>
           {{else}}
-            <button class="btn btn-sm common-btn-link p-0" id="editDescriptionBtn" title="Add description">
-              <i class="bi bi-plus"></i> Add description
-            </button>
-            <p class="app-description" id="applicationDescription" data-original="{{null}}"></p>
+          <button class="btn btn-sm common-btn-link p-0" id="editDescriptionBtn" title="Add description">
+            <i class="bi bi-plus"></i> Add description
+          </button>
+          <p class="app-description" id="applicationDescription" data-original="{{null}}"></p>
           {{/if}}
           <div class="edit-actions" id="descriptionEditActions" style="display: none;">
             <button class="btn btn-sm common-btn-primary save-btn" id="saveDescriptionBtn" title="Save">
@@ -42,7 +44,8 @@
                 <span class="spinner-border spinner-border-sm" role="status"></span>
               </span>
             </button>
-            <button class="btn btn-sm common-btn-outlined cancel-btn" id="cancelDescriptionBtn" title="Cancel"><i class="bi bi-x"></i></button>
+            <button class="btn btn-sm common-btn-outlined cancel-btn" id="cancelDescriptionBtn" title="Cancel"><i
+                class="bi bi-x"></i></button>
           </div>
         </div>
         <div id="descriptionEditError" class="edit-error-message" style="display: none;"></div>
@@ -56,15 +59,15 @@
         <h5 class="oauth2-title mb-2">OAuth2</h5>
 
         <!-- Generate Key Button (shown initially) -->
-
         {{#each keyManagersMetadata}}
+        {{#in name values="_internal_key_manager_,Resident Key Manager,_appdev_sts_key_manager_prod"}}
         {{#if enabled}}
         {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
 
-        <div id="generateKeyContainer"
-          style="{{#if keys.consumerKey}}display: none;{{/if}}">
+        <div id="generateKeyContainer" style="{{#if keys.consumerKey}}display: none;{{/if}}">
           <div class="d-flex align-items-center">
-            <button id="generateKeyBtn" class="common-btn-primary btn-sm" onclick="generateApplicationKey('keysview-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.id}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', 'consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}')">
+            <button id="generateKeyBtn" class="common-btn-primary btn-sm"
+              onclick="generateApplicationKey('keysview-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.id}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', 'consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}')">
               <span class="button-normal-state">
                 <i class="bi bi-key me-1"></i> Generate Key
               </span>
@@ -98,7 +101,7 @@
             <span class="key-action-label">Token: </span>
             <div class="key-action-buttons">
               <button id="tokenKeyBtn" class="common-btn-outlined btn-sm" data-app-id="{{@root.applicationMetadata.id}}"
-              onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}', '{{json @root.subscriptionScopes}}')">
+                onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}', '{{json @root.subscriptionScopes}}')">
                 <span class="button-normal-state">
                   <i class="bi bi-key-fill"></i> Generate
                 </span>
@@ -107,18 +110,73 @@
                   Generating...
                 </span>
               </button>
-              <button id="tokenInstructionsBtn" class="common-btn-outlined btn-sm" onclick="loadKeysInstructionsModal()">
+              <button id="tokenInstructionsBtn" class="common-btn-outlined btn-sm"
+                onclick="loadKeysInstructionsModal()">
                 <i class="bi bi-info-circle"></i> Instructions
               </button>
             </div>
           </div>
         </div>
 
-        <!-- Error message container for key generation and token generation -->
-        <div id="keyGenerationErrorContainer" class="mt-2 text-danger" style="display: none; font-size: 0.75rem; word-wrap: break-word;"></div>
-
         {{/let}}
         {{/if}}
+        {{else}}
+        {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
+        <div id="generateKeyContainer"
+          class="d-flex align-items-center edit-container mb-2 {{#if keys.consumerKey}}d-none{{/if}}"
+          style="{{#if keys.consumerKey}}display: none;{{/if}}">
+          <div class="d-flex align-items-center">
+            <button class="btn btn-sm common-btn-link p-0" id="addClientID" title="Add description">
+              <i class="bi bi-plus"></i> Add Client ID
+            </button>
+            <p class="app-description" id="clientIDInput" data-key-manager="{{name}}"
+              data-app-ref-id="{{@root.applicationMetadata}}"></p>
+
+          </div>
+          <div class="edit-actions" id="clientIDEditActions" style="display: none;">
+            <button class="btn btn-sm common-btn-primary save-btn" id="generateKeyBtn"
+              onclick="generateApplicationKey('keysview-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.id}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', 'consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}')"
+              title="Save">
+              <span class="button-normal-state"><i class="bi bi-check"></i></span>
+              <span class="button-loading-state" style="display: none;">
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+              </span>
+            </button>
+            <button class="btn btn-sm common-btn-outlined cancel-btn" id="cancelClientIDBtn" title="Cancel"><i
+                class="bi bi-x"></i></button>
+          </div>
+          <div class="tooltip-container ms-2">
+            <i class="bi bi-info-circle"></i>
+            <span class="tooltip-text">This key is shared among all APIs</span>
+          </div>
+        </div>
+        <button id="clientIDSaveError" class="edit-error-message" style="display: none;"></button>
+
+        <div id="keyActionsContainer" class="key-actions-container"
+          style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
+          <div class="key-action-row">
+            <span class="key-action-label">Credentials: </span>
+            <div class="key-action-buttons">
+              <button id="viewKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal()">
+                <i class="bi bi-eye"></i> View
+              </button>
+            </div>
+          </div>
+          <div class="key-action-row">
+            <span class="key-action-label">Token: </span>
+            <div class="key-action-buttons">
+              <button id="tokenInstructionsBtn" class="common-btn-outlined btn-sm"
+                onclick="loadKeysInstructionsModal()">
+                <i class="bi bi-info-circle"></i> Instructions
+              </button>
+            </div>
+          </div>
+        </div>
+        {{/let}}
+        {{/in}}
+        <!-- Error message container for key generation and token generation -->
+        <div id="keyGenerationErrorContainer" class="mt-2 text-danger"
+          style="display: none; font-size: 0.75rem; word-wrap: break-word;"></div>
         {{/each}}
       </div>
     </div>
