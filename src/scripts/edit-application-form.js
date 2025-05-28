@@ -161,35 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
             sharedKeyTooltip.style.display = 'inline-block';
         });
 
-        // saveClientIDBtn.addEventListener('click', async () => {
-        //     const clientID = clientIDInput.textContent.trim();
-        //     const keyManager = clientIDInput.dataset.keyManager;
-        //     const appRefId = clientIDInput.dataset.appRefId;
-
-        //     console.log('Saving client ID:', clientID, 'Key Manager:', keyManager);
-
-        //     const response = await fetch(`/devportal/applications/${appRefId}/map-keys`, {
-        //         method: 'POST',
-        //         headers: {
-        //             'Content-Type': 'application/json',
-        //         },
-        //         body: JSON.stringify({
-        //             consumerKey: clientID,
-        //             keyManager: keyManager,
-        //             keyType: 'PRODUCTION',
-        //         }),
-        //     });
-
-        //     if (!response.ok) {
-        //         const errorData = await response.json();
-        //         clientIDSaveError.textContent = `Failed to save client ID: ${errorData.message}`;
-        //         clientIDSaveError.style.display = 'block';
-        //         return;
-        //     } else {
-        //     }
-
-        //     console.log('Response from save client ID:', response);
-        // });
     };
 
     // Function to save application changes
