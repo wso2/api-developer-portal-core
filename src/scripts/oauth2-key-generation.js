@@ -45,8 +45,9 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
                 "default"
             ],
             "validityTime": 3600,
-            "additionalProperties": jsonObject.additionalProperties
-        }
+            "additionalProperties": jsonObject.additionalProperties,
+        },
+        "clientID": document.getElementById("clientIDInput").textContent.trim(),
     })
     try {
         const response = await fetch(`/devportal/organizations/${orgID}/app-key-mapping`, {
@@ -94,16 +95,20 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             //     tokenDetails.textContent = responseData.accessToken;
             // });
             const tokenbtn = document.getElementById('tokenKeyBtn');
-            tokenbtn.setAttribute("data-keyMappingId", responseData.keyMappingId);
-            tokenbtn.setAttribute("data-consumerSecretID", consumerSecretID);
-            tokenbtn.setAttribute("data-app-ref-id", responseData.appRefId);
-
+            if (tokenbtn) {
+                tokenbtn.setAttribute("data-keyMappingId", responseData.keyMappingId);
+                tokenbtn.setAttribute("data-consumerSecretID", consumerSecretID);
+                tokenbtn.setAttribute("data-app-ref-id", responseData.appRefId);
+            }
             subList.forEach(subscription => {
                 document.getElementById("generateKeyBtn-" + subscription.subID)?.setAttribute('data-app-ref-id', `${responseData.appRefId}`);
             })
 
             document.getElementById("tokenKeyBtn")?.setAttribute("data-scopes", JSON.stringify(responseData.subscriptionScopes));
 
+            generateKeyContainer.style.display = 'none';
+            generateKeyContainer.classList.add('d-none');
+            
             loadKeysViewModal();
 
 

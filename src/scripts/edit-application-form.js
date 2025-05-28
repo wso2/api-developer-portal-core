@@ -16,16 +16,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const nameEditError = document.getElementById('nameEditError');
         const descriptionEditError = document.getElementById('descriptionEditError');
         const inlineEditForm = document.getElementById('inlineEditForm');
-        
+        const addClientID = document.getElementById('addClientID');
+        const clientIDInput = document.getElementById('clientIDInput');
+        const cancelClientIDBtn = document.getElementById('cancelClientIDBtn');
+
         if (!applicationName || !applicationDescription) return;
-        
+
         const applicationId = inlineEditForm.dataset.applicationId;
-        
+
         // Function to set loading state
         const setButtonLoadingState = (button, isLoading) => {
             const normalState = button.querySelector('.button-normal-state');
             const loadingState = button.querySelector('.button-loading-state');
-            
+
             if (isLoading) {
                 button.disabled = true;
                 if (normalState) normalState.style.display = 'none';
@@ -36,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (loadingState) loadingState.style.display = 'none';
             }
         };
-        
+
         // Make name editable
         editNameBtn.addEventListener('click', () => {
             applicationName.contentEditable = true;
@@ -46,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Clear any existing error
             nameEditError.style.display = 'none';
         });
-        
+
         // Make description editable
         editDescriptionBtn.addEventListener('click', () => {
             applicationDescription.contentEditable = true;
@@ -56,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Clear any existing error
             descriptionEditError.style.display = 'none';
         });
-        
+
         // Cancel name edit
         cancelNameBtn.addEventListener('click', () => {
             applicationName.textContent = applicationName.dataset.original;
@@ -65,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
             editNameBtn.style.display = 'inline-block';
             nameEditError.style.display = 'none';
         });
-        
+
         // Cancel description edit
         cancelDescriptionBtn.addEventListener('click', () => {
             applicationDescription.textContent = applicationDescription.dataset.original;
@@ -74,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
             editDescriptionBtn.style.display = 'inline-block';
             descriptionEditError.style.display = 'none';
         });
-        
+
         // Save name changes
         saveNameBtn.addEventListener('click', async () => {
             const newName = applicationName.textContent.trim();
@@ -83,20 +86,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 nameEditError.style.display = 'block';
                 return;
             }
-            
+
             // Enable loading state
             setButtonLoadingState(saveNameBtn, true);
             cancelNameBtn.disabled = true;
-            
+
             const result = await saveApplicationChanges(applicationId, {
                 name: newName,
                 description: applicationDescription.dataset.original
             }, nameEditError);
-            
+
             // Reset loading state
             setButtonLoadingState(saveNameBtn, false);
             cancelNameBtn.disabled = false;
-            
+
             if (result) {
                 applicationName.dataset.original = newName;
                 applicationName.contentEditable = false;
@@ -105,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 nameEditError.style.display = 'none';
             }
         });
-        
+
         // Save description changes
         saveDescriptionBtn.addEventListener('click', async () => {
             const newDescription = applicationDescription.textContent.trim();
@@ -114,20 +117,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 descriptionEditError.style.display = 'block';
                 return;
             }
-            
+
             // Enable loading state
             setButtonLoadingState(saveDescriptionBtn, true);
             cancelDescriptionBtn.disabled = true;
-            
+
             const result = await saveApplicationChanges(applicationId, {
                 name: applicationName.dataset.original,
                 description: newDescription
             }, descriptionEditError);
-            
+
             // Reset loading state
             setButtonLoadingState(saveDescriptionBtn, false);
             cancelDescriptionBtn.disabled = false;
-            
+
             if (result) {
                 document.location.reload();
                 // applicationDescription.dataset.original = newDescription;
@@ -137,15 +140,62 @@ document.addEventListener('DOMContentLoaded', () => {
                 // descriptionEditError.style.display = 'none';
             }
         });
+
+        // Add client ID
+        addClientID.addEventListener('click', () => {
+            clientIDInput.contentEditable = true;
+            clientIDInput.focus();
+            addClientID.style.display = 'none';
+            clientIDEditActions.style.display = 'inline-flex';
+        });
+
+
+        // Cancel description edit
+        cancelClientIDBtn.addEventListener('click', () => {
+            clientIDInput.textContent = applicationDescription.dataset.original;
+            clientIDInput.contentEditable = false;
+            clientIDEditActions.style.display = 'none';
+            addClientID.style.display = 'inline-block';
+        });
+
+        // saveClientIDBtn.addEventListener('click', async () => {
+        //     const clientID = clientIDInput.textContent.trim();
+        //     const keyManager = clientIDInput.dataset.keyManager;
+        //     const appRefId = clientIDInput.dataset.appRefId;
+
+        //     console.log('Saving client ID:', clientID, 'Key Manager:', keyManager);
+
+        //     const response = await fetch(`/devportal/applications/${appRefId}/map-keys`, {
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'application/json',
+        //         },
+        //         body: JSON.stringify({
+        //             consumerKey: clientID,
+        //             keyManager: keyManager,
+        //             keyType: 'PRODUCTION',
+        //         }),
+        //     });
+
+        //     if (!response.ok) {
+        //         const errorData = await response.json();
+        //         clientIDSaveError.textContent = `Failed to save client ID: ${errorData.message}`;
+        //         clientIDSaveError.style.display = 'block';
+        //         return;
+        //     } else {
+        //     }
+
+        //     console.log('Response from save client ID:', response);
+        // });
     };
-    
+
     // Function to save application changes
     const saveApplicationChanges = async (applicationId, data, errorElement) => {
         try {
             if (errorElement) {
                 errorElement.style.display = 'none';
             }
-            
+
             const response = await fetch(`/devportal/applications/${applicationId}`, {
                 method: 'PUT',
                 headers: {
@@ -156,11 +206,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     type: 'WEB'
                 }),
             });
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-            
+
             return true;
         } catch (error) {
             console.error('Error saving application:', error);
@@ -171,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return false;
         }
     };
-    
+
     // Initialize inline editing
     setupInlineEditing();
 });
