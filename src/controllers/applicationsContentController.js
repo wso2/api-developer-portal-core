@@ -209,8 +209,6 @@ const loadApplication = async (req, res) => {
                 keyManager.applicationConfiguration = await mapDefaultValues(keyManager.applicationConfiguration);
             }
 
-            console.log("Key Managers Metadata: ", kMmetaData[0].applicationConfiguration);
-
 
             let productionKeys = [];
             let sandboxKeys = [];

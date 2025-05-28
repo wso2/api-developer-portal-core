@@ -60,7 +60,7 @@
 
         <!-- Generate Key Button (shown initially) -->
         {{#each keyManagersMetadata}}
-        {{#in name values="_internal_key_manager_,Resident Key Manager,_appdev_sts_key_manager_prod"}}
+        {{#in name values="_internal_key_manager_,Resident Key Manager,_appdev_sts_key_manager_"}}
         {{#if enabled}}
         {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
 
@@ -130,10 +130,10 @@
               <i class="bi bi-plus"></i> Add Client ID
             </button>
             <p class="app-description" id="clientIDInput" data-key-manager="{{name}}"
-              data-app-ref-id="{{@root.applicationMetadata}}"></p>
+              data-app-ref-id="{{@root.applicationMetadata}}" style="font-size:13px"></p>
 
           </div>
-          <div class="edit-actions" id="clientIDEditActions" style="display: none;">
+          <div class="edit-actions ms-0" id="clientIDEditActions" style="display: none;">
             <button class="btn btn-sm common-btn-primary save-btn" id="generateKeyBtn"
               onclick="generateApplicationKey('keysview-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.id}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', 'consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}')"
               title="Save">
@@ -145,7 +145,7 @@
             <button class="btn btn-sm common-btn-outlined cancel-btn" id="cancelClientIDBtn" title="Cancel"><i
                 class="bi bi-x"></i></button>
           </div>
-          <div class="tooltip-container ms-2">
+          <div class="tooltip-container ms-2" id="sharedKeyTooltip">
             <i class="bi bi-info-circle"></i>
             <span class="tooltip-text">This key is shared among all APIs</span>
           </div>

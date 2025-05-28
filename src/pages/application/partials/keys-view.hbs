@@ -1,5 +1,5 @@
 <div class="modal custom-modal" id='keysViewModal'>
-    <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-dialog modal-xl" role="document" id="keysViewModalBody" style="{{#unless keyManagersMetadata.[0].productionKeys.consumerSecret}} width: 550px; {{/unless}}">
         <div class="modal-content custom-modal-content">
             <div class="custom-modal-header">
                 <h2 class="custom-modal-title m-0">View Credentials </h2>
@@ -28,9 +28,9 @@
                     {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
                     <form id='keysview-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'>
                         <div id="consumerKeys_{{../name}}">
-                            <h3 class='h6'> Key and Secret </h3>
+                            <h3 class='h6'> Application Keys </h3>
                             <div class="row mb-3">
-                                <div class="col-md-6">
+                                <div id="consumerKey" class="{{#unless keys.consumerSecret}} col-md-12 {{else}} col-md-6 {{/unless}}">
                                     <label
                                         for='consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
                                         class='form-label'>
@@ -51,7 +51,7 @@
                                     <input type='hidden' id='key-map-{{../id}}' class='form-control' name="keyMappingId"
                                         value='{{keys.keyMappingId}}' />
                                 </div>
-                                <div class="col-md-6" style="{{#unless keys.consumerSecret}} display: none; {{/unless}}">
+                                <div id="consumerSecret" class="col-md-6" style="{{#unless keys.consumerSecret}} display: none; {{/unless}}">
                                     <label
                                         for='consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
                                         class='form-label'>
