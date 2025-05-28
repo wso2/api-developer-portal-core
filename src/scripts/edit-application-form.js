@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const addClientID = document.getElementById('addClientID');
         const clientIDInput = document.getElementById('clientIDInput');
         const cancelClientIDBtn = document.getElementById('cancelClientIDBtn');
+        const sharedKeyTooltip = document.getElementById('sharedKeyTooltip');
 
         if (!applicationName || !applicationDescription) return;
 
@@ -147,6 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clientIDInput.focus();
             addClientID.style.display = 'none';
             clientIDEditActions.style.display = 'inline-flex';
+            sharedKeyTooltip.style.display = 'none';
         });
 
 
@@ -156,6 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clientIDInput.contentEditable = false;
             clientIDEditActions.style.display = 'none';
             addClientID.style.display = 'inline-block';
+            sharedKeyTooltip.style.display = 'inline-block';
         });
 
         // saveClientIDBtn.addEventListener('click', async () => {

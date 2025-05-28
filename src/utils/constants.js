@@ -103,7 +103,7 @@ module.exports = {
     KEY_MANAGERS: {
         INTERNAL_KEY_MANAGER: '_internal_key_manager',
         RESIDENT_KEY_MANAGER: 'Resident Key Manager',
-        APP_DEV_STS_KEY_MANAGER_PROD: '_appdev_sts_key_manager_prod',
+        APP_DEV_STS_KEY_MANAGER: '_appdev_sts_key_manager_',
     },
     TOKEN_TYPES: {
         API_KEY: 'API_KEY',

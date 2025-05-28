@@ -47,7 +47,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             "validityTime": 3600,
             "additionalProperties": jsonObject.additionalProperties,
         },
-        "clientID": document.getElementById("clientIDInput").textContent.trim(),
+        "clientID": document.getElementById("clientIDInput")?.textContent.trim(),
     })
     try {
         const response = await fetch(`/devportal/organizations/${orgID}/app-key-mapping`, {
@@ -75,6 +75,18 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             document.getElementById(consumerSecretID).value = consumerSecret;
             document.getElementById("app-ref-" + keyManagerId).value = responseData.appRefId;
             document.getElementById("key-map-" + keyManagerId).value = responseData.keyMappingId;
+
+            console.log("Response Data:", document.getElementById("curlDisplay_" + keyManager));
+            console.log("curlDisplay_" + keyManager);
+            if (consumerSecret) {
+                document.getElementById("keysViewModalBody").removeAttribute("style");
+                document.getElementById("consumerKey").removeAttribute("class");
+                document.getElementById("consumerSecret").removeAttribute("style");
+                document.getElementById("consumerKey").classList.add("col-md-6");
+                document.getElementById("keyActionsContainer").removeAttribute("style");
+                document.getElementById("curlDisplay_" + keyManager).removeAttribute("style");
+                document.getElementById("KMData_" + keyManager).removeAttribute("style");
+            }
 
             const keyActionsContainer = document.getElementById("keyActionsContainer");
             if (keyActionsContainer) {
