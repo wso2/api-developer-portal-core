@@ -145,15 +145,12 @@ async function regenerateAPIKey(apiKeyID, subID) {
 
       await showAlert('API Key regenerated successfully!,', 'success');
     } else {
-      console.log('Here')
       await showAlert(`Failed to regenerate API Key. Please try again.\n${responseData?.description || ''}`, 'error');
     }
   } catch (error) {
-    console.log('Here2')
 
     await showAlert(`Failed to generate API Key. Please try again.\n${error}`, 'error');
   }
-  console.log('Here3')
 
   normalState.style.display = 'inline-block';
   loadingState.style.display = 'none';
