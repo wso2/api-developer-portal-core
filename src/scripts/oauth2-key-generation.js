@@ -45,8 +45,9 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
                 "default"
             ],
             "validityTime": 3600,
-            "additionalProperties": jsonObject.additionalProperties
-        }
+            "additionalProperties": jsonObject.additionalProperties,
+        },
+        "clientID": document.getElementById("clientIDInput")?.textContent.trim(),
     })
     try {
         const response = await fetch(`/devportal/organizations/${orgID}/app-key-mapping`, {
@@ -75,6 +76,16 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             document.getElementById("app-ref-" + keyManagerId).value = responseData.appRefId;
             document.getElementById("key-map-" + keyManagerId).value = responseData.keyMappingId;
 
+            if (consumerSecret) {
+                document.getElementById("keysViewModalBody").removeAttribute("style");
+                document.getElementById("consumerKey").removeAttribute("class");
+                document.getElementById("consumerSecret").removeAttribute("style");
+                document.getElementById("consumerKey").classList.add("col-md-6");
+                document.getElementById("keyActionsContainer").removeAttribute("style");
+                document.getElementById("curlDisplay_" + keyManager).removeAttribute("style");
+                document.getElementById("KMData_" + keyManager).removeAttribute("style");
+            }
+
             const keyActionsContainer = document.getElementById("keyActionsContainer");
             if (keyActionsContainer) {
                 keyActionsContainer.style.display = "flex";
@@ -94,16 +105,20 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             //     tokenDetails.textContent = responseData.accessToken;
             // });
             const tokenbtn = document.getElementById('tokenKeyBtn');
-            tokenbtn.setAttribute("data-keyMappingId", responseData.keyMappingId);
-            tokenbtn.setAttribute("data-consumerSecretID", consumerSecretID);
-            tokenbtn.setAttribute("data-app-ref-id", responseData.appRefId);
-
+            if (tokenbtn) {
+                tokenbtn.setAttribute("data-keyMappingId", responseData.keyMappingId);
+                tokenbtn.setAttribute("data-consumerSecretID", consumerSecretID);
+                tokenbtn.setAttribute("data-app-ref-id", responseData.appRefId);
+            }
             subList.forEach(subscription => {
                 document.getElementById("generateApiKey_" + subscription.subID)?.setAttribute('data-app-ref-id', `${responseData.appRefId}`);
             })
 
             document.getElementById("tokenKeyBtn")?.setAttribute("data-scopes", JSON.stringify(responseData.subscriptionScopes));
 
+            generateKeyContainer.style.display = 'none';
+            generateKeyContainer.classList.add('d-none');
+            
             loadKeysViewModal();
 
 

@@ -37,7 +37,7 @@
                                 </div>
                             </div>
                             
-                            <div id="curlDisplay_{{../name}}">
+                            <div id="curlDisplay_{{../name}}" style="{{#unless keys.consumerSecret}} display: none; {{/unless}}">
                                 <p class="small mb-2 instruction-header">cURL to Generate Access Token</p>
                                 <p class="curl-description">
                                     The following cURL command template allows you to generate an access token using the
