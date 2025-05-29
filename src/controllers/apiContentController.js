@@ -168,10 +168,10 @@ const loadAPIContent = async (req, res) => {
             let apiName = metaData? metaData.apiHandle?.split('-v')[0] : "";
             const version = metaData? metaData.apiInfo.apiVersion : "";
             //check whether user has access to the API
-            let allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:${apiName}+version:${version}`, {}, {});
+            let allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
             if (allowedAPIList.count === 0) {
                 apiName = metaData.apiInfo.apiName;
-                allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:${apiName}+version:${version}`, {}, {});
+                allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
                 
             }
             let templateContent = {
