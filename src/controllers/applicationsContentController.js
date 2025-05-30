@@ -83,8 +83,8 @@ const loadApplications = async (req, res) => {
         }
     } catch (error) {
         console.error("Error occurred while loading Applications", error);
-        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
-        constants.COMMON_ERROR_MESSAGE, true);
+        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs',
+            constants.COMMON_ERROR_MESSAGE, true);
     }
     res.send(html);
 }
@@ -188,11 +188,13 @@ const loadApplication = async (req, res) => {
             //TODO: handle multiple KM scenarios
             //select only one KM for chroeo.
 
-            kMmetaData = kMmetaData.filter(keyManager =>
-                keyManager.name.includes("_internal_key_manager_") ||
-                (!kMmetaData.some(km => km.name.includes("_internal_key_manager_")) && keyManager.name.includes("Resident Key Manager")) ||
-                (!kMmetaData.some(km => km.name.includes("_internal_key_manager_") || km.name.includes("Resident Key Manager")) && keyManager.name.includes("_appdev_sts_key_manager_") && keyManager.name.endsWith("_prod"))
-            );
+            if (Array.isArray(kMmetaData) && kMmetaData.length > 1) {
+                kMmetaData = kMmetaData.filter(keyManager =>
+                    keyManager.name.includes("_internal_key_manager_") ||
+                    (!kMmetaData.some(km => km.name.includes("_internal_key_manager_")) && keyManager.name.includes("Resident Key Manager")) ||
+                    (!kMmetaData.some(km => km.name.includes("_internal_key_manager_") || km.name.includes("Resident Key Manager")) && keyManager.name.includes("_appdev_sts_key_manager_") && keyManager.name.endsWith("_prod"))
+                );
+            }
 
             for (var keyManager of kMmetaData) {
                 if (keyManager.name === 'Resident Key Manager') {
@@ -204,6 +206,7 @@ const loadApplication = async (req, res) => {
                 keyManager.availableGrantTypes = await mapGrants(keyManager.availableGrantTypes);
                 keyManager.applicationConfiguration = await mapDefaultValues(keyManager.applicationConfiguration);
             }
+
 
             let productionKeys = [];
             let sandboxKeys = [];
@@ -280,8 +283,8 @@ const loadApplication = async (req, res) => {
         }
     } catch (error) {
         console.error("Error occurred while loading application", error);
-        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
-        constants.COMMON_ERROR_MESSAGE, true);
+        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs',
+            constants.COMMON_ERROR_MESSAGE, true);
     }
     res.send(html);
 }

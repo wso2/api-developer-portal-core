@@ -136,10 +136,14 @@ Handlebars.registerHelper('eq', function (a, b) {
 });
 
 Handlebars.registerHelper('in', function (value, options) {
-    const validValues = Array.isArray(options.hash.values) ? options.hash.values : options.hash.values.split(',');
-    return Array.isArray(validValues) && validValues.includes(value)
-        ? options.fn(this)
-        : options.inverse(this);
+    const rawValues = Array.isArray(options.hash.values)
+        ? options.hash.values
+        : options.hash.values.split(',');
+    const validValues = rawValues.map(v => v.trim());
+    const trimmedValue = value.trim();
+
+    const match = validValues.some(valid => trimmedValue.includes(valid));
+    return match ? options.fn(this) : options.inverse(this);
 });
 
 Handlebars.registerHelper('conditionalIf', function (condition, value1, value2) {
@@ -309,7 +313,7 @@ const strategy = new OAuth2Strategy({
     //return done(null, profile);
 });
 
-strategy.authorizationParams = function(options) {
+strategy.authorizationParams = function (options) {
     const params = {};
     if (options.prompt) {
         params.prompt = options.prompt;

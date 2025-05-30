@@ -100,6 +100,11 @@ module.exports = {
         YML: '.yml',
         XML: '.xml'
     },
+    KEY_MANAGERS: {
+        INTERNAL_KEY_MANAGER: '_internal_key_manager',
+        RESIDENT_KEY_MANAGER: 'Resident Key Manager',
+        APP_DEV_STS_KEY_MANAGER: '_appdev_sts_key_manager_',
+    },
     TOKEN_TYPES: {
         API_KEY: 'API_KEY',
         OAUTH: 'OAUTH',
