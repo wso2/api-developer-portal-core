@@ -189,18 +189,22 @@ const registerPartialsFromAPI = async (req) => {
     isAdmin = req.user["isAdmin"];
     isSuperAdmin = req.user["isSuperAdmin"];
   }
-  if (partialObject[constants.HEADER_PARTIAL_NAME] && req.user) {
-    const profile = {
+  let profile = "";
+  if (req.user) {
+    profile = {
       imageURL: req.user.imageURL,
       firstName: req.user.firstName,
       lastName: req.user.lastName,
       email: req.user.email
     }
+  }
+
+  if (partialObject[constants.HEADER_PARTIAL_NAME]) {
     hbs.handlebars.partials = {
       ...hbs.handlebars.partials,
       header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
         baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-        profile: req.isAuthenticated() ? profile : {},
+        profile: req.isAuthenticated() ? profile : "",
         isAdmin: isAdmin,
         isSuperAdmin: isSuperAdmin,
         hasWSO2APIs: hasWSO2APIs
