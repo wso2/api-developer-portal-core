@@ -188,7 +188,7 @@ const registerPartialsFromAPI = async (req) => {
     isSuperAdmin = req.user["isSuperAdmin"];
   }
   let profile = "";
-  if (partialObject[constants.HEADER_PARTIAL_NAME] && req.user) {
+  if (req.user) {
     profile = {
       imageURL: req.user.imageURL,
       firstName: req.user.firstName,
