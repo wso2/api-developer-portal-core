@@ -877,7 +877,7 @@ const createAppKeyMapping = async (req, res) => {
     try {
         let responseData;
         await sequelize.transaction(async (t) => {
-            const { applicationName, apis, tokenType, tokenDetails, provider } = req.body;
+            const { applicationName, apis, tokenType, tokenDetails, provider, clientID } = req.body;
             const appIDResponse = await adminDao.getApplicationID(orgID, userID, applicationName);
             let appID;
             if (appIDResponse) {
@@ -955,9 +955,13 @@ const createAppKeyMapping = async (req, res) => {
             tokenDetails.additionalProperties = checkAdditionalValues(tokenDetails.additionalProperties);
             //TODO: need to support both key types
             tokenDetails.keyType = "PRODUCTION";
-            //generate oauth key
-            responseData = await generateOAuthKey(req, cpAppID, tokenDetails);
 
+            if (tokenDetails.keyManager.startsWith(constants.KEY_MANAGERS.INTERNAL_KEY_MANAGER) || tokenDetails.keyManager.startsWith(constants.KEY_MANAGERS.RESIDENT_KEY_MANAGER) || tokenDetails.keyManager.startsWith(constants.KEY_MANAGERS.APP_DEV_STS_KEY_MANAGER)) {
+                //generate oauth key
+                responseData = await generateOAuthKey(req, cpAppID, tokenDetails);
+            } else {
+                responseData = await mapKeys(req, clientID, tokenDetails.keyManager, cpAppID);
+            }
             // Add the appRefId to the response data
             responseData.appRefId = cpAppID;
             const cpApp = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${cpAppID}`, {}, {});
@@ -982,6 +986,20 @@ const createAppKeyMapping = async (req, res) => {
         return util.handleError(res, error);
     }
 }
+
+async function mapKeys(req, clientID, keyManager, applicationId) {
+    const body = {
+        "consumerKey": clientID,
+        "keyManager": keyManager,
+        "keyType": 'PRODUCTION',
+    };
+    try {
+        return await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/map-keys`, {}, body);
+    } catch (error) {
+        console.error("Error occurred while mapping keys", error);
+        throw error;
+    }
+};
 
 async function generateOAuthKey(req, cpAppID, tokenDetails) {
     try {
