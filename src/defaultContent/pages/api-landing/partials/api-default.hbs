@@ -51,6 +51,12 @@
             {{/if}}
         </div>
         <div class="defaultapi-section">
+            <div class="container-header mb-4">Scopes</div>
+            {{#scopes}}
+            <span class="api-span-tag"> {{this.key}} </span>
+            {{/scopes}}
+        </div>
+        <div class="defaultapi-section">
             <div class="container-header mb-4">Resources</div>
             <div class="defaultapi-resources col-12">
                 {{#resources.endpoints}}
