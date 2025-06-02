@@ -264,3 +264,15 @@
   border: 1px solid #bfbebe;
   border-bottom: none;
 }
+
+.api-span-tag {
+  opacity: 0.7;
+  border: 1px solid var(--main-text-color);
+  display: inline-block;
+  margin: 2px;
+  padding: 2px 8px;
+  background-color: var(--main-bg-color);
+  border-radius: 5px;
+  font-size: 0.875rem;
+  transition: background-color 0.2s ease;
+}
