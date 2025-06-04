@@ -58,7 +58,6 @@
       </div>
       {{/if}}
       {{#apiMetadata}}
-      {{#unless (eq apiInfo.apiType "MCP")}}
       <div class="col-lg-4 col-md-6 col-sm-12" id="apiCard-{{apiID}}">
         <div class="card api-card d-flex flex-column">
           <div class="api-card-header d-flex align-items-center gap-3 position-relative overflow-hidden" 
@@ -71,8 +70,23 @@
             <div class="flex-grow-1">
               <h5 class="api-card-title mb-0">{{apiInfo.apiName}}</h5>
               <div class="d-flex align-items-center gap-2">
-                <p class="mb-0">{{apiInfo.apiVersion}}</p>
-                <span class="badge badge-custom2">{{apiInfo.apiType}}</span>
+                <p class="mb-0 mt-1" style="font-size: 16px;">{{apiInfo.apiVersion}}</p>                         
+                <div class="type-badge badge-custom2" style="display: flex; flex-direction: row; align-items: center;">
+                  <div style="margin-right: 8px; display: flex;">
+                    {{#if (eq apiInfo.apiType "MCP")}}
+                          <img
+                            src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/MCP.svg"
+                            style="height: 16px; object-fit: contain;"
+                          />
+                        {{else}}
+                          <img
+                            src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/REST.svg"
+                            style=" height: 16px; object-fit: contain;"
+                          />
+                    {{/if}}
+                  </div>
+                  <span>{{apiInfo.apiType}}</span>
+                </div>
               </div>
             </div>
             {{#if ../isAuthenticated}}
@@ -156,7 +170,6 @@
           </div>
         </div>
       </div>
-      {{/unless}}
       {{/apiMetadata}}
     </div>
   </div>
