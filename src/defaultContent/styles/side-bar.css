@@ -238,12 +238,6 @@
     margin-bottom: 0;
 }
 
-#mcps.has-active-submenu {
-    background-color: var(--primary-dark-color);
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    margin-bottom: 0;
-}
 
 .submenu-link {
     margin: 0;

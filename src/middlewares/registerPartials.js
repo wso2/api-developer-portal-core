@@ -153,8 +153,6 @@ const registerAllPartialsFromFile = async (baseURL, req, filePrefix) => {
   registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req);
   registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "apis", "partials"), req);
   registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "docs", "partials"), req);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "mcp", "partials"), req);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "mcp-landing", "partials"), req);
 
   if (fs.existsSync(path.join(process.cwd(), filePrefix + "pages", filePath, "partials"))) {
     registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix + "pages", filePath, "partials"), req);
@@ -284,15 +282,7 @@ async function registerDocsPageContent(req, orgID, partialObject) {
     }
   }
 
-  const apiMetadata = await apiDao.getAPIMetadata(orgID, apiID);
-  let apiType = apiMetadata[0].dataValues.API_TYPE;
-  let baseUrl;
 
-  if (apiType === constants.API_TYPE.MCP) {
-      baseUrl = '/' + orgName + '/views/' + viewName + "/mcp/" + apiHandle;
-  } else {
-      baseUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle;
-  }
   hbs.handlebars.partials[constants.FILE_NAME.API_DOC_PARTIAL_NAME] = hbs.handlebars.compile(
     partialObject[constants.FILE_NAME.API_DOC_PARTIAL_NAME])({
       baseUrl: baseUrl,
