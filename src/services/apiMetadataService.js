@@ -685,7 +685,7 @@ const createSubscriptionPolicies = async (req, res) => {
         if (config.generateDefaultSubPolicies) {
             const msg = "Bulk creation of subscription policies is not allowed because 'generateDefaultSubPolicies' is enabled in the Developer Portal.";
             console.log(msg);
-            res.status(403).json({ message: msg });
+            res.status(200).json({ message: msg });
         } else {
             const { orgId } = req.params;
             const subscriptionPolicies = req.body;
@@ -762,7 +762,7 @@ const updateSubscriptionPolicies = async (req, res) => {
         if (config.generateDefaultSubPolicies) {
             const msg = "Bulk updating of subscription policies is not allowed because 'generateDefaultSubPolicies' is enabled in the Developer Portal.";
             console.log(msg);
-            res.status(403).json({ message: msg });
+            res.status(200).json({ message: msg });
         } else {
             const { orgId } = req.params;
             const subscriptionPolicies = req.body;
