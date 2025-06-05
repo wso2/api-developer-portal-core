@@ -342,7 +342,7 @@ const loadDocsPage = async (req, res) => {
 }
 
 const loadDocument = async (req, res) => {
-
+    try {
     const { orgName, apiHandle, viewName, docType, docName } = req.params;
     const hbs = exphbs.create({});
     let templateContent = {
@@ -420,6 +420,15 @@ const loadDocument = async (req, res) => {
         }
     }
     res.send(html);
+    } catch (error) {
+        if (Number(error?.code) === 401) {
+            const authErrorContent = { baseUrl: config.baseUrl + "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName}; 
+            html = renderTemplate('../pages/auth-error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', authErrorContent, true);
+        } else { 
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_ERROR_MESSAGE, true);
+        }
+        res.send(html);
+    }  
 }
 
 async function loadAPIMetaDataList() {
