@@ -270,8 +270,12 @@ const loadAPIContent = async (req, res) => {
         html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
         } catch (error) {
             console.error(`Failed to load api content:`, error);
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
-            constants.COMMON_ERROR_MESSAGE, true);
+            if (Number(error?.code) === 401) {
+                const authErrorContent = { baseUrl: config.baseUrl + "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName}; 
+                html = renderTemplate('../pages/auth-error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', authErrorContent, true);
+            } else { 
+                html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_ERROR_MESSAGE, true);
+            }
             res.send(html);
         }
         res.send(html);
