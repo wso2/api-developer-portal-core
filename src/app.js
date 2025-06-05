@@ -97,7 +97,11 @@ Handlebars.registerHelper('json', function (context) {
 
 Handlebars.registerHelper('jsonBeautify', function (context) {
     if (context) {
-        return JSON.stringify(context, null, 2); 
+        if (!(typeof context == 'string')) {
+            return JSON.stringify(context, null, 2); 
+        } else {
+            return context;
+        }
     } else {
         return '{}'; 
     }
