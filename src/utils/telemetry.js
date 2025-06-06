@@ -1,10 +1,10 @@
-import { telemetryClient } from '../telemetryClient.js';
+const { trackEventWithDefaults } = require('./telemetryHelper');
 
 /**
  * Send telemetry for login trigger
  */
 function trackLoginTrigger({ orgName, ipAddress, userAgent }) {
-    telemetryClient.trackEvent({
+    trackEventWithDefaults({
         name: 'LoginTriggered',
         properties: {
             organization: orgName || 'unknown',
@@ -16,5 +16,5 @@ function trackLoginTrigger({ orgName, ipAddress, userAgent }) {
 }
 
 module.exports = {
-    trackLoginTrigger
+    trackLoginTrigger,
 };
