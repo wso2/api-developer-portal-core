@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "design-mode": "npm run build-css --watch & nodemon src/dev-server.js",
-    "start": "nodemon --ignore 'generated-sdks/**/*' src/app.js",
+    "start": "nodemon src/app.js",
     "multi-tenant": "npm run build-css --watch & nodemon src/multi-tenant.js",
     "build-css": "node watcher.js",
     "build": "pkg ."
@@ -25,10 +25,9 @@
   },
   "homepage": "https://github.com/api-developer-portal-core#readme",
   "dependencies": {
-    "@openapitools/openapi-generator-cli": "^2.21.3",
-    "archiver": "^7.0.1",
+    "applicationinsights": "^3.7.0",
     "async-lock": "^1.4.1",
-    "axios": "^1.11.0",
+    "axios": "^1.8.2",
     "bootstrap-icons": "^1.11.3",
     "chalk": "^4.1.2",
     "chokidar": "^3.6.0",

@@ -28,6 +28,7 @@ const IdentityProviderDTO = require("../dto/identityProvider");
 const minimatch = require('minimatch');
 const { validationResult } = require('express-validator');
 const { renderGivenTemplate } = require('../utils/util');
+const { trackLoginTrigger } = require('../utils/telemetry');
 
 const filePrefix = config.pathToContent;
 
@@ -60,40 +61,48 @@ const fetchAuthJsonContent = async (req, orgName) => {
 
 const login = async (req, res, next) => {
 
+    let orgName, IDP;
     let claimNames = {
         [constants.ROLES.ROLE_CLAIM]: config.roleClaim,
         [constants.ROLES.GROUP_CLAIM]: config.groupsClaim,
         [constants.ROLES.ORGANIZATION_CLAIM]: config.orgIDClaim
-    };  
-    const orgName = req.params.orgName;
-    const baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName;
-    const orgDetails = await adminDao.getOrganization(orgName);
-    if (orgDetails) {
-        claimNames[constants.ROLES.ROLE_CLAIM] = orgDetails.ROLE_CLAIM_NAME || config.roleClaim;
-        claimNames[constants.ROLES.GROUP_CLAIM] = orgDetails.GROUPS_CLAIM_NAME || config.groupsClaim;
-        claimNames[constants.ROLES.ORGANIZATION_CLAIM] = orgDetails.ORGANIZATION_CLAIM_NAME || config.orgIDClaim;
-    }
-    if (!req.isAuthenticated()) {
-        const fidp = req.query.fidp;
-        if (fidp && config.fidp[fidp]) {
-            if (fidp == 'enterprise' && req.query.username) {
-                await passport.authenticate('oauth2', { fidp: config.fidp[fidp], username: req.query.username })(req, res, next);
-            } else {
-                await passport.authenticate('oauth2', { fidp: config.fidp[fidp] })(req, res, next);
+    };
+    if (req.params.orgName) {
+        orgName = req.params.orgName;
+        if (orgName !== 'portal') {
+            const orgDetails = await adminDao.getOrganization(orgName);
+            if (orgDetails) {
+                claimNames[constants.ROLES.ROLE_CLAIM] = orgDetails.ROLE_CLAIM_NAME || config.roleClaim;
+                claimNames[constants.ROLES.GROUP_CLAIM] = orgDetails.GROUPS_CLAIM_NAME || config.groupsClaim;
+                claimNames[constants.ROLES.ORGANIZATION_CLAIM] = orgDetails.ORGANIZATION_CLAIM_NAME || config.orgIDClaim;
             }
-        } else if (fidp && fidp == 'default') {
-            await passport.authenticate('oauth2')(req, res, next);
-        } else { 
-            const templateContent = {
-                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName
-            };
-            const html = util.renderTemplate('../pages/login-page/page.hbs', 
-                'src/pages/login-page/layout.hbs', templateContent, true);
-            res.send(html);
         }
+    }
+
+    trackLoginTrigger({
+        orgName,
+        ipAddress: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+    });
+
+    IDP = await fetchAuthJsonContent(req, orgName);
+    if (IDP.clientId) {
+        //await configurePassport(IDP, claimNames);  // Configure passport dynamically
+        await passport.authenticate('oauth2')(req, res, next);
     } else {
-        res.redirect(baseUrl);
-    }     
+        orgName = req.params.orgName;
+        const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'login', 'page.hbs');
+        const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
+        const layoutResponse = "";
+
+        const templateContent = {
+            baseUrl: '/' + orgName
+        };
+
+        const html = await renderGivenTemplate(layoutResponse, templateResponse, templateContent);
+        res.set('Cache-Control', 'no-store');
+        res.send(html);
+    }
 };
 
 const handleCallback = async (req, res, next) => {
