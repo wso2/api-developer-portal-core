@@ -37,6 +37,7 @@
                 </div>
             </div>
             {{/unless}}
+            {{#unless (eq apiMetadata.apiInfo.apiType "MCP")}}
             {{#unless (eq resources.serverDetails.sandboxURL "")}}
             <div class="defaultapi-endpoint-row col-12 col-xl-9">
                 <div class="defaultapi-endpoint-content">
@@ -46,6 +47,7 @@
                     </div>
                 </div>
             </div>
+            {{/unless}}
             {{/unless}}
             {{/if}}
         </div>
@@ -59,19 +61,82 @@
             <span> No scopes available </span>
             {{/if}}
         </div>
+        {{#unless (eq apiMetadata.apiInfo.apiType "MCP")}}
         <div class="defaultapi-section">
-            <div class="container-header mb-4">Resources</div>
-            <div class="defaultapi-resources col-12">
-                {{#resources.endpoints}}
-                {{#methods}}
-                <div class="defaultapi-resource-item defaultapi-resource-item-{{method}}">
-                    <div class="defaultapi-http-method defaultapi-http-method-{{method}}">{{method}}</div>
-                    <div class="defaultapi-resource-path">{{../path}}</div>
-                    <div class="defaultapi-resource-summary">{{summary}}</div>
-                </div>
-                {{/methods}}
-                {{/resources.endpoints}}
+        <div class="container-header mb-4">Resources</div>
+        <div class="defaultapi-resources col-12">
+            {{#resources.endpoints}}
+            {{#methods}}
+            <div class="defaultapi-resource-item defaultapi-resource-item-{{method}}">
+            <div class="defaultapi-http-method defaultapi-http-method-{{method}}">{{method}}</div>
+            <div class="defaultapi-resource-path">{{../path}}</div>
+            <div class="defaultapi-resource-summary">{{summary}}</div>
             </div>
+            {{/methods}}
+            {{/resources.endpoints}}
         </div>
+        </div>
+        {{/unless}}
+
+{{#if (eq apiMetadata.apiInfo.apiType "MCP")}}
+            <div class="defaultapi-section">
+      <div class="row">
+        <div class="container-header mb-4">Tools</div>
+        <div class="defaultapi-resources col-12 col-lg-6 mb-4" style="margin-right: 30px;">
+          {{#each schemaDefinition}}
+            <div class="accordion-set">
+              <button
+                class="accordion-header"
+                onclick="this.classList.toggle('open')"
+              >
+                <span>{{this.name}}</span>
+                <i class="chevron-icon bi bi-chevron-down"></i>
+              </button>
+              <div class="accordion-body">
+                {{#if this.description}}
+                  <p class="accordion-summary">{{this.description}}</p>
+                {{else}}
+                  <p class="accordion-summary">No summary available.</p>
+                {{/if}}
+                {{#if this.inputSchema}}
+                    <pre class="json-block"><code>    {{jsonBeautify this.inputSchema}}</code></pre>
+                {{/if}}
+              </div>
+            </div>
+          {{/each}}
+        </div>
+        <div class="defaultapi-resources-mcp col-12 col-lg-5 mb-4">
+          <div class="mcp-json-block-header">MCP Server Configuration</div>
+        <div class="server-config-container" style="position: relative;">
+        <pre class="mcp-json-block" id="server-config-{{apiID}}">
+        <code class="language-json">
+{
+  <span class="schema-title">"servers"</span>: {
+    <span class="schema-title">"{{apiMetadata.apiInfo.apiName}}"</span>: {
+      <span class="schema-title">"url"</span>: <span class="schema-content">"{{resources.serverDetails.productionURL}}/mcp"</span>,
+      <span class="schema-title">"type"</span>: <span class="schema-content">"http"</span>,
+      <span class="schema-title">"headers"</span>: {
+        <span class="schema-title">"Authorization"</span>: <span class="schema-content">"Bearer ${token}</span>"
+      }
+    }
+  }
+}
+        </code>
+        </pre>
+        <button
+            type="button"
+            class="password-copy-btn"
+            onclick="copyServerConfig('{{apiID}}')"
+            title="Copy"
+            style="position: absolute; top: 10px; right: 10px; border: none; background: transparent; outline: none;"
+        >
+            <i class="bi bi-clipboard"></i>
+        </button>
+        </div>
+          <p style="font-size: small; font-weight: 400;">Please generate a token using the subscribed application and replace the placeholder.</p>
+        </div>
+      </div>
+    </div>
+    {{/if}}
     </div>
 </section>

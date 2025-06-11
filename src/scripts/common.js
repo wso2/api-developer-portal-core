@@ -928,58 +928,6 @@ document.addEventListener("DOMContentLoaded", function () {
             await showAlert('Failed to copy server config', true);
         }
     };
-
-    // Add pagination for subscription table
-    (function setupSubscriptionPagination() {
-            const apisTableContainer = document.getElementById('app-table-container')      
-            const rows = Array.from(apisTableContainer.querySelectorAll('tr.data-row'));
-            const pageSize = 5;
-            let currentPage = 1;
-        
-            function showPage(page) {
-                const start = (page - 1) * pageSize;
-                const end = start + pageSize;
-        
-                rows.forEach((row, index) => {
-                    row.style.display = index >= start && index < end ? '' : 'none';
-                });
-        
-                renderPagination(page);
-            }
-        
-            function renderPagination(page) {
-                const totalPages = Math.ceil(rows.length / pageSize);
-                const container = apisTableContainer.querySelector('#subscription-pagination');
-                container.innerHTML = '';
-        
-                if (totalPages <= 1) return;
-        
-                for (let i = 1; i <= totalPages; i++) {
-                    const btn = document.createElement('button');
-                    btn.textContent = i;
-                    btn.className = `pagination-btn btn btn-sm ${i === page ? 'common-btn-primary' : 'common-btn-outlined'}`;
-                    btn.onclick = () => {
-                        currentPage = i;
-                        showPage(currentPage);
-                    };
-                    container.appendChild(btn);
-                }
-            }
-            let paginationDiv = apisTableContainer.querySelector('#subscription-pagination');
-            if (!paginationDiv) {
-                paginationDiv = document.createElement('div');
-                paginationDiv.id = 'subscription-pagination';
-                paginationDiv.className = 'd-flex justify-content-end gap-2 mt-3';
-                const rowWrapper = apisTableContainer.querySelector('.row.row-gap-4');
-                const noSubs = apisTableContainer.querySelector('#no-subscription');
-                apisTableContainer.appendChild(paginationDiv);
-                if (rowWrapper && noSubs) {
-                    rowWrapper.insertBefore(paginationDiv, noSubs);
-                }
-            }
-        
-            showPage(currentPage);
-    })(); 
     
     // Handle API card message overlays
     const messageOverlays = document.querySelectorAll('.message-overlay');

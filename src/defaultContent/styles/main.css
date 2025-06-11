@@ -280,6 +280,14 @@ html {
   font-weight: 500;
 }
 
+.type-badge {
+  display: inline-block;
+  padding: 5px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
 /* common-card-style */
 .dev-card {
   height: 100%;
