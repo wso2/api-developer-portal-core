@@ -1,11 +1,11 @@
 <section class="section mt-5 mb-6">
     <div class="container-fluid">
         <div class="d-flex align-items-center justify-content-between mb-3">
-            <div class="container-header">Subscribed APIs</div>
+            <div class="container-header">Subscriptions</div>
             <div class='action-buttons mt-0'>
                 <a class="common-btn-primary" type="button"
                     href="{{baseUrl}}/apis?appID={{applicationMetadata.id}}&appName={{applicationMetadata.name}}">
-                    <i class="fas fa-external-link-alt me-2"></i> Subscribe to more APIs
+                    <i class="fas fa-external-link-alt me-2"></i> Explore more
                 </a>
             </div>
         </div>
@@ -15,8 +15,9 @@
                 <table class="app-table" id="app-table-{{applicationMetadata.id}}">
                     <thead>
                         <tr>
-                            <th class="app-th">API</th>
+                            <th class="app-th">Name</th>
                             <th class="app-th">Version</th>
+                            <th class="app-th">Type</th>
                             <th class="app-th">Subscription Plan</th>
                             <th class="app-th">
                                 {{#if isApiKey}}
@@ -30,15 +31,15 @@
                     <tbody>
                         {{#each subAPIs}}
                         {{> api-key apiID=apiID}}
-                        {{#if (eq apiType "REST")}}
                         {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
                         <tr class="data-row" id="data-row-{{subID}}" data-index="{{@index}}">
                             <td class="app-td">
                                 <span onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
                                     class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
                             </td>
-                            <td class="app-td">{{version}}</td>
-                            <td id="policy_{{subID}}" class="app-td">{{policyName}}</td>
+                            <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'" class="app-td" style="cursor: pointer;">{{version}}</td>
+                            <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'" class="app-td" style="cursor: pointer;">{{apiType}}</td>
+                            <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'" id="policy_{{subID}}" class="app-td" style="cursor: pointer;">{{policyName}}</td>
                             <td class="app-td">
                                 {{#if (contains security 'api_key')}}
                                 <div class="api-key-actions">
@@ -96,7 +97,6 @@
                                 </div>
                             </td>
                         </tr>
-                        {{/if}}
                         {{/each}}
                     </tbody>
                 </table>
