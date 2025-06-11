@@ -205,9 +205,9 @@ const loadApplication = async (req, res) => {
 
             for (var keyManager of kMmetaData) {
                 if (keyManager.name === 'Resident Key Manager') {
-                    keyManager.tokenEndpoint = 'https://sts.preview-dv.choreo.dev/oauth2/token';
-                    keyManager.authorizeEndpoint = 'https://sts.preview-dv.choreo.dev/oauth2/authorize';
-                    keyManager.revokeEndpoint = 'https://sts.preview-dv.choreo.dev/oauth2/revoke';
+                    keyManager.tokenEndpoint = 'https://sts.choreo.dev/oauth2/token';
+                    keyManager.authorizeEndpoint = 'https://sts.choreo.dev/oauth2/authorize';
+                    keyManager.revokeEndpoint = 'https://sts.choreo.dev/oauth2/revoke';
                 }
 
                 keyManager.availableGrantTypes = await mapGrants(keyManager.availableGrantTypes);
