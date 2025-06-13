@@ -1,21 +1,14 @@
 <section class="section mt-5 mb-6">
-    <div class="container-fluid">
+    <div class="container-fluid" >
         <div class="d-flex align-items-center justify-content-between mb-3">
-            <div class="container-header">Subscribed APIs</div>
-            <div class='action-buttons mt-0'>
-                <a class="common-btn-primary" type="button"
-                    href="{{baseUrl}}/apis?appID={{applicationMetadata.id}}&appName={{applicationMetadata.name}}">
-                    <i class="fas fa-external-link-alt me-2"></i> Subscribe to more APIs
-                </a>
-            </div>
+            <div class="container-header">Subscribed MCP Proxies</div>
         </div>
         <div class="row row-gap-4">
-            {{#if subAPIs}}
-            <div class="app-table-container" id="app-table-container">
-                <table class="app-table" id="app-table-{{applicationMetadata.id}}">
+            <div class="app-table-container" id="app-table-container-mcp">
+                <table class="app-table" id="app-table-mcp-{{applicationMetadata.id}}">
                     <thead>
                         <tr>
-                            <th class="app-th">API</th>
+                            <th class="app-th">MCP</th>
                             <th class="app-th">Version</th>
                             <th class="app-th">Subscription Plan</th>
                             <th class="app-th">
@@ -27,12 +20,11 @@
                             </th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="subscribed-api-body">
                         {{#each subAPIs}}
-                        {{> api-key apiID=apiID}}
-                        {{#if (eq apiType "REST")}}
+                        {{#if (eq apiType "MCP")}}
                         {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
-                        <tr class="data-row" id="data-row-{{subID}}" data-index="{{@index}}">
+                        <tr class="data-row" data-index="{{@index}}" id="data-row-{{subID}}">
                             <td class="app-td">
                                 <span onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
                                     class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
@@ -43,10 +35,9 @@
                                 {{#if (contains security 'api_key')}}
                                 <div class="api-key-actions">
                                     <button class="common-btn-outlined btn-sm me-1" id="regenerateKeyBtn-{{subID}}"
-                                        data-scopes="{{json apiKeys.scopes}}"
-                                        data-api-key-id="'{{apiKeys.key.[0].id}}'"
+                                        data-api-key-id="'{{apiKeys.[0].id}}'"
                                         onclick="openWarningModal('regenerate', this.dataset.apiKeyId, '{{subID}}')"
-                                        style="{{#if apiKeys.key}}display: inline-flex;{{else}}display: none;{{/if}}">
+                                        style="{{#if apiKeys}}display: inline-flex;{{else}}display: none;{{/if}}">
                                         <span class="button-normal-state">
                                             <i class="bi bi-key me-1"></i> Regenerate
                                         </span>
@@ -56,10 +47,10 @@
                                         </span>
                                     </button>
                                     <button class="common-btn-outlined btn-sm api-key-revoke"
-                                        data-api-key-id="'{{apiKeys.key.[0].id}}'"
+                                        data-api-key-id="'{{apiKeys.[0].id}}'"
                                         onclick="openWarningModal('revoke', this.dataset.apiKeyId, '{{subID}}', '{{../applicationMetadata.id}}', '{{refID}}')"
                                         id="revokeKeyBtn-{{subID}}"
-                                        style="{{#if apiKeys.key}}display: inline-flex;{{else}}display: none;{{/if}}">
+                                        style="{{#if apiKeys}}display: inline-flex;{{else}}display: none;{{/if}}">
                                         <span class="button-normal-state">
                                             <i class="bi bi-key me-1"></i> Revoke
                                         </span>
@@ -69,9 +60,9 @@
                                         </span>
                                     </button>
                                     <button class="common-btn-outlined btn-sm me-1" id="generateKeyBtn-{{subID}}"
-                                        style="{{#if apiKeys.key}}display: none;{{else}}display: inline-flex;{{/if}}"
+                                        style="{{#if apiKeys}}display: none;{{else}}display: inline-flex;{{/if}}"
                                         data-app-ref-id=""
-\                                        onclick="openApiKeyModal('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIs}}', '{{json scopes}}')">
+                                        onclick="generateAPIKey('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIs}}')">
                                         <span class="button-normal-state">
                                             <i class="bi bi-key me-1"></i> Generate Key
                                         </span>
@@ -101,15 +92,15 @@
                     </tbody>
                 </table>
             </div>
-            {{/if}}
-            <div class="ps-3" id="no-subscription" style="{{#if subAPIs.length}}display:none{{/if}}">
+            <div class="ps-3" id="no-subscription-mcp" style="{{#if mcpAPICount}}display:none{{/if}}">
                 <div class="info-box">
                     <div class="info-content">
                         <div class="info-title">
-                            No subscriptions available for this application. Please subscribe to an API.
+                            No subscriptions available for this application. Please subscribe to an MCP Proxies.
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 </section>
