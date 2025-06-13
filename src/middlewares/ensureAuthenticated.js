@@ -330,9 +330,11 @@ const validateWithJWKS = async (token, jwksURL, req) => {
                 return [true, response.scope || ""];
             } catch (error) {
                 req.user =  null;
+                console.error("Error refreshing access token:", error.message);
                 return [false, ""];           
             }
         } else {
+            console.error("Token validation error:", err.message);
             return [false, ""];
         }
     }
