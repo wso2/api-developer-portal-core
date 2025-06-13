@@ -496,6 +496,12 @@ async function parseSwagger(api) {
 
 function replaceEndpointParams(apiDefinition, prodEndpoint, sandboxEndpoint) {
 
+    if (apiDefinition.swagger.startsWith('2.')) {
+        if (prodEndpoint.trim().length !== 0) {
+            apiDefinition.host = prodEndpoint.replace(/https?:\/\//, '');
+            apiDefinition.schemes = [prodEndpoint.startsWith('https') ? 'https' : 'http'];
+        }
+    }
     let servers = [];
     if (prodEndpoint.trim().length !== 0) {
         servers.push({
