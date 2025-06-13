@@ -179,6 +179,8 @@ const loadAPIContent = async (req, res) => {
             let templateContent = {
                 errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API
             }
+            const apiDetail = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${metaData.apiReferenceID}`, null, null);
+
             if (allowedAPIList.count === 0) {
                 if (!(req.user)) {
                     console.log("User is not authorized to access the API or user session expired, hence redirecting to login page");
@@ -262,6 +264,7 @@ const loadAPIContent = async (req, res) => {
                 resources: apiDetails,
                 orgID: orgID,
                 schemaDefinition: schemaDefinition,
+                scopes: apiDetail.scopes
             };
         html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
         } catch (error) {
