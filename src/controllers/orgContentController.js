@@ -77,9 +77,19 @@ const loadOrgContentFromAPI = async (req, res) => {
     return html;
 }
 
+const loadLoginPage = async (req, res) => {
+    const orgName = req.params.orgName;
+    const templateContent = {
+        baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName
+    };
+    const html = renderTemplate('../pages/login-page/page.hbs', 'src/pages/login-page/layout.hbs', templateContent, true);
+    res.send(html);
+}
+
 module.exports = {
     loadOrgContentFromFile,
     loadOrgContentFromAPI,
     loadOrganizationContent,
-    loadDefaultLandingPage
+    loadDefaultLandingPage,
+    loadLoginPage
 };
