@@ -27,7 +27,8 @@ const util = require('../utils/util');
 const { CustomError } = require('../utils/errors/customErrors');
 const IdentityProviderDTO = require("../dto/identityProvider");
 const jwt = require('jsonwebtoken');
-
+const axios = require('axios');
+const qs = require('qs');
 
 function enforceSecuirty(scope) {
     return async function (req, res, next) {
@@ -196,17 +197,17 @@ const ensureAuthenticated = async (req, res, next) => {
             }
             return next();
         } else {
-        await req.session.save(async (err) => {
-            if (err) {
-                return res.status(500).send('Internal Server Error');
-            }
-            req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
-            if (req.params.orgName) {
-                res.redirect(`/${req.params.orgName}/views/${req.params.viewName}/login`);
-            } else {
-                res.redirect(303, `/portal/login`);
-            }
-        });
+            await req.session.save(async (err) => {
+                if (err) {
+                    return res.status(500).send('Internal Server Error');
+                }
+                req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
+                if (req.params.orgName) {
+                    res.redirect(`/${req.params.orgName}/views/${req.params.viewName}/login`);
+                } else {
+                    res.redirect(303, `/portal/login`);
+                }
+            });
         }
     } else {
         return next();
@@ -256,7 +257,7 @@ function validateAuthentication(scope) {
                 [valid, scopes] = await validateWithCert(accessToken, publicKey);
             } else {
                 if (IDP.jwksURL) {
-                    [valid, scopes] = await validateWithJWKS(accessToken, IDP.jwksURL);
+                    [valid, scopes] = await validateWithJWKS(accessToken, IDP.jwksURL, req);
                 } else {
                     valid = false;
                 }
@@ -309,15 +310,44 @@ const validateWithCert = async (token, publicKey) => {
     }
 }
 
-const validateWithJWKS = async (token, jwksURL) => {
+const validateWithJWKS = async (token, jwksURL, req) => {
 
     try {
         const jwks = await createRemoteJWKSet(new URL(jwksURL));
         const { payload } = await jwtVerify(token, jwks);
         return [true, payload.scope];
     } catch (err) {
-        console.error("Invalid token:", err.message);
-        return [false, ""];
+        console.error("Invalid token:", err);
+        if (err.code === 'ERR_JWT_EXPIRED' && req.user && req.user.refreshToken) {
+            // Token expired, refresh it
+            console.log("Access token expired, refreshing...");
+            const response = await refreshAccessToken(req.user.refreshToken);
+            req.user[constants.ACCESS_TOKEN] = response.access_token;
+            req.user[constants.REFRESH_TOKEN] = response.refresh_token;
+            return [true, response.scope || ""];
+        } else {
+            return [false, ""];
+        }
+    }
+}
+
+async function refreshAccessToken(refreshToken) {
+    try {
+        const data = qs.stringify({
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken,
+            client_id: config.identityProvider.clientId,
+        });
+        const response = await axios.post(config.identityProvider.tokenURL, data, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+        return response.data
+
+    } catch (err) {
+        console.error('Token refresh error:', err.response?.data || err.message);
+        throw err;
     }
 }
 
