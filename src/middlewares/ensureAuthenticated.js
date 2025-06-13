@@ -320,11 +320,18 @@ const validateWithJWKS = async (token, jwksURL, req) => {
         console.error("Invalid token:", err);
         if (err.code === 'ERR_JWT_EXPIRED' && req.user && req.user.refreshToken) {
             // Token expired, refresh it
-            console.log("Access token expired. Triggering refresh token flow to obtain a new access token.");
-            const response = await refreshAccessToken(req.user.refreshToken);
-            req.user[constants.ACCESS_TOKEN] = response.access_token;
-            req.user[constants.REFRESH_TOKEN] = response.refresh_token;
-            return [true, response.scope || ""];
+            try {
+                console.log("Access token expired. Triggering refresh token flow to obtain new tokens");
+                const response = await refreshAccessToken(req.user.refreshToken);
+                req.user[constants.ACCESS_TOKEN] = response.access_token;
+                req.user[constants.REFRESH_TOKEN] = response.refresh_token;
+                req.user[constants.EXCHANGE_TOKEN] = await util.tokenExchanger(response.access_token, req.user.returnTo.split("/")[1]);
+                
+                return [true, response.scope || ""];
+            } catch (error) {
+                req.user =  null;
+                return [false, ""];           
+            }
         } else {
             return [false, ""];
         }

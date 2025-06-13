@@ -34,6 +34,7 @@ module.exports = {
     ORG_HANDLE: 'orgHandle',
     ACCESS_TOKEN: 'accessToken',
     REFRESH_TOKEN: 'refreshToken',
+    EXCHANGE_TOKEN: 'exchangeToken',
     USER_ID: 'sub',
     BASIC_HEADER: 'basicAuthHeader',
     API_VISIBILITY: {
@@ -222,7 +223,7 @@ module.exports = {
         IDP_UPDATE_ERROR: "Error while updating IDP",
         IDP_DELETE_ERROR: "Error while deleting IDP",
         API_NOT_IN_ORG: "API does not belong to given organization",
-        UNAUTHENTICATED: "User is not authenticated",
+        UNAUTHENTICATED: "Unauthorized access, please log in again",
         FORBIDDEN: "You do not have permission to access this resource",
         PROVIDER_CREATE_ERROR: "Error while creating provider",
         PROVIDER_UPDATE_ERROR: "Error while updating provider",
