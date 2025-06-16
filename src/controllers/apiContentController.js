@@ -350,10 +350,10 @@ const loadDocument = async (req, res) => {
     const version = apiMetadata ? apiMetadata.apiInfo.apiVersion : "";
     //check whether user has access to the API
 
-    let allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:${apiName}+version:${version}`, {}, {});
+    let allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
     if (allowedAPIList.count == 0) {
         apiName = apiMetadata.apiInfo.apiName;
-        allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:${apiName}+version:${version}`, {}, {});
+        allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
     }
     if (allowedAPIList.count === 0) {
         templateContent = {
@@ -496,6 +496,12 @@ async function parseSwagger(api) {
 
 function replaceEndpointParams(apiDefinition, prodEndpoint, sandboxEndpoint) {
 
+    if (apiDefinition?.swagger?.startsWith('2.')) {
+        if (prodEndpoint.trim().length !== 0) {
+            apiDefinition.host = prodEndpoint.replace(/https?:\/\//, '');
+            apiDefinition.schemes = [prodEndpoint.startsWith('https') ? 'https' : 'http'];
+        }
+    }
     let servers = [];
     if (prodEndpoint.trim().length !== 0) {
         servers.push({
