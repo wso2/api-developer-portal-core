@@ -42,6 +42,4 @@ router.get('/', (req, res, next) => {
     next();
 }, orgController.loadDefaultLandingPage);
 
-router.get('/:orgName/views/:viewName/log-in', registerPartials, orgController.loadLoginPage);
-
 module.exports = router;
