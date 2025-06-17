@@ -292,8 +292,11 @@ const loadApplication = async (req, res) => {
         }
     } catch (error) {
         console.error("Error occurred while loading application", error);
-        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs',
-            constants.COMMON_ERROR_MESSAGE, true);
+        if (Number(error?.statusCode) === 401) {
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_AUTH_ERROR_MESSAGE, true);
+        } else { 
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_ERROR_MESSAGE, true);
+        }    
     }
     res.send(html);
 }
