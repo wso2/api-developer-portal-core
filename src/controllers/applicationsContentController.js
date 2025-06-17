@@ -292,9 +292,8 @@ const loadApplication = async (req, res) => {
         }
     } catch (error) {
         console.error("Error occurred while loading application", error);
-        if (Number(error?.code) === 401) {
-            const authErrorContent = { baseUrl: config.baseUrl + "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName}; 
-            html = renderTemplate('../pages/auth-error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', authErrorContent, true);
+        if (Number(error?.statusCode) === 401) {
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_AUTH_ERROR_MESSAGE, true);
         } else { 
             html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_ERROR_MESSAGE, true);
         }    
