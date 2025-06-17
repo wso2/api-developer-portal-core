@@ -342,84 +342,93 @@ const loadDocsPage = async (req, res) => {
 }
 
 const loadDocument = async (req, res) => {
+    try {
+        const { orgName, apiHandle, viewName, docType, docName } = req.params;
+        const hbs = exphbs.create({});
+        let templateContent = {
+            "isAPIDefinition": false
+        };
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
+        req.cpOrgID = cpOrgID;
+        const definitionResponse = await loadAPIDefinition(orgName, viewName, apiHandle);
+        templateContent.apiType = definitionResponse.apiType;
+        let apiMetadata = definitionResponse.metaData;
+        let apiName = apiMetadata ? apiMetadata.apiHandle?.split('-v')[0] : "";
+        const version = apiMetadata ? apiMetadata.apiInfo.apiVersion : "";
+        //check whether user has access to the API
 
-    const { orgName, apiHandle, viewName, docType, docName } = req.params;
-    const hbs = exphbs.create({});
-    let templateContent = {
-        "isAPIDefinition": false
-    };
-    const orgDetails = await adminDao.getOrganization(orgName);
-    const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
-    req.cpOrgID = cpOrgID;
-    const definitionResponse = await loadAPIDefinition(orgName, viewName, apiHandle);
-    templateContent.apiType = definitionResponse.apiType;
-    let apiMetadata = definitionResponse.metaData;
-    let apiName = apiMetadata ? apiMetadata.apiHandle?.split('-v')[0] : "";
-    const version = apiMetadata ? apiMetadata.apiInfo.apiVersion : "";
-    //check whether user has access to the API
-
-    let allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
-    if (allowedAPIList.count == 0) {
-        apiName = apiMetadata.apiInfo.apiName;
-        allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
-    }
-    if (allowedAPIList.count === 0) {
-        templateContent = {
-            errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API
+        let allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
+        if (allowedAPIList.count == 0) {
+            apiName = apiMetadata.apiInfo.apiName;
+            allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
         }
-        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
-        res.send(html);
-    }
-    //load API definition
-    if (req.originalUrl.includes(constants.FILE_NAME.API_SPECIFICATION_PATH)) {
-       
-      
-        let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
-        const response = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiMetadata.apiReferenceID}`, null, null);
-        if (response.securityScheme.includes("api_key")) {
-            modifiedSwagger.components.securitySchemes.ApiKeyAuth = { "type": "apiKey", "name": `${response.apiKeyHeader}`, "in": "header" };
-            for (let path in modifiedSwagger.paths) {
-                for (let method in modifiedSwagger.paths[path]) {
-                    if (modifiedSwagger.paths[path].hasOwnProperty(method)) {
-                        modifiedSwagger.paths[path][method].security[0].ApiKeyAuth = [];
+        if (allowedAPIList.count === 0) {
+            templateContent = {
+                errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API
+            }
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+            res.send(html);
+        }
+        //load API definition
+        if (req.originalUrl.includes(constants.FILE_NAME.API_SPECIFICATION_PATH)) {
+        
+        
+            let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
+            const response = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiMetadata.apiReferenceID}`, null, null);
+            if (response.securityScheme.includes("api_key")) {
+                modifiedSwagger.components.securitySchemes.ApiKeyAuth = { "type": "apiKey", "name": `${response.apiKeyHeader}`, "in": "header" };
+                for (let path in modifiedSwagger.paths) {
+                    for (let method in modifiedSwagger.paths[path]) {
+                        if (modifiedSwagger.paths[path].hasOwnProperty(method)) {
+                            modifiedSwagger.paths[path][method].security[0].ApiKeyAuth = [];
+                        }
                     }
                 }
             }
+            templateContent.swagger = JSON.stringify(modifiedSwagger);
+            templateContent.isAPIDefinition = true;
         }
-        templateContent.swagger = JSON.stringify(modifiedSwagger);
-        templateContent.isAPIDefinition = true;
-    }
-    if (config.mode === constants.DEV_MODE) {
-        const apiMetadata = await loadAPIMetaDataFromFile(apiHandle);
-        const docNames = apiMetadata.docTypes;
-        let apiMD = "";
-        if (docType !== undefined && docName !== undefined) {
-            const filePath = path.join(process.cwd(), filePrefix + '../mock', apiHandle + "/" + docType + "/" + docName);
-            if (fs.existsSync(filePath) && (filePath.endsWith('.hbs') || filePath.endsWith('.html'))) {
-                hbs.handlebars.registerPartial(constants.FILE_NAME.API_DOC_PARTIAL_NAME, fs.readFileSync(filePath, constants.CHARSET_UTF8));
+        if (config.mode === constants.DEV_MODE) {
+            const apiMetadata = await loadAPIMetaDataFromFile(apiHandle);
+            const docNames = apiMetadata.docTypes;
+            let apiMD = "";
+            if (docType !== undefined && docName !== undefined) {
+                const filePath = path.join(process.cwd(), filePrefix + '../mock', apiHandle + "/" + docType + "/" + docName);
+                if (fs.existsSync(filePath) && (filePath.endsWith('.hbs') || filePath.endsWith('.html'))) {
+                    hbs.handlebars.registerPartial(constants.FILE_NAME.API_DOC_PARTIAL_NAME, fs.readFileSync(filePath, constants.CHARSET_UTF8));
+                }
+                apiMD = await loadMarkdown(docName, filePrefix + '../mock/' + apiHandle + "/" + docType);
             }
-            apiMD = await loadMarkdown(docName, filePrefix + '../mock/' + apiHandle + "/" + docType);
-        }
-        templateContent.baseUrl = constants.BASE_URL + config.port + "/views/" + viewName + "/api/" + apiHandle;
-        templateContent.docTypes = docNames;
-        templateContent.apiMD = apiMD;
-        html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
-    } else {
-        try {
-            const orgID = await adminDao.getOrgId(orgName);
-            const apiID = await apiDao.getAPIId(orgID, apiHandle);
-            const viewName = req.params.viewName;
-            const docNames = await apiMetadataService.getAPIDocTypes(orgID, apiID)
-            templateContent.baseUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle;
+            templateContent.baseUrl = constants.BASE_URL + config.port + "/views/" + viewName + "/api/" + apiHandle;
             templateContent.docTypes = docNames;
-            html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
-        } catch (error) {
-            console.error(`Failed to load api content :`, error);
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
-            constants.COMMON_ERROR_MESSAGE, true);
+            templateContent.apiMD = apiMD;
+            html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
+        } else {
+            try {
+                const orgID = await adminDao.getOrgId(orgName);
+                const apiID = await apiDao.getAPIId(orgID, apiHandle);
+                const viewName = req.params.viewName;
+                const docNames = await apiMetadataService.getAPIDocTypes(orgID, apiID)
+                templateContent.baseUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle;
+                templateContent.docTypes = docNames;
+                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
+            } catch (error) {
+                console.error(`Failed to load api content :`, error);
+                html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
+                constants.COMMON_ERROR_MESSAGE, true);
+            }
         }
-    }
-    res.send(html);
+        res.send(html);
+    } catch (error) {
+        if (Number(error?.code) === 401) {
+            const authErrorContent = { baseUrl: config.baseUrl + "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName}; 
+            html = renderTemplate('../pages/auth-error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', authErrorContent, true);
+        } else { 
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_ERROR_MESSAGE, true);
+        }
+        res.send(html);
+    }    
 }
 
 async function loadAPIMetaDataList() {
