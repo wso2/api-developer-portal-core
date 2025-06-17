@@ -205,9 +205,9 @@ const loadApplication = async (req, res) => {
 
             for (var keyManager of kMmetaData) {
                 if (keyManager.name === 'Resident Key Manager') {
-                    keyManager.tokenEndpoint = 'https://sts.preview-dv.choreo.dev/oauth2/token';
-                    keyManager.authorizeEndpoint = 'https://sts.preview-dv.choreo.dev/oauth2/authorize';
-                    keyManager.revokeEndpoint = 'https://sts.preview-dv.choreo.dev/oauth2/revoke';
+                    keyManager.tokenEndpoint = 'https://sts.choreo.dev/oauth2/token';
+                    keyManager.authorizeEndpoint = 'https://sts.choreo.dev/oauth2/authorize';
+                    keyManager.revokeEndpoint = 'https://sts.choreo.dev/oauth2/revoke';
                 }
 
                 keyManager.availableGrantTypes = await mapGrants(keyManager.availableGrantTypes);
@@ -292,8 +292,11 @@ const loadApplication = async (req, res) => {
         }
     } catch (error) {
         console.error("Error occurred while loading application", error);
-        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs',
-            constants.COMMON_ERROR_MESSAGE, true);
+        if (Number(error?.statusCode) === 401) {
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_AUTH_ERROR_MESSAGE, true);
+        } else { 
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_ERROR_MESSAGE, true);
+        }    
     }
     res.send(html);
 }
