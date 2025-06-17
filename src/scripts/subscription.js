@@ -174,6 +174,7 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
     const card = getSubscriptionCard(apiId, policyId);
     const subscribeButton = card ? card.querySelector(".common-btn-primary") : null;
     const messageOverlay = card ? card.querySelector(".message-overlay") : null;
+    let response;
 
     try {
         // Get application ID from hidden field if not provided
@@ -185,7 +186,7 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
         }
 
         // Make the API request
-        const response = await fetch(`/devportal/organizations/${orgID}/subscriptions`, {
+        response = await fetch(`/devportal/organizations/${orgID}/subscriptions`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -262,8 +263,11 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
         closeModal('planModal-' + apiId);
         resetSubscribeButtonState(subscribeButton);
 
-        const errorMessage = `Error while subscribing: ${error.message}`;
-        showSubscriptionMessage(messageOverlay, errorMessage, 'error');
+        let errorMessage = ``
+        if (response.headers.get("content-type") && response.headers.get("content-type").includes("application/json")) {
+            errorMessage = `: ${error.message}`;
+        }
+        showSubscriptionMessage(messageOverlay, `Error while subscribing${errorMessage}`, 'error');
     }
 }
 
