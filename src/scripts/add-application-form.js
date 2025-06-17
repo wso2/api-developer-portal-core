@@ -67,7 +67,6 @@ window.resetButtonState = function (button) {
         button.innerHTML = button.dataset.originalText;
         button.disabled = false;
         cancelButton.disabled = false;
-        appErrror.classList.add('d-none');
         nameInput.disabled = false;
     }
 };

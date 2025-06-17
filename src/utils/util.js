@@ -468,21 +468,8 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         const response = await axios(url, options);
         return response.data;
     } catch (error) {
-        if (error.response?.status === 401 && req.user?.exchangeToken) {
-            try {
-                const newExchangedToken = await tokenExchanger(req.user.accessToken, req.user.returnTo.split("/")[1]);
-                req.user.exchangeToken = newExchangedToken;
-                headers.Authorization = `Bearer ${newExchangedToken}`;
-                options.headers = headers;
-                const response = await axios(url, options);
-                return response.data;
-            } catch (retryError) {
-                let retryMessage;
-                if (retryError.response) {
-                    retryMessage = retryError.response.data.description;
-                }
-                throw new CustomError(retryError.response?.status || 500, "Request retry failed", retryMessage);   
-            }
+        if (error.response?.status === 401) {
+            throw new CustomError(error.response.status, "Access denied", error.message || error.response?.data?.description || constants.ERROR_MESSAGE.UNAUTHENTICATED);   
         } else {
             console.log(`Error while invoking API:`, error);
             let message = error.message;
