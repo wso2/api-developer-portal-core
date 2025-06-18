@@ -1,0 +1,23 @@
+<div class="container enterprise-login">
+  <h2 class="enterprise-login-heading">Sign in with Enterprise ID</h2>
+
+  <form method="POST" action="/enterprise-login">
+    <div class="enterprise-login-form-group">
+      <input
+        type="email"
+        name="email"
+        class="enterprise-login-input"
+        placeholder="Enter email"
+        required
+      />
+    </div>
+
+    <div class="enterprise-login-form-group">
+        <a href="{{baseUrl}}/login?fidp=enterprise" class="enterprise-login-button">Continue</a>
+    </div>
+
+    <div class="enterprise-login-form-group">
+        <a class="enterprise-login-back" id="back-to-signin">Back</a>
+    </div>
+  </form>
+</div>
