@@ -333,6 +333,9 @@ strategy.authorizationParams = function (options) {
     if (options.fidp) {
         params.fidp = options.fidp;
     }
+    if (options.username) {
+        params.username = options.username;
+    }
     return params;
 };
 
