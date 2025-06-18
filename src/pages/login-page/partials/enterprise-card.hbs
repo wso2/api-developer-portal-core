@@ -1,23 +1,27 @@
 <div class="container enterprise-login">
     <h2>Sign in with Enterprise ID</h2>
-
-    <form method="POST" action="/enterprise-login">
-        <div class="enterprise-login-form-group">
+    <div class="enterprise-login-form-group">
         <input
             type="email"
             name="email"
+            id="enterprise-email"
             class="enterprise-login-input"
             placeholder="Enter email"
             required
         />
-        </div>
+    </div>
 
-        <div class="enterprise-login-form-group">
-            <a href="{{baseUrl}}/login?fidp=enterprise" class="btn">Continue</a>
-        </div>
+    <div class="enterprise-login-form-group">
+        <a
+            href="#"
+            class="btn"
+            id="enterprise-continue"
+            style="pointer-events: none; opacity: 0.5;"
+            >Continue</a
+        >
+    </div>
 
-        <div class="enterprise-login-form-group">
-            <a class="btn" id="back-to-signin">Back</a>
-        </div>
-    </form>
+    <div class="enterprise-login-form-group">
+        <a class="btn" id="back-to-signin">Back</a>
+    </div>
 </div>

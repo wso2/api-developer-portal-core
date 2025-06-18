@@ -76,7 +76,11 @@ const login = async (req, res, next) => {
     if (!req.isAuthenticated()) {
         const fidp = req.query.fidp;
         if (fidp && config.fidp[fidp]) {
-            await passport.authenticate('oauth2', { fidp: config.fidp[fidp] })(req, res, next);
+            if (fidp == 'enterprise' && req.query.username) {
+                await passport.authenticate('oauth2', { fidp: config.fidp[fidp], username: req.query.username })(req, res, next);
+            } else {
+                await passport.authenticate('oauth2', { fidp: config.fidp[fidp] })(req, res, next);
+            }
         } else if (fidp && fidp == 'default') {
             await passport.authenticate('oauth2')(req, res, next);
         } else { 
