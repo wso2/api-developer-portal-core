@@ -77,6 +77,8 @@ const login = async (req, res, next) => {
         const fidp = req.query.fidp;
         if (fidp && config.fidp[fidp]) {
             await passport.authenticate('oauth2', { fidp: config.fidp[fidp] })(req, res, next);
+        } else if (fidp && fidp == 'default') {
+            await passport.authenticate('oauth2')(req, res, next);
         } else { 
             const templateContent = {
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName
