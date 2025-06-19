@@ -81,5 +81,5 @@ module.exports = {
     loadOrgContentFromFile,
     loadOrgContentFromAPI,
     loadOrganizationContent,
-    loadDefaultLandingPage,
+    loadDefaultLandingPage
 };
