@@ -16,31 +16,22 @@ document.addEventListener('DOMContentLoaded', function () {
         signinCard.style.display = 'block';
     });
 
-    // Google Login
     document.getElementById('login-google').addEventListener('click', function () {
-        console.log('Google login clicked');
         window.location.href = `${baseUrl}/login?fidp=google`;
     });
 
-    // GitHub Login
     document.getElementById('login-github').addEventListener('click', function () {
-        console.log('GitHub login clicked');
         window.location.href = `${baseUrl}/login?fidp=github`;
     });
 
-    // Microsoft Login
     document.getElementById('login-microsoft').addEventListener('click', function () {
-        console.log('Microsoft login clicked');
         window.location.href = `${baseUrl}/login?fidp=microsoft`;
     });
 
-    // Email Login
     document.getElementById('login-email').addEventListener('click', function () {
-        console.log('Email login clicked');
         window.location.href = `${baseUrl}/login?fidp=email`;
     });
 
-    // Enterprise login
     const emailInput = document.getElementById('enterprise-email');
     const continueBtn = document.getElementById('login-enterprise');
 
@@ -52,7 +43,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const redirectUrl = `${baseUrl}/login?fidp=enterprise&username=${encodeURIComponent(email)}`;
-        console.log('Enterprise login triggered with:', email);
         window.location.href = redirectUrl;
     });
 
