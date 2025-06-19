@@ -45,8 +45,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const continueBtn = document.getElementById('login-enterprise');
 
     continueBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-
         const email = emailInput.value.trim();
         if (!validateEmail(email)) {
             alert("Please enter a valid email address.");
