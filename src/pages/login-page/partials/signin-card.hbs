@@ -1,17 +1,17 @@
 <div class="container">
     <h2>Sign in to continue</h2>
-    <a class="btn" href="{{baseUrl}}/login?fidp=google">
+    <button class="btn" id="login-google">
         <img src="" alt="Google" width="20">
         Continue with Google
-    </a>
-    <a class="btn" href="{{baseUrl}}/login?fidp=github">
+    </button>
+    <button class="btn" id="login-github">
         <img src="" alt="GitHub" width="20">
         Continue with GitHub
-    </a>
-    <a class="btn" href="{{baseUrl}}/login?fidp=microsoft">
+    </button>
+    <button class="btn" id="login-microsoft">
         <img src="" alt="Microsoft" width="20">
         Continue with Microsoft
-    </a> 
+    </button>
     <a class="btn" id="show-enterprise">
         <img src="" alt="Enterprise" width="20">
         Sign in with Enterprise ID
@@ -19,10 +19,10 @@
 
     <div class="or-divider">OR</div>
 
-    <a class="btn" href="{{baseUrl}}/login?fidp=email">
+    <button class="btn" id="login-email">
         <img src="" alt="Email" width="20">
         Sign in with Email
-    </a>
+    </button>
 
     {{!-- <div class="signup">
         Don’t have an account? <a>Sign Up</a>
