@@ -44,6 +44,10 @@ const createOrganization = async (req, res) => {
         return res.status(400).json(util.getErrors(errors));
     }
     const payload = req.body;
+    const orgConfig = {
+        allowedAPITypes: [constants.API_TYPE.MCP, constants.API_TYPE.API_PROXIES],
+    }
+    payload.orgConfig = orgConfig;
     let organization = "";
     try {
         await sequelize.transaction(async (t) => {
@@ -66,6 +70,7 @@ const createOrganization = async (req, res) => {
                 }
             }
         });
+
         const orgCreationResponse = {
             orgId: organization.ORG_ID,
             orgName: organization.ORG_NAME,
@@ -79,7 +84,8 @@ const createOrganization = async (req, res) => {
             organizationIdentifier: organization.ORGANIZATION_IDENTIFIER,
             adminRole: organization.ADMIN_ROLE,
             subscriberRole: organization.SUBSCRIBER_ROLE,
-            groupClaimName: organization.GROUP_CLAIM_NAME
+            groupClaimName: organization.GROUP_CLAIM_NAME,
+            orgConfig: organization.dataValues.ORG_CONFIG
         };
         console.log(`Organization created successfully. orgId: ${orgCreationResponse.orgId}, orgName: ${orgCreationResponse.orgName}`);
         res.status(201).send(orgCreationResponse);
@@ -118,7 +124,8 @@ const getAllOrganizations = async () => {
                 organizationIdentifier: organization.ORGANIZATION_IDENTIFIER,
                 adminRole: organization.ADMIN_ROLE,
                 subscriberRole: organization.SUBSCRIBER_ROLE,
-                superAdminRole: organization.SUPER_ADMIN_ROLE
+                superAdminRole: organization.SUPER_ADMIN_ROLE,
+                orgConfig: organization.dataValues.ORG_CONFIG
             });
         }
     }
@@ -158,9 +165,11 @@ const updateOrganization = async (req, res) => {
             organizationIdentifier: updatedOrg[0].dataValues.ORGANIZATION_IDENTIFIER,
             adminRole: updatedOrg[0].dataValues.ADMIN_ROLE,
             subscriberRole: updatedOrg[0].dataValues.SUBSCRIBER_ROLE,
-            superAdminRole: updatedOrg[0].dataValues.SUPER_ADMIN_ROLE
+            superAdminRole: updatedOrg[0].dataValues.SUPER_ADMIN_ROLE,
+            orgConfig: updatedOrg[0].dataValues.ORG_CONFIG
         });
     } catch (error) {
+        console.error(error);
         console.error(`${constants.ERROR_MESSAGE.ORG_UPDATE_ERROR}, ${error}`);
         util.handleError(res, error);
     }
