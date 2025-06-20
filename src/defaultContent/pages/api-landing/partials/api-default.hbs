@@ -1,4 +1,3 @@
-
 <!--
  * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
@@ -50,6 +49,16 @@
             </div>
             {{/unless}}
             {{/unless}}
+            {{/if}}
+        </div>
+        <div class="defaultapi-section">
+            <div class="container-header mb-4">Scopes</div>
+            {{#if scopes.length}}
+            {{#scopes}}
+            <span class="api-span-tag"> {{this.key}} </span>
+            {{/scopes}}
+            {{else}}
+            <span> No scopes available </span>
             {{/if}}
         </div>
         {{#unless (eq apiMetadata.apiInfo.apiType "MCP")}}

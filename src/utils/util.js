@@ -485,11 +485,11 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
                 throw new CustomError(error.response.status, "Access denied", error.message || error.response?.data?.description || constants.ERROR_MESSAGE.UNAUTHENTICATED);   
             }
         } else {
-            console.log(`Error while invoking API:`, error);
             let message = error.message;
             if (error.response) {
                 message = error.response.data.description;
             }
+            console.log(`Error while invoking API:`, message);
             throw new CustomError(error.status, 'Request failed', message);
         }      
     }

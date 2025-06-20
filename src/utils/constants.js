@@ -258,6 +258,9 @@ module.exports = {
     COMMON_ERROR_MESSAGE: {
         errorMessage: "Oops! Something went wrong",
     },
+    COMMON_AUTH_ERROR_MESSAGE: {
+        errorMessage: "User is not authenticated to perform this request",
+    },
     ERROR_CODE: {
         401: "Unauthenticated",
         403: "Forbidden",
