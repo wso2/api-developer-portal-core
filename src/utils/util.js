@@ -469,7 +469,21 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         return response.data;
     } catch (error) {
         if (error.response?.status === 401) {
-            throw new CustomError(error.response.status, "Access denied", error.message || error.response?.data?.description || constants.ERROR_MESSAGE.UNAUTHENTICATED);   
+            try {
+                const newExchangedToken = await tokenExchanger(req.user.accessToken, req.originalUrl.split("/")[1]);
+                req.user.exchangeToken = newExchangedToken;
+                headers.Authorization = `Bearer ${newExchangedToken}`;
+                options.headers = headers;
+                const response = await axios(url, options);
+                return response.data;
+            } catch (retryError) {
+                let retryMessage;
+                if (retryError.response) {
+                    retryMessage = retryError.response.data.description;
+                }
+                console.error(`Retry failed:`, retryMessage);
+                throw new CustomError(error.response.status, "Access denied", error.message || error.response?.data?.description || constants.ERROR_MESSAGE.UNAUTHENTICATED);   
+            }
         } else {
             console.log(`Error while invoking API:`, error);
             let message = error.message;
@@ -748,6 +762,7 @@ const loadSubscriptionPlan = async (orgID, policyName) => {
 }
 
 async function tokenExchanger(token, orgName) {
+    console.log(`Exchanging token for organization: ${orgName}`);
     const url = config.advanced.tokenExchanger.url;
     const maxRetries = 3;
     let delay = 1000;
@@ -767,6 +782,8 @@ async function tokenExchanger(token, orgName) {
         subject_token: token,
         orgHandle: orgDetails.ORG_HANDLE
     });
+
+    console.log(`Token exchange data:` + data);
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
