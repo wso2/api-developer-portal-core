@@ -783,8 +783,6 @@ async function tokenExchanger(token, orgName) {
         orgHandle: orgDetails.ORG_HANDLE
     });
 
-    console.log(`Token exchange data:` + data);
-
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
             const response = await axios.post(url, data, {
