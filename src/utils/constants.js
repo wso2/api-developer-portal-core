@@ -46,7 +46,8 @@ module.exports = {
         UNPUBLISHED: "CREATED"
     },
     API_TYPE: {
-        MCP: "MCP"
+        MCP: "MCP",
+        API_PROXIES: "API_PROXIES",
     },
     DOC_TYPES: {
         DOC_ID: 'DOC_',
