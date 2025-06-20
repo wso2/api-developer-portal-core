@@ -469,21 +469,7 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         return response.data;
     } catch (error) {
         if (error.response?.status === 401) {
-            try {
-                const newExchangedToken = await tokenExchanger(req.user.accessToken, req.originalUrl.split("/")[1]);
-                req.user.exchangeToken = newExchangedToken;
-                headers.Authorization = `Bearer ${newExchangedToken}`;
-                options.headers = headers;
-                const response = await axios(url, options);
-                return response.data;
-            } catch (retryError) {
-                let retryMessage;
-                if (retryError.response) {
-                    retryMessage = retryError.response.data.description;
-                }
-                console.error(`Retry failed:`, retryMessage);
-                throw new CustomError(error.response.status, "Access denied", error.message || error.response?.data?.description || constants.ERROR_MESSAGE.UNAUTHENTICATED);
-            }
+            throw new CustomError(error.response.status, "Access denied", error.message || error.response?.data?.description || constants.ERROR_MESSAGE.UNAUTHENTICATED);
         } else {
             let message = error.message;
             if (error.response) {
