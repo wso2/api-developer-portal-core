@@ -331,6 +331,12 @@ strategy.authorizationParams = function (options) {
     if (options.prompt) {
         params.prompt = options.prompt;
     }
+    if (options.fidp) {
+        params.fidp = options.fidp;
+    }
+    if (options.username) {
+        params.username = options.username;
+    }
     return params;
 };
 
