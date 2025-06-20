@@ -547,11 +547,16 @@ const validateOrganization = () => {
         body('businessOwnerEmail')
             .optional({ checkFalsy: true })
             .isEmail(),
-        body('*')
-            .if(body('*').not().equals('orgHandle'))
-            .optional()
-            .customSanitizer(value => value.replace(/[<>"'&]/g, ''))
-            .trim()
+        body().customSanitizer((value) => {
+            for (const key in value) {
+                if (['orgHandle', 'orgConfig'].includes(key)) {
+                    continue;
+                } else if (typeof value[key] === 'string') {
+                    value[key] = value[key].replace(/[<>"'&]/g, '').trim();
+                }
+            }
+            return value;
+        })
     ]
     return validations;
 }

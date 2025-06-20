@@ -75,7 +75,11 @@ const Organization = sequelize.define('DP_ORGANIZATION', {
     GROUPS_CLAIM_NAME: {
         type: DataTypes.STRING,
         allowNull: true
-    }
+    },   
+    ORG_CONFIG: {
+        type: DataTypes.JSON,
+        allowNull: true
+    },
 }, {
     timestamps: false,
     tableName: 'DP_ORGANIZATION',

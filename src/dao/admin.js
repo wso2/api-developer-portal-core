@@ -43,7 +43,8 @@ const createOrganization = async (orgData, t) => {
         ORGANIZATION_IDENTIFIER: orgData.organizationIdentifier,
         ADMIN_ROLE: orgData.adminRole,
         SUBSCRIBER_ROLE: orgData.subscriberRole,
-        SUPER_ADMIN_ROLE: orgData.superAdminRole
+        SUPER_ADMIN_ROLE: orgData.superAdminRole,
+        ORG_CONFIG: orgData.orgConfig
     };
     try {
         const organization = await Organization.create(createOrgData, { transaction: t });
@@ -140,7 +141,8 @@ const updateOrganization = async (orgData) => {
                 ORGANIZATION_IDENTIFIER: orgData.organizationIdentifier,
                 ADMIN_ROLE: orgData.adminRole,
                 SUBSCRIBER_ROLE: orgData.subscriberRole,
-                SUPER_ADMIN_ROLE: orgData.superAdminRole
+                SUPER_ADMIN_ROLE: orgData.superAdminRole,
+                ORG_CONFIG: orgData.orgConfig
             },
             {
                 where: { ORG_ID: orgData.orgId },
