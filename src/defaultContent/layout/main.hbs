@@ -22,6 +22,12 @@
     <main class="main-container">
        {{> sidebar }}
         <div class="content-area">
+        {{#if portalConfigs.showAlert}}
+            <div class="alert alert-warning text-center" role="alert"
+                style="border-radius: 0; margin-left: 0.7rem; margin-right: 1.7rem;">
+                {{portalConfigs.alertMessage}}
+            </div>
+        {{/if}}
         {{{ body }}}
         </div>
     </main>
