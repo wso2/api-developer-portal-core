@@ -57,8 +57,6 @@ function renderTemplate(templatePath, layoutPath, templateContent, isTechnical) 
         completeTemplatePath = path.join(process.cwd(), templatePath);
     }
 
-    console.log("Rendering template: " + completeTemplatePath);
-
     const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
     const completeLayoutPath = path.join(process.cwd(), layoutPath);
     const layoutResponse = fs.readFileSync(completeLayoutPath, constants.CHARSET_UTF8)
