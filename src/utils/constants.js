@@ -264,7 +264,7 @@ module.exports = {
         errorMessage: "User is not authenticated to perform this request",
     },
     COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE: {
-        errorMessage: "Requested page not found",
+        errorMessage: "Requested page not found!",
     },
     ERROR_CODE: {
         401: "Unauthenticated",
