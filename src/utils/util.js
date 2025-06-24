@@ -65,7 +65,8 @@ function renderTemplate(templatePath, layoutPath, templateContent, isTechnical) 
     const layout = Handlebars.compile(layoutResponse.toString());
 
     return layout({
-        body: template(templateContent)
+        body: template(templateContent),
+        portalConfigs: config.portalConfigs,
     });
 }
 
