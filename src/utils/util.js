@@ -57,6 +57,8 @@ function renderTemplate(templatePath, layoutPath, templateContent, isTechnical) 
         completeTemplatePath = path.join(process.cwd(), templatePath);
     }
 
+    console.log("Rendering template: " + completeTemplatePath);
+
     const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
     const completeLayoutPath = path.join(process.cwd(), layoutPath);
     const layoutResponse = fs.readFileSync(completeLayoutPath, constants.CHARSET_UTF8)
@@ -549,7 +551,7 @@ const validateOrganization = () => {
             .isEmail(),
         body().customSanitizer((value) => {
             for (const key in value) {
-                if (['orgHandle', 'orgConfig'].includes(key)) {
+                if (['orgHandle', 'orgConfiguration'].includes(key)) {
                     continue;
                 } else if (typeof value[key] === 'string') {
                     value[key] = value[key].replace(/[<>"'&]/g, '').trim();
@@ -818,6 +820,19 @@ function filterAllowedAPIs (searchResults, allowedAPIs) {
     return searchResults;
 }
 
+const enforcePortalMode = async (req, res, next) => {
+    const orgDetails = await adminDao.getOrganization(req.params.orgName);
+    const orgConfig = orgDetails.ORG_CONFIG;
+    if ((req.originalUrl.split('/')[4] === 'apis' || req.originalUrl.split('/')[4] === 'api') && (orgConfig && orgConfig.devportalMode === constants.API_TYPE.DEFAULT || orgConfig.devportalMode === constants.API_TYPE.API_PROXIES) ||
+        (req.originalUrl.split('/')[4] === 'mcps' || req.originalUrl.split('/')[4] === 'mcp') && (orgConfig && orgConfig.devportalMode === constants.API_TYPE.DEFAULT || orgConfig.devportalMode === constants.API_TYPE.MCP)) {
+        next();
+    } else {
+        console.log("dewkdhwehd")
+        const html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE, true);
+        res.send(html);
+    }
+}
+
 module.exports = {
     loadMarkdown,
     renderTemplate,
@@ -846,5 +861,6 @@ module.exports = {
     listFiles,
     readDocFiles,
     unzipDirectory,
-    filterAllowedAPIs
+    filterAllowedAPIs,
+    enforcePortalMode
 }

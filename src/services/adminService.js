@@ -45,7 +45,7 @@ const createOrganization = async (req, res) => {
     }
     const payload = req.body;
     const orgConfig = {
-        allowedAPITypes: [constants.API_TYPE.MCP, constants.API_TYPE.API_PROXIES],
+        devportalMode: constants.API_TYPE.DEFAULT,
     }
     payload.orgConfig = orgConfig;
     let organization = "";
@@ -85,7 +85,7 @@ const createOrganization = async (req, res) => {
             adminRole: organization.ADMIN_ROLE,
             subscriberRole: organization.SUBSCRIBER_ROLE,
             groupClaimName: organization.GROUP_CLAIM_NAME,
-            orgConfig: organization.dataValues.ORG_CONFIG
+            orgConfiguration: organization.dataValues.ORG_CONFIG
         };
         console.log(`Organization created successfully. orgId: ${orgCreationResponse.orgId}, orgName: ${orgCreationResponse.orgName}`);
         res.status(201).send(orgCreationResponse);
@@ -125,7 +125,7 @@ const getAllOrganizations = async () => {
                 adminRole: organization.ADMIN_ROLE,
                 subscriberRole: organization.SUBSCRIBER_ROLE,
                 superAdminRole: organization.SUPER_ADMIN_ROLE,
-                orgConfig: organization.dataValues.ORG_CONFIG
+                orgConfiguration: organization.dataValues.ORG_CONFIG
             });
         }
     }
@@ -166,7 +166,7 @@ const updateOrganization = async (req, res) => {
             adminRole: updatedOrg[0].dataValues.ADMIN_ROLE,
             subscriberRole: updatedOrg[0].dataValues.SUBSCRIBER_ROLE,
             superAdminRole: updatedOrg[0].dataValues.SUPER_ADMIN_ROLE,
-            orgConfig: updatedOrg[0].dataValues.ORG_CONFIG
+            orgConfiguration: updatedOrg[0].dataValues.ORG_CONFIG
         });
     } catch (error) {
         console.error(error);
