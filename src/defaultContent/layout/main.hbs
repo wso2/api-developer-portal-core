@@ -23,11 +23,11 @@
     <main class="main-container">
        {{> sidebar }}
         <div class="content-area">
-            {{#if portalConfigs.showAlert}}
+            {{#if portalConfigs.showMaintenanceBanner}}
                 <div class="alert custom-bootstrap-alert d-flex align-items-center" role="alert">
                     <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-3 alert-icon" aria-hidden="true"></i>
                     <div>
-                        {{portalConfigs.alertMessage}}
+                        {{portalConfigs.maintenanceBannerText}}
                     </div>
                 </div>
             {{/if}}
