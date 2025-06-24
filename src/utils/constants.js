@@ -46,7 +46,9 @@ module.exports = {
         UNPUBLISHED: "CREATED"
     },
     API_TYPE: {
-        MCP: "MCP"
+        MCP: "MCPServersOnly",
+        API_PROXIES: "APIsOnly",
+        DEFAULT: "Default",
     },
     DOC_TYPES: {
         DOC_ID: 'DOC_',
@@ -260,6 +262,9 @@ module.exports = {
     },
     COMMON_AUTH_ERROR_MESSAGE: {
         errorMessage: "User is not authenticated to perform this request",
+    },
+    COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE: {
+        errorMessage: "Requested page not found!",
     },
     ERROR_CODE: {
         401: "Unauthenticated",
