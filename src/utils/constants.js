@@ -46,7 +46,8 @@ module.exports = {
         UNPUBLISHED: "CREATED"
     },
     API_TYPE: {
-        MCP: "MCPServersOnly",
+        MCP: "MCP",
+        MCP_ONLY: "MCPServersOnly",
         API_PROXIES: "APIsOnly",
         DEFAULT: "Default",
     },

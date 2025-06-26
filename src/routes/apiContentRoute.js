@@ -52,7 +52,7 @@ router.get('/:orgName/views/:viewName/api/:apiHandle/docs/:docType/:docName', (r
         return res.status(404).send('Not Found');
     }
     next();
-}, util.enforcePortalMode, authController.handleSilentSSO, registerPartials, ensureAuthenticated, apiController.loadDocument);
+}, authController.handleSilentSSO, registerPartials, util.enforcePortalMode, ensureAuthenticated, apiController.loadDocument);
 
 
 module.exports = router;
