@@ -170,6 +170,8 @@ const registerPartialsFromAPI = async (req) => {
   const viewName = req.params.viewName;
   const orgID = await adminDao.getOrgId(orgName);
   const imageUrl = `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.VIEWS_PATH}${viewName}/layout?fileType=image&fileName=`;
+  const orgDetails = await adminDao.getOrganization(req.params.orgName);
+  const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
 
   let partials = await adminDao.getOrgContent({
     orgId: orgID,
@@ -210,7 +212,8 @@ const registerPartialsFromAPI = async (req) => {
         profile: req.isAuthenticated() ? profile : "",
         isAdmin: isAdmin,
         isSuperAdmin: isSuperAdmin,
-        hasWSO2APIs: hasWSO2APIs
+        hasWSO2APIs: hasWSO2APIs,
+        devportalMode: devportalMode || constants.API_TYPE.DEFAULT
       })
     };
   }
@@ -222,7 +225,8 @@ const registerPartialsFromAPI = async (req) => {
         baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
         isAdmin: isAdmin,
         isSuperAdmin: isSuperAdmin,
-        hasWSO2APIs: hasWSO2APIs
+        hasWSO2APIs: hasWSO2APIs,
+        devportalMode: devportalMode || constants.API_TYPE.DEFAULT
       }),
     };
   }
