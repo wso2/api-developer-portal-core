@@ -150,7 +150,7 @@ const registerAllPartialsFromFile = async (baseURL, req, filePrefix) => {
   const filePath = req.originalUrl.split(baseURL).pop();
   const orgDetails = await adminDao.getOrganization(req.params.orgName);
   const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
-  
+
   registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "partials"), req, devportalMode);
   registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "home", "partials"), req, devportalMode);
   registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req, devportalMode);
@@ -231,6 +231,15 @@ const registerPartialsFromAPI = async (req) => {
     };
   }
 
+  if (partialObject[constants.HOME_PARTIAL_NAME]) {
+    hbs.handlebars.partials = {
+      ...hbs.handlebars.partials,
+      home: hbs.handlebars.compile(partialObject[constants.HOME_PARTIAL_NAME])({
+        devportalMode: devportalMode || constants.API_TYPE.DEFAULT
+      }),
+    };
+  }
+
   if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
     await registerAPILandingContent(req, orgID, partialObject);
   }
@@ -299,9 +308,9 @@ async function registerDocsPageContent(req, orgID, partialObject) {
   let baseUrl;
 
   if (apiType === constants.API_TYPE.MCP) {
-      baseUrl = '/' + orgName + '/views/' + viewName + "/mcp/" + apiHandle;
+    baseUrl = '/' + orgName + '/views/' + viewName + "/mcp/" + apiHandle;
   } else {
-      baseUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle;
+    baseUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle;
   }
 
   hbs.handlebars.partials[constants.FILE_NAME.API_DOC_PARTIAL_NAME] = hbs.handlebars.compile(
@@ -348,8 +357,8 @@ function registerPartialsFromFile(baseURL, dir, req, devportalMode) {
             devportalMode: devportalMode || constants.API_TYPE.DEFAULT
           }),
         };
-      }       
-      
+      }
+
       if (filename === constants.FILE_NAME.HOME_FILE_NAME) {
         hbs.handlebars.partials = {
           ...hbs.handlebars.partials,
@@ -360,7 +369,7 @@ function registerPartialsFromFile(baseURL, dir, req, devportalMode) {
             devportalMode: devportalMode || constants.API_TYPE.DEFAULT
           }),
         };
-      } 
+      }
 
       if (filename === constants.FILE_NAME.PARTIAL_SIDEBAR_FILE_NAME) {
         hbs.handlebars.partials = {
