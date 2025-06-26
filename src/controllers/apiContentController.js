@@ -117,7 +117,6 @@ const loadAPIs = async (req, res) => {
             };
 
             if (req.originalUrl.includes("/mcps")) {
-                console.log
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp", viewName);
             } else {
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
