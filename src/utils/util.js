@@ -201,17 +201,17 @@ const unzipDirectory = async (zipPath, extractPath) => {
                         const normalizedFilePath = path.normalize(filePath);
                         if (!normalizedFilePath.startsWith(path.resolve(extractPath))) {
                             entry.autodrain();
-                            return reject (new CustomError(400, 'Error unzipping directory'
+                            return reject(new CustomError(400, 'Error unzipping directory'
                                 , 'File access outside working directory detected.'));
                         }
 
                         // Validate depth (to avoid zip bombs with excessive nesting)
                         // and reject files that are too large
                         // and check if adding this file would exceed the total size limit
-                        if ((entryDepth > maxDepth) || (entrySize > maxFileSize) 
+                        if ((entryDepth > maxDepth) || (entrySize > maxFileSize)
                             || (totalExtractedSize + entrySize > maxTotalSize)) {
                             entry.autodrain();
-                            return reject (new CustomError(400, 'Error unzipping directory'
+                            return reject(new CustomError(400, 'Error unzipping directory'
                                 , 'File size exceeded the limit of 100 MB'));
                         }
 
@@ -236,7 +236,7 @@ const unzipDirectory = async (zipPath, extractPath) => {
                 } catch (err) {
                     console.error("Error processing entry. ", err);
                     entry.autodrain();
-                    reject (new Error('Error processing entry.'));
+                    reject(new Error('Error processing entry.'));
                 }
             })
             .on('close', async () => {
@@ -250,9 +250,9 @@ const unzipDirectory = async (zipPath, extractPath) => {
             .on('error', err => {
                 reject(new Error(`Unzip failed: ${err.message}`));
             });
-    }).catch ((err) => {
+    }).catch((err) => {
         throw err;
-    });  
+    });
 }
 
 const imageMapping = {
@@ -363,8 +363,8 @@ const invokeGraphQLRequest = async (req, url, query, variables, headers) => {
         Authorization: req.user?.exchangeToken
             ? `Bearer ${req.user.exchangeToken}`
             : req.user
-            ? `Bearer ${req.user.accessToken}`
-            : req.headers.authorization
+                ? `Bearer ${req.user.accessToken}`
+                : req.headers.authorization
     };
 
     let httpsAgent;
@@ -405,7 +405,7 @@ const invokeGraphQLRequest = async (req, url, query, variables, headers) => {
                 const newExchangedToken = await tokenExchanger(req.user.accessToken, req.user.returnTo.split("/")[1]);
                 req.user.exchangeToken = newExchangedToken;
                 headers.Authorization = `Bearer ${newExchangedToken}`;
-                
+
                 const retryResponse = await axios.post(url, graphqlPayload, {
                     headers,
                     httpsAgent
@@ -425,7 +425,7 @@ const invokeGraphQLRequest = async (req, url, query, variables, headers) => {
 };
 
 const invokeApiRequest = async (req, method, url, headers, body) => {
- 
+
     console.log(`Invoking API: ${url}`);
     headers = headers || {};
     headers.Authorization = req.user?.exchangeToken ? `Bearer ${req.user.exchangeToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
@@ -449,7 +449,7 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         httpsAgent,
     };
 
-    try { 
+    try {
         if (!(body == null || body === '' || (Array.isArray(body) && body.length === 0) || (typeof body === 'object' && !Array.isArray(body) && Object.keys(body).length === 0))) {
             options.data = body;
         }
@@ -464,13 +464,27 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
                 orgId = decodedToken?.organization.uuid;
                 url = url.includes("?") ? `${url}&organizationId=${orgId}` : `${url}?organizationId=${orgId}`;
             }
-        
+
         }
         const response = await axios(url, options);
         return response.data;
     } catch (error) {
         if (error.response?.status === 401) {
-            throw new CustomError(error.response.status, "Access denied", error.message || error.response?.data?.description || constants.ERROR_MESSAGE.UNAUTHENTICATED);   
+            try {
+                const newExchangedToken = await tokenExchanger(req.user.accessToken, req.originalUrl.split("/")[1]);
+                req.user.exchangeToken = newExchangedToken;
+                headers.Authorization = `Bearer ${newExchangedToken}`;
+                options.headers = headers;
+                const response = await axios(url, options);
+                return response.data;
+            } catch (retryError) {
+                let retryMessage;
+                if (retryError.response) {
+                    retryMessage = retryError.response.data.description;
+                }
+                console.error(`Retry failed:`, retryMessage);
+                throw new CustomError(error.response.status, "Access denied", error.message || error.response?.data?.description || constants.ERROR_MESSAGE.UNAUTHENTICATED);
+            }
         } else {
             let message = error.message;
             if (error.response) {
@@ -478,7 +492,7 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
             }
             console.log(`Error while invoking API:`, message);
             throw new CustomError(error.status, 'Request failed', message);
-        }      
+        }
     }
 };
 
@@ -631,9 +645,9 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                     fileType = "style"
                     if (file.name === "main.css") {
                         strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g, `@import url("${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
-                    } 
-                    strContent = strContent.replace(/"\/images\/([^"]+)/g, `"${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
-                    strContent = strContent.replace(/'\/images\/([^']+)/g, `'${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
+                    }
+                    strContent = strContent.replace(/"\/images\/([^"]+)/g, `"${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`);
+                    strContent = strContent.replace(/'\/images\/([^']+)/g, `'${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`);
                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
                 } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                     fileType = "layout"
@@ -642,9 +656,9 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                         content = Buffer.from(strContent, constants.CHARSET_UTF8);
                     }
                     validateScripts(strContent);
-                } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {                    
-                    strContent = strContent.replace(/"\/images\/([^"]+)/g, `"${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
-                    strContent = strContent.replace(/'\/images\/([^']+)/g, `'${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`); 
+                } else if (file.name.endsWith(".hbs") && dir.endsWith("partials")) {
+                    strContent = strContent.replace(/"\/images\/([^"]+)/g, `"${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`);
+                    strContent = strContent.replace(/'\/images\/([^']+)/g, `'${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`);
                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
                     validateScripts(strContent);
                     fileType = "partial"
@@ -754,6 +768,7 @@ const loadSubscriptionPlan = async (orgID, policyName) => {
 }
 
 async function tokenExchanger(token, orgName) {
+    console.log(`Exchanging token for organization: ${orgName}`);
     const url = config.advanced.tokenExchanger.url;
     const maxRetries = 3;
     let delay = 1000;
@@ -789,12 +804,12 @@ async function tokenExchanger(token, orgName) {
             if (error.response?.status >= 500 && error.response?.status < 600 && attempt < maxRetries) {
                 console.warn(`Token exchange failed. Retrying in ${delay}ms... (Attempt ${attempt + 1}/${maxRetries})`);
                 await new Promise(resolve => setTimeout(resolve, delay));
-                delay *= 2; 
+                delay *= 2;
             } else {
                 console.error('Token exchange failed:', error.message);
                 throw new Error('Failed to exchange token');
             }
-        }        
+        }
     }
 }
 
@@ -811,7 +826,7 @@ async function listFiles(path) {
     return files;
 }
 
-function filterAllowedAPIs (searchResults, allowedAPIs) {
+function filterAllowedAPIs(searchResults, allowedAPIs) {
 
     searchResults = searchResults.filter(api =>
         allowedAPIs.some(allowedAPI => api.apiReferenceID === allowedAPI.id)
@@ -823,10 +838,10 @@ const enforcePortalMode = async (req, res, next) => {
     const orgDetails = await adminDao.getOrganization(req.params.orgName);
     const portalMode = orgDetails.ORG_CONFIG?.devportalMode;
     const path = req.originalUrl.split('/')[4];
+
     if ((path.includes('apis') || path.includes('api') ) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.API_PROXIES) ||
         (path.includes('mcps') || path.includes('mcp') ) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.MCP_ONLY)) {
         next();
-
     } else {
         const html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE, true);
         res.send(html);
