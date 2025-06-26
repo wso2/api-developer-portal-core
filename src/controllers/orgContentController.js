@@ -82,8 +82,11 @@ const loadOrgContentFromAPI = async (req, res) => {
         html = await renderTemplateFromAPI(templateContent, orgId, orgName, 'pages/home', req.params.viewName);
     } catch (error) {
         console.error(`Failed to load organization :`, error);
-        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs',
-            constants.COMMON_ERROR_MESSAGE, true);
+        const templateContent = {
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+            errorMessage: constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE,
+        }
+        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
         return res.send(html);
     }
     return html;

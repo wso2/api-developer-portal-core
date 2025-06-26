@@ -98,7 +98,6 @@ async function loadTemplateFromAPI(orgID, filePath, viewName) {
 }
 
 async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, viewName) {
-    console.log("Bingo. Loading template from API for org: " + orgID + " and view: " + viewName);
 
     var layoutContent = await loadLayoutFromAPI(orgID, viewName);
     if (layoutContent === "") {
@@ -471,6 +470,7 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         const response = await axios(url, options);
         return response.data;
     } catch (error) {
+        console.error(`Error while invoking API:`, error);
         if (error.response?.status === 401) {
             throw new CustomError(error.response.status, "Access denied", error.message || error.response?.data?.description || constants.ERROR_MESSAGE.UNAUTHENTICATED);   
         } else {

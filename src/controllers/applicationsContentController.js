@@ -78,7 +78,7 @@ const loadApplications = async (req, res) => {
                     email: req.user.email,
                 }
             }
-            
+
             templateContent = {
                 applicationsMetadata: metaData,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
@@ -93,9 +93,12 @@ const loadApplications = async (req, res) => {
             }
         }
     } catch (error) {
+        const templateContent = {
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+            errorMessage: constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE,
+        }
         console.error("Error occurred while loading Applications", error);
-        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs',
-            constants.COMMON_ERROR_MESSAGE, true);
+        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
     }
     res.send(html);
 }
@@ -315,11 +318,16 @@ const loadApplication = async (req, res) => {
         }
     } catch (error) {
         console.error("Error occurred while loading application", error);
+        const templateContent = {
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+        }
         if (Number(error?.statusCode) === 401) {
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_AUTH_ERROR_MESSAGE, true);
-        } else { 
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_ERROR_MESSAGE, true);
-        }    
+            templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_AUTH_ERROR_MESSAGE;
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+        } else {
+            templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE;
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+        }
     }
     res.send(html);
 }
