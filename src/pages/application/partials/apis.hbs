@@ -1,7 +1,8 @@
 <section class="section mt-5 mb-6">
     <div class="container-fluid">
+        {{#in devportalMode values="DEFAULT,APISONLY"}}
         <div class="d-flex align-items-center justify-content-between mb-3">
-            <div class="container-header">Subscriptions</div>
+            <div class="container-header">Subscribed API Proxies</div>
             <div class='action-buttons mt-0'>
                 <a class="common-btn-primary" type="button"
                     href="{{baseUrl}}/apis?appID={{applicationMetadata.id}}&appName={{applicationMetadata.name}}">
@@ -9,7 +10,7 @@
                 </a>
             </div>
         </div>
-        <div class="row row-gap-4">
+        <div class="row row-gap-4" style="margin-bottom: 64px;">
             {{#if subAPIs}}
             <div class="app-table-container" id="app-table-container">
                 <table class="app-table" id="app-table-{{applicationMetadata.id}}">
@@ -17,7 +18,7 @@
                         <tr>
                             <th class="app-th">Name</th>
                             <th class="app-th">Version</th>
-                            <th class="app-th">Type</th>
+                            {{!-- <th class="app-th">Type</th> --}}
                             <th class="app-th">Subscription Plan</th>
                             <th class="app-th">
                                 {{#if isApiKey}}
@@ -31,6 +32,7 @@
                     <tbody>
                         {{#each subAPIs}}
                         {{> api-key apiID=apiID}}
+                        {{#if (eq apiType "REST")}}
                         {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
                         <tr class="data-row" id="data-row-{{subID}}" data-index="{{@index}}">
                             <td class="app-td">
@@ -38,7 +40,7 @@
                                     class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
                             </td>
                             <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'" class="app-td" style="cursor: pointer;">{{version}}</td>
-                            <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'" class="app-td" style="cursor: pointer;">{{apiType}}</td>
+                            {{!-- <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'" class="app-td" style="cursor: pointer;">{{apiType}}</td> --}}
                             <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'" id="policy_{{subID}}" class="app-td" style="cursor: pointer;">{{policyName}}</td>
                             <td class="app-td">
                                 {{#if (contains security 'api_key')}}
@@ -72,7 +74,7 @@
                                     <button class="common-btn-outlined btn-sm me-1" id="generateKeyBtn-{{subID}}"
                                         style="{{#if apiKeys.key}}display: none;{{else}}display: inline-flex;{{/if}}"
                                         data-app-ref-id=""
-\                                        onclick="openApiKeyModal('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIs}}', '{{json scopes}}')">
+                                      onclick="openApiKeyModal('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIs}}', '{{json scopes}}')">
                                         <span class="button-normal-state">
                                             <i class="bi bi-key me-1"></i> Generate Key
                                         </span>
@@ -97,6 +99,7 @@
                                 </div>
                             </td>
                         </tr>
+                        {{/if}}
                         {{/each}}
                     </tbody>
                 </table>
@@ -112,4 +115,116 @@
                 </div>
             </div>
         </div>
+        {{/in}}
+        {{#in devportalMode values="DEFAULT,MCPSERVERSONLY"}}
+                <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="container-header">Subscribed MCP Servers</div>
+            <div class='action-buttons mt-0'>
+                <a class="common-btn-primary" type="button"
+                    href="{{baseUrl}}/mcps?appID={{applicationMetadata.id}}&appName={{applicationMetadata.name}}">
+                    <i class="fas fa-external-link-alt me-2"></i> Explore more
+                </a>
+            </div>
+        </div>
+        <div class="row row-gap-4">
+            <div class="app-table-container" id="app-table-container-mcp">
+                <table class="app-table" id="app-table-mcp-{{applicationMetadata.id}}">
+                    <thead>
+                        <tr>
+                            <th class="app-th">MCP</th>
+                            <th class="app-th">Version</th>
+                            <th class="app-th">Subscription Plan</th>
+                            <th class="app-th">
+                                {{#if isApiKey}}
+                                API Key
+                                {{/if}}
+                            </th>
+                            <th class="app-th action-column" style="padding-right: 2.25rem; text-align: right;">Action
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="subscribed-api-body">
+                        {{#each subAPIs}}
+                        {{#if (eq apiType "MCP")}}
+                        {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
+                        <tr class="data-row" data-index="{{@index}}" id="data-row-{{subID}}">
+                            <td class="app-td">
+                                <span onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
+                                    class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
+                            </td>
+                            <td class="app-td">{{version}}</td>
+                            <td id="policy_{{subID}}" class="app-td">{{policyName}}</td>
+                            <td class="app-td">
+                                {{#if (contains security 'api_key')}}
+                                <div class="api-key-actions">
+                                    <button class="common-btn-outlined btn-sm me-1" id="regenerateKeyBtn-{{subID}}"
+                                        data-api-key-id="'{{apiKeys.[0].id}}'"
+                                        onclick="openWarningModal('regenerate', this.dataset.apiKeyId, '{{subID}}')"
+                                        style="{{#if apiKeys}}display: inline-flex;{{else}}display: none;{{/if}}">
+                                        <span class="button-normal-state">
+                                            <i class="bi bi-key me-1"></i> Regenerate
+                                        </span>
+                                        <span class="button-loading-state" style="display: none;">
+                                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                            Regenerate...
+                                        </span>
+                                    </button>
+                                    <button class="common-btn-outlined btn-sm api-key-revoke"
+                                        data-api-key-id="'{{apiKeys.[0].id}}'"
+                                        onclick="openWarningModal('revoke', this.dataset.apiKeyId, '{{subID}}', '{{../applicationMetadata.id}}', '{{refID}}')"
+                                        id="revokeKeyBtn-{{subID}}"
+                                        style="{{#if apiKeys}}display: inline-flex;{{else}}display: none;{{/if}}">
+                                        <span class="button-normal-state">
+                                            <i class="bi bi-key me-1"></i> Revoke
+                                        </span>
+                                        <span class="button-loading-state" style="display: none;">
+                                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                            Revoking...
+                                        </span>
+                                    </button>
+                                    <button class="common-btn-outlined btn-sm me-1" id="generateKeyBtn-{{subID}}"
+                                        style="{{#if apiKeys}}display: none;{{else}}display: inline-flex;{{/if}}"
+                                        data-app-ref-id=""
+                                        onclick="generateAPIKey('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIs}}')">
+                                        <span class="button-normal-state">
+                                            <i class="bi bi-key me-1"></i> Generate Key
+                                        </span>
+                                        <span class="button-loading-state" style="display: none;">
+                                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                            Generating...
+                                        </span>
+                                    </button>
+                                </div>
+                                {{/if}}
+                            </td>
+                            <td class="app-td action-column">
+                                <div class="action-buttons-container">
+                                    {{> warning }}
+                                    <button type="button" class="btn application-btn-icon" onclick="loadModal('planModal-{{apiID}}')">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button type="button" class="btn application-btn-icon delete-button"
+                                        onclick="openWarningModal('Unsubscribe', '{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {{/if}}
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+            <div class="ps-3" id="no-subscription-mcp" style="{{#if mcpAPICount}}display:none{{/if}}">
+                <div class="info-box">
+                    <div class="info-content">
+                        <div class="info-title">
+                            No subscriptions available for this application. Please subscribe to an MCP Proxies.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{/in}}
+     </div>    
 </section>

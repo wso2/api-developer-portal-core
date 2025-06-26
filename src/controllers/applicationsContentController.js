@@ -47,6 +47,9 @@ const templateResponseValue = async (pageName) => {
 const loadApplications = async (req, res) => {
 
     const viewName = req.params.viewName;
+    const orgName = req.params.orgName;
+    const orgDetails = await adminDao.getOrganization(orgName);
+    const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
     let html, metaData, templateContent;
     try {
         if (config.mode === constants.DEV_MODE) {
@@ -82,7 +85,8 @@ const loadApplications = async (req, res) => {
             templateContent = {
                 applicationsMetadata: metaData,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-                profile: req.isAuthenticated() ? profile : {}
+                profile: req.isAuthenticated() ? profile : {},
+                devportalMode: devportalMode
             }
             const templateResponse = await templateResponseValue('applications');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
@@ -114,6 +118,9 @@ async function getMockApplications() {
 const loadApplication = async (req, res) => {
     let html, templateContent, metaData, kMmetaData;
     const viewName = req.params.viewName;
+    const orgName = req.params.orgName;
+    const orgDetails = await adminDao.getOrganization(orgName);
+    const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
     try {
         const applicationId = req.params.applicationId;
         if (config.mode === constants.DEV_MODE) {
@@ -305,8 +312,8 @@ const loadApplication = async (req, res) => {
                 subscriptionScopes: subscriptionScopes,
                 otherAPICount: otherAPICount,
                 mcpAPICount: mcpAPICount,
-                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName,
                 profile: req.isAuthenticated() ? profile : {},
+                devportalMode: devportalMode
             }
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
