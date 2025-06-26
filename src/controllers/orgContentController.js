@@ -25,7 +25,7 @@ const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
 
 const filePrefix = config.pathToContent;
-const baseURLDev = config.baseUrl  + constants.ROUTE.VIEWS_PATH;
+const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
 
 const loadOrganizationContent = async (req, res) => {
 
@@ -59,19 +59,31 @@ const loadOrgContentFromFile = async (req, res) => {
 }
 
 const loadOrgContentFromAPI = async (req, res) => {
-
+    console.log(`Loading organization content from API for org:`, req);
     let html;
     const orgName = req.params.orgName;
     try {
         const orgId = await adminDao.getOrgId(orgName);
+        let profile = {};
+        if (req.user) {
+            profile = {
+                imageURL: req.user.imageURL,
+                firstName: req.user.firstName,
+                lastName: req.user.lastName,
+                email: req.user.email,
+            }
+        }
+        console.log(profile);
         templateContent = {
-            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName,
+            profile: req.isAuthenticated() ? profile : {}
         };
+        console.log(templateContent);
         html = await renderTemplateFromAPI(templateContent, orgId, orgName, 'pages/home', req.params.viewName);
     } catch (error) {
         console.error(`Failed to load organization :`, error);
-        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
-        constants.COMMON_ERROR_MESSAGE, true);
+        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs',
+            constants.COMMON_ERROR_MESSAGE, true);
         return res.send(html);
     }
     return html;

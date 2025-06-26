@@ -98,12 +98,14 @@ async function loadTemplateFromAPI(orgID, filePath, viewName) {
 }
 
 async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, viewName) {
+    console.log("Bingo. Loading template from API for org: " + orgID + " and view: " + viewName);
 
     var layoutContent = await loadLayoutFromAPI(orgID, viewName);
     if (layoutContent === "") {
         console.log("Layout not found for org: " + orgName + " and view: " + viewName);
         //load default org content
         html = renderTemplate(filePrefix + filePath + '/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
+        console.error("Rendering default content for org This: " + orgName + " and view: " + viewName);
         return html;
     }
     var templatePage = await loadTemplateFromAPI(orgID, filePath, viewName);

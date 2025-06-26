@@ -172,6 +172,9 @@ const ensureAuthenticated = async (req, res, next) => {
                         //const decodedToken = req.user.exchangeToken ? jwt.decode(req.user.exchangeToken) : null;
                         const allowedOrgs = req.user.authorizedOrgs;
                         if (req.user.userOrg !== req.user[constants.ORG_IDENTIFIER]) {
+                            console.log("User does not belong to the organization");
+                            console.log(allowedOrgs)
+                            console.log(req.user[constants.ORG_IDENTIFIER])
                             if (allowedOrgs && (allowedOrgs.includes(req.user[constants.ORG_IDENTIFIER]))) {
                                 res.redirect(`/${req.params.orgName}/views/${req.params.viewName}/login`);
                             } else {

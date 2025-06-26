@@ -256,6 +256,9 @@ module.exports = {
         UNAUTHORIZED_ORG: "You are not authorized to access this organization",
         UNAUTHORIZED_API: "You are not authorized to access this API",
         API_NOT_FOUND: "Requested API not found",
+        COMMON_AUTH_ERROR_MESSAGE: "User is not authenticated to perform this request",
+        COMMON_ERROR_MESSAGE: "Oops! Something went wrong",
+        COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE: "Requested page not found!"
     },
     COMMON_ERROR_MESSAGE: {
         errorMessage: "Oops! Something went wrong",

@@ -62,6 +62,17 @@ const loadCustomContent = async (req, res) => {
                 });
             }
             content[constants.BASE_URL_NAME] = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
+            let profile = {};
+            if (req.user) {
+                profile = {
+                    imageURL: req.user.imageURL,
+                    firstName: req.user.firstName,
+                    lastName: req.user.lastName,
+                    email: req.user.email,
+                }
+            }
+            content['profile'] = req.isAuthenticated() ? profile : {},
+
             html = await renderTemplateFromAPI(content, orgId, orgName, filePath, viewName);
         } catch (error) {
             console.error("Error while loading custom content", error);

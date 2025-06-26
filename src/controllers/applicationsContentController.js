@@ -69,9 +69,20 @@ const loadApplications = async (req, res) => {
                     };
                 })
             );
+            let profile = {};
+            if (req.user) {
+                profile = {
+                    imageURL: req.user.imageURL,
+                    firstName: req.user.firstName,
+                    lastName: req.user.lastName,
+                    email: req.user.email,
+                }
+            }
+            
             templateContent = {
                 applicationsMetadata: metaData,
-                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+                profile: req.isAuthenticated() ? profile : {}
             }
             const templateResponse = await templateResponseValue('applications');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
@@ -265,6 +276,16 @@ const loadApplication = async (req, res) => {
             }
             //display only one key type (SANBOX).
             //TODO: handle multiple key types
+            let profile = {};
+            if (req.user) {
+                profile = {
+                    imageURL: req.user.imageURL,
+                    firstName: req.user.firstName,
+                    lastName: req.user.lastName,
+                    email: req.user.email,
+                }
+            }
+
             templateContent = {
                 orgID: orgID,
                 applicationMetadata: {
@@ -281,6 +302,8 @@ const loadApplication = async (req, res) => {
                 subscriptionScopes: subscriptionScopes,
                 otherAPICount: otherAPICount,
                 mcpAPICount: mcpAPICount,
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName,
+                profile: req.isAuthenticated() ? profile : {},
             }
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);

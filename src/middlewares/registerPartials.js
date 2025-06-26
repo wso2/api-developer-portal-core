@@ -108,37 +108,6 @@ const registerInternalPartials = async (req) => {
           const partialName = path.basename(file, '.hbs');
           const partialContent = fs.readFileSync(path.join(dir, file), 'utf8');
           hbs.handlebars.registerPartial(partialName, partialContent);
-          let profile = {};
-          if (req.user) {
-            profile = {
-              imageURL: req.user.imageURL,
-              firstName: req.user.firstName,
-              lastName: req.user.lastName,
-              email: req.user.email,
-            }
-          }
-          if (partialName === constants.HEADER_PARTIAL_NAME) {
-            hbs.handlebars.partials = {
-              ...hbs.handlebars.partials,
-              header: hbs.handlebars.compile(partialContent)({
-                isAdmin: isAdmin,
-                isSuperAdmin: isSuperAdmin,
-                profile: req.isAuthenticated() ? profile : {},
-                baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
-              }),
-            };
-          };
-
-          if (partialName === constants.SIDEBAR_PARTIAL_NAME) {
-            hbs.handlebars.partials = {
-              ...hbs.handlebars.partials,
-              sidebar: hbs.handlebars.compile(partialContent)({
-                profile: req.isAuthenticated() ? profile : {},
-                baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
-                hasWSO2APIs: hasWSO2API
-              }),
-            };
-          }
         }
       });
     }
@@ -187,41 +156,6 @@ const registerPartialsFromAPI = async (req) => {
     isAdmin = req.user["isAdmin"];
     isSuperAdmin = req.user["isSuperAdmin"];
   }
-  let profile = "";
-  if (req.user) {
-    profile = {
-      imageURL: req.user.imageURL,
-      firstName: req.user.firstName,
-      lastName: req.user.lastName,
-      email: req.user.email
-    }
-  }
-
-  if (partialObject[constants.HEADER_PARTIAL_NAME]) {
-    hbs.handlebars.partials = {
-      ...hbs.handlebars.partials,
-      header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
-        baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-        profile: req.isAuthenticated() ? profile : "",
-        isAdmin: isAdmin,
-        isSuperAdmin: isSuperAdmin,
-        hasWSO2APIs: hasWSO2APIs
-      })
-    };
-  }
-
-  if (partialObject[constants.SIDEBAR_PARTIAL_NAME]) {
-    hbs.handlebars.partials = {
-      ...hbs.handlebars.partials,
-      sidebar: hbs.handlebars.compile(partialObject[constants.SIDEBAR_PARTIAL_NAME])({
-        baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-        isAdmin: isAdmin,
-        isSuperAdmin: isSuperAdmin,
-        hasWSO2APIs: hasWSO2APIs
-      }),
-    };
-  }
-
   if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
     await registerAPILandingContent(req, orgID, partialObject);
   }
@@ -319,25 +253,6 @@ function registerPartialsFromFile(baseURL, dir, req) {
           lastName: req.user.lastName,
           email: req.user.email
         }
-      }
-      if (filename === constants.FILE_NAME.PARTIAL_HEADER_FILE_NAME) {
-        hbs.handlebars.partials = {
-          ...hbs.handlebars.partials,
-          header: hbs.handlebars.compile(template)({
-            baseUrl: baseURL,
-            profile: profile,
-            hasWSO2APIs: true
-          }),
-        };
-      };
-      if (filename === constants.FILE_NAME.PARTIAL_SIDEBAR_FILE_NAME) {
-        hbs.handlebars.partials = {
-          ...hbs.handlebars.partials,
-          sidebar: hbs.handlebars.compile(template)({
-            baseUrl: baseURL,
-            hasWSO2APIs: true
-          }),
-        };
       }
     }
   });
