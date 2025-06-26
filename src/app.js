@@ -152,9 +152,9 @@ Handlebars.registerHelper('in', function (value, options) {
         ? options.hash.values
         : options.hash.values.split(',');
     const validValues = rawValues.map(v => v.trim());
-    const trimmedValue = value.trim();
+    const trimmedValue = value?.trim();
 
-    const match = validValues.some(valid => trimmedValue.includes(valid));
+    const match = validValues.some(valid => trimmedValue?.includes(valid));
     return match ? options.fn(this) : options.inverse(this);
 });
 
