@@ -148,14 +148,19 @@ const registerInternalPartials = async (req) => {
 const registerAllPartialsFromFile = async (baseURL, req, filePrefix) => {
 
   const filePath = req.originalUrl.split(baseURL).pop();
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "partials"), req);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "home", "partials"), req);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "apis", "partials"), req);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "docs", "partials"), req);
+  const orgDetails = await adminDao.getOrganization(req.params.orgName);
+  const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+  
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "partials"), req, devportalMode);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "home", "partials"), req, devportalMode);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req, devportalMode);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "apis", "partials"), req, devportalMode);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "docs", "partials"), req, devportalMode);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "mcp", "partials"), req, devportalMode);
+  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "mcp-landing", "partials"), req, devportalMode);
 
   if (fs.existsSync(path.join(process.cwd(), filePrefix + "pages", filePath, "partials"))) {
-    registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix + "pages", filePath, "partials"), req);
+    registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix + "pages", filePath, "partials"), req, devportalMode);
   }
 }
 
@@ -285,7 +290,15 @@ async function registerDocsPageContent(req, orgID, partialObject) {
       partialObject[constants.FILE_NAME.API_DOC_PARTIAL_NAME] = additionalDocContent ? additionalDocContent : "";
     }
   }
+  const apiMetadata = await apiDao.getAPIMetadata(orgID, apiID);
+  let apiType = apiMetadata[0].dataValues.API_TYPE;
+  let baseUrl;
 
+  if (apiType === constants.API_TYPE.MCP) {
+      baseUrl = '/' + orgName + '/views/' + viewName + "/mcp/" + apiHandle;
+  } else {
+      baseUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle;
+  }
 
   hbs.handlebars.partials[constants.FILE_NAME.API_DOC_PARTIAL_NAME] = hbs.handlebars.compile(
     partialObject[constants.FILE_NAME.API_DOC_PARTIAL_NAME])({
@@ -303,10 +316,10 @@ async function checkWSO2APIAvailability() {
   return await apiDao.getAPIMetadataByCondition(condition).then(apis => apis.length > 0);
 }
 
-function registerPartialsFromFile(baseURL, dir, req) {
-
+function registerPartialsFromFile(baseURL, dir, req, devportalMode) {
   const filenames = fs.readdirSync(dir);
-  filenames.forEach((filename) => {
+
+  for (const filename of filenames) {
     if (filename.endsWith(".hbs")) {
       const template = fs.readFileSync(path.join(dir, filename), constants.CHARSET_UTF8);
       hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
@@ -318,29 +331,46 @@ function registerPartialsFromFile(baseURL, dir, req) {
           firstName: req.user.firstName,
           lastName: req.user.lastName,
           email: req.user.email
-        }
+        };
       }
+
       if (filename === constants.FILE_NAME.PARTIAL_HEADER_FILE_NAME) {
         hbs.handlebars.partials = {
           ...hbs.handlebars.partials,
           header: hbs.handlebars.compile(template)({
             baseUrl: baseURL,
             profile: profile,
-            hasWSO2APIs: true
+            hasWSO2APIs: true,
+            devportalMode: devportalMode || constants.API_TYPE.DEFAULT
           }),
         };
-      };
+      }       
+      
+      if (filename === constants.FILE_NAME.HOME_FILE_NAME) {
+        hbs.handlebars.partials = {
+          ...hbs.handlebars.partials,
+          home: hbs.handlebars.compile(template)({
+            baseUrl: baseURL,
+            profile: profile,
+            hasWSO2APIs: true,
+            devportalMode: devportalMode || constants.API_TYPE.DEFAULT
+          }),
+        };
+      } 
+
       if (filename === constants.FILE_NAME.PARTIAL_SIDEBAR_FILE_NAME) {
         hbs.handlebars.partials = {
           ...hbs.handlebars.partials,
           sidebar: hbs.handlebars.compile(template)({
             baseUrl: baseURL,
-            hasWSO2APIs: true
+            hasWSO2APIs: true,
+            devportalMode: devportalMode || constants.API_TYPE.DEFAULT
           }),
         };
       }
     }
-  });
+  }
 }
 
 module.exports = registerPartials;
+

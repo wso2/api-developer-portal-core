@@ -3,7 +3,12 @@
   <nav class="navbar navbar-expand-lg custom-navbar fixed-top">
     <div class="container-fluid">
       <a class="navbar-brand d-flex align-items-center" href="{{baseUrl}}">
+        {{#if (eq devportalMode "MCPSERVERSONLY")}}
+        <img src="/images/devportalLogoMCP.png" alt="Logo" class="navbar-logo me-2" />
+        {{/if}}
+        {{#in devportalMode values="DEFAULT,APISONLY"}}
         <img src="/images/devportalLogo.png" alt="Logo" class="navbar-logo me-2" />
+        {{/in}}
       </a>
       <div class="d-flex align-items-center me-2">
         {{#if profile}}
