@@ -148,13 +148,14 @@ Handlebars.registerHelper('eq', function (a, b) {
 });
 
 Handlebars.registerHelper('in', function (value, options) {
+    console.log('in helper called with value:', value);
     const rawValues = Array.isArray(options.hash.values)
         ? options.hash.values
         : options.hash.values.split(',');
     const validValues = rawValues.map(v => v.trim());
-    const trimmedValue = value.trim();
+    const trimmedValue = value?.trim();
 
-    const match = validValues.some(valid => trimmedValue.includes(valid));
+    const match = validValues.some(valid => trimmedValue?.includes(valid));
     return match ? options.fn(this) : options.inverse(this);
 });
 

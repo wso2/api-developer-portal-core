@@ -59,9 +59,10 @@ const loadOrgContentFromFile = async (req, res) => {
 }
 
 const loadOrgContentFromAPI = async (req, res) => {
-    console.log(`Loading organization content from API for org:`, req);
     let html;
     const orgName = req.params.orgName;
+    const orgDetails = await adminDao.getOrganization(orgName);
+    const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
     try {
         const orgId = await adminDao.getOrgId(orgName);
         let profile = {};
@@ -75,6 +76,7 @@ const loadOrgContentFromAPI = async (req, res) => {
         }
         console.log(profile);
         templateContent = {
+            devportalMode: devportalMode,
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName,
             profile: req.isAuthenticated() ? profile : {}
         };
@@ -83,6 +85,7 @@ const loadOrgContentFromAPI = async (req, res) => {
     } catch (error) {
         console.error(`Failed to load organization :`, error);
         const templateContent = {
+            devportalMode: devportalMode,
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
             errorMessage: constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE,
         }

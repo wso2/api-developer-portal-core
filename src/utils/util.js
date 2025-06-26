@@ -848,6 +848,11 @@ const enforcePortalMode = async (req, res, next) => {
         (path.includes('mcps') || path.includes('mcp') ) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.MCP_ONLY)) {
         next();
     } else {
+        const templateContent = {
+            errorMessage: constants.COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE,
+            portalMode: portalMode,
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName,
+        }
         const html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE, true);
         res.send(html);
     }

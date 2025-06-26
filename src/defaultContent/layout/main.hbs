@@ -19,9 +19,9 @@
 </head>
 
 <body class="main-body">
-    {{> header profile=profile baseUrl=baseUrl }}
+    {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode }}
     <main class="main-container">
-       {{> sidebar profile=profile baseUrl=baseUrl }}
+       {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode }}
         <div class="content-area">
             {{#if portalConfigs.showMaintenanceBanner}}
                 <div class="alert custom-bootstrap-alert d-flex align-items-center" role="alert">
