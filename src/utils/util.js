@@ -815,6 +815,9 @@ async function listFiles(path) {
 
 function filterAllowedAPIs (searchResults, allowedAPIs) {
 
+    console.log("Filtering allowed APIs");
+    console.log("Search Results: ", searchResults);
+    console.log("Allowed APIs: ", allowedAPIs);
     searchResults = searchResults.filter(api =>
         allowedAPIs.some(allowedAPI => api.apiReferenceID === allowedAPI.id)
     );

@@ -201,6 +201,7 @@ const loadAPIContent = async (req, res) => {
 
             }
             let templateContent = {
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API
             }
             const apiDetail = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${metaData.apiReferenceID}`, null, null);
@@ -461,7 +462,7 @@ const loadDocument = async (req, res) => {
                 const apiID = await apiDao.getAPIId(orgID, apiHandle);
                 const viewName = req.params.viewName;
                 const docNames = await apiMetadataService.getAPIDocTypes(orgID, apiID)
-                templateContent.baseUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle;
+                templateContent.baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
                 templateContent.docTypes = docNames;
                 let profile = {};
                 if (req.user) {
