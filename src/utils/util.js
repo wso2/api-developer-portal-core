@@ -823,8 +823,8 @@ const enforcePortalMode = async (req, res, next) => {
     const orgDetails = await adminDao.getOrganization(req.params.orgName);
     const portalMode = orgDetails.ORG_CONFIG?.devportalMode;
     const path = req.originalUrl.split('/')[4];
-    if ((path.startsWith('apis') || path.startsWith('api') ) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.API_PROXIES) ||
-        (path.startsWith('mcps') || path.startsWith('mcp') ) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.MCP_ONLY)) {
+    if ((path.includes('apis') || path.includes('api') ) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.API_PROXIES) ||
+        (path.includes('mcps') || path.includes('mcp') ) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.MCP_ONLY)) {
         next();
 
     } else {
