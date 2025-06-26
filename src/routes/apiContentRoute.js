@@ -21,13 +21,14 @@ const apiController = require('../controllers/apiContentController');
 const registerPartials = require('../middlewares/registerPartials');
 const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
 const authController = require('../controllers/authController');
+const util = require('../utils/util');
 
 router.get('/:orgName/views/:viewName/apis', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
         return res.status(404).send('Not Found');
     }
     next();
-}, authController.handleSilentSSO, registerPartials, ensureAuthenticated, apiController.loadAPIs);
+}, authController.handleSilentSSO, registerPartials, util.enforcePortalMode, ensureAuthenticated, apiController.loadAPIs);
 
 
 router.get('/:orgName/views/:viewName/api/:apiHandle', (req, res, next) => {
@@ -35,7 +36,7 @@ router.get('/:orgName/views/:viewName/api/:apiHandle', (req, res, next) => {
         return res.status(404).send('Not Found');
     }
     next();
-}, authController.handleSilentSSO, registerPartials, ensureAuthenticated, apiController.loadAPIContent);
+}, authController.handleSilentSSO, registerPartials, util.enforcePortalMode, ensureAuthenticated, apiController.loadAPIContent);
 
 
 router.get('/:orgName/views/:viewName/api/:apiHandle/docs/specification', (req, res, next) => {
@@ -43,7 +44,7 @@ router.get('/:orgName/views/:viewName/api/:apiHandle/docs/specification', (req, 
         return res.status(404).send('Not Found');
     }
     next();
-}, authController.handleSilentSSO, registerPartials, ensureAuthenticated, apiController.loadDocument);
+}, authController.handleSilentSSO, registerPartials, util.enforcePortalMode, ensureAuthenticated, apiController.loadDocument);
 
 
 router.get('/:orgName/views/:viewName/api/:apiHandle/docs/:docType/:docName', (req, res, next) => {
@@ -51,7 +52,7 @@ router.get('/:orgName/views/:viewName/api/:apiHandle/docs/:docType/:docName', (r
         return res.status(404).send('Not Found');
     }
     next();
-}, authController.handleSilentSSO, registerPartials, ensureAuthenticated, apiController.loadDocument);
+}, authController.handleSilentSSO, registerPartials, util.enforcePortalMode, ensureAuthenticated, apiController.loadDocument);
 
 
 module.exports = router;

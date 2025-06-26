@@ -142,7 +142,7 @@ const updateOrganization = async (orgData) => {
                 ADMIN_ROLE: orgData.adminRole,
                 SUBSCRIBER_ROLE: orgData.subscriberRole,
                 SUPER_ADMIN_ROLE: orgData.superAdminRole,
-                ORG_CONFIG: orgData.orgConfig
+                ORG_CONFIG: orgData.orgConfiguration
             },
             {
                 where: { ORG_ID: orgData.orgId },

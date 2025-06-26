@@ -51,7 +51,7 @@ const getOrganizationDetails = async (orgId) => {
         superAdminRole: organization.SUPER_ADMIN_ROLE,
         subscriberRole: organization.SUBSCRIBER_ROLE,
         groupClaimName: organization.GROUP_CLAIM_NAME,
-        orgConfig: organization.ORG_CONFIG,
+        orgConfiguration: organization.ORG_CONFIG,
     };
 }
 

@@ -32,8 +32,8 @@ const sequelizeOptions = {
     dialect: config.db.dialect,
     logging: false,
     pool: {
-        max: 5,
-        min: 0,
+        max: 50,
+        min: 2,
         acquire: 30000,
         idle: 10000
     }
