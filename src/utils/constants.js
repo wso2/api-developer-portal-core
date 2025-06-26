@@ -46,9 +46,10 @@ module.exports = {
         UNPUBLISHED: "CREATED"
     },
     API_TYPE: {
-        MCP: "MCPServersOnly",
-        API_PROXIES: "APIsOnly",
-        DEFAULT: "Default",
+        MCP: "MCP",
+        MCP_ONLY: "MCPSERVERSONLY",
+        API_PROXIES: "APISONLY",
+        DEFAULT: "DEFAULT",
     },
     DOC_TYPES: {
         DOC_ID: 'DOC_',
@@ -170,6 +171,7 @@ module.exports = {
         API_DEFINITION_XML: 'apiDefinition.xml',
         PARTIAL_HEADER_FILE_NAME: 'header.hbs',
         PARTIAL_SIDEBAR_FILE_NAME: 'sidebar.hbs',
+        HOME_FILE_NAME: 'home.hbs',
     },
     DEFAULT_SUBSCRIPTION_PLANS: [
             {

@@ -30,6 +30,12 @@ router.get('/:orgName/views/:viewName/apis', (req, res, next) => {
     next();
 }, authController.handleSilentSSO, registerPartials, util.enforcePortalMode, ensureAuthenticated, apiController.loadAPIs);
 
+router.get('/:orgName/views/:viewName/mcps', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, registerPartials, ensureAuthenticated, util.enforcePortalMode, apiController.loadAPIs);
 
 router.get('/:orgName/views/:viewName/api/:apiHandle', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
@@ -38,6 +44,12 @@ router.get('/:orgName/views/:viewName/api/:apiHandle', (req, res, next) => {
     next();
 }, authController.handleSilentSSO, registerPartials, util.enforcePortalMode, ensureAuthenticated, apiController.loadAPIContent);
 
+router.get('/:orgName/views/:viewName/mcp/:apiHandle', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, registerPartials, ensureAuthenticated, util.enforcePortalMode, apiController.loadAPIContent);
 
 router.get('/:orgName/views/:viewName/api/:apiHandle/docs/specification', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
@@ -46,13 +58,25 @@ router.get('/:orgName/views/:viewName/api/:apiHandle/docs/specification', (req, 
     next();
 }, authController.handleSilentSSO, registerPartials, util.enforcePortalMode, ensureAuthenticated, apiController.loadDocument);
 
+router.get('/:orgName/views/:viewName/mcp/:apiHandle/docs/specification', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, authController.handleSilentSSO, registerPartials, util.enforcePortalMode, ensureAuthenticated, apiController.loadDocument);
 
 router.get('/:orgName/views/:viewName/api/:apiHandle/docs/:docType/:docName', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
         return res.status(404).send('Not Found');
     }
     next();
-}, util.enforcePortalMode, authController.handleSilentSSO, registerPartials, ensureAuthenticated, apiController.loadDocument);
+},  authController.handleSilentSSO, registerPartials, util.enforcePortalMode, ensureAuthenticated, apiController.loadDocument);
 
+router.get('/:orgName/views/:viewName/mcp/:apiHandle/docs/:docType/:docName', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, authController.handleSilentSSO, registerPartials, util.enforcePortalMode, ensureAuthenticated, apiController.loadDocument);
 
 module.exports = router;

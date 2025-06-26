@@ -116,7 +116,12 @@ const loadAPIs = async (req, res) => {
                 orgID: orgID,
             };
 
-            html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
+            if (req.originalUrl.includes("/mcps")) {
+                console.log
+                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp", viewName);
+            } else {
+                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
+            }
         } catch (error) {
             console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
             if (Number(error?.statusCode) === 401) {
@@ -269,7 +274,11 @@ const loadAPIContent = async (req, res) => {
                 schemaDefinition: schemaDefinition,
                 scopes: apiDetail.scopes
             };
-        html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
+            if (metaData.apiInfo.apiType == "MCP") {
+                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp-landing", viewName);
+            } else {
+                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
+            }
         } catch (error) {
             console.error(`Failed to load api content:`, error);
             if (Number(error?.statusCode) === 401) {
@@ -410,8 +419,14 @@ const loadDocument = async (req, res) => {
                 const orgID = await adminDao.getOrgId(orgName);
                 const apiID = await apiDao.getAPIId(orgID, apiHandle);
                 const viewName = req.params.viewName;
-                const docNames = await apiMetadataService.getAPIDocTypes(orgID, apiID)
-                templateContent.baseUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle;
+                const docNames = await apiMetadataService.getAPIDocTypes(orgID, apiID);
+                const apiMetadata = await apiDao.getAPIMetadata(orgID, apiID);
+                let apiType = apiMetadata[0].dataValues.API_TYPE;
+                if (apiType === constants.API_TYPE.MCP) {
+                    templateContent.baseUrl = '/' + orgName + '/views/' + viewName + "/mcp/" + apiHandle;
+                } else {
+                    templateContent.baseUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle;
+                }
                 templateContent.docTypes = docNames;
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
             } catch (error) {

@@ -206,7 +206,7 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
 
         if (response.ok) {
             // Show success notification
-            showSubscriptionMessage(messageOverlay, 'Successfully subscribed to API', 'success');
+            showSubscriptionMessage(messageOverlay, 'Successfully subscribed', 'success');
 
             if (card) {
                 // Show "Subscribed" label

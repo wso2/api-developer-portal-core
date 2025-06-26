@@ -823,9 +823,10 @@ const enforcePortalMode = async (req, res, next) => {
     const orgDetails = await adminDao.getOrganization(req.params.orgName);
     const portalMode = orgDetails.ORG_CONFIG?.devportalMode;
     const path = req.originalUrl.split('/')[4];
-    if ((path === 'apis' || path === 'api') && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.API_PROXIES) ||
-        (path === 'mcps' || path === 'mcp') && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.MCP)) {
+    if ((path.startsWith('apis') || path.startsWith('api') ) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.API_PROXIES) ||
+        (path.startsWith('mcps') || path.startsWith('mcp') ) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.MCP_ONLY)) {
         next();
+
     } else {
         const html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE, true);
         res.send(html);
