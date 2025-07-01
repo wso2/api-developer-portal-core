@@ -89,7 +89,7 @@
     </script>
     <script src="https://unpkg.com/react@17.0.2/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@17.0.2/umd/react-dom.development.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/thisaltennakoon/mcp-inspector@main3/dist/mcp-inspector.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/thisaltennakoon/mcp-inspector@main5/dist/mcp-inspector.umd.js"></script>
 </head>
 <main>
     <div id="root" style="height: 100vh;"></div>
@@ -97,7 +97,19 @@
         // Wait for the DOM to be ready
         document.addEventListener('DOMContentLoaded', function () {
             const rootElement = document.getElementById('root');
-            ReactDOM.render(React.createElement(MCPInspector.default), rootElement);
+            const customTheme = {
+                typography: {
+                    fontFamily: 'montserrat',
+                }
+            };
+
+            // Show loading message first
+            rootElement.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: montserrat;">Loading MCP Inspector...</div>';
+
+            // Then render the actual component
+            ReactDOM.render(React.createElement(MCPInspector.default, {
+                themeCustomization: customTheme
+            }), rootElement);
         });
     </script>
 </main>
