@@ -89,13 +89,22 @@
     </script>
     <script src="https://unpkg.com/react@17.0.2/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@17.0.2/umd/react-dom.development.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/thisaltennakoon/mcp-inspector@main5/dist/mcp-inspector.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/thisaltennakoon/mcp-inspector@main7/dist/mcp-inspector.umd.js"></script>
 </head>
 <main>
     <div id="root" style="height: 100vh;"></div>
     <script>
         // Wait for the DOM to be ready
         document.addEventListener('DOMContentLoaded', function () {
+            // Extract URL from swagger JSON
+            const swaggerData = {{{swagger}}};
+            let serverUrl = swaggerData.servers && swaggerData.servers.length > 0 ? swaggerData.servers[0].url : '';
+
+            // Add '/mcp' to the end of the URL if URL is available
+            if (serverUrl) {
+                serverUrl = serverUrl + '/mcp';
+            }
+
             const rootElement = document.getElementById('root');
             const customTheme = {
                 typography: {
@@ -108,7 +117,8 @@
 
             // Then render the actual component
             ReactDOM.render(React.createElement(MCPInspector.default, {
-                themeCustomization: customTheme
+                themeCustomization: customTheme,
+                url: serverUrl,
             }), rootElement);
         });
     </script>
