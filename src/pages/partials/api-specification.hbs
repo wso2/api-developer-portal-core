@@ -1,4 +1,4 @@
-{{#in apiType values="REST,MCP"}}
+{{#in apiType values="REST"}}
 
 <head>
   <link rel="stylesheet" href="https://unpkg.com/@stoplight/elements/styles.min.css">
@@ -79,5 +79,26 @@
       })
     );
   </script>
+</main>
+
+{{else if (eq apiType "MCP")}}
+
+<head>
+    <script>
+        window.process = {env: {NODE_ENV: 'production'}};
+    </script>
+    <script src="https://unpkg.com/react@17.0.2/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17.0.2/umd/react-dom.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/thisaltennakoon/mcp-inspector@main3/dist/mcp-inspector.umd.js"></script>
+</head>
+<main>
+    <div id="root" style="height: 100vh;"></div>
+    <script>
+        // Wait for the DOM to be ready
+        document.addEventListener('DOMContentLoaded', function () {
+            const rootElement = document.getElementById('root');
+            ReactDOM.render(React.createElement(MCPInspector.default), rootElement);
+        });
+    </script>
 </main>
 {{/if}}
