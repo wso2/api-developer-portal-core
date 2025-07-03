@@ -104,6 +104,7 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
         console.log("Layout not found for org: " + orgName + " and view: " + viewName);
         //load default org content
         html = renderTemplate(filePrefix + filePath + '/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
+        console.error("Rendering default content for org This: " + orgName + " and view: " + viewName);
         return html;
     }
     var templatePage = await loadTemplateFromAPI(orgID, filePath, viewName);
@@ -469,6 +470,7 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         const response = await axios(url, options);
         return response.data;
     } catch (error) {
+        console.error(`Error while invoking API:`, error);
         if (error.response?.status === 401) {
             try {
                 const newExchangedToken = await tokenExchanger(req.user.accessToken, req.originalUrl.split("/")[1]);
@@ -828,6 +830,9 @@ async function listFiles(path) {
 
 function filterAllowedAPIs(searchResults, allowedAPIs) {
 
+    console.log("Filtering allowed APIs");
+    console.log("Search Results: ", searchResults);
+    console.log("Allowed APIs: ", allowedAPIs);
     searchResults = searchResults.filter(api =>
         allowedAPIs.some(allowedAPI => api.apiReferenceID === allowedAPI.id)
     );
@@ -843,6 +848,11 @@ const enforcePortalMode = async (req, res, next) => {
         (path.includes('mcps') || path.includes('mcp') ) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.MCP_ONLY)) {
         next();
     } else {
+        const templateContent = {
+            errorMessage: constants.COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE,
+            portalMode: portalMode,
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName,
+        }
         const html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE, true);
         res.send(html);
     }

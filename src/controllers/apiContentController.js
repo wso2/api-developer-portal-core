@@ -38,6 +38,7 @@ const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
 
 const loadAPIs = async (req, res) => {
 
+    console.log("Loading APIs for org: " + req.params.orgName);
     const { orgName, viewName } = req.params;
     let html;
     if (config.mode === constants.DEV_MODE) {
@@ -59,8 +60,9 @@ const loadAPIs = async (req, res) => {
         }
         html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
     } else {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
         try {
-            const orgDetails = await adminDao.getOrganization(orgName);
             const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
             req.cpOrgID = cpOrgID;
             const orgID = orgDetails.ORG_ID;
@@ -108,25 +110,42 @@ const loadAPIs = async (req, res) => {
                 metaDataList = [];
             }
 
+            let profile = {};
+            if (req.user) {
+                profile = {
+                    imageURL: req.user.imageURL,
+                    firstName: req.user.firstName,
+                    lastName: req.user.lastName,
+                    email: req.user.email,
+                }
+            }
             const templateContent = {
                 isAuthenticated: req.isAuthenticated(),
                 apiMetadata: metaDataList,
                 tags: apiTags,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 orgID: orgID,
+                profile: req.isAuthenticated() ? profile : {},
+                devportalMode: devportalMode,
             };
 
-            if (req.originalUrl.includes("/mcps")) {
-                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp", viewName);
-            } else {
-                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
-            }
+            html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
         } catch (error) {
+            console.error(`Failed to load API listing:`, error);
             console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
+            const templateContent = {
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+                devportalMode: devportalMode,
+            }
             if (Number(error?.statusCode) === 401) {
-                html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_AUTH_ERROR_MESSAGE, true);
-            } else { 
-                html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_ERROR_MESSAGE , true);
+                console.log("User is not authorized to access the API or user session expired, hence redirecting to login page");
+                console.log(templateContent)
+                templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_AUTH_ERROR_MESSAGE;
+                console.log(templateContent)
+                html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+            } else {
+                templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE;
+                html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
             }
         }
     }
@@ -142,6 +161,9 @@ const loadAPIContent = async (req, res) => {
     if (config.mode === constants.DEV_MODE) {
         const metaData = loadAPIMetaDataFromFile(apiHandle);
         const filePath = path.join(process.cwd(), filePrefix + '../mock', apiHandle + "/" + constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME);
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+
         if (fs.existsSync(filePath)) {
             hbs.handlebars.registerPartial('api-content', fs.readFileSync(filePath, constants.CHARSET_UTF8));
         }
@@ -162,11 +184,13 @@ const loadAPIContent = async (req, res) => {
             apiMetadata: metaData,
             subscriptionPlans: subscriptionPlans,
             baseUrl: baseURLDev + viewName,
-            schemaUrl: orgName + '/mock/' + apiHandle + '/apiDefinition.xml'
+            schemaUrl: orgName + '/mock/' + apiHandle + '/apiDefinition.xml',
+            devportalMode: devportalMode,
         }
         html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
         res.send(html);
     } else {
+        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
         try {
             const orgDetails = await adminDao.getOrganization(orgName);
             const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
@@ -174,17 +198,19 @@ const loadAPIContent = async (req, res) => {
             const orgID = orgDetails.ORG_ID;
             const apiID = await apiDao.getAPIId(orgID, apiHandle);
             const metaData = await loadAPIMetaData(req, orgID, apiID);
-            let apiName = metaData? metaData.apiHandle?.split('-v')[0] : "";
-            const version = metaData? metaData.apiInfo.apiVersion : "";
+            let apiName = metaData ? metaData.apiHandle?.split('-v')[0] : "";
+            const version = metaData ? metaData.apiInfo.apiVersion : "";
             //check whether user has access to the API
             let allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
             if (allowedAPIList.count === 0) {
                 apiName = metaData.apiInfo.apiName;
                 allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
-                
+
             }
             let templateContent = {
-                errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+                errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API,
+                devportalMode: devportalMode,
             }
             const apiDetail = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${metaData.apiReferenceID}`, null, null);
 
@@ -258,6 +284,15 @@ const loadAPIContent = async (req, res) => {
                     );
                 }
             }
+            let profile = {};
+            if (req.user) {
+                profile = {
+                    imageURL: req.user.imageURL,
+                    firstName: req.user.firstName,
+                    lastName: req.user.lastName,
+                    email: req.user.email,
+                }
+            }
             templateContent = {
                 isAuthenticated: req.isAuthenticated(),
                 applications: appList,
@@ -271,7 +306,9 @@ const loadAPIContent = async (req, res) => {
                 resources: apiDetails,
                 orgID: orgID,
                 schemaDefinition: schemaDefinition,
-                scopes: apiDetail.scopes
+                scopes: apiDetail.scopes,
+                devportalMode: devportalMode,
+                profile: req.isAuthenticated() ? profile : {}
             };
             if (metaData.apiInfo.apiType == "MCP") {
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp-landing", viewName);
@@ -280,10 +317,16 @@ const loadAPIContent = async (req, res) => {
             }
         } catch (error) {
             console.error(`Failed to load api content:`, error);
+            const templateContent = {
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+                devportalMode: devportalMode,
+            }
             if (Number(error?.statusCode) === 401) {
-                html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_AUTH_ERROR_MESSAGE, true);
-            } else { 
-                html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_ERROR_MESSAGE, true);
+                templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_AUTH_ERROR_MESSAGE;
+                html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+            } else {
+                templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE;
+                html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
             }
             res.send(html);
         }
@@ -308,7 +351,7 @@ const loadAPIDefinition = async (orgName, viewName, apiHandle) => {
         metaData = await apiMetadataService.getMetadataFromDB(orgID, apiID, viewName);
         const data = metaData ? JSON.stringify(metaData) : {};
         metaData = JSON.parse(data);
-        apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
+        let apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
         templateContent.apiType = metaData.apiInfo.apiType;
         templateContent.swagger = apiDefinition;
@@ -324,10 +367,13 @@ const loadDocsPage = async (req, res) => {
     if (config.mode === constants.DEV_MODE) {
         const apiMetadata = await loadAPIMetaDataFromFile(apiHandle);
         const docNames = apiMetadata.docTypes;
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
         const templateContent = {
             apiMD: await loadMarkdown("api-doc.md", filePrefix + '../mock/' + apiHandle + "/" + docType),
             baseUrl: constants.BASE_URL + config.port + "/views/" + viewName + "/api/" + apiHandle,
-            docTypes: docNames
+            docTypes: docNames,
+            devportalMode: devportalMode,
         }
         html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
     } else {
@@ -335,29 +381,49 @@ const loadDocsPage = async (req, res) => {
             const orgID = await adminDao.getOrgId(orgName);
             const apiID = await apiDao.getAPIId(orgID, apiHandle);
             const viewName = req.params.viewName;
-            const docNames = await apiMetadataService.getAPIDocTypes(orgID, apiID)
+            const docNames = await apiMetadataService.getAPIDocTypes(orgID, apiID);
+            const orgDetails = await adminDao.getOrganization(orgName);
+            const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+
+            let profile = {};
+            if (req.user) {
+                profile = {
+                    imageURL: req.user.imageURL,
+                    firstName: req.user.firstName,
+                    lastName: req.user.lastName,
+                    email: req.user.email,
+                }
+            }
+
             const templateContent = {
                 baseUrl: '/' + orgName + '/views/' + viewName + "/api/" + apiHandle,
-                docTypes: docNames
+                docTypes: docNames,
+                profile: req.isAuthenticated() ? profile : {},
+                devportalMode: devportalMode,
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
         } catch (error) {
+            const templateContent = {
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+                errorMessage: constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE,
+                devportalMode: devportalMode,
+            }
             console.error(`Failed to load api docs:`, error);
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
-            constants.COMMON_ERROR_MESSAGE, true);
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
         }
     }
     res.send(html);
 }
 
 const loadDocument = async (req, res) => {
+    const orgDetails = await adminDao.getOrganization(orgName);
+    const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
     try {
         const { orgName, apiHandle, viewName, docType, docName } = req.params;
         const hbs = exphbs.create({});
         let templateContent = {
             "isAPIDefinition": false
         };
-        const orgDetails = await adminDao.getOrganization(orgName);
         const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
         req.cpOrgID = cpOrgID;
         const definitionResponse = await loadAPIDefinition(orgName, viewName, apiHandle);
@@ -374,15 +440,17 @@ const loadDocument = async (req, res) => {
         }
         if (allowedAPIList.count === 0) {
             templateContent = {
-                errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API
+                errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API,
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+                devportalMode: devportalMode,
             }
             html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
             res.send(html);
         }
         //load API definition
         if (req.originalUrl.includes(constants.FILE_NAME.API_SPECIFICATION_PATH)) {
-        
-        
+
+
             let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
             const response = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiMetadata.apiReferenceID}`, null, null);
             if (response.securityScheme.includes("api_key")) {
@@ -414,6 +482,7 @@ const loadDocument = async (req, res) => {
             templateContent.apiMD = apiMD;
             html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
         } else {
+
             try {
                 const orgID = await adminDao.getOrgId(orgName);
                 const apiID = await apiDao.getAPIId(orgID, apiHandle);
@@ -427,22 +496,42 @@ const loadDocument = async (req, res) => {
                     templateContent.baseUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle;
                 }
                 templateContent.docTypes = docNames;
+                let profile = {};
+                if (req.user) {
+                    profile = {
+                        imageURL: req.user.imageURL,
+                        firstName: req.user.firstName,
+                        lastName: req.user.lastName,
+                        email: req.user.email,
+                    }
+                }
+                templateContent.profile = req.isAuthenticated() ? profile : {};
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
             } catch (error) {
+                const templateContent = {
+                    devportalMode: devportalMode,
+                    baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+                    errorMessage: constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE,
+                }
                 console.error(`Failed to load api content :`, error);
-                html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
-                constants.COMMON_ERROR_MESSAGE, true);
+                html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
             }
         }
         res.send(html);
     } catch (error) {
+        const templateContent = {
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+            devportalMode: orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT,
+        }
         if (Number(error?.statusCode) === 401) {
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_AUTH_ERROR_MESSAGE, true);
-        } else { 
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_ERROR_MESSAGE, true);
+            templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_AUTH_ERROR_MESSAGE;
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+        } else {
+            templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE;
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
         }
         res.send(html);
-    }    
+    }
 }
 
 async function loadAPIMetaDataList() {

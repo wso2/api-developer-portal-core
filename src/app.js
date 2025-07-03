@@ -148,6 +148,7 @@ Handlebars.registerHelper('eq', function (a, b) {
 });
 
 Handlebars.registerHelper('in', function (value, options) {
+    console.log('in helper called with value:', value);
     const rawValues = Array.isArray(options.hash.values)
         ? options.hash.values
         : options.hash.values.split(',');
