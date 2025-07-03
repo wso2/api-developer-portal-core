@@ -27,6 +27,7 @@ module.exports = {
     API_TYPE_QUERY: '/template?type=',
     HEADER_PARTIAL_NAME: 'header',
     SIDEBAR_PARTIAL_NAME: 'sidebar',
+    HOME_PARTIAL_NAME: 'home',
     BASE_URL: 'https://localhost:',
     BASE_URL_NAME: 'baseUrl',
     ORG_ID: 'orgID',

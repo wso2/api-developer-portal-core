@@ -119,7 +119,7 @@ const registerAllPartialsFromFile = async (baseURL, req, filePrefix) => {
   const filePath = req.originalUrl.split(baseURL).pop();
   const orgDetails = await adminDao.getOrganization(req.params.orgName);
   const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
-  
+
   registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "partials"), req, devportalMode);
   registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "home", "partials"), req, devportalMode);
   registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req, devportalMode);
@@ -139,6 +139,8 @@ const registerPartialsFromAPI = async (req) => {
   const viewName = req.params.viewName;
   const orgID = await adminDao.getOrgId(orgName);
   const imageUrl = `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.VIEWS_PATH}${viewName}/layout?fileType=image&fileName=`;
+  const orgDetails = await adminDao.getOrganization(req.params.orgName);
+  const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
 
   let partials = await adminDao.getOrgContent({
     orgId: orgID,
@@ -161,6 +163,7 @@ const registerPartialsFromAPI = async (req) => {
     isAdmin = req.user["isAdmin"];
     isSuperAdmin = req.user["isSuperAdmin"];
   }
+
   if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
     await registerAPILandingContent(req, orgID, partialObject);
   }
@@ -229,9 +232,9 @@ async function registerDocsPageContent(req, orgID, partialObject) {
   let baseUrl;
 
   if (apiType === constants.API_TYPE.MCP) {
-      baseUrl = '/' + orgName + '/views/' + viewName + "/mcp/" + apiHandle;
+    baseUrl = '/' + orgName + '/views/' + viewName + "/mcp/" + apiHandle;
   } else {
-      baseUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle;
+    baseUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle;
   }
 
   hbs.handlebars.partials[constants.FILE_NAME.API_DOC_PARTIAL_NAME] = hbs.handlebars.compile(
