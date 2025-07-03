@@ -235,6 +235,7 @@ const registerPartialsFromAPI = async (req) => {
     hbs.handlebars.partials = {
       ...hbs.handlebars.partials,
       home: hbs.handlebars.compile(partialObject[constants.HOME_PARTIAL_NAME])({
+        baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
         devportalMode: devportalMode || constants.API_TYPE.DEFAULT
       }),
     };
