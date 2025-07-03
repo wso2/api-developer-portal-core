@@ -35,6 +35,7 @@ const { Sequelize } = require("sequelize");
 
 const createOrganization = async (req, res) => {
 
+    console.log("Received request to create organization");
     const rules = util.validateOrganization();
     for (let validation of rules) {
         await validation.run(req);
