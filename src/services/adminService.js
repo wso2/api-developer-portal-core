@@ -35,33 +35,48 @@ const { Sequelize } = require("sequelize");
 
 const createOrganization = async (req, res) => {
 
+    console.log("Received request to create organization");
     const rules = util.validateOrganization();
     for (let validation of rules) {
         await validation.run(req);
     }
+    console.log("Organization creation request payload validation successful");
+
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json(util.getErrors(errors));
     }
+    console.log("Organization creation request validation successful");
+
     const payload = req.body;
     const orgConfig = {
         devportalMode: constants.API_TYPE.DEFAULT,
     }
     payload.orgConfig = orgConfig;
+
     let organization = "";
     try {
         await sequelize.transaction(async (t) => {
             organization = await adminDao.createOrganization(payload, t);
             const orgId = organization.ORG_ID;
+            console.log(`Organization created successfully. orgId: ${orgId}, orgName: ${organization.ORG_NAME}`);
+
             // create default label
             const labels = await apiDao.createLabels(organization.ORG_ID, [{ name: 'default', displayName: 'default' }], t);
             const labelId = labels[0].dataValues.LABEL_ID;
+            console.log(`Default label created successfully. labelId: ${labelId}, orgId: ${orgId}`);
+            
             //create default view
             const viewResponse = await apiDao.addView(orgId, { name: 'default', displayName: 'default' }, t);
             const viewID = viewResponse.dataValues.VIEW_ID;
+            console.log(`Default view created successfully. viewId: ${viewID}, orgId: ${orgId}`);
+            
             await apiDao.addLabel(orgId, labelId, viewID, t);
             //create default provider
             await adminDao.createProvider(organization.ORG_ID, { name: 'WSO2', providerURL: config.controlPlane.url }, t);
+            console.log(`Default provider created successfully. orgId: ${orgId}`);
+
             //store default subscription policies
             if (config.generateDefaultSubPolicies) {
                 const storagePlans = constants.DEFAULT_SUBSCRIPTION_PLANS;
@@ -69,6 +84,7 @@ const createOrganization = async (req, res) => {
                     await apiDao.createSubscriptionPolicy(orgId, plan, t);
                 }
             }
+            console.log(`Default subscription policy config: ${config.generateDefaultSubPolicies}`);
         });
 
         const orgCreationResponse = {
