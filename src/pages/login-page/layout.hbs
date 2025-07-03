@@ -33,8 +33,32 @@
     <script src='/technical-scripts/signin.js' defer></script>
 </head>
 
-<body class="main-body">
+  <body
+    class="main-body"
+    style="background-color: var(--primary-lightest-color);"
+  >
 
-</body>
-    {{{body}}}
+  </body>
+  <div
+    class="default-container"
+    style="display: flex; justify-content: center;
+    align-items: center; padding-left: 40px;
+    padding-right: 40px;"
+  >
+    <div class="left-side">
+      <div class="default-logo-container">
+        <div class="default-logo">
+          <img
+            src="/images/devportalLogo.png"
+            alt="Logo"
+            class="img-fluid align-items-start me-2"
+            style="width: 40%;"
+          />
+        </div>
+      </div>
+    </div>
+    <div>
+      {{{body}}}
+    </div>
+  </div>
 </html>
