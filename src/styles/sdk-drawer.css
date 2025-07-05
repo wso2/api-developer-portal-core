@@ -1,0 +1,615 @@
+/* SDK Drawer Styles */
+/* Body scroll lock when drawer is open */
+body.drawer-open {
+  overflow: hidden;
+}
+
+.sdk-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1050;
+  pointer-events: none;
+}
+
+.sdk-drawer-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--main-text-color);
+  letter-spacing: 0.5px;
+}
+
+.sdk-drawer.open {
+  pointer-events: all;
+}
+
+.sdk-drawer-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sdk-drawer.open .sdk-drawer-overlay {
+  opacity: 1;
+}
+
+.sdk-drawer-content {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 480px;
+  height: 100%;
+  background-color: var(--white-color);
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.sdk-drawer.open .sdk-drawer-content {
+  transform: translateX(0);
+}
+
+/* Header */
+.sdk-drawer-header {
+  padding: 1.5rem;
+  flex-shrink: 0;
+}
+
+.sdk-drawer-header h4 {
+  color: var(--main-text-color);
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--main-text-color);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-close:hover {
+  background-color: #f5f5f5;
+}
+
+/* Body */
+.sdk-drawer-body {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--main-text-color);
+  letter-spacing: 0.5px;
+  margin-bottom: 1rem;
+}
+
+/* Selected APIs */
+.selected-apis-section {
+  margin-bottom: 1.5rem;
+}
+
+.selected-apis-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 120px;
+  overflow-y: auto;
+  padding: 12px;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  background-color: #f8f9fa;
+  min-height: 60px;
+}
+
+/* Custom scrollbar for selected APIs */
+.selected-apis-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.selected-apis-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 2px;
+}
+
+.selected-apis-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 2px;
+}
+
+.selected-apis-list::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.selected-api-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 12px;
+  background-color: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--main-text-color);
+  height: 28px;
+  white-space: nowrap;
+  width: auto;
+  min-width: fit-content;
+}
+
+.selected-api-badge .api-name {
+  font-weight: 500;
+  line-height: 1;
+}
+
+.selected-api-badge .api-version {
+  font-size: 11px;
+  font-weight: 400;
+  color: #6c757d;
+  line-height: 1;
+}
+
+/* SDK Configuration */
+.sdk-config-section {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.config-group {
+  margin-bottom: 1.5rem;
+}
+
+.config-group.mode-selection {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  align-items: center;
+  padding-left: 0;
+  margin-left: 0; 
+}
+
+/* General styling for each radio button and its label */
+.mode-selection .form-check {
+  display: flex;
+  align-items: center; /* Vertically aligns the radio circle and the text */
+  gap: 0.5rem; /* The space between the radio circle and its text label */
+}
+
+/* Styles for the clickable radio button circle */
+.mode-selection .form-check-input {
+  accent-color: var(--primary-main-color);
+  transform: scale(1.1);
+  cursor: pointer;
+  margin: 0; /* Reset margin to rely on the parent's 'gap' for spacing */
+}
+
+.mode-selection .form-check-input:focus {
+  border-color: var(--primary-main-color);
+  box-shadow: 0 0 0 0.25rem rgba(26, 76, 109, 0.25);
+}
+
+/* Styles for the text label */
+.mode-selection .form-check-label {
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--main-text-color);
+  font-size: 0.8rem; /* 14px is a good standard size */
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Make the label bold when its corresponding radio button is checked */
+.mode-selection .form-check-input:checked + .form-check-label {
+  color: var(--primary-main-color);
+  font-weight: 600;
+}
+
+.mode-selection .form-check-label .bi-stars {
+    color: #ffc107;
+    font-size: 0.875rem;
+}
+
+/* Language Grid */
+.language-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.language-option {
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+/* Makes the whole card a clickable radio button */
+.language-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    margin: 0;
+}
+
+/*
+  --- KEY CHANGES FOR HORIZONTAL LAYOUT ---
+  - flex-direction is now 'row'.
+  - justify-content: space-between pushes the info and button to opposite ends.
+  - Padding is adjusted for the new layout.
+*/
+.language-card {
+    display: flex;
+    flex-direction: row; /* CHANGED */
+    align-items: center;
+    justify-content: space-between; /* CHANGED back for default mode */
+    padding: 0.875rem 0.75rem; /* ADJUSTED - reduced left padding */
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background-color: var(--white-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    color: inherit;
+    height: 54px; /* Fixed height for consistency */
+    min-height: 54px;
+}
+
+/* NEW: Styles for the wrapper containing the icon and name */
+.language-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0; /* Allows text to truncate if needed */
+    margin-left: -0.125rem; /* Shift slightly more to the left */
+}
+
+/* The selected state now highlights the border and background */
+.language-option.selected .language-card,
+.language-option input:checked + .language-card {
+    border-color: var(--primary-main-color);
+    background-color: rgba(26, 76, 109, 0.08);
+    box-shadow: 0 2px 8px rgba(26, 76, 109, 0.15);
+}
+
+/* --- Hover and Interaction Styles --- */
+.language-card:hover {
+    border-color: var(--primary-main-color);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.language-option.selected .language-card:hover,
+.language-option input:checked + .language-card:hover {
+    box-shadow: 0 4px 12px rgba(26, 76, 109, 0.25);
+    transform: translateY(-1px);
+}
+
+
+/* --- Element Styles --- */
+
+/* Language icon styling */
+.language-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  color: #6c757d;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+/* Icon hover effects */
+.language-card:hover .language-icon {
+    transform: scale(1.05);
+}
+
+/* Specific icon colors and backgrounds */
+.language-icon.android-icon {
+  background-color: #3ddc84;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.language-icon.java-icon {
+  background-color: #ed8b00;
+  color: white;
+  font-size: 1rem;
+}
+
+.language-icon.js-icon {
+  background-color: #f7df1e;
+  color: #000;
+  font-weight: 700;
+  font-size: 0.65rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.language-icon.jmeter-icon {
+  background-color: #d22128;
+  color: white;
+  font-size: 0.9rem;
+}
+
+/* ADJUSTED: Language name styling */
+.language-name {
+  font-size: 0.8rem;
+  color: var(--main-text-color);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Download button styles */
+.language-download-btn {
+    font-size: 0.6rem;
+    padding: 0.25rem 0.4rem;
+    border-radius: 4px;
+    border: 1px solid var(--primary-main-color);
+    color: var(--primary-main-color);
+    background-color: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+}
+
+.language-download-btn:hover {
+    background-color: var(--primary-main-color);
+    color: white;
+}
+
+/* AI Description Section */
+.ai-description-section {
+  transition: all 0.3s ease;
+}
+
+.ai-description-section textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.ai-description-section .form-label {
+  font-weight: 500;
+  color: var(--main-text-color);
+}
+
+.ai-description-section .bi-stars {
+  color: #ffc107;
+}
+
+/* AI Generate Button Section */
+.ai-generate-section {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.ai-generate-btn {
+    width: 60px;
+    height: 20px;
+    border-radius: 6px;
+    background-color: var(--primary-main-color);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(26, 76, 109, 0.2);
+}
+
+.ai-generate-btn:hover {
+    background-color: rgba(26, 76, 109, 0.9);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(26, 76, 109, 0.3);
+}
+
+.ai-generate-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(26, 76, 109, 0.2);
+}
+
+.ai-generate-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Footer */
+.sdk-drawer-footer {
+  padding: 1.5rem;
+  border-top: 1px solid #e5e5e5;
+  flex-shrink: 0;
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sdk-drawer-content {
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .language-options {
+    grid-template-columns: 1fr;
+  }
+  
+  .language-card {
+    padding: 0.875rem 1rem;
+  }
+  
+  .language-info {
+    gap: 0.5rem;
+  }
+  
+  .language-icon {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .language-name {
+    font-size: 0.875rem;
+  }
+  
+  .language-download-btn {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+  }
+}
+
+/* Responsive behavior for AI mode */
+@media (max-width: 768px) {
+  .language-options.ai-mode .language-option.ai-only .language-card {
+    min-width: 100%; /* Full width on mobile */
+    padding: 1rem 1.25rem; /* Reduce padding on mobile */
+  }
+  
+  .language-options.ai-mode .language-option.ai-only .language-info {
+    gap: 0.75rem; /* Reduce gap on mobile */
+    margin-left: -0.125rem; /* Adjust margin for mobile */
+  }
+  
+  .language-options.ai-mode ~ .config-group #aiDescriptionSection .form-control,
+  #aiDescriptionSection.ai-mode .form-control {
+    padding: 1rem 1.25rem; /* Reduce padding on mobile */
+  }
+}
+
+/* Badge styles */
+.badge {
+  font-size: 0.6875rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.bg-secondary {
+  background-color: #6c757d !important;
+}
+
+/* Icon improvements */
+.bi-stars {
+  font-size: 0.875rem;
+}
+
+.text-warning {
+  color: #ffc107 !important;
+}
+
+/* Form improvements */
+.form-check-input:checked {
+  background-color: var(--primary-main-color);
+  border-color: var(--primary-main-color);
+}
+
+.form-check-input:focus {
+  border-color: var(--primary-main-color);
+  box-shadow: 0 0 0 0.25rem rgba(26, 76, 109, 0.25);
+}
+
+/* Spacing improvements */
+.mb-4 {
+  margin-bottom: 1.5rem !important;
+}
+
+.ms-1 {
+  margin-left: 0.25rem !important;
+}
+
+.me-2 {
+  margin-right: 0.5rem !important;
+}
+
+.w-100 {
+  width: 100% !important;
+}
+
+.d-flex {
+  display: flex !important;
+}
+
+.align-items-center {
+  align-items: center !important;
+}
+
+.justify-content-between {
+  justify-content: space-between !important;
+}
+
+.mb-0 {
+  margin-bottom: 0 !important;
+}
+
+/* AI Mode language cards without buttons */
+.language-option.ai-only .language-card {
+    justify-content: flex-start;
+    padding: 0.875rem 1rem; /* Increased padding for wider tiles */
+    min-width: 160px; /* Set minimum width for AI tiles */
+}
+
+.language-option.ai-only .language-info {
+    gap: 0.75rem;
+    margin-left: 0;
+}
+
+/* AI Mode - Wider tiles and input */
+.language-options.ai-mode .language-option.ai-only .language-card {
+    min-width: 200px; /* Increased from 220px */
+    padding: 1.25rem 1.5rem; /* Increased padding for better spacing */
+}
+
+.language-options.ai-mode .language-option.ai-only .language-info {
+    gap: 1rem; /* Increased gap between icon and text */
+    margin-left: -0.25rem; /* Shift icon and text more to the left */
+}
+
+/* AI Mode - Wider input prompt */
+.language-options.ai-mode ~ .config-group #aiDescriptionSection .form-control,
+#aiDescriptionSection.ai-mode .form-control {
+    min-width: 100%;
+    width: 100%;
+    max-width: none;
+    padding: 1.25rem 1.5rem; /* Increased padding to match tiles */
+    font-size: 0.875rem; /* Slightly larger font */
+}
+
+/* AI Mode - Wider textarea container */
+.language-options.ai-mode ~ .config-group #aiDescriptionSection,
+#aiDescriptionSection.ai-mode {
+    width: 100%;
+    max-width: none;
+}

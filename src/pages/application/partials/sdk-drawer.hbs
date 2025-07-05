@@ -1,0 +1,649 @@
+<!-- SDK Generation Right Drawer -->
+<div id="sdkDrawer" class="sdk-drawer" style="display: none;">
+    <div class="sdk-drawer-overlay" onclick="closeSdkDrawer()"></div>
+    <div class="sdk-drawer-content">
+        <!-- Header -->
+        <div class="sdk-drawer-header">
+            <div class="d-flex align-items-center justify-content-between">
+                <h4 class="mb-0">SDK Generation</h4>
+                <button class="btn-close" onclick="closeSdkDrawer()" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Drawer Body -->
+        <div class="sdk-drawer-body">
+            <!-- Selected APIs Section -->
+            <div class="selected-apis-section mb-4">
+                <h5 class="section-title mb-3">Selected APIs</h5>
+                <div id="selectedApisList" class="selected-apis-list">
+                    <!-- Selected APIs will be populated here dynamically -->
+                </div>
+            </div>
+
+            <!-- SDK Configuration Section -->
+            <div class="sdk-config-section mb-4">
+                <h5 class="section-title mb-3">SDK Configuration</h5>
+                
+                <!-- Mode Selection -->
+                <div class="config-group mode-selection mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input sdk-mode-input" type="radio" name="sdkMode" id="defaultMode" value="default" checked>
+                        <label class="form-check-label" for="defaultMode">
+                            Default Mode
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input sdk-mode-input" type="radio" name="sdkMode" id="generateWithAI" value="ai">
+                        <label class="form-check-label" for="generateWithAI">
+                            Generate With AI
+                            <i class="bi bi-stars ms-1 text-warning"></i>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Programming Language -->
+                <div class="config-group mb-4">
+                    <label class="form-label mb-3">Programming Language</label>
+                    <div class="language-options" id="languageOptions">
+                        <!-- Default Mode Languages -->
+                        <div class="language-option selected" data-language="android" data-mode="default">
+                            <input type="radio" name="programmingLanguage" id="langAndroid" value="android" checked>
+                            <label for="langAndroid" class="language-card">
+                                <div class="language-info">
+                                    <div class="language-icon android-icon">
+                                        <i class="bi bi-android2"></i>
+                                    </div>
+                                    <span class="language-name">Android</span>
+                                </div>
+                                <button class="language-download-btn" onclick="downloadSDK('android', event)">
+                                    <i class="bi bi-download me-1"></i>Download
+                                </button>
+                            </label>
+                        </div>
+                        
+                        <div class="language-option" data-language="java" data-mode="default">
+                            <input type="radio" name="programmingLanguage" id="langJava" value="java">
+                            <label for="langJava" class="language-card">
+                                <div class="language-info">
+                                    <div class="language-icon java-icon">
+                                        <i class="bi bi-cup-hot"></i>
+                                    </div>
+                                    <span class="language-name">Java</span>
+                                </div>
+                                <button class="language-download-btn" onclick="downloadSDK('java', event)">
+                                    <i class="bi bi-download me-1"></i>Download
+                                </button>
+                            </label>
+                        </div>
+
+                        <div class="language-option" data-language="javascript" data-mode="default">
+                            <input type="radio" name="programmingLanguage" id="langJS" value="javascript">
+                            <label for="langJS" class="language-card">
+                                <div class="language-info">
+                                    <div class="language-icon js-icon">
+                                        <span>JS</span>
+                                    </div>
+                                    <span class="language-name">Javascript</span>
+                                </div>
+                                <button class="language-download-btn" onclick="downloadSDK('javascript', event)">
+                                    <i class="bi bi-download me-1"></i>Download
+                                </button>
+                            </label>
+                        </div>
+
+                        <div class="language-option" data-language="jmeter" data-mode="default">
+                            <input type="radio" name="programmingLanguage" id="langJMeter" value="jmeter">
+                            <label for="langJMeter" class="language-card">
+                                <div class="language-info">
+                                    <div class="language-icon jmeter-icon">
+                                        <i class="bi bi-speedometer2"></i>
+                                    </div>
+                                    <span class="language-name">JMeter</span>
+                                </div>
+                                <button class="language-download-btn" onclick="downloadSDK('jmeter', event)">
+                                    <i class="bi bi-download me-1"></i>Download
+                                </button>
+                            </label>
+                        </div>
+
+                        <!-- AI Mode Languages (initially hidden) -->
+                        <div class="language-option ai-only" data-language="android-ai" data-mode="ai" style="display: none;">
+                            <input type="radio" name="programmingLanguageAI" id="langAndroidAI" value="android">
+                            <label for="langAndroidAI" class="language-card">
+                                <div class="language-info">
+                                    <div class="language-icon android-icon">
+                                        <i class="bi bi-android2"></i>
+                                    </div>
+                                    <span class="language-name">Android</span>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="language-option ai-only" data-language="java-ai" data-mode="ai" style="display: none;">
+                            <input type="radio" name="programmingLanguageAI" id="langJavaAI" value="java">
+                            <label for="langJavaAI" class="language-card">
+                                <div class="language-info">
+                                    <div class="language-icon java-icon">
+                                        <i class="bi bi-cup-hot"></i>
+                                    </div>
+                                    <span class="language-name">Java</span>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="language-option ai-only" data-language="javascript-ai" data-mode="ai" style="display: none;">
+                            <input type="radio" name="programmingLanguageAI" id="langJSAI" value="javascript">
+                            <label for="langJSAI" class="language-card">
+                                <div class="language-info">
+                                    <div class="language-icon js-icon">
+                                        <span>JS</span>
+                                    </div>
+                                    <span class="language-name">Javascript</span>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="language-option ai-only" data-language="jmeter-ai" data-mode="ai" style="display: none;">
+                            <input type="radio" name="programmingLanguageAI" id="langJMeterAI" value="jmeter">
+                            <label for="langJMeterAI" class="language-card">
+                                <div class="language-info">
+                                    <div class="language-icon jmeter-icon">
+                                        <i class="bi bi-speedometer2"></i>
+                                    </div>
+                                    <span class="language-name">JMeter</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Description Section (only shown when AI mode is selected) -->
+                <div id="aiDescriptionSection" class="config-group mb-4" style="display: none;">
+                    <label for="sdkDescription" class="form-label mb-2">
+                        Describe your SDK requirements 
+                        <i class="bi bi-stars text-warning ms-1"></i>
+                    </label>
+                    <textarea class="form-control" id="sdkDescription" rows="4" 
+                              placeholder="Describe what kind of application you want to generate. For example: 'Create a dashboard application that displays user analytics data' or 'Build a REST client that handles authentication and displays API responses'"></textarea>
+                    <div class="ai-generate-section mt-3">
+                        <button class="ai-generate-btn" onclick="generateSDKFromDrawer()">
+                            <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="sdk-drawer-footer">
+            <div id="selectedModeFooter">
+                <div id="defaultModeFooter">Select a language to download the SDK</div>
+                <div id="aiModeFooter" style="display: none;">Select a language, describe your requirements, and generate</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize drawer event handlers
+function initializeDrawerEventHandlers() {
+    // Clear any existing event listeners to prevent duplicates
+    const existingHandlers = document.querySelectorAll('.sdk-drawer-event-handler');
+    existingHandlers.forEach(handler => handler.remove());
+    
+    // Handle SDK mode changes
+    const sdkModeRadios = document.querySelectorAll('.sdk-mode-input');
+    sdkModeRadios.forEach(radio => {
+        // Remove any existing listeners
+        radio.removeEventListener('change', handleModeChange);
+        radio.removeEventListener('click', handleModeClick);
+        
+        // Add new listeners
+        radio.addEventListener('change', handleModeChange);
+        radio.addEventListener('click', handleModeClick);
+    });
+
+    // Handle programming language changes for both modes
+    setupLanguageHandlers('programmingLanguage', 'default');
+    setupLanguageHandlers('programmingLanguageAI', 'ai');
+    
+    // Prevent any form submissions within the drawer
+    const drawer = document.getElementById('sdkDrawer');
+    drawer.addEventListener('submit', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+    });
+}
+
+function handleModeChange(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('SDK Mode changed to:', e.target.value);
+    console.log('Radio checked state:', e.target.checked);
+    
+    const aiSection = document.getElementById('aiDescriptionSection');
+    const defaultModeFooter = document.getElementById('defaultModeFooter');
+    const aiModeFooter = document.getElementById('aiModeFooter');
+    
+    // Get all language options
+    const defaultLanguages = document.querySelectorAll('.language-option[data-mode="default"]');
+    const aiLanguages = document.querySelectorAll('.language-option[data-mode="ai"]');
+    
+    if (e.target.value === 'ai') {
+        // Show AI mode
+        aiSection.style.display = 'block';
+        defaultModeFooter.style.display = 'none';
+        aiModeFooter.style.display = 'block';
+        
+        // Add AI mode class to language options for wider tiles
+        const languageOptions = document.getElementById('languageOptions');
+        if (languageOptions) {
+            languageOptions.classList.add('ai-mode');
+        }
+        
+        // Add AI mode class to AI description section for wider input
+        if (aiSection) {
+            aiSection.classList.add('ai-mode');
+        }
+        
+        // Hide default languages, show AI languages
+        defaultLanguages.forEach(lang => lang.style.display = 'none');
+        aiLanguages.forEach(lang => lang.style.display = 'block');
+        
+        // Clear selection and select Android as default AI language
+        const androidAIRadio = document.querySelector('input[name="programmingLanguageAI"][value="android"]');
+        if (androidAIRadio) {
+            androidAIRadio.checked = true;
+            updateLanguageSelection('ai');
+        }
+        
+        console.log('AI section shown, AI languages displayed');
+    } else {
+        // Show default mode
+        aiSection.style.display = 'none';
+        defaultModeFooter.style.display = 'block';
+        aiModeFooter.style.display = 'none';
+        
+        // Remove AI mode class from language options
+        const languageOptions = document.getElementById('languageOptions');
+        if (languageOptions) {
+            languageOptions.classList.remove('ai-mode');
+        }
+        
+        // Remove AI mode class from AI description section
+        if (aiSection) {
+            aiSection.classList.remove('ai-mode');
+        }
+        
+        // Show default languages, hide AI languages
+        defaultLanguages.forEach(lang => lang.style.display = 'block');
+        aiLanguages.forEach(lang => lang.style.display = 'none');
+        
+        // Clear AI selection and select first default language
+        const firstDefaultRadio = document.querySelector('input[name="programmingLanguage"]');
+        if (firstDefaultRadio) {
+            firstDefaultRadio.checked = true;
+            updateLanguageSelection('default');
+        }
+        
+        console.log('AI section hidden, default languages displayed');
+    }
+    
+    // Update mode selection visual feedback
+    setTimeout(() => {
+        updateModeSelection();
+    }, 50);
+    
+    return false;
+}
+
+function handleModeClick(e) {
+    e.stopPropagation();
+}
+
+function updateModeSelection() {
+    const modeRadios = document.querySelectorAll('.sdk-mode-input');
+    modeRadios.forEach(radio => {
+        const formCheck = radio.closest('.form-check');
+        if (radio.checked) {
+            formCheck.classList.add('selected');
+        } else {
+            formCheck.classList.remove('selected');
+        }
+    });
+}
+
+function setupLanguageHandlers(radioName, mode) {
+    const radios = document.querySelectorAll(`input[name="${radioName}"]`);
+    radios.forEach(radio => {
+        // Remove existing listeners to prevent duplicates
+        radio.removeEventListener('change', handleLanguageChange);
+        radio.removeEventListener('click', handleLanguageClick);
+        
+        // Add new listeners
+        radio.addEventListener('change', function(e) {
+            handleLanguageChange(e, mode);
+        });
+        radio.addEventListener('click', handleLanguageClick);
+    });
+}
+
+function handleLanguageChange(e, mode) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log(`${mode} mode language changed to:`, e.target.value);
+    updateLanguageSelection(mode);
+    
+    return false;
+}
+
+function handleLanguageClick(e) {
+    e.stopPropagation();
+}
+
+function updateLanguageSelection(mode) {
+    // Remove selection from all language options first
+    document.querySelectorAll('.language-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    // Update only the current mode's language options
+    const currentModeOptions = document.querySelectorAll(`.language-option[data-mode="${mode}"]`);
+    
+    currentModeOptions.forEach(option => {
+        const radio = option.querySelector('input[type="radio"]');
+        
+        if (radio && radio.checked) {
+            option.classList.add('selected');
+        } else {
+            option.classList.remove('selected');
+        }
+    });
+}
+
+// Call initialization when drawer opens
+window.openSdkDrawer = function() {
+    const checkedCheckboxes = document.querySelectorAll('.api-checkbox:checked');
+    if (checkedCheckboxes.length < 2) {
+        alert('Please select at least 2 APIs to generate SDK');
+        return;
+    }
+
+    // Populate selected APIs
+    populateSelectedAPIs(checkedCheckboxes);
+    
+    // Show drawer
+    const drawer = document.getElementById('sdkDrawer');
+    drawer.style.display = 'block';
+    
+    // Add body class to prevent scrolling
+    document.body.classList.add('drawer-open');
+    
+    // Initialize event handlers
+    initializeDrawerEventHandlers();
+    
+    // Initialize visual state
+    updateModeSelection();
+    updateLanguageSelection('default');
+    
+    // Animate drawer in
+    setTimeout(() => {
+        drawer.classList.add('open');
+    }, 10);
+}
+
+function closeSdkDrawer() {
+    const drawer = document.getElementById('sdkDrawer');
+    drawer.classList.remove('open');
+    
+    // Remove body class
+    document.body.classList.remove('drawer-open');
+    
+    // Hide drawer after animation
+    setTimeout(() => {
+        drawer.style.display = 'none';
+        
+        // Reset drawer state
+        resetDrawerState();
+    }, 300);
+}
+
+function resetDrawerState() {
+    // Reset to default mode
+    const defaultModeRadio = document.getElementById('defaultMode');
+    if (defaultModeRadio) {
+        defaultModeRadio.checked = true;
+    }
+    
+    // Reset to Android as default language
+    const defaultLanguage = document.querySelector('input[name="programmingLanguage"][value="android"]');
+    if (defaultLanguage) {
+        defaultLanguage.checked = true;
+    }
+    
+    // Clear AI description
+    const aiDescription = document.getElementById('sdkDescription');
+    if (aiDescription) {
+        aiDescription.value = '';
+    }
+    
+    // Hide AI section
+    const aiSection = document.getElementById('aiDescriptionSection');
+    if (aiSection) {
+        aiSection.style.display = 'none';
+    }
+    
+    // Show default mode footer
+    const defaultModeFooter = document.getElementById('defaultModeFooter');
+    const aiModeFooter = document.getElementById('aiModeFooter');
+    if (defaultModeFooter) defaultModeFooter.style.display = 'block';
+    if (aiModeFooter) aiModeFooter.style.display = 'none';
+    
+    // Show default languages, hide AI languages
+    const defaultLanguages = document.querySelectorAll('.language-option[data-mode="default"]');
+    const aiLanguages = document.querySelectorAll('.language-option[data-mode="ai"]');
+    
+    defaultLanguages.forEach(lang => lang.style.display = 'block');
+    aiLanguages.forEach(lang => lang.style.display = 'none');
+    
+    // Remove AI mode classes
+    const languageOptions = document.getElementById('languageOptions');
+    if (languageOptions) {
+        languageOptions.classList.remove('ai-mode');
+    }
+    if (aiSection) {
+        aiSection.classList.remove('ai-mode');
+    }
+    
+    // Update visual state
+    updateModeSelection();
+    updateLanguageSelection('default');
+}
+
+function populateSelectedAPIs(checkedCheckboxes) {
+    const selectedApisList = document.getElementById('selectedApisList');
+    selectedApisList.innerHTML = '';
+    
+    checkedCheckboxes.forEach(checkbox => {
+        const apiItem = document.createElement('div');
+        apiItem.className = 'selected-api-badge';
+        apiItem.innerHTML = `
+            <span class="api-name">${checkbox.dataset.apiName}</span>
+            <span class="api-version">${checkbox.dataset.apiVersion}</span>
+        `;
+        selectedApisList.appendChild(apiItem);
+    });
+}
+
+function generateSDKFromDrawer(language) {
+    const checkedCheckboxes = document.querySelectorAll('.api-checkbox:checked');
+    const selectedMode = document.querySelector('.sdk-mode-input:checked').value;
+    const selectedLanguage = language || getSelectedLanguage();
+    const description = document.getElementById('sdkDescription').value;
+    
+    // Validate that description is provided when AI mode is selected
+    if (selectedMode === 'ai' && (!description || description.trim() === '')) {
+        alert('Please provide a description for AI-generated SDK requirements.');
+        return;
+    }
+    
+    const selectedAPIs = Array.from(checkedCheckboxes).map(checkbox => ({
+        id: checkbox.dataset.apiId,
+        name: checkbox.dataset.apiName,
+        version: checkbox.dataset.apiVersion
+    }));
+    
+    const sdkConfiguration = {
+        mode: selectedMode,
+        language: selectedLanguage,
+        description: description.trim(),
+        name: '{{applicationMetadata.name}}-sdk'
+    };
+    
+    // Get current URL path parts
+    const pathParts = window.location.pathname.split('/');
+    const orgName = pathParts[1];
+    const applicationId = pathParts[pathParts.length - 1];
+    const viewName = pathParts[3];
+    
+    // Close drawer
+    closeSdkDrawer();
+    
+    // Log the configuration for debugging
+    console.log('SDK Generation Configuration:', {
+        mode: selectedMode,
+        language: selectedLanguage,
+        description: description.trim(),
+        selectedAPIs: selectedAPIs.length
+    });
+    
+    // Show loading state
+    showSDKGenerationLoading();
+    
+    // Call the SDK generation API
+    fetch(`/${orgName}/views/${viewName}/applications/${applicationId}/generate-sdk`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            selectedAPIs: selectedAPIs.map(api => api.id),
+            sdkConfiguration: sdkConfiguration
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideSDKGenerationLoading();
+        if (data.success) {
+            showSDKGenerationSuccess(data, selectedMode);
+        } else {
+            showSDKGenerationError(data.message || 'SDK generation failed');
+        }
+    })
+    .catch(error => {
+        hideSDKGenerationLoading();
+        console.error('Error generating SDK:', error);
+        showSDKGenerationError('An error occurred while generating the SDK');
+    });
+}
+
+function downloadSDK(language) {
+    const checkedCheckboxes = document.querySelectorAll('.api-checkbox:checked');
+    const selectedAPIs = Array.from(checkedCheckboxes).map(checkbox => ({
+        id: checkbox.dataset.apiId,
+        name: checkbox.dataset.apiName,
+        version: checkbox.dataset.apiVersion
+    }));
+    
+    const sdkConfiguration = {
+        mode: 'default',
+        language: language,
+        description: '',
+        name: '{{applicationMetadata.name}}-sdk'
+    };
+    
+    // Get current URL path parts
+    const pathParts = window.location.pathname.split('/');
+    const orgName = pathParts[1];
+    const applicationId = pathParts[pathParts.length - 1];
+    const viewName = pathParts[3];
+    
+    // Close drawer
+    closeSdkDrawer();
+    
+    // Log the configuration for debugging
+    console.log('SDK Download Configuration:', {
+        mode: 'default',
+        language: language,
+        selectedAPIs: selectedAPIs.length
+    });
+    
+    // Show loading state
+    showSDKGenerationLoading();
+    
+    // Call the SDK generation API
+    fetch(`/${orgName}/views/${viewName}/applications/${applicationId}/generate-sdk`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            selectedAPIs: selectedAPIs.map(api => api.id),
+            sdkConfiguration: sdkConfiguration
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideSDKGenerationLoading();
+        if (data.success) {
+            showSDKGenerationSuccess(data, 'default');
+        } else {
+            showSDKGenerationError(data.message || 'SDK download failed');
+        }
+    })
+    .catch(error => {
+        hideSDKGenerationLoading();
+        console.error('Error downloading SDK:', error);
+        showSDKGenerationError('An error occurred while downloading the SDK');
+    });
+}
+
+function getSelectedLanguage() {
+    const selectedMode = document.querySelector('.sdk-mode-input:checked').value;
+    const radioName = selectedMode === 'ai' ? 'programmingLanguageAI' : 'programmingLanguage';
+    const selectedRadio = document.querySelector(`input[name="${radioName}"]:checked`);
+    return selectedRadio ? selectedRadio.value : 'java';
+}
+
+// Helper functions for SDK generation feedback
+function showSDKGenerationLoading() {
+    // You can implement a loading overlay or notification here
+    console.log('SDK generation started...');
+}
+
+function hideSDKGenerationLoading() {
+    // Hide loading state
+    console.log('SDK generation completed');
+}
+
+function showSDKGenerationSuccess(data, mode) {
+    // Show success message and download links based on mode
+    const modeText = mode === 'ai' ? 'AI-powered SDK with application code' : 'SDK';
+    const message = `${modeText} generated successfully! Download will start automatically.`;
+    
+    alert(message);
+    
+    if (data.data && data.data.finalDownloadUrl) {
+        window.location.href = data.data.finalDownloadUrl;
+    }
+}
+
+function showSDKGenerationError(message) {
+    alert('Error: ' + message);
+}
+</script>
