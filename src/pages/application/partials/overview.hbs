@@ -1,5 +1,82 @@
 <head>
   <link rel='stylesheet' href='/technical-styles/overview.css' />
+  <script>
+    // API Selection Management
+    function toggleAllAPISelection(selectAllCheckbox) {
+      const checkboxes = document.querySelectorAll('.api-checkbox');
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+      });
+      updateSDKButtonVisibility();
+    }
+
+    function toggleAPISelection() {
+      const checkboxes = document.querySelectorAll('.api-checkbox');
+      const selectAllCheckbox = document.getElementById('selectAllAPIs');
+      
+      // Update "Select All" checkbox state
+      const checkedCount = document.querySelectorAll('.api-checkbox:checked').length;
+      if (selectAllCheckbox) {
+        selectAllCheckbox.checked = checkedCount === checkboxes.length;
+        selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+      }
+      
+      updateSDKButtonVisibility();
+    }
+
+    function updateSDKButtonVisibility() {
+      const checkedCount = document.querySelectorAll('.api-checkbox:checked').length;
+      const sdkButton = document.getElementById('generateSDKBtn');
+      const tooltip = sdkButton?.parentElement?.querySelector('.tooltip-text');
+      
+      if (sdkButton) {
+        if (checkedCount >= 2) {
+          sdkButton.disabled = false;
+          sdkButton.classList.remove('disabled');
+          if (tooltip) {
+            tooltip.textContent = `Generate SDK for ${checkedCount} selected APIs`;
+          }
+        } else {
+          sdkButton.disabled = true;
+          sdkButton.classList.add('disabled');
+          if (tooltip) {
+            tooltip.textContent = 'Select at least 2 APIs to generate SDK';
+          }
+        }
+      }
+    }
+
+    function redirectToSDKGeneration() {
+      const checkedCheckboxes = document.querySelectorAll('.api-checkbox:checked');
+      if (checkedCheckboxes.length < 2) {
+        alert('Please select at least 2 APIs to generate SDK');
+        return;
+      }
+      
+      // Call the global openSdkDrawer function from the SDK drawer
+      if (typeof window.openSdkDrawer === 'function') {
+        window.openSdkDrawer();
+      }
+    }
+
+    // Initialize SDK button state when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      updateSDKButtonVisibility();
+      
+      // Set up event listeners for API checkboxes if they exist
+      const apiCheckboxes = document.querySelectorAll('.api-checkbox');
+      apiCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', toggleAPISelection);
+      });
+      
+      const selectAllCheckbox = document.getElementById('selectAllAPIs');
+      if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+          toggleAllAPISelection(this);
+        });
+      }
+    });
+  </script>
 </head>
 
 <section class="section mt-0 mb-6">
@@ -53,6 +130,22 @@
       </div>
       {{/applicationMetadata}}
 
+      <!-- SDK Generation Section -->
+      <div class="sdk-generation-section mb-4">
+        <h5 class="oauth2-title mb-2">SDK Generation</h5>
+        <div class="d-flex align-items-center">
+          <button id="generateSDKBtn" class="common-btn-primary btn-sm" 
+                  onclick="redirectToSDKGeneration()" disabled>
+            <span class="button-normal-state">
+              <i class="bi bi-code-slash me-1"></i> Generate SDK
+            </span>
+          </button>
+          <div class="tooltip-container ms-2">
+            <i class="bi bi-info-circle"></i>
+            <span class="tooltip-text">Select at least 2 APIs to generate SDK</span>
+          </div>
+        </div>
+      </div>
 
       <!-- OAuth2 Keys Section -->
       <div class="oauth2-keys-section">
