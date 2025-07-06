@@ -26,6 +26,11 @@ const apiMetadata = require('../dao/apiMetadata');
 const util = require('../utils/util');
 const filePrefix = config.pathToContent;
 const controlPlaneUrl = config.controlPlane.url;
+const aiSDKServiceUrl = config.aiSDKService?.url || 'http://localhost:5001';
+const aiSDKServiceEndpoints = config.aiSDKService?.endpoints || {
+    mergeSpecs: '/merge-openapi-specs',
+    generateApp: '/generate-application-code'
+};
 const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
 const adminService = require('../services/adminService');
@@ -35,7 +40,6 @@ const { promisify } = require('util');
 const execAsync = promisify(exec);
 const os = require('os');
 const archiver = require('archiver');
-const FormData = require('form-data');
 const unzipper = require('unzipper');
 
 
@@ -542,17 +546,9 @@ const generateSDK = async (req, res) => {
     try {
         const { selectedAPIs, sdkConfiguration } = req.body;
         const orgName = req.params.orgName;
-        const viewName = req.params.viewName;
         const applicationId = req.params.applicationId;
-        
-        // console.log('SDK Generation Request:', {
-        //     orgName,
-        //     viewName,
-        //     applicationId,
-        //     selectedAPIs,
-        //     sdkConfiguration
-        // });
 
+        // Validate input
         if (!selectedAPIs || selectedAPIs.length === 0) {
             return res.status(400).json({
                 success: false,
@@ -560,11 +556,10 @@ const generateSDK = async (req, res) => {
             });
         }
 
-        // Get organization ID
+        // Get organization and API data
         const orgID = await orgIDValue(orgName);
-        
         const apiSpecs = await apiMetadata.getAPISpecs(orgID, selectedAPIs);
-
+        
         if (apiSpecs.length === 0) {
             return res.status(404).json({
                 success: false,
@@ -572,102 +567,64 @@ const generateSDK = async (req, res) => {
             });
         }
 
-        console.log(`Found ${apiSpecs.length} API specifications`);
+        const apiHandles = await getApiHandlers(orgID, selectedAPIs);
+        const baseSdkName = sdkConfiguration?.name || `${orgName}-${applicationId}-sdk`;
 
-        // Load API metadata for each selected API and transform API handles
-        const apiHandlesArray = [];
-        for (const apiId of selectedAPIs) {
-            try {
-                const apiMetadataResult = await apiMetadata.getAPIMetadata(orgID, apiId);
-                if (apiMetadataResult && apiMetadataResult.length > 0) {
-                    const apiData = apiMetadataResult[0];
-                    const apiHandle = apiData.API_HANDLE || apiData.dataValues?.API_HANDLE;
-                    
-                    if (apiHandle) {
-                        // Transform API handle
-                        // Example: financeapi-v1.0 -> financeapi/v1.0
-                        const transformedHandle = apiHandle.replace(/-v(\d+\.\d+)$/, '/v$1');
-                        apiHandlesArray.push(transformedHandle);
-                    }
-                } else {
-                    console.warn(`No metadata found for API ${apiId}`);
-                }
-            } catch (error) {
-                console.error(`Error loading metadata for API ${apiId}:`, error);
-            }
+        // Prepare merged specification
+        let mergedSpec;
+        if (selectedAPIs.length === 1) {
+            // Single API case
+            mergedSpec = JSON.parse(apiSpecs[0].apiSpec);
+        } else {
+            // Multiple APIs case - merge specifications
+            const mergeSpecApiRequest = prepareSDKGenerationRequest(apiSpecs, apiHandles);
+            const mergedSpecsResponse = await invokeMergeSpecApi(mergeSpecApiRequest);
+            mergedSpec = JSON.parse(mergedSpecsResponse.merged_spec);
+            console.log('Merged API specifications received');
         }
 
-        const mergeSpecApiRequest = prepareSDKGenerationRequest(apiSpecs, apiHandlesArray);
-
-        const mergedSpecsResponse = await invokeMergeSpecApi(mergeSpecApiRequest);
-
-        console.log('Merged API specifications received');
-        
-        // Generate SDK using openapi-generator
+        // Generate SDK
         const sdkResult = await generateSDKWithOpenAPIGenerator(
-            mergedSpecsResponse.mergedSpec || mergedSpecsResponse,
+            mergedSpec,
             sdkConfiguration,
             orgName,
-            applicationId,
-            apiHandlesArray
+            applicationId
         );
 
-        const extractedData = await extractAndProcessSDK(
-            sdkResult.sdkPath, sdkResult.language
-        );
+        console.log('SDK generated successfully, saved to:', sdkResult.sdkPath);
 
-        if (!extractedData.apiClassFound) {
-            return res.status(404).json({
-                success: false,
-                message: 'API class not found in SDK',
-            });
+        // Process final ZIP based on mode
+        let finalZipPath;
+        const isAIMode = sdkConfiguration?.mode === 'ai';
+        
+        if (isAIMode) {
+            finalZipPath = await processAIModeSDK(sdkResult, mergedSpec, sdkConfiguration, apiHandles, baseSdkName);
+        } else {
+            finalZipPath = await processDefaultModeSDK(sdkResult, apiHandles, baseSdkName);
         }
 
-        const formData = await createBackendFormData(
-            extractedData.apiClassContent,
-            'java',
-            mergedSpecsResponse,
-            sdkConfiguration,
-            path.basename(extractedData.apiClassFile || 'UnknownApi')
-        );
-
-        console.log('Form data prepared for backend API');
-
-        const applicationResponse = await invokeApplicationCodeGenApi(
-            formData
-        );
-        
-        console.log('Backend API response received:', applicationResponse);
-
-        // Process application code and create final ZIP
-        const finalZipResult = await processApplicationCodeAndCreateFinalZip(
-            applicationResponse,
-            extractedData.extractedSdkPath,
-            sdkResult.zipFileName,
-            sdkConfiguration
-        );
+        // Send response
+        const responseMessage = isAIMode 
+            ? 'SDK and application code generated successfully' 
+            : 'SDK generated successfully';
 
         res.json({
             success: true,
-            message: 'SDK and application code generated successfully',
+            message: responseMessage,
             data: {
                 selectedAPIs: selectedAPIs,
                 apiSpecsFound: apiSpecs.length,
-                transformedApiHandles: apiHandlesArray,
+                transformedApiHandles: apiHandles || [],
                 sdkConfiguration: {
                     language: sdkConfiguration?.language || 'javascript',
-                    name: sdkConfiguration?.name || `${orgName}-${applicationId}-sdk`,
+                    name: baseSdkName,
                     version: '1.0.0',
-                    packageName: sdkConfiguration?.name || `${orgName}-${applicationId}-sdk`
+                    packageName: baseSdkName,
+                    mode: sdkConfiguration?.mode || 'default'
                 },
-                originalSdkDownloadUrl: sdkResult.downloadUrl,
-                finalDownloadUrl: finalZipResult.downloadUrl,
-                finalZipFileName: finalZipResult.finalZipFileName,
-                sdkPath: sdkResult.sdkPath,
-                zipFileName: sdkResult.zipFileName,
-                apiClassExtracted: extractedData.apiClassFound,
-                applicationCodeGenerated: !!applicationResponse.applicationCode,
-                backendApiResponse: applicationResponse
+                finalDownloadUrl: `/download/sdk/${path.basename(finalZipPath)}`,
+                applicationCodeGenerated: isAIMode,
+                mode: sdkConfiguration?.mode || 'default'
             }
         });
         
@@ -683,10 +640,37 @@ const generateSDK = async (req, res) => {
 
 // ***** Helper Functions for SDK Generation *****
 
+
+const getApiHandlers = async (orgID, selectedAPIs) => {
+    const apiHandlesArray = [];
+    
+    for (const apiId of selectedAPIs) {
+        try {
+            const apiMetadataResult = await apiMetadata.getAPIMetadata(orgID, apiId);
+            if (apiMetadataResult && apiMetadataResult.length > 0) {
+                const apiData = apiMetadataResult[0];
+                const apiHandle = apiData.API_HANDLE || apiData.dataValues?.API_HANDLE;
+                
+                if (apiHandle) {
+                    // Transform API handle: financeapi-v1.0 -> financeapi/v1.0
+                    const transformedHandle = apiHandle.replace(/-v(\d+\.\d+)$/, '/v$1');
+                    apiHandlesArray.push(transformedHandle);
+                }
+            } else {
+                console.warn(`No metadata found for API ${apiId}`);
+            }
+        } catch (error) {
+            console.error(`Error loading metadata for API ${apiId}:`, error);
+        }
+    }
+    
+    return apiHandlesArray;
+};
+
 /**
  * Prepare the request payload for the merge OpenAPI specs API
  */
-function prepareSDKGenerationRequest(apiSpecs, apiHandlesArray) {
+const prepareSDKGenerationRequest = (apiSpecs, apiHandlesArray) => {
     // Collect apiSpecString array for further processing
     const apiSpecStrings = apiSpecs.map(spec => {
         const parsedSpec = JSON.parse(spec.apiSpec);
@@ -712,7 +696,7 @@ function prepareSDKGenerationRequest(apiSpecs, apiHandlesArray) {
  */
 const invokeMergeSpecApi = async(requestPayload) => {
     try {
-        const response = await fetch('http://localhost:5001/merge-openapi-specs', {
+        const response = await fetch(`${aiSDKServiceUrl}${aiSDKServiceEndpoints.mergeSpecs}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -731,9 +715,91 @@ const invokeMergeSpecApi = async(requestPayload) => {
 };
 
 /**
+ * Process AI mode SDK generation - extract SDK, generate application code, and create final ZIP
+ */
+const processAIModeSDK = async (sdkResult, mergedSpec, sdkConfiguration, apiHandles, baseSdkName) => {
+    try {
+        console.log('Processing AI mode SDK generation...');
+        
+        // Extract SDK methods for AI processing
+        const sdkMethods = await extractMethodFile(sdkResult.sdkPath, sdkConfiguration?.language || 'java');
+        
+        // Generate application code using AI
+        const applicationApiRequest = await getApplicationGenApiReqBody(
+            sdkMethods.apiClassContent,
+            sdkConfiguration?.language || 'java',
+            mergedSpec,
+            sdkConfiguration
+        );
+        
+        const applicationCodeResponse = await invokeApplicationCodeGenApi(applicationApiRequest);
+        
+        // Create final ZIP with SDK + application code
+        const finalZipName = createSDKFileName(apiHandles, baseSdkName, true);
+        const finalZipResult = await processApplicationCodeAndCreateFinalZip(
+            applicationCodeResponse.application_code,
+            sdkResult.sdkPath,
+            sdkConfiguration,
+            finalZipName
+        );
+        
+        return finalZipResult.finalZipPath;
+        
+    } catch (error) {
+        console.error('Error processing AI mode SDK:', error);
+        throw error;
+    }
+};
+
+/**
+ * Process default mode SDK generation - create ZIP with SDK only
+ */
+const processDefaultModeSDK = async (sdkResult, apiHandles, baseSdkName) => {
+    try {
+        console.log('Processing default mode SDK generation...');
+        
+        // Create ZIP filename and path
+        const zipFileName = createSDKFileName(apiHandles, baseSdkName, false);
+        const zipPath = path.join(sdkResult.sdkPath, zipFileName);
+        
+        // Create ZIP archive
+        await createZipArchive(sdkResult.sdkPath, zipPath);
+        
+        // Move ZIP to permanent location
+        const permanentDir = path.join(process.cwd(), 'generated-sdks');
+        await fs.promises.mkdir(permanentDir, { recursive: true });
+        
+        const finalZipPath = path.join(permanentDir, zipFileName);
+        await fs.promises.copyFile(zipPath, finalZipPath);
+        
+        // Clean up temporary SDK directory
+        await fs.promises.rm(sdkResult.sdkPath, { recursive: true, force: true });
+        
+        console.log(`Default mode SDK ZIP created: ${finalZipPath}`);
+        return finalZipPath;
+        
+    } catch (error) {
+        console.error('Error processing default mode SDK:', error);
+        throw error;
+    }
+};
+
+/**
+ * Create SDK filename based on API handles and mode
+ */
+const createSDKFileName = (apiHandles, baseSdkName, isAIMode) => {
+    const apiHandlesSuffix = apiHandles.map(handle => 
+        handle.replace(/[^a-zA-Z0-9]/g, '') // Remove special characters
+    ).join('-');
+    
+    const suffix = isAIMode ? '-with-app' : '';
+    return `${baseSdkName}-${apiHandlesSuffix}${suffix}.zip`;
+};
+
+/**
  * Generate SDK using openapi-generator
  */
-const generateSDKWithOpenAPIGenerator = async (mergedSpec, sdkConfiguration, orgName, applicationId, apiHandles) => {
+const generateSDKWithOpenAPIGenerator = async (mergedSpec, sdkConfiguration, orgName, applicationId) => {
     try {
         const language = sdkConfiguration?.language || 'javascript';
         const sdkName = sdkConfiguration?.name || `${orgName}-${applicationId}-sdk`;
@@ -741,7 +807,7 @@ const generateSDKWithOpenAPIGenerator = async (mergedSpec, sdkConfiguration, org
         // Create temporary directory for SDK generation
         const tempDir = path.join(os.tmpdir(), 'sdk-generation', `${sdkName}-${Date.now()}`);
         const specFilePath = path.join(tempDir, 'merged-spec.json');
-        const outputDir = path.join(tempDir, 'generated-sdk');
+        const outputDir = path.join(process.cwd(), 'generated-sdks', `${sdkName}-${Date.now()}`);
         
         // Create directories
         await fs.promises.mkdir(tempDir, { recursive: true });
@@ -749,9 +815,6 @@ const generateSDKWithOpenAPIGenerator = async (mergedSpec, sdkConfiguration, org
         
         // Write merged spec to file
         await fs.promises.writeFile(specFilePath, JSON.stringify(mergedSpec, null, 2));
-        
-        console.log(`Generating SDK for language: ${language}`);
-        console.log(`SDK output directory: ${outputDir}`);
         
         // Determine the generator name based on language
         const generatorMap = {
@@ -779,7 +842,7 @@ const generateSDKWithOpenAPIGenerator = async (mergedSpec, sdkConfiguration, org
             `packageName=${sdkName},projectName=${sdkName},packageVersion=1.0.0`
         ].join(' ');
         
-        console.log(`Executing command: ${command}`);
+        console.log(`Generating SDK with command: ${command}`);
         
         // Execute openapi-generator
         const { stdout, stderr } = await execAsync(command, { 
@@ -790,36 +853,15 @@ const generateSDKWithOpenAPIGenerator = async (mergedSpec, sdkConfiguration, org
         if (stderr && !stderr.includes('WARN')) {
             console.warn('openapi-generator stderr:', stderr);
         }
-        
-        console.log('SDK generation completed successfully');
-        
-        // Create ZIP filename in the format: applicationName-<apiHandles>.zip
-        const apiHandlesSuffix = apiHandles.map(handle => 
-            handle.replace(/[^a-zA-Z0-9]/g, '') // Remove special characters
-        ).join('-');
-        const zipFileName = `${sdkName}-${apiHandlesSuffix}.zip`;
-        const zipPath = path.join(tempDir, zipFileName);
-        
-        await createZipArchive(outputDir, zipPath);
-        
-        // Move ZIP to a permanent location
-        const permanentDir = path.join(process.cwd(), 'generated-sdks');
-        await fs.promises.mkdir(permanentDir, { recursive: true });
-        
-        const finalZipPath = path.join(permanentDir, zipFileName);
-        await fs.promises.copyFile(zipPath, finalZipPath);
-        
-        console.log(`SDK ZIP created: ${finalZipPath}`);
-        
-        const downloadUrl = `/download/sdk/${zipFileName}`;
+                
+        // Clean up temp directory
+        await fs.promises.rm(tempDir, { recursive: true, force: true });
         
         return {
             success: true,
-            sdkPath: finalZipPath,
-            downloadUrl: downloadUrl,
+            sdkPath: outputDir,
             language: language,
-            generator: generator,
-            zipFileName: zipFileName
+            sdkName: sdkName
         };
         
     } catch (error) {
@@ -854,22 +896,8 @@ const createZipArchive = async (sourceDir, outputPath) => {
 /**
  * Extract ZIP and process SDK files to send to backend API
  */
-const extractAndProcessSDK = async (zipPath, language) => {
+const extractMethodFile = async (sdkDir, language) => {
     try {
-        console.log('Extracting SDK ZIP file for processing...');
-        
-        const extractDir = path.join(process.cwd(), 'generated-sdks', 'sdk-extraction', `extract-${Date.now()}`);
-        await fs.promises.mkdir(extractDir, { recursive: true });
-        
-        // Extract ZIP file
-        await new Promise((resolve, reject) => {
-            fs.createReadStream(zipPath)
-                .pipe(unzipper.Extract({ path: extractDir }))
-                .on('close', resolve)
-                .on('error', reject);
-        });
-        
-        console.log(`SDK extracted to: ${extractDir}`);
         
         // Find the API class file based on language
         let apiClassFile = null;
@@ -877,15 +905,15 @@ const extractAndProcessSDK = async (zipPath, language) => {
         
         if (language === 'java') {
             // Look for DefaultApi.java file in src/main/java directory structure
-            const javaApiPath = await findFileRecursively(extractDir, 'DefaultApi.java');
+            const javaApiPath = await findFileRecursively(sdkDir, 'DefaultApi.java');
             if (javaApiPath) {
                 apiClassFile = javaApiPath;
                 apiClassContent = await fs.promises.readFile(javaApiPath, 'utf8');
                 console.log(`Found Java API class: ${javaApiPath}`);
             }
-        } else if (language === 'javascript' || language === 'typescript') {
+        } else if (language === 'javascript' || language === 'android') {
             // Look for API class in JavaScript/TypeScript SDKs
-            const jsApiPath = await findFileRecursively(extractDir, /.*[Aa]pi\.js$|.*[Aa]pi\.ts$/);
+            const jsApiPath = await findFileRecursively(sdkDir, /.*[Aa]pi\.js$|.*[Aa]pi\.ts$/);
             if (jsApiPath) {
                 apiClassFile = jsApiPath;
                 apiClassContent = await fs.promises.readFile(jsApiPath, 'utf8');
@@ -893,7 +921,7 @@ const extractAndProcessSDK = async (zipPath, language) => {
             }
         } else if (language === 'python') {
             // Look for API class in Python SDKs
-            const pythonApiPath = await findFileRecursively(extractDir, /.*_api\.py$|.*api\.py$/);
+            const pythonApiPath = await findFileRecursively(sdkDir, /.*_api\.py$|.*api\.py$/);
             if (pythonApiPath) {
                 apiClassFile = pythonApiPath;
                 apiClassContent = await fs.promises.readFile(pythonApiPath, 'utf8');
@@ -905,20 +933,11 @@ const extractAndProcessSDK = async (zipPath, language) => {
             console.warn(`No API class file found for language: ${language}`);
         }
         
-        // Copy extracted folder to generated-sdks for later use
-        // const permanentExtractDir = path.join(process.cwd(), 'generated-sdks', `extracted-sdk-${Date.now()}`);
-        // await fs.promises.mkdir(path.dirname(permanentExtractDir), { recursive: true });
-        // await fs.promises.cp(extractDir, permanentExtractDir, { recursive: true });
-        // console.log(`Extracted SDK copied to: ${permanentExtractDir}`);
-        
-        // Clean up temporary extraction directory
-        // await fs.promises.rm(extractDir, { recursive: true, force: true });
-        
         return {
             apiClassContent: apiClassContent || '',
             apiClassFile: path.basename(apiClassFile || 'UnknownApi'),
             apiClassFound: !!apiClassContent,
-            extractedSdkPath: extractDir
+            SdkPath: sdkDir
         };
         
     } catch (error) {
@@ -961,41 +980,37 @@ const findFileRecursively = async (dir, filePattern) => {
 };
 
 /**
- * Create form data for backend API request
+ * Create JSON request data for backend API request
  */
-const createBackendFormData = async (apiClassContent, language, mergedSpec, sdkConfiguration, fileName) => {
-    const formData = new FormData();
+const getApplicationGenApiReqBody = async (apiClassContent, language, mergedSpec, sdkConfiguration) => {
+    // Use user's prompt if AI mode is selected and description is provided
+    let useCase;
     
-    // Add API class file as a buffer
-    if (apiClassContent) {
-        formData.append('sdkMethodsFile', Buffer.from(apiClassContent, 'utf8'), {
-            filename: fileName,
-            contentType: 'text/plain'
-        });
+    if (sdkConfiguration?.mode === 'ai' && sdkConfiguration?.description && sdkConfiguration.description.trim()) {
+        useCase = sdkConfiguration.description.trim();
+        console.log('Using AI mode with user prompt:', useCase);
+    } else {
+        // Default use case for default mode
+        useCase = `Generate application which uses the provided APIs to demonstrate their functionality with sample data and proper error handling`;
+        console.log('Using default mode with standard use case');
     }
     
-    // Add use case (you can customize this based on your requirements)
-    const useCase = `Generate application which uses weather api to get weather of a given city and generate financial cost if the weather is rainy`;
-    formData.append('useCase', useCase);
-    
-    // Add language
-    formData.append('language', language);
-    
-    // Add merged API spec as JSON
-    formData.append('mergedApiSpec', JSON.stringify(mergedSpec), {
-        filename: 'merged-spec.json',
-        contentType: 'application/json'
-    });
-    
-    return formData;
+    return {
+        sdkMethodsFile: apiClassContent || '',
+        useCase: useCase,
+        language: language,
+        APISpecification: JSON.stringify(mergedSpec)
+    };
 };
 
-const invokeApplicationCodeGenApi = async (formData) => {
+const invokeApplicationCodeGenApi = async (requestData) => {
     try {
-        const response = await fetch('http://localhost:5001/generate-application-code', {
+        const response = await fetch(`${aiSDKServiceUrl}${aiSDKServiceEndpoints.generateApp}`, {
             method: 'POST',
-            body: formData
-            // Don't set Content-Type header - let fetch handle it automatically for FormData
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
         });
         if (!response.ok) {
             throw new Error(`Failed to generate application: ${response.statusText}`);
@@ -1011,28 +1026,21 @@ const invokeApplicationCodeGenApi = async (formData) => {
 /**
  * Process application code response and create final ZIP with SDK + application code
  */
-const processApplicationCodeAndCreateFinalZip = async (applicationResponse, extractedSdkPath, zipFileName, sdkConfiguration) => {
+const processApplicationCodeAndCreateFinalZip = async (applicationCode, sdkPath, sdkConfiguration, zipFileName) => {
     try {
         console.log('Processing application code response and creating final ZIP...');
         
-        // Create application code files in the extracted SDK folder
-        if (applicationResponse && applicationResponse.applicationCode) {
-            const appCodeDir = path.join(extractedSdkPath, 'application-code');
+        // Create application code files in the SDK folder
+        if (applicationCode) {
+            const appCodeDir = path.join(sdkPath, 'application-code');
             await fs.promises.mkdir(appCodeDir, { recursive: true });
             
             // Write main application file
-            const mainAppFile = path.join(appCodeDir, 'Application.java');
-            await fs.promises.writeFile(mainAppFile, applicationResponse.applicationCode, 'utf8');
+            const language = sdkConfiguration?.language || 'java';
+            const fileExtension = getFileExtension(language);
+            const mainAppFile = path.join(appCodeDir, `Application.${fileExtension}`);
+            await fs.promises.writeFile(mainAppFile, applicationCode, 'utf8');
             console.log(`Application code written to: ${mainAppFile}`);
-            
-            // Write additional files if present
-            if (applicationResponse.additionalFiles) {
-                for (const [fileName, fileContent] of Object.entries(applicationResponse.additionalFiles)) {
-                    const filePath = path.join(appCodeDir, fileName);
-                    await fs.promises.writeFile(filePath, fileContent, 'utf8');
-                    console.log(`Additional file written: ${filePath}`);
-                }
-            }
             
             // Create README with instructions
             const readmeContent = `# Generated Application with SDK
@@ -1042,8 +1050,9 @@ This package contains:
 2. Application code that demonstrates API usage
 
 ## SDK Configuration
-- Language: ${sdkConfiguration?.language || 'java'}
+- Language: ${language}
 - SDK Name: ${sdkConfiguration?.name || 'generated-sdk'}
+- Mode: ${sdkConfiguration?.mode || 'ai'}
 
 ## Application Code
 The application code is located in the 'application-code' directory.
@@ -1055,30 +1064,46 @@ The application code is located in the 'application-code' directory.
 
 Generated on: ${new Date().toISOString()}
 `;
-            const readmePath = path.join(extractedSdkPath, 'README.md');
+            const readmePath = path.join(sdkPath, 'README.md');
             await fs.promises.writeFile(readmePath, readmeContent, 'utf8');
         }
         
         // Create final ZIP with SDK + application code
-        const finalZipFileName = zipFileName.replace('.zip', '-with-app.zip');
-        const finalZipPath = path.join(process.cwd(), 'generated-sdks', finalZipFileName);
+        const permanentDir = path.join(process.cwd(), 'generated-sdks');
+        await fs.promises.mkdir(permanentDir, { recursive: true });
         
-        await createZipArchive(extractedSdkPath, finalZipPath);
+        const finalZipPath = path.join(permanentDir, zipFileName);
+        await createZipArchive(sdkPath, finalZipPath);
         console.log(`Final ZIP created: ${finalZipPath}`);
         
-        // Clean up extracted SDK folder
-        await fs.promises.rm(extractedSdkPath, { recursive: true, force: true });
+        // Clean up SDK folder
+        await fs.promises.rm(sdkPath, { recursive: true, force: true });
         
         return {
             finalZipPath: finalZipPath,
-            finalZipFileName: finalZipFileName,
-            downloadUrl: `/download/sdk/${finalZipFileName}`
         };
         
     } catch (error) {
         console.error('Error processing application code and creating final ZIP:', error);
         throw error;
     }
+};
+
+/**
+ * Get file extension based on programming language
+ */
+const getFileExtension = (language) => {
+    const extensionMap = {
+        'java': 'java',
+        'javascript': 'js',
+        'typescript': 'ts',
+        'python': 'py',
+        'csharp': 'cs',
+        'go': 'go',
+        'php': 'php',
+        'ruby': 'rb'
+    };
+    return extensionMap[language] || 'java';
 };
 
 module.exports = {
