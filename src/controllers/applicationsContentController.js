@@ -747,6 +747,15 @@ const processAIModeSDK = async (sdkResult, mergedSpec, sdkConfiguration, apiHand
         
     } catch (error) {
         console.error('Error processing AI mode SDK:', error);
+        
+        // Ensure cleanup of SDK folder even if processing fails
+        try {
+            await fs.promises.rm(sdkResult.sdkPath, { recursive: true, force: true });
+            console.log('Cleaned up SDK folder after AI mode error');
+        } catch (cleanupError) {
+            console.error('Error cleaning up SDK folder:', cleanupError);
+        }
+        
         throw error;
     }
 };
@@ -758,28 +767,35 @@ const processDefaultModeSDK = async (sdkResult, apiHandles, baseSdkName) => {
     try {
         console.log('Processing default mode SDK generation...');
         
-        // Create ZIP filename and path
+        // Create ZIP filename and permanent directory
         const zipFileName = createSDKFileName(apiHandles, baseSdkName, false);
-        const zipPath = path.join(sdkResult.sdkPath, zipFileName);
-        
-        // Create ZIP archive
-        await createZipArchive(sdkResult.sdkPath, zipPath);
-        
-        // Move ZIP to permanent location
         const permanentDir = path.join(process.cwd(), 'generated-sdks');
         await fs.promises.mkdir(permanentDir, { recursive: true });
         
+        // Create ZIP directly in permanent location
         const finalZipPath = path.join(permanentDir, zipFileName);
-        await fs.promises.copyFile(zipPath, finalZipPath);
+        
+        // Create ZIP archive
+        await createZipArchive(sdkResult.sdkPath, finalZipPath);
+        console.log(`Default mode SDK ZIP created: ${finalZipPath}`);
         
         // Clean up temporary SDK directory
         await fs.promises.rm(sdkResult.sdkPath, { recursive: true, force: true });
+        console.log('Cleaned up temporary SDK directory');
         
-        console.log(`Default mode SDK ZIP created: ${finalZipPath}`);
         return finalZipPath;
         
     } catch (error) {
         console.error('Error processing default mode SDK:', error);
+        
+        // Ensure cleanup of SDK folder even if processing fails
+        try {
+            await fs.promises.rm(sdkResult.sdkPath, { recursive: true, force: true });
+            console.log('Cleaned up SDK folder after default mode error');
+        } catch (cleanupError) {
+            console.error('Error cleaning up SDK folder:', cleanupError);
+        }
+        
         throw error;
     }
 };
@@ -800,14 +816,17 @@ const createSDKFileName = (apiHandles, baseSdkName, isAIMode) => {
  * Generate SDK using openapi-generator
  */
 const generateSDKWithOpenAPIGenerator = async (mergedSpec, sdkConfiguration, orgName, applicationId) => {
+    let tempDir = null;
+    let outputDir = null;
+    
     try {
         const language = sdkConfiguration?.language || 'javascript';
         const sdkName = sdkConfiguration?.name || `${orgName}-${applicationId}-sdk`;
         
         // Create temporary directory for SDK generation
-        const tempDir = path.join(os.tmpdir(), 'sdk-generation', `${sdkName}-${Date.now()}`);
+        tempDir = path.join(os.tmpdir(), 'sdk-generation', `${sdkName}-${Date.now()}`);
         const specFilePath = path.join(tempDir, 'merged-spec.json');
-        const outputDir = path.join(process.cwd(), 'generated-sdks', `${sdkName}-${Date.now()}`);
+        outputDir = path.join(process.cwd(), 'generated-sdks', `${sdkName}-${Date.now()}`);
         
         // Create directories
         await fs.promises.mkdir(tempDir, { recursive: true });
@@ -866,6 +885,21 @@ const generateSDKWithOpenAPIGenerator = async (mergedSpec, sdkConfiguration, org
         
     } catch (error) {
         console.error('Error generating SDK with openapi-generator:', error);
+        
+        // Clean up directories on error
+        try {
+            if (tempDir) {
+                await fs.promises.rm(tempDir, { recursive: true, force: true });
+                console.log('Cleaned up temp directory after SDK generation error');
+            }
+            if (outputDir) {
+                await fs.promises.rm(outputDir, { recursive: true, force: true });
+                console.log('Cleaned up output directory after SDK generation error');
+            }
+        } catch (cleanupError) {
+            console.error('Error cleaning up directories after SDK generation error:', cleanupError);
+        }
+        
         throw new Error(`SDK generation failed: ${error.message}`);
     }
 };
@@ -1078,6 +1112,7 @@ Generated on: ${new Date().toISOString()}
         
         // Clean up SDK folder
         await fs.promises.rm(sdkPath, { recursive: true, force: true });
+        console.log('Cleaned up temporary SDK folder');
         
         return {
             finalZipPath: finalZipPath,
@@ -1085,6 +1120,15 @@ Generated on: ${new Date().toISOString()}
         
     } catch (error) {
         console.error('Error processing application code and creating final ZIP:', error);
+        
+        // Ensure cleanup of SDK folder even if ZIP creation fails
+        try {
+            await fs.promises.rm(sdkPath, { recursive: true, force: true });
+            console.log('Cleaned up SDK folder after ZIP creation error');
+        } catch (cleanupError) {
+            console.error('Error cleaning up SDK folder:', cleanupError);
+        }
+        
         throw error;
     }
 };
@@ -1106,9 +1150,66 @@ const getFileExtension = (language) => {
     return extensionMap[language] || 'java';
 };
 
+/**
+ * Utility function to clean up orphaned SDK directories
+ * This can be called periodically to clean up any leftover temporary directories
+ */
+const cleanupOrphanedSDKDirectories = async () => {
+    try {
+        const sdkTempPattern = path.join(os.tmpdir(), 'sdk-generation');
+        const generatedSdksDir = path.join(process.cwd(), 'generated-sdks');
+        
+        // Clean up temporary SDK generation directories older than 1 hour
+        if (await fs.promises.access(sdkTempPattern).then(() => true).catch(() => false)) {
+            const tempItems = await fs.promises.readdir(sdkTempPattern, { withFileTypes: true });
+            const oneHourAgo = Date.now() - (60 * 60 * 1000);
+            
+            for (const item of tempItems) {
+                if (item.isDirectory()) {
+                    const dirPath = path.join(sdkTempPattern, item.name);
+                    try {
+                        const stats = await fs.promises.stat(dirPath);
+                        if (stats.mtime.getTime() < oneHourAgo) {
+                            await fs.promises.rm(dirPath, { recursive: true, force: true });
+                            console.log(`Cleaned up orphaned temp SDK directory: ${dirPath}`);
+                        }
+                    } catch (error) {
+                        console.warn(`Error checking temp SDK directory ${dirPath}:`, error);
+                    }
+                }
+            }
+        }
+        
+        // Clean up generated SDK directories (not ZIP files) older than 24 hours
+        if (await fs.promises.access(generatedSdksDir).then(() => true).catch(() => false)) {
+            const generatedItems = await fs.promises.readdir(generatedSdksDir, { withFileTypes: true });
+            const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+            
+            for (const item of generatedItems) {
+                if (item.isDirectory()) {
+                    const dirPath = path.join(generatedSdksDir, item.name);
+                    try {
+                        const stats = await fs.promises.stat(dirPath);
+                        if (stats.mtime.getTime() < oneDayAgo) {
+                            await fs.promises.rm(dirPath, { recursive: true, force: true });
+                            console.log(`Cleaned up orphaned generated SDK directory: ${dirPath}`);
+                        }
+                    } catch (error) {
+                        console.warn(`Error checking generated SDK directory ${dirPath}:`, error);
+                    }
+                }
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error during orphaned SDK directories cleanup:', error);
+    }
+};
+
 module.exports = {
     loadApplications,
     loadApplication,
     loadSDKGeneration,
     generateSDK,
+    cleanupOrphanedSDKDirectories
 };
