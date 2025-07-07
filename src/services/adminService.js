@@ -50,7 +50,9 @@ const createOrganization = async (req, res) => {
     payload.orgConfig = orgConfig;
     let organization = "";
     try {
-        await sequelize.transaction(async (t) => {
+        await sequelize.transaction({
+            timeout: 60000,
+        }, async (t) => {
             organization = await adminDao.createOrganization(payload, t);
             const orgId = organization.ORG_ID;
             // create default label
@@ -64,10 +66,7 @@ const createOrganization = async (req, res) => {
             await adminDao.createProvider(organization.ORG_ID, { name: 'WSO2', providerURL: config.controlPlane.url }, t);
             //store default subscription policies
             if (config.generateDefaultSubPolicies) {
-                const storagePlans = constants.DEFAULT_SUBSCRIPTION_PLANS;
-                for (const plan of storagePlans) {
-                    await apiDao.createSubscriptionPolicy(orgId, plan, t);
-                }
+                await apiDao.bulkCreateSubscriptionPolicies(orgId, constants.DEFAULT_SUBSCRIPTION_PLANS, t);
             }
         });
 

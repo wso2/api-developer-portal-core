@@ -36,7 +36,11 @@ const sequelizeOptions = {
         min: 2,
         acquire: 30000,
         idle: 10000
-    }
+    },
+    dialectOptions: {
+        connectTimeout: 30000,
+        requestTimeout: 30000,
+    },
 };
 
 if (config.advanced.dbSslDialectOption) {
