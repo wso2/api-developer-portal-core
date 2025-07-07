@@ -374,6 +374,7 @@ const loadDocsPage = async (req, res) => {
             baseUrl: constants.BASE_URL + config.port + "/views/" + viewName + "/api/" + apiHandle,
             docTypes: docNames,
             devportalMode: devportalMode,
+            apiType: apiMetadata.apiInfo?.apiType
         }
         html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
     } else {
@@ -395,9 +396,12 @@ const loadDocsPage = async (req, res) => {
                 }
             }
 
+            const apiMetadata = await apiDao.getAPIMetadata(orgID, apiID);
+            let apiType = apiMetadata[0].dataValues.API_TYPE;
             const templateContent = {
                 baseUrl: '/' + orgName + '/views/' + viewName + "/api/" + apiHandle,
                 docTypes: docNames,
+                apiType: apiType,
                 profile: req.isAuthenticated() ? profile : {},
                 devportalMode: devportalMode,
             };
@@ -480,6 +484,7 @@ const loadDocument = async (req, res) => {
             templateContent.baseUrl = constants.BASE_URL + config.port + "/views/" + viewName + "/api/" + apiHandle;
             templateContent.docTypes = docNames;
             templateContent.apiMD = apiMD;
+            templateContent.apiType = apiMetadata.apiInfo?.apiType;
             html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
         } else {
 
@@ -506,6 +511,7 @@ const loadDocument = async (req, res) => {
                     }
                 }
                 templateContent.profile = req.isAuthenticated() ? profile : {};
+                templateContent.apiType = apiType;
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
             } catch (error) {
                 const templateContent = {

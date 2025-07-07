@@ -163,6 +163,52 @@ const registerPartialsFromAPI = async (req) => {
     isAdmin = req.user["isAdmin"];
     isSuperAdmin = req.user["isSuperAdmin"];
   }
+  let profile = "";
+  if (req.user) {
+    profile = {
+      imageURL: req.user.imageURL,
+      firstName: req.user.firstName,
+      lastName: req.user.lastName,
+      email: req.user.email
+    }
+  }
+
+  if (partialObject[constants.HEADER_PARTIAL_NAME]) {
+    hbs.handlebars.partials = {
+      ...hbs.handlebars.partials,
+      header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
+        baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+        profile: req.isAuthenticated() ? profile : "",
+        isAdmin: isAdmin,
+        isSuperAdmin: isSuperAdmin,
+        hasWSO2APIs: hasWSO2APIs,
+        devportalMode: devportalMode || constants.API_TYPE.DEFAULT
+      })
+    };
+  }
+
+  if (partialObject[constants.SIDEBAR_PARTIAL_NAME]) {
+    hbs.handlebars.partials = {
+      ...hbs.handlebars.partials,
+      sidebar: hbs.handlebars.compile(partialObject[constants.SIDEBAR_PARTIAL_NAME])({
+        baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+        isAdmin: isAdmin,
+        isSuperAdmin: isSuperAdmin,
+        hasWSO2APIs: hasWSO2APIs,
+        devportalMode: devportalMode || constants.API_TYPE.DEFAULT
+      }),
+    };
+  }
+
+  if (partialObject[constants.HOME_PARTIAL_NAME]) {
+    hbs.handlebars.partials = {
+      ...hbs.handlebars.partials,
+      home: hbs.handlebars.compile(partialObject[constants.HOME_PARTIAL_NAME])({
+        baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+        devportalMode: devportalMode || constants.API_TYPE.DEFAULT
+      }),
+    };
+  }
 
   if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
     await registerAPILandingContent(req, orgID, partialObject);
