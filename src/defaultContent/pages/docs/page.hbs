@@ -30,7 +30,11 @@
                         <a href="{{../baseUrl}}/docs/specification" class="doc-link">
                             <i class="bi bi-code"></i>
                             <div class="doc-title">
-                                API Definition
+                                {{#if (eq ../apiType "MCP")}}
+                                    MCP Playground
+                                {{else}}
+                                    API Definition
+                                {{/if}}
                             </div>
                         </a>
                     </div>

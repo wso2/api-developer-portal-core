@@ -327,7 +327,8 @@ const loadDocsPage = async (req, res) => {
         const templateContent = {
             apiMD: await loadMarkdown("api-doc.md", filePrefix + '../mock/' + apiHandle + "/" + docType),
             baseUrl: constants.BASE_URL + config.port + "/views/" + viewName + "/api/" + apiHandle,
-            docTypes: docNames
+            docTypes: docNames,
+            apiType: apiMetadata.apiInfo?.apiType
         }
         html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
     } else {
@@ -336,9 +337,12 @@ const loadDocsPage = async (req, res) => {
             const apiID = await apiDao.getAPIId(orgID, apiHandle);
             const viewName = req.params.viewName;
             const docNames = await apiMetadataService.getAPIDocTypes(orgID, apiID)
+            const apiMetadata = await apiDao.getAPIMetadata(orgID, apiID);
+            let apiType = apiMetadata[0].dataValues.API_TYPE;
             const templateContent = {
                 baseUrl: '/' + orgName + '/views/' + viewName + "/api/" + apiHandle,
-                docTypes: docNames
+                docTypes: docNames,
+                apiType: apiType
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
         } catch (error) {
@@ -412,6 +416,7 @@ const loadDocument = async (req, res) => {
             templateContent.baseUrl = constants.BASE_URL + config.port + "/views/" + viewName + "/api/" + apiHandle;
             templateContent.docTypes = docNames;
             templateContent.apiMD = apiMD;
+            templateContent.apiType = apiMetadata.apiInfo?.apiType;
             html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
         } else {
             try {
@@ -427,6 +432,7 @@ const loadDocument = async (req, res) => {
                     templateContent.baseUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle;
                 }
                 templateContent.docTypes = docNames;
+                templateContent.apiType = apiType;
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
             } catch (error) {
                 console.error(`Failed to load api content :`, error);
