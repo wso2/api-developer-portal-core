@@ -40,6 +40,7 @@ const designRoute = require('./routes/designModeRoute');
 const settingsRoute = require('./routes/configureRoute');
 const AsyncLock = require('async-lock');
 const util = require('./utils/util');
+const logger = require('./utils/logger');
 
 const OAuth2Strategy = require('passport-oauth2');
 const jwt = require('jsonwebtoken');
@@ -54,7 +55,7 @@ const filePrefix = config.pathToContent;
 
 const SERVER_ID = uuidv4();
 
-console.log(`starting server: ${SERVER_ID}`);
+logger.info(`Starting server with ID: ${SERVER_ID}`);
 
 //PostgreSQL connection pool for session store
 
@@ -206,7 +207,7 @@ app.use(session({
         pool: pool,
         tableName: 'session',
         pruneSessionInterval: 3600,
-        debug: console.log,
+        debug: logger.debug.bind(logger),
     }),
     secret: sessionSecret,
     resave: false,
@@ -219,6 +220,26 @@ app.use(session({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// HTTP request logging middleware
+app.use((req, res, next) => {
+    const start = Date.now();
+    
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        const logLevel = res.statusCode >= 400 ? 'error' : 'http';
+        logger.log(logLevel, `${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`, {
+            method: req.method,
+            url: req.originalUrl,
+            statusCode: res.statusCode,
+            duration: duration,
+            userAgent: req.get('User-Agent'),
+            ip: req.ip
+        });
+    });
+    
+    next();
+});
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -308,20 +329,33 @@ const strategy = new OAuth2Strategy({
     };
     req.session.regenerate((err) => {
         if (err) {
-            console.error('Session regeneration failed:', err);
+            logger.error('Session regeneration failed', { 
+                error: err.message,
+                stack: err.stack,
+                userId: decodedAccessToken[constants.USER_ID],
+                serverId: SERVER_ID 
+            });
             return done(err);
         }
         // Store the new user profile in the session
         req.login(profile, (err) => {
             if (err) {
-                console.error('Login failed after session regen:', err);
+                logger.error('Login failed after session regen', { 
+                    error: err.message,
+                    stack: err.stack,
+                    userId: decodedAccessToken[constants.USER_ID],
+                    serverId: SERVER_ID 
+                });
                 return done(err);
             }
             return done(null, profile);
         });
     });
 
-    console.log('Retruning profile');
+    logger.debug('Returning profile', { 
+        userId: decodedAccessToken[constants.USER_ID],
+        serverId: SERVER_ID 
+    });
 
     //return done(null, profile);
 });
@@ -345,7 +379,10 @@ passport.use(strategy);
 // Serialize user into the session
 passport.serializeUser((user, done) => {
 
-    console.log("Serializing user");
+    logger.debug("Serializing user", { 
+        userId: user[constants.USER_ID],
+        serverId: SERVER_ID 
+    });
     const profile = {
         firstName: user.firstName,
         lastName: user.lastName,
@@ -422,8 +459,22 @@ if (config.mode === constants.DEV_MODE) {
 
 
 app.use((err, req, res, next) => {
-
-    console.log(err) // Log error for debugging
+    // Log error with Winston
+    logger.error('Express error handler caught an error:', {
+        error: err.message,
+        stack: err.stack,
+        url: req.originalUrl,
+        method: req.method,
+        userAgent: req.get('User-Agent'),
+        ip: req.ip
+    });
+    
+    // Additional debug logging for development
+    logger.debug('Express error handler debug details', { 
+        errorDetails: err,
+        requestParams: req.params,
+        requestQuery: req.query 
+    });
     const templateContent = {
         baseUrl: '/' + req.params.orgName + '/' + constants.ROUTE.VIEWS_PATH + "default",
         errorMessage: "Oops! Something went wrong"
@@ -471,29 +522,28 @@ if (config.advanced.http) {
         });
 
     } catch (err) {
-        ('\n' + chalk.red.bold('Error setting up HTTPS server:') + '\n', chalk.red(err.message) + '\n');
+        logger.error('Error setting up HTTPS server:', err.message);
     }
 }
 
 const logStartupInfo = () => {
-    console.log('\n' + chalk.green.bold(`Developer Portal V2 is running on port ${PORT}`) + '\n');
-    console.log('\n' + chalk.cyan.bold(`Mode: ${config.mode}`) + '\n');
+    logger.info(`Developer Portal V2 is running on port ${PORT}`);
+    logger.info(`Mode: ${config.mode}`);
 
     if (config.mode === constants.DEV_MODE) {
-        console.log('\n' + chalk.yellow('⚠️  Since you are in DEV mode...') + '\n');
-        console.log(chalk.greenBright('✅ Ensure that the default content is correctly available at the configured "pathToContent".') + '\n');
-        console.log(chalk.greenBright('✅ The "Mock" folder must exist in the same root directory as "pathToContent".') + '\n');
+        logger.warn('Running in DEV mode - ensure default content and Mock folder are properly configured');
     }
 
-    console.log(chalk.blue(`🔗 Visit: ${chalk.underline(config.baseUrl + (config.mode === constants.DEV_MODE ? "/views/default" : "/<organization>/views/default"))}`) + '\n');
+    const visitUrl = config.baseUrl + (config.mode === constants.DEV_MODE ? "/views/default" : "/<organization>/views/default");
+    logger.info(`Application available at: ${visitUrl}`);
 };
 
 // Handle Uncaught Exceptions
 process.on('uncaughtException', (err) => {
-    ('\n' + chalk.bgRed.white.bold(' Uncaught Exception ') + '\n', chalk.red(err.stack || err.message) + '\n');
+    logger.error('Uncaught Exception:', err.stack || err.message);
 });
 
 // Handle Unhandled Rejections
 process.on('unhandledRejection', (reason, promise) => {
-    ('\n' + chalk.bgRed.white.bold(' Unhandled Rejection ') + '\n', chalk.red('Promise:', promise, '\nReason:', reason) + '\n');
+    logger.error('Unhandled Rejection:', { promise, reason });
 });

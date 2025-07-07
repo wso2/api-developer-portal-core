@@ -23,6 +23,7 @@ const fs = require('fs');
 const path = require('path');
 const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
+const logger = require('../utils/logger');
 
 const filePrefix = config.pathToContent;
 const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
@@ -64,7 +65,11 @@ const loadCustomContent = async (req, res) => {
             content[constants.BASE_URL_NAME] = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
             html = await renderTemplateFromAPI(content, orgId, orgName, filePath, viewName);
         } catch (error) {
-            console.error("Error while loading custom content", error);
+            logger.error('Error while loading custom content', {
+                error: error.message,
+                stack: error.stack,
+                orgName: orgName,
+            });
             html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
             constants.COMMON_ERROR_MESSAGE, true);
         }

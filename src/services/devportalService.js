@@ -16,6 +16,7 @@
  * under the License.
  */
 /* eslint-disable no-undef */
+const logger = require('../utils/logger');
 const adminService = require('../services/adminService');
 const adminDao = require('../dao/admin');
 const util = require('../utils/util');
@@ -89,7 +90,11 @@ const getOrgContent = async (req, res) => {
             res.status(400).send('Invalid request');
         }
     } catch (error) {
-        console.error(`Error while fetching organization content:`, error);
+        logger.error(`Error while fetching organization content`, { 
+            error: error.message,
+            stack: error.stack,
+            orgId: req.params?.orgId 
+        });
         res.status(404).send(error.message);
     }
 };

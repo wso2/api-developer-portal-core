@@ -28,12 +28,14 @@ const axios = require('axios');
 const qs = require('qs');
 const https = require('https');
 const config = require(process.cwd() + '/config.json');
+const logger = require('./logger');
 const { body, param, query } = require('express-validator');
 const { Sequelize } = require('sequelize');
 const apiDao = require('../dao/apiMetadata');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const jwt = require('jsonwebtoken');
 const filePrefix = '/src/defaultContent/';
+const logger = require('./logger');
 
 // Function to load and convert markdown file to HTML
 async function loadMarkdown(filename, dirName) {
@@ -101,7 +103,12 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
 
     var layoutContent = await loadLayoutFromAPI(orgID, viewName);
     if (layoutContent === "") {
-        console.log("Layout not found for org: " + orgName + " and view: " + viewName);
+        logger.warn("Layout not found, loading default content", { 
+            orgName, 
+            viewName,
+            orgID,
+            action: 'fallback_to_default'
+        });
         //load default org content
         html = renderTemplate(filePrefix + filePath + '/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
         return html;
@@ -234,7 +241,11 @@ const unzipDirectory = async (zipPath, extractPath) => {
                         entry.autodrain();
                     }
                 } catch (err) {
-                    console.error("Error processing entry. ", err);
+                    logger.error('Error processing entry.', {
+                        error: err.message,
+                        stack: err.stack,
+                        entryPath: entry.path
+                    });
                     entry.autodrain();
                     reject(new Error('Error processing entry.'));
                 }
@@ -355,7 +366,12 @@ async function readDocFiles(directory, baseDir = '') {
 
 
 const invokeGraphQLRequest = async (req, url, query, variables, headers) => {
-    console.log(`Invoking GraphQL API: ${url}`);
+    logger.info('Invoking GraphQL API', { 
+        url,
+        hasQuery: !!query,
+        hasVariables: !!variables,
+        userId: req.user?.id
+    });
 
     headers = {
         ...headers,
@@ -417,7 +433,11 @@ const invokeGraphQLRequest = async (req, url, query, variables, headers) => {
                 throw new CustomError(retryError.response?.status || 500, "Request retry failed", retryMessage);
             }
         } else {
-            console.error(`GraphQL Request Error:`, error);
+            logger.error('GraphQL Request Error', {
+                error: error.message,
+                stack: error.stack,
+                statusCode: error.response?.status,
+            });
             let message = error.response?.data?.description || error.message;
             throw new CustomError(error.response?.status || 500, 'GraphQL request failed', message);
         }
@@ -426,7 +446,12 @@ const invokeGraphQLRequest = async (req, url, query, variables, headers) => {
 
 const invokeApiRequest = async (req, method, url, headers, body) => {
 
-    console.log(`Invoking API: ${url}`);
+    logger.info('Invoking API request', { 
+        url,
+        method,
+        hasBody: !!body,
+        userId: req.user?.id
+    });
     headers = headers || {};
     headers.Authorization = req.user?.exchangeToken ? `Bearer ${req.user.exchangeToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
     let httpsAgent;
@@ -482,7 +507,12 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
                 if (retryError.response) {
                     retryMessage = retryError.response.data.description;
                 }
-                console.error(`Retry failed:`, retryMessage);
+                logger.error('API retry failed', {
+                    url,
+                    method,
+                    retryMessage,
+                    userId: req.user?.id
+                });
                 throw new CustomError(error.response.status, "Access denied", error.message || error.response?.data?.description || constants.ERROR_MESSAGE.UNAUTHENTICATED);
             }
         } else {
@@ -490,7 +520,13 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
             if (error.response) {
                 message = error.response.data.description;
             }
-            console.log(`Error while invoking API:`, message);
+            logger.error('API request failed', {
+                url,
+                method,
+                error: message,
+                statusCode: error.response?.status,
+                userId: req.user?.id
+            });
             throw new CustomError(error.status, 'Request failed', message);
         }
     }
@@ -671,7 +707,9 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                     fileType = "image";
                 } else {
                     // Unexpected file type
-                    console.warn(`Unexpected file type detected: ${file.name}`);
+                    logger.warn('Unexpected file type detected', {
+                        fileName: file.name,
+                    });
                     continue;
                 }
 
@@ -685,7 +723,14 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
         }
         return fileDetails;
     } catch (error) {
-        console.error("Error occurred while reading files in directory", error);
+        logger.error('Error occurred while reading files in directory', {
+            error: error.message,
+            stack: error.stack,
+            orgId,
+            protocol: protocol,
+            host: host,
+            viewName: viewName
+        });
         throw error;
     }
 }
@@ -716,7 +761,10 @@ function validateScripts(strContent) {
             }
         }
     } catch (error) {
-        console.error("Error occurred while validating scripts", error);
+        logger.error("Error occurred while validating scripts", {
+            error: error.message,
+            stack: error.stack
+        });
         throw error;
     }
 }
@@ -768,7 +816,10 @@ const loadSubscriptionPlan = async (orgID, policyName) => {
 }
 
 async function tokenExchanger(token, orgName) {
-    console.log(`Exchanging token for organization: ${orgName}`);
+    logger.info('Exchanging token for organization', { 
+        orgName,
+        action: 'token_exchange'
+    });
     const url = config.advanced.tokenExchanger.url;
     const maxRetries = 3;
     let delay = 1000;
@@ -802,11 +853,21 @@ async function tokenExchanger(token, orgName) {
             return response.data.access_token;
         } catch (error) {
             if (error.response?.status >= 500 && error.response?.status < 600 && attempt < maxRetries) {
-                console.warn(`Token exchange failed. Retrying in ${delay}ms... (Attempt ${attempt + 1}/${maxRetries})`);
+                logger.warn('Token exchange failed, retrying', {
+                    orgName,
+                    attempt: attempt + 1,
+                    maxRetries,
+                    delay: delay,
+                    error: error.message
+                });
                 await new Promise(resolve => setTimeout(resolve, delay));
                 delay *= 2;
             } else {
-                console.error('Token exchange failed:', error.message);
+                logger.error('Token exchange failed', {
+                    orgName,
+                    error: error.message,
+                    stack: error.stack,
+                });
                 throw new Error('Failed to exchange token');
             }
         }
@@ -818,10 +879,17 @@ async function listFiles(path) {
     let files = [];
     fs.promises.readdir(path, (err, files) => {
         if (err) {
-            console.error('Error reading directory:', err);
+            logger.error('Error reading directory', { 
+                error: err.message,
+                directory: directoryPath
+            });
             return;
         }
-        console.log('Files in directory:', files);
+        logger.debug('Files found in directory', { 
+            directory: directoryPath,
+            fileCount: files.length,
+            files: files
+        });
     });
     return files;
 }
