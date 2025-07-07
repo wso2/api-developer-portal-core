@@ -23,6 +23,7 @@ const { renderTemplate, renderTemplateFromAPI } = require('../utils/util');
 const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
+const logger = require('../utils/logger');
 
 const filePrefix = config.pathToContent;
 const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;

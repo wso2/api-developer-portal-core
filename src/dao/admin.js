@@ -24,6 +24,7 @@ const apiDao = require('./apiMetadata');
 const { APIMetadata } = require('../models/apiMetadata');
 const APIImageMetadata = require('../models/apiImages');
 const SubscriptionPolicy = require('../models/subscriptionPolicy');
+const logger = require('../utils/logger');
 
 const createOrganization = async (orgData, t) => {
 
@@ -854,7 +855,10 @@ const deleteAppMappings = async (orgID, appID, t) => {
             }, transaction: t
         }, { transaction: t });
         if (deletedRowsCount < 1) {
-            console.log("No Application Key Mapping found");
+            logger.info('No Application Key Mapping found', {
+                orgId, 
+                appID
+            });
             return deletedRowsCount;
         } else {
             return deletedRowsCount;

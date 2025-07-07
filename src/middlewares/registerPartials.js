@@ -30,6 +30,7 @@ const util = require('../utils/util');
 const { validationResult } = require('express-validator');
 const filePrefix = config.pathToContent;
 const hbs = exphbs.create({});
+const logger = require('../utils/logger');
 
 const registerPartials = async (req, res, next) => {
 
@@ -69,7 +70,12 @@ const registerPartials = async (req, res, next) => {
 
       }
     } catch (error) {
-      console.error('Error while loading organization :', error);
+      logger.error('Error while loading organization', {
+        error: error.message,
+        stack: error.stack,
+        orgName: req.params.orgName,
+        viewName: req.params.viewName
+      });
       if (error.message === "API not found") {
         let templateContent = {
           errorMessage: constants.ERROR_MESSAGE.API_NOT_FOUND,

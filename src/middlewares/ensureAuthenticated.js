@@ -29,6 +29,7 @@ const IdentityProviderDTO = require("../dto/identityProvider");
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const qs = require('qs');
+const logger = require('../utils/logger');
 
 function enforceSecuirty(scope) {
     return async function (req, res, next) {
@@ -77,7 +78,10 @@ function enforceSecuirty(scope) {
                 }
             }
         } catch (err) {
-            console.error("Error checking access token:", err);
+            logger.error("Error checking access token", {
+                error: err.message,
+                stack: err.stack,
+            });
             return res.status(500).json({ error: "Internal Server Error" });
         }
     }
@@ -332,7 +336,10 @@ const validateWithCert = async (token, publicKey) => {
         const { payload } = await jwtVerify(token, publicKey);
         return [true, payload.scope];
     } catch (err) {
-        console.error("Invalid token:", err.message);
+        logger.error('Invalid token', {
+            error: err.message,
+            stack: err.stack,
+        });
         return [false, ""];
     }
 }
@@ -344,11 +351,17 @@ const validateWithJWKS = async (token, jwksURL, req) => {
         const { payload } = await jwtVerify(token, jwks);
         return [true, payload.scope];
     } catch (err) {
-        console.error("Invalid token:", err);
+        logger.error("Invalid token:", {
+            error: err.message,
+            stack: err.stack,
+        });
         if (err.code === 'ERR_JWT_EXPIRED' && req.user && req.user.refreshToken) {
             // Token expired, refresh it
             try {
-                console.log("Access token expired. Triggering refresh token flow to obtain new tokens");
+                logger.info('Access token expired. Triggering refresh token flow to obtain new tokens', {
+                    userId: req.user[constants.USER_ID],
+                    orgId: req.user[constants.ORG_ID],
+                });
                 const response = await refreshAccessToken(req.user.refreshToken);
                 req.user[constants.ACCESS_TOKEN] = response.access_token;
                 req.user[constants.REFRESH_TOKEN] = response.refresh_token;
@@ -357,11 +370,17 @@ const validateWithJWKS = async (token, jwksURL, req) => {
                 return [true, response.scope || ""];
             } catch (error) {
                 req.user =  null;
-                console.error("Error refreshing access token:", error.message);
+                logger.error('Error refreshing access token', {
+                    error: error.message,
+                    stack: error.stack,
+                });
                 return [false, ""];           
             }
         } else {
-            console.error("Token validation error:", err.message);
+            logger.error("Token validation error:", {
+                error: err.message,
+                stack: err.stack,
+            });
             return [false, ""];
         }
     }
@@ -382,7 +401,10 @@ async function refreshAccessToken(refreshToken) {
         return response.data
 
     } catch (err) {
-        console.error('Token refresh error:', err.response?.data || err.message);
+        logger.error('Token refresh error', {
+            error: err.response?.data || err.message,
+            stack: err.stack
+        });
         throw err;
     }
 }

@@ -16,6 +16,7 @@
  * under the License.
  */
 /* eslint-disable no-undef */
+const logger = require('../utils/logger');
 const configurePassport = require('../middlewares/passport');
 const passport = require('passport');
 const config = require(process.cwd() + '/config.json');
@@ -29,6 +30,7 @@ const minimatch = require('minimatch');
 const { validationResult } = require('express-validator');
 const { renderGivenTemplate } = require('../utils/util');
 const { trackLoginTrigger, trackLogoutTrigger } = require('../utils/telemetry');
+const logger = require('../utils/logger');
 
 const filePrefix = config.pathToContent;
 
@@ -54,12 +56,23 @@ const fetchAuthJsonContent = async (req, orgName) => {
         }
         return new IdentityProviderDTO(response[0].dataValues);
     } catch (error) {
-        console.error("Failed to fetch identity provider details", error);
+        logger.error("Failed to fetch identity provider details", {
+            error: error.message,
+            stack: error.stack,
+            orgId
+        });
         return config.identityProvider;
     }
 };
 
 const login = async (req, res, next) => {
+    logger.info('Login attempt initiated', {
+        orgName: req.params.orgName,
+        viewName: req.params.viewName,
+        fidp: req.query.fidp,
+        ip: req.ip,
+        userAgent: req.get('User-Agent')
+    });
 
     let claimNames = {
         [constants.ROLES.ROLE_CLAIM]: config.roleClaim,
@@ -70,13 +83,18 @@ const login = async (req, res, next) => {
     const baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName;
     const orgDetails = await adminDao.getOrganization(orgName);
     if (orgDetails) {
+        logger.debug('Organization details found', { orgName, orgId: orgDetails.id });
         claimNames[constants.ROLES.ROLE_CLAIM] = orgDetails.ROLE_CLAIM_NAME || config.roleClaim;
         claimNames[constants.ROLES.GROUP_CLAIM] = orgDetails.GROUPS_CLAIM_NAME || config.groupsClaim;
         claimNames[constants.ROLES.ORGANIZATION_CLAIM] = orgDetails.ORGANIZATION_CLAIM_NAME || config.orgIDClaim;
+    } else {
+        logger.warn('Organization not found', { orgName });
     }
     if (!req.isAuthenticated()) {
+        logger.debug('User not authenticated, processing login flow');
         const fidp = req.query.fidp;
         if (fidp && config.fidp[fidp]) {
+            logger.info('Using federated identity provider', { fidp, orgName });
             if (fidp == 'enterprise' && req.query.username) {
                 await passport.authenticate('oauth2', { fidp: config.fidp[fidp], username: req.query.username })(req, res, next);
             } else {
@@ -109,7 +127,11 @@ const handleCallback = async (req, res, next) => {
             }
         })
         .catch(error => {
-            console.error("Error validating request parameters: " + error);
+            logger.error("Error validating request parameters", { 
+                error: error.message,
+                stack: error.stack,
+                orgName: req.params?.orgName 
+            });
             return res.status(500).json({ message: 'Internal Server Error' });
         });
     await passport.authenticate(
@@ -195,7 +217,11 @@ const handleLogOut = async (req, res) => {
         const logoutURL = match ? match[1] : null;
         req.logout((err) => {
             if (err) {
-                console.error("Logout error:", err);
+                logger.error("Logout error", { 
+                    error: err.message,
+                    stack: err.stack,
+                    userId: req.user?.[constants.USER_ID] 
+                });
             }
             trackLogoutTrigger({ orgName: req.params.orgName });
             req.session.currentPathURI = currentPathURI;
