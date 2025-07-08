@@ -129,7 +129,11 @@ const loadAPIs = async (req, res) => {
                 devportalMode: devportalMode,
             };
 
-            html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
+            if (req.originalUrl.includes("/mcps")) {
+                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp", viewName);
+            } else {
+                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
+            }
         } catch (error) {
             console.error(`Failed to load API listing:`, error);
             console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
@@ -184,8 +188,7 @@ const loadAPIContent = async (req, res) => {
             apiMetadata: metaData,
             subscriptionPlans: subscriptionPlans,
             baseUrl: baseURLDev + viewName,
-            schemaUrl: orgName + '/mock/' + apiHandle + '/apiDefinition.xml',
-            devportalMode: devportalMode,
+            schemaUrl: orgName + '/mock/' + apiHandle + '/apiDefinition.xml'
         }
         html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
         res.send(html);
