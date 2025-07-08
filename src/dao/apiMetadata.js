@@ -294,7 +294,6 @@ const getView = async (orgID, viewName) => {
 
 const getViewID = async (orgID, viewName) => {
 
-    console.log("getViewID called with orgID:", orgID, "and viewName:", viewName);
     try {
         const viewResponse = await View.findOne({
             where: {

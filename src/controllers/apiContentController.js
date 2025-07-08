@@ -38,7 +38,6 @@ const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
 
 const loadAPIs = async (req, res) => {
 
-    console.log("Loading APIs for org: " + req.params.orgName);
     const { orgName, viewName } = req.params;
     let html;
     if (config.mode === constants.DEV_MODE) {
