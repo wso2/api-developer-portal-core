@@ -98,6 +98,7 @@ const loadApplications = async (req, res) => {
         }
     } catch (error) {
         const templateContent = {
+            devportalMode: devportalMode,
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
             errorMessage: constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE,
         }
@@ -327,6 +328,7 @@ const loadApplication = async (req, res) => {
         console.error("Error occurred while loading application", error);
         const templateContent = {
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+            devportalMode: devportalMode,
         }
         if (Number(error?.statusCode) === 401) {
             templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_AUTH_ERROR_MESSAGE;

@@ -143,9 +143,7 @@ const loadAPIs = async (req, res) => {
             }
             if (Number(error?.statusCode) === 401) {
                 console.log("User is not authorized to access the API or user session expired, hence redirecting to login page");
-                console.log(templateContent)
                 templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_AUTH_ERROR_MESSAGE;
-                console.log(templateContent)
                 html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
             } else {
                 templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE;

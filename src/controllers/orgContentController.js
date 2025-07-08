@@ -74,13 +74,11 @@ const loadOrgContentFromAPI = async (req, res) => {
                 email: req.user.email,
             }
         }
-        console.log(profile);
         templateContent = {
             devportalMode: devportalMode,
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName,
             profile: req.isAuthenticated() ? profile : {}
         };
-        console.log(templateContent);
         html = await renderTemplateFromAPI(templateContent, orgId, orgName, 'pages/home', req.params.viewName);
     } catch (error) {
         console.error(`Failed to load organization :`, error);

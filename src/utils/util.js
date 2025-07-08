@@ -849,11 +849,11 @@ const enforcePortalMode = async (req, res, next) => {
         next();
     } else {
         const templateContent = {
-            errorMessage: constants.COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE,
+            errorMessage: constants.ERROR_MESSAGE.COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE,
             portalMode: portalMode,
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName,
         }
-        const html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE, true);
+        const html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
         res.send(html);
     }
 }

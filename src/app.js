@@ -423,7 +423,6 @@ if (config.mode === constants.DEV_MODE) {
 
 
 app.use((err, req, res, next) => {
-
     console.log(err) // Log error for debugging
     const templateContent = {
         baseUrl: '/' + req.params.orgName + '/' + constants.ROUTE.VIEWS_PATH + "default",
