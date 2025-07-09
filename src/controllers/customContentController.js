@@ -71,9 +71,7 @@ const loadCustomContent = async (req, res) => {
                     email: req.user.email,
                 }
             }
-            content['profile'] = req.isAuthenticated() ? profile : {},
-
-                html = await renderTemplateFromAPI(content, orgId, orgName, filePath, viewName);
+            html = await renderTemplateFromAPI(content, orgId, orgName, filePath, viewName);
         } catch (error) {
             const templateContent = {
                 devportalMode: constants.API_TYPE.DEFAULT,

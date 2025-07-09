@@ -210,9 +210,11 @@ const ensureAuthenticated = async (req, res, next) => {
             });
         }
     } else {
+        console.log("No authentication required for this page, authentication status: ", req.isAuthenticated());
         if (req.isAuthenticated()) {
             const token = accessTokenPresent(req);
             if (token && config.identityProvider.jwksURL) {
+                console.log("Validating token with JWKS URL");
                 await validateWithJWKS(token, config.identityProvider.jwksURL, req);
             }
         }

@@ -134,7 +134,6 @@ const loadAPIs = async (req, res) => {
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
             }
         } catch (error) {
-            console.error(`Failed to load API listing:`, error);
             console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
             const templateContent = {
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
