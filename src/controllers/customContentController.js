@@ -76,6 +76,7 @@ const loadCustomContent = async (req, res) => {
                 html = await renderTemplateFromAPI(content, orgId, orgName, filePath, viewName);
         } catch (error) {
             const templateContent = {
+                devportalMode: constants.API_TYPE.DEFAULT,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 errorMessage: constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE,
             }

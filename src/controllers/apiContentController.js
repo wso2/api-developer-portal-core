@@ -162,8 +162,6 @@ const loadAPIContent = async (req, res) => {
     if (config.mode === constants.DEV_MODE) {
         const metaData = loadAPIMetaDataFromFile(apiHandle);
         const filePath = path.join(process.cwd(), filePrefix + '../mock', apiHandle + "/" + constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME);
-        const orgDetails = await adminDao.getOrganization(orgName);
-        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
 
         if (fs.existsSync(filePath)) {
             hbs.handlebars.registerPartial('api-content', fs.readFileSync(filePath, constants.CHARSET_UTF8));
@@ -190,6 +188,7 @@ const loadAPIContent = async (req, res) => {
         html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
         res.send(html);
     } else {
+        const orgDetails = await adminDao.getOrganization(orgName);
         const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
         try {
             const orgDetails = await adminDao.getOrganization(orgName);
@@ -378,13 +377,14 @@ const loadDocsPage = async (req, res) => {
         }
         html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
     } else {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+
         try {
             const orgID = await adminDao.getOrgId(orgName);
             const apiID = await apiDao.getAPIId(orgID, apiHandle);
             const viewName = req.params.viewName;
             const docNames = await apiMetadataService.getAPIDocTypes(orgID, apiID);
-            const orgDetails = await adminDao.getOrganization(orgName);
-            const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
 
             let profile = {};
             if (req.user) {
@@ -420,10 +420,10 @@ const loadDocsPage = async (req, res) => {
 }
 
 const loadDocument = async (req, res) => {
+    const { orgName, apiHandle, viewName, docType, docName } = req.params;
     const orgDetails = await adminDao.getOrganization(orgName);
     const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
     try {
-        const { orgName, apiHandle, viewName, docType, docName } = req.params;
         const hbs = exphbs.create({});
         let templateContent = {
             "isAPIDefinition": false
@@ -512,6 +512,8 @@ const loadDocument = async (req, res) => {
                 }
                 templateContent.profile = req.isAuthenticated() ? profile : {};
                 templateContent.apiType = apiType;
+                templateContent.devportalMode = devportalMode;
+                templateContent.baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
             } catch (error) {
                 const templateContent = {

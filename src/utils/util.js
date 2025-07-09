@@ -838,7 +838,7 @@ function filterAllowedAPIs(searchResults, allowedAPIs) {
 
 const enforcePortalMode = async (req, res, next) => {
     const orgDetails = await adminDao.getOrganization(req.params.orgName);
-    const portalMode = orgDetails.ORG_CONFIG?.devportalMode;
+    const portalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
     const path = req.originalUrl.split('/')[4];
 
     if ((path.includes('apis') || path.includes('api') ) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.API_PROXIES) ||
@@ -847,8 +847,8 @@ const enforcePortalMode = async (req, res, next) => {
     } else {
         const templateContent = {
             errorMessage: constants.ERROR_MESSAGE.COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE,
-            portalMode: portalMode,
-            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName,
+            devportalMode: portalMode,
+            baseUrl: '/' + req.params.orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName,
         }
         const html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
         res.send(html);

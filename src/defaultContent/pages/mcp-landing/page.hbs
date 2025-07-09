@@ -21,6 +21,8 @@
   <script src='/technical-scripts/add-application-form.js' defer></script>
 </head>
 <main>
+    {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode }}
+    {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode }}
     {{> mcp-detail-banner }}
     {{#if loadDefault}}
     {{> mcp-default}}
