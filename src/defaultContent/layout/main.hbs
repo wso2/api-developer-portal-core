@@ -19,7 +19,9 @@
 </head>
 
 <body class="main-body">
+    {{> header }}
     <main class="main-container">
+       {{> sidebar }}
         <div class="content-area">
             {{#if portalConfigs.showMaintenanceBanner}}
                 <div class="alert custom-bootstrap-alert d-flex align-items-center" role="alert">

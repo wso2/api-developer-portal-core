@@ -421,23 +421,19 @@ if (config.mode === constants.DEV_MODE) {
 }
 
 
-app.use( (err, req, res, next) => {
-    Handlebars.registerPartial('header', '');
-    Handlebars.registerPartial('sidebar', '');
+app.use((err, req, res, next) => {
+
     console.log(err) // Log error for debugging
     const templateContent = {
-        devportalMode: 'DEFAULT',
-        baseUrl: '/' + req.originalUrl?.split('/')[1] + '/' + constants.ROUTE.VIEWS_PATH + "default",
+        baseUrl: '/' + req.params.orgName + '/' + constants.ROUTE.VIEWS_PATH + "default",
         errorMessage: "Oops! Something went wrong"
     }
-    let html = "";
     if (err.status === 401) {
         req.session.destroy((err) => {
             if (err) {
                 return res.status(500).send("Logout failed");
             }
         });
-        
         html = util.renderTemplate('../pages/error-page/page.hbs', 'src/pages/error-layout/main.hbs', templateContent, true);
     } else {
         html = util.renderTemplate('../pages/error-page/page.hbs', 'src/pages/error-layout/main.hbs', templateContent, true);

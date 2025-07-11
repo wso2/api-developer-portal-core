@@ -25,6 +25,9 @@ module.exports = {
     API_ICON: 'api-icon',
     API_TEMPLATE_FILE_NAME: '/template?type=IMAGE&fileName=',
     API_TYPE_QUERY: '/template?type=',
+    HEADER_PARTIAL_NAME: 'header',
+    SIDEBAR_PARTIAL_NAME: 'sidebar',
+    HOME_PARTIAL_NAME: 'home',
     BASE_URL: 'https://localhost:',
     BASE_URL_NAME: 'baseUrl',
     ORG_ID: 'orgID',
@@ -167,6 +170,9 @@ module.exports = {
         API_SPECIFICATION_PATH: 'specification',
         API_DEFINITION_GRAPHQL: 'apiDefinition.graphql',
         API_DEFINITION_XML: 'apiDefinition.xml',
+        PARTIAL_HEADER_FILE_NAME: 'header.hbs',
+        PARTIAL_SIDEBAR_FILE_NAME: 'sidebar.hbs',
+        HOME_FILE_NAME: 'home.hbs',
     },
     DEFAULT_SUBSCRIPTION_PLANS: [
             {
@@ -249,12 +255,19 @@ module.exports = {
         KEY_MAPPING_RETRIEVE_ERROR: "Error while retrieving key mapping",
         KEY_MAPPING_DELETE_ERROR: "Error while deleting key mapping",
         ERR_SUB_EXIST: "ERR_SUB_EXIST",
+        COMMON_ERR: "Oops! Something went wrong",
         UNAUTHORIZED_ORG: "You are not authorized to access this organization",
         UNAUTHORIZED_API: "You are not authorized to access this API",
         API_NOT_FOUND: "Requested API not found",
-        COMMON_AUTH_ERROR_MESSAGE: "User is not authenticated to perform this request",
-        COMMON_ERROR_MESSAGE: "Oops! Something went wrong",
-        COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE: "Requested page not found!"
+    },
+    COMMON_ERROR_MESSAGE: {
+        errorMessage: "Oops! Something went wrong",
+    },
+    COMMON_AUTH_ERROR_MESSAGE: {
+        errorMessage: "User is not authenticated to perform this request",
+    },
+    COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE: {
+        errorMessage: "Requested page not found!",
     },
     ERROR_CODE: {
         401: "Unauthenticated",
