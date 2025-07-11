@@ -104,7 +104,6 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
         console.log("Layout not found for org: " + orgName + " and view: " + viewName);
         //load default org content
         html = renderTemplate(filePrefix + filePath + '/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
-        console.error("Rendering default content for org This: " + orgName + " and view: " + viewName);
         return html;
     }
     var templatePage = await loadTemplateFromAPI(orgID, filePath, viewName);
@@ -470,7 +469,6 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         const response = await axios(url, options);
         return response.data;
     } catch (error) {
-        console.error(`Error while invoking API:`, error);
         if (error.response?.status === 401) {
             try {
                 const newExchangedToken = await tokenExchanger(req.user.accessToken, req.originalUrl.split("/")[1]);
@@ -838,19 +836,14 @@ function filterAllowedAPIs(searchResults, allowedAPIs) {
 
 const enforcePortalMode = async (req, res, next) => {
     const orgDetails = await adminDao.getOrganization(req.params.orgName);
-    const portalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+    const portalMode = orgDetails.ORG_CONFIG?.devportalMode;
     const path = req.originalUrl.split('/')[4];
 
     if ((path.includes('apis') || path.includes('api') ) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.API_PROXIES) ||
         (path.includes('mcps') || path.includes('mcp') ) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.MCP_ONLY)) {
         next();
     } else {
-        const templateContent = {
-            errorMessage: constants.ERROR_MESSAGE.COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE,
-            devportalMode: portalMode,
-            baseUrl: '/' + req.params.orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName,
-        }
-        const html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+        const html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE, true);
         res.send(html);
     }
 }
