@@ -126,6 +126,11 @@ const ensureAuthenticated = async (req, res, next) => {
     if (!errors.isEmpty()) {
         return res.status(400).json(util.getErrors(errors));
     }
+    if (req.user && Array.isArray(req.user.authorizedOrgs) && req.user.userOrg) {
+        if (req.user.authorizedOrgs.includes(req.user.userOrg)) {
+            req.user[constants.ORG_IDENTIFIER] = req.user.userOrg;
+        }
+    }
     if ((req.originalUrl != '/favicon.ico' | req.originalUrl != '/images') &&
         config.authenticatedPages.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
         //fetch role details from DB
