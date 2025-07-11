@@ -1028,7 +1028,6 @@ const findFileRecursively = async (dir, filePattern) => {
  * Create JSON request data for backend API request
  */
 const getApplicationGenApiReqBody = async (apiClassContent, language, mergedSpec, sdkConfiguration) => {
-    // Use user's prompt if AI mode is selected and description is provided
     let useCase;
     
     if (sdkConfiguration?.mode === 'ai' && sdkConfiguration?.description && sdkConfiguration.description.trim()) {
@@ -1087,30 +1086,6 @@ const processApplicationCodeAndCreateFinalZip = async (applicationCode, sdkPath,
             await fs.promises.writeFile(mainAppFile, applicationCode, 'utf8');
             console.log(`Application code written to: ${mainAppFile}`);
             
-            // Create README with instructions
-            const readmeContent = `# Generated Application with SDK
-
-This package contains:
-1. SDK generated from your selected APIs
-2. Application code that demonstrates API usage
-
-## SDK Configuration
-- Language: ${language}
-- SDK Name: ${sdkConfiguration?.name || 'generated-sdk'}
-- Mode: ${sdkConfiguration?.mode || 'ai'}
-
-## Application Code
-The application code is located in the 'application-code' directory.
-
-## Usage
-1. Extract this ZIP file
-2. Follow the SDK documentation to set up dependencies
-3. Compile and run the application code
-
-Generated on: ${new Date().toISOString()}
-`;
-            const readmePath = path.join(sdkPath, 'README.md');
-            await fs.promises.writeFile(readmePath, readmeContent, 'utf8');
         }
         
         // Create final ZIP with SDK + application code
