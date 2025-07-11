@@ -1025,6 +1025,106 @@ const findFileRecursively = async (dir, filePattern) => {
 };
 
 /**
+ * Find the Java package directory where API classes are located
+ * This looks for the directory that contains api/, auth/, and model/ subdirectories
+ */
+const findJavaPackageDirectory = async (sdkDir) => {
+    try {
+        console.log(`Searching for Java package directory in: ${sdkDir}`);
+        
+        // Common Java package paths in OpenAPI generated SDKs
+        const possiblePaths = [
+            'src/main/java/org/openapitools/client',
+            'src/main/java/io/swagger/client',
+            'src/main/java/com/example/client',
+            'src/main/java'
+        ];
+        
+        // First, try the common OpenAPI tools structure
+        for (const possiblePath of possiblePaths) {
+            const fullPath = path.join(sdkDir, possiblePath);
+            console.log(`Checking path: ${fullPath}`);
+            
+            if (await fs.promises.access(fullPath).then(() => true).catch(() => false)) {
+                console.log(`Path exists: ${fullPath}`);
+                
+                // Check if this directory contains the expected subdirectories
+                const hasApiDir = await fs.promises.access(path.join(fullPath, 'api')).then(() => true).catch(() => false);
+                const hasAuthDir = await fs.promises.access(path.join(fullPath, 'auth')).then(() => true).catch(() => false);
+                const hasModelDir = await fs.promises.access(path.join(fullPath, 'model')).then(() => true).catch(() => false);
+                
+                console.log(`Directory contents check - api: ${hasApiDir}, auth: ${hasAuthDir}, model: ${hasModelDir}`);
+                
+                if (hasApiDir || hasAuthDir || hasModelDir) {
+                    console.log(`Found Java package directory: ${fullPath}`);
+                    return fullPath;
+                }
+            } else {
+                console.log(`Path does not exist: ${fullPath}`);
+            }
+        }
+        
+        // If common paths don't work, search recursively for a directory that contains api/auth/model subdirs
+        console.log('Searching recursively for Java package structure...');
+        console.log('Current SDK directory structure:');
+        await listDirectoryStructure(sdkDir);
+        
+        const foundPath = await findJavaPackageRecursively(sdkDir);
+        if (foundPath) {
+            console.log(`Found Java package directory recursively: ${foundPath}`);
+            return foundPath;
+        }
+        
+        console.warn('Could not find Java package directory structure');
+        return null;
+        
+    } catch (error) {
+        console.error('Error finding Java package directory:', error);
+        return null;
+    }
+};
+
+/**
+ * Recursively search for Java package directory
+ */
+const findJavaPackageRecursively = async (dir, maxDepth = 10, currentDepth = 0) => {
+    if (currentDepth > maxDepth) {
+        return null;
+    }
+    
+    try {
+        const items = await fs.promises.readdir(dir, { withFileTypes: true });
+        
+        // Check if current directory has api, auth, or model subdirectories
+        const subdirs = items.filter(item => item.isDirectory()).map(item => item.name);
+        const hasApiDir = subdirs.includes('api');
+        const hasAuthDir = subdirs.includes('auth');
+        const hasModelDir = subdirs.includes('model');
+        
+        // If we found at least one of the expected directories, this is likely the package root
+        if (hasApiDir || hasAuthDir || hasModelDir) {
+            return dir;
+        }
+        
+        // Continue searching in subdirectories
+        for (const item of items) {
+            if (item.isDirectory() && item.name !== 'api' && item.name !== 'auth' && item.name !== 'model') {
+                const fullPath = path.join(dir, item.name);
+                const result = await findJavaPackageRecursively(fullPath, maxDepth, currentDepth + 1);
+                if (result) {
+                    return result;
+                }
+            }
+        }
+        
+        return null;
+    } catch (error) {
+        console.error(`Error searching directory ${dir}:`, error);
+        return null;
+    }
+};
+
+/**
  * Create JSON request data for backend API request
  */
 const getApplicationGenApiReqBody = async (apiClassContent, language, mergedSpec, sdkConfiguration) => {
@@ -1073,20 +1173,47 @@ const invokeApplicationCodeGenApi = async (requestData) => {
 const processApplicationCodeAndCreateFinalZip = async (applicationCode, sdkPath, sdkConfiguration, zipFileName) => {
     try {
         console.log('Processing application code response and creating final ZIP...');
+        const language = sdkConfiguration?.language || 'java';
         
         // Create application code files in the SDK folder
         if (applicationCode) {
-            const appCodeDir = path.join(sdkPath, 'application-code');
-            await fs.promises.mkdir(appCodeDir, { recursive: true });
-            
-            // Write main application file
-            const language = sdkConfiguration?.language || 'java';
             const fileExtension = getFileExtension(language);
-            const mainAppFile = path.join(appCodeDir, `Application.${fileExtension}`);
-            await fs.promises.writeFile(mainAppFile, applicationCode, 'utf8');
-            console.log(`Application code written to: ${mainAppFile}`);
             
+            if (language === 'java') {
+                // For Java projects, place Application.java in the correct package structure
+                console.log('Searching for Java package directory structure...');
+                const javaPackageDir = await findJavaPackageDirectory(sdkPath);
+                
+                if (javaPackageDir) {
+                    // Place Application.java at the same level as api, auth, model packages
+                    const mainAppFile = path.join(javaPackageDir, `Application.${fileExtension}`);
+                    await fs.promises.writeFile(mainAppFile, applicationCode, 'utf8');
+                    console.log(`Java Application code written to: ${mainAppFile}`);
+                    
+                    // Also log the relative path for clarity
+                    const relativePath = path.relative(sdkPath, mainAppFile);
+                    console.log(`Relative path: ${relativePath}`);
+                } else {
+                    // Fallback: create in application-code directory
+                    console.warn('Could not find Java package directory, using fallback location');
+                    const appCodeDir = path.join(sdkPath, 'application-code');
+                    await fs.promises.mkdir(appCodeDir, { recursive: true });
+                    const mainAppFile = path.join(appCodeDir, `Application.${fileExtension}`);
+                    await fs.promises.writeFile(mainAppFile, applicationCode, 'utf8');
+                    console.log(`Application code written to fallback location: ${mainAppFile}`);
+                }
+            } else {
+                // For non-Java languages, use the application-code directory
+                const appCodeDir = path.join(sdkPath, 'application-code');
+                await fs.promises.mkdir(appCodeDir, { recursive: true });
+                const mainAppFile = path.join(appCodeDir, `Application.${fileExtension}`);
+                await fs.promises.writeFile(mainAppFile, applicationCode, 'utf8');
+                console.log(`Application code written to: ${mainAppFile}`);
+            }
         }
+        
+        // Create README with instructions based on language and structure
+        await createProjectReadme(sdkPath, sdkConfiguration, language);
         
         // Create final ZIP with SDK + application code
         const permanentDir = path.join(process.cwd(), 'generated-sdks');
@@ -1189,6 +1316,175 @@ const cleanupOrphanedSDKDirectories = async () => {
         
     } catch (error) {
         console.error('Error during orphaned SDK directories cleanup:', error);
+    }
+};
+
+/**
+ * Create a comprehensive README file for the generated SDK and application
+ */
+const createProjectReadme = async (sdkPath, sdkConfiguration, language) => {
+    try {
+        const sdkName = sdkConfiguration?.name || 'generated-sdk';
+        const mode = sdkConfiguration?.mode || 'default';
+        
+        let readmeContent = `# ${sdkName}
+
+Generated SDK with Application Code
+
+## Overview
+This package contains:
+1. **SDK Library**: Generated from your selected API specifications
+2. **Application Code**: Sample application demonstrating API usage
+3. **Documentation**: This README and any additional documentation
+
+## Configuration
+- **Language**: ${language}
+- **SDK Name**: ${sdkName}
+- **Generation Mode**: ${mode}
+- **Generated**: ${new Date().toISOString()}
+
+`;
+
+        if (language === 'java') {
+            readmeContent += `## Java Project Structure
+
+The generated Java SDK follows standard Maven/Gradle project structure:
+
+\`\`\`
+src/
+├── main/
+│   ├── AndroidManifest.xml (for Android projects)
+│   └── java/
+│       └── org/openapitools/client/
+│           ├── Application.java          # ← Your generated application
+│           ├── ApiClient.java           # Main API client
+│           ├── Configuration.java       # SDK configuration
+│           ├── api/                     # API endpoints
+│           ├── auth/                    # Authentication classes
+│           └── model/                   # Data models
+├── build.gradle (or pom.xml)
+└── README.md
+\`\`\`
+
+## Quick Start (Java)
+
+### 1. Build the Project
+\`\`\`bash
+# For Gradle projects
+./gradlew build
+
+# For Maven projects
+mvn clean compile
+\`\`\`
+
+### 2. Run the Application
+\`\`\`bash
+# Compile and run Application.java
+javac -cp "lib/*:src/main/java" src/main/java/org/openapitools/client/Application.java
+java -cp "lib/*:src/main/java" org.openapitools.client.Application
+
+# Or use your build tool
+./gradlew run
+# or
+mvn exec:java -Dexec.mainClass="org.openapitools.client.Application"
+\`\`\`
+
+### 3. Integration
+To use this SDK in your own project:
+
+1. **Add the SDK as a dependency** in your \`build.gradle\` or \`pom.xml\`
+2. **Import the necessary classes**:
+   \`\`\`java
+   import org.openapitools.client.ApiClient;
+   import org.openapitools.client.Configuration;
+   import org.openapitools.client.api.*;
+   import org.openapitools.client.model.*;
+   \`\`\`
+3. **Initialize the API client**:
+   \`\`\`java
+   ApiClient client = Configuration.getDefaultApiClient();
+   client.setBasePath("https://your-api-server.com");
+   \`\`\`
+
+## Application.java
+The generated \`Application.java\` file contains:
+- Complete working examples of API calls
+- Error handling patterns
+- Authentication setup (if required)
+- Sample data processing
+
+`;
+        } else {
+            readmeContent += `## ${language.charAt(0).toUpperCase() + language.slice(1)} Project
+
+Please refer to the application code in the application-code directory.
+
+`;
+        }
+
+        readmeContent += `## API Documentation
+- Check the docs/ directory for detailed API documentation
+- Each API endpoint is documented with request/response examples
+- Model classes are documented with field descriptions
+
+## Authentication
+If your APIs require authentication, update the configuration in Application.${getFileExtension(language)}:
+- API Keys: Set in the ApiClient configuration
+- OAuth2: Configure the OAuth2 flow
+- Basic Auth: Set username/password in the client
+
+## Troubleshooting
+
+### Common Issues
+1. **Compilation Errors**: Ensure all dependencies are installed
+2. **Runtime Errors**: Check API endpoint URLs and authentication
+3. **Network Issues**: Verify server connectivity and firewall settings
+
+### Getting Help
+- Check the generated documentation in docs/ folder
+- Review the API specification used for generation
+- Examine the sample code in Application.${getFileExtension(language)}
+
+## License
+This generated code is provided as-is for demonstration purposes.
+Check your API provider's terms of service for usage guidelines.
+`;
+
+        const readmePath = path.join(sdkPath, 'README.md');
+        await fs.promises.writeFile(readmePath, readmeContent, 'utf8');
+        console.log(`Comprehensive README created: ${readmePath}`);
+        
+    } catch (error) {
+        console.error('Error creating project README:', error);
+        // Don't throw error, as this is not critical for SDK generation
+    }
+};
+
+/**
+ * Debug function to list directory structure (helpful for troubleshooting)
+ */
+const listDirectoryStructure = async (dir, prefix = '', maxDepth = 3, currentDepth = 0) => {
+    if (currentDepth > maxDepth) {
+        return;
+    }
+    
+    try {
+        const items = await fs.promises.readdir(dir, { withFileTypes: true });
+        
+        for (const item of items.slice(0, 20)) { // Limit to first 20 items to avoid spam
+            console.log(`${prefix}${item.isDirectory() ? '📁' : '📄'} ${item.name}`);
+            
+            if (item.isDirectory() && currentDepth < maxDepth) {
+                const fullPath = path.join(dir, item.name);
+                await listDirectoryStructure(fullPath, prefix + '  ', maxDepth, currentDepth + 1);
+            }
+        }
+        
+        if (items.length > 20) {
+            console.log(`${prefix}... and ${items.length - 20} more items`);
+        }
+    } catch (error) {
+        console.log(`${prefix}❌ Error reading directory: ${error.message}`);
     }
 };
 
