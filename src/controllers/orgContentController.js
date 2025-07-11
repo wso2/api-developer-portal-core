@@ -23,6 +23,7 @@ const { renderTemplate, renderTemplateFromAPI } = require('../utils/util');
 const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
+const logger = require('../utils/logger');
 
 const filePrefix = config.pathToContent;
 const baseURLDev = config.baseUrl  + constants.ROUTE.VIEWS_PATH;
@@ -69,7 +70,11 @@ const loadOrgContentFromAPI = async (req, res) => {
         };
         html = await renderTemplateFromAPI(templateContent, orgId, orgName, 'pages/home', req.params.viewName);
     } catch (error) {
-        console.error(`Failed to load organization :`, error);
+        logger.error('Failed to load organization', {
+            error: error.message,
+            stack: error.stack,
+            orgName: orgName,
+        });
         html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
         constants.COMMON_ERROR_MESSAGE, true);
         return res.send(html);

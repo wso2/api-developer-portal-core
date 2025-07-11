@@ -30,6 +30,7 @@ const util = require('../utils/util');
 const { validationResult } = require('express-validator');
 const filePrefix = config.pathToContent;
 const hbs = exphbs.create({});
+const logger = require('../utils/logger');
 
 const registerPartials = async (req, res, next) => {
 
@@ -55,7 +56,9 @@ const registerPartials = async (req, res, next) => {
         const orgID = await adminDao.getOrgId(req.params.orgName);
         var layoutContent = await loadLayoutFromAPI(orgID, req.params.viewName);
         if (layoutContent === "") {
-          console.log("Layout content not found in the database. Loading from file system");
+          logger.info('Layout content not found in the database. Loading from file system', {
+            orgId: orgID,
+          });
           await registerAllPartialsFromFile(config.baseUrl + "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName, req, './src/defaultContent');
           //register doc page partials
           if (req.originalUrl.includes(constants.ROUTE.API_DOCS_PATH) && req.params.docType && req.params.docName) {
@@ -68,7 +71,12 @@ const registerPartials = async (req, res, next) => {
         }
       }
     } catch (error) {
-      console.error('Error while loading organization :', error);
+      logger.error('Error while loading organization', {
+        error: error.message,
+        stack: error.stack,
+        orgName: req.params.orgName,
+        viewName: req.params.viewName
+      });
       if (error.message === "API not found") {
         let templateContent = {
           errorMessage: constants.ERROR_MESSAGE.API_NOT_FOUND

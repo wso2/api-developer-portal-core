@@ -29,6 +29,7 @@ const { ApplicationDTO } = require('../dto/application');
 const { Sequelize } = require("sequelize");
 const adminService = require('../services/adminService');
 const apiDao = require('../dao/apiMetadata');
+const logger = require('../utils/logger');
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
 
@@ -40,7 +41,11 @@ const saveApplication = async (req, res) => {
         const application = await adminDao.createApplication(orgID, req.user.sub, req.body);
         return res.status(201).json(new ApplicationDTO(application.dataValues));
     } catch (error) {
-        console.error("Error occurred while creating the application", error);
+        logger.error('Error occurred while creating the application', {
+            error: error.message,
+            stack: error.stack,
+            orgID: req.user[constants.ORG_IDENTIFIER]
+        });
         util.handleError(res, error);
     }
 };
@@ -57,7 +62,12 @@ const updateApplication = async (req, res) => {
         }
         res.status(200).send(new ApplicationDTO(updatedApp[0].dataValues));
     } catch (error) {
-        console.error("Error occurred while updating the application", error);
+        logger.error('Error occurred while updating the application', {
+            error: error.message,
+            stack: error.stack,
+            orgID: req.user[constants.ORG_IDENTIFIER],
+            applicationId: req.params.applicationId
+        });
         util.handleError(res, error);
     }
 };
@@ -91,11 +101,20 @@ const deleteApplication = async (req, res) => {
                     res.status(200).send("Resouce Deleted Successfully");
                 }
             }
-            console.error("Error occurred while deleting the application", error);
+            logger.error('Error occurred while deleting the application', {
+                error: error.message,
+                stack: error.stack,
+                orgID: req.user[constants.ORG_IDENTIFIER],
+                applicationId: applicationId
+            });
             util.handleError(res, error);
         }
     } catch (error) {
-        console.error("Error occurred while deleting the application", error);
+        logger.error('Error occurred while deleting the application', {
+            error: error.message,
+            stack: error.stack,
+            orgID: req.user[constants.ORG_IDENTIFIER],
+        });
         util.handleError(res, error);
     }
 }
@@ -113,7 +132,11 @@ const resetThrottlingPolicy = async (req, res) => {
         });
         res.status(200).json({ message: responseData.message });
     } catch (error) {
-        console.error("Error occurred while resetting the application", error);
+        logger.error('Error occurred while resetting the application', {
+            error: error.message,
+            stack: error.stack,
+            applicationId: req.params.applicationId,
+        });
         util.handleError(res, error);
     }
 };
@@ -190,7 +213,12 @@ const generateAPIKeys = async (req, res) => {
         responseData.appRefId = cpAppID;
         res.status(200).json(responseData);
     } catch (error) {
-        console.error("Error occurred while deleting the application", error);
+        logger.error('Error occurred while deleting the application', {
+            error: error.message,
+            stack: error.stack,
+            apiId: req.body.apiId,
+            applicationId: req.body.applicationId
+        });
         util.handleError(res, error);
     }
 };
@@ -202,7 +230,10 @@ const revokeAPIKeys = async (req, res) => {
         // await adminDao.deleteAppKeyMapping(await adminDao.getOrgId((req.user[constants.ORG_IDENTIFIER])), req.body.applicationId, req.body.apiRefID);
         res.status(200).json(responseData);
     } catch (error) {
-        console.error("Error occurred while revoking the API key", error);
+        logger.error('Error occurred while revoking the API key', {
+            error: error.message,
+            stack: error.stack,
+        });
         util.handleError(res, error);
     }
 }
@@ -213,7 +244,10 @@ const regenerateAPIKeys = async (req, res) => {
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/api-keys/${apiKeyID}/regenerate`, {}, {});
         res.status(200).json(responseData);
     } catch (error) {
-        console.error("Error occurred while revoking the API key", error);
+        logger.error('Error occurred while revoking the API key', {
+            error: error.message,
+            stack: error.stack,
+        });
         util.handleError(res, error);
     }
 }
@@ -224,7 +258,11 @@ const generateApplicationKeys = async (req, res) => {
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/generate-keys`, {}, req.body);
         res.status(200).json(responseData);
     } catch (error) {
-        console.error("Error occurred while generating the application keys", error);
+        logger.error('Error occurred while generating the application keys', {
+            error: error.message,
+            stack: error.stack,
+            applicationId: req.params.applicationId,
+        });
         util.handleError(res, error);
     }
 };
@@ -236,7 +274,11 @@ const generateOAuthKeys = async (req, res) => {
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}/generate-token`, {}, req.body);
         res.status(200).json(responseData);
     } catch (error) {
-        console.error("Error occurred while generating the OAuth keys", error);
+        logger.error('Error occurred while generating the OAuth keys', {
+            error: error.message,
+            stack: error.stack,
+            applicationId: req.params.applicationId,
+        });
         util.handleError(res, error);
     }
 };
@@ -248,7 +290,11 @@ const revokeOAuthKeys = async (req, res) => {
         const responseData = await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}`, {}, {});
         res.status(200).json(responseData);
     } catch (error) {
-        console.error("Error occurred while generating the OAuth keys", error);
+        logger.error('Error occurred while revoking the OAuth keys', {
+            error: error.message,
+            stack: error.stack,
+            applicationId: req.params.applicationId,
+        });
         util.handleError(res, error);
     }
 };
@@ -260,13 +306,16 @@ const cleanUp = async (req, res) => {
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}/clean-up`, {}, req.body);
         res.status(200).json(responseData);
     } catch (error) {
-        console.error("Error occurred while generating the OAuth keys", error);
+        logger.error('Error occurred while cleaning up the OAuth keys', {
+            error: error.message,
+            stack: error.stack,
+            applicationId: req.params.applicationId,
+        });
         util.handleError(res, error);
     }
 };
 
 const updateOAuthKeys = async (req, res) => {
-
     let tokenDetails = req.body;
     try {
         const applicationId = req.params.applicationId;
@@ -274,7 +323,11 @@ const updateOAuthKeys = async (req, res) => {
         const responseData = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}`, {}, tokenDetails);
         res.status(200).json(responseData);
     } catch (error) {
-        console.error("Error occurred while generating the OAuth keys", error);
+        logger.error('Error occurred while generating the OAuth keys', {
+            error: error.message,
+            stack: error.stack,
+            applicationId: req.params.applicationId,
+        });
         util.handleError(res, error);
     }
 };
@@ -298,7 +351,10 @@ const login = async (req, res) => {
 
     passport.authenticate('default-auth', (err, user, info) => {
         if (err) {
-            console.error("Error occurred while logging in", err);
+            logger.error('Error occurred while logging in', {
+                error: err.message,
+                stack: err.stack,
+            });
             return util.handleError(res, err);
         }
         if (!user) {

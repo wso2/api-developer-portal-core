@@ -26,6 +26,7 @@ const constants = require('../utils/constants');
 const adminService = require('../services/adminService');
 const apiMetadataService = require('../services/apiMetadataService');
 const devPortalService = require('../services/devportalService');
+const logger = require('../utils/logger');
 
 const filePrefix = config.pathToContent;
 
@@ -96,7 +97,10 @@ const loadSettingPage = async (req, res) => {
         let html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         res.send(html);
     } catch (error) {
-        console.error(`Error while loading content from DB: ${error}`);
+        logger.error('Error while loading content from DB', {
+            error: error.message,
+            stack: error.stack,
+        });
     }
 }
 
@@ -147,7 +151,10 @@ const loadPortalPage = async (req, res) => {
         res.send(html);
 
     } catch (error) {
-        console.error(`Error while loading setting page:`, error);
+        logger.error('Error while loading setting page', {
+            error: error.message,
+            stack: error.stack,
+        });
     }
 }
 
@@ -181,7 +188,11 @@ const loadEditOrganizationPage = async (req, res) => {
         const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         res.send(html);
     } catch (error) {
-        console.error(`Error while loading setting page :`, error);
+        logger.error('Error while loading setting page', {
+            error: error.message,
+            stack: error.stack,
+            orgID: orgID
+        });
     }
 }
 
@@ -196,7 +207,10 @@ const loadCreateOrganizationPage = async (req, res) => {
         const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         res.send(html);
     } catch (error) {
-        console.error(`Error while loading setting page :`, error);
+        logger.error('Error while loading setting page', {
+            error: error.message,
+            stack: error.stack,
+        });
     }
 }
 

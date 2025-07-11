@@ -31,6 +31,7 @@ const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
 const controlPlaneUrl = config.controlPlane.url;
+const logger = require('../utils/logger');
 
 const filePrefix = config.pathToContent;
 const generateArray = (length) => Array.from({ length });
@@ -104,7 +105,7 @@ const loadAPIs = async (req, res) => {
                 //filter apis based on the roles
                 metaDataList = util.filterAllowedAPIs(metaDataList, allowedAPIList.list);
             } else {
-                console.log("Cannot retrieve allowed API list from control plane");
+                logger.info('Cannot retrieve allowed API list from control plane');
                 metaDataList = [];
             }
 
@@ -122,7 +123,7 @@ const loadAPIs = async (req, res) => {
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
             }
         } catch (error) {
-            console.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
+            logger.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, error);
             if (Number(error?.statusCode) === 401) {
                 html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_AUTH_ERROR_MESSAGE, true);
             } else { 
@@ -190,7 +191,7 @@ const loadAPIContent = async (req, res) => {
 
             if (allowedAPIList.count === 0) {
                 if (!(req.user)) {
-                    console.log("User is not authorized to access the API or user session expired, hence redirecting to login page");
+                    logger.info('User is not authorized to access the API or user session expired, redirecting to login page', { })
                     res.redirect(req.originalUrl.split("/api/")[0] + '/login');
                 } else {
                     html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
@@ -237,7 +238,12 @@ const loadAPIContent = async (req, res) => {
                             const schemaString = rawSchema.API_FILE.toString(constants.CHARSET_UTF8);
                             schemaDefinition = JSON.parse(schemaString);
                         } catch (err) {
-                            console.error("Failed to load or parse schema definition:", err);
+                            logger.error("Failed to load or parse schema definition", {
+                                error: err.message,
+                                stack: err.stack,
+                                orgID: orgID,
+                                apiID: apiID
+                            });
                             throw err;
                         }
                     }
@@ -279,7 +285,7 @@ const loadAPIContent = async (req, res) => {
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
             }
         } catch (error) {
-            console.error(`Failed to load api content:`, error);
+            logger.error('Failed to load API content', error);
             if (Number(error?.statusCode) === 401) {
                 html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_AUTH_ERROR_MESSAGE, true);
             } else { 
@@ -346,7 +352,12 @@ const loadDocsPage = async (req, res) => {
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
         } catch (error) {
-            console.error(`Failed to load api docs:`, error);
+            logger.error('Failed to load api docs:`', {
+                error: error.message,
+                stack: error.stack,
+                orgName: orgName,
+                apiHandle: apiHandle,
+            });
             html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
             constants.COMMON_ERROR_MESSAGE, true);
         }
@@ -435,7 +446,12 @@ const loadDocument = async (req, res) => {
                 templateContent.apiType = apiType;
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
             } catch (error) {
-                console.error(`Failed to load api content :`, error);
+                logger.error('Failed to load api content', {
+                    error: error.message,
+                    stack: error.stack,
+                    orgName: orgName,
+                    apiHandle: apiHandle,
+                });
                 html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
                 constants.COMMON_ERROR_MESSAGE, true);
             }
@@ -527,7 +543,11 @@ async function parseSwagger(api) {
         }));
         return { title, description: apiDescription, endpoints };
     } catch (error) {
-        console.error("Error parsing OpenAPI:", error);
+        logger.error('Error parsing OpenAPI', {
+            error: error.message,
+            stack: error.stack,
+            api: api
+        });
     }
 }
 
