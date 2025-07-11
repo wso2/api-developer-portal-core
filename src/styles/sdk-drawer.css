@@ -177,57 +177,6 @@ body.drawer-open {
   margin-bottom: 1.5rem;
 }
 
-.config-group.mode-selection {
-  display: flex;
-  flex-direction: row;
-  gap: 2rem;
-  align-items: center;
-  padding-left: 0;
-  margin-left: 0; 
-}
-
-/* General styling for each radio button and its label */
-.mode-selection .form-check {
-  display: flex;
-  align-items: center; /* Vertically aligns the radio circle and the text */
-  gap: 0.5rem; /* The space between the radio circle and its text label */
-}
-
-/* Styles for the clickable radio button circle */
-.mode-selection .form-check-input {
-  accent-color: var(--primary-main-color);
-  transform: scale(1.1);
-  cursor: pointer;
-  margin: 0; /* Reset margin to rely on the parent's 'gap' for spacing */
-}
-
-.mode-selection .form-check-input:focus {
-  border-color: var(--primary-main-color);
-  box-shadow: 0 0 0 0.25rem rgba(26, 76, 109, 0.25);
-}
-
-/* Styles for the text label */
-.mode-selection .form-check-label {
-  cursor: pointer;
-  font-weight: 500;
-  color: var(--main-text-color);
-  font-size: 0.8rem; /* 14px is a good standard size */
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-/* Make the label bold when its corresponding radio button is checked */
-.mode-selection .form-check-input:checked + .form-check-label {
-  color: var(--primary-main-color);
-  font-weight: 600;
-}
-
-.mode-selection .form-check-label .bi-stars {
-    color: #ffc107;
-    font-size: 0.875rem;
-}
-
 /* Language Grid */
 .language-options {
     display: grid;
@@ -252,18 +201,13 @@ body.drawer-open {
     margin: 0;
 }
 
-/*
-  --- KEY CHANGES FOR HORIZONTAL LAYOUT ---
-  - flex-direction is now 'row'.
-  - justify-content: space-between pushes the info and button to opposite ends.
-  - Padding is adjusted for the new layout.
-*/
+/* AI Mode card styling without download buttons */
 .language-card {
     display: flex;
-    flex-direction: row; /* CHANGED */
+    flex-direction: row;
     align-items: center;
-    justify-content: space-between; /* CHANGED back for default mode */
-    padding: 0.875rem 0.75rem; /* ADJUSTED - reduced left padding */
+    justify-content: flex-start; /* Changed for AI mode without buttons */
+    padding: 1.25rem 1.5rem; /* Increased padding for AI mode */
     border: 2px solid #e9ecef;
     border-radius: 8px;
     background-color: var(--white-color);
@@ -271,18 +215,19 @@ body.drawer-open {
     transition: all 0.2s ease;
     text-decoration: none;
     color: inherit;
-    height: 54px; /* Fixed height for consistency */
+    height: 54px;
     min-height: 54px;
+    min-width: 200px; /* Wider tiles for AI mode */
 }
 
 /* NEW: Styles for the wrapper containing the icon and name */
 .language-info {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 1rem; /* Increased gap for AI mode */
     flex: 1;
-    min-width: 0; /* Allows text to truncate if needed */
-    margin-left: -0.125rem; /* Shift slightly more to the left */
+    min-width: 0;
+    margin-left: -0.25rem; /* Shift more to the left for AI mode */
 }
 
 /* The selected state now highlights the border and background */
@@ -357,35 +302,12 @@ body.drawer-open {
 
 /* ADJUSTED: Language name styling */
 .language-name {
-  font-size: 0.8rem;
+  font-size: 0.875rem; /* Slightly larger for AI mode */
   color: var(--main-text-color);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-/* Download button styles */
-.language-download-btn {
-    font-size: 0.6rem;
-    padding: 0.25rem 0.4rem;
-    border-radius: 4px;
-    border: 1px solid var(--primary-main-color);
-    color: var(--primary-main-color);
-    background-color: transparent;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 500;
-    white-space: nowrap;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.15rem;
-}
-
-.language-download-btn:hover {
-    background-color: var(--primary-main-color);
-    color: white;
 }
 
 /* AI Description Section */
@@ -458,90 +380,126 @@ body.drawer-open {
   font-size: 0.875rem;
 }
 
-/* SDK Notification Message */
-.sdk-notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background-color: var(--white-color);
-    border: 1px solid #dee2e6;
+/* SDK Progress Bar Styles */
+.sdk-progress-container {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
     border-radius: 8px;
-    padding: 1rem 1.25rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 2000;
-    max-width: 350px;
-    transform: translateX(100%);
-    transition: transform 0.3s ease;
+    padding: 20px;
+    margin: 10px 0;
+    min-height: 120px;
+    transition: all 0.3s ease;
 }
 
-.sdk-notification.show {
-    transform: translateX(0);
+.sdk-progress-container.error {
+    background: #f8f4f4;
+    border-color: #f5c6cb;
 }
 
-.sdk-notification-header {
+.sdk-progress-header {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    margin-bottom: 0.5rem;
+    align-items: center;
+    margin-bottom: 15px;
 }
 
-.sdk-notification-title {
+.sdk-progress-title {
     font-weight: 600;
-    color: var(--main-text-color);
-    font-size: 0.875rem;
+    font-size: 14px;
+    color: #495057;
 }
 
-.sdk-notification-close {
-    background: none;
-    border: none;
-    font-size: 1.2rem;
-    color: #6c757d;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
+.sdk-progress-percentage {
+    font-weight: 700;
+    font-size: 16px;
+    color: #007bff;
 }
 
-.sdk-notification-close:hover {
-    color: var(--main-text-color);
+.sdk-progress-container.error .sdk-progress-percentage {
+    color: #dc3545;
 }
 
-.sdk-notification-message {
-    color: #6c757d;
-    font-size: 0.8rem;
-    line-height: 1.4;
-    margin: 0;
-}
-
-.sdk-notification-progress {
-    margin-top: 0.75rem;
+.sdk-progress-bar-wrapper {
+    margin-bottom: 15px;
 }
 
 .sdk-progress-bar {
     width: 100%;
-    height: 4px;
+    height: 8px;
     background-color: #e9ecef;
-    border-radius: 2px;
+    border-radius: 4px;
     overflow: hidden;
+    position: relative;
 }
 
 .sdk-progress-fill {
     height: 100%;
-    background-color: var(--primary-main-color);
-    border-radius: 2px;
-    transition: width 0.3s ease;
+    background: linear-gradient(90deg, #007bff 0%, #0056b3 100%);
+    border-radius: 4px;
     width: 0%;
+    transition: width 0.4s ease;
+    position: relative;
 }
 
-.sdk-notification.success {
-    border-left: 4px solid #28a745;
+.sdk-progress-container.error .sdk-progress-fill {
+    background: linear-gradient(90deg, #dc3545 0%, #c82333 100%);
 }
 
-.sdk-notification.error {
-    border-left: 4px solid #dc3545;
+.sdk-progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        transparent 100%
+    );
+    animation: progressShimmer 2s infinite;
 }
 
-.sdk-notification.info {
-    border-left: 4px solid var(--primary-main-color);
+@keyframes progressShimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.sdk-progress-status {
+    font-size: 13px;
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+}
+
+/* Hide generate button when progress is shown */
+.sdk-progress-container + .ai-generate-section {
+    display: none;
+}
+
+/* Ensure proper spacing in AI description section */
+#aiDescriptionSection .sdk-progress-container {
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+/* Progress container animation */
+.sdk-progress-container {
+    opacity: 0;
+    transform: translateY(-10px);
+    animation: progressSlideIn 0.3s ease forwards;
+}
+
+@keyframes progressSlideIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Responsive */

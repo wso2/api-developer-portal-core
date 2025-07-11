@@ -7,20 +7,7 @@ function initializeDrawerEventHandlers() {
     const existingHandlers = document.querySelectorAll('.sdk-drawer-event-handler');
     existingHandlers.forEach(handler => handler.remove());
     
-    // Handle SDK mode changes
-    const sdkModeRadios = document.querySelectorAll('.sdk-mode-input');
-    sdkModeRadios.forEach(radio => {
-        // Remove any existing listeners
-        radio.removeEventListener('change', handleModeChange);
-        radio.removeEventListener('click', handleModeClick);
-        
-        // Add new listeners
-        radio.addEventListener('change', handleModeChange);
-        radio.addEventListener('click', handleModeClick);
-    });
-
-    // Handle programming language changes for both modes
-    setupLanguageHandlers('programmingLanguage', 'default');
+    // Handle programming language changes for AI mode only
     setupLanguageHandlers('programmingLanguageAI', 'ai');
     
     // Prevent any form submissions within the drawer
@@ -32,107 +19,6 @@ function initializeDrawerEventHandlers() {
             return false;
         });
     }
-}
-
-function handleModeChange(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    console.log('SDK Mode changed to:', e.target.value);
-    console.log('Radio checked state:', e.target.checked);
-    
-    const aiSection = document.getElementById('aiDescriptionSection');
-    const defaultModeFooter = document.getElementById('defaultModeFooter');
-    const aiModeFooter = document.getElementById('aiModeFooter');
-    
-    // Get all language options
-    const defaultLanguages = document.querySelectorAll('.language-option[data-mode="default"]');
-    const aiLanguages = document.querySelectorAll('.language-option[data-mode="ai"]');
-    
-    if (e.target.value === 'ai') {
-        // Show AI mode
-        if (aiSection) aiSection.style.display = 'block';
-        if (defaultModeFooter) defaultModeFooter.style.display = 'none';
-        if (aiModeFooter) aiModeFooter.style.display = 'block';
-        
-        // Add AI mode class to language options for wider tiles
-        const languageOptions = document.getElementById('languageOptions');
-        if (languageOptions) {
-            languageOptions.classList.add('ai-mode');
-        }
-        
-        // Add AI mode class to AI description section for wider input
-        if (aiSection) {
-            aiSection.classList.add('ai-mode');
-        }
-        
-        // Hide default languages, show AI languages
-        defaultLanguages.forEach(lang => lang.style.display = 'none');
-        aiLanguages.forEach(lang => lang.style.display = 'block');
-        
-        // Clear selection and select Android as default AI language
-        const androidAIRadio = document.querySelector('input[name="programmingLanguageAI"][value="android"]');
-        if (androidAIRadio) {
-            androidAIRadio.checked = true;
-            updateLanguageSelection('ai');
-        }
-        
-        console.log('AI section shown, AI languages displayed');
-    } else {
-        // Show default mode
-        if (aiSection) aiSection.style.display = 'none';
-        if (defaultModeFooter) defaultModeFooter.style.display = 'block';
-        if (aiModeFooter) aiModeFooter.style.display = 'none';
-        
-        // Remove AI mode class from language options
-        const languageOptions = document.getElementById('languageOptions');
-        if (languageOptions) {
-            languageOptions.classList.remove('ai-mode');
-        }
-        
-        // Remove AI mode class from AI description section
-        if (aiSection) {
-            aiSection.classList.remove('ai-mode');
-        }
-        
-        // Show default languages, hide AI languages
-        defaultLanguages.forEach(lang => lang.style.display = 'block');
-        aiLanguages.forEach(lang => lang.style.display = 'none');
-        
-        // Clear AI selection and select first default language
-        const firstDefaultRadio = document.querySelector('input[name="programmingLanguage"]');
-        if (firstDefaultRadio) {
-            firstDefaultRadio.checked = true;
-            updateLanguageSelection('default');
-        }
-        
-        console.log('AI section hidden, default languages displayed');
-    }
-    
-    // Update mode selection visual feedback
-    setTimeout(() => {
-        updateModeSelection();
-    }, 50);
-    
-    return false;
-}
-
-function handleModeClick(e) {
-    e.stopPropagation();
-}
-
-function updateModeSelection() {
-    const modeRadios = document.querySelectorAll('.sdk-mode-input');
-    modeRadios.forEach(radio => {
-        const formCheck = radio.closest('.form-check');
-        if (formCheck) {
-            if (radio.checked) {
-                formCheck.classList.add('selected');
-            } else {
-                formCheck.classList.remove('selected');
-            }
-        }
-    });
 }
 
 function setupLanguageHandlers(radioName, mode) {
@@ -170,10 +56,10 @@ function updateLanguageSelection(mode) {
         option.classList.remove('selected');
     });
     
-    // Update only the current mode's language options
-    const currentModeOptions = document.querySelectorAll(`.language-option[data-mode="${mode}"]`);
+    // Update AI mode language options only
+    const aiModeOptions = document.querySelectorAll('.language-option[data-mode="ai"]');
     
-    currentModeOptions.forEach(option => {
+    aiModeOptions.forEach(option => {
         const radio = option.querySelector('input[type="radio"]');
         
         if (radio && radio.checked) {
@@ -206,9 +92,8 @@ function openSdkDrawer() {
         // Initialize event handlers
         initializeDrawerEventHandlers();
         
-        // Initialize visual state
-        updateModeSelection();
-        updateLanguageSelection('default');
+        // Initialize visual state for AI mode only
+        updateLanguageSelection('ai');
         
         // Animate drawer in
         setTimeout(() => {
@@ -236,14 +121,8 @@ function closeSdkDrawer() {
 }
 
 function resetDrawerState() {
-    // Reset to default mode
-    const defaultModeRadio = document.getElementById('defaultMode');
-    if (defaultModeRadio) {
-        defaultModeRadio.checked = true;
-    }
-    
-    // Reset to Android as default language
-    const defaultLanguage = document.querySelector('input[name="programmingLanguage"][value="android"]');
+    // Reset to Android as default AI language
+    const defaultLanguage = document.querySelector('input[name="programmingLanguageAI"][value="android"]');
     if (defaultLanguage) {
         defaultLanguage.checked = true;
     }
@@ -254,37 +133,29 @@ function resetDrawerState() {
         aiDescription.value = '';
     }
     
-    // Hide AI section
+    // Show AI section (always visible now)
     const aiSection = document.getElementById('aiDescriptionSection');
     if (aiSection) {
-        aiSection.style.display = 'none';
+        aiSection.style.display = 'block';
+        aiSection.classList.add('ai-mode');
     }
     
-    // Show default mode footer
-    const defaultModeFooter = document.getElementById('defaultModeFooter');
+    // Show AI mode footer only
     const aiModeFooter = document.getElementById('aiModeFooter');
-    if (defaultModeFooter) defaultModeFooter.style.display = 'block';
-    if (aiModeFooter) aiModeFooter.style.display = 'none';
+    if (aiModeFooter) aiModeFooter.style.display = 'block';
     
-    // Show default languages, hide AI languages
-    const defaultLanguages = document.querySelectorAll('.language-option[data-mode="default"]');
+    // Show AI languages only
     const aiLanguages = document.querySelectorAll('.language-option[data-mode="ai"]');
+    aiLanguages.forEach(lang => lang.style.display = 'block');
     
-    defaultLanguages.forEach(lang => lang.style.display = 'block');
-    aiLanguages.forEach(lang => lang.style.display = 'none');
-    
-    // Remove AI mode classes
+    // Add AI mode class to language options
     const languageOptions = document.getElementById('languageOptions');
     if (languageOptions) {
-        languageOptions.classList.remove('ai-mode');
-    }
-    if (aiSection) {
-        aiSection.classList.remove('ai-mode');
+        languageOptions.classList.add('ai-mode');
     }
     
     // Update visual state
-    updateModeSelection();
-    updateLanguageSelection('default');
+    updateLanguageSelection('ai');
 }
 
 function populateSelectedAPIs(checkedCheckboxes) {
@@ -306,14 +177,18 @@ function populateSelectedAPIs(checkedCheckboxes) {
 
 function generateSDKFromDrawer(language) {
     const checkedCheckboxes = document.querySelectorAll('.api-checkbox:checked');
-    const selectedModeRadio = document.querySelector('.sdk-mode-input:checked');
-    const selectedMode = selectedModeRadio ? selectedModeRadio.value : 'default';
     const selectedLanguage = language || getSelectedLanguage();
     const descriptionElement = document.getElementById('sdkDescription');
     const description = descriptionElement ? descriptionElement.value : '';
     
-    // Validate that description is provided when AI mode is selected
-    if (selectedMode === 'ai' && (!description || description.trim() === '')) {
+    // Validate that at least 2 APIs are selected
+    if (checkedCheckboxes.length < 2) {
+        alert('Please select at least 2 APIs for SDK generation.');
+        return;
+    }
+    
+    // Validate that description is provided for AI mode
+    if (!description || description.trim() === '') {
         alert('Please provide a description for AI-generated SDK requirements.');
         return;
     }
@@ -328,7 +203,7 @@ function generateSDKFromDrawer(language) {
     const applicationName = getApplicationName();
     
     const sdkConfiguration = {
-        mode: selectedMode,
+        mode: 'ai',
         language: selectedLanguage,
         description: description.trim(),
         name: `${applicationName}-sdk`
@@ -340,12 +215,11 @@ function generateSDKFromDrawer(language) {
     const applicationId = pathParts[pathParts.length - 1];
     const viewName = pathParts[3];
     
-    // Close drawer
-    closeSdkDrawer();
+    // Don't close drawer - show progress in place
     
     // Log the configuration for debugging
     console.log('SDK Generation Configuration:', {
-        mode: selectedMode,
+        mode: 'ai',
         language: selectedLanguage,
         description: description.trim(),
         selectedAPIs: selectedAPIs.length
@@ -381,83 +255,6 @@ function generateSDKFromDrawer(language) {
     });
 }
 
-function downloadSDK(language, event) {
-    if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-    }
-    
-    const checkedCheckboxes = document.querySelectorAll('.api-checkbox:checked');
-    const selectedAPIs = Array.from(checkedCheckboxes).map(checkbox => ({
-        id: checkbox.dataset.apiId,
-        name: checkbox.dataset.apiName,
-        version: checkbox.dataset.apiVersion
-    }));
-    
-    // Get application name from template context or use default
-    const applicationName = getApplicationName();
-    
-    const sdkConfiguration = {
-        mode: 'default',
-        language: language,
-        description: '',
-        name: `${applicationName}-sdk`
-    };
-    
-    // Get current URL path parts
-    const pathParts = window.location.pathname.split('/');
-    const orgName = pathParts[1];
-    const applicationId = pathParts[pathParts.length - 1];
-    const viewName = pathParts[3];
-    
-    // Close drawer
-    closeSdkDrawer();
-    
-    // Log the configuration for debugging
-    console.log('SDK Download Configuration:', {
-        mode: 'default',
-        language: language,
-        selectedAPIs: selectedAPIs.length
-    });
-    
-    // Show loading state
-    showSDKGenerationLoading();
-    
-    // Call the SDK generation API
-    fetch(`/${orgName}/views/${viewName}/applications/${applicationId}/generate-sdk`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            selectedAPIs: selectedAPIs.map(api => api.id),
-            sdkConfiguration: sdkConfiguration
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        hideSDKGenerationLoading();
-        if (data.success) {
-            showSDKGenerationSuccess(data, 'default');
-        } else {
-            showSDKGenerationError(data.message || 'SDK download failed');
-        }
-    })
-    .catch(error => {
-        hideSDKGenerationLoading();
-        console.error('Error downloading SDK:', error);
-        showSDKGenerationError('An error occurred while downloading the SDK');
-    });
-}
-
-function getSelectedLanguage() {
-    const selectedModeRadio = document.querySelector('.sdk-mode-input:checked');
-    const selectedMode = selectedModeRadio ? selectedModeRadio.value : 'default';
-    const radioName = selectedMode === 'ai' ? 'programmingLanguageAI' : 'programmingLanguage';
-    const selectedRadio = document.querySelector(`input[name="${radioName}"]:checked`);
-    return selectedRadio ? selectedRadio.value : 'android';
-}
-
 function getApplicationName() {
     // Try to get application name from the page context
     const titleElement = document.querySelector('h1, .application-title, [data-application-name]');
@@ -474,128 +271,176 @@ function getApplicationName() {
 function showSDKGenerationLoading() {
     console.log('SDK generation started...');
     
-    // Show notification instead of overlay
-    showSDKNotification(
-        'SDK Generation Started',
-        'SDK generation is in progress. The SDK will be downloaded automatically once it is generated.',
-        'info'
-    );
+    // Show progress bar in place of prompt input
+    showProgressBarInPrompt();
 }
 
 function hideSDKGenerationLoading() {
     console.log('SDK generation completed');
-    // Keep notification visible until success/error
+    // Hide progress bar and restore prompt input
+    hideProgressBarInPrompt();
 }
 
 function showSDKGenerationSuccess(data, mode) {
-    // Show success notification
-    const modeText = mode === 'ai' ? 'AI-powered SDK with application code' : 'SDK';
-    showSDKNotification(
-        'SDK Generated Successfully',
-        `${modeText} has been generated successfully. Download started automatically.`,
-        'success'
-    );
+    // Complete the progress bar
+    updateProgressBar(100);
     
     // Auto-download the file
     if (data.data && data.data.finalDownloadUrl) {
         setTimeout(() => {
             triggerAutoDownload(data.data.finalDownloadUrl);
-        }, 1000); // Small delay to ensure user sees the success message
+            // Hide progress bar and restore input after download starts
+            setTimeout(() => {
+                hideProgressBarInPrompt();
+            }, 500);
+        }, 1000); // Small delay to show 100% completion
+    } else {
+        // Hide progress bar if no download URL
+        setTimeout(() => {
+            hideProgressBarInPrompt();
+        }, 1500);
     }
-    
-    // Hide notification after 5 seconds
-    setTimeout(hideSDKNotification, 5000);
 }
 
 function showSDKGenerationError(message) {
-    showSDKNotification(
-        'SDK Generation Failed',
-        'Error: ' + message,
-        'error'
-    );
+    console.error('SDK Generation Error:', message);
     
-    // Hide notification after 8 seconds for errors
-    setTimeout(hideSDKNotification, 8000);
+    // Show error state in progress bar briefly
+    showProgressError(message);
+    
+    // Hide progress bar and restore input after showing error
+    setTimeout(() => {
+        hideProgressBarInPrompt();
+    }, 3000);
 }
 
-// Notification system
-function showSDKNotification(title, message, type = 'info') {
-    // Remove existing notification
-    hideSDKNotification();
+// Progress bar functions for in-place generation feedback
+function showProgressBarInPrompt() {
+    const aiSection = document.getElementById('aiDescriptionSection');
+    const textarea = document.getElementById('sdkDescription');
+    const generateButton = document.querySelector('.ai-generate-btn');
     
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.id = 'sdkNotification';
-    notification.className = `sdk-notification ${type}`;
-    
-    notification.innerHTML = `
-        <div class="sdk-notification-header">
-            <span class="sdk-notification-title">${title}</span>
-            <button class="sdk-notification-close" onclick="hideSDKNotification()">×</button>
-        </div>
-        <p class="sdk-notification-message">${message}</p>
-        ${type === 'info' ? `
-            <div class="sdk-notification-progress">
-                <div class="sdk-progress-bar">
+    if (aiSection && textarea) {
+        // Hide the textarea and generate button
+        textarea.style.display = 'none';
+        if (generateButton) {
+            generateButton.style.display = 'none';
+        }
+        
+        // Create progress bar container
+        const progressContainer = document.createElement('div');
+        progressContainer.id = 'sdkProgressContainer';
+        progressContainer.className = 'sdk-progress-container';
+        progressContainer.innerHTML = `
+            <div class="sdk-progress-header">
+                <span class="sdk-progress-title">Generating SDK...</span>
+                <span class="sdk-progress-percentage" id="sdkProgressPercentage">0%</span>
+            </div>
+            <div class="sdk-progress-bar-wrapper">
+                <div class="sdk-progress-bar" id="sdkProgressBar">
                     <div class="sdk-progress-fill" id="sdkProgressFill"></div>
                 </div>
             </div>
-        ` : ''}
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Trigger animation
-    setTimeout(() => {
-        notification.classList.add('show');
-    }, 100);
-    
-    // Start progress animation for info notifications
-    if (type === 'info') {
+            <div class="sdk-progress-status" id="sdkProgressStatus">
+                Preparing SDK generation...
+            </div>
+        `;
+        
+        // Insert progress container after the label
+        const label = aiSection.querySelector('label[for="sdkDescription"]');
+        if (label) {
+            label.insertAdjacentElement('afterend', progressContainer);
+        } else {
+            aiSection.insertBefore(progressContainer, textarea);
+        }
+        
+        // Start progress animation
         startProgressAnimation();
     }
 }
 
-function hideSDKNotification() {
-    const notification = document.getElementById('sdkNotification');
-    if (notification) {
-        notification.classList.remove('show');
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
+function hideProgressBarInPrompt() {
+    const progressContainer = document.getElementById('sdkProgressContainer');
+    const textarea = document.getElementById('sdkDescription');
+    const generateButton = document.querySelector('.ai-generate-btn');
+    
+    if (progressContainer) {
+        progressContainer.remove();
+    }
+    
+    if (textarea) {
+        textarea.style.display = 'block';
+    }
+    
+    if (generateButton) {
+        generateButton.style.display = 'flex';
+    }
+}
+
+function updateProgressBar(progress) {
+    const progressFill = document.getElementById('sdkProgressFill');
+    const progressPercentage = document.getElementById('sdkProgressPercentage');
+    const progressStatus = document.getElementById('sdkProgressStatus');
+    
+    if (progressFill) {
+        progressFill.style.width = `${progress}%`;
+    }
+    
+    if (progressPercentage) {
+        progressPercentage.textContent = `${Math.round(progress)}%`;
+    }
+    
+    if (progressStatus) {
+        if (progress < 30) {
+            progressStatus.textContent = 'Preparing SDK generation...';
+        } else if (progress < 60) {
+            progressStatus.textContent = 'Processing API specifications...';
+        } else if (progress < 90) {
+            progressStatus.textContent = 'Generating SDK files...';
+        } else if (progress < 100) {
+            progressStatus.textContent = 'Finalizing SDK package...';
+        } else {
+            progressStatus.textContent = 'SDK generated successfully!';
+        }
+    }
+}
+
+function showProgressError(message) {
+    const progressContainer = document.getElementById('sdkProgressContainer');
+    const progressStatus = document.getElementById('sdkProgressStatus');
+    const progressTitle = document.querySelector('.sdk-progress-title');
+    
+    if (progressContainer) {
+        progressContainer.classList.add('error');
+    }
+    
+    if (progressTitle) {
+        progressTitle.textContent = 'Generation Failed';
+    }
+    
+    if (progressStatus) {
+        progressStatus.textContent = message;
+        progressStatus.style.color = '#dc3545';
     }
 }
 
 function startProgressAnimation() {
-    const progressFill = document.getElementById('sdkProgressFill');
-    if (progressFill) {
-        let progress = 0;
-        const interval = setInterval(() => {
-            progress += Math.random() * 15; // Random increment for realistic feel
-            if (progress > 90) {
-                progress = 90; // Stop at 90% until actual completion
-                clearInterval(interval);
-            }
-            progressFill.style.width = `${progress}%`;
-        }, 800);
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 8 + 2; // Random increment between 2-10
         
-        // Store interval reference for potential cleanup
-        progressFill.dataset.intervalId = interval;
-    }
-}
-
-function updateSDKProgress(progress) {
-    const progressFill = document.getElementById('sdkProgressFill');
-    if (progressFill) {
-        progressFill.style.width = `${progress}%`;
-        
-        // Clear the animation interval if it exists
-        if (progressFill.dataset.intervalId) {
-            clearInterval(progressFill.dataset.intervalId);
-            delete progressFill.dataset.intervalId;
+        if (progress > 85) {
+            progress = 85; // Stop at 85% until actual completion
+            clearInterval(interval);
         }
+        
+        updateProgressBar(progress);
+    }, 400);
+    
+    // Store interval reference for cleanup
+    const progressContainer = document.getElementById('sdkProgressContainer');
+    if (progressContainer) {
+        progressContainer.dataset.intervalId = interval;
     }
 }
 
@@ -613,8 +458,81 @@ function triggerAutoDownload(downloadUrl) {
     console.log('Auto-download triggered for:', downloadUrl);
 }
 
+// Download button progress functions
+function showDownloadProgress(buttonElement) {
+    if (!buttonElement) return;
+    
+    // Find the closest download button (in case event.target is an icon)
+    const downloadBtn = buttonElement.closest('.language-download-btn') || buttonElement;
+    
+    if (downloadBtn) {
+        // Store original content
+        downloadBtn.dataset.originalContent = downloadBtn.innerHTML;
+        
+        // Replace button content with progress
+        downloadBtn.innerHTML = `
+            <div class="download-progress">
+                <div class="download-progress-spinner"></div>
+                <span class="download-progress-text">Generating...</span>
+            </div>
+        `;
+        
+        downloadBtn.disabled = true;
+        downloadBtn.classList.add('downloading');
+    }
+}
+
+function handleDownloadSuccess(data, buttonElement) {
+    const downloadBtn = buttonElement.closest('.language-download-btn') || buttonElement;
+    
+    if (downloadBtn) {
+        // Show success state
+        downloadBtn.innerHTML = `
+            <div class="download-progress">
+                <i class="bi bi-check-circle-fill text-success"></i>
+                <span class="download-progress-text">Complete!</span>
+            </div>
+        `;
+        
+        // Auto-download the file
+        if (data.data && data.data.finalDownloadUrl) {
+            setTimeout(() => {
+                triggerAutoDownload(data.data.finalDownloadUrl);
+                
+                // Restore button after download starts
+                setTimeout(() => {
+                    restoreDownloadButton(downloadBtn);
+                }, 1000);
+            }, 800);
+        } else {
+            // Restore button if no download URL
+            setTimeout(() => {
+                restoreDownloadButton(downloadBtn);
+            }, 2000);
+        }
+    }
+}
+
+function handleDownloadError(message, buttonElement) {
+    const downloadBtn = buttonElement.closest('.language-download-btn') || buttonElement;
+    
+    if (downloadBtn) {
+        // Show error state
+        downloadBtn.innerHTML = `
+            <div class="download-progress">
+                <i class="bi bi-exclamation-circle-fill text-danger"></i>
+                <span class="download-progress-text">Failed</span>
+            </div>
+        `;
+        
+        // Restore button after showing error
+        setTimeout(() => {
+            restoreDownloadButton(downloadBtn);
+        }, 3000);
+    }
+}
+
 // Make functions available globally
 window.openSdkDrawer = openSdkDrawer;
 window.closeSdkDrawer = closeSdkDrawer;
 window.generateSDKFromDrawer = generateSDKFromDrawer;
-window.downloadSDK = downloadSDK;

@@ -549,11 +549,27 @@ const generateSDK = async (req, res) => {
         const orgName = req.params.orgName;
         const applicationId = req.params.applicationId;
 
-        // Validate input
-        if (!selectedAPIs || selectedAPIs.length === 0) {
+        // Validate input - require at least 2 APIs
+        if (!selectedAPIs || selectedAPIs.length < 2) {
             return res.status(400).json({
                 success: false,
-                message: 'No APIs selected for SDK generation'
+                message: 'At least 2 APIs must be selected for SDK generation'
+            });
+        }
+
+        // Validate AI mode configuration
+        if (!sdkConfiguration || sdkConfiguration.mode !== 'ai') {
+            return res.status(400).json({
+                success: false,
+                message: 'Only AI mode is supported for SDK generation'
+            });
+        }
+
+        // Validate AI description is provided
+        if (!sdkConfiguration.description || sdkConfiguration.description.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                message: 'AI description is required for SDK generation'
             });
         }
 
@@ -571,10 +587,10 @@ const generateSDK = async (req, res) => {
         const apiHandles = await getApiHandlers(orgID, selectedAPIs);
         const baseSdkName = sdkConfiguration?.name || `${orgName}-${applicationId}-sdk`;
 
-        // Prepare merged specification
+        // Prepare merged specification (always multiple APIs now)
         let mergedSpec;
         if (selectedAPIs.length === 1) {
-            // Single API case
+            // Single API case (though we require 2+, this is for edge cases)
             mergedSpec = JSON.parse(apiSpecs[0].apiSpec);
         } else {
             // Multiple APIs case - merge specifications
@@ -584,7 +600,7 @@ const generateSDK = async (req, res) => {
             console.log('Merged API specifications received');
         }
 
-        // Generate SDK
+        // Generate SDK with OpenAPI Generator
         const sdkResult = await generateSDKWithOpenAPIGenerator(
             mergedSpec,
             sdkConfiguration,
@@ -594,38 +610,28 @@ const generateSDK = async (req, res) => {
 
         console.log('SDK generated successfully, saved to:', sdkResult.sdkPath);
 
-        // Process final ZIP based on mode
-        let finalZipPath;
-        const isAIMode = sdkConfiguration?.mode === 'ai';
-        
-        if (isAIMode) {
-            finalZipPath = await processAIModeSDK(sdkResult, mergedSpec, sdkConfiguration, apiHandles, baseSdkName);
-        } else {
-            finalZipPath = await processDefaultModeSDK(sdkResult, apiHandles, baseSdkName);
-        }
+        // Process AI mode SDK (only mode supported now)
+        const finalZipPath = await processAIModeSDK(sdkResult, mergedSpec, sdkConfiguration, apiHandles, baseSdkName);
 
         // Send response
-        const responseMessage = isAIMode 
-            ? 'SDK and application code generated successfully' 
-            : 'SDK generated successfully';
-
         res.json({
             success: true,
-            message: responseMessage,
+            message: 'AI-powered SDK and application code generated successfully',
             data: {
                 selectedAPIs: selectedAPIs,
                 apiSpecsFound: apiSpecs.length,
                 transformedApiHandles: apiHandles || [],
                 sdkConfiguration: {
-                    language: sdkConfiguration?.language || 'javascript',
+                    language: sdkConfiguration?.language || 'java',
                     name: baseSdkName,
                     version: '1.0.0',
                     packageName: baseSdkName,
-                    mode: sdkConfiguration?.mode || 'default'
+                    mode: 'ai',
+                    description: sdkConfiguration.description
                 },
                 finalDownloadUrl: `/download/sdk/${path.basename(finalZipPath)}`,
-                applicationCodeGenerated: isAIMode,
-                mode: sdkConfiguration?.mode || 'default'
+                applicationCodeGenerated: true,
+                mode: 'ai'
             }
         });
         
@@ -753,46 +759,6 @@ const processAIModeSDK = async (sdkResult, mergedSpec, sdkConfiguration, apiHand
         try {
             await fs.promises.rm(sdkResult.sdkPath, { recursive: true, force: true });
             console.log('Cleaned up SDK folder after AI mode error');
-        } catch (cleanupError) {
-            console.error('Error cleaning up SDK folder:', cleanupError);
-        }
-        
-        throw error;
-    }
-};
-
-/**
- * Process default mode SDK generation - create ZIP with SDK only
- */
-const processDefaultModeSDK = async (sdkResult, apiHandles, baseSdkName) => {
-    try {
-        console.log('Processing default mode SDK generation...');
-        
-        // Create ZIP filename and permanent directory
-        const zipFileName = createSDKFileName(apiHandles, baseSdkName, false);
-        const permanentDir = path.join(process.cwd(), 'generated-sdks');
-        await fs.promises.mkdir(permanentDir, { recursive: true });
-        
-        // Create ZIP directly in permanent location
-        const finalZipPath = path.join(permanentDir, zipFileName);
-        
-        // Create ZIP archive
-        await createZipArchive(sdkResult.sdkPath, finalZipPath);
-        console.log(`Default mode SDK ZIP created: ${finalZipPath}`);
-        
-        // Clean up temporary SDK directory
-        await fs.promises.rm(sdkResult.sdkPath, { recursive: true, force: true });
-        console.log('Cleaned up temporary SDK directory');
-        
-        return finalZipPath;
-        
-    } catch (error) {
-        console.error('Error processing default mode SDK:', error);
-        
-        // Ensure cleanup of SDK folder even if processing fails
-        try {
-            await fs.promises.rm(sdkResult.sdkPath, { recursive: true, force: true });
-            console.log('Cleaned up SDK folder after default mode error');
         } catch (cleanupError) {
             console.error('Error cleaning up SDK folder:', cleanupError);
         }

@@ -24,93 +24,13 @@
 
             <!-- SDK Configuration Section -->
             <div class="sdk-config-section mb-4">
-                <h5 class="section-title mb-3">SDK Configuration</h5>
-                
-                <!-- Mode Selection -->
-                <div class="config-group mode-selection mb-3">
-                    <div class="form-check">
-                        <input class="form-check-input sdk-mode-input" type="radio" name="sdkMode" id="defaultMode" value="default" checked>
-                        <label class="form-check-label" for="defaultMode">
-                            Default Mode
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input sdk-mode-input" type="radio" name="sdkMode" id="generateWithAI" value="ai">
-                        <label class="form-check-label" for="generateWithAI">
-                            Generate With AI
-                            <i class="bi bi-stars ms-1 text-warning"></i>
-                        </label>
-                    </div>
-                </div>
 
                 <!-- Programming Language -->
                 <div class="config-group mb-4">
-                    <label class="form-label mb-3">Programming Language</label>
-                    <div class="language-options" id="languageOptions">
-                        <!-- Default Mode Languages -->
-                        <div class="language-option selected" data-language="android" data-mode="default">
-                            <input type="radio" name="programmingLanguage" id="langAndroid" value="android" checked>
-                            <label for="langAndroid" class="language-card">
-                                <div class="language-info">
-                                    <div class="language-icon android-icon">
-                                        <i class="bi bi-android2"></i>
-                                    </div>
-                                    <span class="language-name">Android</span>
-                                </div>
-                                <button class="language-download-btn" onclick="downloadSDK('android', event)">
-                                    <i class="bi bi-download me-1"></i>Download
-                                </button>
-                            </label>
-                        </div>
-                        
-                        <div class="language-option" data-language="java" data-mode="default">
-                            <input type="radio" name="programmingLanguage" id="langJava" value="java">
-                            <label for="langJava" class="language-card">
-                                <div class="language-info">
-                                    <div class="language-icon java-icon">
-                                        <i class="bi bi-cup-hot"></i>
-                                    </div>
-                                    <span class="language-name">Java</span>
-                                </div>
-                                <button class="language-download-btn" onclick="downloadSDK('java', event)">
-                                    <i class="bi bi-download me-1"></i>Download
-                                </button>
-                            </label>
-                        </div>
-
-                        <div class="language-option" data-language="javascript" data-mode="default">
-                            <input type="radio" name="programmingLanguage" id="langJS" value="javascript">
-                            <label for="langJS" class="language-card">
-                                <div class="language-info">
-                                    <div class="language-icon js-icon">
-                                        <span>JS</span>
-                                    </div>
-                                    <span class="language-name">Javascript</span>
-                                </div>
-                                <button class="language-download-btn" onclick="downloadSDK('javascript', event)">
-                                    <i class="bi bi-download me-1"></i>Download
-                                </button>
-                            </label>
-                        </div>
-
-                        <div class="language-option" data-language="jmeter" data-mode="default">
-                            <input type="radio" name="programmingLanguage" id="langJMeter" value="jmeter">
-                            <label for="langJMeter" class="language-card">
-                                <div class="language-info">
-                                    <div class="language-icon jmeter-icon">
-                                        <i class="bi bi-speedometer2"></i>
-                                    </div>
-                                    <span class="language-name">JMeter</span>
-                                </div>
-                                <button class="language-download-btn" onclick="downloadSDK('jmeter', event)">
-                                    <i class="bi bi-download me-1"></i>Download
-                                </button>
-                            </label>
-                        </div>
-
-                        <!-- AI Mode Languages (initially hidden) -->
-                        <div class="language-option ai-only" data-language="android-ai" data-mode="ai" style="display: none;">
-                            <input type="radio" name="programmingLanguageAI" id="langAndroidAI" value="android">
+                    <div class="language-options ai-mode" id="languageOptions">
+                        <!-- AI Mode Languages -->
+                        <div class="language-option ai-only selected" data-language="android-ai" data-mode="ai">
+                            <input type="radio" name="programmingLanguageAI" id="langAndroidAI" value="android" checked>
                             <label for="langAndroidAI" class="language-card">
                                 <div class="language-info">
                                     <div class="language-icon android-icon">
@@ -121,7 +41,7 @@
                             </label>
                         </div>
                         
-                        <div class="language-option ai-only" data-language="java-ai" data-mode="ai" style="display: none;">
+                        <div class="language-option ai-only" data-language="java-ai" data-mode="ai">
                             <input type="radio" name="programmingLanguageAI" id="langJavaAI" value="java">
                             <label for="langJavaAI" class="language-card">
                                 <div class="language-info">
@@ -133,7 +53,7 @@
                             </label>
                         </div>
                         
-                        <div class="language-option ai-only" data-language="javascript-ai" data-mode="ai" style="display: none;">
+                        <div class="language-option ai-only" data-language="javascript-ai" data-mode="ai">
                             <input type="radio" name="programmingLanguageAI" id="langJSAI" value="javascript">
                             <label for="langJSAI" class="language-card">
                                 <div class="language-info">
@@ -145,7 +65,7 @@
                             </label>
                         </div>
                         
-                        <div class="language-option ai-only" data-language="jmeter-ai" data-mode="ai" style="display: none;">
+                        <div class="language-option ai-only" data-language="jmeter-ai" data-mode="ai">
                             <input type="radio" name="programmingLanguageAI" id="langJMeterAI" value="jmeter">
                             <label for="langJMeterAI" class="language-card">
                                 <div class="language-info">
@@ -159,8 +79,8 @@
                     </div>
                 </div>
 
-                <!-- AI Description Section (only shown when AI mode is selected) -->
-                <div id="aiDescriptionSection" class="config-group mb-4" style="display: none;">
+                <!-- AI Description Section -->
+                <div id="aiDescriptionSection" class="config-group mb-4 ai-mode">
                     <label for="sdkDescription" class="form-label mb-2">
                         Describe your SDK requirements 
                         <i class="bi bi-stars text-warning ms-1"></i>
@@ -179,8 +99,7 @@
         <!-- Footer -->
         <div class="sdk-drawer-footer">
             <div id="selectedModeFooter">
-                <div id="defaultModeFooter">Select a language to download the SDK</div>
-                <div id="aiModeFooter" style="display: none;">Select a language, describe your requirements, and generate</div>
+                <div id="aiModeFooter">Select a language, describe your requirements, and generate</div>
             </div>
         </div>
     </div>
