@@ -3,6 +3,8 @@
 
 /dist
 
+/generated-sdks
+
 /.pnp
 .pnp.js
 .yarn/install-state.gz
@@ -99,3 +101,5 @@ config*.json
 secret*.json
 resources/default-layout
 resources/mock
+
+openapitools.json

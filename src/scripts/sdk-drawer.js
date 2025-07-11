@@ -474,52 +474,143 @@ function getApplicationName() {
 function showSDKGenerationLoading() {
     console.log('SDK generation started...');
     
-    // Create or show loading overlay
-    let loadingOverlay = document.getElementById('sdkLoadingOverlay');
-    if (!loadingOverlay) {
-        loadingOverlay = document.createElement('div');
-        loadingOverlay.id = 'sdkLoadingOverlay';
-        loadingOverlay.className = 'sdk-loading-overlay';
-        loadingOverlay.innerHTML = `
-            <div class="sdk-loading-content">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <p class="mt-3 mb-0">Generating SDK...</p>
-            </div>
-        `;
-        document.body.appendChild(loadingOverlay);
-    }
-    
-    loadingOverlay.style.display = 'flex';
-    document.body.classList.add('sdk-loading');
+    // Show notification instead of overlay
+    showSDKNotification(
+        'SDK Generation Started',
+        'SDK generation is in progress. The SDK will be downloaded automatically once it is generated.',
+        'info'
+    );
 }
 
 function hideSDKGenerationLoading() {
     console.log('SDK generation completed');
-    
-    const loadingOverlay = document.getElementById('sdkLoadingOverlay');
-    if (loadingOverlay) {
-        loadingOverlay.style.display = 'none';
-    }
-    
-    document.body.classList.remove('sdk-loading');
+    // Keep notification visible until success/error
 }
 
 function showSDKGenerationSuccess(data, mode) {
-    // Show success message and download links based on mode
+    // Show success notification
     const modeText = mode === 'ai' ? 'AI-powered SDK with application code' : 'SDK';
-    const message = `${modeText} generated successfully! Download will start automatically.`;
+    showSDKNotification(
+        'SDK Generated Successfully',
+        `${modeText} has been generated successfully. Download started automatically.`,
+        'success'
+    );
     
-    alert(message);
-    
+    // Auto-download the file
     if (data.data && data.data.finalDownloadUrl) {
-        window.location.href = data.data.finalDownloadUrl;
+        setTimeout(() => {
+            triggerAutoDownload(data.data.finalDownloadUrl);
+        }, 1000); // Small delay to ensure user sees the success message
     }
+    
+    // Hide notification after 5 seconds
+    setTimeout(hideSDKNotification, 5000);
 }
 
 function showSDKGenerationError(message) {
-    alert('Error: ' + message);
+    showSDKNotification(
+        'SDK Generation Failed',
+        'Error: ' + message,
+        'error'
+    );
+    
+    // Hide notification after 8 seconds for errors
+    setTimeout(hideSDKNotification, 8000);
+}
+
+// Notification system
+function showSDKNotification(title, message, type = 'info') {
+    // Remove existing notification
+    hideSDKNotification();
+    
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.id = 'sdkNotification';
+    notification.className = `sdk-notification ${type}`;
+    
+    notification.innerHTML = `
+        <div class="sdk-notification-header">
+            <span class="sdk-notification-title">${title}</span>
+            <button class="sdk-notification-close" onclick="hideSDKNotification()">×</button>
+        </div>
+        <p class="sdk-notification-message">${message}</p>
+        ${type === 'info' ? `
+            <div class="sdk-notification-progress">
+                <div class="sdk-progress-bar">
+                    <div class="sdk-progress-fill" id="sdkProgressFill"></div>
+                </div>
+            </div>
+        ` : ''}
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Trigger animation
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 100);
+    
+    // Start progress animation for info notifications
+    if (type === 'info') {
+        startProgressAnimation();
+    }
+}
+
+function hideSDKNotification() {
+    const notification = document.getElementById('sdkNotification');
+    if (notification) {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }
+}
+
+function startProgressAnimation() {
+    const progressFill = document.getElementById('sdkProgressFill');
+    if (progressFill) {
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += Math.random() * 15; // Random increment for realistic feel
+            if (progress > 90) {
+                progress = 90; // Stop at 90% until actual completion
+                clearInterval(interval);
+            }
+            progressFill.style.width = `${progress}%`;
+        }, 800);
+        
+        // Store interval reference for potential cleanup
+        progressFill.dataset.intervalId = interval;
+    }
+}
+
+function updateSDKProgress(progress) {
+    const progressFill = document.getElementById('sdkProgressFill');
+    if (progressFill) {
+        progressFill.style.width = `${progress}%`;
+        
+        // Clear the animation interval if it exists
+        if (progressFill.dataset.intervalId) {
+            clearInterval(progressFill.dataset.intervalId);
+            delete progressFill.dataset.intervalId;
+        }
+    }
+}
+
+function triggerAutoDownload(downloadUrl) {
+    // Create a temporary anchor element for download
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = ''; // Let the browser determine the filename
+    link.style.display = 'none';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    console.log('Auto-download triggered for:', downloadUrl);
 }
 
 // Make functions available globally

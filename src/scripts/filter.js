@@ -12,10 +12,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
 });
 
-document.querySelectorAll('.form-check-input').forEach(checkbox => {
+document.querySelectorAll('.form-check-input[data-tag]').forEach(checkbox => {
     checkbox.addEventListener('change', () => {
         let selectedTags = [];
-        document.querySelectorAll('.form-check-input:checked').forEach(checkedCheckbox => {
+        document.querySelectorAll('.form-check-input[data-tag]:checked').forEach(checkedCheckbox => {
             selectedTags.push(checkedCheckbox.getAttribute('data-tag'));
         });
         const tagsParam = selectedTags.join(',');
@@ -26,7 +26,7 @@ document.querySelectorAll('.form-check-input').forEach(checkbox => {
 const clearAllButton = document.getElementById('clearAll');
 if (clearAllButton) {
     clearAllButton.addEventListener('click', () => {
-        document.querySelectorAll('.form-check-input:checked').forEach(checkbox => {
+        document.querySelectorAll('.form-check-input[data-tag]:checked').forEach(checkbox => {
             checkbox.checked = false;
         });
         window.location.href = window.location.pathname; // Refresh URL without parameters

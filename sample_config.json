@@ -23,6 +23,13 @@
     "disableCertValidation": true,
     "pathToCertificate": "./resources/security/client-truststore.pem"
   },
+  "aiSDKService": {
+    "url": "http://localhost:5001",
+    "endpoints": {
+      "mergeSpecs": "/merge-openapi-specs",
+      "generateApp": "/generate-application-code"
+    }
+  },
   "serverCerts": {
     "pathToCert": "./resources/security/client-truststore.pem",
     "pathToPK": "./resources/security/private-key.pem",
@@ -30,7 +37,7 @@
   },
   "db": {
     "username": "postgres",
-    "password": "postgres",
+    "password": "root",
     "database": "devportal",
     "host": "localhost",
     "port": 5432,

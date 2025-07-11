@@ -16,6 +16,9 @@
                 <table class="app-table" id="app-table-{{applicationMetadata.id}}">
                     <thead>
                         <tr>
+                            <th class="app-th" style="width: 50px;">
+                                <input type="checkbox" id="selectAllAPIs">
+                            </th>
                             <th class="app-th">Name</th>
                             <th class="app-th">Version</th>
                             {{!-- <th class="app-th">Type</th> --}}
@@ -35,6 +38,12 @@
                         {{#if (eq apiType "REST")}}
                         {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
                         <tr class="data-row" id="data-row-{{subID}}" data-index="{{@index}}">
+                            <td class="app-td">
+                                <input type="checkbox" class="api-checkbox" 
+                                    data-api-id="{{apiID}}" 
+                                    data-api-name="{{name}}" 
+                                    data-api-version="{{version}}">
+                            </td>
                             <td class="app-td">
                                 <span onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
                                     class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
