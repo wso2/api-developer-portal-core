@@ -41,6 +41,7 @@ const execAsync = promisify(exec);
 const os = require('os');
 const archiver = require('archiver');
 const unzipper = require('unzipper');
+const js = require('@eslint/js');
 
 
 const orgIDValue = async (orgName) => {
@@ -579,7 +580,7 @@ const generateSDK = async (req, res) => {
             // Multiple APIs case - merge specifications
             const mergeSpecApiRequest = prepareSDKGenerationRequest(apiSpecs, apiHandles);
             const mergedSpecsResponse = await invokeMergeSpecApi(mergeSpecApiRequest);
-            mergedSpec = JSON.parse(mergedSpecsResponse.merged_spec);
+            mergedSpec = mergedSpecsResponse;
             console.log('Merged API specifications received');
         }
 
@@ -737,7 +738,7 @@ const processAIModeSDK = async (sdkResult, mergedSpec, sdkConfiguration, apiHand
         // Create final ZIP with SDK + application code
         const finalZipName = createSDKFileName(apiHandles, baseSdkName, true);
         const finalZipResult = await processApplicationCodeAndCreateFinalZip(
-            applicationCodeResponse.application_code,
+            applicationCodeResponse,
             sdkResult.sdkPath,
             sdkConfiguration,
             finalZipName
@@ -820,6 +821,7 @@ const generateSDKWithOpenAPIGenerator = async (mergedSpec, sdkConfiguration, org
     let outputDir = null;
     
     try {
+        console.log('Starting SDK generation with OpenAPI Generator...');
         const language = sdkConfiguration?.language || 'javascript';
         const sdkName = sdkConfiguration?.name || `${orgName}-${applicationId}-sdk`;
         
@@ -838,13 +840,7 @@ const generateSDKWithOpenAPIGenerator = async (mergedSpec, sdkConfiguration, org
         // Determine the generator name based on language
         const generatorMap = {
             'javascript': 'javascript',
-            'typescript': 'typescript-axios',
-            'python': 'python',
-            'java': 'java',
-            'csharp': 'csharp',
-            'go': 'go',
-            'php': 'php',
-            'ruby': 'ruby'
+            'java': 'java'
         };
         
         const generator = generatorMap[language] || 'javascript';
@@ -859,7 +855,7 @@ const generateSDKWithOpenAPIGenerator = async (mergedSpec, sdkConfiguration, org
             '--package-name', sdkName,
             '--additional-properties',
             `packageName=${sdkName},projectName=${sdkName},packageVersion=1.0.0`
-        ].join(' ');
+            ].join(' ');
         
         console.log(`Generating SDK with command: ${command}`);
         
@@ -874,7 +870,7 @@ const generateSDKWithOpenAPIGenerator = async (mergedSpec, sdkConfiguration, org
         }
                 
         // Clean up temp directory
-        await fs.promises.rm(tempDir, { recursive: true, force: true });
+        //await fs.promises.rm(tempDir, { recursive: true, force: true });
         
         return {
             success: true,
@@ -886,21 +882,36 @@ const generateSDKWithOpenAPIGenerator = async (mergedSpec, sdkConfiguration, org
     } catch (error) {
         console.error('Error generating SDK with openapi-generator:', error);
         
+        // Provide more specific error messages based on error type
+        let errorMessage = 'SDK generation failed';
+        
+        if (error.message && error.message.includes('NullPointerException')) {
+            errorMessage = 'SDK generation failed due to invalid OpenAPI specification. The specification may be missing required fields.';
+        } else if (error.message && error.message.includes('Command failed')) {
+            errorMessage = 'OpenAPI Generator failed to process the specification. Please check the API specification format.';
+        } else if (error.code === 'ENOENT') {
+            errorMessage = 'OpenAPI Generator CLI not found. Please install openapi-generator-cli: npm install -g @openapitools/openapi-generator-cli';
+        } else if (error.message && error.message.includes('timeout')) {
+            errorMessage = 'SDK generation timed out. The API specification might be too complex.';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
         // Clean up directories on error
         try {
             if (tempDir) {
-                await fs.promises.rm(tempDir, { recursive: true, force: true });
+                //await fs.promises.rm(tempDir, { recursive: true, force: true });
                 console.log('Cleaned up temp directory after SDK generation error');
             }
             if (outputDir) {
-                await fs.promises.rm(outputDir, { recursive: true, force: true });
+                //await fs.promises.rm(outputDir, { recursive: true, force: true });
                 console.log('Cleaned up output directory after SDK generation error');
             }
         } catch (cleanupError) {
             console.error('Error cleaning up directories after SDK generation error:', cleanupError);
         }
         
-        throw new Error(`SDK generation failed: ${error.message}`);
+        throw new Error(errorMessage);
     }
 };
 
@@ -1049,7 +1060,7 @@ const invokeApplicationCodeGenApi = async (requestData) => {
         if (!response.ok) {
             throw new Error(`Failed to generate application: ${response.statusText}`);
         }
-        const data = await response.json();
+        const data = await response.text();
         return data;
     } catch (error) {
         console.error("Error invoking application generation API:", error);
