@@ -103,6 +103,10 @@ function openSdkDrawer() {
 }
 
 function closeSdkDrawer() {
+    if (window.currentSDKEventSource) {
+        window.currentSDKEventSource.close();
+        window.currentSDKEventSource = null;
+    }
     const drawer = document.getElementById('sdkDrawer');
     if (drawer) {
         drawer.classList.remove('open');
@@ -241,10 +245,11 @@ function generateSDKFromDrawer(language) {
     })
     .then(response => response.json())
     .then(data => {
-        hideSDKGenerationLoading();
-        if (data.success) {
-            showSDKGenerationSuccess(data, selectedMode);
+        if (data.success && data.jobId) {
+            // Start SSE connection for real-time updates
+            startSDKProgressStream(data.jobId);
         } else {
+            hideSDKGenerationLoading();
             showSDKGenerationError(data.message || 'SDK generation failed');
         }
     })
@@ -254,6 +259,124 @@ function generateSDKFromDrawer(language) {
         showSDKGenerationError('An error occurred while generating the SDK');
     });
 }
+
+function startSDKProgressStream(jobId) {
+    const pathParts = window.location.pathname.split('/');
+    const orgName = pathParts[1];
+    const applicationId = pathParts[pathParts.length - 1];
+    const viewName = pathParts[3];
+
+    const eventSource = new EventSource(
+        `/${orgName}/views/${viewName}/applications/${applicationId}/sdk-progress`
+    );
+
+    eventSource.onmessage = function(event) {
+        try {
+            const data = JSON.parse(event.data);
+
+            if (data.progress == 'progress') {
+                updateProgressBar(data.progress);
+                updateProgressStatus(data.currentStep, data.message);
+
+                if (data.status === 'completed') {
+                    eventSource.close();
+                    handleSDKGenerationComplete(data);
+                } else if (data.status === 'failed') {
+                    eventSource.close();
+                    hideSDKGenerationLoading();
+                    showSDKGenerationError(data.message || 'SDK generation failed');
+                }
+            }
+        } catch (error) {
+            console.error('Error parsing SDK progress event:', error);
+        }
+    };
+
+    eventSource.onerror = function(error) {
+        console.error('SSE error:', error);
+        eventSource.close();
+        
+        // Fallback to polling
+        startSDKStatusPolling(jobId);
+    };
+    
+    // Store reference for cleanup
+    window.currentSDKEventSource = eventSource;
+}
+
+// Enhanced progress update functions
+function updateProgressStatus(currentStep, message) {
+    const progressStatus = document.getElementById('sdkProgressStatus');
+    const progressTitle = document.querySelector('.sdk-progress-title');
+    
+    if (progressTitle) {
+        progressTitle.textContent = currentStep;
+    }
+    
+    if (progressStatus) {
+        progressStatus.textContent = message;
+    }
+}
+
+function handleSDKGenerationComplete(data) {
+    // Complete the progress bar
+    updateProgressBar(100);
+    updateProgressStatus('Completed!', 'SDK generated successfully');
+    
+    // Auto-download the file
+    if (data.resultData && data.resultData.finalDownloadUrl) {
+        setTimeout(() => {
+            triggerAutoDownload(data.resultData.finalDownloadUrl);
+            // Hide progress bar after download starts
+            setTimeout(() => {
+                hideSDKGenerationLoading();
+            }, 500);
+        }, 1000);
+    } else {
+        setTimeout(() => {
+            hideSDKGenerationLoading();
+        }, 1500);
+    }
+}
+
+function startSDKStatusPolling(jobId) {
+    const pathParts = window.location.pathname.split('/');
+    const orgName = pathParts[1];
+    const applicationId = pathParts[pathParts.length - 1];
+    const viewName = pathParts[3];
+    
+    const pollInterval = setInterval(() => {
+        fetch(`/${orgName}/views/${viewName}/applications/${applicationId}/sdk-status/${jobId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateProgressBar(data.progress);
+                    updateProgressStatus(data.currentStep, data.message);
+                    
+                    if (data.status === 'completed') {
+                        clearInterval(pollInterval);
+                        handleSDKGenerationComplete(data);
+                    } else if (data.status === 'failed') {
+                        clearInterval(pollInterval);
+                        hideSDKGenerationLoading();
+                        showSDKGenerationError(data.message || 'SDK generation failed');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error polling SDK status:', error);
+                clearInterval(pollInterval);
+                hideSDKGenerationLoading();
+                showSDKGenerationError('Error checking SDK status');
+            });
+    }, 1000); // Poll every second
+    
+    // Stop polling after 10 minutes
+    setTimeout(() => {
+        clearInterval(pollInterval);
+    }, 10 * 60 * 1000);
+}
+
 
 function getApplicationName() {
     // Try to get application name from the page context

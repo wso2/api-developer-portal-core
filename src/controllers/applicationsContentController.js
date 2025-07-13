@@ -42,6 +42,7 @@ const os = require('os');
 const archiver = require('archiver');
 const unzipper = require('unzipper');
 const js = require('@eslint/js');
+const sdkJobService = require('../services/sdkJobService');
 
 
 const orgIDValue = async (orgName) => {
@@ -448,98 +449,73 @@ async function mapDefaultValues(applicationConfiguration) {
     return appConfigs;
 }
 
-const loadSDKGeneration = async (req, res) => {
-    let html, templateContent, metaData;
-    const viewName = req.params.viewName;
+const streamSDKProgress = async (req, res) => {
     const orgName = req.params.orgName;
     const applicationId = req.params.applicationId;
-    const orgDetails = await adminDao.getOrganization(orgName);
-    const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
-    
-    try {
-        if (config.mode === constants.DEV_MODE) {
-            // Mock data for development
-            metaData = await getMockApplication();
-            const mockAPIs = [
-                {
-                    apiID: 'api-1',
-                    name: 'Weather API',
-                    version: '1.0.0',
-                    apiType: 'REST',
-                    image: '/images/apisHeroImg.svg'
-                },
-                {
-                    apiID: 'api-2', 
-                    name: 'User Management API',
-                    version: '2.1.0',
-                    apiType: 'REST',
-                    image: '/images/apisHeroImg.svg'
-                }
-            ];
-            templateContent = {
-                applicationMetadata: metaData,
-                subAPIs: mockAPIs,
-                baseUrl: baseURLDev + viewName,
-                orgName: orgName,
-                viewName: viewName,
-                applicationId: applicationId
-            };
-        } else {
-            const orgID = await orgIDValue(orgName);
-            const subAPIs = await adminDao.getSubscribedAPIs(orgID, applicationId);
-            
-            let subList = [];
-            if (subAPIs.length > 0) {
-                subList = await Promise.all(subAPIs.map(async (sub) => {
-                    const api = new APIDTO(sub);
-                    let apiDTO = {};
-                    apiDTO.apiID = api.apiID;
-                    apiDTO.name = api.apiInfo.apiName;
-                    apiDTO.version = api.apiInfo.apiVersion;
-                    apiDTO.apiType = api.apiInfo.apiType;
-                    //apiDTO.image = api.apiInfo.apiImageMetadata["api-icon"] || '/images/apisHeroImg.svg';
-                    apiDTO.subID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.SUB_ID;
-                    return apiDTO;
-                }));
-            }
-            
-            // Get application metadata
-            const userID = req[constants.USER_ID];
-            const applicationList = await adminService.getApplicationKeyMap(orgID, applicationId, userID);
-            metaData = applicationList;
-            
-            //util.appendAPIImageURL(subList, req, orgID);
-            
-            templateContent = {
-                orgID: orgID,
-                applicationMetadata: metaData,
-                subAPIs: subList,
-                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-                orgName: orgName,
-                viewName: viewName,
-                applicationId: applicationId,
-                devportalMode: devportalMode
-            };
-        }
-        
-        const templateResponse = await templateResponseValue('sdk-generation');
-        if (config.mode === constants.DEV_MODE) {
-            html = renderTemplate('../pages/sdk-generation/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
-        } else {
-            const layoutResponse = await loadLayoutFromAPI(templateContent.orgID, viewName);
-            if (layoutResponse === "") {
-                html = renderTemplate('../pages/sdk-generation/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
-            } else {
-                html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
-            }
-        }
-        
-        res.send(html);
-    } catch (error) {
-        console.error('Error loading SDK generation page:', error);
-        res.status(500).send('Error loading SDK generation page');
+
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Cache-Control'
+    });
+    const jobId = orgName + '-' + applicationId;
+    const job = await sdkJobService.getJob(jobId)
+
+    if (job) {
+        res.write(`data: ${JSON.stringify({
+            type: 'progress',
+            jobId: jobId,
+            status: job.jobStatus,
+            progress: job.progress,
+            currentStep: job.currentStep,
+            message: job.message
+        })}\n\n`);
+    } else {
+        res.write(`data: ${JSON.stringify({
+            type: 'error',
+            message: 'Job not found or access denied'
+        })}\n\n`);
+        res.end();
+        return;
     }
-};
+
+    const progressHandler = (data) => {
+        if (data.jobId === jobId) {
+            res.write(`data: ${JSON.stringify({
+                type: 'progress',
+                jobId: data.jobId,
+                status: data.status,
+                progress: data.progress,
+                currentStep: data.currentStep,
+                message: data.message
+            })}\n\n`);
+        }
+
+        // Close connection when job is completed or failed
+        if (data.status === 'completed' || data.status === 'failed') {
+            setTimeout(() => {
+                res.end();
+            }, 1000);
+        }
+    };
+
+    sdkJobService.on('progress', progressHandler);
+
+    req.on('close', () => {
+    sdkJobService.removeListener('progress', progressHandler);
+    });
+
+    // Keep connection alive
+    const keepAlive = setInterval(() => {
+        res.write(`data: ${JSON.stringify({ type: 'ping' })}\n\n`);
+    }, 30000);
+
+    req.on('close', () => {
+        clearInterval(keepAlive);
+    });
+}
 
 // ***** Generate SDK *****
 

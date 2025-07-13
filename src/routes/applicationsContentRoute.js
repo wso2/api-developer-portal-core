@@ -29,6 +29,14 @@ router.post('/:orgName/views/:viewName/applications/:applicationId/generate-sdk'
     next();
 }, ensureAuthenticated, applicationsController.generateSDK);
 
+router.get('/:orgName/views/:viewName/applications/:applicationId/sdk-progress', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, ensureAuthenticated, applicationsController.streamSDKProgress
+);
+
 // SDK Download route
 router.get('/download/sdk/:filename', (req, res) => {
     const filename = req.params.filename;
