@@ -10,6 +10,14 @@ function initializeDrawerEventHandlers() {
     // Handle programming language changes for AI mode only
     setupLanguageHandlers('programmingLanguageAI', 'ai');
     
+    // Add direct event listener to the generate button
+    const generateBtn = document.querySelector('.ai-generate-btn');
+    if (generateBtn) {
+        generateBtn.removeEventListener('click', handleGenerateClick); // Remove existing
+        generateBtn.addEventListener('click', handleGenerateClick);
+        console.log('Generate button event listener added');
+    }
+    
     // Prevent any form submissions within the drawer
     const drawer = document.getElementById('sdkDrawer');
     if (drawer) {
@@ -19,6 +27,14 @@ function initializeDrawerEventHandlers() {
             return false;
         });
     }
+}
+
+function handleGenerateClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Generate button clicked via event listener');
+    generateSDKFromDrawerInternal();
+    return false;
 }
 
 function setupLanguageHandlers(radioName, mode) {
@@ -179,11 +195,40 @@ function populateSelectedAPIs(checkedCheckboxes) {
     }
 }
 
-function generateSDKFromDrawer(language) {
+// Add global function for inline onclick handler as backup
+window.generateSDKFromDrawer = function(language) {
+    console.log('generateSDKFromDrawer called via global window function');
+    generateSDKFromDrawerInternal(language);
+};
+
+// Debug function to check button state
+window.debugGenerateButton = function() {
+    const btn = document.querySelector('.ai-generate-btn');
+    console.log('Button element:', btn);
+    console.log('Button onclick:', btn ? btn.onclick : 'not found');
+    console.log('Button event listeners:', btn ? getEventListeners(btn) : 'not found');
+    console.log('Button disabled:', btn ? btn.disabled : 'not found');
+    console.log('Button style display:', btn ? getComputedStyle(btn).display : 'not found');
+};
+
+function getSelectedLanguage() {
+    const selectedRadio = document.querySelector('input[name="programmingLanguageAI"]:checked');
+    return selectedRadio ? selectedRadio.value : 'android'; // Default to android
+}
+
+function generateSDKFromDrawerInternal(language) {
+    console.log('generateSDKFromDrawerInternal called');
+    
     const checkedCheckboxes = document.querySelectorAll('.api-checkbox:checked');
     const selectedLanguage = language || getSelectedLanguage();
     const descriptionElement = document.getElementById('sdkDescription');
     const description = descriptionElement ? descriptionElement.value : '';
+    
+    console.log('Validation checks:', {
+        checkedCheckboxes: checkedCheckboxes.length,
+        selectedLanguage: selectedLanguage,
+        description: description
+    });
     
     // Validate that at least 2 APIs are selected
     if (checkedCheckboxes.length < 2) {
@@ -245,9 +290,9 @@ function generateSDKFromDrawer(language) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success && data.jobId) {
+        if (data.success && data.data.jobId) {
             // Start SSE connection for real-time updates
-            startSDKProgressStream(data.jobId);
+            startSDKProgressStream(data.data.jobId, data.data.sseEndpoint);
         } else {
             hideSDKGenerationLoading();
             showSDKGenerationError(data.message || 'SDK generation failed');
@@ -260,21 +305,15 @@ function generateSDKFromDrawer(language) {
     });
 }
 
-function startSDKProgressStream(jobId) {
-    const pathParts = window.location.pathname.split('/');
-    const orgName = pathParts[1];
-    const applicationId = pathParts[pathParts.length - 1];
-    const viewName = pathParts[3];
-
-    const eventSource = new EventSource(
-        `/${orgName}/views/${viewName}/applications/${applicationId}/sdk-progress`
-    );
+function startSDKProgressStream(jobId, sseEndpoint) {
+    const eventSource = new EventSource(sseEndpoint);
 
     eventSource.onmessage = function(event) {
         try {
             const data = JSON.parse(event.data);
+            console.log('SSE Progress Update:', data);
 
-            if (data.progress == 'progress') {
+            if (data.type === 'progress') {
                 updateProgressBar(data.progress);
                 updateProgressStatus(data.currentStep, data.message);
 
@@ -284,8 +323,15 @@ function startSDKProgressStream(jobId) {
                 } else if (data.status === 'failed') {
                     eventSource.close();
                     hideSDKGenerationLoading();
-                    showSDKGenerationError(data.message || 'SDK generation failed');
+                    showSDKGenerationError(data.message || data.error || 'SDK generation failed');
                 }
+            } else if (data.type === 'ping') {
+                // Keep alive message - no action needed
+                console.log('SSE Keep alive ping received');
+            } else if (data.type === 'error') {
+                eventSource.close();
+                hideSDKGenerationLoading();
+                showSDKGenerationError(data.message || 'SDK generation failed');
             }
         } catch (error) {
             console.error('Error parsing SDK progress event:', error);
@@ -296,8 +342,9 @@ function startSDKProgressStream(jobId) {
         console.error('SSE error:', error);
         eventSource.close();
         
-        // Fallback to polling
-        startSDKStatusPolling(jobId);
+        // Show error message
+        hideSDKGenerationLoading();
+        showSDKGenerationError('Connection lost. Please try again.');
     };
     
     // Store reference for cleanup
@@ -503,7 +550,6 @@ function hideProgressBarInPrompt() {
 function updateProgressBar(progress) {
     const progressFill = document.getElementById('sdkProgressFill');
     const progressPercentage = document.getElementById('sdkProgressPercentage');
-    const progressStatus = document.getElementById('sdkProgressStatus');
     
     if (progressFill) {
         progressFill.style.width = `${progress}%`;
@@ -511,20 +557,6 @@ function updateProgressBar(progress) {
     
     if (progressPercentage) {
         progressPercentage.textContent = `${Math.round(progress)}%`;
-    }
-    
-    if (progressStatus) {
-        if (progress < 30) {
-            progressStatus.textContent = 'Preparing SDK generation...';
-        } else if (progress < 60) {
-            progressStatus.textContent = 'Processing API specifications...';
-        } else if (progress < 90) {
-            progressStatus.textContent = 'Generating SDK files...';
-        } else if (progress < 100) {
-            progressStatus.textContent = 'Finalizing SDK package...';
-        } else {
-            progressStatus.textContent = 'SDK generated successfully!';
-        }
     }
 }
 

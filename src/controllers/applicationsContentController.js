@@ -460,17 +460,20 @@ const streamSDKProgress = async (req, res) => {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Cache-Control'
     });
-    const jobId = orgName + '-' + applicationId;
-    const job = await sdkJobService.getJob(jobId)
+    
+    const orgID = await orgIDValue(orgName);
+    const jobId = orgID + '-' + applicationId;
+    const job = await sdkJobService.getJob(jobId);
 
     if (job) {
         res.write(`data: ${JSON.stringify({
             type: 'progress',
             jobId: jobId,
-            status: job.jobStatus,
-            progress: job.progress,
-            currentStep: job.currentStep,
-            message: job.message
+            status: job.JOB_STATUS ? job.JOB_STATUS.toLowerCase() : 'pending',
+            progress: job.PROGRESS || 0,
+            currentStep: job.CURRENT_STEP || 'Initializing',
+            message: job.CURRENT_STEP || 'Job is being processed',
+            resultData: job.RESULT_DATA ? JSON.parse(job.RESULT_DATA) : null
         })}\n\n`);
     } else {
         res.write(`data: ${JSON.stringify({
@@ -489,7 +492,9 @@ const streamSDKProgress = async (req, res) => {
                 status: data.status,
                 progress: data.progress,
                 currentStep: data.currentStep,
-                message: data.message
+                message: data.message,
+                resultData: data.resultData,
+                error: data.error
             })}\n\n`);
         }
 
@@ -504,7 +509,7 @@ const streamSDKProgress = async (req, res) => {
     sdkJobService.on('progress', progressHandler);
 
     req.on('close', () => {
-    sdkJobService.removeListener('progress', progressHandler);
+        sdkJobService.removeListener('progress', progressHandler);
     });
 
     // Keep connection alive
@@ -514,6 +519,7 @@ const streamSDKProgress = async (req, res) => {
 
     req.on('close', () => {
         clearInterval(keepAlive);
+        sdkJobService.removeListener('progress', progressHandler);
     });
 }
 
@@ -549,73 +555,101 @@ const generateSDK = async (req, res) => {
             });
         }
 
-        // Get organization and API data
+        // Get organization ID
         const orgID = await orgIDValue(orgName);
-        const apiSpecs = await apiMetadata.getAPISpecs(orgID, selectedAPIs);
         
-        if (apiSpecs.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: 'No API specifications found for the selected APIs'
-            });
-        }
+        // Create job for tracking progress
+        const job = await sdkJobService.createJob(orgID, applicationId);
+        const jobId = job.JOB_ID;
 
-        const apiHandles = await getApiHandlers(orgID, selectedAPIs);
-        const baseSdkName = sdkConfiguration?.name || `${orgName}-${applicationId}-sdk`;
+        // Start background processing
+        setImmediate(async () => {
+            try {
+                // Get API specifications and handles
+                const apiSpecs = await apiMetadata.getAPISpecs(orgID, selectedAPIs);
+                
+                if (apiSpecs.length === 0) {
+                    await sdkJobService.markJobAsFailed(jobId, 'No API specifications found for the selected APIs');
+                    return;
+                }
 
-        // Prepare merged specification (always multiple APIs now)
-        let mergedSpec;
-        if (selectedAPIs.length === 1) {
-            // Single API case (though we require 2+, this is for edge cases)
-            mergedSpec = JSON.parse(apiSpecs[0].apiSpec);
-        } else {
-            // Multiple APIs case - merge specifications
-            const mergeSpecApiRequest = prepareSDKGenerationRequest(apiSpecs, apiHandles);
-            const mergedSpecsResponse = await invokeMergeSpecApi(mergeSpecApiRequest);
-            mergedSpec = mergedSpecsResponse;
-            console.log('Merged API specifications received');
-        }
+                const apiHandles = await getApiHandlers(orgID, selectedAPIs);
+                const baseSdkName = sdkConfiguration?.name || `${orgName}-${applicationId}-sdk`;
 
-        // Generate SDK with OpenAPI Generator
-        const sdkResult = await generateSDKWithOpenAPIGenerator(
-            mergedSpec,
-            sdkConfiguration,
-            orgName,
-            applicationId
-        );
+                // Step 1: Merging API specifications
+                await sdkJobService.startMergingStep(jobId);
+                
+                let mergedSpec;
+                if (selectedAPIs.length === 1) {
+                    mergedSpec = JSON.parse(apiSpecs[0].apiSpec);
+                } else {
+                    const mergeSpecApiRequest = prepareSDKGenerationRequest(apiSpecs, apiHandles);
+                    mergedSpec = await invokeMergeSpecApi(mergeSpecApiRequest);
+                    console.log('Merged API specifications received');
+                }
 
-        console.log('SDK generated successfully, saved to:', sdkResult.sdkPath);
+                // Step 2: SDK Generation
+                await sdkJobService.startSDKGenerationStep(jobId);
+                
+                const sdkResult = await generateSDKWithOpenAPIGenerator(
+                    mergedSpec,
+                    sdkConfiguration,
+                    orgName,
+                    applicationId
+                );
 
-        // Process AI mode SDK (only mode supported now)
-        const finalZipPath = await processAIModeSDK(sdkResult, mergedSpec, sdkConfiguration, apiHandles, baseSdkName);
+                console.log('SDK generated successfully, saved to:', sdkResult.sdkPath);
 
-        // Send response
+                // Step 3: Application Code Generation
+                await sdkJobService.startAppCodeGenerationStep(jobId);
+                
+                const finalZipPath = await processAIModeSDK(sdkResult, mergedSpec, sdkConfiguration, apiHandles, baseSdkName);
+
+                // Complete job with result data
+                const resultData = {
+                    selectedAPIs: selectedAPIs,
+                    apiSpecsFound: apiSpecs.length,
+                    transformedApiHandles: apiHandles || [],
+                    sdkConfiguration: {
+                        language: sdkConfiguration?.language || 'java',
+                        name: baseSdkName,
+                        version: '1.0.0',
+                        packageName: baseSdkName,
+                        mode: 'ai',
+                        description: sdkConfiguration.description
+                    },
+                    finalDownloadUrl: `/download/sdk/${path.basename(finalZipPath)}`,
+                    applicationCodeGenerated: true,
+                    mode: 'ai',
+                    downloadPath: finalZipPath
+                };
+
+                await sdkJobService.completeJob(jobId, resultData);
+                
+            } catch (error) {
+                console.error('Error in background SDK generation:', error);
+                await sdkJobService.markJobAsFailed(jobId, error.message);
+            }
+        });
+
+        // Send immediate response with job ID
         res.json({
             success: true,
-            message: 'AI-powered SDK and application code generated successfully',
+            message: 'SDK generation job started successfully',
             data: {
-                selectedAPIs: selectedAPIs,
-                apiSpecsFound: apiSpecs.length,
-                transformedApiHandles: apiHandles || [],
-                sdkConfiguration: {
-                    language: sdkConfiguration?.language || 'java',
-                    name: baseSdkName,
-                    version: '1.0.0',
-                    packageName: baseSdkName,
-                    mode: 'ai',
-                    description: sdkConfiguration.description
-                },
-                finalDownloadUrl: `/download/sdk/${path.basename(finalZipPath)}`,
-                applicationCodeGenerated: true,
-                mode: 'ai'
+                jobId: jobId,
+                status: 'PENDING',
+                progress: 0,
+                currentStep: 'Initializing',
+                sseEndpoint: `/${orgName}/views/default/applications/${applicationId}/sdk/job-progress`
             }
         });
         
     } catch (error) {
-        console.error('Error generating SDK:', error);
+        console.error('Error starting SDK generation job:', error);
         res.status(500).json({
             success: false,
-            message: 'Error generating SDK',
+            message: 'Error starting SDK generation job',
             error: error.message
         });
     }
@@ -1433,7 +1467,7 @@ const listDirectoryStructure = async (dir, prefix = '', maxDepth = 3, currentDep
 module.exports = {
     loadApplications,
     loadApplication,
-    loadSDKGeneration,
     generateSDK,
+    streamSDKProgress,
     cleanupOrphanedSDKDirectories
 };

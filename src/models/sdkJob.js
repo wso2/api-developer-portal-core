@@ -21,15 +21,32 @@ const SDKJob = sequelize.define('DP_SDK_JOB', {
         allowNull: false,
         defaultValue: 'PENDING'
     },
+    PROGRESS: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+        validate: {
+            min: 0,
+            max: 100
+        }
+    },
+    CURRENT_STEP: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    RESULT_DATA: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
     ERROR_MESSAGE: {
         type: DataTypes.STRING,
         allowNull: true
     }
 }, {
-    timestamps: false,
-    tableName: 'DP_API_CONTENT',
-    returning: false,
-    primaryKey: true
+    timestamps: true,
+    tableName: 'DP_SDK_JOB',
+    createdAt: 'CREATED_AT',
+    updatedAt: 'UPDATED_AT'
 });
 
 module.exports = SDKJob;
