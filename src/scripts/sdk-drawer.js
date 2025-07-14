@@ -195,12 +195,6 @@ function populateSelectedAPIs(checkedCheckboxes) {
     }
 }
 
-// Add global function for inline onclick handler as backup
-window.generateSDKFromDrawer = function(language) {
-    console.log('generateSDKFromDrawer called via global window function');
-    generateSDKFromDrawerInternal(language);
-};
-
 // Debug function to check button state
 window.debugGenerateButton = function() {
     const btn = document.querySelector('.ai-generate-btn');
@@ -690,4 +684,3 @@ function handleDownloadError(message, buttonElement) {
 // Make functions available globally
 window.openSdkDrawer = openSdkDrawer;
 window.closeSdkDrawer = closeSdkDrawer;
-window.generateSDKFromDrawer = generateSDKFromDrawer;

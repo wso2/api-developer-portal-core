@@ -29,7 +29,7 @@ router.post('/:orgName/views/:viewName/applications/:applicationId/generate-sdk'
     next();
 }, ensureAuthenticated, applicationsController.generateSDK);
 
-router.get('/:orgName/views/:viewName/applications/:applicationId/sdk/job-progress', (req, res, next) => {
+router.get('/:orgName/views/:viewName/applications/:applicationId/sdk/job-progress/:jobId', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
         return res.status(404).send('Not Found');
     }

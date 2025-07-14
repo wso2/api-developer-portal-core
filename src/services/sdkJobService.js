@@ -124,6 +124,7 @@ class SDKJobService extends EventEmitter {
     }
 
     async completeJob(jobId, resultData = null) {
+        this.activeJobs.delete(jobId); // Remove from active jobs
         return await this.updateJobStatus(
             jobId, 
             'COMPLETED', 
@@ -149,7 +150,8 @@ class SDKJobService extends EventEmitter {
     }
 
     generateJobId(orgId, applicationId) {
-        return `${orgId}-${applicationId}`;
+        const randomPostfix = Math.floor(10000 + Math.random() * 90000); // 5 digit random number
+        return `${orgId}-${applicationId}-${randomPostfix}`;
     }
 
     emitProgress(jobId, progressData) {
@@ -169,45 +171,6 @@ class SDKJobService extends EventEmitter {
             'FAILED': 'Job failed'
         };
         return messages[status.toUpperCase()] || 'Processing...';
-    }
-
-    // Background job processing simulation
-    async processJob(jobId, apiSpecs, sdkConfiguration, orgName, applicationId) {
-        try {
-            console.log(`Starting background job processing for ${jobId}`);
-            
-            // Step 1: Merging API specs
-            await this.startMergingStep(jobId);
-            await this.simulateDelay(2000); // Simulate processing time
-            
-            // Step 2: SDK Generation
-            await this.startSDKGenerationStep(jobId);
-            await this.simulateDelay(3000); // Simulate processing time
-            
-            // Step 3: App Code Generation
-            await this.startAppCodeGenerationStep(jobId);
-            await this.simulateDelay(2000); // Simulate processing time
-            
-            // Complete job
-            const resultData = {
-                downloadUrl: `/download/sdk/${jobId}.zip`,
-                generatedFiles: ['sdk.zip', 'application-code.zip'],
-                timestamp: new Date().toISOString()
-            };
-            
-            await this.completeJob(jobId, resultData);
-            
-            // Clean up job from active jobs after 30 minutes
-            setTimeout(() => {
-                this.activeJobs.delete(jobId);
-            }, 30 * 60 * 1000);
-            
-            console.log(`Background job processing completed for ${jobId}`);
-            
-        } catch (error) {
-            console.error(`Background job processing failed for ${jobId}:`, error);
-            await this.markJobAsFailed(jobId, error.message);
-        }
     }
 
     async simulateDelay(ms) {

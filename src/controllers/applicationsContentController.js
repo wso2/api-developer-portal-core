@@ -452,6 +452,7 @@ async function mapDefaultValues(applicationConfiguration) {
 const streamSDKProgress = async (req, res) => {
     const orgName = req.params.orgName;
     const applicationId = req.params.applicationId;
+    const jobId = req.params.jobId;
 
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
@@ -461,8 +462,15 @@ const streamSDKProgress = async (req, res) => {
         'Access-Control-Allow-Headers': 'Cache-Control'
     });
     
-    const orgID = await orgIDValue(orgName);
-    const jobId = orgID + '-' + applicationId;
+    if (!jobId) {
+        res.write(`data: ${JSON.stringify({
+            type: 'error',
+            message: 'Job ID is required'
+        })}\n\n`);
+        res.end();
+        return;
+    }
+    
     const job = await sdkJobService.getJob(jobId);
 
     if (job) {
@@ -641,7 +649,7 @@ const generateSDK = async (req, res) => {
                 status: 'PENDING',
                 progress: 0,
                 currentStep: 'Initializing',
-                sseEndpoint: `/${orgName}/views/default/applications/${applicationId}/sdk/job-progress`
+                sseEndpoint: `/${orgName}/views/default/applications/${applicationId}/sdk/job-progress/${jobId}`
             }
         });
         
@@ -1460,7 +1468,7 @@ const listDirectoryStructure = async (dir, prefix = '', maxDepth = 3, currentDep
             console.log(`${prefix}... and ${items.length - 20} more items`);
         }
     } catch (error) {
-        console.log(`${prefix}❌ Error reading directory: ${error.message}`);
+        console.log(`${prefix} Error reading directory: ${error.message}`);
     }
 };
 
