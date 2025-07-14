@@ -215,6 +215,12 @@ const ensureAuthenticated = async (req, res, next) => {
             });
         }
     } else {
+        if (req.isAuthenticated()) {
+            const token = accessTokenPresent(req);
+            if (token && config.identityProvider.jwksURL) {
+                await validateWithJWKS(token, config.identityProvider.jwksURL, req);
+            }
+        }
         return next();
     };
 };
