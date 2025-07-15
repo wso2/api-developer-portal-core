@@ -482,6 +482,10 @@ body.drawer-open {
     display: none;
 }
 
+#aiDescriptionSection {
+  width: 100%;
+}
+
 /* Ensure proper spacing in AI description section */
 #aiDescriptionSection .sdk-progress-container {
     margin-top: 10px;
@@ -502,160 +506,86 @@ body.drawer-open {
     }
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .sdk-drawer-content {
-    width: 100%;
+/* Notification System Styles */
+.sdk-error-notification,
+.sdk-success-notification,
+.sdk-warning-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
     max-width: 400px;
-  }
-  
-  .language-options {
-    grid-template-columns: 1fr;
-  }
-  
-  .language-card {
-    padding: 0.875rem 1rem;
-  }
-  
-  .language-info {
-    gap: 0.5rem;
-  }
-  
-  .language-icon {
-    width: 28px;
-    height: 28px;
-  }
-  
-  .language-name {
-    font-size: 0.875rem;
-  }
-  
-  .language-download-btn {
-    font-size: 0.75rem;
-    padding: 0.375rem 0.75rem;
-    position: relative;
-    z-index: 2;
-  }
+    min-width: 300px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.4;
+    animation: slideInFromRight 0.3s ease-out;
 }
 
-/* Responsive behavior for AI mode */
+.sdk-error-notification {
+    box-shadow: 0 4px 20px rgba(220, 53, 69, 0.3);
+    border: 1px solid #dc3545;
+}
+
+.sdk-success-notification {
+    box-shadow: 0 4px 20px rgba(25, 135, 84, 0.3);
+    border: 1px solid #198754;
+}
+
+.sdk-warning-notification {
+    box-shadow: 0 4px 20px rgba(255, 193, 7, 0.3);
+    border: 1px solid #ffc107;
+}
+
+.sdk-error-notification .fw-bold,
+.sdk-success-notification .fw-bold,
+.sdk-warning-notification .fw-bold {
+    font-size: 15px;
+}
+
+.sdk-error-notification .error-message,
+.sdk-success-notification .success-message,
+.sdk-warning-notification .warning-message {
+    word-wrap: break-word;
+}
+
+.sdk-error-notification .bi-exclamation-triangle-fill,
+.sdk-success-notification .bi-check-circle-fill,
+.sdk-warning-notification .bi-exclamation-triangle-fill {
+    font-size: 1.2em;
+}
+
+/* Notification animations */
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutToRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Responsive behavior for notifications */
 @media (max-width: 768px) {
-  .language-options.ai-mode .language-option.ai-only .language-card {
-    min-width: 100%; /* Full width on mobile */
-    padding: 1rem 1.25rem; /* Reduce padding on mobile */
-  }
-  
-  .language-options.ai-mode .language-option.ai-only .language-info {
-    gap: 0.75rem; /* Reduce gap on mobile */
-    margin-left: -0.125rem; /* Adjust margin for mobile */
-  }
-  
-  .language-options.ai-mode ~ .config-group #aiDescriptionSection .form-control,
-  #aiDescriptionSection.ai-mode .form-control {
-    padding: 1rem 1.25rem; /* Reduce padding on mobile */
-  }
-}
-
-/* Badge styles */
-.badge {
-  font-size: 0.6875rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-}
-
-.bg-secondary {
-  background-color: #6c757d !important;
-}
-
-/* Icon improvements */
-.bi-stars {
-  font-size: 0.875rem;
-}
-
-.text-warning {
-  color: #ffc107 !important;
-}
-
-/* Form improvements */
-.form-check-input:checked {
-  background-color: var(--primary-main-color);
-  border-color: var(--primary-main-color);
-}
-
-.form-check-input:focus {
-  border-color: var(--primary-main-color);
-  box-shadow: 0 0 0 0.25rem rgba(26, 76, 109, 0.25);
-}
-
-/* Spacing improvements */
-.mb-4 {
-  margin-bottom: 1.5rem !important;
-}
-
-.ms-1 {
-  margin-left: 0.25rem !important;
-}
-
-.me-2 {
-  margin-right: 0.5rem !important;
-}
-
-.w-100 {
-  width: 100% !important;
-}
-
-.d-flex {
-  display: flex !important;
-}
-
-.align-items-center {
-  align-items: center !important;
-}
-
-.justify-content-between {
-  justify-content: space-between !important;
-}
-
-.mb-0 {
-  margin-bottom: 0 !important;
-}
-
-/* AI Mode language cards without buttons */
-.language-option.ai-only .language-card {
-    justify-content: flex-start;
-    padding: 0.875rem 1rem; /* Increased padding for wider tiles */
-    min-width: 160px; /* Set minimum width for AI tiles */
-}
-
-.language-option.ai-only .language-info {
-    gap: 0.75rem;
-    margin-left: 0;
-}
-
-/* AI Mode - Wider tiles and input */
-.language-options.ai-mode .language-option.ai-only .language-card {
-    min-width: 200px; /* Increased from 220px */
-    padding: 1.25rem 1.5rem; /* Increased padding for better spacing */
-}
-
-.language-options.ai-mode .language-option.ai-only .language-info {
-    gap: 1rem; /* Increased gap between icon and text */
-    margin-left: -0.25rem; /* Shift icon and text more to the left */
-}
-
-/* AI Mode - Wider input prompt */
-.language-options.ai-mode ~ .config-group #aiDescriptionSection .form-control,
-#aiDescriptionSection.ai-mode .form-control {
-    min-width: 100%;
-    width: 100%;
-    max-width: none;
-    padding: 1.25rem 1.5rem; /* Increased padding to match tiles */
-    font-size: 0.875rem; /* Slightly larger font */
-}
-
-/* AI Mode - Wider textarea container */
-.language-options.ai-mode ~ .config-group #aiDescriptionSection,
-#aiDescriptionSection.ai-mode {
-    width: 100%;
-    max-width: none;
+    .sdk-error-notification,
+    .sdk-success-notification,
+    .sdk-warning-notification {
+        left: 10px;
+        right: 10px;
+        max-width: none;
+        min-width: auto;
+    }
 }

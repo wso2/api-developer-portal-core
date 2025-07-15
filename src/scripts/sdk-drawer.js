@@ -469,6 +469,9 @@ function showSDKGenerationSuccess(data, mode) {
 function showSDKGenerationError(message) {
     console.error('SDK Generation Error:', message);
     
+    // Show error notification popup
+    showErrorNotification(message);
+    
     // Show error state in progress bar briefly
     showProgressError(message);
     
@@ -681,6 +684,144 @@ function handleDownloadError(message, buttonElement) {
     }
 }
 
+// Error Notification System
+function showErrorNotification(message, title = 'SDK Generation Error') {
+    // Remove any existing error notifications
+    const existingNotifications = document.querySelectorAll('.sdk-error-notification');
+    existingNotifications.forEach(notification => notification.remove());
+    
+    // Create notification container
+    const notification = document.createElement('div');
+    notification.className = 'sdk-error-notification alert alert-danger';
+    
+    notification.innerHTML = `
+        <div class="d-flex align-items-start">
+            <div class="flex-shrink-0 me-3">
+                <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+            </div>
+            <div class="flex-grow-1">
+                <div class="fw-bold mb-1">${title}</div>
+                <div class="error-message">${message}</div>
+            </div>
+            <button type="button" class="btn-close ms-2" onclick="closeErrorNotification(this)" aria-label="Close"></button>
+        </div>
+    `;
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Auto-hide after 8 seconds
+    setTimeout(() => {
+        closeErrorNotification(notification);
+    }, 8000);
+}
+
+function showSuccessNotification(message, title = 'Success') {
+    // Remove any existing notifications
+    const existingNotifications = document.querySelectorAll('.sdk-success-notification');
+    existingNotifications.forEach(notification => notification.remove());
+    
+    // Create notification container
+    const notification = document.createElement('div');
+    notification.className = 'sdk-success-notification alert alert-success';
+    
+    notification.innerHTML = `
+        <div class="d-flex align-items-start">
+            <div class="flex-shrink-0 me-3">
+                <i class="bi bi-check-circle-fill text-success"></i>
+            </div>
+            <div class="flex-grow-1">
+                <div class="fw-bold mb-1">${title}</div>
+                <div class="success-message">${message}</div>
+            </div>
+            <button type="button" class="btn-close ms-2" onclick="closeSuccessNotification(this)" aria-label="Close"></button>
+        </div>
+    `;
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        closeSuccessNotification(notification);
+    }, 5000);
+}
+
+function showWarningNotification(message, title = 'Warning') {
+    // Remove any existing warning notifications
+    const existingNotifications = document.querySelectorAll('.sdk-warning-notification');
+    existingNotifications.forEach(notification => notification.remove());
+    
+    // Create notification container
+    const notification = document.createElement('div');
+    notification.className = 'sdk-warning-notification alert alert-warning';
+    
+    notification.innerHTML = `
+        <div class="d-flex align-items-start">
+            <div class="flex-shrink-0 me-3">
+                <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+            </div>
+            <div class="flex-grow-1">
+                <div class="fw-bold mb-1">${title}</div>
+                <div class="warning-message">${message}</div>
+            </div>
+            <button type="button" class="btn-close ms-2" onclick="closeWarningNotification(this)" aria-label="Close"></button>
+        </div>
+    `;
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Auto-hide after 6 seconds
+    setTimeout(() => {
+        closeWarningNotification(notification);
+    }, 6000);
+}
+
+function closeErrorNotification(element) {
+    const notification = element.closest ? element.closest('.sdk-error-notification') : element;
+    if (notification) {
+        notification.style.animation = 'slideOutToRight 0.3s ease-in';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }
+}
+
+function closeSuccessNotification(element) {
+    const notification = element.closest ? element.closest('.sdk-success-notification') : element;
+    if (notification) {
+        notification.style.animation = 'slideOutToRight 0.3s ease-in';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }
+}
+
+function closeWarningNotification(element) {
+    const notification = element.closest ? element.closest('.sdk-warning-notification') : element;
+    if (notification) {
+        notification.style.animation = 'slideOutToRight 0.3s ease-in';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }
+}
+
 // Make functions available globally
 window.openSdkDrawer = openSdkDrawer;
 window.closeSdkDrawer = closeSdkDrawer;
+
+// Make notification functions globally available
+window.showErrorNotification = showErrorNotification;
+window.showSuccessNotification = showSuccessNotification;
+window.showWarningNotification = showWarningNotification;
+window.closeErrorNotification = closeErrorNotification;
+window.closeSuccessNotification = closeSuccessNotification;
+window.closeWarningNotification = closeWarningNotification;
