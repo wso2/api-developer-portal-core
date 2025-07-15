@@ -65,7 +65,7 @@ const loadOrgContentFromAPI = async (req, res) => {
     const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
     try {
         const orgId = await adminDao.getOrgId(orgName);
-        let profile = {};
+        let profile = null;
         if (req.user) {
             profile = {
                 imageURL: req.user.imageURL,
@@ -77,7 +77,7 @@ const loadOrgContentFromAPI = async (req, res) => {
         templateContent = {
             devportalMode: devportalMode,
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName,
-            profile: req.isAuthenticated() ? profile : {}
+            profile: req.isAuthenticated() ? profile : null
         };
         html = await renderTemplateFromAPI(templateContent, orgId, orgName, 'pages/home', req.params.viewName);
     } catch (error) {

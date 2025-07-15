@@ -62,7 +62,7 @@ const loadCustomContent = async (req, res) => {
                 });
             }
             content[constants.BASE_URL_NAME] = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
-            let profile = {};
+            let profile = null;
             if (req.user) {
                 profile = {
                     imageURL: req.user.imageURL,
