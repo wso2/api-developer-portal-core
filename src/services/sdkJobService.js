@@ -135,7 +135,6 @@ class SDKJobService extends EventEmitter {
                 completeWeight += step.weight;
             }
             
-            // Complete the job with real result data
             const { selectedAPIs, sdkConfiguration, orgName, applicationId } = jobPayload;
             const finalBaseSdkName = baseSdkName || sdkConfiguration?.name || `${orgName}-${applicationId}-sdk`;
             
@@ -161,21 +160,42 @@ class SDKJobService extends EventEmitter {
             
         } catch (error) {
             console.error(`Error in job ${jobId}:`, error);
-            // Don't handle the error here - let it bubble up to be handled by createJob
             throw error;
         }
     }
 
     async performMergingTask(jobPayload, reportProgress) {
         try {
-            reportProgress(0); // Report 0% at the start of the task
-            const result = await this.performMergingStep(jobPayload);
-            console.log('Merging step completed');
-            reportProgress(100); // Report 100% on task completion
-            return result;
+            reportProgress(10); // 10% of 30% = 3% overall
+            
+            const { selectedAPIs, orgId } = jobPayload;
+            
+            reportProgress(20); // 20% of 30% = 6% overall
+            // Get API specifications and handles
+            const apiSpecs = await apiMetadata.getAPISpecs(orgId, selectedAPIs);
+            
+            if (apiSpecs.length === 0) {
+                throw new Error('No API specifications found for the selected APIs');
+            }
+
+            reportProgress(50); // 50% of 30% = 15% overall
+            const apiHandles = await this.getApiHandlers(orgId, selectedAPIs);
+            
+            reportProgress(70); // 70% of 30% = 21% overall
+            let mergedSpec;
+            if (selectedAPIs.length === 1) {
+                mergedSpec = JSON.parse(apiSpecs[0].apiSpec);
+            } else {
+                const mergeSpecApiRequest = this.prepareSDKGenerationRequest(apiSpecs, apiHandles);
+                reportProgress(80); // 80% of 30% = 24% overall
+                mergedSpec = await this.invokeMergeSpecApi(mergeSpecApiRequest);
+                console.log('Merged API specifications received');
+            }
+
+            reportProgress(100); // 100% of 30% = 30% overall
+            return { mergedSpec, apiSpecs, apiHandles };
         } catch (error) {
             console.error('Error during merging step:', error);
-            // Provide user-friendly error messages
             let userMessage = 'Failed to merge API specifications';
             
             if (error.message.includes('No API specifications found')) {
@@ -192,14 +212,23 @@ class SDKJobService extends EventEmitter {
 
     async performSdkGenerationTask(jobPayload, mergedSpec, reportProgress) {
         try {
-            reportProgress(0);
-            const sdkResult = await this.performSDKGenerationStep(jobPayload, mergedSpec);
-            console.log('SDK generation step completed');
-            reportProgress(100);
+            reportProgress(20); // 20% of 20% = 4% overall (34% total)
+            
+            const { sdkConfiguration, orgName, applicationId } = jobPayload;
+            
+            reportProgress(50); // 50% of 20% = 10% overall (40% total)
+            const sdkResult = await this.generateSDKWithOpenAPIGenerator(
+                mergedSpec,
+                sdkConfiguration,
+                orgName,
+                applicationId
+            );
+
+            console.log('SDK generated successfully, saved to:', sdkResult.sdkPath);
+            reportProgress(100); // 100% of 20% = 20% overall (50% total)
             return sdkResult;
         } catch (error) {
             console.error('Error during SDK generation step:', error);
-            // Provide user-friendly error messages
             let userMessage = 'Failed to generate SDK';
             
             if (error.message.includes('openapi-generator-cli')) {
@@ -218,18 +247,18 @@ class SDKJobService extends EventEmitter {
 
     async performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec, apiHandles, reportProgress) {
         try {
-            reportProgress(0);
-            reportProgress(10);
+            reportProgress(10); // 10% of 50% = 5% overall (55% total)
+            
+            reportProgress(20); // 20% of 50% = 10% overall (60% total)
             const result = await this.processAIModeSDK(sdkResult, mergedSpec, jobPayload.sdkConfiguration, apiHandles, jobPayload.sdkConfiguration?.name);
-            console.log('Application code generation step completed');
-            reportProgress(100);
+            
+            reportProgress(100); // 100% of 50% = 50% overall (100% total)
             return {
                 finalZipPath: result,
                 baseSdkName: jobPayload.sdkConfiguration?.name
             };
         } catch (error) {
             console.error('Error during application code generation step:', error);
-            // Provide user-friendly error messages
             let userMessage = 'Failed to generate application code';
             
             if (error.message.includes('AI service')) {
@@ -292,12 +321,11 @@ class SDKJobService extends EventEmitter {
             if (updatedJob) {
                 this.activeJobs.set(jobId, updatedJob);
                 
-                // Emit progress event with error details for frontend
                 this.emitProgress(jobId, {
                     status: 'failed',
                     progress: 0,
                     currentStep: 'Failed',
-                    message: errorMessage, // Use the actual error message
+                    message: errorMessage,
                     error: errorMessage
                 });
                 
@@ -365,65 +393,7 @@ class SDKJobService extends EventEmitter {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    // Import helper functions from controller
-    async performMergingStep(jobPayload) {
-        try {
-            const { selectedAPIs, orgId } = jobPayload;
-        
-            // Get API specifications and handles
-            const apiSpecs = await apiMetadata.getAPISpecs(orgId, selectedAPIs);
-            
-            if (apiSpecs.length === 0) {
-                throw new Error('No API specifications found for the selected APIs');
-            }
-
-            const apiHandles = await this.getApiHandlers(orgId, selectedAPIs);
-            
-            let mergedSpec;
-            if (selectedAPIs.length === 1) {
-                mergedSpec = JSON.parse(apiSpecs[0].apiSpec);
-            } else {
-                const mergeSpecApiRequest = this.prepareSDKGenerationRequest(apiSpecs, apiHandles);
-                mergedSpec = await this.invokeMergeSpecApi(mergeSpecApiRequest);
-                console.log('Merged API specifications received');
-            }
-
-            return { mergedSpec, apiSpecs, apiHandles };
-        } catch (error) {
-            console.error('Error during merging step:', error);
-            // Re-throw with original message for the outer handler to process
-            throw error;
-        }
-        
-    }
-
-    async performSDKGenerationStep(jobPayload, mergedSpec) {
-        const { sdkConfiguration, orgName, applicationId } = jobPayload;
-        
-        const sdkResult = await this.generateSDKWithOpenAPIGenerator(
-            mergedSpec,
-            sdkConfiguration,
-            orgName,
-            applicationId
-        );
-
-        console.log('SDK generated successfully, saved to:', sdkResult.sdkPath);
-        return sdkResult;
-    }
-
-    async performAppCodeGenerationStep(jobPayload, sdkResult, mergedSpec, apiHandles) {
-        const { sdkConfiguration, orgName, applicationId } = jobPayload;
-        const baseSdkName = sdkConfiguration?.name || `${orgName}-${applicationId}-sdk`;
-        
-        const finalZipPath = await this.processAIModeSDK(sdkResult, mergedSpec, sdkConfiguration, apiHandles, baseSdkName);
-        
-        return {
-            finalZipPath,
-            baseSdkName
-        };
-    }
-
-    // Helper methods (moved from controller)
+    // Helper methods
     async getApiHandlers(orgID, selectedAPIs) {
         const apiHandlesArray = [];
         
@@ -497,8 +467,6 @@ class SDKJobService extends EventEmitter {
         }
     }
 
-    // Note: This is a simplified version. For full implementation, we'd need to import
-    // all the helper functions from the controller
     async generateSDKWithOpenAPIGenerator(mergedSpec, sdkConfiguration, orgName, applicationId) {
         
         let tempDir = null;
@@ -830,7 +798,7 @@ class SDKJobService extends EventEmitter {
             
             // Common Java package paths in OpenAPI generated SDKs
             const possiblePaths = [
-                // 'src/main/java/org/openapitools/client',
+                'src/main/java/org/openapitools/client',
                 'src/main/java/io/swagger/client',
                 'src/main/java/com/example/client',
                 'src/main/java'
