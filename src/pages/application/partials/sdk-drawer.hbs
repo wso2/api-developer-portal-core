@@ -27,7 +27,7 @@
 
                 <!-- Programming Language -->
                 <div class="config-group mb-4">
-                    <label class="form-label mb-1">Select Programming Language</label>
+                    <label class="form-label mb-1" style="color: var(--primary-main-color)">Select Programming Language</label>
                     <div class="language-options ai-mode" id="languageOptions">
                         <!-- AI Mode Languages -->
                         {{!-- <div class="language-option ai-only selected" data-language="android-ai" data-mode="ai">
@@ -82,7 +82,7 @@
 
                 <!-- AI Description Section -->
                 <div id="aiDescriptionSection" class="config-group mb-4 ai-mode">
-                    <label for="sdkDescription" class="form-label mb-2">
+                    <label for="sdkDescription" class="form-label mb-3" style="color: var(--primary-main-color)">
                         Describe your SDK requirement 
                         <i class="bi bi-stars text-warning ms-1"></i>
                     </label>
@@ -106,7 +106,7 @@
                             Use AI Chat mindfully as AI can make mistakes.
                         </div>
                         <div class="ai-generate-section">
-                            <button class="ai-generate-btn">
+                            <button class="common-btn-primary" id="aiGenerateBtn">
                                 <i class="bi bi-arrow-right"></i>
                             </button>
                         </div>

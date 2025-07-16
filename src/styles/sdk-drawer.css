@@ -16,8 +16,8 @@ body.drawer-open {
 
 .sdk-drawer-title {
   font-size: 13px;
-  font-weight: 500;
-  color: var(--main-text-color);
+  font-weight: 600;
+  color: var(--primary-main-color);
   letter-spacing: 0.5px;
 }
 
@@ -65,7 +65,7 @@ body.drawer-open {
 }
 
 .sdk-drawer-header h4 {
-  color: var(--main-text-color);
+  color: var(--primary-main-color);
   font-weight: 600;
   font-size: 1.25rem;
 }
@@ -94,14 +94,14 @@ body.drawer-open {
 
 .section-title {
   font-size: 13px;
-  font-weight: 500;
-  color: var(--main-text-color);
+  font-weight: 600;
+  color: var(--primary-main-color);
   letter-spacing: 0.5px;
   margin-bottom: 1rem;
 }
 
 /* Selected APIs */
-.selected-apis-section {
+/* .selected-apis-section {
   margin-bottom: 1.5rem;
 }
 
@@ -119,7 +119,7 @@ body.drawer-open {
 }
 
 /* Custom scrollbar for selected APIs */
-.selected-apis-list::-webkit-scrollbar {
+/* .selected-apis-list::-webkit-scrollbar {
   width: 4px;
 }
 
@@ -163,7 +163,7 @@ body.drawer-open {
   font-weight: 400;
   color: #6c757d;
   line-height: 1;
-}
+} */
 
 /* SDK Configuration */
 .sdk-config-section {
@@ -206,8 +206,8 @@ body.drawer-open {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: flex-start; /* Changed for AI mode without buttons */
-    padding: 1.25rem 1.5rem; /* Increased padding for AI mode */
+    justify-content: flex-start;
+    padding: 1.25rem 1.5rem;
     border: 2px solid #e9ecef;
     border-radius: 8px;
     background-color: var(--white-color);
@@ -217,14 +217,13 @@ body.drawer-open {
     color: inherit;
     height: 54px;
     min-height: 54px;
-    min-width: 200px; /* Wider tiles for AI mode */
+    min-width: 200px; 
 }
 
-/* NEW: Styles for the wrapper containing the icon and name */
 .language-info {
     display: flex;
     align-items: center;
-    gap: 1rem; /* Increased gap for AI mode */
+    gap: 1rem; 
     flex: 1;
     min-width: 0;
     margin-left: -0.25rem; /* Shift more to the left for AI mode */
@@ -234,11 +233,11 @@ body.drawer-open {
 .language-option.selected .language-card,
 .language-option input:checked + .language-card {
     border-color: var(--primary-main-color);
-    background-color: rgba(26, 76, 109, 0.08);
-    box-shadow: 0 2px 8px rgba(26, 76, 109, 0.15);
+    background-color: rgba(89, 82, 173, 0.08);
+    box-shadow: 0 2px 8px rgba(89, 82, 173, 0.15);
 }
 
-/* --- Hover and Interaction Styles --- */
+
 .language-card:hover {
     border-color: var(--primary-main-color);
     transform: translateY(-1px);
@@ -247,7 +246,7 @@ body.drawer-open {
 
 .language-option.selected .language-card:hover,
 .language-option input:checked + .language-card:hover {
-    box-shadow: 0 4px 12px rgba(26, 76, 109, 0.25);
+    box-shadow: 0 4px 12px rgba(89, 82, 173, 0.25);
     transform: translateY(-1px);
 }
 
@@ -321,8 +320,8 @@ body.drawer-open {
 }
 
 .ai-description-section .form-label {
-  font-weight: 500;
-  color: var(--main-text-color);
+  font-weight: 600;
+  color: var(--primary-main-color);
 }
 
 .ai-description-section .bi-stars {
@@ -336,26 +335,15 @@ body.drawer-open {
     align-items: center;
 }
 
-.ai-generate-btn {
+/* Override common-btn-primary dimensions for AI generate button */
+#aiGenerateBtn {
     width: 60px;
     height: 20px;
-    border-radius: 6px;
-    background-color: var(--primary-main-color);
-    color: white;
-    border: none;
-    cursor: pointer;
+    padding: 0;
+    font-size: 1.2rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 6px rgba(26, 76, 109, 0.2);
-}
-
-.ai-generate-btn:hover {
-    background-color: rgba(26, 76, 109, 0.9);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(26, 76, 109, 0.3);
 }
 
 .prompt-input-area {
@@ -367,8 +355,8 @@ body.drawer-open {
     transition: border-color 0.2s ease;
 }
 .prompt-input-area:focus-within {
-        border-color: #86b7fe; /* Bootstrap focus color */
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        border-color: var(--primary-main-color);
+        box-shadow: 0 0 0 0.25rem rgba(89, 82, 173, 0.25);
 }
 
 /* Hide the original textarea border */
@@ -378,10 +366,15 @@ body.drawer-open {
     padding: 0;
     margin-top: 0.5rem; /* Space between suggestion and textarea */
     resize: none; /* Or vertical if you prefer */
+    color: var(--main-text-color);
 }
 .prompt-input-area > textarea.form-control:focus {
     border: none;
     box-shadow: none;
+}
+
+.prompt-input-area > textarea.form-control::placeholder {
+    color: #6c757d;
 }
 
 /* Container for one or more suggestion chips */
@@ -422,18 +415,6 @@ body.drawer-open {
 }
 .suggestion-chip .btn-close:hover {
     opacity: 1;
-}
-
-.ai-generate-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 6px rgba(26, 76, 109, 0.2);
-}
-
-.ai-generate-btn:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
 }
 
 .prompt-footer-row {
@@ -477,13 +458,13 @@ body.drawer-open {
 .sdk-progress-title {
     font-weight: 600;
     font-size: 14px;
-    color: #495057;
+    color: var(--primary-main-color);
 }
 
 .sdk-progress-percentage {
     font-weight: 700;
     font-size: 16px;
-    color: #007bff;
+    color: var(--primary-main-color);
 }
 
 .sdk-progress-container.error .sdk-progress-percentage {
@@ -505,7 +486,7 @@ body.drawer-open {
 
 .sdk-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #007bff 0%, #0056b3 100%);
+    background: linear-gradient(90deg, var(--primary-main-color) 0%, rgba(89, 82, 173, 0.8) 100%);
     border-radius: 4px;
     width: 0%;
     transition: width 0.4s ease;
