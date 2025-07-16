@@ -425,11 +425,13 @@ const invokeGraphQLRequest = async (req, url, query, variables, headers) => {
     }
 };
 
-const invokeApiRequest = async (req, method, url, headers, body) => {
+const invokeApiRequest = async (req, method, url, headers, body, publicMode=false) => {
 
     console.log(`Invoking API: ${url}`);
-    headers = headers || {};
-    headers.Authorization = req.user?.exchangeToken ? `Bearer ${req.user.exchangeToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
+    if(!publicMode) {
+        headers = headers || {};
+        headers.Authorization = req.user?.exchangeToken ? `Bearer ${req.user.exchangeToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
+    }
     let httpsAgent;
 
     if (config.controlPlane.disableCertValidation) {
