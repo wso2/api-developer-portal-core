@@ -72,7 +72,7 @@ const loadApplications = async (req, res) => {
                     };
                 })
             );
-            let profile = {};
+            let profile = null;
             if (req.user) {
                 profile = {
                     imageURL: req.user.imageURL,
@@ -85,7 +85,7 @@ const loadApplications = async (req, res) => {
             templateContent = {
                 applicationsMetadata: metaData,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-                profile: req.isAuthenticated() ? profile : {},
+                profile: req.isAuthenticated() ? profile : null,
                 devportalMode: devportalMode
             }
             const templateResponse = await templateResponseValue('applications');
@@ -287,7 +287,7 @@ const loadApplication = async (req, res) => {
             }
             //display only one key type (SANBOX).
             //TODO: handle multiple key types
-            let profile = {};
+            let profile = null;
             if (req.user) {
                 profile = {
                     imageURL: req.user.imageURL,
@@ -313,7 +313,7 @@ const loadApplication = async (req, res) => {
                 subscriptionScopes: subscriptionScopes,
                 otherAPICount: otherAPICount,
                 mcpAPICount: mcpAPICount,
-                profile: req.isAuthenticated() ? profile : {},
+                profile: req.isAuthenticated() ? profile : null,
                 devportalMode: devportalMode
             }
             const templateResponse = await templateResponseValue('application');

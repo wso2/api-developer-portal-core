@@ -152,19 +152,6 @@ const registerPartialsFromAPI = async (req) => {
   Object.keys(partialObject).forEach((partialName) => {
     hbs.handlebars.registerPartial(partialName, partialObject[partialName]);
   });
-  let isAdmin, isSuperAdmin = false;
-  if (req.user) {
-    isAdmin = req.user["isAdmin"];
-    isSuperAdmin = req.user["isSuperAdmin"];
-  }
-  if (req.user) {
-    profile = {
-      imageURL: req.user.imageURL,
-      firstName: req.user.firstName,
-      lastName: req.user.lastName,
-      email: req.user.email
-    }
-  }
 
   if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
     await registerAPILandingContent(req, orgID, partialObject);

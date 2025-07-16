@@ -109,7 +109,7 @@ const loadAPIs = async (req, res) => {
                 metaDataList = [];
             }
 
-            let profile = {};
+            let profile = null;
             if (req.user) {
                 profile = {
                     imageURL: req.user.imageURL,
@@ -124,7 +124,7 @@ const loadAPIs = async (req, res) => {
                 tags: apiTags,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 orgID: orgID,
-                profile: req.isAuthenticated() ? profile : {},
+                profile: req.isAuthenticated() ? profile : null,
                 devportalMode: devportalMode,
             };
 
@@ -282,7 +282,7 @@ const loadAPIContent = async (req, res) => {
                     );
                 }
             }
-            let profile = {};
+            let profile = null;
             if (req.user) {
                 profile = {
                     imageURL: req.user.imageURL,
@@ -306,7 +306,7 @@ const loadAPIContent = async (req, res) => {
                 schemaDefinition: schemaDefinition,
                 scopes: apiDetail.scopes,
                 devportalMode: devportalMode,
-                profile: req.isAuthenticated() ? profile : {}
+                profile: req.isAuthenticated() ? profile : null
             };
             if (metaData.apiInfo.apiType == "MCP") {
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp-landing", viewName);
@@ -385,7 +385,7 @@ const loadDocsPage = async (req, res) => {
             const viewName = req.params.viewName;
             const docNames = await apiMetadataService.getAPIDocTypes(orgID, apiID);
 
-            let profile = {};
+            let profile = null;
             if (req.user) {
                 profile = {
                     imageURL: req.user.imageURL,
@@ -401,7 +401,7 @@ const loadDocsPage = async (req, res) => {
                 baseUrl: '/' + orgName + '/views/' + viewName + "/api/" + apiHandle,
                 docTypes: docNames,
                 apiType: apiType,
-                profile: req.isAuthenticated() ? profile : {},
+                profile: req.isAuthenticated() ? profile : null,
                 devportalMode: devportalMode,
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
@@ -503,7 +503,7 @@ const loadDocument = async (req, res) => {
                 templateContent.baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
                 templateContent.baseDocUrl = baseDocUrl;                
                 templateContent.docTypes = docNames;
-                let profile = {};
+                let profile = null;
                 if (req.user) {
                     profile = {
                         imageURL: req.user.imageURL,
@@ -512,7 +512,7 @@ const loadDocument = async (req, res) => {
                         email: req.user.email,
                     }
                 }
-                templateContent.profile = req.isAuthenticated() ? profile : {};
+                templateContent.profile = req.isAuthenticated() ? profile : null;
                 templateContent.apiType = apiType;
                 templateContent.devportalMode = devportalMode;
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
