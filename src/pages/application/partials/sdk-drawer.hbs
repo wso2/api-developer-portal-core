@@ -14,22 +14,23 @@
 
         <!-- Drawer Body -->
         <div class="sdk-drawer-body">
-            <!-- Selected APIs Section -->
+            {{!-- <!-- Selected APIs Section -->
             <div class="selected-apis-section mb-4">
                 <h5 class="section-title mb-3">Selected APIs</h5>
                 <div id="selectedApisList" class="selected-apis-list">
                     <!-- Selected APIs will be populated here dynamically -->
                 </div>
-            </div>
+            </div> --}}
 
             <!-- SDK Configuration Section -->
             <div class="sdk-config-section mb-4">
 
                 <!-- Programming Language -->
                 <div class="config-group mb-4">
+                    <label class="form-label mb-1">Select Programming Language</label>
                     <div class="language-options ai-mode" id="languageOptions">
                         <!-- AI Mode Languages -->
-                        <div class="language-option ai-only selected" data-language="android-ai" data-mode="ai">
+                        {{!-- <div class="language-option ai-only selected" data-language="android-ai" data-mode="ai">
                             <input type="radio" name="programmingLanguageAI" id="langAndroidAI" value="android" checked>
                             <label for="langAndroidAI" class="language-card">
                                 <div class="language-info">
@@ -39,10 +40,10 @@
                                     <span class="language-name">Android</span>
                                 </div>
                             </label>
-                        </div>
+                        </div> --}}
                         
-                        <div class="language-option ai-only" data-language="java-ai" data-mode="ai">
-                            <input type="radio" name="programmingLanguageAI" id="langJavaAI" value="java">
+                        <div class="language-option ai-only selected" data-language="java-ai" data-mode="ai">
+                            <input type="radio" name="programmingLanguageAI" id="langJavaAI" value="java" checked>
                             <label for="langJavaAI" class="language-card">
                                 <div class="language-info">
                                     <div class="language-icon java-icon">
@@ -65,7 +66,7 @@
                             </label>
                         </div>
                         
-                        <div class="language-option ai-only" data-language="jmeter-ai" data-mode="ai">
+                        {{!-- <div class="language-option ai-only" data-language="jmeter-ai" data-mode="ai">
                             <input type="radio" name="programmingLanguageAI" id="langJMeterAI" value="jmeter">
                             <label for="langJMeterAI" class="language-card">
                                 <div class="language-info">
@@ -75,31 +76,42 @@
                                     <span class="language-name">JMeter</span>
                                 </div>
                             </label>
-                        </div>
+                        </div> --}}
                     </div>
                 </div>
 
                 <!-- AI Description Section -->
                 <div id="aiDescriptionSection" class="config-group mb-4 ai-mode">
                     <label for="sdkDescription" class="form-label mb-2">
-                        Describe your SDK requirements 
+                        Describe your SDK requirement 
                         <i class="bi bi-stars text-warning ms-1"></i>
                     </label>
-                    <textarea class="form-control" id="sdkDescription" rows="4" 
-                              placeholder="Describe what kind of application you want to generate. For example: 'Create a dashboard application that displays user analytics data' or 'Build a REST client that handles authentication and displays API responses'"></textarea>
-                    <div class="ai-generate-section mt-3">
-                        <button class="ai-generate-btn">
-                            <i class="bi bi-arrow-right"></i>
-                        </button>
+                    <div class="prompt-input-area">
+                        <!-- NEW: Suggestions Container -->
+                        <div class="prompt-suggestions-container">
+                            <!-- Example Suggestion Chip -->
+                            <div class="suggestion-chip" data-prompt="Generate an SDK with token management for selected APIs.">
+                                <i class="bi bi-magic suggestion-icon"></i>
+                                <span class="suggestion-text">Generate an SDK with token management for selected APIs.</span>
+                                <button type="button" class="btn-close" aria-label="Close">X</button>
+                            </div>
+                        </div>
+
+                        <textarea class="form-control" id="sdkDescription" rows="5" 
+                                placeholder="Add your requirement..."></textarea>
+                    </div>
+
+                    <div class="prompt-footer-row">
+                        <div class="ai-disclaimer">
+                            Use AI Chat mindfully as AI can make mistakes.
+                        </div>
+                        <div class="ai-generate-section">
+                            <button class="ai-generate-btn">
+                                <i class="bi bi-arrow-right"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="sdk-drawer-footer">
-            <div id="selectedModeFooter">
-                <div id="aiModeFooter">Select a language, describe your requirements, and generate</div>
             </div>
         </div>
     </div>
