@@ -11,11 +11,10 @@ function initializeDrawerEventHandlers() {
     setupLanguageHandlers('programmingLanguageAI', 'ai');
     
     // Add direct event listener to the generate button
-    const generateBtn = document.querySelector('.ai-generate-btn');
+    const generateBtn = document.querySelector('#aiGenerateBtn');
     if (generateBtn) {
-        generateBtn.removeEventListener('click', handleGenerateClick); // Remove existing
+        generateBtn.removeEventListener('click', handleGenerateClick); 
         generateBtn.addEventListener('click', handleGenerateClick);
-        console.log('Generate button event listener added');
     }
     
     // Prevent any form submissions within the drawer
@@ -26,6 +25,72 @@ function initializeDrawerEventHandlers() {
             e.stopPropagation();
             return false;
         });
+        
+        // Add escape key listener
+        document.addEventListener('keydown', handleEscapeKey);
+        
+        // Add click outside listener
+        drawer.addEventListener('click', handleDrawerBackdropClick);
+    }
+}
+
+function setupSuggestionListeners() {    
+    // Add click listeners to all suggestion chips for applying the prompt
+    const suggestionElements = document.querySelectorAll('.suggestion-chip .suggestion-text, .suggestion-chip .suggestion-icon');
+    
+    suggestionElements.forEach((element, index) => {
+        // Remove existing listeners to prevent duplicates
+        element.removeEventListener('click', handleSuggestionClick);
+        
+        // Add new listener
+        element.addEventListener('click', handleSuggestionClick);
+    });
+
+    // Add click listeners to all close buttons for dismissing the chip
+    const closeButtons = document.querySelectorAll('.suggestion-chip .btn-close');
+    
+    closeButtons.forEach((button, index) => {
+        // Remove existing listeners to prevent duplicates
+        button.removeEventListener('click', handleSuggestionClose);
+        
+        // Add new listener
+        button.addEventListener('click', handleSuggestionClose);
+    });
+}
+
+function handleSuggestionClick(event) {
+    const chip = event.target.closest('.suggestion-chip');
+    if (!chip) {
+        console.error('Could not find suggestion chip parent');
+        return;
+    }
+    
+    const promptText = chip.dataset.prompt;
+
+    if (!promptText) {
+        console.error('No prompt text found in data-prompt attribute');
+        return;
+    }
+    
+    const descriptionTextarea = document.getElementById('sdkDescription');
+    if (descriptionTextarea) {
+        descriptionTextarea.value = promptText;
+        descriptionTextarea.focus();
+        
+        // Trigger any change events that might be needed
+        descriptionTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+        descriptionTextarea.dispatchEvent(new Event('change', { bubbles: true }));
+    } else {
+        console.error('Could not find sdkDescription textarea');
+    }
+}
+
+function handleSuggestionClose(event) {
+    event.stopPropagation();
+
+    const chip = event.target.closest('.suggestion-chip');
+    if (chip) {
+        chip.remove();
     }
 }
 
@@ -94,6 +159,9 @@ function openSdkDrawer() {
         return;
     }
 
+    // Reset SDK generation state
+    window.sdkGenerationActive = false;
+
     // Populate selected APIs
     populateSelectedAPIs(checkedCheckboxes);
     
@@ -108,6 +176,12 @@ function openSdkDrawer() {
         // Initialize event handlers
         initializeDrawerEventHandlers();
         
+        // Initialize suggestion chip listeners
+        setupSuggestionListeners();
+        
+        // Ensure suggestion chips are visible when drawer opens
+        showSuggestionChips();
+        
         // Initialize visual state for AI mode only
         updateLanguageSelection('ai');
         
@@ -119,10 +193,28 @@ function openSdkDrawer() {
 }
 
 function closeSdkDrawer() {
+    // Check if SDK generation is in progress
+    if (isSDKGenerationInProgress()) {
+        // Show confirmation dialog
+        const confirmClose = confirm('SDK generation is in progress. Are you sure you want to close? This will cancel the generation process.');
+        if (!confirmClose) {
+            return; 
+        }
+        
+        cancelSDKGeneration();
+    }
+    
+    // Stop any running progress animation
+    stopProgressAnimation();
+    
     if (window.currentSDKEventSource) {
         window.currentSDKEventSource.close();
         window.currentSDKEventSource = null;
     }
+    
+    // Clean up event listeners
+    document.removeEventListener('keydown', handleEscapeKey);
+    
     const drawer = document.getElementById('sdkDrawer');
     if (drawer) {
         drawer.classList.remove('open');
@@ -176,6 +268,14 @@ function resetDrawerState() {
     
     // Update visual state
     updateLanguageSelection('ai');
+    
+    // Show suggestion chips when drawer is reset
+    showSuggestionChips();
+    
+    // Re-setup suggestion listeners in case suggestions were added dynamically
+    setTimeout(() => {
+        setupSuggestionListeners();
+    }, 100);
 }
 
 function populateSelectedAPIs(checkedCheckboxes) {
@@ -197,7 +297,7 @@ function populateSelectedAPIs(checkedCheckboxes) {
 
 // Debug function to check button state
 window.debugGenerateButton = function() {
-    const btn = document.querySelector('.ai-generate-btn');
+    const btn = document.querySelector('#aiGenerateBtn');
     console.log('Button element:', btn);
     console.log('Button onclick:', btn ? btn.onclick : 'not found');
     console.log('Button event listeners:', btn ? getEventListeners(btn) : 'not found');
@@ -308,6 +408,9 @@ function startSDKProgressStream(jobId, sseEndpoint) {
             console.log('SSE Progress Update:', data);
 
             if (data.type === 'progress') {
+                // Stop any fake progress animation when we receive real progress
+                stopProgressAnimation();
+                
                 updateProgressBar(data.progress);
                 updateProgressStatus(data.currentStep, data.message);
 
@@ -431,9 +534,32 @@ function getApplicationName() {
     return pathParts[pathParts.length - 1] || 'application';
 }
 
+// Functions to handle suggestion chips visibility
+function hideSuggestionChips() {
+    const suggestionContainer = document.querySelector('.prompt-input-area');
+    if (suggestionContainer) {
+        suggestionContainer.style.display = 'none';
+        console.log('Suggestion chips hidden');
+    }
+}
+
+function showSuggestionChips() {
+    const suggestionContainer = document.querySelector('.prompt-input-area');
+    if (suggestionContainer) {
+        suggestionContainer.style.display = 'block';
+        console.log('Suggestion chips shown');
+    }
+}
+
 // Helper functions for SDK generation feedback
 function showSDKGenerationLoading() {
     console.log('SDK generation started...');
+    
+    // Mark SDK generation as active
+    window.sdkGenerationActive = true;
+    
+    // Hide suggestion chips during generation
+    hideSuggestionChips();
     
     // Show progress bar in place of prompt input
     showProgressBarInPrompt();
@@ -441,8 +567,15 @@ function showSDKGenerationLoading() {
 
 function hideSDKGenerationLoading() {
     console.log('SDK generation completed');
+    
+    // Mark SDK generation as inactive
+    window.sdkGenerationActive = false;
+    
     // Hide progress bar and restore prompt input
     hideProgressBarInPrompt();
+    
+    // Show suggestion chips after SDK generation
+    showSuggestionChips();
 }
 
 function showSDKGenerationSuccess(data, mode) {
@@ -478,6 +611,8 @@ function showSDKGenerationError(message) {
     // Hide progress bar and restore input after showing error
     setTimeout(() => {
         hideProgressBarInPrompt();
+        // Show suggestion chips after error
+        showSuggestionChips();
     }, 3000);
 }
 
@@ -485,7 +620,7 @@ function showSDKGenerationError(message) {
 function showProgressBarInPrompt() {
     const aiSection = document.getElementById('aiDescriptionSection');
     const textarea = document.getElementById('sdkDescription');
-    const generateButton = document.querySelector('.ai-generate-btn');
+    const generateButton = document.querySelector('#aiGenerateBtn');
     
     if (aiSection && textarea) {
         // Hide the textarea and generate button
@@ -527,9 +662,12 @@ function showProgressBarInPrompt() {
 }
 
 function hideProgressBarInPrompt() {
+    // Stop any running progress animation
+    stopProgressAnimation();
+    
     const progressContainer = document.getElementById('sdkProgressContainer');
     const textarea = document.getElementById('sdkDescription');
-    const generateButton = document.querySelector('.ai-generate-btn');
+    const generateButton = document.querySelector('#aiGenerateBtn');
     
     if (progressContainer) {
         progressContainer.remove();
@@ -545,15 +683,25 @@ function hideProgressBarInPrompt() {
 }
 
 function updateProgressBar(progress) {
+    // Ensure we have a valid progress value
+    const boundedProgress = Math.max(0, Math.min(100, progress));
+    
     const progressFill = document.getElementById('sdkProgressFill');
     const progressPercentage = document.getElementById('sdkProgressPercentage');
     
     if (progressFill) {
-        progressFill.style.width = `${progress}%`;
+        // Only update if progress is moving forward (real progress) or it's a reset/completion
+        const currentWidth = parseFloat(progressFill.style.width) || 0;
+        if (boundedProgress > currentWidth || boundedProgress === 0 || boundedProgress === 100) {
+            progressFill.style.width = `${boundedProgress}%`;
+            console.log(`Progress bar updated to: ${boundedProgress}%`);
+        } else {
+            console.log(`Skipping backwards progress update: ${boundedProgress}% (current: ${currentWidth}%)`);
+        }
     }
     
     if (progressPercentage) {
-        progressPercentage.textContent = `${Math.round(progress)}%`;
+        progressPercentage.textContent = `${Math.round(boundedProgress)}%`;
     }
 }
 
@@ -577,6 +725,9 @@ function showProgressError(message) {
 }
 
 function startProgressAnimation() {
+    // Stop any existing animation first
+    stopProgressAnimation();
+    
     let progress = 0;
     const interval = setInterval(() => {
         progress += Math.random() * 8 + 2; // Random increment between 2-10
@@ -593,6 +744,24 @@ function startProgressAnimation() {
     const progressContainer = document.getElementById('sdkProgressContainer');
     if (progressContainer) {
         progressContainer.dataset.intervalId = interval;
+    }
+    
+    // Also store globally for easy cleanup
+    window.currentProgressInterval = interval;
+}
+
+function stopProgressAnimation() {
+    // Clear the global interval if it exists
+    if (window.currentProgressInterval) {
+        clearInterval(window.currentProgressInterval);
+        window.currentProgressInterval = null;
+    }
+    
+    // Also check for interval stored in the progress container
+    const progressContainer = document.getElementById('sdkProgressContainer');
+    if (progressContainer && progressContainer.dataset.intervalId) {
+        clearInterval(parseInt(progressContainer.dataset.intervalId));
+        delete progressContainer.dataset.intervalId;
     }
 }
 
@@ -814,6 +983,50 @@ function closeWarningNotification(element) {
     }
 }
 
+// SDK Generation State Management
+function isSDKGenerationInProgress() {
+    // Check global flag
+    if (window.sdkGenerationActive === true) {
+        return true;
+    }
+    
+    // Check if progress container exists (indicates generation is active)
+    const progressContainer = document.getElementById('sdkProgressContainer');
+    
+    // Check if SSE connection is active
+    const hasActiveSSE = window.currentSDKEventSource && window.currentSDKEventSource.readyState === EventSource.OPEN;
+    
+    // Check if progress animation is running
+    const hasProgressAnimation = window.currentProgressInterval !== null && window.currentProgressInterval !== undefined;
+    
+    return !!(progressContainer || hasActiveSSE || hasProgressAnimation);
+}
+
+function cancelSDKGeneration() {
+    console.log('Cancelling SDK generation...');
+    
+    // Mark SDK generation as inactive
+    window.sdkGenerationActive = false;
+    
+    // Close SSE connection
+    if (window.currentSDKEventSource) {
+        window.currentSDKEventSource.close();
+        window.currentSDKEventSource = null;
+        console.log('SSE connection closed');
+    }
+    
+    // Stop progress animation
+    stopProgressAnimation();
+    
+    // Hide progress UI
+    hideSDKGenerationLoading();
+    
+    // Show cancellation notification
+    showWarningNotification('SDK generation has been cancelled.', 'Generation Cancelled');
+    
+    console.log('SDK generation cancelled successfully');
+}
+
 // Make functions available globally
 window.openSdkDrawer = openSdkDrawer;
 window.closeSdkDrawer = closeSdkDrawer;
@@ -825,3 +1038,21 @@ window.showWarningNotification = showWarningNotification;
 window.closeErrorNotification = closeErrorNotification;
 window.closeSuccessNotification = closeSuccessNotification;
 window.closeWarningNotification = closeWarningNotification;
+
+function handleEscapeKey(event) {
+    if (event.key === 'Escape') {
+        const drawer = document.getElementById('sdkDrawer');
+        if (drawer && drawer.classList.contains('open')) {
+            event.preventDefault();
+            closeSdkDrawer();
+        }
+    }
+}
+
+function handleDrawerBackdropClick(event) {
+    // Only close if clicking on the drawer backdrop (not on drawer content)
+    if (event.target.id === 'sdkDrawer') {
+        event.preventDefault();
+        closeSdkDrawer();
+    }
+}

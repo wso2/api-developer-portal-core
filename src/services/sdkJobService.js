@@ -133,6 +133,8 @@ class SDKJobService extends EventEmitter {
 
                 await step.task(progressCallback);
                 completeWeight += step.weight;
+                
+                console.log(`Step ${step.name} completed. Total progress: ${completeWeight}%`);
             }
             
             const { selectedAPIs, sdkConfiguration, orgName, applicationId } = jobPayload;
@@ -169,19 +171,15 @@ class SDKJobService extends EventEmitter {
             reportProgress(10); // 10% of 30% = 3% overall
             
             const { selectedAPIs, orgId } = jobPayload;
-            
-            reportProgress(20); // 20% of 30% = 6% overall
-            // Get API specifications and handles
+                        // Get API specifications and handles
             const apiSpecs = await apiMetadata.getAPISpecs(orgId, selectedAPIs);
             
             if (apiSpecs.length === 0) {
                 throw new Error('No API specifications found for the selected APIs');
             }
 
-            reportProgress(50); // 50% of 30% = 15% overall
             const apiHandles = await this.getApiHandlers(orgId, selectedAPIs);
             
-            reportProgress(70); // 70% of 30% = 21% overall
             let mergedSpec;
             if (selectedAPIs.length === 1) {
                 mergedSpec = JSON.parse(apiSpecs[0].apiSpec);
@@ -192,7 +190,7 @@ class SDKJobService extends EventEmitter {
                 console.log('Merged API specifications received');
             }
 
-            reportProgress(100); // 100% of 30% = 30% overall
+
             return { mergedSpec, apiSpecs, apiHandles };
         } catch (error) {
             console.error('Error during merging step:', error);
@@ -211,9 +209,7 @@ class SDKJobService extends EventEmitter {
     }
 
     async performSdkGenerationTask(jobPayload, mergedSpec, reportProgress) {
-        try {
-            reportProgress(20); // 20% of 20% = 4% overall (34% total)
-            
+        try {            
             const { sdkConfiguration, orgName, applicationId } = jobPayload;
             
             reportProgress(50); // 50% of 20% = 10% overall (40% total)
@@ -225,7 +221,7 @@ class SDKJobService extends EventEmitter {
             );
 
             console.log('SDK generated successfully, saved to:', sdkResult.sdkPath);
-            reportProgress(100); // 100% of 20% = 20% overall (50% total)
+
             return sdkResult;
         } catch (error) {
             console.error('Error during SDK generation step:', error);
@@ -247,9 +243,8 @@ class SDKJobService extends EventEmitter {
 
     async performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec, apiHandles, reportProgress) {
         try {
-            reportProgress(10); // 10% of 50% = 5% overall (55% total)
-            
-            reportProgress(20); // 20% of 50% = 10% overall (60% total)
+
+            reportProgress(40); // 40% of 50% = 20% overall (70% total)
             const result = await this.processAIModeSDK(sdkResult, mergedSpec, jobPayload.sdkConfiguration, apiHandles, jobPayload.sdkConfiguration?.name);
             
             reportProgress(100); // 100% of 50% = 50% overall (100% total)
