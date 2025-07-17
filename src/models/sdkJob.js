@@ -17,7 +17,7 @@ const SDKJob = sequelize.define('DP_SDK_JOB', {
         allowNull: false,
     },
     JOB_STATUS: {
-        type: DataTypes.ENUM('PENDING', 'MERGING', 'SDK_GENERATION', 'APP_CODE_GENERATION', 'COMPLETED', 'FAILED'),
+        type: DataTypes.ENUM('PENDING', 'MERGING', 'SDK_GENERATION', 'APP_CODE_GENERATION', 'COMPLETED', 'FAILED', 'CANCELED'),
         allowNull: false,
         defaultValue: 'PENDING'
     },

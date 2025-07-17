@@ -230,6 +230,10 @@ function closeSdkDrawer() {
 }
 
 function resetDrawerState() {
+    // Reset SDK generation state
+    window.sdkGenerationActive = false;
+    window.currentSDKJobId = null;
+    
     // Reset to Android as default AI language
     const defaultLanguage = document.querySelector('input[name="programmingLanguageAI"][value="android"]');
     if (defaultLanguage) {
@@ -365,6 +369,8 @@ function generateSDKFromDrawerInternal(language) {
     .then(response => response.json())
     .then(data => {
         if (data.success && data.data.jobId) {
+            // Store job ID for potential cancellation
+            window.currentSDKJobId = data.data.jobId;
             // Start SSE connection for real-time updates
             startSDKProgressStream(data.data.jobId, data.data.sseEndpoint);
         } else {
@@ -446,6 +452,9 @@ function handleSDKGenerationComplete(data) {
     // Complete the progress bar
     updateProgressBar(100);
     updateProgressStatus('Completed!', 'SDK generated successfully');
+    
+    // Clear job ID since generation is complete
+    window.currentSDKJobId = null;
     
     // Auto-download the file
     if (data.resultData && data.resultData.finalDownloadUrl) {
@@ -582,6 +591,9 @@ function showSDKGenerationSuccess(data, mode) {
 function showSDKGenerationError(message) {
     console.error('SDK Generation Error:', message);
     
+    // Clear job ID since generation failed
+    window.currentSDKJobId = null;
+    
     // Show error notification popup
     showErrorNotification(message);
     
@@ -712,13 +724,13 @@ function startProgressAnimation() {
     const interval = setInterval(() => {
         progress += Math.random() * 8 + 2; // Random increment between 2-10
         
-        if (progress > 85) {
-            progress = 85; // Stop at 85% until actual completion
+        if (progress > 20) {
+            progress = 20; // Stop at 20% until actual completion
             clearInterval(interval);
         }
         
         updateProgressBar(progress);
-    }, 400);
+    }, 1000);
     
     // Store interval reference for cleanup
     const progressContainer = document.getElementById('sdkProgressContainer');
@@ -1000,6 +1012,35 @@ function cancelSDKGeneration() {
     
     // Hide progress UI
     hideSDKGenerationLoading();
+    
+    // Send cancellation request to backend if we have a job ID
+    if (window.currentSDKJobId) {
+        const orgName = window.location.pathname.split('/')[1];
+        const viewName = window.location.pathname.split('/')[3];
+        const applicationId = window.location.pathname.split('/')[5];
+        const cancelUrl = `/${orgName}/views/${viewName}/applications/${applicationId}/sdk/cancel/${window.currentSDKJobId}`;
+        
+        fetch(cancelUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('SDK job cancelled on server:', data.message);
+            } else {
+                console.error('Failed to cancel SDK job on server:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error sending cancellation request:', error);
+        });
+        
+        // Clear the job ID
+        window.currentSDKJobId = null;
+    }
     
     // Show cancellation notification
     showWarningNotification('SDK generation has been cancelled.', 'Generation Cancelled');

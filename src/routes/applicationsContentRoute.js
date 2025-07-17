@@ -36,6 +36,13 @@ router.get('/:orgName/views/:viewName/applications/:applicationId/sdk/job-progre
     next();
 }, ensureAuthenticated, applicationsController.streamSDKProgress);
 
+router.post('/:orgName/views/:viewName/applications/:applicationId/sdk/cancel/:jobId', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, ensureAuthenticated, applicationsController.cancelSDK);
+
 // SDK Download route
 router.get('/download/sdk/:filename', (req, res) => {
     const filename = req.params.filename;

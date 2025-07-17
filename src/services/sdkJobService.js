@@ -115,10 +115,15 @@ class SDKJobService extends EventEmitter {
         ];
 
         try {
+            // Check for cancellation before starting
+            await this.checkJobCancellation(jobId);
 
             let completeWeight = 0;
             for (const step of steps) {
                 console.log(`Starting step: ${step.name}`);
+                
+                // Check for cancellation before each step
+                await this.checkJobCancellation(jobId);
 
                 const progressCallback = (stepProgress) => {
                     const overallProgress = completeWeight + (stepProgress * (step.weight / 100));
@@ -135,6 +140,9 @@ class SDKJobService extends EventEmitter {
                 completeWeight += step.weight;
                 
                 console.log(`Step ${step.name} completed. Total progress: ${completeWeight}%`);
+                
+                // Check for cancellation after each step
+                await this.checkJobCancellation(jobId);
             }
             
             const { selectedAPIs, sdkConfiguration, orgName, applicationId } = jobPayload;
@@ -299,6 +307,105 @@ class SDKJobService extends EventEmitter {
             await this.markJobAsFailed(jobId, error.message);
             throw error;
         }
+    }
+
+    async cancelJob(jobId) {
+        try {
+            console.log(`Cancelling job ${jobId}`);
+            
+            // Check if job exists and is cancellable
+            const job = await this.getJob(jobId);
+            if (!job) {
+                throw new Error('Job not found');
+            }
+            
+            if (job.JOB_STATUS === 'COMPLETED' || job.JOB_STATUS === 'FAILED') {
+                throw new Error('Cannot cancel a job that is already completed or failed');
+            }
+            
+            // Mark the job as cancelled in the database
+            const updateData = {
+                jobStatus: 'CANCELLED',
+                progress: 0,
+                currentStep: 'Cancelled',
+                errorMessage: 'Job was cancelled by user'
+            };
+
+            const updatedJob = await SdkJob.updateJob(jobId, updateData);
+            
+            // Remove from active jobs
+            this.activeJobs.delete(jobId);
+            
+            // Clean up any generated files for this job
+            await this.cleanupJobFiles(jobId);
+            
+            // Emit cancellation event
+            this.emitProgress(jobId, {
+                status: 'cancelled',
+                progress: 0,
+                currentStep: 'Cancelled',
+                message: 'Job cancelled by user'
+            });
+            
+            console.log(`Job ${jobId} cancelled successfully`);
+            return updatedJob;
+            
+        } catch (error) {
+            console.error('Error cancelling job:', error);
+            throw error;
+        }
+    }
+
+    async cleanupJobFiles(jobId) {
+        try {
+            const fs = require('fs').promises;
+            const path = require('path');
+            const os = require('os');
+            
+            // Define potential file locations
+            const tempDir = path.join(os.tmpdir(), `sdk-generation-${jobId}`);
+            const generatedSdksDir = path.join(process.cwd(), 'generated-sdks');
+            
+            // Clean up temporary SDK generation directory
+            try {
+                const tempDirExists = await fs.access(tempDir).then(() => true).catch(() => false);
+                if (tempDirExists) {
+                    await fs.rm(tempDir, { recursive: true, force: true });
+                    console.log(`Cleaned up temp directory: ${tempDir}`);
+                }
+            } catch (error) {
+                console.warn(`Failed to clean up temp directory ${tempDir}:`, error.message);
+            }
+            
+            // Clean up any generated ZIP files for this job
+            try {
+                const generatedDirExists = await fs.access(generatedSdksDir).then(() => true).catch(() => false);
+                if (generatedDirExists) {
+                    const files = await fs.readdir(generatedSdksDir);
+                    const jobFiles = files.filter(file => file.includes(jobId));
+                    
+                    for (const file of jobFiles) {
+                        const filePath = path.join(generatedSdksDir, file);
+                        await fs.unlink(filePath);
+                        console.log(`Cleaned up generated file: ${filePath}`);
+                    }
+                }
+            } catch (error) {
+                console.warn(`Failed to clean up generated files for job ${jobId}:`, error.message);
+            }
+            
+        } catch (error) {
+            console.error(`Error cleaning up files for job ${jobId}:`, error);
+        }
+    }
+
+    // Make jobs cancellable by checking for cancellation status during processing
+    async checkJobCancellation(jobId) {
+        const job = await this.getJob(jobId);
+        if (job && job.JOB_STATUS === 'CANCELLED') {
+            throw new Error('Job was cancelled');
+        }
+        return job;
     }
 
     async markJobAsFailed(jobId, errorMessage) {

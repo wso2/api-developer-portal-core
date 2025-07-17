@@ -448,11 +448,9 @@ async function mapDefaultValues(applicationConfiguration) {
     return appConfigs;
 }
 
-const streamSDKProgress = async (req, res) => {
-    const orgName = req.params.orgName;
-    const applicationId = req.params.applicationId;
-    const jobId = req.params.jobId;
-
+const streamSDKProgress = (req, res) => {
+    const { jobId } = req.params;
+    
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -460,75 +458,51 @@ const streamSDKProgress = async (req, res) => {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Cache-Control'
     });
-    
-    if (!jobId) {
-        res.write(`data: ${JSON.stringify({
-            type: 'error',
-            message: 'Job ID is required'
-        })}\n\n`);
-        res.end();
-        return;
-    }
-    
-    const job = await sdkJobService.getJob(jobId);
 
-    if (job) {
-        res.write(`data: ${JSON.stringify({
-            type: 'progress',
-            jobId: jobId,
-            status: job.JOB_STATUS ? job.JOB_STATUS.toLowerCase() : 'pending',
-            progress: job.PROGRESS || 0,
-            currentStep: job.CURRENT_STEP || 'Initializing',
-            message: job.CURRENT_STEP || 'Job is being processed',
-            resultData: job.RESULT_DATA ? JSON.parse(job.RESULT_DATA) : null
-        })}\n\n`);
-    } else {
-        res.write(`data: ${JSON.stringify({
-            type: 'error',
-            message: 'Job not found or access denied'
-        })}\n\n`);
-        res.end();
-        return;
-    }
+    console.log(`Client connected to SSE for job: ${jobId}`);
 
-    const progressHandler = (data) => {
-        if (data.jobId === jobId) {
-            res.write(`data: ${JSON.stringify({
-                type: 'progress',
-                jobId: data.jobId,
-                status: data.status,
-                progress: data.progress,
-                currentStep: data.currentStep,
-                message: data.message,
-                resultData: data.resultData,
-                error: data.error
-            })}\n\n`);
-        }
-
-        // Close connection when job is completed or failed
-        if (data.status === 'completed' || data.status === 'failed') {
-            setTimeout(() => {
-                res.end();
-            }, 1000);
+    const onProgress = (progressData) => {
+        if (progressData.jobId === jobId) {
+            const dataToSend = { ...progressData, type: 'progress' };
+            console.log(`Sending SSE data for job ${jobId}:`, dataToSend);
+            res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
         }
     };
 
-    sdkJobService.on('progress', progressHandler);
+    sdkJobService.on('progress', onProgress);
+
+    // Send initial ping
+    res.write(`data: ${JSON.stringify({ type: 'ping', jobId })}\n\n`);
 
     req.on('close', () => {
-        sdkJobService.removeListener('progress', progressHandler);
+        console.log(`Client disconnected from SSE for job: ${jobId}`);
+        sdkJobService.removeListener('progress', onProgress);
     });
+};
 
-    // Keep connection alive
-    const keepAlive = setInterval(() => {
-        res.write(`data: ${JSON.stringify({ type: 'ping' })}\n\n`);
-    }, 30000);
-
-    req.on('close', () => {
-        clearInterval(keepAlive);
-        sdkJobService.removeListener('progress', progressHandler);
-    });
-}
+const cancelSDK = async (req, res) => {
+    try {
+        const { jobId } = req.params;
+        
+        console.log(`Received request to cancel SDK job: ${jobId}`);
+        
+        // Call the service to cancel the job
+        await sdkJobService.cancelJob(jobId);
+        
+        res.status(200).json({ 
+            success: true, 
+            message: 'SDK generation cancelled successfully',
+            jobId: jobId
+        });
+        
+    } catch (error) {
+        console.error('Error cancelling SDK generation:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message || 'Failed to cancel SDK generation'
+        });
+    }
+};
 
 // ***** Generate SDK *****
 
@@ -661,5 +635,6 @@ module.exports = {
     loadApplication,
     generateSDK,
     streamSDKProgress,
-    cleanupOrphanedSDKDirectories
+    cleanupOrphanedSDKDirectories,
+    cancelSDK
 };
