@@ -14,13 +14,6 @@ body.drawer-open {
   pointer-events: none;
 }
 
-.sdk-drawer-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--primary-main-color);
-  letter-spacing: 0.5px;
-}
-
 .sdk-drawer.open {
   pointer-events: all;
 }
@@ -92,14 +85,6 @@ body.drawer-open {
   overflow-y: auto;
 }
 
-.section-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--primary-main-color);
-  letter-spacing: 0.5px;
-  margin-bottom: 1rem;
-}
-
 /* SDK Configuration */
 .sdk-config-section {
   margin-bottom: 1.5rem;
@@ -110,6 +95,12 @@ body.drawer-open {
 
 .config-group {
   margin-bottom: 1.5rem;
+}
+
+/* Form labels styling */
+.form-label {
+  font-weight: 600;
+  color: var(--primary-main-color);
 }
 
 /* Language Grid */
@@ -208,12 +199,6 @@ body.drawer-open {
 }
 
 /* Specific icon colors and backgrounds */
-.language-icon.android-icon {
-  background-color: #3ddc84;
-  color: #fff;
-  font-size: 1rem;
-}
-
 .language-icon.java-icon {
   background-color: #ed8b00;
   color: white;
@@ -228,39 +213,14 @@ body.drawer-open {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.language-icon.jmeter-icon {
-  background-color: #d22128;
-  color: white;
-  font-size: 0.9rem;
-}
-
-/* ADJUSTED: Language name styling */
+/* Language name styling */
 .language-name {
-  font-size: 0.875rem; /* Slightly larger for AI mode */
+  font-size: 0.875rem; 
   color: var(--main-text-color);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-/* AI Description Section */
-.ai-description-section {
-  transition: all 0.3s ease;
-}
-
-.ai-description-section textarea {
-  resize: vertical;
-  min-height: 100px;
-}
-
-.ai-description-section .form-label {
-  font-weight: 600;
-  color: var(--primary-main-color);
-}
-
-.ai-description-section .bi-stars {
-  color: #ffc107;
 }
 
 /* AI Generate Button Section */
