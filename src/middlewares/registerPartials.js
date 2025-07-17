@@ -56,19 +56,15 @@ const registerPartials = async (req, res, next) => {
       if (req.params.orgName && req.params.orgName !== "portal" && (!(/configure/i.test(matchURL)))) {
 
         const orgID = await adminDao.getOrgId(req.params.orgName);
-        var layoutContent = await loadLayoutFromAPI(orgID, req.params.viewName);
-        if (layoutContent === "") {
-          console.log("Layout content not found in the database. Loading from file system");
-          await registerAllPartialsFromFile(config.baseUrl + "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName, req, './src/defaultContent');
-          //register doc page partials
-          if (req.originalUrl.includes(constants.ROUTE.API_DOCS_PATH) && req.params.docType && req.params.docName) {
-            await registerDocsPageContent(req, orgID, {});
-          } else if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
-            await registerAPILandingContent(req, orgID, {});
-          }
-        } else {
-          await registerPartialsFromAPI(req);
+        await registerPartialsFromAPI(req);
+        await registerAllPartialsFromFile(config.baseUrl + "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName, req, './src/defaultContent');
+        //register doc page partials
+        if (req.originalUrl.includes(constants.ROUTE.API_DOCS_PATH) && req.params.docType && req.params.docName) {
+          await registerDocsPageContent(req, orgID, {});
+        } else if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
+          await registerAPILandingContent(req, orgID, {});
         }
+
       }
     } catch (error) {
       console.error('Error while loading organization :', error);
@@ -150,16 +146,10 @@ const registerPartialsFromAPI = async (req) => {
   });
   const hbs = exphbs.create({});
   Object.keys(partialObject).forEach((partialName) => {
-    hbs.handlebars.registerPartial(partialName, partialObject[partialName]);
+    if (constants.CUSTOMIZABLE_FILES.includes(partialName)) {
+      hbs.handlebars.registerPartial(partialName, partialObject[partialName]);
+    }
   });
-
-  if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
-    await registerAPILandingContent(req, orgID, partialObject);
-  }
-  //register doc page partials
-  if (req.originalUrl.includes(constants.ROUTE.API_DOCS_PATH) && req.params.docType && req.params.docName) {
-    await registerDocsPageContent(req, orgID, partialObject);
-  }
 };
 
 async function registerAPILandingContent(req, orgID, partialObject) {
@@ -238,8 +228,12 @@ function registerPartialsFromFile(baseURL, dir, req) {
 
   for (const filename of filenames) {
     if (filename.endsWith(".hbs")) {
-      const template = fs.readFileSync(path.join(dir, filename), constants.CHARSET_UTF8);
-      hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
+      constants.CUSTOMIZABLE_FILES.forEach(name => {
+        if (!(hbs.handlebars.partials[name])) {
+          const template = fs.readFileSync(path.join(dir, filename), constants.CHARSET_UTF8);
+          hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
+        }
+      });
     }
   }
 }

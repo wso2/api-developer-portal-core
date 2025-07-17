@@ -169,34 +169,34 @@ module.exports = {
         API_DEFINITION_XML: 'apiDefinition.xml',
     },
     DEFAULT_SUBSCRIPTION_PLANS: [
-            {
-                "policyName": "Bronze",
-                "description": "Allows 1000 requests per minute",
-                "requestCount": 1000,
-                "displayName": "Bronze",
-                "billingPlan": "FREE"
-            },
-            {
-                "policyName": "Gold",
-                "description": "Allows 5000 requests per minute",
-                "displayName": "Gold",
-                "requestCount": 5000,
-                "billingPlan": "FREE"
-            },
-            {
-                "policyName": "Silver",
-                "description": "Allows 2000 requests per minute",
-                "displayName": "Silver",
-                "requestCount": 2000,
-                "billingPlan": "FREE"
-            },
-            {
-                "policyName": "Unlimited",
-                "description": "Allows unlimited requests",
-                "displayName": "Unlimited",
-                "requestCount": "Unlimited",
-                "billingPlan": "FREE"
-            }
+        {
+            "policyName": "Bronze",
+            "description": "Allows 1000 requests per minute",
+            "requestCount": 1000,
+            "displayName": "Bronze",
+            "billingPlan": "FREE"
+        },
+        {
+            "policyName": "Gold",
+            "description": "Allows 5000 requests per minute",
+            "displayName": "Gold",
+            "requestCount": 5000,
+            "billingPlan": "FREE"
+        },
+        {
+            "policyName": "Silver",
+            "description": "Allows 2000 requests per minute",
+            "displayName": "Silver",
+            "requestCount": 2000,
+            "billingPlan": "FREE"
+        },
+        {
+            "policyName": "Unlimited",
+            "description": "Allows unlimited requests",
+            "displayName": "Unlimited",
+            "requestCount": "Unlimited",
+            "billingPlan": "FREE"
+        }
     ],
     ERROR_MESSAGE: {
         ORG_NOT_FOUND: "Failed to load organization",
@@ -261,5 +261,12 @@ module.exports = {
         403: "Forbidden",
         404: "Not Found",
         500: "Internal Server Error"
-    }
+    },
+    CUSTOMIZABLE_FILES: [
+        'header',
+        'home',
+        'main',
+        'home',
+        'api-content',
+    ]
 }
