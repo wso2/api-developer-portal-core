@@ -114,16 +114,16 @@ const registerAllPartialsFromFile = async (baseURL, req, filePrefix) => {
 
   const filePath = req.originalUrl.split(baseURL).pop();
 
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "partials"), req);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "home", "partials"), req);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "apis", "partials"), req);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "docs", "partials"), req);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "mcp", "partials"), req);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "mcp-landing", "partials"), req);
+  await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "partials"), req);
+  await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "home", "partials"), req);
+  await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req);
+  await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "apis", "partials"), req);
+  await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "docs", "partials"), req);
+  await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "mcp", "partials"), req);
+  await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "mcp-landing", "partials"), req);
 
   if (fs.existsSync(path.join(process.cwd(), filePrefix + "pages", filePath, "partials"))) {
-    registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix + "pages", filePath, "partials"), req);
+    await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix + "pages", filePath, "partials"), req);
   }
 }
 
@@ -223,20 +223,26 @@ async function registerDocsPageContent(req, orgID, partialObject) {
     });
 }
 
-function registerPartialsFromFile(baseURL, dir, req) {
+async function registerPartialsFromFile(baseURL, dir, req) {
   const filenames = fs.readdirSync(dir);
 
   for (const filename of filenames) {
     if (filename.endsWith(".hbs")) {
-      constants.CUSTOMIZABLE_FILES.forEach(name => {
-        if (!(hbs.handlebars.partials[name])) {
-          const template = fs.readFileSync(path.join(dir, filename), constants.CHARSET_UTF8);
-          hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
+      let name = filename.split(".hbs")[0];
+      const template = fs.readFileSync(path.join(dir, filename), constants.CHARSET_UTF8);
+      if (constants.CUSTOMIZABLE_FILES.includes(name)) {
+        const orgID = await adminDao.getOrgId(req.params.orgName);
+        const content = await adminDao.getOrgContent({ orgId: orgID, fileType: 'partial', viewName: req.params.viewName, fileName: name + '.hbs' });
+        console.log("Registering partial: ", name, " with content: ", content);
+        if (!(content)) {
+          hbs.handlebars.registerPartial(name, template);
         }
-      });
+      } else {
+        hbs.handlebars.registerPartial(name, template);
+      }
     }
   }
 }
 
-module.exports = registerPartials;
+  module.exports = registerPartials;
 

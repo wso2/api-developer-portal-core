@@ -104,8 +104,10 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
     var layoutResponse = await loadLayoutFromAPI(orgID, viewName);
 
     if (layoutResponse === "") {
-        layoutResponse = fs.readFileSync(completeLayoutPath, constants.CHARSET_UTF8)
+        layoutResponse = fs.readFileSync(completeLayoutPath, constants.CHARSET_UTF8);
+        layoutResponse = layoutResponse.replace(/\/styles\//g, `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/views/${viewName}/layout?fileType=style&fileName=`);
     }
+    
     const template = Handlebars.compile(templateResponse.toString());
     const layout = Handlebars.compile(layoutResponse.toString());
 

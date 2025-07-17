@@ -264,7 +264,6 @@ module.exports = {
     },
     CUSTOMIZABLE_FILES: [
         'header',
-        'home',
         'main',
         'home',
         'api-content',
