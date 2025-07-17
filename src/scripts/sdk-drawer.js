@@ -327,13 +327,13 @@ function generateSDKFromDrawerInternal(language) {
     }));
     
     // Get application name from template context or use default
-    const applicationName = getApplicationName();
+    //const applicationName = getApplicationName();
     
     const sdkConfiguration = {
         mode: 'ai',
         language: selectedLanguage,
-        description: description.trim(),
-        name: `${applicationName}-sdk`
+        description: description.trim()
+        // name: `${applicationName}-sdk`
     };
     
     // Get current URL path parts
@@ -511,17 +511,17 @@ function startSDKStatusPolling(jobId) {
 }
 
 
-function getApplicationName() {
-    // Try to get application name from the page context
-    const titleElement = document.querySelector('h1, .application-title, [data-application-name]');
-    if (titleElement) {
-        return titleElement.textContent.trim() || 'application';
-    }
+// function getApplicationName() {
+//     // Try to get application name from the page context
+//     const titleElement = document.querySelector('h1, .application-title, [data-application-name], .app-overview-title');
+//     if (titleElement) {
+//         return titleElement.textContent.trim() || 'application';
+//     }
     
-    // Fallback to extracting from URL or use default
-    const pathParts = window.location.pathname.split('/');
-    return pathParts[pathParts.length - 1] || 'application';
-}
+//     // Fallback to extracting from URL or use default
+//     const pathParts = window.location.pathname.split('/');
+//     return pathParts[pathParts.length - 1] || 'application';
+// }
 
 // Functions to handle suggestion chips visibility
 function hideSuggestionChips() {
