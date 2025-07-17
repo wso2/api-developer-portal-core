@@ -186,17 +186,11 @@ function openSdkDrawer() {
         // Add body class to prevent scrolling
         document.body.classList.add('drawer-open');
         
+        // Reset drawer to initial state
+        resetDrawerState();
+        
         // Initialize event handlers
         initializeDrawerEventHandlers();
-        
-        // Initialize suggestion chip listeners
-        setupSuggestionListeners();
-        
-        // Ensure suggestion chips are visible when drawer opens
-        showSuggestionChips();
-        
-        // Initialize visual state for AI mode only
-        updateLanguageSelection('ai');
         
         // Animate drawer in
         setTimeout(() => {
@@ -245,13 +239,49 @@ function closeSdkDrawer() {
     }
 }
 
+function restoreDefaultSuggestionChips() {
+    const suggestionsContainer = document.querySelector('.prompt-suggestions-container');
+    if (!suggestionsContainer) {
+        console.warn('Suggestions container not found');
+        return;
+    }
+    
+    // Clear any existing chips
+    suggestionsContainer.innerHTML = '';
+    
+    // Define default suggestion chips
+    const defaultSuggestions = [
+        {
+            prompt: "Generate an SDK with token management for selected APIs.",
+            icon: "bi-magic"
+        }
+    ];
+    
+    // Create and append default suggestion chips
+    defaultSuggestions.forEach(suggestion => {
+        const chipElement = document.createElement('div');
+        chipElement.className = 'suggestion-chip';
+        chipElement.setAttribute('data-prompt', suggestion.prompt);
+        
+        chipElement.innerHTML = `
+            <i class="bi ${suggestion.icon} suggestion-icon"></i>
+            <span class="suggestion-text">${suggestion.prompt}</span>
+            <button type="button" class="btn-close" aria-label="Close">X</button>
+        `;
+        
+        suggestionsContainer.appendChild(chipElement);
+    });
+    
+    console.log('Default suggestion chips restored');
+}
+
 function resetDrawerState() {
     // Reset SDK generation state
     window.sdkGenerationActive = false;
     window.currentSDKJobId = null;
     
-    // Reset to Android as default AI language
-    const defaultLanguage = document.querySelector('input[name="programmingLanguageAI"][value="android"]');
+    // Reset to Java as default AI language (matches HTML default)
+    const defaultLanguage = document.querySelector('input[name="programmingLanguageAI"][value="java"]');
     if (defaultLanguage) {
         defaultLanguage.checked = true;
     }
@@ -286,6 +316,9 @@ function resetDrawerState() {
     // Update visual state
     updateLanguageSelection('ai');
     
+    // Restore default suggestion chips
+    restoreDefaultSuggestionChips();
+    
     // Show suggestion chips when drawer is reset
     showSuggestionChips();
     
@@ -307,7 +340,7 @@ window.debugGenerateButton = function() {
 
 function getSelectedLanguage() {
     const selectedRadio = document.querySelector('input[name="programmingLanguageAI"]:checked');
-    return selectedRadio ? selectedRadio.value : 'android'; // Default to android
+    return selectedRadio ? selectedRadio.value : 'java'; // Default to java
 }
 
 function generateSDKFromDrawerInternal(language) {
