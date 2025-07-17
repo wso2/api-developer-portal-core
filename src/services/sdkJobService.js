@@ -79,6 +79,8 @@ class SDKJobService extends EventEmitter {
     async runJob(jobId, jobPayload) {
         let mergedSpec, apiSpecs, apiHandles, sdkResult, finalZipPath, baseSdkName;
 
+        jobPayload = { ...jobPayload, jobId };
+
         const steps = [
             {
                 name: 'Merging API Specifications',
@@ -146,7 +148,7 @@ class SDKJobService extends EventEmitter {
             }
             
             const { selectedAPIs, sdkConfiguration, orgName, applicationId } = jobPayload;
-            const finalBaseSdkName = baseSdkName || sdkConfiguration?.name || `${orgName}-${applicationId}-sdk`;
+            const finalBaseSdkName = `${orgName}-${applicationId}-sdk`;
             
             const resultData = {
                 selectedAPIs: selectedAPIs,
@@ -218,14 +220,13 @@ class SDKJobService extends EventEmitter {
 
     async performSdkGenerationTask(jobPayload, mergedSpec, reportProgress) {
         try {            
-            const { sdkConfiguration, orgName, applicationId } = jobPayload;
+            const { sdkConfiguration, orgName, applicationId, jobId } = jobPayload;
             
             reportProgress(50); // 50% of 20% = 10% overall (40% total)
             const sdkResult = await this.generateSDKWithOpenAPIGenerator(
                 mergedSpec,
                 sdkConfiguration,
-                orgName,
-                applicationId
+                jobId
             );
 
             console.log('SDK generated successfully, saved to:', sdkResult.sdkPath);
@@ -253,12 +254,11 @@ class SDKJobService extends EventEmitter {
         try {
 
             reportProgress(40); // 40% of 50% = 20% overall (70% total)
-            const result = await this.processAIModeSDK(sdkResult, mergedSpec, jobPayload.sdkConfiguration, apiHandles, jobPayload.sdkConfiguration?.name);
+            const result = await this.processAIModeSDK(sdkResult, mergedSpec, jobPayload.sdkConfiguration, apiHandles);
             
             reportProgress(100); // 100% of 50% = 50% overall (100% total)
             return {
-                finalZipPath: result,
-                baseSdkName: jobPayload.sdkConfiguration?.name
+                finalZipPath: result
             };
         } catch (error) {
             console.error('Error during application code generation step:', error);
@@ -363,7 +363,7 @@ class SDKJobService extends EventEmitter {
             const os = require('os');
             
             // Define potential file locations
-            const tempDir = path.join(os.tmpdir(), `sdk-generation-${jobId}`);
+            const tempDir = path.join(os.tmpdir(), `sdk-generation`, `${jobId}-sdk`);
             const generatedSdksDir = path.join(process.cwd(), 'generated-sdks');
             
             // Clean up temporary SDK generation directory
@@ -411,6 +411,13 @@ class SDKJobService extends EventEmitter {
     async markJobAsFailed(jobId, errorMessage) {
         try {
             console.log(`Marking job ${jobId} as failed with message: ${errorMessage}`);
+
+            const job = await this.getJob(jobId);
+
+            if (job && job.JOB_STATUS === 'CANCELLED') {
+                console.log(`Job ${jobId} is already cancelled, skipping failure update.`);
+                return job;
+            }
             
             const updateData = {
                 jobStatus: 'FAILED',
@@ -569,21 +576,20 @@ class SDKJobService extends EventEmitter {
         }
     }
 
-    async generateSDKWithOpenAPIGenerator(mergedSpec, sdkConfiguration, orgName, applicationId) {
-        
+    async generateSDKWithOpenAPIGenerator(mergedSpec, sdkConfiguration, jobId) {
+
         let tempDir = null;
         let outputDir = null;
         
         try {
             console.log('Starting SDK generation with OpenAPI Generator...');
             const language = sdkConfiguration?.language || 'javascript';
-            const sdkName = sdkConfiguration?.name || `${orgName}-${applicationId}-sdk`;
-            
+            const sdkName = `${jobId}-sdk`;
+
             // Create temporary directory for SDK generation
-            tempDir = path.join(os.tmpdir(), 'sdk-generation', `${sdkName}-${Date.now()}`);
+            tempDir = path.join(os.tmpdir(), 'sdk-generation', `${sdkName}`);
             const specFilePath = path.join(tempDir, 'merged-spec.json');
-            outputDir = path.join(process.cwd(), 'generated-sdks', `${sdkName}-${Date.now()}`);
-            
+            outputDir = path.join(process.cwd(), 'generated-sdks', `${sdkName}`);
             // Create directories
             await fs.promises.mkdir(tempDir, { recursive: true });
             await fs.promises.mkdir(outputDir, { recursive: true });
@@ -657,7 +663,7 @@ class SDKJobService extends EventEmitter {
         }
     }
 
-    async processAIModeSDK(sdkResult, mergedSpec, sdkConfiguration, apiHandles, baseSdkName) {        
+    async processAIModeSDK(sdkResult, mergedSpec, sdkConfiguration, apiHandles) {        
         try {
             console.log('Processing AI mode SDK generation...');
 
@@ -672,7 +678,7 @@ class SDKJobService extends EventEmitter {
 
             const applicationCodeResponse = await this.invokeApplicationCodeGenApi(applicationApiRequest);
 
-            const finalZipName = this.createSDKFileName(apiHandles, baseSdkName, true);
+            const finalZipName = this.createSDKFileName(apiHandles, sdkResult.sdkName, true);
             const finalZipResult = await this.processApplicationCodeAndCreateFinalZip(
                 applicationCodeResponse,
                 sdkResult.sdkPath,
@@ -792,8 +798,8 @@ class SDKJobService extends EventEmitter {
             handle.replace(/[^a-zA-Z0-9]/g, '') // Remove special characters
         ).join('-');
         
-        const suffix = isAIMode ? '-with-app' : '';
-        return `${baseSdkName}-${apiHandlesSuffix}${suffix}.zip`;
+        const suffix = isAIMode ? 'with-app' : '';
+        return `${baseSdkName}-${suffix}.zip`;
     };
 
     /**
