@@ -233,7 +233,6 @@ async function registerPartialsFromFile(baseURL, dir, req) {
       if (constants.CUSTOMIZABLE_FILES.includes(name)) {
         const orgID = await adminDao.getOrgId(req.params.orgName);
         const content = await adminDao.getOrgContent({ orgId: orgID, fileType: 'partial', viewName: req.params.viewName, fileName: name + '.hbs' });
-        console.log("Registering partial: ", name, " with content: ", content);
         if (!(content)) {
           hbs.handlebars.registerPartial(name, template);
         }
