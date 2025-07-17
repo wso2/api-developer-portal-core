@@ -161,9 +161,6 @@ function openSdkDrawer() {
 
     // Reset SDK generation state
     window.sdkGenerationActive = false;
-
-    // Populate selected APIs
-    populateSelectedAPIs(checkedCheckboxes);
     
     // Show drawer
     const drawer = document.getElementById('sdkDrawer');
@@ -276,23 +273,6 @@ function resetDrawerState() {
     setTimeout(() => {
         setupSuggestionListeners();
     }, 100);
-}
-
-function populateSelectedAPIs(checkedCheckboxes) {
-    const selectedApisList = document.getElementById('selectedApisList');
-    if (selectedApisList) {
-        selectedApisList.innerHTML = '';
-        
-        checkedCheckboxes.forEach(checkbox => {
-            const apiItem = document.createElement('div');
-            apiItem.className = 'selected-api-badge';
-            apiItem.innerHTML = `
-                <span class="api-name">${checkbox.dataset.apiName || 'Unknown API'}</span>
-                <span class="api-version">${checkbox.dataset.apiVersion || 'v1.0'}</span>
-            `;
-            selectedApisList.appendChild(apiItem);
-        });
-    }
 }
 
 // Debug function to check button state
