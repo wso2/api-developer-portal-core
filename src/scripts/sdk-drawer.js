@@ -52,7 +52,7 @@ function initializeDrawerEventHandlers() {
 
 function setupSuggestionListeners() {    
     // Add click listeners to all suggestion chips for applying the prompt
-    const suggestionElements = document.querySelectorAll('.suggestion-chip .suggestion-text, .suggestion-chip .suggestion-icon');
+    const suggestionElements = document.querySelectorAll('.suggestion-chip .suggestion-text, .suggestion-chip .suggestion-icon, .suggestion-chip .suggestion-play-button');
     
     suggestionElements.forEach((element, index) => {
         // Remove existing listeners to prevent duplicates
@@ -81,6 +81,10 @@ function handleSuggestionClick(event) {
         return;
     }
     
+    if (window.currentTypingAnimation) {
+        return;
+    }
+    
     const promptText = chip.dataset.prompt;
 
     if (!promptText) {
@@ -90,12 +94,8 @@ function handleSuggestionClick(event) {
     
     const descriptionTextarea = document.getElementById('sdkDescription');
     if (descriptionTextarea) {
-        descriptionTextarea.value = promptText;
-        descriptionTextarea.focus();
-        
-        // Trigger any change events that might be needed
-        descriptionTextarea.dispatchEvent(new Event('input', { bubbles: true }));
-        descriptionTextarea.dispatchEvent(new Event('change', { bubbles: true }));
+        // Immediately hide the clicked chip and start typing animation
+        hideChipAndStartTyping(chip, descriptionTextarea, promptText);
     } else {
         console.error('Could not find sdkDescription textarea');
     }
@@ -106,7 +106,10 @@ function handleSuggestionClose(event) {
 
     const chip = event.target.closest('.suggestion-chip');
     if (chip) {
-        chip.remove();
+        // Hide the chip instead of removing it from DOM
+        chip.style.display = 'none';
+        // Add a class to track that it was manually closed
+        chip.classList.add('manually-closed');
     }
 }
 
@@ -178,6 +181,9 @@ function openSdkDrawer() {
     // Reset SDK generation state
     window.sdkGenerationActive = false;
     
+    // Store original chip HTML when drawer first opens (for restoration)
+    storeOriginalChipHTML();
+    
     // Show drawer
     const drawer = document.getElementById('sdkDrawer');
     if (drawer) {
@@ -202,17 +208,23 @@ function openSdkDrawer() {
 function closeSdkDrawer() {
     // Check if SDK generation is in progress
     if (isSDKGenerationInProgress()) {
-        // Show confirmation dialog
-        const confirmClose = confirm('SDK generation is in progress. Are you sure you want to close? This will cancel the generation process.');
-        if (!confirmClose) {
-            return; 
-        }
-        
-        cancelSDKGeneration();
+        // Show custom confirmation modal instead of browser confirm
+        showSdkCancelConfirmModal();
+        return; 
     }
     
+    // Proceed with normal closure
+    proceedWithDrawerClosure();
+}
+
+function proceedWithDrawerClosure() {
     // Stop any running progress animation
     stopProgressAnimation();
+    
+    // Cancel any ongoing typing animation
+    if (window.currentTypingAnimation) {
+        cancelTypingAnimation();
+    }
     
     if (window.currentSDKEventSource) {
         window.currentSDKEventSource.close();
@@ -239,46 +251,77 @@ function closeSdkDrawer() {
     }
 }
 
-function restoreDefaultSuggestionChips() {
-    const suggestionsContainer = document.querySelector('.prompt-suggestions-container');
-    if (!suggestionsContainer) {
-        console.warn('Suggestions container not found');
-        return;
-    }
-    
-    // Clear any existing chips
-    suggestionsContainer.innerHTML = '';
-    
-    // Define default suggestion chips
-    const defaultSuggestions = [
-        {
-            prompt: "Generate an SDK with token management for selected APIs.",
-            icon: "bi-magic"
+// Chip State Management Functions
+function storeOriginalChipHTML() {
+    // Only store if not already stored (to preserve original state)
+    if (!window.originalChipHTML) {
+        const chipContainer = document.querySelector('.prompt-suggestions-container');
+        if (chipContainer) {
+            window.originalChipHTML = chipContainer.innerHTML;
         }
-    ];
+    }
+}
+
+function restoreOriginalChips() {
+    // Restore chips from stored HTML if available
+    if (window.originalChipHTML) {
+        const chipContainer = document.querySelector('.prompt-suggestions-container');
+        if (chipContainer) {
+            chipContainer.innerHTML = window.originalChipHTML;
+            // Re-setup event listeners for the restored chips
+            setTimeout(() => {
+                setupSuggestionListeners();
+            }, 50);
+            return true;
+        }
+    }
+    return false;
+}
+
+function resetChipStates() {
+    // Reset all chip states without restoring HTML
+    const allChips = document.querySelectorAll('.suggestion-chip');
     
-    // Create and append default suggestion chips
-    defaultSuggestions.forEach(suggestion => {
-        const chipElement = document.createElement('div');
-        chipElement.className = 'suggestion-chip';
-        chipElement.setAttribute('data-prompt', suggestion.prompt);
+    allChips.forEach((chip) => {
+        // Show all chips
+        chip.style.display = 'inline-flex';
         
-        chipElement.innerHTML = `
-            <i class="bi ${suggestion.icon} suggestion-icon"></i>
-            <span class="suggestion-text">${suggestion.prompt}</span>
-            <button type="button" class="btn-close" aria-label="Close">X</button>
-        `;
-        
-        suggestionsContainer.appendChild(chipElement);
+        // Remove all state classes
+        chip.classList.remove('typing-in-progress', 'manually-closed');
     });
     
-    console.log('Default suggestion chips restored');
+    // Enable all chips
+    enableSuggestionChips();
+}
+
+function restoreHiddenSuggestionChips() {
+    // Cancel any ongoing typing animation
+    if (window.currentTypingAnimation) {
+        cancelTypingAnimation();
+    }
+    
+    // Try to restore from original HTML first (handles completely removed chips)
+    const restoredFromOriginal = restoreOriginalChips();
+    
+    if (!restoredFromOriginal) {
+        // If no original HTML stored, just reset states of existing chips
+        resetChipStates();
+    }
+    
+    // Always ensure chips are enabled after restoration
+    enableSuggestionChips();
 }
 
 function resetDrawerState() {
     // Reset SDK generation state
     window.sdkGenerationActive = false;
     window.currentSDKJobId = null;
+    
+    // Clear any typing animation state
+    if (window.currentTypingAnimation) {
+        window.currentTypingAnimation.active = false;
+        window.currentTypingAnimation = null;
+    }
     
     // Reset to Java as default AI language (matches HTML default)
     const defaultLanguage = document.querySelector('input[name="programmingLanguageAI"][value="java"]');
@@ -290,6 +333,7 @@ function resetDrawerState() {
     const aiDescription = document.getElementById('sdkDescription');
     if (aiDescription) {
         aiDescription.value = '';
+        aiDescription.classList.remove('typing');
     }
     
     // Show AI section (always visible now)
@@ -315,14 +359,14 @@ function resetDrawerState() {
     
     // Update visual state
     updateLanguageSelection('ai');
-    
-    // Restore default suggestion chips
-    restoreDefaultSuggestionChips();
+
+    // Restore hidden suggestion chips (this will restore ALL chips)
+    restoreHiddenSuggestionChips();
     
     // Show suggestion chips when drawer is reset
     showSuggestionChips();
     
-    // Re-setup suggestion listeners in case suggestions were added dynamically
+    // Re-setup suggestion listeners after restoration
     setTimeout(() => {
         setupSuggestionListeners();
     }, 100);
@@ -1097,9 +1141,80 @@ function cancelSDKGeneration() {
     console.log('SDK generation cancelled successfully');
 }
 
+// SDK Cancel Confirmation Modal Functions
+function showSdkCancelConfirmModal() {
+    const modal = document.getElementById('sdkCancelConfirmModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Add body class to prevent scrolling behind modal
+        document.body.classList.add('modal-open');
+        
+        // Add escape key listener for modal
+        document.addEventListener('keydown', handleModalEscapeKey);
+        
+        // Add click outside listener
+        modal.addEventListener('click', handleModalBackdropClick);
+    }
+}
+
+function closeSdkCancelConfirmModal() {
+    const modal = document.getElementById('sdkCancelConfirmModal');
+    if (modal) {
+        modal.style.display = 'none';
+        // Remove body class to restore scrolling
+        document.body.classList.remove('modal-open');
+        
+        // Remove event listeners
+        document.removeEventListener('keydown', handleModalEscapeKey);
+        modal.removeEventListener('click', handleModalBackdropClick);
+    }
+}
+
+function confirmSdkCancellation() {
+    // Close the confirmation modal first
+    closeSdkCancelConfirmModal();
+    
+    // Cancel the SDK generation
+    cancelSDKGeneration();
+    
+    // Proceed with closing the drawer
+    proceedWithDrawerClosure();
+}
+
+function handleModalEscapeKey(event) {
+    if (event.key === 'Escape') {
+        const modal = document.getElementById('sdkCancelConfirmModal');
+        if (modal && modal.style.display === 'flex') {
+            event.preventDefault();
+            closeSdkCancelConfirmModal();
+        }
+    }
+}
+
+function handleModalBackdropClick(event) {
+    // Only close if clicking on the modal backdrop (not on modal content)
+    if (event.target.id === 'sdkCancelConfirmModal') {
+        event.preventDefault();
+        closeSdkCancelConfirmModal();
+    }
+}
+
+// Debug function for testing the modal
+window.testSdkCancelModal = function() {
+    console.log('Testing SDK cancel confirmation modal...');
+    showSdkCancelConfirmModal();
+};
+
 // Make functions available globally
 window.openSdkDrawer = openSdkDrawer;
 window.closeSdkDrawer = closeSdkDrawer;
+
+// Make modal functions globally available
+window.showSdkCancelConfirmModal = showSdkCancelConfirmModal;
+window.closeSdkCancelConfirmModal = closeSdkCancelConfirmModal;
+window.confirmSdkCancellation = confirmSdkCancellation;
+window.handleModalEscapeKey = handleModalEscapeKey;
+window.handleModalBackdropClick = handleModalBackdropClick;
 
 // Make notification functions globally available
 window.showErrorNotification = showErrorNotification;
@@ -1125,4 +1240,139 @@ function handleDrawerBackdropClick(event) {
         event.preventDefault();
         closeSdkDrawer();
     }
+}
+
+// Typing Animation Functions
+function hideChipAndStartTyping(chip, textarea, text) {
+    // Disable all other suggestion chips during typing
+    disableSuggestionChips();
+    
+    // Immediately hide the clicked chip
+    chip.style.display = 'none';
+    
+    // Store the chip reference for restoring when needed
+    if (!window.currentTypingAnimation) {
+        window.currentTypingAnimation = {};
+    }
+    window.currentTypingAnimation.hiddenChip = chip;
+    
+    // Start typing animation
+    startTypingAnimation(textarea, text);
+}
+
+function disableSuggestionChips() {
+    const allChips = document.querySelectorAll('.suggestion-chip');
+    allChips.forEach(chip => {
+        chip.classList.add('typing-in-progress');
+    });
+}
+
+function enableSuggestionChips() {
+    const allChips = document.querySelectorAll('.suggestion-chip');
+    allChips.forEach(chip => {
+        chip.classList.remove('typing-in-progress');
+    });
+}
+
+function startTypingAnimation(textarea, text) {
+    // Store existing hidden chip reference before cancelling
+    let existingHiddenChip = null;
+    if (window.currentTypingAnimation && window.currentTypingAnimation.hiddenChip) {
+        existingHiddenChip = window.currentTypingAnimation.hiddenChip;
+    }
+    
+    // Cancel any existing typing animation
+    if (window.currentTypingAnimation) {
+        // Don't restore the chip when cancelling for a new animation
+        window.currentTypingAnimation.active = false;
+        if (window.currentTypingAnimation.textarea) {
+            window.currentTypingAnimation.textarea.classList.remove('typing');
+        }
+    }
+    
+    // Clear textarea and focus it
+    textarea.value = '';
+    textarea.focus();
+    
+    // Add typing class for cursor effect (if supported)
+    textarea.classList.add('typing');
+    
+    let currentIndex = 0;
+    const typingSpeed = 60; // milliseconds per character
+    
+    // Store animation state for cancellation
+    window.currentTypingAnimation = {
+        active: true,
+        textarea: textarea,
+        targetText: text,
+        hiddenChip: existingHiddenChip
+    };
+    
+    function typeNextCharacter() {
+        // Check if animation was cancelled
+        if (!window.currentTypingAnimation || !window.currentTypingAnimation.active) {
+            return;
+        }
+        
+        if (currentIndex < text.length) {
+            // Add next character
+            textarea.value += text.charAt(currentIndex);
+            currentIndex++;
+            
+            // Trigger input event for any listeners
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            
+            // Schedule next character
+            setTimeout(typeNextCharacter, typingSpeed);
+        } else {
+            // Typing completed
+            finishTypingAnimation(textarea, text);
+        }
+    }
+    
+    // Start typing after a short delay
+    setTimeout(typeNextCharacter, 100);
+}
+
+function cancelTypingAnimation() {
+    if (window.currentTypingAnimation) {
+        window.currentTypingAnimation.active = false;
+        
+        // Remove typing class
+        if (window.currentTypingAnimation.textarea) {
+            window.currentTypingAnimation.textarea.classList.remove('typing');
+        }
+        
+        // Restore the hidden chip if it exists
+        if (window.currentTypingAnimation.hiddenChip) {
+            const chip = window.currentTypingAnimation.hiddenChip;
+            chip.style.display = 'inline-flex'; // Show the chip again
+        }
+        
+        window.currentTypingAnimation = null;
+        
+        // Re-enable suggestion chips
+        enableSuggestionChips();
+        
+        console.log('Typing animation cancelled');
+    }
+}
+
+function finishTypingAnimation(textarea, text) {
+    // Remove typing class
+    textarea.classList.remove('typing');
+    
+    // Keep the hidden chip hidden (don't restore it after typing completes)
+    // The chip will only be restored when drawer is reset/closed
+    
+    // Clear animation state
+    window.currentTypingAnimation = null;
+    
+    // Re-enable suggestion chips
+    enableSuggestionChips();
+    
+    // Trigger final change event
+    textarea.dispatchEvent(new Event('change', { bubbles: true }));
+    
+    console.log('Typing animation completed:', text);
 }

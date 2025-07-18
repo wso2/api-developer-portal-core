@@ -269,6 +269,7 @@ body.drawer-open {
     resize: none; /* Or vertical if you prefer */
     color: var(--main-text-color);
 }
+
 .prompt-input-area > textarea.form-control:focus {
     border: none;
     box-shadow: none;
@@ -276,6 +277,19 @@ body.drawer-open {
 
 .prompt-input-area > textarea.form-control::placeholder {
     color: #6c757d;
+}
+
+/* Typing indicator styles */
+.prompt-input-area > textarea.form-control.typing {
+    position: relative;
+}
+
+.prompt-input-area > textarea.form-control.typing::after {
+    content: '|';
+    color: var(--primary-main-color);
+    animation: blinkCursor 1s infinite;
+    position: absolute;
+    right: 2px;
 }
 
 /* Container for one or more suggestion chips */
@@ -289,19 +303,54 @@ body.drawer-open {
 .suggestion-chip {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.35rem 0.75rem;
+    gap: 0.75rem;
+    padding: 0.35rem 0.5rem 0.35rem 0.5rem;
     background-color: #f8f9fa;
     border: 1px solid #e9ecef;
     border-radius: 6px;
     font-size: 0.75rem;
     color: #495057;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
+    opacity: 1;
+    transform: scale(1);
 }
+
 .suggestion-chip:hover {
-    background-color: #e9ecef;
-    border-color: #dee2e6;
+    background-color: #dee2e6;
+    border-color: var(--primary-main-color);
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Fade out animation for clicked suggestion chips */
+.suggestion-chip.fading-out {
+    opacity: 0;
+    transform: scale(0.95);
+    pointer-events: none;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Disabled state during typing */
+.suggestion-chip.typing-in-progress {
+    opacity: 0.5;
+    pointer-events: none;
+    filter: grayscale(50%);
+    transition: all 0.3s ease;
+}
+
+.suggestion-play-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background-color: #dddfe1;
+    border-radius: 50%;
+    color: #495057;
+    font-size: 1rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
 }
 
 .suggestion-chip .suggestion-icon {
@@ -459,6 +508,16 @@ body.drawer-open {
     }
 }
 
+/* Blinking cursor animation for typing effect */
+@keyframes blinkCursor {
+    0%, 50% {
+        opacity: 1;
+    }
+    51%, 100% {
+        opacity: 0;
+    }
+}
+
 /* Notification System Styles */
 .sdk-error-notification,
 .sdk-success-notification,
@@ -541,4 +600,65 @@ body.drawer-open {
         max-width: none;
         min-width: auto;
     }
+}
+
+/* SDK Cancel Confirmation Modal Styles */
+
+/* Reduce modal width */
+#sdkCancelConfirmModal .modal-dialog {
+    max-width: 600px;
+    width: 90%;
+}
+
+#sdkCancelConfirmModal .button-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+/* Make both buttons the same size */
+#sdkCancelConfirmModal .button-container button {
+    min-width: 100px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+#sdkCancelConfirmModal .btn-danger {
+  background-color: #fa5c5c;
+  border: 1px solid #fa5c5c;
+  color: white;
+}
+
+#sdkCancelConfirmModal .btn-danger:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+}
+
+#sdkCancelConfirmModal .btn-danger:focus {
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+/* Modal body styling for better presentation */
+#sdkCancelConfirmModal .custom-modal-body {
+  min-height: 150px;
+}
+
+/* Prevent background scrolling when modal is open */
+body.modal-open {
+  overflow: hidden;
+}
+
+#sdkCancelConfirmModal .confirmation-title {
+    font-size: 1.1rem; 
+    font-weight: 600;
+    color: #111827; 
+    margin-bottom: 0.75rem;
+}
+
+#sdkCancelConfirmModal .confirmation-text {
+    font-size: 0.75rem; 
+    color: #4b5563;
+    line-height: 1.6;
+    margin-bottom: 2rem;
 }
