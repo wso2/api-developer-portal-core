@@ -101,14 +101,11 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
 
     const templateResponse = fs.readFileSync(path.join(process.cwd(), filePrefix + filePath + '/page.hbs'), constants.CHARSET_UTF8);
     const completeLayoutPath = path.join(process.cwd(), filePrefix + 'layout/main.hbs');
-    var layoutResponse = await loadLayoutFromAPI(orgID, viewName);
 
-    if (layoutResponse === "") {
-        layoutResponse = fs.readFileSync(completeLayoutPath, constants.CHARSET_UTF8);
-        const styleContent = await adminDao.getOrgContent({ orgId: orgID, fileType: 'style', viewName: viewName, fileName: 'main.css' });
-        if (styleContent) {
-            layoutResponse = layoutResponse.replace(/\/styles\//g, `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/views/${viewName}/layout?fileType=style&fileName=`);
-        }
+    layoutResponse = fs.readFileSync(completeLayoutPath, constants.CHARSET_UTF8);
+    const styleContent = await adminDao.getOrgContent({ orgId: orgID, fileType: 'style', viewName: viewName, fileName: 'main.css' });
+    if (styleContent) {
+        layoutResponse = layoutResponse.replace(/\/styles\//g, `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/views/${viewName}/layout?fileType=style&fileName=`);
     }
 
     const template = Handlebars.compile(templateResponse.toString());
