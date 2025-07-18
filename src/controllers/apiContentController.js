@@ -101,7 +101,7 @@ const loadAPIs = async (req, res) => {
             }
             //retrieve api list from control plane
             let publicMode = false;
-            if (cpOrgID && Array.isArray(req.user.authorizedOrgs) && !req.user.authorizedOrgs.includes(cpOrgID)) {
+            if (cpOrgID && Array.isArray(req.user?.authorizedOrgs) && !req.user.authorizedOrgs?.includes(cpOrgID)) {
                 publicMode = true;
             }
             const allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?limit=1000`, {}, {}, publicMode);

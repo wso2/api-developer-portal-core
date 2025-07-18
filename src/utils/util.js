@@ -99,19 +99,21 @@ async function loadTemplateFromAPI(orgID, filePath, viewName) {
 
 async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, viewName) {
 
-    var layoutContent = await loadLayoutFromAPI(orgID, viewName);
-    if (layoutContent === "") {
-        console.log("Layout not found for org: " + orgName + " and view: " + viewName);
-        //load default org content
-        html = renderTemplate(filePrefix + filePath + '/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
-        console.error("Rendering default content for org This: " + orgName + " and view: " + viewName);
-        return html;
+    const templateResponse = fs.readFileSync(path.join(process.cwd(), filePrefix + filePath + '/page.hbs'), constants.CHARSET_UTF8);
+    const completeLayoutPath = path.join(process.cwd(), filePrefix + 'layout/main.hbs');
+
+    layoutResponse = fs.readFileSync(completeLayoutPath, constants.CHARSET_UTF8);
+    const styleContent = await adminDao.getOrgContent({ orgId: orgID, fileType: 'style', viewName: viewName, fileName: 'main.css' });
+    if (styleContent) {
+        layoutResponse = layoutResponse.replace(/\/styles\//g, `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/views/${viewName}/layout?fileType=style&fileName=`);
     }
-    var templatePage = await loadTemplateFromAPI(orgID, filePath, viewName);
-    const template = Handlebars.compile(templatePage.toString());
-    const layout = Handlebars.compile(layoutContent.toString());
+
+    const template = Handlebars.compile(templateResponse.toString());
+    const layout = Handlebars.compile(layoutResponse.toString());
+
     return layout({
         body: template(templateContent),
+        portalConfigs: config.portalConfigs,
     });
 
 }
@@ -425,10 +427,10 @@ const invokeGraphQLRequest = async (req, url, query, variables, headers) => {
     }
 };
 
-const invokeApiRequest = async (req, method, url, headers, body, publicMode=false) => {
+const invokeApiRequest = async (req, method, url, headers, body, publicMode = false) => {
 
     console.log(`Invoking API: ${url}`);
-    if(!publicMode) {
+    if (!publicMode) {
         headers = headers || {};
         headers.Authorization = req.user?.exchangeToken ? `Bearer ${req.user.exchangeToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
     }
@@ -648,10 +650,12 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                 if (file.name.endsWith(".css")) {
                     fileType = "style"
                     if (file.name === "main.css") {
-                        strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g, `@import url("${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
+                        strContent = strContent.replace(/@import\s*['"]\/styles\/api-content\.css['"];/g, `@import url("${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=api-content.css");`);
+                        strContent = strContent.replace(/@import\s*['"]\/styles\/home\.css['"];/g, `@import url("${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=home.css");`);
+                        strContent = strContent.replace(/@import\s*['"]\/styles\/main\.css['"];/g, `@import url("${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=main.css");`);
                     }
-                    strContent = strContent.replace(/"\/images\/([^"]+)/g, `"${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`);
-                    strContent = strContent.replace(/'\/images\/([^']+)/g, `'${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`);
+                    strContent = strContent.replace(/"\/images\/(devportalLogo\.[^"]+)/g, `"${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`);
+                    strContent = strContent.replace(/'\/images\/(devportalLogo\.[^']+)/g, `"${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`);
                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
                 } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                     fileType = "layout"
@@ -843,8 +847,8 @@ const enforcePortalMode = async (req, res, next) => {
     const portalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
     const path = req.originalUrl.split('/')[4];
 
-    if ((path.includes('apis') || path.includes('api') ) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.API_PROXIES) ||
-        (path.includes('mcps') || path.includes('mcp') ) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.MCP_ONLY)) {
+    if ((path.includes('apis') || path.includes('api')) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.API_PROXIES) ||
+        (path.includes('mcps') || path.includes('mcp')) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.MCP_ONLY)) {
         next();
     } else {
         const templateContent = {
