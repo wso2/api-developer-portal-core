@@ -464,7 +464,6 @@ const streamSDKProgress = (req, res) => {
     const onProgress = (progressData) => {
         if (progressData.jobId === jobId) {
             const dataToSend = { ...progressData, type: 'progress' };
-            console.log(`Sending SSE data for job ${jobId}:`, dataToSend);
             res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
         }
     };
@@ -480,13 +479,14 @@ const streamSDKProgress = (req, res) => {
     });
 };
 
+// ***** Cancel SDK Job *****
+
 const cancelSDK = async (req, res) => {
     try {
         const { jobId } = req.params;
         
         console.log(`Received request to cancel SDK job: ${jobId}`);
         
-        // Call the service to cancel the job
         await sdkJobService.cancelJob(jobId);
         
         res.status(200).json({ 
@@ -520,8 +520,6 @@ const generateSDK = async (req, res) => {
             });
         }
 
-        // Validate AI mode configuration, 
-        // TODO: need to remove this mode selection for sdk generation as only ai mode is supported
         if (!sdkConfiguration || sdkConfiguration.mode !== 'ai') {
             return res.status(400).json({
                 success: false,
@@ -537,7 +535,6 @@ const generateSDK = async (req, res) => {
             });
         }
 
-        // Get organization ID
         const orgID = await orgIDValue(orgName);
         
         // Create job for tracking progress

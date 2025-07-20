@@ -266,7 +266,7 @@ class SDKJobService extends EventEmitter {
             
             if (error.message.includes('AI service')) {
                 userMessage = 'Unable to connect to AI service for application code generation. Please try again later.';
-            } else if (error.message.includes('Failed to generate application')) {
+            } else if (error.message.includes('use case is invalid')) {
                 userMessage = 'AI service failed to generate application code. Please try with a different description.';
             } else if (error.message.includes('ZIP')) {
                 userMessage = 'Failed to create final package. Please try again.';
