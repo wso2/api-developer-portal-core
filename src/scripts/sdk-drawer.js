@@ -17,7 +17,6 @@
  */
 /* eslint-disable no-undef */
 
-// Initialize drawer event handlers
 function initializeDrawerEventHandlers() {
     // Clear any existing event listeners to prevent duplicates
     const existingHandlers = document.querySelectorAll('.sdk-drawer-event-handler');
@@ -33,6 +32,17 @@ function initializeDrawerEventHandlers() {
         generateBtn.addEventListener('click', handleGenerateClick);
     }
     
+    const descriptionTextArea = document.getElementById('sdkDescription');
+    if (descriptionTextArea) {
+        descriptionTextArea.addEventListener('input', function() {
+            autoResizeTextarea(this);
+        });
+        descriptionTextArea.addEventListener('keyup', function() {
+            autoResizeTextarea(this);
+        });
+        autoResizeTextarea(descriptionTextArea);
+    }
+
     // Prevent any form submissions within the drawer
     const drawer = document.getElementById('sdkDrawer');
     if (drawer) {
@@ -334,6 +344,7 @@ function resetDrawerState() {
     if (aiDescription) {
         aiDescription.value = '';
         aiDescription.classList.remove('typing');
+        aiDescription.style.height = 'auto';
     }
     
     // Show AI section (always visible now)
@@ -544,25 +555,20 @@ function updateProgressStatus(currentStep, message) {
 function handleSDKGenerationComplete(data) {
     // Complete the progress bar
     updateProgressBar(100);
-    updateProgressStatus('Completed!', 'SDK generated successfully');
+    updateProgressStatus('Completed!', 'SDK generation completed successfully');
     
     // Clear job ID since generation is complete
     window.currentSDKJobId = null;
     
-    // Auto-download the file
+    // Auto-download the file if available
     if (data.resultData && data.resultData.finalDownloadUrl) {
         setTimeout(() => {
             triggerAutoDownload(data.resultData.finalDownloadUrl);
-            // Hide progress bar after download starts
-            setTimeout(() => {
-                hideSDKGenerationLoading();
-            }, 500);
         }, 1000);
-    } else {
-        setTimeout(() => {
-            hideSDKGenerationLoading();
-        }, 1500);
     }
+    
+    // Immediately show success state, then reset drawer after 10 seconds
+    showSDKGenerationSuccess();
 }
 
 function startSDKStatusPolling(jobId) {
@@ -660,25 +666,32 @@ function hideSDKGenerationLoading() {
     showSuggestionChips();
 }
 
-function showSDKGenerationSuccess(data, mode) {
-    // Complete the progress bar
-    updateProgressBar(100);
+function showSDKGenerationSuccess() {
+    console.log('SDK generation completed successfully - showing success state');
     
-    // Auto-download the file
-    if (data.data && data.data.finalDownloadUrl) {
-        setTimeout(() => {
-            triggerAutoDownload(data.data.finalDownloadUrl);
-            // Hide progress bar and restore input after download starts
-            setTimeout(() => {
-                hideProgressBarInPrompt();
-            }, 500);
-        }, 1000); // Small delay to show 100% completion
-    } else {
-        // Hide progress bar if no download URL
-        setTimeout(() => {
-            hideProgressBarInPrompt();
-        }, 1500);
+    // Mark SDK generation as inactive
+    window.sdkGenerationActive = false;
+    
+    // Update progress bar to show success state
+    const progressContainer = document.getElementById('sdkProgressContainer');
+    if (progressContainer) {
+        // Add success styling
+        progressContainer.classList.add('success');
+        
+        // Update the progress bar to green success color
+        const progressFill = document.getElementById('sdkProgressFill');
+        if (progressFill) {
+            progressFill.style.backgroundColor = '#10b981'; // Green success color
+        }
+        
+        // Update title and status for success
+        updateProgressStatus('Success!', 'SDK generation completed successfully');
     }
+    
+    // After 10 seconds, reset the drawer to initial state
+    setTimeout(() => {
+        resetDrawerToInitialState();
+    }, 10000);
 }
 
 function showSDKGenerationError(message) {
@@ -1199,6 +1212,13 @@ function handleModalBackdropClick(event) {
     }
 }
 
+function autoResizeTextarea(textArea) {
+    if (textArea) {
+        textArea.style.height = 'auto';
+        textArea.style.height = textArea.scrollHeight + 'px';
+    }
+}
+
 // Debug function for testing the modal
 window.testSdkCancelModal = function() {
     console.log('Testing SDK cancel confirmation modal...');
@@ -1315,14 +1335,14 @@ function startTypingAnimation(textarea, text) {
         }
         
         if (currentIndex < text.length) {
-            // Add next character
+
             textarea.value += text.charAt(currentIndex);
             currentIndex++;
             
-            // Trigger input event for any listeners
+            autoResizeTextarea(textarea);
+            
             textarea.dispatchEvent(new Event('input', { bubbles: true }));
             
-            // Schedule next character
             setTimeout(typeNextCharacter, typingSpeed);
         } else {
             // Typing completed
@@ -1375,4 +1395,49 @@ function finishTypingAnimation(textarea, text) {
     textarea.dispatchEvent(new Event('change', { bubbles: true }));
     
     console.log('Typing animation completed:', text);
+}
+
+function resetDrawerToInitialState() {
+    console.log('Resetting drawer to initial state after successful SDK generation');
+    
+    // Hide progress bar and restore prompt input
+    hideProgressBarInPrompt();
+    
+    // Clear any temporary data
+    window.sdkGenerationActive = false;
+    window.currentSDKJobId = null;
+    
+    // Clear any typing animation state
+    if (window.currentTypingAnimation) {
+        window.currentTypingAnimation.active = false;
+        window.currentTypingAnimation = null;
+    }
+    
+    // Reset textarea content and height
+    const aiDescription = document.getElementById('sdkDescription');
+    if (aiDescription) {
+        aiDescription.value = '';
+        aiDescription.classList.remove('typing');
+        aiDescription.style.height = 'auto';
+    }
+    
+    // Reset language selection to Java (default)
+    const defaultLanguage = document.querySelector('input[name="programmingLanguageAI"][value="java"]');
+    if (defaultLanguage) {
+        defaultLanguage.checked = true;
+    }
+    updateLanguageSelection('ai');
+    
+    // Restore all suggestion chips to initial state
+    restoreHiddenSuggestionChips();
+    
+    // Show suggestion chips
+    showSuggestionChips();
+    
+    // Re-setup event listeners to ensure everything works
+    setTimeout(() => {
+        setupSuggestionListeners();
+    }, 100);
+    
+    console.log('Drawer reset to initial state completed');
 }

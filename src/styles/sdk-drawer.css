@@ -230,6 +230,12 @@ body.drawer-open {
 }
 
 /* AI Generate Button Section */
+#sdkDescription {
+    min-height: calc(1.5em * 5); /* Corresponds to 5 rows */
+    max-height: calc(1.5em * 20); /* Maximum height for 20 rows */
+    overflow-y: auto; /* Show scrollbar when max-height is reached */
+}
+
 .ai-generate-section {
     display: flex;
     justify-content: flex-end;
@@ -240,7 +246,7 @@ body.drawer-open {
 #aiGenerateBtn {
     width: 60px;
     height: 20px;
-    padding: 0;
+    padding: 16px;
     font-size: 1.2rem;
     display: flex;
     align-items: center;
@@ -379,7 +385,7 @@ body.drawer-open {
     font-size: 0.6rem; /* 12.8px */
     color: #6c757d; /* A subtle gray color */
     flex-grow: 1; /* Allow it to take up available space */
-    text-align: center;
+    text-align: left;
 }
 
 /* SDK Progress Bar Styles */
@@ -445,6 +451,24 @@ body.drawer-open {
 
 .sdk-progress-container.error .sdk-progress-fill {
     background: linear-gradient(90deg, #dc3545 0%, #c82333 100%);
+}
+
+/* Success state styles */
+.sdk-progress-container.success .sdk-progress-fill {
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}
+
+.sdk-progress-container.success .sdk-progress-title {
+    color: var(--success-color);
+}
+
+.sdk-progress-container.success .sdk-progress-percentage {
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.sdk-progress-container.success .sdk-progress-status {
+    color: var(--success-color);
 }
 
 .sdk-progress-fill::after {
