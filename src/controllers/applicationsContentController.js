@@ -26,23 +26,11 @@ const apiMetadata = require('../dao/apiMetadata');
 const util = require('../utils/util');
 const filePrefix = config.pathToContent;
 const controlPlaneUrl = config.controlPlane.url;
-const aiSDKServiceUrl = config.aiSDKService?.url || 'http://localhost:5001';
-const aiSDKServiceEndpoints = config.aiSDKService?.endpoints || {
-    mergeSpecs: '/merge-openapi-specs',
-    generateApp: '/generate-application-code'
-};
 const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
 const adminService = require('../services/adminService');
 const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
-const { exec } = require('child_process');
-const { promisify } = require('util');
-const execAsync = promisify(exec);
-const os = require('os');
-const unzipper = require('unzipper');
-const js = require('@eslint/js');
 const sdkJobService = require('../services/sdkJobService');
-
 
 const orgIDValue = async (orgName) => {
     const organization = await adminDao.getOrganization(orgName);

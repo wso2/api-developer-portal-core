@@ -22,7 +22,6 @@ const SdkJob = require('../dao/sdkJob');
 const apiMetadata = require('../dao/apiMetadata');
 const path = require('path');
 const fs = require('fs');
-const os = require('os');
 const config = require(process.cwd() + '/config');
 const aiSDKServiceUrl = config.aiSDKService?.url || 'http://localhost:5001';
 const aiSDKServiceEndpoints = config.aiSDKService?.endpoints || {
