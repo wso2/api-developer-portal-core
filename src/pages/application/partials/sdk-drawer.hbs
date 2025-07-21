@@ -21,23 +21,11 @@
                 <!-- Programming Language -->
                 <div class="config-group mb-4">
                     <label class="form-label mb-1" style="color: var(--primary-main-color)">Select Programming Language</label>
-                    <div class="language-options ai-mode" id="languageOptions">
-                        <!-- AI Mode Languages -->
-                        {{!-- <div class="language-option ai-only selected" data-language="android-ai" data-mode="ai">
-                            <input type="radio" name="programmingLanguageAI" id="langAndroidAI" value="android" checked>
-                            <label for="langAndroidAI" class="language-card">
-                                <div class="language-info">
-                                    <div class="language-icon android-icon">
-                                        <i class="bi bi-android2"></i>
-                                    </div>
-                                    <span class="language-name">Android</span>
-                                </div>
-                            </label>
-                        </div> --}}
+                    <div class="language-options" id="languageOptions">
                         
-                        <div class="language-option ai-only selected" data-language="java-ai" data-mode="ai">
-                            <input type="radio" name="programmingLanguageAI" id="langJavaAI" value="java" checked>
-                            <label for="langJavaAI" class="language-card">
+                        <div class="language-option selected" data-language="java">
+                            <input type="radio" name="programmingLanguageAI" id="langJava" value="java" checked>
+                            <label for="langJava" class="language-card">
                                 <div class="language-info">
                                     <div class="language-icon java-icon">
                                         <i class="bi bi-cup-hot"></i>
@@ -47,9 +35,9 @@
                             </label>
                         </div>
                         
-                        <div class="language-option ai-only" data-language="javascript-ai" data-mode="ai">
-                            <input type="radio" name="programmingLanguageAI" id="langJSAI" value="javascript">
-                            <label for="langJSAI" class="language-card">
+                        <div class="language-option" data-language="javascript">
+                            <input type="radio" name="programmingLanguageAI" id="langJS" value="javascript">
+                            <label for="langJS" class="language-card">
                                 <div class="language-info">
                                     <div class="language-icon js-icon">
                                         <span>JS</span>
@@ -58,23 +46,11 @@
                                 </div>
                             </label>
                         </div>
-                        
-                        {{!-- <div class="language-option ai-only" data-language="jmeter-ai" data-mode="ai">
-                            <input type="radio" name="programmingLanguageAI" id="langJMeterAI" value="jmeter">
-                            <label for="langJMeterAI" class="language-card">
-                                <div class="language-info">
-                                    <div class="language-icon jmeter-icon">
-                                        <i class="bi bi-speedometer2"></i>
-                                    </div>
-                                    <span class="language-name">JMeter</span>
-                                </div>
-                            </label>
-                        </div> --}}
                     </div>
                 </div>
 
                 <!-- AI Description Section -->
-                <div id="aiDescriptionSection" class="config-group mb-4 ai-mode">
+                <div id="sdkDescriptionSection" class="config-group mb-4">
                     <label for="sdkDescription" class="form-label mb-3" style="color: var(--primary-main-color)">
                         Describe your SDK Requirement 
                         <i class="bi bi-stars text-warning ms-1"></i>

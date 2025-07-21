@@ -28,7 +28,7 @@
       const sdkButton = document.querySelector('button[onclick="redirectToSDKGeneration()"]');
       
       if (sdkButton) {
-        if (checkedCount >= 2) {
+        if (checkedCount >= 1) {
           sdkButton.disabled = false;
           sdkButton.classList.remove('disabled');
         } else {
@@ -40,8 +40,8 @@
 
     function redirectToSDKGeneration() {
       const checkedCheckboxes = document.querySelectorAll('.api-checkbox:checked');
-      if (checkedCheckboxes.length < 2) {
-        alert('Please select at least 2 APIs to generate SDK');
+      if (checkedCheckboxes.length < 1) {
+        alert('Please select at least 1 API to generate SDK');
         return;
       }
       

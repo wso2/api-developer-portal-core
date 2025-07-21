@@ -264,14 +264,12 @@ class SDKJobService extends EventEmitter {
             console.error('Error during application code generation step:', error);
             let userMessage = 'Failed to generate application code';
             
-            if (error.message.includes('AI service')) {
+            if (error.message.includes('fetch failed')) {
                 userMessage = 'Unable to connect to AI service for application code generation. Please try again later.';
             } else if (error.message.includes('use case is invalid')) {
                 userMessage = 'AI service failed to generate application code. Please try with a different description.';
             } else if (error.message.includes('ZIP')) {
                 userMessage = 'Failed to create final package. Please try again.';
-            } else if (error.message.includes('file')) {
-                userMessage = 'File processing error during application generation. Please try again.';
             }
             
             throw new Error(userMessage);
@@ -753,7 +751,7 @@ class SDKJobService extends EventEmitter {
     async getApplicationGenApiReqBody(apiClassContent, language, mergedSpec, sdkConfiguration) {
         let useCase;
         
-        if (sdkConfiguration?.mode === 'ai' && sdkConfiguration?.description && sdkConfiguration.description.trim()) {
+        if (sdkConfiguration?.description && sdkConfiguration.description.trim()) {
             useCase = sdkConfiguration.description.trim();
             console.log('Using AI mode with user prompt:', useCase);
         } else {
@@ -780,7 +778,8 @@ class SDKJobService extends EventEmitter {
                 body: JSON.stringify(requestData)
             });
             if (!response.ok) {
-                throw new Error(`Failed to generate application: ${response.statusText}`);
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Failed to generate application: ${response.statusText}`);
             }
             const data = await response.text();
             return data;
@@ -1063,7 +1062,6 @@ class SDKJobService extends EventEmitter {
     async createProjectReadme(sdkPath, sdkConfiguration, language) {
         try {
             const sdkName = sdkConfiguration?.name || 'generated-sdk';
-            const mode = sdkConfiguration?.mode || 'default';
             
             let readmeContent = `# ${sdkName}
 
@@ -1078,7 +1076,6 @@ class SDKJobService extends EventEmitter {
     ## Configuration
     - **Language**: ${language}
     - **SDK Name**: ${sdkName}
-    - **Generation Mode**: ${mode}
     - **Generated**: ${new Date().toISOString()}
 
     `;

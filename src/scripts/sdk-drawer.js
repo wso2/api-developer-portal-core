@@ -17,15 +17,37 @@
  */
 /* eslint-disable no-undef */
 
+function openSdkDrawer() {
+    const checkedCheckboxes = document.querySelectorAll('.api-checkbox:checked');
+    if (checkedCheckboxes.length < 1) {
+        alert('Please select at least 1 API to generate SDK');
+        return;
+    }
+
+    window.sdkGenerationActive = false;
+    
+    storeOriginalChipHTML();
+    
+    const drawer = document.getElementById('sdkDrawer');
+    if (drawer) {
+        drawer.style.display = 'block';
+        
+        document.body.classList.add('drawer-open');
+        
+        resetDrawerState();
+        
+        initializeDrawerEventHandlers();
+        
+        setTimeout(() => {
+            drawer.classList.add('open');
+        }, 10);
+    }
+}
+
 function initializeDrawerEventHandlers() {
-    // Clear any existing event listeners to prevent duplicates
-    const existingHandlers = document.querySelectorAll('.sdk-drawer-event-handler');
-    existingHandlers.forEach(handler => handler.remove());
     
-    // Handle programming language changes for AI mode only
-    setupLanguageHandlers('programmingLanguageAI', 'ai');
+    setupLanguageHandlers('programmingLanguageAI');
     
-    // Add direct event listener to the generate button
     const generateBtn = document.querySelector('#aiGenerateBtn');
     if (generateBtn) {
         generateBtn.removeEventListener('click', handleGenerateClick); 
@@ -43,7 +65,6 @@ function initializeDrawerEventHandlers() {
         autoResizeTextarea(descriptionTextArea);
     }
 
-    // Prevent any form submissions within the drawer
     const drawer = document.getElementById('sdkDrawer');
     if (drawer) {
         drawer.addEventListener('submit', function(e) {
@@ -52,34 +73,24 @@ function initializeDrawerEventHandlers() {
             return false;
         });
         
-        // Add escape key listener
         document.addEventListener('keydown', handleEscapeKey);
         
-        // Add click outside listener
         drawer.addEventListener('click', handleDrawerBackdropClick);
     }
 }
 
 function setupSuggestionListeners() {    
-    // Add click listeners to all suggestion chips for applying the prompt
     const suggestionElements = document.querySelectorAll('.suggestion-chip .suggestion-text, .suggestion-chip .suggestion-icon, .suggestion-chip .suggestion-play-button');
     
     suggestionElements.forEach((element, index) => {
-        // Remove existing listeners to prevent duplicates
         element.removeEventListener('click', handleSuggestionClick);
-        
-        // Add new listener
         element.addEventListener('click', handleSuggestionClick);
     });
 
-    // Add click listeners to all close buttons for dismissing the chip
     const closeButtons = document.querySelectorAll('.suggestion-chip .btn-close');
     
     closeButtons.forEach((button, index) => {
-        // Remove existing listeners to prevent duplicates
         button.removeEventListener('click', handleSuggestionClose);
-        
-        // Add new listener
         button.addEventListener('click', handleSuggestionClose);
     });
 }
@@ -104,7 +115,6 @@ function handleSuggestionClick(event) {
     
     const descriptionTextarea = document.getElementById('sdkDescription');
     if (descriptionTextarea) {
-        // Immediately hide the clicked chip and start typing animation
         hideChipAndStartTyping(chip, descriptionTextarea, promptText);
     } else {
         console.error('Could not find sdkDescription textarea');
@@ -116,9 +126,7 @@ function handleSuggestionClose(event) {
 
     const chip = event.target.closest('.suggestion-chip');
     if (chip) {
-        // Hide the chip instead of removing it from DOM
         chip.style.display = 'none';
-        // Add a class to track that it was manually closed
         chip.classList.add('manually-closed');
     }
 }
@@ -131,28 +139,24 @@ function handleGenerateClick(e) {
     return false;
 }
 
-function setupLanguageHandlers(radioName, mode) {
+function setupLanguageHandlers(radioName) {
     const radios = document.querySelectorAll(`input[name="${radioName}"]`);
     radios.forEach(radio => {
-        // Remove existing listeners to prevent duplicates
         radio.removeEventListener('change', handleLanguageChange);
         radio.removeEventListener('click', handleLanguageClick);
         
-        // Add new listeners
-        radio.addEventListener('change', function(e) {
-            handleLanguageChange(e, mode);
-        });
+        radio.addEventListener('change', handleLanguageChange);
         radio.addEventListener('click', handleLanguageClick);
     });
 }
 
-function handleLanguageChange(e, mode) {
+function handleLanguageChange(e) {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log(`${mode} mode language changed to:`, e.target.value);
-    updateLanguageSelection(mode);
-    
+    console.log(`Language changed to:`, e.target.value);
+    updateLanguageSelection();
+
     return false;
 }
 
@@ -160,16 +164,14 @@ function handleLanguageClick(e) {
     e.stopPropagation();
 }
 
-function updateLanguageSelection(mode) {
-    // Remove selection from all language options first
+function updateLanguageSelection() {
     document.querySelectorAll('.language-option').forEach(option => {
         option.classList.remove('selected');
     });
     
-    // Update AI mode language options only
-    const aiModeOptions = document.querySelectorAll('.language-option[data-mode="ai"]');
-    
-    aiModeOptions.forEach(option => {
+    const languageOptions = document.querySelectorAll('.language-option');
+
+    languageOptions.forEach(option => {
         const radio = option.querySelector('input[type="radio"]');
         
         if (radio && radio.checked) {
@@ -180,58 +182,18 @@ function updateLanguageSelection(mode) {
     });
 }
 
-// Open SDK drawer
-function openSdkDrawer() {
-    const checkedCheckboxes = document.querySelectorAll('.api-checkbox:checked');
-    if (checkedCheckboxes.length < 2) {
-        alert('Please select at least 2 APIs to generate SDK');
-        return;
-    }
-
-    // Reset SDK generation state
-    window.sdkGenerationActive = false;
-    
-    // Store original chip HTML when drawer first opens (for restoration)
-    storeOriginalChipHTML();
-    
-    // Show drawer
-    const drawer = document.getElementById('sdkDrawer');
-    if (drawer) {
-        drawer.style.display = 'block';
-        
-        // Add body class to prevent scrolling
-        document.body.classList.add('drawer-open');
-        
-        // Reset drawer to initial state
-        resetDrawerState();
-        
-        // Initialize event handlers
-        initializeDrawerEventHandlers();
-        
-        // Animate drawer in
-        setTimeout(() => {
-            drawer.classList.add('open');
-        }, 10);
-    }
-}
-
 function closeSdkDrawer() {
-    // Check if SDK generation is in progress
     if (isSDKGenerationInProgress()) {
-        // Show custom confirmation modal instead of browser confirm
         showSdkCancelConfirmModal();
         return; 
     }
     
-    // Proceed with normal closure
     proceedWithDrawerClosure();
 }
 
 function proceedWithDrawerClosure() {
-    // Stop any running progress animation
     stopProgressAnimation();
     
-    // Cancel any ongoing typing animation
     if (window.currentTypingAnimation) {
         cancelTypingAnimation();
     }
@@ -241,29 +203,23 @@ function proceedWithDrawerClosure() {
         window.currentSDKEventSource = null;
     }
     
-    // Clean up event listeners
     document.removeEventListener('keydown', handleEscapeKey);
     
     const drawer = document.getElementById('sdkDrawer');
     if (drawer) {
         drawer.classList.remove('open');
         
-        // Remove body class
         document.body.classList.remove('drawer-open');
         
-        // Hide drawer after animation
         setTimeout(() => {
             drawer.style.display = 'none';
             
-            // Reset drawer state
             resetDrawerState();
         }, 300);
     }
 }
 
-// Chip State Management Functions
 function storeOriginalChipHTML() {
-    // Only store if not already stored (to preserve original state)
     if (!window.originalChipHTML) {
         const chipContainer = document.querySelector('.prompt-suggestions-container');
         if (chipContainer) {
@@ -273,12 +229,10 @@ function storeOriginalChipHTML() {
 }
 
 function restoreOriginalChips() {
-    // Restore chips from stored HTML if available
     if (window.originalChipHTML) {
         const chipContainer = document.querySelector('.prompt-suggestions-container');
         if (chipContainer) {
             chipContainer.innerHTML = window.originalChipHTML;
-            // Re-setup event listeners for the restored chips
             setTimeout(() => {
                 setupSuggestionListeners();
             }, 50);
@@ -289,109 +243,73 @@ function restoreOriginalChips() {
 }
 
 function resetChipStates() {
-    // Reset all chip states without restoring HTML
     const allChips = document.querySelectorAll('.suggestion-chip');
     
     allChips.forEach((chip) => {
-        // Show all chips
         chip.style.display = 'inline-flex';
-        
-        // Remove all state classes
         chip.classList.remove('typing-in-progress', 'manually-closed');
     });
     
-    // Enable all chips
     enableSuggestionChips();
 }
 
 function restoreHiddenSuggestionChips() {
-    // Cancel any ongoing typing animation
     if (window.currentTypingAnimation) {
         cancelTypingAnimation();
     }
     
-    // Try to restore from original HTML first (handles completely removed chips)
     const restoredFromOriginal = restoreOriginalChips();
     
     if (!restoredFromOriginal) {
-        // If no original HTML stored, just reset states of existing chips
         resetChipStates();
     }
     
-    // Always ensure chips are enabled after restoration
     enableSuggestionChips();
 }
 
 function resetDrawerState() {
-    // Reset SDK generation state
     window.sdkGenerationActive = false;
     window.currentSDKJobId = null;
     
-    // Clear any typing animation state
     if (window.currentTypingAnimation) {
         window.currentTypingAnimation.active = false;
         window.currentTypingAnimation = null;
     }
     
-    // Reset to Java as default AI language (matches HTML default)
     const defaultLanguage = document.querySelector('input[name="programmingLanguageAI"][value="java"]');
     if (defaultLanguage) {
         defaultLanguage.checked = true;
     }
     
-    // Clear AI description
-    const aiDescription = document.getElementById('sdkDescription');
-    if (aiDescription) {
-        aiDescription.value = '';
-        aiDescription.classList.remove('typing');
-        aiDescription.style.height = 'auto';
+    const description = document.getElementById('sdkDescription');
+    if (description) {
+        description.value = '';
+        description.classList.remove('typing');
+        description.style.height = 'auto';
     }
     
-    // Show AI section (always visible now)
-    const aiSection = document.getElementById('aiDescriptionSection');
-    if (aiSection) {
-        aiSection.style.display = 'block';
-        aiSection.classList.add('ai-mode');
+    const descriptionSection = document.getElementById('aiDescriptionSection');
+    if (descriptionSection) {
+        descriptionSection.style.display = 'block';
     }
-    
-    // Show AI mode footer only
-    const aiModeFooter = document.getElementById('aiModeFooter');
-    if (aiModeFooter) aiModeFooter.style.display = 'block';
-    
-    // Show AI languages only
-    const aiLanguages = document.querySelectorAll('.language-option[data-mode="ai"]');
-    aiLanguages.forEach(lang => lang.style.display = 'block');
-    
-    // Add AI mode class to language options
-    const languageOptions = document.getElementById('languageOptions');
-    if (languageOptions) {
-        languageOptions.classList.add('ai-mode');
-    }
-    
-    // Update visual state
-    updateLanguageSelection('ai');
 
-    // Restore hidden suggestion chips (this will restore ALL chips)
+    const footer = document.getElementById('aiModeFooter');
+    if (footer) footer.style.display = 'block';
+
+    const languages = document.querySelectorAll('.language-option');
+    languages.forEach(lang => lang.style.display = 'block');
+
+    updateLanguageSelection();
+
     restoreHiddenSuggestionChips();
     
-    // Show suggestion chips when drawer is reset
     showSuggestionChips();
     
-    // Re-setup suggestion listeners after restoration
     setTimeout(() => {
         setupSuggestionListeners();
     }, 100);
 }
 
-// Debug function to check button state
-window.debugGenerateButton = function() {
-    const btn = document.querySelector('#aiGenerateBtn');
-    console.log('Button element:', btn);
-    console.log('Button onclick:', btn ? btn.onclick : 'not found');
-    console.log('Button event listeners:', btn ? getEventListeners(btn) : 'not found');
-    console.log('Button disabled:', btn ? btn.disabled : 'not found');
-    console.log('Button style display:', btn ? getComputedStyle(btn).display : 'not found');
-};
 
 function getSelectedLanguage() {
     const selectedRadio = document.querySelector('input[name="programmingLanguageAI"]:checked');
@@ -412,13 +330,11 @@ function generateSDKFromDrawerInternal(language) {
         description: description
     });
     
-    // Validate that at least 2 APIs are selected
-    if (checkedCheckboxes.length < 2) {
-        alert('Please select at least 2 APIs for SDK generation.');
+    if (checkedCheckboxes.length < 1) {
+        alert('Please select at least 1 API for SDK generation.');
         return;
     }
     
-    // Validate that description is provided for AI mode
     if (!description || description.trim() === '') {
         alert('Please provide a description for AI-generated SDK requirements.');
         return;
@@ -430,36 +346,24 @@ function generateSDKFromDrawerInternal(language) {
         version: checkbox.dataset.apiVersion
     }));
     
-    // Get application name from template context or use default
-    //const applicationName = getApplicationName();
-    
     const sdkConfiguration = {
-        mode: 'ai',
         language: selectedLanguage,
         description: description.trim()
-        // name: `${applicationName}-sdk`
     };
     
-    // Get current URL path parts
     const pathParts = window.location.pathname.split('/');
     const orgName = pathParts[1];
     const applicationId = pathParts[pathParts.length - 1];
     const viewName = pathParts[3];
     
-    // Don't close drawer - show progress in place
-    
-    // Log the configuration for debugging
     console.log('SDK Generation Configuration:', {
-        mode: 'ai',
         language: selectedLanguage,
         description: description.trim(),
         selectedAPIs: selectedAPIs.length
     });
     
-    // Show loading state
     showSDKGenerationLoading();
     
-    // Call the SDK generation API
     fetch(`/${orgName}/views/${viewName}/applications/${applicationId}/generate-sdk`, {
         method: 'POST',
         headers: {
@@ -473,9 +377,7 @@ function generateSDKFromDrawerInternal(language) {
     .then(response => response.json())
     .then(data => {
         if (data.success && data.data.jobId) {
-            // Store job ID for potential cancellation
             window.currentSDKJobId = data.data.jobId;
-            // Start SSE connection for real-time updates
             startSDKProgressStream(data.data.jobId, data.data.sseEndpoint);
         } else {
             hideSDKGenerationLoading();
@@ -498,7 +400,6 @@ function startSDKProgressStream(jobId, sseEndpoint) {
             console.log('SSE Progress Update:', data);
 
             if (data.type === 'progress') {
-                // Stop any fake progress animation when we receive real progress
                 stopProgressAnimation();
                 
                 updateProgressBar(data.progress);
@@ -513,7 +414,6 @@ function startSDKProgressStream(jobId, sseEndpoint) {
                     showSDKGenerationError(data.message || data.error || 'SDK generation failed');
                 }
             } else if (data.type === 'ping') {
-                // Keep alive message - no action needed
                 console.log('SSE Keep alive ping received');
             } else if (data.type === 'error') {
                 eventSource.close();
@@ -529,7 +429,6 @@ function startSDKProgressStream(jobId, sseEndpoint) {
         console.error('SSE error:', error);
         eventSource.close();
         
-        // Show error message
         hideSDKGenerationLoading();
         showSDKGenerationError('Connection lost. Please try again.');
     };
@@ -553,76 +452,20 @@ function updateProgressStatus(currentStep, message) {
 }
 
 function handleSDKGenerationComplete(data) {
-    // Complete the progress bar
     updateProgressBar(100);
     updateProgressStatus('Completed!', 'SDK generation completed successfully');
     
-    // Clear job ID since generation is complete
     window.currentSDKJobId = null;
     
-    // Auto-download the file if available
     if (data.resultData && data.resultData.finalDownloadUrl) {
         setTimeout(() => {
             triggerAutoDownload(data.resultData.finalDownloadUrl);
         }, 1000);
     }
     
-    // Immediately show success state, then reset drawer after 10 seconds
     showSDKGenerationSuccess();
 }
 
-function startSDKStatusPolling(jobId) {
-    const pathParts = window.location.pathname.split('/');
-    const orgName = pathParts[1];
-    const applicationId = pathParts[pathParts.length - 1];
-    const viewName = pathParts[3];
-    
-    const pollInterval = setInterval(() => {
-        fetch(`/${orgName}/views/${viewName}/applications/${applicationId}/sdk-status/${jobId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    updateProgressBar(data.progress);
-                    updateProgressStatus(data.currentStep, data.message);
-                    
-                    if (data.status === 'completed') {
-                        clearInterval(pollInterval);
-                        handleSDKGenerationComplete(data);
-                    } else if (data.status === 'failed') {
-                        clearInterval(pollInterval);
-                        hideSDKGenerationLoading();
-                        showSDKGenerationError(data.message || 'SDK generation failed');
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Error polling SDK status:', error);
-                clearInterval(pollInterval);
-                hideSDKGenerationLoading();
-                showSDKGenerationError('Error checking SDK status');
-            });
-    }, 1000); // Poll every second
-    
-    // Stop polling after 10 minutes
-    setTimeout(() => {
-        clearInterval(pollInterval);
-    }, 10 * 60 * 1000);
-}
-
-
-// function getApplicationName() {
-//     // Try to get application name from the page context
-//     const titleElement = document.querySelector('h1, .application-title, [data-application-name], .app-overview-title');
-//     if (titleElement) {
-//         return titleElement.textContent.trim() || 'application';
-//     }
-    
-//     // Fallback to extracting from URL or use default
-//     const pathParts = window.location.pathname.split('/');
-//     return pathParts[pathParts.length - 1] || 'application';
-// }
-
-// Functions to handle suggestion chips visibility
 function hideSuggestionChips() {
     const suggestionContainer = document.querySelector('.prompt-input-area');
     if (suggestionContainer) {
@@ -639,37 +482,29 @@ function showSuggestionChips() {
     }
 }
 
-// Helper functions for SDK generation feedback
 function showSDKGenerationLoading() {
     console.log('SDK generation started...');
     
-    // Mark SDK generation as active
     window.sdkGenerationActive = true;
     
-    // Hide suggestion chips during generation
     hideSuggestionChips();
     
-    // Show progress bar in place of prompt input
     showProgressBarInPrompt();
 }
 
 function hideSDKGenerationLoading() {
     console.log('SDK generation completed');
     
-    // Mark SDK generation as inactive
     window.sdkGenerationActive = false;
     
-    // Hide progress bar and restore prompt input
     hideProgressBarInPrompt();
     
-    // Show suggestion chips after SDK generation
     showSuggestionChips();
 }
 
 function showSDKGenerationSuccess() {
     console.log('SDK generation completed successfully - showing success state');
     
-    // Mark SDK generation as inactive
     window.sdkGenerationActive = false;
     
     // Update progress bar to show success state
@@ -697,26 +532,21 @@ function showSDKGenerationSuccess() {
 function showSDKGenerationError(message) {
     console.error('SDK Generation Error:', message);
     
-    // Clear job ID since generation failed
     window.currentSDKJobId = null;
     
-    // Show error notification popup
     showErrorNotification(message);
     
-    // Show error state in progress bar briefly
     showProgressError(message);
     
-    // Hide progress bar and restore input after showing error
     setTimeout(() => {
         hideProgressBarInPrompt();
-        // Show suggestion chips after error
         showSuggestionChips();
     }, 3000);
 }
 
 // Progress bar functions for in-place generation feedback
 function showProgressBarInPrompt() {
-    const aiSection = document.getElementById('aiDescriptionSection');
+    const aiSection = document.getElementById('sdkDescriptionSection');
     const textarea = document.getElementById('sdkDescription');
     const generateButton = document.querySelector('#aiGenerateBtn');
     
@@ -760,7 +590,6 @@ function showProgressBarInPrompt() {
 }
 
 function hideProgressBarInPrompt() {
-    // Stop any running progress animation
     stopProgressAnimation();
     
     const progressContainer = document.getElementById('sdkProgressContainer');
@@ -781,14 +610,12 @@ function hideProgressBarInPrompt() {
 }
 
 function updateProgressBar(progress) {
-    // Ensure we have a valid progress value
     const boundedProgress = Math.max(0, Math.min(100, progress));
     
     const progressFill = document.getElementById('sdkProgressFill');
     const progressPercentage = document.getElementById('sdkProgressPercentage');
     
     if (progressFill) {
-        // Only update if progress is moving forward (real progress) or it's a reset/completion
         const currentWidth = parseFloat(progressFill.style.width) || 0;
         if (boundedProgress > currentWidth || boundedProgress === 0 || boundedProgress === 100) {
             progressFill.style.width = `${boundedProgress}%`;
@@ -823,7 +650,6 @@ function showProgressError(message) {
 }
 
 function startProgressAnimation() {
-    // Stop any existing animation first
     stopProgressAnimation();
     
     let progress = 0;
@@ -838,24 +664,20 @@ function startProgressAnimation() {
         updateProgressBar(progress);
     }, 1000);
     
-    // Store interval reference for cleanup
     const progressContainer = document.getElementById('sdkProgressContainer');
     if (progressContainer) {
         progressContainer.dataset.intervalId = interval;
     }
     
-    // Also store globally for easy cleanup
     window.currentProgressInterval = interval;
 }
 
 function stopProgressAnimation() {
-    // Clear the global interval if it exists
     if (window.currentProgressInterval) {
         clearInterval(window.currentProgressInterval);
         window.currentProgressInterval = null;
     }
     
-    // Also check for interval stored in the progress container
     const progressContainer = document.getElementById('sdkProgressContainer');
     if (progressContainer && progressContainer.dataset.intervalId) {
         clearInterval(parseInt(progressContainer.dataset.intervalId));
@@ -864,10 +686,9 @@ function stopProgressAnimation() {
 }
 
 function triggerAutoDownload(downloadUrl) {
-    // Create a temporary anchor element for download
     const link = document.createElement('a');
     link.href = downloadUrl;
-    link.download = ''; // Let the browser determine the filename
+    link.download = ''; 
     link.style.display = 'none';
     
     document.body.appendChild(link);
@@ -875,80 +696,6 @@ function triggerAutoDownload(downloadUrl) {
     document.body.removeChild(link);
     
     console.log('Auto-download triggered for:', downloadUrl);
-}
-
-// Download button progress functions
-function showDownloadProgress(buttonElement) {
-    if (!buttonElement) return;
-    
-    // Find the closest download button (in case event.target is an icon)
-    const downloadBtn = buttonElement.closest('.language-download-btn') || buttonElement;
-    
-    if (downloadBtn) {
-        // Store original content
-        downloadBtn.dataset.originalContent = downloadBtn.innerHTML;
-        
-        // Replace button content with progress
-        downloadBtn.innerHTML = `
-            <div class="download-progress">
-                <div class="download-progress-spinner"></div>
-                <span class="download-progress-text">Generating...</span>
-            </div>
-        `;
-        
-        downloadBtn.disabled = true;
-        downloadBtn.classList.add('downloading');
-    }
-}
-
-function handleDownloadSuccess(data, buttonElement) {
-    const downloadBtn = buttonElement.closest('.language-download-btn') || buttonElement;
-    
-    if (downloadBtn) {
-        // Show success state
-        downloadBtn.innerHTML = `
-            <div class="download-progress">
-                <i class="bi bi-check-circle-fill text-success"></i>
-                <span class="download-progress-text">Complete!</span>
-            </div>
-        `;
-        
-        // Auto-download the file
-        if (data.data && data.data.finalDownloadUrl) {
-            setTimeout(() => {
-                triggerAutoDownload(data.data.finalDownloadUrl);
-                
-                // Restore button after download starts
-                setTimeout(() => {
-                    restoreDownloadButton(downloadBtn);
-                }, 1000);
-            }, 800);
-        } else {
-            // Restore button if no download URL
-            setTimeout(() => {
-                restoreDownloadButton(downloadBtn);
-            }, 2000);
-        }
-    }
-}
-
-function handleDownloadError(message, buttonElement) {
-    const downloadBtn = buttonElement.closest('.language-download-btn') || buttonElement;
-    
-    if (downloadBtn) {
-        // Show error state
-        downloadBtn.innerHTML = `
-            <div class="download-progress">
-                <i class="bi bi-exclamation-circle-fill text-danger"></i>
-                <span class="download-progress-text">Failed</span>
-            </div>
-        `;
-        
-        // Restore button after showing error
-        setTimeout(() => {
-            restoreDownloadButton(downloadBtn);
-        }, 3000);
-    }
 }
 
 // Error Notification System
@@ -984,11 +731,9 @@ function showErrorNotification(message, title = 'SDK Generation Error') {
 }
 
 function showSuccessNotification(message, title = 'Success') {
-    // Remove any existing notifications
     const existingNotifications = document.querySelectorAll('.sdk-success-notification');
     existingNotifications.forEach(notification => notification.remove());
     
-    // Create notification container
     const notification = document.createElement('div');
     notification.className = 'sdk-success-notification alert alert-success';
     
@@ -1005,21 +750,17 @@ function showSuccessNotification(message, title = 'Success') {
         </div>
     `;
     
-    // Add to page
     document.body.appendChild(notification);
     
-    // Auto-hide after 5 seconds
     setTimeout(() => {
         closeSuccessNotification(notification);
     }, 5000);
 }
 
 function showWarningNotification(message, title = 'Warning') {
-    // Remove any existing warning notifications
     const existingNotifications = document.querySelectorAll('.sdk-warning-notification');
     existingNotifications.forEach(notification => notification.remove());
     
-    // Create notification container
     const notification = document.createElement('div');
     notification.className = 'sdk-warning-notification alert alert-warning';
     
@@ -1036,10 +777,8 @@ function showWarningNotification(message, title = 'Warning') {
         </div>
     `;
     
-    // Add to page
     document.body.appendChild(notification);
     
-    // Auto-hide after 6 seconds
     setTimeout(() => {
         closeWarningNotification(notification);
     }, 6000);
@@ -1081,20 +820,16 @@ function closeWarningNotification(element) {
     }
 }
 
-// SDK Generation State Management
 function isSDKGenerationInProgress() {
     // Check global flag
     if (window.sdkGenerationActive === true) {
         return true;
     }
     
-    // Check if progress container exists (indicates generation is active)
     const progressContainer = document.getElementById('sdkProgressContainer');
     
-    // Check if SSE connection is active
     const hasActiveSSE = window.currentSDKEventSource && window.currentSDKEventSource.readyState === EventSource.OPEN;
     
-    // Check if progress animation is running
     const hasProgressAnimation = window.currentProgressInterval !== null && window.currentProgressInterval !== undefined;
     
     return !!(progressContainer || hasActiveSSE || hasProgressAnimation);
@@ -1103,23 +838,18 @@ function isSDKGenerationInProgress() {
 function cancelSDKGeneration() {
     console.log('Cancelling SDK generation...');
     
-    // Mark SDK generation as inactive
     window.sdkGenerationActive = false;
     
-    // Close SSE connection
     if (window.currentSDKEventSource) {
         window.currentSDKEventSource.close();
         window.currentSDKEventSource = null;
         console.log('SSE connection closed');
     }
     
-    // Stop progress animation
     stopProgressAnimation();
     
-    // Hide progress UI
     hideSDKGenerationLoading();
     
-    // Send cancellation request to backend if we have a job ID
     if (window.currentSDKJobId) {
         const orgName = window.location.pathname.split('/')[1];
         const viewName = window.location.pathname.split('/')[3];
@@ -1144,28 +874,22 @@ function cancelSDKGeneration() {
             console.error('Error sending cancellation request:', error);
         });
         
-        // Clear the job ID
         window.currentSDKJobId = null;
     }
     
-    // Show cancellation notification
     showWarningNotification('SDK generation has been cancelled.', 'Generation Cancelled');
     
     console.log('SDK generation cancelled successfully');
 }
 
-// SDK Cancel Confirmation Modal Functions
 function showSdkCancelConfirmModal() {
     const modal = document.getElementById('sdkCancelConfirmModal');
     if (modal) {
         modal.style.display = 'flex';
-        // Add body class to prevent scrolling behind modal
         document.body.classList.add('modal-open');
         
-        // Add escape key listener for modal
         document.addEventListener('keydown', handleModalEscapeKey);
         
-        // Add click outside listener
         modal.addEventListener('click', handleModalBackdropClick);
     }
 }
@@ -1174,23 +898,17 @@ function closeSdkCancelConfirmModal() {
     const modal = document.getElementById('sdkCancelConfirmModal');
     if (modal) {
         modal.style.display = 'none';
-        // Remove body class to restore scrolling
         document.body.classList.remove('modal-open');
-        
-        // Remove event listeners
         document.removeEventListener('keydown', handleModalEscapeKey);
         modal.removeEventListener('click', handleModalBackdropClick);
     }
 }
 
 function confirmSdkCancellation() {
-    // Close the confirmation modal first
     closeSdkCancelConfirmModal();
     
-    // Cancel the SDK generation
     cancelSDKGeneration();
     
-    // Proceed with closing the drawer
     proceedWithDrawerClosure();
 }
 
@@ -1218,12 +936,6 @@ function autoResizeTextarea(textArea) {
         textArea.style.height = textArea.scrollHeight + 'px';
     }
 }
-
-// Debug function for testing the modal
-window.testSdkCancelModal = function() {
-    console.log('Testing SDK cancel confirmation modal...');
-    showSdkCancelConfirmModal();
-};
 
 // Make functions available globally
 window.openSdkDrawer = openSdkDrawer;
@@ -1255,7 +967,6 @@ function handleEscapeKey(event) {
 }
 
 function handleDrawerBackdropClick(event) {
-    // Only close if clicking on the drawer backdrop (not on drawer content)
     if (event.target.id === 'sdkDrawer') {
         event.preventDefault();
         closeSdkDrawer();
@@ -1264,19 +975,14 @@ function handleDrawerBackdropClick(event) {
 
 // Typing Animation Functions
 function hideChipAndStartTyping(chip, textarea, text) {
-    // Disable all other suggestion chips during typing
     disableSuggestionChips();
-    
-    // Immediately hide the clicked chip
     chip.style.display = 'none';
     
-    // Store the chip reference for restoring when needed
     if (!window.currentTypingAnimation) {
         window.currentTypingAnimation = {};
     }
     window.currentTypingAnimation.hiddenChip = chip;
     
-    // Start typing animation
     startTypingAnimation(textarea, text);
 }
 
@@ -1295,30 +1001,25 @@ function enableSuggestionChips() {
 }
 
 function startTypingAnimation(textarea, text) {
-    // Store existing hidden chip reference before cancelling
     let existingHiddenChip = null;
     if (window.currentTypingAnimation && window.currentTypingAnimation.hiddenChip) {
         existingHiddenChip = window.currentTypingAnimation.hiddenChip;
     }
     
-    // Cancel any existing typing animation
     if (window.currentTypingAnimation) {
-        // Don't restore the chip when cancelling for a new animation
         window.currentTypingAnimation.active = false;
         if (window.currentTypingAnimation.textarea) {
             window.currentTypingAnimation.textarea.classList.remove('typing');
         }
     }
     
-    // Clear textarea and focus it
     textarea.value = '';
     textarea.focus();
     
-    // Add typing class for cursor effect (if supported)
     textarea.classList.add('typing');
     
     let currentIndex = 0;
-    const typingSpeed = 60; // milliseconds per character
+    const typingSpeed = 30; // milliseconds per character
     
     // Store animation state for cancellation
     window.currentTypingAnimation = {
@@ -1345,12 +1046,10 @@ function startTypingAnimation(textarea, text) {
             
             setTimeout(typeNextCharacter, typingSpeed);
         } else {
-            // Typing completed
             finishTypingAnimation(textarea, text);
         }
     }
     
-    // Start typing after a short delay
     setTimeout(typeNextCharacter, 100);
 }
 
@@ -1382,9 +1081,6 @@ function finishTypingAnimation(textarea, text) {
     // Remove typing class
     textarea.classList.remove('typing');
     
-    // Keep the hidden chip hidden (don't restore it after typing completes)
-    // The chip will only be restored when drawer is reset/closed
-    
     // Clear animation state
     window.currentTypingAnimation = null;
     
@@ -1400,41 +1096,33 @@ function finishTypingAnimation(textarea, text) {
 function resetDrawerToInitialState() {
     console.log('Resetting drawer to initial state after successful SDK generation');
     
-    // Hide progress bar and restore prompt input
     hideProgressBarInPrompt();
     
-    // Clear any temporary data
     window.sdkGenerationActive = false;
     window.currentSDKJobId = null;
     
-    // Clear any typing animation state
     if (window.currentTypingAnimation) {
         window.currentTypingAnimation.active = false;
         window.currentTypingAnimation = null;
     }
     
-    // Reset textarea content and height
-    const aiDescription = document.getElementById('sdkDescription');
-    if (aiDescription) {
-        aiDescription.value = '';
-        aiDescription.classList.remove('typing');
-        aiDescription.style.height = 'auto';
+    const description = document.getElementById('sdkDescription');
+    if (description) {
+        description.value = '';
+        description.classList.remove('typing');
+        description.style.height = 'auto';
     }
     
-    // Reset language selection to Java (default)
     const defaultLanguage = document.querySelector('input[name="programmingLanguageAI"][value="java"]');
     if (defaultLanguage) {
         defaultLanguage.checked = true;
     }
-    updateLanguageSelection('ai');
+    updateLanguageSelection();
     
-    // Restore all suggestion chips to initial state
     restoreHiddenSuggestionChips();
     
-    // Show suggestion chips
     showSuggestionChips();
     
-    // Re-setup event listeners to ensure everything works
     setTimeout(() => {
         setupSuggestionListeners();
     }, 100);
