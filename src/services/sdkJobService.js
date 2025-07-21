@@ -65,7 +65,6 @@ class SDKJobService extends EventEmitter {
         // Start background job processing
         this.runJob(jobId, jobPayload).catch(async (error) => {
             console.error(`Error occurred while running job ${jobId}:`, error);
-            // Make sure the job is marked as failed in the database and frontend is notified
             try {
                 await this.markJobAsFailed(jobId, error.message || 'Unknown error occurred during job processing');
             } catch (failureError) {
@@ -117,7 +116,7 @@ class SDKJobService extends EventEmitter {
         ];
 
         try {
-            // Check for cancellation before starting
+
             await this.checkJobCancellation(jobId);
 
             let completeWeight = 0;
@@ -208,7 +207,7 @@ class SDKJobService extends EventEmitter {
             
             if (error.message.includes('No API specifications found')) {
                 userMessage = 'No API specifications were found for the selected APIs. Please check your API selection.';
-            } else if (error.message.includes('fetch')) {
+            } else if (error.message.includes('fetch failed')) {
                 userMessage = 'Unable to connect to the AI service for merging specifications. Please try again later.';
             } else if (error.message.includes('HTTP error')) {
                 userMessage = 'AI service returned an error while merging specifications. Please check your API specifications.';
@@ -360,7 +359,6 @@ class SDKJobService extends EventEmitter {
             const path = require('path');
             const os = require('os');
             
-            // Define potential file locations
             const tempDir = path.join(os.tmpdir(), `sdk-generation`, `${jobId}-sdk`);
             const generatedSdksDir = path.join(process.cwd(), 'generated-sdks');
             
@@ -564,7 +562,8 @@ class SDKJobService extends EventEmitter {
                 body: JSON.stringify(requestPayload)
             });
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Failed to generate application: ${response.statusText}`);
             }
             const data = await response.json();
             return data;
@@ -676,7 +675,7 @@ class SDKJobService extends EventEmitter {
 
             const applicationCodeResponse = await this.invokeApplicationCodeGenApi(applicationApiRequest);
 
-            const finalZipName = this.createSDKFileName(apiHandles, sdkResult.sdkName, true);
+            const finalZipName = this.createSDKFileName(sdkResult.sdkName, true);
             const finalZipResult = await this.processApplicationCodeAndCreateFinalZip(
                 applicationCodeResponse,
                 sdkResult.sdkPath,
@@ -718,15 +717,7 @@ class SDKJobService extends EventEmitter {
                     apiClassContent = await fs.promises.readFile(jsApiPath, 'utf8');
                     console.log(`Found JS/TS API class: ${jsApiPath}`);
                 }
-            } else if (language === 'python') {
-                // Look for API class in Python SDKs
-                const pythonApiPath = await this.findFileRecursively(sdkDir, /.*_api\.py$|.*api\.py$/);
-                if (pythonApiPath) {
-                    apiClassFile = pythonApiPath;
-                    apiClassContent = await fs.promises.readFile(pythonApiPath, 'utf8');
-                    console.log(`Found Python API class: ${pythonApiPath}`);
-                }
-            }
+            } 
             
             if (!apiClassContent) {
                 console.warn(`No API class file found for language: ${language}`);
@@ -792,11 +783,7 @@ class SDKJobService extends EventEmitter {
      /**
      * Create SDK filename based on API handles and mode
      */
-    createSDKFileName(apiHandles, baseSdkName, isAIMode) {
-        const apiHandlesSuffix = apiHandles.map(handle => 
-            handle.replace(/[^a-zA-Z0-9]/g, '') // Remove special characters
-        ).join('-');
-        
+    createSDKFileName(baseSdkName, isAIMode) {        
         const suffix = isAIMode ? 'with-app' : '';
         return `${baseSdkName}-${suffix}.zip`;
     };
@@ -813,36 +800,22 @@ class SDKJobService extends EventEmitter {
             if (applicationCode) {
                 const fileExtension = this.getFileExtension(language);
                 
-                if (language === 'java' || language === 'javascript') {
-                    // For Java projects, place Application.java in the correct package structure
-                    console.log('Searching for Java package directory structure...');
-                    const javaPackageDir = await this.findJavaPackageDirectory(sdkPath);
-                    
-                    if (javaPackageDir) {
-                        // Place Application.java at the same level as api, auth, model packages
-                        const mainAppFile = path.join(javaPackageDir, `Application.${fileExtension}`);
-                        await fs.promises.writeFile(mainAppFile, applicationCode, 'utf8');
-                        console.log(`Java Application code written to: ${mainAppFile}`);
-                        
-                        // Also log the relative path for clarity
-                        const relativePath = path.relative(sdkPath, mainAppFile);
-                        console.log(`Relative path: ${relativePath}`);
-                    } else {
-                        // Fallback: create in application-code directory
-                        console.warn('Could not find Java package directory, using fallback location');
-                        const appCodeDir = path.join(sdkPath, 'application-code');
-                        await fs.promises.mkdir(appCodeDir, { recursive: true });
-                        const mainAppFile = path.join(appCodeDir, `Application.${fileExtension}`);
-                        await fs.promises.writeFile(mainAppFile, applicationCode, 'utf8');
-                        console.log(`Application code written to fallback location: ${mainAppFile}`);
-                    }
+                console.log('Searching for package directory structure...');
+                const javaPackageDir = await this.findJavaPackageDirectory(sdkPath);
+                
+                if (javaPackageDir) {
+                    // Place Application.java at the same level as api, auth, model packages
+                    const mainAppFile = path.join(javaPackageDir, `Application.${fileExtension}`);
+                    await fs.promises.writeFile(mainAppFile, applicationCode, 'utf8');
+                    console.log(`Java Application code written to: ${mainAppFile}`);
                 } else {
-                    // For non-Java languages, use the application-code directory
+                    // create in application-code directory
+                    console.warn('Could not find Java package directory, using fallback location');
                     const appCodeDir = path.join(sdkPath, 'application-code');
                     await fs.promises.mkdir(appCodeDir, { recursive: true });
                     const mainAppFile = path.join(appCodeDir, `Application.${fileExtension}`);
                     await fs.promises.writeFile(mainAppFile, applicationCode, 'utf8');
-                    console.log(`Application code written to: ${mainAppFile}`);
+                    console.log(`Application code written to fallback location: ${mainAppFile}`);
                 }
             }
             
@@ -911,7 +884,6 @@ class SDKJobService extends EventEmitter {
                 'src/main/java'
             ];
             
-            // First, try the common OpenAPI tools structure
             for (const possiblePath of possiblePaths) {
                 const fullPath = path.join(sdkDir, possiblePath);
                 console.log(`Checking path: ${fullPath}`);
@@ -924,9 +896,9 @@ class SDKJobService extends EventEmitter {
                     const hasAuthDir = await fs.promises.access(path.join(fullPath, 'auth')).then(() => true).catch(() => false);
                     const hasModelDir = await fs.promises.access(path.join(fullPath, 'model')).then(() => true).catch(() => false);
                     
-                    console.log(`Directory contents check - api: ${hasApiDir}, auth: ${hasAuthDir}, model: ${hasModelDir}`);
-                    
-                    if (hasApiDir || hasAuthDir || hasModelDir) {
+                    console.log(`Directory contents check - api: ${hasApiDir}, model: ${hasModelDir}`);
+
+                    if (hasApiDir && hasModelDir) {
                         console.log(`Found Java package directory: ${fullPath}`);
                         return fullPath;
                     }
@@ -935,7 +907,7 @@ class SDKJobService extends EventEmitter {
                 }
             }
             
-            // If common paths don't work, search recursively for a directory that contains api/auth/model subdirs
+            // If common paths don't work, search recursively for a directory that contains api/model subdirs
             console.log('Searching recursively for Java package structure...');
             console.log('Current SDK directory structure:');
             await this.listDirectoryStructure(sdkDir);
@@ -956,7 +928,7 @@ class SDKJobService extends EventEmitter {
     };
 
     /**
-     * Debug function to list directory structure (helpful for troubleshooting)
+     * Debug function to list directory structure
      */
     async listDirectoryStructure(dir, prefix = '', maxDepth = 3, currentDepth = 0) {
         if (currentDepth > maxDepth) {

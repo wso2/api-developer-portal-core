@@ -579,9 +579,8 @@ const cleanupGeneratedSDKs = async () => {
     try {
         const generatedSdksDir = path.join(process.cwd(), 'generated-sdks');
         
-        // Check if generated-sdks directory exists
         if (!(await fs.promises.access(generatedSdksDir).then(() => true).catch(() => false))) {
-            return; // Directory doesn't exist, nothing to clean
+            return;
         }
         
         const tenMinutesAgo = Date.now() - (10 * 60 * 1000); // 10 minutes in milliseconds
@@ -636,15 +635,14 @@ let sdkCleanupInterval = null;
  */
 const startSDKCleanupScheduler = () => {
     if (sdkCleanupInterval) {
-        return; // Already running
+        return; 
     }
     
     console.log('Starting SDK cleanup scheduler - runs every 5 minutes to clean files older than 10 minutes');
-    
-    // Run immediately on start
+
     cleanupGeneratedSDKs();
     
-    // Set up periodic cleanup every 5 minutes (300,000 milliseconds)
+    // Set up periodic cleanup every 5 minutes
     sdkCleanupInterval = setInterval(async () => {
         try {
             await cleanupGeneratedSDKs();
