@@ -17,6 +17,11 @@
  */
 /* eslint-disable no-undef */
 
+/**
+ * Opens the SDK drawer and initializes its state
+ * Validates that at least 1 API is selected before opening
+ * Sets up initial drawer state and event handlers
+ */
 function openSdkDrawer() {
     const checkedCheckboxes = document.querySelectorAll('.api-checkbox:checked');
     if (checkedCheckboxes.length < 1) {
@@ -44,6 +49,25 @@ function openSdkDrawer() {
     }
 }
 
+/**
+ * Handles SDK drawer close requests
+ * Shows confirmation modal if SDK generation is in progress
+ * Otherwise proceeds with normal drawer closure
+ */
+function closeSdkDrawer() {
+    if (isSDKGenerationInProgress()) {
+        showSdkCancelConfirmModal();
+        return; 
+    }
+    
+    proceedWithDrawerClosure();
+}
+
+/**
+ * Initializes all event handlers for the SDK drawer
+ * Sets up language selection, generate button, textarea auto-resize,
+ * form submission prevention, escape key, and backdrop click handlers
+ */
 function initializeDrawerEventHandlers() {
     
     setupLanguageHandlers('programmingLanguageAI');
@@ -79,8 +103,13 @@ function initializeDrawerEventHandlers() {
     }
 }
 
+/**
+ * Sets up event listeners for suggestion chips
+ * Handles click events for chip text and play button
+ * Also sets up close button event handlers for removing chips
+ */
 function setupSuggestionListeners() {    
-    const suggestionElements = document.querySelectorAll('.suggestion-chip .suggestion-text, .suggestion-chip .suggestion-icon, .suggestion-chip .suggestion-play-button');
+    const suggestionElements = document.querySelectorAll('.suggestion-chip .suggestion-text, .suggestion-chip .suggestion-play-button');
     
     suggestionElements.forEach((element, index) => {
         element.removeEventListener('click', handleSuggestionClick);
@@ -95,6 +124,12 @@ function setupSuggestionListeners() {
     });
 }
 
+/**
+ * Handles suggestion chip click events
+ * Prevents multiple typing animations and retrieves prompt text
+ * Initiates typing animation to fill textarea with suggestion content
+ * @param {Event} event - The click event from the suggestion chip
+ */
 function handleSuggestionClick(event) {
     const chip = event.target.closest('.suggestion-chip');
     if (!chip) {
@@ -121,6 +156,11 @@ function handleSuggestionClick(event) {
     }
 }
 
+/**
+ * Handles suggestion chip close button clicks
+ * Hides the chip and marks it as manually closed
+ * @param {Event} event - The click event from the close button
+ */
 function handleSuggestionClose(event) {
     event.stopPropagation();
 
@@ -131,6 +171,11 @@ function handleSuggestionClose(event) {
     }
 }
 
+/**
+ * Handles generate button click events
+ * Prevents default form submission and initiates SDK generation process
+ * @param {Event} e - The click event from the generate button
+ */
 function handleGenerateClick(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -139,6 +184,11 @@ function handleGenerateClick(e) {
     return false;
 }
 
+/**
+ * Sets up event handlers for programming language radio buttons
+ * Attaches change and click handlers to all radio buttons with specified name
+ * @param {string} radioName - The name attribute of the radio button group
+ */
 function setupLanguageHandlers(radioName) {
     const radios = document.querySelectorAll(`input[name="${radioName}"]`);
     radios.forEach(radio => {
@@ -150,6 +200,11 @@ function setupLanguageHandlers(radioName) {
     });
 }
 
+/**
+ * Handles programming language selection changes
+ * Prevents default behavior and updates UI to reflect language selection
+ * @param {Event} e - The change event from the radio button
+ */
 function handleLanguageChange(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -164,6 +219,11 @@ function handleLanguageClick(e) {
     e.stopPropagation();
 }
 
+/**
+ * Updates the visual selection state of language options
+ * Removes 'selected' class from all options and adds it to the checked option
+ * Synchronizes UI state with radio button selection
+ */
 function updateLanguageSelection() {
     document.querySelectorAll('.language-option').forEach(option => {
         option.classList.remove('selected');
@@ -182,15 +242,11 @@ function updateLanguageSelection() {
     });
 }
 
-function closeSdkDrawer() {
-    if (isSDKGenerationInProgress()) {
-        showSdkCancelConfirmModal();
-        return; 
-    }
-    
-    proceedWithDrawerClosure();
-}
-
+/**
+ * Executes the actual drawer closure process
+ * Stops animations, closes connections, removes event listeners
+ * Applies closing animation and resets drawer state
+ */
 function proceedWithDrawerClosure() {
     stopProgressAnimation();
     
@@ -219,6 +275,11 @@ function proceedWithDrawerClosure() {
     }
 }
 
+/**
+ * Stores the original HTML content of suggestion chips
+ * Used for restoring chips to their initial state when drawer is reopened
+ * Only stores HTML if not already stored to preserve original state
+ */
 function storeOriginalChipHTML() {
     if (!window.originalChipHTML) {
         const chipContainer = document.querySelector('.prompt-suggestions-container');
@@ -228,6 +289,11 @@ function storeOriginalChipHTML() {
     }
 }
 
+/**
+ * Restores suggestion chips from originally stored HTML
+ * Recreates all chips in their initial state and re-establishes event listeners
+ * @returns {boolean} - True if restoration was successful, false otherwise
+ */
 function restoreOriginalChips() {
     if (window.originalChipHTML) {
         const chipContainer = document.querySelector('.prompt-suggestions-container');
@@ -242,6 +308,9 @@ function restoreOriginalChips() {
     return false;
 }
 
+/**
+ * Resets the state of all existing suggestion chips
+ */ 
 function resetChipStates() {
     const allChips = document.querySelectorAll('.suggestion-chip');
     
@@ -253,6 +322,11 @@ function resetChipStates() {
     enableSuggestionChips();
 }
 
+/**
+ * Restores hidden suggestion chips to their visible state
+ * Cancels any ongoing typing animation and attempts restoration from original HTML
+ * Falls back to resetting existing chip states if original HTML is unavailable
+ */
 function restoreHiddenSuggestionChips() {
     if (window.currentTypingAnimation) {
         cancelTypingAnimation();
@@ -267,6 +341,12 @@ function restoreHiddenSuggestionChips() {
     enableSuggestionChips();
 }
 
+/**
+ * Resets the entire drawer to its initial state
+ * Clears generation flags, typing animations, form values
+ * Restores default language selection and suggestion chips
+ * Re-establishes event listeners for proper functionality
+ */
 function resetDrawerState() {
     window.sdkGenerationActive = false;
     window.currentSDKJobId = null;
@@ -310,12 +390,22 @@ function resetDrawerState() {
     }, 100);
 }
 
-
+/**
+ * Gets the currently selected programming language from radio buttons
+ * @returns {string} - The value of the selected radio button, defaults to 'java'
+ */
 function getSelectedLanguage() {
     const selectedRadio = document.querySelector('input[name="programmingLanguageAI"]:checked');
     return selectedRadio ? selectedRadio.value : 'java'; // Default to java
 }
 
+/**
+ * Initiates SDK generation process with validation and API calls
+ * Validates API selection and description requirements
+ * Constructs configuration object and sends generation request
+ * Handles success/error responses and progress tracking
+ * @param {string} language - Optional language override for SDK generation
+ */
 function generateSDKFromDrawerInternal(language) {
     console.log('generateSDKFromDrawerInternal called');
     
@@ -378,7 +468,7 @@ function generateSDKFromDrawerInternal(language) {
     .then(data => {
         if (data.success && data.data.jobId) {
             window.currentSDKJobId = data.data.jobId;
-            startSDKProgressStream(data.data.jobId, data.data.sseEndpoint);
+            startSDKProgressStream(data.data.sseEndpoint);
         } else {
             hideSDKGenerationLoading();
             showSDKGenerationError(data.message || 'SDK generation failed');
@@ -391,7 +481,14 @@ function generateSDKFromDrawerInternal(language) {
     });
 }
 
-function startSDKProgressStream(jobId, sseEndpoint) {
+/**
+ * Establishes Server-Sent Events connection for real-time progress updates
+ * Handles progress messages, completion, and error states
+ * Manages EventSource lifecycle and cleanup
+ * @param {string} jobId - The unique identifier for the SDK generation job
+ * @param {string} sseEndpoint - The SSE endpoint URL for progress updates
+ */
+function startSDKProgressStream(sseEndpoint) {
     const eventSource = new EventSource(sseEndpoint);
 
     eventSource.onmessage = function(event) {
@@ -437,7 +534,12 @@ function startSDKProgressStream(jobId, sseEndpoint) {
     window.currentSDKEventSource = eventSource;
 }
 
-// Enhanced progress update functions
+/**
+ * Updates the progress status display with current step and message
+ * Modifies the progress title and status text elements
+ * @param {string} currentStep - The current step name/title
+ * @param {string} message - Detailed message about the current step
+ */
 function updateProgressStatus(currentStep, message) {
     const progressStatus = document.getElementById('sdkProgressStatus');
     const progressTitle = document.querySelector('.sdk-progress-title');
@@ -451,6 +553,12 @@ function updateProgressStatus(currentStep, message) {
     }
 }
 
+/**
+ * Handles successful completion of SDK generation
+ * Updates progress to 100%, shows completion message
+ * Triggers file download and initiates success display sequence
+ * @param {Object} data - The completion data containing result information
+ */
 function handleSDKGenerationComplete(data) {
     updateProgressBar(100);
     updateProgressStatus('Completed!', 'SDK generation completed successfully');
@@ -466,6 +574,10 @@ function handleSDKGenerationComplete(data) {
     showSDKGenerationSuccess();
 }
 
+/**
+ * Hides the suggestion chips container
+ * Used during SDK generation to focus user attention on progress
+ */
 function hideSuggestionChips() {
     const suggestionContainer = document.querySelector('.prompt-input-area');
     if (suggestionContainer) {
@@ -474,6 +586,10 @@ function hideSuggestionChips() {
     }
 }
 
+/**
+ * Shows the suggestion chips container
+ * Restores visibility of suggestion chips after generation completion
+ */
 function showSuggestionChips() {
     const suggestionContainer = document.querySelector('.prompt-input-area');
     if (suggestionContainer) {
@@ -482,6 +598,10 @@ function showSuggestionChips() {
     }
 }
 
+/**
+ * Initiates the SDK generation loading state
+ * Sets generation flag, hides suggestions, and shows progress bar
+ */
 function showSDKGenerationLoading() {
     console.log('SDK generation started...');
     
@@ -492,6 +612,10 @@ function showSDKGenerationLoading() {
     showProgressBarInPrompt();
 }
 
+/**
+ * Ends the SDK generation loading state
+ * Clears generation flag, hides progress bar, and restores suggestions
+ */
 function hideSDKGenerationLoading() {
     console.log('SDK generation completed');
     
@@ -502,6 +626,11 @@ function hideSDKGenerationLoading() {
     showSuggestionChips();
 }
 
+/**
+ * Displays success state for completed SDK generation
+ * Applies green success styling to progress bar
+ * Schedules automatic drawer reset after 10 seconds
+ */
 function showSDKGenerationSuccess() {
     console.log('SDK generation completed successfully - showing success state');
     
@@ -516,7 +645,7 @@ function showSDKGenerationSuccess() {
         // Update the progress bar to green success color
         const progressFill = document.getElementById('sdkProgressFill');
         if (progressFill) {
-            progressFill.style.backgroundColor = '#10b981'; // Green success color
+            progressFill.style.backgroundColor = 'var(--success-color)';
         }
         
         // Update title and status for success
@@ -529,6 +658,12 @@ function showSDKGenerationSuccess() {
     }, 10000);
 }
 
+/**
+ * Handles and displays SDK generation errors
+ * Shows error notifications and progress error state
+ * Schedules automatic UI restoration after error display
+ * @param {string} message - The error message to display
+ */
 function showSDKGenerationError(message) {
     console.error('SDK Generation Error:', message);
     
@@ -544,7 +679,11 @@ function showSDKGenerationError(message) {
     }, 3000);
 }
 
-// Progress bar functions for in-place generation feedback
+/**
+ * Creates and displays an in-place progress bar within the prompt area
+ * Replaces textarea and generate button with progress visualization
+ * Starts initial progress animation for user feedback
+ */
 function showProgressBarInPrompt() {
     const aiSection = document.getElementById('sdkDescriptionSection');
     const textarea = document.getElementById('sdkDescription');
@@ -589,6 +728,10 @@ function showProgressBarInPrompt() {
     }
 }
 
+/**
+ * Removes the in-place progress bar and restores original UI elements
+ * Shows textarea and generate button after progress completion or cancellation
+ */
 function hideProgressBarInPrompt() {
     stopProgressAnimation();
     
@@ -609,6 +752,12 @@ function hideProgressBarInPrompt() {
     }
 }
 
+/**
+ * Updates the visual progress bar with a specified percentage
+ * Prevents backwards progress updates and provides smooth transitions
+ * Updates both the progress fill width and percentage display
+ * @param {number} progress - Progress percentage (0-100)
+ */
 function updateProgressBar(progress) {
     const boundedProgress = Math.max(0, Math.min(100, progress));
     
@@ -630,6 +779,11 @@ function updateProgressBar(progress) {
     }
 }
 
+/**
+ * Displays error state in the progress bar
+ * Applies error styling and updates title and status with error information
+ * @param {string} message - The error message to display
+ */
 function showProgressError(message) {
     const progressContainer = document.getElementById('sdkProgressContainer');
     const progressStatus = document.getElementById('sdkProgressStatus');
@@ -649,6 +803,11 @@ function showProgressError(message) {
     }
 }
 
+/**
+ * Starts animated progress bar simulation for initial user feedback
+ * Provides visual progress indication before real server updates arrive
+ * Stops at 20% to wait for actual progress data
+ */
 function startProgressAnimation() {
     stopProgressAnimation();
     
@@ -672,6 +831,10 @@ function startProgressAnimation() {
     window.currentProgressInterval = interval;
 }
 
+/**
+ * Stops any running progress animation intervals
+ * Cleans up animation timers to prevent memory leaks
+ */
 function stopProgressAnimation() {
     if (window.currentProgressInterval) {
         clearInterval(window.currentProgressInterval);
@@ -685,6 +848,11 @@ function stopProgressAnimation() {
     }
 }
 
+/**
+ * Triggers automatic file download for the generated SDK
+ * Creates temporary download link and programmatically clicks it
+ * @param {string} downloadUrl - The URL of the file to download
+ */
 function triggerAutoDownload(downloadUrl) {
     const link = document.createElement('a');
     link.href = downloadUrl;
@@ -730,33 +898,40 @@ function showErrorNotification(message, title = 'SDK Generation Error') {
     }, 8000);
 }
 
-function showSuccessNotification(message, title = 'Success') {
-    const existingNotifications = document.querySelectorAll('.sdk-success-notification');
-    existingNotifications.forEach(notification => notification.remove());
+// function showSuccessNotification(message, title = 'Success') {
+//     const existingNotifications = document.querySelectorAll('.sdk-success-notification');
+//     existingNotifications.forEach(notification => notification.remove());
     
-    const notification = document.createElement('div');
-    notification.className = 'sdk-success-notification alert alert-success';
+//     const notification = document.createElement('div');
+//     notification.className = 'sdk-success-notification alert alert-success';
     
-    notification.innerHTML = `
-        <div class="d-flex align-items-start">
-            <div class="flex-shrink-0 me-3">
-                <i class="bi bi-check-circle-fill text-success"></i>
-            </div>
-            <div class="flex-grow-1">
-                <div class="fw-bold mb-1">${title}</div>
-                <div class="success-message">${message}</div>
-            </div>
-            <button type="button" class="btn-close ms-2" onclick="closeSuccessNotification(this)" aria-label="Close"></button>
-        </div>
-    `;
+//     notification.innerHTML = `
+//         <div class="d-flex align-items-start">
+//             <div class="flex-shrink-0 me-3">
+//                 <i class="bi bi-check-circle-fill text-success"></i>
+//             </div>
+//             <div class="flex-grow-1">
+//                 <div class="fw-bold mb-1">${title}</div>
+//                 <div class="success-message">${message}</div>
+//             </div>
+//             <button type="button" class="btn-close ms-2" onclick="closeSuccessNotification(this)" aria-label="Close"></button>
+//         </div>
+//     `;
     
-    document.body.appendChild(notification);
+//     document.body.appendChild(notification);
     
-    setTimeout(() => {
-        closeSuccessNotification(notification);
-    }, 5000);
-}
+//     setTimeout(() => {
+//         closeSuccessNotification(notification);
+//     }, 5000);
+// }
 
+/**
+ * Displays warning notifications as dismissible alert banners
+ * Creates styled notification with warning icon, title, message, and close button
+ * Auto-hides after 6 seconds with moderate urgency indication
+ * @param {string} message - The warning message content
+ * @param {string} title - The warning notification title (default: 'Warning')
+ */
 function showWarningNotification(message, title = 'Warning') {
     const existingNotifications = document.querySelectorAll('.sdk-warning-notification');
     existingNotifications.forEach(notification => notification.remove());
@@ -784,6 +959,11 @@ function showWarningNotification(message, title = 'Warning') {
     }, 6000);
 }
 
+/**
+ * Closes error notifications with slide-out animation
+ * Handles both direct element and event target scenarios
+ * @param {Element} element - The notification element or close button
+ */
 function closeErrorNotification(element) {
     const notification = element.closest ? element.closest('.sdk-error-notification') : element;
     if (notification) {
@@ -808,6 +988,11 @@ function closeSuccessNotification(element) {
     }
 }
 
+/**
+ * Closes warning notifications with slide-out animation
+ * Handles both direct element and event target scenarios
+ * @param {Element} element - The notification element or close button
+ */
 function closeWarningNotification(element) {
     const notification = element.closest ? element.closest('.sdk-warning-notification') : element;
     if (notification) {
@@ -820,6 +1005,11 @@ function closeWarningNotification(element) {
     }
 }
 
+/**
+ * Checks if SDK generation is currently in progress
+ * Evaluates multiple indicators: generation flag, progress UI, SSE connection
+ * @returns {boolean} - True if generation is active, false otherwise
+ */
 function isSDKGenerationInProgress() {
     // Check global flag
     if (window.sdkGenerationActive === true) {
@@ -835,6 +1025,11 @@ function isSDKGenerationInProgress() {
     return !!(progressContainer || hasActiveSSE || hasProgressAnimation);
 }
 
+/**
+ * Cancels ongoing SDK generation process
+ * Stops all related activities: SSE connection, progress animation, UI state
+ * Sends cancellation request to server and shows user notification
+ */
 function cancelSDKGeneration() {
     console.log('Cancelling SDK generation...');
     
@@ -882,6 +1077,10 @@ function cancelSDKGeneration() {
     console.log('SDK generation cancelled successfully');
 }
 
+/**
+ * Shows the SDK cancellation confirmation modal
+ * Displays modal with backdrop and establishes keyboard/click event handlers
+ */
 function showSdkCancelConfirmModal() {
     const modal = document.getElementById('sdkCancelConfirmModal');
     if (modal) {
@@ -894,6 +1093,10 @@ function showSdkCancelConfirmModal() {
     }
 }
 
+/**
+ * Closes the SDK cancellation confirmation modal
+ * Hides modal, removes event listeners, and restores document scroll behavior
+ */
 function closeSdkCancelConfirmModal() {
     const modal = document.getElementById('sdkCancelConfirmModal');
     if (modal) {
@@ -904,6 +1107,10 @@ function closeSdkCancelConfirmModal() {
     }
 }
 
+/**
+ * Confirms SDK cancellation and proceeds with cancellation process
+ * Closes confirmation modal, cancels generation, and closes drawer
+ */
 function confirmSdkCancellation() {
     closeSdkCancelConfirmModal();
     
@@ -912,6 +1119,11 @@ function confirmSdkCancellation() {
     proceedWithDrawerClosure();
 }
 
+/**
+ * Handles Escape key press for modal closure
+ * Only responds when the cancellation modal is currently visible
+ * @param {KeyboardEvent} event - The keyboard event
+ */
 function handleModalEscapeKey(event) {
     if (event.key === 'Escape') {
         const modal = document.getElementById('sdkCancelConfirmModal');
@@ -922,6 +1134,11 @@ function handleModalEscapeKey(event) {
     }
 }
 
+/**
+ * Handles backdrop clicks for modal closure
+ * Only closes modal when clicking on the backdrop, not modal content
+ * @param {MouseEvent} event - The click event
+ */
 function handleModalBackdropClick(event) {
     // Only close if clicking on the modal backdrop (not on modal content)
     if (event.target.id === 'sdkCancelConfirmModal') {
@@ -930,6 +1147,11 @@ function handleModalBackdropClick(event) {
     }
 }
 
+/**
+ * Automatically resizes textarea height based on content
+ * Adjusts height to fit text content without scrollbars
+ * @param {HTMLTextAreaElement} textArea - The textarea element to resize
+ */
 function autoResizeTextarea(textArea) {
     if (textArea) {
         textArea.style.height = 'auto';
@@ -937,25 +1159,11 @@ function autoResizeTextarea(textArea) {
     }
 }
 
-// Make functions available globally
-window.openSdkDrawer = openSdkDrawer;
-window.closeSdkDrawer = closeSdkDrawer;
-
-// Make modal functions globally available
-window.showSdkCancelConfirmModal = showSdkCancelConfirmModal;
-window.closeSdkCancelConfirmModal = closeSdkCancelConfirmModal;
-window.confirmSdkCancellation = confirmSdkCancellation;
-window.handleModalEscapeKey = handleModalEscapeKey;
-window.handleModalBackdropClick = handleModalBackdropClick;
-
-// Make notification functions globally available
-window.showErrorNotification = showErrorNotification;
-window.showSuccessNotification = showSuccessNotification;
-window.showWarningNotification = showWarningNotification;
-window.closeErrorNotification = closeErrorNotification;
-window.closeSuccessNotification = closeSuccessNotification;
-window.closeWarningNotification = closeWarningNotification;
-
+/**
+ * Handles Escape key press for drawer closure
+ * Only responds when the SDK drawer is currently open
+ * @param {KeyboardEvent} event - The keyboard event
+ */
 function handleEscapeKey(event) {
     if (event.key === 'Escape') {
         const drawer = document.getElementById('sdkDrawer');
@@ -966,6 +1174,11 @@ function handleEscapeKey(event) {
     }
 }
 
+/**
+ * Handles backdrop clicks for drawer closure
+ * Only closes drawer when clicking on the backdrop, not drawer content
+ * @param {MouseEvent} event - The click event
+ */
 function handleDrawerBackdropClick(event) {
     if (event.target.id === 'sdkDrawer') {
         event.preventDefault();
@@ -973,7 +1186,13 @@ function handleDrawerBackdropClick(event) {
     }
 }
 
-// Typing Animation Functions
+/**
+ * Initiates the chip hiding and typing animation sequence
+ * Disables other chips, hides the clicked chip, and starts typing animation
+ * @param {Element} chip - The suggestion chip element that was clicked
+ * @param {HTMLTextAreaElement} textarea - The target textarea for typing
+ * @param {string} text - The text content to type into the textarea
+ */
 function hideChipAndStartTyping(chip, textarea, text) {
     disableSuggestionChips();
     chip.style.display = 'none';
@@ -986,6 +1205,10 @@ function hideChipAndStartTyping(chip, textarea, text) {
     startTypingAnimation(textarea, text);
 }
 
+/**
+ * Disables all suggestion chips during typing animation
+ * Adds visual indication that chips are temporarily unavailable
+ */
 function disableSuggestionChips() {
     const allChips = document.querySelectorAll('.suggestion-chip');
     allChips.forEach(chip => {
@@ -993,6 +1216,10 @@ function disableSuggestionChips() {
     });
 }
 
+/**
+ * Re-enables all suggestion chips after typing completion
+ * Removes visual indication and restores chip interactivity
+ */
 function enableSuggestionChips() {
     const allChips = document.querySelectorAll('.suggestion-chip');
     allChips.forEach(chip => {
@@ -1000,6 +1227,13 @@ function enableSuggestionChips() {
     });
 }
 
+/**
+ * Starts character-by-character typing animation into textarea
+ * Preserves existing hidden chip reference and manages animation state
+ * Provides realistic typing speed and visual feedback
+ * @param {HTMLTextAreaElement} textarea - The target textarea element
+ * @param {string} text - The text content to type character by character
+ */
 function startTypingAnimation(textarea, text) {
     let existingHiddenChip = null;
     if (window.currentTypingAnimation && window.currentTypingAnimation.hiddenChip) {
@@ -1053,6 +1287,10 @@ function startTypingAnimation(textarea, text) {
     setTimeout(typeNextCharacter, 100);
 }
 
+/**
+ * Cancels ongoing typing animation and restores UI state
+ * Restores hidden chip visibility and re-enables all suggestion chips
+ */
 function cancelTypingAnimation() {
     if (window.currentTypingAnimation) {
         window.currentTypingAnimation.active = false;
@@ -1129,3 +1367,23 @@ function resetDrawerToInitialState() {
     
     console.log('Drawer reset to initial state completed');
 }
+
+// Make functions available globally
+window.openSdkDrawer = openSdkDrawer;
+window.closeSdkDrawer = closeSdkDrawer;
+
+// Make modal functions globally available
+window.showSdkCancelConfirmModal = showSdkCancelConfirmModal;
+window.closeSdkCancelConfirmModal = closeSdkCancelConfirmModal;
+window.confirmSdkCancellation = confirmSdkCancellation;
+window.handleModalEscapeKey = handleModalEscapeKey;
+window.handleModalBackdropClick = handleModalBackdropClick;
+
+// Make notification functions globally available
+window.showErrorNotification = showErrorNotification;
+// window.showSuccessNotification = showSuccessNotification;
+window.showWarningNotification = showWarningNotification;
+window.closeErrorNotification = closeErrorNotification;
+window.closeSuccessNotification = closeSuccessNotification;
+window.closeWarningNotification = closeWarningNotification;
+
