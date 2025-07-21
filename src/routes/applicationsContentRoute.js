@@ -48,7 +48,6 @@ router.get('/download/sdk/:filename', (req, res) => {
     const filename = req.params.filename;
     const filePath = path.join(process.cwd(), 'generated-sdks', filename);
     
-    // Security check - ensure the file is within the generated-sdks directory
     const normalizedPath = path.normalize(filePath);
     const expectedDir = path.join(process.cwd(), 'generated-sdks');
     
@@ -56,12 +55,10 @@ router.get('/download/sdk/:filename', (req, res) => {
         return res.status(403).json({ error: 'Access denied' });
     }
     
-    // Check if file exists
     if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: 'SDK file not found' });
     }
     
-    // Set appropriate headers for download
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     
