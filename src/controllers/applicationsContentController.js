@@ -512,18 +512,18 @@ const generateSDK = async (req, res) => {
         const orgName = req.params.orgName;
         const applicationId = req.params.applicationId;
 
-        // Validate input - require at least 2 APIs
-        if (!selectedAPIs || selectedAPIs.length < 2) {
+        // Validate input - require at least 1 API
+        if (!selectedAPIs || selectedAPIs.length < 1) {
             return res.status(400).json({
                 success: false,
-                message: 'At least 2 APIs must be selected for SDK generation'
+                message: 'At least 1 API must be selected for SDK generation'
             });
         }
 
-        if (!sdkConfiguration || sdkConfiguration.mode !== 'ai') {
+        if (!sdkConfiguration) {
             return res.status(400).json({
                 success: false,
-                message: 'Only AI mode is supported for SDK generation'
+                message: 'Please provide SDK configuration details'
             });
         }
 
@@ -572,58 +572,96 @@ const generateSDK = async (req, res) => {
 };
 
 /**
- * Utility function to clean up orphaned SDK directories
- * This can be called periodically to clean up any leftover temporary directories
+ * Utility function to clean up generated SDK files and folders older than 10 minutes
+ * This runs periodically to remove all files and folders in the generated-sdks directory
  */
-const cleanupOrphanedSDKDirectories = async () => {
+const cleanupGeneratedSDKs = async () => {
     try {
-        const sdkTempPattern = path.join(os.tmpdir(), 'sdk-generation');
         const generatedSdksDir = path.join(process.cwd(), 'generated-sdks');
         
-        // Clean up temporary SDK generation directories older than 1 hour
-        if (await fs.promises.access(sdkTempPattern).then(() => true).catch(() => false)) {
-            const tempItems = await fs.promises.readdir(sdkTempPattern, { withFileTypes: true });
-            const oneHourAgo = Date.now() - (60 * 60 * 1000);
-            
-            for (const item of tempItems) {
-                if (item.isDirectory()) {
-                    const dirPath = path.join(sdkTempPattern, item.name);
-                    try {
-                        const stats = await fs.promises.stat(dirPath);
-                        if (stats.mtime.getTime() < oneHourAgo) {
-                            await fs.promises.rm(dirPath, { recursive: true, force: true });
-                            console.log(`Cleaned up orphaned temp SDK directory: ${dirPath}`);
-                        }
-                    } catch (error) {
-                        console.warn(`Error checking temp SDK directory ${dirPath}:`, error);
-                    }
-                }
-            }
+        // Check if generated-sdks directory exists
+        if (!(await fs.promises.access(generatedSdksDir).then(() => true).catch(() => false))) {
+            return; // Directory doesn't exist, nothing to clean
         }
         
-        // Clean up generated SDK directories (not ZIP files) older than 24 hours
-        if (await fs.promises.access(generatedSdksDir).then(() => true).catch(() => false)) {
-            const generatedItems = await fs.promises.readdir(generatedSdksDir, { withFileTypes: true });
-            const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+        const tenMinutesAgo = Date.now() - (10 * 60 * 1000); // 10 minutes in milliseconds
+        
+        try {
+            const items = await fs.promises.readdir(generatedSdksDir, { withFileTypes: true });
+            let cleanedCount = 0;
             
-            for (const item of generatedItems) {
-                if (item.isDirectory()) {
-                    const dirPath = path.join(generatedSdksDir, item.name);
-                    try {
-                        const stats = await fs.promises.stat(dirPath);
-                        if (stats.mtime.getTime() < oneDayAgo) {
-                            await fs.promises.rm(dirPath, { recursive: true, force: true });
-                            console.log(`Cleaned up orphaned generated SDK directory: ${dirPath}`);
+            for (const item of items) {
+                const itemPath = path.join(generatedSdksDir, item.name);
+                
+                try {
+                    const stats = await fs.promises.stat(itemPath);
+                    
+                    // Check if the item is older than 10 minutes (using creation time)
+                    if (stats.birthtime.getTime() < tenMinutesAgo) {
+                        if (item.isDirectory()) {
+                            await fs.promises.rm(itemPath, { recursive: true, force: true });
+                            console.log(`Cleaned up SDK directory (${Math.round((Date.now() - stats.birthtime.getTime()) / 60000)} minutes old): ${itemPath}`);
+                        } else {
+                            await fs.promises.unlink(itemPath);
+                            console.log(`Cleaned up SDK file (${Math.round((Date.now() - stats.birthtime.getTime()) / 60000)} minutes old): ${itemPath}`);
                         }
-                    } catch (error) {
-                        console.warn(`Error checking generated SDK directory ${dirPath}:`, error);
+                        cleanedCount++;
                     }
+                } catch (error) {
+                    console.warn(`Error processing SDK item ${itemPath}:`, error.message);
                 }
             }
+            
+            if (cleanedCount > 0) {
+                console.log(`SDK cleanup completed: ${cleanedCount} items removed from generated-sdks directory`);
+            }
+            
+        } catch (error) {
+            console.warn(`Error reading generated-sdks directory: ${error.message}`);
         }
         
     } catch (error) {
-        console.error('Error during orphaned SDK directories cleanup:', error);
+        console.error('Error during generated SDK cleanup:', error);
+    }
+};
+
+
+
+// Global variable to store the cleanup interval
+let sdkCleanupInterval = null;
+
+/**
+ * Start the periodic SDK cleanup process
+ * Runs every 5 minutes to check for files/folders older than 10 minutes
+ */
+const startSDKCleanupScheduler = () => {
+    if (sdkCleanupInterval) {
+        return; // Already running
+    }
+    
+    console.log('Starting SDK cleanup scheduler - runs every 5 minutes to clean files older than 10 minutes');
+    
+    // Run immediately on start
+    cleanupGeneratedSDKs();
+    
+    // Set up periodic cleanup every 5 minutes (300,000 milliseconds)
+    sdkCleanupInterval = setInterval(async () => {
+        try {
+            await cleanupGeneratedSDKs();
+        } catch (error) {
+            console.error('Error in scheduled SDK cleanup:', error);
+        }
+    }, 5 * 60 * 1000);
+};
+
+/**
+ * Stop the periodic SDK cleanup process
+ */
+const stopSDKCleanupScheduler = () => {
+    if (sdkCleanupInterval) {
+        clearInterval(sdkCleanupInterval);
+        sdkCleanupInterval = null;
+        console.log('SDK cleanup scheduler stopped');
     }
 };
 
@@ -632,6 +670,8 @@ module.exports = {
     loadApplication,
     generateSDK,
     streamSDKProgress,
-    cleanupOrphanedSDKDirectories,
+    cleanupGeneratedSDKs,
+    startSDKCleanupScheduler,
+    stopSDKCleanupScheduler,
     cancelSDK
 };
