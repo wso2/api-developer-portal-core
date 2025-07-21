@@ -107,7 +107,7 @@ class SDKJobService extends EventEmitter {
                 weight: 50,
                 title: 'APP_CODE_GENERATION',
                 task: async (reportProgress) => {
-                    const result = await this.performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec, apiHandles, reportProgress);
+                    const result = await this.performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec, reportProgress);
                     finalZipPath = result.finalZipPath;
                     baseSdkName = result.baseSdkName;
                     console.log('Application code generation step completed');
@@ -249,11 +249,11 @@ class SDKJobService extends EventEmitter {
         }
     }
 
-    async performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec, apiHandles, reportProgress) {
+    async performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec, reportProgress) {
         try {
 
             reportProgress(40); // 40% of 50% = 20% overall (70% total)
-            const result = await this.processAIModeSDK(sdkResult, mergedSpec, jobPayload.sdkConfiguration, apiHandles);
+            const result = await this.processAIModeSDK(sdkResult, mergedSpec, jobPayload.sdkConfiguration);
             
             reportProgress(100); // 100% of 50% = 50% overall (100% total)
             return {
@@ -575,7 +575,7 @@ class SDKJobService extends EventEmitter {
 
     async generateSDKWithOpenAPIGenerator(mergedSpec, sdkConfiguration, jobId) {
 
-        let tempDir = null;
+        let specDir = null;
         let outputDir = null;
         
         try {
@@ -584,11 +584,11 @@ class SDKJobService extends EventEmitter {
             const sdkName = `${jobId}-sdk`;
 
             // Create temporary directory for SDK generation
-            tempDir = path.join(os.tmpdir(), 'sdk-generation', `${sdkName}`);
-            const specFilePath = path.join(tempDir, 'merged-spec.json');
+            specDir = path.join(process.cwd(), 'generated-sdks', 'merged-specs', `${sdkName}`);
+            const specFilePath = path.join(specDir, 'merged-spec.json');
             outputDir = path.join(process.cwd(), 'generated-sdks', `${sdkName}`);
             // Create directories
-            await fs.promises.mkdir(tempDir, { recursive: true });
+            await fs.promises.mkdir(specDir, { recursive: true });
             await fs.promises.mkdir(outputDir, { recursive: true });
             
             // Write merged spec to file
@@ -619,12 +619,18 @@ class SDKJobService extends EventEmitter {
             
             // Execute openapi-generator
             const { stdout, stderr } = await execAsync(command, { 
-                cwd: tempDir,
+                cwd: specDir,
                 timeout: 120000
             });
             
             if (stderr && !stderr.includes('WARN')) {
                 console.warn('SDK generation warnings/errors:', stderr);
+            }
+
+            try {
+                if (specDir) await fs.promises.rm(specDir, { recursive: true, force: true });
+            } catch (cleanupError) {
+                console.error('Error cleaning up directories:', cleanupError);
             }
                     
             return {
@@ -650,7 +656,7 @@ class SDKJobService extends EventEmitter {
             
             // Clean up directories on error
             try {
-                if (tempDir) await fs.promises.rm(tempDir, { recursive: true, force: true });
+                if (specDir) await fs.promises.rm(specDir, { recursive: true, force: true });
                 if (outputDir) await fs.promises.rm(outputDir, { recursive: true, force: true });
             } catch (cleanupError) {
                 console.error('Error cleaning up directories:', cleanupError);
@@ -660,7 +666,7 @@ class SDKJobService extends EventEmitter {
         }
     }
 
-    async processAIModeSDK(sdkResult, mergedSpec, sdkConfiguration, apiHandles) {        
+    async processAIModeSDK(sdkResult, mergedSpec, sdkConfiguration) {        
         try {
             console.log('Processing AI mode SDK generation...');
 
@@ -831,7 +837,7 @@ class SDKJobService extends EventEmitter {
             
             // Clean up SDK folder
             await fs.promises.rm(sdkPath, { recursive: true, force: true });
-            console.log('Cleaned up temporary SDK folder');
+            console.log('Cleaned up SDK folder');
             
             return {
                 finalZipPath: finalZipPath,
