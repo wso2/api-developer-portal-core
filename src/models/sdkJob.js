@@ -12,7 +12,7 @@ const SDKJob = sequelize.define('DP_SDK_JOB', {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    APPLICATION_ID: {
+    APP_ID: {
         type: DataTypes.STRING,
         allowNull: false,
     },
@@ -32,10 +32,6 @@ const SDKJob = sequelize.define('DP_SDK_JOB', {
     },
     CURRENT_STEP: {
         type: DataTypes.STRING,
-        allowNull: true
-    },
-    RESULT_DATA: {
-        type: DataTypes.TEXT,
         allowNull: true
     },
     ERROR_MESSAGE: {

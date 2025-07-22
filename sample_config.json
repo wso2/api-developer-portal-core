@@ -37,7 +37,7 @@
   },
   "db": {
     "username": "postgres",
-    "password": "root",
+    "password": "postgres",
     "database": "devportal",
     "host": "localhost",
     "port": 5432,

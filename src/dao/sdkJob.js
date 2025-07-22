@@ -5,7 +5,7 @@ const createJob = async (jobData) => {
         const job = await SDKJob.create({
             JOB_ID: jobData.jobId,
             ORG_ID: jobData.orgId,
-            APPLICATION_ID: jobData.applicationId,
+            APP_ID: jobData.applicationId,
             JOB_STATUS: jobData.jobStatus || 'PENDING',
             PROGRESS: jobData.progress || 0,
             CURRENT_STEP: jobData.currentStep || 'Initializing',
@@ -24,7 +24,6 @@ const updateJob = async (jobId, updateData) => {
             JOB_STATUS: updateData.jobStatus,
             PROGRESS: updateData.progress,
             CURRENT_STEP: updateData.currentStep,
-            RESULT_DATA: updateData.resultData,
             ERROR_MESSAGE: updateData.errorMessage || null
         }, {
             where: { JOB_ID: jobId }
