@@ -20,6 +20,7 @@
 const EventEmitter = require('events');
 const SdkJob = require('../dao/sdkJob');
 const apiMetadata = require('../dao/apiMetadata');
+const adminDao = require('../dao/admin');
 const path = require('path');
 const fs = require('fs');
 const config = require(process.cwd() + '/config');
@@ -36,6 +37,16 @@ class SDKJobService extends EventEmitter {
     constructor() {
         super();
         this.activeJobs = new Map();
+    }
+
+    /**
+     * Utility function to get organization ID from organization name
+     * @param {string} orgName - The organization name
+     * @returns {Promise<string>} - The organization ID
+     */
+    async orgIDValue(orgName) {
+        const organization = await adminDao.getOrganization(orgName);
+        return organization.ORG_ID;
     }
 
     async createJob(orgId, applicationId, jobPayload = {}) {
@@ -160,7 +171,7 @@ class SDKJobService extends EventEmitter {
                     mode: 'ai',
                     description: sdkConfiguration.description
                 },
-                finalDownloadUrl: `/download/sdk/${path.basename(finalZipPath || `${jobId}.zip`)}`,
+                finalDownloadUrl: `/devportal/applications/${applicationId}/sdk/download/${jobId}`,
                 applicationCodeGenerated: true,
                 mode: 'ai',
                 downloadPath: finalZipPath
@@ -185,6 +196,7 @@ class SDKJobService extends EventEmitter {
             if (apiSpecs.length === 0) {
                 throw new Error('No API specifications found for the selected APIs');
             }
+            reportProgress(80); // 80% of 30% = 24% overall
 
             const apiHandles = await this.getApiHandlers(orgId, selectedAPIs);
             
@@ -193,7 +205,7 @@ class SDKJobService extends EventEmitter {
                 mergedSpec = JSON.parse(apiSpecs[0].apiSpec);
             } else {
                 const mergeSpecApiRequest = this.prepareSDKGenerationRequest(apiSpecs, apiHandles);
-                reportProgress(80); // 80% of 30% = 24% overall
+                reportProgress(90); // 90% of 30% = 27% overall
                 mergedSpec = await this.invokeMergeSpecApi(mergeSpecApiRequest);
                 console.log('Merged API specifications received');
             }
@@ -283,11 +295,17 @@ class SDKJobService extends EventEmitter {
                 resultData: resultData ? JSON.stringify(resultData) : null
             };
 
+            console.log(`[SDK Job ${jobId}] Updating status:`, {
+                status: status,
+                progress: progress,
+                currentStep: currentStep,
+                message: message
+            });
+
             const updatedJob = await SdkJob.updateJob(jobId, updateData);
             if (updatedJob) {
                 this.activeJobs.set(jobId, updatedJob);
-                
-                // Emit progress event
+                            // Emit progress event
                 this.emitProgress(jobId, {
                     status: status.toLowerCase(),
                     progress: progress,
@@ -1192,6 +1210,216 @@ class SDKJobService extends EventEmitter {
             archive.directory(sourceDir, false);
             archive.finalize();
         });
+    };
+
+    // ***** Route Handler Methods *****
+
+    /**
+     * Route handler for SDK generation
+     * Validates input and creates SDK generation job
+     */
+    generateSDK = async (req, res) => {
+        try {
+            const { selectedAPIs, sdkConfiguration, orgName } = req.body;
+            const { applicationId } = req.params;
+
+            // Validate input
+            if (!orgName) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Organization name is required'
+                });
+            }
+
+            if (!selectedAPIs || selectedAPIs.length < 1) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'At least 1 API must be selected for SDK generation'
+                });
+            }
+
+            if (!sdkConfiguration) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Please provide SDK configuration details'
+                });
+            }
+
+            // Validate AI description is provided
+            if (!sdkConfiguration.description || sdkConfiguration.description.trim() === '') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'AI description is required for SDK generation'
+                });
+            }
+
+            // Convert orgName to orgId
+            const orgId = await this.orgIDValue(orgName);
+            
+            // Create job for tracking progress
+            const jobPayload = {
+                selectedAPIs,
+                sdkConfiguration,
+                orgName,
+                applicationId,
+                orgId
+            };
+            const job = await this.createJob(orgId, applicationId, jobPayload);
+            const jobId = job.JOB_ID;
+
+            // Send immediate response with job ID
+            res.json({
+                success: true,
+                message: 'SDK generation job started successfully',
+                data: {
+                    jobId: jobId,
+                    status: 'PENDING',
+                    progress: 0,
+                    currentStep: 'Initializing',
+                    sseEndpoint: `/devportal/applications/${applicationId}/sdk/job-progress/${jobId}`
+                }
+            });
+            
+        } catch (error) {
+            console.error('Error starting SDK generation job:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error starting SDK generation job',
+                error: error.message
+            });
+        }
+    };
+
+    /**
+     * Route handler for SDK job progress streaming via SSE
+     * Establishes Server-Sent Events connection for real-time progress updates
+     */
+    streamSDKProgress = (req, res) => {
+        const { jobId } = req.params;
+        
+        res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Cache-Control'
+        });
+
+        console.log(`Client connected to SSE for job: ${jobId}`);
+
+        const onProgress = (progressData) => {
+            if (progressData.jobId === jobId) {
+                const dataToSend = { ...progressData, type: 'progress' };
+                res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
+            }
+        };
+
+        this.on('progress', onProgress);
+
+        // Send initial ping
+        res.write(`data: ${JSON.stringify({ type: 'ping', jobId })}\n\n`);
+
+        req.on('close', () => {
+            console.log(`Client disconnected from SSE for job: ${jobId}`);
+            this.removeListener('progress', onProgress);
+        });
+    };
+
+    /**
+     * Route handler for SDK job cancellation
+     * Cancels an ongoing SDK generation job
+     */
+    cancelSDK = async (req, res) => {
+        try {
+            const { jobId } = req.params;
+            
+            console.log(`Received request to cancel SDK job: ${jobId}`);
+            
+            await this.cancelJob(jobId);
+            
+            res.status(200).json({ 
+                success: true, 
+                message: 'SDK generation cancelled successfully',
+                jobId: jobId
+            });
+            
+        } catch (error) {
+            console.error('Error cancelling SDK generation:', error);
+            res.status(500).json({ 
+                success: false, 
+                error: error.message || 'Failed to cancel SDK generation'
+            });
+        }
+    };
+
+    /**
+     * Route handler for SDK download
+     * Serves the generated SDK ZIP file for download
+     */
+    downloadSDK = async (req, res) => {
+        try {
+            const { jobId } = req.params;
+            
+            console.log(`Received request to download SDK for job: ${jobId}`);
+            
+            // Get job details
+            const job = await this.getJob(jobId);
+            
+            if (!job) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'SDK job not found'
+                });
+            }
+            
+            if (job.JOB_STATUS !== 'completed') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'SDK generation is not completed yet'
+                });
+            }
+            
+            const resultData = JSON.parse(job.RESULT_DATA || '{}');
+            const filePath = resultData.finalZipPath;
+            
+            if (!filePath || !fs.existsSync(filePath)) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'SDK file not found'
+                });
+            }
+            
+            // Set appropriate headers for file download
+            const fileName = path.basename(filePath);
+            res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+            res.setHeader('Content-Type', 'application/zip');
+            
+            // Stream the file
+            const fileStream = fs.createReadStream(filePath);
+            fileStream.pipe(res);
+            
+            fileStream.on('error', (error) => {
+                console.error('Error streaming SDK file:', error);
+                if (!res.headersSent) {
+                    res.status(500).json({
+                        success: false,
+                        message: 'Error downloading SDK file'
+                    });
+                }
+            });
+            
+            fileStream.on('end', () => {
+                console.log(`SDK file download completed for job: ${jobId}`);
+            });
+            
+        } catch (error) {
+            console.error('Error downloading SDK:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error downloading SDK file',
+                error: error.message
+            });
+        }
     };
 }
 

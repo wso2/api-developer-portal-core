@@ -443,8 +443,8 @@ function generateSDKFromDrawerInternal(language) {
     
     const pathParts = window.location.pathname.split('/');
     const orgName = pathParts[1];
-    const applicationId = pathParts[pathParts.length - 1];
     const viewName = pathParts[3];
+    const applicationId = pathParts[5];
     
     console.log('SDK Generation Configuration:', {
         language: selectedLanguage,
@@ -454,14 +454,15 @@ function generateSDKFromDrawerInternal(language) {
     
     showSDKGenerationLoading();
     
-    fetch(`/${orgName}/views/${viewName}/applications/${applicationId}/generate-sdk`, {
+    fetch(`/devportal/applications/${applicationId}/generate-sdk`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
             selectedAPIs: selectedAPIs.map(api => api.id),
-            sdkConfiguration: sdkConfiguration
+            sdkConfiguration: sdkConfiguration,
+            orgName: orgName
         })
     })
     .then(response => response.json())
@@ -1049,7 +1050,7 @@ function cancelSDKGeneration() {
         const orgName = window.location.pathname.split('/')[1];
         const viewName = window.location.pathname.split('/')[3];
         const applicationId = window.location.pathname.split('/')[5];
-        const cancelUrl = `/${orgName}/views/${viewName}/applications/${applicationId}/sdk/cancel/${window.currentSDKJobId}`;
+        const cancelUrl = `/devportal/applications/${applicationId}/sdk/cancel/${window.currentSDKJobId}`;
         
         fetch(cancelUrl, {
             method: 'POST',

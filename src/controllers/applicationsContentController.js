@@ -30,7 +30,6 @@ const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
 const adminService = require('../services/adminService');
 const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
-const sdkJobService = require('../services/sdkJobService');
 
 const orgIDValue = async (orgName) => {
     const organization = await adminDao.getOrganization(orgName);
@@ -436,128 +435,7 @@ async function mapDefaultValues(applicationConfiguration) {
     return appConfigs;
 }
 
-const streamSDKProgress = (req, res) => {
-    const { jobId } = req.params;
-    
-    res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Cache-Control'
-    });
 
-    console.log(`Client connected to SSE for job: ${jobId}`);
-
-    const onProgress = (progressData) => {
-        if (progressData.jobId === jobId) {
-            const dataToSend = { ...progressData, type: 'progress' };
-            res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
-        }
-    };
-
-    sdkJobService.on('progress', onProgress);
-
-    // Send initial ping
-    res.write(`data: ${JSON.stringify({ type: 'ping', jobId })}\n\n`);
-
-    req.on('close', () => {
-        console.log(`Client disconnected from SSE for job: ${jobId}`);
-        sdkJobService.removeListener('progress', onProgress);
-    });
-};
-
-// ***** Cancel SDK Job *****
-
-const cancelSDK = async (req, res) => {
-    try {
-        const { jobId } = req.params;
-        
-        console.log(`Received request to cancel SDK job: ${jobId}`);
-        
-        await sdkJobService.cancelJob(jobId);
-        
-        res.status(200).json({ 
-            success: true, 
-            message: 'SDK generation cancelled successfully',
-            jobId: jobId
-        });
-        
-    } catch (error) {
-        console.error('Error cancelling SDK generation:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: error.message || 'Failed to cancel SDK generation'
-        });
-    }
-};
-
-// ***** Generate SDK *****
-
-const generateSDK = async (req, res) => {
-    try {
-        const { selectedAPIs, sdkConfiguration } = req.body;
-        const orgName = req.params.orgName;
-        const applicationId = req.params.applicationId;
-
-        // Validate input - require at least 1 API
-        if (!selectedAPIs || selectedAPIs.length < 1) {
-            return res.status(400).json({
-                success: false,
-                message: 'At least 1 API must be selected for SDK generation'
-            });
-        }
-
-        if (!sdkConfiguration) {
-            return res.status(400).json({
-                success: false,
-                message: 'Please provide SDK configuration details'
-            });
-        }
-
-        // Validate AI description is provided
-        if (!sdkConfiguration.description || sdkConfiguration.description.trim() === '') {
-            return res.status(400).json({
-                success: false,
-                message: 'AI description is required for SDK generation'
-            });
-        }
-
-        const orgID = await orgIDValue(orgName);
-        
-        // Create job for tracking progress
-        const jobPayload = {
-            selectedAPIs,
-            sdkConfiguration,
-            orgName,
-            applicationId,
-            orgId: orgID
-        };
-        const job = await sdkJobService.createJob(orgID, applicationId, jobPayload);
-        const jobId = job.JOB_ID;
-
-        // Send immediate response with job ID
-        res.json({
-            success: true,
-            message: 'SDK generation job started successfully',
-            data: {
-                jobId: jobId,
-                status: 'PENDING',
-                progress: 0,
-                currentStep: 'Initializing',
-                sseEndpoint: `/${orgName}/views/default/applications/${applicationId}/sdk/job-progress/${jobId}`
-            }
-        });
-        
-    } catch (error) {
-        console.error('Error starting SDK generation job:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error starting SDK generation job',
-            error: error.message
-        });
-    }
-};
 
 /**
  * Utility function to clean up generated SDK files and folders older than 10 minutes
@@ -654,10 +532,7 @@ const stopSDKCleanupScheduler = () => {
 module.exports = {
     loadApplications,
     loadApplication,
-    generateSDK,
-    streamSDKProgress,
     cleanupGeneratedSDKs,
     startSDKCleanupScheduler,
-    stopSDKCleanupScheduler,
-    cancelSDK
+    stopSDKCleanupScheduler
 };
