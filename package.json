@@ -28,7 +28,7 @@
     "@openapitools/openapi-generator-cli": "^2.21.3",
     "archiver": "^7.0.1",
     "async-lock": "^1.4.1",
-    "axios": "^1.8.2",
+    "axios": "^1.11.0",
     "bootstrap-icons": "^1.11.3",
     "chalk": "^4.1.2",
     "chokidar": "^3.6.0",
