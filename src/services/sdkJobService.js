@@ -738,8 +738,6 @@ class SDKJobService extends EventEmitter {
                 `packageName=${sdkName},projectName=${sdkName},packageVersion=1.0.0`
             ].join(' ');
             
-            console.log(`Generating SDK with command: ${command}`);
-            
             // Execute openapi-generator
             const { stdout, stderr } = await execAsync(command, { 
                 cwd: specDir,
