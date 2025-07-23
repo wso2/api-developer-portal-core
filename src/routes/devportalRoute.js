@@ -21,6 +21,7 @@ const devportalService = require('../services/devportalService');
 const apiMetadataService = require('../services/apiMetadataService');
 const adminService = require('../services/adminService');
 const devportalController = require('../controllers/devportalController');
+const sdkJobService = require('../services/sdkJobService');
 const multer = require('multer');
 const storage = multer.memoryStorage()
 const multipartHandler = multer({storage: storage})
@@ -146,6 +147,12 @@ router.post('/applications/:applicationId/oauth-keys/:keyMappingId/clean-up', en
 router.post('/api-keys/generate', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.generateAPIKeys);
 router.post('/api-keys/:apiKeyID/revoke', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.revokeAPIKeys);
 router.post('/api-keys/:apiKeyID/regenerate', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.regenerateAPIKeys);
+
+// SDK Generation Routes
+router.post('/applications/:applicationId/generate-sdk', enforceSecuirty(constants.SCOPES.DEVELOPER), sdkJobService.generateSDK);
+router.get('/applications/:applicationId/sdk/job-progress/:jobId', sdkJobService.streamSDKProgress);
+router.post('/applications/:applicationId/sdk/cancel/:jobId', enforceSecuirty(constants.SCOPES.DEVELOPER), sdkJobService.cancelSDK);
+router.get('/sdk/download/:filename', enforceSecuirty(constants.SCOPES.DEVELOPER),sdkJobService.downloadSDK);
 
 router.post('/login', devportalController.login);
 module.exports = router;

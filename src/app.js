@@ -32,7 +32,7 @@ const devportalRoute = require('./routes/devportalRoute');
 const orgContent = require('./routes/orgContentRoute');
 const apiContent = require('./routes/apiContentRoute');
 const applicationContent = require('./routes/applicationsContentRoute');
-const applicationsController = require('./controllers/applicationsContentController');
+const sdkJobService = require('./services/sdkJobService');
 const customContent = require('./routes/customPageRoute');
 const config = require(process.cwd() + '/config.json');
 const Handlebars = require('handlebars');
@@ -490,7 +490,7 @@ const logStartupInfo = () => {
     
     // Start SDK cleanup scheduler
     try {
-        applicationsController.startSDKCleanupScheduler();
+        sdkJobService.startSDKCleanupScheduler();
         console.log(chalk.green('✅ SDK cleanup scheduler started') + '\n');
     } catch (error) {
         console.log(chalk.yellow('⚠️  Warning: Could not start SDK cleanup scheduler:'), chalk.red(error.message) + '\n');
@@ -513,7 +513,7 @@ const gracefulShutdown = (signal) => {
     
     // Stop SDK cleanup scheduler
     try {
-        applicationsController.stopSDKCleanupScheduler();
+        sdkJobService.stopSDKCleanupScheduler();
         console.log(chalk.green('✅ SDK cleanup scheduler stopped'));
     } catch (error) {
         console.log(chalk.yellow('⚠️  Warning: Error stopping SDK cleanup scheduler:'), chalk.red(error.message));

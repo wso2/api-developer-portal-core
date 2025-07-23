@@ -20,6 +20,7 @@
 const EventEmitter = require('events');
 const SdkJob = require('../dao/sdkJob');
 const apiMetadata = require('../dao/apiMetadata');
+const adminDao = require('../dao/admin');
 const path = require('path');
 const fs = require('fs');
 const config = require(process.cwd() + '/config');
@@ -36,6 +37,17 @@ class SDKJobService extends EventEmitter {
     constructor() {
         super();
         this.activeJobs = new Map();
+        this.sdkCleanupInterval = null; // Store cleanup interval reference
+    }
+
+    /**
+     * Utility function to get organization ID from organization name
+     * @param {string} orgName - The organization name
+     * @returns {Promise<string>} - The organization ID
+     */
+    async orgIDValue(orgName) {
+        const organization = await adminDao.getOrganization(orgName);
+        return organization.ORG_ID;
     }
 
     async createJob(orgId, applicationId, jobPayload = {}) {
@@ -45,7 +57,7 @@ class SDKJobService extends EventEmitter {
             jobId,
             orgId,
             applicationId,
-            jobStatus: 'PENDING',
+            jobStatus: JOB_STATUS.PENDING,
             progress: 0,
             currentStep: 'Initializing'
         };
@@ -83,7 +95,7 @@ class SDKJobService extends EventEmitter {
             {
                 name: 'Merging API Specifications',
                 weight: 30,
-                title: 'MERGING',
+                title: JOB_STATUS.MERGING,
                 task: async (reportProgress) => {
                     const result = await this.performMergingTask(jobPayload, reportProgress);
                     mergedSpec = result.mergedSpec;
@@ -95,7 +107,7 @@ class SDKJobService extends EventEmitter {
             {
                 name: 'Generating SDK',
                 weight: 20, 
-                title: 'SDK_GENERATION',
+                title: JOB_STATUS.SDK_GENERATION,
                 task: async (reportProgress) => {
                     sdkResult = await this.performSdkGenerationTask(jobPayload, mergedSpec, reportProgress);
                     console.log('SDK generation step completed');
@@ -104,7 +116,7 @@ class SDKJobService extends EventEmitter {
             {
                 name: 'Generating Application Code',
                 weight: 50,
-                title: 'APP_CODE_GENERATION',
+                title: JOB_STATUS.APP_CODE_GENERATION,
                 task: async (reportProgress) => {
                     const result = await this.performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec, reportProgress);
                     finalZipPath = result.finalZipPath;
@@ -146,7 +158,6 @@ class SDKJobService extends EventEmitter {
             }
             
             const { selectedAPIs, sdkConfiguration, orgName, applicationId } = jobPayload;
-            const finalBaseSdkName = `${orgName}-${applicationId}-sdk`;
             
             const resultData = {
                 selectedAPIs: selectedAPIs,
@@ -154,13 +165,11 @@ class SDKJobService extends EventEmitter {
                 transformedApiHandles: apiHandles || [],
                 sdkConfiguration: {
                     language: sdkConfiguration?.language || 'java',
-                    name: finalBaseSdkName,
                     version: '1.0.0',
-                    packageName: finalBaseSdkName,
                     mode: 'ai',
                     description: sdkConfiguration.description
                 },
-                finalDownloadUrl: `/download/sdk/${path.basename(finalZipPath || `${jobId}.zip`)}`,
+                finalDownloadUrl: `/devportal/sdk/download/${path.basename(finalZipPath || `${jobId}.zip`)}`,
                 applicationCodeGenerated: true,
                 mode: 'ai',
                 downloadPath: finalZipPath
@@ -185,6 +194,7 @@ class SDKJobService extends EventEmitter {
             if (apiSpecs.length === 0) {
                 throw new Error('No API specifications found for the selected APIs');
             }
+            reportProgress(80); // 80% of 30% = 24% overall
 
             const apiHandles = await this.getApiHandlers(orgId, selectedAPIs);
             
@@ -193,7 +203,7 @@ class SDKJobService extends EventEmitter {
                 mergedSpec = JSON.parse(apiSpecs[0].apiSpec);
             } else {
                 const mergeSpecApiRequest = this.prepareSDKGenerationRequest(apiSpecs, apiHandles);
-                reportProgress(80); // 80% of 30% = 24% overall
+                reportProgress(90); // 90% of 30% = 27% overall
                 mergedSpec = await this.invokeMergeSpecApi(mergeSpecApiRequest);
                 console.log('Merged API specifications received');
             }
@@ -286,8 +296,7 @@ class SDKJobService extends EventEmitter {
             const updatedJob = await SdkJob.updateJob(jobId, updateData);
             if (updatedJob) {
                 this.activeJobs.set(jobId, updatedJob);
-                
-                // Emit progress event
+                            // Emit progress event
                 this.emitProgress(jobId, {
                     status: status.toLowerCase(),
                     progress: progress,
@@ -314,14 +323,14 @@ class SDKJobService extends EventEmitter {
             if (!job) {
                 throw new Error('Job not found');
             }
-            
-            if (job.JOB_STATUS === 'COMPLETED' || job.JOB_STATUS === 'FAILED') {
+
+            if (job.JOB_STATUS === JOB_STATUS.COMPLETED || job.JOB_STATUS === JOB_STATUS.FAILED) {
                 throw new Error('Cannot cancel a job that is already completed or failed');
             }
             
             // Mark the job as cancelled in the database
             const updateData = {
-                jobStatus: 'CANCELLED',
+                jobStatus: JOB_STATUS.CANCELLED,
                 progress: 0,
                 currentStep: 'Cancelled',
                 errorMessage: 'Job was cancelled by user'
@@ -397,7 +406,7 @@ class SDKJobService extends EventEmitter {
     // Make jobs cancellable by checking for cancellation status during processing
     async checkJobCancellation(jobId) {
         const job = await this.getJob(jobId);
-        if (job && job.JOB_STATUS === 'CANCELLED') {
+        if (job && job.JOB_STATUS === JOB_STATUS.CANCELLED) {
             throw new Error('Job was cancelled');
         }
         return job;
@@ -409,13 +418,13 @@ class SDKJobService extends EventEmitter {
 
             const job = await this.getJob(jobId);
 
-            if (job && job.JOB_STATUS === 'CANCELLED') {
+            if (job && job.JOB_STATUS === JOB_STATUS.CANCELLED) {
                 console.log(`Job ${jobId} is already cancelled, skipping failure update.`);
                 return job;
             }
             
             const updateData = {
-                jobStatus: 'FAILED',
+                jobStatus: JOB_STATUS.FAILED,
                 progress: 0,
                 currentStep: 'Failed',
                 errorMessage: errorMessage
@@ -447,7 +456,7 @@ class SDKJobService extends EventEmitter {
         this.activeJobs.delete(jobId); // Remove from active jobs
         return await this.updateJobStatus(
             jobId, 
-            'COMPLETED', 
+            JOB_STATUS.COMPLETED, 
             100, 
             'Completed',
             'SDK generation completed successfully',
@@ -497,7 +506,103 @@ class SDKJobService extends EventEmitter {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    // Helper methods
+    // ***** SDK Cleanup Methods *****
+
+    /**
+     * Utility function to clean up generated SDK files and folders older than 10 minutes
+     * This runs periodically to remove all files and folders in the generated-sdks directory
+     */
+    async cleanupGeneratedSDKs() {
+        try {
+            const generatedSdksDir = path.join(process.cwd(), 'generated-sdks');
+            
+            if (!(await fs.promises.access(generatedSdksDir).then(() => true).catch(() => false))) {
+                return;
+            }
+            
+            const tenMinutesAgo = Date.now() - (10 * 60 * 1000); // 10 minutes in milliseconds
+            
+            try {
+                const items = await fs.promises.readdir(generatedSdksDir, { withFileTypes: true });
+                let cleanedCount = 0;
+                
+                for (const item of items) {
+                    const itemPath = path.join(generatedSdksDir, item.name);
+                    
+                    try {
+                        const stats = await fs.promises.stat(itemPath);
+                        
+                        // Check if the item is older than 10 minutes (using creation time)
+                        if (stats.birthtime.getTime() < tenMinutesAgo) {
+                            if (item.isDirectory()) {
+                                await fs.promises.rm(itemPath, { recursive: true, force: true });
+                                console.log(`Cleaned up SDK directory (${Math.round((Date.now() - stats.birthtime.getTime()) / 60000)} minutes old): ${itemPath}`);
+                            } else {
+                                await fs.promises.unlink(itemPath);
+                                console.log(`Cleaned up SDK file (${Math.round((Date.now() - stats.birthtime.getTime()) / 60000)} minutes old): ${itemPath}`);
+                            }
+                            cleanedCount++;
+                        }
+                    } catch (error) {
+                        console.warn(`Error processing SDK item ${itemPath}:`, error.message);
+                    }
+                }
+                
+                if (cleanedCount > 0) {
+                    console.log(`SDK cleanup completed: ${cleanedCount} items removed from generated-sdks directory`);
+                }
+                
+            } catch (error) {
+                console.warn(`Error reading generated-sdks directory: ${error.message}`);
+            }
+            
+        } catch (error) {
+            console.error('Error during generated SDK cleanup:', error);
+        }
+    }
+
+    /**
+     * Start the periodic SDK cleanup process
+     * Runs every 5 minutes to check for files/folders older than 10 minutes
+     */
+    startSDKCleanupScheduler() {
+        if (this.sdkCleanupInterval) {
+            return; 
+        }
+        
+        console.log('Starting SDK cleanup scheduler - runs every 5 minutes to clean files older than 10 minutes');
+
+        this.cleanupGeneratedSDKs();
+        
+        // Set up periodic cleanup every 5 minutes
+        this.sdkCleanupInterval = setInterval(async () => {
+            try {
+                await this.cleanupGeneratedSDKs();
+            } catch (error) {
+                console.error('Error in scheduled SDK cleanup:', error);
+            }
+        }, 5 * 60 * 1000);
+    }
+
+    /**
+     * Stop the periodic SDK cleanup process
+     */
+    stopSDKCleanupScheduler() {
+        if (this.sdkCleanupInterval) {
+            clearInterval(this.sdkCleanupInterval);
+            this.sdkCleanupInterval = null;
+            console.log('SDK cleanup scheduler stopped');
+        }
+    }
+
+    // ***** Helper Methods *****
+
+    /**
+     * Helper method to get API handlers for selected APIs
+     * @param {string} orgID - Organization ID
+     * @param {Array} selectedAPIs - Array of selected API IDs
+     * @returns {Array} - Array of API handles
+     */
     async getApiHandlers(orgID, selectedAPIs) {
         const apiHandlesArray = [];
         
@@ -524,6 +629,12 @@ class SDKJobService extends EventEmitter {
         return apiHandlesArray;
     }
 
+    /**
+     * Prepare SDK generation request payload for merge API
+     * @param {Array} apiSpecs - Array of API specifications
+     * @param {Array} apiHandlesArray - Array of API handles
+     * @returns {Object} - Request payload for merge API
+     */
     prepareSDKGenerationRequest(apiSpecs, apiHandlesArray) {
         // Collect apiSpecString array for further processing
         const apiSpecStrings = apiSpecs.map(spec => {
@@ -545,6 +656,11 @@ class SDKJobService extends EventEmitter {
         };
     }
 
+    /**
+     * Invoke the merge specification API
+     * @param {Object} requestPayload - Request payload for merge API
+     * @returns {Object} - Merged API specification
+     */
     async invokeMergeSpecApi(requestPayload) {
         const aiSDKServiceUrl = config.aiSDKService?.url || 'http://localhost:5001';
         const aiSDKServiceEndpoints = config.aiSDKService?.endpoints || {
@@ -564,6 +680,7 @@ class SDKJobService extends EventEmitter {
                 const errorData = await response.json();
                 throw new Error(errorData.error || `Failed to generate application: ${response.statusText}`);
             }
+            
             const data = await response.json();
             return data;
         } catch (error) {
@@ -572,8 +689,14 @@ class SDKJobService extends EventEmitter {
         }
     }
 
+    /**
+     * Generate SDK using OpenAPI Generator
+     * @param {Object} mergedSpec - Merged API specification
+     * @param {Object} sdkConfiguration - SDK configuration
+     * @param {string} jobId - Job ID for tracking
+     * @returns {Object} - SDK generation result
+     */
     async generateSDKWithOpenAPIGenerator(mergedSpec, sdkConfiguration, jobId) {
-
         let specDir = null;
         let outputDir = null;
         
@@ -586,6 +709,7 @@ class SDKJobService extends EventEmitter {
             specDir = path.join(process.cwd(), 'generated-sdks', 'merged-specs', `${sdkName}`);
             const specFilePath = path.join(specDir, 'merged-spec.json');
             outputDir = path.join(process.cwd(), 'generated-sdks', `${sdkName}`);
+            
             // Create directories
             await fs.promises.mkdir(specDir, { recursive: true });
             await fs.promises.mkdir(outputDir, { recursive: true });
@@ -623,13 +747,15 @@ class SDKJobService extends EventEmitter {
             });
             
             if (stderr && !stderr.includes('WARN')) {
-                console.warn('SDK generation warnings/errors:', stderr);
+                console.warn('OpenAPI Generator warnings:', stderr);
             }
 
+            // Clean up spec directory
             try {
-                if (specDir) await fs.promises.rm(specDir, { recursive: true, force: true });
+                await fs.promises.rm(specDir, { recursive: true, force: true });
+                console.log('Cleaned up temporary spec directory');
             } catch (cleanupError) {
-                console.error('Error cleaning up directories:', cleanupError);
+                console.warn('Could not clean up spec directory:', cleanupError);
             }
                     
             return {
@@ -658,13 +784,20 @@ class SDKJobService extends EventEmitter {
                 if (specDir) await fs.promises.rm(specDir, { recursive: true, force: true });
                 if (outputDir) await fs.promises.rm(outputDir, { recursive: true, force: true });
             } catch (cleanupError) {
-                console.error('Error cleaning up directories:', cleanupError);
+                console.warn('Error cleaning up directories after SDK generation failure:', cleanupError);
             }
             
             throw new Error(errorMessage);
         }
     }
 
+    /**
+     * Process AI mode SDK generation
+     * @param {Object} sdkResult - SDK generation result
+     * @param {Object} mergedSpec - Merged API specification
+     * @param {Object} sdkConfiguration - SDK configuration
+     * @returns {string} - Final ZIP file path
+     */
     async processAIModeSDK(sdkResult, mergedSpec, sdkConfiguration) {        
         try {
             console.log('Processing AI mode SDK generation...');
@@ -698,10 +831,12 @@ class SDKJobService extends EventEmitter {
 
     /**
      * Extract ZIP and process SDK files to send to backend API
+     * @param {string} sdkDir - SDK directory path
+     * @param {string} language - Programming language
+     * @returns {Object} - Extracted method information
      */
     async extractMethodFile(sdkDir, language) {
         try {
-            
             // Find the API class file based on language
             let apiClassFile = null;
             let apiClassContent = null;
@@ -725,7 +860,7 @@ class SDKJobService extends EventEmitter {
             } 
             
             if (!apiClassContent) {
-                console.warn(`No API class file found for language: ${language}`);
+                throw new Error(`No API class file found for language: ${language}`);
             }
             
             return {
@@ -743,6 +878,11 @@ class SDKJobService extends EventEmitter {
 
     /**
      * Create JSON request data for backend API request
+     * @param {string} apiClassContent - API class content
+     * @param {string} language - Programming language
+     * @param {Object} mergedSpec - Merged API specification
+     * @param {Object} sdkConfiguration - SDK configuration
+     * @returns {Object} - Request body for application generation API
      */
     async getApplicationGenApiReqBody(apiClassContent, language, mergedSpec, sdkConfiguration) {
         let useCase;
@@ -762,8 +902,13 @@ class SDKJobService extends EventEmitter {
             language: language,
             APISpecification: JSON.stringify(mergedSpec)
         };
-    };
+    }
 
+    /**
+     * Invoke application code generation API
+     * @param {Object} requestData - Request data for application generation
+     * @returns {string} - Generated application code
+     */
     async invokeApplicationCodeGenApi(requestData) {
         try {
             const response = await fetch(`${aiSDKServiceUrl}${aiSDKServiceEndpoints.generateApp}`, {
@@ -773,28 +918,38 @@ class SDKJobService extends EventEmitter {
                 },
                 body: JSON.stringify(requestData)
             });
+            
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.error || `Failed to generate application: ${response.statusText}`);
             }
+            
             const data = await response.text();
             return data;
         } catch (error) {
             console.error("Error invoking application generation API:", error);
             throw error;
         }
-    };
+    }
 
-     /**
+    /**
      * Create SDK filename based on API handles and mode
+     * @param {string} baseSdkName - Base SDK name
+     * @param {boolean} isAIMode - Whether AI mode is enabled
+     * @returns {string} - Final SDK filename
      */
     createSDKFileName(baseSdkName, isAIMode) {        
         const suffix = isAIMode ? 'with-app' : '';
         return `${baseSdkName}-${suffix}.zip`;
-    };
+    }
 
     /**
      * Process application code response and create final ZIP with SDK + application code
+     * @param {string} applicationCode - Generated application code
+     * @param {string} sdkPath - SDK directory path
+     * @param {Object} sdkConfiguration - SDK configuration
+     * @param {string} zipFileName - Final ZIP filename
+     * @returns {Object} - Final ZIP result
      */
     async processApplicationCodeAndCreateFinalZip(applicationCode, sdkPath, sdkConfiguration, zipFileName) {
         try {
@@ -854,10 +1009,12 @@ class SDKJobService extends EventEmitter {
             
             throw error;
         }
-    };
+    }
 
-     /**
+    /**
      * Get file extension based on programming language
+     * @param {string} language - Programming language
+     * @returns {string} - File extension
      */
     getFileExtension(language) {
         const extensionMap = {
@@ -1035,6 +1192,9 @@ class SDKJobService extends EventEmitter {
 
     /**
      * Create a comprehensive README file for the generated SDK and application
+     * @param {string} sdkPath - SDK directory path
+     * @param {Object} sdkConfiguration - SDK configuration
+     * @param {string} language - Programming language
      */
     async createProjectReadme(sdkPath, sdkConfiguration, language) {
         try {
@@ -1169,10 +1329,13 @@ class SDKJobService extends EventEmitter {
         } catch (error) {
             console.error('Error creating project README:', error);
         }
-    };
+    }
 
     /**
      * Create ZIP archive of the generated SDK
+     * @param {string} sourceDir - Source directory to zip
+     * @param {string} outputPath - Output ZIP file path
+     * @returns {Promise} - Promise that resolves when ZIP is created
      */
     async createZipArchive(sourceDir, outputPath) {
         return new Promise((resolve, reject) => {
@@ -1183,16 +1346,208 @@ class SDKJobService extends EventEmitter {
                 console.log(`ZIP archive created: ${archive.pointer()} total bytes`);
                 resolve();
             });
-            
+
             archive.on('error', (err) => {
                 reject(err);
             });
-            
+
             archive.pipe(output);
             archive.directory(sourceDir, false);
             archive.finalize();
         });
+    }
+
+    // ***** Route Handler Methods *****
+
+    /**
+     * Route handler for SDK generation
+     * Validates input and creates SDK generation job
+     */
+    generateSDK = async (req, res) => {
+        try {
+            const { selectedAPIs, sdkConfiguration, orgName } = req.body;
+            const { applicationId } = req.params;
+
+            // Validate input
+            if (!orgName) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Organization name is required'
+                });
+            }
+
+            if (!selectedAPIs || selectedAPIs.length < 1) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'At least 1 API must be selected for SDK generation'
+                });
+            }
+
+            if (!sdkConfiguration) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Please provide SDK configuration details'
+                });
+            }
+
+            // Validate AI description is provided
+            if (!sdkConfiguration.description || sdkConfiguration.description.trim() === '') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'AI description is required for SDK generation'
+                });
+            }
+
+            // Convert orgName to orgId
+            const orgId = await this.orgIDValue(orgName);
+            
+            // Create job for tracking progress
+            const jobPayload = {
+                selectedAPIs,
+                sdkConfiguration,
+                orgName,
+                applicationId,
+                orgId
+            };
+            const job = await this.createJob(orgId, applicationId, jobPayload);
+            const jobId = job.JOB_ID;
+
+            // Send immediate response with job ID
+            res.json({
+                success: true,
+                message: 'SDK generation job started successfully',
+                data: {
+                    jobId: jobId,
+                    status: JOB_STATUS.PENDING,
+                    progress: 0,
+                    currentStep: 'Initializing',
+                    sseEndpoint: `/devportal/applications/${applicationId}/sdk/job-progress/${jobId}`
+                }
+            });
+            
+        } catch (error) {
+            console.error('Error starting SDK generation job:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error starting SDK generation job',
+                error: error.message
+            });
+        }
     };
+
+    /**
+     * Route handler for SDK job progress streaming via SSE
+     * Establishes Server-Sent Events connection for real-time progress updates
+     */
+    streamSDKProgress = (req, res) => {
+        const { jobId } = req.params;
+        
+        res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Cache-Control'
+        });
+
+        console.log(`Client connected to SSE for job: ${jobId}`);
+
+        const onProgress = (progressData) => {
+            if (progressData.jobId === jobId) {
+                const dataToSend = { ...progressData, type: 'progress' };
+                res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
+            }
+        };
+
+        this.on('progress', onProgress);
+
+        // Send initial ping
+        res.write(`data: ${JSON.stringify({ type: 'ping', jobId })}\n\n`);
+
+        req.on('close', () => {
+            console.log(`Client disconnected from SSE for job: ${jobId}`);
+            this.removeListener('progress', onProgress);
+        });
+    };
+
+    /**
+     * Route handler for SDK job cancellation
+     * Cancels an ongoing SDK generation job
+     */
+    cancelSDK = async (req, res) => {
+        try {
+            const { jobId } = req.params;
+            
+            console.log(`Received request to cancel SDK job: ${jobId}`);
+            
+            await this.cancelJob(jobId);
+            
+            res.status(200).json({ 
+                success: true, 
+                message: 'SDK generation cancelled successfully',
+                jobId: jobId
+            });
+            
+        } catch (error) {
+            console.error('Error cancelling SDK generation:', error);
+            res.status(500).json({ 
+                success: false, 
+                error: error.message || 'Failed to cancel SDK generation'
+            });
+        }
+    };
+
+    /**
+     * Route handler for SDK download
+     * Serves the generated SDK ZIP file for download
+     */
+    downloadSDK = async (req, res) => {
+        try {
+            const { filename } = req.params;
+            const filePath = path.join(process.cwd(), 'generated-sdks', filename);
+
+            const normalizedPath = path.normalize(filePath);
+            const expectedDir = path.join(process.cwd(), 'generated-sdks');
+
+            if (!normalizedPath.startsWith(expectedDir)) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
+
+            if (!fs.existsSync(filePath)) {
+                return res.status(404).json({ error: 'SDK file not found' });
+            }
+
+            res.setHeader('Content-Type', 'application/zip');
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+            // Stream the file
+            const fileStream = fs.createReadStream(filePath);
+            fileStream.pipe(res);
+
+            fileStream.on('error', (err) => {
+                console.error('Error streaming SDK file:', err);
+                res.status(500).json({ error: 'Error downloading SDK' });
+            });
+            
+        } catch (error) {
+            console.error('Error downloading SDK:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error downloading SDK file',
+                error: error.message
+            });
+        }
+    };
+}
+
+const JOB_STATUS = {
+    PENDING: 'PENDING',
+    MERGING: 'MERGING',
+    SDK_GENERATION: 'SDK_GENERATION',
+    APP_CODE_GENERATION: 'APP_CODE_GENERATION',
+    COMPLETED: 'COMPLETED',
+    FAILED: 'FAILED',
+    CANCELLED: 'CANCELLED'
 }
 
 // Create singleton instance

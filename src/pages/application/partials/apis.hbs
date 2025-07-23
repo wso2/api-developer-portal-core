@@ -1,76 +1,3 @@
-<head>
-  <script>
-    // API Selection Management for SDK Generation
-    function toggleAllAPISelection(selectAllCheckbox) {
-      const checkboxes = document.querySelectorAll('.api-checkbox');
-      checkboxes.forEach(checkbox => {
-        checkbox.checked = selectAllCheckbox.checked;
-      });
-      updateSDKButtonVisibility();
-    }
-
-    function toggleAPISelection() {
-      const checkboxes = document.querySelectorAll('.api-checkbox');
-      const selectAllCheckbox = document.getElementById('selectAllAPIs');
-      
-      // Update "Select All" checkbox state
-      const checkedCount = document.querySelectorAll('.api-checkbox:checked').length;
-      if (selectAllCheckbox) {
-        selectAllCheckbox.checked = checkedCount === checkboxes.length;
-        selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
-      }
-      
-      updateSDKButtonVisibility();
-    }
-
-    function updateSDKButtonVisibility() {
-      const checkedCount = document.querySelectorAll('.api-checkbox:checked').length;
-      const sdkButton = document.querySelector('button[onclick="redirectToSDKGeneration()"]');
-      
-      if (sdkButton) {
-        if (checkedCount >= 1) {
-          sdkButton.disabled = false;
-          sdkButton.classList.remove('disabled');
-        } else {
-          sdkButton.disabled = true;
-          sdkButton.classList.add('disabled');
-        }
-      }
-    }
-
-    function redirectToSDKGeneration() {
-      const checkedCheckboxes = document.querySelectorAll('.api-checkbox:checked');
-      if (checkedCheckboxes.length < 1) {
-        alert('Please select at least 1 API to generate SDK');
-        return;
-      }
-      
-      // Call the global openSdkDrawer function from the SDK drawer
-      if (typeof window.openSdkDrawer === 'function') {
-        window.openSdkDrawer();
-      }
-    }
-
-    // Initialize SDK button state when page loads
-    document.addEventListener('DOMContentLoaded', function() {
-      updateSDKButtonVisibility();
-      
-      // Set up event listeners for API checkboxes if they exist
-      const apiCheckboxes = document.querySelectorAll('.api-checkbox');
-      apiCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', toggleAPISelection);
-      });
-      
-      const selectAllCheckbox = document.getElementById('selectAllAPIs');
-      if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', function() {
-          toggleAllAPISelection(this);
-        });
-      }
-    });
-  </script>
-</head>
-
 <section class="section mt-5 mb-6">
     <div class="container-fluid">
         {{#in devportalMode values="DEFAULT,APISONLY"}}
@@ -315,3 +242,6 @@
         {{/in}}
      </div>    
 </section>
+
+<!-- Load API selection management script -->
+<script src="/technical-scripts/api-selection.js"></script>
