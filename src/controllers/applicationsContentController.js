@@ -31,7 +31,6 @@ const APIDTO = require('../dto/apiDTO');
 const adminService = require('../services/adminService');
 const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
 
-
 const orgIDValue = async (orgName) => {
     const organization = await adminDao.getOrganization(orgName);
     return organization.ORG_ID;
@@ -468,7 +467,9 @@ async function mapDefaultValues(applicationConfiguration) {
     return appConfigs;
 }
 
+
+
 module.exports = {
     loadApplications,
-    loadApplication,
+    loadApplication
 };

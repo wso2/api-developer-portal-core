@@ -20,4 +20,6 @@ router.get('/:orgName/views/:viewName/applications/:applicationId', (req, res, n
     next();
 }, registerPartials, ensureAuthenticated, applicationsController.loadApplication);
 
+
+
 module.exports = router;

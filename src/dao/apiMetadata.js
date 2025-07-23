@@ -886,6 +886,49 @@ const getAPIDocLinks = async (orgID, apiID) => {
     }
 }
 
+const getAPISpecs = async (orgID, apiIDs) => {
+    try {
+        const apiSpecsResponse = await APIContent.findAll({
+            attributes: [
+                'API_ID',
+                'FILE_NAME',
+                'API_FILE'
+            ],
+            where: {
+                API_ID: {
+                    [Op.in]: apiIDs
+                },
+                TYPE: constants.DOC_TYPES.API_DEFINITION
+            },
+            include: [
+                {
+                    model: APIMetadata,
+                    required: true,
+                    attributes: ['API_NAME', 'API_VERSION', 'API_HANDLE'],
+                    where: {
+                        ORG_ID: orgID
+                    }
+                }
+            ]
+        });
+
+        return apiSpecsResponse.map(spec => {
+            
+            return {
+                apiID: spec.API_ID,
+                fileName: spec.FILE_NAME,
+                apiSpec: spec.API_FILE ? spec.API_FILE.toString('utf8') : null
+            };
+        }).filter(spec => spec !== null);
+    } catch (error) {
+        console.error('Error fetching API specifications:', error);
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
 const getAPIMetadataByCondition = async (condition, t) => {
     try {
         if (condition.TAGS) {
@@ -1570,6 +1613,7 @@ module.exports = {
     getAPIDocTypes,
     getAPIId,
     getAPIHandle,
+    getAPISpecs,
     getAPIMetadataByCondition,
     searchAPIMetadata,
     putSubscriptionPolicy,

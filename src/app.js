@@ -32,6 +32,7 @@ const devportalRoute = require('./routes/devportalRoute');
 const orgContent = require('./routes/orgContentRoute');
 const apiContent = require('./routes/apiContentRoute');
 const applicationContent = require('./routes/applicationsContentRoute');
+const sdkJobService = require('./services/sdkJobService');
 const customContent = require('./routes/customPageRoute');
 const config = require(process.cwd() + '/config.json');
 const Handlebars = require('handlebars');
@@ -490,6 +491,14 @@ const logStartupInfo = () => {
     }
 
     console.log(chalk.blue(`🔗 Visit: ${chalk.underline(config.baseUrl + (config.mode === constants.DEV_MODE ? "/views/default" : "/<organization>/views/default"))}`) + '\n');
+    
+    // Start SDK cleanup scheduler
+    try {
+        sdkJobService.startSDKCleanupScheduler();
+        console.log(chalk.green('✅ SDK cleanup scheduler started') + '\n');
+    } catch (error) {
+        console.log(chalk.yellow('⚠️  Warning: Could not start SDK cleanup scheduler:'), chalk.red(error.message) + '\n');
+    }
 };
 
 // Handle Uncaught Exceptions
@@ -501,3 +510,21 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason, promise) => {
     ('\n' + chalk.bgRed.white.bold(' Unhandled Rejection ') + '\n', chalk.red('Promise:', promise, '\nReason:', reason) + '\n');
 });
+
+// Graceful shutdown handlers
+const gracefulShutdown = (signal) => {
+    console.log(`\n${chalk.yellow(`Received ${signal}. Gracefully shutting down...`)}`);
+    
+    // Stop SDK cleanup scheduler
+    try {
+        sdkJobService.stopSDKCleanupScheduler();
+        console.log(chalk.green('✅ SDK cleanup scheduler stopped'));
+    } catch (error) {
+        console.log(chalk.yellow('⚠️  Warning: Error stopping SDK cleanup scheduler:'), chalk.red(error.message));
+    }
+    
+    process.exit(0);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
