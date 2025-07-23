@@ -18,6 +18,18 @@
 /* eslint-disable no-undef */
 
 /**
+ * Gets the application ID from the drawer's data attribute
+ * @returns {string} - The application ID
+ */
+function getApplicationId() {
+    const drawer = document.getElementById('sdkDrawer');
+    const fromData = drawer ? drawer.dataset.applicationId : null;
+
+    return fromData;
+}
+
+
+/**
  * Opens the SDK drawer and initializes its state
  * Validates that at least 1 API is selected before opening
  * Sets up initial drawer state and event handlers
@@ -443,8 +455,7 @@ function generateSDKFromDrawerInternal(language) {
     
     const pathParts = window.location.pathname.split('/');
     const orgName = pathParts[1];
-    const viewName = pathParts[3];
-    const applicationId = pathParts[5];
+    const applicationId = getApplicationId() || pathParts[5];
     
     console.log('SDK Generation Configuration:', {
         language: selectedLanguage,
@@ -566,10 +577,20 @@ function handleSDKGenerationComplete(data) {
     
     window.currentSDKJobId = null;
     
+    console.log('SDK Generation Complete - Full data:', data);
+    console.log('Result data:', data.resultData);
+    
     if (data.resultData && data.resultData.finalDownloadUrl) {
+        console.log('Download URL found:', data.resultData.finalDownloadUrl);
         setTimeout(() => {
             triggerAutoDownload(data.resultData.finalDownloadUrl);
         }, 1000);
+    } else {
+        console.warn('No download URL found in completion data');
+        console.log('Available data keys:', Object.keys(data));
+        if (data.resultData) {
+            console.log('Available resultData keys:', Object.keys(data.resultData));
+        }
     }
     
     showSDKGenerationSuccess();
@@ -703,7 +724,7 @@ function showProgressBarInPrompt() {
         progressContainer.className = 'sdk-progress-container';
         progressContainer.innerHTML = `
             <div class="sdk-progress-header">
-                <span class="sdk-progress-title">Generating SDK...</span>
+                <span class="sdk-progress-title">Merging API Specifications</span>
                 <span class="sdk-progress-percentage" id="sdkProgressPercentage">0%</span>
             </div>
             <div class="sdk-progress-bar-wrapper">
@@ -712,7 +733,7 @@ function showProgressBarInPrompt() {
                 </div>
             </div>
             <div class="sdk-progress-status" id="sdkProgressStatus">
-                Preparing SDK generation...
+                In progress: Merging API Specifications...
             </div>
         `;
         
@@ -855,16 +876,41 @@ function stopProgressAnimation() {
  * @param {string} downloadUrl - The URL of the file to download
  */
 function triggerAutoDownload(downloadUrl) {
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = ''; 
-    link.style.display = 'none';
+    console.log('Triggering download for URL:', downloadUrl);
     
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    if (!downloadUrl) {
+        console.error('Download URL is empty or undefined');
+        showErrorNotification('Download URL is not available');
+        return;
+    }
     
-    console.log('Auto-download triggered for:', downloadUrl);
+    try {
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = ''; 
+        link.style.display = 'none';
+        
+        // Add error handling for download
+        link.onerror = function(error) {
+            console.error('Download link error:', error);
+            showErrorNotification('Failed to download SDK file');
+        };
+        
+        document.body.appendChild(link);
+        
+        console.log('Clicking download link for:', downloadUrl);
+        link.click();
+        
+        // Clean up
+        setTimeout(() => {
+            document.body.removeChild(link);
+        }, 1000);
+        
+        console.log('Auto-download triggered successfully for:', downloadUrl);
+    } catch (error) {
+        console.error('Error triggering download:', error);
+        showErrorNotification('Failed to initiate download');
+    }
 }
 
 // Error Notification System

@@ -6,7 +6,7 @@ const createJob = async (jobData) => {
             JOB_ID: jobData.jobId,
             ORG_ID: jobData.orgId,
             APP_ID: jobData.applicationId,
-            JOB_STATUS: jobData.jobStatus || 'PENDING',
+            JOB_STATUS: jobData.jobStatus || JOB_STATUS.PENDING,
             PROGRESS: jobData.progress || 0,
             CURRENT_STEP: jobData.currentStep || 'Initializing',
             ERROR_MESSAGE: jobData.errorMessage || null
