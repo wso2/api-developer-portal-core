@@ -35,40 +35,55 @@ const { Sequelize } = require("sequelize");
 
 const createOrganization = async (req, res) => {
 
+    console.log("Received request to create organization");
     const rules = util.validateOrganization();
     for (let validation of rules) {
         await validation.run(req);
     }
+    console.log("Organization creation request payload validation successful");
+
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json(util.getErrors(errors));
     }
+    console.log("Organization creation request validation successful");
+
     const payload = req.body;
     const orgConfig = {
         devportalMode: constants.API_TYPE.DEFAULT,
     }
     payload.orgConfig = orgConfig;
+
     let organization = "";
     try {
-        await sequelize.transaction(async (t) => {
+        await sequelize.transaction({
+            timeout: 60000,
+        }, async (t) => {
             organization = await adminDao.createOrganization(payload, t);
             const orgId = organization.ORG_ID;
+            console.log(`Organization created successfully. orgId: ${orgId}, orgName: ${organization.ORG_NAME}`);
+
             // create default label
             const labels = await apiDao.createLabels(organization.ORG_ID, [{ name: 'default', displayName: 'default' }], t);
             const labelId = labels[0].dataValues.LABEL_ID;
+            console.log(`Default label created successfully. labelId: ${labelId}, orgId: ${orgId}`);
+            
             //create default view
             const viewResponse = await apiDao.addView(orgId, { name: 'default', displayName: 'default' }, t);
             const viewID = viewResponse.dataValues.VIEW_ID;
+            console.log(`Default view created successfully. viewId: ${viewID}, orgId: ${orgId}`);
+            
             await apiDao.addLabel(orgId, labelId, viewID, t);
             //create default provider
             await adminDao.createProvider(organization.ORG_ID, { name: 'WSO2', providerURL: config.controlPlane.url }, t);
+            console.log(`Default provider created successfully. orgId: ${orgId}`);
+
             //store default subscription policies
             if (config.generateDefaultSubPolicies) {
-                const storagePlans = constants.DEFAULT_SUBSCRIPTION_PLANS;
-                for (const plan of storagePlans) {
-                    await apiDao.createSubscriptionPolicy(orgId, plan, t);
-                }
+                await apiDao.bulkCreateSubscriptionPolicies(orgId, constants.DEFAULT_SUBSCRIPTION_PLANS, t);
             }
+            console.log(`Default subscription policy config: ${config.generateDefaultSubPolicies}`);
         });
 
         const orgCreationResponse = {
@@ -684,7 +699,9 @@ const createSubscription = async (req, res) => {
         let isShared;
         let sharedApp = [];
         let nonSharedApp = [];
-        await sequelize.transaction(async (t) => {
+        await sequelize.transaction({
+            timeout: 60000,
+        }, async (t) => {
             try {
                 sharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
                 nonSharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, false);
@@ -745,7 +762,9 @@ const updateSubscription = async (req, res) => {
 
     try {
         const orgID = req.params.orgId;
-        await sequelize.transaction(async (t) => {
+        await sequelize.transaction({
+            timeout: 60000,
+        }, async (t) => {
             try {
                 let app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
                 if (app.length === 0) {
@@ -855,7 +874,9 @@ const deleteSubscription = async (req, res) => {
     const orgID = req.params.orgId;
     const subID = req.params.subscriptionId;
     try {
-        await sequelize.transaction(async (t) => {
+        await sequelize.transaction({
+            timeout: 60000,
+        }, async (t) => {
             const subscription = await adminDao.getSubscription(orgID, subID, t);
             const subDeleteResponse = await adminDao.deleteSubscription(orgID, subID, t);
             if (subDeleteResponse === 0) {
@@ -885,7 +906,9 @@ const createAppKeyMapping = async (req, res) => {
     let cpAppID = "";
     try {
         let responseData;
-        await sequelize.transaction(async (t) => {
+        await sequelize.transaction({
+            timeout: 60000,
+        }, async (t) => {
             const { applicationName, apis, tokenType, tokenDetails, provider, clientID } = req.body;
             const appIDResponse = await adminDao.getApplicationID(orgID, userID, applicationName);
             let appID;
@@ -1134,7 +1157,9 @@ const unsubscribeAPI = async (req, res) => {
         const orgID = req.params.orgId;;
         const { appID, apiReferenceID, subscriptionID } = req.query;
 
-        await sequelize.transaction(async (t) => {
+        await sequelize.transaction({
+            timeout: 60000,
+        }, async (t) => {
             const sharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, true);
             const nonSharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, false);
             console.log("Unsubscribing from API with api ref id: ", apiReferenceID);

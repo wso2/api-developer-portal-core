@@ -59,7 +59,9 @@ const createAPIMetadata = async (req, res) => {
         }
         apiMetadata.endPoints.productionURL = changeEndpoint(apiMetadata.endPoints.productionURL);
         apiMetadata.endPoints.sandboxURL = changeEndpoint(apiMetadata.endPoints.sandboxURL);
-        await sequelize.transaction(async (t) => {
+        await sequelize.transaction({
+            timeout: 60000,
+        }, async (t) => {
             // Create apimetadata record
             const createdAPI = await apiDao.createAPIMetadata(orgId, apiMetadata, t);
             const apiID = createdAPI.dataValues.API_ID;
@@ -173,7 +175,9 @@ const getAPIMetadata = async (req, res) => {
 
 const getMetadataFromDB = async (orgID, apiID) => {
 
-    return await sequelize.transaction(async (t) => {
+    return await sequelize.transaction({
+        timeout: 60000,
+    }, async (t) => {
         const retrievedAPI = await apiDao.getAPIMetadata(orgID, apiID, t);
         if (retrievedAPI.length > 0) {
             return new APIDTO(retrievedAPI[0]);
@@ -219,7 +223,9 @@ const getAllAPIMetadata = async (req, res) => {
 
 const getMetadataListFromDB = async (orgID, groups, searchTerm, tags, apiName, apiVersion, viewName) => {
 
-    return await sequelize.transaction(async (t) => {
+    return await sequelize.transaction({
+        timeout: 60000,
+    }, async (t) => {
         let retrievedAPIs;
         if (apiName || apiVersion || tags) {
             const condition = {};
@@ -267,7 +273,9 @@ const updateAPIMetadata = async (req, res) => {
         if (!allowStatusChange) {
             throw new CustomError(409, constants.ERROR_MESSAGE.ERR_SUB_EXIST, "API has subscriptions.");
         }
-        await sequelize.transaction(async (t) => {
+        await sequelize.transaction({
+            timeout: 60000,
+        }, async (t) => {
             // Create apimetadata record
             console.log("Updating metadata", apiId);
             let [updatedRows, updatedAPI] = await apiDao.updateAPIMetadata(orgId, apiId, apiMetadata, t);
@@ -350,7 +358,9 @@ const deleteAPIMetadata = async (req, res) => {
             "Missing or Invalid fields in the request payload"
         );
     }
-    await sequelize.transaction(async (t) => {
+    await sequelize.transaction({
+        timeout: 60000,
+    }, async (t) => {
         try {
             //check if subscriptions exist for the application
             const subApis = await adminDao.getSubscriptions(orgId, '', apiId);
@@ -435,7 +445,9 @@ const createAPITemplate = async (req, res) => {
         if (req.body.imageMetadata) {
             imageMetadata = JSON.parse(req.body.imageMetadata);
         }
-        await sequelize.transaction(async (t) => {
+        await sequelize.transaction({
+            timeout: 60000,
+        }, async (t) => {
             //check whether api belongs to given org
             let apiMetadata = await apiDao.getAPIMetadata(orgId, apiId, t);
             let exsistingAPIImage = await apiDao.getImage(constants.API_ICON, apiId, t);
@@ -522,7 +534,9 @@ const updateAPITemplate = async (req, res) => {
             const links = util.getAPIDocLinks(docMetadata);
             apiContent.push(...links);
         }
-        await sequelize.transaction(async (t) => {
+        await sequelize.transaction({
+            timeout: 60000,
+        }, async (t) => {
             //check whether api belongs to given org
             const apiMetadata = await apiDao.getAPIMetadata(orgId, apiId, t);
             if (apiMetadata) {
@@ -665,7 +679,9 @@ const createSubscriptionPolicy = async (req, res) => {
     }
 
     try {
-        await sequelize.transaction(async (t) => {
+        await sequelize.transaction({
+            timeout: 60000,
+        }, async (t) => {
             const subscriptionPolicyResponse = await apiDao.createSubscriptionPolicy(orgId, subscriptionPolicy, t);
             if (subscriptionPolicyResponse) {
                 console.log(`Created subscription policy for orgId: ${orgId}`);
@@ -700,7 +716,9 @@ const createSubscriptionPolicies = async (req, res) => {
 
             const createdPolicies = [];
 
-            await sequelize.transaction(async (t) => {
+            await sequelize.transaction({
+                timeout: 60000,
+            }, async (t) => {
                 // TODO: Try using SubscriptionPolicy.bulkCreate() once Table is finalised and manipulating each data is not needed
                 for (const policy of subscriptionPolicies) {
                     if (policy.type == "requestCount") {
@@ -743,7 +761,9 @@ const updateSubscriptionPolicy = async (req, res) => {
     }
     
     try {
-        await sequelize.transaction(async (t) => {
+        await sequelize.transaction({
+            timeout: 60000,
+        }, async (t) => {
             const { subscriptionPolicyResponse, statusCode } =  await apiDao.putSubscriptionPolicy(orgId, subscriptionPolicy, t);
             if (subscriptionPolicyResponse) {
                 res.status(statusCode).send(new subscriptionPolicyDTO(subscriptionPolicyResponse));
@@ -777,7 +797,9 @@ const updateSubscriptionPolicies = async (req, res) => {
 
             const updatedPolicies = [];
 
-            await sequelize.transaction(async (t) => {
+            await sequelize.transaction({
+                timeout: 60000,
+            }, async (t) => {
                 for (const policy of subscriptionPolicies) {
                     if (policy.type == "requestCount") {
                         const created = await apiDao.putSubscriptionPolicy(orgId, policy, t);
@@ -810,7 +832,9 @@ const deleteSubscriptionPolicy = async (req, res) => {
         );
     }
     try {
-        await sequelize.transaction(async (t) => {
+        await sequelize.transaction({
+            timeout: 60000,
+        }, async (t) => {
             const deleteCount = await apiDao.deleteSubscriptionPolicy(orgId, policyName, t);
             if (deleteCount === 0) {
                 throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
@@ -943,7 +967,9 @@ const addView = async (req, res) => {
             "Missing or Invalid fields in the request payload"
         );
     }
-    await sequelize.transaction(async (t) => {
+    await sequelize.transaction({
+        timeout: 60000,
+    }, async (t) => {
         try {
             const viewResponse = await apiDao.addView(orgId, req.body, t);
             const viewID = viewResponse.dataValues.VIEW_ID;
@@ -968,7 +994,9 @@ const updateView = async (req, res) => {
         );
     }
     try {
-        await sequelize.transaction(async (t) => {
+        await sequelize.transaction({
+            timeout: 60000,
+        }, async (t) => {
 
             let viewID = "";
             if (req.body.displayName) {

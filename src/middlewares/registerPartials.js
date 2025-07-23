@@ -49,29 +49,30 @@ const registerPartials = async (req, res, next) => {
     if (req.session.returnTo) {
       matchURL = req.session.returnTo;
     }
+    const orgDetails = await adminDao.getOrganization(req.params.orgName);
+    const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+
     try {
       if (req.params.orgName && req.params.orgName !== "portal" && (!(/configure/i.test(matchURL)))) {
 
         const orgID = await adminDao.getOrgId(req.params.orgName);
-        var layoutContent = await loadLayoutFromAPI(orgID, req.params.viewName);
-        if (layoutContent === "") {
-          console.log("Layout content not found in the database. Loading from file system");
-          await registerAllPartialsFromFile(config.baseUrl + "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName, req, './src/defaultContent');
-          //register doc page partials
-          if (req.originalUrl.includes(constants.ROUTE.API_DOCS_PATH) && req.params.docType && req.params.docName) {
-            await registerDocsPageContent(req, orgID, {});
-          } else if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
-            await registerAPILandingContent(req, orgID, {});
-          }
-        } else {
-          await registerPartialsFromAPI(req);
+        await registerPartialsFromAPI(req);
+        await registerAllPartialsFromFile(config.baseUrl + "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName, req, './src/defaultContent');
+        //register doc page partials
+        if (req.originalUrl.includes(constants.ROUTE.API_DOCS_PATH) && req.params.docType && req.params.docName) {
+          await registerDocsPageContent(req, orgID, {});
+        } else if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
+          await registerAPILandingContent(req, orgID, {});
         }
+
       }
     } catch (error) {
       console.error('Error while loading organization :', error);
       if (error.message === "API not found") {
         let templateContent = {
-          errorMessage: constants.ERROR_MESSAGE.API_NOT_FOUND
+          errorMessage: constants.ERROR_MESSAGE.API_NOT_FOUND,
+          baseUrl: '/' + req.params.orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName,
+          devportalMode: devportalMode
         }
         html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
         return res.send(html);
@@ -96,11 +97,6 @@ const registerInternalPartials = async (req) => {
       .map(dirent => path.join(source, dirent.name));
 
   const partialsDirs = [partialsDir, ...getDirectories(path.join(require.main.filename, '..', '/pages')).map(dir => path.join(dir, 'partials'))];
-  let hasWSO2API = true;
-  if (config.mode !== constants.DEV_MODE) {
-    hasWSO2API = await checkWSO2APIAvailability();
-  }
-
   for (const dir of partialsDirs) {
     if (fs.existsSync(dir)) {
       fs.readdirSync(dir).forEach(file => {
@@ -108,37 +104,6 @@ const registerInternalPartials = async (req) => {
           const partialName = path.basename(file, '.hbs');
           const partialContent = fs.readFileSync(path.join(dir, file), 'utf8');
           hbs.handlebars.registerPartial(partialName, partialContent);
-          let profile = {};
-          if (req.user) {
-            profile = {
-              imageURL: req.user.imageURL,
-              firstName: req.user.firstName,
-              lastName: req.user.lastName,
-              email: req.user.email,
-            }
-          }
-          if (partialName === constants.HEADER_PARTIAL_NAME) {
-            hbs.handlebars.partials = {
-              ...hbs.handlebars.partials,
-              header: hbs.handlebars.compile(partialContent)({
-                isAdmin: isAdmin,
-                isSuperAdmin: isSuperAdmin,
-                profile: req.isAuthenticated() ? profile : {},
-                baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
-              }),
-            };
-          };
-
-          if (partialName === constants.SIDEBAR_PARTIAL_NAME) {
-            hbs.handlebars.partials = {
-              ...hbs.handlebars.partials,
-              sidebar: hbs.handlebars.compile(partialContent)({
-                profile: req.isAuthenticated() ? profile : {},
-                baseUrl: "/" + req.params.orgName + constants.ROUTE.VIEWS_PATH + "default",
-                hasWSO2APIs: hasWSO2API
-              }),
-            };
-          }
         }
       });
     }
@@ -148,19 +113,17 @@ const registerInternalPartials = async (req) => {
 const registerAllPartialsFromFile = async (baseURL, req, filePrefix) => {
 
   const filePath = req.originalUrl.split(baseURL).pop();
-  const orgDetails = await adminDao.getOrganization(req.params.orgName);
-  const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
 
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "partials"), req, devportalMode);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "home", "partials"), req, devportalMode);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req, devportalMode);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "apis", "partials"), req, devportalMode);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "docs", "partials"), req, devportalMode);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "mcp", "partials"), req, devportalMode);
-  registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "mcp-landing", "partials"), req, devportalMode);
+  await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "partials"), req);
+  await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "home", "partials"), req);
+  await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-landing", "partials"), req);
+  await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "apis", "partials"), req);
+  await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "docs", "partials"), req);
+  await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "mcp", "partials"), req);
+  await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "mcp-landing", "partials"), req);
 
   if (fs.existsSync(path.join(process.cwd(), filePrefix + "pages", filePath, "partials"))) {
-    registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix + "pages", filePath, "partials"), req, devportalMode);
+    await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix + "pages", filePath, "partials"), req);
   }
 }
 
@@ -169,9 +132,6 @@ const registerPartialsFromAPI = async (req) => {
   const orgName = req.params.orgName;
   const viewName = req.params.viewName;
   const orgID = await adminDao.getOrgId(orgName);
-  const imageUrl = `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.VIEWS_PATH}${viewName}/layout?fileType=image&fileName=`;
-  const orgDetails = await adminDao.getOrganization(req.params.orgName);
-  const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
 
   let partials = await adminDao.getOrgContent({
     orgId: orgID,
@@ -179,7 +139,6 @@ const registerPartialsFromAPI = async (req) => {
     viewName: viewName
   });
   let partialObject = {};
-  let hasWSO2APIs = await checkWSO2APIAvailability();
   partials.forEach(file => {
     let fileName = file.FILE_NAME.split(".")[0];
     let content = file.FILE_CONTENT.toString(constants.CHARSET_UTF8);
@@ -187,66 +146,10 @@ const registerPartialsFromAPI = async (req) => {
   });
   const hbs = exphbs.create({});
   Object.keys(partialObject).forEach((partialName) => {
-    hbs.handlebars.registerPartial(partialName, partialObject[partialName]);
-  });
-  let isAdmin, isSuperAdmin = false;
-  if (req.user) {
-    isAdmin = req.user["isAdmin"];
-    isSuperAdmin = req.user["isSuperAdmin"];
-  }
-  let profile = "";
-  if (req.user) {
-    profile = {
-      imageURL: req.user.imageURL,
-      firstName: req.user.firstName,
-      lastName: req.user.lastName,
-      email: req.user.email
+    if (constants.CUSTOMIZABLE_FILES.includes(partialName)) {
+      hbs.handlebars.registerPartial(partialName, partialObject[partialName]);
     }
-  }
-
-  if (partialObject[constants.HEADER_PARTIAL_NAME]) {
-    hbs.handlebars.partials = {
-      ...hbs.handlebars.partials,
-      header: hbs.handlebars.compile(partialObject[constants.HEADER_PARTIAL_NAME])({
-        baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-        profile: req.isAuthenticated() ? profile : "",
-        isAdmin: isAdmin,
-        isSuperAdmin: isSuperAdmin,
-        hasWSO2APIs: hasWSO2APIs,
-        devportalMode: devportalMode || constants.API_TYPE.DEFAULT
-      })
-    };
-  }
-
-  if (partialObject[constants.SIDEBAR_PARTIAL_NAME]) {
-    hbs.handlebars.partials = {
-      ...hbs.handlebars.partials,
-      sidebar: hbs.handlebars.compile(partialObject[constants.SIDEBAR_PARTIAL_NAME])({
-        baseUrl: "/" + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-        isAdmin: isAdmin,
-        isSuperAdmin: isSuperAdmin,
-        hasWSO2APIs: hasWSO2APIs,
-        devportalMode: devportalMode || constants.API_TYPE.DEFAULT
-      }),
-    };
-  }
-
-  if (partialObject[constants.HOME_PARTIAL_NAME]) {
-    hbs.handlebars.partials = {
-      ...hbs.handlebars.partials,
-      home: hbs.handlebars.compile(partialObject[constants.HOME_PARTIAL_NAME])({
-        devportalMode: devportalMode || constants.API_TYPE.DEFAULT
-      }),
-    };
-  }
-
-  if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
-    await registerAPILandingContent(req, orgID, partialObject);
-  }
-  //register doc page partials
-  if (req.originalUrl.includes(constants.ROUTE.API_DOCS_PATH) && req.params.docType && req.params.docName) {
-    await registerDocsPageContent(req, orgID, partialObject);
-  }
+  });
 };
 
 async function registerAPILandingContent(req, orgID, partialObject) {
@@ -320,70 +223,25 @@ async function registerDocsPageContent(req, orgID, partialObject) {
     });
 }
 
-
-async function checkWSO2APIAvailability() {
-
-  const condition = {
-    PROVIDER: "WSO2"
-  }
-  return await apiDao.getAPIMetadataByCondition(condition).then(apis => apis.length > 0);
-}
-
-function registerPartialsFromFile(baseURL, dir, req, devportalMode) {
+async function registerPartialsFromFile(baseURL, dir, req) {
   const filenames = fs.readdirSync(dir);
 
   for (const filename of filenames) {
     if (filename.endsWith(".hbs")) {
+      let name = filename.split(".hbs")[0];
       const template = fs.readFileSync(path.join(dir, filename), constants.CHARSET_UTF8);
-      hbs.handlebars.registerPartial(filename.split(".hbs")[0], template);
-
-      let profile;
-      if (req.isAuthenticated()) {
-        profile = {
-          imageURL: req.user.imageURL,
-          firstName: req.user.firstName,
-          lastName: req.user.lastName,
-          email: req.user.email
-        };
-      }
-
-      if (filename === constants.FILE_NAME.PARTIAL_HEADER_FILE_NAME) {
-        hbs.handlebars.partials = {
-          ...hbs.handlebars.partials,
-          header: hbs.handlebars.compile(template)({
-            baseUrl: baseURL,
-            profile: profile,
-            hasWSO2APIs: true,
-            devportalMode: devportalMode || constants.API_TYPE.DEFAULT
-          }),
-        };
-      }
-
-      if (filename === constants.FILE_NAME.HOME_FILE_NAME) {
-        hbs.handlebars.partials = {
-          ...hbs.handlebars.partials,
-          home: hbs.handlebars.compile(template)({
-            baseUrl: baseURL,
-            profile: profile,
-            hasWSO2APIs: true,
-            devportalMode: devportalMode || constants.API_TYPE.DEFAULT
-          }),
-        };
-      }
-
-      if (filename === constants.FILE_NAME.PARTIAL_SIDEBAR_FILE_NAME) {
-        hbs.handlebars.partials = {
-          ...hbs.handlebars.partials,
-          sidebar: hbs.handlebars.compile(template)({
-            baseUrl: baseURL,
-            hasWSO2APIs: true,
-            devportalMode: devportalMode || constants.API_TYPE.DEFAULT
-          }),
-        };
+      if (constants.CUSTOMIZABLE_FILES.includes(name)) {
+        const orgID = await adminDao.getOrgId(req.params.orgName);
+        const content = await adminDao.getOrgContent({ orgId: orgID, fileType: 'partial', viewName: req.params.viewName, fileName: name + '.hbs' });
+        if (!(content)) {
+          hbs.handlebars.registerPartial(name, template);
+        }
+      } else {
+        hbs.handlebars.registerPartial(name, template);
       }
     }
   }
 }
 
-module.exports = registerPartials;
+  module.exports = registerPartials;
 

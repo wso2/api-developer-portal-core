@@ -9,6 +9,8 @@
   <script src="/technical-scripts/api-key-generation.js" defer></script>
 </head>
 <main>
+    {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode }}
+    {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode }}
     {{> overview }}
     {{> apis }}
     {{> application-modal }}

@@ -71,9 +71,20 @@ const loadApplications = async (req, res) => {
                     };
                 })
             );
+            let profile = null;
+            if (req.user) {
+                profile = {
+                    imageURL: req.user.imageURL,
+                    firstName: req.user.firstName,
+                    lastName: req.user.lastName,
+                    email: req.user.email,
+                }
+            }
+
             templateContent = {
                 applicationsMetadata: metaData,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+                profile: req.isAuthenticated() ? profile : null,
                 devportalMode: devportalMode
             }
             const templateResponse = await templateResponseValue('applications');
@@ -85,9 +96,13 @@ const loadApplications = async (req, res) => {
             }
         }
     } catch (error) {
+        const templateContent = {
+            devportalMode: devportalMode,
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+            errorMessage: constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE,
+        }
         console.error("Error occurred while loading Applications", error);
-        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs',
-            constants.COMMON_ERROR_MESSAGE, true);
+        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
     }
     res.send(html);
 }
@@ -271,6 +286,16 @@ const loadApplication = async (req, res) => {
             }
             //display only one key type (SANBOX).
             //TODO: handle multiple key types
+            let profile = null;
+            if (req.user) {
+                profile = {
+                    imageURL: req.user.imageURL,
+                    firstName: req.user.firstName,
+                    lastName: req.user.lastName,
+                    email: req.user.email,
+                }
+            }
+
             templateContent = {
                 orgID: orgID,
                 applicationMetadata: {
@@ -287,6 +312,7 @@ const loadApplication = async (req, res) => {
                 subscriptionScopes: subscriptionScopes,
                 otherAPICount: otherAPICount,
                 mcpAPICount: mcpAPICount,
+                profile: req.isAuthenticated() ? profile : null,
                 devportalMode: devportalMode
             }
             const templateResponse = await templateResponseValue('application');
@@ -299,11 +325,17 @@ const loadApplication = async (req, res) => {
         }
     } catch (error) {
         console.error("Error occurred while loading application", error);
+        const templateContent = {
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+            devportalMode: devportalMode,
+        }
         if (Number(error?.statusCode) === 401) {
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_AUTH_ERROR_MESSAGE, true);
-        } else { 
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_ERROR_MESSAGE, true);
-        }    
+            templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_AUTH_ERROR_MESSAGE;
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+        } else {
+            templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE;
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+        }
     }
     res.send(html);
 }

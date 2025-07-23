@@ -482,6 +482,35 @@ const createSubscriptionPolicy = async (orgID, policy, t) => {
         throw new Sequelize.DatabaseError(error);
     }
 };
+/**
+ * Bulk create subscription policies
+ * @param {} orgID 
+ * @param {*} policies 
+ * @param {*} t 
+ * @returns 
+ */
+const bulkCreateSubscriptionPolicies = async (orgID, policies, t) => {
+    let subscriptionPoliciesList = [];
+    try {
+        policies.forEach(policy => {
+            const requestCount = policy.requestCount === -1 ? "Unlimited" : policy.requestCount;
+            subscriptionPoliciesList.push({
+                POLICY_NAME: policy.policyName,
+                DISPLAY_NAME: policy.displayName,
+                BILLING_PLAN: policy.billingPlan,
+                DESCRIPTION: policy.description,
+                REQUEST_COUNT: requestCount,
+                ORG_ID: orgID
+            });
+        });
+        return await SubscriptionPolicy.bulkCreate(subscriptionPoliciesList, { transaction: t });
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError || error instanceof Sequelize.ValidationError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
 
 const updateSubscriptionPolicy = async (orgID, policyID, policy, t) => {
     const requestCount = policy.requestCount === -1 ? "Unlimited" : policy.requestCount;
@@ -1589,6 +1618,7 @@ module.exports = {
     searchAPIMetadata,
     putSubscriptionPolicy,
     createSubscriptionPolicy,
+    bulkCreateSubscriptionPolicies,
     getSubscriptionPolicyByName,
     getSubscriptionPolicy,
     getSubscriptionPolicies,

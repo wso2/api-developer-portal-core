@@ -26,10 +26,10 @@ body {
 }
 
 .container {
-    background: white;
-    padding: 2rem;
+    /* background: white; */
+    padding: 1rem;
     border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    /* box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); */
     width: 320px;
     text-align: center;
 }
@@ -45,7 +45,7 @@ h2 {
     gap: 10px;
     width: 100%;
     padding: 10px;
-    margin: 8px 0;
+    margin: 12px 0;
     border: 1px solid #ccc;
     border-radius: 4px;
     background-color: #fff;
@@ -84,4 +84,32 @@ h2 {
     width: 100%;
     border: 1px solid #ccc;
     border-radius: 5px;
+}
+
+.devportal-image {
+    max-width: 800px;
+}
+
+@media (max-width: 1300px) {
+    .devportal-image {
+        max-width: 500px;
+    }
+}
+
+@media (max-width: 1100px) {
+    .devportal-image {
+        max-width: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .devportal-image {
+        max-width: 300px;
+    }
+}
+
+@media (max-width: 576px) {
+    .devportal-image {
+        max-width: 300px;
+    }
 }

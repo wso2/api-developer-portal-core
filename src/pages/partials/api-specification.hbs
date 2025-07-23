@@ -89,15 +89,38 @@
     </script>
     <script src="https://unpkg.com/react@17.0.2/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@17.0.2/umd/react-dom.development.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/thisaltennakoon/mcp-inspector@main3/dist/mcp-inspector.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/thisaltennakoon/mcp-inspector@main11/dist/mcp-inspector.umd.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <main>
     <div id="root" style="height: 100vh;"></div>
+    <style>
+        .mcp-MuiTypography-h3 {
+            font-family: 'Montserrat', sans-serif;
+        }
+    </style>
     <script>
         // Wait for the DOM to be ready
         document.addEventListener('DOMContentLoaded', function () {
+            // Extract URL from swagger JSON
+            const swaggerData = {{{swagger}}};
+            let serverUrl = swaggerData.servers && swaggerData.servers.length > 0 ? swaggerData.servers[0].url : '';
+
+            // Add '/mcp' to the end of the URL if URL is available
+            if (serverUrl) {
+                serverUrl = serverUrl + '/mcp';
+            }
+
             const rootElement = document.getElementById('root');
-            ReactDOM.render(React.createElement(MCPInspector.default), rootElement);
+
+            // Show loading message first
+            rootElement.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: montserrat;">Loading MCP Inspector...</div>';
+
+            // Then render the actual component
+            ReactDOM.render(React.createElement(MCPInspector.default, {
+                url: serverUrl,
+                tokenPlaceholder: 'Bearer <your-token-here>',
+            }), rootElement);
         });
     </script>
 </main>
