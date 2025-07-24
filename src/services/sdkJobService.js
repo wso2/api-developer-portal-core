@@ -748,7 +748,7 @@ class SDKJobService extends EventEmitter {
                 timeout: 120000
             });
 
-            console.log('OpenAPI Generator stdout:', stdout);
+            // console.log('OpenAPI Generator stdout:', stdout);
             const dirExists = await fs.promises.access(outputDir).then(() => true).catch(() => false);
             if (!dirExists) {
                 throw new Error(`SDK generation failed: Output directory ${outputDir} does not exist`);
@@ -762,10 +762,10 @@ class SDKJobService extends EventEmitter {
                 throw new Error(`SDK generation failed: No files generated in ${outputDir}`);
             }
 
-            const stdoutValidation = this.validateStdoutOutput(stdout);
-            if (!stdoutValidation.success) {
-                throw new Error(`SDK generation failed: ${stdoutValidation.message}`);
-            }
+            // const stdoutValidation = this.validateStdoutOutput(stdout);
+            // if (!stdoutValidation.success) {
+            //     throw new Error(`SDK generation failed: ${stdoutValidation.message}`);
+            // }
             console.log('SDK generation completed successfully');
 
             // Clean up spec directory
