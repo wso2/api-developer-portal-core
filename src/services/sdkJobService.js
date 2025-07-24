@@ -1445,19 +1445,29 @@ class SDKJobService extends EventEmitter {
      */
     streamSDKProgress = (req, res) => {
         const { jobId } = req.params;
+
+        console.log(`[SSE] Starting connection for job: ${jobId}`);
+        console.log(`[SSE] Request headers:`, req.headers);
+        console.log(`[SSE] Environment:`, process.env.NODE_ENV);
         
         res.writeHead(200, {
             'Content-Type': 'text/event-stream',
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive',
             'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Cache-Control'
+            'Access-Control-Allow-Headers': 'Cache-Control, Content-Type, Accept',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Credentials': 'false',
+            'X-Accel-Buffering': 'no',
+            'X-Content-Type-Options': 'nosniff'
         });
 
         console.log(`Client connected to SSE for job: ${jobId}`);
 
         const onProgress = (progressData) => {
+            console.log(`[SSE] Progress event emitted:`, progressData);
             if (progressData.jobId === jobId) {
+                console.log(`[SSE] Sending progress for job ${jobId}:`, progressData);
                 const dataToSend = { ...progressData, type: 'progress' };
                 res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
             }
