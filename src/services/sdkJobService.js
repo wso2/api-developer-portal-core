@@ -570,11 +570,11 @@ class SDKJobService extends EventEmitter {
             return; 
         }
         
-        console.log('Starting SDK cleanup scheduler - runs every 5 minutes to clean files older than 10 minutes');
+        console.log('Starting SDK cleanup scheduler - runs every 60 minutes to clean files older than 10 minutes');
 
         this.cleanupGeneratedSDKs();
-        
-        // Set up periodic cleanup every 5 minutes
+
+        // Set up periodic cleanup every 60 minutes
         this.sdkCleanupInterval = setInterval(async () => {
             try {
                 await this.cleanupGeneratedSDKs();
