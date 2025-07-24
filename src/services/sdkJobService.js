@@ -804,6 +804,12 @@ class SDKJobService extends EventEmitter {
         try {
             console.log('Processing AI mode SDK generation...');
 
+            // Add code to view the content of sdkResult.sdkPath
+            console.log('=== SDK Directory Structure ===');
+            console.log(`SDK Path: ${sdkResult.sdkPath}`);
+            await this.listDirectoryStructure(sdkResult.sdkPath, '', 6); // List up to 4 levels deep
+            console.log('=== End SDK Directory Structure ===');
+
             const sdkMethods = await this.extractMethodFile(sdkResult.sdkPath, sdkConfiguration?.language || 'java');
 
             const applicationApiRequest = await this.getApplicationGenApiReqBody(
