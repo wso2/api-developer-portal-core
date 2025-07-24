@@ -667,12 +667,14 @@ class SDKJobService extends EventEmitter {
             mergeSpecs: '/merge-openapi-specs',
             generateApp: '/generate-application-code'
         };
+        const { authHeaderName, apiKey } = config.aiSDKService?.oauth2 || {};
 
         try {
             const response = await fetch(`${aiSDKServiceUrl}${aiSDKServiceEndpoints.mergeSpecs}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    [authHeaderName]: apiKey
                 },
                 body: JSON.stringify(requestPayload)
             });
@@ -909,10 +911,12 @@ class SDKJobService extends EventEmitter {
      */
     async invokeApplicationCodeGenApi(requestData) {
         try {
+            const { authHeaderName, apiKey } = config.aiSDKService?.oauth2 || {};
             const response = await fetch(`${aiSDKServiceUrl}${aiSDKServiceEndpoints.generateApp}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    [authHeaderName]: apiKey
                 },
                 body: JSON.stringify(requestData)
             });

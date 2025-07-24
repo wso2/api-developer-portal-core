@@ -28,6 +28,10 @@
     "endpoints": {
       "mergeSpecs": "/merge-openapi-specs",
       "generateApp": "/generate-application-code"
+    },
+    "oauth2": {
+      "authHeaderName": "Choreo-API-Key",
+      "apiKey": ""
     }
   },
   "serverCerts": {
