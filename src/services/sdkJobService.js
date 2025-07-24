@@ -1454,6 +1454,7 @@ class SDKJobService extends EventEmitter {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Headers': 'Cache-Control',
                 'X-Accel-Buffering': 'no',
+                'X-Content-Type-Options': 'nosniff'
             });
 
             console.log(`Client connected to SSE for job: ${jobId}`);

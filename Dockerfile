@@ -30,6 +30,8 @@ RUN npm ci --only=production
 RUN ls -ltrh
 RUN npx @openapitools/openapi-generator-cli version
 RUN ls -ltrh node_modules/@openapitools/openapi-generator-cli
+RUN ls -ltrh node_modules/@openapitools/openapi-generator-cli/versions/
+
 
 # Copy the rest of the application files
 COPY . .
