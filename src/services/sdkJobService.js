@@ -33,6 +33,7 @@ const archiver = require('archiver');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const execAsync = promisify(exec);
+const secret = require(process.cwd() + '/secret.json');
 class SDKJobService extends EventEmitter {
     constructor() {
         super();
@@ -667,7 +668,7 @@ class SDKJobService extends EventEmitter {
             mergeSpecs: '/merge-openapi-specs',
             generateApp: '/generate-application-code'
         };
-        const { authHeaderName, apiKey } = config.aiSDKService?.oauth2 || {};
+        const { authHeaderName, apiKey } = secret.aiSDKService || {};
 
         try {
             const response = await fetch(`${aiSDKServiceUrl}${aiSDKServiceEndpoints.mergeSpecs}`, {
@@ -911,7 +912,7 @@ class SDKJobService extends EventEmitter {
      */
     async invokeApplicationCodeGenApi(requestData) {
         try {
-            const { authHeaderName, apiKey } = config.aiSDKService?.oauth2 || {};
+            const { authHeaderName, apiKey } = secret.aiSDKService || {};
             const response = await fetch(`${aiSDKServiceUrl}${aiSDKServiceEndpoints.generateApp}`, {
                 method: 'POST',
                 headers: {
