@@ -747,10 +747,26 @@ class SDKJobService extends EventEmitter {
                 cwd: specDir,
                 timeout: 120000
             });
+
+            console.log('OpenAPI Generator stdout:', stdout);
+            const dirExists = await fs.promises.access(outputDir).then(() => true).catch(() => false);
+            if (!dirExists) {
+                throw new Error(`SDK generation failed: Output directory ${outputDir} does not exist`);
+            }
             
             if (stderr && !stderr.includes('WARN')) {
                 console.warn('OpenAPI Generator warnings:', stderr);
             }
+            const files = await fs.promises.readdir(outputDir);
+            if (files.length === 0) {
+                throw new Error(`SDK generation failed: No files generated in ${outputDir}`);
+            }
+
+            const stdoutValidation = this.validateStdoutOutput(stdout);
+            if (!stdoutValidation.success) {
+                throw new Error(`SDK generation failed: ${stdoutValidation.message}`);
+            }
+            console.log('SDK generation completed successfully');
 
             // Clean up spec directory
             try {
@@ -791,6 +807,47 @@ class SDKJobService extends EventEmitter {
             
             throw new Error(errorMessage);
         }
+    }
+
+    validateStdoutOutput(stdout) {
+        if (!stdout) {
+            return { success: true }; // If no stdout, assume success (some generators are quiet)
+        }
+
+        // Check for success indicators
+        const successIndicators = [
+            'Successfully generated',
+            'writing file',
+            'Generated',
+            'Done'
+        ];
+
+        // Check for error indicators
+        const errorIndicators = [
+            'Error:',
+            'Exception:',
+            'Failed to',
+            'Could not',
+            'NullPointerException',
+            'ClassNotFoundException'
+        ];
+
+        const hasSuccessIndicator = successIndicators.some(indicator => 
+        stdout.toLowerCase().includes(indicator.toLowerCase())
+        );
+
+        const hasErrorIndicator = errorIndicators.some(indicator => 
+            stdout.toLowerCase().includes(indicator.toLowerCase())
+        );
+
+        if (hasErrorIndicator) {
+            return {
+                success: false,
+                error: 'Error indicators found in output'
+            };
+        }
+
+        return { success: true };
     }
 
     /**
