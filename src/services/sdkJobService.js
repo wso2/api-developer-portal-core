@@ -582,7 +582,7 @@ class SDKJobService extends EventEmitter {
             } catch (error) {
                 console.error('Error in scheduled SDK cleanup:', error);
             }
-        }, 5 * 60 * 1000);
+        }, 60 * 60 * 1000);
     }
 
     /**
