@@ -1444,44 +1444,53 @@ class SDKJobService extends EventEmitter {
      * Establishes Server-Sent Events connection for real-time progress updates
      */
     streamSDKProgress = (req, res) => {
-        const { jobId } = req.params;
+        try {
+            const { jobId } = req.params;
 
-        console.log(`[SSE] Starting connection for job: ${jobId}`);
-        console.log(`[SSE] Request headers:`, req.headers);
-        console.log(`[SSE] Environment:`, process.env.NODE_ENV);
-        
-        res.writeHead(200, {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Cache-Control, Content-Type, Accept',
-            'Access-Control-Allow-Methods': 'GET, OPTIONS',
-            'Access-Control-Allow-Credentials': 'false',
-            'X-Accel-Buffering': 'no',
-            'X-Content-Type-Options': 'nosniff'
-        });
+            console.log(`[SSE] Starting connection for job: ${jobId}`);
+            console.log(`[SSE] Request headers:`, req.headers);
+            console.log(`[SSE] Environment:`, process.env.NODE_ENV);
+            
+            res.writeHead(200, {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Cache-Control, Content-Type, Accept',
+                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Credentials': 'false',
+                'X-Accel-Buffering': 'no',
+                'X-Content-Type-Options': 'nosniff'
+            });
 
-        console.log(`Client connected to SSE for job: ${jobId}`);
+            console.log(`Client connected to SSE for job: ${jobId}`);
 
-        const onProgress = (progressData) => {
-            console.log(`[SSE] Progress event emitted:`, progressData);
-            if (progressData.jobId === jobId) {
-                console.log(`[SSE] Sending progress for job ${jobId}:`, progressData);
-                const dataToSend = { ...progressData, type: 'progress' };
-                res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
-            }
-        };
+            const onProgress = (progressData) => {
+                console.log(`[SSE] Progress event emitted:`, progressData);
+                if (progressData.jobId === jobId) {
+                    console.log(`[SSE] Sending progress for job ${jobId}:`, progressData);
+                    const dataToSend = { ...progressData, type: 'progress' };
+                    res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
+                }
+            };
 
-        this.on('progress', onProgress);
+            this.on('progress', onProgress);
 
-        // Send initial ping
-        res.write(`data: ${JSON.stringify({ type: 'ping', jobId })}\n\n`);
+            // Send initial ping
+            res.write(`data: ${JSON.stringify({ type: 'ping', jobId })}\n\n`);
 
-        req.on('close', () => {
-            console.log(`Client disconnected from SSE for job: ${jobId}`);
-            this.removeListener('progress', onProgress);
-        });
+            req.on('close', () => {
+                console.log(`Client disconnected from SSE for job: ${jobId}`);
+                this.removeListener('progress', onProgress);
+            });
+        } catch (error) {
+            console.error('Error in SSE streamSDKProgress:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error establishing SDK progress stream',
+                error: error.message
+            });
+        }
     };
 
     /**
