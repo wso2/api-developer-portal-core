@@ -22,6 +22,7 @@ WORKDIR /app
 
 # Copy package.json and package-lock.json first to leverage Docker caching
 COPY package*.json ./
+COPY openapitools.json ./
 
 # Install dependencies using npm ci for faster, cleaner installations in production
 RUN npm ci --only=production
