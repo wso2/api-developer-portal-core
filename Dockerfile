@@ -9,13 +9,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     bash \
     coreutils \
-    default-jre \
     && rm -rf /var/lib/apt/lists/*
 
 # Verify the installed wget version
 RUN wget --version
-RUN java --version
-RUN mkdir /.tmp
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -34,10 +31,6 @@ EXPOSE 8080
 
 # Create a non-root user with UID 10001 to satisfy Checkov CKV_CHOREO_1
 RUN groupadd -g 10001 appgroup && useradd -m -u 10001 -g appgroup -s /bin/bash appuser
-
-RUN mkdir -p /app/generated-sdks && \
-    chown -R 10001:10001 /app/generated-sdks && \
-    chmod -R 755 /app/generated-sdks
 
 # Explicitly switch to UID 10001 instead of using "appuser"
 USER 10001
