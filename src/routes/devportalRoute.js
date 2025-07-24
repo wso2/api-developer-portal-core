@@ -149,7 +149,7 @@ router.post('/api-keys/:apiKeyID/revoke', enforceSecuirty(constants.SCOPES.DEVEL
 router.post('/api-keys/:apiKeyID/regenerate', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.regenerateAPIKeys);
 
 // SDK Generation Routes
-router.post('/applications/:applicationId/generate-sdk', enforceSecuirty(constants.SCOPES.DEVELOPER), sdkJobService.generateSDK);
+router.post('/applications/:applicationId/generate-sdk', sdkJobService.generateSDK);
 router.get('/applications/:applicationId/sdk/job-progress/:jobId', sdkJobService.streamSDKProgress);
 router.post('/applications/:applicationId/sdk/cancel/:jobId', enforceSecuirty(constants.SCOPES.DEVELOPER), sdkJobService.cancelSDK);
 router.get('/sdk/download/:filename', enforceSecuirty(constants.SCOPES.DEVELOPER),sdkJobService.downloadSDK);
