@@ -728,7 +728,8 @@ class SDKJobService extends EventEmitter {
             
             // Build openapi-generator command
             const command = [
-                'openapi-generator-cli',
+                'npx',
+                '@openapitools/openapi-generator-cli',
                 'generate',
                 '-i', specFilePath,
                 '-g', generator,
@@ -751,7 +752,7 @@ class SDKJobService extends EventEmitter {
             // Clean up spec directory
             try {
                 await fs.promises.rm(specDir, { recursive: true, force: true });
-                console.log('Cleaned up temporary spec directory');
+                console.log('Cleaned up spec file');
             } catch (cleanupError) {
                 console.warn('Could not clean up spec directory:', cleanupError);
             }
