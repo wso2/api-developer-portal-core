@@ -33,6 +33,7 @@ const archiver = require('archiver');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const execAsync = promisify(exec);
+const secret = require(process.cwd() + '/secret.json');
 class SDKJobService extends EventEmitter {
     constructor() {
         super();
@@ -581,7 +582,7 @@ class SDKJobService extends EventEmitter {
             } catch (error) {
                 console.error('Error in scheduled SDK cleanup:', error);
             }
-        }, 5 * 60 * 1000);
+        }, 60 * 60 * 1000);
     }
 
     /**
@@ -667,12 +668,14 @@ class SDKJobService extends EventEmitter {
             mergeSpecs: '/merge-openapi-specs',
             generateApp: '/generate-application-code'
         };
+        const { authHeaderName, apiKey } = secret.aiSDKService || {};
 
         try {
             const response = await fetch(`${aiSDKServiceUrl}${aiSDKServiceEndpoints.mergeSpecs}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    [authHeaderName]: apiKey
                 },
                 body: JSON.stringify(requestPayload)
             });
@@ -909,10 +912,12 @@ class SDKJobService extends EventEmitter {
      */
     async invokeApplicationCodeGenApi(requestData) {
         try {
+            const { authHeaderName, apiKey } = secret.aiSDKService || {};
             const response = await fetch(`${aiSDKServiceUrl}${aiSDKServiceEndpoints.generateApp}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    [authHeaderName]: apiKey
                 },
                 body: JSON.stringify(requestData)
             });
