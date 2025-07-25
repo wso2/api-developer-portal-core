@@ -748,10 +748,14 @@ class SDKJobService extends EventEmitter {
                 timeout: 120000
             });
 
-            // console.log('OpenAPI Generator stdout:', stdout);
             const dirExists = await fs.promises.access(outputDir).then(() => true).catch(() => false);
             if (!dirExists) {
                 throw new Error(`SDK generation failed: Output directory ${outputDir} does not exist`);
+            }
+
+            const files = await fs.promises.readdir(outputDir);
+            if (files.length === 0) {
+                throw new Error(`SDK generation failed: No files generated in ${outputDir}`);
             }
             
             if (stderr && !stderr.includes('WARN')) {
@@ -1516,7 +1520,7 @@ class SDKJobService extends EventEmitter {
     streamSDKProgress = (req, res) => {
         try {
             const { jobId } = req.params;
-            
+        
             res.writeHead(200, {
                 'Content-Type': 'text/event-stream',
                 'Cache-Control': 'no-cache',
@@ -1527,58 +1531,27 @@ class SDKJobService extends EventEmitter {
                 'X-Content-Type-Options': 'nosniff'
             });
 
-            // let heartbeatInterval;
-            // let connectionClosed = false;
-
             console.log(`Client connected to SSE for job: ${jobId}`);
 
             const onProgress = (progressData) => {
-                console.log(`Progress update for job ${jobId}:`, progressData);
                 if (progressData.jobId === jobId) {
                     const dataToSend = { ...progressData, type: 'progress' };
                     res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
-                    // res.flush();
                 }
             };
-
-            // const cleanup = () => {
-            //     if (connectionClosed) return;
-            //     connectionClosed = true;
-                
-            //     console.log(`[SSE] Cleaning up connection for job: ${jobId}`);
-            //     clearInterval(heartbeatInterval);
-            //     this.removeListener('progress', onProgress);
-            // };
-
-            // heartbeatInterval = setInterval(() => {
-            //     if (connectionClosed) return;
-                
-            //     try {
-            //         res.write(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: Date.now(), jobId })}\n\n`);
-            //         // res.flush();
-            //     } catch (error) {
-            //         console.error(`[SSE] Heartbeat failed:`, error);
-            //         cleanup();
-            //     }
-            // }, 15000);
 
             this.on('progress', onProgress);
 
             // Send initial ping
             res.write(`data: ${JSON.stringify({ type: 'ping', jobId })}\n\n`);
-            // res.flush();
 
             req.on('close', () => {
                 console.log(`Client disconnected from SSE for job: ${jobId}`);
                 this.removeListener('progress', onProgress);
             });
         } catch (error) {
-            console.error('Error in SSE streamSDKProgress:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Error establishing SDK progress stream',
-                error: error.message
-            });
+            console.error('Error in SDK progress streaming:', error);
+            res.status(500).end(`Error: ${error.message}`);
         }
     };
 
