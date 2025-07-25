@@ -1527,6 +1527,9 @@ class SDKJobService extends EventEmitter {
                 'X-Content-Type-Options': 'nosniff'
             });
 
+            let heartbeatInterval;
+            let connectionClosed = false;
+
             console.log(`Client connected to SSE for job: ${jobId}`);
 
             const onProgress = (progressData) => {
@@ -1534,8 +1537,17 @@ class SDKJobService extends EventEmitter {
                 if (progressData.jobId === jobId) {
                     const dataToSend = { ...progressData, type: 'progress' };
                     res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
-                    res.flush();
+                    // res.flush();
                 }
+            };
+
+            const cleanup = () => {
+                if (connectionClosed) return;
+                connectionClosed = true;
+                
+                console.log(`[SSE] Cleaning up connection for job: ${jobId}`);
+                clearInterval(heartbeatInterval);
+                this.removeListener('progress', onProgress);
             };
 
             heartbeatInterval = setInterval(() => {
@@ -1543,7 +1555,7 @@ class SDKJobService extends EventEmitter {
                 
                 try {
                     res.write(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: Date.now(), jobId })}\n\n`);
-                    res.flush();
+                    // res.flush();
                 } catch (error) {
                     console.error(`[SSE] Heartbeat failed:`, error);
                     cleanup();
@@ -1554,7 +1566,7 @@ class SDKJobService extends EventEmitter {
 
             // Send initial ping
             res.write(`data: ${JSON.stringify({ type: 'ping', jobId })}\n\n`);
-            res.flush();
+            // res.flush();
 
             req.on('close', () => {
                 console.log(`Client disconnected from SSE for job: ${jobId}`);
