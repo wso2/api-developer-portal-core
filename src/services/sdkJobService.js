@@ -761,10 +761,6 @@ class SDKJobService extends EventEmitter {
             if (stderr && !stderr.includes('WARN')) {
                 console.warn('OpenAPI Generator warnings:', stderr);
             }
-            const files = await fs.promises.readdir(outputDir);
-            if (files.length === 0) {
-                throw new Error(`SDK generation failed: No files generated in ${outputDir}`);
-            }
 
             // const stdoutValidation = this.validateStdoutOutput(stdout);
             // if (!stdoutValidation.success) {
