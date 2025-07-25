@@ -762,17 +762,6 @@ class SDKJobService extends EventEmitter {
                 console.warn('OpenAPI Generator warnings:', stderr);
             }
 
-            // const stdoutValidation = this.validateStdoutOutput(stdout);
-            // if (!stdoutValidation.success) {
-            //     throw new Error(`SDK generation failed: ${stdoutValidation.message}`);
-            // }
-
-            console.log('=== SDK Directory Structure ===');
-            console.log(`SDK Path: ${outputDir}`);
-            await this.listDirectoryStructure(outputDir, '', 7); // List up to 4 levels deep
-            console.log('=== End SDK Directory Structure ===');
-
-
             console.log('SDK generation completed successfully');
 
             // Clean up spec directory
@@ -816,47 +805,6 @@ class SDKJobService extends EventEmitter {
         }
     }
 
-    validateStdoutOutput(stdout) {
-        if (!stdout) {
-            return { success: true }; // If no stdout, assume success (some generators are quiet)
-        }
-
-        // Check for success indicators
-        const successIndicators = [
-            'Successfully generated',
-            'writing file',
-            'Generated',
-            'Done'
-        ];
-
-        // Check for error indicators
-        const errorIndicators = [
-            'Error:',
-            'Exception:',
-            'Failed to',
-            'Could not',
-            'NullPointerException',
-            'ClassNotFoundException'
-        ];
-
-        const hasSuccessIndicator = successIndicators.some(indicator => 
-        stdout.toLowerCase().includes(indicator.toLowerCase())
-        );
-
-        const hasErrorIndicator = errorIndicators.some(indicator => 
-            stdout.toLowerCase().includes(indicator.toLowerCase())
-        );
-
-        if (hasErrorIndicator) {
-            return {
-                success: false,
-                error: 'Error indicators found in output'
-            };
-        }
-
-        return { success: true };
-    }
-
     /**
      * Process AI mode SDK generation
      * @param {Object} sdkResult - SDK generation result
@@ -867,12 +815,6 @@ class SDKJobService extends EventEmitter {
     async processAIModeSDK(sdkResult, mergedSpec, sdkConfiguration) {        
         try {
             console.log('Processing AI mode SDK generation...');
-
-            // Add code to view the content of sdkResult.sdkPath
-            console.log('=== SDK Directory Structure ===');
-            console.log(`SDK Path: ${sdkResult.sdkPath}`);
-            await this.listDirectoryStructure(sdkResult.sdkPath, '', 6); // List up to 4 levels deep
-            console.log('=== End SDK Directory Structure ===');
 
             const sdkMethods = await this.extractMethodFile(sdkResult.sdkPath, sdkConfiguration?.language || 'java');
 
@@ -1535,6 +1477,21 @@ class SDKJobService extends EventEmitter {
                     console.log(`Progress update for job ${jobId} step [${progressData.currentStep}] progress ${progressData.progress}%`);
                     const dataToSend = { ...progressData, type: 'progress' };
                     res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
+                    
+                    // Close SSE connection after sending completion or failure events
+                    if (progressData.status === 'completed' || progressData.status === 'failed' || progressData.status === 'cancelled') {
+                        console.log(`Closing SSE connection for job ${jobId} after ${progressData.status} event`);
+                        this.removeListener('progress', onProgress);
+                        
+                        // Close the connection after a brief delay to ensure the client receives the final event
+                        setTimeout(() => {
+                            try {
+                                res.end();
+                            } catch (error) {
+                                console.warn(`Error closing SSE connection for job ${jobId}:`, error.message);
+                            }
+                        }, 100);
+                    }
                 }
             };
 

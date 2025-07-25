@@ -202,12 +202,6 @@ Handlebars.registerHelper('startsWith', function (str, includeStr, options) {
 
 // #endregion
 
-console.log('=== Starting Application ===');
-console.log('Node version:', process.version);
-console.log('Working directory:', process.cwd());
-console.log('__dirname:', __dirname);
-console.log('NODE_ENV:', process.env.NODE_ENV);
-
 app.use(session({
     store: new pgSession({
         pool: pool,
