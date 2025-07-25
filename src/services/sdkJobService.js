@@ -1117,7 +1117,8 @@ class SDKJobService extends EventEmitter {
                 'src/main/java/org/openapitools/client',
                 'src/main/java/io/swagger/client',
                 'src/main/java/com/example/client',
-                'src/main/java'
+                'src/main/java',
+                'src'
             ];
             
             for (const possiblePath of possiblePaths) {
@@ -1150,7 +1151,7 @@ class SDKJobService extends EventEmitter {
 
             const foundPath = await this.findJavaPackageRecursively(sdkDir);
             if (foundPath) {
-                console.log(`Found Java package directory recursively: ${foundPath}`);
+                console.log(`Found package directory recursively: ${foundPath}`);
                 return foundPath;
             }
             
@@ -1531,6 +1532,7 @@ class SDKJobService extends EventEmitter {
 
             const onProgress = (progressData) => {
                 if (progressData.jobId === jobId) {
+                    console.log(`Progress update for job ${jobId} step [${progressData.currentStep}] progress ${progressData.progress}%`);
                     const dataToSend = { ...progressData, type: 'progress' };
                     res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
                 }
