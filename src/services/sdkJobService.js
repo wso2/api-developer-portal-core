@@ -33,6 +33,7 @@ const archiver = require('archiver');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const execAsync = promisify(exec);
+const secret = require(process.cwd() + '/secret.json');
 class SDKJobService extends EventEmitter {
     constructor() {
         super();
@@ -570,18 +571,18 @@ class SDKJobService extends EventEmitter {
             return; 
         }
         
-        console.log('Starting SDK cleanup scheduler - runs every 5 minutes to clean files older than 10 minutes');
+        console.log('Starting SDK cleanup scheduler - runs every 60 minutes to clean files older than 10 minutes');
 
         this.cleanupGeneratedSDKs();
-        
-        // Set up periodic cleanup every 5 minutes
+
+        // Set up periodic cleanup every 60 minutes
         this.sdkCleanupInterval = setInterval(async () => {
             try {
                 await this.cleanupGeneratedSDKs();
             } catch (error) {
                 console.error('Error in scheduled SDK cleanup:', error);
             }
-        }, 5 * 60 * 1000);
+        }, 60 * 60 * 1000);
     }
 
     /**
@@ -667,12 +668,14 @@ class SDKJobService extends EventEmitter {
             mergeSpecs: '/merge-openapi-specs',
             generateApp: '/generate-application-code'
         };
+        const { authHeaderName, apiKey } = secret.aiSDKService || {};
 
         try {
             const response = await fetch(`${aiSDKServiceUrl}${aiSDKServiceEndpoints.mergeSpecs}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    [authHeaderName]: apiKey
                 },
                 body: JSON.stringify(requestPayload)
             });
@@ -728,7 +731,8 @@ class SDKJobService extends EventEmitter {
             
             // Build openapi-generator command
             const command = [
-                'openapi-generator-cli',
+                'npx',
+                '@openapitools/openapi-generator-cli',
                 'generate',
                 '-i', specFilePath,
                 '-g', generator,
@@ -761,7 +765,7 @@ class SDKJobService extends EventEmitter {
             // Clean up spec directory
             try {
                 await fs.promises.rm(specDir, { recursive: true, force: true });
-                console.log('Cleaned up temporary spec directory');
+                console.log('Cleaned up spec file');
             } catch (cleanupError) {
                 console.warn('Could not clean up spec directory:', cleanupError);
             }
@@ -919,10 +923,12 @@ class SDKJobService extends EventEmitter {
      */
     async invokeApplicationCodeGenApi(requestData) {
         try {
+            const { authHeaderName, apiKey } = secret.aiSDKService || {};
             const response = await fetch(`${aiSDKServiceUrl}${aiSDKServiceEndpoints.generateApp}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    [authHeaderName]: apiKey
                 },
                 body: JSON.stringify(requestData)
             });
