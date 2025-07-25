@@ -747,6 +747,16 @@ class SDKJobService extends EventEmitter {
                 cwd: specDir,
                 timeout: 120000
             });
+
+            const dirExists = await fs.promises.access(outputDir).then(() => true).catch(() => false);
+            if (!dirExists) {
+                throw new Error(`SDK generation failed: Output directory ${outputDir} does not exist`);
+            }
+
+            const files = await fs.promises.readdir(outputDir);
+            if (files.length === 0) {
+                throw new Error(`SDK generation failed: No files generated in ${outputDir}`);
+            }
             
             if (stderr && !stderr.includes('WARN')) {
                 console.warn('OpenAPI Generator warnings:', stderr);
@@ -1444,34 +1454,41 @@ class SDKJobService extends EventEmitter {
      * Establishes Server-Sent Events connection for real-time progress updates
      */
     streamSDKProgress = (req, res) => {
-        const { jobId } = req.params;
+        try {
+            const { jobId } = req.params;
         
-        res.writeHead(200, {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Cache-Control'
-        });
+            res.writeHead(200, {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Cache-Control',
+                'X-Accel-Buffering': 'no',
+                'X-Content-Type-Options': 'nosniff'
+            });
 
-        console.log(`Client connected to SSE for job: ${jobId}`);
+            console.log(`Client connected to SSE for job: ${jobId}`);
 
-        const onProgress = (progressData) => {
-            if (progressData.jobId === jobId) {
-                const dataToSend = { ...progressData, type: 'progress' };
-                res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
-            }
-        };
+            const onProgress = (progressData) => {
+                if (progressData.jobId === jobId) {
+                    const dataToSend = { ...progressData, type: 'progress' };
+                    res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
+                }
+            };
 
-        this.on('progress', onProgress);
+            this.on('progress', onProgress);
 
-        // Send initial ping
-        res.write(`data: ${JSON.stringify({ type: 'ping', jobId })}\n\n`);
+            // Send initial ping
+            res.write(`data: ${JSON.stringify({ type: 'ping', jobId })}\n\n`);
 
-        req.on('close', () => {
-            console.log(`Client disconnected from SSE for job: ${jobId}`);
-            this.removeListener('progress', onProgress);
-        });
+            req.on('close', () => {
+                console.log(`Client disconnected from SSE for job: ${jobId}`);
+                this.removeListener('progress', onProgress);
+            });
+        } catch (error) {
+            console.error('Error in SDK progress streaming:', error);
+            res.status(500).end(`Error: ${error.message}`);
+        }
     };
 
     /**

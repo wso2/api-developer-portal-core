@@ -685,3 +685,17 @@ body.modal-open {
     line-height: 1.6;
     margin-bottom: 2rem;
 }
+
+#sdkDescriptionRequiredModal .confirmation-title {
+    font-size: 1.1rem; 
+    font-weight: 600;
+    color: #111827; 
+    margin-bottom: 0.75rem;
+}
+
+#sdkDescriptionRequiredModal .confirmation-text {
+    font-size: 0.75rem; 
+    color: #4b5563;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
