@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     bash \
     coreutils \
+    default-jre \
     && rm -rf /var/lib/apt/lists/*
 
 # Verify the installed wget version
@@ -19,9 +20,12 @@ WORKDIR /app
 
 # Copy package.json and package-lock.json first to leverage Docker caching
 COPY package*.json ./
+COPY openapitools.json ./
 
 # Install dependencies using npm ci for faster, cleaner installations in production
 RUN npm ci --only=production
+
+RUN npx @openapitools/openapi-generator-cli version
 
 # Copy the rest of the application files
 COPY . .

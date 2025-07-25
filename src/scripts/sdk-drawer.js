@@ -438,7 +438,7 @@ function generateSDKFromDrawerInternal(language) {
     }
     
     if (!description || description.trim() === '') {
-        alert('Please provide a description for AI-generated SDK requirements.');
+        showSdkDescriptionRequiredModal();
         return;
     }
     
@@ -1415,6 +1415,60 @@ function resetDrawerToInitialState() {
     console.log('Drawer reset to initial state completed');
 }
 
+/**
+ * Shows the description required modal
+ * Displays modal when user tries to generate SDK without providing description
+ */
+function showSdkDescriptionRequiredModal() {
+    const modal = document.getElementById('sdkDescriptionRequiredModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.classList.add('modal-open');
+
+        document.addEventListener('keydown', handleDescriptionModalEscapeKey);
+        modal.addEventListener('click', handleDescriptionModalBackdropClick);
+    }
+}
+
+/**
+ * Closes the description required modal
+ * Hides modal, removes event listeners, and restores document scroll behavior
+ */
+function closeSdkDescriptionRequiredModal() {
+    const modal = document.getElementById('sdkDescriptionRequiredModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+        document.removeEventListener('keydown', handleDescriptionModalEscapeKey);
+        modal.removeEventListener('click', handleDescriptionModalBackdropClick);
+    }
+}
+
+/**
+ * Handles Escape key press for description modal closure
+ * @param {KeyboardEvent} event - The keyboard event
+ */
+function handleDescriptionModalEscapeKey(event) {
+    if (event.key === 'Escape') {
+        const modal = document.getElementById('sdkDescriptionRequiredModal');
+        if (modal && modal.style.display === 'flex') {
+            event.preventDefault();
+            closeSdkDescriptionRequiredModal();
+        }
+    }
+}
+
+/**
+ * Handles backdrop clicks for description modal closure
+ * @param {MouseEvent} event - The click event
+ */
+function handleDescriptionModalBackdropClick(event) {
+    if (event.target.id === 'sdkDescriptionRequiredModal') {
+        event.preventDefault();
+        closeSdkDescriptionRequiredModal();
+    }
+}
+
 // Make functions available globally
 window.openSdkDrawer = openSdkDrawer;
 window.closeSdkDrawer = closeSdkDrawer;
@@ -1433,4 +1487,8 @@ window.showWarningNotification = showWarningNotification;
 window.closeErrorNotification = closeErrorNotification;
 window.closeSuccessNotification = closeSuccessNotification;
 window.closeWarningNotification = closeWarningNotification;
+window.showSdkDescriptionRequiredModal = showSdkDescriptionRequiredModal;
+window.closeSdkDescriptionRequiredModal = closeSdkDescriptionRequiredModal;
+window.handleDescriptionModalEscapeKey = handleDescriptionModalEscapeKey;
+window.handleDescriptionModalBackdropClick = handleDescriptionModalBackdropClick;
 
