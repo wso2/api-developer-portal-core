@@ -1527,8 +1527,8 @@ class SDKJobService extends EventEmitter {
                 'X-Content-Type-Options': 'nosniff'
             });
 
-            let heartbeatInterval;
-            let connectionClosed = false;
+            // let heartbeatInterval;
+            // let connectionClosed = false;
 
             console.log(`Client connected to SSE for job: ${jobId}`);
 
@@ -1541,26 +1541,26 @@ class SDKJobService extends EventEmitter {
                 }
             };
 
-            const cleanup = () => {
-                if (connectionClosed) return;
-                connectionClosed = true;
+            // const cleanup = () => {
+            //     if (connectionClosed) return;
+            //     connectionClosed = true;
                 
-                console.log(`[SSE] Cleaning up connection for job: ${jobId}`);
-                clearInterval(heartbeatInterval);
-                this.removeListener('progress', onProgress);
-            };
+            //     console.log(`[SSE] Cleaning up connection for job: ${jobId}`);
+            //     clearInterval(heartbeatInterval);
+            //     this.removeListener('progress', onProgress);
+            // };
 
-            heartbeatInterval = setInterval(() => {
-                if (connectionClosed) return;
+            // heartbeatInterval = setInterval(() => {
+            //     if (connectionClosed) return;
                 
-                try {
-                    res.write(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: Date.now(), jobId })}\n\n`);
-                    // res.flush();
-                } catch (error) {
-                    console.error(`[SSE] Heartbeat failed:`, error);
-                    cleanup();
-                }
-            }, 15000);
+            //     try {
+            //         res.write(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: Date.now(), jobId })}\n\n`);
+            //         // res.flush();
+            //     } catch (error) {
+            //         console.error(`[SSE] Heartbeat failed:`, error);
+            //         cleanup();
+            //     }
+            // }, 15000);
 
             this.on('progress', onProgress);
 
