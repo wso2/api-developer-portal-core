@@ -1530,6 +1530,7 @@ class SDKJobService extends EventEmitter {
             console.log(`Client connected to SSE for job: ${jobId}`);
 
             const onProgress = (progressData) => {
+                console.log(`Progress update for job ${jobId}:`, progressData);
                 if (progressData.jobId === jobId) {
                     const dataToSend = { ...progressData, type: 'progress' };
                     res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
