@@ -766,6 +766,13 @@ class SDKJobService extends EventEmitter {
             // if (!stdoutValidation.success) {
             //     throw new Error(`SDK generation failed: ${stdoutValidation.message}`);
             // }
+
+            console.log('=== SDK Directory Structure ===');
+            console.log(`SDK Path: ${outputDir}`);
+            await this.listDirectoryStructure(outputDir, '', 7); // List up to 4 levels deep
+            console.log('=== End SDK Directory Structure ===');
+
+
             console.log('SDK generation completed successfully');
 
             // Clean up spec directory
