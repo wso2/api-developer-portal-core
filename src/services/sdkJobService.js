@@ -1534,13 +1534,27 @@ class SDKJobService extends EventEmitter {
                 if (progressData.jobId === jobId) {
                     const dataToSend = { ...progressData, type: 'progress' };
                     res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
+                    res.flush();
                 }
             };
+
+            heartbeatInterval = setInterval(() => {
+                if (connectionClosed) return;
+                
+                try {
+                    res.write(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: Date.now(), jobId })}\n\n`);
+                    res.flush();
+                } catch (error) {
+                    console.error(`[SSE] Heartbeat failed:`, error);
+                    cleanup();
+                }
+            }, 15000);
 
             this.on('progress', onProgress);
 
             // Send initial ping
             res.write(`data: ${JSON.stringify({ type: 'ping', jobId })}\n\n`);
+            res.flush();
 
             req.on('close', () => {
                 console.log(`Client disconnected from SSE for job: ${jobId}`);
