@@ -129,7 +129,10 @@ const loadApplication = async (req, res) => {
             templateContent = {
                 applicationMetadata: metaData,
                 keyManagersMetadata: kMmetaData,
-                baseUrl: baseURLDev + viewName
+                baseUrl: baseURLDev + viewName,
+                features: {
+                    sdkGeneration: config.features?.sdkGeneration?.enabled || false
+                }
             }
             html = renderTemplate('../pages/application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
         } else {
@@ -313,7 +316,10 @@ const loadApplication = async (req, res) => {
                 otherAPICount: otherAPICount,
                 mcpAPICount: mcpAPICount,
                 profile: req.isAuthenticated() ? profile : null,
-                devportalMode: devportalMode
+                devportalMode: devportalMode,
+                features: {
+                    sdkGeneration: config.features?.sdkGeneration?.enabled || false
+                }
             }
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
@@ -328,6 +334,9 @@ const loadApplication = async (req, res) => {
         const templateContent = {
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
             devportalMode: devportalMode,
+            features: {
+                sdkGeneration: config.features?.sdkGeneration?.enabled || false
+            }
         }
         if (Number(error?.statusCode) === 401) {
             templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_AUTH_ERROR_MESSAGE;
