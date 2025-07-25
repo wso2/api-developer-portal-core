@@ -60,6 +60,7 @@ function updateSDKButtonVisibility() {
     const checkedCount = document.querySelectorAll('.api-checkbox:checked').length;
     const sdkButton = document.querySelector('button[onclick="redirectToSDKGeneration()"]');
     
+    // Only update if the button exists (i.e., if SDK generation feature is enabled)
     if (sdkButton) {
         if (checkedCount >= 1) {
             sdkButton.disabled = false;
@@ -92,13 +93,19 @@ function redirectToSDKGeneration() {
 
 /**
  * Initialize API selection functionality when the page loads
- * Sets up event listeners and initial button states
+ * Sets up event listeners and initial button states only if SDK feature is enabled
  */
 function initializeAPISelection() {
+    // Only initialize if API checkboxes exist (feature is enabled)
+    const apiCheckboxes = document.querySelectorAll('.api-checkbox');
+    if (apiCheckboxes.length === 0) {
+        console.log('SDK Generation feature is disabled - no API checkboxes found');
+        return;
+    }
+    
     updateSDKButtonVisibility();
     
-    // Set up event listeners for API checkboxes if they exist
-    const apiCheckboxes = document.querySelectorAll('.api-checkbox');
+    // Set up event listeners for API checkboxes
     apiCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', toggleAPISelection);
     });
@@ -109,6 +116,8 @@ function initializeAPISelection() {
             toggleAllAPISelection(this);
         });
     }
+    
+    console.log('SDK Generation feature is enabled - API selection initialized');
 }
 
 // Initialize when DOM is ready
