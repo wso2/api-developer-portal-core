@@ -102,5 +102,10 @@
     "**/myapis",
     "**/myapis/**",
     "**/myapis?**"
-  ]
+  ],
+  "features": {
+    "sdkGeneration": {
+      "enabled": true
+    }
+  }
 }

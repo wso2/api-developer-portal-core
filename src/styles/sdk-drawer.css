@@ -63,7 +63,7 @@ body.drawer-open {
   font-size: 1.25rem;
 }
 
-.btn-close {
+.sdk-drawer .btn-close {
   background: none;
   border: none;
   font-size: 1.2rem;
@@ -74,7 +74,7 @@ body.drawer-open {
   transition: background-color 0.2s ease;
 }
 
-.btn-close:hover {
+.sdk-drawer .btn-close:hover {
   background-color: #f5f5f5;
 }
 
