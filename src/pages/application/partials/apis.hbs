@@ -5,11 +5,13 @@
             <div class="container-header">Subscribed API Proxies</div>
             <div class='action-buttons mt-0'>
                 {{#if features.sdkGeneration}}
-                <button class="common-btn-primary" style="font-weight: 500;" type="button" onclick="redirectToSDKGeneration()" disabled>
-                    <span class="button-normal-state">
-                        <i class="bi bi-box-seam me-1"></i> Generate SDK
-                    </span>
-                </button>
+                    {{#if subAPIs}}
+                        <button class="common-btn-primary" style="font-weight: 500;" type="button" onclick="redirectToSDKGeneration()" disabled>
+                            <span class="button-normal-state">
+                                <i class="bi bi-box-seam me-1"></i> Generate SDK
+                            </span>
+                        </button>
+                    {{/if}}
                 {{/if}}
                 <a class="common-btn-primary ms-2" type="button"
                     href="{{baseUrl}}/apis?appID={{applicationMetadata.id}}&appName={{applicationMetadata.name}}">
@@ -24,9 +26,9 @@
                     <thead>
                         <tr>
                             {{#if features.sdkGeneration}}
-                            <th class="app-th" style="width: 50px;">
-                                <input type="checkbox" id="selectAllAPIs">
-                            </th>
+                                <th class="app-th" style="width: 50px;">
+                                    <input type="checkbox" id="selectAllAPIs">
+                                </th>
                             {{/if}}
                             <th class="app-th">Name</th>
                             <th class="app-th">Version</th>
