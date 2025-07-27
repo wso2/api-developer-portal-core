@@ -126,6 +126,7 @@ const ensureAuthenticated = async (req, res, next) => {
     if (!errors.isEmpty()) {
         return res.status(400).json(util.getErrors(errors));
     }
+    console.log("User's current authorized organization: ", req.user.userOrg);
     if (req.user && Array.isArray(req.user.authorizedOrgs) && req.user.userOrg) {
         if (req.user.authorizedOrgs.includes(req.user.userOrg)) {
             req.user[constants.ORG_IDENTIFIER] = req.user.userOrg;
@@ -179,9 +180,9 @@ const ensureAuthenticated = async (req, res, next) => {
                         const allowedOrgs = req.user.authorizedOrgs;
                         console.log("User's organization claim: ", req.user[constants.ROLES.ORGANIZATION_CLAIM]);
                         console.log("User's organization identifier: ", req.user[constants.ORG_IDENTIFIER]);
+                        console.log("User's current authorized organization: ", req.user.userOrg);
                         if (req.user.userOrg !== req.user[constants.ORG_IDENTIFIER]) {
                             if (allowedOrgs && (allowedOrgs.includes(req.user[constants.ORG_IDENTIFIER]))) {
-                                req.session.returnTo = req.originalUrl
                                 res.redirect(`/${req.params.orgName}/views/${req.params.viewName}/login`);
                             } else {
                                 const err = new Error('Authentication required');
