@@ -92,7 +92,7 @@ const login = async (req, res, next) => {
             res.send(html);
         }
     } else {
-        res.redirect(baseUrl);
+        res.redirect(req.session?.returnTo || baseUrl);
     }     
 };
 

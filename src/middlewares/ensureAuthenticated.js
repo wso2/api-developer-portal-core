@@ -149,6 +149,7 @@ const ensureAuthenticated = async (req, res, next) => {
             organizationClaimName = orgDetails.ORGANIZATION_CLAIM_NAME || config.orgIDClaim;
         }
         let role;
+        console.log("Is request authenticated: ", req.isAuthenticated());
         if (req.isAuthenticated()) {
             const token = accessTokenPresent(req);
             if (token) {
