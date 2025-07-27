@@ -149,6 +149,7 @@ const ensureAuthenticated = async (req, res, next) => {
             organizationClaimName = orgDetails.ORGANIZATION_CLAIM_NAME || config.orgIDClaim;
         }
         let role;
+        console.log("Is request authenticated: ", req.isAuthenticated());
         if (req.isAuthenticated()) {
             const token = accessTokenPresent(req);
             if (token) {
@@ -206,6 +207,7 @@ const ensureAuthenticated = async (req, res, next) => {
                 if (err) {
                     return res.status(500).send('Internal Server Error');
                 }
+                console.error("User not authenticated, redirecting to login", req.originalUrl);
                 req.session.returnTo = req.originalUrl || `/${req.params.orgName}`;
                 if (req.params.orgName) {
                     res.redirect(`/${req.params.orgName}/views/${req.params.viewName}/login`);
