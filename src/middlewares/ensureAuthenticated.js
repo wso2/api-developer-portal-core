@@ -126,7 +126,6 @@ const ensureAuthenticated = async (req, res, next) => {
     if (!errors.isEmpty()) {
         return res.status(400).json(util.getErrors(errors));
     }
-    console.log("User's current authorized organization: ", req.user.userOrg);
     if (req.user && Array.isArray(req.user.authorizedOrgs) && req.user.userOrg) {
         if (req.user.authorizedOrgs.includes(req.user.userOrg)) {
             req.user[constants.ORG_IDENTIFIER] = req.user.userOrg;
