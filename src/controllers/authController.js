@@ -28,6 +28,7 @@ const IdentityProviderDTO = require("../dto/identityProvider");
 const minimatch = require('minimatch');
 const { validationResult } = require('express-validator');
 const { renderGivenTemplate } = require('../utils/util');
+const { trackLoginTrigger } = require('../utils/telemetry');
 
 const filePrefix = config.pathToContent;
 
@@ -81,6 +82,11 @@ const login = async (req, res, next) => {
             } else {
                 await passport.authenticate('oauth2', { fidp: config.fidp[fidp] })(req, res, next);
             }
+            trackLoginTrigger({
+                orgName,
+                ipAddress: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+                userAgent: req.headers['user-agent']
+            });
         } else if (fidp && fidp == 'default') {
             await passport.authenticate('oauth2')(req, res, next);
         } else { 
