@@ -149,6 +149,7 @@ const ensureAuthenticated = async (req, res, next) => {
             organizationClaimName = orgDetails.ORGANIZATION_CLAIM_NAME || config.orgIDClaim;
         }
         let role;
+        console.log("Is request authenticated: ", req.isAuthenticated());
         if (req.isAuthenticated()) {
             const token = accessTokenPresent(req);
             if (token) {
@@ -176,9 +177,24 @@ const ensureAuthenticated = async (req, res, next) => {
                         //check if exchanged token has organization identifier
                         //const decodedToken = req.user.exchangeToken ? jwt.decode(req.user.exchangeToken) : null;
                         const allowedOrgs = req.user.authorizedOrgs;
+                        console.log("User's current authorized organization: ", req.user.userOrg);
                         if (req.user.userOrg !== req.user[constants.ORG_IDENTIFIER]) {
                             if (allowedOrgs && (allowedOrgs.includes(req.user[constants.ORG_IDENTIFIER]))) {
-                                res.redirect(`/${req.params.orgName}/views/${req.params.viewName}/login`);
+                                try {
+                                    const exchangedToken = await util.tokenExchanger(req.user[constants.EXCHANGE_TOKEN], req.user[constants.ORG_IDENTIFIER]);
+                                    const decodedExchangedToken = jwt.decode(exchangedToken);
+                                    const userOrg = decodedExchangedToken.organization.uuid;
+
+                                    req.user[constants.EXCHANGE_TOKEN] = exchangedToken;
+                                    req.user['userOrg'] = userOrg;
+                                    req.user[constants.ROLES.ORGANIZATION_CLAIM] = userOrg;
+                                    req.user[constants.ORG_IDENTIFIER] = userOrg;
+                                } catch (error) {
+                                    console.error("Error during token exchange:", error);
+                                    const err = new Error('Authentication required');
+                                    err.status = 401; // Unauthorized
+                                    return next(err);
+                                }
                             } else {
                                 const err = new Error('Authentication required');
                                 err.status = 401; // Unauthorized

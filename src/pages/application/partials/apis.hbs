@@ -4,11 +4,15 @@
         <div class="d-flex align-items-center justify-content-between mb-3">
             <div class="container-header">Subscribed API Proxies</div>
             <div class='action-buttons mt-0'>
-                <button class="common-btn-primary" style="font-weight: 500;" type="button" onclick="redirectToSDKGeneration()" disabled>
-                    <span class="button-normal-state">
-                        <i class="bi bi-box-seam me-1"></i> Generate SDK
-                    </span>
-                </button>
+                {{#if features.sdkGeneration}}
+                    {{#if subAPIs}}
+                        <button class="common-btn-primary" style="font-weight: 500;" type="button" onclick="redirectToSDKGeneration()" disabled>
+                            <span class="button-normal-state">
+                                <i class="bi bi-box-seam me-1"></i> Generate SDK
+                            </span>
+                        </button>
+                    {{/if}}
+                {{/if}}
                 <a class="common-btn-primary ms-2" type="button"
                     href="{{baseUrl}}/apis?appID={{applicationMetadata.id}}&appName={{applicationMetadata.name}}">
                     <i class="fas fa-external-link-alt me-2"></i> Explore more
@@ -21,9 +25,11 @@
                 <table class="app-table" id="app-table-{{applicationMetadata.id}}">
                     <thead>
                         <tr>
-                            <th class="app-th" style="width: 50px;">
-                                <input type="checkbox" id="selectAllAPIs">
-                            </th>
+                            {{#if features.sdkGeneration}}
+                                <th class="app-th" style="width: 50px;">
+                                    <input type="checkbox" id="selectAllAPIs">
+                                </th>
+                            {{/if}}
                             <th class="app-th">Name</th>
                             <th class="app-th">Version</th>
                             {{!-- <th class="app-th">Type</th> --}}
@@ -43,12 +49,14 @@
                         {{#if (eq apiType "REST")}}
                         {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
                         <tr class="data-row" id="data-row-{{subID}}" data-index="{{@index}}">
+                            {{#if ../features.sdkGeneration}}
                             <td class="app-td">
                                 <input type="checkbox" class="api-checkbox" 
                                     data-api-id="{{apiID}}" 
                                     data-api-name="{{name}}" 
                                     data-api-version="{{version}}">
                             </td>
+                            {{/if}}
                             <td class="app-td">
                                 <span onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
                                     class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
@@ -163,7 +171,7 @@
                         {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
                         <tr class="data-row" data-index="{{@index}}" id="data-row-{{subID}}">
                             <td class="app-td">
-                                <span onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
+                                <span onclick="window.location.href='{{@root.baseUrl}}/mcp/{{apiHandle}}'"
                                     class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
                             </td>
                             <td class="app-td">{{version}}</td>

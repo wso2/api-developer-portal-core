@@ -762,7 +762,7 @@ class SDKJobService extends EventEmitter {
                 console.warn('OpenAPI Generator warnings:', stderr);
             }
 
-            console.log('SDK generation completed successfully');
+            console.log('SDK generation completed successfully. Output directory:', outputDir);
 
             // Clean up spec directory
             try {
@@ -1078,7 +1078,7 @@ class SDKJobService extends EventEmitter {
                     console.log(`Directory contents check - api: ${hasApiDir}, model: ${hasModelDir}`);
 
                     if (hasApiDir && hasModelDir) {
-                        console.log(`Found Java package directory: ${fullPath}`);
+                        console.log(`Found package directory: ${fullPath}`);
                         return fullPath;
                     }
                 } else {
@@ -1096,12 +1096,12 @@ class SDKJobService extends EventEmitter {
                 console.log(`Found package directory recursively: ${foundPath}`);
                 return foundPath;
             }
-            
-            console.warn('Could not find Java package directory structure');
+
+            console.warn('Could not find package directory structure');
             return null;
             
         } catch (error) {
-            console.error('Error finding Java package directory:', error);
+            console.error('Error finding package directory:', error);
             return null;
         }
     };
@@ -1477,12 +1477,12 @@ class SDKJobService extends EventEmitter {
                     console.log(`Progress update for job ${jobId} step [${progressData.currentStep}] progress ${progressData.progress}%`);
                     const dataToSend = { ...progressData, type: 'progress' };
                     res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
-                    
+
                     // Close SSE connection after sending completion or failure events
                     if (progressData.status === 'completed' || progressData.status === 'failed' || progressData.status === 'cancelled') {
                         console.log(`Closing SSE connection for job ${jobId} after ${progressData.status} event`);
                         this.removeListener('progress', onProgress);
-                        
+
                         // Close the connection after a brief delay to ensure the client receives the final event
                         setTimeout(() => {
                             try {
