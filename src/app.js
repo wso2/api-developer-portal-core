@@ -426,7 +426,7 @@ app.use( (err, req, res, next) => {
     Handlebars.registerPartial('header', '');
     Handlebars.registerPartial('sidebar', '');
     console.log(err) // Log error for debugging
-    const templateContent = {
+    let templateContent = {
         devportalMode: 'DEFAULT',
         baseUrl: '/' + req.originalUrl?.split('/')[1] + '/' + constants.ROUTE.VIEWS_PATH + "default",
         errorMessage: "Oops! Something went wrong"
@@ -438,7 +438,7 @@ app.use( (err, req, res, next) => {
                 return res.status(500).send("Logout failed");
             }
         });
-        
+        templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_AUTH_ERROR_MESSAGE;
         html = util.renderTemplate('../pages/error-page/page.hbs', 'src/pages/error-layout/main.hbs', templateContent, true);
     } else {
         html = util.renderTemplate('../pages/error-page/page.hbs', 'src/pages/error-layout/main.hbs', templateContent, true);
