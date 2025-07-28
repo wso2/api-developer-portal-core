@@ -2,7 +2,7 @@
 const appInsights = require('applicationinsights');
 const secret = require(process.cwd() + '/secret.json');
 
-appInsights.setup(secret.azureInsightsKey);
+appInsights.setup(secret.azureInsightsConnectionString);
 
 const telemetryClient = appInsights.defaultClient;
 
