@@ -82,11 +82,7 @@ const login = async (req, res, next) => {
             } else {
                 await passport.authenticate('oauth2', { fidp: config.fidp[fidp] })(req, res, next);
             }
-            trackLoginTrigger({
-                orgName,
-                ipAddress: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
-                userAgent: req.headers['user-agent']
-            });
+            trackLoginTrigger({ orgName });
         } else if (fidp && fidp == 'default') {
             await passport.authenticate('oauth2')(req, res, next);
         } else { 
