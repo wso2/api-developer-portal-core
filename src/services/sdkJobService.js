@@ -39,6 +39,8 @@ class SDKJobService extends EventEmitter {
         super();
         this.activeJobs = new Map();
         this.sdkCleanupInterval = null; // Store cleanup interval reference
+        this.eventStorage = new Map(); // Store events before SSE connection
+        this.activeSSEConnections = new Map(); // Track active SSE connections
     }
 
     /**
@@ -343,6 +345,12 @@ class SDKJobService extends EventEmitter {
             // Remove from active jobs
             this.activeJobs.delete(jobId);
             
+            // Clean up event storage and SSE connections for cancelled job
+            this.cleanupStoredEvents(jobId);
+            if (this.activeSSEConnections.has(jobId)) {
+                this.activeSSEConnections.delete(jobId);
+            }
+            
             // Clean up any generated files for this job
             await this.cleanupJobFiles(jobId);
             
@@ -444,6 +452,12 @@ class SDKJobService extends EventEmitter {
                     error: errorMessage
                 });
                 
+                // Clean up event storage and SSE connections for failed job
+                this.cleanupStoredEvents(jobId);
+                if (this.activeSSEConnections.has(jobId)) {
+                    this.activeSSEConnections.delete(jobId);
+                }
+                
                 console.log(`Job ${jobId} marked as failed and frontend notified`);
             }
             
@@ -456,6 +470,13 @@ class SDKJobService extends EventEmitter {
 
     async completeJob(jobId, resultData = null) {
         this.activeJobs.delete(jobId); // Remove from active jobs
+        
+        // Clean up event storage and SSE connections for completed job
+        this.cleanupStoredEvents(jobId);
+        if (this.activeSSEConnections.has(jobId)) {
+            this.activeSSEConnections.delete(jobId);
+        }
+        
         return await this.updateJobStatus(
             jobId, 
             JOB_STATUS.COMPLETED, 
@@ -486,11 +507,101 @@ class SDKJobService extends EventEmitter {
     }
 
     emitProgress(jobId, progressData) {
-        console.log(`Emitting progress for job ${jobId}:`, progressData);
-        this.emit('progress', {
+        const eventData = {
             jobId,
-            ...progressData
+            ...progressData,
+            timestamp: Date.now()
+        };
+        
+        console.log(`Emitting progress for job ${jobId}:`, progressData);
+        
+        // Check if there's an active SSE connection for this job
+        const hasActiveSSE = this.activeSSEConnections.has(jobId);
+        
+        if (hasActiveSSE) {
+            // Direct emit for active connections
+            this.emit('progress', eventData);
+        } else {
+            // Store event for later replay when SSE connection is established
+            this.storeProgressEvent(jobId, eventData);
+            console.log(`📦 Stored progress event for job ${jobId} (no active SSE connection)`);
+        }
+        
+        // Always emit for potential listeners (for backward compatibility)
+        this.emit('progress', eventData);
+    }
+
+    /**
+     * Store progress events for jobs without active SSE connections
+     * @param {string} jobId - Job ID
+     * @param {Object} eventData - Event data to store
+     */
+    storeProgressEvent(jobId, eventData) {
+        if (!this.eventStorage.has(jobId)) {
+            this.eventStorage.set(jobId, []);
+        }
+        
+        const events = this.eventStorage.get(jobId);
+        events.push(eventData);
+        
+        // Keep only the last 50 events per job to prevent memory issues
+        if (events.length > 50) {
+            events.splice(0, events.length - 50);
+        }
+        
+        console.log(`📦 Stored event for job ${jobId}: ${events.length} total stored events`);
+    }
+
+    /**
+     * Replay stored events for a job when SSE connection is established
+     * @param {string} jobId - Job ID
+     * @param {Object} res - Express response object for SSE
+     */
+    replayStoredEvents(jobId, res) {
+        const storedEvents = this.eventStorage.get(jobId);
+        
+        if (!storedEvents || storedEvents.length === 0) {
+            console.log(`📭 No stored events to replay for job ${jobId}`);
+            return 0;
+        }
+        
+        console.log(`🔄 Replaying ${storedEvents.length} stored events for job ${jobId}`);
+        
+        // Send all stored events
+        storedEvents.forEach((eventData, index) => {
+            try {
+                const replayEventData = {
+                    ...eventData,
+                    type: 'progress',
+                    isReplay: true,
+                    replayIndex: index + 1,
+                    totalReplays: storedEvents.length
+                };
+                
+                res.write(`data: ${JSON.stringify(replayEventData)}\n\n`);
+                console.log(`📤 Replayed event ${index + 1}/${storedEvents.length} for job ${jobId}`);
+            } catch (error) {
+                console.error(`❌ Error replaying event ${index + 1} for job ${jobId}:`, error.message);
+            }
         });
+        
+        // Clear stored events after successful replay
+        this.eventStorage.delete(jobId);
+        console.log(`🗑️ Cleared stored events for job ${jobId} after replay`);
+        
+        return storedEvents.length;
+    }
+
+    /**
+     * Clean up stored events for completed or failed jobs
+     * @param {string} jobId - Job ID
+     */
+    cleanupStoredEvents(jobId) {
+        if (this.eventStorage.has(jobId)) {
+            const eventCount = this.eventStorage.get(jobId).length;
+            this.eventStorage.delete(jobId);
+            console.log(`🗑️ Cleaned up ${eventCount} stored events for completed job ${jobId}`);
+        }
     }
 
     getDefaultMessage(status) {
@@ -1711,43 +1822,119 @@ class SDKJobService extends EventEmitter {
                 'X-Content-Type-Options': 'nosniff'
             });
 
-            console.log(`Client connected to SSE for job: ${jobId}`);
+            console.log(`📡 Client connected to SSE for job: ${jobId}`);
+
+            // Register this SSE connection as active
+            this.activeSSEConnections.set(jobId, {
+                connected: true,
+                connectionTime: Date.now(),
+                response: res
+            });
 
             const onProgress = (progressData) => {
-                console.log(`Progress update for job ${jobId} step [${progressData.currentStep}] progress ${progressData.progress}%`);
-                const dataToSend = { ...progressData, type: 'progress' };
-                res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
+                // Only process events for this specific job
+                if (progressData.jobId === jobId) {
+                    console.log(`📤 Progress update for job ${jobId} step [${progressData.currentStep}] progress ${progressData.progress}%`);
+                    
+                    const dataToSend = { 
+                        ...progressData, 
+                        type: 'progress',
+                        isReplay: progressData.isReplay || false 
+                    };
+                    
+                    try {
+                        res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
+                    } catch (writeError) {
+                        console.error(`❌ Error writing SSE data for job ${jobId}:`, writeError.message);
+                        this.cleanupSSEConnection(jobId, onProgress);
+                        return;
+                    }
 
-                // Close SSE connection after sending completion or failure events
-                if (progressData.status === 'completed' || progressData.status === 'failed' || progressData.status === 'cancelled') {
-                    console.log(`Closing SSE connection for job ${jobId} after ${progressData.status} event`);
-                    this.removeListener('progress', onProgress);
+                    // Close SSE connection and clean up after sending final events
+                    if (progressData.status === 'completed' || progressData.status === 'failed' || progressData.status === 'cancelled') {
+                        console.log(`🔚 Closing SSE connection for job ${jobId} after ${progressData.status} event`);
+                        
+                        // Clean up stored events for completed jobs
+                        this.cleanupStoredEvents(jobId);
+                        
+                        // Remove connection tracking and event listener
+                        this.cleanupSSEConnection(jobId, onProgress);
 
-                    // Close the connection after a brief delay to ensure the client receives the final event
-                    setTimeout(() => {
-                        try {
-                            res.end();
-                        } catch (error) {
-                            console.warn(`Error closing SSE connection for job ${jobId}:`, error.message);
-                        }
-                    }, 100);
+                        // Close the connection after a brief delay to ensure the client receives the final event
+                        setTimeout(() => {
+                            try {
+                                res.end();
+                            } catch (error) {
+                                console.warn(`⚠️ Error closing SSE connection for job ${jobId}:`, error.message);
+                            }
+                        }, 100);
+                    }
                 }
             };
 
+            // Add progress event listener
             this.on('progress', onProgress);
 
-            // Send initial ping
-            res.write(`data: ${JSON.stringify({ type: 'ping', jobId })}\n\n`);
+            // Send initial ping to establish connection
+            res.write(`data: ${JSON.stringify({ 
+                type: 'ping', 
+                jobId, 
+                connectionTime: Date.now(),
+                message: 'SSE connection established' 
+            })}\n\n`);
 
+            // Add small delay to ensure connection is established before replaying events
+            setTimeout(() => {
+                // Replay any stored events that occurred before this connection
+                const replayedCount = this.replayStoredEvents(jobId, res);
+                
+                if (replayedCount > 0) {
+                    // Send replay completion notification
+                    res.write(`data: ${JSON.stringify({ 
+                        type: 'replay-complete', 
+                        jobId,
+                        replayedEvents: replayedCount,
+                        message: `Replayed ${replayedCount} stored events`
+                    })}\n\n`);
+                }
+            }, 50); // 50ms delay to ensure connection stability
+
+            // Handle client disconnect
             req.on('close', () => {
-                console.log(`Client disconnected from SSE for job: ${jobId}`);
-                this.removeListener('progress', onProgress);
+                console.log(`📴 Client disconnected from SSE for job: ${jobId}`);
+                this.cleanupSSEConnection(jobId, onProgress);
             });
+
+            // Handle response errors
+            res.on('error', (error) => {
+                console.error(`❌ SSE response error for job ${jobId}:`, error.message);
+                this.cleanupSSEConnection(jobId, onProgress);
+            });
+
         } catch (error) {
-            console.error('Error in SDK progress streaming:', error);
+            console.error('❌ Error in SDK progress streaming:', error);
             res.status(500).end(`Error: ${error.message}`);
         }
     };
+
+    /**
+     * Clean up SSE connection and related resources
+     * @param {string} jobId - Job ID
+     * @param {Function} onProgress - Progress event listener to remove
+     */
+    cleanupSSEConnection(jobId, onProgress) {
+        // Remove from active connections
+        if (this.activeSSEConnections.has(jobId)) {
+            this.activeSSEConnections.delete(jobId);
+            console.log(`🗑️ Removed SSE connection tracking for job ${jobId}`);
+        }
+        
+        // Remove event listener
+        if (onProgress) {
+            this.removeListener('progress', onProgress);
+            console.log(`🗑️ Removed progress listener for job ${jobId}`);
+        }
+    }
 
     /**
      * Route handler for SDK job cancellation
@@ -2008,8 +2195,8 @@ class SDKJobService extends EventEmitter {
             console.log(`📥 Download request for file: ${filename}`);
             
             // 🔍 Explore app folder structure before download
-            await this.exploreAppFolderStructure(`Download request for ${filename}`);
-            
+            // await this.exploreAppFolderStructure(`Download request for ${filename}`);
+
             const filePath = path.join(process.cwd(), 'generated-sdks', filename);
             console.log(`📁 Full file path: ${filePath}`);
 
