@@ -1006,8 +1006,8 @@ class SDKJobService extends EventEmitter {
             console.log(`Final ZIP created: ${finalZipPath}`);
             
             // Clean up SDK folder
-            await fs.promises.rm(sdkPath, { recursive: true, force: true });
-            console.log('Cleaned up SDK folder');
+            //await fs.promises.rm(sdkPath, { recursive: true, force: true });
+            //console.log('Cleaned up SDK folder');
             
             return {
                 finalZipPath: finalZipPath,
@@ -1538,44 +1538,182 @@ class SDKJobService extends EventEmitter {
     };
 
     /**
+     * Verify file exists with exponential retry mechanism
+     * @param {string} filePath - Path to the file to verify
+     * @param {number} maxRetries - Maximum number of retry attempts (default: 4)
+     * @returns {Promise<boolean>} - Promise that resolves when file is verified
+     */
+    async verifyFileExistsWithRetry(filePath, maxRetries = 4) {
+        let lastError = null;
+        const baseDelay = 500; // Base delay of 500ms
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                console.log(`🔍 File verification attempt ${attempt}/${maxRetries} for: ${path.basename(filePath)}`);
+                
+                // Check if file exists
+                const fileExists = await fs.promises.access(filePath).then(() => true).catch(() => false);
+                if (!fileExists) {
+                    throw new Error(`File does not exist: ${filePath}`);
+                }
+                
+                // Get file stats to verify it's a proper file
+                const stats = await fs.promises.stat(filePath);
+                console.log(`📊 File stats - Size: ${stats.size} bytes, Created: ${stats.birthtime.toISOString()}`);
+                
+                // Verify file has content (should be at least 1KB for a valid ZIP)
+                if (stats.size === 0) {
+                    throw new Error('File exists but is empty');
+                }
+                
+                if (stats.size < 1024) {
+                    throw new Error(`File is too small (${stats.size} bytes), likely incomplete`);
+                }
+                
+                // Try to open and close the file to ensure it's not locked
+                const fileHandle = await fs.promises.open(filePath, 'r');
+                await fileHandle.close();
+                
+                // Validate ZIP file signature if it's a ZIP file
+                if (path.extname(filePath).toLowerCase() === '.zip') {
+                    await this.validateZipFileSignature(filePath);
+                }
+                
+                console.log(`✅ File verification successful on attempt ${attempt}: ${path.basename(filePath)} (${stats.size} bytes)`);
+                return true;
+                
+            } catch (error) {
+                lastError = error;
+                console.warn(`⚠️ File verification attempt ${attempt}/${maxRetries} failed: ${error.message}`);
+                
+                // If this is the last attempt, break and throw the error
+                if (attempt === maxRetries) {
+                    break;
+                }
+                
+                // Calculate exponential backoff delay: 500ms, 1000ms, 2000ms, 4000ms
+                const delay = baseDelay * Math.pow(2, attempt - 1);
+                console.log(`⏳ Waiting ${delay}ms before retry (exponential backoff)...`);
+                await this.simulateDelay(delay);
+            }
+        }
+        
+        console.error(`❌ File verification failed after ${maxRetries} attempts: ${lastError.message}`);
+        throw new Error(`File is not available after ${maxRetries} retry attempts: ${lastError.message}`);
+    }
+
+    /**
+     * Validate that the file is a proper ZIP file by checking its signature
+     * @param {string} filePath - Path to the ZIP file
+     */
+    async validateZipFileSignature(filePath) {
+        try {
+            const fileHandle = await fs.promises.open(filePath, 'r');
+            const buffer = Buffer.alloc(4);
+            await fileHandle.read(buffer, 0, 4, 0);
+            await fileHandle.close();
+            
+            // ZIP file signature: 0x504B0304 (PK..) for regular ZIP files
+            const signature = buffer.readUInt32LE(0);
+            const validSignatures = [
+                0x04034B50, // Regular ZIP file (PK\x03\x04)
+                0x06054B50, // Empty ZIP file (PK\x05\x06)
+                0x08074B50  // Spanned ZIP file (PK\x07\x08)
+            ];
+            
+            if (!validSignatures.includes(signature)) {
+                throw new Error(`Invalid ZIP file signature: 0x${signature.toString(16).padStart(8, '0')}`);
+            }
+            
+            console.log(`✅ ZIP file signature validated: 0x${signature.toString(16).padStart(8, '0')}`);
+            
+        } catch (error) {
+            throw new Error(`ZIP file validation failed: ${error.message}`);
+        }
+    }
+
+    /**
      * Route handler for SDK download
      * Serves the generated SDK ZIP file for download
      */
     downloadSDK = async (req, res) => {
         try {
             const { filename } = req.params;
+            
+            console.log(`📥 Download request for file: ${filename}`);
+            
             const filePath = path.join(process.cwd(), 'generated-sdks', filename);
+            console.log(`📁 Full file path: ${filePath}`);
 
+            // Security check - prevent path traversal attacks
             const normalizedPath = path.normalize(filePath);
             const expectedDir = path.join(process.cwd(), 'generated-sdks');
 
             if (!normalizedPath.startsWith(expectedDir)) {
+                console.error(`🚫 Security violation: Path traversal attempt for ${filename}`);
                 return res.status(403).json({ error: 'Access denied' });
             }
 
-            if (!fs.existsSync(filePath)) {
-                return res.status(404).json({ error: 'SDK file not found' });
+            // Use exponential retry mechanism to verify file existence (4 retries)
+            try {
+                await this.verifyFileExistsWithRetry(filePath, 4);
+                console.log(`✅ File verified and ready for download: ${filename}`);
+            } catch (error) {
+                console.error(`❌ File verification failed after retries: ${error.message}`);
+                return res.status(404).json({ 
+                    error: 'SDK file not found',
+                    filename: filename,
+                    message: error.message
+                });
             }
 
+            // Get file stats for Content-Length header and additional validation
+            const fileStats = await fs.promises.stat(filePath);
+            
+            console.log(`📦 Preparing download: ${filename} (${fileStats.size} bytes)`);
+
+            // Set response headers for ZIP file download
             res.setHeader('Content-Type', 'application/zip');
             res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
 
-            // Stream the file
+            console.log(`🚀 Starting file stream for: ${filename}`);
+
+            // Create and pipe the file stream
             const fileStream = fs.createReadStream(filePath);
-            fileStream.pipe(res);
-
+            
             fileStream.on('error', (err) => {
-                console.error('Error streaming SDK file:', err);
-                res.status(500).json({ error: 'Error downloading SDK' });
+                console.error('❌ Error streaming SDK file:', err);
+                if (!res.headersSent) {
+                    res.status(500).json({ 
+                        error: 'Error streaming SDK file',
+                        message: err.message
+                    });
+                }
+            });
+
+            fileStream.on('end', () => {
+                console.log(`✅ Download completed successfully: ${filename}`);
+            });
+
+            fileStream.on('close', () => {
+                console.log(`📁 File stream closed for: ${filename}`);
             });
             
+            // Pipe the file to the response
+            fileStream.pipe(res);
+            
         } catch (error) {
-            console.error('Error downloading SDK:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Error downloading SDK file',
-                error: error.message
-            });
+            console.error('❌ Error in download handler:', error);
+            if (!res.headersSent) {
+                res.status(500).json({
+                    success: false,
+                    message: 'Error downloading SDK file',
+                    error: error.message
+                });
+            }
         }
     };
 }
