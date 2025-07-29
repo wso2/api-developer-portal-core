@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Verify the installed wget version
 RUN wget --version
+RUN java --version
 
 # Set the working directory inside the container
 WORKDIR /app
