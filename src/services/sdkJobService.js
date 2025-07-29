@@ -1475,26 +1475,26 @@ class SDKJobService extends EventEmitter {
             console.log(`Client connected to SSE for job: ${jobId}`);
 
             const onProgress = (progressData) => {
-                if (progressData.jobId === jobId) {
-                    console.log(`Progress update for job ${jobId} step [${progressData.currentStep}] progress ${progressData.progress}%`);
-                    const dataToSend = { ...progressData, type: 'progress' };
-                    res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
+                // if (progressData.jobId === jobId) {
+                console.log(`Progress update for job ${jobId} step [${progressData.currentStep}] progress ${progressData.progress}%`);
+                const dataToSend = { ...progressData, type: 'progress' };
+                res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
 
-                    // Close SSE connection after sending completion or failure events
-                    if (progressData.status === 'completed' || progressData.status === 'failed' || progressData.status === 'cancelled') {
-                        console.log(`Closing SSE connection for job ${jobId} after ${progressData.status} event`);
-                        this.removeListener('progress', onProgress);
+                // Close SSE connection after sending completion or failure events
+                if (progressData.status === 'completed' || progressData.status === 'failed' || progressData.status === 'cancelled') {
+                    console.log(`Closing SSE connection for job ${jobId} after ${progressData.status} event`);
+                    this.removeListener('progress', onProgress);
 
-                        // Close the connection after a brief delay to ensure the client receives the final event
-                        setTimeout(() => {
-                            try {
-                                res.end();
-                            } catch (error) {
-                                console.warn(`Error closing SSE connection for job ${jobId}:`, error.message);
-                            }
-                        }, 100);
-                    }
+                    // Close the connection after a brief delay to ensure the client receives the final event
+                    setTimeout(() => {
+                        try {
+                            res.end();
+                        } catch (error) {
+                            console.warn(`Error closing SSE connection for job ${jobId}:`, error.message);
+                        }
+                    }, 100);
                 }
+                // }
             };
 
             this.on('progress', onProgress);
@@ -1787,7 +1787,7 @@ class SDKJobService extends EventEmitter {
 
             // Use exponential retry mechanism to verify file existence (4 retries)
             try {
-                await this.verifyFileExistsWithRetry(filePath, 4);
+                await this.verifyFileExistsWithRetry(filePath, 10);
                 console.log(`✅ File verified and ready for download: ${filename}`);
             } catch (error) {
                 console.error(`❌ File verification failed after retries: ${error.message}`);
