@@ -287,6 +287,7 @@ class SDKJobService extends EventEmitter {
 
     async updateJobStatus(jobId, status, progress = null, currentStep = null, message = null, resultData = null) {
         try {
+            console.log(`Updating job ${jobId} status to ${status}`);
             const updateData = {
                 jobStatus: status.toUpperCase(),
                 progress: progress,
@@ -485,6 +486,7 @@ class SDKJobService extends EventEmitter {
     }
 
     emitProgress(jobId, progressData) {
+        console.log(`Emitting progress for job ${jobId}:`, progressData);
         this.emit('progress', {
             jobId,
             ...progressData
