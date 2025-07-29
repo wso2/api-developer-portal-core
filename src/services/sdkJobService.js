@@ -287,6 +287,7 @@ class SDKJobService extends EventEmitter {
 
     async updateJobStatus(jobId, status, progress = null, currentStep = null, message = null, resultData = null) {
         try {
+            console.log(`Updating job ${jobId} status to ${status}`);
             const updateData = {
                 jobStatus: status.toUpperCase(),
                 progress: progress,
@@ -485,6 +486,7 @@ class SDKJobService extends EventEmitter {
     }
 
     emitProgress(jobId, progressData) {
+        console.log(`Emitting progress for job ${jobId}:`, progressData);
         this.emit('progress', {
             jobId,
             ...progressData
@@ -1633,6 +1635,132 @@ class SDKJobService extends EventEmitter {
     }
 
     /**
+     * List files and directories in the app folder (root folder) with specified depth
+     * @param {string} rootPath - Root path to explore (defaults to process.cwd())
+     * @param {number} maxDepth - Maximum depth to explore (default: 3)
+     * @param {number} currentDepth - Current depth level (internal parameter)
+     * @param {string} prefix - Prefix for display formatting (internal parameter)
+     * @returns {Array} - Array of file/directory information
+     */
+    async listAppFolderContents(rootPath = process.cwd(), maxDepth = 2, currentDepth = 0, prefix = '') {
+        const results = [];
+        
+        if (currentDepth > maxDepth) {
+            return results;
+        }
+        
+        try {
+            const items = await fs.promises.readdir(rootPath, { withFileTypes: true });
+            
+            for (const item of items) {
+                const fullPath = path.join(rootPath, item.name);
+                const relativePath = path.relative(process.cwd(), fullPath);
+                const displayPath = `${prefix}${item.isDirectory() ? '📁' : '📄'} ${item.name}`;
+                
+                const itemInfo = {
+                    name: item.name,
+                    type: item.isDirectory() ? 'directory' : 'file',
+                    fullPath: fullPath,
+                    relativePath: relativePath,
+                    depth: currentDepth,
+                    displayPath: displayPath
+                };
+                
+                results.push(itemInfo);
+                console.log(displayPath);
+                
+                // If it's a directory and we haven't reached max depth, recurse
+                if (item.isDirectory() && currentDepth < maxDepth) {
+                    const subResults = await this.listAppFolderContents(
+                        fullPath, 
+                        maxDepth, 
+                        currentDepth + 1, 
+                        prefix + '  '
+                    );
+                    results.push(...subResults);
+                }
+            }
+            
+        } catch (error) {
+            console.error(`❌ Error reading directory ${rootPath}:`, error.message);
+            results.push({
+                name: path.basename(rootPath),
+                type: 'error',
+                fullPath: rootPath,
+                relativePath: path.relative(process.cwd(), rootPath),
+                depth: currentDepth,
+                error: error.message,
+                displayPath: `${prefix}❌ Error: ${error.message}`
+            });
+        }
+        
+        return results;
+    }
+
+    /**
+     * Debug method to explore app folder structure before download
+     * @param {string} context - Context description for the exploration
+     */
+    async exploreAppFolderStructure(context = 'Pre-download exploration') {
+        console.log(`\n🔍 ${context} - App Folder Structure (depth: 3)`);
+        console.log(`📁 Root Path: ${process.cwd()}`);
+        console.log('─'.repeat(80));
+        
+        try {
+            const startTime = Date.now();
+            const results = await this.listAppFolderContents(process.cwd(), 3);
+            const endTime = Date.now();
+            
+            console.log('─'.repeat(80));
+            console.log(`📊 Exploration Summary:`);
+            console.log(`   • Total items found: ${results.length}`);
+            console.log(`   • Directories: ${results.filter(r => r.type === 'directory').length}`);
+            console.log(`   • Files: ${results.filter(r => r.type === 'file').length}`);
+            console.log(`   • Errors: ${results.filter(r => r.type === 'error').length}`);
+            console.log(`   • Exploration time: ${endTime - startTime}ms`);
+            
+            // Log some key directories if they exist
+            const keyDirectories = ['src', 'generated-sdks', 'node_modules', 'config', 'resources'];
+            const foundKeyDirs = results.filter(r => 
+                r.type === 'directory' && 
+                r.depth === 0 && 
+                keyDirectories.includes(r.name)
+            );
+            
+            if (foundKeyDirs.length > 0) {
+                console.log(`   • Key directories found: ${foundKeyDirs.map(d => d.name).join(', ')}`);
+            }
+            
+            // Check for generated-sdks specifically
+            const generatedSdksDir = results.find(r => 
+                r.name === 'generated-sdks' && r.type === 'directory' && r.depth === 0
+            );
+            
+            if (generatedSdksDir) {
+                const sdkFiles = results.filter(r => 
+                    r.relativePath.startsWith('generated-sdks') && 
+                    r.type === 'file' && 
+                    r.name.endsWith('.zip')
+                );
+                console.log(`   • SDK ZIP files in generated-sdks: ${sdkFiles.length}`);
+                if (sdkFiles.length > 0) {
+                    console.log(`   • Recent SDK files: ${sdkFiles.slice(-3).map(f => f.name).join(', ')}`);
+                }
+            } else {
+                console.log(`   ⚠️ generated-sdks directory not found in root`);
+            }
+            
+            console.log('─'.repeat(80));
+            
+            return results;
+            
+        } catch (error) {
+            console.error(`❌ Error during app folder exploration:`, error);
+            return [];
+        }
+    }
+
+    /**
      * Route handler for SDK download
      * Serves the generated SDK ZIP file for download
      */
@@ -1641,6 +1769,9 @@ class SDKJobService extends EventEmitter {
             const { filename } = req.params;
             
             console.log(`📥 Download request for file: ${filename}`);
+            
+            // 🔍 Explore app folder structure before download
+            await this.exploreAppFolderStructure(`Download request for ${filename}`);
             
             const filePath = path.join(process.cwd(), 'generated-sdks', filename);
             console.log(`📁 Full file path: ${filePath}`);
