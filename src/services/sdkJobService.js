@@ -1787,7 +1787,7 @@ class SDKJobService extends EventEmitter {
 
             // Use exponential retry mechanism to verify file existence (4 retries)
             try {
-                await this.verifyFileExistsWithRetry(filePath, 4);
+                await this.verifyFileExistsWithRetry(filePath, 10);
                 console.log(`✅ File verified and ready for download: ${filename}`);
             } catch (error) {
                 console.error(`❌ File verification failed after retries: ${error.message}`);
