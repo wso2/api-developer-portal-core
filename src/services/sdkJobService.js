@@ -1006,8 +1006,8 @@ class SDKJobService extends EventEmitter {
             console.log(`Final ZIP created: ${finalZipPath}`);
             
             // Clean up SDK folder
-            await fs.promises.rm(sdkPath, { recursive: true, force: true });
-            console.log('Cleaned up SDK folder');
+            //await fs.promises.rm(sdkPath, { recursive: true, force: true });
+            //console.log('Cleaned up SDK folder');
             
             return {
                 finalZipPath: finalZipPath,
