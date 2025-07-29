@@ -1361,19 +1361,258 @@ class SDKJobService extends EventEmitter {
             const output = fs.createWriteStream(outputPath);
             const archive = archiver('zip', { zlib: { level: 9 } });
             
-            output.on('close', () => {
-                console.log(`ZIP archive created: ${archive.pointer()} total bytes`);
-                resolve();
+            output.on('close', async () => {
+                try {
+                    console.log(`ZIP archive created: ${archive.pointer()} total bytes`);
+                    
+                    // Validate ZIP file creation with comprehensive checks
+                    await this.validateZipFileCreation(outputPath, archive.pointer());
+                    
+                    console.log(`✅ ZIP file validation successful: ${path.basename(outputPath)}`);
+                    resolve();
+                    
+                } catch (validationError) {
+                    console.error(`❌ ZIP file validation failed: ${validationError.message}`);
+                    
+                    // Clean up invalid ZIP file
+                    try {
+                        await fs.promises.unlink(outputPath);
+                        console.log(`🗑️ Cleaned up invalid ZIP file: ${outputPath}`);
+                    } catch (cleanupError) {
+                        console.warn(`Warning: Could not clean up invalid ZIP file: ${cleanupError.message}`);
+                    }
+                    
+                    reject(new Error(`ZIP file creation validation failed: ${validationError.message}`));
+                }
+            });
+
+            output.on('error', (err) => {
+                console.error(`ZIP file write stream error: ${err.message}`);
+                reject(new Error(`Failed to write ZIP file: ${err.message}`));
             });
 
             archive.on('error', (err) => {
-                reject(err);
+                console.error(`ZIP archive error: ${err.message}`);
+                reject(new Error(`Failed to create ZIP archive: ${err.message}`));
+            });
+
+            archive.on('warning', (warn) => {
+                console.warn(`ZIP archive warning: ${warn.message}`);
             });
 
             archive.pipe(output);
             archive.directory(sourceDir, false);
             archive.finalize();
         });
+    }
+
+    /**
+     * Comprehensive ZIP file validation
+     * Validates file existence, size, signature, and structure
+     * @param {string} zipPath - Path to the ZIP file to validate
+     * @param {number} expectedSize - Expected size from archiver
+     */
+    async validateZipFileCreation(zipPath, expectedSize) {
+        try {
+            console.log(`🔍 Validating ZIP file: ${path.basename(zipPath)}`);
+            
+            // 1. Check if file exists
+            const fileExists = await fs.promises.access(zipPath).then(() => true).catch(() => false);
+            if (!fileExists) {
+                throw new Error(`ZIP file does not exist: ${zipPath}`);
+            }
+            
+            // 2. Check file size and basic properties
+            const stats = await fs.promises.stat(zipPath);
+            console.log(`📊 ZIP file size: ${stats.size} bytes (${(stats.size / 1024).toFixed(2)} KB)`);
+            console.log(`📊 Expected size: ${expectedSize} bytes`);
+            
+            if (stats.size === 0) {
+                throw new Error('ZIP file is empty (0 bytes)');
+            }
+            
+            if (stats.size < 100) {
+                throw new Error(`ZIP file is too small (${stats.size} bytes), likely corrupted`);
+            }
+            
+            // Size check with tolerance (archiver size might differ slightly from actual file size)
+            const sizeDifference = Math.abs(stats.size - expectedSize);
+            const sizeTolerancePercent = 5; // 5% tolerance
+            const maxToleranceDifference = Math.max(1000, expectedSize * sizeTolerancePercent / 100);
+            
+            if (sizeDifference > maxToleranceDifference) {
+                console.warn(`⚠️ Size difference detected: actual=${stats.size}, expected=${expectedSize}, diff=${sizeDifference}`);
+            }
+            
+            // 3. Validate ZIP file signature (magic number)
+            await this.validateZipFileSignature(zipPath);
+            
+            // 4. Test ZIP file structure by attempting to read entries
+            await this.validateZipFileStructure(zipPath);
+            
+            console.log(`✅ ZIP file validation completed successfully`);
+            
+        } catch (error) {
+            console.error(`❌ ZIP file validation failed: ${error.message}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Validate ZIP file signature (magic number)
+     * @param {string} zipPath - Path to the ZIP file
+     */
+    async validateZipFileSignature(zipPath) {
+        try {
+            const buffer = Buffer.alloc(4);
+            const fileHandle = await fs.promises.open(zipPath, 'r');
+            
+            try {
+                await fileHandle.read(buffer, 0, 4, 0);
+                
+                // ZIP file magic numbers
+                const signature = buffer.readUInt32LE(0);
+                const validSignatures = [
+                    0x04034b50, // Local file header signature
+                    0x02014b50, // Central directory file header signature
+                    0x06054b50  // End of central directory signature
+                ];
+                
+                if (!validSignatures.includes(signature)) {
+                    // Check for other possible ZIP signatures
+                    const firstTwoBytes = buffer.readUInt16LE(0);
+                    if (firstTwoBytes !== 0x4b50) { // 'PK' magic number
+                        throw new Error(`Invalid ZIP file signature: 0x${signature.toString(16)}`);
+                    }
+                }
+                
+                console.log(`✅ ZIP file signature validated: 0x${signature.toString(16)}`);
+                
+            } finally {
+                await fileHandle.close();
+            }
+            
+        } catch (error) {
+            throw new Error(`ZIP signature validation failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Validate ZIP file structure by attempting to read entries
+     * @param {string} zipPath - Path to the ZIP file
+     */
+    async validateZipFileStructure(zipPath) {
+        return new Promise((resolve, reject) => {
+            try {
+                const unzipper = require('unzipper');
+                const readStream = fs.createReadStream(zipPath);
+                
+                let entryCount = 0;
+                let validEntries = 0;
+                let hasError = false;
+                
+                readStream
+                    .pipe(unzipper.Parse())
+                    .on('entry', (entry) => {
+                        entryCount++;
+                        
+                        try {
+                            const fileName = entry.path;
+                            const type = entry.type; // 'Directory' or 'File'
+                            const size = entry.vars ? entry.vars.uncompressedSize || 0 : 0;
+                            
+                            console.log(`� Entry: ${fileName} (${type}, ${size} bytes)`);
+                            
+                            if (type === 'Directory' || (type === 'File' && size >= 0)) {
+                                validEntries++;
+                            }
+                            
+                            // Auto-drain the entry (don't extract, just validate)
+                            entry.autodrain();
+                            
+                        } catch (entryError) {
+                            console.warn(`⚠️ Entry validation warning: ${entryError.message}`);
+                            entry.autodrain();
+                        }
+                    })
+                    .on('error', (error) => {
+                        if (!hasError) {
+                            hasError = true;
+                            reject(new Error(`ZIP file structure validation failed: ${error.message}`));
+                        }
+                    })
+                    .on('close', () => {
+                        if (hasError) return; // Already rejected
+                        
+                        if (entryCount === 0) {
+                            reject(new Error('ZIP file contains no entries'));
+                            return;
+                        }
+                        
+                        if (validEntries === 0) {
+                            reject(new Error('No valid entries found in ZIP file'));
+                            return;
+                        }
+                        
+                        console.log(`📁 ZIP file structure validated: ${entryCount} total entries, ${validEntries} valid entries`);
+                        resolve();
+                    });
+                    
+            } catch (error) {
+                // Fallback: try to read the file manually for basic validation
+                fs.promises.readFile(zipPath)
+                    .then(buffer => {
+                        if (buffer.length > 0) {
+                            console.log(`✅ ZIP file structure basic validation passed (${buffer.length} bytes)`);
+                            resolve();
+                        } else {
+                            reject(new Error('ZIP file is empty'));
+                        }
+                    })
+                    .catch(readError => {
+                        reject(new Error(`ZIP file structure validation failed: ${error.message}, fallback error: ${readError.message}`));
+                    });
+            }
+        });
+    }
+
+    /**
+     * Enhanced folder exploration before download for debugging
+     * @param {string} folderPath - Path to explore
+     * @param {string} description - Description for logging
+     */
+    async exploreAndLogFolder(folderPath, description = 'folder') {
+        try {
+            console.log(`📂 Exploring ${description}: ${folderPath}`);
+            
+            const exists = await fs.promises.access(folderPath).then(() => true).catch(() => false);
+            if (!exists) {
+                console.log(`❌ ${description} does not exist: ${folderPath}`);
+                return;
+            }
+            
+            const stats = await fs.promises.stat(folderPath);
+            console.log(`📊 ${description} info: ${stats.isDirectory() ? 'directory' : 'file'}, size: ${stats.size} bytes`);
+            
+            if (stats.isDirectory()) {
+                const items = await fs.promises.readdir(folderPath, { withFileTypes: true });
+                console.log(`📁 ${description} contents (${items.length} items):`);
+                
+                for (const item of items.slice(0, 10)) { // Show first 10 items
+                    const itemPath = path.join(folderPath, item.name);
+                    const itemStats = await fs.promises.stat(itemPath).catch(() => null);
+                    const itemSize = itemStats ? itemStats.size : 'unknown';
+                    console.log(`  ${item.isDirectory() ? '📁' : '📄'} ${item.name} (${itemSize} bytes)`);
+                }
+                
+                if (items.length > 10) {
+                    console.log(`  ... and ${items.length - 10} more items`);
+                }
+            }
+            
+        } catch (error) {
+            console.warn(`⚠️ Error exploring ${description}: ${error.message}`);
+        }
     }
 
     // ***** Route Handler Methods *****
@@ -1475,7 +1714,6 @@ class SDKJobService extends EventEmitter {
             console.log(`Client connected to SSE for job: ${jobId}`);
 
             const onProgress = (progressData) => {
-                // if (progressData.jobId === jobId) {
                 console.log(`Progress update for job ${jobId} step [${progressData.currentStep}] progress ${progressData.progress}%`);
                 const dataToSend = { ...progressData, type: 'progress' };
                 res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
@@ -1494,7 +1732,6 @@ class SDKJobService extends EventEmitter {
                         }
                     }, 100);
                 }
-                // }
             };
 
             this.on('progress', onProgress);
@@ -1787,7 +2024,7 @@ class SDKJobService extends EventEmitter {
 
             // Use exponential retry mechanism to verify file existence (4 retries)
             try {
-                await this.verifyFileExistsWithRetry(filePath, 10);
+                await this.verifyFileExistsWithRetry(filePath, 4);
                 console.log(`✅ File verified and ready for download: ${filename}`);
             } catch (error) {
                 console.error(`❌ File verification failed after retries: ${error.message}`);
