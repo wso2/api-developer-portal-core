@@ -1,0 +1,187 @@
+<!--
+ * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
+ *
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+ -->
+
+<div id="telemetryConsentBanner" class="telemetry-consent-banner" style="display: none;">
+    <div class="consent-banner-content">
+        <div class="consent-icon">
+            <i class="bi bi-info-circle"></i>
+        </div>
+        <div class="consent-message">
+            <h6 class="consent-title">Help us improve your experience</h6>
+            <p class="consent-text">
+                We use cookies and collect anonymous usage data to analyze how you use our developer portal and improve our services. 
+                This helps us understand user behavior and optimize the platform for better performance.
+                <a href="#" class="consent-learn-more" onclick="showConsentDetails()">Learn more</a>
+            </p>
+        </div>
+        <div class="consent-actions">
+            <button type="button" class="btn common-btn-outlined btn-sm me-2" onclick="handleTelemetryConsent(false)">
+                Reject
+            </button>
+            <button type="button" class="btn common-btn-primary btn-sm" onclick="handleTelemetryConsent(true)">
+                Accept
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Consent Details Modal -->
+<div class="modal fade" id="consentDetailsModal" tabindex="-1" aria-labelledby="consentDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="consentDetailsModalLabel">About Our Data Collection</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>What data do we collect?</h6>
+                <ul>
+                    <li>Pages you visit and features you use</li>
+                    <li>Login and logout events</li>
+                    <li>Anonymous usage patterns and performance metrics</li>
+                    <li>Browser type and device information</li>
+                </ul>
+                
+                <h6 class="mt-3">What we don't collect:</h6>
+                <ul>
+                    <li>Personal information or sensitive data</li>
+                    <li>API keys or authentication tokens</li>
+                    <li>Content of your applications or data</li>
+                    <li>Personally identifiable information</li>
+                </ul>
+                
+                <h6 class="mt-3">How we use this data:</h6>
+                <ul>
+                    <li>Improve user experience and platform performance</li>
+                    <li>Identify and fix issues</li>
+                    <li>Understand usage patterns to enhance features</li>
+                    <li>Generate anonymous analytics reports</li>
+                </ul>
+                
+                <p class="mt-3">
+                    <strong>Your choice:</strong> You can change your consent preference at any time by clearing your browser data. Your consent is stored locally and expires after one year.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn common-btn-outlined" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .telemetry-consent-banner {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: #fff;
+        border-top: 1px solid #e0e0e0;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        z-index: 1050;
+        padding: 16px 20px;
+        animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .consent-banner-content {
+        display: flex;
+        align-items: center;
+        max-width: 1200px;
+        margin: 0 auto;
+        gap: 16px;
+    }
+
+    .consent-icon {
+        color: var(--primary-main-color, #007bff);
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .consent-message {
+        flex: 1;
+    }
+
+    .consent-title {
+        margin: 0 0 4px 0;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .consent-text {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #666;
+        line-height: 1.4;
+    }
+
+    .consent-learn-more {
+        color: var(--primary-main-color, #007bff);
+        text-decoration: none;
+    }
+
+    .consent-learn-more:hover {
+        text-decoration: underline;
+    }
+
+    .consent-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .consent-banner-content {
+            flex-direction: column;
+            text-align: center;
+            gap: 12px;
+        }
+        
+        .consent-actions {
+            justify-content: center;
+            width: 100%;
+        }
+        
+        .consent-actions button {
+            flex: 1;
+            max-width: 120px;
+        }
+    }
+
+    body.consent-banner-visible {
+        padding-bottom: 120px;
+    }
+
+    @media (max-width: 768px) {
+        body.consent-banner-visible {
+            padding-bottom: 160px;
+        }
+    }
+</style>

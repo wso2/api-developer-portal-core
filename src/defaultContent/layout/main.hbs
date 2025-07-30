@@ -16,6 +16,8 @@
     <script src='/technical-scripts/filter.js' defer></script>
     <script src='/technical-scripts/common.js' defer></script>
     <script src='/technical-scripts/subscription.js' defer></script>
+    <script src='/technical-scripts/telemetry-consent.js' defer></script>
+    <script src='/technical-scripts/client-telemetry.js' defer></script>
 </head>
 
 <body class="main-body">
@@ -32,6 +34,7 @@
         {{{ body }}}
         </div>
     </main>
+    {{> telemetry-consent-banner }}
     {{> footer }}
 </body>
 
