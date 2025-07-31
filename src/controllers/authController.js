@@ -83,7 +83,7 @@ const login = async (req, res, next) => {
             } else {
                 await passport.authenticate('oauth2', { fidp: config.fidp[fidp] })(req, res, next);
             }
-            trackLoginTrigger({ orgName, telemetryConsent });
+            telemetryConsent && trackLoginTrigger({ orgName });
         } else if (fidp && fidp == 'default') {
             await passport.authenticate('oauth2')(req, res, next);
         } else { 

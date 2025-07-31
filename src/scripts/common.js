@@ -1103,6 +1103,7 @@ function getOrgName() {
 function getTelemetryConsent() {
     const CONSENT_KEY = 'telemetry_consent';
     const CONSENT_DATE_KEY = 'telemetry_consent_date';
+    const CONSENT_EXPIRY_DAYS = 365;
     const consent = localStorage.getItem(CONSENT_KEY);
     const consentDate = localStorage.getItem(CONSENT_DATE_KEY);
 
@@ -1120,4 +1121,6 @@ function getTelemetryConsent() {
     }
     return true;
 }
+
+window.getTelemetryConsent = getTelemetryConsent;
 

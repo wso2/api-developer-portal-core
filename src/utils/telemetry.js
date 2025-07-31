@@ -1,7 +1,7 @@
 const { trackEventWithDefaults } = require('./telemetryHelper');
 
-function trackLoginTrigger({ orgName, consent }) {
-    consent && trackEventWithDefaults({
+function trackLoginTrigger({ orgName }) {
+    trackEventWithDefaults({
         name: 'LoginTriggered',
         properties: {
             organization: orgName || 'unknown',
@@ -10,8 +10,8 @@ function trackLoginTrigger({ orgName, consent }) {
     });
 }
 
-function trackLogoutTrigger({ orgName, consent }) {
-    consent && trackEventWithDefaults({
+function trackLogoutTrigger({ orgName }) {
+    trackEventWithDefaults({
         name: 'LogoutTriggered',
         properties: {
             organization: orgName || 'unknown',
