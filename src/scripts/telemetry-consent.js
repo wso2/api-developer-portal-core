@@ -21,41 +21,25 @@ const CONSENT_DATE_KEY = 'telemetry_consent_date';
 const CONSENT_EXPIRY_DAYS = 365;
 
 function shouldShowBanner() {
-    try {
-        const consent = localStorage.getItem(CONSENT_KEY);
-        const consentDate = localStorage.getItem(CONSENT_DATE_KEY);
-        
-        if (consent === null || (consent !== 'true' && consent !== 'false') || !consentDate) {
-            return true;
-        }
-        
-        const consentTime = new Date(consentDate).getTime();
-        const expiryTime = consentTime + (CONSENT_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
-        
-        if (Date.now() >= expiryTime) {
-            localStorage.removeItem(CONSENT_KEY);
-            localStorage.removeItem(CONSENT_DATE_KEY);
-            return true;
-        }
-        
-        return false;
-    } catch (error) {
-        console.error('Error checking consent:', error);
+    const consent = localStorage.getItem(CONSENT_KEY);
+    const consentDate = localStorage.getItem(CONSENT_DATE_KEY);   
+    if (consent === null || (consent !== 'true' && consent !== 'false') || !consentDate) {
+        return true;
+    }  
+    const consentTime = new Date(consentDate).getTime();
+    const expiryTime = consentTime + (CONSENT_EXPIRY_DAYS * 24 * 60 * 60 * 1000);   
+    if (Date.now() >= expiryTime) {
+        localStorage.removeItem(CONSENT_KEY);
+        localStorage.removeItem(CONSENT_DATE_KEY);
         return true;
     }
+    return false;  
 }
 
 function storeConsent(consent) {
-    try {
-        localStorage.setItem(CONSENT_KEY, consent.toString());
-        localStorage.setItem(CONSENT_DATE_KEY, new Date().toISOString());
-        
-        console.log('Consent stored:', consent, 'at', new Date().toISOString());
-        return true;
-    } catch (error) {
-        console.error('Error storing consent:', error);
-        return false;
-    }
+    localStorage.setItem(CONSENT_KEY, consent.toString());
+    localStorage.setItem(CONSENT_DATE_KEY, new Date().toISOString());
+    return true;  
 }
 
 function showConsentBanner() {
@@ -75,13 +59,9 @@ function hideConsentBanner() {
 }
 
 function handleTelemetryConsent(consent) {
-    const success = storeConsent(consent);
-    
+    const success = storeConsent(consent);   
     if (success) {
         hideConsentBanner();
-        console.log(consent ? 'Analytics enabled' : 'Analytics disabled');
-    } else {
-        console.error('Failed to save consent preference');
     }
 }
 
@@ -91,21 +71,15 @@ function showConsentDetails() {
 }
 
 function initializeConsentBanner() {
-    console.log('Initializing consent banner...');
-    
-    // Show banner if needed
     if (shouldShowBanner()) {
         console.log('Showing consent banner');
         setTimeout(showConsentBanner, 500);
-    } else {
-        console.log('Valid consent found, banner will not be shown');
     }
 }
 
 function resetTelemetryConsent() {
     localStorage.removeItem(CONSENT_KEY);
     localStorage.removeItem(CONSENT_DATE_KEY);
-    console.log('Consent reset, showing banner immediately');
     showConsentBanner();
 }
 
