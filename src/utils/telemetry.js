@@ -1,41 +1,21 @@
 const { trackEventWithDefaults } = require('./telemetryHelper');
 
-function checkTelemetryConsent() {
-    try {
-        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-            return false;
-        }
-        
-        const consent = localStorage.getItem('telemetry_consent');
-        const consentDate = localStorage.getItem('telemetry_consent_date');
-        
-        if (consent !== 'true' || !consentDate) {
-            return false;
-        }
-        
-        const consentTime = new Date(consentDate).getTime();
-        const expiryTime = consentTime + (365 * 24 * 60 * 60 * 1000);
-        
-        if (Date.now() >= expiryTime) {
-            localStorage.removeItem('telemetry_consent');
-            localStorage.removeItem('telemetry_consent_date');
-            return false;
-        }
-        
-        return true;
-    } catch (error) {
-        console.error('Error checking telemetry consent:', error);
+function checkTelemetryConsent(telemetry_consent, telemetry_consent_date) {
+    if (telemetry_consent !== 'true' || !telemetry_consent_date) {
         return false;
     }
+    
+    const consentTime = new Date(telemetry_consent_date).getTime();
+    const expiryTime = consentTime + (365 * 24 * 60 * 60 * 1000);
+    
+    if (Date.now() >= expiryTime) {
+        return false;
+    }    
+    return true;
 }
 
-function trackLoginTrigger({ orgName }) {
-    if (!checkTelemetryConsent()) {
-        console.log('Telemetry consent not given - skipping login tracking');
-        return;
-    }
-    
-    trackEventWithDefaults({
+function trackLoginTrigger({ orgName, consent, consent_date }) {
+    checkTelemetryConsent(consent, consent_date) && trackEventWithDefaults({
         name: 'LoginTriggered',
         properties: {
             organization: orgName || 'unknown',
@@ -44,13 +24,8 @@ function trackLoginTrigger({ orgName }) {
     });
 }
 
-function trackLogoutTrigger({ orgName }) {
-    if (!checkTelemetryConsent()) {
-        console.log('Telemetry consent not given - skipping logout tracking');
-        return;
-    }
-    
-    trackEventWithDefaults({
+function trackLogoutTrigger({ orgName, consent }) {
+    checkTelemetryConsent(consent, consent_date) && trackEventWithDefaults({
         name: 'LogoutTriggered',
         properties: {
             organization: orgName || 'unknown',
