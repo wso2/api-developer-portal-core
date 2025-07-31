@@ -198,7 +198,8 @@ const handleLogOut = async (req, res) => {
             if (err) {
                 console.error("Logout error:", err);
             }
-            trackLogoutTrigger({ orgName: req.params.orgName });
+            const telemetryConsent = req.query.telemetry_consent === 'true';
+            telemetryConsent && trackLogoutTrigger({ orgName: req.params.orgName });
             req.session.currentPathURI = currentPathURI;
             res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${authJsonContent.logoutRedirectURI}&id_token_hint=${idToken}`);
         });

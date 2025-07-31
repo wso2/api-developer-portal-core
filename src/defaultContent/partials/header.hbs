@@ -27,7 +27,11 @@
           </li>
           <li class="dropdown-item">
             <i class="fas fa-sign-out-alt me-2"></i>
-            <a href="{{baseUrl}}/logout" class="profile-dropdown-link">Log Out</a>
+            <a href="#"
+              onclick="window.location.href='{{baseUrl}}/logout?telemetry_consent=' + window.getTelemetryConsent(); return false;"
+              class="profile-dropdown-link">
+              Log Out
+            </a>
           </li>
         </ul>
         {{else}}
