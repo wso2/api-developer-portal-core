@@ -1095,10 +1095,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 function getOrgName() {
-
     const orgName = document.getElementById("organization-name").value;
     const url = new URL(window.location.origin + '/'+ orgName);
     window.location.href = url.toString();
+}
 
+function getTelemetryConsent() {
+    const CONSENT_KEY = 'telemetry_consent';
+    const CONSENT_DATE_KEY = 'telemetry_consent_date';
+    const consent = localStorage.getItem(CONSENT_KEY);
+    const consentDate = localStorage.getItem(CONSENT_DATE_KEY);
+
+    if (consent === 'false') {
+        return false;
+    }
+
+    const consentTime = new Date(consentDate).getTime();
+    const expiryTime = consentTime + (CONSENT_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+
+    if (consent !== 'true' || !consentDate || isNaN(consentTime) || Date.now() >= expiryTime) {
+        localStorage.removeItem(CONSENT_KEY);
+        localStorage.removeItem(CONSENT_DATE_KEY);
+        return false;
+    }
+    return true;
 }
 
