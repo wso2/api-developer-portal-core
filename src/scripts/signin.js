@@ -34,19 +34,19 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.getElementById('login-google').addEventListener('click', function () {
-        window.location.href = `${baseUrl}/login?fidp=google`;
+        window.location.href = `${baseUrl}/login?fidp=google&telemetry_consent=${getTelemetryConsent()}`;
     });
 
     document.getElementById('login-github').addEventListener('click', function () {
-        window.location.href = `${baseUrl}/login?fidp=github`;
+        window.location.href = `${baseUrl}/login?fidp=github&telemetry_consent=${getTelemetryConsent()}`;
     });
 
     document.getElementById('login-microsoft').addEventListener('click', function () {
-        window.location.href = `${baseUrl}/login?fidp=microsoft`;
+        window.location.href = `${baseUrl}/login?fidp=microsoft&telemetry_consent=${getTelemetryConsent()}`;
     });
 
     document.getElementById('login-email').addEventListener('click', function () {
-        window.location.href = `${baseUrl}/login?fidp=email`;
+        window.location.href = `${baseUrl}/login?fidp=email&telemetry_consent=${getTelemetryConsent()}`;
     });
 
     const emailInput = document.getElementById('enterprise-email');
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        const redirectUrl = `${baseUrl}/login?fidp=enterprise&username=${encodeURIComponent(email)}`;
+        const redirectUrl = `${baseUrl}/login?fidp=enterprise&telemetry_consent=${getTelemetryConsent()}&username=${encodeURIComponent(email)}`;
         window.location.href = redirectUrl;
     });
 

@@ -77,12 +77,13 @@ const login = async (req, res, next) => {
     if (!req.isAuthenticated()) {
         const fidp = req.query.fidp;
         if (fidp && config.fidp[fidp]) {
+            const telemetryConsent = req.query.telemetry_consent === 'true';
             if (fidp == 'enterprise' && req.query.username) {
                 await passport.authenticate('oauth2', { fidp: config.fidp[fidp], username: req.query.username })(req, res, next);
             } else {
                 await passport.authenticate('oauth2', { fidp: config.fidp[fidp] })(req, res, next);
             }
-            trackLoginTrigger({ orgName });
+            trackLoginTrigger({ orgName, telemetryConsent });
         } else if (fidp && fidp == 'default') {
             await passport.authenticate('oauth2')(req, res, next);
         } else { 
