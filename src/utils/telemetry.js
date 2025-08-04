@@ -96,6 +96,36 @@ function trackGenerateKey({ orgId, appId }) {
     });
 }
 
+/**
+ * Send telemetry for subscribe to an API
+ */
+function trackSubscribeApi({ orgId, appId, apiId }) {
+    trackEventWithDefaults({
+        name: 'subscribe-api',
+        properties: {
+            orgId: orgId || 'unknown',
+            appId: appId || 'unknown',
+            apiId: apiId || 'unknown',
+            timestamp: new Date().toISOString()
+        }
+    });
+}
+
+/**
+ * Send telemetry for unsubscribe to an API
+ */
+function trackUnsubscribeApi({ orgId, appId, apiId }) {
+    trackEventWithDefaults({
+        name: 'unsubscribe-api',
+        properties: {
+            orgId: orgId || 'unknown',
+            appId: appId || 'unknown',
+            apiId: apiId || 'unknown',
+            timestamp: new Date().toISOString()
+        }
+    });
+}
+
 module.exports = {
     trackLoginTrigger,
     trackLogoutTrigger,
