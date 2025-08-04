@@ -5,7 +5,7 @@ const { trackEventWithDefaults } = require('./telemetryHelper');
  */
 function trackLoginTrigger({ orgName }) {
     trackEventWithDefaults({
-        name: 'LoginTriggered',
+        name: 'login',
         properties: {
             organization: orgName || 'unknown',
             timestamp: new Date().toISOString()
@@ -18,7 +18,7 @@ function trackLoginTrigger({ orgName }) {
  */
 function trackLogoutTrigger({ orgName }) {
     trackEventWithDefaults({
-        name: 'LogoutTriggered',
+        name: 'logout',
         properties: {
             organization: orgName || 'unknown',
             timestamp: new Date().toISOString()
@@ -26,7 +26,37 @@ function trackLogoutTrigger({ orgName }) {
     });
 }
 
+/**
+ * Send telemetry for start to create an application
+ */
+function trackAppCreationStart({ orgId, appId }) {
+    trackEventWithDefaults({
+        name: 'application-create-start',
+        properties: {
+            orgId: orgId || 'unknown',
+            appId: appId || 'unknown',
+            timestamp: new Date().toISOString()
+        }
+    });
+}
+
+/**
+ * Send telemetry for create an application
+ */
+function trackAppCreationEnd({ orgId, appId }) {
+    trackEventWithDefaults({
+        name: 'application-create-end',
+        properties: {
+            orgId: orgId || 'unknown',
+            appId: appId || 'unknown',
+            timestamp: new Date().toISOString()
+        }
+    });
+}
+
 module.exports = {
     trackLoginTrigger,
-    trackLogoutTrigger
+    trackLogoutTrigger,
+    trackAppCreationStart,
+    trackAppCreationEnd
 };
