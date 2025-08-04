@@ -29,6 +29,9 @@ const { ApplicationDTO } = require('../dto/application');
 const { Sequelize } = require("sequelize");
 const adminService = require('../services/adminService');
 const apiDao = require('../dao/apiMetadata');
+const sdkJobService = require('../services/sdkJobService');
+const path = require('path');
+const fs = require('fs');
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
 
@@ -313,6 +316,224 @@ const login = async (req, res) => {
     })(req, res);
 };
 
+// ***** Route Handler Methods *****
+
+/**
+ * Route handler for SDK generation
+ * Validates input and creates SDK generation job
+ */
+const generateSDK = async (req, res) => {
+    try {
+        const { selectedAPIs, sdkConfiguration, orgName } = req.body;
+        const { applicationId } = req.params;
+
+        // Validate input
+        if (!orgName) {
+            return res.status(400).json({
+                success: false,
+                message: 'Organization name is required'
+            });
+        }
+
+        if (!selectedAPIs || selectedAPIs.length < 1) {
+            return res.status(400).json({
+                success: false,
+                message: 'At least 1 API must be selected for SDK generation'
+            });
+        }
+
+        if (!sdkConfiguration) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide SDK configuration details'
+            });
+        }
+
+        // Validate AI description is provided
+        if (!sdkConfiguration.description || sdkConfiguration.description.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                message: 'AI description is required for SDK generation'
+            });
+        }
+
+        // Convert orgName to orgId
+        const orgId = await sdkJobService.orgIDValue(orgName);
+        
+        // Create job for tracking progress
+        const jobPayload = {
+            selectedAPIs,
+            sdkConfiguration,
+            orgName,
+            applicationId,
+            orgId
+        };
+        const job = await sdkJobService.createJob(orgId, applicationId, jobPayload);
+        const jobId = job.JOB_ID;
+
+        // Send immediate response with job ID
+        res.json({
+            success: true,
+            message: 'SDK generation job started successfully',
+            data: {
+                jobId: jobId,
+                status: JOB_STATUS.PENDING,
+                progress: 0,
+                currentStep: 'Initializing',
+                sseEndpoint: `/devportal/applications/${applicationId}/sdk/job-progress/${jobId}`
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error starting SDK generation job:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error starting SDK generation job',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Route handler for SDK job progress streaming via SSE
+ * Establishes Server-Sent Events connection for real-time progress updates
+ */
+const streamSDKProgress = (req, res) => {
+    try {
+        const { jobId } = req.params;
+    
+        res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Cache-Control',
+            'X-Accel-Buffering': 'no',
+            'X-Content-Type-Options': 'nosniff'
+        });
+
+        console.log(`Client connected to SSE for job: ${jobId}`);
+
+        const onProgress = (progressData) => {
+            if (progressData.jobId === jobId) {
+                console.log(`Progress update for job ${jobId} step [${progressData.currentStep}] progress ${progressData.progress}%`);
+                const dataToSend = { ...progressData, type: 'progress' };
+                res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
+
+                // Close SSE connection after sending completion or failure events
+                if (progressData.status === 'completed' || progressData.status === 'failed' || progressData.status === 'cancelled') {
+                    console.log(`Closing SSE connection for job ${jobId} after ${progressData.status} event`);
+                    sdkJobService.removeListener('progress', onProgress);
+
+                    // Close the connection after a brief delay to ensure the client receives the final event
+                    setTimeout(() => {
+                        try {
+                            res.end();
+                        } catch (error) {
+                            console.warn(`Error closing SSE connection for job ${jobId}:`, error.message);
+                        }
+                    }, 100);
+                }
+            }
+        };
+
+        sdkJobService.on('progress', onProgress);
+
+        // Send initial ping
+        res.write(`data: ${JSON.stringify({ type: 'ping', jobId })}\n\n`);
+
+        req.on('close', () => {
+            console.log(`Client disconnected from SSE for job: ${jobId}`);
+            sdkJobService.removeListener('progress', onProgress);
+        });
+    } catch (error) {
+        console.error('Error in SDK progress streaming:', error);
+        res.status(500).end(`Error: ${error.message}`);
+    }
+};
+
+/**
+ * Route handler for SDK job cancellation
+ * Cancels an ongoing SDK generation job
+ */
+const cancelSDK = async (req, res) => {
+    try {
+        const { jobId } = req.params;
+        
+        console.log(`Received request to cancel SDK job: ${jobId}`);
+        
+        await sdkJobService.cancelJob(jobId);
+        
+        res.status(200).json({ 
+            success: true, 
+            message: 'SDK generation cancelled successfully',
+            jobId: jobId
+        });
+        
+    } catch (error) {
+        console.error('Error cancelling SDK generation:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message || 'Failed to cancel SDK generation'
+        });
+    }
+};
+
+/**
+ * Route handler for SDK download
+ * Serves the generated SDK ZIP file for download
+ */
+const downloadSDK = async (req, res) => {
+    try {
+        const { filename } = req.params;
+        const filePath = path.join(process.cwd(), 'generated-sdks', filename);
+
+        const normalizedPath = path.normalize(filePath);
+        const expectedDir = path.join(process.cwd(), 'generated-sdks');
+
+        if (!normalizedPath.startsWith(expectedDir)) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ error: 'SDK file not found' });
+        }
+
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+        // Stream the file
+        const fileStream = fs.createReadStream(filePath);
+        fileStream.pipe(res);
+
+        fileStream.on('error', (err) => {
+            console.error('Error streaming SDK file:', err);
+            res.status(500).json({ error: 'Error downloading SDK' });
+        });
+        
+    } catch (error) {
+        console.error('Error downloading SDK:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error downloading SDK file',
+            error: error.message
+        });
+    }
+};
+
+// Create singleton instance
+// const sdkJobService = new SDKJobService();
+
+const JOB_STATUS = {
+    PENDING: 'PENDING',
+    MERGING: 'MERGING',
+    SDK_GENERATION: 'SDK_GENERATION',
+    APP_CODE_GENERATION: 'APP_CODE_GENERATION',
+    COMPLETED: 'COMPLETED',
+    FAILED: 'FAILED',
+    CANCELLED: 'CANCELLED'
+}
+
 module.exports = {
     saveApplication,
     updateApplication,
@@ -326,5 +547,9 @@ module.exports = {
     cleanUp,
     login,
     revokeAPIKeys,
-    regenerateAPIKeys
+    regenerateAPIKeys,
+    generateSDK,
+    streamSDKProgress,
+    cancelSDK,
+    downloadSDK
 };
