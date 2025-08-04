@@ -54,9 +54,24 @@ function trackAppCreationEnd({ orgId, appName }) {
     });
 }
 
+/**
+ * Send telemetry for create an application
+ */
+function trackAppDeletion({ orgId, appId }) {
+    trackEventWithDefaults({
+        name: 'application-delete',
+        properties: {
+            orgId: orgId || 'unknown',
+            appId: appId || 'unknown',
+            timestamp: new Date().toISOString()
+        }
+    });
+}
+
 module.exports = {
     trackLoginTrigger,
     trackLogoutTrigger,
     trackAppCreationStart,
-    trackAppCreationEnd
+    trackAppCreationEnd,
+    trackAppDeletion
 };

@@ -29,7 +29,7 @@ const { ApplicationDTO } = require('../dto/application');
 const { Sequelize } = require("sequelize");
 const adminService = require('../services/adminService');
 const apiDao = require('../dao/apiMetadata');
-const { trackAppCreationStart, trackAppCreationEnd } = require('../utils/telemetry');
+const { trackAppCreationStart, trackAppCreationEnd, trackAppDeletion } = require('../utils/telemetry');
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
 
@@ -83,6 +83,7 @@ const deleteApplication = async (req, res) => {
             if (appDeleteResponse === 0) {
                 throw new Sequelize.EmptyResultError("Resource not found to delete");
             } else {
+                trackAppDeletion({ orgId: orgID, appId: applicationId  });
                 res.status(200).send("Resouce Deleted Successfully");
             }
         } catch (error) {
