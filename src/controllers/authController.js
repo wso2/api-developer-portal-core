@@ -28,7 +28,7 @@ const IdentityProviderDTO = require("../dto/identityProvider");
 const minimatch = require('minimatch');
 const { validationResult } = require('express-validator');
 const { renderGivenTemplate } = require('../utils/util');
-const { trackLoginTrigger } = require('../utils/telemetry');
+const { trackLoginTrigger, trackLogoutTrigger } = require('../utils/telemetry');
 
 const filePrefix = config.pathToContent;
 
@@ -197,6 +197,7 @@ const handleLogOut = async (req, res) => {
             if (err) {
                 console.error("Logout error:", err);
             }
+            trackLogoutTrigger({ orgName: req.params.orgName });
             req.session.currentPathURI = currentPathURI;
             res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${authJsonContent.logoutRedirectURI}&id_token_hint=${idToken}`);
         });
