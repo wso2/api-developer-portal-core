@@ -29,6 +29,7 @@ const { ApplicationDTO } = require('../dto/application');
 const { Sequelize } = require("sequelize");
 const adminService = require('../services/adminService');
 const apiDao = require('../dao/apiMetadata');
+const { trackAppCreationStart, trackAppCreationEnd } = require('../utils/telemetry');
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
 
@@ -37,7 +38,9 @@ const apiDao = require('../dao/apiMetadata');
 const saveApplication = async (req, res) => {
     try {
         const orgID = await adminDao.getOrgId(req.user[constants.ORG_IDENTIFIER]);
+        trackAppCreationStart({ orgId: orgID, appName: req.body.name });
         const application = await adminDao.createApplication(orgID, req.user.sub, req.body);
+        trackAppCreationEnd({ orgId: orgID, appName: req.body.name });
         return res.status(201).json(new ApplicationDTO(application.dataValues));
     } catch (error) {
         console.error("Error occurred while creating the application", error);

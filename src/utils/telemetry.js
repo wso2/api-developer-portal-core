@@ -29,12 +29,12 @@ function trackLogoutTrigger({ orgName }) {
 /**
  * Send telemetry for start to create an application
  */
-function trackAppCreationStart({ orgId, appId }) {
+function trackAppCreationStart({ orgId, appName }) {
     trackEventWithDefaults({
         name: 'application-create-start',
         properties: {
             orgId: orgId || 'unknown',
-            appId: appId || 'unknown',
+            appName: appName || 'unknown',
             timestamp: new Date().toISOString()
         }
     });
@@ -43,12 +43,12 @@ function trackAppCreationStart({ orgId, appId }) {
 /**
  * Send telemetry for create an application
  */
-function trackAppCreationEnd({ orgId, appId }) {
+function trackAppCreationEnd({ orgId, appName }) {
     trackEventWithDefaults({
         name: 'application-create-end',
         properties: {
             orgId: orgId || 'unknown',
-            appId: appId || 'unknown',
+            appName: appName || 'unknown',
             timestamp: new Date().toISOString()
         }
     });
