@@ -55,11 +55,39 @@ function trackAppCreationEnd({ orgId, appName }) {
 }
 
 /**
- * Send telemetry for create an application
+ * Send telemetry for delete an application
  */
 function trackAppDeletion({ orgId, appId }) {
     trackEventWithDefaults({
         name: 'application-delete',
+        properties: {
+            orgId: orgId || 'unknown',
+            appId: appId || 'unknown',
+            timestamp: new Date().toISOString()
+        }
+    });
+}
+
+/**
+ * Send telemetry for generate credentials
+ */
+function trackGenerateCredentials({ orgId, appId }) {
+    trackEventWithDefaults({
+        name: 'generate-credentials',
+        properties: {
+            orgId: orgId || 'unknown',
+            appId: appId || 'unknown',
+            timestamp: new Date().toISOString()
+        }
+    });
+}
+
+/**
+ * Send telemetry for generate key
+ */
+function trackGenerateKey({ orgId, appId }) {
+    trackEventWithDefaults({
+        name: 'generate-key',
         properties: {
             orgId: orgId || 'unknown',
             appId: appId || 'unknown',
