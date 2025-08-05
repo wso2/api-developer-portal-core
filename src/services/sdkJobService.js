@@ -97,8 +97,8 @@ class SDKJobService extends EventEmitter {
                 name: 'Merging API Specifications',
                 weight: 30,
                 title: JOB_STATUS.MERGING,
-                task: async (reportProgress) => {
-                    const result = await this.performMergingTask(jobPayload, reportProgress);
+                task: async () => {
+                    const result = await this.performMergingTask(jobPayload);
                     mergedSpec = result.mergedSpec;
                     apiSpecs = result.apiSpecs;
                     apiHandles = result.apiHandles;
@@ -109,8 +109,8 @@ class SDKJobService extends EventEmitter {
                 name: 'Generating SDK',
                 weight: 20, 
                 title: JOB_STATUS.SDK_GENERATION,
-                task: async (reportProgress) => {
-                    sdkResult = await this.performSdkGenerationTask(jobPayload, mergedSpec, reportProgress);
+                task: async () => {
+                    sdkResult = await this.performSdkGenerationTask(jobPayload, mergedSpec);
                     console.log('SDK generation step completed');
                 }
             },
@@ -118,8 +118,8 @@ class SDKJobService extends EventEmitter {
                 name: 'Generating Application Code',
                 weight: 50,
                 title: JOB_STATUS.APP_CODE_GENERATION,
-                task: async (reportProgress) => {
-                    const result = await this.performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec, reportProgress);
+                task: async () => {
+                    const result = await this.performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec);
                     finalZipPath = result.finalZipPath;
                     baseSdkName = result.baseSdkName;
                     console.log('Application code generation step completed');
@@ -138,21 +138,21 @@ class SDKJobService extends EventEmitter {
                 // Check for cancellation before each step
                 await this.checkJobCancellation(jobId);
 
-                const progressCallback = (stepProgress) => {
-                    const overallProgress = completeWeight + (stepProgress * (step.weight / 100));
-                    this.updateJobStatus(
-                        jobId,
-                        step.title,
-                        Math.min(99, Math.round(overallProgress)),
-                        step.name,
-                        `In progress: ${step.name}...`
-                    );
-                }
+                // const progressCallback = (stepProgress) => {
+                //     const overallProgress = completeWeight + (stepProgress * (step.weight / 100));
+                //     this.updateJobStatus(
+                //         jobId,
+                //         step.title,
+                //         Math.min(99, Math.round(overallProgress)),
+                //         step.name,
+                //         `In progress: ${step.name}...`
+                //     );
+                // }
 
-                await step.task(progressCallback);
-                completeWeight += step.weight;
+                await step.task();
+                // completeWeight += step.weight;
                 
-                console.log(`Step ${step.name} completed. Total progress: ${completeWeight}%`);
+                // console.log(`Step ${step.name} completed. Total progress: ${completeWeight}%`);
                 
                 // Check for cancellation after each step
                 await this.checkJobCancellation(jobId);
@@ -184,9 +184,17 @@ class SDKJobService extends EventEmitter {
         }
     }
 
-    async performMergingTask(jobPayload, reportProgress) {
+    async performMergingTask(jobPayload) {
         try {
-            reportProgress(10); // 10% of 30% = 3% overall
+            //reportProgress(10); // 10% of 30% = 3% overall
+
+            this.updateJobStatus(
+                jobPayload.jobId,
+                JOB_STATUS.MERGING,
+                3,
+                'Merging API Specifications',
+                `In progress: Merging API Specifications...`
+            );
             
             const { selectedAPIs, orgId } = jobPayload;
                         // Get API specifications and handles
@@ -195,7 +203,14 @@ class SDKJobService extends EventEmitter {
             if (apiSpecs.length === 0) {
                 throw new Error('No API specifications found for the selected APIs');
             }
-            reportProgress(80); // 80% of 30% = 24% overall
+            //reportProgress(80); // 80% of 30% = 24% overall
+            this.updateJobStatus(
+                jobPayload.jobId,
+                JOB_STATUS.MERGING,
+                24,
+                'Merging API Specifications',
+                `In progress: Merging API Specifications...`
+            );
 
             const apiHandles = await this.getApiHandlers(orgId, selectedAPIs);
             
@@ -204,7 +219,14 @@ class SDKJobService extends EventEmitter {
                 mergedSpec = JSON.parse(apiSpecs[0].apiSpec);
             } else {
                 const mergeSpecApiRequest = this.prepareSDKGenerationRequest(apiSpecs, apiHandles);
-                reportProgress(90); // 90% of 30% = 27% overall
+                //reportProgress(90); // 90% of 30% = 27% overall
+                this.updateJobStatus(
+                    jobPayload.jobId,
+                    JOB_STATUS.MERGING,
+                    27,
+                    'Merging API Specifications',
+                    `In progress: Merging API Specifications...`
+                );
                 mergedSpec = await this.invokeMergeSpecApi(mergeSpecApiRequest);
                 console.log('Merged API specifications received');
             }
@@ -227,11 +249,18 @@ class SDKJobService extends EventEmitter {
         }
     }
 
-    async performSdkGenerationTask(jobPayload, mergedSpec, reportProgress) {
+    async performSdkGenerationTask(jobPayload, mergedSpec) {
         try {            
             const { sdkConfiguration, orgName, applicationId, jobId } = jobPayload;
             
-            reportProgress(50); // 50% of 20% = 10% overall (40% total)
+            //reportProgress(50); // 50% of 20% = 10% overall (40% total)
+            this.updateJobStatus(
+                jobPayload.jobId,
+                JOB_STATUS.SDK_GENERATION,
+                40,
+                'Generating SDK',
+                `In progress: Generating SDK...`
+            );
             const sdkResult = await this.generateSDKWithOpenAPIGenerator(
                 mergedSpec,
                 sdkConfiguration,
@@ -259,13 +288,27 @@ class SDKJobService extends EventEmitter {
         }
     }
 
-    async performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec, reportProgress) {
+    async performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec) {
         try {
 
-            reportProgress(40); // 40% of 50% = 20% overall (70% total)
+            this.updateJobStatus(
+                jobPayload.jobId,
+                JOB_STATUS.APP_CODE_GENERATION,
+                70,
+                'Generating Application Code',
+                `In progress: Generating Application Code...`
+            );
+
             const result = await this.processAIModeSDK(sdkResult, mergedSpec, jobPayload.sdkConfiguration);
-            
-            reportProgress(100); // 100% of 50% = 50% overall (100% total)
+
+            this.updateJobStatus(
+                jobPayload.jobId,
+                JOB_STATUS.APP_CODE_GENERATION,
+                100,
+                'Generating Application Code',
+                `In progress: Generating Application Code...`
+            );
+
             return {
                 finalZipPath: result
             };
@@ -295,17 +338,17 @@ class SDKJobService extends EventEmitter {
             };
 
             const updatedJob = await SdkJob.updateJob(jobId, updateData);
-            if (updatedJob) {
-                this.activeJobs.set(jobId, updatedJob);
-                            // Emit progress event
-                this.emitProgress(jobId, {
-                    status: status.toLowerCase(),
-                    progress: progress,
-                    currentStep: currentStep,
-                    message: message || this.getDefaultMessage(status),
-                    resultData: resultData
-                });
-            }
+            // if (updatedJob) {
+            this.activeJobs.set(jobId, updatedJob);
+            // Emit progress event
+            await this.emitProgress(jobId, {
+                status: status.toLowerCase(),
+                progress: progress,
+                currentStep: currentStep,
+                message: message || this.getDefaultMessage(status),
+                resultData: resultData
+            });
+            // }
             
             return updatedJob;
         } catch (error) {
@@ -484,7 +527,7 @@ class SDKJobService extends EventEmitter {
         return `${orgId}-${applicationId}-${randomPostfix}`;
     }
 
-    emitProgress(jobId, progressData) {
+    async emitProgress(jobId, progressData) {
         this.emit('progress', {
             jobId,
             ...progressData
@@ -1003,6 +1046,14 @@ class SDKJobService extends EventEmitter {
             
             const finalZipPath = path.join(permanentDir, zipFileName);
             await this.createZipArchive(sdkPath, finalZipPath);
+
+            // need to write logic to check whether the zip file is exist in finalZipPath
+            const zipExists = await this.isFileExists(finalZipPath);
+
+            if (!zipExists) {
+                throw new Error(`Final ZIP file not created: ${finalZipPath}`);
+            }
+
             console.log(`Final ZIP created: ${finalZipPath}`);
             
             // Clean up SDK folder
@@ -1025,6 +1076,19 @@ class SDKJobService extends EventEmitter {
             
             throw error;
         }
+    }
+
+    async isFileExists(filePath) {
+        let retryCount = 0;
+        for (retryCount = 0; retryCount < 4; retryCount++) {
+            console.log(`Checking if file exists: ${filePath} (Attempt ${retryCount + 1})`);
+            let exists = await fs.promises.access(filePath).then(() => true).catch(() => false);
+            if (exists) {
+                return true;
+            }
+            await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds before retrying
+        }
+        return false;
     }
 
     /**
@@ -1373,211 +1437,6 @@ class SDKJobService extends EventEmitter {
             archive.finalize();
         });
     }
-
-    // ***** Route Handler Methods *****
-
-    /**
-     * Route handler for SDK generation
-     * Validates input and creates SDK generation job
-     */
-    generateSDK = async (req, res) => {
-        try {
-            const { selectedAPIs, sdkConfiguration, orgName } = req.body;
-            const { applicationId } = req.params;
-
-            // Validate input
-            if (!orgName) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Organization name is required'
-                });
-            }
-
-            if (!selectedAPIs || selectedAPIs.length < 1) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'At least 1 API must be selected for SDK generation'
-                });
-            }
-
-            if (!sdkConfiguration) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Please provide SDK configuration details'
-                });
-            }
-
-            // Validate AI description is provided
-            if (!sdkConfiguration.description || sdkConfiguration.description.trim() === '') {
-                return res.status(400).json({
-                    success: false,
-                    message: 'AI description is required for SDK generation'
-                });
-            }
-
-            // Convert orgName to orgId
-            const orgId = await this.orgIDValue(orgName);
-            
-            // Create job for tracking progress
-            const jobPayload = {
-                selectedAPIs,
-                sdkConfiguration,
-                orgName,
-                applicationId,
-                orgId
-            };
-            const job = await this.createJob(orgId, applicationId, jobPayload);
-            const jobId = job.JOB_ID;
-
-            // Send immediate response with job ID
-            res.json({
-                success: true,
-                message: 'SDK generation job started successfully',
-                data: {
-                    jobId: jobId,
-                    status: JOB_STATUS.PENDING,
-                    progress: 0,
-                    currentStep: 'Initializing',
-                    sseEndpoint: `/devportal/applications/${applicationId}/sdk/job-progress/${jobId}`
-                }
-            });
-            
-        } catch (error) {
-            console.error('Error starting SDK generation job:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Error starting SDK generation job',
-                error: error.message
-            });
-        }
-    };
-
-    /**
-     * Route handler for SDK job progress streaming via SSE
-     * Establishes Server-Sent Events connection for real-time progress updates
-     */
-    streamSDKProgress = (req, res) => {
-        try {
-            const { jobId } = req.params;
-        
-            res.writeHead(200, {
-                'Content-Type': 'text/event-stream',
-                'Cache-Control': 'no-cache',
-                'Connection': 'keep-alive',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Cache-Control',
-                'X-Accel-Buffering': 'no',
-                'X-Content-Type-Options': 'nosniff'
-            });
-
-            console.log(`Client connected to SSE for job: ${jobId}`);
-
-            const onProgress = (progressData) => {
-                if (progressData.jobId === jobId) {
-                    console.log(`Progress update for job ${jobId} step [${progressData.currentStep}] progress ${progressData.progress}%`);
-                    const dataToSend = { ...progressData, type: 'progress' };
-                    res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
-
-                    // Close SSE connection after sending completion or failure events
-                    if (progressData.status === 'completed' || progressData.status === 'failed' || progressData.status === 'cancelled') {
-                        console.log(`Closing SSE connection for job ${jobId} after ${progressData.status} event`);
-                        this.removeListener('progress', onProgress);
-
-                        // Close the connection after a brief delay to ensure the client receives the final event
-                        setTimeout(() => {
-                            try {
-                                res.end();
-                            } catch (error) {
-                                console.warn(`Error closing SSE connection for job ${jobId}:`, error.message);
-                            }
-                        }, 100);
-                    }
-                }
-            };
-
-            this.on('progress', onProgress);
-
-            // Send initial ping
-            res.write(`data: ${JSON.stringify({ type: 'ping', jobId })}\n\n`);
-
-            req.on('close', () => {
-                console.log(`Client disconnected from SSE for job: ${jobId}`);
-                this.removeListener('progress', onProgress);
-            });
-        } catch (error) {
-            console.error('Error in SDK progress streaming:', error);
-            res.status(500).end(`Error: ${error.message}`);
-        }
-    };
-
-    /**
-     * Route handler for SDK job cancellation
-     * Cancels an ongoing SDK generation job
-     */
-    cancelSDK = async (req, res) => {
-        try {
-            const { jobId } = req.params;
-            
-            console.log(`Received request to cancel SDK job: ${jobId}`);
-            
-            await this.cancelJob(jobId);
-            
-            res.status(200).json({ 
-                success: true, 
-                message: 'SDK generation cancelled successfully',
-                jobId: jobId
-            });
-            
-        } catch (error) {
-            console.error('Error cancelling SDK generation:', error);
-            res.status(500).json({ 
-                success: false, 
-                error: error.message || 'Failed to cancel SDK generation'
-            });
-        }
-    };
-
-    /**
-     * Route handler for SDK download
-     * Serves the generated SDK ZIP file for download
-     */
-    downloadSDK = async (req, res) => {
-        try {
-            const { filename } = req.params;
-            const filePath = path.join(process.cwd(), 'generated-sdks', filename);
-
-            const normalizedPath = path.normalize(filePath);
-            const expectedDir = path.join(process.cwd(), 'generated-sdks');
-
-            if (!normalizedPath.startsWith(expectedDir)) {
-                return res.status(403).json({ error: 'Access denied' });
-            }
-
-            if (!fs.existsSync(filePath)) {
-                return res.status(404).json({ error: 'SDK file not found' });
-            }
-
-            res.setHeader('Content-Type', 'application/zip');
-            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-
-            // Stream the file
-            const fileStream = fs.createReadStream(filePath);
-            fileStream.pipe(res);
-
-            fileStream.on('error', (err) => {
-                console.error('Error streaming SDK file:', err);
-                res.status(500).json({ error: 'Error downloading SDK' });
-            });
-            
-        } catch (error) {
-            console.error('Error downloading SDK:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Error downloading SDK file',
-                error: error.message
-            });
-        }
-    };
 }
 
 const JOB_STATUS = {
@@ -1590,7 +1449,8 @@ const JOB_STATUS = {
     CANCELLED: 'CANCELLED'
 }
 
-// Create singleton instance
 const sdkJobService = new SDKJobService();
 
 module.exports = sdkJobService;
+module.exports.SDKJobService = SDKJobService;
+module.exports.JOB_STATUS = JOB_STATUS;
