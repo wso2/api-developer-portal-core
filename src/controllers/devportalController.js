@@ -30,6 +30,7 @@ const { Sequelize } = require("sequelize");
 const adminService = require('../services/adminService');
 const apiDao = require('../dao/apiMetadata');
 const sdkJobService = require('../services/sdkJobService');
+const redisService = require('../services/redisService');
 const path = require('path');
 const fs = require('fs');
 
@@ -423,7 +424,7 @@ const streamSDKProgress = (req, res) => {
                 // Close SSE connection after sending completion or failure events
                 if (progressData.status === 'completed' || progressData.status === 'failed' || progressData.status === 'cancelled') {
                     console.log(`Closing SSE connection for job ${jobId} after ${progressData.status} event`);
-                    sdkJobService.removeListener('progress', onProgress);
+                    redisService.removeListener('progress', onProgress);
 
                     // Close the connection after a brief delay to ensure the client receives the final event
                     setTimeout(() => {
@@ -437,14 +438,14 @@ const streamSDKProgress = (req, res) => {
             }
         };
 
-        sdkJobService.on('progress', onProgress);
+        redisService.on('progress', onProgress);
 
         // Send initial ping
         res.write(`data: ${JSON.stringify({ type: 'ping', jobId })}\n\n`);
 
         req.on('close', () => {
             console.log(`Client disconnected from SSE for job: ${jobId}`);
-            sdkJobService.removeListener('progress', onProgress);
+            redisService.removeListener('progress', onProgress);
         });
     } catch (error) {
         console.error('Error in SDK progress streaming:', error);
@@ -487,33 +488,81 @@ const downloadSDK = async (req, res) => {
     try {
         const { filename } = req.params;
         const filePath = path.join(process.cwd(), 'generated-sdks', filename);
+        const fileKey = path.basename(filename, '.zip');
 
-        const normalizedPath = path.normalize(filePath);
+        console.log(`Download request for SDK file: ${filename} Redis Key: ${fileKey}`);
+
+        const redisFile = await redisService.retrieveFile(fileKey);
+
+        if (redisFile) {
+            console.log(`Found SDK file in Redis cache: ${fileKey}`);
+
+            res.setHeader('Content-Type', 'application/zip');
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+            // res.setHeader('Content-Length', redisFile.metadata.size);
+            res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+            res.setHeader('Expires', '0');
+            res.setHeader('Pragma', 'no-cache');
+
+            res.send(redisFile.data);
+            console.log(`Streaming SDK file from Redis cache: ${filename}`);
+            return;
+        }
+
+        console.log(`📭 File not found in Redis, checking local filesystem: ${filename}`);
+
+        const localFilePath = path.join(process.cwd(), 'generated-sdks', filename);
+        const normalizedPath = path.normalize(localFilePath);
         const expectedDir = path.join(process.cwd(), 'generated-sdks');
 
+        // Security check for path traversal
         if (!normalizedPath.startsWith(expectedDir)) {
+            console.warn(`🚫 Path traversal attempt detected: ${filename}`);
             return res.status(403).json({ error: 'Access denied' });
         }
 
-        if (!fs.existsSync(filePath)) {
-            return res.status(404).json({ error: 'SDK file not found' });
+        // Check if local file exists
+        const localFileExists = await fs.promises.access(localFilePath).then(() => true).catch(() => false);
+        
+        if (!localFileExists) {
+            console.error(`❌ File not found in Redis or local filesystem: ${filename}`);
+            return res.status(404).json({ 
+                error: 'SDK file not found',
+                message: 'The requested SDK file is not available. It may have expired or been cleaned up.',
+                filename: filename
+            });
         }
 
+        console.log(`📁 File found locally: ${filename}`);
+        
+        // Get file stats for local file
+        const stats = await fs.promises.stat(localFilePath);
+        
+        // Set response headers for local file
         res.setHeader('Content-Type', 'application/zip');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Length', stats.size);
+        res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+        res.setHeader('Expires', '0');
+        res.setHeader('Pragma', 'no-cache');
 
-        console.log(`Streaming SDK file: ${filename} from ${filePath}`);
+        console.log(`📤 Streaming file from local filesystem: ${filename} (${stats.size} bytes)`);
 
-        showGeneratedSdksContent();
-
-        // Stream the file
-        const fileStream = fs.createReadStream(filePath);
-        fileStream.pipe(res);
-
-        fileStream.on('error', (err) => {
-            console.error('Error streaming SDK file:', err);
-            res.status(500).json({ error: 'Error downloading SDK' });
+        // Stream the local file
+        const fileStream = fs.createReadStream(localFilePath);
+        
+        fileStream.on('error', (streamError) => {
+            console.error(`❌ Error streaming local file: ${streamError.message}`);
+            if (!res.headersSent) {
+                res.status(500).json({ error: 'Error streaming file' });
+            }
         });
+
+        fileStream.on('end', () => {
+            console.log(`✅ Local file download completed: ${filename}`);
+        });
+
+        fileStream.pipe(res);
         
     } catch (error) {
         console.error('Error downloading SDK:', error);
