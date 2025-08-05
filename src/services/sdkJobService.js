@@ -37,7 +37,7 @@ const secret = require(process.cwd() + '/secret.json');
 class SDKJobService extends EventEmitter {
     constructor() {
         super();
-        this.activeJobs = new Map();
+        //this.activeJobs = new Map();
         this.sdkCleanupInterval = null; // Store cleanup interval reference
     }
 
@@ -64,7 +64,7 @@ class SDKJobService extends EventEmitter {
         };
         
         const job = await SdkJob.createJob(jobData);
-        this.activeJobs.set(jobId, job);
+        //this.activeJobs.set(jobId, job);
         
         // Emit initial progress
         this.emitProgress(jobId, {
@@ -339,7 +339,7 @@ class SDKJobService extends EventEmitter {
 
             const updatedJob = await SdkJob.updateJob(jobId, updateData);
             // if (updatedJob) {
-            this.activeJobs.set(jobId, updatedJob);
+            //this.activeJobs.set(jobId, updatedJob);
             // Emit progress event
             await this.emitProgress(jobId, {
                 status: status.toLowerCase(),
@@ -383,7 +383,7 @@ class SDKJobService extends EventEmitter {
             const updatedJob = await SdkJob.updateJob(jobId, updateData);
             
             // Remove from active jobs
-            this.activeJobs.delete(jobId);
+            //this.activeJobs.delete(jobId);
             
             // Clean up any generated files for this job
             await this.cleanupJobFiles(jobId);
@@ -476,7 +476,7 @@ class SDKJobService extends EventEmitter {
 
             const updatedJob = await SdkJob.updateJob(jobId, updateData);
             if (updatedJob) {
-                this.activeJobs.set(jobId, updatedJob);
+                //this.activeJobs.set(jobId, updatedJob);
                 
                 this.emitProgress(jobId, {
                     status: 'failed',
@@ -497,7 +497,7 @@ class SDKJobService extends EventEmitter {
     }
 
     async completeJob(jobId, resultData = null) {
-        this.activeJobs.delete(jobId); // Remove from active jobs
+        //this.activeJobs.delete(jobId); // Remove from active jobs
         return await this.updateJobStatus(
             jobId, 
             JOB_STATUS.COMPLETED, 
@@ -509,13 +509,13 @@ class SDKJobService extends EventEmitter {
     }
 
     async getJob(jobId) {
-        if (this.activeJobs.has(jobId)) {
-            return this.activeJobs.get(jobId);
-        }
+        // if (this.activeJobs.has(jobId)) {
+        //     return this.activeJobs.get(jobId);
+        // }
         
         const job = await SdkJob.getJobById(jobId);
         if (job) {
-            this.activeJobs.set(jobId, job);
+            // this.activeJobs.set(jobId, job);
             return job;
         }
         
