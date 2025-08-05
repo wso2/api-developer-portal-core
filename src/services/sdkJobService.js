@@ -34,7 +34,7 @@ const { exec } = require('child_process');
 const { promisify } = require('util');
 const execAsync = promisify(exec);
 const secret = require(process.cwd() + '/secret.json');
-const progressBroadcaster = require('./progressBroadcaster');
+const redisService = require('./redisService');
 const { report } = require('process');
 
 class SDKJobService extends EventEmitter {
@@ -49,7 +49,7 @@ class SDKJobService extends EventEmitter {
 
     setupProgressBroadcasting() {
         // Listen to Redis progress events and re-emit locally for SSE connections
-        progressBroadcaster.on('progress', (progressData) => {
+        redisService.on('progress', (progressData) => {
             // Re-emit on local EventEmitter for this pod's SSE connections
             super.emit('progress', progressData);
         });
@@ -104,7 +104,7 @@ class SDKJobService extends EventEmitter {
     }
 
     async runJob(jobId, jobPayload) {
-        let mergedSpec, apiSpecs, apiHandles, sdkResult, finalZipPath, baseSdkName;
+        let mergedSpec, apiSpecs, apiHandles, sdkResult, finalZipPath, baseSdkName, redisKey;
 
         jobPayload = { ...jobPayload, jobId };
 
@@ -137,6 +137,7 @@ class SDKJobService extends EventEmitter {
                 task: async (reportProgress) => {
                     const result = await this.performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec, reportProgress);
                     finalZipPath = result.finalZipPath;
+                    redisKey = result.redisKey;
                     baseSdkName = result.baseSdkName;
                     console.log('Application code generation step completed');
                 }
@@ -189,7 +190,8 @@ class SDKJobService extends EventEmitter {
                 finalDownloadUrl: `/devportal/sdk/download/${path.basename(finalZipPath || `${jobId}.zip`)}`,
                 applicationCodeGenerated: true,
                 mode: 'ai',
-                downloadPath: finalZipPath
+                downloadPath: finalZipPath,
+                redisKey: redisKey
             };
             
             await this.completeJob(jobId, resultData);
@@ -329,7 +331,8 @@ class SDKJobService extends EventEmitter {
             reportProgress(100); // 100% of 50% = 50% overall (100% total)
 
             return {
-                finalZipPath: result
+                finalZipPath: result.finalZipPath,
+                redisKey: result.redisKey
             };
         } catch (error) {
             console.error('Error during application code generation step:', error);
@@ -553,12 +556,12 @@ class SDKJobService extends EventEmitter {
         };
 
         // Try to broadcast via Redis for multi-pod support
-        const broadcasted = await progressBroadcaster.publishProgress(jobId, progressData);
+        const broadcasted = await redisService.publishProgress(jobId, progressData);
         
         if (!broadcasted) {
             // Fallback to local emission if Redis is not available
             console.warn(`⚠️ Redis broadcasting failed for job ${jobId}, using local emission`);
-            progressBroadcaster.emitLocal(jobId, progressData);
+            redisService.emitLocal(jobId, progressData);
         }
     }
 
@@ -906,8 +909,10 @@ class SDKJobService extends EventEmitter {
                 finalZipName
             );
 
-            return finalZipResult.finalZipPath;
-            
+            return {
+                finalZipPath: finalZipResult.finalZipPath,
+                redisKey: finalZipResult.redisKey
+            }
         } catch (error) {
             console.error('Error processing AI mode SDK:', error);
             throw error;
@@ -1083,6 +1088,16 @@ class SDKJobService extends EventEmitter {
             }
 
             console.log(`Final ZIP created: ${finalZipPath}`);
+
+            const fileKey = path.basename(zipFileName, '.zip');
+            const zipStored = await redisService.storeFile(fileKey, finalZipPath, 3600);
+
+            if (!zipStored) {
+                console.warn(`Failed to store final ZIP in Redis: ${fileKey}`);
+                throw new Error(`Failed to store final ZIP in Redis: ${fileKey}`);
+            }
+
+            console.log(`Final ZIP stored in Redis with key: ${fileKey}`);
             
             // Clean up SDK folder
             await fs.promises.rm(sdkPath, { recursive: true, force: true });
@@ -1093,6 +1108,7 @@ class SDKJobService extends EventEmitter {
             
             return {
                 finalZipPath: finalZipPath,
+                redisKey: fileKey
             };
             
         } catch (error) {

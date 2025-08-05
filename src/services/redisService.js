@@ -23,17 +23,22 @@
 const Redis = require('ioredis');
 const EventEmitter = require('events');
 const config = require(process.cwd() + '/config');
+const path = require('path');
+const fs = require('fs');
 
-class ProgressBroadcaster extends EventEmitter {
+class RedisService extends EventEmitter {
     constructor() {
         super();
+        this.redis = null;
         this.publisher = null;
         this.subscriber = null;
         this.isConnected = false;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
         this.podId = process.env.POD_NAME || `pod-${Math.random().toString(36).substr(2, 9)}`;
-        
+        this.maxFileSize = 50 * 1024 * 1024; // 50 MB
+        this.defaultTTL = 3600;
+
         this.init();
     }
 
@@ -48,13 +53,15 @@ class ProgressBroadcaster extends EventEmitter {
                 maxRetriesPerRequest: 3,
                 lazyConnect: true,
                 connectTimeout: 10000,
-                commandTimeout: 5000
+                commandTimeout: 5000,
+                keyPrefix: 'sdkfiles:'
             };
 
+            this.redis = new Redis(redisConfig);
             this.publisher = new Redis(redisConfig);
             this.subscriber = new Redis(redisConfig);
 
-            this.setupEventHandlers();
+            await this.setupEventHandlers();
 
             await this.connect();
 
@@ -66,7 +73,7 @@ class ProgressBroadcaster extends EventEmitter {
         }
     }
 
-    setupEventHandlers() {
+    async setupEventHandlers() {
 
         this.publisher.on('connect', () => {
             console.log(`Publisher connected to Redis from pod: ${this.podId}`);
@@ -109,13 +116,29 @@ class ProgressBroadcaster extends EventEmitter {
             console.warn(`Redis subscriber connection closed on pod: ${this.podId}`);
             this.scheduleReconnect();
         });
+
+        this.redis.on('connect', () => {
+                console.log('✅ Redis file storage connected successfully');
+                this.isConnected = true;
+        });
+
+        this.redis.on('error', (error) => {
+            console.error('❌ Redis file storage connection error:', error.message);
+            this.isConnected = false;
+        });
+
+        this.redis.on('close', () => {
+            console.log('🔌 Redis file storage connection closed');
+            this.isConnected = false;
+        });
     }
 
     async connect() {
         try {
             await Promise.all([
                 this.publisher.connect(),
-                this.subscriber.connect()
+                this.subscriber.connect(),
+                this.redis.connect()
             ]);
 
             // Subscribe to progress events
@@ -124,7 +147,7 @@ class ProgressBroadcaster extends EventEmitter {
             this.isConnected = true;
             this.reconnectAttempts = 0;
             
-            console.log(`ProgressBroadcaster fully connected on pod: ${this.podId}`);
+            console.log(`RedisService fully connected on pod: ${this.podId}`);
             
         } catch (error) {
             console.error('Failed to connect to Redis:', error);
@@ -202,22 +225,107 @@ class ProgressBroadcaster extends EventEmitter {
         this.emit('progress', { ...progressData, jobId });
     }
 
+    async storeFile(fileKey, filePath, ttl = this.defaultTTL) {
+        if (!this.isConnected) {
+            console.warn(`Cannot store file - Redis not connected on pod: ${this.podId}`);
+            return false;
+        }
+
+        try {
+            console.log(`Storing file ${fileKey} from ${filePath}`);
+
+            const fileExists = await fs.promises.access(filePath).then(() => true).catch(() => false);
+            if (!fileExists) {
+                throw new Error(`File does not exist: ${filePath}`);
+            }
+
+            const stats = await fs.promises.stat(filePath);
+            if (stats.size > this.maxFileSize) {
+                throw new Error(`File too large: ${stats.size} bytes (max: ${this.maxFileSize})`);
+            }
+
+            const fileBuffer = await fs.promises.readFile(filePath);
+
+            const pipeline = this.redis.pipeline();
+            pipeline.setex(`${fileKey}:data`, ttl, fileBuffer)
+
+            const result = await pipeline.exec();
+
+            const dataStored = result[0][1] === 'OK';
+
+            if (dataStored) {
+                console.log(`✅ File stored in Redis successfully: ${fileKey} (${stats.size} bytes)`);
+                return true;
+            } else {
+                throw new Error('Failed to store file in Redis');
+            }
+        } catch (error) {
+            console.error(`❌ Error storing file ${fileKey}:`, error.message);
+            return false;
+        }
+    }
+
+    async retrieveFile(fileKey) {
+        if (!this.isConnected) {
+            console.warn(`Cannot retrieve file - Redis not connected on pod: ${this.podId}`);
+            return null;
+        }
+
+        try {
+            console.log(`Retrieving file ${fileKey} from Redis`);
+
+            const pipeline = this.redis.pipeline();
+            pipeline.getBuffer(`${fileKey}:data`);
+            
+            const result = await pipeline.exec();
+
+            const fileBuffer = result[0][1];
+            if (!fileBuffer) {
+                console.warn(`File not found in Redis: ${fileKey}`);
+                return null;
+            }
+
+            console.log(`✅ File retrieved successfully: ${fileKey} (${fileBuffer.length} bytes)`);
+            return {
+                data: fileBuffer
+            }
+
+        } catch (error) {
+            console.error(`❌ Error retrieving file ${fileKey}:`, error.message);
+            return null;
+        }
+    }
+
+    async fileExists(fileKey) {
+        if (!this.isConnected) {
+            return false;
+        }
+
+        try {
+            const exists = await this.redis.exists(`${fileKey}:data`);
+            return exists === 1;
+        } catch (error) {
+            console.error(`❌ Error checking file existence in Redis: ${error.message}`);
+            return false;
+        }
+    }
+
 }
 
 // Create singleton instance
-const progressBroadcaster = new ProgressBroadcaster();
+const redisService = new RedisService();
 
 process.on('SIGTERM', async () => {
     console.log('🛑 SIGTERM received, closing Redis connections...');
-    await progressBroadcaster.disconnect();
+    await redisService.disconnect();
     process.exit(0);
 });
 
 process.on('SIGINT', async () => {
     console.log('🛑 SIGINT received, closing Redis connections...');
-    await progressBroadcaster.disconnect();
+    await redisService.disconnect();
     process.exit(0);
 });
 
-module.exports = progressBroadcaster;
-module.exports.ProgressBroadcaster = ProgressBroadcaster;
+module.exports = redisService;
+module.exports.ProgressBroadcaster = RedisService;
