@@ -521,6 +521,58 @@ const downloadSDK = async (req, res) => {
     }
 };
 
+/**
+ * Route handler for SDK job status polling
+ * Returns current job status from the database
+ */
+const statusSDK = async (req, res) => {
+    try {
+        const { jobId } = req.params;
+        
+        console.log(`Status request for SDK job: ${jobId}`);
+        
+        const job = await sdkJobService.getJob(jobId);
+        
+        if (!job) {
+            return res.status(404).json({
+                success: false,
+                message: 'Job not found'
+            });
+        }
+
+        let resultData = {};
+        if (job.JOB_STATUS === JOB_STATUS.COMPLETED) {
+            const permanentDir = path.join(process.cwd(), 'generated-sdks');
+            const zipFileName = `${jobId}-sdk.zip`;
+
+            const finalZipPath = path.join(permanentDir, zipFileName);
+
+            resultData = {
+                finalDownloadUrl: `/devportal/sdk/download/${path.basename(finalZipPath || `${jobId}.zip`)}`,
+            };
+        }
+
+        res.json({
+            success: true,
+            data: {
+                jobId: jobId,
+                JOB_STATUS: job.JOB_STATUS,
+                CURRENT_STEP: job.CURRENT_STEP,
+                PROGRESS: job.PROGRESS || 0,
+                resultData: resultData
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error getting SDK job status:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error getting SDK job status',
+            error: error.message
+        });
+    }
+};
+
 // Create singleton instance
 // const sdkJobService = new SDKJobService();
 
@@ -551,5 +603,6 @@ module.exports = {
     generateSDK,
     streamSDKProgress,
     cancelSDK,
-    downloadSDK
+    downloadSDK,
+    statusSDK
 };

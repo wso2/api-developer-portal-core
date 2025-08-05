@@ -271,6 +271,11 @@ function proceedWithDrawerClosure() {
         window.currentSDKEventSource = null;
     }
     
+    if (window.currentSDKPollingInterval) {
+        clearInterval(window.currentSDKPollingInterval);
+        window.currentSDKPollingInterval = null;
+    }
+    
     document.removeEventListener('keydown', handleEscapeKey);
     
     const drawer = document.getElementById('sdkDrawer');
@@ -496,14 +501,45 @@ function generateSDKFromDrawerInternal(language) {
 /**
  * Establishes Server-Sent Events connection for real-time progress updates
  * Handles progress messages, completion, and error states
- * Manages EventSource lifecycle and cleanup
- * @param {string} jobId - The unique identifier for the SDK generation job
+ * Manages EventSource lifecycle and cleanup with 30-second timeout fallback to polling
  * @param {string} sseEndpoint - The SSE endpoint URL for progress updates
  */
 function startSDKProgressStream(sseEndpoint) {
     const eventSource = new EventSource(sseEndpoint);
+    let sseTimeout;
+    let hasSwitchedToPolling = false;
+    let lastEventTime = Date.now();
+    
+    // Extract jobId from SSE endpoint for polling
+    const jobIdMatch = sseEndpoint.match(/\/job-progress\/([^\/]+)$/);
+    const jobId = jobIdMatch ? jobIdMatch[1] : null;
+    
+    // Set 30-second timeout to switch to polling
+    sseTimeout = setTimeout(() => {
+        if (!hasSwitchedToPolling) {
+            console.log('SSE timeout: No events received within 30 seconds, switching to polling');
+            eventSource.close();
+            hasSwitchedToPolling = true;
+            startPollingSDKProgress(jobId);
+        }
+    }, 30000);
 
     eventSource.onmessage = function(event) {
+        if (hasSwitchedToPolling) return; // Ignore SSE events after switching to polling
+        
+        lastEventTime = Date.now();
+        clearTimeout(sseTimeout); // Reset timeout on successful event
+        
+        // Set new timeout for next event
+        sseTimeout = setTimeout(() => {
+            if (!hasSwitchedToPolling) {
+                console.log('SSE timeout: No events received within 30 seconds, switching to polling');
+                eventSource.close();
+                hasSwitchedToPolling = true;
+                startPollingSDKProgress(jobId);
+            }
+        }, 30000);
+        
         try {
             const data = JSON.parse(event.data);
             console.log('SSE Progress Update:', data);
@@ -515,9 +551,11 @@ function startSDKProgressStream(sseEndpoint) {
                 updateProgressStatus(data.currentStep, data.message);
 
                 if (data.status === 'completed') {
+                    clearTimeout(sseTimeout);
                     eventSource.close();
                     handleSDKGenerationComplete(data);
                 } else if (data.status === 'failed') {
+                    clearTimeout(sseTimeout);
                     eventSource.close();
                     hideSDKGenerationLoading();
                     showSDKGenerationError(data.message || data.error || 'SDK generation failed');
@@ -525,6 +563,7 @@ function startSDKProgressStream(sseEndpoint) {
             } else if (data.type === 'ping') {
                 console.log('SSE Keep alive ping received');
             } else if (data.type === 'error') {
+                clearTimeout(sseTimeout);
                 eventSource.close();
                 hideSDKGenerationLoading();
                 showSDKGenerationError(data.message || 'SDK generation failed');
@@ -535,15 +574,113 @@ function startSDKProgressStream(sseEndpoint) {
     };
 
     eventSource.onerror = function(error) {
+        if (hasSwitchedToPolling) return; // Ignore SSE errors after switching to polling
+        
         console.error('SSE error:', error);
+        clearTimeout(sseTimeout);
         eventSource.close();
         
-        hideSDKGenerationLoading();
-        showSDKGenerationError('Connection lost. Please try again.');
+        if (!hasSwitchedToPolling) {
+            hasSwitchedToPolling = true;
+            startPollingSDKProgress(jobId);
+        }
     };
     
     // Store reference for cleanup
     window.currentSDKEventSource = eventSource;
+}
+
+/**
+ * Starts polling the SDK job status every 5 seconds as fallback to SSE
+ * @param {string} jobId - The job ID to poll for status
+ */
+function startPollingSDKProgress(jobId) {
+    if (!jobId) {
+        console.error('Cannot start polling: jobId is missing');
+        return;
+    }
+    
+    console.log('Starting SDK progress polling for job:', jobId);
+    let previousStep = null;
+    let pollingInterval;
+    
+    const pollStatus = async () => {
+        try {
+            const applicationId = getApplicationId();
+            
+            const response = await fetch(`/devportal/applications/${applicationId}/sdk/status/${jobId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Polling failed: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            console.log('Polling Status Update:', result.data);
+            
+            const { JOB_STATUS, CURRENT_STEP, PROGRESS, resultData } = result.data;
+            
+            // Only update progress if step has changed
+            if (CURRENT_STEP !== previousStep) {
+                console.log(`Step changed: ${previousStep} -> ${CURRENT_STEP}`);
+                previousStep = CURRENT_STEP;
+                
+                stopProgressAnimation();
+                updateProgressBar(PROGRESS);
+                updateProgressStatus(CURRENT_STEP, getDefaultStepMessage(JOB_STATUS));
+            }
+            
+            // Handle completion states
+            if (JOB_STATUS === 'COMPLETED') {
+                clearInterval(pollingInterval);
+                handleSDKGenerationComplete({
+                    status: 'completed',
+                    progress: 100,
+                    currentStep: CURRENT_STEP,
+                    message: 'SDK generation completed successfully',
+                    resultData: resultData || {}
+                });
+            } else if (JOB_STATUS === 'FAILED') {
+                clearInterval(pollingInterval);
+                hideSDKGenerationLoading();
+                showSDKGenerationError('SDK generation failed');
+            }
+            
+        } catch (error) {
+            console.error('Polling error:', error);
+            clearInterval(pollingInterval);
+            hideSDKGenerationLoading();
+            showSDKGenerationError('Connection lost. Please try again.');
+        }
+    };
+    
+    // Start polling immediately and then every 5 seconds
+    pollStatus();
+    pollingInterval = setInterval(pollStatus, 5000);
+    
+    // Store reference for cleanup
+    window.currentSDKPollingInterval = pollingInterval;
+}
+
+/**
+ * Get default message for job status
+ * @param {string} status - Job status
+ * @returns {string} - Default message
+ */
+function getDefaultStepMessage(status) {
+    const messages = {
+        'PENDING': 'Job is pending',
+        'MERGING': 'Merging API specifications',
+        'SDK_GENERATION': 'Generating SDK',
+        'APP_CODE_GENERATION': 'Generating application code',
+        'COMPLETED': 'Job completed successfully',
+        'FAILED': 'Job failed'
+    };
+    return messages[status] || 'Processing...';
 }
 
 /**
@@ -1086,6 +1223,12 @@ function cancelSDKGeneration() {
         window.currentSDKEventSource.close();
         window.currentSDKEventSource = null;
         console.log('SSE connection closed');
+    }
+    
+    if (window.currentSDKPollingInterval) {
+        clearInterval(window.currentSDKPollingInterval);
+        window.currentSDKPollingInterval = null;
+        console.log('SDK polling stopped');
     }
     
     stopProgressAnimation();

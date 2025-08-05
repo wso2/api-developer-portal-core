@@ -998,8 +998,8 @@ class SDKJobService extends EventEmitter {
      * @returns {string} - Final SDK filename
      */
     createSDKFileName(baseSdkName, isAIMode) {        
-        const suffix = isAIMode ? 'with-app' : '';
-        return `${baseSdkName}-${suffix}.zip`;
+        // const suffix = isAIMode ? 'with-app' : '';
+        return `${baseSdkName}.zip`;
     }
 
     /**
