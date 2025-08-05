@@ -1048,7 +1048,7 @@ class SDKJobService extends EventEmitter {
             await this.createZipArchive(sdkPath, finalZipPath);
 
             // need to write logic to check whether the zip file is exist in finalZipPath
-            const zipExists = await this.isFileExists(finalZipPath);
+            const zipExists = await this.isFileExists(finalZipPath, sdkPath);
 
             if (!zipExists) {
                 throw new Error(`Final ZIP file not created: ${finalZipPath}`);
@@ -1059,6 +1059,9 @@ class SDKJobService extends EventEmitter {
             // Clean up SDK folder
             await fs.promises.rm(sdkPath, { recursive: true, force: true });
             console.log('Cleaned up SDK folder');
+
+            // Show content of generated-sdks folder for debugging
+            // await this.showGeneratedSdksContent();
             
             return {
                 finalZipPath: finalZipPath,
@@ -1078,16 +1081,49 @@ class SDKJobService extends EventEmitter {
         }
     }
 
-    async isFileExists(filePath) {
+    async isFileExists(filePath, sdkPath = null) {
         let retryCount = 0;
+        
+        // First attempt: Check 4 times with exponential backoff
         for (retryCount = 0; retryCount < 4; retryCount++) {
             console.log(`Checking if file exists: ${filePath} (Attempt ${retryCount + 1})`);
             let exists = await fs.promises.access(filePath).then(() => true).catch(() => false);
             if (exists) {
                 return true;
             }
-            await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds before retrying
+            
+            // Exponential backoff: 2s, 4s, 8s, 16s
+            const waitTime = Math.pow(2, retryCount + 1) * 1000;
+            console.log(`File not found, waiting ${waitTime}ms before next attempt...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
         }
+        
+        // If file still doesn't exist and we have sdkPath, re-run createZipArchive
+        if (sdkPath) {
+            console.log(`File still not found after 4 attempts. Re-running createZipArchive for: ${filePath}`);
+            try {
+                await this.createZipArchive(sdkPath, filePath);
+                console.log(`Re-ran createZipArchive successfully for: ${filePath}`);
+            } catch (error) {
+                console.error(`Failed to re-run createZipArchive for ${filePath}:`, error);
+                return false;
+            }
+            
+            // Second attempt: Check 4 more times after re-running createZipArchive
+            for (retryCount = 0; retryCount < 4; retryCount++) {
+                console.log(`Post re-run check if file exists: ${filePath} (Attempt ${retryCount + 1})`);
+                let exists = await fs.promises.access(filePath).then(() => true).catch(() => false);
+                if (exists) {
+                    return true;
+                }
+                
+                // Exponential backoff: 2s, 4s, 8s, 16s
+                const waitTime = Math.pow(2, retryCount + 1) * 1000;
+                console.log(`File not found after re-run, waiting ${waitTime}ms before next attempt...`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+            }
+        }
+        
         return false;
     }
 
@@ -1283,125 +1319,125 @@ class SDKJobService extends EventEmitter {
             
             let readmeContent = `# ${sdkName}
 
-    Generated SDK with Application Code
+            Generated SDK with Application Code
 
-    ## Overview
-    This package contains:
-    1. **SDK Library**: Generated from your selected API specifications
-    2. **Application Code**: Sample application demonstrating API usage
-    3. **Documentation**: This README and any additional documentation
+            ## Overview
+            This package contains:
+            1. **SDK Library**: Generated from your selected API specifications
+            2. **Application Code**: Sample application demonstrating API usage
+            3. **Documentation**: This README and any additional documentation
 
-    ## Configuration
-    - **Language**: ${language}
-    - **SDK Name**: ${sdkName}
-    - **Generated**: ${new Date().toISOString()}
+            ## Configuration
+            - **Language**: ${language}
+            - **SDK Name**: ${sdkName}
+            - **Generated**: ${new Date().toISOString()}
 
-    `;
+            `;
 
-            if (language === 'java') {
-                readmeContent += `## Java Project Structure
+                    if (language === 'java') {
+                        readmeContent += `## Java Project Structure
 
-    The generated Java SDK follows standard Maven/Gradle project structure:
+            The generated Java SDK follows standard Maven/Gradle project structure:
 
-    \`\`\`
-    src/
-    ├── main/
-    │   ├── AndroidManifest.xml (for Android projects)
-    │   └── java/
-    │       └── org/openapitools/client/
-    │           ├── Application.java          # ← Your generated application
-    │           ├── ApiClient.java           # Main API client
-    │           ├── Configuration.java       # SDK configuration
-    │           ├── api/                     # API endpoints
-    │           ├── auth/                    # Authentication classes
-    │           └── model/                   # Data models
-    ├── build.gradle (or pom.xml)
-    └── README.md
-    \`\`\`
+            \`\`\`
+            src/
+            ├── main/
+            │   ├── AndroidManifest.xml (for Android projects)
+            │   └── java/
+            │       └── org/openapitools/client/
+            │           ├── Application.java          # ← Your generated application
+            │           ├── ApiClient.java           # Main API client
+            │           ├── Configuration.java       # SDK configuration
+            │           ├── api/                     # API endpoints
+            │           ├── auth/                    # Authentication classes
+            │           └── model/                   # Data models
+            ├── build.gradle (or pom.xml)
+            └── README.md
+            \`\`\`
 
-    ## Quick Start (Java)
+            ## Quick Start (Java)
 
-    ### 1. Build the Project
-    \`\`\`bash
-    # For Gradle projects
-    ./gradlew build
+            ### 1. Build the Project
+            \`\`\`bash
+            # For Gradle projects
+            ./gradlew build
 
-    # For Maven projects
-    mvn clean compile
-    \`\`\`
+            # For Maven projects
+            mvn clean compile
+            \`\`\`
 
-    ### 2. Run the Application
-    \`\`\`bash
-    # Compile and run Application.java
-    javac -cp "lib/*:src/main/java" src/main/java/org/openapitools/client/Application.java
-    java -cp "lib/*:src/main/java" org.openapitools.client.Application
+            ### 2. Run the Application
+            \`\`\`bash
+            # Compile and run Application.java
+            javac -cp "lib/*:src/main/java" src/main/java/org/openapitools/client/Application.java
+            java -cp "lib/*:src/main/java" org.openapitools.client.Application
 
-    # Or use your build tool
-    ./gradlew run
-    # or
-    mvn exec:java -Dexec.mainClass="org.openapitools.client.Application"
-    \`\`\`
+            # Or use your build tool
+            ./gradlew run
+            # or
+            mvn exec:java -Dexec.mainClass="org.openapitools.client.Application"
+            \`\`\`
 
-    ### 3. Integration
-    To use this SDK in your own project:
+            ### 3. Integration
+            To use this SDK in your own project:
 
-    1. **Add the SDK as a dependency** in your \`build.gradle\` or \`pom.xml\`
-    2. **Import the necessary classes**:
-    \`\`\`java
-    import org.openapitools.client.ApiClient;
-    import org.openapitools.client.Configuration;
-    import org.openapitools.client.api.*;
-    import org.openapitools.client.model.*;
-    \`\`\`
-    3. **Initialize the API client**:
-    \`\`\`java
-    ApiClient client = Configuration.getDefaultApiClient();
-    client.setBasePath("https://your-api-server.com");
-    \`\`\`
+            1. **Add the SDK as a dependency** in your \`build.gradle\` or \`pom.xml\`
+            2. **Import the necessary classes**:
+            \`\`\`java
+            import org.openapitools.client.ApiClient;
+            import org.openapitools.client.Configuration;
+            import org.openapitools.client.api.*;
+            import org.openapitools.client.model.*;
+            \`\`\`
+            3. **Initialize the API client**:
+            \`\`\`java
+            ApiClient client = Configuration.getDefaultApiClient();
+            client.setBasePath("https://your-api-server.com");
+            \`\`\`
 
-    ## Application.java
-    The generated \`Application.java\` file contains:
-    - Complete working examples of API calls
-    - Error handling patterns
-    - Authentication setup (if required)
-    - Sample data processing
+            ## Application.java
+            The generated \`Application.java\` file contains:
+            - Complete working examples of API calls
+            - Error handling patterns
+            - Authentication setup (if required)
+            - Sample data processing
 
-    `;
-            } else {
-                readmeContent += `## ${language.charAt(0).toUpperCase() + language.slice(1)} Project
+            `;
+                    } else {
+                        readmeContent += `## ${language.charAt(0).toUpperCase() + language.slice(1)} Project
 
-    Please refer to the application code in the application-code directory.
+            Please refer to the application code in the application-code directory.
 
-    `;
-            }
+            `;
+                    }
 
-            readmeContent += `## API Documentation
-    - Check the docs/ directory for detailed API documentation
-    - Each API endpoint is documented with request/response examples
-    - Model classes are documented with field descriptions
+                    readmeContent += `## API Documentation
+            - Check the docs/ directory for detailed API documentation
+            - Each API endpoint is documented with request/response examples
+            - Model classes are documented with field descriptions
 
-    ## Authentication
-    If your APIs require authentication, update the configuration in Application.${this.getFileExtension(language)}:
-    - API Keys: Set in the ApiClient configuration
-    - OAuth2: Configure the OAuth2 flow
-    - Basic Auth: Set username/password in the client
+            ## Authentication
+            If your APIs require authentication, update the configuration in Application.${this.getFileExtension(language)}:
+            - API Keys: Set in the ApiClient configuration
+            - OAuth2: Configure the OAuth2 flow
+            - Basic Auth: Set username/password in the client
 
-    ## Troubleshooting
+            ## Troubleshooting
 
-    ### Common Issues
-    1. **Compilation Errors**: Ensure all dependencies are installed
-    2. **Runtime Errors**: Check API endpoint URLs and authentication
-    3. **Network Issues**: Verify server connectivity and firewall settings
+            ### Common Issues
+            1. **Compilation Errors**: Ensure all dependencies are installed
+            2. **Runtime Errors**: Check API endpoint URLs and authentication
+            3. **Network Issues**: Verify server connectivity and firewall settings
 
-    ### Getting Help
-    - Check the generated documentation in docs/ folder
-    - Review the API specification used for generation
-    - Examine the sample code in Application.${this.getFileExtension(language)}
+            ### Getting Help
+            - Check the generated documentation in docs/ folder
+            - Review the API specification used for generation
+            - Examine the sample code in Application.${this.getFileExtension(language)}
 
-    ## License
-    This generated code is provided as-is for demonstration purposes.
-    Check your API provider's terms of service for usage guidelines.
-    `;
+            ## License
+            This generated code is provided as-is for demonstration purposes.
+            Check your API provider's terms of service for usage guidelines.
+            `;
 
             const readmePath = path.join(sdkPath, 'README.md');
             await fs.promises.writeFile(readmePath, readmeContent, 'utf8');

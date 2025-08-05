@@ -647,7 +647,7 @@ function startPollingSDKProgress(jobId) {
             } else if (JOB_STATUS === 'FAILED') {
                 clearInterval(pollingInterval);
                 hideSDKGenerationLoading();
-                showSDKGenerationError('SDK generation failed');
+                showSDKGenerationError(data.message || data.error || 'SDK generation failed');
             }
             
         } catch (error) {
