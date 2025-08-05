@@ -32,7 +32,7 @@ const config = require(process.cwd() + '/config.json');
 const controlPlaneUrl = config.controlPlane.url;
 const { invokeApiRequest } = require('../utils/util');
 const { Sequelize } = require("sequelize");
-const { trackGenerateCredentials } = require('../utils/telemetry');
+const { trackGenerateCredentials, trackSubscribeApi, trackUnsubscribeApi } = require('../utils/telemetry');
 
 const createOrganization = async (req, res) => {
 
@@ -725,6 +725,11 @@ const createSubscription = async (req, res) => {
                     await handleSubscribe(orgID, req.body.applicationID, nonSharedApp[0].dataValues.API_REF_ID, nonSharedApp[0].dataValues.SUBSCRIPTION_REF_ID, response, isShared, t);
                 }
                 await adminDao.createSubscription(orgID, req.body, t);
+                trackSubscribeApi({
+                    orgId: orgID,
+                    appId: req.body.applicationID,
+                    apiId: req.body.apiId
+                });
                 return res.status(200).json({ message: 'Subscribed successfully' });
 
             } catch (error) {
@@ -891,6 +896,11 @@ const deleteSubscription = async (req, res) => {
                     await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${subscriptionID}`, {}, {})
                     await adminDao.deleteAppKeyMapping(orgID, subDeleteResponse.APP_ID, subscriptionID, t);
                 }
+                trackUnsubscribeApi({
+                    orgId: orgID,
+                    appId: subscription.dataValues.APP_ID,
+                    apiId: subscription.dataValues.API_ID
+                });
                 res.status(200).send("Resouce Deleted Successfully");
             }
         });
