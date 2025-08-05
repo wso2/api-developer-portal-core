@@ -97,8 +97,8 @@ class SDKJobService extends EventEmitter {
                 name: 'Merging API Specifications',
                 weight: 30,
                 title: JOB_STATUS.MERGING,
-                task: async (reportProgress) => {
-                    const result = await this.performMergingTask(jobPayload, reportProgress);
+                task: async () => {
+                    const result = await this.performMergingTask(jobPayload);
                     mergedSpec = result.mergedSpec;
                     apiSpecs = result.apiSpecs;
                     apiHandles = result.apiHandles;
@@ -109,8 +109,8 @@ class SDKJobService extends EventEmitter {
                 name: 'Generating SDK',
                 weight: 20, 
                 title: JOB_STATUS.SDK_GENERATION,
-                task: async (reportProgress) => {
-                    sdkResult = await this.performSdkGenerationTask(jobPayload, mergedSpec, reportProgress);
+                task: async () => {
+                    sdkResult = await this.performSdkGenerationTask(jobPayload, mergedSpec);
                     console.log('SDK generation step completed');
                 }
             },
@@ -118,8 +118,8 @@ class SDKJobService extends EventEmitter {
                 name: 'Generating Application Code',
                 weight: 50,
                 title: JOB_STATUS.APP_CODE_GENERATION,
-                task: async (reportProgress) => {
-                    const result = await this.performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec, reportProgress);
+                task: async () => {
+                    const result = await this.performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec);
                     finalZipPath = result.finalZipPath;
                     baseSdkName = result.baseSdkName;
                     console.log('Application code generation step completed');
@@ -138,21 +138,21 @@ class SDKJobService extends EventEmitter {
                 // Check for cancellation before each step
                 await this.checkJobCancellation(jobId);
 
-                const progressCallback = (stepProgress) => {
-                    const overallProgress = completeWeight + (stepProgress * (step.weight / 100));
-                    this.updateJobStatus(
-                        jobId,
-                        step.title,
-                        Math.min(99, Math.round(overallProgress)),
-                        step.name,
-                        `In progress: ${step.name}...`
-                    );
-                }
+                // const progressCallback = (stepProgress) => {
+                //     const overallProgress = completeWeight + (stepProgress * (step.weight / 100));
+                //     this.updateJobStatus(
+                //         jobId,
+                //         step.title,
+                //         Math.min(99, Math.round(overallProgress)),
+                //         step.name,
+                //         `In progress: ${step.name}...`
+                //     );
+                // }
 
-                await step.task(progressCallback);
-                completeWeight += step.weight;
+                await step.task();
+                // completeWeight += step.weight;
                 
-                console.log(`Step ${step.name} completed. Total progress: ${completeWeight}%`);
+                // console.log(`Step ${step.name} completed. Total progress: ${completeWeight}%`);
                 
                 // Check for cancellation after each step
                 await this.checkJobCancellation(jobId);
@@ -184,9 +184,17 @@ class SDKJobService extends EventEmitter {
         }
     }
 
-    async performMergingTask(jobPayload, reportProgress) {
+    async performMergingTask(jobPayload) {
         try {
-            reportProgress(10); // 10% of 30% = 3% overall
+            //reportProgress(10); // 10% of 30% = 3% overall
+
+            this.updateJobStatus(
+                jobPayload.jobId,
+                JOB_STATUS.MERGING,
+                3,
+                'Merging API Specifications',
+                `In progress: Merging API Specifications...`
+            );
             
             const { selectedAPIs, orgId } = jobPayload;
                         // Get API specifications and handles
@@ -195,7 +203,14 @@ class SDKJobService extends EventEmitter {
             if (apiSpecs.length === 0) {
                 throw new Error('No API specifications found for the selected APIs');
             }
-            reportProgress(80); // 80% of 30% = 24% overall
+            //reportProgress(80); // 80% of 30% = 24% overall
+            this.updateJobStatus(
+                jobPayload.jobId,
+                JOB_STATUS.MERGING,
+                24,
+                'Merging API Specifications',
+                `In progress: Merging API Specifications...`
+            );
 
             const apiHandles = await this.getApiHandlers(orgId, selectedAPIs);
             
@@ -204,7 +219,14 @@ class SDKJobService extends EventEmitter {
                 mergedSpec = JSON.parse(apiSpecs[0].apiSpec);
             } else {
                 const mergeSpecApiRequest = this.prepareSDKGenerationRequest(apiSpecs, apiHandles);
-                reportProgress(90); // 90% of 30% = 27% overall
+                //reportProgress(90); // 90% of 30% = 27% overall
+                this.updateJobStatus(
+                    jobPayload.jobId,
+                    JOB_STATUS.MERGING,
+                    27,
+                    'Merging API Specifications',
+                    `In progress: Merging API Specifications...`
+                );
                 mergedSpec = await this.invokeMergeSpecApi(mergeSpecApiRequest);
                 console.log('Merged API specifications received');
             }
@@ -227,11 +249,18 @@ class SDKJobService extends EventEmitter {
         }
     }
 
-    async performSdkGenerationTask(jobPayload, mergedSpec, reportProgress) {
+    async performSdkGenerationTask(jobPayload, mergedSpec) {
         try {            
             const { sdkConfiguration, orgName, applicationId, jobId } = jobPayload;
             
-            reportProgress(50); // 50% of 20% = 10% overall (40% total)
+            //reportProgress(50); // 50% of 20% = 10% overall (40% total)
+            this.updateJobStatus(
+                jobPayload.jobId,
+                JOB_STATUS.SDK_GENERATION,
+                40,
+                'Generating SDK',
+                `In progress: Generating SDK...`
+            );
             const sdkResult = await this.generateSDKWithOpenAPIGenerator(
                 mergedSpec,
                 sdkConfiguration,
@@ -259,13 +288,27 @@ class SDKJobService extends EventEmitter {
         }
     }
 
-    async performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec, reportProgress) {
+    async performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec) {
         try {
 
-            reportProgress(40); // 40% of 50% = 20% overall (70% total)
+            this.updateJobStatus(
+                jobPayload.jobId,
+                JOB_STATUS.APP_CODE_GENERATION,
+                70,
+                'Generating Application Code',
+                `In progress: Generating Application Code...`
+            );
+
             const result = await this.processAIModeSDK(sdkResult, mergedSpec, jobPayload.sdkConfiguration);
-            
-            reportProgress(100); // 100% of 50% = 50% overall (100% total)
+
+            this.updateJobStatus(
+                jobPayload.jobId,
+                JOB_STATUS.APP_CODE_GENERATION,
+                100,
+                'Generating Application Code',
+                `In progress: Generating Application Code...`
+            );
+
             return {
                 finalZipPath: result
             };
@@ -295,17 +338,17 @@ class SDKJobService extends EventEmitter {
             };
 
             const updatedJob = await SdkJob.updateJob(jobId, updateData);
-            if (updatedJob) {
-                this.activeJobs.set(jobId, updatedJob);
-                            // Emit progress event
-                this.emitProgress(jobId, {
-                    status: status.toLowerCase(),
-                    progress: progress,
-                    currentStep: currentStep,
-                    message: message || this.getDefaultMessage(status),
-                    resultData: resultData
-                });
-            }
+            // if (updatedJob) {
+            this.activeJobs.set(jobId, updatedJob);
+            // Emit progress event
+            await this.emitProgress(jobId, {
+                status: status.toLowerCase(),
+                progress: progress,
+                currentStep: currentStep,
+                message: message || this.getDefaultMessage(status),
+                resultData: resultData
+            });
+            // }
             
             return updatedJob;
         } catch (error) {
@@ -484,7 +527,7 @@ class SDKJobService extends EventEmitter {
         return `${orgId}-${applicationId}-${randomPostfix}`;
     }
 
-    emitProgress(jobId, progressData) {
+    async emitProgress(jobId, progressData) {
         this.emit('progress', {
             jobId,
             ...progressData
@@ -1003,6 +1046,14 @@ class SDKJobService extends EventEmitter {
             
             const finalZipPath = path.join(permanentDir, zipFileName);
             await this.createZipArchive(sdkPath, finalZipPath);
+
+            // need to write logic to check whether the zip file is exist in finalZipPath
+            const zipExists = await this.isFileExists(finalZipPath);
+
+            if (!zipExists) {
+                throw new Error(`Final ZIP file not created: ${finalZipPath}`);
+            }
+
             console.log(`Final ZIP created: ${finalZipPath}`);
             
             // Clean up SDK folder
@@ -1025,6 +1076,19 @@ class SDKJobService extends EventEmitter {
             
             throw error;
         }
+    }
+
+    async isFileExists(filePath) {
+        let retryCount = 0;
+        for (retryCount = 0; retryCount < 4; retryCount++) {
+            console.log(`Checking if file exists: ${filePath} (Attempt ${retryCount + 1})`);
+            let exists = await fs.promises.access(filePath).then(() => true).catch(() => false);
+            if (exists) {
+                return true;
+            }
+            await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds before retrying
+        }
+        return false;
     }
 
     /**
