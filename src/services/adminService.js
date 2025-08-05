@@ -32,6 +32,7 @@ const config = require(process.cwd() + '/config.json');
 const controlPlaneUrl = config.controlPlane.url;
 const { invokeApiRequest } = require('../utils/util');
 const { Sequelize } = require("sequelize");
+const { trackGenerateCredentials } = require('../utils/telemetry');
 
 const createOrganization = async (req, res) => {
 
@@ -1006,6 +1007,10 @@ const createAppKeyMapping = async (req, res) => {
                 }
             }
             responseData.subscriptionScopes = subscriptionScopes;
+        });
+        trackGenerateCredentials({
+            orgId: orgID,
+            appName: req.body.applicationName,
         });
         return res.status(200).json(responseData);
     } catch (error) {

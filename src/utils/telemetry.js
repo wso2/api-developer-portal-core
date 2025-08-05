@@ -71,12 +71,12 @@ function trackAppDeletion({ orgId, appId }) {
 /**
  * Send telemetry for generate credentials
  */
-function trackGenerateCredentials({ orgId, appId }) {
+function trackGenerateCredentials({ orgId, appName }) {
     trackEventWithDefaults({
         name: 'generate-credentials',
         properties: {
             orgId: orgId || 'unknown',
-            appId: appId || 'unknown',
+            appName: appName || 'unknown',
             timestamp: new Date().toISOString()
         }
     });
