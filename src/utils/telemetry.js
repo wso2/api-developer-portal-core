@@ -131,5 +131,9 @@ module.exports = {
     trackLogoutTrigger,
     trackAppCreationStart,
     trackAppCreationEnd,
-    trackAppDeletion
+    trackAppDeletion,
+    trackGenerateCredentials,
+    trackGenerateKey,
+    trackSubscribeApi,
+    trackUnsubscribeApi
 };

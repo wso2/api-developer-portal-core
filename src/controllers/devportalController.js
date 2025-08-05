@@ -29,7 +29,7 @@ const { ApplicationDTO } = require('../dto/application');
 const { Sequelize } = require("sequelize");
 const adminService = require('../services/adminService');
 const apiDao = require('../dao/apiMetadata');
-const { trackAppCreationStart, trackAppCreationEnd, trackAppDeletion } = require('../utils/telemetry');
+const { trackAppCreationStart, trackAppCreationEnd, trackAppDeletion, trackGenerateKey } = require('../utils/telemetry');
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
 
@@ -238,6 +238,10 @@ const generateOAuthKeys = async (req, res) => {
         const applicationId = req.params.applicationId;
         const keyMappingId = req.params.keyMappingId;
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}/generate-token`, {}, req.body);
+        trackGenerateKey({
+            orgId: req.user[constants.ORG_ID],
+            appId: applicationId
+        });
         res.status(200).json(responseData);
     } catch (error) {
         console.error("Error occurred while generating the OAuth keys", error);
