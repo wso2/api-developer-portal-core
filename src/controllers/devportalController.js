@@ -30,6 +30,7 @@ const { Sequelize } = require("sequelize");
 const adminService = require('../services/adminService');
 const apiDao = require('../dao/apiMetadata');
 const sdkJobService = require('../services/sdkJobService');
+const progressBroadcaster = require('../services/progressBroadcaster');
 const path = require('path');
 const fs = require('fs');
 
@@ -423,7 +424,7 @@ const streamSDKProgress = (req, res) => {
                 // Close SSE connection after sending completion or failure events
                 if (progressData.status === 'completed' || progressData.status === 'failed' || progressData.status === 'cancelled') {
                     console.log(`Closing SSE connection for job ${jobId} after ${progressData.status} event`);
-                    sdkJobService.removeListener('progress', onProgress);
+                    progressBroadcaster.removeListener('progress', onProgress);
 
                     // Close the connection after a brief delay to ensure the client receives the final event
                     setTimeout(() => {
@@ -437,14 +438,14 @@ const streamSDKProgress = (req, res) => {
             }
         };
 
-        sdkJobService.on('progress', onProgress);
+        progressBroadcaster.on('progress', onProgress);
 
         // Send initial ping
         res.write(`data: ${JSON.stringify({ type: 'ping', jobId })}\n\n`);
 
         req.on('close', () => {
             console.log(`Client disconnected from SSE for job: ${jobId}`);
-            sdkJobService.removeListener('progress', onProgress);
+            progressBroadcaster.removeListener('progress', onProgress);
         });
     } catch (error) {
         console.error('Error in SDK progress streaming:', error);

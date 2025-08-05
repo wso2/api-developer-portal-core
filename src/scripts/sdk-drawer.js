@@ -522,7 +522,7 @@ function startSDKProgressStream(sseEndpoint) {
             hasSwitchedToPolling = true;
             startPollingSDKProgress(jobId);
         }
-    }, 30000);
+    }, 45000);
 
     eventSource.onmessage = function(event) {
         if (hasSwitchedToPolling) return; // Ignore SSE events after switching to polling
@@ -538,7 +538,7 @@ function startSDKProgressStream(sseEndpoint) {
                 hasSwitchedToPolling = true;
                 startPollingSDKProgress(jobId);
             }
-        }, 30000);
+        }, 45000);
         
         try {
             const data = JSON.parse(event.data);

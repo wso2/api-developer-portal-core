@@ -34,11 +34,27 @@ const { exec } = require('child_process');
 const { promisify } = require('util');
 const execAsync = promisify(exec);
 const secret = require(process.cwd() + '/secret.json');
+const progressBroadcaster = require('./progressBroadcaster');
+const { report } = require('process');
+
 class SDKJobService extends EventEmitter {
     constructor() {
         super();
         //this.activeJobs = new Map();
         this.sdkCleanupInterval = null; // Store cleanup interval reference
+        
+        // Set up Redis progress broadcasting
+        this.setupProgressBroadcasting();
+    }
+
+    setupProgressBroadcasting() {
+        // Listen to Redis progress events and re-emit locally for SSE connections
+        progressBroadcaster.on('progress', (progressData) => {
+            // Re-emit on local EventEmitter for this pod's SSE connections
+            super.emit('progress', progressData);
+        });
+
+        console.log('🔄 Progress broadcasting setup completed');
     }
 
     /**
@@ -97,8 +113,8 @@ class SDKJobService extends EventEmitter {
                 name: 'Merging API Specifications',
                 weight: 30,
                 title: JOB_STATUS.MERGING,
-                task: async () => {
-                    const result = await this.performMergingTask(jobPayload);
+                task: async (reportProgress) => {
+                    const result = await this.performMergingTask(jobPayload, reportProgress);
                     mergedSpec = result.mergedSpec;
                     apiSpecs = result.apiSpecs;
                     apiHandles = result.apiHandles;
@@ -109,8 +125,8 @@ class SDKJobService extends EventEmitter {
                 name: 'Generating SDK',
                 weight: 20, 
                 title: JOB_STATUS.SDK_GENERATION,
-                task: async () => {
-                    sdkResult = await this.performSdkGenerationTask(jobPayload, mergedSpec);
+                task: async (reportProgress) => {
+                    sdkResult = await this.performSdkGenerationTask(jobPayload, mergedSpec, reportProgress);
                     console.log('SDK generation step completed');
                 }
             },
@@ -118,8 +134,8 @@ class SDKJobService extends EventEmitter {
                 name: 'Generating Application Code',
                 weight: 50,
                 title: JOB_STATUS.APP_CODE_GENERATION,
-                task: async () => {
-                    const result = await this.performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec);
+                task: async (reportProgress) => {
+                    const result = await this.performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec, reportProgress);
                     finalZipPath = result.finalZipPath;
                     baseSdkName = result.baseSdkName;
                     console.log('Application code generation step completed');
@@ -138,21 +154,21 @@ class SDKJobService extends EventEmitter {
                 // Check for cancellation before each step
                 await this.checkJobCancellation(jobId);
 
-                // const progressCallback = (stepProgress) => {
-                //     const overallProgress = completeWeight + (stepProgress * (step.weight / 100));
-                //     this.updateJobStatus(
-                //         jobId,
-                //         step.title,
-                //         Math.min(99, Math.round(overallProgress)),
-                //         step.name,
-                //         `In progress: ${step.name}...`
-                //     );
-                // }
+                const progressCallback = (stepProgress) => {
+                    const overallProgress = completeWeight + (stepProgress * (step.weight / 100));
+                    this.updateJobStatus(
+                        jobId,
+                        step.title,
+                        Math.min(99, Math.round(overallProgress)),
+                        step.name,
+                        `In progress: ${step.name}...`
+                    );
+                }
 
-                await step.task();
-                // completeWeight += step.weight;
+                await step.task(progressCallback);
+                completeWeight += step.weight;
                 
-                // console.log(`Step ${step.name} completed. Total progress: ${completeWeight}%`);
+                console.log(`Step ${step.name} completed. Total progress: ${completeWeight}%`);
                 
                 // Check for cancellation after each step
                 await this.checkJobCancellation(jobId);
@@ -184,17 +200,17 @@ class SDKJobService extends EventEmitter {
         }
     }
 
-    async performMergingTask(jobPayload) {
+    async performMergingTask(jobPayload, reportProgress) {
         try {
-            //reportProgress(10); // 10% of 30% = 3% overall
+            reportProgress(10); // 10% of 30% = 3% overall
 
-            this.updateJobStatus(
-                jobPayload.jobId,
-                JOB_STATUS.MERGING,
-                3,
-                'Merging API Specifications',
-                `In progress: Merging API Specifications...`
-            );
+            // this.updateJobStatus(
+            //     jobPayload.jobId,
+            //     JOB_STATUS.MERGING,
+            //     3,
+            //     'Merging API Specifications',
+            //     `In progress: Merging API Specifications...`
+            // );
             
             const { selectedAPIs, orgId } = jobPayload;
                         // Get API specifications and handles
@@ -203,14 +219,14 @@ class SDKJobService extends EventEmitter {
             if (apiSpecs.length === 0) {
                 throw new Error('No API specifications found for the selected APIs');
             }
-            //reportProgress(80); // 80% of 30% = 24% overall
-            this.updateJobStatus(
-                jobPayload.jobId,
-                JOB_STATUS.MERGING,
-                24,
-                'Merging API Specifications',
-                `In progress: Merging API Specifications...`
-            );
+            reportProgress(80); // 80% of 30% = 24% overall
+            // this.updateJobStatus(
+            //     jobPayload.jobId,
+            //     JOB_STATUS.MERGING,
+            //     24,
+            //     'Merging API Specifications',
+            //     `In progress: Merging API Specifications...`
+            // );
 
             const apiHandles = await this.getApiHandlers(orgId, selectedAPIs);
             
@@ -219,14 +235,14 @@ class SDKJobService extends EventEmitter {
                 mergedSpec = JSON.parse(apiSpecs[0].apiSpec);
             } else {
                 const mergeSpecApiRequest = this.prepareSDKGenerationRequest(apiSpecs, apiHandles);
-                //reportProgress(90); // 90% of 30% = 27% overall
-                this.updateJobStatus(
-                    jobPayload.jobId,
-                    JOB_STATUS.MERGING,
-                    27,
-                    'Merging API Specifications',
-                    `In progress: Merging API Specifications...`
-                );
+                reportProgress(90); // 90% of 30% = 27% overall
+                // this.updateJobStatus(
+                //     jobPayload.jobId,
+                //     JOB_STATUS.MERGING,
+                //     27,
+                //     'Merging API Specifications',
+                //     `In progress: Merging API Specifications...`
+                // );
                 mergedSpec = await this.invokeMergeSpecApi(mergeSpecApiRequest);
                 console.log('Merged API specifications received');
             }
@@ -249,18 +265,18 @@ class SDKJobService extends EventEmitter {
         }
     }
 
-    async performSdkGenerationTask(jobPayload, mergedSpec) {
+    async performSdkGenerationTask(jobPayload, mergedSpec, reportProgress) {
         try {            
             const { sdkConfiguration, orgName, applicationId, jobId } = jobPayload;
             
-            //reportProgress(50); // 50% of 20% = 10% overall (40% total)
-            this.updateJobStatus(
-                jobPayload.jobId,
-                JOB_STATUS.SDK_GENERATION,
-                40,
-                'Generating SDK',
-                `In progress: Generating SDK...`
-            );
+            reportProgress(50); // 50% of 20% = 10% overall (40% total)
+            // this.updateJobStatus(
+            //     jobPayload.jobId,
+            //     JOB_STATUS.SDK_GENERATION,
+            //     40,
+            //     'Generating SDK',
+            //     `In progress: Generating SDK...`
+            // );
             const sdkResult = await this.generateSDKWithOpenAPIGenerator(
                 mergedSpec,
                 sdkConfiguration,
@@ -288,26 +304,29 @@ class SDKJobService extends EventEmitter {
         }
     }
 
-    async performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec) {
+    async performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec, reportProgress) {
         try {
 
-            this.updateJobStatus(
-                jobPayload.jobId,
-                JOB_STATUS.APP_CODE_GENERATION,
-                70,
-                'Generating Application Code',
-                `In progress: Generating Application Code...`
-            );
+            reportProgress(40); // 40% of 50% = 20% overall (70% total)
+
+            // this.updateJobStatus(
+            //     jobPayload.jobId,
+            //     JOB_STATUS.APP_CODE_GENERATION,
+            //     70,
+            //     'Generating Application Code',
+            //     `In progress: Generating Application Code...`
+            // );
 
             const result = await this.processAIModeSDK(sdkResult, mergedSpec, jobPayload.sdkConfiguration);
 
-            this.updateJobStatus(
-                jobPayload.jobId,
-                JOB_STATUS.APP_CODE_GENERATION,
-                100,
-                'Generating Application Code',
-                `In progress: Generating Application Code...`
-            );
+            // this.updateJobStatus(
+            //     jobPayload.jobId,
+            //     JOB_STATUS.APP_CODE_GENERATION,
+            //     100,
+            //     'Generating Application Code',
+            //     `In progress: Generating Application Code...`
+            // );
+            reportProgress(100); // 100% of 50% = 50% overall (100% total)
 
             return {
                 finalZipPath: result
@@ -528,10 +547,19 @@ class SDKJobService extends EventEmitter {
     }
 
     async emitProgress(jobId, progressData) {
-        this.emit('progress', {
+        const progressPayload = {
             jobId,
             ...progressData
-        });
+        };
+
+        // Try to broadcast via Redis for multi-pod support
+        const broadcasted = await progressBroadcaster.publishProgress(jobId, progressData);
+        
+        if (!broadcasted) {
+            // Fallback to local emission if Redis is not available
+            console.warn(`⚠️ Redis broadcasting failed for job ${jobId}, using local emission`);
+            progressBroadcaster.emitLocal(jobId, progressData);
+        }
     }
 
     getDefaultMessage(status) {
