@@ -151,8 +151,9 @@ router.post('/api-keys/:apiKeyID/regenerate', enforceSecuirty(constants.SCOPES.D
 // SDK Generation Routes
 router.post('/applications/:applicationId/generate-sdk', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.generateSDK);
 router.get('/applications/:applicationId/sdk/job-progress/:jobId', enforceSecuirty(constants.SCOPES.DEVELOPER),devportalController.streamSDKProgress);
+router.get('/applications/:applicationId/sdk/status/:jobId', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.statusSDK);
 router.post('/applications/:applicationId/sdk/cancel/:jobId', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.cancelSDK);
-router.get('/sdk/download/:filename', enforceSecuirty(constants.SCOPES.DEVELOPER),devportalController.downloadSDK);
+router.get('/sdk/download/:filename', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.downloadSDK);
 
 router.post('/login', devportalController.login);
 module.exports = router;

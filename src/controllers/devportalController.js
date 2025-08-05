@@ -502,6 +502,10 @@ const downloadSDK = async (req, res) => {
         res.setHeader('Content-Type', 'application/zip');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
+        console.log(`Streaming SDK file: ${filename} from ${filePath}`);
+
+        showGeneratedSdksContent();
+
         // Stream the file
         const fileStream = fs.createReadStream(filePath);
         fileStream.pipe(res);
@@ -520,6 +524,242 @@ const downloadSDK = async (req, res) => {
         });
     }
 };
+
+/**
+ * Route handler for SDK job status polling
+ * Returns current job status from the database
+ */
+const statusSDK = async (req, res) => {
+    try {
+        const { jobId } = req.params;
+        
+        console.log(`Status request for SDK job: ${jobId}`);
+        
+        const job = await sdkJobService.getJob(jobId);
+        
+        if (!job) {
+            return res.status(404).json({
+                success: false,
+                message: 'Job not found'
+            });
+        }
+
+        let resultData = {};
+        if (job.JOB_STATUS === JOB_STATUS.COMPLETED) {
+            const permanentDir = path.join(process.cwd(), 'generated-sdks');
+            const zipFileName = `${jobId}-sdk.zip`;
+
+            const finalZipPath = path.join(permanentDir, zipFileName);
+
+            resultData = {
+                finalDownloadUrl: `/devportal/sdk/download/${path.basename(finalZipPath || `${jobId}.zip`)}`,
+            };
+        }
+
+        res.json({
+            success: true,
+            data: {
+                jobId: jobId,
+                JOB_STATUS: job.JOB_STATUS,
+                CURRENT_STEP: job.CURRENT_STEP,
+                PROGRESS: job.PROGRESS || 0,
+                resultData: resultData
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error getting SDK job status:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error getting SDK job status',
+            error: error.message
+        });
+    }
+};
+
+
+/**
+ * Show content of generated-sdks folder for debugging with detailed file sizes
+ */
+const showGeneratedSdksContent = async () => {
+    try {
+        const generatedSdksDir = path.join(process.cwd(), 'generated-sdks');
+        
+        if (!(await fs.promises.access(generatedSdksDir).then(() => true).catch(() => false))) {
+            console.log('📁 Generated-sdks directory does not exist');
+            return;
+        }
+        
+        console.log('=== Generated-sdks folder content ===');
+        console.log(`📂 Directory: ${generatedSdksDir}`);
+        
+        const items = await fs.promises.readdir(generatedSdksDir, { withFileTypes: true });
+        
+        if (items.length === 0) {
+            console.log('📭 Generated-sdks folder is empty');
+            return;
+        }
+        
+        let totalSize = 0;
+        let fileCount = 0;
+        let dirCount = 0;
+        
+        console.log('────────────────────────────────────────────────────────────────────────────────');
+        console.log('📋 Item Name                           📏 Size        🕐 Age      📝 Type');
+        console.log('────────────────────────────────────────────────────────────────────────────────');
+        
+        for (const item of items) {
+            const itemPath = path.join(generatedSdksDir, item.name);
+            
+            try {
+                const stats = await fs.promises.stat(itemPath);
+                const ageMinutes = Math.round((Date.now() - stats.birthtime.getTime()) / 60000);
+                const ageHours = Math.round(ageMinutes / 60);
+                const ageDays = Math.round(ageHours / 24);
+                
+                let ageDisplay;
+                if (ageMinutes < 60) {
+                    ageDisplay = `${ageMinutes}m`;
+                } else if (ageHours < 24) {
+                    ageDisplay = `${ageHours}h`;
+                } else {
+                    ageDisplay = `${ageDays}d`;
+                }
+                
+                if (item.isFile()) {
+                    const sizeBytes = stats.size;
+                    const sizeKB = Math.round(sizeBytes / 1024);
+                    const sizeMB = (sizeBytes / (1024 * 1024)).toFixed(2);
+                    
+                    let sizeDisplay;
+                    if (sizeBytes < 1024) {
+                        sizeDisplay = `${sizeBytes}B`;
+                    } else if (sizeBytes < 1024 * 1024) {
+                        sizeDisplay = `${sizeKB}KB`;
+                    } else {
+                        sizeDisplay = `${sizeMB}MB`;
+                    }
+                    
+                    console.log(`📄 ${item.name.padEnd(35)} ${sizeDisplay.padStart(12)} ${ageDisplay.padStart(8)} File`);
+                    totalSize += sizeBytes;
+                    fileCount++;
+                    
+                } else if (item.isDirectory()) {
+                    // Calculate directory size by recursively checking contents
+                    const dirSize = await calculateDirectorySize(itemPath);
+                    const dirSizeKB = Math.round(dirSize / 1024);
+                    const dirSizeMB = (dirSize / (1024 * 1024)).toFixed(2);
+                    
+                    let dirSizeDisplay;
+                    if (dirSize < 1024) {
+                        dirSizeDisplay = `${dirSize}B`;
+                    } else if (dirSize < 1024 * 1024) {
+                        dirSizeDisplay = `${dirSizeKB}KB`;
+                    } else {
+                        dirSizeDisplay = `${dirSizeMB}MB`;
+                    }
+                    
+                    console.log(`📁 ${item.name.padEnd(35)} ${dirSizeDisplay.padStart(12)} ${ageDisplay.padStart(8)} Directory`);
+                    totalSize += dirSize;
+                    dirCount++;
+                }
+                
+            } catch (statError) {
+                console.log(`❌ ${item.name.padEnd(35)} ${'Error'.padStart(12)} ${'N/A'.padStart(8)} Unknown`);
+                console.warn(`   Error getting stats for ${item.name}:`, statError.message);
+            }
+        }
+        
+        console.log('────────────────────────────────────────────────────────────────────────────────');
+        
+        // Display summary
+        const totalSizeKB = Math.round(totalSize / 1024);
+        const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+        
+        let totalSizeDisplay;
+        if (totalSize < 1024) {
+            totalSizeDisplay = `${totalSize}B`;
+        } else if (totalSize < 1024 * 1024) {
+            totalSizeDisplay = `${totalSizeKB}KB`;
+        } else {
+            totalSizeDisplay = `${totalSizeMB}MB`;
+        }
+        
+        console.log(`📊 Summary: ${fileCount} files, ${dirCount} directories`);
+        console.log(`📏 Total size: ${totalSizeDisplay}`);
+        console.log(`📂 Total items: ${items.length}`);
+        console.log('=====================================');
+        
+        // Show recent SDK files specifically
+        const zipFiles = items
+            .filter(item => item.isFile() && item.name.endsWith('.zip'))
+            .sort((a, b) => {
+                // Sort by creation time (newest first)
+                try {
+                    const aPath = path.join(generatedSdksDir, a.name);
+                    const bPath = path.join(generatedSdksDir, b.name);
+                    const aStats = fs.statSync(aPath);
+                    const bStats = fs.statSync(bPath);
+                    return bStats.birthtime.getTime() - aStats.birthtime.getTime();
+                } catch (error) {
+                    return 0;
+                }
+            });
+        
+        if (zipFiles.length > 0) {
+            console.log('🔍 Recent SDK ZIP files:');
+            for (const zipFile of zipFiles.slice(0, 5)) { // Show last 5 ZIP files
+                try {
+                    const zipPath = path.join(generatedSdksDir, zipFile.name);
+                    const zipStats = await fs.promises.stat(zipPath);
+                    const zipSizeKB = Math.round(zipStats.size / 1024);
+                    const zipAge = Math.round((Date.now() - zipStats.birthtime.getTime()) / 60000);
+                    console.log(`   📦 ${zipFile.name} (${zipSizeKB}KB, ${zipAge}m old)`);
+                } catch (error) {
+                    console.log(`   📦 ${zipFile.name} (size unknown)`);
+                }
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ Error showing generated-sdks content:', error);
+    }
+}
+
+/**
+ * Calculate total size of a directory recursively
+ * @param {string} dirPath - Directory path
+ * @returns {Promise<number>} - Total size in bytes
+ */
+const calculateDirectorySize = async (dirPath) => {
+    let totalSize = 0;
+    
+    try {
+        const items = await fs.promises.readdir(dirPath, { withFileTypes: true });
+        
+        for (const item of items) {
+            const itemPath = path.join(dirPath, item.name);
+            
+            try {
+                if (item.isFile()) {
+                    const stats = await fs.promises.stat(itemPath);
+                    totalSize += stats.size;
+                } else if (item.isDirectory()) {
+                    totalSize += await calculateDirectorySize(itemPath);
+                }
+            } catch (error) {
+                // Skip files that can't be accessed
+                continue;
+            }
+        }
+        
+    } catch (error) {
+        // If we can't read the directory, return 0
+        return 0;
+    }
+    
+    return totalSize;
+}
 
 // Create singleton instance
 // const sdkJobService = new SDKJobService();
@@ -551,5 +791,6 @@ module.exports = {
     generateSDK,
     streamSDKProgress,
     cancelSDK,
-    downloadSDK
+    downloadSDK,
+    statusSDK
 };
