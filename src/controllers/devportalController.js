@@ -415,33 +415,41 @@ const streamSDKProgress = (req, res) => {
 
         console.log(`Client connected to SSE for job: ${jobId}`);
 
-        const onProgress = (progressData) => {
-            if (progressData.jobId === jobId) {
-                console.log(`Progress update for job ${jobId} step [${progressData.currentStep}] progress ${progressData.progress}%`);
-                const dataToSend = { ...progressData, type: 'progress' };
-                res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
+        // const onProgress = (progressData) => {
+        //     if (progressData.jobId === jobId) {
+        //         console.log(`Progress update for job ${jobId} step [${progressData.currentStep}] progress ${progressData.progress}%`);
+        //         const dataToSend = { ...progressData, type: 'progress' };
+        //         res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
 
-                // Close SSE connection after sending completion or failure events
-                if (progressData.status === 'completed' || progressData.status === 'failed' || progressData.status === 'cancelled') {
-                    console.log(`Closing SSE connection for job ${jobId} after ${progressData.status} event`);
-                    redisService.removeListener('progress', onProgress);
+        //         // Close SSE connection after sending completion or failure events
+        //         if (progressData.status === 'completed' || progressData.status === 'failed' || progressData.status === 'cancelled') {
+        //             console.log(`Closing SSE connection for job ${jobId} after ${progressData.status} event`);
+        //             redisService.removeListener('progress', onProgress);
 
-                    // Close the connection after a brief delay to ensure the client receives the final event
-                    setTimeout(() => {
-                        try {
-                            res.end();
-                        } catch (error) {
-                            console.warn(`Error closing SSE connection for job ${jobId}:`, error.message);
-                        }
-                    }, 100);
-                }
-            }
-        };
+        //             // Close the connection after a brief delay to ensure the client receives the final event
+        //             setTimeout(() => {
+        //                 try {
+        //                     res.end();
+        //                 } catch (error) {
+        //                     console.warn(`Error closing SSE connection for job ${jobId}:`, error.message);
+        //                 }
+        //             }, 100);
+        //         }
+        //     }
+        // };
 
-        redisService.on('progress', onProgress);
+        // redisService.on('progress', onProgress);
 
-        // Send initial ping
-        res.write(`data: ${JSON.stringify({ type: 'ping', jobId })}\n\n`);
+        // Send initial connection confirmation
+        res.write(`data: ${JSON.stringify({
+            type: 'connected',
+            jobId: jobId,
+            podId: redisService.podId,
+            timestamp: Date.now(),
+            message: 'SSE connection established'
+        })}\n\n`);
+
+        redisService.registerSSEConnection(jobId, res);
 
         req.on('close', () => {
             console.log(`Client disconnected from SSE for job: ${jobId}`);
