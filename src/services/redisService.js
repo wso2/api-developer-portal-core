@@ -478,7 +478,7 @@ class RedisService extends EventEmitter {
         }    
     }
 
-    async storeFile(fileKey, filePath, ttl = this.defaultTTL) {
+    async storeFile(fileKey, filePath, ttl = this.defaultTTL, metadata = {}) {
         if (!this.isConnected) {
             console.warn(`Cannot store file - Redis not connected on pod: ${this.podId}`);
             return false;
@@ -499,14 +499,25 @@ class RedisService extends EventEmitter {
 
             const fileBuffer = await fs.promises.readFile(filePath);
 
+            const fileMetadata = {
+                originalName: path.basename(filePath),
+                size: stats.size,
+                mimeType: this.getMimeType(filePath),
+                uploadedAt: new Date().toISOString(),
+                uploadedBy: process.env.POD_NAME || 'unknown-pod',
+                ...metadata
+            };
+
             const pipeline = this.redis.pipeline();
             pipeline.setex(`${fileKey}:data`, ttl, fileBuffer)
+            pipeline.setex(`${fileKey}:metadata`, ttl, JSON.stringify(fileMetadata));
 
             const result = await pipeline.exec();
 
             const dataStored = result[0][1] === 'OK';
+            const metadataStored = result[1][1] === 'OK';
 
-            if (dataStored) {
+            if (dataStored && metadataStored) {
                 console.log(`File stored in Redis successfully: ${fileKey} (${stats.size} bytes)`);
                 await this.verifyStoredFile(fileKey, stats.size);
                 return true;
@@ -517,6 +528,20 @@ class RedisService extends EventEmitter {
             console.error(`Error storing file ${fileKey}:`, error.message);
             return false;
         }
+    }
+
+    getMimeType(filePath) {
+        const ext = path.extname(filePath).toLowerCase();
+        const mimeTypes = {
+            '.zip': 'application/zip',
+            '.jar': 'application/java-archive',
+            '.tar': 'application/x-tar',
+            '.gz': 'application/gzip',
+            '.json': 'application/json',
+            '.txt': 'text/plain',
+            '.md': 'text/markdown'
+        };
+        return mimeTypes[ext] || 'application/octet-stream';
     }
 
     async verifyStoredFile(fileKey, expectedSize) {
@@ -531,16 +556,16 @@ class RedisService extends EventEmitter {
                 const metadata = await this.redis.get(`${fileKey}:metadata`);
                 if (metadata) {
                     const meta = JSON.parse(metadata);
-                    console.log(`✅ Verification successful: ${fileKey} (${meta.size} bytes)`);
+                    console.log(`Verification successful: ${fileKey} (${meta.size} bytes)`);
                     return true;
                 }
             }
             
-            console.warn(`⚠️ Verification failed: ${fileKey} not immediately accessible`);
+            console.warn(`Verification failed: ${fileKey} not immediately accessible`);
             return false;
             
         } catch (error) {
-            console.error(`❌ Error verifying stored file: ${error.message}`);
+            console.error(`Error verifying stored file: ${error.message}`);
             return false;
         }
     }
@@ -554,12 +579,12 @@ class RedisService extends EventEmitter {
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                console.log(`📥 Attempt ${attempt}/${maxRetries} - Retrieving file ${fileKey} from Redis`);
+                console.log(`Attempt ${attempt}/${maxRetries} - Retrieving file ${fileKey} from Redis`);
                 
                 const result = await this.retrieveFile(fileKey);
                 
                 if (result) {
-                    console.log(`✅ File retrieved successfully on attempt ${attempt}`);
+                    console.log(`File retrieved successfully on attempt ${attempt}`);
                     return result;
                 }
                 
@@ -580,7 +605,7 @@ class RedisService extends EventEmitter {
                 }
             }
         }
-        console.error(`❌ Failed to retrieve file ${fileKey} after ${maxRetries} attempts`);
+        console.error(`Failed to retrieve file ${fileKey} after ${maxRetries} attempts`);
         return null;
     }
 
