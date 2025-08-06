@@ -1,4 +1,5 @@
 const { telemetryClient } = require('./telemetryClient');
+const config = require(process.cwd() + '/config.json');
 
 const DEFAULT_PROPERTIES = {
     context: 'devportal',
@@ -6,6 +7,10 @@ const DEFAULT_PROPERTIES = {
 };
 
 function trackEventWithDefaults(event) {
+    if (!config.telemetry) {
+        return;
+    }
+    
     event.properties = {
         ...DEFAULT_PROPERTIES,
         ...(event.properties || {})
