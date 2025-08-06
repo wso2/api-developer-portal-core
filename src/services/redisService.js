@@ -443,6 +443,14 @@ class RedisService extends EventEmitter {
             
         } catch (error) {
             console.error('Failed to publish progress:', error);
+            
+            // Check for connection timeout or Redis errors that warrant reconnection
+            if (this._shouldReconnectOnError(error)) {
+                console.warn(`Triggering Redis reconnection due to publish error: ${error.message}`);
+                // Don't await - reconnect in background
+                this._triggerReconnection();
+            }
+            
             return false;
         }
     }
@@ -478,59 +486,177 @@ class RedisService extends EventEmitter {
         }    
     }
 
-    async storeFile(fileKey, filePath, ttl = this.defaultTTL, metadata = {}) {
-        if (!this.isConnected) {
-            console.warn(`Cannot store file - Redis not connected on pod: ${this.podId}`);
-            return false;
+    async storeFile(fileKey, filePath, ttl = this.defaultTTL, maxRetries = 3) {
+        let lastError = null;
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                console.log(`📤 Storing file ${fileKey} from ${filePath} (attempt ${attempt}/${maxRetries}) on pod: ${this.podId}`);
+                
+                const result = await this._storeFileInternal(fileKey, filePath, ttl);
+                if (result) {
+                    console.log(`File stored successfully on attempt ${attempt}: ${fileKey}`);
+                    return true;
+                }
+                
+            } catch (error) {
+                lastError = error;
+                console.error(`Storage attempt ${attempt} failed for ${fileKey}:`, error.message);
+                
+                // Check for connection timeout or Redis errors that warrant reconnection
+                if (this._shouldReconnectOnError(error)) {
+                    console.warn(`Triggering Redis reconnection due to file storage error: ${error.message}`);
+                    // Don't await - reconnect in background
+                    this._triggerReconnection();
+                }
+                
+                // Determine if error is retryable
+                if (!this._isRetryableError(error) || attempt === maxRetries) {
+                    console.error(`Non-retryable error or max attempts reached for ${fileKey}`);
+                    break;
+                }
+                
+                // Wait before retry with exponential backoff
+                if (attempt < maxRetries) {
+                    const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Max 5s delay
+                    console.log(`⏳ Waiting ${delay}ms before retry ${attempt + 1}...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
         }
-
-        try {
-            console.log(`Storing file ${fileKey} from ${filePath}`);
-
-            const fileExists = await fs.promises.access(filePath).then(() => true).catch(() => false);
-            if (!fileExists) {
-                throw new Error(`File does not exist: ${filePath}`);
-            }
-
-            const stats = await fs.promises.stat(filePath);
-            if (stats.size > this.maxFileSize) {
-                throw new Error(`File too large: ${stats.size} bytes (max: ${this.maxFileSize})`);
-            }
-
-            const fileBuffer = await fs.promises.readFile(filePath);
-
-            const fileMetadata = {
-                originalName: path.basename(filePath),
-                size: stats.size,
-                mimeType: this.getMimeType(filePath),
-                uploadedAt: new Date().toISOString(),
-                uploadedBy: process.env.POD_NAME || 'unknown-pod',
-                ...metadata
-            };
-
-            const pipeline = this.redis.pipeline();
-            pipeline.setex(`${fileKey}:data`, ttl, fileBuffer)
-            pipeline.setex(`${fileKey}:metadata`, ttl, JSON.stringify(fileMetadata));
-
-            const result = await pipeline.exec();
-
-            const dataStored = result[0][1] === 'OK';
-            const metadataStored = result[1][1] === 'OK';
-
-            if (dataStored && metadataStored) {
-                console.log(`File stored in Redis successfully: ${fileKey} (${stats.size} bytes)`);
-                await this.verifyStoredFile(fileKey, stats.size);
-                return true;
-            } else {
-                throw new Error('Failed to store file in Redis');
-            }
-        } catch (error) {
-            console.error(`Error storing file ${fileKey}:`, error.message);
-            return false;
-        }
+        
+        console.error(`Failed to store file ${fileKey} after ${maxRetries} attempts. Last error:`, lastError?.message);
+        return false;
     }
 
-    getMimeType(filePath) {
+    async _storeFileInternal(fileKey, filePath, ttl) {
+        if (!this.isConnected || !this.redis) {
+            throw new Error(`Redis not connected on pod: ${this.podId}`);
+        }
+
+        // Check file existence and size
+        const fileExists = await fs.promises.access(filePath).then(() => true).catch(() => false);
+        if (!fileExists) {
+            throw new Error(`File does not exist: ${filePath}`);
+        }
+
+        const stats = await fs.promises.stat(filePath);
+        if (stats.size > this.maxFileSize) {
+            throw new Error(`File too large: ${stats.size} bytes (max: ${this.maxFileSize})`);
+        }
+
+        // Check Redis memory before storing large files
+        // if (stats.size > 10 * 1024 * 1024) { // 10MB+
+        //     const memoryOk = await this._checkRedisMemory();
+        //     if (!memoryOk) {
+        //         throw new Error('Redis memory pressure detected, skipping large file storage');
+        //     }
+        // }
+
+        console.log(`📤 Reading file for Redis storage: ${filePath} (${stats.size} bytes)`);
+        const fileBuffer = await fs.promises.readFile(filePath);
+
+        // Prepare metadata
+        const metadata = {
+            originalName: path.basename(filePath),
+            size: stats.size,
+            mimeType: this._getMimeType(filePath),
+            uploadedAt: new Date().toISOString(),
+            uploadedBy: this.podId,
+            ttl: ttl
+        };
+
+        console.log(`Storing ${fileBuffer.length} bytes in Redis with key: ${fileKey}`);
+    
+        const pipeline = this.redis.pipeline();
+        pipeline.setex(`${fileKey}:data`, ttl, fileBuffer);
+        pipeline.setex(`${fileKey}:metadata`, ttl, JSON.stringify(metadata));
+
+        const results = await Promise.race([
+            pipeline.exec(),
+            new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Redis pipeline timeout')), 30000) // 30s timeout
+            )
+        ]);
+
+        const dataStored = results[0][1] === 'OK';
+        const metadataStored = results[1][1] === 'OK';
+
+        if (!dataStored || !metadataStored) {
+            throw new Error(`Redis pipeline failed - data: ${dataStored}, metadata: ${metadataStored}`);
+        }
+
+        console.log(`File stored in Redis successfully: ${fileKey} (${stats.size} bytes) on pod: ${this.podId}`);
+
+        const verified = await this.verifyStoredFile(fileKey, stats.size);
+        if (!verified) {
+            throw new Error('File storage verification failed');
+        }
+
+        return true;
+    }
+
+    _isRetryableError(error) {
+        const retryableErrors = [
+            'Connection is closed',
+            'Command timed out',
+            'Redis pipeline timeout',
+            'LOADING',
+            'READONLY',
+            'CLUSTERDOWN',
+            'TRYAGAIN',
+            'MOVED',
+            'ASK',
+            'Connection lost',
+            'Socket closed unexpectedly'
+        ];
+        
+        const errorMessage = error.message || '';
+        return retryableErrors.some(retryableError => 
+            errorMessage.includes(retryableError)
+        );
+    }
+
+    _shouldReconnectOnError(error) {
+        const reconnectTriggers = [
+            'Command timed out',
+            'Connection is closed',
+            'Connection lost',
+            'Socket closed unexpectedly',
+            'Redis pipeline timeout',
+            'Failed to store file in Redis'
+        ];
+        
+        const errorMessage = error.message || '';
+        return reconnectTriggers.some(trigger => 
+            errorMessage.includes(trigger)
+        );
+    }
+
+    _triggerReconnection() {
+        // Prevent multiple simultaneous reconnection attempts
+        if (this.isConnecting) {
+            console.log('Reconnection already in progress, skipping trigger');
+            return;
+        }
+
+        console.log(`Triggering Redis reconnection on pod: ${this.podId}`);
+        
+        // Mark as disconnected to stop current operations
+        this.isConnected = false;
+        
+        // Trigger reconnection in background without blocking current operations
+        setImmediate(async () => {
+            try {
+                await this.init();
+                console.log(`Background reconnection successful on pod: ${this.podId}`);
+            } catch (error) {
+                console.error(`Background reconnection failed on pod: ${this.podId}:`, error.message);
+            }
+        });
+    }
+
+    _getMimeType(filePath) {
         const ext = path.extname(filePath).toLowerCase();
         const mimeTypes = {
             '.zip': 'application/zip',
@@ -544,30 +670,50 @@ class RedisService extends EventEmitter {
         return mimeTypes[ext] || 'application/octet-stream';
     }
 
-    async verifyStoredFile(fileKey, expectedSize) {
-        try {
-            console.log(`🔍 Verifying stored file: ${fileKey}`);
-            
-            // Wait a moment for cluster replication
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
-            const exists = await this.redis.exists(`${fileKey}:data`);
-            if (exists) {
-                const metadata = await this.redis.get(`${fileKey}:metadata`);
-                if (metadata) {
-                    const meta = JSON.parse(metadata);
-                    console.log(`Verification successful: ${fileKey} (${meta.size} bytes)`);
-                    return true;
+    async verifyStoredFile(fileKey, expectedSize, maxRetries = 3) {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                console.log(`🔍 Verifying stored file: ${fileKey} (attempt ${attempt}/${maxRetries})`);
+                
+                // Wait a moment for cluster replication
+                if (attempt === 1) {
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+                
+                const exists = await this.redis.exists(`${fileKey}:data`);
+                if (exists) {
+                    const metadata = await this.redis.get(`${fileKey}:metadata`);
+                    if (metadata) {
+                        const meta = JSON.parse(metadata);
+                        if (meta.size === expectedSize) {
+                            console.log(`Verification successful: ${fileKey} (${meta.size} bytes)`);
+                            return true;
+                        } else {
+                            console.warn(`Size mismatch: expected ${expectedSize}, got ${meta.size}`);
+                        }
+                    } else {
+                        console.warn(`Metadata not found for ${fileKey}`);
+                    }
+                } else {
+                    console.warn(`Data not found for ${fileKey}`);
+                }
+                
+                if (attempt < maxRetries) {
+                    const delay = 500 * attempt; // 500ms, 1s, 1.5s
+                    console.log(`Verification failed, waiting ${delay}ms before retry...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+                
+            } catch (error) {
+                console.error(`Error verifying stored file (attempt ${attempt}):`, error.message);
+                if (attempt === maxRetries) {
+                    return false;
                 }
             }
-            
-            console.warn(`Verification failed: ${fileKey} not immediately accessible`);
-            return false;
-            
-        } catch (error) {
-            console.error(`Error verifying stored file: ${error.message}`);
-            return false;
         }
+
+        console.warn(`Verification failed after ${maxRetries} attempts: ${fileKey}`);
+        return false;
     }
 
     async retrieveFileWithRetry(fileKey, maxRetries = 3, baseDelay = 1000) {
@@ -597,6 +743,13 @@ class RedisService extends EventEmitter {
             } catch (error) {
                 lastError = error;
                 console.error(`Attempt ${attempt} failed:`, error.message);
+                
+                // Check for connection timeout or Redis errors that warrant reconnection
+                if (this._shouldReconnectOnError(error)) {
+                    console.warn(`Triggering Redis reconnection due to file retrieval error: ${error.message}`);
+                    // Don't await - reconnect in background
+                    this._triggerReconnection();
+                }
                 
                 if (attempt < maxRetries) {
                     const delay = baseDelay * Math.pow(2, attempt - 1);
@@ -636,6 +789,14 @@ class RedisService extends EventEmitter {
 
         } catch (error) {
             console.error(`Error retrieving file ${fileKey}:`, error.message);
+            
+            // Check for connection timeout or Redis errors that warrant reconnection
+            if (this._shouldReconnectOnError(error)) {
+                console.warn(`Triggering Redis reconnection due to file retrieval error: ${error.message}`);
+                // Don't await - reconnect in background
+                this._triggerReconnection();
+            }
+            
             return null;
         }
     }
@@ -650,6 +811,14 @@ class RedisService extends EventEmitter {
             return exists === 1;
         } catch (error) {
             console.error(`Error checking file existence in Redis: ${error.message}`);
+            
+            // Check for connection timeout or Redis errors that warrant reconnection
+            if (this._shouldReconnectOnError(error)) {
+                console.warn(`Triggering Redis reconnection due to file existence check error: ${error.message}`);
+                // Don't await - reconnect in background
+                this._triggerReconnection();
+            }
+            
             return false;
         }
    }
