@@ -114,13 +114,13 @@ function trackSubscribeApi({ orgId, appId, apiId }) {
 /**
  * Send telemetry for unsubscribe to an API
  */
-function trackUnsubscribeApi({ orgId, appId, apiId }) {
+function trackUnsubscribeApi({ orgId, appId, apiRefId }) {
     trackEventWithDefaults({
         name: 'unsubscribe-api',
         properties: {
             orgId: orgId || 'unknown',
             appId: appId || 'unknown',
-            apiId: apiId || 'unknown',
+            apiRefId: apiRefId || 'unknown',
             timestamp: new Date().toISOString()
         }
     });
