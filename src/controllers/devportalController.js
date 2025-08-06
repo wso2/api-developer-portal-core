@@ -500,7 +500,7 @@ const downloadSDK = async (req, res) => {
 
         console.log(`Download request for SDK file: ${filename} Redis Key: ${fileKey}`);
 
-        const redisFile = await redisService.retrieveFile(fileKey);
+        const redisFile = await redisService.retrieveFileWithRetry(fileKey);
 
         if (redisFile) {
             console.log(`Found SDK file in Redis cache: ${fileKey}`);

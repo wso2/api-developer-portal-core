@@ -84,7 +84,7 @@ class RedisService extends EventEmitter {
                 password: config.redis?.password || process.env.REDIS_PASSWORD,
                 db: config.redis?.db || process.env.REDIS_DB || 0,
                 retryDelayOnFailover: 1000,
-                maxRetriesPerRequest: 0, // Disable internal retries to prevent timeout loops
+                maxRetriesPerRequest: 0,
                 lazyConnect: true,
                 connectTimeout: 8000,
                 commandTimeout: 20000,
@@ -508,6 +508,7 @@ class RedisService extends EventEmitter {
 
             if (dataStored) {
                 console.log(`File stored in Redis successfully: ${fileKey} (${stats.size} bytes)`);
+                await this.verifyStoredFile(fileKey, stats.size);
                 return true;
             } else {
                 throw new Error('Failed to store file in Redis');
@@ -516,6 +517,71 @@ class RedisService extends EventEmitter {
             console.error(`Error storing file ${fileKey}:`, error.message);
             return false;
         }
+    }
+
+    async verifyStoredFile(fileKey, expectedSize) {
+        try {
+            console.log(`🔍 Verifying stored file: ${fileKey}`);
+            
+            // Wait a moment for cluster replication
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            const exists = await this.redis.exists(`${fileKey}:data`);
+            if (exists) {
+                const metadata = await this.redis.get(`${fileKey}:metadata`);
+                if (metadata) {
+                    const meta = JSON.parse(metadata);
+                    console.log(`✅ Verification successful: ${fileKey} (${meta.size} bytes)`);
+                    return true;
+                }
+            }
+            
+            console.warn(`⚠️ Verification failed: ${fileKey} not immediately accessible`);
+            return false;
+            
+        } catch (error) {
+            console.error(`❌ Error verifying stored file: ${error.message}`);
+            return false;
+        }
+    }
+
+    async retrieveFileWithRetry(fileKey, maxRetries = 3, baseDelay = 1000) {
+        let lastError = null;
+        if (!this.isConnected) {
+            console.warn(`Cannot retrieve file - Redis not connected on pod: ${this.podId}`);
+            return null;
+        }
+
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                console.log(`📥 Attempt ${attempt}/${maxRetries} - Retrieving file ${fileKey} from Redis`);
+                
+                const result = await this.retrieveFile(fileKey);
+                
+                if (result) {
+                    console.log(`✅ File retrieved successfully on attempt ${attempt}`);
+                    return result;
+                }
+                
+                if (attempt < maxRetries) {
+                    const delay = baseDelay * Math.pow(2, attempt - 1); // Exponential backoff
+                    console.log(`File not found, waiting ${delay}ms before retry ${attempt + 1}...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+                
+            } catch (error) {
+                lastError = error;
+                console.error(`Attempt ${attempt} failed:`, error.message);
+                
+                if (attempt < maxRetries) {
+                    const delay = baseDelay * Math.pow(2, attempt - 1);
+                    console.log(`Retrying in ${delay}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
+        console.error(`❌ Failed to retrieve file ${fileKey} after ${maxRetries} attempts`);
+        return null;
     }
 
     async retrieveFile(fileKey) {
