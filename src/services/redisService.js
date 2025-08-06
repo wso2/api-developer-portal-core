@@ -443,6 +443,14 @@ class RedisService extends EventEmitter {
             
         } catch (error) {
             console.error('Failed to publish progress:', error);
+            
+            // Check for connection timeout or Redis errors that warrant reconnection
+            if (this._shouldReconnectOnError(error)) {
+                console.warn(`Triggering Redis reconnection due to publish error: ${error.message}`);
+                // Don't await - reconnect in background
+                this._triggerReconnection();
+            }
+            
             return false;
         }
     }
@@ -495,6 +503,13 @@ class RedisService extends EventEmitter {
                 lastError = error;
                 console.error(`Storage attempt ${attempt} failed for ${fileKey}:`, error.message);
                 
+                // Check for connection timeout or Redis errors that warrant reconnection
+                if (this._shouldReconnectOnError(error)) {
+                    console.warn(`Triggering Redis reconnection due to file storage error: ${error.message}`);
+                    // Don't await - reconnect in background
+                    this._triggerReconnection();
+                }
+                
                 // Determine if error is retryable
                 if (!this._isRetryableError(error) || attempt === maxRetries) {
                     console.error(`Non-retryable error or max attempts reached for ${fileKey}`);
@@ -506,9 +521,6 @@ class RedisService extends EventEmitter {
                     const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Max 5s delay
                     console.log(`⏳ Waiting ${delay}ms before retry ${attempt + 1}...`);
                     await new Promise(resolve => setTimeout(resolve, delay));
-                    
-                    // Check Redis connection health before retry
-                    //await this._ensureConnection();
                 }
             }
         }
@@ -605,6 +617,45 @@ class RedisService extends EventEmitter {
         );
     }
 
+    _shouldReconnectOnError(error) {
+        const reconnectTriggers = [
+            'Command timed out',
+            'Connection is closed',
+            'Connection lost',
+            'Socket closed unexpectedly',
+            'Redis pipeline timeout',
+            'Failed to store file in Redis'
+        ];
+        
+        const errorMessage = error.message || '';
+        return reconnectTriggers.some(trigger => 
+            errorMessage.includes(trigger)
+        );
+    }
+
+    _triggerReconnection() {
+        // Prevent multiple simultaneous reconnection attempts
+        if (this.isConnecting) {
+            console.log('Reconnection already in progress, skipping trigger');
+            return;
+        }
+
+        console.log(`Triggering Redis reconnection on pod: ${this.podId}`);
+        
+        // Mark as disconnected to stop current operations
+        this.isConnected = false;
+        
+        // Trigger reconnection in background without blocking current operations
+        setImmediate(async () => {
+            try {
+                await this.init();
+                console.log(`Background reconnection successful on pod: ${this.podId}`);
+            } catch (error) {
+                console.error(`Background reconnection failed on pod: ${this.podId}:`, error.message);
+            }
+        });
+    }
+
     _getMimeType(filePath) {
         const ext = path.extname(filePath).toLowerCase();
         const mimeTypes = {
@@ -693,6 +744,13 @@ class RedisService extends EventEmitter {
                 lastError = error;
                 console.error(`Attempt ${attempt} failed:`, error.message);
                 
+                // Check for connection timeout or Redis errors that warrant reconnection
+                if (this._shouldReconnectOnError(error)) {
+                    console.warn(`Triggering Redis reconnection due to file retrieval error: ${error.message}`);
+                    // Don't await - reconnect in background
+                    this._triggerReconnection();
+                }
+                
                 if (attempt < maxRetries) {
                     const delay = baseDelay * Math.pow(2, attempt - 1);
                     console.log(`Retrying in ${delay}ms...`);
@@ -731,6 +789,14 @@ class RedisService extends EventEmitter {
 
         } catch (error) {
             console.error(`Error retrieving file ${fileKey}:`, error.message);
+            
+            // Check for connection timeout or Redis errors that warrant reconnection
+            if (this._shouldReconnectOnError(error)) {
+                console.warn(`Triggering Redis reconnection due to file retrieval error: ${error.message}`);
+                // Don't await - reconnect in background
+                this._triggerReconnection();
+            }
+            
             return null;
         }
     }
@@ -745,6 +811,14 @@ class RedisService extends EventEmitter {
             return exists === 1;
         } catch (error) {
             console.error(`Error checking file existence in Redis: ${error.message}`);
+            
+            // Check for connection timeout or Redis errors that warrant reconnection
+            if (this._shouldReconnectOnError(error)) {
+                console.warn(`Triggering Redis reconnection due to file existence check error: ${error.message}`);
+                // Don't await - reconnect in background
+                this._triggerReconnection();
+            }
+            
             return false;
         }
    }
