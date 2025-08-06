@@ -126,6 +126,32 @@ function trackUnsubscribeApi({ orgId, appId, apiId }) {
     });
 }
 
+/**
+ * Send telemetry for SDK generation start
+ */
+function trackSDKGenerationStart({ orgName, appId }) {
+    trackEventWithDefaults({
+        name: 'generate-sdk-start',
+        properties: {
+            orgName: orgName || 'unknown',
+            appId: appId || 'unknown',
+            timestamp: new Date().toISOString()
+        }
+    });
+}
+
+/**
+ * Send telemetry for SDK generation end
+ */
+function trackSDKGenerationEnd() {
+    trackEventWithDefaults({
+        name: 'generate-sdk-end',
+        properties: {
+            timestamp: new Date().toISOString()
+        }
+    });
+}
+
 module.exports = {
     trackLoginTrigger,
     trackLogoutTrigger,
@@ -135,5 +161,7 @@ module.exports = {
     trackGenerateCredentials,
     trackGenerateKey,
     trackSubscribeApi,
-    trackUnsubscribeApi
+    trackUnsubscribeApi,
+    trackSDKGenerationStart,
+    trackSDKGenerationEnd
 };
