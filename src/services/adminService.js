@@ -896,11 +896,6 @@ const deleteSubscription = async (req, res) => {
                     await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${subscriptionID}`, {}, {})
                     await adminDao.deleteAppKeyMapping(orgID, subDeleteResponse.APP_ID, subscriptionID, t);
                 }
-                trackUnsubscribeApi({
-                    orgId: orgID,
-                    appId: subscription.dataValues.APP_ID,
-                    apiId: subscription.dataValues.API_ID
-                });
                 res.status(200).send("Resouce Deleted Successfully");
             }
         });
@@ -1198,6 +1193,11 @@ const unsubscribeAPI = async (req, res) => {
                     };
                 }
                 await adminDao.deleteSubscription(orgID, subscriptionID, t);
+                trackUnsubscribeApi({
+                    orgId: orgID,
+                    appId: appID,
+                    apiRefId: apiReferenceID
+                });
                 return res.status(204).send();
             } catch (error) {
                 try {
@@ -1205,6 +1205,11 @@ const unsubscribeAPI = async (req, res) => {
                         console.log("Subscription not found in control plane, deleting the subscription from database");
                         await handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiReferenceID, t);
                         await adminDao.deleteSubscription(orgID, subscriptionID, t);
+                        trackUnsubscribeApi({
+                            orgId: orgID,
+                            appId: appID,
+                            apiRefId: apiReferenceID
+                        });
                         return res.status(204).send();
                     }
                 } catch (error) {
