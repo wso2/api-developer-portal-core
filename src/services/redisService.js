@@ -448,7 +448,7 @@ class RedisService extends EventEmitter {
             if (this._shouldReconnectOnError(error)) {
                 console.warn(`Triggering Redis reconnection due to publish error: ${error.message}`);
                 // Don't await - reconnect in background
-                this._triggerReconnection();
+                await this._triggerReconnection();
             }
             
             return false;
@@ -507,7 +507,7 @@ class RedisService extends EventEmitter {
                 if (this._shouldReconnectOnError(error)) {
                     console.warn(`Triggering Redis reconnection due to file storage error: ${error.message}`);
                     // Don't await - reconnect in background
-                    this._triggerReconnection();
+                    await this._triggerReconnection();
                 }
                 
                 // Determine if error is retryable
@@ -633,7 +633,7 @@ class RedisService extends EventEmitter {
         );
     }
 
-    _triggerReconnection() {
+    async _triggerReconnection() {
         // Prevent multiple simultaneous reconnection attempts
         if (this.isConnecting) {
             console.log('Reconnection already in progress, skipping trigger');
@@ -737,6 +737,7 @@ class RedisService extends EventEmitter {
                 if (attempt < maxRetries) {
                     const delay = baseDelay * Math.pow(2, attempt - 1); // Exponential backoff
                     console.log(`File not found, waiting ${delay}ms before retry ${attempt + 1}...`);
+                    await this._triggerReconnection();
                     await new Promise(resolve => setTimeout(resolve, delay));
                 }
                 
@@ -748,7 +749,7 @@ class RedisService extends EventEmitter {
                 if (this._shouldReconnectOnError(error)) {
                     console.warn(`Triggering Redis reconnection due to file retrieval error: ${error.message}`);
                     // Don't await - reconnect in background
-                    this._triggerReconnection();
+                    await this._triggerReconnection();
                 }
                 
                 if (attempt < maxRetries) {
@@ -794,7 +795,7 @@ class RedisService extends EventEmitter {
             if (this._shouldReconnectOnError(error)) {
                 console.warn(`Triggering Redis reconnection due to file retrieval error: ${error.message}`);
                 // Don't await - reconnect in background
-                this._triggerReconnection();
+                await this._triggerReconnection();
             }
             
             return null;
@@ -816,7 +817,7 @@ class RedisService extends EventEmitter {
             if (this._shouldReconnectOnError(error)) {
                 console.warn(`Triggering Redis reconnection due to file existence check error: ${error.message}`);
                 // Don't await - reconnect in background
-                this._triggerReconnection();
+                await this._triggerReconnection();
             }
             
             return false;
