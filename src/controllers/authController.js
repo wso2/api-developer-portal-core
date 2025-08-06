@@ -28,6 +28,7 @@ const IdentityProviderDTO = require("../dto/identityProvider");
 const minimatch = require('minimatch');
 const { validationResult } = require('express-validator');
 const { renderGivenTemplate } = require('../utils/util');
+const { trackLoginTrigger, trackLogoutTrigger } = require('../utils/telemetry');
 
 const filePrefix = config.pathToContent;
 
@@ -81,6 +82,7 @@ const login = async (req, res, next) => {
             } else {
                 await passport.authenticate('oauth2', { fidp: config.fidp[fidp] })(req, res, next);
             }
+            trackLoginTrigger({ orgName });
         } else if (fidp && fidp == 'default') {
             await passport.authenticate('oauth2')(req, res, next);
         } else { 
@@ -195,6 +197,7 @@ const handleLogOut = async (req, res) => {
             if (err) {
                 console.error("Logout error:", err);
             }
+            trackLogoutTrigger({ orgName: req.params.orgName });
             req.session.currentPathURI = currentPathURI;
             res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${authJsonContent.logoutRedirectURI}&id_token_hint=${idToken}`);
         });
