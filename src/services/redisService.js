@@ -42,10 +42,12 @@ class RedisService extends EventEmitter {
         this.maxFileSize = 50 * 1024 * 1024; // 50 MB
         this.defaultTTL = 3600;
         this.isShuttingDown = false;
+        this.activeSSEConnections = new Map();
+        this.sseConnectionTimeout = 120000;
 
         // Start connection without waiting
         this.init().catch(error => {
-            console.error('❌ Initial Redis connection failed:', error.message);
+            console.error('Initial Redis connection failed:', error.message);
         });
     }
 
@@ -65,7 +67,7 @@ class RedisService extends EventEmitter {
 
         // Check if we've exceeded max attempts before even starting
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-            console.error(`❌ Max Redis connection attempts reached for pod: ${this.podId}. Operating in offline mode.`);
+            console.error(`Max Redis connection attempts reached for pod: ${this.podId}. Operating in offline mode.`);
             this._enterOfflineMode();
             throw new Error('Max reconnection attempts exceeded');
         }
@@ -85,7 +87,7 @@ class RedisService extends EventEmitter {
                 maxRetriesPerRequest: 0, // Disable internal retries to prevent timeout loops
                 lazyConnect: true,
                 connectTimeout: 8000,
-                commandTimeout: 3000,
+                commandTimeout: 20000,
                 keyPrefix: 'sdkfiles:',
                 retryConnectOnFailure: false,
                 enableOfflineQueue: false,
@@ -114,7 +116,6 @@ class RedisService extends EventEmitter {
                 )
             ]);
 
-            // Subscribe to progress events
             await this.subscriber.subscribe('sdk-progress');
             
             this.isConnected = true;
@@ -126,20 +127,18 @@ class RedisService extends EventEmitter {
         } catch (error) {
             this.isConnecting = false;
             this.isConnected = false;
-            
-            console.error(`❌ Redis connection failed (attempt ${this.reconnectAttempts + 1}):`, error.message);
-            
+
+            console.error(`Redis connection failed (attempt ${this.reconnectAttempts + 1}):`, error.message);
+
             // Clean up failed connections
             await this._cleanupConnections();
             
-            // Increment attempts after failure
             this.reconnectAttempts++;
             
-            // Schedule retry if within limits
             if (this.reconnectAttempts < this.maxReconnectAttempts && !this.isShuttingDown) {
                 this._scheduleReconnect();
             } else {
-                console.error(`❌ Max Redis connection attempts reached for pod: ${this.podId}. Operating in offline mode.`);
+                console.error(`Max Redis connection attempts reached for pod: ${this.podId}. Operating in offline mode.`);
                 this._enterOfflineMode();
             }
             
@@ -155,15 +154,15 @@ class RedisService extends EventEmitter {
         });
 
         this.publisher.on('error', (error) => {
-            console.error(`❌ Redis publisher error on pod ${this.podId}:`, error.message);
-            // Don't throw here - just log and handle gracefully
+            console.error(`Redis publisher error on pod ${this.podId}:`, error.message);
+
             if (this.isConnected) {
                 this.isConnected = false;
             }
         });
 
         this.publisher.on('close', () => {
-            console.warn(`🔌 Redis publisher connection closed on pod: ${this.podId}`);
+            console.warn(`Redis publisher connection closed on pod: ${this.podId}`);
             this.isConnected = false;
             if (!this.isShuttingDown) {
                 this._handleConnectionLoss();
@@ -177,22 +176,27 @@ class RedisService extends EventEmitter {
         });
 
         this.subscriber.on('error', (error) => {
-            console.error(`❌ Redis subscriber error on pod ${this.podId}:`, error.message);
-            // Don't throw here - just log and handle gracefully
+            console.error(`Redis subscriber error on pod ${this.podId}:`, error.message);
             if (this.isConnected) {
                 this.isConnected = false;
             }
         });
 
-        this.subscriber.on('message', (channel, message) => {
+        this.subscriber.on('message', async (channel, data) => {
             try {
                 if (channel === 'sdk-progress') {
-                    const progressData = JSON.parse(message);
-                    this.emit('progress', progressData);
-                    console.log(`📨 Received progress for job ${progressData.jobId} on pod ${this.podId}: ${progressData.currentStep} (${progressData.progress}%)`);
-                }
+                    const jsonData = JSON.parse(data);
+                    if (jsonData.type === 'progress') {
+                        await this.handleProgressEvent(jsonData);
+                    }
+                } 
+                // else if (channel === 'sse-connections') {
+                //     if (data.type === 'sse-connection') {
+                //         this.handleSSEConnectionAnnouncement(data);
+                //     }
+                // }
             } catch (error) {
-                console.error('❌ Error processing Redis message:', error.message);
+                console.error('Error processing Redis message:', error.message);
             }
         });
 
@@ -211,8 +215,8 @@ class RedisService extends EventEmitter {
         });
 
         this.redis.on('error', (error) => {
-            console.error(`❌ Redis file storage error on pod ${this.podId}:`, error.message);
-            // Don't throw here - just log and handle gracefully
+            console.error(`Redis file storage error on pod ${this.podId}:`, error.message);
+
             if (this.isConnected) {
                 this.isConnected = false;
             }
@@ -234,12 +238,12 @@ class RedisService extends EventEmitter {
 
         // Check if we've already exceeded max attempts
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-            console.warn(`⚠️ Redis connection lost on pod: ${this.podId}, but max attempts reached. Staying in offline mode.`);
+            console.warn(`Redis connection lost on pod: ${this.podId}, but max attempts reached. Staying in offline mode.`);
             this._enterOfflineMode();
             return;
         }
 
-        console.warn(`⚠️ Redis connection lost on pod: ${this.podId}`);
+        console.warn(`Redis connection lost on pod: ${this.podId}`);
         this.isConnected = false;
         
         // Schedule reconnection
@@ -248,33 +252,32 @@ class RedisService extends EventEmitter {
 
     _scheduleReconnect() {
         if (this.isShuttingDown || this.reconnectTimeout) {
-            return; // Already scheduled or shutting down
+            return; 
         }
 
         // Check limits before scheduling
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-            console.error(`❌ Max reconnection attempts reached for pod: ${this.podId}. Stopping retries.`);
+            console.error(`Max reconnection attempts reached for pod: ${this.podId}. Stopping retries.`);
             this._enterOfflineMode();
             return;
         }
 
         const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000); // Exponential backoff, max 30s
 
-        console.log(`⏰ Scheduling reconnect attempt ${this.reconnectAttempts + 1}/${this.maxReconnectAttempts} in ${delay}ms for pod: ${this.podId}`);
+        console.log(`Scheduling reconnect attempt ${this.reconnectAttempts + 1}/${this.maxReconnectAttempts} in ${delay}ms for pod: ${this.podId}`);
 
         this.reconnectTimeout = setTimeout(async () => {
             this.reconnectTimeout = null;
             
             if (this.isShuttingDown) {
-                console.log(`🛑 Skipping reconnect - service is shutting down on pod: ${this.podId}`);
+                console.log(`Skipping reconnect - service is shutting down on pod: ${this.podId}`);
                 return;
             }
             
             try {
                 await this.init();
             } catch (error) {
-                console.error(`❌ Reconnection attempt ${this.reconnectAttempts + 1} failed:`, error.message);
-                // The _performConnection method will handle incrementing attempts and further retries
+                console.error(`Reconnection attempt ${this.reconnectAttempts + 1} failed:`, error.message);
             }
         }, delay);
     }
@@ -304,7 +307,6 @@ class RedisService extends EventEmitter {
         for (const { name, instance } of connections) {
             if (instance) {
                 try {
-                    // Remove all listeners to prevent memory leaks
                     instance.removeAllListeners();
                     
                     if (instance.status !== 'end') {
@@ -324,7 +326,101 @@ class RedisService extends EventEmitter {
         this.subscriber = null;
     }
 
+    registerSSEConnection(jobId, res, podId = this.podId) {
+        console.log(`Registering SSE connection for job ${jobId} on pod ${podId}`);
+
+        this.activeSSEConnections.set(jobId, {
+            response: res,
+            podId: podId,
+            connectedAt: Date.now(),
+            lastActivity: Date.now()
+        });
+
+        res.on('close', () => {
+            console.log(`SSE connection closed for job ${jobId} on pod ${podId}`);
+            this.unregisterSSEConnection(jobId);
+        });
+
+        res.on('error', (error) => {
+            console.error(`SSE connection error for job ${jobId} on pod ${podId}:`, error.message);
+            this.unregisterSSEConnection(jobId);
+        });
+
+        // this.announceSSEConnection(jobId, podId, 'connected');
+    }
+
+    unregisterSSEConnection(jobId) {
+        const connection = this.activeSSEConnections.get(jobId);
+        if (connection) {
+            console.log(`Unregistering SSE connection for job ${jobId} on pod ${connection.podId}`);
+            this.activeSSEConnections.delete(jobId);            
+        }
+    }
+
+    hasActiveSSEConnection(jobId) {
+        return this.activeSSEConnections.has(jobId);
+    }
+
+    async sendSSEEvent(jobId, data) {
+        const connection = this.activeSSEConnections.get(jobId);
+        if (!connection) {
+            console.warn(`No active SSE connection for job ${jobId} on pod ${this.podId}`);
+            return false;
+        }
+
+        const { response, podId } = connection;
+
+        try {
+            const modifiedData = {
+                type: 'progress',
+                ...data
+            };
+            response.write(`data: ${JSON.stringify(modifiedData)}\n\n`);
+            if (modifiedData.status === 'completed' || modifiedData.status === 'failed' || modifiedData.status === 'cancelled') {
+                response.on('close', () => {
+                    console.log(`SSE connection closed for job ${jobId} on pod ${podId}`);
+                    this.unregisterSSEConnection(jobId);
+                });
+            }
+            connection.lastActivity = Date.now();
+            console.log(`Sent SSE event for job ${jobId} from pod ${podId}:`, modifiedData);
+            return true;
+        } catch (error) {
+            console.error(`Error sending SSE event for job ${jobId} on pod ${podId}:`, error.message);
+            this.unregisterSSEConnection(jobId);
+            return false;
+        }
+    }
+
+    // async announceSSEConnection(jobId, podId, state) {
+    //     if (!this.isConnected || !this.publisher) {
+    //         console.warn(`Cannot announce SSE connection - Redis not connected on pod: ${this.podId}`);
+    //         return;
+    //     }
+
+    //     try {
+    //         const announcement = {
+    //             type: 'sse-connection',
+    //             jobId: jobId,
+    //             podId: podId,
+    //             state: state,
+    //             timestamp: Date.now()
+    //         }
+
+    //         await this.publisher.publish('sse-connections', JSON.stringify(announcement));
+    //         console.log(`Announced SSE connection for job ${jobId} on pod ${podId}: ${state}`);
+    //     } catch (error) {
+    //         console.error(`Failed to announce SSE connection for job ${jobId} on pod ${podId}:`, error.message);
+    //     }
+    // }
+
     async publishProgress(jobId, progressData) {
+
+        const sentLocally = await this.sendSSEEvent(jobId, progressData);
+
+        if (sentLocally) {
+            console.log(`Progress for job ${jobId} sent locally on pod ${this.podId}`);
+        }
         if (!this.isConnected || !this.publisher) {
             console.warn(`Cannot publish progress - Redis not connected on pod: ${this.podId}`);
             return false;
@@ -332,10 +428,12 @@ class RedisService extends EventEmitter {
 
         try {
             const message = JSON.stringify({
+                type: 'progress',
                 ...progressData,
                 jobId,
                 timestamp: Date.now(),
-                podId: this.podId
+                publishedBy: this.podId,
+                sentLocally: sentLocally
             });
 
             await this.publisher.publish('sdk-progress', message);
@@ -349,96 +447,35 @@ class RedisService extends EventEmitter {
         }
     }
 
-    scheduleReconnect() {
-        if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-            console.error(`Max reconnection attempts reached for pod: ${this.podId}`);
+    async handleProgressEvent(data) {
+        const { jobId, publishedBy, sentLocally } = data;
+        
+        // If this pod published the event and already sent it locally, skip
+        if (publishedBy === this.podId && sentLocally) {
+            console.log(`Skipping progress event for job ${jobId} - already sent locally`);
             return;
         }
-
-        const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000); // Exponential backoff, max 30s
-        this.reconnectAttempts++;
-
-        console.log(`Scheduling reconnect attempt ${this.reconnectAttempts} in ${delay}ms for pod: ${this.podId}`);
-
-        setTimeout(async () => {
-            try {
-                await this.connect();
-            } catch (error) {
-                console.error('Reconnection failed:', error);
-                this.scheduleReconnect();
-            }
-        }, delay);
-    }
-
-    async disconnect() {
-        console.log(`🛑 Initiating Redis service shutdown for pod: ${this.podId}`);
-        this.isShuttingDown = true;
         
-        // Clear any pending reconnect timeout
-        if (this.reconnectTimeout) {
-            clearTimeout(this.reconnectTimeout);
-            this.reconnectTimeout = null;
+        // Try to send to local SSE connection if it exists
+        const sent = await this.sendSSEEvent(jobId, data);
+        
+        if (sent) {
+            console.log(`Forwarded Redis progress event to local SSE for job ${jobId} on pod ${this.podId}`);
+        } else {
+            console.log(`No local SSE connection for job ${jobId} on pod ${this.podId}`);
         }
         
-        try {
-            // Gracefully disconnect subscriber first
-            if (this.subscriber && this.subscriber.status !== 'end') {
-                try {
-                    await this.subscriber.unsubscribe('sdk-progress');
-                    await Promise.race([
-                        this.subscriber.disconnect(),
-                        new Promise(resolve => setTimeout(resolve, 3000)) // 3s timeout
-                    ]);
-                } catch (error) {
-                    console.warn(`⚠️ Error disconnecting subscriber:`, error.message);
-                }
-            }
-            
-            // Disconnect publisher
-            if (this.publisher && this.publisher.status !== 'end') {
-                try {
-                    await Promise.race([
-                        this.publisher.disconnect(),
-                        new Promise(resolve => setTimeout(resolve, 3000)) // 3s timeout
-                    ]);
-                } catch (error) {
-                    console.warn(`⚠️ Error disconnecting publisher:`, error.message);
-                }
-            }
-            
-            // Disconnect main Redis connection
-            if (this.redis && this.redis.status !== 'end') {
-                try {
-                    await Promise.race([
-                        this.redis.disconnect(),
-                        new Promise(resolve => setTimeout(resolve, 3000)) // 3s timeout
-                    ]);
-                } catch (error) {
-                    console.warn(`⚠️ Error disconnecting main Redis:`, error.message);
-                }
-            }
-            
-            this.isConnected = false;
-            this.isConnecting = false;
-            
-            console.log(`✅ Redis service disconnected cleanly for pod: ${this.podId}`);
-            
-        } catch (error) {
-            console.error(`❌ Error during Redis service shutdown:`, error.message);
-        } finally {
-            // Clean up references
-            this.redis = null;
-            this.publisher = null;
-            this.subscriber = null;
-            
-            // Remove all event listeners to prevent memory leaks
-            this.removeAllListeners();
-        }
+        //this.emit('progress', data);
     }
 
     // Fallback method for when Redis is not available
     emitLocal(jobId, progressData) {
-        this.emit('progress', { ...progressData, jobId });
+        try {
+            this.emit('progress', { ...progressData, jobId });
+        } catch (error) {
+            console.error(`Error emitting local progress for job ${jobId}:`, error);
+            throw new Error(`Failed to emit local progress for job ${jobId}: ${error.message}`);
+        }    
     }
 
     async storeFile(fileKey, filePath, ttl = this.defaultTTL) {
@@ -470,13 +507,13 @@ class RedisService extends EventEmitter {
             const dataStored = result[0][1] === 'OK';
 
             if (dataStored) {
-                console.log(`✅ File stored in Redis successfully: ${fileKey} (${stats.size} bytes)`);
+                console.log(`File stored in Redis successfully: ${fileKey} (${stats.size} bytes)`);
                 return true;
             } else {
                 throw new Error('Failed to store file in Redis');
             }
         } catch (error) {
-            console.error(`❌ Error storing file ${fileKey}:`, error.message);
+            console.error(`Error storing file ${fileKey}:`, error.message);
             return false;
         }
     }
@@ -501,13 +538,13 @@ class RedisService extends EventEmitter {
                 return null;
             }
 
-            console.log(`✅ File retrieved successfully: ${fileKey} (${fileBuffer.length} bytes)`);
+            console.log(`File retrieved successfully: ${fileKey} (${fileBuffer.length} bytes)`);
             return {
                 data: fileBuffer
             }
 
         } catch (error) {
-            console.error(`❌ Error retrieving file ${fileKey}:`, error.message);
+            console.error(`Error retrieving file ${fileKey}:`, error.message);
             return null;
         }
     }
@@ -521,7 +558,7 @@ class RedisService extends EventEmitter {
             const exists = await this.redis.exists(`${fileKey}:data`);
             return exists === 1;
         } catch (error) {
-            console.error(`❌ Error checking file existence in Redis: ${error.message}`);
+            console.error(`Error checking file existence in Redis: ${error.message}`);
             return false;
         }
    }
@@ -605,18 +642,6 @@ class RedisService extends EventEmitter {
 
 // Create singleton instance
 const redisService = new RedisService();
-
-process.on('SIGTERM', async () => {
-    console.log('🛑 SIGTERM received, closing Redis connections...');
-    await redisService.disconnect();
-    process.exit(0);
-});
-
-process.on('SIGINT', async () => {
-    console.log('🛑 SIGINT received, closing Redis connections...');
-    await redisService.disconnect();
-    process.exit(0);
-});
 
 module.exports = redisService;
 module.exports.RedisService = RedisService;

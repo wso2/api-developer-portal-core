@@ -83,7 +83,7 @@ class SDKJobService extends EventEmitter {
         //this.activeJobs.set(jobId, job);
         
         // Emit initial progress
-        this.emitProgress(jobId, {
+        await this.emitProgress(jobId, {
             status: 'pending',
             progress: 0,
             currentStep: 'Initializing',
@@ -550,18 +550,25 @@ class SDKJobService extends EventEmitter {
     }
 
     async emitProgress(jobId, progressData) {
-        const progressPayload = {
-            jobId,
-            ...progressData
-        };
+        try {
+            const progressPayload = {
+                jobId,
+                ...progressData
+            };
 
-        // Try to broadcast via Redis for multi-pod support
-        const broadcasted = await redisService.publishProgress(jobId, progressData);
-        
-        if (!broadcasted) {
-            // Fallback to local emission if Redis is not available
-            console.warn(`⚠️ Redis broadcasting failed for job ${jobId}, using local emission`);
-            redisService.emitLocal(jobId, progressData);
+            const { currentStep, progress } = progressData; 
+
+            // Try to broadcast via Redis for multi-pod support
+            const published = await redisService.publishProgress(jobId, progressData);
+            
+            if (!published) {
+                // Fallback to local emission if Redis is not available
+                console.warn(`Redis broadcasting failed for job ${jobId}, using local emission`);
+                redisService.emitLocal(jobId, progressData);
+            }
+        } catch (error) {
+            console.error(`Error emitting progress for job ${jobId}:`, error);
+            throw new Error(`Failed to emit progress for job ${jobId}: ${error.message}`);
         }
     }
 
@@ -1090,7 +1097,7 @@ class SDKJobService extends EventEmitter {
             console.log(`Final ZIP created: ${finalZipPath}`);
 
             const fileKey = path.basename(zipFileName, '.zip');
-            const zipStored = await redisService.storeFile(fileKey, finalZipPath, 3600);
+            const zipStored = await redisService.storeFile(fileKey, finalZipPath, 600);
 
             if (!zipStored) {
                 console.warn(`Failed to store final ZIP in Redis: ${fileKey}`);
