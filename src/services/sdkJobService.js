@@ -34,10 +34,10 @@ const { exec } = require('child_process');
 const { promisify } = require('util');
 const execAsync = promisify(exec);
 const secret = require(process.cwd() + '/secret.json');
+const redisService = require('./redisService');
 class SDKJobService extends EventEmitter {
     constructor() {
         super();
-        this.activeJobs = new Map();
         this.sdkCleanupInterval = null; // Store cleanup interval reference
     }
 
@@ -64,10 +64,9 @@ class SDKJobService extends EventEmitter {
         };
         
         const job = await SdkJob.createJob(jobData);
-        this.activeJobs.set(jobId, job);
-        
+
         // Emit initial progress
-        this.emitProgress(jobId, {
+        await this.emitProgress(jobId, {
             status: 'pending',
             progress: 0,
             currentStep: 'Initializing',
@@ -88,7 +87,7 @@ class SDKJobService extends EventEmitter {
     }
 
     async runJob(jobId, jobPayload) {
-        let mergedSpec, apiSpecs, apiHandles, sdkResult, finalZipPath, baseSdkName;
+        let mergedSpec, apiSpecs, apiHandles, sdkResult, finalZipPath, baseSdkName, redisKey;
 
         jobPayload = { ...jobPayload, jobId };
 
@@ -102,6 +101,7 @@ class SDKJobService extends EventEmitter {
                     mergedSpec = result.mergedSpec;
                     apiSpecs = result.apiSpecs;
                     apiHandles = result.apiHandles;
+                    redisKey = result.redisKey;
                     console.log('Merging step completed');
                 }
             },
@@ -173,7 +173,8 @@ class SDKJobService extends EventEmitter {
                 finalDownloadUrl: `/devportal/sdk/download/${path.basename(finalZipPath || `${jobId}.zip`)}`,
                 applicationCodeGenerated: true,
                 mode: 'ai',
-                downloadPath: finalZipPath
+                downloadPath: finalZipPath,
+                redisKey: redisKey
             };
             
             await this.completeJob(jobId, resultData);
@@ -267,7 +268,8 @@ class SDKJobService extends EventEmitter {
             
             reportProgress(100); // 100% of 50% = 50% overall (100% total)
             return {
-                finalZipPath: result
+                finalZipPath: result.finalZipPath,
+                redisKey: result.redisKey
             };
         } catch (error) {
             console.error('Error during application code generation step:', error);
@@ -295,17 +297,13 @@ class SDKJobService extends EventEmitter {
             };
 
             const updatedJob = await SdkJob.updateJob(jobId, updateData);
-            if (updatedJob) {
-                this.activeJobs.set(jobId, updatedJob);
-                            // Emit progress event
-                this.emitProgress(jobId, {
-                    status: status.toLowerCase(),
-                    progress: progress,
-                    currentStep: currentStep,
-                    message: message || this.getDefaultMessage(status),
-                    resultData: resultData
-                });
-            }
+            await this.emitProgress(jobId, {
+                status: status.toLowerCase(),
+                progress: progress,
+                currentStep: currentStep,
+                message: message || this.getDefaultMessage(status),
+                resultData: resultData
+            });
             
             return updatedJob;
         } catch (error) {
@@ -338,9 +336,6 @@ class SDKJobService extends EventEmitter {
             };
 
             const updatedJob = await SdkJob.updateJob(jobId, updateData);
-            
-            // Remove from active jobs
-            this.activeJobs.delete(jobId);
             
             // Clean up any generated files for this job
             await this.cleanupJobFiles(jobId);
@@ -433,7 +428,6 @@ class SDKJobService extends EventEmitter {
 
             const updatedJob = await SdkJob.updateJob(jobId, updateData);
             if (updatedJob) {
-                this.activeJobs.set(jobId, updatedJob);
                 
                 this.emitProgress(jobId, {
                     status: 'failed',
@@ -454,7 +448,6 @@ class SDKJobService extends EventEmitter {
     }
 
     async completeJob(jobId, resultData = null) {
-        this.activeJobs.delete(jobId); // Remove from active jobs
         return await this.updateJobStatus(
             jobId, 
             JOB_STATUS.COMPLETED, 
@@ -466,13 +459,8 @@ class SDKJobService extends EventEmitter {
     }
 
     async getJob(jobId) {
-        if (this.activeJobs.has(jobId)) {
-            return this.activeJobs.get(jobId);
-        }
-        
         const job = await SdkJob.getJobById(jobId);
         if (job) {
-            this.activeJobs.set(jobId, job);
             return job;
         }
         
@@ -484,11 +472,27 @@ class SDKJobService extends EventEmitter {
         return `${orgId}-${applicationId}-${randomPostfix}`;
     }
 
-    emitProgress(jobId, progressData) {
-        this.emit('progress', {
-            jobId,
-            ...progressData
-        });
+    async emitProgress(jobId, progressData) {
+        try {
+            const progressPayload = {
+                jobId,
+                ...progressData
+            };
+
+            const { currentStep, progress } = progressData;
+
+            const published = await redisService.publishProgress(jobId, progressData);
+
+            if (!published) {
+                // Fallback to local emission if Redis is not available
+                console.warn(`Redis broadcasting failed for job ${jobId}, using local emission`);
+                redisService.emitLocal(jobId, progressData);
+            }
+
+        } catch (error) {
+            console.error(`Error emitting progress for job ${jobId}:`, error);
+            throw new Error(`Failed to emit progress for job ${jobId}: ${error.message}`);
+        }
     }
 
     getDefaultMessage(status) {
@@ -827,7 +831,7 @@ class SDKJobService extends EventEmitter {
 
             const applicationCodeResponse = await this.invokeApplicationCodeGenApi(applicationApiRequest);
 
-            const finalZipName = this.createSDKFileName(sdkResult.sdkName, true);
+            const finalZipName = this.createSDKFileName(sdkResult.sdkName);
             const finalZipResult = await this.processApplicationCodeAndCreateFinalZip(
                 applicationCodeResponse,
                 sdkResult.sdkPath,
@@ -835,7 +839,10 @@ class SDKJobService extends EventEmitter {
                 finalZipName
             );
 
-            return finalZipResult.finalZipPath;
+            return {
+                finalZipPath: finalZipResult.finalZipPath,
+                redisKey: finalZipResult.redisKey
+            }
             
         } catch (error) {
             console.error('Error processing AI mode SDK:', error);
@@ -954,9 +961,8 @@ class SDKJobService extends EventEmitter {
      * @param {boolean} isAIMode - Whether AI mode is enabled
      * @returns {string} - Final SDK filename
      */
-    createSDKFileName(baseSdkName, isAIMode) {        
-        const suffix = isAIMode ? 'with-app' : '';
-        return `${baseSdkName}-${suffix}.zip`;
+    createSDKFileName(baseSdkName) {        
+        return `${baseSdkName}.zip`;
     }
 
     /**
@@ -1003,7 +1009,17 @@ class SDKJobService extends EventEmitter {
             
             const finalZipPath = path.join(permanentDir, zipFileName);
             await this.createZipArchive(sdkPath, finalZipPath);
+
             console.log(`Final ZIP created: ${finalZipPath}`);
+
+            const fileKey = path.basename(zipFileName, '.zip');
+            const zipStored = await redisService.storeFileWithRetry(fileKey, finalZipPath, 600);
+
+            if (!zipStored) {
+                console.warn(`Failed to store final ZIP in Redis: ${fileKey}`);
+            }
+
+            console.log(`Final ZIP stored in Redis with key: ${fileKey}`);
             
             // Clean up SDK folder
             await fs.promises.rm(sdkPath, { recursive: true, force: true });
@@ -1011,6 +1027,7 @@ class SDKJobService extends EventEmitter {
             
             return {
                 finalZipPath: finalZipPath,
+                redisKey: fileKey
             };
             
         } catch (error) {
@@ -1472,37 +1489,20 @@ class SDKJobService extends EventEmitter {
 
             console.log(`Client connected to SSE for job: ${jobId}`);
 
-            const onProgress = (progressData) => {
-                if (progressData.jobId === jobId) {
-                    console.log(`Progress update for job ${jobId} step [${progressData.currentStep}] progress ${progressData.progress}%`);
-                    const dataToSend = { ...progressData, type: 'progress' };
-                    res.write(`data: ${JSON.stringify(dataToSend)}\n\n`);
+            // Send initial connection confirmation
+            res.write(`data: ${JSON.stringify({
+                type: 'connected',
+                jobId: jobId,
+                podId: redisService.podId,
+                timestamp: Date.now(),
+                message: 'SSE connection established'
+            })}\n\n`);
 
-                    // Close SSE connection after sending completion or failure events
-                    if (progressData.status === 'completed' || progressData.status === 'failed' || progressData.status === 'cancelled') {
-                        console.log(`Closing SSE connection for job ${jobId} after ${progressData.status} event`);
-                        this.removeListener('progress', onProgress);
-
-                        // Close the connection after a brief delay to ensure the client receives the final event
-                        setTimeout(() => {
-                            try {
-                                res.end();
-                            } catch (error) {
-                                console.warn(`Error closing SSE connection for job ${jobId}:`, error.message);
-                            }
-                        }, 100);
-                    }
-                }
-            };
-
-            this.on('progress', onProgress);
-
-            // Send initial ping
-            res.write(`data: ${JSON.stringify({ type: 'ping', jobId })}\n\n`);
+            redisService.registerSSEConnection(jobId, res);
 
             req.on('close', () => {
                 console.log(`Client disconnected from SSE for job: ${jobId}`);
-                this.removeListener('progress', onProgress);
+                redisService.unregisterSSEConnection(jobId);
             });
         } catch (error) {
             console.error('Error in SDK progress streaming:', error);
@@ -1545,29 +1545,78 @@ class SDKJobService extends EventEmitter {
         try {
             const { filename } = req.params;
             const filePath = path.join(process.cwd(), 'generated-sdks', filename);
+            const fileKey = path.basename(filename, '.zip');
 
-            const normalizedPath = path.normalize(filePath);
+            console.log(`Download request for SDK file: ${filename} Redis Key: ${fileKey}`);
+
+            const redisFile = await redisService.retrieveFileWithRetry(fileKey);
+
+            if (redisFile) {
+                console.log(`Found SDK file in Redis cache: ${fileKey}`);
+
+                res.setHeader('Content-Type', 'application/zip');
+                res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+                // res.setHeader('Content-Length', redisFile.metadata.size);
+                res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+                res.setHeader('Expires', '0');
+                res.setHeader('Pragma', 'no-cache');
+
+                res.send(redisFile.data);
+                console.log(`Streaming SDK file from Redis cache: ${filename}`);
+                return;
+            }
+
+            console.log(`SDK file not found in Redis cache, checking local storage: ${filePath}`);
+
+            const localFilePath = path.join(process.cwd(), 'generated-sdks', filename);
+            const normalizedPath = path.normalize(localFilePath);
             const expectedDir = path.join(process.cwd(), 'generated-sdks');
 
+            // Security check for path traversal
             if (!normalizedPath.startsWith(expectedDir)) {
+                console.warn(`Path traversal attempt detected: ${filename}`);
                 return res.status(403).json({ error: 'Access denied' });
             }
 
-            if (!fs.existsSync(filePath)) {
-                return res.status(404).json({ error: 'SDK file not found' });
+            const localFileExists = await fs.promises.access(localFilePath).then(() => true).catch(() => false);
+
+            if (!localFileExists) {
+                console.error(`File not found in Redis or local filesystem: ${filename}`);
+                return res.status(404).json({ 
+                    error: 'SDK file not found',
+                    message: 'The requested SDK file is not available. It may have expired or been cleaned up.',
+                    filename: filename
+                });
             }
+
+            console.log(`Found SDK file in local storage: ${localFilePath}`);
+
+            const stats = await fs.promises.stat(localFilePath);
 
             res.setHeader('Content-Type', 'application/zip');
             res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+            res.setHeader('Content-Length', stats.size);
+            res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+            res.setHeader('Expires', '0');
+            res.setHeader('Pragma', 'no-cache');
 
-            // Stream the file
-            const fileStream = fs.createReadStream(filePath);
-            fileStream.pipe(res);
+            console.log(`Streaming file from local filesystem: ${filename} (${stats.size} bytes)`);
 
-            fileStream.on('error', (err) => {
-                console.error('Error streaming SDK file:', err);
-                res.status(500).json({ error: 'Error downloading SDK' });
+            // Stream the local file
+            const fileStream = fs.createReadStream(localFilePath);
+
+            fileStream.on('error', (streamError) => {
+                console.error(`Error streaming local file: ${streamError.message}`);
+                if (!res.headersSent) {
+                    res.status(500).json({ error: 'Error streaming file' });
+                }
             });
+
+            fileStream.on('end', () => {
+                console.log(`Local file download completed: ${filename}`);
+            });
+
+            fileStream.pipe(res);
             
         } catch (error) {
             console.error('Error downloading SDK:', error);
