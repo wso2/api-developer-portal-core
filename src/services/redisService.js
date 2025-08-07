@@ -96,7 +96,6 @@ class RedisService extends EventEmitter {
     async sendSSEEvent(jobId, data) {
         const connection = this.activeSSEConnections.get(jobId);
         if (!connection) {
-            console.debug(`No active SSE connection for job ${jobId} on pod ${this.podId}`);
             return false;
         }
 
@@ -115,7 +114,7 @@ class RedisService extends EventEmitter {
                 });
             }
             connection.lastActivity = Date.now();
-            console.log(`Sent SSE event for job ${jobId} from pod ${podId}:`);
+            console.log(`Sent SSE event for job ${jobId} from pod: ${podId}`);
             return true;
         } catch (error) {
             console.error(`Error sending SSE event for job ${jobId} on pod ${podId}:`, error.message);
@@ -147,8 +146,8 @@ class RedisService extends EventEmitter {
             });
 
             await this.publisher.publish(REDIS_CONSTANTS.SDK_PROGRESS_CHANNEL, message);
-            
-            console.log(`Published progress event for job ${jobId} from pod (${progressData.progress}%) to other available pods`);
+
+            console.log(`Published progress event for job ${jobId} from ${this.podId} with progress: (${progressData.progress}%) to other available pods`);
             return true;
             
         } catch (error) {
@@ -178,9 +177,7 @@ class RedisService extends EventEmitter {
         
         const sent = await this.sendSSEEvent(jobId, data);
         
-        if (sent) {
-            console.log(`Sent progress event for SSE from job ${jobId} on pod ${this.podId}`);
-        } else {
+        if (!sent) {
             console.debug(`No local SSE connection for job ${jobId} on pod ${this.podId}`);
         }
     }
