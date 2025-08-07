@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
+ * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -25,6 +25,7 @@ const config = require(process.cwd() + '/config');
 const path = require('path');
 const fs = require('fs');
 const RedisConnectionHelper = require('./redisConnectionHelper');
+const REDIS_CONSTANTS = require('../utils/constants').REDIS_CONSTANTS;
 
 class RedisService extends EventEmitter {
     constructor() {
@@ -39,11 +40,11 @@ class RedisService extends EventEmitter {
         this.reconnectTimeout = null;
         this.connectionPromise = null;
         this.podId = process.env.POD_NAME || `pod-${Math.random().toString(36).substr(2, 9)}`;
-        this.maxFileSize = 50 * 1024 * 1024; // 50 MB
-        this.defaultTTL = 3600;
+        this.maxFileSize = config.redis?.configs?.maxFileSize || 50 * 1024 * 1024; // 50 MB
+        this.defaultTTL = config.redis?.configs?.ttl || 3600;
         this.isShuttingDown = false;
         this.activeSSEConnections = new Map();
-        this.sseConnectionTimeout = 120000;
+        this.sseConnectionTimeout = config.redis?.configs?.sseConnectionTimeout || 120000;
 
         // Start connection without waiting
         this.init().catch(error => {
@@ -145,7 +146,7 @@ class RedisService extends EventEmitter {
                 sentLocally: sentLocally
             });
 
-            await this.publisher.publish('sdk-progress', message);
+            await this.publisher.publish(REDIS_CONSTANTS.SDK_PROGRESS_CHANNEL, message);
             
             console.log(`Published progress event for job ${jobId} from pod (${progressData.progress}%) to other available pods`);
             return true;
@@ -231,7 +232,7 @@ class RedisService extends EventEmitter {
 
         const fileExists = await fs.promises.access(filePath).then(() => true).catch(() => false);
         if (!fileExists) {
-            throw new Error(`File does not exist: ${filePath}`);
+            throw new Error(REDIS_CONSTANTS.ERRORS.FILE_NOT_EXIST);
         }
 
         const stats = await fs.promises.stat(filePath);
@@ -260,7 +261,7 @@ class RedisService extends EventEmitter {
         const results = await Promise.race([
             pipeline.exec(),
             new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Redis pipeline timeout')), 30000) // 30s timeout
+                setTimeout(() => reject(new Error(REDIS_CONSTANTS.ERRORS.PIPELINE_TIMEOUT)), 30000) // 30s timeout
             )
         ]);
 
@@ -282,6 +283,9 @@ class RedisService extends EventEmitter {
     }
 
     async verifyStoredFile(fileKey, expectedSize, maxRetries = 3) {
+        if (!this.isConnected || !this.redis) {
+            throw new Error(`Redis not connected on pod: ${this.podId}`);
+        }
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 console.log(`Verifying stored file: ${fileKey} (attempt ${attempt}/${maxRetries})`);
@@ -458,13 +462,13 @@ class RedisService extends EventEmitter {
 
     _shouldReconnectOnError(error) {
         const reconnectTriggers = [
-            'Command timed out',
-            'Connection is closed',
-            'Connection lost',
-            'Socket closed unexpectedly',
-            'Redis pipeline timeout',
-            'Failed to store file in Redis',
-            'File does not exist'
+            REDIS_CONSTANTS.ERRORS.COMMAND_TIMEOUT,
+            REDIS_CONSTANTS.ERRORS.CONNECTION_CLOSED,
+            REDIS_CONSTANTS.ERRORS.CONNECTION_LOST,
+            REDIS_CONSTANTS.ERRORS.SOCKET_CLOSED,
+            REDIS_CONSTANTS.ERRORS.PIPELINE_TIMEOUT,
+            REDIS_CONSTANTS.ERRORS.STORE_FAILED,
+            REDIS_CONSTANTS.ERRORS.FILE_NOT_EXIST
         ];
         
         const errorMessage = error.message || '';

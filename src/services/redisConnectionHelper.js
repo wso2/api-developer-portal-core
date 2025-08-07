@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
+ * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -21,6 +21,8 @@
 
 const Redis = require('ioredis');
 const config = require(process.cwd() + '/config');
+const secret = require(process.cwd() + '/secret.json');
+const REDIS_CONSTANTS = require('../utils/constants').REDIS_CONSTANTS;
 
 class RedisConnectionHelper {
     static async performConnection(service) {
@@ -31,7 +33,7 @@ class RedisConnectionHelper {
         if (service.reconnectAttempts >= service.maxReconnectAttempts) {
             console.error(`Max Redis connection attempts reached for pod: ${service.podId}. Operating in offline mode.`);
             RedisConnectionHelper.enterOfflineMode(service);
-            throw new Error('Max reconnection attempts exceeded');
+            throw new Error(REDIS_CONSTANTS.ERRORS.MAX_ATTEMPTS_REACHED);
         }
 
         service.isConnecting = true;
@@ -41,15 +43,15 @@ class RedisConnectionHelper {
 
             const redisConfig = {
                 host: config.redis?.host || process.env.REDIS_HOST || 'localhost',
-                port: config.redis?.port || process.env.REDIS_PORT || 6379,
-                password: config.redis?.password || process.env.REDIS_PASSWORD,
-                db: config.redis?.db || process.env.REDIS_DB || 0,
-                retryDelayOnFailover: 1000,
+                port: Number(config.redis?.port || process.env.REDIS_PORT || 6379),
+                password: secret.redisSecret || process.env.REDIS_PASSWORD || '',
+                db: Number(config.redis?.db || process.env.REDIS_DB || 0),
+                retryDelayOnFailover: Number(config.redis?.configs?.retryDelayOnFailover || 1000),
                 maxRetriesPerRequest: 0,
                 lazyConnect: true,
-                connectTimeout: 8000,
-                commandTimeout: 20000,
-                keyPrefix: 'sdkfiles:',
+                connectTimeout: Number(config.redis?.configs?.connectionTimeout || 8000),
+                commandTimeout: Number(config.redis?.configs?.commandTimeout || 20000),
+                keyPrefix: REDIS_CONSTANTS.KEY_PREFIX,
                 retryConnectOnFailure: false,
                 enableOfflineQueue: false,
                 tls: true
@@ -75,7 +77,7 @@ class RedisConnectionHelper {
                 )
             ]);
 
-            await service.subscriber.subscribe('sdk-progress');
+            await service.subscriber.subscribe(REDIS_CONSTANTS.SDK_PROGRESS_CHANNEL);
             
             service.isConnected = true;
             service.isConnecting = false;
@@ -140,7 +142,7 @@ class RedisConnectionHelper {
 
         service.subscriber.on('message', async (channel, data) => {
             try {
-                if (channel === 'sdk-progress') {
+                if (channel === REDIS_CONSTANTS.SDK_PROGRESS_CHANNEL) {
                     const jsonData = JSON.parse(data);
                     if (jsonData.type === 'progress') {
                         await service.handleProgressEvent(jsonData);
@@ -239,7 +241,8 @@ class RedisConnectionHelper {
             service.reconnectTimeout = null;
         }
         
-        service.emit('offline', { podId: service.podId, timestamp: Date.now() });
+        service.emit(REDIS_CONSTANTS.CONNECTION_STATES.OFFLINE,
+             { podId: service.podId, timestamp: Date.now() });
     }
 
     static async cleanupConnections(service) {
