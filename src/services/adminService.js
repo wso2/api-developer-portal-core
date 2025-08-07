@@ -32,6 +32,7 @@ const config = require(process.cwd() + '/config.json');
 const controlPlaneUrl = config.controlPlane.url;
 const { invokeApiRequest } = require('../utils/util');
 const { Sequelize } = require("sequelize");
+const { trackGenerateCredentials, trackSubscribeApi, trackUnsubscribeApi } = require('../utils/telemetry');
 
 const createOrganization = async (req, res) => {
 
@@ -724,6 +725,11 @@ const createSubscription = async (req, res) => {
                     await handleSubscribe(orgID, req.body.applicationID, nonSharedApp[0].dataValues.API_REF_ID, nonSharedApp[0].dataValues.SUBSCRIPTION_REF_ID, response, isShared, t);
                 }
                 await adminDao.createSubscription(orgID, req.body, t);
+                trackSubscribeApi({
+                    orgId: orgID,
+                    appId: req.body.applicationID,
+                    apiId: req.body.apiId
+                });
                 return res.status(200).json({ message: 'Subscribed successfully' });
 
             } catch (error) {
@@ -1007,6 +1013,10 @@ const createAppKeyMapping = async (req, res) => {
             }
             responseData.subscriptionScopes = subscriptionScopes;
         });
+        trackGenerateCredentials({
+            orgId: orgID,
+            appName: req.body.applicationName,
+        });
         return res.status(200).json(responseData);
     } catch (error) {
         console.error(`${constants.ERROR_MESSAGE.KEY_MAPPING_CREATE_ERROR}`, error);
@@ -1183,6 +1193,11 @@ const unsubscribeAPI = async (req, res) => {
                     };
                 }
                 await adminDao.deleteSubscription(orgID, subscriptionID, t);
+                trackUnsubscribeApi({
+                    orgId: orgID,
+                    appId: appID,
+                    apiRefId: apiReferenceID
+                });
                 return res.status(204).send();
             } catch (error) {
                 try {
@@ -1190,6 +1205,11 @@ const unsubscribeAPI = async (req, res) => {
                         console.log("Subscription not found in control plane, deleting the subscription from database");
                         await handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiReferenceID, t);
                         await adminDao.deleteSubscription(orgID, subscriptionID, t);
+                        trackUnsubscribeApi({
+                            orgId: orgID,
+                            appId: appID,
+                            apiRefId: apiReferenceID
+                        });
                         return res.status(204).send();
                     }
                 } catch (error) {

@@ -29,6 +29,7 @@ const { ApplicationDTO } = require('../dto/application');
 const { Sequelize } = require("sequelize");
 const adminService = require('../services/adminService');
 const apiDao = require('../dao/apiMetadata');
+const { trackAppCreationStart, trackAppCreationEnd, trackAppDeletion, trackGenerateKey } = require('../utils/telemetry');
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
 
@@ -37,7 +38,9 @@ const apiDao = require('../dao/apiMetadata');
 const saveApplication = async (req, res) => {
     try {
         const orgID = await adminDao.getOrgId(req.user[constants.ORG_IDENTIFIER]);
+        trackAppCreationStart({ orgId: orgID, appName: req.body.name });
         const application = await adminDao.createApplication(orgID, req.user.sub, req.body);
+        trackAppCreationEnd({ orgId: orgID, appName: req.body.name });
         return res.status(201).json(new ApplicationDTO(application.dataValues));
     } catch (error) {
         console.error("Error occurred while creating the application", error);
@@ -80,6 +83,7 @@ const deleteApplication = async (req, res) => {
             if (appDeleteResponse === 0) {
                 throw new Sequelize.EmptyResultError("Resource not found to delete");
             } else {
+                trackAppDeletion({ orgId: orgID, appId: applicationId  });
                 res.status(200).send("Resouce Deleted Successfully");
             }
         } catch (error) {
@@ -234,6 +238,10 @@ const generateOAuthKeys = async (req, res) => {
         const applicationId = req.params.applicationId;
         const keyMappingId = req.params.keyMappingId;
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}/generate-token`, {}, req.body);
+        trackGenerateKey({
+            orgId: req.user[constants.ORG_ID],
+            appId: applicationId
+        });
         res.status(200).json(responseData);
     } catch (error) {
         console.error("Error occurred while generating the OAuth keys", error);

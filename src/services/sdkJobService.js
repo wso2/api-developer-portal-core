@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
@@ -29,6 +30,7 @@ const aiSDKServiceEndpoints = config.aiSDKService?.endpoints || {
     mergeSpecs: '/merge-openapi-specs',
     generateApp: '/generate-application-code'
 };
+const { trackSDKGenerationStart, trackSDKGenerationEnd } = require('../utils/telemetry');
 const archiver = require('archiver');
 const { exec } = require('child_process');
 const { promisify } = require('util');
@@ -1402,6 +1404,11 @@ class SDKJobService extends EventEmitter {
             const { selectedAPIs, sdkConfiguration, orgName } = req.body;
             const { applicationId } = req.params;
 
+            trackSDKGenerationStart({
+                orgName: orgName,
+                appId: applicationId
+            });
+
             // Validate input
             if (!orgName) {
                 return res.status(400).json({
@@ -1616,8 +1623,8 @@ class SDKJobService extends EventEmitter {
                 console.log(`Local file download completed: ${filename}`);
             });
 
-            fileStream.pipe(res);
-            
+            fileStream.pipe(res);      
+            trackSDKGenerationEnd();
         } catch (error) {
             console.error('Error downloading SDK:', error);
             res.status(500).json({

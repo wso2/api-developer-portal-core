@@ -108,6 +108,19 @@
       "enabled": true
     }
   },
+  "portalConfigs": {
+    "showMaintenanceBanner": true,
+    "maintenanceBannerText": "This portal is under maintenance today from 10 PM to 12 AM."
+  },
+  "telemetry": true,
+  "generateDefaultSubPolicies": false,
+  "fidp": {
+    "google": "google",
+    "github": "github",
+    "microsoft": "microsoft",
+    "enterprise": "EnterpriseIDP",
+    "email": "LOCAL"
+  },
   "redis": {
     "host": "redis.f.bijira.com",
     "port": 6379,
