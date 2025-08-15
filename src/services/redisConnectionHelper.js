@@ -273,6 +273,94 @@ class RedisConnectionHelper {
         service.publisher = null;
         service.subscriber = null;
     }
+
+    static async performFileOnlyConnection(service) {
+        if (service.isShuttingDown) {
+            throw new Error('Service is shutting down');
+        }
+
+        console.log(`Attempting Redis file storage reconnection on pod: ${service.podId}`);
+
+        try {
+            await RedisConnectionHelper.cleanupFileConnection(service);
+
+            const redisConfig = {
+                host: config.redis?.host || process.env.REDIS_HOST || 'localhost',
+                port: Number(config.redis?.port || process.env.REDIS_PORT || 6379),
+                password: secret.redisSecret || process.env.REDIS_PASSWORD || '',
+                db: Number(config.redis?.db || process.env.REDIS_DB || 0),
+                retryDelayOnFailover: Number(config.redis?.configs?.retryDelayOnFailover || 1000),
+                maxRetriesPerRequest: 0,
+                lazyConnect: true,
+                connectTimeout: Number(config.redis?.configs?.connectionTimeout || 8000),
+                commandTimeout: Number(config.redis?.configs?.commandTimeout || 20000),
+                keyPrefix: REDIS_CONSTANTS.KEY_PREFIX,
+                retryConnectOnFailure: false,
+                enableOfflineQueue: false,
+                tls: true
+            };
+
+            console.log(`📁 Creating new Redis file storage connection on pod: ${service.podId}`);
+
+            service.redis = new Redis(redisConfig);
+
+            RedisConnectionHelper.setupFileEventHandlers(service);
+
+            await Promise.race([
+            service.redis.connect(),
+            new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('File storage connection timeout')), 8000)
+                )
+            ]);
+            
+            console.log(`Redis file storage reconnected successfully on pod: ${service.podId}`);
+            return true;
+        } catch (error) {
+            console.error(`Redis file storage reconnection failed on pod: ${service.podId}:`, error.message);
+        
+            await RedisConnectionHelper.cleanupFileConnection(service);
+            throw error;
+        }
+    }
+
+    static setupFileEventHandlers(service) {
+        if (!service.redis) {
+            return;
+        }
+
+        service.redis.removeAllListeners();
+        
+        service.redis.on('connect', () => {
+            console.log(`Redis file storage connected successfully on pod: ${service.podId}`);
+        });
+
+        service.redis.on('error', (error) => {
+            console.error(`Redis file storage error on pod ${service.podId}:`, error.message);
+        });
+
+        service.redis.on('close', () => {
+            console.log(`🔌 Redis file storage connection closed on pod: ${service.podId}`);
+        });
+    }
+
+    static async cleanupFileConnection(service) {
+        if (service.redis) {
+            try {
+                service.redis.removeAllListeners();
+                
+                if (service.redis.status !== 'end') {
+                    await Promise.race([
+                        service.redis.disconnect(),
+                        new Promise(resolve => setTimeout(resolve, 2000)) // 2s timeout for cleanup
+                    ]);
+                }
+            } catch (error) {
+                console.warn(`Error cleaning up redis file connection:`, error.message);
+            }
+            
+            service.redis = null;
+        }
+    }
 }
 
 module.exports = RedisConnectionHelper;

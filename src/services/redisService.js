@@ -109,15 +109,15 @@ class RedisService extends EventEmitter {
             response.write(`data: ${JSON.stringify(modifiedData)}\n\n`);
             if (modifiedData.status === 'completed' || modifiedData.status === 'failed' || modifiedData.status === 'cancelled') {
                 response.on('close', () => {
-                    console.log(`SSE connection closed for job ${jobId} on pod ${podId}`);
+                    console.log(`SSE connection closed for job ${jobId} on pod [${podId}]`);
                     this.unregisterSSEConnection(jobId);
                 });
             }
             connection.lastActivity = Date.now();
-            console.log(`Sent SSE event for job ${jobId} from pod: ${podId}`);
+            console.log(`Sent SSE event with progress : ${data.progress}% from pod: [${podId}]`);
             return true;
         } catch (error) {
-            console.error(`Error sending SSE event for job ${jobId} on pod ${podId}:`, error.message);
+            console.error(`Error sending SSE event for job ${jobId} on pod [${podId}]:`, error.message);
             this.unregisterSSEConnection(jobId);
             return false;
         }
@@ -127,11 +127,12 @@ class RedisService extends EventEmitter {
         const sentLocally = await this.sendSSEEvent(jobId, progressData);
 
         if (sentLocally) {
-            console.debug(`SSE connection available in ${this.podId} and SSE event progress for job ${jobId} sent successfully.`);
+            console.debug(`SSE connection available in this pod [${this.podId}] and SSE event progress: ${progressData.progress}% sent successfully. No publishing to Redis required.`);
+            return true;
         }
 
         if (!this.isConnected || !this.publisher) {
-            console.warn(`Cannot publish progress - Redis not connected on pod: ${this.podId}`);
+            console.warn(`Cannot publish progress - Redis not connected on pod: [${this.podId}]`);
             return false;
         }
 
@@ -147,7 +148,7 @@ class RedisService extends EventEmitter {
 
             await this.publisher.publish(REDIS_CONSTANTS.SDK_PROGRESS_CHANNEL, message);
 
-            console.log(`Published progress event for job ${jobId} from ${this.podId} with progress: (${progressData.progress}%) to other available pods`);
+            console.log(`Published progress event for job ${jobId} from [${this.podId}] with progress: ${progressData.progress}% to other available pods`);
             return true;
             
         } catch (error) {
@@ -155,15 +156,29 @@ class RedisService extends EventEmitter {
             
             if (this._shouldReconnectOnError(error)) {
                 console.warn(`Triggering Redis reconnection due to publish error: ${error.message}`);
-                const reconnected = await this._triggerReconnection();
-                if (reconnected) {
-                    console.log(`Reconnected to Redis successfully after error: ${error.message}`);
-                } else {
-                    console.error(`Failed to reconnect to Redis after error: ${error.message}`);
+                try {
+                    const reconnected = await this._triggerReconnection();
+                    if (reconnected) {
+                        console.log(`Reconnected to Redis successfully after error: ${error.message}`);
+                        try {
+                            await this.publisher.publish(REDIS_CONSTANTS.SDK_PROGRESS_CHANNEL, message);
+                            console.log(`Successfully republished progress event for job ${jobId} after reconnection`);
+                            return true;
+                        } catch (retryError) {
+                            console.error(`Failed to republish progress after reconnection for job ${jobId}:`, retryError.message);
+                            return false;
+                        }
+                    } else {
+                        console.error(`Failed to reconnect to Redis after error: ${error.message}`);
+                        return false
+                    }
+                } catch (reconnectError) {
+                    console.error(`Reconnection attempt failed: ${reconnectError.message}`);
+                    return false;
                 }
+            } else {
+                return false;
             }
-            
-            return false;
         }
     }
 
@@ -185,14 +200,11 @@ class RedisService extends EventEmitter {
     async storeFileWithRetry(fileKey, filePath, ttl = this.defaultTTL, maxRetries = 3) {
         let lastError = null;
 
-        console.log(`Storing file ${fileKey} from ${filePath} with TTL ${ttl} on pod: ${this.podId}`);
-
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                console.debug(`Storing file ${fileKey} from ${filePath} (attempt ${attempt}/${maxRetries}) on pod: ${this.podId}`);
                 const result = await this.storeFile(fileKey, filePath, ttl);
                 if (result) {
-                    console.log(`File stored successfully on attempt ${attempt}: ${fileKey}`);
+                    console.log(`File stored successfully on attempt ${attempt}: with redis Key: ${fileKey}`);
                     return true;
                 }
             } catch (error) {
@@ -200,7 +212,7 @@ class RedisService extends EventEmitter {
                 console.error(`Storage attempt ${attempt} failed for ${fileKey}:`, error.message);
                 if (this._shouldReconnectOnError(error)) {
                     console.warn(`Triggering Redis reconnection due to file storage error: ${error.message}`);
-                    const reconnected = await this._triggerReconnection();
+                    const reconnected = await this._triggerFileOnlyReconnection();
                     if (reconnected) {
                         console.log(`Reconnected to Redis successfully after error: ${error.message}`);
                     } else {
@@ -215,7 +227,7 @@ class RedisService extends EventEmitter {
 
                 if (attempt < maxRetries) {
                     const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Max 5s delay
-                    console.log(`⏳ Waiting ${delay}ms before retry ${attempt + 1}...`);
+                    console.log(`Waiting ${delay}ms before retry ${attempt + 1}...`);
                     await new Promise(resolve => setTimeout(resolve, delay));
                 }
             }
@@ -237,7 +249,6 @@ class RedisService extends EventEmitter {
             throw new Error(`File too large: ${stats.size} bytes (max: ${this.maxFileSize})`);
         }
 
-        console.debug(`Reading file for Redis storage: ${filePath} (${stats.size} bytes)`);
         const fileBuffer = await fs.promises.readFile(filePath);
 
         const metadata = {
@@ -248,8 +259,6 @@ class RedisService extends EventEmitter {
             uploadedBy: this.podId,
             ttl: ttl
         };
-
-        console.log(`Storing ${fileBuffer.length} bytes in Redis with key: ${fileKey}`);
     
         const pipeline = this.redis.pipeline();
         pipeline.setex(`${fileKey}:data`, ttl, fileBuffer);
@@ -269,8 +278,6 @@ class RedisService extends EventEmitter {
             throw new Error(`Redis pipeline failed - data: ${dataStored}, metadata: ${metadataStored}`);
         }
 
-        console.log(`File stored in Redis successfully: ${fileKey} (${stats.size} bytes) on pod: ${this.podId}`);
-
         const verified = await this.verifyStoredFile(fileKey, stats.size);
         if (!verified) {
             throw new Error('File storage verification failed');
@@ -285,7 +292,6 @@ class RedisService extends EventEmitter {
         }
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                console.log(`Verifying stored file: ${fileKey} (attempt ${attempt}/${maxRetries})`);
                 if (attempt === 1) {
                     await new Promise(resolve => setTimeout(resolve, 200));
                 }
@@ -296,7 +302,6 @@ class RedisService extends EventEmitter {
                     if (metadata) {
                         const meta = JSON.parse(metadata);
                         if (meta.size === expectedSize) {
-                            console.log(`Verification successful: ${fileKey} (${meta.size} bytes)`);
                             return true;
                         } else {
                             console.warn(`Size mismatch: expected ${expectedSize}, got ${meta.size}`);
@@ -326,9 +331,6 @@ class RedisService extends EventEmitter {
 
     async retrieveFileWithRetry(fileKey, maxRetries = 3, baseDelay = 1000) {
         let lastError = null;
-
-        console.log(`Retrieving file ${fileKey} from Redis on pod: ${this.podId}`);
-
         if (!this.isConnected) {
             console.warn(`Cannot retrieve file - Redis not connected on pod: ${this.podId}`);
             return null;
@@ -336,7 +338,6 @@ class RedisService extends EventEmitter {
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                console.debug(`Attempt ${attempt}/${maxRetries} - Retrieving file ${fileKey} from Redis`);
 
                 const result = await this.retrieveFile(fileKey);
 
@@ -348,7 +349,7 @@ class RedisService extends EventEmitter {
                 if (attempt < maxRetries) {
                     const delay = baseDelay * Math.pow(2, attempt - 1); // Exponential backoff
                     console.log(`File not found, waiting ${delay}ms before retry ${attempt + 1}...`);
-                    await this._triggerReconnection();
+                    await this._triggerFileOnlyReconnection();
                     await new Promise(resolve => setTimeout(resolve, delay));
                 }
 
@@ -358,7 +359,7 @@ class RedisService extends EventEmitter {
                 
                 if (this._shouldReconnectOnError(error)) {
                     console.warn(`Triggering Redis reconnection due to file retrieval error: ${error.message}`);
-                    await this._triggerReconnection();
+                    await this._triggerFileOnlyReconnection();
                 }
                 
                 if (attempt < maxRetries) {
@@ -377,7 +378,6 @@ class RedisService extends EventEmitter {
         }
 
         try {
-            console.log(`Retrieving file ${fileKey} from Redis`);
 
             const pipeline = this.redis.pipeline();
             pipeline.getBuffer(`${fileKey}:data`);
@@ -397,10 +397,9 @@ class RedisService extends EventEmitter {
         } catch (error) {
             console.error(`Error retrieving file ${fileKey}:`, error.message);
             
-            // Check for connection timeout or Redis errors that warrant reconnection
             if (this._shouldReconnectOnError(error)) {
                 console.warn(`Triggering Redis reconnection due to file retrieval error: ${error.message}`);
-                await this._triggerReconnection();
+                await this._triggerFileOnlyReconnection();
             }
             
             return null;
@@ -420,7 +419,7 @@ class RedisService extends EventEmitter {
             
             if (this._shouldReconnectOnError(error)) {
                 console.warn(`Triggering Redis reconnection due to file existence check error: ${error.message}`);
-                await this._triggerReconnection();
+                await this._triggerFileOnlyReconnection();
             }
             
             return false;
@@ -457,6 +456,22 @@ class RedisService extends EventEmitter {
         }
     }
 
+    async _triggerFileOnlyReconnection() {
+        console.log(`Triggering Redis file storage reconnection on pod: ${this.podId}`);
+        
+        try {
+            const success = await RedisConnectionHelper.performFileOnlyConnection(this);
+            if (success) {
+                console.log(`File storage reconnection successful on pod: ${this.podId}`);
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error(`File storage reconnection failed on pod: ${this.podId}:`, error.message);
+            return false;
+        }
+    }
+
     _shouldReconnectOnError(error) {
         const reconnectTriggers = [
             REDIS_CONSTANTS.ERRORS.COMMAND_TIMEOUT,
@@ -465,7 +480,8 @@ class RedisService extends EventEmitter {
             REDIS_CONSTANTS.ERRORS.SOCKET_CLOSED,
             REDIS_CONSTANTS.ERRORS.PIPELINE_TIMEOUT,
             REDIS_CONSTANTS.ERRORS.STORE_FAILED,
-            REDIS_CONSTANTS.ERRORS.FILE_NOT_EXIST
+            REDIS_CONSTANTS.ERRORS.FILE_NOT_EXIST,
+            REDIS_CONSTANTS.ERRORS.FILE_NOT_FOUND,
         ];
         
         const errorMessage = error.message || '';

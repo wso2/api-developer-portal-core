@@ -677,7 +677,7 @@ function showSDKGenerationSuccess() {
     // After 10 seconds, reset the drawer to initial state
     setTimeout(() => {
         resetDrawerToInitialState();
-    }, 10000);
+    }, 13000);
 }
 
 /**

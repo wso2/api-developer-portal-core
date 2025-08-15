@@ -104,7 +104,6 @@ class SDKJobService extends EventEmitter {
                     apiSpecs = result.apiSpecs;
                     apiHandles = result.apiHandles;
                     redisKey = result.redisKey;
-                    console.log('Merging step completed');
                 }
             },
             {
@@ -113,7 +112,6 @@ class SDKJobService extends EventEmitter {
                 title: JOB_STATUS.SDK_GENERATION,
                 task: async (reportProgress) => {
                     sdkResult = await this.performSdkGenerationTask(jobPayload, mergedSpec, reportProgress);
-                    console.log('SDK generation step completed');
                 }
             },
             {
@@ -124,7 +122,6 @@ class SDKJobService extends EventEmitter {
                     const result = await this.performAppCodeGenerationTask(jobPayload, sdkResult, mergedSpec, reportProgress);
                     finalZipPath = result.finalZipPath;
                     baseSdkName = result.baseSdkName;
-                    console.log('Application code generation step completed');
                 }
             }
         ];
@@ -570,25 +567,25 @@ class SDKJobService extends EventEmitter {
 
     /**
      * Start the periodic SDK cleanup process
-     * Runs every 5 minutes to check for files/folders older than 10 minutes
+     * Runs every 2 hours to check for files/folders older than 10 minutes
      */
     startSDKCleanupScheduler() {
         if (this.sdkCleanupInterval) {
             return; 
         }
-        
-        console.log('Starting SDK cleanup scheduler - runs every 60 minutes to clean files older than 10 minutes');
+
+        console.log('Starting SDK cleanup scheduler - runs every 2 hours to clean files older than 10 minutes');
 
         this.cleanupGeneratedSDKs();
 
-        // Set up periodic cleanup every 60 minutes
+        // Set up periodic cleanup every 2 hours
         this.sdkCleanupInterval = setInterval(async () => {
             try {
                 await this.cleanupGeneratedSDKs();
             } catch (error) {
                 console.error('Error in scheduled SDK cleanup:', error);
             }
-        }, 60 * 60 * 1000);
+        }, 2 * 60 * 60 * 1000);
     }
 
     /**
@@ -710,7 +707,6 @@ class SDKJobService extends EventEmitter {
         let outputDir = null;
         
         try {
-            console.log('Starting SDK generation with OpenAPI Generator...');
             const language = sdkConfiguration?.language || 'javascript';
             const sdkName = `${jobId}-sdk`;
 
@@ -763,12 +759,6 @@ class SDKJobService extends EventEmitter {
             if (files.length === 0) {
                 throw new Error(`SDK generation failed: No files generated in ${outputDir}`);
             }
-            
-            if (stderr && !stderr.includes('WARN')) {
-                console.warn('OpenAPI Generator warnings:', stderr);
-            }
-
-            console.log('SDK generation completed successfully. Output directory:', outputDir);
 
             // Clean up spec directory
             try {
@@ -820,7 +810,6 @@ class SDKJobService extends EventEmitter {
      */
     async processAIModeSDK(sdkResult, mergedSpec, sdkConfiguration) {        
         try {
-            console.log('Processing AI mode SDK generation...');
 
             const sdkMethods = await this.extractMethodFile(sdkResult.sdkPath, sdkConfiguration?.language || 'java');
 
@@ -866,19 +855,17 @@ class SDKJobService extends EventEmitter {
             
             if (language === 'java') {
                 // Look for DefaultApi.java file in src/main/java directory structure
-                const javaApiPath = await this.findFileRecursively(sdkDir, 'DefaultApi.java');
+                const javaApiPath = await this.findFileRecursively(sdkDir, /.*Api\.java$/);
                 if (javaApiPath) {
                     apiClassFile = javaApiPath;
                     apiClassContent = await fs.promises.readFile(javaApiPath, 'utf8');
-                    console.log(`Found Java API class: ${javaApiPath}`);
                 }
             } else if (language === 'javascript' || language === 'android') {
                 // Look for API class in JavaScript/TypeScript SDKs
-                const jsApiPath = await this.findFileRecursively(sdkDir, /.*[Aa]pi\.js$|.*[Aa]pi\.ts$/);
+                const jsApiPath = await this.findFileRecursively(sdkDir, /.*Api\.js$|.*Api\.ts$/);
                 if (jsApiPath) {
                     apiClassFile = jsApiPath;
                     apiClassContent = await fs.promises.readFile(jsApiPath, 'utf8');
-                    console.log(`Found JS/TS API class: ${jsApiPath}`);
                 }
             } 
             
@@ -912,11 +899,8 @@ class SDKJobService extends EventEmitter {
         
         if (sdkConfiguration?.description && sdkConfiguration.description.trim()) {
             useCase = sdkConfiguration.description.trim();
-            console.log('Using AI mode with user prompt:', useCase);
         } else {
-            // Default use case for default mode
             useCase = `Generate application which uses the provided APIs to demonstrate their functionality with sample data and proper error handling`;
-            console.log('Using default mode with standard use case');
         }
         
         return {
@@ -977,18 +961,15 @@ class SDKJobService extends EventEmitter {
      */
     async processApplicationCodeAndCreateFinalZip(applicationCode, sdkPath, sdkConfiguration, zipFileName) {
         try {
-            console.log('Processing application code response and creating final ZIP...');
             const language = sdkConfiguration?.language || 'java';
             
             // Create application code files in the SDK folder
             if (applicationCode) {
                 const fileExtension = this.getFileExtension(language);
                 
-                console.log('Searching for package directory structure...');
                 const javaPackageDir = await this.findJavaPackageDirectory(sdkPath);
                 
                 if (javaPackageDir) {
-                    // Place Application.java at the same level as api, auth, model packages
                     const mainAppFile = path.join(javaPackageDir, `Application.${fileExtension}`);
                     await fs.promises.writeFile(mainAppFile, applicationCode, 'utf8');
                     console.log(`Java Application code written to: ${mainAppFile}`);
@@ -1012,16 +993,12 @@ class SDKJobService extends EventEmitter {
             const finalZipPath = path.join(permanentDir, zipFileName);
             await this.createZipArchive(sdkPath, finalZipPath);
 
-            console.log(`Final ZIP created: ${finalZipPath}`);
-
             const fileKey = path.basename(zipFileName, '.zip');
             const zipStored = await redisService.storeFileWithRetry(fileKey, finalZipPath, 600);
 
             if (!zipStored) {
                 console.warn(`Failed to store final ZIP in Redis: ${fileKey}`);
             }
-
-            console.log(`Final ZIP stored in Redis with key: ${fileKey}`);
             
             // Clean up SDK folder
             await fs.promises.rm(sdkPath, { recursive: true, force: true });
@@ -1070,9 +1047,7 @@ class SDKJobService extends EventEmitter {
      * This looks for the directory that contains api/, auth/, and model/ subdirectories
      */
     async findJavaPackageDirectory(sdkDir) {
-        try {
-            console.log(`Searching for Java package directory in: ${sdkDir}`);
-            
+        try {            
             // Common Java package paths in OpenAPI generated SDKs
             const possiblePaths = [
                 'src/main/java/org/openapitools/client',
@@ -1084,20 +1059,14 @@ class SDKJobService extends EventEmitter {
             
             for (const possiblePath of possiblePaths) {
                 const fullPath = path.join(sdkDir, possiblePath);
-                console.log(`Checking path: ${fullPath}`);
                 
                 if (await fs.promises.access(fullPath).then(() => true).catch(() => false)) {
-                    console.log(`Path exists: ${fullPath}`);
-                    
                     // Check if this directory contains the expected subdirectories
                     const hasApiDir = await fs.promises.access(path.join(fullPath, 'api')).then(() => true).catch(() => false);
                     const hasAuthDir = await fs.promises.access(path.join(fullPath, 'auth')).then(() => true).catch(() => false);
                     const hasModelDir = await fs.promises.access(path.join(fullPath, 'model')).then(() => true).catch(() => false);
                     
-                    console.log(`Directory contents check - api: ${hasApiDir}, model: ${hasModelDir}`);
-
                     if (hasApiDir && hasModelDir) {
-                        console.log(`Found package directory: ${fullPath}`);
                         return fullPath;
                     }
                 } else {
@@ -1107,7 +1076,6 @@ class SDKJobService extends EventEmitter {
             
             // If common paths don't work, search recursively for a directory that contains api/model subdirs
             console.log('Searching recursively for Java package structure...');
-            console.log('Current SDK directory structure:');
             await this.listDirectoryStructure(sdkDir);
 
             const foundPath = await this.findJavaPackageRecursively(sdkDir);
@@ -1360,7 +1328,6 @@ class SDKJobService extends EventEmitter {
 
             const readmePath = path.join(sdkPath, 'README.md');
             await fs.promises.writeFile(readmePath, readmeContent, 'utf8');
-            console.log(`Comprehensive README created: ${readmePath}`);
             
         } catch (error) {
             console.error('Error creating project README:', error);
@@ -1379,7 +1346,6 @@ class SDKJobService extends EventEmitter {
             const archive = archiver('zip', { zlib: { level: 9 } });
             
             output.on('close', () => {
-                console.log(`ZIP archive created: ${archive.pointer()} total bytes`);
                 resolve();
             });
 
