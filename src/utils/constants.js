@@ -273,6 +273,7 @@ module.exports = {
             PIPELINE_TIMEOUT: 'Redis pipeline timeout',
             STORE_FAILED: 'Failed to store file in Redis',
             FILE_NOT_EXIST: 'File does not exist',
+            FILE_NOT_FOUND: 'File not found',
             MAX_ATTEMPTS_REACHED: 'Max reconnection attempts exceeded'
         }
     },
