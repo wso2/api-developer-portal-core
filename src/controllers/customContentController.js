@@ -23,6 +23,7 @@ const fs = require('fs');
 const path = require('path');
 const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
+const logger = require('../utils/logger');
 
 const filePrefix = config.pathToContent;
 const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;

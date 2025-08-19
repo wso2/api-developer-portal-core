@@ -30,6 +30,7 @@ const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
 const adminService = require('../services/adminService');
 const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
+const logger = require('../utils/logger');
 
 const orgIDValue = async (orgName) => {
     const organization = await adminDao.getOrganization(orgName);
@@ -357,7 +358,11 @@ async function getApplicationKeys(applicationList, req) {
         try {
             return await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${appRef}/keys`, {}, {});
         } catch (error) {
-            console.error("Error occurred while generating application keys", error);
+            logger.error('Error occurred while generating application keys', {
+                error: error.message,
+                stack: error.stack,
+                applicationId: appRef
+            });
             return null;
         }
     }
@@ -367,7 +372,10 @@ async function getAllAPIs(req) {
     try {
         return await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis`);
     } catch (error) {
-        console.error("Error occurred while loading APIs", error);
+        logger.error('Error occurred while loading APIs', {
+            error: error.message,
+            stack: error.stack,
+        });
         throw error;
     }
 }
@@ -376,7 +384,11 @@ const getSubscribedApis = async (req, appId) => {
     try {
         return await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?applicationId=${appId}`);
     } catch (error) {
-        console.error("Error occurred while loading subscriptions", error);
+        logger.error("Error occurred while loading subscriptions", {
+            error: error.message,
+            stack: error.stack,
+            applicationId: appId
+        });
         throw error;
     }
 }

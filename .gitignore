@@ -93,6 +93,9 @@ replay_pid*
 
 .vscode
 
+# Winston logs
+logs/
+
 eslint.config.mjs
 
 .prettierrc
