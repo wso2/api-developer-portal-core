@@ -1,6 +1,9 @@
 {
   "baseUrl": "https://localhost:3000",
   "defaultPort": 3000,
+  "logging": {
+    "consoleOnly": false
+  },
   "advanced": {
     "http": false,
     "dbSslDialectOption": false,
