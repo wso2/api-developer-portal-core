@@ -46,32 +46,17 @@ function auditMiddleware(options = {}) {
             const endTime = Date.now();
             const duration = endTime - startTime;
             
-            // Get user information if available
-            const userId = req.user ? req.user.id || req.user.username || 'unknown' : 'anonymous';
-            const sessionId = req.sessionID || 'no-session';
-            
             // Redact sensitive information from request body
             const sanitizedBody = sanitizeObject(req.body || {}, sensitiveFields);
-            
+
             // Create audit log entry
             const auditEntry = {
-                timestamp: new Date().toISOString(),
-                method: req.method,
-                url: req.originalUrl || req.url,
-                path: req.path,
-                statusCode: res.statusCode,
-                duration: `${duration}ms`,
-                userAgent: req.get('User-Agent') || 'unknown',
-                ip: getClientIP(req),
-                userId: userId,
-                sessionId: sessionId,
-                requestBody: Object.keys(sanitizedBody).length > 0 ? sanitizedBody : undefined,
-                queryParams: Object.keys(req.query || {}).length > 0 ? req.query : undefined,
-                referrer: req.get('Referrer') || req.get('Referer') || 'direct'
+                requestBody: Object.keys(sanitizedBody).length > 0 ? sanitizedBody : "",
+                queryParams: Object.keys(req.query || {}).length > 0 ? req.query : "",
             };
 
             // Log audit entry
-            logger.audit(`${req.method} ${req.originalUrl || req.url} - ${res.statusCode} - ${userId} - ${duration}ms`, auditEntry);
+            logger.audit(`${req.method} ${req.originalUrl || req.url} - ${res.statusCode} - ${duration}ms`, auditEntry);
             
             // Call original end method
             originalEnd.call(this, chunk, encoding);
@@ -136,8 +121,6 @@ function logUserAction(action, req, additionalData = {}) {
         action: action,
         userId: userId,
         sessionId: sessionId,
-        ip: getClientIP(req),
-        userAgent: req.get('User-Agent') || 'unknown',
         timestamp: new Date().toISOString(),
         ...additionalData
     };
