@@ -19,12 +19,12 @@
 const adminService = require('../services/adminService');
 const adminDao = require('../dao/admin');
 const util = require('../utils/util');
+const logger = require('../config/logger');
 const constants = require('../utils/constants');
 const { validationResult } = require('express-validator');
 const { retrieveContentType } = require('../utils/util');
 
 const getOrganization = async (req, res) => {
-
     try {
         const organization = await getOrganizationDetails(req.params.orgId);
         res.status(200).json(organization);
@@ -34,7 +34,6 @@ const getOrganization = async (req, res) => {
 };
 
 const getOrganizationDetails = async (orgId) => {
-
     const organization = await adminDao.getOrganization(orgId);
     return {
         orgId: organization.ORG_ID,
@@ -56,7 +55,6 @@ const getOrganizationDetails = async (orgId) => {
 }
 
 const getOrgContent = async (req, res) => {
-
     try {
         const rules = util.validateRequestParameters();
         for (let validation of rules) {
@@ -89,7 +87,17 @@ const getOrgContent = async (req, res) => {
             res.status(400).send('Invalid request');
         }
     } catch (error) {
-        console.error(`Error while fetching organization content:`, error);
+        logger.error('Error while fetching organization content', {
+            module: 'DevportalService',
+            method: 'getOrgContent',
+            error: error.message,
+            stack: error.stack,
+            orgId: req.params.orgId,
+            viewName: req.params.name,
+            fileType: req.query.fileType || req.params.fileType,
+            fileName: req.query.fileName,
+            userId: req.user?.id
+        });
         res.status(404).send(error.message);
     }
 };

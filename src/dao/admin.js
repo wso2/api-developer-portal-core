@@ -24,9 +24,9 @@ const apiDao = require('./apiMetadata');
 const { APIMetadata } = require('../models/apiMetadata');
 const APIImageMetadata = require('../models/apiImages');
 const SubscriptionPolicy = require('../models/subscriptionPolicy');
+const logger = require('../config/logger');
 
 const createOrganization = async (orgData, t) => {
-
     let devPortalID = "";
     if (orgData.orgHandle) {
         devPortalID = orgData.orgHandle
@@ -58,7 +58,6 @@ const createOrganization = async (orgData, t) => {
 };
 
 const getOrganization = async (param) => {
-
     try {
         const organization = await Organization.findOne({
             where: {
@@ -106,7 +105,6 @@ const getOrgId = async (orgName) => {
 };
 
 const getOrganizations = async () => {
-
     try {
         const organizations = await Organization.findAll();
         if (organizations.length === 0) {
@@ -122,7 +120,6 @@ const getOrganizations = async () => {
 };
 
 const updateOrganization = async (orgData) => {
-
     let devPortalID = "";
     if (orgData.orgHandle) {
         devPortalID = orgData.orgHandle
@@ -153,7 +150,6 @@ const updateOrganization = async (orgData) => {
             throw new Sequelize.EmptyResultError('Organization not found');
         }
         return [updatedRowsCount, updatedOrg];
-
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -163,16 +159,14 @@ const updateOrganization = async (orgData) => {
 };
 
 const deleteOrganization = async (orgId) => {
-
     try {
         const deletedRowsCount = await Organization.destroy({
             where: { ORG_ID: orgId }
         });
         if (deletedRowsCount < 1) {
             throw Object.assign(new Sequelize.EmptyResultError('Organization not found'));
-        } else {
-            return deletedRowsCount;
         }
+        return deletedRowsCount;
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -182,7 +176,6 @@ const deleteOrganization = async (orgId) => {
 }
 
 const createIdentityProvider = async (orgId, idpData) => {
-
     try {
         const idpResponse = await IdentityProvider.create({
             ORG_ID: orgId,
@@ -210,7 +203,6 @@ const createIdentityProvider = async (orgId, idpData) => {
 }
 
 const updateIdentityProvider = async (orgID, idpData) => {
-
     try {
         const [updatedRowsCount, idpContent] = await IdentityProvider.update(
             {
@@ -240,7 +232,6 @@ const updateIdentityProvider = async (orgID, idpData) => {
             throw new Sequelize.EmptyResultError('IdentityProvider not found');
         }
         return [updatedRowsCount, idpContent];
-
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
@@ -250,14 +241,12 @@ const updateIdentityProvider = async (orgID, idpData) => {
 }
 
 const getIdentityProvider = async (orgID) => {
-
     try {
         const idpResponse = await IdentityProvider.findAll({
             where: {
                 ORG_ID: orgID,
             }
-        }
-        );
+        });
         return idpResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {
@@ -268,7 +257,6 @@ const getIdentityProvider = async (orgID) => {
 };
 
 const deleteIdentityProvider = async (orgID) => {
-
     try {
         const idpResponse = await IdentityProvider.destroy({
             where: {
@@ -285,7 +273,6 @@ const deleteIdentityProvider = async (orgID) => {
 }
 
 const createOrgContent = async (orgData) => {
-
     const viewID = await apiDao.getViewID(orgData.orgId, orgData.viewName);
     try {
         const orgContent = await OrgContent.create({
@@ -306,7 +293,6 @@ const createOrgContent = async (orgData) => {
 }
 
 const updateOrgContent = async (orgData) => {
-
     const viewID = await apiDao.getViewID(orgData.orgId, orgData.viewName);
     try {
         const [updatedRowsCount, updatedOrgContent] = await OrgContent.update({
@@ -329,7 +315,6 @@ const updateOrgContent = async (orgData) => {
             throw new Sequelize.EmptyResultError('No new resources found');
         }
         return [updatedRowsCount, updatedOrgContent];
-
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -341,7 +326,6 @@ const updateOrgContent = async (orgData) => {
 
 
 const getOrgContent = async (orgData) => {
-
     try {
         const viewID = await apiDao.getViewID(orgData.orgId, orgData.viewName);
         if (orgData.fileName || orgData.filePath) {
@@ -374,7 +358,6 @@ const getOrgContent = async (orgData) => {
 };
 
 const deleteOrgContent = async (orgId, viewName, fileName) => {
-
     const viewId = await apiDao.getViewID(orgId, viewName);
     try {
         const deletedRowsCount = await OrgContent.destroy({
@@ -387,9 +370,8 @@ const deleteOrgContent = async (orgId, viewName, fileName) => {
 
         if (deletedRowsCount < 1) {
             throw Object.assign(new Sequelize.EmptyResultError('Organization content not found'));
-        } else {
-            return deletedRowsCount;
         }
+        return deletedRowsCount;
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -399,7 +381,6 @@ const deleteOrgContent = async (orgId, viewName, fileName) => {
 };
 
 const deleteAllOrgContent = async (orgId, viewName) => {
-
     const viewId = await apiDao.getViewID(orgId, viewName);
     try {
         const deletedRowsCount = await OrgContent.destroy({
@@ -411,9 +392,8 @@ const deleteAllOrgContent = async (orgId, viewName) => {
 
         if (deletedRowsCount < 1) {
             throw Object.assign(new Sequelize.EmptyResultError('Organization content not found'));
-        } else {
-            return deletedRowsCount;
         }
+        return deletedRowsCount;
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -423,7 +403,6 @@ const deleteAllOrgContent = async (orgId, viewName) => {
 };
 
 const createProvider = async (orgID, provider, t) => {
-
     let providerDataList = [];
     for (const [key, value] of Object.entries(provider)) {
         if (key !== 'name') {
@@ -448,7 +427,6 @@ const createProvider = async (orgID, provider, t) => {
 }
 
 const updateProvider = async (orgID, provider) => {
-
     try {
         let updatedProviders = [];
         for (const [key, value] of Object.entries(provider)) {
@@ -482,7 +460,6 @@ const updateProvider = async (orgID, provider) => {
 }
 
 const deleteProviderProperty = async (orgID, property, name) => {
-
     try {
         const deletedRowsCount = await Provider.destroy({
             where: {
@@ -493,9 +470,8 @@ const deleteProviderProperty = async (orgID, property, name) => {
         });
         if (deletedRowsCount < 1) {
             throw Object.assign(new Sequelize.EmptyResultError('Organization not found'));
-        } else {
-            return deletedRowsCount;
         }
+        return deletedRowsCount;
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -505,7 +481,6 @@ const deleteProviderProperty = async (orgID, property, name) => {
 }
 
 const deleteProvider = async (orgID, name) => {
-
     try {
         const deletedRowsCount = await Provider.destroy({
             where: {
@@ -515,9 +490,8 @@ const deleteProvider = async (orgID, name) => {
         });
         if (deletedRowsCount < 1) {
             throw Object.assign(new Sequelize.EmptyResultError('Organization not found'));
-        } else {
-            return deletedRowsCount;
         }
+        return deletedRowsCount;
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -527,7 +501,6 @@ const deleteProvider = async (orgID, name) => {
 }
 
 const getProviders = async (orgID) => {
-
     try {
         const providers = await Provider.findAll(
             {
@@ -559,7 +532,6 @@ const getProviders = async (orgID) => {
 };
 
 const getProvider = async (orgID, name) => {
-
     try {
         return await Provider.findAll(
             {
@@ -577,7 +549,6 @@ const getProvider = async (orgID, name) => {
 }
 
 const createApplication = async (orgID, userID, appData) => {
-
     const createAppData = {
         NAME: appData.name,
         ORG_ID: orgID,
@@ -597,7 +568,6 @@ const createApplication = async (orgID, userID, appData) => {
 };
 
 const updateApplication = async (orgID, appID, userID, appData) => {
-
     try {
         const [updatedRowsCount, appContent] = await Application.update(
             {
@@ -624,7 +594,6 @@ const updateApplication = async (orgID, appID, userID, appData) => {
 };
 
 const getApplication = async (orgID, appID, userID) => {
-
     try {
         const application = await Application.findOne(
             {
@@ -644,7 +613,6 @@ const getApplication = async (orgID, appID, userID) => {
 }
 
 const getApplicationID = async (orgID, userID, appName) => {
-
     try {
         return await Application.findOne(
             {
@@ -664,7 +632,6 @@ const getApplicationID = async (orgID, userID, appName) => {
 }
 
 const getApplications = async (orgID, userID) => {
-
     try {
         return await Application.findAll(
             {
@@ -682,7 +649,6 @@ const getApplications = async (orgID, userID) => {
 }
 
 const deleteApplication = async (orgID, appID, userID) => {
-
     try {
         const deletedRowsCount = await Application.destroy({
             where: {
@@ -693,9 +659,8 @@ const deleteApplication = async (orgID, appID, userID) => {
         });
         if (deletedRowsCount < 1) {
             throw Object.assign(new Sequelize.EmptyResultError('Application not found'));
-        } else {
-            return deletedRowsCount;
         }
+        return deletedRowsCount;
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -742,7 +707,6 @@ const updateSubscription = async (orgID, subscription, t) => {
 };
 
 const getSubscription = async (orgID, subID, t) => {
-
     try {
         return await SubscriptionMapping.findOne(
             {
@@ -760,7 +724,6 @@ const getSubscription = async (orgID, subID, t) => {
 }
 
 const getSubscriptions = async (orgID, appID, apiID) => {
-
     try {
         return await SubscriptionMapping.findAll(
             {
@@ -781,7 +744,6 @@ const getSubscriptions = async (orgID, appID, apiID) => {
 }
 
 const getAppApiSubscription = async (orgID, appID, apiID) => {
-
     try {
         return await SubscriptionMapping.findAll(
             {
@@ -810,9 +772,8 @@ const deleteSubscription = async (orgID, subID, t) => {
         }, { transaction: t });
         if (deletedRowsCount < 1) {
             throw new Sequelize.EmptyResultError('Subscription not found');
-        } else {
-            return deletedRowsCount;
         }
+        return deletedRowsCount;
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -822,7 +783,6 @@ const deleteSubscription = async (orgID, subID, t) => {
 }
 
 const deleteAppKeyMapping = async (orgID, appID, apiID, t) => {
-
     try {
         const deletedRowsCount = await ApplicationKeyMapping.destroy({
             where: {
@@ -833,9 +793,8 @@ const deleteAppKeyMapping = async (orgID, appID, apiID, t) => {
         });
         if (deletedRowsCount < 1 && apiID !== null) {
             throw Object.assign(new Sequelize.EmptyResultError('Application Key Mapping not found'));
-        } else {
-            return deletedRowsCount;
         }
+        return deletedRowsCount;
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -845,7 +804,6 @@ const deleteAppKeyMapping = async (orgID, appID, apiID, t) => {
 }
 
 const deleteAppMappings = async (orgID, appID, t) => {
-
     try {
         const deletedRowsCount = await ApplicationKeyMapping.destroy({
             where: {
@@ -854,11 +812,14 @@ const deleteAppMappings = async (orgID, appID, t) => {
             }, transaction: t
         }, { transaction: t });
         if (deletedRowsCount < 1) {
-            console.log("No Application Key Mapping found");
-            return deletedRowsCount;
-        } else {
-            return deletedRowsCount;
+            logger.info("No Application Key Mapping found", { 
+                orgID, 
+                appID, 
+                deletedRowsCount,
+                operation: "deleteApplicationKeyMapping" 
+            });
         }
+        return deletedRowsCount;
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
@@ -868,7 +829,6 @@ const deleteAppMappings = async (orgID, appID, t) => {
 }
 
 const getAPISubscriptionReference = async (orgID, appID, apiID, t) => {
-
     try {
         const subscriptionReference = await ApplicationKeyMapping.findAll(
             {
@@ -889,7 +849,6 @@ const getAPISubscriptionReference = async (orgID, appID, apiID, t) => {
 }
 
 const createAppKeyMapping = async (appKeyMap, t) => {
-
     try {
         const appKeyMapping = await ApplicationKeyMapping.create(appKeyMap, { transaction: t });
         return appKeyMapping;
@@ -902,7 +861,6 @@ const createAppKeyMapping = async (appKeyMap, t) => {
 }
 
 const getKeyMapping = async (orgID, appID, t) => {
-
     try {
         return await Application.findOne(
             {
@@ -957,7 +915,6 @@ const getSubscribedAPIs = async (orgID, appID) => {
 }
 
 const getApplicationKeyMapping = async (orgID, appID, isSharedToken) => {
-
     try {
         return await ApplicationKeyMapping.findAll(
             {
@@ -976,7 +933,6 @@ const getApplicationKeyMapping = async (orgID, appID, isSharedToken) => {
 }
 
 const getApplicationAPIMapping = async (orgID, appID, apiID, appRefID, isSharedToken) => {
-
     try {
         return await ApplicationKeyMapping.findAll(
             {
@@ -997,7 +953,6 @@ const getApplicationAPIMapping = async (orgID, appID, apiID, appRefID, isSharedT
 }
 
 const createApplicationKeyMapping = async (mappingData, t) => {
-
     try {
         const appKeyMapping = await ApplicationKeyMapping.create({
             ORG_ID: mappingData.orgID,

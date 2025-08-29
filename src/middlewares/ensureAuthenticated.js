@@ -28,6 +28,7 @@ const { CustomError } = require('../utils/errors/customErrors');
 const IdentityProviderDTO = require("../dto/identityProvider");
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
+const logger = require('../config/logger');
 const qs = require('qs');
 
 function enforceSecuirty(scope) {
@@ -77,26 +78,23 @@ function enforceSecuirty(scope) {
                 }
             }
         } catch (err) {
-            console.error("Error checking access token:", err);
+            logger.error("Error checking access token", { error: err.message, stack: err.stack, operation: "checkAccessToken" });
             return res.status(500).json({ error: "Internal Server Error" });
         }
     }
 }
 
 function accessTokenPresent(req) {
-
     if (req.user) {
-        accessToken = req.user[constants.ACCESS_TOKEN];
-    } else if (req.headers.authorization) {
-        accessToken = req.headers.authorization.split(' ')[1];
-    } else {
-        return null;
+        return req.user[constants.ACCESS_TOKEN];
     }
-    return accessToken;
+    if (req.headers.authorization) {
+        return req.headers.authorization.split(' ')[1];
+    }
+    return null;
 }
 
 const ensurePermission = (currentPage, role, req) => {
-
     let adminRole, superAdminRole, subscriberRole;
     if (req.user) {
         adminRole = req.user[constants.ROLES.ADMIN];
@@ -114,7 +112,6 @@ const ensurePermission = (currentPage, role, req) => {
 }
 
 const ensureAuthenticated = async (req, res, next) => {
-
     let adminRole = config.adminRole;
     let superAdminRole = config.superAdminRole;
     let subscriberRole = config.subscriberRole;
@@ -149,7 +146,7 @@ const ensureAuthenticated = async (req, res, next) => {
             organizationClaimName = orgDetails.ORGANIZATION_CLAIM_NAME || config.orgIDClaim;
         }
         let role;
-        console.log("Is request authenticated: ", req.isAuthenticated());
+        logger.debug("Request authentication status", { isAuthenticated: req.isAuthenticated() });
         if (req.isAuthenticated()) {
             const token = accessTokenPresent(req);
             if (token) {
@@ -177,7 +174,7 @@ const ensureAuthenticated = async (req, res, next) => {
                         //check if exchanged token has organization identifier
                         //const decodedToken = req.user.exchangeToken ? jwt.decode(req.user.exchangeToken) : null;
                         const allowedOrgs = req.user.authorizedOrgs;
-                        console.log("User's current authorized organization: ", req.user.userOrg);
+                        logger.debug("User authorized organization", { userOrg: req.user.userOrg });
                         if (req.user.userOrg !== req.user[constants.ORG_IDENTIFIER]) {
                             if (allowedOrgs && (allowedOrgs.includes(req.user[constants.ORG_IDENTIFIER]))) {
                                 try {
@@ -190,7 +187,7 @@ const ensureAuthenticated = async (req, res, next) => {
                                     req.user[constants.ROLES.ORGANIZATION_CLAIM] = userOrg;
                                     req.user[constants.ORG_IDENTIFIER] = userOrg;
                                 } catch (error) {
-                                    console.error("Error during token exchange:", error);
+                                    logger.error("Error during token exchange", { error: error.message, stack: error.stack, operation: "tokenExchange" });
                                     const err = new Error('Authentication required');
                                     err.status = 401; // Unauthorized
                                     return next(err);
@@ -332,7 +329,7 @@ const validateWithCert = async (token, publicKey) => {
         const { payload } = await jwtVerify(token, publicKey);
         return [true, payload.scope];
     } catch (err) {
-        console.error("Invalid token:", err.message);
+        logger.error("Invalid token", { error: err.message, operation: "tokenValidation" });
         return [false, ""];
     }
 }
@@ -344,11 +341,11 @@ const validateWithJWKS = async (token, jwksURL, req) => {
         const { payload } = await jwtVerify(token, jwks);
         return [true, payload.scope];
     } catch (err) {
-        console.error("Invalid token:", err);
+        logger.error("Invalid token", { error: err.message, stack: err.stack, operation: "tokenValidation" });
         if (err.code === 'ERR_JWT_EXPIRED' && req.user && req.user.refreshToken) {
             // Token expired, refresh it
             try {
-                console.log("Access token expired. Triggering refresh token flow to obtain new tokens");
+                logger.info("Access token expired, triggering refresh token flow");
                 const response = await refreshAccessToken(req.user.refreshToken);
                 req.user[constants.ACCESS_TOKEN] = response.access_token;
                 req.user[constants.REFRESH_TOKEN] = response.refresh_token;
@@ -357,11 +354,11 @@ const validateWithJWKS = async (token, jwksURL, req) => {
                 return [true, response.scope || ""];
             } catch (error) {
                 req.user =  null;
-                console.error("Error refreshing access token:", error.message);
+                logger.error("Error refreshing access token", { error: error.message, stack: error.stack, operation: "refreshToken" });
                 return [false, ""];           
             }
         } else {
-            console.error("Token validation error:", err.message);
+            logger.error("Token validation error", { error: err.message, operation: "tokenValidation" });
             return [false, ""];
         }
     }
@@ -382,7 +379,10 @@ async function refreshAccessToken(refreshToken) {
         return response.data
 
     } catch (err) {
-        console.error('Token refresh error:', err.response?.data || err.message);
+        logger.error('Token refresh error', { 
+            error: err.response?.data || err.message, 
+            operation: 'tokenRefresh'
+        });
         throw err;
     }
 }

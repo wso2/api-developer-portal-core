@@ -5,12 +5,9 @@
 
 /generated-sdks
 
-/.pnp
-.pnp.js
-.yarn/install-state.gz
-
-# testing
-/coverage
+# logs
+/logs
+*.log
 
 # next.js
 /.next/

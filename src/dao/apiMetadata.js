@@ -27,6 +27,7 @@ const { Sequelize } = require('sequelize');
 const { Op } = require('sequelize');
 const constants = require('../utils/constants');
 const { CustomError } = require('../utils/errors/customErrors');
+const logger = require('../config/logger');
 
 const createAPIMetadata = async (orgID, apiMetadata, t) => {
 
@@ -921,7 +922,11 @@ const getAPISpecs = async (orgID, apiIDs) => {
             };
         }).filter(spec => spec !== null);
     } catch (error) {
-        console.error('Error fetching API specifications:', error);
+        logger.error('Error fetching API specifications', { 
+            error: error.message, 
+            stack: error.stack,
+            operation: 'fetchAPISpecifications'
+        });
         if (error instanceof Sequelize.UniqueConstraintError) {
             throw error;
         }

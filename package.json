@@ -71,7 +71,9 @@
     "sequelize": "^6.37.3",
     "shelljs": "^0.8.5",
     "unzipper": "^0.12.3",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "bin": {
     "app": "src/app.js"
