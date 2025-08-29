@@ -28,6 +28,7 @@ const apiMetadataService = require('../services/apiMetadataService');
 const { loadLayoutFromAPI, renderTemplate } = require('../utils/util');
 const util = require('../utils/util');
 const { validationResult } = require('express-validator');
+const logger = require('../config/logger');
 const filePrefix = config.pathToContent;
 const hbs = exphbs.create({});
 
@@ -69,7 +70,12 @@ const registerPartials = async (req, res, next) => {
 
       }
     } catch (error) {
-      console.error('Error while loading organization :', error);
+      logger.error('Error while loading organization', { 
+        error: error.message, 
+        stack: error.stack,
+        orgName: req.params.orgName,
+        operation: 'registerPartials'
+      });
       if (error.message === "API not found") {
         let templateContent = {
           errorMessage: constants.ERROR_MESSAGE.API_NOT_FOUND,

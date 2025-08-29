@@ -22,6 +22,7 @@
 const Redis = require('ioredis');
 const config = require(process.cwd() + '/config');
 const secret = require(process.cwd() + '/secret.json');
+const logger = require('../config/logger');
 const REDIS_CONSTANTS = require('../utils/constants').REDIS_CONSTANTS;
 
 class RedisConnectionHelper {
@@ -31,7 +32,7 @@ class RedisConnectionHelper {
         }
 
         if (service.reconnectAttempts >= service.maxReconnectAttempts) {
-            console.error(`Max Redis connection attempts reached for pod: ${service.podId}. Operating in offline mode.`);
+            logger.error(`Max Redis connection attempts reached for pod: ${service.podId}. Operating in offline mode.`);
             RedisConnectionHelper.enterOfflineMode(service);
             throw new Error(REDIS_CONSTANTS.ERRORS.MAX_ATTEMPTS_REACHED);
         }
@@ -57,7 +58,7 @@ class RedisConnectionHelper {
                 tls: true
             };
 
-            console.log(`Attempting Redis connection ${service.reconnectAttempts + 1}/${service.maxReconnectAttempts} on pod: ${service.podId}`);
+            logger.info(`Attempting Redis connection ${service.reconnectAttempts + 1}/${service.maxReconnectAttempts} on pod: ${service.podId}`);
 
             // Create new connections
             service.redis = new Redis(redisConfig);
@@ -83,13 +84,15 @@ class RedisConnectionHelper {
             service.isConnecting = false;
             service.reconnectAttempts = 0;
             
-            console.log(`✅ RedisService fully connected on pod: ${service.podId}`);
+            logger.info(`✅ RedisService fully connected on pod: ${service.podId}`);
             
         } catch (error) {
             service.isConnecting = false;
             service.isConnected = false;
 
-            console.error(`Redis connection failed (attempt ${service.reconnectAttempts + 1}):`, error.message);
+            logger.error(`Redis connection failed (attempt ${service.reconnectAttempts + 1})`, {
+                error: error.message,
+            });
 
             await RedisConnectionHelper.cleanupConnections(service);
             
@@ -98,7 +101,7 @@ class RedisConnectionHelper {
             if (service.reconnectAttempts < service.maxReconnectAttempts && !service.isShuttingDown) {
                 RedisConnectionHelper.scheduleReconnect(service);
             } else {
-                console.error(`Max Redis connection attempts reached for pod: ${service.podId}. Operating in offline mode.`);
+                logger.error(`Max Redis connection attempts reached for pod: ${service.podId}. Operating in offline mode.`);
                 RedisConnectionHelper.enterOfflineMode(service);
             }
             
@@ -110,17 +113,19 @@ class RedisConnectionHelper {
         // Publisher events
         service.publisher.removeAllListeners(); 
         service.publisher.on('connect', () => {
-            console.log(`Publisher connected to Redis from pod: ${service.podId}`);
+            logger.info(`Publisher connected to Redis from pod: ${service.podId}`);
         });
         service.publisher.on('error', (error) => {
-            console.error(`Redis publisher error on pod ${service.podId}:`, error.message);
+            logger.error(`Redis publisher error on pod ${service.podId}`, {
+                error: error.message
+            });
 
             if (service.isConnected) {
                 service.isConnected = false;
             }
         });
         service.publisher.on('close', () => {
-            console.warn(`Redis publisher connection closed on pod: ${service.podId}`);
+            logger.warn(`Redis publisher connection closed on pod: ${service.podId}`);
             service.isConnected = false;
             if (!service.isShuttingDown) {
                 RedisConnectionHelper.handleConnectionLoss(service);
@@ -130,11 +135,13 @@ class RedisConnectionHelper {
         // Subscriber events
         service.subscriber.removeAllListeners();
         service.subscriber.on('connect', () => {
-            console.log(`Subscriber connected to Redis from pod: ${service.podId}`);
+            logger.info(`Subscriber connected to Redis from pod: ${service.podId}`);
         });
 
         service.subscriber.on('error', (error) => {
-            console.error(`Redis subscriber error on pod ${service.podId}:`, error.message);
+            logger.error(`Redis subscriber error on pod ${service.podId}`, {
+                error: error.message
+            });
             if (service.isConnected) {
                 service.isConnected = false;
             }
@@ -149,11 +156,13 @@ class RedisConnectionHelper {
                     }
                 }
             } catch (error) {
-                console.error('Error processing Redis message:', error.message);
+                logger.error('Error processing Redis message', {
+                    error: error.message
+                });
             }
         });
         service.subscriber.on('close', () => {
-            console.warn(`🔌 Redis subscriber connection closed on pod: ${service.podId}`);
+            logger.warn(`🔌 Redis subscriber connection closed on pod: ${service.podId}`);
             service.isConnected = false;
             if (!service.isShuttingDown) {
                 RedisConnectionHelper.handleConnectionLoss(service);
@@ -163,11 +172,13 @@ class RedisConnectionHelper {
         // Main Redis events
         service.redis.removeAllListeners();
         service.redis.on('connect', () => {
-            console.log(`Redis file storage connected successfully on pod: ${service.podId}`);
+            logger.info(`Redis file storage connected successfully on pod: ${service.podId}`);
         });
 
         service.redis.on('error', (error) => {
-            console.error(`Redis file storage error on pod ${service.podId}:`, error.message);
+            logger.error(`Redis file storage error on pod ${service.podId}`, {
+                error: error.message
+            });
 
             if (service.isConnected) {
                 service.isConnected = false;
@@ -175,7 +186,7 @@ class RedisConnectionHelper {
         });
 
         service.redis.on('close', () => {
-            console.log(`Redis file storage connection closed on pod: ${service.podId}`);
+            logger.info(`Redis file storage connection closed on pod: ${service.podId}`);
             service.isConnected = false;
             if (!service.isShuttingDown) {
                 RedisConnectionHelper.handleConnectionLoss(service);
@@ -189,12 +200,12 @@ class RedisConnectionHelper {
         }
 
         if (service.reconnectAttempts >= service.maxReconnectAttempts) {
-            console.warn(`Redis connection lost on pod: ${service.podId}, but max attempts reached. Staying in offline mode.`);
+            logger.warn(`Redis connection lost on pod: ${service.podId}, but max attempts reached. Staying in offline mode.`);
             RedisConnectionHelper.enterOfflineMode(service);
             return;
         }
 
-        console.warn(`Redis connection lost on pod: ${service.podId}`);
+        logger.warn(`Redis connection lost on pod: ${service.podId}`);
         service.isConnected = false;
         
         RedisConnectionHelper.scheduleReconnect(service);
@@ -206,33 +217,35 @@ class RedisConnectionHelper {
         }
 
         if (service.reconnectAttempts >= service.maxReconnectAttempts) {
-            console.error(`Max reconnection attempts reached for pod: ${service.podId}. Stopping retries.`);
+            logger.error(`Max reconnection attempts reached for pod: ${service.podId}. Stopping retries.`);
             RedisConnectionHelper.enterOfflineMode(service);
             return;
         }
 
         const delay = Math.min(1000 * Math.pow(2, service.reconnectAttempts), 30000); // Exponential backoff, max 30s
 
-        console.log(`Scheduling reconnect attempt ${service.reconnectAttempts + 1}/${service.maxReconnectAttempts} in ${delay}ms for pod: ${service.podId}`);
+        logger.info(`Scheduling reconnect attempt ${service.reconnectAttempts + 1}/${service.maxReconnectAttempts} in ${delay}ms for pod: ${service.podId}`);
 
         service.reconnectTimeout = setTimeout(async () => {
             service.reconnectTimeout = null;
             
             if (service.isShuttingDown) {
-                console.log(`Skipping reconnect - service is shutting down on pod: ${service.podId}`);
+                logger.info(`Skipping reconnect - service is shutting down on pod: ${service.podId}`);
                 return;
             }
             
             try {
                 await service.init();
             } catch (error) {
-                console.error(`Reconnection attempt ${service.reconnectAttempts + 1} failed:`, error.message);
+                logger.error(`Reconnection attempt ${service.reconnectAttempts + 1} failed`, {
+                    error: error.message,
+                });
             }
         }, delay);
     }
 
     static enterOfflineMode(service) {
-        console.warn(`Redis service entering offline mode on pod: ${service.podId}`);
+        logger.warn(`Redis service entering offline mode on pod: ${service.podId}`);
         service.isConnected = false;
         service.isConnecting = false;
         
@@ -264,7 +277,9 @@ class RedisConnectionHelper {
                         ]);
                     }
                 } catch (error) {
-                    console.warn(`⚠️ Error cleaning up ${name} connection:`, error.message);
+                    logger.warn(`⚠️ Error cleaning up ${name} connection`, {
+                        error: error.message
+                    });
                 }
             }
         }
@@ -279,7 +294,7 @@ class RedisConnectionHelper {
             throw new Error('Service is shutting down');
         }
 
-        console.log(`Attempting Redis file storage reconnection on pod: ${service.podId}`);
+        logger.info(`Attempting Redis file storage reconnection on pod: ${service.podId}`);
 
         try {
             await RedisConnectionHelper.cleanupFileConnection(service);
@@ -300,7 +315,7 @@ class RedisConnectionHelper {
                 tls: true
             };
 
-            console.log(`📁 Creating new Redis file storage connection on pod: ${service.podId}`);
+            logger.info(`📁 Creating new Redis file storage connection on pod: ${service.podId}`);
 
             service.redis = new Redis(redisConfig);
 
@@ -313,10 +328,12 @@ class RedisConnectionHelper {
                 )
             ]);
             
-            console.log(`Redis file storage reconnected successfully on pod: ${service.podId}`);
+            logger.info(`Redis file storage reconnected successfully on pod: ${service.podId}`);
             return true;
         } catch (error) {
-            console.error(`Redis file storage reconnection failed on pod: ${service.podId}:`, error.message);
+            logger.error(`Redis file storage reconnection failed on pod: ${service.podId}`, {
+                error: error.message,
+            });
         
             await RedisConnectionHelper.cleanupFileConnection(service);
             throw error;
@@ -331,15 +348,17 @@ class RedisConnectionHelper {
         service.redis.removeAllListeners();
         
         service.redis.on('connect', () => {
-            console.log(`Redis file storage connected successfully on pod: ${service.podId}`);
+            logger.info(`Redis file storage connected successfully on pod: ${service.podId}`);
         });
 
         service.redis.on('error', (error) => {
-            console.error(`Redis file storage error on pod ${service.podId}:`, error.message);
+            logger.error(`Redis file storage error on pod ${service.podId}:`, {
+                error: error.message
+            });
         });
 
         service.redis.on('close', () => {
-            console.log(`🔌 Redis file storage connection closed on pod: ${service.podId}`);
+            logger.info(`🔌 Redis file storage connection closed on pod: ${service.podId}`);
         });
     }
 
@@ -355,7 +374,9 @@ class RedisConnectionHelper {
                     ]);
                 }
             } catch (error) {
-                console.warn(`Error cleaning up redis file connection:`, error.message);
+                logger.warn('Error cleaning up redis file connection', {
+                    error: error.message,
+                });
             }
             
             service.redis = null;

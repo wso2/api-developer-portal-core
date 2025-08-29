@@ -18,6 +18,8 @@
 /* eslint-disable no-undef */
 const { renderTemplate, renderGivenTemplate, loadLayoutFromAPI, invokeApiRequest } = require('../utils/util');
 const config = require(process.cwd() + '/config');
+const logger = require('../config/logger');
+const { logUserAction } = require('../middlewares/auditLogger');
 const constants = require('../utils/constants');
 const path = require('path');
 const fs = require('fs');
@@ -101,7 +103,11 @@ const loadApplications = async (req, res) => {
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
             errorMessage: constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE,
         }
-        console.error("Error occurred while loading Applications", error);
+        logger.error("Error occurred while loading Applications", {
+            orgName: orgName,
+            error: error.message,
+            stack: error.stack
+        });
         html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
     }
     res.send(html);
@@ -330,7 +336,12 @@ const loadApplication = async (req, res) => {
             }
         }
     } catch (error) {
-        console.error("Error occurred while loading application", error);
+        logger.error("Error occurred while loading application", {
+            orgName: orgName,
+            applicationId: applicationId,
+            error: error.message,
+            stack: error.stack
+        });
         const templateContent = {
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
             devportalMode: devportalMode,
@@ -357,7 +368,11 @@ async function getApplicationKeys(applicationList, req) {
         try {
             return await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${appRef}/keys`, {}, {});
         } catch (error) {
-            console.error("Error occurred while generating application keys", error);
+            logger.error("Error occurred while generating application keys", {
+                applicationRefId: appRef,
+                error: error.message,
+                stack: error.stack
+            });
             return null;
         }
     }
@@ -367,7 +382,10 @@ async function getAllAPIs(req) {
     try {
         return await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis`);
     } catch (error) {
-        console.error("Error occurred while loading APIs", error);
+        logger.error("Error occurred while loading APIs", {
+            error: error.message,
+            stack: error.stack
+        });
         throw error;
     }
 }
@@ -376,7 +394,11 @@ const getSubscribedApis = async (req, appId) => {
     try {
         return await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?applicationId=${appId}`);
     } catch (error) {
-        console.error("Error occurred while loading subscriptions", error);
+        logger.error("Error occurred while loading subscriptions", {
+            applicationId: appId,
+            error: error.message,
+            stack: error.stack
+        });
         throw error;
     }
 }

@@ -1,4 +1,5 @@
 const SDKJob = require('../models/sdkJob');
+const logger = require('../config/logger');
 
 const createJob = async (jobData) => {
     try {
@@ -13,7 +14,14 @@ const createJob = async (jobData) => {
         });
         return job.toJSON();
     } catch (error) {
-        console.error('Error creating SDK job:', error);
+        logger.error('Error creating SDK job', { 
+            error: error.message, 
+            stack: error.stack,
+            jobId: jobData.jobId,
+            orgId: jobData.orgId,
+            applicationId: jobData.applicationId,
+            operation: 'createJob'
+        });
         throw new Error('Error creating job: ' + error.message);
     }
 }
@@ -37,7 +45,13 @@ const updateJob = async (jobId, updateData) => {
         const updatedJob = await SDKJob.findByPk(jobId);
         return updatedJob ? updatedJob.toJSON() : null;
     } catch (error) {
-        console.error('Error updating SDK job:', error);
+        logger.error('Error updating SDK job', { 
+            error: error.message, 
+            stack: error.stack,
+            jobId,
+            updateData,
+            operation: 'updateJob'
+        });
         throw new Error('Error updating job: ' + error.message);
     }
 }
@@ -47,7 +61,12 @@ const getJobById = async (jobId) => {
         const job = await SDKJob.findByPk(jobId);
         return job ? job.toJSON() : null;
     } catch (error) {
-        console.error('Error fetching SDK job:', error);
+        logger.error('Error fetching SDK job', { 
+            error: error.message, 
+            stack: error.stack,
+            jobId,
+            operation: 'getJobById'
+        });
         throw new Error('Error fetching job: ' + error);
     }
 }

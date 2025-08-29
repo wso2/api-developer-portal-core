@@ -19,6 +19,8 @@
 const { renderGivenTemplate } = require('../utils/util');
 const fs = require('fs');
 const path = require('path');
+const logger = require('../config/logger');
+const { logUserAction } = require('../middlewares/auditLogger');
 const adminDao = require('../dao/admin');
 const IdentityProviderDTO = require("../dto/identityProvider");
 const config = require(process.cwd() + '/config.json');
@@ -96,7 +98,10 @@ const loadSettingPage = async (req, res) => {
         let html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         res.send(html);
     } catch (error) {
-        console.error(`Error while loading content from DB: ${error}`);
+        logger.error(`Error while loading content from DB`, {
+            error: error.message,
+            stack: error.stack
+        });
     }
 }
 
@@ -147,7 +152,10 @@ const loadPortalPage = async (req, res) => {
         res.send(html);
 
     } catch (error) {
-        console.error(`Error while loading setting page:`, error);
+        logger.error(`Error while loading setting page`, {
+            error: error.message,
+            stack: error.stack
+        });
     }
 }
 
@@ -181,7 +189,11 @@ const loadEditOrganizationPage = async (req, res) => {
         const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         res.send(html);
     } catch (error) {
-        console.error(`Error while loading setting page :`, error);
+        logger.error(`Error while loading edit organization setting page`, {
+            orgName: req.params?.orgName,
+            error: error.message,
+            stack: error.stack
+        });
     }
 }
 
@@ -196,7 +208,10 @@ const loadCreateOrganizationPage = async (req, res) => {
         const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         res.send(html);
     } catch (error) {
-        console.error(`Error while loading setting page :`, error);
+        logger.error(`Error while loading create organization setting page`, {
+            error: error.message,
+            stack: error.stack
+        });
     }
 }
 

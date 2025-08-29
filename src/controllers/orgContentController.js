@@ -19,6 +19,8 @@
 const path = require('path');
 const fs = require('fs');
 const Handlebars = require('handlebars');
+const logger = require('../config/logger');
+const { logUserAction } = require('../middlewares/auditLogger');
 const { renderTemplate, renderTemplateFromAPI } = require('../utils/util');
 const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
@@ -81,7 +83,11 @@ const loadOrgContentFromAPI = async (req, res) => {
         };
         html = await renderTemplateFromAPI(templateContent, orgId, orgName, 'pages/home', req.params.viewName);
     } catch (error) {
-        console.error(`Failed to load organization :`, error);
+        logger.error(`Failed to load organization`, {
+            orgName: req.params?.orgName,
+            error: error.message,
+            stack: error.stack
+        });
         const templateContent = {
             devportalMode: devportalMode,
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
