@@ -20,6 +20,7 @@ const path = require('path');
 const fs = require('fs');
 const Handlebars = require('handlebars');
 const { renderTemplate, renderTemplateFromAPI } = require('../utils/util');
+const { trackHomePageVisit } = require('../utils/telemetry');
 const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
@@ -44,6 +45,12 @@ const loadDefaultLandingPage = async (req, res) => {
     const templateResponse = await fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
     const template = await Handlebars.compile(templateResponse);
     html = template();
+    
+    // Track home page visit telemetry for default landing page
+    trackHomePageVisit({
+        idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
+    });
+    
     res.send(html);
 }
 const loadOrgContentFromFile = async (req, res) => {
@@ -55,6 +62,12 @@ const loadOrgContentFromFile = async (req, res) => {
         userProfiles: mockProfileData,
         baseUrl: baseURLDev + req.params.viewName
     };
+    
+    // Track home page visit telemetry for dev mode
+    trackHomePageVisit({
+        idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
+    });
+    
     return renderTemplate(filePrefix + 'pages/home/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false)
 }
 
@@ -80,6 +93,12 @@ const loadOrgContentFromAPI = async (req, res) => {
             profile: req.isAuthenticated() ? profile : null
         };
         html = await renderTemplateFromAPI(templateContent, orgId, orgName, 'pages/home', req.params.viewName);
+        
+        // Track home page visit telemetry
+        trackHomePageVisit({ 
+            orgId: orgId, 
+            idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
+        });
     } catch (error) {
         console.error(`Failed to load organization :`, error);
         const templateContent = {

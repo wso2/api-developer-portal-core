@@ -29,12 +29,13 @@ function trackLogoutTrigger({ orgName }) {
 /**
  * Send telemetry for start to create an application
  */
-function trackAppCreationStart({ orgId, appName }) {
+function trackAppCreationStart({ orgId, appName, idpId }) {
     trackEventWithDefaults({
         name: 'application-create-start',
         properties: {
             orgId: orgId || 'unknown',
             appName: appName || 'unknown',
+            idpId: idpId || 'unknown',
             timestamp: new Date().toISOString()
         }
     });
@@ -43,12 +44,13 @@ function trackAppCreationStart({ orgId, appName }) {
 /**
  * Send telemetry for create an application
  */
-function trackAppCreationEnd({ orgId, appName }) {
+function trackAppCreationEnd({ orgId, appName, idpId }) {
     trackEventWithDefaults({
         name: 'application-create-end',
         properties: {
             orgId: orgId || 'unknown',
             appName: appName || 'unknown',
+            idpId: idpId || 'unknown',
             timestamp: new Date().toISOString()
         }
     });
@@ -57,12 +59,13 @@ function trackAppCreationEnd({ orgId, appName }) {
 /**
  * Send telemetry for delete an application
  */
-function trackAppDeletion({ orgId, appId }) {
+function trackAppDeletion({ orgId, appId, idpId }) {
     trackEventWithDefaults({
         name: 'application-delete',
         properties: {
             orgId: orgId || 'unknown',
             appId: appId || 'unknown',
+            idpId: idpId || 'unknown',
             timestamp: new Date().toISOString()
         }
     });
@@ -71,12 +74,13 @@ function trackAppDeletion({ orgId, appId }) {
 /**
  * Send telemetry for generate credentials
  */
-function trackGenerateCredentials({ orgId, appName }) {
+function trackGenerateCredentials({ orgId, appName, idpId }) {
     trackEventWithDefaults({
         name: 'generate-credentials',
         properties: {
             orgId: orgId || 'unknown',
             appName: appName || 'unknown',
+            idpId: idpId || 'unknown',
             timestamp: new Date().toISOString()
         }
     });
@@ -85,12 +89,13 @@ function trackGenerateCredentials({ orgId, appName }) {
 /**
  * Send telemetry for generate key
  */
-function trackGenerateKey({ orgId, appId }) {
+function trackGenerateKey({ orgId, appId, idpId }) {
     trackEventWithDefaults({
         name: 'generate-key',
         properties: {
             orgId: orgId || 'unknown',
             appId: appId || 'unknown',
+            idpId: idpId || 'unknown',
             timestamp: new Date().toISOString()
         }
     });
@@ -99,13 +104,14 @@ function trackGenerateKey({ orgId, appId }) {
 /**
  * Send telemetry for subscribe to an API
  */
-function trackSubscribeApi({ orgId, appId, apiId }) {
+function trackSubscribeApi({ orgId, appId, apiId, idpId }) {
     trackEventWithDefaults({
         name: 'subscribe-api',
         properties: {
             orgId: orgId || 'unknown',
             appId: appId || 'unknown',
             apiId: apiId || 'unknown',
+            idpId: idpId || 'unknown',
             timestamp: new Date().toISOString()
         }
     });
@@ -114,13 +120,14 @@ function trackSubscribeApi({ orgId, appId, apiId }) {
 /**
  * Send telemetry for unsubscribe to an API
  */
-function trackUnsubscribeApi({ orgId, appId, apiRefId }) {
+function trackUnsubscribeApi({ orgId, appId, apiRefId, idpId }) {
     trackEventWithDefaults({
         name: 'unsubscribe-api',
         properties: {
             orgId: orgId || 'unknown',
             appId: appId || 'unknown',
             apiRefId: apiRefId || 'unknown',
+            idpId: idpId || 'unknown',
             timestamp: new Date().toISOString()
         }
     });
@@ -129,12 +136,13 @@ function trackUnsubscribeApi({ orgId, appId, apiRefId }) {
 /**
  * Send telemetry for SDK generation start
  */
-function trackSDKGenerationStart({ orgName, appId }) {
+function trackSDKGenerationStart({ orgName, appId, idpId }) {
     trackEventWithDefaults({
         name: 'generate-sdk-start',
         properties: {
             orgName: orgName || 'unknown',
             appId: appId || 'unknown',
+            idpId: idpId || 'unknown',
             timestamp: new Date().toISOString()
         }
     });
@@ -152,6 +160,20 @@ function trackSDKGenerationEnd() {
     });
 }
 
+/**
+ * Send telemetry for home page visit
+ */
+function trackHomePageVisit({ orgId, idpId }) {
+    trackEventWithDefaults({
+        name: 'home-page-visit',
+        properties: {
+            orgId: orgId || 'unknown',
+            idpId: idpId || 'unknown',
+            timestamp: new Date().toISOString()
+        }
+    });
+}
+
 module.exports = {
     trackLoginTrigger,
     trackLogoutTrigger,
@@ -163,5 +185,6 @@ module.exports = {
     trackSubscribeApi,
     trackUnsubscribeApi,
     trackSDKGenerationStart,
-    trackSDKGenerationEnd
+    trackSDKGenerationEnd,
+    trackHomePageVisit
 };

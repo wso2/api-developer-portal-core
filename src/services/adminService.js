@@ -728,7 +728,8 @@ const createSubscription = async (req, res) => {
                 trackSubscribeApi({
                     orgId: orgID,
                     appId: req.body.applicationID,
-                    apiId: req.body.apiId
+                    apiId: req.body.apiId,
+                    idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
                 });
                 return res.status(200).json({ message: 'Subscribed successfully' });
 
@@ -1016,6 +1017,7 @@ const createAppKeyMapping = async (req, res) => {
         trackGenerateCredentials({
             orgId: orgID,
             appName: req.body.applicationName,
+            idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
         });
         return res.status(200).json(responseData);
     } catch (error) {
@@ -1196,7 +1198,8 @@ const unsubscribeAPI = async (req, res) => {
                 trackUnsubscribeApi({
                     orgId: orgID,
                     appId: appID,
-                    apiRefId: apiReferenceID
+                    apiRefId: apiReferenceID,
+                    idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
                 });
                 return res.status(204).send();
             } catch (error) {
@@ -1208,7 +1211,8 @@ const unsubscribeAPI = async (req, res) => {
                         trackUnsubscribeApi({
                             orgId: orgID,
                             appId: appID,
-                            apiRefId: apiReferenceID
+                            apiRefId: apiReferenceID,
+                            idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
                         });
                         return res.status(204).send();
                     }

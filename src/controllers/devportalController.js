@@ -38,9 +38,9 @@ const { trackAppCreationStart, trackAppCreationEnd, trackAppDeletion, trackGener
 const saveApplication = async (req, res) => {
     try {
         const orgID = await adminDao.getOrgId(req.user[constants.ORG_IDENTIFIER]);
-        trackAppCreationStart({ orgId: orgID, appName: req.body.name });
+        trackAppCreationStart({ orgId: orgID, appName: req.body.name, idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined });
         const application = await adminDao.createApplication(orgID, req.user.sub, req.body);
-        trackAppCreationEnd({ orgId: orgID, appName: req.body.name });
+        trackAppCreationEnd({ orgId: orgID, appName: req.body.name, idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined });
         return res.status(201).json(new ApplicationDTO(application.dataValues));
     } catch (error) {
         console.error("Error occurred while creating the application", error);
@@ -83,7 +83,7 @@ const deleteApplication = async (req, res) => {
             if (appDeleteResponse === 0) {
                 throw new Sequelize.EmptyResultError("Resource not found to delete");
             } else {
-                trackAppDeletion({ orgId: orgID, appId: applicationId  });
+                trackAppDeletion({ orgId: orgID, appId: applicationId, idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined });
                 res.status(200).send("Resouce Deleted Successfully");
             }
         } catch (error) {
@@ -240,7 +240,8 @@ const generateOAuthKeys = async (req, res) => {
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}/generate-token`, {}, req.body);
         trackGenerateKey({
             orgId: req.user[constants.ORG_ID],
-            appId: applicationId
+            appId: applicationId,
+            idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
         });
         res.status(200).json(responseData);
     } catch (error) {
