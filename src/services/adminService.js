@@ -45,7 +45,11 @@ const createOrganization = async (req, res) => {
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json(util.getErrors(errors));
+        const errObj = util.getErrors(errors);
+        logger.error('Organization creation request validation failed', {
+            errors: errObj
+        });
+        return res.status(400).json(errObj);
     }
     logger.info('Organization creation request validation successful');
 
@@ -91,8 +95,7 @@ const createOrganization = async (req, res) => {
             if (config.generateDefaultSubPolicies) {
                 await apiDao.bulkCreateSubscriptionPolicies(orgId, constants.DEFAULT_SUBSCRIPTION_PLANS, t);
             }
-            logger.info('Default subscription policy configuration processed', {
-                generateDefaultSubPolicies: config.generateDefaultSubPolicies,
+            logger.info('Default subscription policies created successfully', {
                 orgId
             });
         });
@@ -113,7 +116,7 @@ const createOrganization = async (req, res) => {
             groupClaimName: organization.GROUP_CLAIM_NAME,
             orgConfiguration: organization.dataValues.ORG_CONFIG
         };
-        logger.info('Organization creation completed successfully', {
+        logger.info('Organization creation flow completed successfully', {
             orgId: orgCreationResponse.orgId,
             orgName: orgCreationResponse.orgName,
         });
