@@ -67,7 +67,7 @@
                             <td class="app-td">
                                 {{#if (contains security 'api_key')}}
                                 <div class="api-key-actions">
-                                    <button class="common-btn-outlined btn-sm me-1" id="regenerateKeyBtn-{{subID}}"
+                                    <button class="common-btn-outlined btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}" id="regenerateKeyBtn-{{subID}}"
                                         data-scopes="{{json apiKeys.scopes}}"
                                         data-api-key-id="'{{apiKeys.key.[0].id}}'"
                                         onclick="openWarningModal('regenerate', this.dataset.apiKeyId, '{{subID}}')"
@@ -80,7 +80,7 @@
                                             Regenerate...
                                         </span>
                                     </button>
-                                    <button class="common-btn-outlined btn-sm api-key-revoke"
+                                    <button class="common-btn-outlined btn-sm api-key-revoke {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                         data-api-key-id="'{{apiKeys.key.[0].id}}'"
                                         onclick="openWarningModal('revoke', this.dataset.apiKeyId, '{{subID}}', '{{../applicationMetadata.id}}', '{{refID}}')"
                                         id="revokeKeyBtn-{{subID}}"
@@ -93,7 +93,7 @@
                                             Revoking...
                                         </span>
                                     </button>
-                                    <button class="common-btn-outlined btn-sm me-1" id="generateKeyBtn-{{subID}}"
+                                    <button class="common-btn-outlined btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}" id="generateKeyBtn-{{subID}}"
                                         style="{{#if apiKeys.key}}display: none;{{else}}display: inline-flex;{{/if}}"
                                         data-app-ref-id=""
                                       onclick="openApiKeyModal('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIs}}', '{{json scopes}}')">
@@ -111,10 +111,10 @@
                             <td class="app-td action-column">
                                 <div class="action-buttons-container">
                                     {{> warning }}
-                                    <button type="button" class="btn application-btn-icon" onclick="loadModal('planModal-{{apiID}}')">
+                                    <button type="button" class="btn application-btn-icon {{#if @root.isReadOnlyMode}}disabled{{/if}}" onclick="loadModal('planModal-{{apiID}}')">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button type="button" class="btn application-btn-icon delete-button"
+                                    <button type="button" class="btn application-btn-icon delete-button {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                         onclick="openWarningModal('Unsubscribe', '{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')">
                                         <i class="bi bi-trash"></i>
                                     </button>
