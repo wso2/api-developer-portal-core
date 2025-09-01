@@ -48,7 +48,7 @@
                                         onClick="closeModal('keysTokenModal')">
                                         Cancel
                                     </button>
-                                    <button class="common-btn-primary btn-sm me-1" id="regenerateButton_{{../name}}"
+                                    <button class="common-btn-primary btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}" id="regenerateButton_{{../name}}"
                                         onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}')">
                                         <span class="button-normal-state">
                                             <i class="bi bi-arrow-clockwise"></i> Regenerate

@@ -12,7 +12,7 @@
       {{#if applicationsMetadata.length}}
       <!-- Show button if there are applications -->
       <div class="create-application-btn">
-        <button class="btn common-btn-primary" onclick="toggleCreateCard()" id="createButton">Create</button>
+        <button class="btn common-btn-primary {{#if @root.isReadOnlyMode}}disabled{{/if}}" onclick="toggleCreateCard()" id="createButton">Create</button>
       </div>
       {{/if}}
     </div>
@@ -21,7 +21,7 @@
 
       <!-- Create application Card -->
       <div class="col-12 col-md-6 col-lg-4 col-xl-3 {{#if applicationsMetadata.length}}d-none{{/if}}" id="createApplicationCardWrapper">
-        <div class="create-application-card card {{#if applicationsMetadata.length}}d-none{{/if}}" id="applicationCreateCard" style="cursor: pointer;"
+        <div class="create-application-card card {{#if @root.isReadOnlyMode}}disabled{{/if}} {{#if applicationsMetadata.length}}d-none{{/if}}" id="applicationCreateCard" style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 1;{{else}} cursor: pointer; {{/if}}"
           onclick="showApplicationForm()">
           <span class="plus-icon">+</span>
           <span class="create-text">Create Application</span>
@@ -107,7 +107,7 @@
               </div>
               <div class="application-card-footer">
                 <div class="application-card-actions">
-                  <button type="button" class="btn application-btn-icon delete-button" title="Delete"
+                  <button type="button" class="btn application-btn-icon delete-button {{#if @root.isReadOnlyMode}}disabled{{/if}}" title="Delete"
                       id="trash-btn-{{id}}" onclick="event.stopPropagation(); openWarningModal('{{id}}', '')">
                     <i class="bi bi-trash"></i>
                   </button>
