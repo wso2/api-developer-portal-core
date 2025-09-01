@@ -66,7 +66,7 @@
 
         <div id="generateKeyContainer" style="{{#if keys.consumerKey}}display: none;{{/if}}">
           <div class="d-flex align-items-center">
-            <button id="generateKeyBtn" class="common-btn-primary btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+            <button id="generateKeyBtn" class="common-btn-primary btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}" style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
               onclick="generateApplicationKey('keysview-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.id}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', 'consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}')">
               <span class="button-normal-state">
                 <i class="bi bi-key me-1"></i> Generate Key
@@ -92,7 +92,7 @@
               <button id="viewKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal()">
                 <i class="bi bi-eye"></i> View
               </button>
-              <button id="modifyKeyBtn" class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}" style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{if}}" onclick="loadKeysModifyModal()">
+              <button id="modifyKeyBtn" class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}" style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}" onclick="loadKeysModifyModal()">
                 <i class="bi bi-pencil-square"></i> Modify
               </button>
             </div>
@@ -100,7 +100,7 @@
           <div class="key-action-row">
             <span class="key-action-label">Token: </span>
             <div class="key-action-buttons">
-              <button id="tokenKeyBtn" class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}" data-app-id="{{@root.applicationMetadata.id}}" style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{if}}"
+              <button id="tokenKeyBtn" class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}" data-app-id="{{@root.applicationMetadata.id}}" style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
                 onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}', '{{json @root.subscriptionScopes}}')">
                 <span class="button-normal-state">
                   <i class="bi bi-key-fill"></i> Generate
