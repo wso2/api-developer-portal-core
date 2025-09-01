@@ -24,7 +24,7 @@
                                     </div>
                                     <div class="select-items" role="listbox">
                                         <div class="select-search-container">
-                                            <input type="text" class="select-search-input" placeholder="Find or create an application..."
+                                            <input type="text" class="select-search-input {{#if @root.isReadOnlyMode}}d-none{{/if}}" placeholder="Find or create an application..."
                                                 aria-label="Search applications">
                                         </div>
                                         <div class="select-items-container">
@@ -45,7 +45,7 @@
                                 </div>
                             </div>
                             <a id="subscribe-btn-{{policyID}}" type="button"
-                                 class="common-btn-primary subscribe-btn"
+                                 class="common-btn-primary subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                  onclick="showSubscribeButtonLoading(this); subscribe('{{@root.orgID}}', '', '{{../apiMetadata.apiID}}', '{{../apiMetadata.apiReferenceID}}', '{{policyID}}', '{{policyName}}')"
                                  disabled>Subscribe</a>
                         </div>

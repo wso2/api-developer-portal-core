@@ -87,7 +87,8 @@ const loadApplications = async (req, res) => {
                 applicationsMetadata: metaData,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 profile: req.isAuthenticated() ? profile : null,
-                devportalMode: devportalMode
+                devportalMode: devportalMode,
+                isReadOnlyMode: config.readOnlyMode,
             }
             const templateResponse = await templateResponseValue('applications');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
@@ -325,7 +326,8 @@ const loadApplication = async (req, res) => {
                 devportalMode: devportalMode,
                 features: {
                     sdkGeneration: config.features?.sdkGeneration?.enabled || false
-                }
+                },
+                isReadOnlyMode: config.readOnlyMode
             }
             const templateResponse = await templateResponseValue('application');
             const layoutResponse = await loadLayoutFromAPI(orgID, viewName);

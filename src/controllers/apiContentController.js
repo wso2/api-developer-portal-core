@@ -136,6 +136,7 @@ const loadAPIs = async (req, res) => {
                 orgID: orgID,
                 profile: req.isAuthenticated() ? profile : null,
                 devportalMode: devportalMode,
+                isReadOnlyMode: config.readOnlyMode
             };
 
             if (req.originalUrl.includes("/mcps")) {
@@ -338,9 +339,10 @@ const loadAPIContent = async (req, res) => {
                 resources: apiDetails,
                 orgID: orgID,
                 schemaDefinition: schemaDefinition,
-                scopes: apiDetail.scopes,
+                scopes: apiDetail?.scopes,
                 devportalMode: devportalMode,
-                profile: req.isAuthenticated() ? profile : null
+                profile: req.isAuthenticated() ? profile : null,
+                isReadOnlyMode: config.readOnlyMode
             };
             if (metaData.apiInfo.apiType == "MCP") {
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp-landing", viewName);

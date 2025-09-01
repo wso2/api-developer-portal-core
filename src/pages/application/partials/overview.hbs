@@ -9,7 +9,7 @@
         {{#applicationMetadata}}
         <div class="d-flex align-items-center edit-container mb-2">
           <h3 class="app-overview-title" id="applicationName" data-original="{{name}}">{{name}}</h3>
-          <button class="btn btn-sm edit-inline-btn" id="editNameBtn" title="Edit name">
+          <button class="btn btn-sm edit-inline-btn {{#if @root.isReadOnlyMode}}disabled border-0{{/if}}" id="editNameBtn" title="Edit name">
             <i class="bi bi-pencil"></i>
           </button>
           <div class="edit-actions" id="nameEditActions" style="display: none;">
@@ -28,11 +28,11 @@
           {{#if description}}
           <p class="app-description mb-0" id="applicationDescription" data-original="{{description}}">{{description}}
           </p>
-          <button class="btn btn-sm edit-inline-btn" id="editDescriptionBtn" title="Edit description">
+          <button class="btn btn-sm edit-inline-btn {{#if @root.isReadOnlyMode}}disabled border-0{{/if}}" id="editDescriptionBtn" title="Edit description">
             <i class="bi bi-pencil"></i>
           </button>
           {{else}}
-          <button class="btn btn-sm common-btn-link p-0" id="editDescriptionBtn" title="Add description">
+          <button class="btn btn-sm common-btn-link p-0 {{#if @root.isReadOnlyMode}}disabled border-0{{/if}}" id="editDescriptionBtn" title="Add description">
             <i class="bi bi-plus"></i> Add description
           </button>
           <p class="app-description" id="applicationDescription" data-original="{{null}}"></p>
@@ -66,7 +66,7 @@
 
         <div id="generateKeyContainer" style="{{#if keys.consumerKey}}display: none;{{/if}}">
           <div class="d-flex align-items-center">
-            <button id="generateKeyBtn" class="common-btn-primary btn-sm"
+            <button id="generateKeyBtn" class="common-btn-primary btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}"
               onclick="generateApplicationKey('keysview-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.id}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', 'consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}')">
               <span class="button-normal-state">
                 <i class="bi bi-key me-1"></i> Generate Key
@@ -92,7 +92,7 @@
               <button id="viewKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal()">
                 <i class="bi bi-eye"></i> View
               </button>
-              <button id="modifyKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysModifyModal()">
+              <button id="modifyKeyBtn" class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}" onclick="loadKeysModifyModal()">
                 <i class="bi bi-pencil-square"></i> Modify
               </button>
             </div>
@@ -100,7 +100,7 @@
           <div class="key-action-row">
             <span class="key-action-label">Token: </span>
             <div class="key-action-buttons">
-              <button id="tokenKeyBtn" class="common-btn-outlined btn-sm" data-app-id="{{@root.applicationMetadata.id}}"
+              <button id="tokenKeyBtn" class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}" data-app-id="{{@root.applicationMetadata.id}}"
                 onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}', '{{json @root.subscriptionScopes}}')">
                 <span class="button-normal-state">
                   <i class="bi bi-key-fill"></i> Generate
