@@ -77,7 +77,8 @@ const customFormat = winston.format.combine(
 const consoleFormat = winston.format.combine(
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     winston.format.errors({ stack: true }),
-    winston.format.colorize({ all: true }),
+    // Disable colorization
+    // winston.format.colorize({ all: true }),
     winston.format.printf((info) => {
         const { timestamp, level, message, stack, filename, line, ...metadata } = info;
         const fileInfo = filename && line ? `[${path.basename(filename)}:${line}]` : '[unknown:0]';

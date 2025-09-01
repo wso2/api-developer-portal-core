@@ -88,15 +88,10 @@ const getOrgContent = async (req, res) => {
         }
     } catch (error) {
         logger.error('Error while fetching organization content', {
-            module: 'DevportalService',
-            method: 'getOrgContent',
             error: error.message,
             stack: error.stack,
             orgId: req.params.orgId,
-            viewName: req.params.name,
-            fileType: req.query.fileType || req.params.fileType,
-            fileName: req.query.fileName,
-            userId: req.user?.id
+            viewName: req.params.name
         });
         res.status(404).send(error.message);
     }

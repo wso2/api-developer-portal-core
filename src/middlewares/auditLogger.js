@@ -49,19 +49,16 @@ function auditMiddleware(options = {}) {
             // Redact sensitive information from request body
             const sanitizedBody = sanitizeObject(req.body || {}, sensitiveFields);
 
-            // Create audit log entry
+            // Create and log audit log entry
             const auditEntry = {
                 requestBody: Object.keys(sanitizedBody).length > 0 ? sanitizedBody : "",
                 queryParams: Object.keys(req.query || {}).length > 0 ? req.query : "",
             };
-
-            // Log audit entry
             logger.audit(`${req.method} ${req.originalUrl || req.url} - ${res.statusCode} - ${duration}ms`, auditEntry);
             
             // Call original end method
             originalEnd.call(this, chunk, encoding);
         };
-
         next();
     };
 }

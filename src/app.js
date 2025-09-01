@@ -26,7 +26,6 @@ const path = require('path');
 const http = require('http');
 const https = require('https');
 const fs = require('fs');
-const chalk = require('chalk');
 const logger = require('./config/logger');
 const { auditMiddleware } = require('./middlewares/auditLogger');
 const authRoute = require('./routes/authRoute');
@@ -48,7 +47,6 @@ const OAuth2Strategy = require('passport-oauth2');
 const jwt = require('jsonwebtoken');
 const secretConf = require(process.cwd() + '/secret.json');
 const { v4: uuidv4 } = require('uuid');
-const { start } = require('repl');
 
 const lock = new AsyncLock();
 const app = express();
@@ -225,7 +223,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Add audit logging middleware
 app.use(auditMiddleware({
-    excludePaths: ['/health', '/metrics', '/favicon.ico', '/styles', '/scripts', '/images'],
+    excludePaths: ['/health', '/metrics', '/favicon.ico', '/styles', '/scripts', '/images', '/technical-styles', '/technical-scripts'],
     sensitiveFields: ['password', 'token', 'secret', 'key', 'authorization', 'idToken', 'accessToken', 'refreshToken']
 }));
 
