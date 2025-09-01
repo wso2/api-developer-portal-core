@@ -21,6 +21,7 @@ const sequelize = require("../db/sequelize");
 const apiDao = require("../dao/apiMetadata");
 const adminDao = require("../dao/admin");
 const util = require("../utils/util");
+const logger = require("../config/logger");
 const config = require(process.cwd() + '/config.json');
 const path = require("path");
 const fs = require("fs").promises;
@@ -35,8 +36,10 @@ const { CustomError } = require("../utils/errors/customErrors");
 const LabelDTO = require("../dto/label");
 
 const createAPIMetadata = async (req, res) => {
-
-    console.log("Creating API metadata");
+    const orgId = req.params.orgId;
+    logger.info('Creating API metadata...', {
+        orgId
+    });
     const apiMetadata = JSON.parse(req.body.apiMetadata);
     let apiDefinitionFile, apiFileName = "";
     if (req.files?.apiDefinition?.[0]) {
@@ -44,7 +47,7 @@ const createAPIMetadata = async (req, res) => {
         apiDefinitionFile = file.buffer;
         apiFileName = file.originalname;
     }
-    const orgId = req.params.orgId;
+    
     try {
         // Validate input
         if (!apiMetadata.apiInfo || !apiDefinitionFile || !apiMetadata.endPoints) {
@@ -102,11 +105,18 @@ const createAPIMetadata = async (req, res) => {
             if (constants.API_TYPE.MCP === apiMetadata.apiInfo.apiType && req.files?.schemaDefinition?.[0]) {
                 const file = req.files.schemaDefinition[0];
                 const schemaDefinitionFile = file.buffer;
-                console.log("Schema definition file", schemaDefinitionFile);
+                logger.debug('Schema definition file received', {
+                    apiId: apiID,
+                    schemaDefinitionFileSize: schemaDefinitionFile.length,
+                    schemaFileName: file.originalname
+                });
                 const schemaFileName = file.originalname;
                 await apiDao.storeAPIFile(schemaDefinitionFile, schemaFileName, apiID,
                     constants.DOC_TYPES.SCHEMA_DEFINITION, t);
-                console.log("Schema definition file stored");
+                logger.info('Schema definition file stored', {
+                    apiId: apiID,
+                    schemaFileName
+                });
             }
             apiMetadata.apiID = apiID;
         });
@@ -114,22 +124,14 @@ const createAPIMetadata = async (req, res) => {
 
         res.status(201).send(apiMetadata);
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.API_CREATE_ERROR}`, error);
+        logger.error('API metadata creation failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId: req.params.orgId
+        });
         util.handleError(res, error);
     }
 };
-
-function getRandomDarkColor() {
-    let r, g, b;
-
-    do {
-        r = Math.floor(Math.random() * 128);  // Red component (0-127)
-        g = Math.floor(Math.random() * 128);  // Green component (0-127)
-        b = Math.floor(Math.random() * 128);  // Blue component (0-127)
-    } while (r === 0 && g === 0 && b === 0);  // Skip black color
-
-    return `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
-}
 
 function changeEndpoint(endPoint) {
 
@@ -168,7 +170,12 @@ const getAPIMetadata = async (req, res) => {
             res.status(404).send("API not found");
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.API_NOT_FOUND}`, error);
+        logger.error('API metadata retrieval failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId,
+            apiId
+        });
         util.handleError(res, error);
     }
 };
@@ -216,7 +223,16 @@ const getAllAPIMetadata = async (req, res) => {
         const retrievedAPIs = await getMetadataListFromDB(orgID, groupList, searchTerm, tags, apiName, apiVersion, view);
         res.status(200).send(retrievedAPIs);
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.API_NOT_FOUND}`, error);
+        logger.error('API metadata list retrieval failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId: req.params.orgId,
+            searchTerm: req.query.query,
+            apiName: req.query.apiName,
+            apiVersion: req.query.version,
+            tags: req.query.tags,
+            view: req.query.view
+        });
         util.handleError(res, error);
     }
 };
@@ -246,8 +262,12 @@ const getMetadataListFromDB = async (orgID, groups, searchTerm, tags, apiName, a
 };
 
 const updateAPIMetadata = async (req, res) => {
-
-    console.log("Updating API metadata");
+    //TODO: Get orgId from the orgName
+    const { orgId, apiId } = req.params;
+    logger.info('Updating API metadata', {
+        orgId,
+        apiId
+    });
     const apiMetadata = JSON.parse(req.body.apiMetadata);
     let apiDefinitionFile, apiFileName = "";
     if (req.files?.apiDefinition?.[0]) {
@@ -255,9 +275,12 @@ const updateAPIMetadata = async (req, res) => {
         apiDefinitionFile = file.buffer;
         apiFileName = file.originalname;
     }
-    console.log("MCP API Definition file name", apiFileName);
-    //TODO: Get orgId from the orgName
-    const { orgId, apiId } = req.params;
+    logger.debug('MCP API Definition file', {
+        apiFileName,
+        hasApiDefinitionFile: !!apiDefinitionFile,
+        orgId,
+        apiId
+    });
 
     try {
         // Validate input
@@ -277,7 +300,10 @@ const updateAPIMetadata = async (req, res) => {
             timeout: 60000,
         }, async (t) => {
             // Create apimetadata record
-            console.log("Updating metadata", apiId);
+            logger.info('Updating API metadata in database', {
+                orgId,
+                apiId
+            });
             let [updatedRows, updatedAPI] = await apiDao.updateAPIMetadata(orgId, apiId, apiMetadata, t);
             if (!updatedRows) {
                 throw new Sequelize.EmptyResultError("No record found to update");
@@ -333,25 +359,41 @@ const updateAPIMetadata = async (req, res) => {
                 throw new Sequelize.EmptyResultError("No record found to update");
             }
             // Update MCP tools schema definition if the API type is MCP
-            console.log("MCP API Definition", req.files?.schemaDefinition?.[0]);
+            logger.debug('Processing MCP API schema definition', {
+                hasSchemaDefinition: !!req.files?.schemaDefinition?.[0],
+                apiType: apiMetadata.apiInfo.apiType,
+                apiId
+            });
             if (constants.API_TYPE.MCP === apiMetadata.apiInfo.apiType && req.files?.schemaDefinition?.[0]) {
                 const file = req.files.schemaDefinition[0];
                 const schemaDefinitionFile = file.buffer;
                 const schemaFileName = file.originalname;
-                console.log("Schema definition file", schemaDefinitionFile);
+                logger.debug('Schema definition file received for update', {
+                    schemaDefinitionFileSize: schemaDefinitionFile.length,
+                    schemaFileName,
+                    apiId
+                });
                 await apiDao.updateAPIFile(schemaDefinitionFile, schemaFileName, apiId, orgId,
                     constants.DOC_TYPES.SCHEMA_DEFINITION, t);
-                console.log("Schema definition file stored");
+                logger.info('Schema definition file updated', {
+                    schemaFileName,
+                    apiId
+                });
             }
             res.status(200).send(new APIDTO(updatedAPI[0].dataValues));
         });
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.API_UPDATE_ERROR}`, error);
+        logger.error('API metadata update failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId,
+            apiId
+        });
         util.handleError(res, error);
     }
 };
-const deleteAPIMetadata = async (req, res) => {
 
+const deleteAPIMetadata = async (req, res) => {
     const { orgId, apiId } = req.params;
     if (!orgId || !apiId) {
         throw new Sequelize.ValidationError(
@@ -374,14 +416,23 @@ const deleteAPIMetadata = async (req, res) => {
                 res.status(200).send("Resouce Deleted Successfully");
             }
         } catch (error) {
-            console.error(`${constants.ERROR_MESSAGE.API_DELETE_ERROR}, ${error}`);
+            logger.error('API metadata deletion failed', {
+                error: error.message,
+                stack: error.stack,
+                orgId,
+                apiId
+            });
             util.handleError(res, error);
         }
     });
 };
 
 const createAPITemplate = async (req, res) => {
-
+    logger.info('Creating API template...', {
+        orgId: req.params.orgId,
+        apiId: req.params.apiId,
+        fileName: req.file?.originalname,
+    });
     try {
         const { orgId, apiId } = req.params;
         if (!orgId) {
@@ -411,8 +462,14 @@ const createAPITemplate = async (req, res) => {
                 await fs.access(documentPath);
             }
         } catch (err) {
-            console.log("Error while trying to access directories");
-            console.error(err);
+            logger.error('Error while trying to access directories', {
+                error: err.message,
+                contentPath,
+                imagesPath,
+                documentPath,
+                orgId,
+                apiId
+            });
             throw new Error(
                 `Required directories not found after extraction. Content path: ${contentPath}, Images path: ${imagesPath}
                 , Documents path: ${documentPath}`
@@ -467,13 +524,23 @@ const createAPITemplate = async (req, res) => {
         await fs.rm(extractPath, { recursive: true, force: true });
         res.status(201).type("application/json").send({ message: "API Template updated successfully" });
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.API_CONTENT_CREATE_ERROR}`, error);
+        logger.error('API content creation failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId: req.params.orgId,
+            apiId: req.params.apiId,
+            fileName: req.file?.originalname,
+        });
         util.handleError(res, error);
     }
 };
 
 const updateAPITemplate = async (req, res) => {
-
+    logger.info('Updating API template...', {
+        orgId: req.params.orgId,
+        apiId: req.params.apiId,
+        fileName: req.file?.originalname
+    });
     try {
         const { orgId, apiId } = req.params;
         let imageMetadata;
@@ -506,7 +573,14 @@ const updateAPITemplate = async (req, res) => {
                 await fs.access(documentPath);
             }
         } catch (err) {
-            console.error(err);
+            logger.error('Error accessing directories during API template update', {
+                error: err.message,
+                contentPath,
+                imagesPath,
+                documentPath,
+                orgId: req.params.orgId,
+                apiId: req.params.apiId
+            });
             throw new Error(
                 `Required directories not found after extraction. Content path: ${contentPath}, Images path: ${imagesPath},
                 Documents path: ${documentPath}`
@@ -551,7 +625,13 @@ const updateAPITemplate = async (req, res) => {
         await fs.rm(extractPath, { recursive: true, force: true });
         res.status(201).send({ message: "API Files updated successfully" });
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.API_CONTENT_UPDATE_ERROR}, ${error}`);
+        logger.error('API content update failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId: req.params.orgId,
+            apiId: req.params.apiId,
+            fileName: req.file?.originalname
+        });
         util.handleError(res, error);
     }
 };
@@ -600,7 +680,13 @@ const getAPIFile = async (req, res) => {
             }
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.API_CONTENT_NOT_FOUND}, ${error}`);
+        logger.error('API content retrieval failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId,
+            apiId,
+            fileName: req.query.fileName
+        });
         util.handleError(res, error);
     }
 };
@@ -612,13 +698,24 @@ const getAPIDocTypes = async (orgID, apiID) => {
         const apiCreationResponse = docTypeResponse.map((doc) => new APIDocDTO(doc.dataValues));
         return apiCreationResponse;
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.API_DOCS_LIST_ERROR}`, error);
-        util.handleError(res, error);
+        logger.error('API doc types retrieval failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId: orgID,
+            apiId: apiID
+        });
+        // Note: This function doesn't have access to res, so we can't call util.handleError
+        throw error;
     }
 }
 
 const deleteAPIFile = async (req, res) => {
-
+    logger.info('Deleting API file...', {
+        orgId: req.params.orgId,
+        apiId: req.params.apiId,
+        fileName: req.query.fileName,
+        fileType: req.query.type
+    });
     const { orgId, apiId } = req.params;
     const apiFileName = req.query.fileName;
     const fileType = req.query.type;
@@ -640,7 +737,12 @@ const deleteAPIFile = async (req, res) => {
             res.status(404).send("API Content not found");
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.API_CONTENT_DELETE_ERROR}`, error);
+        logger.error('API content deletion failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId: req.params?.orgId,
+            apiId: req.params?.apiId
+        });
         util.handleError(res, error);
     }
 };
@@ -662,9 +764,11 @@ const putSubscriptionPolicies = async (req, res) => {
 }
 
 const createSubscriptionPolicy = async (req, res) => {
-
     const { orgId } = req.params;
     const subscriptionPolicy = req.body;
+    logger.info('Creating subscription policy...', {
+        orgId
+    });
 
     if (!orgId) {
         return res.status(400).json({ message: "Organization ID is missing" });
@@ -684,14 +788,20 @@ const createSubscriptionPolicy = async (req, res) => {
         }, async (t) => {
             const subscriptionPolicyResponse = await apiDao.createSubscriptionPolicy(orgId, subscriptionPolicy, t);
             if (subscriptionPolicyResponse) {
-                console.log(`Created subscription policy for orgId: ${orgId}`);
+                logger.info('Created subscription policy', {
+                    orgId
+                });
                 res.status(201).send(new subscriptionPolicyDTO(subscriptionPolicyResponse));
             } else {
                 throw new CustomError(500, constants.ERROR_CODE[500], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_CREATE_ERROR);
             }
         });
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_CREATE_ERROR}, ${error}`);
+        logger.error('subscription policy create error failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId
+        });
         util.handleError(res, error);
     }
 };
@@ -700,7 +810,9 @@ const createSubscriptionPolicies = async (req, res) => {
     try {
         if (config.generateDefaultSubPolicies) {
             const msg = "Bulk creation of subscription policies is not allowed because 'generateDefaultSubPolicies' is enabled in the Developer Portal.";
-            console.log(msg);
+            logger.info(msg, {
+                orgId: req.params?.orgId
+            });
             res.status(200).json({ message: msg });
         } else {
             const { orgId } = req.params;
@@ -734,18 +846,26 @@ const createSubscriptionPolicies = async (req, res) => {
                     }
                 }
             });
-            console.log(`Created subscription policies for orgId: ${orgId}`);
+            logger.info('Created subscription policies', {
+                orgId
+            });
             res.status(201).send(createdPolicies);
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_CREATE_ERROR}, ${error}`);
+        logger.error('subscription policy create error failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId: req.params?.orgId
+        });
         util.handleError(res, error);
     }
 };
 
 const updateSubscriptionPolicy = async (req, res) => {
-
     const { orgId } = req.params;
+    logger.info('Updating subscription policy...', {
+        orgId
+    });
     const subscriptionPolicy = req.body;
 
     if (!orgId) {
@@ -772,7 +892,11 @@ const updateSubscriptionPolicy = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND}, ${error}`);
+        logger.error('subscription policy not found failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId: req.params?.orgId
+        });
         util.handleError(res, error);
     }
 };
@@ -781,7 +905,9 @@ const updateSubscriptionPolicies = async (req, res) => {
     try {
         if (config.generateDefaultSubPolicies) {
             const msg = "Bulk updating of subscription policies is not allowed because 'generateDefaultSubPolicies' is enabled in the Developer Portal.";
-            console.log(msg);
+            logger.info(msg, {
+                orgId: req.params?.orgId
+            });
             res.status(200).json({ message: msg });
         } else {
             const { orgId } = req.params;
@@ -818,14 +944,21 @@ const updateSubscriptionPolicies = async (req, res) => {
             res.status(201).send(updatedPolicies);
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_CREATE_ERROR}, ${error}`);
+        logger.error('subscription policy create error failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId: req.params?.orgId
+        });
         util.handleError(res, error);
     }
 };
 
 const deleteSubscriptionPolicy = async (req, res) => {
-
     const { orgId, policyName } = req.params;
+    logger.info('Deleting subscription policy...', {
+        orgId,
+        policyName
+    });
     if (!orgId || !policyName) {
         throw new Sequelize.ValidationError(
             "Missing or Invalid fields in the request payload"
@@ -843,7 +976,12 @@ const deleteSubscriptionPolicy = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_DELETE_ERROR}, ${error}`);
+        logger.error('subscription policy delete error failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId,
+            policyName
+        });
         util.handleError(res, error);
     }
 };
@@ -866,11 +1004,14 @@ const getSubscriptionPolicy = async (req, res) => {
             throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND}, ${error}`);
+        logger.error('subscription policy not found failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId
+        });
         util.handleError(res, error);
     }
 };
-
 
 const createLabels = async (req, res) => {
 
@@ -885,7 +1026,11 @@ const createLabels = async (req, res) => {
         await apiDao.createLabels(orgId, labels);
         res.status(201).send(labels);
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.LABEL_CREATE_ERROR}, ${error}`);
+        logger.error('label create error failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId
+        });
         util.handleError(res, error);
     }
 }
@@ -905,7 +1050,11 @@ const updateLabel = async (req, res) => {
         };
         res.status(201).send(labels);
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.LABEL_UPDATE_ERROR}`, error);
+        logger.error('label update error failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId
+        });
         util.handleError(res, error);
     }
 }
@@ -924,7 +1073,11 @@ const deleteLabels = async (req, res) => {
         await apiDao.deleteLabel(orgId, labelList);
         res.status(204).send();
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.LABEL_DELETE_ERROR}`, error);
+        logger.error('label delete error failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId
+        });
         util.handleError(res, error);
     }
 }
@@ -941,7 +1094,11 @@ const retrieveLabels = async (req, res) => {
         const labels = await getOrgLabels(orgId);
         res.status(200).send(labels);
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.LABEL_RETRIEVE_ERROR}`, error);
+        logger.error('label retrieve error failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId
+        });
         util.handleError(res, error);
     }
 }
@@ -952,7 +1109,11 @@ const getOrgLabels = async (orgId) => {
         const labels = await apiDao.getLabels(orgId);
         return labels.map((label) => new LabelDTO(label));
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.LABEL_UPDATE_ERROR}, ${error}`);
+        logger.error('label update error failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId
+        });
         util.handleError(res, error);
     }
 }
@@ -976,7 +1137,11 @@ const addView = async (req, res) => {
             await apiDao.addViewLabels(orgId, viewID, labels, t);
             res.status(201).send({ message: "View added successfully" });
         } catch (error) {
-            console.error(`${constants.ERROR_MESSAGE.VIEW_CREATE_ERROR}`, error);
+            logger.error('view create error failed', {
+                error: error.message,
+                stack: error.stack,
+                orgId
+            });
             util.handleError(res, error);
         }
     });
@@ -1013,7 +1178,11 @@ const updateView = async (req, res) => {
             res.status(200).send(req.body);
         });
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.VIEW_UPDATE_ERROR}`, error);
+        logger.error('view update error failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId
+        });
         util.handleError(res, error);
     }
 }
@@ -1035,7 +1204,11 @@ const deleteView = async (req, res) => {
             res.status(204).send("View Deleted Successfully");
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.VIEW_DELETE_ERROR}`, error);
+        logger.error('view delete error failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId
+        });
         util.handleError(res, error);
     }
 }
@@ -1057,7 +1230,11 @@ const getView = async (req, res) => {
             res.status(404).send(`View ${name} not found`);
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.VIEW_RETRIEVE_ERROR}`, error);
+        logger.error('view retrieve error failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId
+        });
         util.handleError(res, error);
     }
 }
@@ -1088,7 +1265,11 @@ const getAllViews = async (req, res) => {
             res.status(404).send("No views found");
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.VIEW_RETRIEVE_ERROR}`, error);
+        logger.error('view retrieve error failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId
+        });
         util.handleError(res, error);
     }
 }
