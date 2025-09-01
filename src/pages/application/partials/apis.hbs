@@ -6,7 +6,7 @@
             <div class='action-buttons mt-0'>
                 {{#if features.sdkGeneration}}
                     {{#if subAPIs}}
-                        <button class="common-btn-primary" style="font-weight: 500;" type="button" onclick="redirectToSDKGeneration()" disabled>
+                        <button class="common-btn-primary {{#if @root.isReadOnlyMode}}disabled{{/if}}" style="font-weight: 500;" type="button" onclick="redirectToSDKGeneration()" disabled>
                             <span class="button-normal-state">
                                 <i class="bi bi-box-seam me-1"></i> Generate SDK
                             </span>
