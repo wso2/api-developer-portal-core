@@ -22,6 +22,7 @@ const EventEmitter = require('events');
 const SdkJob = require('../dao/sdkJob');
 const apiMetadata = require('../dao/apiMetadata');
 const adminDao = require('../dao/admin');
+const constants = require('../utils/constants');
 const path = require('path');
 const fs = require('fs');
 const config = require(process.cwd() + '/config');
@@ -1372,7 +1373,8 @@ class SDKJobService extends EventEmitter {
 
             trackSDKGenerationStart({
                 orgName: orgName,
-                appId: applicationId
+                appId: applicationId,
+                idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
             });
 
             // Validate input
