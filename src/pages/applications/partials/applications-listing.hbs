@@ -21,7 +21,7 @@
 
       <!-- Create application Card -->
       <div class="col-12 col-md-6 col-lg-4 col-xl-3 {{#if applicationsMetadata.length}}d-none{{/if}}" id="createApplicationCardWrapper">
-        <div class="create-application-card card {{#if @root.isReadOnlyMode}}disabled{{/if}} {{#if applicationsMetadata.length}}d-none{{/if}}" id="applicationCreateCard" style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 1;{{else}} cursor: pointer; {{/if}}"
+        <div class="create-application-card card {{#if @root.isReadOnlyMode}}disabled{{/if}} {{#if applicationsMetadata.length}}d-none{{/if}}" id="applicationCreateCard" style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{else}} cursor: pointer; {{/if}}"
           onclick="showApplicationForm()">
           <span class="plus-icon">+</span>
           <span class="create-text">Create Application</span>

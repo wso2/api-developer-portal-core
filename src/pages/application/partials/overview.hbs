@@ -92,7 +92,7 @@
               <button id="viewKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal()">
                 <i class="bi bi-eye"></i> View
               </button>
-              <button id="modifyKeyBtn" class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}" onclick="loadKeysModifyModal()">
+              <button id="modifyKeyBtn" class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}" style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{if}}" onclick="loadKeysModifyModal()">
                 <i class="bi bi-pencil-square"></i> Modify
               </button>
             </div>
@@ -100,7 +100,7 @@
           <div class="key-action-row">
             <span class="key-action-label">Token: </span>
             <div class="key-action-buttons">
-              <button id="tokenKeyBtn" class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}" data-app-id="{{@root.applicationMetadata.id}}"
+              <button id="tokenKeyBtn" class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}" data-app-id="{{@root.applicationMetadata.id}}" style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{if}}"
                 onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}', '{{json @root.subscriptionScopes}}')">
                 <span class="button-normal-state">
                   <i class="bi bi-key-fill"></i> Generate
@@ -126,7 +126,7 @@
           class="d-flex align-items-center edit-container mb-2 {{#if keys.consumerKey}}d-none{{/if}}"
           style="{{#if keys.consumerKey}}display: none;{{/if}}">
           <div class="d-flex align-items-center">
-            <button class="btn btn-sm common-btn-link p-0" id="addClientID" title="Add description">
+            <button class="btn btn-sm common-btn-link p-0 {{#if @root.isReadOnlyMode}}disabled{{/if}}" id="addClientID" title="Add description">
               <i class="bi bi-plus"></i> Add Client ID
             </button>
             <p class="app-description" id="clientIDInput" data-key-manager="{{name}}"
