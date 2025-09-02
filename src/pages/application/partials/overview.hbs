@@ -66,7 +66,7 @@
 
         <div id="generateKeyContainer" style="{{#if keys.consumerKey}}display: none;{{/if}}">
           <div class="d-flex align-items-center">
-            <button id="generateKeyBtn" class="common-btn-primary btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}" style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
+            <button data-cyid="generateKey" id="generateKeyBtn" class="common-btn-primary btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}" style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
               onclick="generateApplicationKey('keysview-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.id}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', 'consumer-secret-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}')">
               <span class="button-normal-state">
                 <i class="bi bi-key me-1"></i> Generate Key
