@@ -74,12 +74,23 @@
                 <p class="mb-0 mt-1" style="font-size: 16px;">{{apiInfo.apiVersion}}</p>                         
                 <div class="type-badge badge-custom2" style="display: flex; flex-direction: row; align-items: center;">
                   <div style="margin-right: 8px; display: flex;">
+                    {{#if (eq apiInfo.apiType "WS")}}
+                    <img
+                      src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/WebSocket.svg"
+                      style=" height: 16px; object-fit: contain;"
+                    />
+                    {{else}}
                     <img
                       src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/REST.svg"
                       style=" height: 16px; object-fit: contain;"
                     />
+                    {{/if}}
                   </div>
+                  {{#if (eq apiInfo.apiType "WS")}}
+                  <span>WebSocket</span>
+                  {{else}}
                   <span>{{apiInfo.apiType}}</span>
+                  {{/if}}
                 </div>
               </div>
             </div>

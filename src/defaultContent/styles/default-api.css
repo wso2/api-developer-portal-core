@@ -120,6 +120,48 @@
   border: 1px solid #50e3c2;
 }
 
+.defaultapi-resources-channel {
+  display: flex;
+  flex-direction: row;
+  border: 2px solid #5567D5;
+  border-radius: 8px;
+  padding: 10px 15px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  align-items: center;
+}
+
+.defaultapi-resources-channel-operations {
+  display: flex;
+  gap: 10px;
+  padding-right: 8px;
+}
+
+.pub-box, .sub-box {
+  padding: 5px 15px;
+  border-radius: 5px;
+  font-weight: bold;
+  color: #fff;
+  text-align: center;
+}
+
+.pub-box {
+  background-color: #49cc90;
+}
+
+.operation-box-disabled {
+  padding: 5px 15px;
+  border-radius: 5px;
+  font-weight: bold;
+  color: #fff;
+  text-align: center;
+  background-color: #6c757d;
+}
+
+.sub-box {
+  background-color: #61affe;
+}
+
 .defaultapi-http-method {
   padding: 6px 12px;
   border-radius: 4px;
