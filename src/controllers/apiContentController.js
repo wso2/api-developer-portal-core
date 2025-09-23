@@ -269,11 +269,22 @@ const loadAPIContent = async (req, res) => {
                 let additionalAPIContentResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME, constants.DOC_TYPES.API_LANDING, orgID, apiID);
                 if (!additionalAPIContentResponse) {
                     loadDefault = true;
-                    if (metaData.apiInfo && metaData.apiInfo.apiType !== "GraphQL") {
+                    if (metaData.apiInfo && metaData.apiInfo.apiType !== "GraphQL" && metaData.apiInfo.apiType !== constants.API_TYPE.ASYNCAPI) {
                         apiDefinition = "";
                         apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
                         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
                         apiDetails = await parseSwagger(JSON.parse(apiDefinition))
+                        if (metaData.endPoints.productionURL === "" && metaData.endPoints.sandboxURL === "") {
+                            apiDetails["serverDetails"] = "";
+                        } else {
+                            apiDetails["serverDetails"] = metaData.endPoints;
+                        }
+                    }
+                    if (metaData.apiInfo.apiType === constants.API_TYPE.ASYNCAPI) {
+                        apiDefinition = "";
+                        apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
+                        apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
+                        apiDetails = await parseAsyncAPI(JSON.parse(apiDefinition))
                         if (metaData.endPoints.productionURL === "" && metaData.endPoints.sandboxURL === "") {
                             apiDetails["serverDetails"] = "";
                         } else {
@@ -392,7 +403,11 @@ const loadAPIDefinition = async (orgName, viewName, apiHandle) => {
         let apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
         templateContent.apiType = metaData.apiInfo.apiType;
-        templateContent.swagger = apiDefinition;
+        if (metaData.apiInfo.apiType === constants.API_TYPE.ASYNCAPI) {
+            templateContent.asyncapi = apiDefinition;
+        } else {
+            templateContent.swagger = apiDefinition;
+        }
         templateContent.metaData = metaData;
     }
     return templateContent;
@@ -503,20 +518,23 @@ const loadDocument = async (req, res) => {
         //load API definition
         if (req.originalUrl.includes(constants.FILE_NAME.API_SPECIFICATION_PATH)) {
 
-
-            let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
-            const response = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiMetadata.apiReferenceID}`, null, null);
-            if (response.securityScheme.includes("api_key")) {
-                modifiedSwagger.components.securitySchemes.ApiKeyAuth = { "type": "apiKey", "name": `${response.apiKeyHeader}`, "in": "header" };
-                for (let path in modifiedSwagger.paths) {
-                    for (let method in modifiedSwagger.paths[path]) {
-                        if (modifiedSwagger.paths[path].hasOwnProperty(method)) {
-                            modifiedSwagger.paths[path][method].security[0].ApiKeyAuth = [];
+            if (definitionResponse.apiType === constants.API_TYPE.SWAGGER) {
+                let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
+                const response = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiMetadata.apiReferenceID}`, null, null);
+                if (response.securityScheme.includes("api_key")) {
+                    modifiedSwagger.components.securitySchemes.ApiKeyAuth = { "type": "apiKey", "name": `${response.apiKeyHeader}`, "in": "header" };
+                    for (let path in modifiedSwagger.paths) {
+                        for (let method in modifiedSwagger.paths[path]) {
+                            if (modifiedSwagger.paths[path].hasOwnProperty(method)) {
+                                modifiedSwagger.paths[path][method].security[0].ApiKeyAuth = [];
+                            }
                         }
                     }
                 }
+                templateContent.swagger = JSON.stringify(modifiedSwagger);
+            } else {
+                templateContent.asyncapi = JSON.stringify(definitionResponse.asyncapi);
             }
-            templateContent.swagger = JSON.stringify(modifiedSwagger);
             templateContent.isAPIDefinition = true;
         }
         if (config.mode === constants.DEV_MODE) {
@@ -669,6 +687,76 @@ async function parseSwagger(api) {
         return { title, description: apiDescription, endpoints };
     } catch (error) {
         logger.error('Error parsing OpenAPI', { 
+            error: error.message, 
+            stack: error.stack
+        });
+    }
+}
+
+async function parseAsyncAPI(api) {
+    try {
+        // Extract general API info
+        console.log("api", api)
+        const title = api.info?.title || "No title";
+        const apiDescription = api.info?.description || "No description available";
+        const version = api.info?.version || "1.0.0";
+        
+        // Extract servers
+        const servers = Object.entries(api.servers || {}).map(([name, server]) => ({
+            name,
+            url: server.url || "No URL",
+            protocol: server.protocol || "Unknown",
+            description: server.description || "No description"
+        }));
+
+        // Extract channels (AsyncAPI equivalent of endpoints)
+        const channels = Object.entries(api.channels || {}).map(([channelName, channel]) => {
+            const operations = [];
+            
+            // Extract publish operations
+            if (channel.publish) {
+                operations.push({
+                    type: "publish",
+                    summary: channel.publish.summary || "No summary",
+                    description: channel.publish.description || "No description",
+                    message: channel.publish.message || {}
+                });
+            }
+            
+            // Extract subscribe operations
+            if (channel.subscribe) {
+                operations.push({
+                    type: "subscribe",
+                    summary: channel.subscribe.summary || "No summary",
+                    description: channel.subscribe.description || "No description",
+                    message: channel.subscribe.message || {}
+                });
+            }
+
+            return {
+                name: channelName,
+                operations
+            };
+        });
+
+        // Extract messages
+        const messages = Object.entries(api.components?.messages || {}).map(([messageName, message]) => ({
+            name: messageName,
+            summary: message.summary || "No summary",
+            description: message.description || "No description",
+            payload: message.payload || {}
+        }));
+
+        return { 
+            title, 
+            description: apiDescription, 
+            version,
+            servers, 
+            channels, 
+            messages 
+        };
+    } catch (error) {
+        logger.error('Error parsing AsyncAPI', { 
             error: error.message, 
             stack: error.stack
         });
