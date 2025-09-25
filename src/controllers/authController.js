@@ -84,6 +84,7 @@ const login = async (req, res, next) => {
         const fidp = req.query.fidp;
         if (fidp && config.fidp[fidp]) {
             if (fidp == 'enterprise' && req.query.username) {
+                req.session.username = req.query.username;
                 await passport.authenticate('oauth2', { fidp: config.fidp[fidp], username: req.query.username })(req, res, next);
             } else {
                 await passport.authenticate('oauth2', { fidp: config.fidp[fidp] })(req, res, next);
