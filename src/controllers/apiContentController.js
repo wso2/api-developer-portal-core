@@ -695,8 +695,6 @@ async function parseSwagger(api) {
 
 async function parseAsyncAPI(api) {
     try {
-        // Extract general API info
-        console.log("api", api)
         const title = api.info?.title || "No title";
         const apiDescription = api.info?.description || "No description available";
         const version = api.info?.version || "1.0.0";
