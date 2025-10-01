@@ -48,7 +48,7 @@ module.exports = {
         MCP_ONLY: "MCPSERVERSONLY",
         API_PROXIES: "APISONLY",
         DEFAULT: "DEFAULT",
-        ASYNCAPI: "AsyncAPI"
+        WS: "WS"
     },
     DOC_TYPES: {
         DOC_ID: 'DOC_',
