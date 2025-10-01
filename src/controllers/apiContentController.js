@@ -403,7 +403,7 @@ const loadAPIDefinition = async (orgName, viewName, apiHandle) => {
         let apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
         templateContent.apiType = metaData.apiInfo.apiType;
-        if (metaData.apiInfo.apiType === YNCAPI) {
+        if (metaData.apiInfo.apiType === constants.API_TYPE.WS) {
             templateContent.asyncapi = apiDefinition;
         } else {
             templateContent.swagger = apiDefinition;
