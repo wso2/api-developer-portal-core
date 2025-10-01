@@ -5,7 +5,7 @@ FROM node:22-bookworm
 ENV DEBIAN_FRONTEND=noninteractive 
 
 # Update package lists and install necessary utilities in a single RUN to reduce image layers
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     wget \
     bash \
     coreutils \
