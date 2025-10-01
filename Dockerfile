@@ -1,11 +1,11 @@
 # Use the latest Node.js 22 with Debian Bookworm as the base image
-FROM node:22-bookworm
+FROM node:23-bookworm-slim
 
 # Set a non-interactive frontend to prevent prompts
 ENV DEBIAN_FRONTEND=noninteractive 
 
 # Update package lists and install necessary utilities in a single RUN to reduce image layers
-RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     bash \
     coreutils \
