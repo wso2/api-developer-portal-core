@@ -202,7 +202,7 @@ The /apis page will render the page with no apis, since no API content is upload
 
 5.  Create an API in the developer portal:
     
-The apiType values include REST, WS, GraphQL or SOAP
+The apiType values include REST, AsyncAPI, GraphQL or SOAP
 
 This is a multi part request containing a json with metadata related to the API and a file attachement of the api schema definition file.
 ``` bash
