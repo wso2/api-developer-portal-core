@@ -79,7 +79,7 @@ db = {
 
 -  Create an API in the developer portal:
     
-The apiType values include REST, WS, GraphQL or SOAP
+The apiType values include REST, AsyncAPI, GraphQL or SOAP
 
 The provider value should be the name of the control plane configured in the developer portal.
 
