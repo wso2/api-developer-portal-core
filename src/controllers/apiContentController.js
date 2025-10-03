@@ -272,7 +272,6 @@ const loadAPIContent = async (req, res) => {
                     if (
                       metaData.apiInfo &&
                       metaData.apiInfo.apiType !== "GraphQL" &&
-                      metaData.apiInfo.apiType !== "AsyncAPI" &&
                       metaData.apiInfo.apiType !== "WS"
                     ) {
                         apiDefinition = "";
@@ -285,7 +284,7 @@ const loadAPIContent = async (req, res) => {
                             apiDetails["serverDetails"] = metaData.endPoints;
                         }
                     }
-                    if (metaData.apiInfo.apiType === "AsyncAPI" || metaData.apiInfo.apiType === "WS") {
+                    if (metaData.apiInfo.apiType === "WS") {
                         apiDefinition = "";
                         apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
                         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
