@@ -297,7 +297,7 @@ const strategy = new OAuth2Strategy({
         'lastName': lastName ? lastName : (firstName && firstName.includes(" ") ? firstName.split(" ")[1] : ''),
         'view': view,
         'idToken': params.id_token,
-        'email': decodedJWT['email'],
+        'email': decodedJWT['email'] || req.session.username,
         [constants.ROLES.ORGANIZATION_CLAIM]: organizationID,
         'returnTo': req.session.returnTo,
         accessToken,

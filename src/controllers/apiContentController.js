@@ -275,27 +275,15 @@ const loadAPIContent = async (req, res) => {
                       metaData.apiInfo.apiType !== "AsyncAPI" &&
                       metaData.apiInfo.apiType !== "WS"
                     ) {
-                      apiDefinition = "";
-                      apiDefinition = await apiDao.getAPIFile(
-                        constants.FILE_NAME.API_DEFINITION_FILE_NAME,
-                        constants.DOC_TYPES.API_DEFINITION,
-                        orgID,
-                        apiID
-                      );
-                      apiDefinition = apiDefinition.API_FILE.toString(
-                        constants.CHARSET_UTF8
-                      );
-                      apiDetails = await parseSwagger(
-                        JSON.parse(apiDefinition)
-                      );
-                      if (
-                        metaData.endPoints.productionURL === "" &&
-                        metaData.endPoints.sandboxURL === ""
-                      ) {
-                        apiDetails["serverDetails"] = "";
-                      } else {
-                        apiDetails["serverDetails"] = metaData.endPoints;
-                      }
+                        apiDefinition = "";
+                        apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
+                        apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
+                        apiDetails = await parseSwagger(JSON.parse(apiDefinition))
+                        if (metaData.endPoints.productionURL === "" && metaData.endPoints.sandboxURL === "") {
+                            apiDetails["serverDetails"] = "";
+                        } else {
+                            apiDetails["serverDetails"] = metaData.endPoints;
+                        }
                     }
                     if (metaData.apiInfo.apiType === "AsyncAPI" || metaData.apiInfo.apiType === "WS") {
                         apiDefinition = "";
@@ -420,7 +408,7 @@ const loadAPIDefinition = async (orgName, viewName, apiHandle) => {
         let apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
         templateContent.apiType = metaData.apiInfo.apiType;
-        if (metaData.apiInfo.apiType === constants.API_TYPE.WS) {
+        if (metaData.apiInfo.apiType === constants.API_TYPE.ASYNCAPI) {
             templateContent.asyncapi = apiDefinition;
         } else {
             templateContent.swagger = apiDefinition;
@@ -535,7 +523,7 @@ const loadDocument = async (req, res) => {
         //load API definition
         if (req.originalUrl.includes(constants.FILE_NAME.API_SPECIFICATION_PATH)) {
 
-            if (definitionResponse.apiType !== constants.API_TYPE.WS) {
+            if (definitionResponse.apiType !== constants.API_TYPE.ASYNCAPI) {
                 let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
                 const response = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiMetadata.apiReferenceID}`, null, null);
                 if (response.securityScheme.includes("api_key")) {
