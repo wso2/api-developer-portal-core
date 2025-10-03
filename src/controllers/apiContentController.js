@@ -140,9 +140,9 @@ const loadAPIs = async (req, res) => {
             };
 
             if (req.originalUrl.includes("/mcps")) {
-                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp", viewName);
+                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp", viewName, orgDetails.ORG_CONFIG);
             } else {
-                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName);
+                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/apis", viewName, orgDetails.ORG_CONFIG);
             }
         } catch (error) {
             logger.error(constants.ERROR_MESSAGE.API_LISTING_LOAD_ERROR, {
@@ -361,9 +361,9 @@ const loadAPIContent = async (req, res) => {
                 isReadOnlyMode: config.readOnlyMode
             };
             if (metaData.apiInfo.apiType == "MCP") {
-                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp-landing", viewName);
+                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp-landing", viewName, orgDetails.ORG_CONFIG);
             } else {
-                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
+                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName, orgDetails.ORG_CONFIG);
             }
         } catch (error) {
             logger.error(`Failed to load api content`, {
@@ -464,7 +464,7 @@ const loadDocsPage = async (req, res) => {
                 profile: req.isAuthenticated() ? profile : null,
                 devportalMode: devportalMode,
             };
-            html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
+            html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName, orgDetails.ORG_CONFIG);
         } catch (error) {
             const templateContent = {
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
@@ -582,7 +582,7 @@ const loadDocument = async (req, res) => {
                 templateContent.profile = req.isAuthenticated() ? profile : null;
                 templateContent.apiType = apiType;
                 templateContent.devportalMode = devportalMode;
-                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
+                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName, orgDetails.ORG_CONFIG);
             } catch (error) {
                 const templateContent = {
                     devportalMode: devportalMode,

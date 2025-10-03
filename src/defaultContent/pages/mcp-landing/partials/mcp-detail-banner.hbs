@@ -8,11 +8,13 @@
           <p class="api-version"> {{apiMetadata.apiInfo.apiVersion}}</p>
         </div>
         <p class="api-description">{{apiMetadata.apiInfo.apiDescription}}</p>
+        {{#if themeConfig.tagCloud.active}}
         <div class="api-tags">
           {{#apiMetadata.apiInfo.tags}}
           <span class="badge api-badge-custom2">{{this}}</span>
           {{/apiMetadata.apiInfo.tags}}
         </div>
+        {{/if}}
         <div class="api-details-btn">
           <a type="button" class="common-btn-primary" href="#subscriptionPlans">Subscribe</a>
           {{#in apiMetadata.apiInfo.apiType values="REST,AsyncAPI,GraphQL,MCP"}}

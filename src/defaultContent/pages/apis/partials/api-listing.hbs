@@ -100,6 +100,7 @@
           </div>
           <div class="api-card-body flex-grow-1" onclick="window.location.href='{{../baseUrl}}/api/{{apiHandle}}'" style="cursor: pointer;">
             <div class="truncate-text fw-light apilisting-api-description small mb-3">{{apiInfo.apiDescription}}</div>
+            {{#if ../../themeConfig.tagCloud.active}}
             <div class="row">
               <div class="apilisting-tags">
                 {{#apiInfo.tags}}
@@ -107,6 +108,7 @@
                 {{/apiInfo.tags}}
               </div>
             </div>
+            {{/if}}
           </div>
           {{#if ../isAuthenticated}}
           <hr class="card-separator" />

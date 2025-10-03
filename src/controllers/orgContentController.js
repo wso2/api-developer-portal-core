@@ -94,7 +94,7 @@ const loadOrgContentFromAPI = async (req, res) => {
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName,
             profile: req.isAuthenticated() ? profile : null
         };
-        html = await renderTemplateFromAPI(templateContent, orgId, orgName, 'pages/home', req.params.viewName);
+        html = await renderTemplateFromAPI(templateContent, orgId, orgName, 'pages/home', req.params.viewName, orgDetails.ORG_CONFIG);
         
         // Track home page visit telemetry
         trackHomePageVisit({ 

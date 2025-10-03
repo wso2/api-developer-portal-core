@@ -98,7 +98,7 @@ async function loadTemplateFromAPI(orgID, filePath, viewName) {
     return templateContent ? templateContent.FILE_CONTENT.toString(constants.CHARSET_UTF8) : "";
 }
 
-async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, viewName) {
+async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, viewName, orgConfig = null) {
 
     const templateResponse = fs.readFileSync(path.join(process.cwd(), filePrefix + filePath + '/page.hbs'), constants.CHARSET_UTF8);
     const completeLayoutPath = path.join(process.cwd(), filePrefix + 'layout/main.hbs');
@@ -112,9 +112,13 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
     const template = Handlebars.compile(templateResponse.toString());
     const layout = Handlebars.compile(layoutResponse.toString());
 
+    // Extract theme configurations from ORG_CONFIG
+    const themeConfig = getThemeConfig(orgConfig);
+
     return layout({
         body: template(templateContent),
         portalConfigs: config.portalConfigs,
+        themeConfig: themeConfig,
     });
 
 }
@@ -920,6 +924,43 @@ function filterAllowedAPIs(searchResults, allowedAPIs) {
     return searchResults;
 }
 
+/**
+ * Extract theme configuration from organization config
+ * Returns default values if not configured
+ */
+function getThemeConfig(orgConfig) {
+    const defaultTheme = {
+        showRating: true,
+        tagCloud: {
+            active: false
+        },
+        footer: {
+            active: true
+        },
+        banner: {
+            active: false
+        }
+    };
+
+    if (!orgConfig || !orgConfig.theme) {
+        return defaultTheme;
+    }
+
+    const theme = orgConfig.theme;
+    return {
+        showRating: theme.showRating !== undefined ? theme.showRating : defaultTheme.showRating,
+        tagCloud: {
+            active: theme.tagCloud?.active !== undefined ? theme.tagCloud.active : defaultTheme.tagCloud.active
+        },
+        footer: {
+            active: theme.footer?.active !== undefined ? theme.footer.active : defaultTheme.footer.active
+        },
+        banner: {
+            active: theme.banner?.active !== undefined ? theme.banner.active : defaultTheme.banner.active
+        }
+    };
+}
+
 const enforcePortalMode = async (req, res, next) => {
     const orgDetails = await adminDao.getOrganization(req.params.orgName);
     const portalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
@@ -968,5 +1009,6 @@ module.exports = {
     readDocFiles,
     unzipDirectory,
     filterAllowedAPIs,
-    enforcePortalMode
+    enforcePortalMode,
+    getThemeConfig
 }

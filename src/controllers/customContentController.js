@@ -48,9 +48,11 @@ const loadCustomContent = async (req, res) => {
 
     } else {
         let content = {};
+        let orgDetails;
         try {
             filePath = 'pages/' + filePath;
             let orgId = await adminDao.getOrgId(orgName);
+            orgDetails = await adminDao.getOrganization(orgName);
             let markDownFiles = await adminDao.getOrgContent({
                 orgId: orgId,
                 fileType: 'markDown',
@@ -72,7 +74,7 @@ const loadCustomContent = async (req, res) => {
                     email: req.user.email,
                 }
             }
-            html = await renderTemplateFromAPI(content, orgId, orgName, filePath, viewName);
+            html = await renderTemplateFromAPI(content, orgId, orgName, filePath, viewName, orgDetails.ORG_CONFIG);
         } catch (error) {
             const templateContent = {
                 devportalMode: constants.API_TYPE.DEFAULT,
