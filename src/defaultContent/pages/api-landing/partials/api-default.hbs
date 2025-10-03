@@ -57,7 +57,7 @@
             {{/unless}}
             {{/if}}
         </div>
-        {{#unless (eq apiMetadata.apiInfo.apiType "AsyncAPI")}}
+        {{#unless (eq apiMetadata.apiInfo.apiType "WS")}}
         <div class="defaultapi-section">
             <div class="container-header mb-4">Scopes</div>
             {{#if scopes.length}}
@@ -70,7 +70,7 @@
         </div>
         {{/unless}}
         {{#unless (eq apiMetadata.apiInfo.apiType "MCP")}}
-        {{#unless (eq apiMetadata.apiInfo.apiType "AsyncAPI")}}
+        {{#unless (eq apiMetadata.apiInfo.apiType "WS")}}
         <div class="defaultapi-section">
         <div class="container-header mb-4">Resources</div>
         <div class="defaultapi-resources col-12">
@@ -87,7 +87,7 @@
         </div>
         {{/unless}}
         {{/unless}}
-        {{#if (eq apiMetadata.apiInfo.apiType "AsyncAPI")}}
+        {{#if (eq apiMetadata.apiInfo.apiType "WS")}}
         <div class="defaultapi-section">
         <div class="container-header mb-4">Channels</div>
         <div class="defaultapi-resources col-12">

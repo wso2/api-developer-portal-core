@@ -272,7 +272,6 @@ const loadAPIContent = async (req, res) => {
                     if (
                       metaData.apiInfo &&
                       metaData.apiInfo.apiType !== "GraphQL" &&
-                      metaData.apiInfo.apiType !== "AsyncAPI" &&
                       metaData.apiInfo.apiType !== "WS"
                     ) {
                         apiDefinition = "";
@@ -285,7 +284,7 @@ const loadAPIContent = async (req, res) => {
                             apiDetails["serverDetails"] = metaData.endPoints;
                         }
                     }
-                    if (metaData.apiInfo.apiType === "AsyncAPI" || metaData.apiInfo.apiType === "WS") {
+                    if (metaData.apiInfo.apiType === "WS") {
                         apiDefinition = "";
                         apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
                         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
@@ -408,7 +407,7 @@ const loadAPIDefinition = async (orgName, viewName, apiHandle) => {
         let apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
         templateContent.apiType = metaData.apiInfo.apiType;
-        if (metaData.apiInfo.apiType === constants.API_TYPE.ASYNCAPI) {
+        if (metaData.apiInfo.apiType === constants.API_TYPE.WS) {
             templateContent.asyncapi = apiDefinition;
         } else {
             templateContent.swagger = apiDefinition;
@@ -523,7 +522,7 @@ const loadDocument = async (req, res) => {
         //load API definition
         if (req.originalUrl.includes(constants.FILE_NAME.API_SPECIFICATION_PATH)) {
 
-            if (definitionResponse.apiType !== constants.API_TYPE.ASYNCAPI) {
+            if (definitionResponse.apiType !== constants.API_TYPE.WS) {
                 let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
                 const response = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiMetadata.apiReferenceID}`, null, null);
                 if (response.securityScheme.includes("api_key")) {
