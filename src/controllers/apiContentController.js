@@ -269,7 +269,12 @@ const loadAPIContent = async (req, res) => {
                 let additionalAPIContentResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME, constants.DOC_TYPES.API_LANDING, orgID, apiID);
                 if (!additionalAPIContentResponse) {
                     loadDefault = true;
-                    if (metaData.apiInfo && metaData.apiInfo.apiType !== "GraphQL" && metaData.apiInfo.apiType !== constants.API_TYPE.ASYNCAPI) {
+                    if (
+                      metaData.apiInfo &&
+                      metaData.apiInfo.apiType !== "GraphQL" &&
+                      metaData.apiInfo.apiType !== "AsyncAPI" &&
+                      metaData.apiInfo.apiType !== "WS"
+                    ) {
                         apiDefinition = "";
                         apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
                         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
@@ -280,7 +285,7 @@ const loadAPIContent = async (req, res) => {
                             apiDetails["serverDetails"] = metaData.endPoints;
                         }
                     }
-                    if (metaData.apiInfo.apiType === constants.API_TYPE.ASYNCAPI) {
+                    if (metaData.apiInfo.apiType === "AsyncAPI" || metaData.apiInfo.apiType === "WS") {
                         apiDefinition = "";
                         apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
                         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
