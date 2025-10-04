@@ -380,6 +380,9 @@ const createOrgContent = async (req, res) => {
     const zipPath = req.file.path;
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
     try {
+        if (req.file.size > 10485760) { 
+            throw new CustomError(400, "Bad Request", "File size exceeds the 10MB limit");
+        }
         await util.unzipDirectory(zipPath, extractPath);
         const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'), viewName);
         for (const { filePath, fileName, fileContent, fileType } of files) {
@@ -438,6 +441,9 @@ const updateOrgContent = async (req, res) => {
     const zipPath = req.file.path;
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
     try {
+        if (req.file.size > 10485760) { 
+            throw new CustomError(400, "Bad Request", "File size exceeds the 10MB limit");
+        }
         await util.unzipDirectory(zipPath, extractPath);
         const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'), viewName);
         for (const { filePath, fileName, fileContent, fileType } of files) {
