@@ -537,7 +537,8 @@ const loadDocument = async (req, res) => {
                 }
                 templateContent.swagger = JSON.stringify(modifiedSwagger);
             } else {
-                templateContent.asyncapi = JSON.stringify(definitionResponse.asyncapi);
+                let modifiedAsyncAPI = replaceEndpointParamsAsyncAPI(JSON.parse(definitionResponse.asyncapi), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
+                templateContent.asyncapi = JSON.stringify(modifiedAsyncAPI);
             }
             templateContent.isAPIDefinition = true;
         }
@@ -699,6 +700,7 @@ async function parseSwagger(api) {
 
 async function parseAsyncAPI(api) {
     try {
+        // Extract general API info
         const title = api.info?.title || "No title";
         const apiDescription = api.info?.description || "No description available";
         const version = api.info?.version || "1.0.0";
@@ -785,6 +787,26 @@ function replaceEndpointParams(apiDefinition, prodEndpoint, sandboxEndpoint) {
         });
     }
     apiDefinition.servers = servers;
+    return apiDefinition;
+}
+
+function replaceEndpointParamsAsyncAPI(apiDefinition, prodEndpoint, sandboxEndpoint) {
+    if (apiDefinition?.asyncapi && apiDefinition.asyncapi.startsWith('2.')) {
+        if (prodEndpoint.trim().length !== 0) {
+            apiDefinition.servers = [{
+                url: prodEndpoint,
+                host: prodEndpoint.replace(/wss?:\/\//, ''),
+                protocol: prodEndpoint.startsWith('ws') ? 'ws' : 'wss'
+            }];
+        }
+        if (sandboxEndpoint.trim().length !== 0) {
+            apiDefinition.servers.push({
+                url: sandboxEndpoint,
+                host: sandboxEndpoint.replace(/wss?:\/\//, ''),
+                protocol: sandboxEndpoint.startsWith('ws') ? 'ws' : 'wss'
+            });
+        }
+    }
     return apiDefinition;
 }
 
