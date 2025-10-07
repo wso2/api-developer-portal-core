@@ -89,19 +89,18 @@
         {{/unless}}
         {{#if (eq apiMetadata.apiInfo.apiType "WS")}}
         <div class="defaultapi-section">
-        <div class="container-header mb-4">Channels</div>
-        <div class="defaultapi-resources col-12">
-        {{#each resources.channels}}
-        <div class="defaultapi-resources-channel">
-        <div class="defaultapi-resources-channel-operations">
-        <div class="pub-box">PUB</div>
-        <div class="sub-box">SUB</div>
-        </div>
-        <div class="defaultapi-resource-path">{{name}}</div>
-        </div>
-        {{/each}}
-        </div>
-        </div>
+            <div class="container-header mb-4">Channels</div>
+            <div class="defaultapi-resources col-12">
+                {{#each resources.channels}}
+                <div class="defaultapi-resources-channel">
+                    <div class="defaultapi-resources-channel-operations">
+                        <div class="pub-box">PUB</div>
+                        <div class="sub-box">SUB</div>
+                    </div>
+                    <div class="defaultapi-resource-path">{{name}}</div>
+                </div>
+                {{/each}}
+            </div>
         </div>
         {{/if}}
     </div>
