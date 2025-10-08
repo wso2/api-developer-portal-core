@@ -440,12 +440,15 @@ const updateOrgContent = async (req, res) => {
         orgId,
         viewName
     });
-    if (!orgId) {
-        throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
-    }
-    const zipPath = req.file.path;
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
     try {
+        if (!orgId) {
+            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+        }
+        const zipPath = req.file?.path;
+        if (!zipPath) {
+            throw new CustomError(400, "Bad Request", "Missing required zip file");
+        }
         if (req.file.size > 10485760) {
             throw new CustomError(400, "Bad Request", "File size exceeds the 10MB limit");
         }
