@@ -17054,7 +17054,7 @@ const J1 = "choreo-test-key", Z1 = "choreo-oauth2-token", Q1 = (e) => {
   };
   Go(() => {
     if (r !== "/*") {
-      const ie = r.startsWith("/") ? r : `/${r}`;
+      const ie = r.startsWith("/") || a.endsWith("/") ? r === "/" ? "" : r : `/${r}`;
       C(`${a}${ie}`);
     }
     i != null && M(
