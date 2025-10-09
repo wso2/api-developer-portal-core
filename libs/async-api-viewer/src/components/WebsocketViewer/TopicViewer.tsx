@@ -78,7 +78,12 @@ const TopicViewer = (props: TopicViewerProps) => {
 
   useEffect(() => {
     if (topic !== '/*') {
-      const formattedTopic = topic.startsWith('/') ? topic : `/${topic}`;
+      const formattedTopic =
+        topic.startsWith('/') || apiEndpoint.endsWith('/')
+          ? topic === '/'
+            ? ''
+            : topic
+          : `/${topic}`;
       setEndpoint(`${apiEndpoint}${formattedTopic}`);
     }
     if (parameters != null) {
