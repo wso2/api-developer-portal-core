@@ -7,64 +7,57 @@ A React component library for viewing and testing AsyncAPI specifications with s
 - WebSocket API testing
 - YAML and JSON support
 
-## Installation
-
-```bash
-npm install @wso2/async-api-viewer
-```
-
 ## Usage
+
+The component is distributed via a CDN and can be integrated into your application by including the following <script> tag in your HTML file:
+
+```html
+<script src="https://cdn.jsdelivr.net/gh/wso2/api-developer-portal-core@refs/heads/main/libs/async-api-viewer/dist/websocket-viewer.umd.js"></script>
+```
 
 ### Basic Usage
 
-```tsx
-import React from 'react';
-import { WebSocketViewer } from '@wso2/async-api-viewer';
-
-const MyComponent = () => {
-  const asyncAPISpec = {
-    asyncapi: '2.0.0',
-    info: {
-      title: 'My API',
-      version: '1.0.0',
-      description: 'A sample AsyncAPI specification'
-    },
-    // ... rest of the spec
-  };
-
-  return (
-    <WebSocketViewer 
-      schema={asyncAPISpec}
-      targetUrl="https://api.example.com"
-      token="your-token"
-    />
-  );
-};
-```
-
-### With YAML String
-
-```tsx
-import React from 'react';
-import { WebSocketViewer } from '@wso2/async-api-viewer';
-
-const MyComponent = () => {
-  const yamlSpec = `
-asyncapi: 2.0.0
-info:
-  title: My API
-  version: 1.0.0
-  description: A sample AsyncAPI specification
-  `;
-
-  return (
-    <WebSocketViewer 
-      schema={yamlSpec}
-      targetUrl="https://api.example.com"
-      token="your-token"
-    />
-  );
-};
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://unpkg.com/react@17.0.2/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17.0.2/umd/react-dom.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/wso2/api-developer-portal-core@refs/heads/main/libs/async-api-viewer/dist/websocket-viewer.umd.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script>
+    const asyncapi = {
+        asyncapi: '2.0.0',
+        info: {
+            title: 'My API',
+            version: '1.0.0',
+            description: 'A sample AsyncAPI specification'
+        },
+        channels: {
+            'test': {
+                subscribe: {
+                    message: 'A sample message',
+                    operationId: 'test'
+                },
+                publish: {
+                    message: 'A sample message',
+                    operationId: 'test'
+                }
+            }
+        }
+    };
+    let serverUrl = 'wss://echo.websocket.org';
+    const rootElement = document.getElementById('root');
+    ReactDOM.render(React.createElement(WebSocketViewer.default, {
+        apiEndpoint: serverUrl,
+        token: 'token',
+        asyncapi: asyncapi,
+    }), rootElement);
+</script>
+</body>
+</html>
 ```
 
 ## Props
@@ -82,20 +75,15 @@ info:
 
 ```bash
 # Install dependencies
-rush install
+npm install
 
 # Build the package
-rushx build
-
-# Watch for changes
-rushx dev
-
-# Lint code
-rushx lint
-
-# Format code
-rushx format
+npm run build
 ```
+
+You can test the component using the test.html file.
+
+Commit the dist folder to the repo.
 
 ## Dependencies
 
