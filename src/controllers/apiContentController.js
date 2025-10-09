@@ -484,6 +484,7 @@ const loadDocsPage = async (req, res) => {
 
 const loadDocument = async (req, res) => {
     const { orgName, apiHandle, viewName, docType, docName } = req.params;
+    const isWebSocketTryout = req.query.tryout ? true : false;
     const orgDetails = await adminDao.getOrganization(orgName);
     const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
     let baseDocUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle
@@ -493,7 +494,8 @@ const loadDocument = async (req, res) => {
     try {
         const hbs = exphbs.create({});
         let templateContent = {
-            "isAPIDefinition": false
+            "isAPIDefinition": false,
+            "isWebSocketTryout": isWebSocketTryout
         };
         const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
         req.cpOrgID = cpOrgID;
@@ -539,6 +541,7 @@ const loadDocument = async (req, res) => {
             } else {
                 let modifiedAsyncAPI = replaceEndpointParamsAsyncAPI(JSON.parse(definitionResponse.asyncapi), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
                 templateContent.asyncapi = JSON.stringify(modifiedAsyncAPI);
+                templateContent.isWebSocketTryout = isWebSocketTryout;
             }
             templateContent.isAPIDefinition = true;
         }
@@ -793,18 +796,16 @@ function replaceEndpointParams(apiDefinition, prodEndpoint, sandboxEndpoint) {
 function replaceEndpointParamsAsyncAPI(apiDefinition, prodEndpoint, sandboxEndpoint) {
     if (apiDefinition?.asyncapi && apiDefinition.asyncapi.startsWith('2.')) {
         if (prodEndpoint.trim().length !== 0) {
-            apiDefinition.servers = [{
+            apiDefinition.servers = {"production": {
                 url: prodEndpoint,
-                host: prodEndpoint.replace(/wss?:\/\//, ''),
                 protocol: prodEndpoint.startsWith('ws') ? 'ws' : 'wss'
-            }];
+            }};
         }
         if (sandboxEndpoint.trim().length !== 0) {
-            apiDefinition.servers.push({
+            apiDefinition.servers["sandbox"] = {
                 url: sandboxEndpoint,
-                host: sandboxEndpoint.replace(/wss?:\/\//, ''),
                 protocol: sandboxEndpoint.startsWith('ws') ? 'ws' : 'wss'
-            });
+            };
         }
     }
     return apiDefinition;

@@ -30,15 +30,11 @@
     };
     let serverUrl = 'wss://echo.websocket.org';
     const rootElement = document.getElementById('root');
-    // React 17 way
-    // Use default export
     ReactDOM.render(React.createElement(WebSocketViewer.default, {
         apiEndpoint: serverUrl,
         token: 'token',
         asyncapi: swaggerData,
     }), rootElement);
-    // Or, named export:
-    // ReactDOM.render(React.createElement(ReactHelloLib.HelloWorld), rootElement);
 </script>
 </body>
 </html>
