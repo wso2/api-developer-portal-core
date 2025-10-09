@@ -58,7 +58,7 @@
     href="https://cdn.jsdelivr.net/gh/wso2/api-developer-portal-core@refs/heads/main/libs/async-api-viewer/dist/async-api-viewer.css"
   />
   <script>
-    const isWebSocketTryout = {{isWebSocketTryout}};
+    const isWebSocketTryout = {{#if isWebSocketTryout}}{{isWebSocketTryout}}{{else}}false{{/if}};
     if (isWebSocketTryout) {
       document.addEventListener('DOMContentLoaded', function () {
         const swaggerData = {{{ asyncapi }}};
