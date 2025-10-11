@@ -718,13 +718,13 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                     fileType = "image";
                 } else {
                     // Unexpected file type
-                    logger.warn(`Unexpected file type detected: ${file.name}`, {
+                    logger.error(`Unexpected file type detected: ${file.name}`, {
                         fileName: file.name,
                         fileExtension: fileExtension,
                         directory: directory,
                         orgId: orgId
                     });
-                    continue;
+                    throw new CustomError(400, `Bad Request`, `Unexpected file type: ${file.name}`);
                 }
 
                 fileDetails.push({
@@ -744,7 +744,7 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
             error: error.message,
             stack: error.stack
         });
-        throw error;
+        throw new CustomError(error.statusCode || 500, error.message || 'Internal Server Error', error.description || 'Error reading files in directory');
     }
 }
 
