@@ -450,7 +450,7 @@ const updateOrgContent = async (req, res) => {
             throw new CustomError(400, "Bad Request", "Missing required zip file");
         }
         if (req.file.size > 50 * 1024 * 1024) {
-            throw new CustomError(400, "Bad Request", "File size exceeds the 10MB limit");
+            throw new CustomError(400, "Bad Request", "File size exceeds the 50MB limit");
         }
         await util.unzipDirectory(zipPath, extractPath);
         const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'), viewName);
