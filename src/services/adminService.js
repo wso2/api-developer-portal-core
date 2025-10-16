@@ -76,14 +76,14 @@ const createOrganization = async (req, res) => {
             logger.info('Default label created successfully', {
                 orgId
             });
-            
+
             //create default view
             const viewResponse = await apiDao.addView(orgId, { name: 'default', displayName: 'default' }, t);
             const viewID = viewResponse.dataValues.VIEW_ID;
             logger.info('Default view created successfully', {
                 orgId
             });
-            
+
             await apiDao.addLabel(orgId, labelId, viewID, t);
             //create default provider
             await adminDao.createProvider(organization.ORG_ID, { name: 'WSO2', providerURL: config.controlPlane.url }, t);
@@ -374,12 +374,20 @@ const createOrgContent = async (req, res) => {
         orgId,
         viewName
     });
-    if (!orgId) {
-        throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
-    }
-    const zipPath = req.file.path;
+    
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
+
     try {
+        if (!orgId) {
+            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+        }
+        const zipPath = req.file?.path;
+        if (!zipPath) {
+            throw new CustomError(400, "Bad Request", "Missing required zip file");
+        }
+        if (req.file.size > 50 * 1024 * 1024) {
+            throw new CustomError(400, "Bad Request", "File size exceeds the 50MB limit");
+        }
         await util.unzipDirectory(zipPath, extractPath);
         const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'), viewName);
         for (const { filePath, fileName, fileContent, fileType } of files) {
@@ -432,12 +440,18 @@ const updateOrgContent = async (req, res) => {
         orgId,
         viewName
     });
-    if (!orgId) {
-        throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
-    }
-    const zipPath = req.file.path;
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
     try {
+        if (!orgId) {
+            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+        }
+        const zipPath = req.file?.path;
+        if (!zipPath) {
+            throw new CustomError(400, "Bad Request", "Missing required zip file");
+        }
+        if (req.file.size > 50 * 1024 * 1024) {
+            throw new CustomError(400, "Bad Request", "File size exceeds the 50MB limit");
+        }
         await util.unzipDirectory(zipPath, extractPath);
         const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'), viewName);
         for (const { filePath, fileName, fileContent, fileType } of files) {
@@ -635,7 +649,7 @@ const updateProvider = async (req, res) => {
 const getProviders = async (req, res) => {
     const orgId = req.params.orgId;
     try {
-        
+
         if (req.query.name) {
             const providerName = req.query.name;
             return res.status(200).send(await getProvidetByName(orgId, providerName));
@@ -1061,7 +1075,7 @@ const getSubscription = async (req, res) => {
             error: error.message,
             stack: error.stack,
             orgId: orgID,
-            subId: subID            
+            subId: subID
         });
         util.handleError(res, error);
     }

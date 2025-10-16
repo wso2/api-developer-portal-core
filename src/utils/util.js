@@ -184,8 +184,8 @@ const unzipDirectory = async (zipPath, extractPath) => {
         throw new CustomError(400, 'Error unzipping directory', 'Invalid zip path or extract path.');
     }
     const extractedFiles = [];
-    const maxFileSize = 50 * 1024 * 1024; // 50MB (limit for individual file size)
-    const maxTotalSize = 100 * 1024 * 1024; // 100MB (limit for total extracted data)
+    const maxFileSize = 10 * 1024 * 1024; // 10MB (limit for individual file size)
+    const maxTotalSize = 50 * 1024 * 1024; // 50MB (limit for total extracted data)
     const maxDepth = 10; // Limit to prevent excessive nesting
     let totalExtractedSize = 0; // Total extracted data size
 
@@ -216,7 +216,7 @@ const unzipDirectory = async (zipPath, extractPath) => {
                             || (totalExtractedSize + entrySize > maxTotalSize)) {
                             entry.autodrain();
                             return reject(new CustomError(400, 'Error unzipping directory'
-                                , 'File size exceeded the limit of 100 MB'));
+                                , 'File size exceeded the limit of 50 MB'));
                         }
 
                         const dirName = path.dirname(normalizedFilePath);
@@ -718,13 +718,13 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                     fileType = "image";
                 } else {
                     // Unexpected file type
-                    logger.warn(`Unexpected file type detected: ${file.name}`, {
+                    logger.error(`Unexpected file type detected: ${file.name}`, {
                         fileName: file.name,
                         fileExtension: fileExtension,
                         directory: directory,
                         orgId: orgId
                     });
-                    continue;
+                    throw new CustomError(400, `Bad Request`, `Unexpected file type: ${file.name}`);
                 }
 
                 fileDetails.push({
@@ -744,7 +744,7 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
             error: error.message,
             stack: error.stack
         });
-        throw error;
+        throw new CustomError(error.statusCode || 500, error.message || 'Internal Server Error', error.description || 'Error reading files in directory');
     }
 }
 
