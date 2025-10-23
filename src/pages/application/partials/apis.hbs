@@ -46,7 +46,7 @@
                     <tbody>
                         {{#each subAPIs}}
                         {{> api-key apiID=apiID}}
-                        {{#if (eq apiType "REST")}}
+                        {{#in apiType values="REST, WS"}}
                         {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
                         <tr class="data-row" id="data-row-{{subID}}" data-index="{{@index}}">
                             {{#if ../features.sdkGeneration}}
@@ -121,7 +121,7 @@
                                 </div>
                             </td>
                         </tr>
-                        {{/if}}
+                        {{/in}}
                         {{/each}}
                     </tbody>
                 </table>
