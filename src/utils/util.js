@@ -395,7 +395,7 @@ const invokeGraphQLRequest = async (req, url, query, variables, headers) => {
     };
 
     try {
-        if (config.advanced.tokenExchanger.enabled) {
+        if (config.advanced.tokenExchanger?.enabled) {
             const decodedToken = jwt.decode(req.user.exchangeToken);
             const orgId = decodedToken.organization.uuid;
             url = url.includes("?") ? `${url}&organizationId=${orgId}` : `${url}?organizationId=${orgId}`;
@@ -479,8 +479,7 @@ const invokeApiRequest = async (req, method, url, headers, body, publicMode = fa
         if (!(body == null || body === '' || (Array.isArray(body) && body.length === 0) || (typeof body === 'object' && !Array.isArray(body) && Object.keys(body).length === 0))) {
             options.data = body;
         }
-
-        if (config.advanced.tokenExchanger.enabled) {
+        if (config.advanced.tokenExchanger?.enabled) {
             let orgId = "";
             if (req.cpOrgID) {
                 orgId = req.cpOrgID;
