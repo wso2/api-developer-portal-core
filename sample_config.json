@@ -1,5 +1,5 @@
 {
-  "baseUrl": "https://localhost:3000",
+  "baseUrl": "http://localhost:3000",
   "defaultPort": 3000,
   "readOnlyMode": false,
   "logging": {
@@ -22,6 +22,7 @@
   "pathToDBCert": "./resources/security/ca.pem",
   "mode": "production",
   "controlPlane": {
+    "enabled": true,
     "url": "https://sts.preview-dv.choreo.dev/api/am/devportal/v2",
     "graphqlURL": "https://app.preview-dv.choreo.dev/graphql",
     "disableCertValidation": true,
@@ -65,9 +66,9 @@
   },
   "identityProvider": {
     "name": "IS",
-    "issuer": "https://127.0.0.1:9443/oauth2/token",
+    "issuer": "https://localhost:9443/oauth2/token",
     "authorizationURL": "https://localhost:9443/oauth2/authorize",
-    "tokenURL": "https://127.0.0.1:9443/oauth2/token",
+    "tokenURL": "https://localhost:9443/oauth2/token",
     "userInfoURL": "https://localhost:9443/oauth2/userinfo",
     "clientId": "",
     "callbackURL": "https://localhost:3000/ACME/callback",
