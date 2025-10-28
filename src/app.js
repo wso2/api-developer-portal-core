@@ -258,7 +258,7 @@ const strategy = new OAuth2Strategy({
         return done(new Error('Access token missing'));
     }
     let orgList, userOrg;
-    if (config.advanced.tokenExchanger.enabled) {
+    if (config.advanced.tokenExchanger?.enabled) {
         const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
         const decodedExchangedToken = jwt.decode(exchangedToken);
         orgList = decodedExchangedToken.organizations;
