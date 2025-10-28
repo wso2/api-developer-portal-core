@@ -102,21 +102,28 @@ const loadAPIs = async (req, res) => {
                 metaData.applications = appList;
             }
             //retrieve api list from control plane
-            let publicMode = false;
-            if (cpOrgID && Array.isArray(req.user?.authorizedOrgs) && !req.user.authorizedOrgs?.includes(cpOrgID)) {
-                publicMode = true;
-            }
-            const allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?limit=1000`, {}, {}, publicMode);
-            if (allowedAPIList) {
-                //filter apis based on the roles
-                metaDataList = util.filterAllowedAPIs(metaDataList, allowedAPIList.list);
+            if (config.controlPlane?.enabled) {
+                let publicMode = false;
+                if (cpOrgID && Array.isArray(req.user?.authorizedOrgs) && !req.user.authorizedOrgs?.includes(cpOrgID)) {
+                    publicMode = true;
+                }
+                try {
+                    const allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?limit=1000`, {}, {}, publicMode);
+                    if (allowedAPIList) {
+                        //filter apis based on the roles
+                        metaDataList = util.filterAllowedAPIs(metaDataList, allowedAPIList.list);
+                    }
+                } catch (error) {
+                    logger.warn("Cannot retrieve allowed API list from control plane", {
+                        orgName: req.params.orgName,
+                        error: error.message,
+                        stack: error.stack
+                    });
+                }
             } else {
-                logger.warn("Cannot retrieve allowed API list from control plane", {
-                    orgName: req.params.orgName,
-                    error: error.message, 
-                    stack: error.stack
+                logger.debug("Control plane is disabled, skipping API filtering", {
+                    orgName: req.params.orgName
                 });
-                metaDataList = [];
             }
 
             let profile = null;
@@ -221,35 +228,50 @@ const loadAPIContent = async (req, res) => {
                 apiID: apiID,
             });
             
-            let apiName = metaData ? metaData.apiHandle?.split('-v')[0] : "";
-            const version = metaData ? metaData.apiInfo.apiVersion : "";
-            //check whether user has access to the API
-            let allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
-            if (allowedAPIList.count === 0) {
-                apiName = metaData.apiInfo.apiName;
-                allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
+            let apiDetail = null;
+            //check whether user has access to the API via control plane
+            if (config.controlPlane?.enabled) {
+                try {
+                    let apiName = metaData ? metaData.apiHandle?.split('-v')[0] : "";
+                    const version = metaData ? metaData.apiInfo.apiVersion : "";
+                    let allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
+                    if (allowedAPIList.count === 0) {
+                        apiName = metaData.apiInfo.apiName;
+                        allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
+                    }
 
-            }
-            let templateContent = {
-                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-                errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API,
-                devportalMode: devportalMode,
-            }
-            const apiDetail = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${metaData.apiReferenceID}`, null, null);
-
-            if (allowedAPIList.count === 0) {
-                if (!(req.user)) {
-                    logger.warn("User is not authorized to access the API or user session expired, hence redirecting to login page", {
+                    if (allowedAPIList.count === 0) {
+                        let templateContent = {
+                            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+                            errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API,
+                            devportalMode: devportalMode,
+                        }
+                        if (!(req.user)) {
+                            logger.warn("User is not authorized to access the API or user session expired, hence redirecting to login page", {
+                                orgName: orgName,
+                                apiID: apiID
+                            });
+                            res.redirect(req.originalUrl.split("/api/")[0] + '/login');
+                            return;
+                        } else {
+                            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+                            res.send(html);
+                            return;
+                        }
+                    }
+                    apiDetail = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${metaData.apiReferenceID}`, null, null);
+                } catch (error) {
+                    logger.warn("Error checking API authorization from control plane, proceeding without authorization check", {
                         orgName: orgName,
                         apiID: apiID,
-                        error: error.message, 
-                        stack: error.stack
+                        error: error.message
                     });
-                    res.redirect(req.originalUrl.split("/api/")[0] + '/login');
-                } else {
-                    html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
-                    res.send(html);
                 }
+            } else {
+                logger.debug("Control plane is disabled, skipping API authorization check", {
+                    orgName: orgName,
+                    apiID: apiID
+                });
             }
             let subscriptionPlans = await util.appendSubscriptionPlanDetails(orgID, metaData.subscriptionPolicies);
             let providerUrl;
@@ -502,39 +524,62 @@ const loadDocument = async (req, res) => {
         const definitionResponse = await loadAPIDefinition(orgName, viewName, apiHandle);
         templateContent.apiType = definitionResponse.apiType;
         let apiMetadata = definitionResponse.metaData;
-        let apiName = apiMetadata ? apiMetadata.apiHandle?.split('-v')[0] : "";
-        const version = apiMetadata ? apiMetadata.apiInfo.apiVersion : "";
-        //check whether user has access to the API
-
-        let allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
-        if (allowedAPIList.count == 0) {
-            apiName = apiMetadata.apiInfo.apiName;
-            allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
-        }
-        if (allowedAPIList.count === 0) {
-            templateContent = {
-                errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API,
-                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-                baseDocUrl: baseDocUrl,
-                devportalMode: devportalMode,
+        //check whether user has access to the API via control plane
+        if (config.controlPlane?.enabled) {
+            try {
+                let apiName = apiMetadata ? apiMetadata.apiHandle?.split('-v')[0] : "";
+                const version = apiMetadata ? apiMetadata.apiInfo.apiVersion : "";
+                let allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
+                if (allowedAPIList.count == 0) {
+                    apiName = apiMetadata.apiInfo.apiName;
+                    allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
+                }
+                if (allowedAPIList.count === 0) {
+                    templateContent = {
+                        errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API,
+                        baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+                        baseDocUrl: baseDocUrl,
+                        devportalMode: devportalMode,
+                    }
+                    html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+                    res.send(html);
+                    return;
+                }
+            } catch (error) {
+                logger.warn("Error checking API authorization from control plane, proceeding without authorization check", {
+                    orgName: orgName,
+                    error: error.message
+                });
             }
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
-            res.send(html);
+        } else {
+            logger.debug("Control plane is disabled, skipping API authorization check", {
+                orgName: orgName
+            });
         }
+
         //load API definition
         if (req.originalUrl.includes(constants.FILE_NAME.API_SPECIFICATION_PATH)) {
 
             if (definitionResponse.apiType !== constants.API_TYPE.WS) {
                 let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
-                const response = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiMetadata.apiReferenceID}`, null, null);
-                if (response.securityScheme.includes("api_key")) {
-                    modifiedSwagger.components.securitySchemes.ApiKeyAuth = { "type": "apiKey", "name": `${response.apiKeyHeader}`, "in": "header" };
-                    for (let path in modifiedSwagger.paths) {
-                        for (let method in modifiedSwagger.paths[path]) {
-                            if (modifiedSwagger.paths[path].hasOwnProperty(method)) {
-                                modifiedSwagger.paths[path][method].security[0].ApiKeyAuth = [];
+                if (config.controlPlane?.enabled) {
+                    try {
+                        const response = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiMetadata.apiReferenceID}`, null, null);
+                        if (response.securityScheme.includes("api_key")) {
+                            modifiedSwagger.components.securitySchemes.ApiKeyAuth = { "type": "apiKey", "name": `${response.apiKeyHeader}`, "in": "header" };
+                            for (let path in modifiedSwagger.paths) {
+                                for (let method in modifiedSwagger.paths[path]) {
+                                    if (modifiedSwagger.paths[path].hasOwnProperty(method)) {
+                                        modifiedSwagger.paths[path][method].security[0].ApiKeyAuth = [];
+                                    }
+                                }
                             }
                         }
+                    } catch (error) {
+                        logger.warn("Error fetching API security details from control plane", {
+                            orgName: orgName,
+                            error: error.message
+                        });
                     }
                 }
                 templateContent.swagger = JSON.stringify(modifiedSwagger);
