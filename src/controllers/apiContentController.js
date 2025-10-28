@@ -102,7 +102,7 @@ const loadAPIs = async (req, res) => {
                 metaData.applications = appList;
             }
             //retrieve api list from control plane
-            if (config.controlPlane?.enabled) {
+            if (config.controlPlane?.enabled !== false) {
                 let publicMode = false;
                 if (cpOrgID && Array.isArray(req.user?.authorizedOrgs) && !req.user.authorizedOrgs?.includes(cpOrgID)) {
                     publicMode = true;
@@ -230,7 +230,7 @@ const loadAPIContent = async (req, res) => {
             
             let apiDetail = null;
             //check whether user has access to the API via control plane
-            if (config.controlPlane?.enabled) {
+            if (config.controlPlane?.enabled !== false) {
                 try {
                     let apiName = metaData ? metaData.apiHandle?.split('-v')[0] : "";
                     const version = metaData ? metaData.apiInfo.apiVersion : "";
@@ -525,7 +525,7 @@ const loadDocument = async (req, res) => {
         templateContent.apiType = definitionResponse.apiType;
         let apiMetadata = definitionResponse.metaData;
         //check whether user has access to the API via control plane
-        if (config.controlPlane?.enabled) {
+        if (config.controlPlane?.enabled !== false) {
             try {
                 let apiName = apiMetadata ? apiMetadata.apiHandle?.split('-v')[0] : "";
                 const version = apiMetadata ? apiMetadata.apiInfo.apiVersion : "";
@@ -562,7 +562,7 @@ const loadDocument = async (req, res) => {
 
             if (definitionResponse.apiType !== constants.API_TYPE.WS) {
                 let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
-                if (config.controlPlane?.enabled) {
+                if (config.controlPlane?.enabled !== false) {
                     try {
                         const response = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiMetadata.apiReferenceID}`, null, null);
                         if (response.securityScheme.includes("api_key")) {
