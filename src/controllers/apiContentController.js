@@ -228,6 +228,9 @@ const loadAPIContent = async (req, res) => {
                 apiID: apiID,
             });
             
+            const gatewayVendor = metaData?.apiInfo?.gatewayVendor ? metaData?.apiInfo?.gatewayVendor: 'wso2';
+            const isFederatedAPI = constants.FEDERATED_GATEWAY_VENDORS.includes(gatewayVendor);
+            
             let apiDetail = null;
             //check whether user has access to the API via control plane
             if (config.controlPlane?.enabled !== false) {
@@ -245,6 +248,7 @@ const loadAPIContent = async (req, res) => {
                             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                             errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API,
                             devportalMode: devportalMode,
+                            isFederatedAPI,
                         }
                         if (!(req.user)) {
                             logger.warn("User is not authorized to access the API or user session expired, hence redirecting to login page", {
@@ -379,7 +383,8 @@ const loadAPIContent = async (req, res) => {
                 scopes: apiDetail?.scopes,
                 devportalMode: devportalMode,
                 profile: req.isAuthenticated() ? profile : null,
-                isReadOnlyMode: config.readOnlyMode
+                isReadOnlyMode: config.readOnlyMode,
+                isFederatedAPI: isFederatedAPI
             };
             if (metaData.apiInfo.apiType == "MCP") {
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp-landing", viewName);

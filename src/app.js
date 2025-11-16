@@ -200,6 +200,11 @@ Handlebars.registerHelper('startsWith', function (str, includeStr, options) {
     }
 });
 
+Handlebars.registerHelper('isFederatedAPI', function (gatewayVendor) {
+    const constants = require('./utils/constants');
+    return constants.FEDERATED_GATEWAY_VENDORS.includes(gatewayVendor);
+});
+
 // #endregion
 
 app.use(session({
