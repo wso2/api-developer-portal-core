@@ -201,7 +201,9 @@ Handlebars.registerHelper('startsWith', function (str, includeStr, options) {
 });
 
 Handlebars.registerHelper('isFederatedAPI', function (gatewayVendor) {
-    const constants = require('./utils/constants');
+    if (!gatewayVendor || typeof gatewayVendor !== 'string') {
+        return false;
+    }
     return constants.FEDERATED_GATEWAY_VENDORS.includes(gatewayVendor);
 });
 
