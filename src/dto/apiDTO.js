@@ -50,6 +50,7 @@ class APIInfo {
         this.apiDescription = apiInfo.API_DESCRIPTION;
         this.apiType = apiInfo.API_TYPE;
         this.visibility = apiInfo.VISIBILITY;
+        this.gatewayVendor = apiInfo.METADATA_SEARCH?.apiInfo?.gatewayVendor || 'wso2';
         if (apiInfo.addedLabels) {
             this.addedLabels = apiInfo.addedLabels;
         }
