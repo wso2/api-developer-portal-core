@@ -200,6 +200,13 @@ Handlebars.registerHelper('startsWith', function (str, includeStr, options) {
     }
 });
 
+Handlebars.registerHelper('isFederatedAPI', function (gatewayVendor) {
+    if (!gatewayVendor || typeof gatewayVendor !== 'string') {
+        return false;
+    }
+    return constants.FEDERATED_GATEWAY_VENDORS.includes(gatewayVendor);
+});
+
 // #endregion
 
 app.use(session({

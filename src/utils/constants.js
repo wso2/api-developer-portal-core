@@ -290,5 +290,6 @@ module.exports = {
         'main',
         'home',
         'api-content',
-    ]
+    ],
+    FEDERATED_GATEWAY_VENDORS: ['aws']
 }

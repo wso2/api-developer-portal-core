@@ -113,6 +113,7 @@
               </div>
             </div>
           </div>
+          {{#unless (isFederatedAPI apiInfo.gatewayVendor)}}
           {{#if ../isAuthenticated}}
           <hr class="card-separator" />
           {{/if}}
@@ -178,6 +179,7 @@
               <button type="button" class="close-message" aria-label="Close message">&times;</button>
             </div>
           </div>
+          {{/unless}}
         </div>
       </div>
       {{/unless}}
