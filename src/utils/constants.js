@@ -48,7 +48,8 @@ module.exports = {
         MCP_ONLY: "MCPSERVERSONLY",
         API_PROXIES: "APISONLY",
         DEFAULT: "DEFAULT",
-        WS: "WS"
+        WS: "WS",
+        GRAPHQL: "GRAPHQL",
     },
     DOC_TYPES: {
         DOC_ID: 'DOC_',

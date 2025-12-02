@@ -50,6 +50,16 @@
                         </a>
                     </div>
                     {{/if}}
+                    {{#if (eq ../apiType "GRAPHQL")}}
+                    <div class="doc-links">
+                        <a href="{{../baseDocUrl}}/docs/specification?tryout=true" class="doc-link">
+                            <i class="bi bi-code"></i>
+                            <div class="doc-title">
+                                Tryout
+                            </div>
+                        </a>
+                    </div>
+                    {{/if}}
                 </div>
                 {{else}}
                 <div>

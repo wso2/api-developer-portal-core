@@ -1,0 +1,167 @@
+.graphql-tryout-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100vh;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.graphql-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #d0d7de;
+  border-radius: 12px;
+  background: #f6f8fa;
+}
+
+.graphql-control {
+  flex: 1 1 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.graphql-control label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #57606a;
+}
+
+.graphql-control input {
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  color: #1f2328;
+  background: #fff;
+}
+
+.graphql-control .control-hint {
+  font-size: 12px;
+  color: #57606a;
+}
+
+.graphql-control .control-hint strong {
+  color: #1f2328;
+}
+
+.graphiql-container .graphiql-logo {
+  display: none !important;
+}
+
+.graphiql-container .graphiql-session {
+  height: 100% !important;
+}
+
+.graphiql-container .graphiql-sidebar .graphiql-sidebar-section:last-of-type button {
+  display: none !important;
+}
+
+.graphiql-container .graphiql-execute-button,
+.graphiql-container button.graphiql-execute-button,
+.graphiql-container .graphiql-execute-button-wrapper button {
+  background-color: #3498DB !important;
+  border-color: #3498DB !important;
+  color: #ffffff !important;
+}
+
+.graphiql-container .graphiql-execute-button:hover,
+.graphiql-container button.graphiql-execute-button:hover,
+.graphiql-container .graphiql-execute-button-wrapper button:hover {
+  background-color: #5DADE2 !important;
+  border-color: #5DADE2 !important;
+}
+
+.graphiql-container .graphiql-execute-button:active,
+.graphiql-container button.graphiql-execute-button:active,
+.graphiql-container .graphiql-execute-button-wrapper button:active {
+  background-color: #2980B9 !important;
+  border-color: #2980B9 !important;
+}
+
+.graphiql-container {
+  --primary-400: #3498DB !important;
+  --primary-500: #5DADE2 !important;
+  --primary-600: #2980B9 !important;
+}
+
+.graphiql-container [style*="rgb(219, 112, 147)"],
+.graphiql-container [style*="#db7093"],
+.graphiql-container [style*="rgb(255, 20, 147)"],
+.graphiql-container [style*="#ff1493"],
+.graphiql-container [style*="rgb(255, 105, 180)"],
+.graphiql-container [style*="#ff69b4"],
+.graphiql-container [style*="rgb(236, 72, 153)"],
+.graphiql-container [style*="#ec4899"] {
+  color: #3498DB !important;
+  background-color: transparent !important;
+}
+
+.graphiql-container .graphiql-toolbar button {
+  color: #3498DB !important;
+}
+
+.graphiql-container .graphiql-toolbar button:hover {
+  background-color: #EBF5FB !important;
+  color: #5DADE2 !important;
+}
+
+.graphiql-container .graphiql-doc-explorer-root button:active,
+.graphiql-container .graphiql-doc-explorer-root button[aria-selected="true"],
+.graphiql-container .graphiql-doc-explorer-root button[aria-pressed="true"] {
+  background-color: #3498DB !important;
+  color: #ffffff !important;
+}
+
+.graphiql-container .graphiql-doc-explorer-root a:hover,
+.graphiql-container .graphiql-doc-explorer-root button:hover,
+.graphiql-container a:hover {
+  color: #5DADE2 !important;
+}
+
+.graphiql-container button:focus,
+.graphiql-container button:focus-visible {
+  outline-color: #3498DB !important;
+  border-color: #3498DB !important;
+}
+
+.graphiql-container [class*="pink"],
+.graphiql-container [class*="magenta"],
+.graphiql-container [class*="rose"] {
+  background-color: #3498DB !important;
+  color: #ffffff !important;
+}
+
+.graphiql-container .graphiql-execute-button svg,
+.graphiql-container .graphiql-execute-button-wrapper svg,
+.graphiql-container button.graphiql-execute-button svg {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+}
+
+.graphiql-container svg[fill*="#db7093"],
+.graphiql-container svg[fill*="#ff1493"],
+.graphiql-container svg[fill*="#ff69b4"],
+.graphiql-container svg[fill*="#ec4899"] {
+  fill: #3498DB !important;
+}
+
+.graphiql-container .graphiql-execute-button-wrapper {
+  background-color: #3498DB !important;
+}
+
+.graphiql-container .graphiql-execute-button-wrapper:hover {
+  background-color: #5DADE2 !important;
+}
+
+@media (max-width: 640px) {
+  .graphql-control input {
+    font-size: 12px;
+  }
+}
+
