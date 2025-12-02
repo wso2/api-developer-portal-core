@@ -18,7 +18,7 @@
   },
   "peerDependencies": {
     "@material-ui/core": "4.12.3",
-    "@material-ui/icons": "4.11.2",
+    "@material-ui/icons": "4.11.3",
     "@modelcontextprotocol/sdk": "1.12.1",
     "@radix-ui/react-tabs": "1.1.1",
     "ajv": "6.12.6",
