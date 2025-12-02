@@ -89,10 +89,6 @@
   <link rel="stylesheet" href="https://unpkg.com/graphiql@3/graphiql.min.css">
   <link rel="stylesheet" href="https://unpkg.com/@graphiql/plugin-explorer@3/dist/style.css">
   <link rel="stylesheet" href="/technical-styles/graphql-tryout.css">
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/gh/wso2/api-developer-portal-core@refs/heads/main/src/styles/graphql-tryout.css"
-  />
 </head>
 <main>
   <div class="graphql-tryout-container">
@@ -180,7 +176,11 @@
         schemaIntrospectionJSON = JSON.parse(schemaScript.textContent);
       } catch (error) {
         console.error('Error parsing schema introspection JSON:', error);
-        rootElement.innerHTML = '<div style="padding: 20px; color: red;">Error parsing schema: ' + error.message + '</div>';
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = 'padding: 20px; color: red;';
+        errorDiv.textContent = 'Error parsing schema: ' + (error && error.message ? error.message : '');
+        rootElement.innerHTML = '';
+        rootElement.appendChild(errorDiv);
         return;
       }
       
@@ -277,7 +277,11 @@
         } catch (error) {
           console.error('Error parsing GraphQL schema or metadata:', error);
           const rootElement = document.getElementById('root');
-          rootElement.innerHTML = '<div style="padding: 20px; color: #d1242f;">Error loading GraphQL schema. Please refresh the page.</div>';
+          const errorDiv = document.createElement('div');
+          errorDiv.style.cssText = 'padding: 20px; color: #d1242f;';
+          errorDiv.textContent = 'Error loading GraphQL schema. Please refresh the page.';
+          rootElement.innerHTML = '';
+          rootElement.appendChild(errorDiv);
           return;
         }
         

@@ -267,6 +267,18 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
     setExpandedSections(newExpanded);
   };
 
+  const handleEndpointCopy = async (endpointType: 'production' | 'sandbox', url?: string) => {
+    if (!url) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedEndpoint(endpointType);
+      setTimeout(() => setCopiedEndpoint(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy endpoint URL:', err);
+    }
+  };
 
   return (
     <div style={styles.container}>
@@ -286,27 +298,28 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
           {apiMetadata && (apiMetadata.endPoints?.productionURL || apiMetadata.endPoints?.sandboxURL) && (
             <div style={styles.endpointsContainer}>
               {apiMetadata.endPoints.productionURL && (
-                <div style={styles.endpointCard}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#22863a';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(34, 134, 58, 0.15)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#e1e4e8';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-                onClick={async () => {
-                  try {
-                    if (apiMetadata.endPoints?.productionURL) {
-                      await navigator.clipboard.writeText(apiMetadata.endPoints.productionURL);
-                      setCopiedEndpoint('production');
-                      setTimeout(() => setCopiedEndpoint(null), 2000);
+                <div
+                  style={styles.endpointCard}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Copy production endpoint URL to clipboard"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#22863a';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(34, 134, 58, 0.15)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#e1e4e8';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                  onClick={() => handleEndpointCopy('production', apiMetadata.endPoints?.productionURL)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleEndpointCopy('production', apiMetadata.endPoints?.productionURL);
                     }
-                  } catch (err) {
-                    console.error('Failed to copy:', err);
-                  }
-                }}
-                title="Click to copy">
+                  }}
+                  title="Click to copy"
+                >
                   <div style={{ ...styles.endpointIcon, ...styles.endpointIconProduction }}>
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M10 2L2 7L10 12L18 7L10 2Z" fill="white"/>
@@ -337,27 +350,28 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
                 </div>
               )}
               {apiMetadata.endPoints.sandboxURL && (
-                <div style={styles.endpointCard}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#d73a49';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(215, 58, 73, 0.15)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#e1e4e8';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-                onClick={async () => {
-                  try {
-                    if (apiMetadata.endPoints?.sandboxURL) {
-                      await navigator.clipboard.writeText(apiMetadata.endPoints.sandboxURL);
-                      setCopiedEndpoint('sandbox');
-                      setTimeout(() => setCopiedEndpoint(null), 2000);
+                <div
+                  style={styles.endpointCard}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Copy sandbox endpoint URL to clipboard"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#d73a49';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(215, 58, 73, 0.15)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#e1e4e8';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                  onClick={() => handleEndpointCopy('sandbox', apiMetadata.endPoints?.sandboxURL)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleEndpointCopy('sandbox', apiMetadata.endPoints?.sandboxURL);
                     }
-                  } catch (err) {
-                    console.error('Failed to copy:', err);
-                  }
-                }}
-                title="Click to copy">
+                  }}
+                  title="Click to copy"
+                >
                   <div style={{ ...styles.endpointIcon, ...styles.endpointIconSandbox }}>
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M10 2L2 7L10 12L18 7L10 2Z" fill="white"/>
@@ -396,7 +410,17 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
           {/* Queries Section */}
           <div style={styles.section}>
             <div
+              role="button"
+              tabIndex={0}
+              aria-expanded={expandedSections.has('queries')}
+              aria-controls="graphql-queries-content"
               onClick={() => toggleSection('queries')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleSection('queries');
+                }
+              }}
               style={{
                 ...styles.sectionHeader,
                 borderBottom: expandedSections.has('queries') ? '1px solid #e1e4e8' : 'none'
@@ -424,7 +448,10 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
             </div>
 
             {expandedSections.has('queries') && (
-              <div style={styles.sectionContent}>
+              <div
+                id="graphql-queries-content"
+                style={styles.sectionContent}
+              >
                 {queries.length === 0 ? (
                   <div style={styles.emptyState}>
                     No queries found
@@ -502,7 +529,17 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
           {/* Mutations Section */}
           <div style={styles.section}>
             <div
+              role="button"
+              tabIndex={0}
+              aria-expanded={expandedSections.has('mutations')}
+              aria-controls="graphql-mutations-content"
               onClick={() => toggleSection('mutations')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleSection('mutations');
+                }
+              }}
               style={{
                 ...styles.sectionHeader,
                 borderBottom: expandedSections.has('mutations') ? '1px solid #e1e4e8' : 'none'
@@ -530,7 +567,10 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
             </div>
 
             {expandedSections.has('mutations') && (
-              <div style={styles.sectionContent}>
+              <div
+                id="graphql-mutations-content"
+                style={styles.sectionContent}
+              >
                 {mutations.length === 0 ? (
                   <div style={styles.emptyState}>
                     No mutations found
@@ -608,7 +648,17 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
           {/* Types Section */}
           <div style={styles.section}>
             <div
+              role="button"
+              tabIndex={0}
+              aria-expanded={expandedSections.has('types')}
+              aria-controls="graphql-types-content"
               onClick={() => toggleSection('types')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleSection('types');
+                }
+              }}
               style={{
                 ...styles.sectionHeader,
                 borderBottom: expandedSections.has('types') ? '1px solid #e1e4e8' : 'none'
@@ -636,7 +686,10 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
             </div>
 
             {expandedSections.has('types') && (
-              <div style={styles.sectionContent}>
+              <div
+                id="graphql-types-content"
+                style={styles.sectionContent}
+              >
                 {types.length === 0 ? (
                   <div style={styles.emptyState}>
                     No types found

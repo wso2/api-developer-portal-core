@@ -298,8 +298,8 @@ const loadAPIContent = async (req, res) => {
                     loadDefault = true;
                     if (
                       metaData.apiInfo &&
-                      metaData.apiInfo.apiType !== "GRAPHQL" &&
-                      metaData.apiInfo.apiType !== "WS"
+                      metaData.apiInfo.apiType !== constants.API_TYPE.GRAPHQL &&
+                      metaData.apiInfo.apiType !== constants.API_TYPE.WS
                     ) {
                         apiDefinition = "";
                         apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
@@ -351,8 +351,8 @@ const loadAPIContent = async (req, res) => {
                             logger.error("Failed to load or parse schema definition", {
                                 orgID: orgID,
                                 apiID: apiID,
-                                error: error.message, 
-                                stack: error.stack
+                                error: err.message, 
+                                stack: err.stack
                             });
                             throw err;
                         }
