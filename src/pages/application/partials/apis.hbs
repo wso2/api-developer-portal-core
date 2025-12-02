@@ -71,7 +71,7 @@
                                         data-scopes="{{json apiKeys.scopes}}"
                                         data-api-key-id="'{{apiKeys.key.[0].id}}'"
                                         onclick="openWarningModal('regenerate', this.dataset.apiKeyId, '{{subID}}')"
-                                        style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{else}}{{#if apiKeys.key}}display:inline-flex;{{else}}display:none;{{/if}}{{/if}}"
+                                        style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{else}}{{#if apiKeys.key}}display:inline-flex;{{else}}display:none;{{/if}}{{/if}}">
                                         <span class="button-normal-state">
                                             <i class="bi bi-key me-1"></i> Regenerate
                                         </span>
