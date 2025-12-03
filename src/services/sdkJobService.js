@@ -735,7 +735,7 @@ class SDKJobService extends EventEmitter {
             // Build openapi-generator command
             const command = [
                 'npx',
-                '@openapitools/openapi-generator-cli',
+                '@openapitools/openapi-generator-cli@2.21.3',
                 'generate',
                 '-i', specFilePath,
                 '-g', generator,
