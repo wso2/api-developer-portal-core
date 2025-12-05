@@ -464,7 +464,12 @@ const putSubscriptionPolicy = async (orgID, policy, t) => {
 };
 
 const createSubscriptionPolicy = async (orgID, policy, t) => {
-    const requestCount = policy.requestCount === -1 ? "Unlimited" : policy.requestCount;
+    let requestCount = null;
+    if (policy.type == "requestCount") {
+        requestCount = policy.requestCount === -1 ? "Unlimited" : policy.requestCount;
+    } else if (policy.type == "EventCount") {
+        requestCount = policy.eventCount === -1 ? "Unlimited" : policy.eventCount;
+    }
     try {
         const subscriptionPolicyResponse = await SubscriptionPolicy.create({
             POLICY_NAME: policy.policyName,
@@ -513,7 +518,12 @@ const bulkCreateSubscriptionPolicies = async (orgID, policies, t) => {
 }
 
 const updateSubscriptionPolicy = async (orgID, policyID, policy, t) => {
-    const requestCount = policy.requestCount === -1 ? "Unlimited" : policy.requestCount;
+    let requestCount = null;
+    if (policy.type == "requestCount") {
+        requestCount = policy.requestCount === -1 ? "Unlimited" : policy.requestCount;
+    } else if (policy.type == "EventCount") {
+        requestCount = policy.eventCount === -1 ? "Unlimited" : policy.eventCount;
+    }
     try {
         const [affectedCount, updatedRows] = await SubscriptionPolicy.update({
             POLICY_NAME: policy.policyName,
