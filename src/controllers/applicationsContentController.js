@@ -442,10 +442,9 @@ async function getAPIKeys(req, apiId, applicationId) {
     return apiKeys;
 }
 
-async function mapGrants(grantTypes = []) {
-    // Defensive: some mock key managers omit grant types
+async function mapGrants(grantTypes) {
     let mappedGrantTypes = [];
-    grantTypes.forEach(grantType => {
+    grantTypes.map(grantType => {
         if (grantType === 'password') {
             mappedGrantTypes.push({
                 label: 'Password',
@@ -488,7 +487,7 @@ async function mapDefaultValues(applicationConfiguration = []) {
     // Defensive: some mock key managers omit configs
     let appConfigs = [];
     let defaultConfigs = ["application_access_token_expiry_time", "user_access_token_expiry_time", "id_token_expiry_time"];
-    applicationConfiguration.forEach(config => {
+    applicationConfiguration.map(config => {
         if (defaultConfigs.includes(config.name) && config.default == 'N/A') {
             config.default = 900;
         } else if (config.name === 'refresh_token_expiry_time' && config.default == 'N/A') {
