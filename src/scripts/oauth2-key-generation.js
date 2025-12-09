@@ -5,7 +5,12 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
     const loadingState = generateBtn.querySelector('.button-loading-state');
 
     // Clear any previous error messages
-    const errorContainer = document.getElementById('keyGenerationErrorContainer');
+    let errorContainer;
+    if (keyType === 'PRODUCTION') {
+        errorContainer = document.getElementById('keyGenerationErrorContainer-production');
+    } else {
+        errorContainer = document.getElementById('keyGenerationErrorContainer-sandbox');
+    }
     errorContainer.style.display = 'none';
     errorContainer.textContent = '';
 
@@ -119,7 +124,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             generateKeyContainer.style.display = 'none';
             generateKeyContainer.classList.add('d-none');
             
-            loadKeysViewModal();
+            loadKeysViewModal(keyType);
 
 
             // // Hide the key action container
@@ -308,9 +313,15 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
     updateBtn.disabled = true;
 
     // Clear any previous error messages
-    const errorContainer = document.getElementById('keyUpdateErrorContainer');
-    errorContainer.style.display = 'none';
-    errorContainer.textContent = '';
+    const errorContainer = document.getElementById(
+        'keyUpdateErrorContainer-' + keyType.toLowerCase()
+    );
+    if (!errorContainer) {
+        console.error('keyUpdateErrorContainer not found for keyType:', keyType);
+    } else {
+        errorContainer.style.display = 'none';
+        errorContainer.textContent = '';
+    }
 
     const form = document.getElementById(formId);
     const formData = new FormData(form);
@@ -354,7 +365,7 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
                 updateBtn.innerHTML = originalContent;
                 updateBtn.disabled = false;
 
-                closeModal('keysModifyModal')
+                closeModal('keysModifyModal-' + keyType);
                 await showAlert('Updated Oauth application successfully!', 'success');
                 const url = new URL(window.location.origin + window.location.pathname);
                 window.location.href = url.toString();
@@ -439,17 +450,27 @@ async function removeApplicationKey() {
 }
 
 async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName, clientSecret, subscribedScopes) {
-    let tokenBtn = document.getElementById('tokenKeyBtn');
+    // Determine keyType from formId (formId contains either "production" or "sandbox")
+     let keyType = 'PRODUCTION';
+    if (formId && formId.includes('-sandbox')) {
+        keyType = 'SANDBOX';
+    }
+    const keyTypeSuffix = keyType.toLowerCase();
+    
+    tokenBtn = document.getElementById('regenerateKeyBtn-' + keyTypeSuffix);
+    if (!tokenBtn) {
+        console.error('Regenerate button container not found for keyType:', keyType);
+    }
     const devAppId = tokenBtn?.dataset?.appId
-    const scopeContainer = document.getElementById('scopeContainer-' + devAppId);
-    const scopeInput = document.getElementById('scope-' + devAppId);
+    const scopeContainer = document.getElementById('scopeContainer-' + keyType + '-' + devAppId);
+    const scopeInput = document.getElementById('scope-' + keyType + '-' + devAppId);
 
     if (!(subscribedScopes)) {
         // In the regenerate token request, the scopes are fetched from the span tags
         const scopeElements = document.querySelectorAll(`#scopeContainer-${devAppId} .span-tag`);
         subscribedScopes = Array.from(scopeElements).map(el => el.textContent.replace('×', '').trim());
         scopeContainer.setAttribute('data-scopes', JSON.stringify(subscribedScopes));
-        tokenBtn = document.getElementById('regenerateKeyBtn');
+        tokenBtn = document.getElementById('regenerateKeyBtn-'+keyType);
     } else {
         /**
          * During the intial generate token request, the data-scopes attribute is set with subcribed scopes
@@ -526,7 +547,12 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
     const loadingState = tokenBtn.querySelector('.button-loading-state');
 
     // Clear any previous error messages
-    const errorContainer = document.getElementById('keyGenerationErrorContainer');
+    let errorContainer;
+    if (keyType === 'PRODUCTION') {
+        errorContainer = document.getElementById('keyGenerationErrorContainer-production');
+    } else {
+        errorContainer = document.getElementById('keyGenerationErrorContainer-sandbox');
+    }
     errorContainer.style.display = 'none';
     errorContainer.textContent = '';
 
@@ -583,7 +609,7 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
             tokenDetails.style.display = "block";
             let tokenText = document.getElementById("token_" + keyManager);
             tokenText.textContent = responseData.accessToken;
-            loadKeysTokenModal();
+            loadKeysTokenModal(keyType);
 
             // Reset button state
             normalState.style.display = 'inline-block';
@@ -702,8 +728,14 @@ function loadKeyGenModal() {
     }
 }
 
-function loadKeysViewModal() {
-    const modal = document.getElementById('keysViewModal');
+function loadKeysViewModal(keyType) {
+    console.log('Loading keys view modal for key type:', keyType);
+    const modalId = 'keysViewModal-' + keyType;
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.error('Modal not found:', modalId);
+        return;
+    }
     modal.style.display = 'flex';
 
     const authorizationCodeCheckbox = modal.querySelector('input[id^="grant-type-view-authorization_code-"]');
@@ -716,8 +748,13 @@ function loadKeysViewModal() {
     }
 }
 
-function loadKeysModifyModal() {
-    const modal = document.getElementById('keysModifyModal');
+function loadKeysModifyModal(keyType) {
+    const modalId = 'keysModifyModal-' + keyType;
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.error('Modal not found:', modalId);
+        return;
+    }
     modal.style.display = 'flex';
 
     // Collapse all advanced configurations and reset UI state
@@ -801,13 +838,23 @@ function validateGrantTypes(modal) {
     }
 }
 
-function loadKeysTokenModal() {
-    const modal = document.getElementById('keysTokenModal');
+function loadKeysTokenModal(keyType) {
+    const modalId = 'keysTokenModal-' + keyType;
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.error('Modal not found:', modalId);
+        return;
+    }
     modal.style.display = 'flex';
 }
 
-function loadKeysInstructionsModal() {
-    const modal = document.getElementById('keysInstructionsModal');
+function loadKeysInstructionsModal(keyType) {
+    const modalId = 'keysInstructionsModal-' + keyType;
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.error('Modal not found:', modalId);
+        return;
+    }
     modal.style.display = 'flex';
 }
 

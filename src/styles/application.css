@@ -104,7 +104,7 @@ thead tr th {
 /* OAuth2 Keys Section Styles */
 .oauth2-keys-section {
   padding: 0.5rem 1rem;
-  width: 320px;
+  width: 420px;
   border-left: 0.5px solid rgb(from var(--primary-main-color) r g b / 10%);
   margin-left: 1rem;
   position: relative;
@@ -215,4 +215,13 @@ thead tr th {
   width: 0.8rem;
   height: 0.8rem;
   border-width: 0.15em;
+}
+
+/* Error message containers for production and sandbox environments */
+#keyGenerationErrorContainer-production,
+#keyGenerationErrorContainer-sandbox {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  word-wrap: break-word;
+  line-height: 1.4;
 }

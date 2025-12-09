@@ -245,7 +245,6 @@ const loadApplication = async (req, res) => {
                 keyManager.applicationConfiguration = await mapDefaultValues(keyManager.applicationConfiguration);
             }
 
-
             let productionKeys = [];
             let sandboxKeys = [];
 
@@ -317,7 +316,7 @@ const loadApplication = async (req, res) => {
                 subAPIs: subList,
                 nonSubAPIs: nonSubscribedAPIs,
                 productionKeys: productionKeys,
-                isProduction: true,
+                sandboxKeys: sandboxKeys,
                 isApiKey: isApiKey,
                 subscriptionScopes: subscriptionScopes,
                 otherAPICount: otherAPICount,
@@ -444,7 +443,6 @@ async function getAPIKeys(req, apiId, applicationId) {
 }
 
 async function mapGrants(grantTypes) {
-
     let mappedGrantTypes = [];
     grantTypes.map(grantType => {
         if (grantType === 'password') {
@@ -486,7 +484,6 @@ async function mapGrants(grantTypes) {
 }
 
 async function mapDefaultValues(applicationConfiguration) {
-
     let appConfigs = [];
     let defaultConfigs = ["application_access_token_expiry_time", "user_access_token_expiry_time", "id_token_expiry_time"];
     applicationConfiguration.map(config => {
