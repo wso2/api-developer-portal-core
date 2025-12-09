@@ -37,7 +37,7 @@
                                     onClick="closeModal('apiKeyModal-{{subID}}')">
                                     Cancel
                                 </button>
-                                <button class="common-btn-primary btn-sm me-1" id="generateAPIKeyBtn-{{subID}}"
+                                <button class="common-btn-primary btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}" id="generateAPIKeyBtn-{{subID}}"
                                     onclick="">
                                     <span class="button-normal-state">
                                         <i class="bi bi-key me-1"></i> Generate

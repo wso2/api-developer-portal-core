@@ -18,6 +18,8 @@
 /* eslint-disable no-undef */
 const configurePassport = require('../middlewares/passport');
 const passport = require('passport');
+const logger = require('../config/logger');
+const { logUserAction } = require('../middlewares/auditLogger');
 const config = require(process.cwd() + '/config.json');
 const fs = require('fs');
 const path = require('path');
@@ -28,6 +30,7 @@ const IdentityProviderDTO = require("../dto/identityProvider");
 const minimatch = require('minimatch');
 const { validationResult } = require('express-validator');
 const { renderGivenTemplate } = require('../utils/util');
+const { trackLoginTrigger, trackLogoutTrigger } = require('../utils/telemetry');
 
 const filePrefix = config.pathToContent;
 
@@ -53,7 +56,11 @@ const fetchAuthJsonContent = async (req, orgName) => {
         }
         return new IdentityProviderDTO(response[0].dataValues);
     } catch (error) {
-        console.error("Failed to fetch identity provider details", error);
+        logger.error("Failed to fetch identity provider details", {
+            orgName: orgName,
+            error: error.message,
+            stack: error.stack
+        });
         return config.identityProvider;
     }
 };
@@ -77,10 +84,12 @@ const login = async (req, res, next) => {
         const fidp = req.query.fidp;
         if (fidp && config.fidp[fidp]) {
             if (fidp == 'enterprise' && req.query.username) {
+                req.session.username = req.query.username;
                 await passport.authenticate('oauth2', { fidp: config.fidp[fidp], username: req.query.username })(req, res, next);
             } else {
                 await passport.authenticate('oauth2', { fidp: config.fidp[fidp] })(req, res, next);
             }
+            trackLoginTrigger({ orgName });
         } else if (fidp && fidp == 'default') {
             await passport.authenticate('oauth2')(req, res, next);
         } else { 
@@ -107,7 +116,12 @@ const handleCallback = async (req, res, next) => {
             }
         })
         .catch(error => {
-            console.error("Error validating request parameters: " + error);
+            logger.error("Error validating request parameters", {
+                error: error.message,
+                path: req.path,
+                method: req.method,
+                params: req.params
+            });
             return res.status(500).json({ message: 'Internal Server Error' });
         });
     await passport.authenticate(
@@ -193,8 +207,19 @@ const handleLogOut = async (req, res) => {
         const logoutURL = match ? match[1] : null;
         req.logout((err) => {
             if (err) {
-                console.error("Logout error:", err);
+                logger.error("Logout error", {
+                    userId: req.user?.id || req.user?.username || 'unknown',
+                    orgName: req.params.orgName,
+                    error: err.message,
+                    stack: err.stack
+                });
             }
+            // Log successful logout action
+            logUserAction('USER_LOGOUT', req, {
+                orgName: req.params.orgName,
+                logoutURL: logoutURL
+            });
+            trackLogoutTrigger({ orgName: req.params.orgName });
             req.session.currentPathURI = currentPathURI;
             res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${authJsonContent.logoutRedirectURI}&id_token_hint=${idToken}`);
         });

@@ -31,8 +31,11 @@
             <div class="defaultapi-endpoint-row col-12 col-xl-9">
                 <div class="defaultapi-endpoint-content">
                     <span class="defaultapi-development-label">Production Endpoint</span>
-                    <div class="defaultapi-endpoint-url-container">
-                        <span class="defaultapi-endpoint-url">{{resources.serverDetails.productionURL}}</span>
+                    <div class="defaultapi-endpoint-url-container d-flex">
+                        <pre id="token_api_prod_url" class="defaultapi-endpoint-url token-text mb-0">{{resources.serverDetails.productionURL}}</pre>
+                        <a class="copy-button" aria-label="Copy token" type="button" onclick="copyToken('api_prod_url')">
+                            <i class="bi bi-copy"></i>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -42,8 +45,11 @@
             <div class="defaultapi-endpoint-row col-12 col-xl-9">
                 <div class="defaultapi-endpoint-content">
                     <span class="defaultapi-development-label">Sandbox Endpoint</span>
-                    <div class="defaultapi-endpoint-url-container">
-                        <span class="defaultapi-endpoint-url">{{resources.serverDetails.sandboxURL}}</span>
+                    <div class="defaultapi-endpoint-url-container d-flex">
+                        <pre id="token_api_dev_url" class="defaultapi-endpoint-url token-text mb-0">{{resources.serverDetails.sandboxURL}}</pre>
+                        <a class="copy-button" aria-label="Copy token" type="button" onclick="copyToken('api_dev_url')">
+                            <i class="bi bi-copy"></i>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -51,6 +57,7 @@
             {{/unless}}
             {{/if}}
         </div>
+        {{#unless (eq apiMetadata.apiInfo.apiType "WS")}}
         <div class="defaultapi-section">
             <div class="container-header mb-4">Scopes</div>
             {{#if scopes.length}}
@@ -61,7 +68,9 @@
             <span> No scopes available </span>
             {{/if}}
         </div>
+        {{/unless}}
         {{#unless (eq apiMetadata.apiInfo.apiType "MCP")}}
+        {{#unless (eq apiMetadata.apiInfo.apiType "WS")}}
         <div class="defaultapi-section">
         <div class="container-header mb-4">Resources</div>
         <div class="defaultapi-resources col-12">
@@ -77,5 +86,22 @@
         </div>
         </div>
         {{/unless}}
+        {{/unless}}
+        {{#if (eq apiMetadata.apiInfo.apiType "WS")}}
+        <div class="defaultapi-section">
+            <div class="container-header mb-4">Channels</div>
+            <div class="defaultapi-resources col-12">
+                {{#each resources.channels}}
+                <div class="defaultapi-resources-channel">
+                    <div class="defaultapi-resources-channel-operations">
+                        <div class="pub-box">PUB</div>
+                        <div class="sub-box">SUB</div>
+                    </div>
+                    <div class="defaultapi-resource-path">{{name}}</div>
+                </div>
+                {{/each}}
+            </div>
+        </div>
+        {{/if}}
     </div>
 </section>

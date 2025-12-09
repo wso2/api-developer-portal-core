@@ -19,13 +19,16 @@
 const path = require('path');
 const fs = require('fs');
 const Handlebars = require('handlebars');
+const logger = require('../config/logger');
+const { logUserAction } = require('../middlewares/auditLogger');
 const { renderTemplate, renderTemplateFromAPI } = require('../utils/util');
+const { trackHomePageVisit } = require('../utils/telemetry');
 const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
 
 const filePrefix = config.pathToContent;
-const baseURLDev = config.baseUrl  + constants.ROUTE.VIEWS_PATH;
+const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
 
 const loadOrganizationContent = async (req, res) => {
 
@@ -44,6 +47,12 @@ const loadDefaultLandingPage = async (req, res) => {
     const templateResponse = await fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
     const template = await Handlebars.compile(templateResponse);
     html = template();
+    
+    // Track home page visit telemetry for default landing page
+    trackHomePageVisit({
+        idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
+    });
+    
     res.send(html);
 }
 const loadOrgContentFromFile = async (req, res) => {
@@ -55,23 +64,55 @@ const loadOrgContentFromFile = async (req, res) => {
         userProfiles: mockProfileData,
         baseUrl: baseURLDev + req.params.viewName
     };
+    
+    // Track home page visit telemetry for dev mode
+    trackHomePageVisit({
+        idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
+    });
+    
     return renderTemplate(filePrefix + 'pages/home/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false)
 }
 
 const loadOrgContentFromAPI = async (req, res) => {
-
     let html;
     const orgName = req.params.orgName;
+    const orgDetails = await adminDao.getOrganization(orgName);
+    const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
     try {
         const orgId = await adminDao.getOrgId(orgName);
+        let profile = null;
+        if (req.user) {
+            profile = {
+                imageURL: req.user.imageURL,
+                firstName: req.user.firstName,
+                lastName: req.user.lastName,
+                email: req.user.email,
+            }
+        }
         templateContent = {
-            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName
+            devportalMode: devportalMode,
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName,
+            profile: req.isAuthenticated() ? profile : null
         };
         html = await renderTemplateFromAPI(templateContent, orgId, orgName, 'pages/home', req.params.viewName);
+        
+        // Track home page visit telemetry
+        trackHomePageVisit({ 
+            orgId: orgId, 
+            idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
+        });
     } catch (error) {
-        console.error(`Failed to load organization :`, error);
-        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
-        constants.COMMON_ERROR_MESSAGE, true);
+        logger.error(`Failed to load organization`, {
+            orgName: req.params?.orgName,
+            error: error.message,
+            stack: error.stack
+        });
+        const templateContent = {
+            devportalMode: devportalMode,
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+            errorMessage: constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE,
+        }
+        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
         return res.send(html);
     }
     return html;

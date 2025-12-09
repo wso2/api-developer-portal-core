@@ -22,6 +22,7 @@ const apiDao = require('../dao/apiMetadata');
 const util = require('../utils/util');
 const fs = require('fs');
 const path = require('path');
+const logger = require('../config/logger');
 const IdentityProviderDTO = require("../dto/identityProvider");
 const constants = require('../utils/constants');
 const { validationResult } = require('express-validator');
@@ -32,28 +33,30 @@ const config = require(process.cwd() + '/config.json');
 const controlPlaneUrl = config.controlPlane.url;
 const { invokeApiRequest } = require('../utils/util');
 const { Sequelize } = require("sequelize");
+const { trackGenerateCredentials, trackSubscribeApi, trackUnsubscribeApi } = require('../utils/telemetry');
 
 const createOrganization = async (req, res) => {
+    logger.info('Initiate organization creation...', req.body);
 
-    console.log("Received request to create organization");
     const rules = util.validateOrganization();
     for (let validation of rules) {
         await validation.run(req);
     }
-    console.log("Organization creation request payload validation successful");
 
-    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json(util.getErrors(errors));
+        const errObj = util.getErrors(errors);
+        logger.error('Organization creation request validation failed', {
+            errors: errObj
+        });
+        return res.status(400).json(errObj);
     }
-    console.log("Organization creation request validation successful");
+    logger.info('Organization creation request validation successful');
 
     const payload = req.body;
-    const orgConfig = {
+    payload.orgConfig = {
         devportalMode: constants.API_TYPE.DEFAULT,
-    }
-    payload.orgConfig = orgConfig;
+    };
 
     let organization = "";
     try {
@@ -62,28 +65,39 @@ const createOrganization = async (req, res) => {
         }, async (t) => {
             organization = await adminDao.createOrganization(payload, t);
             const orgId = organization.ORG_ID;
-            console.log(`Organization created successfully. orgId: ${orgId}, orgName: ${organization.ORG_NAME}`);
+            logger.info('Organization created successfully', {
+                orgId,
+                orgName: organization.ORG_NAME
+            });
 
             // create default label
             const labels = await apiDao.createLabels(organization.ORG_ID, [{ name: 'default', displayName: 'default' }], t);
             const labelId = labels[0].dataValues.LABEL_ID;
-            console.log(`Default label created successfully. labelId: ${labelId}, orgId: ${orgId}`);
-            
+            logger.info('Default label created successfully', {
+                orgId
+            });
+
             //create default view
             const viewResponse = await apiDao.addView(orgId, { name: 'default', displayName: 'default' }, t);
             const viewID = viewResponse.dataValues.VIEW_ID;
-            console.log(`Default view created successfully. viewId: ${viewID}, orgId: ${orgId}`);
-            
+            logger.info('Default view created successfully', {
+                orgId
+            });
+
             await apiDao.addLabel(orgId, labelId, viewID, t);
             //create default provider
             await adminDao.createProvider(organization.ORG_ID, { name: 'WSO2', providerURL: config.controlPlane.url }, t);
-            console.log(`Default provider created successfully. orgId: ${orgId}`);
+            logger.info('Default provider created successfully', {
+                orgId
+            });
 
             //store default subscription policies
             if (config.generateDefaultSubPolicies) {
                 await apiDao.bulkCreateSubscriptionPolicies(orgId, constants.DEFAULT_SUBSCRIPTION_PLANS, t);
             }
-            console.log(`Default subscription policy config: ${config.generateDefaultSubPolicies}`);
+            logger.info('Default subscription policies created successfully', {
+                orgId
+            });
         });
 
         const orgCreationResponse = {
@@ -102,16 +116,21 @@ const createOrganization = async (req, res) => {
             groupClaimName: organization.GROUP_CLAIM_NAME,
             orgConfiguration: organization.dataValues.ORG_CONFIG
         };
-        console.log(`Organization created successfully. orgId: ${orgCreationResponse.orgId}, orgName: ${orgCreationResponse.orgName}`);
+        logger.info('Organization creation flow completed successfully', {
+            orgId: orgCreationResponse.orgId,
+            orgName: orgCreationResponse.orgName,
+        });
         res.status(201).send(orgCreationResponse);
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.ORG_CREATE_ERROR}`, error);
+        logger.error('Organization creation failed', {
+            error: error.message,
+            stack: error.stack
+        });
         util.handleError(res, error);
     }
 };
 
 const getOrganizations = async (req, res) => {
-
     try {
         const orgList = await getAllOrganizations();
         res.status(200).send(orgList);
@@ -121,7 +140,6 @@ const getOrganizations = async (req, res) => {
 };
 
 const getAllOrganizations = async () => {
-
     const organizations = await adminDao.getOrganizations();
     const orgList = [];
     if (organizations.length > 0) {
@@ -148,15 +166,17 @@ const getAllOrganizations = async () => {
 }
 
 const updateOrganization = async (req, res) => {
-
+    const orgId = req.params.orgId;
+    logger.info('Initiate update organization...', {
+        orgId,
+        ...req.body
+    });
     try {
-        const orgId = req.params.orgId;
         if (!orgId) {
-            console.log("Missing required parameter: 'orgId'");
+            logger.warn('Missing required parameter: orgId');
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
         const rules = util.validateOrganization();
-
         for (let validation of rules) {
             await validation.run(req);
         }
@@ -167,6 +187,9 @@ const updateOrganization = async (req, res) => {
         const payload = req.body;
         payload.orgId = orgId;
         const [, updatedOrg] = await adminDao.updateOrganization(payload);
+        logger.info('Organization update successful', {
+            orgId
+        });
         res.status(200).json({
             orgId: updatedOrg[0].dataValues.ORG_ID,
             orgName: updatedOrg[0].dataValues.ORG_NAME,
@@ -184,36 +207,51 @@ const updateOrganization = async (req, res) => {
             orgConfiguration: updatedOrg[0].dataValues.ORG_CONFIG
         });
     } catch (error) {
-        console.error(error);
-        console.error(`${constants.ERROR_MESSAGE.ORG_UPDATE_ERROR}, ${error}`);
+        logger.error('Organization update failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId
+        });
         util.handleError(res, error);
     }
 };
 
 const deleteOrganization = async (req, res) => {
-
+    const orgId = req.params.orgId;
+    logger.info('Initiate delete organization...', {
+        orgId
+    });
     try {
-        const orgId = req.params.orgId;
         if (!orgId) {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
         const deletedRowsCount = await adminDao.deleteOrganization(orgId);
         if (deletedRowsCount > 0) {
+            logger.info('Organization deletion successful', {
+                orgId
+            });
             res.status(204).send();
         } else {
             throw new CustomError(404, "Records Not Found", 'Organization not found');
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.ORG_DELETE_ERROR}, ${error}`);
+        logger.error('Organization deletion failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId
+        });
         util.handleError(res, error);
     }
 };
 
 const createIdentityProvider = async (req, res) => {
-
+    const orgId = req.params.orgId;
+    logger.info('Initiate create identity provider...', {
+        orgId,
+        ...req.body
+    });
     try {
         const idpData = req.body;
-        const orgId = req.params.orgId;
         if (!orgId) {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
@@ -226,18 +264,28 @@ const createIdentityProvider = async (req, res) => {
             return res.status(400).json(util.getErrors(errors));
         }
         const idpResponse = await adminDao.createIdentityProvider(orgId, idpData);
+        logger.info('Identity provider created successfully', {
+            orgId
+        });
         res.status(201).send(new IdentityProviderDTO(idpResponse.dataValues));
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.IDP_CREATE_ERROR}, ${error}`);
+        logger.error('Identity provider creation failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId
+        });
         util.handleError(res, error);
     }
 };
 
 const updateIdentityProvider = async (req, res) => {
-
+    const orgId = req.params.orgId;
+    const idpData = req.body;
+    logger.info('Initiate update identity provider...', {
+        orgId,
+        ...idpData
+    });
     try {
-        const orgId = req.params.orgId;
-        const idpData = req.body;
         if (!orgId) {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
@@ -253,9 +301,16 @@ const updateIdentityProvider = async (req, res) => {
         if (!updatedRows) {
             throw new Sequelize.EmptyResultError("No record found to update");
         }
+        logger.info('Identity provider updated successfully', {
+            orgId
+        });
         res.status(200).send(new IdentityProviderDTO(updatedIDP[0].dataValues));
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.IDP_UPDATE_ERROR}, ${error}`);
+        logger.error('Identity provider update failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId
+        });
         util.handleError(res, error);
     }
 };
@@ -275,26 +330,39 @@ const getIdentityProvider = async (req, res) => {
             res.status(404).send();
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.IDP_NOT_FOUND}, ${error}`);
+        logger.error('Identity provider retrieval failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId: orgID
+        });
         util.handleError(res, error);
     }
 }
 
 const deleteIdentityProvider = async (req, res) => {
-
-    const orgID = req.params.orgId;
-    if (!orgID) {
+    const orgId = req.params.orgId;
+    logger.info('Initiate delete identity provider...', {
+        orgId: orgId
+    });
+    if (!orgId) {
         throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
     }
     try {
-        const idpDeleteResponse = await adminDao.deleteIdentityProvider(orgID);
+        const idpDeleteResponse = await adminDao.deleteIdentityProvider(orgId);
         if (idpDeleteResponse === 0) {
             throw new Sequelize.EmptyResultError("Resource not found to delete");
         } else {
+            logger.info('Identity provider deleted successfully', {
+                orgId: orgId
+            });
             res.status(200).send("Resouce Deleted Successfully");
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.IDP_DELETE_ERROR}, ${error}`);
+        logger.error('Identity provider deletion failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId
+        });
         util.handleError(res, error);
     }
 };
@@ -302,29 +370,50 @@ const deleteIdentityProvider = async (req, res) => {
 const createOrgContent = async (req, res) => {
     const orgId = req.params.orgId;
     const viewName = req.params.name;
-    if (!orgId) {
-        throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
-    }
-    const zipPath = req.file.path;
+    logger.info('Initiate create organization content...', {
+        orgId,
+        viewName
+    });
+    
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
+
     try {
+        if (!orgId) {
+            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+        }
+        const zipPath = req.file?.path;
+        if (!zipPath) {
+            throw new CustomError(400, "Bad Request", "Missing required zip file");
+        }
+        if (req.file.size > 50 * 1024 * 1024) {
+            throw new CustomError(400, "Bad Request", "File size exceeds the 50MB limit");
+        }
         await util.unzipDirectory(zipPath, extractPath);
         const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'), viewName);
         for (const { filePath, fileName, fileContent, fileType } of files) {
             await createContent(filePath, fileName, fileContent, fileType, orgId, viewName);
         }
+        logger.info('Organization content created successfully', {
+            orgId,
+            viewName
+        });
         res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
         fs.rmSync(extractPath, { recursive: true, force: true });
 
     } catch (error) {
-        console.log(`${constants.ERROR_MESSAGE.ORG_CONTENT_CREATE_ERROR}, ${error}`);
+        logger.error('Organization content creation failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId,
+            viewName,
+            fileName: req.file?.originalname
+        });
         fs.rmSync(extractPath, { recursive: true, force: true });
         return util.handleError(res, error);
     }
 };
 
 const createContent = async (filePath, fileName, fileContent, fileType, orgId, viewName) => {
-
     let content;
     // eslint-disable-next-line no-useless-catch
     try {
@@ -347,12 +436,22 @@ const createContent = async (filePath, fileName, fileContent, fileType, orgId, v
 const updateOrgContent = async (req, res) => {
     const orgId = req.params.orgId;
     const viewName = req.params.name;
-    if (!orgId) {
-        throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
-    }
-    const zipPath = req.file.path;
+    logger.info('Initiate update organization content...', {
+        orgId,
+        viewName
+    });
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
     try {
+        if (!orgId) {
+            throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
+        }
+        const zipPath = req.file?.path;
+        if (!zipPath) {
+            throw new CustomError(400, "Bad Request", "Missing required zip file");
+        }
+        if (req.file.size > 50 * 1024 * 1024) {
+            throw new CustomError(400, "Bad Request", "File size exceeds the 50MB limit");
+        }
         await util.unzipDirectory(zipPath, extractPath);
         const files = await util.readFilesInDirectory(extractPath, orgId, req.protocol, req.get('host'), viewName);
         for (const { filePath, fileName, fileContent, fileType } of files) {
@@ -368,15 +467,31 @@ const updateOrgContent = async (req, res) => {
                         viewName: viewName
                     });
                 } else {
-                    console.log("Update Content not exists, hense creating new content");
+                    logger.info('Content not found during update, creating new content', {
+                        orgId,
+                        viewName,
+                        fileType,
+                        fileName,
+                        filePath
+                    });
                     await createContent(filePath, fileName, fileContent, fileType, orgId, viewName);
                 }
             }
         }
         fs.rmSync(extractPath, { recursive: true, force: true });
+        logger.info('Organization content updated successfully', {
+            orgId,
+            viewName
+        });
         res.status(201).send({ "orgId": orgId, "fileName": req.file.originalname });
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.ORG_CONTENT_UPDATE_ERROR}`, error);
+        logger.error('Organization content update failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId,
+            viewName,
+            fileName: req.file?.originalname
+        });
         fs.rmSync(extractPath, { recursive: true, force: true });
         util.handleError(res, error);
     }
@@ -394,44 +509,67 @@ const getOrgContent = async (orgId, viewName, fileType, fileName, filePath) => {
 };
 
 const deleteOrgContent = async (req, res) => {
-
+    const orgId = req.params.orgId;
+    logger.info('Initiate delete organization content...', {
+        orgId,
+        viewName: req.params.name
+    });
     try {
         const fileName = req.query.fileName;
         let deletedRowsCount;
         if (!req.query.fileName) {
-            deletedRowsCount = await adminDao.deleteAllOrgContent(req.params.orgId, req.params.name);
+            deletedRowsCount = await adminDao.deleteAllOrgContent(orgId, req.params.name);
         } else {
-            deletedRowsCount = await adminDao.deleteOrgContent(req.params.orgId, req.params.name, fileName);
+            deletedRowsCount = await adminDao.deleteOrgContent(orgId, req.params.name, fileName);
         }
         if (deletedRowsCount > 0) {
+            logger.info('Organization content deletion successful', {
+                orgId,
+                viewName: req.params.name
+            });
             res.status(204).send();
         } else {
             throw new CustomError(404, "Records Not Found", 'Organization not found');
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.ORG_CONTENT_DELETE_ERROR}, ${error}`);
+        logger.error('Organization content deletion failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId,
+        });
         util.handleError(res, error);
     }
 };
 
 const deleteAllOrgContent = async (req, res) => {
-
+    const orgId = req.params.orgId;
+    logger.info('Initiate delete all organization content...', {
+        orgId,
+        viewName: req.params.name
+    });
     try {
-
-        const deletedRowsCount = await adminDao.deleteAllOrgContent(req.params.orgId, req.params.name, fileName);
+        const deletedRowsCount = await adminDao.deleteAllOrgContent(orgId, req.params.name, fileName);
         if (deletedRowsCount > 0) {
+            logger.info('All organization content deletion successful', {
+                orgId,
+                viewName: req.params.name
+            });
             res.status(204).send();
         } else {
             throw new CustomError(404, "Records Not Found", 'Organization not found');
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.ORG_CONTENT_DELETE_ERROR}, ${error}`);
+        logger.error('All organization content deletion failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId,
+            viewName: req.params.name
+        });
         util.handleError(res, error);
     }
 };
 
 const createProvider = async (req, res) => {
-
     const orgID = req.params.orgId;
     const payload = req.body;
     const rules = util.validateProvider();
@@ -458,18 +596,22 @@ const createProvider = async (req, res) => {
         }
         res.status(201).send(providerData);
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.PROVIDER_CREATE_ERROR}, ${error}`);
+        logger.error('Provider creation failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId: orgID,
+            providerName: payload?.name
+        });
         util.handleError(res, error);
     }
 }
 
 const updateProvider = async (req, res) => {
-
     try {
         const orgId = req.params.orgId;
         const payload = req.body;
         if (!orgId) {
-            console.log("Missing required parameter: 'orgId'");
+            logger.warn('Missing required parameter: orgId');
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
         const rules = util.validateProvider();
@@ -495,25 +637,33 @@ const updateProvider = async (req, res) => {
         }
         res.status(200).json(providerData);
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.PROVIDER_UPDATE_ERROR}, ${error}`);
+        logger.error('Provider update failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId: req.params.orgId
+        });
         util.handleError(res, error);
     }
-
 }
 
 const getProviders = async (req, res) => {
-
+    const orgId = req.params.orgId;
     try {
-        const orgID = req.params.orgId;
+
         if (req.query.name) {
             const providerName = req.query.name;
-            return res.status(200).send(await getProvidetByName(orgID, providerName));
+            return res.status(200).send(await getProvidetByName(orgId, providerName));
         } else {
-            const providerList = await getAllProviders(orgID);
+            const providerList = await getAllProviders(orgId);
             return res.status(200).send(providerList);
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.PROVIDER_FETCH_ERROR}, ${error}`);
+        logger.error('Provider fetch failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId,
+            providerName: req.query?.name
+        });
         util.handleError(res, error);
     }
 }
@@ -552,9 +702,8 @@ const getAllProviders = async (orgID) => {
 }
 
 const deleteProvider = async (req, res) => {
-
+    const orgId = req.params.orgId;
     try {
-        const orgId = req.params.orgId;
         const providerName = req.query.name;
         let property, deletedRowsCount;
         if (req.query.property) {
@@ -572,43 +721,60 @@ const deleteProvider = async (req, res) => {
             throw new CustomError(404, "Records Not Found", 'Provider property not found');
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.PROVIDER_DELETE_ERROR}`, error);
+        logger.error('Provider deletion failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId
+        });
         util.handleError(res, error);
     }
 }
 
 const createDevPortalApplication = async (req, res) => {
-
+    const orgId = req.params.orgId;
+    logger.info('Initiate create application...', {
+        orgId: orgId,
+        ...req.body
+    });
     try {
-        const orgID = req.params.orgId;
         const userID = req[constants.USER_ID]
-        if (!orgID) {
+        if (!orgId) {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
         const applicationData = req.body;
         try {
-            const application = await adminDao.createApplication(orgID, userID, applicationData);
+            const application = await adminDao.createApplication(orgId, userID, applicationData);
             res.status(201).send(new ApplicationDTO(application.dataValues));
         } catch (error) {
-            console.error(`${constants.ERROR_MESSAGE.PROVIDER_CREATE_ERROR}`, error);
+            logger.error('Provider creation failed during application creation', {
+                error: error.message,
+                orgId
+            });
             util.handleError(res, error);
         }
-
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.APPLICATION_CREATE_ERROR}`, error);
+        logger.error('Application creation failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId,
+            applicationName: req.body?.name
+        });
         util.handleError(res, error);
     }
-
 }
 
 const updateDevPortalApplication = async (req, res) => {
-
+    const { orgId, appId } = req.params;
+    logger.info('Initiate update application...', {
+        orgId: orgId,
+        appId: appId,
+        ...req.body
+    });
     try {
-        const { orgId, appId } = req.params;
         const userId = req[constants.USER_ID]
         const applicationData = req.body;
         if (!orgId) {
-            console.log("Missing required parameter: 'orgId'");
+            logger.warn('Missing required parameter: orgId');
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
         const [updatedRows, updatedApp] = await adminDao.updateApplication(orgId, appId, userId, applicationData);
@@ -617,10 +783,14 @@ const updateDevPortalApplication = async (req, res) => {
         }
         res.status(200).send(new ApplicationDTO(updatedApp[0].dataValues));
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.APPLICATION_UPDATE_ERROR}`, error);
+        logger.error('Application update failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId,
+            applicationId: req.params.applicationId
+        });
         util.handleError(res, error);
     }
-
 }
 
 const getDevPortalApplications = async (req, res) => {
@@ -638,7 +808,11 @@ const getDevPortalApplications = async (req, res) => {
             throw new CustomError(404, "Records Not Found", 'Applications not found');
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.APPLICATION_RETRIEVE_ERROR}`, error);
+        logger.error('Application retrieval failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId: orgID
+        });
         util.handleError(res, error);
     }
 }
@@ -669,15 +843,22 @@ const getDevPortalApplicationDetails = async (req, res) => {
             throw new CustomError(404, "Records Not Found", 'Applications not found');
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.APPLICATION_RETRIEVE_ERROR}`, error);
+        logger.error('Application retrieval failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId: orgID
+        });
         util.handleError(res, error);
     }
 
 }
 
 const deleteDevPortalApplication = async (req, res) => {
-
     const { orgId, appId } = req.params;
+    logger.info('Initiate delete application...', {
+        orgId: orgId,
+        appId: appId
+    });
     const userID = req[constants.USER_ID]
     try {
         const appDeleteResponse = await adminDao.deleteApplication(orgId, appId, userID);
@@ -687,15 +868,23 @@ const deleteDevPortalApplication = async (req, res) => {
             res.status(200).send("Resouce Deleted Successfully");
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.APPLICATION_DELETE_ERROR}`, error);
+        logger.error('Application deletion failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId: req.params?.orgId,
+            applicationId: req.params?.applicationId
+        });
         util.handleError(res, error);
     }
 }
 
 const createSubscription = async (req, res) => {
-
+    const orgID = req.params.orgId;
+    logger.info('Initiate create subscription...', {
+        orgId: orgID,
+        ...req.body
+    });
     try {
-        const orgID = req.params.orgId;
         let isShared;
         let sharedApp = [];
         let nonSharedApp = [];
@@ -705,7 +894,6 @@ const createSubscription = async (req, res) => {
             try {
                 sharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
                 nonSharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, false);
-
                 if (sharedApp.length > 0) {
                     isShared = true;
                     const response = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, {
@@ -724,6 +912,12 @@ const createSubscription = async (req, res) => {
                     await handleSubscribe(orgID, req.body.applicationID, nonSharedApp[0].dataValues.API_REF_ID, nonSharedApp[0].dataValues.SUBSCRIPTION_REF_ID, response, isShared, t);
                 }
                 await adminDao.createSubscription(orgID, req.body, t);
+                trackSubscribeApi({
+                    orgId: orgID,
+                    appId: req.body.applicationID,
+                    apiId: req.body.apiId,
+                    idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
+                });
                 return res.status(200).json({ message: 'Subscribed successfully' });
 
             } catch (error) {
@@ -736,7 +930,11 @@ const createSubscription = async (req, res) => {
                          * API already exisits (create new row) **/
                         for (const subscription of response.list) {
                             if (subscription.apiId === req.body.apiReferenceID) {
-                                console.log("Subscription already exists in cp, hence creating/updating the subscription in db");
+                                logger.info('Subscription already exists in control plane, updating database', {
+                                    orgId: req.params?.orgId,
+                                    apiId: req.params?.apiId,
+                                    applicationId: req.params?.applicationId
+                                });
                                 await handleSubscribe(orgID, req.body.applicationID, appRef.dataValues.API_REF_ID, appRef.dataValues.SUBSCRIPTION_REF_ID, subscription, sharedApp.length > 0 ? true : false, t);
                                 await adminDao.createSubscription(orgID, req.body, t);
                                 return res.status(200).json({ message: 'Subscribed successfully' });
@@ -744,24 +942,42 @@ const createSubscription = async (req, res) => {
                         }
                     }
                 } catch (error) {
-                    console.error("Error occurred while retrieving subscribing to API", error);
+                    logger.error('Error occurred while retrieving API subscription', {
+                        error: error.message,
+                        orgId: req.params?.orgId,
+                        apiId: req.params?.apiId,
+                        applicationId: req.params?.applicationId
+                    });
                     return util.handleError(res, error);
                 }
 
-                console.error("Error occurred while subscribing to API", error);
+                logger.error('Error occurred while subscribing to API', {
+                    error: error.message,
+                    orgId: req.params?.orgId,
+                    apiId: req.params?.apiId,
+                    applicationId: req.params?.applicationId
+                });
                 return util.handleError(res, error);
             }
         });
     } catch (error) {
-        console.error("Error occurred while subscribing to API", error);
+        logger.error('Error occurred while subscribing to API', {
+            error: error.message,
+            orgId: req.params?.orgId,
+            apiId: req.params?.apiId,
+            applicationId: req.params?.applicationId
+        });
         return util.handleError(res, error);
     }
 }
 
 const updateSubscription = async (req, res) => {
-
+    const orgID = req.params.orgId;
+    logger.info('Initiate update subscription...', {
+        orgId: orgID,
+        ...req.body
+    });
     try {
-        const orgID = req.params.orgId;
         await sequelize.transaction({
             timeout: 60000,
         }, async (t) => {
@@ -797,12 +1013,22 @@ const updateSubscription = async (req, res) => {
                 await adminDao.updateSubscription(orgID, req.body, t);
                 return res.status(201).json({ message: 'Updated subscription successfully' });
             } catch (error) {
-                console.error("Error occurred while subscribing to API", error);
+                logger.error('Error occurred while subscribing to API', {
+                    error: error.message,
+                    orgId: req.params?.orgId,
+                    apiId: req.params?.apiId,
+                    applicationId: req.params?.applicationId
+                });
                 return util.handleError(res, error);
             }
         });
     } catch (error) {
-        console.error("Error occurred while subscribing to API", error);
+        logger.error('Error occurred while subscribing to API', {
+            error: error.message,
+            orgId: req.params?.orgId,
+            apiId: req.params?.apiId,
+            applicationId: req.params?.applicationId
+        });
         return util.handleError(res, error);
     }
 }
@@ -845,7 +1071,12 @@ const getSubscription = async (req, res) => {
             throw new CustomError(404, "Records Not Found", 'Subscriptions not found');
         }
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_RETRIEVE_ERROR}`, error);
+        logger.error('Subscription retrieval failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId: orgID,
+            subId: subID
+        });
         util.handleError(res, error);
     }
 }
@@ -864,15 +1095,24 @@ const getAllSubscriptions = async (req, res) => {
         }
         res.status(200).send(subList);
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_RETRIEVE_ERROR}`, error);
+        logger.error('Subscription retrieval failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId: orgID,
+            appId: appID,
+            apiId: apiID
+        });
         util.handleError(res, error);
     }
 }
 
 const deleteSubscription = async (req, res) => {
-
     const orgID = req.params.orgId;
     const subID = req.params.subscriptionId;
+    logger.info('Initiate delete subscription...', {
+        orgId: orgID,
+        subId: subID
+    });
     try {
         await sequelize.transaction({
             timeout: 60000,
@@ -894,15 +1134,23 @@ const deleteSubscription = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.SUBSCRIPTION_DELETE_ERROR}`, error);
+        logger.error('Subscription deletion failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId: req.params?.orgId,
+            subscriptionId: req.params?.subscriptionId
+        });
         util.handleError(res, error);
     }
 }
 
 const createAppKeyMapping = async (req, res) => {
-
     const orgID = req.params.orgId;
     const userID = req[constants.USER_ID];
+    logger.info('Initiate create application key mapping...', {
+        orgId: orgID,
+        ...req.body
+    });
     let cpAppID = "";
     try {
         let responseData;
@@ -980,7 +1228,10 @@ const createAppKeyMapping = async (req, res) => {
 
             //delete app key mapping entries with no api id ref
             if (apiSubscriptions.length > 0) {
-                console.log("Delete app key mapping entries with no api id ref");
+                logger.info('Deleting app key mapping entries with no API ID reference', {
+                    orgId: req.params?.orgId,
+                    applicationId: req.params?.applicationId
+                });
                 await adminDao.deleteAppKeyMapping(orgID, appID, null, t);
             }
 
@@ -1007,9 +1258,18 @@ const createAppKeyMapping = async (req, res) => {
             }
             responseData.subscriptionScopes = subscriptionScopes;
         });
+        trackGenerateCredentials({
+            orgId: orgID,
+            appName: req.body.applicationName,
+            idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
+        });
         return res.status(200).json(responseData);
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.KEY_MAPPING_CREATE_ERROR}`, error);
+        logger.error('key mapping create error failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId: req.params?.orgId
+        });
         //delete control plane application
         if (cpAppID) {
             await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${cpAppID}`, {}, {});
@@ -1020,6 +1280,9 @@ const createAppKeyMapping = async (req, res) => {
 }
 
 async function mapKeys(req, clientID, keyManager, applicationId) {
+    logger.info('Mapping existing client ID with application', {
+        applicationId
+    });
     const body = {
         "consumerKey": clientID,
         "keyManager": keyManager,
@@ -1028,25 +1291,36 @@ async function mapKeys(req, clientID, keyManager, applicationId) {
     try {
         return await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/map-keys`, {}, body);
     } catch (error) {
-        console.error("Error occurred while mapping keys", error);
+        logger.error('Error occurred while mapping keys', {
+            error: error.message,
+            applicationId
+        });
         throw error;
     }
 };
 
 async function generateOAuthKey(req, cpAppID, tokenDetails) {
+    logger.info('Generating OAuth key for application', {
+        cpAppID
+    });
     try {
         return await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${cpAppID}/generate-keys`, {}, tokenDetails);
     } catch (error) {
         try {
             if (error.statusCode && error.statusCode === 409) {
-                console.log("OAuth key already exists in control plane, retrieving the existing key");
+                logger.info('OAuth key already exists in control plane, retrieving existing key', {
+                    cpAppID
+                });
                 const response = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${cpAppID}/keys`, {});
                 return response.list[0];
             } else {
                 throw error;
             }
         } catch (error) {
-            console.error("Error occurred while generating API key", error);
+            logger.error('Error occurred while generating API key', {
+                error: error.message,
+                cpAppID
+            });
             throw error;
         }
     }
@@ -1066,7 +1340,9 @@ function checkAdditionalValues(additionalValues) {
 }
 
 const createCPApplication = async (req, cpApplicationName) => {
-
+    logger.info('Creating control plane application', {
+        cpApplicationName
+    });
     try {
         //create control plane application
         const cpAppCreationResponse = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications`, {
@@ -1082,14 +1358,24 @@ const createCPApplication = async (req, cpApplicationName) => {
         return cpAppCreationResponse;
     } catch (error) {
         //application already exists
-        console.error(`${constants.ERROR_MESSAGE.KEY_MAPPING_CREATE_ERROR}`, error);
+        logger.error('key mapping create error failed', {
+            error: error.message,
+            stack: error.stack,
+            cpApplicationName
+        });
         if (error.statusCode && error.statusCode === 409) {
             try {
-                console.log("Application already exists in control plane, retrieving the existing application");
+                logger.info('Application already exists in control plane, retrieving existing application', {
+                    orgId: req.params?.orgId,
+                    cpApplicationName
+                });
                 const cpAppResponse = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications?query=${cpApplicationName}`, {}, {});
                 return cpAppResponse.list[0];
             } catch (error) {
-                console.error("Error occurred while fetching the application", error);
+                logger.error('Error occurred while fetching application', {
+                    error: error.message,
+                    cpApplicationName
+                });
                 throw error;
             }
         } else {
@@ -1099,7 +1385,11 @@ const createCPApplication = async (req, cpApplicationName) => {
 }
 
 const createCPSubscription = async (req, apiId, cpAppID, policyDetails) => {
-
+    logger.info('Creating control plane subscription', {
+        apiId,
+        cpAppID,
+        policyDetails: policyDetails.dataValues ? policyDetails.dataValues.POLICY_NAME : policyDetails
+    });
     try {
         const requestBody = {
             apiId: apiId,
@@ -1113,7 +1403,12 @@ const createCPSubscription = async (req, apiId, cpAppID, policyDetails) => {
             const response = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?apiId=${apiId}&applicationId=${cpAppID}`, {});
             return response.list[0];
         }
-        console.error(`${constants.ERROR_MESSAGE.KEY_MAPPING_CREATE_ERROR}`, error);
+        logger.error('key mapping create error failed', {
+            error: error.message,
+            stack: error.stack,
+            apiId,
+            cpAppID
+        });
         throw error;
     }
 }
@@ -1130,7 +1425,11 @@ const retriveAppKeyMappings = async (req, res) => {
         const appKeyMappings = await adminDao.getKeyMapping(orgId, appId);
         res.status(200).send(appKeyMappings);
     } catch (error) {
-        console.error(`${constants.ERROR_MESSAGE.KEY_MAPPING_RETRIEVE_ERROR}`, error);
+        logger.error('key mapping retrieve error failed', {
+            error: error.message,
+            stack: error.stack,
+            orgId
+        });
         util.handleError(res, error);
     }
 }
@@ -1153,19 +1452,28 @@ const getApplicationKeyMap = async (orgId, appId, userId) => {
 }
 
 const unsubscribeAPI = async (req, res) => {
+    const orgID = req.params.orgId;
+    logger.info('Initiate unsubscribe from API...', {
+        orgId: orgID,
+        ...req.query
+    });
     try {
-        const orgID = req.params.orgId;;
         const { appID, apiReferenceID, subscriptionID } = req.query;
-
         await sequelize.transaction({
             timeout: 60000,
         }, async (t) => {
             const sharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, true);
             const nonSharedToken = await adminDao.getApplicationKeyMapping(orgID, appID, false);
-            console.log("Unsubscribing from API with api ref id: ", apiReferenceID);
+            logger.info('Unsubscribing from API', {
+                apiReferenceID,
+                subscriptionId: req.params?.subscriptionId
+            });
             try {
                 if (nonSharedToken.length > 0) {
-                    console.log("Delete non-shared app key mapping entries with api ref id: ", apiReferenceID);
+                    logger.info('Deleting non-shared app key mapping entries', {
+                        apiReferenceID,
+                        subscriptionId: req.params?.subscriptionId
+                    });
                     for (const dataValues of nonSharedToken) {
                         if (dataValues.API_REF_ID === apiReferenceID) {
                             await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${dataValues.SUBSCRIPTION_REF_ID}`, {}, {})
@@ -1174,7 +1482,10 @@ const unsubscribeAPI = async (req, res) => {
                     }
                 }
                 if (sharedToken.length > 0) {
-                    console.log("Delete shared app key mapping entries with api ref id: ", apiReferenceID);
+                    logger.info('Deleting shared app key mapping entries', {
+                        apiReferenceID,
+                        subscriptionId: req.params?.subscriptionId
+                    });
                     for (const dataValues of sharedToken) {
                         if (dataValues.API_REF_ID === apiReferenceID) {
                             await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/subscriptions/${dataValues.SUBSCRIPTION_REF_ID}`, {}, {})
@@ -1183,25 +1494,48 @@ const unsubscribeAPI = async (req, res) => {
                     };
                 }
                 await adminDao.deleteSubscription(orgID, subscriptionID, t);
+                trackUnsubscribeApi({
+                    orgId: orgID,
+                    appId: appID,
+                    apiRefId: apiReferenceID,
+                    idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
+                });
                 return res.status(204).send();
             } catch (error) {
                 try {
                     if (error.statusCode && error.statusCode === 404) {
-                        console.log("Subscription not found in control plane, deleting the subscription from database");
+                        logger.info('Subscription not found in control plane, deleting from database', {
+                            subscriptionId: req.params?.subscriptionId
+                        });
                         await handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiReferenceID, t);
                         await adminDao.deleteSubscription(orgID, subscriptionID, t);
+                        trackUnsubscribeApi({
+                            orgId: orgID,
+                            appId: appID,
+                            apiRefId: apiReferenceID,
+                            idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
+                        });
                         return res.status(204).send();
                     }
                 } catch (error) {
-                    console.error("Error occurred while deleting subscription", error);
+                    logger.error('Error occurred while deleting subscription', {
+                        error: error.message,
+                        subscriptionId: req.params?.subscriptionId
+                    });
                     return util.handleError(res, error);
                 }
-                console.error("Error occurred while unsubscribing from API", error);
+                logger.error('Error occurred while unsubscribing from API', {
+                    error: error.message,
+                    subscriptionId: req.params?.subscriptionId
+                });
                 return util.handleError(res, error);
             }
         });
     } catch (error) {
-        console.error("Error occurred while unsubscribing from API", error);
+        logger.error('Error occurred while unsubscribing from API', {
+            error: error.message,
+            subscriptionId: req.params?.subscriptionId
+        });
         return util.handleError(res, error);
     }
 }
@@ -1209,7 +1543,11 @@ const unsubscribeAPI = async (req, res) => {
 async function handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiRefID, t) {
     try {
         if (sharedToken.length === 1 && nonSharedToken.length === 0) {
-            console.log("Update shared app key mapping entries with api ref id: ", apiRefID);
+            logger.info('Updating shared app key mapping entries', {
+                orgID,
+                appID,
+                apiRefID
+            });
             await adminDao.updateApplicationKeyMapping(apiRefID, {
                 orgID: sharedToken[0].dataValues.ORG_ID,
                 appID: sharedToken[0].dataValues.APP_ID,
@@ -1220,7 +1558,11 @@ async function handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiR
                 tokenType: constants.TOKEN_TYPES.OAUTH
             }, t);
         } else if (nonSharedToken.length === 1 && sharedToken.length === 0) {
-            console.log("Update non-shared app key mapping entries with api ref id: ", apiRefID);
+            logger.info('Updating non-shared app key mapping entries', {
+                orgID,
+                appID,
+                apiRefID
+            });
             await adminDao.updateApplicationKeyMapping(apiRefID, {
                 orgID: nonSharedToken[0].dataValues.ORG_ID,
                 appID: nonSharedToken[0].dataValues.APP_ID,
@@ -1236,7 +1578,12 @@ async function handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiR
             }
         }
     } catch (error) {
-        console.error("Transaction failed during unsubscribing", error);
+        logger.error('Transaction failed during unsubscribing', {
+            error: error.message,
+            orgID,
+            appID,
+            apiRefID
+        });
         throw error;
     }
 }

@@ -3,7 +3,7 @@
         <div class="modal-content custom-modal-content">
             <div class="custom-modal-header">
                 <h2 class="custom-modal-title m-0">Access Token</h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                <button type="button" class="btn-close" data-bs-dismiss="modal" data-cyid="keysTokenModal-close"  aria-label="Close"
                     onclick="closeModal('keysTokenModal')"></button>
             </div>
             <div class="custom-modal-body">
@@ -14,7 +14,7 @@
                     <div id="regenerateKeyBtn" class="d-flex">
                         <div class="row">
                             <div id="tokenDisplay_{{../name}}" style="display: none;">
-                                <div class="info-title pb-2">Request Permisssions (Scopes)</div>
+                                <div class="info-title pb-2">Request Permissions (Scopes)</div>
                                 <div class="input-scopes" id="scopeContainer-{{@root.applicationMetadata.id}}"
                                     data-scopes="{{json @root.subscriptionScopes}}">
                                     <input type="text" class="text-input" id="scope-{{@root.applicationMetadata.id}}"
@@ -48,7 +48,7 @@
                                         onClick="closeModal('keysTokenModal')">
                                         Cancel
                                     </button>
-                                    <button class="common-btn-primary btn-sm me-1" id="regenerateButton_{{../name}}"
+                                    <button class="common-btn-primary btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}" id="regenerateButton_{{../name}}"
                                         onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}')">
                                         <span class="button-normal-state">
                                             <i class="bi bi-arrow-clockwise"></i> Regenerate

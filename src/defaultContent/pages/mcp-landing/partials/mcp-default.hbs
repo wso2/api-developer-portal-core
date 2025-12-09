@@ -19,7 +19,7 @@
 <section class="section mb-4">
   <div class="container-fluid">
     <div class="defaultapi-section">
-      <div class="container-header mb-4">Server URL</div>
+      <div class="container-header mb-4">MCP Server URL</div>
       {{#if (eq resources.serverDetails "")}}
         <div class="defaultapi-endpoint-row col-12 col-xl-9">
           <div class="defaultapi-endpoint-content">
@@ -30,10 +30,11 @@
         {{#unless (eq resources.serverDetails.productionURL "")}}
           <div class="defaultapi-endpoint-row col-12 col-xl-9">
             <div class="defaultapi-endpoint-content">
-              <div class="defaultapi-endpoint-url-container">
-                <span
-                  class="defaultapi-endpoint-url"
-                >{{resources.serverDetails.productionURL}}</span>
+              <div class="defaultapi-endpoint-url-container d-flex">
+                <pre id="token_mcp_prod_url" class="defaultapi-endpoint-url token-text mb-0">{{resources.serverDetails.productionURL}}/mcp</pre>                
+                  <a class="copy-button" aria-label="Copy token" type="button" onclick="copyToken('mcp_prod_url')">
+                    <i class="bi bi-copy"></i>
+                  </a>
               </div>
             </div>
           </div>

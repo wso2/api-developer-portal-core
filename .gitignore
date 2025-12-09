@@ -3,12 +3,11 @@
 
 /dist
 
-/.pnp
-.pnp.js
-.yarn/install-state.gz
+/generated-sdks
 
-# testing
-/coverage
+# logs
+/logs
+*.log
 
 # next.js
 /.next/
@@ -99,3 +98,4 @@ config*.json
 secret*.json
 resources/default-layout
 resources/mock
+

@@ -23,6 +23,7 @@ const fs = require('fs');
 const path = require('path');
 const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
+const logger = require('../config/logger');
 
 const filePrefix = config.pathToContent;
 const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
@@ -31,7 +32,7 @@ const loadCustomContent = async (req, res) => {
 
     let html = "";
     const { orgName, viewName } = req.params;
-    let filePath = req.originalUrl.split("/" + orgName + constants.ROUTE.VIEWS_PATH + viewName + "/")[1];    
+    let filePath = req.originalUrl.split("/" + orgName + constants.ROUTE.VIEWS_PATH + viewName + "/")[1];
     if (config.mode === constants.DEV_MODE) {
         let templateContent = {};
         templateContent[constants.BASE_URL_NAME] = baseURLDev + viewName;
@@ -62,11 +63,29 @@ const loadCustomContent = async (req, res) => {
                 });
             }
             content[constants.BASE_URL_NAME] = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
+            let profile = null;
+            if (req.user) {
+                profile = {
+                    imageURL: req.user.imageURL,
+                    firstName: req.user.firstName,
+                    lastName: req.user.lastName,
+                    email: req.user.email,
+                }
+            }
             html = await renderTemplateFromAPI(content, orgId, orgName, filePath, viewName);
         } catch (error) {
-            console.error("Error while loading custom content", error);
-            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', 
-            constants.COMMON_ERROR_MESSAGE, true);
+            const templateContent = {
+                devportalMode: constants.API_TYPE.DEFAULT,
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+                errorMessage: constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE,
+            }
+            logger.error('Error while loading custom content', { 
+                orgName,
+                error: error.message, 
+                stack: error.stack,
+                filePath: req.params.filePath,
+            });
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
         }
     }
     res.send(html);

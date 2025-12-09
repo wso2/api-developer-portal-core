@@ -1,5 +1,6 @@
 <head>
   <link rel='stylesheet' href='/technical-styles/application.css' />
+  <link rel='stylesheet' href='/technical-styles/sdk-drawer.css' />
   <script src='/technical-scripts/subscription.js' defer></script>
   <script src='/technical-scripts/application-dashboard.js' defer></script>
   <link rel="stylesheet" href="/technical-styles/oauth2-key-generation.css" />
@@ -8,9 +9,12 @@
   <script src="/technical-scripts/api-key-generation.js" defer></script>
 </head>
 <main>
+    {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode }}
+    {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode }}
     {{> overview }}
     {{> apis }}
     {{> application-modal }}
+    {{> sdk-drawer }}
 
     {{!-- Modals for oauth2 buttons --}}
     {{> keys-view }}

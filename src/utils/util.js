@@ -20,6 +20,7 @@ const path = require('path');
 const fs = require('fs');
 const marked = require('marked');
 const Handlebars = require('handlebars');
+const logger = require('../config/logger');
 const { CustomError } = require('../utils/errors/customErrors');
 const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
@@ -99,18 +100,21 @@ async function loadTemplateFromAPI(orgID, filePath, viewName) {
 
 async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, viewName) {
 
-    var layoutContent = await loadLayoutFromAPI(orgID, viewName);
-    if (layoutContent === "") {
-        console.log("Layout not found for org: " + orgName + " and view: " + viewName);
-        //load default org content
-        html = renderTemplate(filePrefix + filePath + '/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
-        return html;
+    const templateResponse = fs.readFileSync(path.join(process.cwd(), filePrefix + filePath + '/page.hbs'), constants.CHARSET_UTF8);
+    const completeLayoutPath = path.join(process.cwd(), filePrefix + 'layout/main.hbs');
+
+    layoutResponse = fs.readFileSync(completeLayoutPath, constants.CHARSET_UTF8);
+    const styleContent = await adminDao.getOrgContent({ orgId: orgID, fileType: 'style', viewName: viewName, fileName: 'main.css' });
+    if (styleContent) {
+        layoutResponse = layoutResponse.replace(/\/styles\//g, `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/views/${viewName}/layout?fileType=style&fileName=`);
     }
-    var templatePage = await loadTemplateFromAPI(orgID, filePath, viewName);
-    const template = Handlebars.compile(templatePage.toString());
-    const layout = Handlebars.compile(layoutContent.toString());
+
+    const template = Handlebars.compile(templateResponse.toString());
+    const layout = Handlebars.compile(layoutResponse.toString());
+
     return layout({
         body: template(templateContent),
+        portalConfigs: config.portalConfigs,
     });
 
 }
@@ -180,8 +184,8 @@ const unzipDirectory = async (zipPath, extractPath) => {
         throw new CustomError(400, 'Error unzipping directory', 'Invalid zip path or extract path.');
     }
     const extractedFiles = [];
-    const maxFileSize = 50 * 1024 * 1024; // 50MB (limit for individual file size)
-    const maxTotalSize = 100 * 1024 * 1024; // 100MB (limit for total extracted data)
+    const maxFileSize = 10 * 1024 * 1024; // 10MB (limit for individual file size)
+    const maxTotalSize = 50 * 1024 * 1024; // 50MB (limit for total extracted data)
     const maxDepth = 10; // Limit to prevent excessive nesting
     let totalExtractedSize = 0; // Total extracted data size
 
@@ -212,7 +216,7 @@ const unzipDirectory = async (zipPath, extractPath) => {
                             || (totalExtractedSize + entrySize > maxTotalSize)) {
                             entry.autodrain();
                             return reject(new CustomError(400, 'Error unzipping directory'
-                                , 'File size exceeded the limit of 100 MB'));
+                                , 'File size exceeded the limit of 50 MB'));
                         }
 
                         const dirName = path.dirname(normalizedFilePath);
@@ -234,7 +238,7 @@ const unzipDirectory = async (zipPath, extractPath) => {
                         entry.autodrain();
                     }
                 } catch (err) {
-                    console.error("Error processing entry. ", err);
+                    logger.error("Error processing entry", { error: err.message, stack: err.stack });
                     entry.autodrain();
                     reject(new Error('Error processing entry.'));
                 }
@@ -355,7 +359,11 @@ async function readDocFiles(directory, baseDir = '') {
 
 
 const invokeGraphQLRequest = async (req, url, query, variables, headers) => {
-    console.log(`Invoking GraphQL API: ${url}`);
+    logger.info(`Invoking GraphQL API: ${url}`, { 
+        userId: req.user?.id || req.user?.username || 'anonymous',
+        method: 'GraphQL',
+        endpoint: url
+    });
 
     headers = {
         ...headers,
@@ -377,7 +385,7 @@ const invokeGraphQLRequest = async (req, url, query, variables, headers) => {
         const certPath = path.join(process.cwd(), config.controlPlane.pathToCertificate);
         httpsAgent = new https.Agent({
             ca: fs.readFileSync(certPath),
-            rejectUnauthorized: true,
+            rejectUnauthorized: false,
         });
     }
 
@@ -387,7 +395,7 @@ const invokeGraphQLRequest = async (req, url, query, variables, headers) => {
     };
 
     try {
-        if (config.advanced.tokenExchanger.enabled) {
+        if (config.advanced.tokenExchanger?.enabled) {
             const decodedToken = jwt.decode(req.user.exchangeToken);
             const orgId = decodedToken.organization.uuid;
             url = url.includes("?") ? `${url}&organizationId=${orgId}` : `${url}?organizationId=${orgId}`;
@@ -414,21 +422,39 @@ const invokeGraphQLRequest = async (req, url, query, variables, headers) => {
                 return retryResponse.data;
             } catch (retryError) {
                 let retryMessage = retryError.response?.data?.description || retryError.message;
+                logger.error('GraphQL request retry failed', {
+                    url: url,
+                    error: retryMessage,
+                    statusCode: retryError.response?.status,
+                    userId: req.user?.id || req.user?.username || 'anonymous'
+                });
                 throw new CustomError(retryError.response?.status || 500, "Request retry failed", retryMessage);
             }
         } else {
-            console.error(`GraphQL Request Error:`, error);
+            logger.error('GraphQL request error', {
+                url: url,
+                error: error.message,
+                statusCode: error.response?.status,
+                responseData: error.response?.data,
+                userId: req.user?.id || req.user?.username || 'anonymous'
+            });
             let message = error.response?.data?.description || error.message;
             throw new CustomError(error.response?.status || 500, 'GraphQL request failed', message);
         }
     }
 };
 
-const invokeApiRequest = async (req, method, url, headers, body) => {
+const invokeApiRequest = async (req, method, url, headers, body, publicMode = false) => {
 
-    console.log(`Invoking API: ${url}`);
-    headers = headers || {};
-    headers.Authorization = req.user?.exchangeToken ? `Bearer ${req.user.exchangeToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
+    logger.info(`Invoking API: ${url}`, {
+        method: method,
+        userId: req.user?.id || req.user?.username || 'anonymous',        
+        endpoint: url
+    });
+    if (!publicMode) {
+        headers = headers || {};
+        headers.Authorization = req.user?.exchangeToken ? `Bearer ${req.user.exchangeToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
+    }
     let httpsAgent;
 
     if (config.controlPlane.disableCertValidation) {
@@ -439,7 +465,7 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         const certPath = path.join(process.cwd(), config.controlPlane.pathToCertificate);
         httpsAgent = new https.Agent({
             ca: fs.readFileSync(certPath),
-            rejectUnauthorized: true,
+            rejectUnauthorized: false,
         });
     }
 
@@ -453,8 +479,7 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         if (!(body == null || body === '' || (Array.isArray(body) && body.length === 0) || (typeof body === 'object' && !Array.isArray(body) && Object.keys(body).length === 0))) {
             options.data = body;
         }
-
-        if (config.advanced.tokenExchanger.enabled) {
+        if (config.advanced.tokenExchanger?.enabled) {
             let orgId = "";
             if (req.cpOrgID) {
                 orgId = req.cpOrgID;
@@ -469,6 +494,14 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
         const response = await axios(url, options);
         return response.data;
     } catch (error) {
+        logger.error('Error while invoking API', {
+            url: url,
+            method: method,
+            error: error.message,
+            statusCode: error.response?.status,
+            responseData: error.response?.data,
+            userId: req.user?.id || req.user?.username || 'anonymous'
+        });
         if (error.response?.status === 401) {
             try {
                 const newExchangedToken = await tokenExchanger(req.user.accessToken, req.originalUrl.split("/")[1]);
@@ -482,7 +515,12 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
                 if (retryError.response) {
                     retryMessage = retryError.response.data.description;
                 }
-                console.error(`Retry failed:`, retryMessage);
+                logger.error('API request retry failed', {
+                    url: url,
+                    method: method,
+                    error: retryMessage,
+                    userId: req.user?.id || req.user?.username || 'anonymous'
+                });
                 throw new CustomError(error.response.status, "Access denied", error.message || error.response?.data?.description || constants.ERROR_MESSAGE.UNAUTHENTICATED);
             }
         } else {
@@ -490,7 +528,13 @@ const invokeApiRequest = async (req, method, url, headers, body) => {
             if (error.response) {
                 message = error.response.data.description;
             }
-            console.log(`Error while invoking API:`, message);
+            logger.error('API request failed', {
+                url: url,
+                method: method,
+                error: message,
+                statusCode: error.status,
+                userId: req.user?.id || req.user?.username || 'anonymous'
+            });
             throw new CustomError(error.status, 'Request failed', message);
         }
     }
@@ -644,10 +688,12 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                 if (file.name.endsWith(".css")) {
                     fileType = "style"
                     if (file.name === "main.css") {
-                        strContent = strContent.replace(/@import\s*['"]\/styles\/([^'"]+)['"];/g, `@import url("${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=$1");`);
+                        strContent = strContent.replace(/@import\s*['"]\/styles\/api-content\.css['"];/g, `@import url("${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=api-content.css");`);
+                        strContent = strContent.replace(/@import\s*['"]\/styles\/home\.css['"];/g, `@import url("${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=home.css");`);
+                        strContent = strContent.replace(/@import\s*['"]\/styles\/main\.css['"];/g, `@import url("${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=main.css");`);
                     }
-                    strContent = strContent.replace(/"\/images\/([^"]+)/g, `"${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`);
-                    strContent = strContent.replace(/'\/images\/([^']+)/g, `'${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`);
+                    strContent = strContent.replace(/"\/images\/(devportalLogo\.[^"]+)/g, `"${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`);
+                    strContent = strContent.replace(/'\/images\/(devportalLogo\.[^']+)/g, `"${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=image&fileName=$1`);
                     content = Buffer.from(strContent, constants.CHARSET_UTF8);
                 } else if (file.name.endsWith(".hbs") && dir.endsWith("layout")) {
                     fileType = "layout"
@@ -671,8 +717,13 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                     fileType = "image";
                 } else {
                     // Unexpected file type
-                    console.warn(`Unexpected file type detected: ${file.name}`);
-                    continue;
+                    logger.error(`Unexpected file type detected: ${file.name}`, {
+                        fileName: file.name,
+                        fileExtension: fileExtension,
+                        directory: directory,
+                        orgId: orgId
+                    });
+                    throw new CustomError(400, `Bad Request`, `Unexpected file type: ${file.name}`);
                 }
 
                 fileDetails.push({
@@ -685,8 +736,14 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
         }
         return fileDetails;
     } catch (error) {
-        console.error("Error occurred while reading files in directory", error);
-        throw error;
+        logger.error("Error occurred while reading files in directory", {
+            directory: directory,
+            orgId: orgId,
+            viewName: viewName,
+            error: error.message,
+            stack: error.stack
+        });
+        throw new CustomError(error.statusCode || 500, error.message || 'Internal Server Error', error.description || 'Error reading files in directory');
     }
 }
 
@@ -716,7 +773,10 @@ function validateScripts(strContent) {
             }
         }
     } catch (error) {
-        console.error("Error occurred while validating scripts", error);
+        logger.error("Error occurred while validating scripts", {
+            error: error.message,
+            stack: error.stack,
+        });
         throw error;
     }
 }
@@ -762,13 +822,21 @@ const loadSubscriptionPlan = async (orgID, policyName) => {
             throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
         }
     } catch (error) {
-        ("Error occurred while loading subscription plans", error);
+        logger.error("Error occurred while loading subscription plans", {
+            orgID: orgID,
+            policyName: policyName,
+            error: error.message,
+            stack: error.stack
+        });
         util.handleError(res, error);
     }
 }
 
 async function tokenExchanger(token, orgName) {
-    console.log(`Exchanging token for organization: ${orgName}`);
+    logger.info(`Exchanging token for organization: ${orgName}`, {
+        orgName: orgName,
+        action: 'token_exchange'
+    });
     const url = config.advanced.tokenExchanger.url;
     const maxRetries = 3;
     let delay = 1000;
@@ -802,11 +870,21 @@ async function tokenExchanger(token, orgName) {
             return response.data.access_token;
         } catch (error) {
             if (error.response?.status >= 500 && error.response?.status < 600 && attempt < maxRetries) {
-                console.warn(`Token exchange failed. Retrying in ${delay}ms... (Attempt ${attempt + 1}/${maxRetries})`);
+                logger.warn(`Token exchange failed. Retrying in ${delay}ms... (Attempt ${attempt + 1}/${maxRetries})`, {
+                    orgName: orgName,
+                    statusCode: error.response?.status,
+                    error: error.message
+                });
                 await new Promise(resolve => setTimeout(resolve, delay));
                 delay *= 2;
             } else {
-                console.error('Token exchange failed:', error.message);
+                logger.error('Token exchange failed', {
+                    orgName: orgName,
+                    attempt: attempt + 1,
+                    error: error.message,
+                    statusCode: error.response?.status,
+                    responseData: error.response?.data
+                });
                 throw new Error('Failed to exchange token');
             }
         }
@@ -818,10 +896,17 @@ async function listFiles(path) {
     let files = [];
     fs.promises.readdir(path, (err, files) => {
         if (err) {
-            console.error('Error reading directory:', err);
+            logger.error('Error reading directory', {
+                path: path,
+                error: err.message
+            });
             return;
         }
-        console.log('Files in directory:', files);
+        logger.debug('Files in directory', {
+            path: path,
+            fileCount: files.length,
+            files: files
+        });
     });
     return files;
 }
@@ -836,14 +921,19 @@ function filterAllowedAPIs(searchResults, allowedAPIs) {
 
 const enforcePortalMode = async (req, res, next) => {
     const orgDetails = await adminDao.getOrganization(req.params.orgName);
-    const portalMode = orgDetails.ORG_CONFIG?.devportalMode;
+    const portalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
     const path = req.originalUrl.split('/')[4];
 
-    if ((path.includes('apis') || path.includes('api') ) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.API_PROXIES) ||
-        (path.includes('mcps') || path.includes('mcp') ) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.MCP_ONLY)) {
+    if ((path.includes('apis') || path.includes('api')) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.API_PROXIES) ||
+        (path.includes('mcps') || path.includes('mcp')) && (portalMode === constants.API_TYPE.DEFAULT || portalMode === constants.API_TYPE.MCP_ONLY)) {
         next();
     } else {
-        const html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', constants.COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE, true);
+        const templateContent = {
+            errorMessage: constants.ERROR_MESSAGE.COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE,
+            devportalMode: portalMode,
+            baseUrl: '/' + req.params.orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName,
+        }
+        const html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
         res.send(html);
     }
 }

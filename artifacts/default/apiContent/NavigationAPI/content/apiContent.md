@@ -7,7 +7,7 @@ The **NavigationAPI** is an AsyncAPI provided by **ACME** that allows developers
 - **API Category**: Transportation
 - **API Version**: 3.0.1
 - **Tags**: navigation, GPS, routes, traffic
-- **API Type**: AsyncAPI
+- **API Type**: WS
 
 ## API Description
 

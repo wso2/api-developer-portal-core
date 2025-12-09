@@ -117,7 +117,7 @@
                     </div>
                     <div class="select-items" role="listbox">
                       <div class="select-search-container">
-                        <input type="text" class="select-search-input" placeholder="Find or create an application..."
+                        <input type="text" class="select-search-input {{#if @root.isReadOnlyMode}}d-none{{/if}}" placeholder="Find or create an application..."
                           aria-label="Search applications">
                       </div>
                       <div class="select-items-container">
@@ -142,7 +142,7 @@
                 </div>
 
                 {{#if (eq subscriptionPolicies.length 1)}}
-                 <a type="button" class="common-btn-primary"
+                 <a type="button" class="common-btn-primary {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                    onclick="showSubscribeButtonLoading(this); subscribe('{{../orgID}}', '', '{{apiID}}', '{{apiReferenceID}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyID"}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyName"}}')"
                    disabled>Subscribe</a>
                  {{else}}

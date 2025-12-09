@@ -1,5 +1,5 @@
 # Use the latest Node.js 22 with Debian Bookworm as the base image
-FROM node:22-bookworm
+FROM node:23-bookworm-slim
 
 # Set a non-interactive frontend to prevent prompts
 ENV DEBIAN_FRONTEND=noninteractive 
@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     bash \
     coreutils \
+    default-jre \
     && rm -rf /var/lib/apt/lists/*
 
 # Verify the installed wget version
@@ -19,9 +20,12 @@ WORKDIR /app
 
 # Copy package.json and package-lock.json first to leverage Docker caching
 COPY package*.json ./
+COPY openapitools.json ./
 
 # Install dependencies using npm ci for faster, cleaner installations in production
-RUN npm ci --only=production
+RUN npm ci --only=production --ignore-scripts
+
+RUN npx @openapitools/openapi-generator-cli@2.21.3 version
 
 # Copy the rest of the application files
 COPY . .

@@ -74,12 +74,23 @@
                 <p class="mb-0 mt-1" style="font-size: 16px;">{{apiInfo.apiVersion}}</p>                         
                 <div class="type-badge badge-custom2" style="display: flex; flex-direction: row; align-items: center;">
                   <div style="margin-right: 8px; display: flex;">
+                    {{#if (eq apiInfo.apiType "WS")}}
+                    <img
+                      src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/WebSocket.svg"
+                      style=" height: 16px; object-fit: contain;"
+                    />
+                    {{else}}
                     <img
                       src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/REST.svg"
                       style=" height: 16px; object-fit: contain;"
                     />
+                    {{/if}}
                   </div>
+                  {{#if (eq apiInfo.apiType "WS")}}
+                  <span>WebSocket</span>
+                  {{else}}
                   <span>{{apiInfo.apiType}}</span>
+                  {{/if}}
                 </div>
               </div>
             </div>
@@ -97,6 +108,7 @@
               </div>
             </div>
           </div>
+          {{#unless (isFederatedAPI apiInfo.gatewayVendor)}}
           {{#if ../isAuthenticated}}
           <hr class="card-separator" />
           {{/if}}
@@ -117,7 +129,7 @@
                     </div>
                     <div class="select-items" role="listbox">
                       <div class="select-search-container">
-                        <input type="text" class="select-search-input" placeholder="Find or create an application..."
+                        <input type="text" class="select-search-input {{#if @root.isReadOnlyMode}}d-none{{/if}}" placeholder="Find or create an application..."
                           aria-label="Search applications">
                       </div>
                       <div class="select-items-container">
@@ -142,7 +154,7 @@
                 </div>
 
                 {{#if (eq subscriptionPolicies.length 1)}}
-                 <a type="button" class="common-btn-primary"
+                 <a type="button" class="common-btn-primary {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                    onclick="showSubscribeButtonLoading(this); subscribe('{{../orgID}}', '', '{{apiID}}', '{{apiReferenceID}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyID"}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyName"}}')"
                    disabled>Subscribe</a>
                  {{else}}
@@ -162,6 +174,7 @@
               <button type="button" class="close-message" aria-label="Close message">&times;</button>
             </div>
           </div>
+          {{/unless}}
         </div>
       </div>
       {{/unless}}

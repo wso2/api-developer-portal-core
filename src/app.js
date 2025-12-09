@@ -26,12 +26,14 @@ const path = require('path');
 const http = require('http');
 const https = require('https');
 const fs = require('fs');
-const chalk = require('chalk');
+const logger = require('./config/logger');
+const { auditMiddleware } = require('./middlewares/auditLogger');
 const authRoute = require('./routes/authRoute');
 const devportalRoute = require('./routes/devportalRoute');
 const orgContent = require('./routes/orgContentRoute');
 const apiContent = require('./routes/apiContentRoute');
 const applicationContent = require('./routes/applicationsContentRoute');
+const sdkJobService = require('./services/sdkJobService');
 const customContent = require('./routes/customPageRoute');
 const config = require(process.cwd() + '/config.json');
 const Handlebars = require('handlebars');
@@ -54,10 +56,9 @@ const filePrefix = config.pathToContent;
 
 const SERVER_ID = uuidv4();
 
-console.log(`starting server: ${SERVER_ID}`);
+logger.info(`Starting server with ID: ${SERVER_ID}`);
 
 //PostgreSQL connection pool for session store
-
 
 if (config.advanced.dbSslDialectOption) {
     pool = new Pool({
@@ -199,6 +200,13 @@ Handlebars.registerHelper('startsWith', function (str, includeStr, options) {
     }
 });
 
+Handlebars.registerHelper('isFederatedAPI', function (gatewayVendor) {
+    if (!gatewayVendor || typeof gatewayVendor !== 'string') {
+        return false;
+    }
+    return constants.FEDERATED_GATEWAY_VENDORS.includes(gatewayVendor);
+});
+
 // #endregion
 
 app.use(session({
@@ -206,7 +214,7 @@ app.use(session({
         pool: pool,
         tableName: 'session',
         pruneSessionInterval: 3600,
-        debug: console.log,
+        debug: (message) => logger.debug('Session store debug', { message }),
     }),
     secret: sessionSecret,
     resave: false,
@@ -219,6 +227,12 @@ app.use(session({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Add audit logging middleware
+app.use(auditMiddleware({
+    excludePaths: ['/health', '/metrics', '/favicon.ico', '/styles', '/scripts', '/images', '/technical-styles', '/technical-scripts'],
+    sensitiveFields: ['password', 'token', 'secret', 'key', 'authorization', 'idToken', 'accessToken', 'refreshToken']
+}));
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -251,7 +265,7 @@ const strategy = new OAuth2Strategy({
         return done(new Error('Access token missing'));
     }
     let orgList, userOrg;
-    if (config.advanced.tokenExchanger.enabled) {
+    if (config.advanced.tokenExchanger?.enabled) {
         const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
         const decodedExchangedToken = jwt.decode(exchangedToken);
         orgList = decodedExchangedToken.organizations;
@@ -290,7 +304,7 @@ const strategy = new OAuth2Strategy({
         'lastName': lastName ? lastName : (firstName && firstName.includes(" ") ? firstName.split(" ")[1] : ''),
         'view': view,
         'idToken': params.id_token,
-        'email': decodedJWT['email'],
+        'email': decodedJWT['email'] || req.session.username,
         [constants.ROLES.ORGANIZATION_CLAIM]: organizationID,
         'returnTo': req.session.returnTo,
         accessToken,
@@ -308,20 +322,28 @@ const strategy = new OAuth2Strategy({
     };
     req.session.regenerate((err) => {
         if (err) {
-            console.error('Session regeneration failed:', err);
+            logger.error('Session regeneration failed', { 
+                error: err.message, 
+                stack: err.stack,
+                operation: 'sessionRegeneration'
+            });
             return done(err);
         }
         // Store the new user profile in the session
         req.login(profile, (err) => {
             if (err) {
-                console.error('Login failed after session regen:', err);
+                logger.error('Login failed after session regeneration', { 
+                    error: err.message, 
+                    stack: err.stack,
+                    operation: 'loginAfterSessionRegen'
+                });
                 return done(err);
             }
             return done(null, profile);
         });
     });
 
-    console.log('Retruning profile');
+    logger.debug('Returning profile', { userId: profile.sub, organization: userOrg });
 
     //return done(null, profile);
 });
@@ -344,8 +366,7 @@ passport.use(strategy);
 
 // Serialize user into the session
 passport.serializeUser((user, done) => {
-
-    console.log("Serializing user");
+    logger.debug('Serializing user', { userId: user.sub });
     const profile = {
         firstName: user.firstName,
         lastName: user.lastName,
@@ -421,19 +442,29 @@ if (config.mode === constants.DEV_MODE) {
 }
 
 
-app.use((err, req, res, next) => {
-
-    console.log(err) // Log error for debugging
-    const templateContent = {
-        baseUrl: '/' + req.params.orgName + '/' + constants.ROUTE.VIEWS_PATH + "default",
+app.use( (err, req, res, next) => {
+    Handlebars.registerPartial('header', '');
+    Handlebars.registerPartial('sidebar', '');
+    logger.error('Application error', { 
+        error: err.message, 
+        stack: err.stack,
+        url: req.url,
+        method: req.method,
+        operation: 'expressErrorHandler'
+    });
+    let templateContent = {
+        devportalMode: 'DEFAULT',
+        baseUrl: '/' + req.originalUrl?.split('/')[1] + '/' + constants.ROUTE.VIEWS_PATH + "default",
         errorMessage: "Oops! Something went wrong"
     }
+    let html = "";
     if (err.status === 401) {
         req.session.destroy((err) => {
             if (err) {
                 return res.status(500).send("Logout failed");
             }
         });
+        templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_AUTH_ERROR_MESSAGE;
         html = util.renderTemplate('../pages/error-page/page.hbs', 'src/pages/error-layout/main.hbs', templateContent, true);
     } else {
         html = util.renderTemplate('../pages/error-page/page.hbs', 'src/pages/error-layout/main.hbs', templateContent, true);
@@ -471,29 +502,79 @@ if (config.advanced.http) {
         });
 
     } catch (err) {
-        ('\n' + chalk.red.bold('Error setting up HTTPS server:') + '\n', chalk.red(err.message) + '\n');
+        logger.error('Error setting up HTTPS server', { 
+            error: err.message, 
+            stack: err.stack,
+            operation: 'httpsServerSetup'
+        });
     }
 }
 
 const logStartupInfo = () => {
-    console.log('\n' + chalk.green.bold(`Developer Portal V2 is running on port ${PORT}`) + '\n');
-    console.log('\n' + chalk.cyan.bold(`Mode: ${config.mode}`) + '\n');
+    logger.info(`Developer Portal V2 is running on port ${PORT}`);
+    logger.info(`Mode: ${config.mode}`);
 
     if (config.mode === constants.DEV_MODE) {
-        console.log('\n' + chalk.yellow('⚠️  Since you are in DEV mode...') + '\n');
-        console.log(chalk.greenBright('✅ Ensure that the default content is correctly available at the configured "pathToContent".') + '\n');
-        console.log(chalk.greenBright('✅ The "Mock" folder must exist in the same root directory as "pathToContent".') + '\n');
+        logger.info('⚠️  Since you are in DEV mode, ensure default content is available at configured pathToContent ' + 
+            'and mock folder must exist in root directory');
     }
 
-    console.log(chalk.blue(`🔗 Visit: ${chalk.underline(config.baseUrl + (config.mode === constants.DEV_MODE ? "/views/default" : "/<organization>/views/default"))}`) + '\n');
+    const visitUrl = config.baseUrl + (config.mode === constants.DEV_MODE ? "/views/default" : "/<organization>/views/default");
+    logger.info(`Visit ${visitUrl}`);
+    
+    // Start SDK cleanup scheduler
+    try {
+        sdkJobService.startSDKCleanupScheduler();
+        logger.info('SDK cleanup scheduler started successfully');
+    } catch (error) {
+        logger.warn('Could not start SDK cleanup scheduler', { 
+            error: error.message, 
+            stack: error.stack 
+        });
+    }
 };
 
 // Handle Uncaught Exceptions
 process.on('uncaughtException', (err) => {
-    ('\n' + chalk.bgRed.white.bold(' Uncaught Exception ') + '\n', chalk.red(err.stack || err.message) + '\n');
+    logger.error('Uncaught Exception - Application will exit', { 
+        error: err.message, 
+        stack: err.stack,
+        type: 'uncaughtException'
+    });
+    process.exit(1);
 });
 
 // Handle Unhandled Rejections
 process.on('unhandledRejection', (reason, promise) => {
-    ('\n' + chalk.bgRed.white.bold(' Unhandled Rejection ') + '\n', chalk.red('Promise:', promise, '\nReason:', reason) + '\n');
+    logger.error('Unhandled Promise Rejection - Application will exit', { 
+        reason: reason?.message || reason, 
+        promise: promise?.toString(),
+        type: 'unhandledRejection'
+    });
+    process.exit(1);
 });
+
+// Graceful shutdown handlers
+const gracefulShutdown = (signal) => {
+    logger.info('Graceful shutdown initiated...', { 
+        signal,
+        message: `Received ${signal}. Gracefully shutting down...`
+    });
+    
+    // Stop SDK cleanup scheduler
+    try {
+        sdkJobService.stopSDKCleanupScheduler();
+        logger.info('SDK cleanup scheduler stopped successfully');
+    } catch (error) {
+        logger.warn('Error stopping SDK cleanup scheduler', { 
+            error: error.message, 
+            stack: error.stack 
+        });
+    }
+    
+    logger.info('Application shutdown complete');
+    process.exit(0);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
