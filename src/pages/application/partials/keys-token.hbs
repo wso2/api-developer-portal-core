@@ -12,7 +12,7 @@
                     {{#each keyManagersMetadata}}
                     {{#if enabled}}
                     {{#let "keys" productionKeys}}
-                    <div id="regenerateKeyBtn" class="d-flex">
+                    <div id="regenerateKeyBtn-production" class="d-flex">
                         <div class="row">
                             <div id="tokenDisplay_{{../name}}" style="display: none;">
                                 <div class="info-title pb-2">Request Permissions (Scopes)</div>
@@ -86,7 +86,7 @@
                     {{#each keyManagersMetadata}}
                     {{#if enabled}}
                     {{#let "keys" sandboxKeys}}
-                    <div id="regenerateKeyBtn" class="d-flex">
+                    <div id="regenerateKeyBtn-sandbox" class="d-flex">
                         <div class="row">
                             <div id="tokenDisplay_{{../name}}" style="display: none;">
                                 <div class="info-title pb-2">Request Permisssions (Scopes)</div>

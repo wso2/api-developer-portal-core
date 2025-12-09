@@ -63,7 +63,7 @@ const loadApplications = async (req, res) => {
         } else {
             const orgName = req.params.orgName;
             const orgID = await orgIDValue(orgName);
-            const applications = await adminDao.getApplications(orgID)
+            const applications = await adminDao.getApplications(orgID, req.user.sub)
             const metaData = await Promise.all(
                 applications.map(async (application) => {
                     const subApis = await adminDao.getSubscriptions(orgID, application.APP_ID, '');
@@ -164,8 +164,7 @@ const loadApplication = async (req, res) => {
             let applicationKeyList;
             if (applicationList.appMap) {
                 applicationReference = applicationList.appMap[0].appRefID;
-                // applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
-                applicationKeyList = await getMockApplicationKeys();
+                applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
             }
             let otherAPICount = 0;
             let mcpAPICount = 0;
@@ -221,7 +220,7 @@ const loadApplication = async (req, res) => {
             await Promise.all(nonSubscribedAPIs.map(async (api) => {
                 api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
             }));
-            kMmetaData = await getMockKeyManagers();
+            kMmetaData = await getAPIMKeyManagers(req);
             kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
 
             //TODO: handle multiple KM scenarios
@@ -249,10 +248,7 @@ const loadApplication = async (req, res) => {
             let productionKeys = [];
             let sandboxKeys = [];
 
-            console.log("applicationKeyList", applicationKeyList);
-
-            applicationKeyList?.map(key => {
-                console.log("key", key);
+            applicationKeyList?.list?.map(key => {
                 let client_name;
                 if (key?.additionalProperties?.client_name) {
                     client_name = key.additionalProperties.client_name;
@@ -277,9 +273,6 @@ const loadApplication = async (req, res) => {
                 return keyData;
             }) || [];
 
-            console.log("productionKeys", productionKeys);
-            console.log("sandboxKeys", sandboxKeys);
-
             kMmetaData.forEach(keyManager => {
                 productionKeys.forEach(productionKey => {
                     if (productionKey.keyManager === keyManager.name) {
@@ -293,7 +286,7 @@ const loadApplication = async (req, res) => {
                 });
             });
 
-            let cpApplication = await getMockApplication();
+            let cpApplication = await getAPIMApplication(req, applicationReference);
             let subscriptionScopes = [];
             if (Array.isArray(cpApplication?.subscriptionScopes)) {
                 for (const scope of cpApplication?.subscriptionScopes) {
@@ -411,21 +404,15 @@ const getSubscribedApis = async (req, appId) => {
     }
 }
 async function getMockApplication() {
-    const mockApplicationMetaDataPath = '/Users/thushanij/Repositories/api-developer-portal-core/mock/Applications/DefaultApplication/DefaultApplication.json';
+    const mockApplicationMetaDataPath = path.join(process.cwd(), filePrefix + '../mock/Applications/DefaultApplication', 'DefaultApplication.json');
     const mockApplicationMetaData = JSON.parse(fs.readFileSync(mockApplicationMetaDataPath, 'utf-8'));
     return mockApplicationMetaData;
 }
 
 async function getMockKeyManagers() {
-    const mockKeyManagersMetaDataPath = '/Users/thushanij/Repositories/api-developer-portal-core/mock/Applications/DefaultApplication/AllKeyManagers.json';
+    const mockKeyManagersMetaDataPath = path.join(process.cwd(), filePrefix + '../mock/Applications/DefaultApplication', 'AllKeyManagers.json');
     const mockKeyManagersMetaData = JSON.parse(fs.readFileSync(mockKeyManagersMetaDataPath, 'utf-8'));
     return mockKeyManagersMetaData.list;
-}
-
-async function getMockApplicationKeys() {
-    const mockApplicationKeysMetaDataPath = '/Users/thushanij/Repositories/api-developer-portal-core/mock/Applications/DefaultApplication/keys.json';
-    const mockApplicationKeysMetaData = JSON.parse(fs.readFileSync(mockApplicationKeysMetaDataPath, 'utf-8'));
-    return mockApplicationKeysMetaData.list;
 }
 
 async function getAPIMApplication(req, applicationId) {

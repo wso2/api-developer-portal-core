@@ -313,7 +313,7 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
     updateBtn.disabled = true;
 
     // Clear any previous error messages
-    const errorContainer = document.getElementById('keyUpdateErrorContainer');
+    const errorContainer = document.getElementById('keyUpdateErrorContainer-' + keyType);
     errorContainer.style.display = 'none';
     errorContainer.textContent = '';
 
@@ -460,7 +460,7 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
         const scopeElements = document.querySelectorAll(`#scopeContainer-${devAppId} .span-tag`);
         subscribedScopes = Array.from(scopeElements).map(el => el.textContent.replace('×', '').trim());
         scopeContainer.setAttribute('data-scopes', JSON.stringify(subscribedScopes));
-        tokenBtn = document.getElementById('regenerateKeyBtn');
+        tokenBtn = document.getElementById('regenerateKeyBtn-'+keyType);
     } else {
         /**
          * During the intial generate token request, the data-scopes attribute is set with subcribed scopes
