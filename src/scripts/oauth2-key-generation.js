@@ -313,9 +313,15 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
     updateBtn.disabled = true;
 
     // Clear any previous error messages
-    const errorContainer = document.getElementById('keyUpdateErrorContainer-' + keyType);
-    errorContainer.style.display = 'none';
-    errorContainer.textContent = '';
+    const errorContainer = document.getElementById(
+        'keyUpdateErrorContainer-' + keyType.toLowerCase()
+    );
+    if (!errorContainer) {
+        console.error('keyUpdateErrorContainer not found for keyType:', keyType);
+    } else {
+        errorContainer.style.display = 'none';
+        errorContainer.textContent = '';
+    }
 
     const form = document.getElementById(formId);
     const formData = new FormData(form);
@@ -445,15 +451,19 @@ async function removeApplicationKey() {
 
 async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName, clientSecret, subscribedScopes) {
     // Determine keyType from formId (formId contains either "production" or "sandbox")
-    let keyType = 'PRODUCTION';
+     let keyType = 'PRODUCTION';
     if (formId && formId.includes('-sandbox')) {
         keyType = 'SANDBOX';
     }
+    const keyTypeSuffix = keyType.toLowerCase();
     
-    let tokenBtn = document.getElementById('tokenKeyBtn');
+    tokenBtn = document.getElementById('regenerateKeyBtn-' + keyTypeSuffix);
+    if (!tokenBtn) {
+        console.error('Regenerate button container not found for keyType:', keyType);
+    }
     const devAppId = tokenBtn?.dataset?.appId
-    const scopeContainer = document.getElementById('scopeContainer-' + devAppId);
-    const scopeInput = document.getElementById('scope-' + devAppId);
+    const scopeContainer = document.getElementById('scopeContainer-' + keyType + '-' + devAppId);
+    const scopeInput = document.getElementById('scope-' + keyType + '-' + devAppId);
 
     if (!(subscribedScopes)) {
         // In the regenerate token request, the scopes are fetched from the span tags
