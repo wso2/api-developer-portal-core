@@ -483,8 +483,7 @@ async function mapGrants(grantTypes) {
     return mappedGrantTypes;
 }
 
-async function mapDefaultValues(applicationConfiguration = []) {
-    // Defensive: some mock key managers omit configs
+async function mapDefaultValues(applicationConfiguration) {
     let appConfigs = [];
     let defaultConfigs = ["application_access_token_expiry_time", "user_access_token_expiry_time", "id_token_expiry_time"];
     applicationConfiguration.map(config => {
