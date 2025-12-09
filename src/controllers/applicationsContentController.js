@@ -63,7 +63,7 @@ const loadApplications = async (req, res) => {
         } else {
             const orgName = req.params.orgName;
             const orgID = await orgIDValue(orgName);
-            const applications = await adminDao.getApplications(orgID, req.user.sub)
+            const applications = await adminDao.getApplications(orgID)
             const metaData = await Promise.all(
                 applications.map(async (application) => {
                     const subApis = await adminDao.getSubscriptions(orgID, application.APP_ID, '');
@@ -164,7 +164,8 @@ const loadApplication = async (req, res) => {
             let applicationKeyList;
             if (applicationList.appMap) {
                 applicationReference = applicationList.appMap[0].appRefID;
-                applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
+                // applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
+                applicationKeyList = await getMockApplicationKeys();
             }
             let otherAPICount = 0;
             let mcpAPICount = 0;
@@ -220,7 +221,7 @@ const loadApplication = async (req, res) => {
             await Promise.all(nonSubscribedAPIs.map(async (api) => {
                 api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
             }));
-            kMmetaData = await getAPIMKeyManagers(req);
+            kMmetaData = await getMockKeyManagers();
             kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
 
             //TODO: handle multiple KM scenarios
@@ -245,11 +246,13 @@ const loadApplication = async (req, res) => {
                 keyManager.applicationConfiguration = await mapDefaultValues(keyManager.applicationConfiguration);
             }
 
-
             let productionKeys = [];
             let sandboxKeys = [];
 
-            applicationKeyList?.list?.map(key => {
+            console.log("applicationKeyList", applicationKeyList);
+
+            applicationKeyList?.map(key => {
+                console.log("key", key);
                 let client_name;
                 if (key?.additionalProperties?.client_name) {
                     client_name = key.additionalProperties.client_name;
@@ -274,6 +277,9 @@ const loadApplication = async (req, res) => {
                 return keyData;
             }) || [];
 
+            console.log("productionKeys", productionKeys);
+            console.log("sandboxKeys", sandboxKeys);
+
             kMmetaData.forEach(keyManager => {
                 productionKeys.forEach(productionKey => {
                     if (productionKey.keyManager === keyManager.name) {
@@ -287,7 +293,7 @@ const loadApplication = async (req, res) => {
                 });
             });
 
-            let cpApplication = await getAPIMApplication(req, applicationReference);
+            let cpApplication = await getMockApplication();
             let subscriptionScopes = [];
             if (Array.isArray(cpApplication?.subscriptionScopes)) {
                 for (const scope of cpApplication?.subscriptionScopes) {
@@ -317,7 +323,7 @@ const loadApplication = async (req, res) => {
                 subAPIs: subList,
                 nonSubAPIs: nonSubscribedAPIs,
                 productionKeys: productionKeys,
-                isProduction: true,
+                sandboxKeys: sandboxKeys,
                 isApiKey: isApiKey,
                 subscriptionScopes: subscriptionScopes,
                 otherAPICount: otherAPICount,
@@ -405,15 +411,21 @@ const getSubscribedApis = async (req, appId) => {
     }
 }
 async function getMockApplication() {
-    const mockApplicationMetaDataPath = path.join(process.cwd(), filePrefix + '../mock/Applications/DefaultApplication', 'DefaultApplication.json');
+    const mockApplicationMetaDataPath = '/Users/thushanij/Repositories/api-developer-portal-core/mock/Applications/DefaultApplication/DefaultApplication.json';
     const mockApplicationMetaData = JSON.parse(fs.readFileSync(mockApplicationMetaDataPath, 'utf-8'));
     return mockApplicationMetaData;
 }
 
 async function getMockKeyManagers() {
-    const mockKeyManagersMetaDataPath = path.join(process.cwd(), filePrefix + '../mock/Applications/DefaultApplication', 'AllKeyManagers.json');
+    const mockKeyManagersMetaDataPath = '/Users/thushanij/Repositories/api-developer-portal-core/mock/Applications/DefaultApplication/AllKeyManagers.json';
     const mockKeyManagersMetaData = JSON.parse(fs.readFileSync(mockKeyManagersMetaDataPath, 'utf-8'));
     return mockKeyManagersMetaData.list;
+}
+
+async function getMockApplicationKeys() {
+    const mockApplicationKeysMetaDataPath = '/Users/thushanij/Repositories/api-developer-portal-core/mock/Applications/DefaultApplication/keys.json';
+    const mockApplicationKeysMetaData = JSON.parse(fs.readFileSync(mockApplicationKeysMetaDataPath, 'utf-8'));
+    return mockApplicationKeysMetaData.list;
 }
 
 async function getAPIMApplication(req, applicationId) {
@@ -443,10 +455,10 @@ async function getAPIKeys(req, apiId, applicationId) {
     return apiKeys;
 }
 
-async function mapGrants(grantTypes) {
-
+async function mapGrants(grantTypes = []) {
+    // Defensive: some mock key managers omit grant types
     let mappedGrantTypes = [];
-    grantTypes.map(grantType => {
+    grantTypes.forEach(grantType => {
         if (grantType === 'password') {
             mappedGrantTypes.push({
                 label: 'Password',
@@ -485,11 +497,11 @@ async function mapGrants(grantTypes) {
     return mappedGrantTypes;
 }
 
-async function mapDefaultValues(applicationConfiguration) {
-
+async function mapDefaultValues(applicationConfiguration = []) {
+    // Defensive: some mock key managers omit configs
     let appConfigs = [];
     let defaultConfigs = ["application_access_token_expiry_time", "user_access_token_expiry_time", "id_token_expiry_time"];
-    applicationConfiguration.map(config => {
+    applicationConfiguration.forEach(config => {
         if (defaultConfigs.includes(config.name) && config.default == 'N/A') {
             config.default = 900;
         } else if (config.name === 'refresh_token_expiry_time' && config.default == 'N/A') {

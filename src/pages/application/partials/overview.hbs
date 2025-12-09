@@ -64,9 +64,9 @@
         {{#if enabled}}
         {{#let "keys" productionKeys}}
 
-        <div id="generateKeyContainer" style="{{#if keys.consumerKey}}display: none;{{/if}}">
+        <div id="generateKeyContainer-{{../id}}-production" style="{{#if keys.consumerKey}}display: none;{{/if}}">
           <div class="d-flex align-items-center">
-            <button id="generateKeyBtn" class="common-btn-primary btn-sm"
+            <button id="generateKeyBtn-{{../id}}-production" class="common-btn-primary btn-sm"
               onclick="generateApplicationKey('keysview-{{../id}}-production', '{{../../applicationMetadata.id}}', 'PRODUCTION', '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-production', 'consumer-secret-{{../id}}-production')">
               <span class="button-normal-state">
                 <i class="bi bi-key me-1"></i> Generate Production Key
@@ -84,15 +84,15 @@
         </div>
 
         <!-- Action Buttons (hidden initially) -->
-        <div id="keyActionsContainer" class="key-actions-container"
+        <div id="keyActionsContainer-{{../id}}-production" class="key-actions-container"
           style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
           <div class="key-action-row">
             <span class="key-action-label">Credentials: </span>
             <div class="key-action-buttons">
-              <button id="viewKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal()">
+              <button id="viewKeyBtn-{{../id}}-production" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal('PRODUCTION')">
                 <i class="bi bi-eye"></i> View
               </button>
-              <button id="modifyKeyBtn" class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}" style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}" onclick="loadKeysModifyModal()">
+              <button id="modifyKeyBtn-{{../id}}-production" class="common-btn-outlined btn-sm" onclick="loadKeysModifyModal('PRODUCTION')">
                 <i class="bi bi-pencil-square"></i> Modify
               </button>
             </div>
@@ -100,7 +100,7 @@
           <div class="key-action-row">
             <span class="key-action-label">Token: </span>
             <div class="key-action-buttons">
-              <button id="tokenKeyBtn" class="common-btn-outlined btn-sm" data-app-id="{{@root.applicationMetadata.id}}"
+              <button id="tokenKeyBtn-{{../id}}-production" class="common-btn-outlined btn-sm" data-app-id="{{@root.applicationMetadata.id}}"
                 onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-production', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}', '{{json @root.subscriptionScopes}}')">
                 <span class="button-normal-state">
                   <i class="bi bi-key-fill"></i> Generate
@@ -110,8 +110,8 @@
                   Generating...
                 </span>
               </button>
-              <button id="tokenInstructionsBtn" class="common-btn-outlined btn-sm"
-                onclick="loadKeysInstructionsModal()">
+              <button id="tokenInstructionsBtn-{{../id}}-production" class="common-btn-outlined btn-sm"
+                onclick="loadKeysInstructionsModal('PRODUCTION')">
                 <i class="bi bi-info-circle"></i> Instructions
               </button>
             </div>
@@ -122,19 +122,19 @@
         {{/if}}
         {{else}}
         {{#let "keys" productionKeys}}
-        <div id="generateKeyContainer"
+        <div id="generateKeyContainer-{{../id}}-production-alt"
           class="d-flex align-items-center edit-container mb-2 {{#if keys.consumerKey}}d-none{{/if}}"
           style="{{#if keys.consumerKey}}display: none;{{/if}}">
           <div class="d-flex align-items-center">
-            <button class="btn btn-sm common-btn-link p-0 {{#if @root.isReadOnlyMode}}disabled{{/if}}" id="addClientID" title="Add description">
+            <button class="btn btn-sm common-btn-link p-0" id="addClientID-{{../id}}-production" title="Add description">
               <i class="bi bi-plus"></i> Add Client ID
             </button>
-            <p class="app-description" id="clientIDInput" data-key-manager="{{name}}"
+            <p class="app-description" id="clientIDInput-{{../id}}-production" data-key-manager="{{name}}"
               data-app-ref-id="{{@root.applicationMetadata}}" style="font-size:13px"></p>
 
           </div>
-          <div class="edit-actions ms-0" id="clientIDEditActions" style="display: none;">
-            <button class="btn btn-sm common-btn-primary save-btn" id="generateKeyBtn"
+          <div class="edit-actions ms-0" id="clientIDEditActions-{{../id}}-production" style="display: none;">
+            <button class="btn btn-sm common-btn-primary save-btn" id="generateKeyBtn-{{../id}}-production-alt"
               onclick="generateApplicationKey('keysview-{{../id}}-production', '{{../../applicationMetadata.id}}', 'PRODUCTION', '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-production', 'consumer-secret-{{../id}}-production')"
               title="Save">
               <span class="button-normal-state"><i class="bi bi-check"></i></span>
@@ -142,22 +142,22 @@
                 <span class="spinner-border spinner-border-sm" role="status"></span>
               </span>
             </button>
-            <button class="btn btn-sm common-btn-outlined cancel-btn" id="cancelClientIDBtn" title="Cancel"><i
+            <button class="btn btn-sm common-btn-outlined cancel-btn" id="cancelClientIDBtn-{{../id}}-production" title="Cancel"><i
                 class="bi bi-x"></i></button>
           </div>
-          <div class="tooltip-container ms-2" id="sharedKeyTooltip">
+          <div class="tooltip-container ms-2" id="sharedKeyTooltip-{{../id}}-production">
             <i class="bi bi-info-circle"></i>
             <span class="tooltip-text">This key is shared among all APIs</span>
           </div>
         </div>
-        <button id="clientIDSaveError" class="edit-error-message" style="display: none;"></button>
+        <button id="clientIDSaveError-{{../id}}-production" class="edit-error-message" style="display: none;"></button>
 
-        <div id="keyActionsContainer" class="key-actions-container"
+        <div id="keyActionsContainer-{{../id}}-production-alt" class="key-actions-container"
           style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
           <div class="key-action-row">
             <span class="key-action-label">Credentials: </span>
             <div class="key-action-buttons">
-              <button id="viewKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal()">
+              <button id="viewKeyBtn-{{../id}}-production-alt" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal('PRODUCTION')">
                 <i class="bi bi-eye"></i> View
               </button>
             </div>
@@ -165,8 +165,8 @@
           <div class="key-action-row">
             <span class="key-action-label">Token: </span>
             <div class="key-action-buttons">
-              <button id="tokenInstructionsBtn" class="common-btn-outlined btn-sm"
-                onclick="loadKeysInstructionsModal()">
+              <button id="tokenInstructionsBtn-{{../id}}-production-alt" class="common-btn-outlined btn-sm"
+                onclick="loadKeysInstructionsModal('PRODUCTION')">
                 <i class="bi bi-info-circle"></i> Instructions
               </button>
             </div>
@@ -175,7 +175,7 @@
         {{/let}}
         {{/in}}
         <!-- Error message container for key generation and token generation -->
-        <div id="keyGenerationErrorContainer" class="mt-2 text-danger"
+        <div id="keyGenerationErrorContainer-production" class="mt-2 text-danger"
           style="display: none; font-size: 0.75rem; word-wrap: break-word;"></div>
         {{/each}}
       </div>
@@ -189,9 +189,9 @@
         {{#if enabled}}
         {{#let "keys" sandboxKeys}}
 
-        <div id="generateKeyContainer" style="{{#if keys.consumerKey}}display: none;{{/if}}">
+        <div id="generateKeyContainer-{{../id}}-sandbox" style="{{#if keys.consumerKey}}display: none;{{/if}}">
           <div class="d-flex align-items-center">
-            <button id="generateKeyBtn" class="common-btn-primary btn-sm"
+            <button id="generateKeyBtn-{{../id}}-sandbox" class="common-btn-primary btn-sm"
               onclick="generateApplicationKey('keysview-{{../id}}-sandbox', '{{../../applicationMetadata.id}}', 'SANDBOX', '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-sandbox', 'consumer-secret-{{../id}}-sandbox')">
               <span class="button-normal-state">
                 <i class="bi bi-key me-1"></i> Generate Sandbox Key
@@ -209,15 +209,15 @@
         </div>
 
         <!-- Action Buttons (hidden initially) -->
-        <div id="keyActionsContainer" class="key-actions-container"
+        <div id="keyActionsContainer-{{../id}}-sandbox" class="key-actions-container"
           style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
           <div class="key-action-row">
             <span class="key-action-label">Credentials: </span>
             <div class="key-action-buttons">
-              <button id="viewKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal()">
+              <button id="viewKeyBtn-{{../id}}-sandbox" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal('SANDBOX')">
                 <i class="bi bi-eye"></i> View
               </button>
-              <button id="modifyKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysModifyModal()">
+              <button id="modifyKeyBtn-{{../id}}-sandbox" class="common-btn-outlined btn-sm" onclick="loadKeysModifyModal('SANDBOX')">
                 <i class="bi bi-pencil-square"></i> Modify
               </button>
             </div>
@@ -225,7 +225,7 @@
           <div class="key-action-row">
             <span class="key-action-label">Token: </span>
             <div class="key-action-buttons">
-              <button id="tokenKeyBtn" class="common-btn-outlined btn-sm" data-app-id="{{@root.applicationMetadata.id}}"
+              <button id="tokenKeyBtn-{{../id}}-sandbox" class="common-btn-outlined btn-sm" data-app-id="{{@root.applicationMetadata.id}}"
                 onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-sandbox', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}', '{{json @root.subscriptionScopes}}')">
                 <span class="button-normal-state">
                   <i class="bi bi-key-fill"></i> Generate
@@ -235,8 +235,8 @@
                   Generating...
                 </span>
               </button>
-              <button id="tokenInstructionsBtn" class="common-btn-outlined btn-sm"
-                onclick="loadKeysInstructionsModal()">
+              <button id="tokenInstructionsBtn-{{../id}}-sandbox" class="common-btn-outlined btn-sm"
+                onclick="loadKeysInstructionsModal('SANDBOX')">
                 <i class="bi bi-info-circle"></i> Instructions
               </button>
             </div>
@@ -247,19 +247,19 @@
         {{/if}}
         {{else}}
         {{#let "keys" sandboxKeys}}
-        <div id="generateKeyContainer"
+        <div id="generateKeyContainer-{{../id}}-sandbox-alt"
           class="d-flex align-items-center edit-container mb-2 {{#if keys.consumerKey}}d-none{{/if}}"
           style="{{#if keys.consumerKey}}display: none;{{/if}}">
           <div class="d-flex align-items-center">
-            <button class="btn btn-sm common-btn-link p-0" id="addClientID" title="Add description">
+            <button class="btn btn-sm common-btn-link p-0" id="addClientID-{{../id}}-sandbox" title="Add description">
               <i class="bi bi-plus"></i> Add Client ID
             </button>
-            <p class="app-description" id="clientIDInput" data-key-manager="{{name}}"
+            <p class="app-description" id="clientIDInput-{{../id}}-sandbox" data-key-manager="{{name}}"
               data-app-ref-id="{{@root.applicationMetadata}}" style="font-size:13px"></p>
 
           </div>
-          <div class="edit-actions ms-0" id="clientIDEditActions" style="display: none;">
-            <button class="btn btn-sm common-btn-primary save-btn" id="generateKeyBtn"
+          <div class="edit-actions ms-0" id="clientIDEditActions-{{../id}}-sandbox" style="display: none;">
+            <button class="btn btn-sm common-btn-primary save-btn" id="generateKeyBtn-{{../id}}-sandbox-alt"
               onclick="generateApplicationKey('keysview-{{../id}}-sandbox', '{{../../applicationMetadata.id}}', 'SANDBOX', '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-sandbox', 'consumer-secret-{{../id}}-sandbox')"
               title="Save">
               <span class="button-normal-state"><i class="bi bi-check"></i></span>
@@ -267,22 +267,22 @@
                 <span class="spinner-border spinner-border-sm" role="status"></span>
               </span>
             </button>
-            <button class="btn btn-sm common-btn-outlined cancel-btn" id="cancelClientIDBtn" title="Cancel"><i
+            <button class="btn btn-sm common-btn-outlined cancel-btn" id="cancelClientIDBtn-{{../id}}-sandbox" title="Cancel"><i
                 class="bi bi-x"></i></button>
           </div>
-          <div class="tooltip-container ms-2" id="sharedKeyTooltip">
+          <div class="tooltip-container ms-2" id="sharedKeyTooltip-{{../id}}-sandbox">
             <i class="bi bi-info-circle"></i>
             <span class="tooltip-text">This key is shared among all APIs</span>
           </div>
         </div>
-        <button id="clientIDSaveError" class="edit-error-message" style="display: none;"></button>
+        <button id="clientIDSaveError-{{../id}}-sandbox" class="edit-error-message" style="display: none;"></button>
 
-        <div id="keyActionsContainer" class="key-actions-container"
+        <div id="keyActionsContainer-{{../id}}-sandbox-alt" class="key-actions-container"
           style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
           <div class="key-action-row">
             <span class="key-action-label">Credentials: </span>
             <div class="key-action-buttons">
-              <button id="viewKeyBtn" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal()">
+              <button id="viewKeyBtn-{{../id}}-sandbox-alt" class="common-btn-outlined btn-sm" onclick="loadKeysViewModal('SANDBOX')">
                 <i class="bi bi-eye"></i> View
               </button>
             </div>
@@ -290,8 +290,8 @@
           <div class="key-action-row">
             <span class="key-action-label">Token: </span>
             <div class="key-action-buttons">
-              <button id="tokenInstructionsBtn" class="common-btn-outlined btn-sm"
-                onclick="loadKeysInstructionsModal()">
+              <button id="tokenInstructionsBtn-{{../id}}-sandbox-alt" class="common-btn-outlined btn-sm"
+                onclick="loadKeysInstructionsModal('SANDBOX')">
                 <i class="bi bi-info-circle"></i> Instructions
               </button>
             </div>
@@ -300,7 +300,7 @@
         {{/let}}
         {{/in}}
         <!-- Error message container for key generation and token generation -->
-        <div id="keyGenerationErrorContainer" class="mt-2 text-danger"
+        <div id="keyGenerationErrorContainer-sandbox" class="mt-2 text-danger"
           style="display: none; font-size: 0.75rem; word-wrap: break-word;"></div>
         {{/each}}
       </div>
