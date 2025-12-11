@@ -867,7 +867,7 @@ const createSubscriptionPolicies = async (req, res) => {
             }, async (t) => {
                 // TODO: Try using SubscriptionPolicy.bulkCreate() once Table is finalised and manipulating each data is not needed
                 for (const policy of subscriptionPolicies) {
-                    if (policy.type == "requestCount") {
+                    if (policy.type.toLowerCase() == "requestcount" || policy.type.toLowerCase() == "eventcount") {
                         const created = await apiDao.createSubscriptionPolicy(orgId, policy, t);
                         if (!created) {
                             throw new CustomError(
@@ -961,7 +961,7 @@ const updateSubscriptionPolicies = async (req, res) => {
                 timeout: 60000,
             }, async (t) => {
                 for (const policy of subscriptionPolicies) {
-                    if (policy.type == "requestCount") {
+                    if (policy.type.toLowerCase() == "requestcount" || policy.type.toLowerCase() == "eventcount") {
                         const created = await apiDao.putSubscriptionPolicy(orgId, policy, t);
                         if (!created) {
                             throw new CustomError(
