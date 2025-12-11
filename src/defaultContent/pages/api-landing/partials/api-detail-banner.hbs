@@ -17,7 +17,7 @@
           {{#unless isFederatedAPI}}
           <a type="button" class="common-btn-primary" href="#subscriptionPlans">Subscribe</a>
           {{/unless}}
-          {{#in apiMetadata.apiInfo.apiType values="REST,WS,GraphQL,MCP"}}
+          {{#in apiMetadata.apiInfo.apiType values="REST,WS,GRAPHQL,MCP"}}
           <a type="button" class="common-btn-outlined"
             href="{{baseUrl}}/api/{{apiMetadata.apiHandle}}/docs/specification">Documentation</a>
           {{else}}

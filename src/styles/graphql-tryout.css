@@ -1,0 +1,98 @@
+.graphql-tryout-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100vh;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.graphql-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #d0d7de;
+  border-radius: 12px;
+  background: #f6f8fa;
+}
+
+.graphql-control {
+  flex: 1 1 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.graphql-control label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #57606a;
+}
+
+.graphql-control input {
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  color: #1f2328;
+  background: #fff;
+}
+
+.graphql-control .control-hint {
+  font-size: 12px;
+  color: #57606a;
+}
+
+.graphql-control .control-hint strong {
+  color: #1f2328;
+}
+
+.graphiql-container .graphiql-logo {
+  display: none !important;
+}
+
+.graphiql-container .graphiql-session {
+  height: 100% !important;
+}
+
+.graphiql-container .graphiql-sidebar .graphiql-sidebar-section:last-of-type button {
+  display: none !important;
+}
+
+.graphiql-container .graphiql-execute-button,
+.graphiql-container button.graphiql-execute-button,
+.graphiql-container .graphiql-execute-button-wrapper button {
+  background-color: #3498DB !important;
+  border-color: #3498DB !important;
+  color: #ffffff !important;
+}
+
+.graphiql-container .graphiql-execute-button:hover,
+.graphiql-container button.graphiql-execute-button:hover,
+.graphiql-container .graphiql-execute-button-wrapper button:hover {
+  background-color: #5DADE2 !important;
+  border-color: #5DADE2 !important;
+}
+
+.graphiql-container .graphiql-execute-button:active,
+.graphiql-container button.graphiql-execute-button:active,
+.graphiql-container .graphiql-execute-button-wrapper button:active {
+  background-color: #2980B9 !important;
+  border-color: #2980B9 !important;
+}
+
+.graphiql-container {
+  --primary-400: #3498DB !important;
+  --primary-500: #5DADE2 !important;
+  --primary-600: #2980B9 !important;
+}
+
+@media (max-width: 640px) {
+  .graphql-control input {
+    font-size: 12px;
+  }
+}
+

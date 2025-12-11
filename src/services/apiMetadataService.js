@@ -118,6 +118,23 @@ const createAPIMetadata = async (req, res) => {
                     schemaFileName
                 });
             }
+
+            if (constants.API_TYPE.GRAPHQL === apiMetadata.apiInfo.apiType && req.files?.schemaDefinition?.[0]) {
+                const file = req.files.schemaDefinition[0];
+                const schemaDefinitionFile = file.buffer;
+                logger.debug('GraphQL schema definition file received', {
+                    apiId: apiID,
+                    schemaDefinitionFileSize: schemaDefinitionFile.length,
+                    schemaFileName: file.originalname
+                });
+                const schemaFileName = file.originalname || constants.FILE_NAME.API_DEFINITION_GRAPHQL;
+                await apiDao.storeAPIFile(schemaDefinitionFile, schemaFileName, apiID,
+                    constants.DOC_TYPES.API_DEFINITION, t);
+                logger.info('GraphQL schema definition file stored', {
+                    apiId: apiID,
+                    schemaFileName
+                });
+            }
             apiMetadata.apiID = apiID;
         });
 
@@ -376,6 +393,23 @@ const updateAPIMetadata = async (req, res) => {
                 await apiDao.updateAPIFile(schemaDefinitionFile, schemaFileName, apiId, orgId,
                     constants.DOC_TYPES.SCHEMA_DEFINITION, t);
                 logger.info('Schema definition file updated', {
+                    schemaFileName,
+                    apiId
+                });
+            }
+
+            if (constants.API_TYPE.GRAPHQL === apiMetadata.apiInfo.apiType && req.files?.schemaDefinition?.[0]) {
+                const file = req.files.schemaDefinition[0];
+                const schemaDefinitionFile = file.buffer;
+                const schemaFileName = file.originalname || constants.FILE_NAME.API_DEFINITION_GRAPHQL;
+                logger.debug('GraphQL schema definition file received for update', {
+                    schemaDefinitionFileSize: schemaDefinitionFile.length,
+                    schemaFileName,
+                    apiId
+                });
+                await apiDao.updateAPIFile(schemaDefinitionFile, schemaFileName, apiId, orgId,
+                    constants.DOC_TYPES.API_DEFINITION, t);
+                logger.info('GraphQL schema definition file updated', {
                     schemaFileName,
                     apiId
                 });
