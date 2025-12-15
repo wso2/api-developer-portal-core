@@ -32,6 +32,7 @@ const adminService = require('../services/adminService');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
+const { buildSchema, getIntrospectionQuery, graphql: executeGraphQL } = require('graphql');
 const controlPlaneUrl = config.controlPlane.url;
 
 const filePrefix = config.pathToContent;
@@ -297,8 +298,8 @@ const loadAPIContent = async (req, res) => {
                     loadDefault = true;
                     if (
                       metaData.apiInfo &&
-                      metaData.apiInfo.apiType !== "GraphQL" &&
-                      metaData.apiInfo.apiType !== "WS"
+                      metaData.apiInfo.apiType !== constants.API_TYPE.GRAPHQL &&
+                      metaData.apiInfo.apiType !== constants.API_TYPE.WS
                     ) {
                         apiDefinition = "";
                         apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
@@ -321,6 +322,21 @@ const loadAPIContent = async (req, res) => {
                             apiDetails["serverDetails"] = metaData.endPoints;
                         }
                     }
+                    if (metaData.apiInfo.apiType === constants.API_TYPE.GRAPHQL) {
+                        apiDefinition = "";
+                        apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_GRAPHQL, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
+                        apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
+                        apiDetails = {
+                            title: metaData.apiInfo.apiName || "No title",
+                            description: metaData.apiInfo.apiDescription || "No description",
+                            schema: apiDefinition 
+                        };
+                        if (metaData.endPoints.productionURL === "" && metaData.endPoints.sandboxURL === "") {
+                            apiDetails["serverDetails"] = "";
+                        } else {
+                            apiDetails["serverDetails"] = metaData.endPoints;
+                        }
+                    }
                     if (constants.API_TYPE.MCP === metaData.apiInfo?.apiType) {
                         try {
                             let rawSchema = await apiDao.getAPIFile(
@@ -335,8 +351,8 @@ const loadAPIContent = async (req, res) => {
                             logger.error("Failed to load or parse schema definition", {
                                 orgID: orgID,
                                 apiID: apiID,
-                                error: error.message, 
-                                stack: error.stack
+                                error: err.message, 
+                                stack: err.stack
                             });
                             throw err;
                         }
@@ -367,6 +383,10 @@ const loadAPIContent = async (req, res) => {
                     email: req.user.email,
                 }
             }
+            let schemaFileName = constants.FILE_NAME.API_DEFINITION_XML;
+            if (metaData.apiInfo.apiType === constants.API_TYPE.GRAPHQL) {
+                schemaFileName = constants.FILE_NAME.API_DEFINITION_GRAPHQL;
+            }
             templateContent = {
                 isAuthenticated: req.isAuthenticated(),
                 applications: appList,
@@ -375,7 +395,7 @@ const loadAPIContent = async (req, res) => {
                 apiMetadata: metaData,
                 subscriptionPlans: subscriptionPlans,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-                schemaUrl: `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${constants.FILE_NAME.API_DEFINITION_XML}`,
+                schemaUrl: `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${schemaFileName}`,
                 loadDefault: loadDefault,
                 resources: apiDetails,
                 orgID: orgID,
@@ -431,14 +451,21 @@ const loadAPIDefinition = async (orgName, viewName, apiHandle) => {
         metaData = await apiMetadataService.getMetadataFromDB(orgID, apiID, viewName);
         const data = metaData ? JSON.stringify(metaData) : {};
         metaData = JSON.parse(data);
-        let apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
-        apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
         templateContent.apiType = metaData.apiInfo.apiType;
-        if (metaData.apiInfo.apiType === constants.API_TYPE.WS) {
-            templateContent.asyncapi = apiDefinition;
-        } else {
-            templateContent.swagger = apiDefinition;
-        }
+            let apiDefinition;
+            if (metaData.apiInfo.apiType === constants.API_TYPE.GRAPHQL) {
+                apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_GRAPHQL, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
+                apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
+                templateContent.graphql = apiDefinition;
+            } else {
+                apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
+                apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
+                if (metaData.apiInfo.apiType === constants.API_TYPE.WS) {
+                    templateContent.asyncapi = apiDefinition;
+                } else {
+                    templateContent.swagger = apiDefinition;
+                }
+            }
         templateContent.metaData = metaData;
     }
     return templateContent;
@@ -511,7 +538,6 @@ const loadDocsPage = async (req, res) => {
 
 const loadDocument = async (req, res) => {
     const { orgName, apiHandle, viewName, docType, docName } = req.params;
-    const isWebSocketTryout = req.query.tryout ? true : false;
     const orgDetails = await adminDao.getOrganization(orgName);
     const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
     let baseDocUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle
@@ -522,12 +548,20 @@ const loadDocument = async (req, res) => {
         const hbs = exphbs.create({});
         let templateContent = {
             "isAPIDefinition": false,
-            "isWebSocketTryout": isWebSocketTryout
+            "isWebSocketTryout": false,
+            "isGraphQLTryout": false
         };
         const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
         req.cpOrgID = cpOrgID;
         const definitionResponse = await loadAPIDefinition(orgName, viewName, apiHandle);
         templateContent.apiType = definitionResponse.apiType;
+        
+        const tryoutEnabled = req.query.tryout ? true : false;
+        if (definitionResponse.apiType === constants.API_TYPE.WS) {
+            templateContent.isWebSocketTryout = tryoutEnabled;
+        } else if (definitionResponse.apiType === constants.API_TYPE.GRAPHQL) {
+            templateContent.isGraphQLTryout = tryoutEnabled;
+        }
         let apiMetadata = definitionResponse.metaData;
         //check whether user has access to the API via control plane
         if (config.controlPlane?.enabled !== false) {
@@ -565,7 +599,7 @@ const loadDocument = async (req, res) => {
         //load API definition
         if (req.originalUrl.includes(constants.FILE_NAME.API_SPECIFICATION_PATH)) {
 
-            if (definitionResponse.apiType !== constants.API_TYPE.WS) {
+            if (definitionResponse.apiType !== constants.API_TYPE.WS && definitionResponse.apiType !== constants.API_TYPE.GRAPHQL) {
                 let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
                 if (config.controlPlane?.enabled !== false) {
                     try {
@@ -588,10 +622,19 @@ const loadDocument = async (req, res) => {
                     }
                 }
                 templateContent.swagger = JSON.stringify(modifiedSwagger);
-            } else {
+            } else if (definitionResponse.apiType === constants.API_TYPE.GRAPHQL) {
+                if (templateContent.isGraphQLTryout && definitionResponse.graphql) {
+                    const schemaAsIntrospectionJSON = await convertSDLToIntrospection(definitionResponse.graphql);
+                    templateContent.graphqlSchemaAsIntrospectionJSON = schemaAsIntrospectionJSON ? JSON.stringify(schemaAsIntrospectionJSON) : null;
+                } else {
+                    templateContent.graphql = definitionResponse.graphql ? JSON.stringify(definitionResponse.graphql) : '""';
+                    templateContent.apiMetadataJSON = JSON.stringify(apiMetadata || {});
+                }
+                templateContent.apiMetadata = apiMetadata;
+            }
+             else {
                 let modifiedAsyncAPI = replaceEndpointParamsAsyncAPI(JSON.parse(definitionResponse.asyncapi), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
                 templateContent.asyncapi = JSON.stringify(modifiedAsyncAPI);
-                templateContent.isWebSocketTryout = isWebSocketTryout;
             }
             templateContent.isAPIDefinition = true;
         }
@@ -859,6 +902,25 @@ function replaceEndpointParamsAsyncAPI(apiDefinition, prodEndpoint, sandboxEndpo
         }
     }
     return apiDefinition;
+}
+
+async function convertSDLToIntrospection(sdl) {
+    try {
+        const schema = buildSchema(sdl);
+        const introspectionQuery = getIntrospectionQuery();
+        const result = await executeGraphQL({
+            schema,
+            source: introspectionQuery
+        });
+        
+        return result.data;
+    } catch (error) {
+        logger.error('Error converting SDL to introspection', {
+            error: error.message,
+            stack: error.stack
+        });
+        return null;
+    }
 }
 
 module.exports = {
