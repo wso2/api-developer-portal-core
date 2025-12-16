@@ -24,13 +24,13 @@ If you want to connect to the **Dev environment**, you need to replace your loca
   - `./config.json`
   - `./secret.json`
 
-If the Dev configuration uses certificates/keys, place the provided files under `./resources/security/` (create the folder if it doesn’t exist):
+If the Dev configuration uses certificates/keys, place the provided files at the paths referenced in your `config.json` (e.g., `pathToDBCert`, `serverCerts.*`). The Dev config typically points under `./resources/security/`, so if you keep those values, create the folder:
 
 ```bash
 mkdir -p resources/security
 ```
 
-Then copy the provided cert/key files into `resources/security/`.
+Then copy the provided cert/key files into that folder.
 
 ### Install and run
 
