@@ -6,7 +6,7 @@
     "consoleOnly": false
   },
   "advanced": {
-    "http": false,
+    "http": true,
     "dbSslDialectOption": false,
     "resourceLoadFromBaseUrl": false,
     "apiKey": {
@@ -70,7 +70,7 @@
     "authorizationURL": "https://localhost:9443/oauth2/authorize",
     "tokenURL": "https://localhost:9443/oauth2/token",
     "userInfoURL": "https://localhost:9443/oauth2/userinfo",
-    "clientId": "",
+    "clientId": "<CLIENT_ID>",
     "callbackURL": "https://localhost:3000/ACME/callback",
     "scope": "openid profile",
     "signUpURL": "",
@@ -130,7 +130,7 @@
     "host": "redis.f.bijira.com",
     "port": 6379,
     "db": 0,
-    "enabled": true,
+    "enabled": false,
     "tls": {
       "enabled": true,
       "rejectUnauthorized": false

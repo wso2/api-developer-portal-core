@@ -19,7 +19,6 @@
  * Handles SSE progress events across multiple pod instances
  */
 
-const Redis = require('ioredis');
 const EventEmitter = require('events');
 const config = require(process.cwd() + '/config');
 const path = require('path');
@@ -40,18 +39,32 @@ class RedisService extends EventEmitter {
         this.reconnectTimeout = null;
         this.connectionPromise = null;
         this.podId = process.env.POD_NAME || `pod-${Math.random().toString(36).substr(2, 9)}`;
+        const envEnabled = process.env.REDIS_ENABLED;
+        this.enabled = (envEnabled !== undefined)
+            ? (envEnabled === 'true' || envEnabled === '1')
+            : (config.redis?.enabled !== false);
         this.maxFileSize = config.redis?.configs?.maxFileSize || 50 * 1024 * 1024; // 50 MB
         this.defaultTTL = config.redis?.configs?.ttl || 3600;
         this.isShuttingDown = false;
         this.activeSSEConnections = new Map();
         this.sseConnectionTimeout = config.redis?.configs?.sseConnectionTimeout || 120000;
 
-        // Start connection without waiting
-        this.init().catch(error => {
-            console.error('Initial Redis connection failed:', error.message);
-        });
+        // Start connection without waiting (only if enabled)
+        if (this.enabled) {
+            this.init().catch(error => {
+                console.error('Initial Redis connection failed:', error.message);
+            });
+        } else {
+            console.info('Redis is disabled.');
+        }
     }    
     async init() {
+        if (!this.enabled) {
+            this.isConnected = false;
+            this.isConnecting = false;
+            this.connectionPromise = Promise.resolve(null);
+            return this.connectionPromise;
+        }
         if (this.isConnecting || this.isConnected) {
             return this.connectionPromise;
         }
@@ -131,6 +144,10 @@ class RedisService extends EventEmitter {
             return true;
         }
 
+        if (!this.enabled) {
+            return false;
+        }
+
         if (!this.isConnected || !this.publisher) {
             console.warn(`Cannot publish progress - Redis not connected on pod: [${this.podId}]`);
             return false;
@@ -198,6 +215,9 @@ class RedisService extends EventEmitter {
     }
 
     async storeFileWithRetry(fileKey, filePath, ttl = this.defaultTTL, maxRetries = 3) {
+        if (!this.enabled) {
+            return false;
+        }
         let lastError = null;
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -235,6 +255,9 @@ class RedisService extends EventEmitter {
     }
 
     async storeFile(fileKey, filePath, ttl) {
+        if (!this.enabled) {
+            throw new Error(`Redis is disabled on pod: ${this.podId}`);
+        }
         if (!this.isConnected || !this.redis) {
             throw new Error(`Redis not connected on pod: ${this.podId}`);
         }
@@ -331,6 +354,9 @@ class RedisService extends EventEmitter {
 
     async retrieveFileWithRetry(fileKey, maxRetries = 3, baseDelay = 1000) {
         let lastError = null;
+        if (!this.enabled) {
+            return null;
+        }
         if (!this.isConnected) {
             console.warn(`Cannot retrieve file - Redis not connected on pod: ${this.podId}`);
             return null;
@@ -372,6 +398,9 @@ class RedisService extends EventEmitter {
     }
 
     async retrieveFile(fileKey) {
+        if (!this.enabled) {
+            return null;
+        }
         if (!this.isConnected) {
             console.warn(`Cannot retrieve file - Redis not connected on pod: ${this.podId}`);
             return null;
@@ -407,6 +436,9 @@ class RedisService extends EventEmitter {
     }
 
     async fileExists(fileKey) {
+        if (!this.enabled) {
+            return false;
+        }
         if (!this.isConnected) {
             return false;
         }
@@ -436,6 +468,9 @@ class RedisService extends EventEmitter {
     }
 
    async _triggerReconnection() {
+        if (!this.enabled) {
+            return false;
+        }
         // Prevent multiple simultaneous reconnection attempts
         if (this.isConnecting) {
             console.log('Reconnection already in progress, skipping trigger');
@@ -457,6 +492,9 @@ class RedisService extends EventEmitter {
     }
 
     async _triggerFileOnlyReconnection() {
+        if (!this.enabled) {
+            return false;
+        }
         console.log(`Triggering Redis file storage reconnection on pod: ${this.podId}`);
         
         try {
