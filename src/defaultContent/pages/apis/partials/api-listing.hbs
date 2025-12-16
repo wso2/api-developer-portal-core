@@ -79,6 +79,11 @@
                       src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/WebSocket.svg"
                       style=" height: 16px; object-fit: contain;"
                     />
+                    {{else if (eq apiInfo.apiType "GRAPHQL")}}
+                    <img 
+                      src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/graphql.svg" 
+                      style="height: 16px; object-fit: contain;"
+                     />
                     {{else}}
                     <img
                       src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/REST.svg"
@@ -108,7 +113,6 @@
               </div>
             </div>
           </div>
-          {{#unless (isFederatedAPI apiInfo.gatewayVendor)}}
           {{#if ../isAuthenticated}}
           <hr class="card-separator" />
           {{/if}}
@@ -174,7 +178,6 @@
               <button type="button" class="close-message" aria-label="Close message">&times;</button>
             </div>
           </div>
-          {{/unless}}
         </div>
       </div>
       {{/unless}}
