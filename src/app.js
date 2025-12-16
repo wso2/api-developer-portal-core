@@ -266,11 +266,19 @@ const strategy = new OAuth2Strategy({
     }
     let orgList, userOrg;
     if (config.advanced.tokenExchanger?.enabled) {
-        const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
-        const decodedExchangedToken = jwt.decode(exchangedToken);
-        orgList = decodedExchangedToken.organizations;
-        userOrg = decodedExchangedToken.organization.uuid;
-        req['exchangedToken'] = exchangedToken;
+        try {
+            const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
+            const decodedExchangedToken = jwt.decode(exchangedToken);
+            orgList = decodedExchangedToken.organizations;
+            userOrg = decodedExchangedToken.organization.uuid;
+            req['exchangedToken'] = exchangedToken;
+        } catch (error) {
+            logger.error('Token exchange failed during authentication', {
+                error: error.message,
+                returnTo: req.session.returnTo
+            });
+            return done(error);
+        }
     }
     const decodedJWT = jwt.decode(params.id_token);
     const decodedAccessToken = jwt.decode(accessToken);
