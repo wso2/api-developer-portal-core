@@ -549,7 +549,6 @@ process.on('uncaughtException', (err) => {
         stack: err.stack,
         type: 'uncaughtException'
     });
-    process.exit(1);
 });
 
 // Handle Unhandled Rejections
@@ -559,7 +558,6 @@ process.on('unhandledRejection', (reason, promise) => {
         promise: promise?.toString(),
         type: 'unhandledRejection'
     });
-    process.exit(1);
 });
 
 // Graceful shutdown handlers
