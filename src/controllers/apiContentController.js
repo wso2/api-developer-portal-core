@@ -299,7 +299,8 @@ const loadAPIContent = async (req, res) => {
                     if (
                       metaData.apiInfo &&
                       metaData.apiInfo.apiType !== constants.API_TYPE.GRAPHQL &&
-                      metaData.apiInfo.apiType !== constants.API_TYPE.WS
+                      metaData.apiInfo.apiType !== constants.API_TYPE.WS &&
+                      metaData.apiInfo.apiType !== constants.API_TYPE.WEBSUB
                     ) {
                         apiDefinition = "";
                         apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
@@ -311,7 +312,7 @@ const loadAPIContent = async (req, res) => {
                             apiDetails["serverDetails"] = metaData.endPoints;
                         }
                     }
-                    if (metaData.apiInfo.apiType === "WS") {
+                    if (metaData.apiInfo.apiType === "WS" || metaData.apiInfo.apiType === "WEBSUB") {
                         apiDefinition = "";
                         apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
                         apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
@@ -460,7 +461,7 @@ const loadAPIDefinition = async (orgName, viewName, apiHandle) => {
             } else {
                 apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
                 apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
-                if (metaData.apiInfo.apiType === constants.API_TYPE.WS) {
+                if (metaData.apiInfo.apiType === constants.API_TYPE.WS || metaData.apiInfo.apiType === constants.API_TYPE.WEBSUB) {
                     templateContent.asyncapi = apiDefinition;
                 } else {
                     templateContent.swagger = apiDefinition;
@@ -557,7 +558,7 @@ const loadDocument = async (req, res) => {
         templateContent.apiType = definitionResponse.apiType;
         
         const tryoutEnabled = req.query.tryout ? true : false;
-        if (definitionResponse.apiType === constants.API_TYPE.WS) {
+        if (definitionResponse.apiType === constants.API_TYPE.WS || definitionResponse.apiType === constants.API_TYPE.WEBSUB) {
             templateContent.isWebSocketTryout = tryoutEnabled;
         } else if (definitionResponse.apiType === constants.API_TYPE.GRAPHQL) {
             templateContent.isGraphQLTryout = tryoutEnabled;
@@ -602,7 +603,7 @@ const loadDocument = async (req, res) => {
         //load API definition
         if (req.originalUrl.includes(constants.FILE_NAME.API_SPECIFICATION_PATH)) {
 
-            if (definitionResponse.apiType !== constants.API_TYPE.WS && definitionResponse.apiType !== constants.API_TYPE.GRAPHQL) {
+            if (definitionResponse.apiType !== constants.API_TYPE.WS && definitionResponse.apiType !== constants.API_TYPE.GRAPHQL && definitionResponse.apiType !== constants.API_TYPE.WEBSUB) {
                 let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
                 if (config.controlPlane?.enabled !== false) {
                     try {
