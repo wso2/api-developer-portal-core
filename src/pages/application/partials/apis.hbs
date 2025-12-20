@@ -45,7 +45,8 @@
                     </thead>
                     <tbody>
                         {{#each subAPIs}}
-                        {{> api-key apiID=apiID}}
+                        {{> api-key apiID=apiID keyType="PRODUCTION"}}
+                        {{> api-key apiID=apiID keyType="SANDBOX"}}
                         {{#in apiType values="REST, WS"}}
                         {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
                         <tr class="data-row" id="data-row-{{subID}}" data-index="{{@index}}">
@@ -73,38 +74,37 @@
                                         onclick="openWarningModal('regenerate', this.dataset.apiKeyId, '{{subID}}')"
                                         style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{else}}{{#if apiKeys.key}}display:inline-flex;{{else}}display:none;{{/if}}{{/if}}">
                                         <span class="button-normal-state">
-                                            <i class="bi bi-key me-1"></i> Regenerate
-                                        </span>
-                                        <span class="button-loading-state" style="display: none;">
-                                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                                            Regenerate...
-                                        </span>
-                                    </button>
-                                    <button class="common-btn-outlined btn-sm api-key-revoke {{#if @root.isReadOnlyMode}}disabled{{/if}}"
-                                        data-api-key-id="'{{apiKeys.key.[0].id}}'"
-                                        onclick="openWarningModal('revoke', this.dataset.apiKeyId, '{{subID}}', '{{../applicationMetadata.id}}', '{{refID}}')"
-                                        id="revokeKeyBtn-{{subID}}"
-                                        style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{else}}{{#if apiKeys.key}}display: inline-flex;{{else}}display: none;{{/if}}{{/if}}">
-                                        <span class="button-normal-state">
-                                            <i class="bi bi-key me-1"></i> Revoke
-                                        </span>
-                                        <span class="button-loading-state" style="display: none;">
-                                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                                            Revoking...
-                                        </span>
-                                    </button>
-                                    <button class="common-btn-outlined btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}" id="generateKeyBtn-{{subID}}"
-                                        style="{{#if apiKeys.key}}display: none;{{else}}display: inline-flex;{{/if}}"
-                                        data-app-ref-id=""
-                                      onclick="openApiKeyModal('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIs}}', '{{json scopes}}')">
-                                        <span class="button-normal-state">
-                                            <i class="bi bi-key me-1"></i> Generate Key
+                                            <i class="bi bi-key me-1"></i> Production
                                         </span>
                                         <span class="button-loading-state" style="display: none;">
                                             <span class="spinner-border spinner-border-sm me-1" role="status"></span>
                                             Generating...
                                         </span>
                                     </button>
+                                    {{/if}}
+                                    {{!-- Sandbox API Key --}}
+                                    {{#if apiKeys.sandbox.key}}
+                                    <a class="common-btn-outlined btn-sm" id="manageKeyBtn-{{subID}}-SANDBOX"
+                                        href="{{@root.baseUrl}}/applications/{{../applicationMetadata.id}}/manage-keys#sandbox"
+                                        title="Manage Sandbox Key">
+                                        <i class="bi bi-gear me-1"></i> Sandbox
+                                    </a>
+                                    {{else}}
+                                    <button class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}" 
+                                        id="generateKeyBtn-{{subID}}-SANDBOX"
+                                        style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
+                                        data-app-ref-id=""
+                                        title="Generate Sandbox Key"
+                                        onclick="openApiKeyModal('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIs}}', '{{json scopes}}', 'SANDBOX')">
+                                        <span class="button-normal-state">
+                                            <i class="bi bi-key me-1"></i> Sandbox
+                                        </span>
+                                        <span class="button-loading-state" style="display: none;">
+                                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                            Generating...
+                                        </span>
+                                    </button>
+                                    {{/if}}
                                 </div>
                                 {{/if}}
                             </td>
@@ -207,7 +207,7 @@
                                     <button class="common-btn-outlined btn-sm me-1" id="generateKeyBtn-{{subID}}"
                                         style="{{#if apiKeys}}display: none;{{else}}display: inline-flex;{{/if}}"
                                         data-app-ref-id=""
-                                        onclick="generateAPIKey('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIs}}')">
+                                        onclick="generateAPIKey('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIs}}', 'PRODUCTION')">
                                         <span class="button-normal-state">
                                             <i class="bi bi-key me-1"></i> Generate Key
                                         </span>

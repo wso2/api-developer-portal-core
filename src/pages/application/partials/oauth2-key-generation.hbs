@@ -83,7 +83,7 @@
                                         <button class='common-btn-primary me-3'
                                             id='apiKeyGenerateButton-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}'
                                             name='http-values' type='button'
-                                            onClick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.applicationId}}', '{{keys.keyMappingId}}', '{{../name}}', '{{keys.clientName}}')">
+                                            onClick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.applicationId}}', '{{keys.keyMappingId}}', '{{../name}}', '{{keys.clientName}}', '{{json ../../subAPIs}}', '{{#if ../../isProduction}}PRODUCTION{{else}}SANDBOX{{/if}}')">
                                             Generate Token
                                         </button>
                                     </div>
@@ -251,7 +251,7 @@
                                 {{/let}}
                                 {{#if keys.consumerKey}}
                                 <div class="d-flex gap-3">
-                                    <button class="common-btn-primary" id="applicationKeyUpdateButton" name="http-values" type="button"
+                                    <button class="common-btn-primary" id="applicationKeyUpdateButton-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}" name="http-values" type="button"
                                         onClick="updateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', 
                                         '{{../../applicationMetadata.applicationId}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', 
                                         '{{keys.keyMappingId}}', '{{keys.clientName}}')">

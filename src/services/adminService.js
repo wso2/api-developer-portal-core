@@ -1236,14 +1236,12 @@ const createAppKeyMapping = async (req, res) => {
             }
 
             tokenDetails.additionalProperties = checkAdditionalValues(tokenDetails.additionalProperties);
-            //TODO: need to support both key types
-            tokenDetails.keyType = "PRODUCTION";
 
             if (tokenDetails.keyManager.startsWith(constants.KEY_MANAGERS.INTERNAL_KEY_MANAGER) || tokenDetails.keyManager.startsWith(constants.KEY_MANAGERS.RESIDENT_KEY_MANAGER) || tokenDetails.keyManager.startsWith(constants.KEY_MANAGERS.APP_DEV_STS_KEY_MANAGER)) {
                 //generate oauth key
                 responseData = await generateOAuthKey(req, cpAppID, tokenDetails);
             } else {
-                responseData = await mapKeys(req, clientID, tokenDetails.keyManager, cpAppID);
+                responseData = await mapKeys(req, clientID, tokenDetails.keyManager, cpAppID, keyType);
             }
             // Add the appRefId to the response data
             responseData.appRefId = cpAppID;
@@ -1279,14 +1277,14 @@ const createAppKeyMapping = async (req, res) => {
     }
 }
 
-async function mapKeys(req, clientID, keyManager, applicationId) {
+async function mapKeys(req, clientID, keyManager, applicationId, keyType) {
     logger.info('Mapping existing client ID with application', {
         applicationId
     });
     const body = {
         "consumerKey": clientID,
         "keyManager": keyManager,
-        "keyType": 'PRODUCTION',
+        "keyType": keyType,
     };
     try {
         return await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/map-keys`, {}, body);

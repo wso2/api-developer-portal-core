@@ -203,7 +203,7 @@ const generateAPIKeys = async (req, res) => {
         const environments = orgDetails?.data?.environments || [];
         const apiHandle = await apiDao.getAPIHandle(orgID, req.body.apiId);
 
-        requestBody.name = apiHandle + "-" + cpAppID;
+        requestBody.name = apiHandle + "-" + cpAppID + "-" + requestBody.keyType;
         requestBody.environmentTemplateId = environments.find(env => env.name === 'Production').templateId;
         requestBody.applicationId = cpAppID;
         delete requestBody.projectID;

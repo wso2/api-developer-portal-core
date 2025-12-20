@@ -1,31 +1,76 @@
-function openWarningModal(param1, param2, param3, param4, param5) {
+function openWarningModal(param1, param2, param3, param4, param5, param6) {
     const modal = document.getElementById('warningModal');
-    modal.dataset.param1 = param1;
-    modal.dataset.param2 = param2;
-    modal.dataset.param3 = param3;
-    modal.dataset.param4 = param4;
-    modal.dataset.param5 = param5;
-    const bootstrapModal = new bootstrap.Modal(modal);
-    bootstrapModal.show();
+    if (!modal) {
+        console.error('openWarningModal: Warning modal not found');
+        return;
+    }
+
+    // Sanitize parameters to prevent XSS
+    const sanitizeParam = (param) => {
+        if (param === null || param === undefined) return '';
+        return String(param).replace(/['"<>]/g, '');
+    };
+
+    const sanitizedParam1 = sanitizeParam(param1);
+    const sanitizedParam2 = sanitizeParam(param2);
+    const sanitizedParam3 = sanitizeParam(param3);
+    const sanitizedParam4 = sanitizeParam(param4);
+    const sanitizedParam5 = sanitizeParam(param5);
+    const sanitizedParam6 = sanitizeParam(param6);
+
+
+    modal.dataset.param1 = sanitizedParam1;
+    modal.dataset.param2 = sanitizedParam2;
+    modal.dataset.param3 = sanitizedParam3;
+    modal.dataset.param4 = sanitizedParam4;
+    modal.dataset.param5 = sanitizedParam5;
+    modal.dataset.param6 = sanitizedParam6;
+
+    try {
+        const bootstrapModal = new bootstrap.Modal(modal);
+        bootstrapModal.show();
+    } catch (error) {
+        console.error('openWarningModal: Failed to show modal', error);
+        return;
+    }
+
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMessage = document.getElementById('modalMessage');
+    const modalFunction = document.getElementById('modalFunction');
+
+    if (!modalTitle || !modalMessage || !modalFunction) {
+        console.error('openWarningModal: Required modal elements not found');
+        return;
+    }
 
     if (param1 === 'regenerate') {
-        document.getElementById('modalTitle').innerText = "Regenerate API Key";
-        document.getElementById('modalMessage').innerText = "Regenerating the API key will impact applications using the current key. \nThe current key will expire in 1 hour. To avoid service disruptions, copy the new key and update it in your applications immediately.";
-        const regenerateBtn = document.getElementById('modalFunction');
-        regenerateBtn.innerText = "Regenerate";
-        regenerateBtn.setAttribute('onclick', `regenerateAPIKey(${param2}, '${param3}')`);
+        modalTitle.innerText = "Regenerate API Key";
+        modalMessage.innerText = "Regenerating the API key will impact applications using the current key. \nThe current key will expire in 1 hour. To avoid service disruptions, copy the new key and update it in your applications immediately.";
+        modalFunction.innerText = "Regenerate";
+        // Use data attributes and event listeners instead of inline onclick to prevent XSS
+        modalFunction.onclick = function() {
+            if (typeof regenerateAPIKey === 'function') {
+                regenerateAPIKey(sanitizedParam2, sanitizedParam3, sanitizedParam6);
+            }
+        };
     } else if (param1 === 'revoke') {
-        document.getElementById('modalTitle').innerText = "Revoke API Key";
-        document.getElementById('modalMessage').innerText = "Revoking the API key will impact applications using the current key. Are you sure you want to proceed? This action cannot be undone.";
-        const revokeBtn = document.getElementById('modalFunction');
-        revokeBtn.innerText = "Revoke";
-        revokeBtn.setAttribute('onclick', `revokeAPIKey(${param2}, '${param3}', '${param4}', '${param5}')`);
+        modalTitle.innerText = "Revoke API Key";
+        modalMessage.innerText = "Revoking the API key will impact applications using the current key. Are you sure you want to proceed? This action cannot be undone.";
+        modalFunction.innerText = "Revoke";
+        modalFunction.onclick = function() {
+            if (typeof revokeAPIKey === 'function') {
+                revokeAPIKey(sanitizedParam2, sanitizedParam3, sanitizedParam4, sanitizedParam5, sanitizedParam6);
+            }
+        };
     } else if (param1 === 'Unsubscribe') {
-        document.getElementById('modalTitle').innerText = "Do you really want to remove the subscription?";
-        document.getElementById('modalMessage').innerText = "This will remove the subscription entry stored in the devportal.";
-        const unsubscribeBtn = document.getElementById('modalFunction');
-        unsubscribeBtn.innerText = "Confirm";
-        unsubscribeBtn.setAttribute('onclick', `removeSubscription('${param2}', '${param3}', '${param4}', '${param5}')`);
+        modalTitle.innerText = "Do you really want to remove the subscription?";
+        modalMessage.innerText = "This will remove the subscription entry stored in the devportal.";
+        modalFunction.innerText = "Confirm";
+        modalFunction.onclick = function() {
+            if (typeof removeSubscription === 'function') {
+                removeSubscription(sanitizedParam2, sanitizedParam3, sanitizedParam4, sanitizedParam5);
+            }
+        };
     }
 }
 

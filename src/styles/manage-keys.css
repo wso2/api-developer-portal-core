@@ -1,0 +1,189 @@
+/* Manage Keys Page Styles */
+
+.keys-section {
+    margin-top: 0rem;
+}
+
+.key-btn-container {
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--secondary-bg-color);
+    background-color: transparent;
+}
+
+.key-btn-container .nav-item {
+    flex: 1;
+}
+
+/* Tab Buttons */
+.key-btn {
+    background-color: var(--main-bg-color);
+    color: var(--main-text-color);
+    border: 1px solid var(--secondary-bg-color);
+    border-bottom: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+    border-radius: 8px 8px 0 0;
+    width: 100%;
+    position: relative;
+    margin-bottom: -2px;
+}
+
+.key-btn:hover {
+    background-color: var(--primary-lightest-color);
+    color: var(--primary-main-color);
+    border-color: var(--primary-lightest-color);
+}
+
+.key-btn.active {
+    background-color: var(--primary-light-color);
+    color: var(--light-text-color);
+    border-color: var(--primary-light-color);
+    border-bottom: 2px solid var(--primary-light-color);
+    font-weight: 600;
+}
+
+.key-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary-lightest-color);
+}
+
+.accordion-item {
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--secondary-bg-color);
+    border-radius: 8px !important;
+    background-color: var(--main-bg-color);
+    transition: box-shadow 0.2s ease;
+}
+
+.accordion-item:hover {
+    box-shadow: 0 2px 8px rgba(26, 76, 109, 0.08);
+}
+
+.accordion-button {
+    font-weight: 600;
+    color: var(--main-text-color);
+    padding: 0.875rem 1rem;
+    font-size: 0.9rem;
+    background-color: var(--secondary-bg-color);
+    border: none;
+    box-shadow: none !important;
+    outline: none !important;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: var(--primary-lightest-color);
+    box-shadow: none !important;
+    color: var(--primary-main-color);
+    border-bottom: 1px solid var(--secondary-bg-color);
+}
+
+.accordion-button:focus {
+    background-color: var(--secondary-bg-color);
+    box-shadow: none !important;
+    border-color: transparent;
+    outline: none !important;
+}
+
+.accordion-button:focus-visible {
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.accordion-button:hover {
+    background-color: var(--primary-lightest-color);
+    color: var(--primary-main-color);
+}
+
+.accordion-button::after {
+    transition: transform 0.25s ease;
+}
+
+.accordion-header {
+    margin-bottom: 0;
+}
+
+.accordion-body {
+    padding: 1.25rem;
+    background-color: var(--main-bg-color);
+    border-top: none;
+    min-height: 30vh;
+    max-height: 60vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.accordion-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.accordion-body::-webkit-scrollbar-track {
+    background: var(--secondary-bg-color);
+    border-radius: 3px;
+}
+
+.accordion-body::-webkit-scrollbar-thumb {
+    background: var(--primary-light-color);
+    border-radius: 3px;
+}
+
+.accordion-body::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-main-color);
+}
+
+.accordion-body .row {
+    margin-bottom: 1rem;
+}
+
+.accordion-body .col-form-label {
+    font-weight: 500;
+    color: var(--main-text-color);
+    padding-top: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.accordion-body .form-control {
+    display: block;
+    width: 100%;
+    border: 1px solid var(--secondary-bg-color);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    background-color: var(--main-bg-color);
+    color: var(--main-text-color);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.accordion-body .form-control:focus {
+    border-color: var(--primary-main-color);
+    box-shadow: 0 0 0 3px rgba(26, 76, 109, 0.1);
+    outline: none;
+}
+
+.accordion-body .input-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    width: 100%;
+}
+
+/* Table Styling in Accordion */
+.app-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.app-table-container {
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--secondary-bg-color);
+}
+

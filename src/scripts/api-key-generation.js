@@ -1,20 +1,48 @@
 const e = require("express");
 
-function openApiKeyModal(projectID, apiRefID, subPlan, cpAppID, appID, subID, subIDs, subscribedScopes) {
+// Handle URL hash for tab navigation on manage-keys page
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.location.pathname.includes('/manage-keys') && window.location.hash) {
+    const hash = window.location.hash.substring(1); // Remove the #
+    
+    if (hash === 'production' || hash === 'sandbox') {
+      const tabButton = document.getElementById(hash + '-tab');
+      const tabPane = document.getElementById(hash);
+      
+      if (tabButton && tabPane) {
+        // Deactivate all tabs first
+        document.querySelectorAll('#keysTab .key-btn').forEach(btn => {
+          btn.classList.remove('active');
+          btn.setAttribute('aria-selected', 'false');
+        });
+        document.querySelectorAll('#keysTabContent .tab-pane').forEach(pane => {
+          pane.classList.remove('show', 'active');
+        });
+        
+        // Activate the target tab
+        tabButton.classList.add('active');
+        tabButton.setAttribute('aria-selected', 'true');
+        tabPane.classList.add('show', 'active');
+      }
+    }
+  }
+});
+
+function openApiKeyModal(projectID, apiRefID, subPlan, cpAppID, appID, subID, subIDs, subscribedScopes, keyType) {
 
   let scopes = Array.isArray(subscribedScopes) ? subscribedScopes : JSON.parse(subscribedScopes);
 
   if (scopes.length < 1) {
-    return generateAPIKey(projectID, apiRefID, subPlan, cpAppID, appID, subID, subIDs, 'generateKeyBtn-')
+    return generateAPIKey(projectID, apiRefID, subPlan, cpAppID, appID, subID, subIDs, 'generateKeyBtn-', keyType)
   }
-  const modal = document.getElementById('apiKeyModal-' + subID);
+  const modal = document.getElementById('apiKeyModal-' + subID + '-' + keyType);
   modal.style.display = 'flex';
 
-  document.getElementById("generateAPIKeyBtn-" + subID).style.display = 'block';
-  document.getElementById('apiKeyCard-' + subID).classList.add('d-none');
-  document.getElementById('apiKeyInfo-' + subID).classList.add('d-none');
+  document.getElementById("generateAPIKeyBtn-" + subID + '-' + keyType).style.display = 'block';
+  document.getElementById('apiKeyCard-' + subID + '-' + keyType).classList.add('d-none');
+  document.getElementById('apiKeyInfo-' + subID + '-' + keyType).classList.add('d-none');
 
-  const scopeContainer = document.getElementById('scopeContainer-' + subID);
+  const scopeContainer = document.getElementById('scopeContainer-' + subID + '-' + keyType);
   scopeContainer.setAttribute('data-scopes', subscribedScopes);
 
   const scopesData = scopeContainer?.dataset?.scopes;
@@ -51,16 +79,16 @@ function openApiKeyModal(projectID, apiRefID, subPlan, cpAppID, appID, subID, su
 
   }
 
-  document.getElementById('generateAPIKeyBtn-' + subID).setAttribute('onclick', `generateAPIKey('${projectID}', '${apiRefID}', '${subPlan}', '${cpAppID}', '${appID}', '${subID}', '${subIDs}', 'generateAPIKeyBtn-')`);
+  document.getElementById('generateAPIKeyBtn-' + subID + '-' + keyType).setAttribute('onclick', `generateAPIKey('${projectID}', '${apiRefID}', '${subPlan}', '${cpAppID}', '${appID}', '${subID}', '${subIDs}', 'generateAPIKeyBtn-', '${keyType}')`);
 }
 
-async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, subIDs, tokenBtnPrefix) {
+async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, subIDs, tokenBtnPrefix, keyType) {
 
-  const tokenBtn = document.getElementById(tokenBtnPrefix + subID);
+  const tokenBtn = document.getElementById(tokenBtnPrefix + subID + '-' + keyType);
   const normalState = tokenBtn.querySelector('.button-normal-state');
   const loadingState = tokenBtn.querySelector('.button-loading-state');
   const subscriptionPlan = document.getElementById('policy_' + subID).textContent;
-  const scopeContainer = document.getElementById('scopeContainer-' + subID);
+  const scopeContainer = document.getElementById('scopeContainer-' + subID + '-' + keyType);
   const scopeTags = scopeContainer.querySelectorAll('.span-tag');
   const scopes = Array.from(scopeTags).map(el => el.textContent.replace('×', '').trim());
   scopeContainer.setAttribute('data-scopes', [scopes]);
@@ -76,7 +104,7 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
       "apiId": `${apiID}`,
       "subscriptionPlan": `${subscriptionPlan}`,
       "scopes": scopes,
-      "keyType": "PRODUCTION",
+      "keyType": `${keyType.toUpperCase()}`,
       "projectID": `${projectID}`,
       "devportalAppId": `${appID}`,
     });
@@ -93,23 +121,56 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
     const responseData = await response.json();
 
     if (response.ok) {
-      const modal = document.getElementById('apiKeyModal-' + subID);
+      const modal = document.getElementById('apiKeyModal-' + subID + '-' + keyType);
       modal.style.display = 'flex';
 
-      document.getElementById('apiKeyCard-' + subID).classList.remove('d-none');
-      document.getElementById('apiKeyInfo-' + subID).classList.remove('d-none');
-      document.getElementById("token_apiKeyText-" + subID).textContent = responseData.value;
-      document.getElementById('generateKeyBtn-' + subID).style.display = 'none';
-      document.getElementById('generateAPIKeyBtn-' + subID).style.display = 'none';
+      document.getElementById('apiKeyCard-' + subID + '-' + keyType).classList.remove('d-none');
+      document.getElementById('apiKeyInfo-' + subID + '-' + keyType).classList.remove('d-none');
+      document.getElementById("token_apiKeyText-" + subID + '-' + keyType).textContent = responseData.value;
+      
+      // Hide the generate button in the modal
+      const generateAPIKeyBtn = document.getElementById('generateAPIKeyBtn-' + subID + '-' + keyType);
+      if (generateAPIKeyBtn) {
+        generateAPIKeyBtn.style.display = 'none';
+      }
 
-      let regenerateBtn = document.getElementById('regenerateKeyBtn-' + subID);
-      regenerateBtn.style.display = 'inline-flex';
-      regenerateBtn.setAttribute('data-api-key-id', `'${responseData.id}'`);
-      regenerateBtn.setAttribute('data-scopes', `${JSON.stringify(scopes)}`);
+      // Check if we're on the manage-keys page
+      const isManageKeysPage = window.location.pathname.includes('/manage-keys');
+      
+      const generateBtn = document.getElementById('generateKeyBtn-' + subID + '-' + keyType);
+      if (generateBtn) {
+        if (isManageKeysPage) {
+          // On manage-keys.hbs: Just hide the generate button, regenerate/revoke buttons will be shown
+          generateBtn.style.display = 'none';
+        } else {
+          // On apis.hbs: Replace generate button with "Manage Key" link
+          const envLabel = keyType === 'PRODUCTION' ? 'Production' : 'Sandbox';
+          const envHash = keyType === 'PRODUCTION' ? '#production' : '#sandbox';
+          
+          const manageLink = document.createElement('a');
+          manageLink.className = 'common-btn-outlined btn-sm';
+          manageLink.id = 'manageKeyBtn-' + subID + '-' + keyType;
+          manageLink.href = window.location.pathname.replace(/\/[^\/]*$/, '/manage-keys') + envHash;
+          manageLink.setAttribute('title', 'Manage ' + envLabel + ' Key');
+          manageLink.innerHTML = '<i class="bi bi-gear me-1"></i> ' + envLabel;
+          
+          generateBtn.parentNode.replaceChild(manageLink, generateBtn);
+        }
+      }
 
-      let revokeBtn = document.getElementById('revokeKeyBtn-' + subID);
-      revokeBtn.style.display = 'inline-flex';
-      revokeBtn.setAttribute('data-api-key-id', `'${responseData.id}'`);
+      // Also update regenerate/revoke buttons in manage-keys page if they exist
+      let regenerateBtn = document.getElementById('regenerateKeyBtn-' + subID + '-' + keyType);
+      if (regenerateBtn) {
+        regenerateBtn.style.display = 'inline-flex';
+        regenerateBtn.setAttribute('data-api-key-id', `'${responseData.id}'`);
+        regenerateBtn.setAttribute('data-scopes', `${JSON.stringify(scopes)}`);
+      }
+
+      let revokeBtn = document.getElementById('revokeKeyBtn-' + subID + '-' + keyType);
+      if (revokeBtn) {
+        revokeBtn.style.display = 'inline-flex';
+        revokeBtn.setAttribute('data-api-key-id', `'${responseData.id}'`);
+      }
 
       const removeElementSpan = scopeContainer.querySelectorAll('.remove');
 
@@ -118,13 +179,15 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
           el.style.display = 'none';
         });
       } else {
-        document.getElementById("scopeContainer-" + subID).style.display = 'none'
-        document.getElementById("scopeTitle-" + subID).style.display = 'none'
+        const scopeContainerEl = document.getElementById("scopeContainer-" + subID + '-' + keyType);
+        const scopeTitleEl = document.getElementById("scopeTitle-" + subID + '-' + keyType);
+        if (scopeContainerEl) scopeContainerEl.style.display = 'none';
+        if (scopeTitleEl) scopeTitleEl.style.display = 'none';
       }
 
       const subList = JSON.parse(subIDs);
       subList.forEach(subID => {
-        document.getElementById("generateAPIKeyBtn-" + subID)?.setAttribute('data-app-ref-id', `${responseData.appRefId}`);
+        document.getElementById("generateAPIKeyBtn-" + subID + '-' + keyType)?.setAttribute('data-app-ref-id', `${responseData.appRefId}`);
       })
 
       await showAlert('API Key generated successfully!', 'success');
@@ -139,9 +202,9 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
   loadingState.style.display = 'none';
 }
 
-async function revokeAPIKey(apiKeyID, subID, appID, apiRefID) {
+async function revokeAPIKey(apiKeyID, subID, appID, apiRefID, keyType) {
 
-  let revokeBtn = document.getElementById('revokeKeyBtn-' + subID);
+  let revokeBtn = document.getElementById('revokeKeyBtn-' + subID + '-' + keyType);
   const normalState = revokeBtn.querySelector('.button-normal-state');
   const loadingState = revokeBtn.querySelector('.button-loading-state');
 
@@ -164,13 +227,46 @@ async function revokeAPIKey(apiKeyID, subID, appID, apiRefID) {
 
     const responseData = await response.json();
     if (response.ok) {
-      let regenerateBtn = document.getElementById('regenerateKeyBtn-' + subID);
-      regenerateBtn.style.display = 'none';
+      let regenerateBtn = document.getElementById('regenerateKeyBtn-' + subID + '-' + keyType);
+      if (regenerateBtn) {
+        regenerateBtn.style.display = 'none';
+      }
 
       revokeBtn.style.display = 'none';
 
-      let generateBtn = document.getElementById('generateKeyBtn-' + subID);
-      generateBtn.style.display = 'inline-flex';
+      // Show the generate button if it exists
+      let generateBtn = document.getElementById('generateKeyBtn-' + subID + '-' + keyType);
+      if (generateBtn) {
+        generateBtn.style.display = 'inline-flex';
+      }
+
+      // Check if we're on the manage-keys page
+      const isManageKeysPage = window.location.pathname.includes('/manage-keys');
+      
+      if (!isManageKeysPage) {
+        // Only on apis.hbs: Replace "Manage Key" button with "Generate Key" button
+        // Note: "Manage Key" buttons only exist in apis.hbs page
+        let manageBtn = document.getElementById('manageKeyBtn-' + subID + '-' + keyType);
+        if (manageBtn) {
+          const envLabel = keyType === 'PRODUCTION' ? 'Production' : 'Sandbox';
+          const generateButton = document.createElement('button');
+          generateButton.className = 'common-btn-outlined btn-sm';
+          generateButton.id = 'generateKeyBtn-' + subID + '-' + keyType;
+          generateButton.setAttribute('data-app-ref-id', '');
+          generateButton.setAttribute('title', 'Generate ' + envLabel + ' Key');
+          generateButton.innerHTML = `
+            <span class="button-normal-state">
+              <i class="bi bi-key me-1"></i> ${envLabel}
+            </span>
+            <span class="button-loading-state" style="display: none;">
+              <span class="spinner-border spinner-border-sm me-1" role="status"> Revoking...</span>
+            </span>
+          `;
+          // Note: The page will need to be refreshed to get the onclick handler with proper parameters
+          manageBtn.parentNode.replaceChild(generateButton, manageBtn);
+        }
+      }
+      // On manage-keys.hbs: regenerate/revoke buttons are already hidden above, generate button is shown
 
       await showAlert('API Key revoked successfully!', 'success');
 
@@ -178,15 +274,15 @@ async function revokeAPIKey(apiKeyID, subID, appID, apiRefID) {
       await showAlert(`Failed to revoke API Key. Please try again.\n${responseData?.description || ''}`, 'error');
     }
   } catch (error) {
-    await showAlert(`Failed to generate API Key. Please try again.\n${error}`, 'error');
+    await showAlert(`Failed to revoke API Key. Please try again.\n${error}`, 'error');
   }
   normalState.style.display = 'inline-block';
   loadingState.style.display = 'none';
 }
 
-async function regenerateAPIKey(apiKeyID, subID) {
+async function regenerateAPIKey(apiKeyID, subID, keyType) {
 
-  const tokenBtn = document.getElementById('regenerateKeyBtn-' + subID);
+  const tokenBtn = document.getElementById('regenerateKeyBtn-' + subID + '-' + keyType);
   const normalState = tokenBtn.querySelector('.button-normal-state');
   const loadingState = tokenBtn.querySelector('.button-loading-state');
 
@@ -206,13 +302,12 @@ async function regenerateAPIKey(apiKeyID, subID) {
     const responseData = await response.json();
 
     if (response.ok) {
+      document.getElementById('apiKeyModal-' + subID + '-' + keyType).style.display = 'flex';
+      document.getElementById("token_apiKeyText-" + subID + '-' + keyType).textContent = responseData.value;
+      document.getElementById("generateAPIKeyBtn-" + subID + '-' + keyType).style.display = 'none';
 
-      document.getElementById('apiKeyModal-' + subID).style.display = 'flex';
-      document.getElementById("token_apiKeyText-" + subID).textContent = responseData.value;
-      document.getElementById("generateAPIKeyBtn-" + subID).style.display = 'none';
-
-      const regenerateBtn = document.getElementById("regenerateKeyBtn-" + subID);
-      const scopeContainer = document.getElementById('scopeContainer-' + subID);
+      const regenerateBtn = document.getElementById("regenerateKeyBtn-" + subID + '-' + keyType);
+      const scopeContainer = document.getElementById('scopeContainer-' + subID + '-' + keyType);
       const scopes = regenerateBtn?.dataset?.scopes || '[]';
 
       if (JSON.parse(scopes).length > 0) {
@@ -227,8 +322,8 @@ async function regenerateAPIKey(apiKeyID, subID) {
           scopeContainer.appendChild(span);
         });
       } else {
-        document.getElementById("scopeContainer-" + subID).style.display = 'none'
-        document.getElementById("scopeTitle-" + subID).style.display = 'none'
+        document.getElementById("scopeContainer-" + subID + '-' + keyType).style.display = 'none'
+        document.getElementById("scopeTitle-" + subID + '-' + keyType).style.display = 'none'
       }
 
       await showAlert('API Key regenerated successfully!', 'success');
