@@ -78,7 +78,6 @@ const createAPIMetadata = async (req, res) => {
                 } else {
                     for (const policy of apiSubscriptionPolicies) {
                         const subscriptionPolicy = await apiDao.getSubscriptionPolicyByName(orgId, policy.policyName);
-                        console.log("Policy Name: ", policy.policyName);
                         if (!subscriptionPolicy) {
                             throw new Sequelize.EmptyResultError("Subscription policy not found");
                         } else {
@@ -256,7 +255,6 @@ const getAllAPIMetadata = async (req, res) => {
 };
 
 const getMetadataListFromDB = async (orgID, groups, searchTerm, tags, apiName, apiVersion, viewName) => {
-    console.log("Fetching From Database")
     return await sequelize.transaction({
         timeout: 60000,
     }, async (t) => {
