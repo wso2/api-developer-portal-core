@@ -71,7 +71,7 @@
                                     {{!-- Production API Key --}}
                                     {{#if apiKeys.production.key}}
                                     <a class="common-btn-outlined btn-sm me-1" id="manageKeyBtn-{{subID}}-PRODUCTION"
-                                        href="{{@root.baseUrl}}/applications/{{../applicationMetadata.id}}/manage-keys#production"
+                                        href="{{@root.baseUrl}}/applications/{{../applicationMetadata.id}}/manage-keys"
                                         title="Manage Production Key">
                                         <i class="bi bi-gear me-1"></i> Production
                                     </a>
@@ -94,7 +94,7 @@
                                     {{!-- Sandbox API Key --}}
                                     {{#if apiKeys.sandbox.key}}
                                     <a class="common-btn-outlined btn-sm" id="manageKeyBtn-{{subID}}-SANDBOX"
-                                        href="{{@root.baseUrl}}/applications/{{../applicationMetadata.id}}/manage-keys#sandbox"
+                                        href="{{@root.baseUrl}}/applications/{{../applicationMetadata.id}}/manage-keys"
                                         title="Manage Sandbox Key">
                                         <i class="bi bi-gear me-1"></i> Sandbox
                                     </a>
@@ -216,7 +216,7 @@
                                     <button class="common-btn-outlined btn-sm me-1" id="generateKeyBtn-{{subID}}"
                                         style="{{#if apiKeys}}display: none;{{else}}display: inline-flex;{{/if}}"
                                         data-app-ref-id=""
-                                        onclick="generateAPIKey('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIs}}', 'PRODUCTION')">
+                                        onclick="generateAPIKey('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIs}}', 'generateKeyBtn-', 'PRODUCTION')">
                                         <span class="button-normal-state">
                                             <i class="bi bi-key me-1"></i> Generate Key
                                         </span>

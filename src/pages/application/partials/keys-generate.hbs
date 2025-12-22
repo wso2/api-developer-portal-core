@@ -325,7 +325,7 @@
                             <div class="d-flex gap-3" id="generate-keys-btn-container-{{keyType}}">
                                 <button class="common-btn-primary" id="applicationKeyGenerateButton-{{keyType}}" name="http-values"
                                     type="button"
-                                    onClick="generateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{keyType}}', '{{@root.applicationMetadata.id}}', '{{keyType}}', '{{../name}}', '{{@root.applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{@root.orgID}}', 'consumer-key-{{../id}}-{{keyType}}', 'consumer-secret-{{../id}}-{{keyType}}')">
+                                    onClick="generateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{keyType}}', '{{../../applicationMetadata.id}}', '{{keyType}}', '{{../name}}', '{{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-{{keyType}}', 'consumer-secret-{{../id}}-{{keyType}}')">
                                     Generate Credentials
                                 </button>
                             </div>

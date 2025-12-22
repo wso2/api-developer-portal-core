@@ -43,6 +43,208 @@ const templateResponseValue = async (pageName) => {
     return fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
 }
 
+const buildProfile = (req) => {
+    if (!req?.user) {
+        return null;
+    }
+    return {
+        imageURL: req.user.imageURL,
+        firstName: req.user.firstName,
+        lastName: req.user.lastName,
+        email: req.user.email,
+    };
+};
+
+/**
+ * Shared data loader for both application overview and manage-keys pages.
+ * Keeps loadApplication / loadApplicationKeys lean and avoids drift between the two.
+ */
+const loadApplicationData = async (req, orgName, applicationId, viewName) => {
+    const orgID = await orgIDValue(orgName);
+
+    let groupList = [];
+    if (req.query.groups) {
+        groupList.push(req.query.groups.split(" "));
+    }
+
+    const subAPIs = await adminDao.getSubscribedAPIs(orgID, applicationId);
+    const allAPIs = await apiMetadata.getAllAPIMetadata(orgID, groupList, viewName);
+
+    const subscribedAPIIds = new Set(subAPIs.map(api => api.API_ID));
+    const nonSubscribedAPIs = allAPIs
+        .filter(api => !subscribedAPIIds.has(api.API_ID) && api.DP_SUBSCRIPTION_POLICies.length > 0)
+        .map(api => new APIDTO(api));
+
+    const userID = req[constants.USER_ID]
+    const applicationList = await adminService.getApplicationKeyMap(orgID, applicationId, userID);
+
+    let applicationReference = "";
+    let applicationKeyList;
+    if (applicationList.appMap) {
+        applicationReference = applicationList.appMap[0].appRefID;
+        applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
+    }
+
+    let otherAPICount = 0;
+    let mcpAPICount = 0;
+
+    let subList = [];
+    if (subAPIs.length > 0) {
+        subList = await Promise.all(subAPIs.map(async (sub) => {
+            const api = new APIDTO(sub);
+            let apiDTO = {};
+            apiDTO.apiInfo = {};
+            apiDTO.name = api.apiInfo.apiName;
+            apiDTO.apiID = api.apiID;
+            apiDTO.version = api.apiInfo.apiVersion;
+            apiDTO.apiType = api.apiInfo.apiType;
+            apiDTO.apiInfo.apiImageMetadata = api.apiInfo.apiImageMetadata;
+            apiDTO.image = api.apiInfo.apiImageMetadata["api-icon"];
+            apiDTO.subID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.SUB_ID;
+            apiDTO.policyID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.POLICY_ID;
+            apiDTO.refID = api.apiReferenceID;
+            apiDTO.apiHandle = api.apiHandle;
+
+            const apiDetails = await getAPIDetails(req, api.apiReferenceID);
+            const projectIdEntry = apiDetails?.additionalProperties?.find(item => item.name === 'projectId');
+            const projectId = projectIdEntry?.value;
+            if (apiDetails) {
+                apiDTO.security = apiDetails.securityScheme;
+            }
+            if (projectId) {
+                apiDTO.projectId = projectId;
+            }
+            const subPolicy = await apiMetadata.getSubscriptionPolicy(apiDTO.policyID, orgID);
+            if (subPolicy) {
+                apiDTO.policyName = subPolicy.dataValues.POLICY_NAME;
+            }
+            if (constants.API_TYPE.MCP === api.apiInfo.apiType) {
+                mcpAPICount++;
+            } else {
+                otherAPICount++;
+            }
+            const productionApiKeys = await getAPIKeys(req, api.apiReferenceID, applicationReference, 'PRODUCTION');
+            const sandboxApiKeys = await getAPIKeys(req, api.apiReferenceID, applicationReference, 'SANDBOX');
+            apiDTO.apiKeys = {
+                production: productionApiKeys,
+                sandbox: sandboxApiKeys
+            };
+            apiDTO.subscriptionPolicyDetails = api.subscriptionPolicies;
+            apiDTO.scopes = (apiDetails?.scopes || []).map(scope => scope.key);
+            return apiDTO
+        }));
+    }
+
+    const isApiKey = subList.some(api => api.security !== null && api.security.includes('api_key'));
+
+    util.appendAPIImageURL(subList, req, orgID);
+
+    await Promise.all(nonSubscribedAPIs.map(async (api) => {
+        api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
+    }));
+
+    let kMmetaData = await getAPIMKeyManagers(req);
+    kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
+
+    // TODO: handle multiple KM scenarios (kept as-is)
+    if (Array.isArray(kMmetaData) && kMmetaData.length > 1) {
+        kMmetaData = kMmetaData.filter(keyManager =>
+            keyManager.name.includes("_internal_key_manager_") ||
+            (!kMmetaData.some(km => km.name.includes("_internal_key_manager_")) && keyManager.name.includes("Resident Key Manager")) ||
+            (!kMmetaData.some(km => km.name.includes("_internal_key_manager_") || km.name.includes("Resident Key Manager")) && keyManager.name.includes("_appdev_sts_key_manager_") && keyManager.name.endsWith("_prod"))
+        );
+    }
+
+    for (const keyManager of kMmetaData) {
+        if (keyManager.name === 'Resident Key Manager') {
+            keyManager.tokenEndpoint = 'https://sts.choreo.dev/oauth2/token';
+            keyManager.authorizeEndpoint = 'https://sts.choreo.dev/oauth2/authorize';
+            keyManager.revokeEndpoint = 'https://sts.choreo.dev/oauth2/revoke';
+        }
+        keyManager.availableGrantTypes = await mapGrants(keyManager.availableGrantTypes);
+        keyManager.applicationConfiguration = await mapDefaultValues(keyManager.applicationConfiguration);
+    }
+
+    let productionKeys = [];
+    let sandboxKeys = [];
+
+    applicationKeyList?.list?.map(key => {
+        let client_name;
+        if (key?.additionalProperties?.client_name) {
+            client_name = key.additionalProperties.client_name;
+        }
+        let keyData = {
+            keyManager: key.keyManager,
+            consumerKey: key.consumerKey,
+            consumerSecret: key.consumerSecret,
+            keyMappingId: key.keyMappingId,
+            keyType: key.keyType,
+            supportedGrantTypes: key.supportedGrantTypes,
+            additionalProperties: key.additionalProperties,
+            clientName: client_name,
+            callbackUrl: key.callbackUrl,
+            appRefID: applicationReference
+        };
+        if (key.keyType === constants.KEY_TYPE.PRODUCTION) {
+            productionKeys.push(keyData);
+        } else {
+            sandboxKeys.push(keyData);
+        }
+        return keyData;
+    }) || [];
+
+    kMmetaData.forEach(keyManager => {
+        productionKeys.forEach(productionKey => {
+            if (productionKey.keyManager === keyManager.name) {
+                keyManager.productionKeys = productionKey;
+            }
+        });
+        sandboxKeys.forEach(sandboxKey => {
+            if (sandboxKey.keyManager === keyManager.name) {
+                keyManager.sandboxKeys = sandboxKey;
+            }
+        });
+        // Build applicationKeys per keyManager with single objects (not arrays)
+        keyManager.applicationKeys = [
+            {
+                keys: keyManager.productionKeys || {},
+                keyType: 'PRODUCTION'
+            },
+            {
+                keys: keyManager.sandboxKeys || {},
+                keyType: 'SANDBOX'
+            }
+        ];
+    });
+
+    let subscriptionScopes = [];
+    if (applicationReference) {
+        let cpApplication = await getAPIMApplication(req, applicationReference);
+        if (Array.isArray(cpApplication?.subscriptionScopes)) {
+            for (const scope of cpApplication?.subscriptionScopes) {
+                subscriptionScopes.push(scope.key);
+            }
+        }
+    }
+
+    const profile = buildProfile(req);
+
+    return {
+        orgID,
+        applicationList,
+        keyManagersMetadata: kMmetaData,
+        subAPIs: subList,
+        nonSubAPIs: nonSubscribedAPIs,
+        productionKeys,
+        sandboxKeys,
+        subscriptionScopes,
+        otherAPICount,
+        mcpAPICount,
+        isApiKey,
+        profile
+    };
+};
+
 // ***** Load Applications *****
 
 const loadApplications = async (req, res) => {
@@ -143,212 +345,38 @@ const loadApplication = async (req, res) => {
             }
             html = renderTemplate('../pages/application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
         } else {
-            const orgName = req.params.orgName;
-            const orgID = await orgIDValue(orgName);
-            let groupList = [];
-            if (req.query.groups) {
-                groupList.push(req.query.groups.split(" "));
-            }
-            const subAPIs = await adminDao.getSubscribedAPIs(orgID, applicationId);
-            const allAPIs = await apiMetadata.getAllAPIMetadata(orgID, groupList, viewName);
-
-            const subscribedAPIIds = new Set(subAPIs.map(api => api.API_ID));
-            const nonSubscribedAPIs = allAPIs
-                .filter(api => !subscribedAPIIds.has(api.API_ID) && api.DP_SUBSCRIPTION_POLICies.length > 0)
-                .map(api => new APIDTO(api));
-
-            const userID = req[constants.USER_ID]
-            const applicationList = await adminService.getApplicationKeyMap(orgID, applicationId, userID);
-            metaData = applicationList;
-            let applicationReference = "";
-            let applicationKeyList;
-            if (applicationList.appMap) {
-                applicationReference = applicationList.appMap[0].appRefID;
-                applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
-            }
-            let otherAPICount = 0;
-            let mcpAPICount = 0;
-            let subList = [];
-            if (subAPIs.length > 0) {
-
-                subList = await Promise.all(subAPIs.map(async (sub) => {
-                    const api = new APIDTO(sub);
-                    let apiDTO = {};
-                    apiDTO.apiInfo = {};
-                    apiDTO.name = api.apiInfo.apiName;
-                    apiDTO.apiID = api.apiID;
-                    apiDTO.version = api.apiInfo.apiVersion;
-                    apiDTO.apiType = api.apiInfo.apiType;
-                    apiDTO.apiInfo.apiImageMetadata = api.apiInfo.apiImageMetadata;
-                    apiDTO.image = api.apiInfo.apiImageMetadata["api-icon"];
-                    apiDTO.subID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.SUB_ID;
-                    apiDTO.policyID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.POLICY_ID;
-                    apiDTO.refID = api.apiReferenceID;
-                    apiDTO.apiHandle = api.apiHandle;
-                    const apiDetails = await getAPIDetails(req, api.apiReferenceID);
-                    const projectIdEntry = apiDetails?.additionalProperties?.find(item => item.name === 'projectId');
-                    const projectId = projectIdEntry?.value;
-                    if (apiDetails) {
-                        apiDTO.security = apiDetails.securityScheme;
-                    }
-                    if (projectId) {
-                        apiDTO.projectId = projectId;
-                    }
-                    const subPolicy = await apiMetadata.getSubscriptionPolicy(apiDTO.policyID, orgID);
-                    if (subPolicy) {
-                        apiDTO.policyName = subPolicy.dataValues.POLICY_NAME;
-                    }
-                    if (constants.API_TYPE.MCP === api.apiInfo.apiType) {
-                        mcpAPICount++;
-                    } else {
-                        otherAPICount++;
-                    }
-                    const productionApiKeys = await getAPIKeys(req, api.apiReferenceID, applicationReference, 'PRODUCTION');
-                    const sandboxApiKeys = await getAPIKeys(req, api.apiReferenceID, applicationReference, 'SANDBOX');
-                    apiDTO.apiKeys = {
-                        production: productionApiKeys,
-                        sandbox: sandboxApiKeys
-                    };
-                    apiDTO.subscriptionPolicyDetails = api.subscriptionPolicies;
-                    apiDTO.scopes = apiDetails.scopes.map(scope => scope.key);
-                    return apiDTO
-                }));
-            }
-            let isApiKey = false
-            let apiKeyList = subList.filter(api => api.security !== null && api.security.includes('api_key'));
-            if (apiKeyList.length > 0) {
-                isApiKey = true;
-            }
-            util.appendAPIImageURL(subList, req, orgID);
-
-            await Promise.all(nonSubscribedAPIs.map(async (api) => {
-                api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
-            }));
-            kMmetaData = await getAPIMKeyManagers(req);
-            kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
-
-            //TODO: handle multiple KM scenarios
-            //select only one KM for chroeo.
-
-            if (Array.isArray(kMmetaData) && kMmetaData.length > 1) {
-                kMmetaData = kMmetaData.filter(keyManager =>
-                    keyManager.name.includes("_internal_key_manager_") ||
-                    (!kMmetaData.some(km => km.name.includes("_internal_key_manager_")) && keyManager.name.includes("Resident Key Manager")) ||
-                    (!kMmetaData.some(km => km.name.includes("_internal_key_manager_") || km.name.includes("Resident Key Manager")) && keyManager.name.includes("_appdev_sts_key_manager_") && keyManager.name.endsWith("_prod"))
-                );
-            }
-
-            for (var keyManager of kMmetaData) {
-                if (keyManager.name === 'Resident Key Manager') {
-                    keyManager.tokenEndpoint = 'https://sts.choreo.dev/oauth2/token';
-                    keyManager.authorizeEndpoint = 'https://sts.choreo.dev/oauth2/authorize';
-                    keyManager.revokeEndpoint = 'https://sts.choreo.dev/oauth2/revoke';
-                }
-
-                keyManager.availableGrantTypes = await mapGrants(keyManager.availableGrantTypes);
-                keyManager.applicationConfiguration = await mapDefaultValues(keyManager.applicationConfiguration);
-            }
-
-
-            let productionKeys = [];
-            let sandboxKeys = [];
-
-            applicationKeyList?.list?.map(key => {
-                let client_name;
-                if (key?.additionalProperties?.client_name) {
-                    client_name = key.additionalProperties.client_name;
-                }
-                let keyData = {
-                    keyManager: key.keyManager,
-                    consumerKey: key.consumerKey,
-                    consumerSecret: key.consumerSecret,
-                    keyMappingId: key.keyMappingId,
-                    keyType: key.keyType,
-                    supportedGrantTypes: key.supportedGrantTypes,
-                    additionalProperties: key.additionalProperties,
-                    clientName: client_name,
-                    callbackUrl: key.callbackUrl,
-                    appRefID: applicationReference
-                };
-                if (key.keyType === constants.KEY_TYPE.PRODUCTION) {
-                    productionKeys.push(keyData);
-                } else {
-                    sandboxKeys.push(keyData);
-                }
-                return keyData;
-            }) || [];
-
-            kMmetaData.forEach(keyManager => {
-                productionKeys.forEach(productionKey => {
-                    if (productionKey.keyManager === keyManager.name) {
-                        keyManager.productionKeys = productionKey;
-                    }
-                });
-                sandboxKeys.forEach(sandboxKey => {
-                    if (sandboxKey.keyManager === keyManager.name) {
-                        keyManager.sandboxKeys = sandboxKey;
-                    }
-                });
-                // Build applicationKeys per keyManager with single objects (not arrays)
-                keyManager.applicationKeys = [
-                    {
-                        keys: keyManager.productionKeys || {},
-                        keyType: 'PRODUCTION'
-                    },
-                    {
-                        keys: keyManager.sandboxKeys || {},
-                        keyType: 'SANDBOX'
-                    }
-                ];
-            });
-
-            let cpApplication = await getAPIMApplication(req, applicationReference);
-            let subscriptionScopes = [];
-            if (Array.isArray(cpApplication?.subscriptionScopes)) {
-                for (const scope of cpApplication?.subscriptionScopes) {
-                    subscriptionScopes.push(scope.key);
-                }
-            }
-            //display only one key type (SANBOX).
-            //TODO: handle multiple key types
-            let profile = null;
-            if (req.user) {
-                profile = {
-                    imageURL: req.user.imageURL,
-                    firstName: req.user.firstName,
-                    lastName: req.user.lastName,
-                    email: req.user.email,
-                }
-            }
+            const data = await loadApplicationData(req, orgName, applicationId, viewName);
+            metaData = data.applicationList;
+            kMmetaData = data.keyManagersMetadata;
 
             templateContent = {
-                orgID: orgID,
+                orgID: data.orgID,
                 applicationMetadata: {
                     ...metaData,
-                    subscriptionCount: subList.length
+                    subscriptionCount: data.subAPIs.length
                 },
                 keyManagersMetadata: kMmetaData,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-                subAPIs: subList,
-                nonSubAPIs: nonSubscribedAPIs,
-                productionKeys: productionKeys,
-                sandboxKeys: sandboxKeys,
+                subAPIs: data.subAPIs,
+                nonSubAPIs: data.nonSubAPIs,
+                productionKeys: data.productionKeys,
+                sandboxKeys: data.sandboxKeys,
                 applicationKeys: [
                     {
-                        keys: productionKeys,
+                        keys: data.productionKeys,
                         keyType: constants.KEY_TYPE.PRODUCTION
                     },
                     {
-                        keys: sandboxKeys,
+                        keys: data.sandboxKeys,
                         keyType: constants.KEY_TYPE.SANDBOX
                     }
                 ],
                 isProduction: true,
-                isApiKey: isApiKey,
-                subscriptionScopes: subscriptionScopes,
-                otherAPICount: otherAPICount,
-                mcpAPICount: mcpAPICount,
-                profile: req.isAuthenticated() ? profile : null,
+                isApiKey: data.isApiKey,
+                subscriptionScopes: data.subscriptionScopes,
+                otherAPICount: data.otherAPICount,
+                mcpAPICount: data.mcpAPICount,
+                profile: req.isAuthenticated() ? data.profile : null,
                 devportalMode: devportalMode,
                 features: {
                     sdkGeneration: config.features?.sdkGeneration?.enabled || false
@@ -356,7 +384,7 @@ const loadApplication = async (req, res) => {
                 isReadOnlyMode: config.readOnlyMode
             }
             const templateResponse = await templateResponseValue('application');
-            const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
+            const layoutResponse = await loadLayoutFromAPI(data.orgID, viewName);
             if (layoutResponse === "") {
                 html = renderTemplate('../pages/application/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
             } else {
@@ -416,210 +444,37 @@ const loadApplicationKeys = async (req, res) => {
             }
             html = renderTemplate('../pages/manage-keys/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
         } else {
-            const orgID = await orgIDValue(orgName);
-            let groupList = [];
-            if (req.query.groups) {
-                groupList.push(req.query.groups.split(" "));
-            }
-            const subAPIs = await adminDao.getSubscribedAPIs(orgID, applicationId);
-            const allAPIs = await apiMetadata.getAllAPIMetadata(orgID, groupList, viewName);
-
-            const subscribedAPIIds = new Set(subAPIs.map(api => api.API_ID));
-            const nonSubscribedAPIs = allAPIs
-                .filter(api => !subscribedAPIIds.has(api.API_ID) && api.DP_SUBSCRIPTION_POLICies.length > 0)
-                .map(api => new APIDTO(api));
-
-            const userID = req[constants.USER_ID]
-            const applicationList = await adminService.getApplicationKeyMap(orgID, applicationId, userID);
-            metaData = applicationList;
-            let applicationReference = "";
-            let applicationKeyList;
-            if (applicationList.appMap) {
-                applicationReference = applicationList.appMap[0].appRefID;
-                applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
-            }
-            let otherAPICount = 0;
-            let mcpAPICount = 0;
-            let subList = [];
-            if (subAPIs.length > 0) {
-
-                subList = await Promise.all(subAPIs.map(async (sub) => {
-                    const api = new APIDTO(sub);
-                    let apiDTO = {};
-                    apiDTO.apiInfo = {};
-                    apiDTO.name = api.apiInfo.apiName;
-                    apiDTO.apiID = api.apiID;
-                    apiDTO.version = api.apiInfo.apiVersion;
-                    apiDTO.apiType = api.apiInfo.apiType;
-                    apiDTO.apiInfo.apiImageMetadata = api.apiInfo.apiImageMetadata;
-                    apiDTO.image = api.apiInfo.apiImageMetadata["api-icon"];
-                    apiDTO.subID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.SUB_ID;
-                    apiDTO.policyID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.POLICY_ID;
-                    apiDTO.refID = api.apiReferenceID;
-                    apiDTO.apiHandle = api.apiHandle;
-                    const apiDetails = await getAPIDetails(req, api.apiReferenceID);
-                    const projectIdEntry = apiDetails?.additionalProperties?.find(item => item.name === 'projectId');
-                    const projectId = projectIdEntry?.value;
-                    if (apiDetails) {
-                        apiDTO.security = apiDetails.securityScheme;
-                    }
-                    if (projectId) {
-                        apiDTO.projectId = projectId;
-                    }
-                    const subPolicy = await apiMetadata.getSubscriptionPolicy(apiDTO.policyID, orgID);
-                    if (subPolicy) {
-                        apiDTO.policyName = subPolicy.dataValues.POLICY_NAME;
-                    }
-                    if (constants.API_TYPE.MCP === api.apiInfo.apiType) {
-                        mcpAPICount++;
-                    } else {
-                        otherAPICount++;
-                    }
-                    const productionApiKeys = await getAPIKeys(req, api.apiReferenceID, applicationReference, 'PRODUCTION');
-                    const sandboxApiKeys = await getAPIKeys(req, api.apiReferenceID, applicationReference, 'SANDBOX');
-                    apiDTO.apiKeys = {
-                        production: productionApiKeys,
-                        sandbox: sandboxApiKeys
-                    };
-                    apiDTO.subscriptionPolicyDetails = api.subscriptionPolicies;
-                    apiDTO.scopes = apiDetails.scopes.map(scope => scope.key);
-                    return apiDTO
-                }));
-            }
-            let isApiKey = false
-            let apiKeyList = subList.filter(api => api.security !== null && api.security.includes('api_key'));
-            if (apiKeyList.length > 0) {
-                isApiKey = true;
-            }
-            util.appendAPIImageURL(subList, req, orgID);
-
-            await Promise.all(nonSubscribedAPIs.map(async (api) => {
-                api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
-            }));
-            kMmetaData = await getAPIMKeyManagers(req);
-            kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
-
-            //TODO: handle multiple KM scenarios
-            //select only one KM for chroeo.
-
-            if (Array.isArray(kMmetaData) && kMmetaData.length > 1) {
-                kMmetaData = kMmetaData.filter(keyManager =>
-                    keyManager.name.includes("_internal_key_manager_") ||
-                    (!kMmetaData.some(km => km.name.includes("_internal_key_manager_")) && keyManager.name.includes("Resident Key Manager")) ||
-                    (!kMmetaData.some(km => km.name.includes("_internal_key_manager_") || km.name.includes("Resident Key Manager")) && keyManager.name.includes("_appdev_sts_key_manager_") && keyManager.name.endsWith("_prod"))
-                );
-            }
-
-            for (var keyManager of kMmetaData) {
-                if (keyManager.name === 'Resident Key Manager') {
-                    keyManager.tokenEndpoint = 'https://sts.choreo.dev/oauth2/token';
-                    keyManager.authorizeEndpoint = 'https://sts.choreo.dev/oauth2/authorize';
-                    keyManager.revokeEndpoint = 'https://sts.choreo.dev/oauth2/revoke';
-                }
-
-                keyManager.availableGrantTypes = await mapGrants(keyManager.availableGrantTypes);
-                keyManager.applicationConfiguration = await mapDefaultValues(keyManager.applicationConfiguration);
-            }
-
-
-            let productionKeys = [];
-            let sandboxKeys = [];
-
-            applicationKeyList?.list?.map(key => {
-                let client_name;
-                if (key?.additionalProperties?.client_name) {
-                    client_name = key.additionalProperties.client_name;
-                }
-                let keyData = {
-                    keyManager: key.keyManager,
-                    consumerKey: key.consumerKey,
-                    consumerSecret: key.consumerSecret,
-                    keyMappingId: key.keyMappingId,
-                    keyType: key.keyType,
-                    supportedGrantTypes: key.supportedGrantTypes,
-                    additionalProperties: key.additionalProperties,
-                    clientName: client_name,
-                    callbackUrl: key.callbackUrl,
-                    appRefID: applicationReference
-                };
-                if (key.keyType === constants.KEY_TYPE.PRODUCTION) {
-                    productionKeys.push(keyData);
-                } else {
-                    sandboxKeys.push(keyData);
-                }
-                return keyData;
-            }) || [];
-
-            kMmetaData.forEach(keyManager => {
-                productionKeys.forEach(productionKey => {
-                    if (productionKey.keyManager === keyManager.name) {
-                        keyManager.productionKeys = productionKey;
-                    }
-                });
-                sandboxKeys.forEach(sandboxKey => {
-                    if (sandboxKey.keyManager === keyManager.name) {
-                        keyManager.sandboxKeys = sandboxKey;
-                    }
-                });
-                // Build applicationKeys per keyManager with single objects (not arrays)
-                keyManager.applicationKeys = [
-                    {
-                        keys: keyManager.productionKeys || {},
-                        keyType: 'PRODUCTION'
-                    },
-                    {
-                        keys: keyManager.sandboxKeys || {},
-                        keyType: 'SANDBOX'
-                    }
-                ];
-            });
-
-            let cpApplication = await getAPIMApplication(req, applicationReference);
-            let subscriptionScopes = [];
-            if (Array.isArray(cpApplication?.subscriptionScopes)) {
-                for (const scope of cpApplication?.subscriptionScopes) {
-                    subscriptionScopes.push(scope.key);
-                }
-            }
-            //display only one key type (SANBOX).
-            //TODO: handle multiple key types
-            let profile = null;
-            if (req.user) {
-                profile = {
-                    imageURL: req.user.imageURL,
-                    firstName: req.user.firstName,
-                    lastName: req.user.lastName,
-                    email: req.user.email,
-                }
-            }
+            const data = await loadApplicationData(req, orgName, applicationId, viewName);
+            metaData = data.applicationList;
+            kMmetaData = data.keyManagersMetadata;
 
             templateContent = {
-                orgID: orgID,
+                orgID: data.orgID,
                 applicationMetadata: {
                     ...metaData,
-                    subscriptionCount: subList.length
+                    subscriptionCount: data.subAPIs.length
                 },
                 keyManagersMetadata: kMmetaData,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-                subAPIs: subList,
-                nonSubAPIs: nonSubscribedAPIs,
-                productionKeys: productionKeys,
-                sandboxKeys: sandboxKeys,
+                subAPIs: data.subAPIs,
+                nonSubAPIs: data.nonSubAPIs,
+                productionKeys: data.productionKeys,
+                sandboxKeys: data.sandboxKeys,
                 applicationKeys: [
                     {
-                        keys: productionKeys,
+                        keys: data.productionKeys,
                         keyType: constants.KEY_TYPE.PRODUCTION
                     },
                     {
-                        keys: sandboxKeys,
+                        keys: data.sandboxKeys,
                         keyType: constants.KEY_TYPE.SANDBOX
                     }
                 ],
-                isApiKey: isApiKey,
-                subscriptionScopes: subscriptionScopes,
-                otherAPICount: otherAPICount,
-                mcpAPICount: mcpAPICount,
-                profile: req.isAuthenticated() ? profile : null,
+                isApiKey: data.isApiKey,
+                subscriptionScopes: data.subscriptionScopes,
+                otherAPICount: data.otherAPICount,
+                mcpAPICount: data.mcpAPICount,
+                profile: req.isAuthenticated() ? data.profile : null,
                 devportalMode: devportalMode,
                 features: {
                     sdkGeneration: config.features?.sdkGeneration?.enabled || false
@@ -627,7 +482,7 @@ const loadApplicationKeys = async (req, res) => {
                 isReadOnlyMode: config.readOnlyMode
             }
             const templateResponse = await templateResponseValue('manage-keys');
-            const layoutResponse = await loadLayoutFromAPI(orgID, viewName);
+            const layoutResponse = await loadLayoutFromAPI(data.orgID, viewName);
             if (layoutResponse === "") {
                 html = renderTemplate('../pages/manage-keys/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
             } else {

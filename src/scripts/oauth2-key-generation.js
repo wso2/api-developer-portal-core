@@ -21,7 +21,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
     }
 
     // Clear any previous error messages
-    const errorContainer = document.getElementById('keyGenerationErrorContainer');
+    const errorContainer = document.getElementById('keyGenerationErrorContainer-' + keyType);
     if (errorContainer) {
         errorContainer.style.display = 'none';
         errorContainer.textContent = '';
@@ -129,16 +129,14 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             if (keyMapElement && responseData.keyMappingId) keyMapElement.value = responseData.keyMappingId;
 
             if (consumerSecret) {
-                const modalBody = keyType === 'PRODUCTION' 
-                    ? document.getElementById("keysViewProductionModalBody")
-                    : document.getElementById("keysViewSandboxModalBody");
+                const modalBody = document.getElementById("keysViewModal-" + keyType + "-Body");
                 if (modalBody) {
                     modalBody.removeAttribute("style");
                 }
 
-                const consumerKeyEl = document.getElementById("consumerKey");
-                const consumerSecretEl = document.getElementById("consumerSecret");
-                const keyActionsContainer = document.getElementById("keyActionsContainer");
+                const consumerKeyEl = document.getElementById("consumerKey" + "-" + keyType);
+                const consumerSecretEl = document.getElementById("consumerSecret" + "-" + keyType);
+                const keyActionsContainer = document.getElementById("keyActionsContainer-" + keyType);
                 const curlDisplay = document.getElementById("curlDisplay_" + keyManager + "_" + keyType);
                 const kmData = document.getElementById("KMData_" + keyManager + "_" + keyType);
 
@@ -178,12 +176,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             // document.querySelectorAll("#token_" + keyManager).forEach(tokenDetails => {
             //     tokenDetails.textContent = responseData.accessToken;
             // });
-            let tokenbtn;
-            if (keyType === 'SANDBOX') {
-                tokenbtn = document.getElementById('tokenKeyBtnSandbox');
-            } else {
-                tokenbtn = document.getElementById('tokenKeyBtnProduction');
-            }
+            const tokenbtn = document.getElementById('tokenKeyBtn-' + keyType);
             if (tokenbtn) {
                 tokenbtn.setAttribute("data-keyMappingId", responseData.keyMappingId);
                 tokenbtn.setAttribute("data-consumerSecretID", consumerSecretID);
@@ -534,12 +527,7 @@ async function removeApplicationKey() {
 
 async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName, clientSecret, subscribedScopes, keyType) {
     // Use the clicked button if provided, otherwise fall back to default buttons
-    let tokenBtn;
-    if (keyType === 'SANDBOX') {
-        tokenBtn = document.getElementById('tokenKeyBtnSandbox');
-    } else {
-        tokenBtn = document.getElementById('tokenKeyBtnProduction');
-    }
+    const tokenBtn = document.getElementById('tokenKeyBtn-' + keyType);
     const devAppId = tokenBtn?.dataset?.appId
     const scopeContainer = document.getElementById('scopeContainer-' + devAppId + '-' + keyType);
     const scopeInput = document.getElementById('scope-' + devAppId);
@@ -627,7 +615,7 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
     const loadingState = tokenBtn?.querySelector('.button-loading-state');
 
     // Clear any previous error messages
-    const errorContainer = document.getElementById('keyGenerationErrorContainer');
+    const errorContainer = document.getElementById('keyGenerationErrorContainer-' + keyType);
     if (errorContainer) {
         errorContainer.style.display = 'none';
         errorContainer.textContent = '';
@@ -644,12 +632,7 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
     const formData = new FormData(form);
 
     if (!keyMappingId) {
-        let tokenbtn;
-        if (keyType === 'SANDBOX') {
-            tokenbtn = document.getElementById('tokenKeyBtnSandbox');
-        } else {
-            tokenbtn = document.getElementById('tokenKeyBtnProduction');
-        }
+        const tokenbtn = document.getElementById('tokenKeyBtn-' + keyType);   
         let clientSecretID = tokenbtn.getAttribute("data-consumerSecretID");
         clientSecret = document.getElementById(clientSecretID).value;
         keyMappingId = tokenbtn.getAttribute("data-keyMappingId");
@@ -837,16 +820,12 @@ function loadKeyGenModal() {
     }
 }
 
-function loadKeysViewModal(env) {
-    // Default to SANDBOX if no environment is specified
-    const environment = env || 'SANDBOX';
-    const modalId = 'keysViewModal-' + environment;
-    const modal = document.getElementById(modalId);
+function loadKeysViewModal(keyType) {
+    const modal = document.getElementById('keysViewModal-' + keyType);
     if (!modal) {
-        console.error(`Modal ${modalId} not found`);
+        console.error(`Modal keysViewModal-${keyType} not found`);
         return;
     }
-    
     modal.style.display = 'flex';
 
     const authorizationCodeCheckbox = modal.querySelector('input[id^="grant-type-view-authorization_code-"]');

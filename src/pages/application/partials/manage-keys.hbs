@@ -48,58 +48,58 @@
                                     <div class="col mb-3">
                                         <div id="consumerKey"
                                             class="{{#unless keys.consumerSecret}} col-md-12 {{else}} col-md-6 {{/unless}}">
-                                            <label for='consumer-key-{{../id}}-production' class='form-label'>
+                                            <label for='consumer-key-{{../id}}-PRODUCTION' class='form-label'>
                                                 Consumer Key
                                             </label>
                                             <div class="password-toggle-container">
-                                                <input type='text' id='consumer-key-{{../id}}-production-view'
+                                                <input type='text' id='consumer-key-{{../id}}-PRODUCTION-view'
                                                     class='form-control' name="consumerKey" value='{{keys.consumerKey}}'
                                                     readonly disabled />
                                                 <button type="button" class="password-copy-btn"
-                                                    onclick="copyConsumerKey('consumer-key-{{../id}}-production')">
+                                                    onclick="copyConsumerKey('consumer-key-{{../id}}-PRODUCTION')">
                                                     <i class="bi bi-clipboard"></i>
                                                 </button>
                                             </div>
-                                            <input type='hidden' id='app-ref-{{../id}}-production' class='form-control'
+                                            <input type='hidden' id='app-ref-{{../id}}-PRODUCTION' class='form-control'
                                                 name="appRefId" value='{{keys.appRefId}}' />
-                                            <input type='hidden' id='key-map-{{../id}}-production' class='form-control'
+                                            <input type='hidden' id='key-map-{{../id}}-PRODUCTION' class='form-control'
                                                 name="keyMappingId" value='{{keys.keyMappingId}}' />
                                         </div>
                                         <div id="consumerSecret" class="col-md-6"
                                             style="{{#unless keys.consumerSecret}} display: none; {{/unless}}">
-                                            <label for='consumer-secret-{{../id}}-production' class='form-label'>
+                                            <label for='consumer-secret-{{../id}}-PRODUCTION' class='form-label'>
                                                 Consumer Secret
                                             </label>
                                             <div class="password-toggle-container">
-                                                <input type='password' id='consumer-secret-{{../id}}-production'
+                                                <input type='password' id='consumer-secret-{{../id}}-PRODUCTION'
                                                     class='form-control' name="consumerSecret"
                                                     value='{{keys.consumerSecret}}' readonly disabled />
                                                 <button type="button" class="password-toggle-btn"
-                                                    onclick="togglePasswordVisibility('consumer-secret-{{../id}}-production')">
+                                                    onclick="togglePasswordVisibility('consumer-secret-{{../id}}-PRODUCTION')">
                                                     <i class="bi bi-eye"></i>
                                                 </button>
                                                 <button type="button" class="password-copy-btn"
-                                                    onclick="copyConsumerSecret('consumer-secret-{{../id}}-production')">
+                                                    onclick="copyConsumerSecret('consumer-secret-{{../id}}-PRODUCTION')">
                                                     <i class="bi bi-clipboard"></i>
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div id="keyActionsContainer" class="key-actions-container">
+                                <div id="keyActionsContainer-PRODUCTION" class="key-actions-container">
                                     <div class="key-action-row">
                                         <div class="key-action-buttons-row">
-                                            <button id="viewKeyBtnProduction" class="common-btn-outlined btn-sm"
+                                            <button id="viewKeyBtn-PRODUCTION" class="common-btn-outlined btn-sm"
                                                 onclick="loadKeysViewModal('PRODUCTION')">
                                                 <i class="bi bi-eye"></i> View
                                             </button>
-                                            <button id="modifyKeyBtnProduction"
+                                            <button id="modifyKeyBtn-PRODUCTION"
                                                 class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                 style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
                                                 onclick="loadKeysModifyModal('PRODUCTION')">
                                                 <i class="bi bi-pencil-square"></i> Modify
                                             </button>
-                                            <button id="tokenKeyBtnProduction"
+                                            <button id="tokenKeyBtn-PRODUCTION"
                                                 class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                 data-app-id="{{@root.applicationMetadata.id}}"
                                                 style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
@@ -113,7 +113,7 @@
                                                     Generating...
                                                 </span>
                                             </button>
-                                            <button id="tokenInstructionsBtn" class="common-btn-outlined btn-sm"
+                                            <button id="tokenInstructionsBtn-PRODUCTION" class="common-btn-outlined btn-sm"
                                                 onclick="loadKeysInstructionsModal('PRODUCTION')">
                                                 <i class="bi bi-info-circle"></i> Instructions
                                             </button>
@@ -141,7 +141,7 @@
                                 {{/let}}
                                 {{/if}}
                                 <!-- Error message container for key generation and token generation -->
-                                <div id="keyGenerationErrorContainer" class="mt-2 text-danger"
+                                <div id="keyGenerationErrorContainer-PRODUCTION" class="mt-2 text-danger"
                                     style="display: none; font-size: 0.75rem; word-wrap: break-word;"></div>
                                 {{/each}}
                             </div>
@@ -289,48 +289,48 @@
                                     <div class="col mb-3">
                                         <div id="consumerKey"
                                             class="{{#unless keys.consumerSecret}} col-md-12 {{else}} col-md-6 {{/unless}}">
-                                            <label for='consumer-key-{{id}}-sandbox' class='form-label'>
+                                            <label for='consumer-key-{{../id}}-SANDBOX' class='form-label'>
                                                 Consumer Key
                                             </label>
                                             <div class="password-toggle-container">
-                                                <input type='text' id='consumer-key-{{id}}-sandbox-view'
+                                                <input type='text' id='consumer-key-{{../id}}-SANDBOX-view'
                                                     class='form-control' name="consumerKey" value='{{keys.consumerKey}}'
                                                     readonly disabled />
                                                 <button type="button" class="password-copy-btn"
-                                                    onclick="copyConsumerKey('consumer-key-{{id}}-sandbox')">
+                                                    onclick="copyConsumerKey('consumer-key-{{../id}}-SANDBOX')">
                                                     <i class="bi bi-clipboard"></i>
                                                 </button>
                                             </div>
-                                            <input type='hidden' id='app-ref-{{id}}-sandbox' class='form-control'
+                                            <input type='hidden' id='app-ref-{{../id}}-SANDBOX' class='form-control'
                                                 name="appRefId" value='{{keys.appRefId}}' />
-                                            <input type='hidden' id='key-map-{{id}}-sandbox' class='form-control'
+                                            <input type='hidden' id='key-map-{{../id}}-SANDBOX' class='form-control'
                                                 name="keyMappingId" value='{{keys.keyMappingId}}' />
                                         </div>
                                         <div id="consumerSecret" class="col-md-6"
                                             style="{{#unless keys.consumerSecret}} display: none; {{/unless}}">
-                                            <label for='consumer-secret-{{id}}-sandbox' class='form-label'>
+                                            <label for='consumer-secret-{{../id}}-SANDBOX' class='form-label'>
                                                 Consumer Secret
                                             </label>
                                             <div class="password-toggle-container">
-                                                <input type='password' id='consumer-secret-{{id}}-sandbox'
+                                                <input type='password' id='consumer-secret-{{../id}}-SANDBOX'
                                                     class='form-control' name="consumerSecret"
                                                     value='{{keys.consumerSecret}}' readonly disabled />
                                                 <button type="button" class="password-toggle-btn"
-                                                    onclick="togglePasswordVisibility('consumer-secret-{{id}}-sandbox')">
+                                                    onclick="togglePasswordVisibility('consumer-secret-{{../id}}-SANDBOX')">
                                                     <i class="bi bi-eye"></i>
                                                 </button>
                                                 <button type="button" class="password-copy-btn"
-                                                    onclick="copyConsumerSecret('consumer-secret-{{id}}-sandbox')">
+                                                    onclick="copyConsumerSecret('consumer-secret-{{../id}}-SANDBOX')">
                                                     <i class="bi bi-clipboard"></i>
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div id="keyActionsContainer" class="key-actions-container">
+                                <div id="keyActionsContainer-SANDBOX" class="key-actions-container">
                                     <div class="key-action-row">
                                         <div class="key-action-buttons-row">
-                                            <button id="viewKeyBtnSandbox" class="common-btn-outlined btn-sm"
+                                            <button id="viewKeyBtn-SANDBOX" class="common-btn-outlined btn-sm"
                                                 onclick="loadKeysViewModal('SANDBOX')">
                                                 <i class="bi bi-eye"></i> View
                                             </button>
@@ -340,7 +340,7 @@
                                                 onclick="loadKeysModifyModal('SANDBOX')">
                                                 <i class="bi bi-pencil-square"></i> Modify
                                             </button>
-                                            <button id="tokenKeyBtnSandbox"
+                                            <button id="tokenKeyBtn-SANDBOX"
                                                 class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                 data-app-id="{{@root.applicationMetadata.id}}"
                                                 style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
@@ -354,7 +354,7 @@
                                                     Generating...
                                                 </span>
                                             </button>
-                                            <button id="tokenInstructionsBtn" class="common-btn-outlined btn-sm"
+                                            <button id="tokenInstructionsBtn-SANDBOX" class="common-btn-outlined btn-sm"
                                                 onclick="loadKeysInstructionsModal('SANDBOX')">
                                                 <i class="bi bi-info-circle"></i> Instructions
                                             </button>
@@ -386,6 +386,9 @@
                                 {{/if}}
                                 {{/let}}
                                 {{/if}}
+                                <!-- Error message container for key generation and token generation -->
+                                <div id="keyGenerationErrorContainer-SANDBOX" class="mt-2 text-danger"
+                                    style="display: none; font-size: 0.75rem; word-wrap: break-word;"></div>
                                 {{/each}}
                             </div>
                         </div>

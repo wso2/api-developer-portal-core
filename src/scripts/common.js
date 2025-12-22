@@ -135,12 +135,12 @@ document.addEventListener("DOMContentLoaded", function () {
             applicationsLink?.classList.add('active');
             applicationsLink?.classList.add('has-active-submenu');
 
-            // Extract API ID from URL path and update submenu links
+            // Extract Application ID from URL path and update submenu links
             const applicationIdMatch = currentPath.match(/\/applications\/([^\/]+)/);
             if (applicationIdMatch && applicationIdMatch[1]) {
                 const applicationId = applicationIdMatch[1];
 
-                // Update the submenu links with the correct API ID and base path
+                // Update the submenu links with the correct Application ID and base path
                 document.getElementById('applications-overview').href = `${basePath}/applications/${applicationId}`;
                 document.getElementById('applications-keys').href = `${basePath}/applications/${applicationId}/manage-keys`;
 
