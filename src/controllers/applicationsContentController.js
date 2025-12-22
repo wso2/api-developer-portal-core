@@ -333,6 +333,16 @@ const loadApplication = async (req, res) => {
                 nonSubAPIs: nonSubscribedAPIs,
                 productionKeys: productionKeys,
                 sandboxKeys: sandboxKeys,
+                applicationKeys: [
+                    {
+                        keys: productionKeys,
+                        keyType: constants.KEY_TYPE.PRODUCTION
+                    },
+                    {
+                        keys: sandboxKeys,
+                        keyType: constants.KEY_TYPE.SANDBOX
+                    }
+                ],
                 isProduction: true,
                 isApiKey: isApiKey,
                 subscriptionScopes: subscriptionScopes,
@@ -356,7 +366,7 @@ const loadApplication = async (req, res) => {
     } catch (error) {
         logger.error("Error occurred while loading application", {
             orgName: orgName,
-            applicationId: applicationId,
+            applicationId: req?.params?.applicationId,
             error: error.message,
             stack: error.stack
         });
@@ -627,7 +637,7 @@ const loadApplicationKeys = async (req, res) => {
     } catch (error) {
         logger.error("Error occurred while loading application keys", {
             orgName: orgName,
-            applicationId: applicationId,
+            applicationId: req?.params?.applicationId,
             error: error.message,
             stack: error.stack
         });
