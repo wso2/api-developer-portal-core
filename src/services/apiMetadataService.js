@@ -265,13 +265,10 @@ const getMetadataListFromDB = async (orgID, groups, searchTerm, tags, apiName, a
             if (apiVersion) condition.API_VERSION = apiVersion;
             if (tags) condition.TAGS = tags;
             condition.ORG_ID = orgID;
-            console.log("Condition: ", condition);
             retrievedAPIs = await apiDao.getAPIMetadataByCondition(condition);
         } else if (searchTerm) {
-            console.log("Search Term: ", searchTerm);
             retrievedAPIs = await apiDao.searchAPIMetadata(orgID, groups, searchTerm, viewName, t);
         } else if (viewName) {
-            console.log("View Name: ", viewName);
             retrievedAPIs = await apiDao.getAllAPIMetadata(orgID, groups, viewName, t);
         }
         // Create response object
