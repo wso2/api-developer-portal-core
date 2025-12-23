@@ -850,7 +850,6 @@ const getDevPortalApplicationDetails = async (req, res) => {
         });
         util.handleError(res, error);
     }
-
 }
 
 const deleteDevPortalApplication = async (req, res) => {
@@ -1202,7 +1201,17 @@ const createAppKeyMapping = async (req, res) => {
             for (const sub of subAPIs) {
                 const api = new APIDTO(sub);
                 const policyDetails = await apiDao.getSubscriptionPolicy(api.policyID, orgID, t);
-                const cpSubscribeResponse = await createCPSubscription(req, api.apiReferenceID, cpAppID, policyDetails);
+                
+                // Get billing data if this is a paid subscription
+                let billingData = null;
+                if (sub.BILLING_CUSTOMER_ID && sub.BILLING_SUBSCRIPTION_ID) {
+                    billingData = {
+                        customerId: sub.BILLING_CUSTOMER_ID,
+                        subscriptionId: sub.BILLING_SUBSCRIPTION_ID
+                    };
+                }
+                
+                const cpSubscribeResponse = await createCPSubscription(req, api.apiReferenceID, cpAppID, policyDetails, billingData);
                 apiSubscriptions.push(cpSubscribeResponse);
             }
             //create app key mapping
@@ -1384,11 +1393,12 @@ const createCPApplication = async (req, cpApplicationName) => {
     }
 }
 
-const createCPSubscription = async (req, apiId, cpAppID, policyDetails) => {
+const createCPSubscription = async (req, apiId, cpAppID, policyDetails, billingData = null) => {
     logger.info('Creating control plane subscription', {
         apiId,
         cpAppID,
-        policyDetails: policyDetails.dataValues ? policyDetails.dataValues.POLICY_NAME : policyDetails
+        policyDetails: policyDetails.dataValues ? policyDetails.dataValues.POLICY_NAME : policyDetails,
+        billingData: billingData ? { customerId: billingData.customerId, subscriptionId: billingData.subscriptionId } : null
     });
     try {
         const requestBody = {
@@ -1396,6 +1406,15 @@ const createCPSubscription = async (req, apiId, cpAppID, policyDetails) => {
             applicationId: cpAppID,
             throttlingPolicy: policyDetails.dataValues ? policyDetails.dataValues.POLICY_NAME : policyDetails
         };
+        
+        // Add billing metadata if available (for paid subscriptions)
+        if (billingData) {
+            requestBody.billingMetadata = {
+                billingCustomerId: billingData.customerId,
+                billingSubscriptionId: billingData.subscriptionId
+            };
+        }
+        
         const cpSubscribeResponse = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, requestBody);
         return cpSubscribeResponse;
     } catch (error) {

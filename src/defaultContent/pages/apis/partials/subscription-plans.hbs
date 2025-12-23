@@ -51,17 +51,76 @@
                     <p class="subscription-plans-subtitle">Please select the most suitable subscription plan from the
                         options
                         available for this API</p>
+                    
+                    {{!-- Hidden field to store selected application ID passed from listing page --}}
+                    <input type="hidden" id="modal-selected-app-{{apiID}}" value="" />
+                    
                     <div class="row row-gap-4 pt-3">
                         {{#each subscriptionPolicyDetails}}
                         <div class="col-12 col-md-6 col-lg-4">
                             <div class="card dev-card">
-                                <div class="card-body align-items-center text-center p-0">
-                                    <span class="subscription-plans-card-title">{{displayName}}</h5>
-                                        <h1 class="subscription-plans-request-count">{{requestCount}}</h1>
-                                        <p class="subscription-plans-card-subtitle pb-4 pt-0">requests per minutes</p>
-                                        <a id="subscribe-btn-{{policyID}}" type="button"
-                                            class="common-btn-outlined p-1 ps-2 pe-2 w-100 subscription-plan-subscribe-btn"
-                                            onclick="showSubscribeButtonLoading(this); subscribe('{{@root.orgID}}', '', '{{../apiID}}', '{{../apiReferenceID}}', '{{policyID}}', '{{policyName}}')">Subscribe</a>
+                                <div class="card-body align-items-center text-center p-4">
+                                    <span class="subscription-plans-card-title d-block mb-3">{{displayName}}</span>
+                                    
+                                    {{!-- Price and Rate Limit Layout --}}
+                                    <div class="mb-4">
+                                      {{!-- Labels Row --}}
+                                      <div class="d-flex justify-content-center align-items-center mb-2" style="gap: 40px;">
+                                        <span class="text-muted" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; width: 80px; text-align: center;">Price</span>
+                                        <span style="color: #cbd5e1;">|</span>
+                                        <span class="text-muted" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; width: 80px; text-align: center;">Rate Limit</span>
+                                      </div>
+
+                                      {{!-- Values Row --}}
+                                      <div class="d-flex justify-content-center align-items-baseline mb-3" style="gap: 40px;">
+                                        {{!-- Price Value --}}
+                                        <div class="text-center" style="width: 80px;">
+                                          {{#if pricingModel}}
+                                            {{#compare pricingModel "===" "FLAT"}}
+                                              {{#if flatAmount}}
+                                              <span class="fw-bold" style="color: #0f172a; font-size: 25px;">{{currency}} {{formatPrice flatAmount}}</span>
+                                              {{else}}
+                                              <span class="fw-bold" style="color: #16a34a; font-size: 25px;">Free</span>
+                                              {{/if}}
+                                            {{else}}
+                                              {{!-- PER_UNIT pricing --}}
+                                              {{#if unitAmount}}
+                                              <span class="fw-bold" style="color: #0f172a; font-size: 25px;">{{currency}} {{formatPrice unitAmount}}</span>
+                                              <small class="text-muted d-block" style="font-size: 10px; margin-top: 2px;">per unit</small>
+                                              {{else}}
+                                              <span class="fw-bold" style="color: #16a34a; font-size: 25px;">Free</span>
+                                              {{/if}}
+                                            {{/compare}}
+                                          {{else}}
+                                            {{!-- Fallback for plans without pricing model --}}
+                                            <span class="fw-bold" style="color: #16a34a; font-size: 25px;">Free</span>
+                                          {{/if}}
+                                        </div>
+
+                                        {{!-- Divider --}}
+                                        <span style="color: #cbd5e1; font-size: 20px;">|</span>
+
+                                        {{!-- Rate Limit Value --}}
+                                        <div class="text-center" style="width: 80px;">
+                                          <span class="fw-bold d-block" style="color: #0f172a; font-size: 25px;">{{requestCount}}</span>
+                                          <small class="text-muted" style="font-size: 11px;">req/min</small>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {{!-- Subscribe Button with data attributes for paid/free detection --}}
+                                    <a 
+                                        id="subscribe-btn-{{policyID}}" 
+                                        type="button"
+                                        class="common-btn-outlined p-1 ps-2 pe-2 w-100 subscription-plan-subscribe-btn"
+                                        data-policy-id="{{policyID}}"
+                                        data-policy-name="{{policyName}}"
+                                        data-external-price-id="{{pricingMetadata.externalPriceId}}"
+                                        data-is-paid="{{#if pricingMetadata.externalPriceId}}true{{else}}false{{/if}}"
+                                        onclick="handlePlanSubscription('{{@root.orgID}}', '{{../apiID}}', '{{../apiReferenceID}}', '{{policyID}}', '{{policyName}}', this)"
+                                    >
+                                        Subscribe
+                                    </a>
                                 </div>
                             </div>
                         </div>

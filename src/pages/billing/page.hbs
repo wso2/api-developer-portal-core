@@ -1,0 +1,54 @@
+<!--
+ * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
+ *
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+ -->
+<link rel="stylesheet" href="/technical-styles/billing.css" />
+
+<main data-org-id="{{orgId}}">
+    {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode }}
+    {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode }}
+    {{> billing-content }}
+    {{> alert }}
+</main>
+
+<script>
+    console.log('📄 Billing page rendered from src/pages/billing/page.hbs');
+    console.log('🌐 Current URL:', window.location.href);
+    console.log('🔍 orgId:', '{{orgId}}');
+    
+    // Load billing.js with cache busting
+    var cacheBuster = '?v=' + Date.now();
+    var scriptUrl = window.location.origin + '/technical-scripts/billing.js' + cacheBuster;
+    
+    console.log('🔍 Loading billing.js from:', scriptUrl);
+    
+    var script = document.createElement('script');
+    script.src = scriptUrl;
+    script.type = 'text/javascript';
+    script.async = false;
+    
+    script.onload = function() {
+        console.log('✅ billing.js loaded and executed successfully!');
+    };
+    
+    script.onerror = function(error) {
+        console.error('❌ FAILED to load billing.js');
+        console.error('❌ Attempted URL:', scriptUrl);
+    };
+    
+    document.body.appendChild(script);
+</script>
