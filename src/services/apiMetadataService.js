@@ -62,6 +62,7 @@ const createAPIMetadata = async (req, res) => {
         }
         apiMetadata.endPoints.productionURL = changeEndpoint(apiMetadata.endPoints.productionURL);
         apiMetadata.endPoints.sandboxURL = changeEndpoint(apiMetadata.endPoints.sandboxURL);
+        normalizeGraphQLEndpoints(apiMetadata);
         await sequelize.transaction({
             timeout: 60000,
         }, async (t) => {
@@ -156,6 +157,30 @@ function changeEndpoint(endPoint) {
         return endPoint.replace("choreoapis", "bijiraapis");
     }
     return endPoint;
+}
+
+function normalizeGraphQLEndpoint(endPoint) {
+    if (!endPoint || typeof endPoint !== 'string') {
+        return endPoint;
+    }
+    if (endPoint.startsWith('ws://')) {
+        return endPoint.replace('ws://', 'http://');
+    }
+    if (endPoint.startsWith('wss://')) {
+        return endPoint.replace('wss://', 'https://');
+    }
+    return endPoint;
+}
+
+function normalizeGraphQLEndpoints(apiMetadata) {
+    if (!apiMetadata?.apiInfo || !apiMetadata?.endPoints) {
+        return;
+    }
+    if (constants.API_TYPE.GRAPHQL !== apiMetadata.apiInfo.apiType) {
+        return;
+    }
+    apiMetadata.endPoints.productionURL = normalizeGraphQLEndpoint(apiMetadata.endPoints.productionURL);
+    apiMetadata.endPoints.sandboxURL = normalizeGraphQLEndpoint(apiMetadata.endPoints.sandboxURL);
 }
 
 async function allowAPIStatusChange(apiStatus, orgId, apiId) {
@@ -308,6 +333,7 @@ const updateAPIMetadata = async (req, res) => {
         }
         apiMetadata.endPoints.productionURL = changeEndpoint(apiMetadata.endPoints.productionURL);
         apiMetadata.endPoints.sandboxURL = changeEndpoint(apiMetadata.endPoints.sandboxURL);
+        normalizeGraphQLEndpoints(apiMetadata);
 
         let allowStatusChange = await allowAPIStatusChange(apiMetadata.apiInfo.apiStatus, orgId, apiId);
         if (!allowStatusChange) {
