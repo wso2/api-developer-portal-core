@@ -58,6 +58,7 @@
             {{/if}}
         </div>
         {{#unless (eq apiMetadata.apiInfo.apiType "WS")}}
+        {{#unless (eq apiMetadata.apiInfo.apiType "WEBSUB")}}
         {{#unless (eq apiMetadata.apiInfo.apiType "GRAPHQL")}}
         <div class="defaultapi-section">
             <div class="container-header mb-4">Scopes</div>
@@ -71,8 +72,10 @@
         </div>
         {{/unless}}
         {{/unless}}
+        {{/unless}}
         {{#unless (eq apiMetadata.apiInfo.apiType "MCP")}}
         {{#unless (eq apiMetadata.apiInfo.apiType "WS")}}
+        {{#unless (eq apiMetadata.apiInfo.apiType "WEBSUB")}}
         {{#unless (eq apiMetadata.apiInfo.apiType "GRAPHQL")}}
         <div class="defaultapi-section">
         <div class="container-header mb-4">Resources</div>
@@ -91,6 +94,7 @@
         {{/unless}}
         {{/unless}}
         {{/unless}}
+        {{/unless}}
         {{#if (eq apiMetadata.apiInfo.apiType "WS")}}
         <div class="defaultapi-section">
             <div class="container-header mb-4">Channels</div>
@@ -99,6 +103,20 @@
                 <div class="defaultapi-resources-channel">
                     <div class="defaultapi-resources-channel-operations">
                         <div class="pub-box">PUB</div>
+                        <div class="sub-box">SUB</div>
+                    </div>
+                    <div class="defaultapi-resource-path">{{name}}</div>
+                </div>
+                {{/each}}
+            </div>
+        </div>
+        {{else if (eq apiMetadata.apiInfo.apiType "WEBSUB")}}
+        <div class="defaultapi-section">
+            <div class="container-header mb-4">Channels</div>
+            <div class="defaultapi-resources col-12">
+                {{#each resources.channels}}
+                <div class="defaultapi-resources-channel">
+                    <div class="defaultapi-resources-channel-operations">
                         <div class="sub-box">SUB</div>
                     </div>
                     <div class="defaultapi-resource-path">{{name}}</div>

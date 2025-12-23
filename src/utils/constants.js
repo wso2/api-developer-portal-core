@@ -49,6 +49,7 @@ module.exports = {
         API_PROXIES: "APISONLY",
         DEFAULT: "DEFAULT",
         WS: "WS",
+        WEBSUB: "WEBSUB",
         GRAPHQL: "GRAPHQL",
     },
     DOC_TYPES: {
@@ -196,6 +197,13 @@ module.exports = {
             "policyName": "Unlimited",
             "description": "Allows unlimited requests",
             "displayName": "Unlimited",
+            "requestCount": "Unlimited",
+            "billingPlan": "FREE"
+        },
+        {
+            "policyName": "AsyncUnlimited",
+            "description": "Allows unlimited requests for Async APIs",
+            "displayName": "AsyncUnlimited",
             "requestCount": "Unlimited",
             "billingPlan": "FREE"
         }

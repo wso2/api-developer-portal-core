@@ -36,11 +36,13 @@ import {
 } from '../../designSystem';
 import { Box, CircularProgress, Tooltip, Typography } from '@material-ui/core';
 import { PlayArrow, Send } from '@material-ui/icons';
+import { APITypeEnum } from './WebsocketViewer';
 
 export const INTERNAL_KEY_HEADER_NAME = 'choreo-test-key';
 export const DEVPORTAL_TOKEN_HEADER_NAME = 'choreo-oauth2-token';
 
 interface TopicViewerProps {
+  asyncType: APITypeEnum | undefined;
   token: string;
   apiEndpoint: string;
   topic: string;
@@ -59,7 +61,7 @@ export interface CollectedLogLineWithKey {
 }
 
 const TopicViewer = (props: TopicViewerProps) => {
-  const { token, apiEndpoint, topic, publish, subscribe, parameters, payload, isDevportal } =
+  const { token, apiEndpoint, topic, publish, subscribe, parameters, payload, isDevportal, asyncType } =
     props;
   const classes = useStyles();
   const [socket, setSocket] = useState<WebSocket | null>(null);
@@ -97,6 +99,9 @@ const TopicViewer = (props: TopicViewerProps) => {
   }, [apiEndpoint, topic]);
 
   const sendMessage = () => {
+    if (asyncType === APITypeEnum.WEBSUB) {
+      return;
+    }
     if (socket && input && socket.readyState === socket.OPEN) {
       socket.send(input);
       setMessages((prev) => [
@@ -267,7 +272,8 @@ const TopicViewer = (props: TopicViewerProps) => {
           aria-controls="panel1a-content"
           testId="topic-accordion-summary"
         >
-          <Box className={classes.topicTypeContainer}>
+            <Box className={classes.topicTypeContainer}>
+            {asyncType === APITypeEnum.WEBSUB && (
             <Box className={classes.typeChipContainer}>
               <Chip
                 label="PUB"
@@ -278,6 +284,7 @@ const TopicViewer = (props: TopicViewerProps) => {
                 disabled={!publish}
               />
             </Box>
+            )}
             <Box className={classes.typeChipContainer}>
               <Chip
                 label="SUB"
@@ -307,6 +314,7 @@ const TopicViewer = (props: TopicViewerProps) => {
                   </Box>
                 }
               >
+              {asyncType === APITypeEnum.WS && (
                 <Box className={classes.endpointContainer}>
                   <Box className={classes.textInput}>
                     <CopyToClipboard
@@ -328,6 +336,7 @@ const TopicViewer = (props: TopicViewerProps) => {
                     {getButtonText(connectButtonText)}
                   </Button>
                 </Box>
+                )}
                 <Box>
                   <TabCard
                     className={classes.tabs}

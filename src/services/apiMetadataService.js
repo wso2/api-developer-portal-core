@@ -280,7 +280,6 @@ const getAllAPIMetadata = async (req, res) => {
 };
 
 const getMetadataListFromDB = async (orgID, groups, searchTerm, tags, apiName, apiVersion, viewName) => {
-
     return await sequelize.transaction({
         timeout: 60000,
     }, async (t) => {

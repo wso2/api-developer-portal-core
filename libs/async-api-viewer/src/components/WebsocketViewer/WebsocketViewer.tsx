@@ -21,6 +21,12 @@ export interface WebSocketViewerProps {
   apiEndpoint?: string;
   asyncapi?: AsyncApi;
   isDevportal?: boolean;
+  asyncApiType: APITypeEnum | undefined;
+}
+
+export enum APITypeEnum {
+  WS = 'WS',
+  WEBSUB = 'WEBSUB',
 }
 
 interface SwaggerSecuritySchemasValue {
@@ -107,7 +113,8 @@ function WebSocketViewer(props: WebSocketViewerProps = {}) {
         }
       }
     },
-    isDevportal = false
+    isDevportal = false,
+    asyncApiType = undefined
   } = props;
 
   const [allTopics, setAllTopics] = useState([
@@ -142,6 +149,9 @@ function WebSocketViewer(props: WebSocketViewerProps = {}) {
         setAllTopics(mapAsyncApiTopics(newAsyncapi));
       }
       return newAsyncapi;
+    } else {
+      let newAsyncapi = cloneDeep(asyncapi);
+      setAllTopics(mapAsyncApiTopics(newAsyncapi));
     }
     return null;
   }, [asyncapi, apiEndpoint]);
@@ -151,6 +161,17 @@ function WebSocketViewer(props: WebSocketViewerProps = {}) {
       setAllTopics(mapAsyncApiTopics(newAsyncapiObj));
     }
   }, [newAsyncapiObj]);
+
+  function buildPayload(topic?: string) {
+    if (asyncApiType === APITypeEnum.WEBSUB) {
+      return JSON.stringify({
+        'hub.mode': 'subscribe',
+        'hub.topic': topic || 'sample-topic',
+        'hub.callback': 'http://example.com/callback',
+      });
+    }
+    return '{ "message": "Hello Server" }';
+  }
 
   if (!allTopics || !asyncapi?.channels) {
     return (
@@ -177,8 +198,9 @@ function WebSocketViewer(props: WebSocketViewerProps = {}) {
             publish={publish}
             subscribe={subscribe}
             parameters={parameters}
-            payload='{ "message": "Hello Server" }'
+            payload={buildPayload(name)}
             isDevportal={isDevportal}
+            asyncType={asyncApiType}
           />
         ))}
       </Box>
