@@ -877,11 +877,13 @@ function replaceEndpointParams(apiDefinition, prodEndpoint, sandboxEndpoint) {
     let servers = [];
     if (prodEndpoint.trim().length !== 0) {
         servers.push({
+            description: "Production",
             url: prodEndpoint
         });
     }
     if (sandboxEndpoint.trim().length !== 0) {
         servers.push({
+            description: "Sandbox",
             url: sandboxEndpoint
         });
     }

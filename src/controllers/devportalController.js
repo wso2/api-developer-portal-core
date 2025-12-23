@@ -203,7 +203,10 @@ const generateAPIKeys = async (req, res) => {
         const environments = orgDetails?.data?.environments || [];
         const apiHandle = await apiDao.getAPIHandle(orgID, req.body.apiId);
 
-        requestBody.name = apiHandle + "-" + cpAppID;
+        if (!requestBody.keyType || ![constants.KEY_TYPE.PRODUCTION, constants.KEY_TYPE.SANDBOX].includes(requestBody.keyType)) {
+            throw new Error('Invalid or missing keyType. Expected ' + constants.KEY_TYPE.PRODUCTION + ' or ' + constants.KEY_TYPE.SANDBOX + '.');
+        }
+        requestBody.name = apiHandle + "-" + cpAppID + "-" + requestBody.keyType;
         requestBody.environmentTemplateId = environments.find(env => env.name === 'Production').templateId;
         requestBody.applicationId = cpAppID;
         delete requestBody.projectID;
