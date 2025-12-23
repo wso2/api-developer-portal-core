@@ -100,6 +100,44 @@
           </div>
           <div class="api-card-body flex-grow-1" onclick="window.location.href='{{../baseUrl}}/api/{{apiHandle}}'" style="cursor: pointer;">
             <div class="truncate-text fw-light apilisting-api-description small mb-3">{{apiInfo.apiDescription}}</div>
+            
+            {{#if subscriptionPolicies}}
+            <div class="mb-3">
+              <div class="d-flex align-items-center mb-2">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="margin-right: 6px; color: #666;">
+                  <path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5z"/>
+                </svg>
+                <span class="small fw-semibold text-muted" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Available Plans</span>
+              </div>
+              <div class="pricing-chips-container d-flex flex-wrap gap-2">
+                {{#each subscriptionPolicies}}
+                <span class="badge pricing-chip" style="background-color: #f8fafc; color: #334155; border: 1px solid #e2e8f0; padding: 8px 14px; border-radius: 20px; font-weight: 600; font-size: 12px; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+                  <span style="color: #0f172a;">{{displayName}}</span>
+                  {{#if pricingModel}}
+                    {{#compare pricingModel "===" "FLAT"}}
+                      {{#if flatAmount}}
+                      <span style="color: #64748b; font-weight: 500; margin-left: 6px;">• {{currency}} {{formatPrice flatAmount}}/{{billingPeriod}}</span>
+                      {{else}}
+                      <span style="color: #16a34a; font-weight: 600; margin-left: 6px;">• Free</span>
+                      {{/if}}
+                    {{else}}
+                      {{!-- PER_UNIT pricing --}}
+                      {{#if unitAmount}}
+                      <span style="color: #64748b; font-weight: 500; margin-left: 6px;">• {{currency}} {{formatPrice unitAmount}} per unit</span>
+                      {{else}}
+                      <span style="color: #16a34a; font-weight: 600; margin-left: 6px;">• Free</span>
+                      {{/if}}
+                    {{/compare}}
+                  {{else}}
+                    {{!-- Fallback for plans without pricing model --}}
+                    <span style="color: #16a34a; font-weight: 600; margin-left: 6px;">• Free</span>
+                  {{/if}}
+                </span>
+                {{/each}}
+              </div>
+            </div>
+            {{/if}}
+            
             <div class="row">
               <div class="apilisting-tags">
                 {{#apiInfo.tags}}
@@ -122,6 +160,8 @@
                 <p class="subscription-box-label">Application: </p>
                 <div class="custom-dropdown">
                   <input type="hidden" id="selectedAppId-{{apiID}}" value="" />
+                  {{!-- Hidden field for subscribeAndCheckout to find application ID --}}
+                  <input type="hidden" id="modal-selected-app-{{apiID}}" value="" />
                   <div class="custom-select-container">
                     <div class="select-selected" role="combobox" aria-expanded="false" aria-haspopup="listbox">
                       <span class="selected-text small">Create an app</span>
@@ -137,9 +177,20 @@
 
                         <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}"
                           data-app-name="{{name}}">
-                          <span>{{name}}</span>
+                          <div class="d-flex flex-column flex-grow-1">
+                            <span class="fw-semibold">{{name}}</span>
+                            {{#if subscriptionPolicy}}
+                            <small style="font-size: 11px; margin-top: 3px;">
+                              <span class="badge" style="background-color: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 10px; font-weight: 600; font-size: 10px;">
+                                {{subscriptionPolicy.policyName}}
+                              </span>
+                            </small>
+                            {{/if}}
+                          </div>
+                          {{#if subscribed}}
                           <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
-                            alt="Subscribed" class="subscription-icon" style="display: {{#if subscribed}}inline-block{{else}}none{{/if}};" />
+                            alt="Subscribed" class="subscription-icon" style="width: 18px; height: 18px; flex-shrink: 0;" />
+                          {{/if}}
                         </div>
 
                         {{/each}}
@@ -154,14 +205,35 @@
                 </div>
 
                 {{#if (eq subscriptionPolicies.length 1)}}
-                 <a type="button" class="common-btn-primary {{#if @root.isReadOnlyMode}}disabled{{/if}}"
-                   onclick="showSubscribeButtonLoading(this); subscribe('{{../orgID}}', '', '{{apiID}}', '{{apiReferenceID}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyID"}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyName"}}')"
-                   disabled>Subscribe</a>
-                 {{else}}
-                 <a type="button" class="common-btn-primary" onclick="loadModal('planModal-{{apiID}}')" disabled>Subscribe</a>
-                 {{/if}}
-
-                {{/if}}
+                 {{!-- Single plan: Check if paid or free --}}
+                 {{#with (lookup subscriptionPolicyDetails 0)}}
+                   {{#if pricingMetadata.externalPriceId}}
+                     {{!-- Paid plan: Route to Stripe checkout --}}
+                     <a type="button" 
+                        id="subscribe-btn-{{policyID}}"
+                        class="common-btn-primary subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                        data-policy-id="{{policyID}}"
+                        data-policy-name="{{policyName}}"
+                        data-external-price-id="{{pricingMetadata.externalPriceId}}"
+                        data-is-paid="true"
+                        onclick="showSubscribeButtonLoading(this); handleListingSubscribe('{{../../orgID}}', '{{../apiID}}', '{{../apiReferenceID}}', '{{policyID}}', '{{policyName}}', 'selectedAppId-{{../apiID}}', this)" 
+                        disabled>Subscribe &amp; Pay</a>
+                   {{else}}
+                     {{!-- Free plan: Direct subscription --}}
+                     <a type="button" 
+                        id="subscribe-btn-{{policyID}}"
+                        class="common-btn-primary subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                        data-policy-id="{{policyID}}"
+                        data-policy-name="{{policyName}}"
+                        data-is-paid="false"
+                        onclick="showSubscribeButtonLoading(this); handleListingSubscribe('{{../../orgID}}', '{{../apiID}}', '{{../apiReferenceID}}', '{{policyID}}', '{{policyName}}', 'selectedAppId-{{../apiID}}', this)" 
+                        disabled>Subscribe</a>
+                   {{/if}}
+                 {{/with}}
+                {{else}}
+                 {{!-- Multiple plans: Open modal --}}
+                 <a type="button" class="common-btn-primary subscribe-btn" onclick="openModalWithApp('planModal-{{apiID}}', 'selectedAppId-{{apiID}}')" disabled>Subscribe</a>
+                {{/if}}                {{/if}}
               </div>
               {{/if}}
             </div>

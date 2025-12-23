@@ -91,9 +91,14 @@ const loadAPIs = async (req, res) => {
                         appList = await Promise.all(
                             applications.map(async (app) => {
                                 const subscription = await adminDao.getAppApiSubscription(orgID, app.APP_ID, metaData.apiID);
+                                const subscriptionData = subscription.length > 0 ? {
+                                    policyId: subscription[0].POLICY_ID,
+                                    policyName: metaData.subscriptionPolicies.find(p => p.policyID === subscription[0].POLICY_ID)?.policyName || 'Unknown'
+                                } : null;
                                 return {
                                     ...new ApplicationDTO(app),
                                     subscribed: subscription.length > 0,
+                                    subscriptionPolicy: subscriptionData
                                 };
                             })
                         );
@@ -350,9 +355,14 @@ const loadAPIContent = async (req, res) => {
                     appList = await Promise.all(
                         applications.map(async (app) => {
                             const subscription = await adminDao.getAppApiSubscription(orgID, app.APP_ID, metaData.apiID);
+                            const subscriptionData = subscription.length > 0 ? {
+                                policyId: subscription[0].POLICY_ID,
+                                policyName: metaData.subscriptionPolicies.find(p => p.policyID === subscription[0].POLICY_ID)?.policyName || 'Unknown'
+                            } : null;
                             return {
                                 ...new ApplicationDTO(app),
                                 subscribed: subscription.length > 0,
+                                subscriptionPolicy: subscriptionData
                             };
                         })
                     );

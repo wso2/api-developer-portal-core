@@ -732,7 +732,11 @@ const getSubscriptions = async (orgID, appID, apiID) => {
                     [Sequelize.Op.or]: [
                         { APP_ID: appID },
                         { API_ID: apiID }
-                    ]
+                    ],
+                    // Exclude PENDING subscriptions (not yet paid)
+                    PAYMENT_STATUS: {
+                        [Sequelize.Op.notIn]: ['PENDING']
+                    }
                 }
             });
     } catch (error) {
@@ -750,7 +754,11 @@ const getAppApiSubscription = async (orgID, appID, apiID) => {
                 where: {
                     ORG_ID: orgID,
                     APP_ID: appID,
-                    API_ID: apiID
+                    API_ID: apiID,
+                    // Exclude PENDING subscriptions (not yet paid)
+                    PAYMENT_STATUS: {
+                        [Sequelize.Op.notIn]: ['PENDING']
+                    }
                 }
             });
     } catch (error) {
@@ -777,6 +785,194 @@ const deleteSubscription = async (orgID, subID, t) => {
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+/**
+ * Update billing-related fields for a subscription (for monetization)
+ */
+const updateBillingFields = async (orgID, subID, fields, t) => {
+    try {
+        const updateData = {};
+        
+        if (fields.BILLING_CUSTOMER_ID !== undefined) {
+            updateData.BILLING_CUSTOMER_ID = fields.BILLING_CUSTOMER_ID;
+        }
+        if (fields.BILLING_SUBSCRIPTION_ID !== undefined) {
+            updateData.BILLING_SUBSCRIPTION_ID = fields.BILLING_SUBSCRIPTION_ID;
+        }
+        if (fields.PAYMENT_PROVIDER !== undefined) {
+            updateData.PAYMENT_PROVIDER = fields.PAYMENT_PROVIDER;
+        }
+        if (fields.PAYMENT_STATUS !== undefined) {
+            updateData.PAYMENT_STATUS = fields.PAYMENT_STATUS;
+        }
+        if (fields.CHECKOUT_SESSION_ID !== undefined) {
+            updateData.CHECKOUT_SESSION_ID = fields.CHECKOUT_SESSION_ID;
+        }
+
+        const [updatedCount] = await SubscriptionMapping.update(updateData, {
+            where: {
+                ORG_ID: orgID,
+                SUB_ID: subID,
+            },
+            transaction: t,
+        });
+
+        return updatedCount;
+    } catch (error) {
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+/**
+ * Find subscription by unique key (app, api, policy) - for duplicate check
+ */
+const findSubscriptionByUniqueKey = async (orgID, appID, apiID, policyID, t) => {
+    try {
+        return await SubscriptionMapping.findOne({
+            where: {
+                ORG_ID: orgID,
+                APP_ID: appID,
+                API_ID: apiID,
+                POLICY_ID: policyID,
+            },
+            transaction: t,
+        });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            return null;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+/**
+ * List all subscriptions for an organization
+ */
+const listSubscriptionsByOrg = async (orgID) => {
+    try {
+        return await SubscriptionMapping.findAll({
+            where: {
+                ORG_ID: orgID,
+                // Exclude PENDING subscriptions (not yet paid)
+                PAYMENT_STATUS: {
+                    [Sequelize.Op.notIn]: ['PENDING']
+                }
+            },
+        });
+    } catch (error) {
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+/**
+ * Get active subscriptions with full details for billing page
+ */
+const getActiveSubscriptionsWithDetails = async (orgID) => {
+    try {
+        if (!orgID) {
+            throw new Error('orgID is required');
+        }
+        
+        const sequelize = require('../db/sequelize');
+        const results = await sequelize.query(`
+            SELECT 
+                s."SUB_ID" as id,
+                s."PAYMENT_STATUS" as status,
+                s."BILLING_SUBSCRIPTION_ID",
+                s."PAYMENT_PROVIDER",
+                a."API_NAME" as "apiName",
+                app."NAME" as "applicationName",
+                p."POLICY_NAME" as "planName",
+                p."BILLING_PLAN" as "billingCycle"
+            FROM "DP_API_SUBSCRIPTION" s
+            LEFT JOIN "DP_API_METADATA" a ON s."API_ID" = a."API_ID" AND s."ORG_ID" = a."ORG_ID"
+            LEFT JOIN "DP_APPLICATION" app ON s."APP_ID" = app."APP_ID" AND s."ORG_ID" = app."ORG_ID"
+            LEFT JOIN "DP_SUBSCRIPTION_POLICY" p ON s."POLICY_ID" = p."POLICY_ID" AND s."ORG_ID" = p."ORG_ID"
+            WHERE s."ORG_ID" = :orgID
+            AND s."PAYMENT_STATUS" = 'ACTIVE'
+            AND p."BILLING_PLAN" = 'COMMERCIAL'
+            AND s."BILLING_CUSTOMER_ID" IS NOT NULL
+            AND s."BILLING_SUBSCRIPTION_ID" IS NOT NULL
+        `, {
+            replacements: { orgID },
+            type: sequelize.QueryTypes.SELECT
+        });
+        
+        return results || [];
+    } catch (error) {
+        logger.error({ error, orgID }, 'getActiveSubscriptionsWithDetails failed');
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+/**
+ * Update subscription by Stripe billing subscription ID (for webhooks)
+ */
+const updateSubscriptionByBillingId = async (billingSubscriptionID, fields) => {
+    try {
+        const updateData = {};
+        
+        if (fields.PAYMENT_STATUS !== undefined) {
+            updateData.PAYMENT_STATUS = fields.PAYMENT_STATUS;
+        }
+        if (fields.BILLING_CUSTOMER_ID !== undefined) {
+            updateData.BILLING_CUSTOMER_ID = fields.BILLING_CUSTOMER_ID;
+        }
+        if (fields.PAYMENT_PROVIDER !== undefined) {
+            updateData.PAYMENT_PROVIDER = fields.PAYMENT_PROVIDER;
+        }
+
+        const [updatedCount] = await SubscriptionMapping.update(updateData, {
+            where: {
+                BILLING_SUBSCRIPTION_ID: billingSubscriptionID,
+            },
+        });
+
+        return updatedCount;
+    } catch (error) {
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+/**
+ * Get API by ID (for monetization validation)
+ */
+const getAPIById = async (orgID, apiID, t) => {
+    try {
+        return await APIMetadata.findOne({
+            where: {
+                ORG_ID: orgID,
+                API_ID: apiID,
+            },
+            transaction: t,
+        });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            return null;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+/**
+ * Get subscription policy by ID (for monetization validation)
+ */
+const getSubscriptionPolicyById = async (orgID, policyID, t) => {
+    try {
+        return await SubscriptionPolicy.findOne({
+            where: {
+                ORG_ID: orgID,
+                POLICY_ID: policyID,
+            },
+            transaction: t,
+        });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            return null;
         }
         throw new Sequelize.DatabaseError(error);
     }
@@ -894,7 +1090,10 @@ const getSubscribedAPIs = async (orgID, appID) => {
                 model: Application,
                 where: { APP_ID: appID },
                 required: true,
-                through: { attributes: ["SUB_ID", "POLICY_ID"] }
+                through: { 
+                    attributes: ["SUB_ID", "POLICY_ID"],
+                    where: { PAYMENT_STATUS: 'ACTIVE' } // Only include paid/active subscriptions
+                }
             },
             {
                 model: APIImageMetadata,
@@ -1031,6 +1230,13 @@ module.exports = {
     getSubscription,
     getSubscriptions,
     deleteSubscription,
+    updateBillingFields,
+    findSubscriptionByUniqueKey,
+    listSubscriptionsByOrg,
+    getActiveSubscriptionsWithDetails,
+    updateSubscriptionByBillingId,
+    getAPIById,
+    getSubscriptionPolicyById,
     deleteAppKeyMapping,
     getAPISubscriptionReference,
     getApplicationID,

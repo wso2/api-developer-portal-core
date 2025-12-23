@@ -806,6 +806,12 @@ async function appendSubscriptionPlanDetails(orgID, subscriptionPolicies) {
                 description: subscriptionPlan.description,
                 billingPlan: subscriptionPlan.billingPlan,
                 requestCount: subscriptionPlan.requestCount,
+                pricingModel: subscriptionPlan.pricingModel,
+                currency: subscriptionPlan.currency,
+                billingPeriod: subscriptionPlan.billingPeriod,
+                flatAmount: subscriptionPlan.flatAmount,
+                unitAmount: subscriptionPlan.unitAmount,
+                pricingMetadata: subscriptionPlan.pricingMetadata
             });
         }
     }

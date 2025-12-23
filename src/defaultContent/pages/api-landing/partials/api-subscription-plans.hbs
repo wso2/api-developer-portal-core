@@ -1,71 +1,207 @@
 {{#unless isFederatedAPI}}
 <section class="section mt-0 mb-6" id="subscriptionPlans">
-    <div class="container-fluid text-center">
-        {{#if subscriptionPlans.length}}
-        <div class="container-header mb-4">Subscription Plans</div>
-        {{/if}}
-        <div class="row row-gap-4 justify-content-center">
-            {{#each subscriptionPlans}}
-            <div class="col-xl-3 col-lg-4 col-md-6 col-12" id="subscriptionCard-{{policyID}}">
-                <div class="card dev-card subscription-card">
-                    <div class="card-body align-items-center text-center p-0">
-                        <span class="subscription-plans-card-title">{{displayName}}</span>
-                        <h1 class="subscription-plans-request-count">{{requestCount}}</h1>
-                        <p class="subscription-plans-card-subtitle pt-0">requests per minute</p>
-                    </div>
-                    <div class="position-relative">
-                        {{#if ../isAuthenticated}}
-                        <div id="subscriptionBox" class="subscription-container">
-                            <div class="custom-dropdown show" id="customDropdown-{{policyID}}">
-                                <input type="hidden" id="selectedAppId-{{policyID}}" value="" />
-                                <div class="custom-select-container">
-                                    <div class="select-selected" aria-expanded="false">
-                                        <span class="selected-text">Create an app</span>
-                                        <span class="select-arrow"></span>
-                                    </div>
-                                    <div class="select-items" role="listbox">
-                                        <div class="select-search-container">
-                                            <input type="text" class="select-search-input {{#if @root.isReadOnlyMode}}d-none{{/if}}" placeholder="Find or create an application..."
-                                                aria-label="Search applications">
-                                        </div>
-                                        <div class="select-items-container">
-                                            {{#each ../applications}}
-                                            <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}" data-app-name="{{name}}">
-                                                <span>{{name}}</span>
-                                                <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
-                                                    alt="Subscribed" class="subscription-icon" style="display: {{#if subscribed}}inline-block{{else}}none{{/if}};" />
-                                            </div>
-                                            {{/each}}
-                                        </div>
-                                        <div class="create-app-container" style="display: none;">
-                                            <div class="create-app-option" role="button">
-                                                Create application "<span class="search-term"></span>"
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <a id="subscribe-btn-{{policyID}}" type="button"
-                                 class="common-btn-primary subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
-                                 onclick="showSubscribeButtonLoading(this); subscribe('{{@root.orgID}}', '', '{{../apiMetadata.apiID}}', '{{../apiMetadata.apiReferenceID}}', '{{policyID}}', '{{policyName}}')"
-                                 disabled>Subscribe</a>
-                        </div>
-                        {{else}}
-                        <a type="button" class="common-btn-primary disabled w-100 subscription-plan-subscribe-btn"
-                            disabled>Subscribe</a>
-                        {{/if}}
-                        
-                        <div class="message-overlay hidden">
-                            <div class="message-content">
-                                <i class="bi message-icon"></i>
-                                <p class="message-text"></p>
-                            </div>
-                            <button type="button" class="close-message" aria-label="Close message">&times;</button>
-                        </div>
-                    </div>
+  <div class="container-fluid text-center">
+    {{#if subscriptionPlans.length}}
+      <div class="container-header mb-4">Subscription Plans</div>
+    {{/if}}
+
+    <div class="row row-gap-4 justify-content-center">
+      {{#each subscriptionPlans}}
+      <div class="col-xl-3 col-lg-4 col-md-6 col-12" id="subscriptionCard-{{policyID}}">
+        <div class="card dev-card subscription-card">
+          <div class="card-body align-items-center text-center p-4">
+            <span class="subscription-plans-card-title d-block mb-3">{{displayName}}</span>
+
+            {{!-- Price and Rate Limit Layout --}}
+            <div class="mb-4">
+              {{!-- Labels Row --}}
+              <div class="d-flex justify-content-center align-items-center mb-2" style="gap: 40px;">
+                <span class="text-muted" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; width: 80px; text-align: center;">Price</span>
+                <span style="color: #cbd5e1;">|</span>
+                <span class="text-muted" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; width: 80px; text-align: center;">Rate Limit</span>
+              </div>
+
+              {{!-- Values Row --}}
+              <div class="d-flex justify-content-center align-items-baseline" style="gap: 40px;">
+                {{!-- Price Value --}}
+                <div class="text-center" style="width: 80px;">
+                  {{#if pricingModel}}
+                    {{#compare pricingModel "===" "FLAT"}}
+                      {{#if flatAmount}}
+                      <span class="fw-bold" style="color: #0f172a; font-size: 20px;">{{currency}} {{formatPrice flatAmount}}</span>
+                      {{else}}
+                      <span class="fw-bold" style="color: #16a34a; font-size: 20px;">Free</span>
+                      {{/if}}
+                    {{else}}
+                      {{!-- PER_UNIT pricing --}}
+                      {{#if unitAmount}}
+                      <span class="fw-bold" style="color: #0f172a; font-size: 20px;">{{currency}} {{formatPrice unitAmount}}</span>
+                      <small class="text-muted d-block" style="font-size: 10px; margin-top: 2px;">per unit</small>
+                      {{else}}
+                      <span class="fw-bold" style="color: #16a34a; font-size: 20px;">Free</span>
+                      {{/if}}
+                    {{/compare}}
+                  {{else}}
+                    {{!-- Fallback for plans without pricing model --}}
+                    <span class="fw-bold" style="color: #16a34a; font-size: 20px;">Free</span>
+                  {{/if}}
                 </div>
+
+                {{!-- Divider --}}
+                <span style="color: #cbd5e1; font-size: 20px;">|</span>
+
+                {{!-- Rate Limit Value --}}
+                <div class="text-center" style="width: 80px;">
+                  <span class="fw-bold d-block" style="color: #0f172a; font-size: 20px;">{{requestCount}}</span>
+                  <small class="text-muted" style="font-size: 11px;">req/min</small>
+                </div>
+              </div>
             </div>
-            {{/each}}
+
+            {{!-- Description if available --}}
+            {{#if description}}
+            <p class="text-muted small mb-3" style="font-size: 12px; line-height: 1.5;">{{description}}</p>
+            {{/if}}
+          </div>
+
+          <div class="position-relative">
+            {{#if ../isAuthenticated}}
+
+            <div id="subscriptionBox" class="subscription-container">
+              <div class="custom-dropdown show" id="customDropdown-{{policyID}}">
+                <input type="hidden" id="selectedAppId-{{policyID}}" value="" />
+
+                <div class="custom-select-container">
+                  <div class="select-selected" aria-expanded="false">
+                    <span class="selected-text">Create an app</span>
+                    <span class="select-arrow"></span>
+                  </div>
+
+                  <div class="select-items" role="listbox">
+                    <div class="select-search-container">
+                      <input
+                        type="text"
+                        class="select-search-input {{#if @root.isReadOnlyMode}}d-none{{/if}}"
+                        placeholder="Find or create an application..."
+                        aria-label="Search applications"
+                      >
+                    </div>
+
+                    <div class="select-items-container">
+                      {{#each ../applications}}
+                      <div
+                        class="select-item {{#if subscribed}}disabled{{/if}}"
+                        role="button"
+                        data-value="{{id}}"
+                        data-app-name="{{name}}"
+                      >
+                        <div class="d-flex flex-column flex-grow-1">
+                          <span class="fw-semibold">{{name}}</span>
+                          {{#if subscriptionPolicy}}
+                          <small style="font-size: 11px; margin-top: 3px;">
+                            <span class="badge" style="background-color: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 10px; font-weight: 600; font-size: 10px;">
+                              {{subscriptionPolicy.policyName}}
+                            </span>
+                          </small>
+                          {{/if}}
+                        </div>
+                        {{#if subscribed}}
+                        <img
+                          src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
+                          alt="Subscribed"
+                          class="subscription-icon"
+                          style="width: 18px; height: 18px; flex-shrink: 0;"
+                        />
+                        {{/if}}
+                      </div>
+                      {{/each}}
+                    </div>
+
+                    <div class="create-app-container" style="display: none;">
+                      <div class="create-app-option" role="button">
+                        Create application "<span class="search-term"></span>"
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+         
+              {{!-- Subscribe Button Logic --}}
+              {{#if @root.apiMetadata.monetizationInfo.enabled}}
+                {{!-- Monetization enabled - check if plan is paid --}}
+                {{#if externalPriceId}}
+                  {{!-- Paid plan with Stripe price ID --}}
+                  <a
+                    id="subscribe-btn-{{policyID}}"
+                    type="button"
+                    class="common-btn-primary subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                    data-policy-id="{{policyID}}"
+                    data-policy-name="{{policyName}}"
+                    data-external-price-id="{{externalPriceId}}"
+                    data-is-paid="true"
+                    onclick="showSubscribeButtonLoading(this); handleSubscribeWithPayment('{{@root.orgID}}','{{../apiMetadata.apiID}}','{{../apiMetadata.apiReferenceID}}','{{policyID}}','{{policyName}}', this)"
+                  >
+                    Subscribe &amp; Pay
+                  </a>
+                {{else}}
+                  {{!-- Free plan --}}
+                  <a
+                    id="subscribe-btn-{{policyID}}"
+                    type="button"
+                    class="common-btn-primary subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                    data-policy-id="{{policyID}}"
+                    data-policy-name="{{policyName}}"
+                    data-is-paid="false"
+                    onclick="showSubscribeButtonLoading(this); subscribe('{{@root.orgID}}', '', '{{../apiMetadata.apiID}}', '{{../apiMetadata.apiReferenceID}}', '{{policyID}}', '{{policyName}}')"
+                  >
+                    Subscribe
+                  </a>
+                {{/if}}
+              {{else}}
+                {{!-- Monetization disabled - all plans are free --}}
+                <a
+                  id="subscribe-btn-{{policyID}}"
+                  type="button"
+                  class="common-btn-primary subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                  data-policy-id="{{policyID}}"
+                  data-policy-name="{{policyName}}"
+                  data-is-paid="false"
+                  onclick="showSubscribeButtonLoading(this); subscribe('{{@root.orgID}}', '', '{{../apiMetadata.apiID}}', '{{../apiMetadata.apiReferenceID}}', '{{policyID}}', '{{policyName}}')"
+                >
+                  Subscribe
+                </a>
+              {{/if}}
+            </div>
+
+            {{else}}
+              <a
+                type="button"
+                class="common-btn-primary disabled w-100 subscription-plan-subscribe-btn"
+                disabled
+              >
+                Subscribe
+              </a>
+            {{/if}}
+
+            <div class="message-overlay hidden">
+              <div class="message-content">
+                <i class="bi message-icon"></i>
+                <p class="message-text"></p>
+              </div>
+              <button type="button" class="close-message" aria-label="Close message">&times;</button>
+            </div>
+
+            {{!-- Stripe embedded checkout container (hidden by default) --}}
+            <div id="stripeCheckoutModal-{{policyID}}" class="stripe-checkout-modal" style="display:none;">
+              <div id="stripe-checkout-{{policyID}}"></div>
+            </div>
+
+          </div>
         </div>
+      </div>
+      {{/each}}
+    </div>
+  </div>
 </section>
 {{/unless}}

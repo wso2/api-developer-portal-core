@@ -16,6 +16,10 @@
  * under the License.
  */
 /* eslint-disable no-undef */
+
+// Load environment variables from .env file
+require('dotenv').config();
+
 const express = require('express');
 const { engine } = require('express-handlebars');
 const passport = require('passport');
@@ -148,6 +152,44 @@ Handlebars.registerHelper('eq', function (a, b) {
     return (a === b || (a != null && b != null && (a === b.toString() || a.toString() === b)));
 });
 
+Handlebars.registerHelper('compare', function (a, operator, b, options) {
+    if (arguments.length < 4) {
+        throw new Error('Handlebars Helper "compare" needs 3 parameters');
+    }
+
+    let result;
+    switch (operator) {
+        case '===':
+            result = a === b;
+            break;
+        case '!==':
+            result = a !== b;
+            break;
+        case '==':
+            result = a == b;
+            break;
+        case '!=':
+            result = a != b;
+            break;
+        case '<':
+            result = a < b;
+            break;
+        case '>':
+            result = a > b;
+            break;
+        case '<=':
+            result = a <= b;
+            break;
+        case '>=':
+            result = a >= b;
+            break;
+        default:
+            throw new Error('Handlebars Helper "compare" doesn\'t know the operator ' + operator);
+    }
+
+    return result ? options.fn(this) : options.inverse(this);
+});
+
 Handlebars.registerHelper('in', function (value, options) {
     const rawValues = Array.isArray(options.hash.values)
         ? options.hash.values
@@ -207,6 +249,12 @@ Handlebars.registerHelper('isFederatedAPI', function (gatewayVendor) {
     return constants.FEDERATED_GATEWAY_VENDORS.includes(gatewayVendor);
 });
 
+Handlebars.registerHelper('formatPrice', function (price) {
+    if (!price) return '0';
+    // Convert to number and remove trailing zeros
+    return parseFloat(price).toString();
+});
+
 // #endregion
 
 app.use(session({
@@ -224,6 +272,9 @@ app.use(session({
         maxAge: 60 * 60 * 1000,
     },
 }));
+
+// Stripe webhook endpoint MUST use raw body parser for signature verification
+app.use('/webhooks/stripe', express.raw({ type: 'application/json' }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
