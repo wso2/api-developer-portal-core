@@ -1241,6 +1241,9 @@ const createAppKeyMapping = async (req, res) => {
                 //generate oauth key
                 responseData = await generateOAuthKey(req, cpAppID, tokenDetails);
             } else {
+                if (!tokenDetails.keyType) {
+                    return util.handleError(res, new CustomError(400, constants.ERROR_CODE[400], "keyType is required in tokenDetails"));
+                }
                 responseData = await mapKeys(req, clientID, tokenDetails.keyManager, cpAppID, tokenDetails.keyType);
             }
             // Add the appRefId to the response data

@@ -15,13 +15,13 @@
         <ul class="nav nav-tabs key-btn-container" id="keysTab" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="key-btn active" id="production-tab" data-bs-toggle="tab" data-bs-target="#production"
-                    type="button" role="tab" aria-controls="production" aria-selected="false">
+                    type="button" role="tab" aria-controls="production" aria-selected="true">
                     Production
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="key-btn" id="sandbox-tab" data-bs-toggle="tab" data-bs-target="#sandbox" type="button"
-                    role="tab" aria-controls="sandbox" aria-selected="true">
+                    role="tab" aria-controls="sandbox" aria-selected="false">
                     Sandbox
                 </button>
             </li>
@@ -410,6 +410,7 @@
                                             <tr>
                                                 <th class="app-th">Name</th>
                                                 <th class="app-th">Version</th>
+                                                <th class="app-th" style="display: none;">Policy</th>
                                                 <th class="app-th">
                                                     {{#if isApiKey}}
                                                     API Key

@@ -54,7 +54,7 @@
 }
 
 .key-btn:focus {
-    outline: none;
+    outline: 2px solid transparent;
     box-shadow: 0 0 0 2px var(--primary-lightest-color);
 }
 
@@ -77,28 +77,23 @@
     font-size: 0.9rem;
     background-color: var(--secondary-bg-color);
     border: none;
-    box-shadow: none !important;
-    outline: none !important;
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .accordion-button:not(.collapsed) {
     background-color: var(--primary-lightest-color);
-    box-shadow: none !important;
     color: var(--primary-main-color);
     border-bottom: 1px solid var(--secondary-bg-color);
 }
 
 .accordion-button:focus {
     background-color: var(--secondary-bg-color);
-    box-shadow: none !important;
     border-color: transparent;
-    outline: none !important;
 }
 
 .accordion-button:focus-visible {
-    box-shadow: none !important;
-    outline: none !important;
+    outline: 2px solid var(--primary-main-color);
+    outline-offset: 2px;
 }
 
 .accordion-button:hover {
@@ -170,8 +165,8 @@
 
 .accordion-body .form-control:focus {
     border-color: var(--primary-main-color);
-    box-shadow: 0 0 0 3px rgba(26, 76, 109, 0.1);
-    outline: none;
+    outline: 2px solid var(--primary-main-color);
+    outline-offset: 2px;
 }
 
 .accordion-body .input-group {
