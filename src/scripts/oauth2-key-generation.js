@@ -120,45 +120,68 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             // Update form fields safely
             const consumerKeyElement = document.getElementById(consumerKeyID);
             const consumerSecretElement = document.getElementById(consumerSecretID);
+            const consumerKeyElementView = document.getElementById(consumerKeyID + "-view");
+            const consumerSecretElementView = document.getElementById(consumerSecretID + "-view");
             const appRefElement = document.getElementById("app-ref-" + keyManagerId + "-" + envSuffix);
             const keyMapElement = document.getElementById("key-map-" + keyManagerId + "-" + envSuffix);
 
             if (consumerKeyElement) consumerKeyElement.value = consumerKey || '';
             if (consumerSecretElement) consumerSecretElement.value = consumerSecret || '';
+
+            if (consumerKeyElementView) consumerKeyElementView.value = consumerKey || '';
+            if (consumerSecretElementView) consumerSecretElementView.value = consumerSecret || '';
+
             if (appRefElement && responseData.appRefId) appRefElement.value = responseData.appRefId;
             if (keyMapElement && responseData.keyMappingId) keyMapElement.value = responseData.keyMappingId;
 
             if (consumerSecret) {
                 const modalBody = document.getElementById("keysViewModal-" + keyType + "-Body");
-                if (modalBody) {
+                if (modalBody && modalBody.hasAttribute("style")) {
                     modalBody.removeAttribute("style");
                 }
 
-                const consumerKeyEl = document.getElementById("consumerKey" + "-" + keyType);
-                const consumerSecretEl = document.getElementById("consumerSecret" + "-" + keyType);
+                const consumerKeyEl = document.getElementById("consumerKey-" + keyType);
+                const consumerSecretEl = document.getElementById("consumerSecret-" + keyType);
                 const keyActionsContainer = document.getElementById("keyActionsContainer-" + keyType);
+
+                const consumerKeyContainer = document.getElementById("consumerKeyContainer-" + keyType);
+                const consumerKeyContainerView = document.getElementById("consumerKey-" + keyType + "-view");
+                const consumerSecretContainerView = document.getElementById("consumerSecret-" + keyType + "-view");
+
                 const curlDisplay = document.getElementById("curlDisplay_" + keyManager + "_" + keyType);
                 const kmData = document.getElementById("KMData_" + keyManager + "_" + keyType);
 
                 if (consumerKeyEl) {
                     consumerKeyEl.removeAttribute("class");
+                    if (consumerKeyEl.hasAttribute("style")) {
+                        consumerKeyEl.removeAttribute("style");
+                    }
                     consumerKeyEl.classList.add("col-md-6");
                 }
-                if (consumerSecretEl) {
+                if (consumerKeyContainerView && consumerKeyContainerView.hasAttribute("style")) {
+                    consumerKeyContainerView.removeAttribute("style");
+                }
+                if (consumerSecretContainerView && consumerSecretContainerView.hasAttribute("style")) {
+                    consumerSecretContainerView.removeAttribute("style");
+                }
+                if (consumerSecretEl && consumerSecretEl.hasAttribute("style")) {
                     consumerSecretEl.removeAttribute("style");
                 }
-                if (keyActionsContainer) {
+                if (keyActionsContainer && keyActionsContainer.hasAttribute("style")) {
                     keyActionsContainer.removeAttribute("style");
                 }
-                if (curlDisplay) {
+                if (consumerKeyContainer && consumerKeyContainer.hasAttribute("style")) {
+                    consumerKeyContainer.removeAttribute("style");
+                }
+                if (curlDisplay && curlDisplay.hasAttribute("style")) {
                     curlDisplay.removeAttribute("style");
                 }
-                if (kmData) {
+                if (kmData && kmData.hasAttribute("style")) {
                     kmData.removeAttribute("style");
                 }
             }
 
-            const keyActionsContainer = document.getElementById("keyActionsContainer");
+            const keyActionsContainer = document.getElementById("keyActionsContainer-" + keyType);
             if (keyActionsContainer) {
                 keyActionsContainer.style.display = "flex";
             }

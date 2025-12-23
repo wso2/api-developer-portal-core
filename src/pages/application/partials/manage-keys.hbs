@@ -43,50 +43,50 @@
                                 {{#each keyManagersMetadata}}
                                 {{#if enabled}}
                                 {{#let "keys" productionKeys}}
-                                {{#if keys.consumerKey}}
-                                <div class="mb-4">
-                                    <div class="col mb-3">
-                                        <div id="consumerKey"
-                                            class="{{#unless keys.consumerSecret}} col-md-12 {{else}} col-md-6 {{/unless}}">
-                                            <label for='consumer-key-{{../id}}-PRODUCTION' class='form-label'>
-                                                Consumer Key
-                                            </label>
-                                            <div class="password-toggle-container">
-                                                <input type='text' id='consumer-key-{{../id}}-PRODUCTION-view'
-                                                    class='form-control' name="consumerKey" value='{{keys.consumerKey}}'
-                                                    readonly disabled />
-                                                <button type="button" class="password-copy-btn"
-                                                    onclick="copyConsumerKey('consumer-key-{{../id}}-PRODUCTION')">
-                                                    <i class="bi bi-clipboard"></i>
-                                                </button>
-                                            </div>
-                                            <input type='hidden' id='app-ref-{{../id}}-PRODUCTION' class='form-control'
-                                                name="appRefId" value='{{keys.appRefId}}' />
-                                            <input type='hidden' id='key-map-{{../id}}-PRODUCTION' class='form-control'
-                                                name="keyMappingId" value='{{keys.keyMappingId}}' />
+                                <div class="mb-4" id="consumerKeyContainer-PRODUCTION"
+                                    style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
+                                    <div id="consumerKey-PRODUCTION-view"
+                                        class="{{#unless keys.consumerSecret}} col-md-12 {{else}} col-md-6 {{/unless}}"
+                                        style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
+                                        <label for='consumer-key-{{../id}}-PRODUCTION-view' class='form-label'>
+                                            Consumer Key
+                                        </label>
+                                        <div class="password-toggle-container">
+                                            <input type='text' id='consumer-key-{{../id}}-PRODUCTION-view'
+                                                class='form-control' name="consumerKey-PRODUCTION"
+                                                value='{{keys.consumerKey}}' readonly disabled />
+                                            <button type="button" class="password-copy-btn"
+                                                onclick="copyConsumerKey('consumer-key-{{../id}}-PRODUCTION-view')">
+                                                <i class="bi bi-clipboard"></i>
+                                            </button>
                                         </div>
-                                        <div id="consumerSecret" class="col-md-6"
-                                            style="{{#unless keys.consumerSecret}} display: none; {{/unless}}">
-                                            <label for='consumer-secret-{{../id}}-PRODUCTION' class='form-label'>
-                                                Consumer Secret
-                                            </label>
-                                            <div class="password-toggle-container">
-                                                <input type='password' id='consumer-secret-{{../id}}-PRODUCTION'
-                                                    class='form-control' name="consumerSecret"
-                                                    value='{{keys.consumerSecret}}' readonly disabled />
-                                                <button type="button" class="password-toggle-btn"
-                                                    onclick="togglePasswordVisibility('consumer-secret-{{../id}}-PRODUCTION')">
-                                                    <i class="bi bi-eye"></i>
-                                                </button>
-                                                <button type="button" class="password-copy-btn"
-                                                    onclick="copyConsumerSecret('consumer-secret-{{../id}}-PRODUCTION')">
-                                                    <i class="bi bi-clipboard"></i>
-                                                </button>
-                                            </div>
+                                        <input type='hidden' id='app-ref-{{../id}}-PRODUCTION' class='form-control'
+                                            name="appRefId" value='{{keys.appRefId}}' />
+                                        <input type='hidden' id='key-map-{{../id}}-PRODUCTION' class='form-control'
+                                            name="keyMappingId" value='{{keys.keyMappingId}}' />
+                                    </div>
+                                    <div id="consumerSecret-PRODUCTION-view" class="col-md-6"
+                                        style="{{#unless keys.consumerSecret}} display: none; {{/unless}}">
+                                        <label for='consumer-secret-{{../id}}-PRODUCTION-view' class='form-label'>
+                                            Consumer Secret
+                                        </label>
+                                        <div class="password-toggle-container">
+                                            <input type='password' id='consumer-secret-{{../id}}-PRODUCTION-view'
+                                                class='form-control' name="consumerSecret-PRODUCTION"
+                                                value='{{keys.consumerSecret}}' readonly disabled />
+                                            <button type="button" class="password-toggle-btn"
+                                                onclick="togglePasswordVisibility('consumer-secret-{{../id}}-PRODUCTION-view')">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button type="button" class="password-copy-btn"
+                                                onclick="copyConsumerSecret('consumer-secret-{{../id}}-PRODUCTION-view')">
+                                                <i class="bi bi-clipboard"></i>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
-                                <div id="keyActionsContainer-PRODUCTION" class="key-actions-container">
+                                <div id="keyActionsContainer-PRODUCTION" class="key-actions-container"
+                                    style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
                                     <div class="key-action-row">
                                         <div class="key-action-buttons-row">
                                             <button id="viewKeyBtn-PRODUCTION" class="common-btn-outlined btn-sm"
@@ -113,31 +113,32 @@
                                                     Generating...
                                                 </span>
                                             </button>
-                                            <button id="tokenInstructionsBtn-PRODUCTION" class="common-btn-outlined btn-sm"
+                                            <button id="tokenInstructionsBtn-PRODUCTION"
+                                                class="common-btn-outlined btn-sm"
                                                 onclick="loadKeysInstructionsModal('PRODUCTION')">
                                                 <i class="bi bi-info-circle"></i> Instructions
                                             </button>
                                         </div>
                                     </div>
                                 </div>
-                                {{else}}
-                                <div id="generateKeyContainer-PRODUCTION">
+                                <div id="generateKeyContainer-PRODUCTION"
+                                    style="{{#if keys.consumerKey}}display: none;{{else}}display: flex;{{/if}}">
                                     <div class="d-flex align-items-center">
-                                    <button data-cyid="generateKey-PRODUCTION" id="generateKeyBtn-PRODUCTION"
-                                        class="common-btn-primary btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}"
-                                        style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
-                                        onclick="generateApplicationKey('keysview-{{../id}}-PRODUCTION', '{{../../applicationMetadata.id}}', 'PRODUCTION', '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-PRODUCTION', 'consumer-secret-{{../id}}-PRODUCTION')">
-                                        <span class="button-normal-state">
-                                            <i class="bi bi-key me-1"></i> Generate Key
-                                        </span>
-                                        <span class="button-loading-state" style="display: none;">
-                                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                                            Generating...
-                                        </span>
-                                    </button>
+                                        <button data-cyid="generateKey-PRODUCTION" id="generateKeyBtn-PRODUCTION"
+                                            class="common-btn-primary btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                            style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
+                                            onclick="generateApplicationKey('keysview-{{../id}}-PRODUCTION', '{{../../applicationMetadata.id}}', 'PRODUCTION', '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-PRODUCTION', 'consumer-secret-{{../id}}-PRODUCTION')">
+                                            <span class="button-normal-state">
+                                                <i class="bi bi-key me-1"></i> Generate Key
+                                            </span>
+                                            <span class="button-loading-state" style="display: none;">
+                                                <span class="spinner-border spinner-border-sm me-1"
+                                                    role="status"></span>
+                                                Generating...
+                                            </span>
+                                        </button>
+                                    </div>
                                 </div>
-                                </div>
-                                {{/if}}
                                 {{/let}}
                                 {{/if}}
                                 <!-- Error message container for key generation and token generation -->
@@ -148,14 +149,15 @@
                         </div>
                     </div>
                     <div class="accordion-item">
-                        <h2 class="accordion-header" id="headingFour">
+                        <h2 class="accordion-header" id="headingFour-PRODUCTION">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                data-bs-target="#collapseFour-PRODUCTION" aria-expanded="false"
+                                aria-controls="collapseFour-PRODUCTION">
                                 API Keys
                             </button>
                         </h2>
-                        <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour"
-                            data-bs-parent="#productionAccordion">
+                        <div id="collapseFour-PRODUCTION" class="accordion-collapse collapse"
+                            aria-labelledby="headingFour-PRODUCTION" data-bs-parent="#productionAccordion">
                             <div class="accordion-body p-0">
                                 {{#if subAPIs}}
                                 <div class="app-table-container" id="app-table-container">
@@ -164,6 +166,7 @@
                                             <tr>
                                                 <th class="app-th">Name</th>
                                                 <th class="app-th">Version</th>
+                                                <th class="app-th" style="display: none;">Policy</th>
                                                 <th class="app-th">
                                                     {{#if isApiKey}}
                                                     API Key
@@ -174,7 +177,7 @@
                                         <tbody>
                                             {{#each subAPIs}}
                                             {{> api-key apiID=apiID keyType="PRODUCTION"}}
-                                            {{#in apiType values="REST, WS"}}
+                                            {{#in apiType values="REST, WS, WEBSUB"}}
                                             {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails
                                             selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
                                             <tr class="data-row" id="data-row-{{subID}}" data-index="{{@index}}">
@@ -186,7 +189,8 @@
                                                 </td>
                                                 <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
                                                     class="app-td" style="cursor: pointer;">{{version}}</td>
-                                                <td id="policy_{{subID}}" class="app-td" style="display: none;">{{policyName}}</td>
+                                                <td id="policy_{{subID}}" class="app-td" style="display: none;">
+                                                    {{policyName}}</td>
                                                 <td class="app-td">
                                                     {{#if (contains security 'api_key')}}
                                                     <div class="api-key-actions">
@@ -194,7 +198,7 @@
                                                             class="common-btn-outlined btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                             id="regenerateKeyBtn-{{subID}}-PRODUCTION"
                                                             data-scopes="{{json apiKeys.production.scopes}}"
-                                                            data-api-key-id="'{{apiKeys.production.key.[0].id}}'"
+                                                            data-api-key-id="{{apiKeys.production.key.[0].id}}"
                                                             onclick="openWarningModal('regenerate', this.dataset.apiKeyId, '{{subID}}', '', '', 'PRODUCTION')"
                                                             style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{else}}{{#if apiKeys.production.key}}display:inline-flex;{{else}}display:none;{{/if}}{{/if}}">
                                                             <span class="button-normal-state">
@@ -208,7 +212,7 @@
                                                         </button>
                                                         <button
                                                             class="common-btn-outlined btn-sm api-key-revoke {{#if @root.isReadOnlyMode}}disabled{{/if}}"
-                                                            data-api-key-id="'{{apiKeys.production.key.[0].id}}'"
+                                                            data-api-key-id="{{apiKeys.production.key.[0].id}}"
                                                             onclick="openWarningModal('revoke', this.dataset.apiKeyId, '{{subID}}', '{{../applicationMetadata.id}}', '{{refID}}', 'PRODUCTION')"
                                                             id="revokeKeyBtn-{{subID}}-PRODUCTION"
                                                             style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{else}}{{#if apiKeys.production.key}}display: inline-flex;{{else}}display: none;{{/if}}{{/if}}">
@@ -284,20 +288,21 @@
                                 {{#each keyManagersMetadata}}
                                 {{#if enabled}}
                                 {{#let "keys" sandboxKeys}}
-                                {{#if keys.consumerKey}}
-                                <div class="mb-4">
-                                    <div class="col mb-3">
-                                        <div id="consumerKey"
-                                            class="{{#unless keys.consumerSecret}} col-md-12 {{else}} col-md-6 {{/unless}}">
-                                            <label for='consumer-key-{{../id}}-SANDBOX' class='form-label'>
+                                <div class="mb-4" id="consumerKeyContainer-SANDBOX"
+                                    style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
+                                    <div class=" col mb-3">
+                                        <div id="consumerKey-SANDBOX-view"
+                                            class="{{#unless keys.consumerSecret}} col-md-12 {{else}} col-md-6 {{/unless}}"
+                                            style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
+                                            <label for='consumer-key-{{../id}}-SANDBOX-view' class='form-label'>
                                                 Consumer Key
                                             </label>
                                             <div class="password-toggle-container">
                                                 <input type='text' id='consumer-key-{{../id}}-SANDBOX-view'
-                                                    class='form-control' name="consumerKey" value='{{keys.consumerKey}}'
-                                                    readonly disabled />
+                                                    class='form-control' name="consumerKey-SANDBOX"
+                                                    value='{{keys.consumerKey}}' readonly disabled />
                                                 <button type="button" class="password-copy-btn"
-                                                    onclick="copyConsumerKey('consumer-key-{{../id}}-SANDBOX')">
+                                                    onclick="copyConsumerKey('consumer-key-{{../id}}-SANDBOX-view')">
                                                     <i class="bi bi-clipboard"></i>
                                                 </button>
                                             </div>
@@ -306,35 +311,36 @@
                                             <input type='hidden' id='key-map-{{../id}}-SANDBOX' class='form-control'
                                                 name="keyMappingId" value='{{keys.keyMappingId}}' />
                                         </div>
-                                        <div id="consumerSecret" class="col-md-6"
+                                        <div id="consumerSecret-SANDBOX-view" class="col-md-6"
                                             style="{{#unless keys.consumerSecret}} display: none; {{/unless}}">
-                                            <label for='consumer-secret-{{../id}}-SANDBOX' class='form-label'>
+                                            <label for='consumer-secret-{{../id}}-SANDBOX-view' class='form-label'>
                                                 Consumer Secret
                                             </label>
                                             <div class="password-toggle-container">
-                                                <input type='password' id='consumer-secret-{{../id}}-SANDBOX'
-                                                    class='form-control' name="consumerSecret"
+                                                <input type='password' id='consumer-secret-{{../id}}-SANDBOX-view'
+                                                    class='form-control' name="consumerSecret-SANDBOX"
                                                     value='{{keys.consumerSecret}}' readonly disabled />
                                                 <button type="button" class="password-toggle-btn"
-                                                    onclick="togglePasswordVisibility('consumer-secret-{{../id}}-SANDBOX')">
+                                                    onclick="togglePasswordVisibility('consumer-secret-{{../id}}-SANDBOX-view')">
                                                     <i class="bi bi-eye"></i>
                                                 </button>
                                                 <button type="button" class="password-copy-btn"
-                                                    onclick="copyConsumerSecret('consumer-secret-{{../id}}-SANDBOX')">
+                                                    onclick="copyConsumerSecret('consumer-secret-{{../id}}-SANDBOX-view')">
                                                     <i class="bi bi-clipboard"></i>
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div id="keyActionsContainer-SANDBOX" class="key-actions-container">
+                                <div id="keyActionsContainer-SANDBOX" class="key-actions-container"
+                                    style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
                                     <div class="key-action-row">
                                         <div class="key-action-buttons-row">
                                             <button id="viewKeyBtn-SANDBOX" class="common-btn-outlined btn-sm"
                                                 onclick="loadKeysViewModal('SANDBOX')">
                                                 <i class="bi bi-eye"></i> View
                                             </button>
-                                            <button id="modifyKeyBtnSandbox"
+                                            <button id="modifyKeyBtn-SANDBOX"
                                                 class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                 style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
                                                 onclick="loadKeysModifyModal('SANDBOX')">
@@ -361,8 +367,8 @@
                                         </div>
                                     </div>
                                 </div>
-                                {{else}}
-                                <div id="generateKeyContainer-SANDBOX">
+                                <div id="generateKeyContainer-SANDBOX"
+                                    style="{{#if keys.consumerKey}}display: none;{{else}}display: flex;{{/if}}">
                                     <div class="d-flex align-items-center">
                                         <button data-cyid="generateKey-SANDBOX" id="generateKeyBtn-SANDBOX"
                                             class="common-btn-primary btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}"
@@ -383,7 +389,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                {{/if}}
                                 {{/let}}
                                 {{/if}}
                                 <!-- Error message container for key generation and token generation -->
@@ -394,14 +399,15 @@
                         </div>
                     </div>
                     <div class="accordion-item">
-                        <h2 class="accordion-header" id="headingFour">
+                        <h2 class="accordion-header" id="headingFour-SANDBOX">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                data-bs-target="#collapseFour-SANDBOX" aria-expanded="false"
+                                aria-controls="collapseFour-SANDBOX">
                                 API Keys
                             </button>
                         </h2>
-                        <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour"
-                            data-bs-parent="#sandboxAccordion">
+                        <div id="collapseFour-SANDBOX" class="accordion-collapse collapse"
+                            aria-labelledby="headingFour-SANDBOX" data-bs-parent="#sandboxAccordion">
                             <div class="accordion-body p-0">
                                 {{#if subAPIs}}
                                 <div class="app-table-container" id="app-table-container">
@@ -421,7 +427,7 @@
                                         <tbody>
                                             {{#each subAPIs}}
                                             {{> api-key apiID=apiID keyType="SANDBOX"}}
-                                            {{#in apiType values="REST, WS"}}
+                                            {{#in apiType values="REST, WS, WEBSUB"}}
                                             {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails
                                             selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
                                             <tr class="data-row" id="data-row-{{subID}}" data-index="{{@index}}">
@@ -440,7 +446,7 @@
                                                             class="common-btn-outlined btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                             id="regenerateKeyBtn-{{subID}}-SANDBOX"
                                                             data-scopes="{{json apiKeys.sandbox.scopes}}"
-                                                            data-api-key-id="'{{apiKeys.sandbox.key.[0].id}}'"
+                                                            data-api-key-id="{{apiKeys.sandbox.key.[0].id}}"
                                                             onclick="openWarningModal('regenerate', this.dataset.apiKeyId, '{{subID}}', '', '', 'SANDBOX')"
                                                             style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{else}}{{#if apiKeys.sandbox.key}}display:inline-flex;{{else}}display:none;{{/if}}{{/if}}">
                                                             <span class="button-normal-state">
@@ -454,7 +460,7 @@
                                                         </button>
                                                         <button
                                                             class="common-btn-outlined btn-sm api-key-revoke {{#if @root.isReadOnlyMode}}disabled{{/if}}"
-                                                            data-api-key-id="'{{apiKeys.sandbox.key.[0].id}}'"
+                                                            data-api-key-id="{{apiKeys.sandbox.key.[0].id}}"
                                                             onclick="openWarningModal('revoke', this.dataset.apiKeyId, '{{subID}}', '{{../applicationMetadata.id}}', '{{refID}}', 'SANDBOX')"
                                                             id="revokeKeyBtn-{{subID}}-SANDBOX"
                                                             style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{else}}{{#if apiKeys.sandbox.key}}display: inline-flex;{{else}}display: none;{{/if}}{{/if}}">

@@ -116,13 +116,11 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
           generateBtn.style.display = 'none';
         } else {
           // On apis.hbs: Replace generate button with "Manage Key" link
-          const envLabel = keyType === 'PRODUCTION' ? 'Production' : 'Sandbox';
-          const envHash = keyType === 'PRODUCTION' ? '#production' : '#sandbox';
-          
+          const envLabel = keyType === 'PRODUCTION' ? 'Production' : 'Sandbox';          
           const manageLink = document.createElement('a');
           manageLink.className = 'common-btn-outlined btn-sm';
           manageLink.id = 'manageKeyBtn-' + subID + '-' + keyType;
-          manageLink.href = window.location.pathname.replace(/\/[^\/]*$/, '/manage-keys') + envHash;
+          manageLink.href = window.location.pathname.replace(/\/[^\/]*$/, '/manage-keys');
           manageLink.setAttribute('title', 'Manage ' + envLabel + ' Key');
           manageLink.innerHTML = '<i class="bi bi-gear me-1"></i> ' + envLabel;
           
