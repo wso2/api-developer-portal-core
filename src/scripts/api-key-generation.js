@@ -1,33 +1,5 @@
 const e = require("express");
 
-// Handle URL hash for tab navigation on manage-keys page
-document.addEventListener('DOMContentLoaded', function() {
-  if (window.location.pathname.includes('/manage-keys') && window.location.hash) {
-    const hash = window.location.hash.substring(1); // Remove the #
-    
-    if (hash === 'production' || hash === 'sandbox') {
-      const tabButton = document.getElementById(hash + '-tab');
-      const tabPane = document.getElementById(hash);
-      
-      if (tabButton && tabPane) {
-        // Deactivate all tabs first
-        document.querySelectorAll('#keysTab .key-btn').forEach(btn => {
-          btn.classList.remove('active');
-          btn.setAttribute('aria-selected', 'false');
-        });
-        document.querySelectorAll('#keysTabContent .tab-pane').forEach(pane => {
-          pane.classList.remove('show', 'active');
-        });
-        
-        // Activate the target tab
-        tabButton.classList.add('active');
-        tabButton.setAttribute('aria-selected', 'true');
-        tabPane.classList.add('show', 'active');
-      }
-    }
-  }
-});
-
 function openApiKeyModal(projectID, apiRefID, subPlan, cpAppID, appID, subID, subIDs, subscribedScopes, keyType) {
 
   let scopes = Array.isArray(subscribedScopes) ? subscribedScopes : JSON.parse(subscribedScopes);
