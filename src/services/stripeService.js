@@ -158,9 +158,6 @@ async function applyWebhookToLocalState(event, { adminDao }) {
     stripeSubscriptionId = event.data.object.id;
   }
 
-    return;
-  }
-
   // Map event types to payment status updates
   const PAYMENT_STATUS = {
     ACTIVE: "ACTIVE",
@@ -213,7 +210,7 @@ async function applyWebhookToLocalState(event, { adminDao }) {
   } catch (err) {
     throw err;
   }
-
+}
 
 module.exports = {
   findOrCreateCustomerByEmail,
