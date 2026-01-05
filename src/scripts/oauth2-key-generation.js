@@ -549,7 +549,7 @@ async function removeApplicationKey() {
 }
 
 async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName, clientSecret, subscribedScopes, keyType) {
-    const tokenBtn = document.getElementById('tokenKeyBtn-' + keyType);
+    let tokenBtn = document.getElementById('tokenKeyBtn-' + keyType);
     const devAppId = tokenBtn?.dataset?.appId
     const scopeContainer = document.getElementById('scopeContainer-' + devAppId + '-' + keyType);
     const scopeInput = document.getElementById('scope-' + devAppId);
