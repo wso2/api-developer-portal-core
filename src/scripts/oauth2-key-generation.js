@@ -426,8 +426,6 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
         errorContainer.style.display = 'none';
         errorContainer.textContent = '';
     }
-    errorContainer.style.display = 'none';
-    errorContainer.textContent = '';
 
     const form = document.getElementById(formId);
     const formData = new FormData(form);
