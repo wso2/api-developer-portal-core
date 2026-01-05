@@ -412,12 +412,20 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
     // Get the update button and set loading state
     console.log("Updating application key with formId:", formId);
     const updateBtn = document.getElementById('applicationKeyUpdateButton' + '-' + keyType);
+    if (!updateBtn) {
+        console.error('updateApplicationKey: Update button not found for keyType:', keyType);
+        return;
+    }
     const originalContent = updateBtn.innerHTML;
     updateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
     updateBtn.disabled = true;
 
     // Clear any previous error messages
     const errorContainer = document.getElementById('keyUpdateErrorContainer-' + keyType);
+    if (errorContainer) {
+        errorContainer.style.display = 'none';
+        errorContainer.textContent = '';
+    }
     errorContainer.style.display = 'none';
     errorContainer.textContent = '';
 
@@ -718,25 +726,27 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
 
             const responseScopeContainer = document.getElementById('responseScopeContainer-' + devAppId + '-' + keyType);
             if (responseScopeContainer) {
-                responseScopeContainer.innerHTML = '';
-                for (const scope of responseData.tokenScopes) {
-                    const span = document.createElement('span');
-                    span.className = 'span-tag';
-                    span.innerHTML = `${scope}`;
+              responseScopeContainer.innerHTML = "";
+              for (const scope of responseData.tokenScopes) {
+                const span = document.createElement("span");
+                span.className = "span-tag";
+                span.innerHTML = `${scope}`;
 
-                    responseScopeContainer.appendChild(span);
-                }
+                responseScopeContainer.appendChild(span);
+              }
 
-                // If no scopes are present, hide the title
-                const resScopeTitle = document.getElementById('resScopeTitle-' + keyType);
-                if (resScopeTitle) {
-                    if (responseScopeContainer.innerHTML === '') {
-                        resScopeTitle.style.display = 'none';
-                    } else {
-                        resScopeTitle.style.display = 'block';
-                        responseScopeContainer.style.display = 'block';
-                    }
+              // If no scopes are present, hide the title
+              const resScopeTitle = document.getElementById(
+                "resScopeTitle-" + keyType
+              );
+              if (resScopeTitle) {
+                if (responseScopeContainer.innerHTML === "") {
+                  resScopeTitle.style.display = "none";
+                } else {
+                  resScopeTitle.style.display = "block";
+                  responseScopeContainer.style.display = "block";
                 }
+              }
             }
 
             await showAlert('Token generated successfully!', 'success');
