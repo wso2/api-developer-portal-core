@@ -1,7 +1,8 @@
 ## Prerequisites
 
 - **Node.js**: v22.0.0
-- **PostgreSQL**
+- **PostgreSQL**: Install PostgreSQL or use Docker (see Database setup section)
+- **psql**: PostgreSQL client command-line tool (required to run the database scripts)
 
 ## Required files
 
@@ -14,50 +15,11 @@ cp sample_config.json config.json
 cp sample_secret.json secret.json
 ```
 
-## Connect to the Dev environment
-
-If you want to connect to the **Dev environment**, you need to replace your local `config.json` and `secret.json` with the **Dev Devportal** versions.
-
-- Request the **Dev** `config.json` and `secret.json` from the team.
-- Request the required **certificate(s) / key file(s)** from the team as well (if the Dev setup uses TLS/SSL).
-- Replace the files in the repo root:
-  - `./config.json`
-  - `./secret.json`
-
-If the Dev configuration uses certificates/keys, place the provided files at the paths referenced in your `config.json` (e.g., `pathToDBCert`, `serverCerts.*`). The Dev config typically points under `./resources/security/`, so if you keep those values, create the folder:
-
-```bash
-mkdir -p resources/security
-```
-
-Then copy the provided cert/key files into that folder.
-
-### Install and run
-
-```bash
-npm install
-npm start
-```
-
-### TLS / self-signed certificate errors (PostgreSQL)
-
-If you see an error like `self-signed certificate in certificate chain` coming from Sequelize when connecting to Postgres, you can **temporarily** test the connection by relaxing TLS validation for the DB connection:
-
-- Open `src/db/sequelize.js`
-- In the `ssl` options passed to Sequelize, change:
-  - from: `rejectUnauthorized: true,`
-  - to: `rejectUnauthorized: false,`
-
-**Important:** this is only for local troubleshooting. **Do not commit** `rejectUnauthorized: false` to the repo; revert it back to `true` (or reset the file) once you’ve validated your setup.
-
-
-If you are connecting to the **Dev environment**, you can skip everything below in this README.
-
-## Local Setup
+## Setup
 
 ### Configure `config.json`
 
-For local development, it’s easiest to run over **HTTP** (no cert files needed). Update these keys in the config.json:
+To run the portal, it's easiest to use **HTTP** (no certificate files needed). Update these keys in `config.json`:
 
 ```json
 {
@@ -95,6 +57,7 @@ createdb -h <HOST> -U <USER> devportal
 
 Or, run PostgreSQL using Docker and create the database:
 
+(example)
 ```bash
 docker run --name devportal-postgres \
   -e POSTGRES_USER=postgres \
@@ -108,8 +71,9 @@ For the DB user, make sure it can connect to `devportal` and has privileges to c
 
 #### 1) Update DB config (`config.json` and `secret.json`)
 
-Update `config.json` with your postgres DB connection details (example):
+Update `config.json` with your postgres DB connection details:
 
+(example)
 ```json
 {
   "db": {
@@ -123,7 +87,14 @@ Update `config.json` with your postgres DB connection details (example):
 }
 ```
 
-Make sure the **DB password** is also set in `secret.json` as `dbSecret` with the same value you use for Postgres (for example, if you used `POSTGRES_PASSWORD=postgres` in Docker, set `"dbSecret": "postgres"`).
+**Important:** You must also set the **DB password** in `secret.json` as `dbSecret` with the same value you use for Postgres. For example, if you used `POSTGRES_PASSWORD=postgres` in Docker, your `secret.json` should have:
+
+```json
+{
+  "dbSecret": "postgres",
+  ...
+}
+```
 
 #### 2) Create tables
 
