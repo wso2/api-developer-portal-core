@@ -273,7 +273,7 @@ const TopicViewer = (props: TopicViewerProps) => {
           testId="topic-accordion-summary"
         >
             <Box className={classes.topicTypeContainer}>
-            {asyncType === APITypeEnum.WEBSUB && (
+            {asyncType === APITypeEnum.WS && (
             <Box className={classes.typeChipContainer}>
               <Chip
                 label="PUB"
