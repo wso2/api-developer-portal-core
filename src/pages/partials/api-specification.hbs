@@ -82,6 +82,46 @@
   </script>
 </main>
 
+{{else if (eq apiType "WEBSUB")}}
+
+<head>
+  <link rel="stylesheet" href="/technical-styles/async-tryout.css">
+</head>
+<main>
+  <div id="root" style="height: 100vh;"></div>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@asyncapi/react-component@latest/browser/standalone/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/wso2/api-developer-portal-core@refs/heads/main/libs/async-api-viewer/dist/websocket-viewer.umd.js"></script>
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/gh/wso2/api-developer-portal-core@refs/heads/main/libs/async-api-viewer/dist/async-api-viewer.css"
+  />
+  <script>
+    const isWebSocketTryout = {{#if isWebSocketTryout}}{{isWebSocketTryout}}{{else}}false{{/if}};
+    if (isWebSocketTryout) {
+      document.addEventListener('DOMContentLoaded', function () {
+        const swaggerData = {{{ asyncapi }}};
+        let serverUrl = swaggerData.servers && swaggerData.servers.production ? swaggerData.servers.production.url : '';
+        const rootElement = document.getElementById('root');
+        rootElement.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: montserrat;">Loading AsyncAPI Viewer...</div>';
+        ReactDOM.render(React.createElement(WebSocketViewer.default, {
+            apiEndpoint: serverUrl,
+            token: '<your-token-here>',
+            asyncapi: swaggerData,
+            isDevportal: true
+        }), rootElement);
+      });
+    } else {
+      const config = { "show": { "sidebar": false }, "sidebar": { "showOperations": "byDefault" } };
+      AsyncApiStandalone.hydrate({
+        schema: {{{ asyncapi }}},
+        config
+      }, document.getElementById('root'));
+    }
+  </script>
+</main>
+
 {{else if (eq apiType "GRAPHQL")}}
 
 {{#if isGraphQLTryout}}
