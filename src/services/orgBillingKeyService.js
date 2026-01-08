@@ -11,7 +11,7 @@ async function getDecryptedStripeKeysForOrg(orgId) {
   const record = await BillingEngineKey.findOne({
     where: {
       ORG_ID: orgId,
-      BILLING_ENGINE: 'stripe',
+      BILLING_ENGINE: 'STRIPE',
     },
   });
   if (!record) throw new Error('Stripe keys not found for this org');

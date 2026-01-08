@@ -1,6 +1,20 @@
 document.addEventListener("DOMContentLoaded", () => {
   checkQueryParamsAndLoadModal();
   wireStripeReturnIfPresent();
+  // Show subscription success message if redirected after payment or free flow
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('subscription') === 'success') {
+    // Try to find the message overlay and card for UI update
+    const messageOverlay = document.getElementById('subscription-message-overlay') || null;
+    showSubscriptionMessage(messageOverlay, "Successfully subscribed", "success");
+    // Optionally, mark the UI as subscribed if you can get the card and applicationID
+    // Example: markSubscribedUI(card, applicationID); // You may need to adapt this line
+    // Clean up the query param so the message doesn't show again on reload
+    urlParams.delete('subscription');
+    const url = new URL(window.location.href);
+    url.searchParams.delete('subscription');
+    window.history.replaceState({}, document.title, url.toString());
+  }
 });
 
 // backend endpoints (keep your existing base)
@@ -392,7 +406,18 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
  *  </div>
  */
 async function openStripeEmbeddedCheckout({ publishableKey, clientSecret, returnUrl }) {
-  console.log("🎯 openStripeEmbeddedCheckout called with:", { publishableKey, clientSecret, returnUrl });
+  console.log("🎯 openStripeEmbeddedCheckout called with:", {
+    publishableKey,
+    clientSecretLength: clientSecret ? clientSecret.length : null,
+    clientSecretPreview: clientSecret ? clientSecret.substring(0, 8) + '...' : null,
+    returnUrl
+  });
+  if (typeof publishableKey !== 'string' || publishableKey.length < 10) {
+    console.warn("⚠️ publishableKey seems too short or invalid:", publishableKey);
+  }
+  if (typeof clientSecret !== 'string' || clientSecret.length < 10) {
+    console.warn("⚠️ clientSecret seems too short or invalid:", clientSecret);
+  }
   
   // Validate inputs
   if (!publishableKey) {
@@ -400,7 +425,6 @@ async function openStripeEmbeddedCheckout({ publishableKey, clientSecret, return
     await showAlert("Stripe publishable key is missing.", "error");
     return;
   }
-  
   if (!clientSecret) {
     console.error("❌ Missing clientSecret");
     await showAlert("Stripe client secret is missing.", "error");
@@ -419,13 +443,19 @@ async function openStripeEmbeddedCheckout({ publishableKey, clientSecret, return
   console.log("✅ Stripe.js loaded");
 
   const stripe = window.Stripe(publishableKey);
-  console.log("✅ Stripe instance created");
-  
+  console.log("✅ Stripe instance created with key:", publishableKey);
+
   const modal = document.getElementById("stripeCheckoutModal");
   const mountPoint = document.getElementById("stripe-embedded-checkout");
 
   console.log("🔍 Modal element:", modal);
+  if (!modal) {
+    console.error("❌ Modal element #stripeCheckoutModal not found in DOM");
+  }
   console.log("🔍 Mount point element:", mountPoint);
+  if (!mountPoint) {
+    console.error("❌ Mount point #stripe-embedded-checkout not found in DOM");
+  }
 
   if (!modal || !mountPoint) {
     console.error("❌ Modal or mount point missing");
@@ -452,13 +482,13 @@ async function openStripeEmbeddedCheckout({ publishableKey, clientSecret, return
   console.log("✅ Modal opened");
 
   try {
-    console.log("🔄 Initializing embedded checkout with clientSecret:", clientSecret.substring(0, 20) + "...");
+    console.log("🔄 Initializing embedded checkout with clientSecret (first 8 chars):", clientSecret.substring(0, 8) + "...");
     const checkout = await stripe.initEmbeddedCheckout({ clientSecret });
     console.log("✅ Checkout initialized, mounting...");
-    
+
     // Store the checkout instance globally
     currentStripeCheckout = checkout;
-    
+
     checkout.mount("#stripe-embedded-checkout");
     console.log("✅ Checkout mounted successfully");
   } catch (e) {
@@ -471,7 +501,7 @@ async function openStripeEmbeddedCheckout({ publishableKey, clientSecret, return
       param: e.param,
       stack: e.stack
     });
-    
+
     let errorMessage = "Failed to load checkout UI";
     if (e.message) {
       errorMessage += ": " + e.message;
@@ -479,7 +509,7 @@ async function openStripeEmbeddedCheckout({ publishableKey, clientSecret, return
     if (e.type === 'invalid_request_error') {
       errorMessage = "Invalid checkout session. Please try again.";
     }
-    
+
     await showAlert(errorMessage, "error");
     closeStripeCheckoutModal();
   }
@@ -896,6 +926,7 @@ async function subscribeAndCheckout(orgID, apiID, apiReferenceID, policyID, poli
       apiReferenceID: safeId(apiReferenceID),
       policyId: safeId(policyID),
       policyName: safeText(policyName),
+      priceId: safeId(priceId), // <-- ensure priceId is sent
       sourcePage: window.location.pathname, // Store current page to redirect back after payment
     };
     

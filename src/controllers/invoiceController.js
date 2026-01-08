@@ -76,19 +76,42 @@ async function getInvoice(req, res) {
 }
 
 async function getInvoicePdfLink(req, res) {
+  const orgId = req.params.orgId;
   const invoiceId = req.params.invoiceId;
 
   try {
-    const inv = await subscriptionService.getInvoice({ invoiceId });
+    const inv = await subscriptionService.getInvoice({ orgId, invoiceId });
     // Stripe returns hosted_invoice_url and invoice_pdf.
+    if (!inv.invoice_pdf) {
+      logger.warn({ invoiceId, hosted_invoice_url: inv.hosted_invoice_url }, "Invoice PDF not available");
+      return res.status(404).json({
+        error: "InvoicePdfNotAvailable",
+        message: "Invoice PDF is not available for this invoice. It may not be finalized or paid yet.",
+        hosted_invoice_url: inv.hosted_invoice_url
+      });
+    }
     return res.status(200).json({
       invoiceId,
       hosted_invoice_url: inv.hosted_invoice_url,
       invoice_pdf: inv.invoice_pdf,
     });
   } catch (err) {
+    // Add more detailed logging for debugging
+    logger.error({
+      message: err.message,
+      stack: err.stack,
+      invoiceId,
+      stripeError: err.raw || err,
+    }, "getInvoicePdfLink failed - detailed");
+    // If Stripe error, return more helpful message
+    if (err.raw && err.raw.type === 'invalid_request_error') {
+      return res.status(404).json({
+        error: "StripeInvoiceNotFound",
+        message: `Stripe could not find invoice: ${invoiceId}`,
+        stripeError: err.raw
+      });
+    }
     const { status, body } = errorToResponse(err);
-    logger.error({ err, invoiceId }, "getInvoicePdfLink failed");
     return res.status(status).json(body);
   }
 }

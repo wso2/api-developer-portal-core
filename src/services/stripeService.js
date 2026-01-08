@@ -40,9 +40,13 @@ function getStripeInstance(stripeSecretKey) {
 async function findOrCreateCustomerByEmail(email, metadata = {}, stripeSecretKey) {
   if (!email) throw new BadRequestError("email is required to create Stripe customer");
   const stripe = getStripeInstance(stripeSecretKey);
+  // Ensure orgId is present in metadata
+  if (!metadata.orgId && metadata.orgId !== '') {
+    metadata.orgId = metadata.orgId || process.env.DEFAULT_ORG_ID || 'default-org';
+  }
   // Search customer by email (Stripe search)
   const result = await stripe.customers.search({
-    query: `email:"${email.replace(/"/g, '\\"')}"`,
+    query: `email:"${email.replace(/"/g, '\"')}"`,
     limit: 1,
   });
   if (result?.data?.[0]) return result.data[0];
@@ -66,19 +70,20 @@ async function createCheckoutSession({ customerId, priceId, quantity, returnUrl,
   if (!isMetered) {
     lineItem.quantity = quantity ? parseInt(quantity, 10) : 1;
   }
+  // Ensure orgId is present in metadata
+  if (!metadata) metadata = {};
+  if (!metadata.orgId && metadata.orgId !== '') {
+    metadata.orgId = metadata.orgId || process.env.DEFAULT_ORG_ID || 'default-org';
+  }
   return stripe.checkout.sessions.create({
     ui_mode: "embedded",
     customer: customerId,
     mode: "subscription",
     line_items: [lineItem],
     return_url: returnUrl,
-    metadata: metadata || {},
+    metadata: metadata,
     payment_method_collection: 'if_required',
-    payment_method_options: {
-      card: {
-        setup_future_usage: 'off_session',
-      },
-    },
+    // Stripe does not allow payment_method_options.setup_future_usage in subscription mode
   });
 }
 
@@ -140,76 +145,108 @@ async function verifyAndConstructWebhookEvent(req, stripeSecretKey, webhookSecre
  * Handles key events like invoice.paid, invoice.payment_failed, customer.subscription.deleted, etc.
  */
 async function applyWebhookToLocalState(event, { adminDao }) {
-  const eventType = event.type;
-  const logger = require("../config/logger");
-
+  const eventType = event?.type;
 
   // Extract subscription ID from the event object
   let stripeSubscriptionId = null;
 
-  if (event.data?.object?.subscription) {
-    // For invoice events
+  if (event?.data?.object?.subscription) {
+    // invoice.* events
     stripeSubscriptionId =
       typeof event.data.object.subscription === "string"
         ? event.data.object.subscription
         : event.data.object.subscription?.id;
-  } else if (event.data?.object?.id && eventType.startsWith("customer.subscription.")) {
-    // For subscription events
+  } else if (event?.data?.object?.id && eventType?.startsWith("customer.subscription.")) {
+    // customer.subscription.* events
     stripeSubscriptionId = event.data.object.id;
   }
 
-  // Map event types to payment status updates
+  if (!stripeSubscriptionId) return;
+
   const PAYMENT_STATUS = {
     ACTIVE: "ACTIVE",
+    CANCEL_SCHEDULED: "CANCEL_SCHEDULED",
     PAST_DUE: "PAST_DUE",
     CANCELED: "CANCELED",
     PAYMENT_FAILED: "PAYMENT_FAILED",
+    INCOMPLETE: "INCOMPLETE",
+    TRIALING: "TRIALING",
+    PAUSED: "PAUSED",
   };
 
   let newStatus = null;
 
   switch (eventType) {
+    // ✅ Recommended: don't set ACTIVE from invoice success events.
+    // They can arrive after a cancel-scheduled update and would flip UI back to ACTIVE.
     case "invoice.paid":
     case "invoice.payment_succeeded":
-      newStatus = PAYMENT_STATUS.ACTIVE;
-      break;
+      return;
 
+    // Optional: keep this if you want a user-facing "payment failed" signal.
+    // Often you'll also get customer.subscription.updated with past_due/unpaid.
     case "invoice.payment_failed":
       newStatus = PAYMENT_STATUS.PAYMENT_FAILED;
       break;
 
     case "customer.subscription.deleted":
+      // Subscription has ended (immediate cancel or period-end reached)
       newStatus = PAYMENT_STATUS.CANCELED;
       break;
 
-    case "customer.subscription.updated":
-      // Check if subscription is past_due or unpaid
-      const subStatus = event.data?.object?.status;
-      if (subStatus === "past_due" || subStatus === "unpaid") {
-        newStatus = PAYMENT_STATUS.PAST_DUE;
-      } else if (subStatus === "active") {
-        newStatus = PAYMENT_STATUS.ACTIVE;
-      } else if (subStatus === "canceled") {
-        newStatus = PAYMENT_STATUS.CANCELED;
+    case "customer.subscription.updated": {
+      const sub = event?.data?.object;
+      if (!sub) return;
+
+      const subStatus = sub.status;
+      const cancelAtPeriodEnd = !!sub.cancel_at_period_end;
+
+      switch (subStatus) {
+        case "past_due":
+        case "unpaid":
+          newStatus = PAYMENT_STATUS.PAST_DUE;
+          break;
+
+        case "incomplete":
+        case "incomplete_expired":
+          newStatus = PAYMENT_STATUS.INCOMPLETE;
+          break;
+
+        case "trialing":
+          newStatus = cancelAtPeriodEnd
+            ? PAYMENT_STATUS.CANCEL_SCHEDULED
+            : PAYMENT_STATUS.TRIALING;
+          break;
+
+        case "active":
+          newStatus = cancelAtPeriodEnd
+            ? PAYMENT_STATUS.CANCEL_SCHEDULED
+            : PAYMENT_STATUS.ACTIVE;
+          break;
+
+        case "paused":
+          newStatus = PAYMENT_STATUS.PAUSED;
+          break;
+
+        case "canceled":
+          newStatus = PAYMENT_STATUS.CANCELED;
+          break;
+
+        default:
+          return;
       }
       break;
+    }
 
     default:
       return;
   }
 
-  if (!newStatus) {
-    return;
-  }
+  if (!newStatus) return;
 
-  // Update all DP subscriptions matching this Stripe subscription ID
-  try {
-    await adminDao.updateSubscriptionByBillingId(stripeSubscriptionId, {
-      PAYMENT_STATUS: newStatus,
-    });
-  } catch (err) {
-    throw err;
-  }
+  await adminDao.updateSubscriptionByBillingId(stripeSubscriptionId, {
+    PAYMENT_STATUS: newStatus,
+  });
 }
 
 module.exports = {

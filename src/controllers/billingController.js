@@ -19,6 +19,7 @@
 // src/controllers/billingController.js
 
 const monetizationService = require("../services/monetizationService");
+const { getDecryptedStripeKeysForOrg } = require("../services/orgBillingKeyService");
 const { CustomError } = require("../utils/errors/customErrors");
 const logger = require("../config/logger");
 const constants = require("../utils/constants");
@@ -78,18 +79,6 @@ async function createCheckoutSessionForSubscription(req, res) {
       throw new BadRequestError("Missing required fields: applicationID, apiId, apiReferenceID, policyId, policyName");
     }
 
-    console.log("💰 All fields validated, calling monetizationService.createCheckoutSession with:", {
-      orgId,
-      user,
-      returnBaseUrl,
-      applicationID,
-      apiId,
-      apiReferenceID,
-      policyId,
-      policyName,
-      sourcePage,
-    });
-
     const result = await monetizationService.createCheckoutSession({
       orgId,
       user,
@@ -105,15 +94,6 @@ async function createCheckoutSessionForSubscription(req, res) {
     return res.status(200).json(result);
   } catch (err) {
     const { status, body } = errorToResponse(err);
-    console.error("💰❌ Checkout error - Full error object:", {
-      name: err.name,
-      message: err.message,
-      code: err.code,
-      type: err.type,
-      stack: err.stack,
-      responseStatus: status,
-      responseBody: body
-    });
     logger.error({ err, orgId, body: req.body }, "createCheckoutSession failed");
     return res.status(status).json(body);
   }
@@ -129,17 +109,14 @@ async function registerStripeCheckoutSession(req, res) {
 
   try {
     const user = getUserContext(req); // optional but good for audit
-
     const result = await monetizationService.registerCheckoutSession({
       orgId,
       checkoutSessionId,
       user,
     });
-
     return res.status(201).json(result);
   } catch (err) {
     const { status, body } = errorToResponse(err);
-    logger.error({ err, orgId, checkoutSessionId }, "registerStripeCheckoutSession failed");
     return res.status(status).json(body);
   }
 }
@@ -229,7 +206,7 @@ async function handleStripeWebhook(req, res) {
     await monetizationService.handleStripeWebhook(req);
     return res.status(200).send("ok");
   } catch (err) {
-    logger.error({ err }, "handleStripeWebhook failed");
+    logger.error({ message: err.message, stack: err.stack }, "handleStripeWebhook failed");
     return res.status(400).send("webhook error");
   }
 }
@@ -240,89 +217,108 @@ async function handleStripeWebhook(req, res) {
  */
 async function handleBillingReturn(req, res) {
   const { session_id, dp_sub_id, org_id } = req.query;
-  
-  console.log("💳 Billing return called with:", { session_id, dp_sub_id, org_id });
-  logger.info({ session_id, dp_sub_id, org_id }, "💳 handleBillingReturn started");
-
+  let orgIdFinal = req.query.org_id || req.query.orgId || org_id;
   try {
     if (!session_id) {
-      console.error("❌ Missing session_id");
       return res.status(400).send("Missing session_id");
     }
 
-    // Retrieve the checkout session to get metadata
-    console.log("💳 Retrieving Stripe session...");
+    // Wire in monetizationService logic to activate paid subscription if needed
+    const monetizationService = require("../services/monetizationService");
+    const user = req.user || {};
+    let activationResult = null;
+    try {
+      activationResult = await monetizationService.handleStripeReturnAndActivate({
+        orgId: orgIdFinal,
+        sessionId: session_id,
+        user
+      });
+    } catch (activationErr) {
+    }
+
+    // Retrieve the checkout session to get metadata for redirect
     const stripeService = require("../services/stripeService");
-    const session = await stripeService.retrieveCheckoutSession(session_id);
-    
-    const { apiReferenceID, orgId, sourcePage } = session.metadata || {};
-    
-    console.log("💳 Session metadata:", session.metadata);
-    console.log("💳 Extracted values:", { apiReferenceID, orgId, sourcePage });
-    
-    // Priority 1: If sourcePage is provided, redirect there (could be listing page or any page)
-    if (sourcePage) {
-      const redirectUrl = `${sourcePage}?session_id=${session_id}&dp_sub_id=${dp_sub_id || ''}&org_id=${encodeURIComponent(orgId || org_id)}`;
-      console.log("💳 Redirecting to sourcePage:", redirectUrl);
-      logger.info({ redirectUrl }, "💳 Redirecting to sourcePage");
-      return res.redirect(redirectUrl);
-    }
-    
-    // Priority 2: If we have the API reference ID, redirect to the API page
-    if (apiReferenceID && (orgId || org_id)) {
-      console.log("💳 Getting org from database for orgId:", orgId || org_id);
-      // Get org name from database to construct proper URL
-      const adminDao = require("../dao/admin");
-      const org = await adminDao.getOrganization(orgId || org_id);
-      
-      if (!org) {
-        console.error("❌ Organization not found for orgId:", orgId || org_id);
-        throw new Error(`Organization not found: ${orgId || org_id}`);
+    const { secretKey: stripeSecretKey } = await getDecryptedStripeKeysForOrg(orgIdFinal);
+    const session = await stripeService.retrieveCheckoutSession(session_id, stripeSecretKey);
+    const apiReferenceID = session?.metadata?.apiReferenceID;
+    const orgIdMeta = session?.metadata?.orgId;
+    const sourcePageMeta = session?.metadata?.sourcePage;
+
+    // If orgIdFinal is still not set, use orgIdMeta from session
+    if (!orgIdFinal && orgIdMeta) orgIdFinal = orgIdMeta;
+
+    // Priority 1: Use sourcePage from query params if present, else from session metadata
+    const sourcePageFinal = req.query.sourcePage || sourcePageMeta;
+      if (sourcePageFinal) {
+        // Always append session_id (and org_id if available) to sourcePageFinal for frontend logic
+        const urlObj = new URL(sourcePageFinal, `${req.protocol}://${req.get('host')}`);
+        if (session_id) urlObj.searchParams.set('session_id', session_id);
+        if (orgIdFinal) urlObj.searchParams.set('org_id', orgIdFinal);
+        const redirectUrl = urlObj.pathname + urlObj.search;
+        return res.redirect(redirectUrl);
       }
-      
+
+    // Priority 2: If we have the API reference ID, redirect to the API page
+    if (apiReferenceID && orgIdFinal) {
+      const adminDao = require("../dao/admin");
+      const org = await adminDao.getOrganization(orgIdFinal);
+      if (!org) {
+        logger.error("❌ Organization not found for orgId:", orgIdFinal);
+        throw new Error(`Organization not found: ${orgIdFinal}`);
+      }
       const orgName = org.IDENTIFIER || 'default';
-      console.log("💳 Found org name:", orgName);
-      
-      // Redirect to API detail page with session_id, dp_sub_id, and org_id so frontend can finalize subscription
-      const redirectUrl = `/${orgName}/apis/${apiReferenceID}?session_id=${session_id}&dp_sub_id=${dp_sub_id || ''}&org_id=${encodeURIComponent(orgId || org_id)}`;
-      console.log("💳 Redirecting to API page:", redirectUrl);
-      logger.info({ redirectUrl }, "💳 Redirecting to API page");
+      const redirectUrl = `/${orgName}/apis/${apiReferenceID}?session_id=${session_id}&dp_sub_id=${dp_sub_id || ''}&org_id=${encodeURIComponent(orgIdFinal)}`;
       return res.redirect(redirectUrl);
     }
-    
-    // Fallback: redirect to applications page
-    const redirectUrl = `/applications?session_id=${session_id}&dp_sub_id=${dp_sub_id || ''}&org_id=${encodeURIComponent(org_id || '')}`;
-    console.log("💳 Fallback redirect to applications:", redirectUrl);
+
+    // Fallback: redirect to applications page, always include org_id if available
+    const redirectUrl = `/applications?session_id=${session_id}&dp_sub_id=${dp_sub_id || ''}&org_id=${encodeURIComponent(orgIdFinal || '')}`;
     logger.info({ redirectUrl }, "💳 Fallback redirect to applications");
     return res.redirect(redirectUrl);
-    
+
   } catch (err) {
-    console.error("❌ handleBillingReturn error:", err);
-    logger.error({ err, session_id, dp_sub_id, org_id }, "handleBillingReturn failed");
-    // Always redirect somewhere even on error
-    return res.redirect(`/applications?payment_error=true&session_id=${session_id || ''}`);
+    // Try to determine if subscription was activated
+    let sourcePageFinal = req.query.sourcePage;
+    if (!orgIdFinal) orgIdFinal = req.query.org_id || req.query.orgId;
+    let activationSucceeded = false;
+    // Try to get from session metadata if not in query
+    if ((!sourcePageFinal || !orgIdFinal) && typeof session_id === 'string') {
+      try {
+        const stripeService = require("../services/stripeService");
+        const { secretKey: stripeSecretKey } = await getDecryptedStripeKeysForOrg(orgIdFinal);
+        const session = await stripeService.retrieveCheckoutSession(session_id, stripeSecretKey);
+        if (!sourcePageFinal) sourcePageFinal = session?.metadata?.sourcePage;
+        if (!orgIdFinal) orgIdFinal = session?.metadata?.orgId;
+        // Check if subscription is active
+        if (session?.status === 'complete' || session?.payment_status === 'paid') {
+          activationSucceeded = true;
+        }
+      } catch (e) {
+        // Ignore errors here, we are in error handling already
+      }
+    }
+    if (sourcePageFinal) {
+      if (activationSucceeded) {
+        // Redirect to sourcePage with clean URL if activation succeeded
+        logger.info({ redirectUrl: sourcePageFinal }, "💳 Redirecting to sourcePage after successful activation (error in later step)");
+        return res.redirect(sourcePageFinal);
+      } else {
+        // Only add payment_error=true if activation failed
+        // Use & if sourcePageFinal already contains a ?
+        const paramJoin = sourcePageFinal.includes('?') ? '&' : '?';
+        const redirectUrl = `${sourcePageFinal}${paramJoin}payment_error=true&session_id=${session_id || ''}&org_id=${encodeURIComponent(orgIdFinal || '')}`;
+        logger.info({ redirectUrl }, "💳 Error redirecting to sourcePage (activation failed)");
+        return res.redirect(redirectUrl);
+      }
+    }
+    // Fallback
+    if (activationSucceeded) {
+      return res.redirect("/"); // or a default landing page
+    }
+    return res.redirect(`/applications?payment_error=true&session_id=${session_id || ''}&org_id=${encodeURIComponent(orgIdFinal || '')}`);
   }
 }
 
-module.exports = {
-  createCheckoutSessionForSubscription,
-  registerStripeCheckoutSession,
-  cancelSubscription,
-  getSubscriptionBillingStatus,
-  createBillingPortal,
-  createBillingPortalByOrg,
-  handleStripeWebhook,
-  handleBillingReturn,
-  getUsageData,
-  getPaymentMethods,
-  removePaymentMethod,
-  getBillingInfo,
-  getActiveSubscriptions
-    , addBillingEngineKeys
-    , updateBillingEngineKeys
-    , deleteBillingEngineKeys
-    , getBillingEngineKeys
-};
 /**
  * POST /organizations/:orgId/billing-engine-keys
  */
@@ -449,16 +445,19 @@ async function getUsageData(req, res) {
  * Get all payment methods for the current user
  */
 async function getPaymentMethods(req, res) {
+  const { orgId } = req.params;
   try {
-    const { orgId } = req.params;
     const userContext = getUserContext(req);
-    
-    // Get payment methods from Stripe
     const paymentMethods = await monetizationService.getPaymentMethods(userContext, orgId);
-    
     return res.json({ paymentMethods });
   } catch (err) {
-    logger.error({ err, userId: getUserContext(req).userId }, "getPaymentMethods failed");
+    logger.error({
+      message: err.message,
+      stack: err.stack,
+      userId: getUserContext(req).userId,
+      stripeError: err.raw || err,
+      orgId
+    }, "getPaymentMethods failed - detailed");
     const resp = errorToResponse(err);
     return res.status(resp.status).json(resp.body);
   }
@@ -506,18 +505,38 @@ async function getBillingInfo(req, res) {
 
 /**
  * GET /organizations/:orgId/billing/subscriptions
- * Get active subscriptions for billing page display
+ * Get subscriptions for billing page display
  */
 async function getActiveSubscriptions(req, res) {
   const { orgId } = req.params;
   try {
     // Get subscriptions from monetization service
-    const subscriptions = await monetizationService.getActiveSubscriptionsForBilling(orgId);
+    const subscriptions = await monetizationService.getSubscriptionsForBilling(orgId);
     
     return res.json({ subscriptions });
   } catch (err) {
-    logger.error({ err, orgId }, "getActiveSubscriptions failed");
+    logger.error({ err, orgId }, "getSubscriptions failed");
     const resp = errorToResponse(err);
     return res.status(resp.status).json(resp.body);
   }
 }
+
+module.exports = {
+  createCheckoutSessionForSubscription,
+  registerStripeCheckoutSession,
+  cancelSubscription,
+  getSubscriptionBillingStatus,
+  createBillingPortal,
+  createBillingPortalByOrg,
+  handleStripeWebhook,
+  handleBillingReturn,
+  getUsageData,
+  getPaymentMethods,
+  removePaymentMethod,
+  getBillingInfo,
+  getActiveSubscriptions, 
+  addBillingEngineKeys, 
+  updateBillingEngineKeys, 
+  deleteBillingEngineKeys,
+  getBillingEngineKeys
+};

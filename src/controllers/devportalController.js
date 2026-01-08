@@ -81,6 +81,32 @@ const deleteApplication = async (req, res) => {
         const orgID = await adminDao.getOrgId(req.user[constants.ORG_IDENTIFIER]);
         const applicationId = req.params.applicationId;
         try {
+            // Cancel all Stripe subscriptions for this application before deleting
+            try {
+                const subscriptions = await adminDao.getSubscriptions(orgID, applicationId, '');
+                const monetizationService = require('../services/monetizationService');
+                for (const subscription of subscriptions) {
+                    if (subscription.BILLING_SUBSCRIPTION_ID && subscription.PAYMENT_PROVIDER === 'STRIPE') {
+                        logger.info('Canceling Stripe subscription before deleting application', {
+                            appId: applicationId,
+                            subId: subscription.SUB_ID,
+                            billingSubscriptionId: subscription.BILLING_SUBSCRIPTION_ID
+                        });
+                        await monetizationService.cancelPaidSubscription({
+                            orgId: orgID,
+                            subId: subscription.SUB_ID,
+                            user: req.user || {}
+                        });
+                    }
+                }
+            } catch (stripeErr) {
+                // Log but don't fail the delete if Stripe cancellation fails
+                logger.warn('Failed to cancel Stripe subscriptions for application (continuing with delete)', {
+                    appId: applicationId,
+                    error: stripeErr.message
+                });
+            }
+
             //delete the CP application
             //TODO: handle non-shared scenarios
             const app = await adminDao.getApplicationKeyMapping(orgID, applicationId, true);
@@ -106,7 +132,7 @@ const deleteApplication = async (req, res) => {
             }
             logger.error('Error occurred while deleting the application', { 
                 orgId: orgID,
-                appId: appID,
+                appId: applicationId,
                 error: error.message, 
                 stack: error.stack
             });

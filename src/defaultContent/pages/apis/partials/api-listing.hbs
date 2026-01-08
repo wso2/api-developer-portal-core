@@ -173,7 +173,7 @@
                           aria-label="Search applications">
                       </div>
                       <div class="select-items-container">
-                        {{#each applications}}
+                        {{#each (filter applications "subscriptionStatus" "CANCELED" false)}}
 
                         <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}"
                           data-app-name="{{name}}">
@@ -188,11 +188,25 @@
                             {{/if}}
                           </div>
                           {{#if subscribed}}
-                          <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
-                            alt="Subscribed" class="subscription-icon" style="width: 18px; height: 18px; flex-shrink: 0;" />
+                            {{#if (eq subscriptionStatus "ACTIVE")}}
+                              <span class="badge" style="background:#ecfdf5;color:#047857;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">
+                                Active
+                              </span>
+                            {{else if (eq subscriptionStatus "TRIALING")}}
+                              <span class="badge" style="background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">
+                                Trial
+                              </span>
+                            {{else if (eq subscriptionStatus "PAST_DUE")}}
+                              <span class="badge" style="background:#fef2f2;color:#b91c1c;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">
+                                Past due
+                              </span>
+                            {{else if (eq subscriptionStatus "CANCEL_SCHEDULED")}}
+                              <span class="badge" style="background:#fff7ed;color:#c2410c;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">
+                                Cancels soon
+                              </span>
+                            {{/if}}
                           {{/if}}
                         </div>
-
                         {{/each}}
                       </div>
                       <div class="create-app-container" style="display: none;">

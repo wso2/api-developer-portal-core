@@ -1,3 +1,25 @@
+/**
+ * Delete subscription by Stripe billing subscription ID (for webhooks)
+ */
+const deleteSubscriptionByBillingId = async (billingSubscriptionID, t) => {
+    try {
+        const deletedRowsCount = await SubscriptionMapping.destroy({
+            where: {
+                BILLING_SUBSCRIPTION_ID: billingSubscriptionID,
+            },
+            transaction: t
+        });
+        if (deletedRowsCount < 1) {
+            throw new Sequelize.EmptyResultError('Subscription not found');
+        }
+        return deletedRowsCount;
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+};
 /*
  * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
@@ -25,6 +47,27 @@ const { APIMetadata } = require('../models/apiMetadata');
 const APIImageMetadata = require('../models/apiImages');
 const SubscriptionPolicy = require('../models/subscriptionPolicy');
 const logger = require('../config/logger');
+const { decrypt } = require('../utils/cryptoUtil');
+
+/**
+ * Get all orgs' billing keys and webhook secrets for Stripe multi-tenant webhook verification.
+ * Returns: [{ orgId, webhookSecret, secretKey }]
+ */
+const getAllOrgBillingKeys = async () => {
+    try {
+        const records = await require('../models/billingEngineKey').findAll({
+            where: { BILLING_ENGINE: 'STRIPE' },
+            attributes: ['ORG_ID', 'WEBHOOK_SECRET_ENC', 'SECRET_KEY_ENC']
+        });
+        return records.map(r => ({
+            orgId: r.ORG_ID,
+            webhookSecret: decrypt(r.WEBHOOK_SECRET_ENC),
+            secretKey: decrypt(r.SECRET_KEY_ENC)
+        }));
+    } catch (error) {
+        throw new Sequelize.DatabaseError(error);
+    }
+};
 
 const createOrganization = async (orgData, t) => {
     let devPortalID = "";
@@ -871,7 +914,7 @@ const listSubscriptionsByOrg = async (orgID) => {
 /**
  * Get active subscriptions with full details for billing page
  */
-const getActiveSubscriptionsWithDetails = async (orgID) => {
+const getSubscriptionsWithDetails = async (orgID) => {
     try {
         if (!orgID) {
             throw new Error('orgID is required');
@@ -893,7 +936,6 @@ const getActiveSubscriptionsWithDetails = async (orgID) => {
             LEFT JOIN "DP_APPLICATION" app ON s."APP_ID" = app."APP_ID" AND s."ORG_ID" = app."ORG_ID"
             LEFT JOIN "DP_SUBSCRIPTION_POLICY" p ON s."POLICY_ID" = p."POLICY_ID" AND s."ORG_ID" = p."ORG_ID"
             WHERE s."ORG_ID" = :orgID
-            AND s."PAYMENT_STATUS" = 'ACTIVE'
             AND p."BILLING_PLAN" = 'COMMERCIAL'
             AND s."BILLING_CUSTOMER_ID" IS NOT NULL
             AND s."BILLING_SUBSCRIPTION_ID" IS NOT NULL
@@ -904,7 +946,7 @@ const getActiveSubscriptionsWithDetails = async (orgID) => {
         
         return results || [];
     } catch (error) {
-        logger.error({ error, orgID }, 'getActiveSubscriptionsWithDetails failed');
+        logger.error({ error, orgID }, 'getSubscriptionsWithDetails failed');
         throw new Sequelize.DatabaseError(error);
     }
 }
@@ -1233,7 +1275,7 @@ module.exports = {
     updateBillingFields,
     findSubscriptionByUniqueKey,
     listSubscriptionsByOrg,
-    getActiveSubscriptionsWithDetails,
+    getSubscriptionsWithDetails,
     updateSubscriptionByBillingId,
     getAPIById,
     getSubscriptionPolicyById,
@@ -1248,5 +1290,7 @@ module.exports = {
     createApplicationKeyMapping,
     updateApplicationKeyMapping,
     getApplicationAPIMapping,
-    deleteAppMappings
+    deleteAppMappings,
+    getAllOrgBillingKeys,
+    deleteSubscriptionByBillingId
 };

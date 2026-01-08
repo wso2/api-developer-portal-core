@@ -115,8 +115,8 @@
                                         class="common-btn-outlined p-1 ps-2 pe-2 w-100 subscription-plan-subscribe-btn"
                                         data-policy-id="{{policyID}}"
                                         data-policy-name="{{policyName}}"
-                                        data-external-price-id="{{pricingMetadata.externalPriceId}}"
-                                        data-is-paid="{{#if pricingMetadata.externalPriceId}}true{{else}}false{{/if}}"
+                                        data-external-price-id="{{pricingMetadata.external.priceId}}"
+                                        data-is-paid="{{#if isPaid}}true{{else}}false{{/if}}"
                                         onclick="handlePlanSubscription('{{@root.orgID}}', '{{../apiID}}', '{{../apiReferenceID}}', '{{policyID}}', '{{policyName}}', this)"
                                     >
                                         Subscribe

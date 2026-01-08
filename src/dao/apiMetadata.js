@@ -442,31 +442,31 @@ const computeRequestCount = (policy) => {
 };
 
 const buildPricingMetadata = (policy) => {
-  const meta = {};
+    const meta = {};
 
-  const productId = policy.externalProductId ?? null;
-  const priceId =
-    policy.externalPlanId ?? policy.externalPriceId ?? null;
+    const productId = policy.externalProductId ?? null;
+    const priceId = policy.externalPlanId ?? policy.externalPriceId ?? null;
+    const billingMeterId = policy.billingMeterId ?? policy.BillingMeterId ?? null;
 
-  if (productId || priceId) {
-    meta.external = { productId, priceId };
-  }
+    if (productId || priceId || billingMeterId) {
+        meta.external = { productId, priceId, billingMeterId };
+    }
 
-  const pricingModel = toUpper(policy.pricingModel);
-  const isTiered = pricingModel === "VOLUME_TIERS" || pricingModel === "GRADUATED_TIERS";
-  const tiers = Array.isArray(policy.tiers) ? policy.tiers : policy.pricingTiers;
+    const pricingModel = toUpper(policy.pricingModel);
+    const isTiered = pricingModel === "VOLUME_TIERS" || pricingModel === "GRADUATED_TIERS";
+    const tiers = Array.isArray(policy.tiers) ? policy.tiers : policy.pricingTiers;
 
-  if (isTiered && Array.isArray(tiers) && tiers.length > 0) {
-    meta.tiers = tiers.map((tier, idx) => ({
-      tierIndex: tier.tierIndex ?? (idx + 1),
-      startUnit: tier.startUnit,
-      endUnit: tier.endUnit ?? null,
-      unitPrice: tier.unitPrice ?? null,
-      flatPrice: tier.flatPrice ?? null
-    }));
-  }
+    if (isTiered && Array.isArray(tiers) && tiers.length > 0) {
+        meta.tiers = tiers.map((tier, idx) => ({
+            tierIndex: tier.tierIndex ?? (idx + 1),
+            startUnit: tier.startUnit,
+            endUnit: tier.endUnit ?? null,
+            unitPrice: tier.unitPrice ?? null,
+            flatPrice: tier.flatPrice ?? null
+        }));
+    }
 
-  return Object.keys(meta).length > 0 ? meta : null;
+    return Object.keys(meta).length > 0 ? meta : null;
 };
 
 const buildSubscriptionPolicyRow = (orgID, policy) => {

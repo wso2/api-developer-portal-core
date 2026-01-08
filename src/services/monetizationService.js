@@ -74,11 +74,12 @@ function extractExternalPriceId(policyRow) {
   // Moesif automatically creates corresponding Stripe plans
   const metadata = policyRow?.PRICING_METADATA;
   if (!metadata) return null;
-  
+
   return (
     metadata.externalPriceId ||  // CP sends Moesif price ID
     metadata.moesifPriceId ||
     metadata.priceId ||
+    (metadata.external && metadata.external.priceId) ||
     null
   );
 }
@@ -197,10 +198,11 @@ async function createCheckoutSession({
 
     const dpSubId = dpSub.SUB_ID;
 
-    // Stripe embedded checkout return URL - include orgId for frontend processing
-    const returnUrl = `${returnBaseUrl}/devportal/billing/return?session_id={CHECKOUT_SESSION_ID}&dp_sub_id=${encodeURIComponent(
-      dpSubId
-    )}&org_id=${encodeURIComponent(orgId)}`;
+    // Stripe embedded checkout return URL - always go to /billing/return, but include sourcePage for redirect after activation
+    // This ensures backend activation, then user is redirected to the original UI page
+    const landingPage = sourcePage || '/devportal/apis';
+    console.log("🏁 Checkout landing page:", landingPage);
+    const returnUrl = `${returnBaseUrl}/billing/return?session_id={CHECKOUT_SESSION_ID}&dp_sub_id=${dpSubId}&org_id=${orgId}&sourcePage=${encodeURIComponent(landingPage)}`;
 
     // isMetered already determined above during validation
     const session = await stripeService.createCheckoutSession({
@@ -216,10 +218,15 @@ async function createCheckoutSession({
         policyId,
         policyName,
         applicationID,
-        sourcePage: sourcePage || '',
+        sourcePage: landingPage,
       },
       stripeSecretKey
     });
+
+    // Patch the returnUrl to include the actual Stripe session id
+    // Stripe requires the success_url to be set before session creation, so we must update it after
+    // If your stripeService.createCheckoutSession supports passing {CHECKOUT_SESSION_ID} as a placeholder, it will be replaced automatically
+    // Otherwise, you may need to update the session after creation (Stripe API supports this)
 
     // Persist checkout session id on the DP row
     await adminDao.updateBillingFields(
@@ -252,13 +259,16 @@ async function createCheckoutSession({
  */
 async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
   return sequelize.transaction(async (t) => {
+    logger.info({ orgId, checkoutSessionId, user }, '[registerCheckoutSession] Stripe session registration started');
     const { secretKey: stripeSecretKey } = await getDecryptedStripeKeysForOrg(orgId);
     const session = await stripeService.retrieveCheckoutSession(checkoutSessionId, stripeSecretKey);
 
     // Validate session is paid/complete (depends on Stripe config; usually "complete")
-    // You may also check session.payment_status, session.status etc.
-    const isComplete = String(session?.status || "").toLowerCase() === "complete";
-    if (!isComplete) {
+    // Accept either status === 'complete' or payment_status === 'paid'
+    const status = String(session?.status || "").toLowerCase();
+    const paymentStatus = String(session?.payment_status || "").toLowerCase();
+    const isPaid = status === "complete" || paymentStatus === "paid";
+    if (!isPaid) {
       // mark failed
       const dpSubId = session?.metadata?.dpSubId;
       if (dpSubId) {
@@ -266,7 +276,7 @@ async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
           PAYMENT_STATUS: PAYMENT_STATUS.PAYMENT_FAILED,
         }, t);
       }
-      throw new ConflictError(`Checkout session is not complete. status=${session?.status}`);
+      throw new ConflictError(`Checkout session is not complete or paid. status=${session?.status}, payment_status=${session?.payment_status}`);
     }
 
     const billingCustomerId =
@@ -288,7 +298,10 @@ async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
     }
 
     // Update DP row with billing ids + ACTIVE
-    await adminDao.updateBillingFields(
+    console.log('[registerCheckoutSession] Attempting to update billing fields to ACTIVE', {
+      orgId, dpSubId, billingCustomerId, billingSubscriptionId, checkoutSessionId
+    });
+    const updatedCount = await adminDao.updateBillingFields(
       orgId,
       dpSubId,
       {
@@ -300,21 +313,21 @@ async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
       },
       t
     );
-
+    console.log('[registerCheckoutSession] updateBillingFields result', { orgId, dpSubId, updatedCount });
+    if (updatedCount !== 1) {
+      console.error('[registerCheckoutSession] updateBillingFields did not update exactly one row!', { orgId, dpSubId, updatedCount });
+    }
     // NOTE: CP subscription creation happens during token generation flow
     // (same as free subscriptions - when user generates API key/OAuth token)
     // This keeps the flow consistent for both free and paid plans
 
-    // Comprehensive Moesif integration for usage tracking
-    // This happens AFTER successful Stripe checkout to sync customer data to Moesif
-    // Note: Control Plane only knows Moesif IDs, not Stripe IDs
-    // Moesif automatically syncs plans to Stripe
+    // Sync customer data to Moesif for usage tracking
+    // Note: Billing meters are created when Moesif price/plan is created, not here
     const policyRow = await adminDao.getSubscriptionPolicyById(orgId, dpSub.POLICY_ID, t);
-    const moesifPriceId = extractExternalPriceId(policyRow); // externalPriceId is Moesif price ID
-    const moesifPlanId = extractMoesifProductId(policyRow); // externalProductId is Moesif plan ID
+    const moesifPriceId = extractExternalPriceId(policyRow);
+    const moesifPlanId = extractMoesifProductId(policyRow);
     const moesifAppKey = process.env.MOESIF_APPLICATION_ID;
-    
-    
+
     if (moesifAppKey && moesifPlanId) {
       try {
         await moesifService.createOrUpdateUser({
@@ -341,28 +354,13 @@ async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
             dpSubId: dpSubId,
           },
         });
-        const billingMeterId = await moesifService.createBillingMeter({
-          subscriptionId: billingSubscriptionId,
-          planId: moesifPlanId,
-          priceId: moesifPriceId,
-          billingProvider: PAYMENT_PROVIDER.STRIPE,
-          metadata: {
-            dpSubId: dpSubId,
-            orgId: orgId,
-            policyId: dpSub.POLICY_ID,
-            stripeCustomerId: billingCustomerId,
-          },
-        });
-        if (billingMeterId) {/* Lines 393-404 omitted */}
-        console.log("✅ Moesif integration complete for usage-based subscription");
+        logger.info({ orgId, dpSubId }, '[registerCheckoutSession] Moesif customer sync complete');
       } catch (e) {
-        // Log but don't fail the subscription activation
         logger.warn({ e, orgId, dpSubId, moesifPlanId }, "Moesif integration failed (non-blocking)");
-        console.error("❌ Moesif integration failed:", e.message);
-        console.error("Stack:", e.stack);
+        logger.error({ message: e.message, stack: e.stack }, '[registerCheckoutSession] Moesif integration error');
       }
     } else {
-      // No Moesif integration if app key or plan ID missing; skip logs in production
+      logger.info({ orgId, dpSubId }, '[registerCheckoutSession] Moesif integration skipped (missing app key or plan ID)');
     }
 
     return {
@@ -431,16 +429,16 @@ async function listInvoices({ orgId, user, period = 'last3months' }) {
   
   // Transform the response to match the frontend expectations
   return {
-    invoices: (result.data || []).map(invoice => ({
-      id: invoice.id,
-      number: invoice.number,
-      created: invoice.created,
-      period: `${new Date(invoice.period_start * 1000).toLocaleDateString()} - ${new Date(invoice.period_end * 1000).toLocaleDateString()}`,
-      amount: invoice.amount_due / 100, // Convert cents to dollars
-      status: invoice.status,
-      hostedInvoiceUrl: invoice.hosted_invoice_url,
-      invoicePdf: invoice.invoice_pdf
-    }))
+        invoices: (result.data || []).map(invoice => ({
+          id: invoice.id,
+          number: invoice.number,
+          created: invoice.created,
+          period: `${new Date(invoice.period_start * 1000).toLocaleDateString()} - ${new Date(invoice.period_end * 1000).toLocaleDateString()}`,
+          amount: invoice.amount_due, // Use raw amount (no conversion)
+          status: invoice.status,
+          hostedInvoiceUrl: invoice.hosted_invoice_url,
+          invoicePdf: invoice.invoice_pdf
+        }))
   };
 }
 
@@ -456,7 +454,7 @@ async function listInvoicesBySubscription({ orgId, subId }) {
   return { ...invoices, data: filtered };
 }
 
-async function getInvoice({ invoiceId }) {
+async function getInvoice({ orgId, invoiceId }) {
   const { secretKey: stripeSecretKey } = await getDecryptedStripeKeysForOrg(orgId);
   return stripeService.getInvoice(invoiceId, stripeSecretKey);
 }
@@ -515,29 +513,41 @@ async function cancelPaidSubscription({ orgId, subId, user }) {
       PAYMENT_STATUS: PAYMENT_STATUS.CANCELED,
     }, t);
 
-    // Optional: also cancel in CP if needed
-    // await apimControlPlaneService.cancelSubscription(...)
-
     return { subId, paymentStatus: PAYMENT_STATUS.CANCELED };
   });
 }
 
 /**
  * Stripe webhook handler delegate.
- * - You can update PAYMENT_STATUS to PAST_DUE/CANCELED/ACTIVE based on invoice/payment events.
+ * - Update PAYMENT_STATUS to PAST_DUE/CANCELED/ACTIVE based on invoice/payment events.
  */
 async function handleStripeWebhook(req) {
   // req.body must be raw buffer for signature verification in stripeService
-  // Extract orgId from webhook metadata/header (customize as needed)
-  const orgId = req.headers['x-org-id'] || req.body?.orgId || req.query?.orgId;
-  const { secretKey: stripeSecretKey, webhookSecret } = await getDecryptedStripeKeysForOrg(orgId);
-  const event = await stripeService.verifyAndConstructWebhookEvent(req, stripeSecretKey, webhookSecret);
-
-  // Example: update DP row by BILLING_SUBSCRIPTION_ID
-  // You should handle at least: invoice.payment_failed, invoice.paid, customer.subscription.deleted/updated
-  await stripeService.applyWebhookToLocalState(event, { adminDao });
-
-  return true;
+  // Multi-tenant: Try all webhook secrets until one matches
+  let event = null;
+  let orgId = null;
+  let matchedKeys = null;
+  try {
+    // Fetch all org billing keys (including webhook secrets and Stripe secret keys)
+    const allOrgKeys = await adminDao.getAllOrgBillingKeys(); // Should return [{ orgId, webhookSecret, secretKey }, ...]
+    for (const { orgId: candidateOrgId, webhookSecret, secretKey } of allOrgKeys) {
+      try {
+        event = await stripeService.verifyAndConstructWebhookEvent(req, secretKey, webhookSecret);
+        orgId = candidateOrgId;
+        matchedKeys = { secretKey, webhookSecret };
+        break; 
+      } catch (err) {
+        // Try next secret
+      }
+    }
+    if (!event || !orgId) {
+      throw new Error('Stripe webhook signature verification failed for all orgs');
+    }
+    await stripeService.applyWebhookToLocalState(event, { adminDao });
+    return true;
+  } catch (err) {
+    throw err;
+  }
 }
 
 async function getSubscriptionBillingStatus({ orgId, subId }) {
@@ -568,7 +578,40 @@ module.exports = {
   getPaymentMethods,
   removePaymentMethod,
   getBillingInfo,
-  getActiveSubscriptionsForBilling
+  getSubscriptionsForBilling,
+  
+  /**
+   * Handles Stripe return and ensures paid subscription is activated.
+   * Call this from your controller when handling Stripe return URL.
+   */
+  async handleStripeReturnAndActivate({ orgId, sessionId, user }) {
+    // Retrieve Stripe session
+    const { secretKey: stripeSecretKey } = await getDecryptedStripeKeysForOrg(orgId);
+    const session = await stripeService.retrieveCheckoutSession(sessionId, stripeSecretKey);
+    const dpSubId = session?.metadata?.dpSubId;
+    if (!dpSubId) {
+      throw new BadRequestError("Stripe session missing dpSubId metadata.");
+    }
+    // Load DP subscription row
+    const dpSub = await adminDao.getSubscription(orgId, dpSubId);
+    if (!dpSub) {
+      throw new NotFoundError(`DP subscription not found: subId=${dpSubId}`);
+    }
+    // Fetch the policy row for billing plan check
+    const policyRow = await adminDao.getSubscriptionPolicyById(orgId, dpSub.POLICY_ID);
+    console.log('[handleStripeReturnAndActivate] POLICY_ID:', dpSub.POLICY_ID, 'billingPlan:', policyRow?.BILLING_PLAN);
+    // If paid and still PENDING, activate
+    if (isPaidPolicy(policyRow) && dpSub.PAYMENT_STATUS === PAYMENT_STATUS.PENDING) {
+      return await module.exports.registerCheckoutSession({ orgId, checkoutSessionId: sessionId, user });
+    }
+    return {
+      subId: dpSubId,
+      paymentStatus: dpSub.PAYMENT_STATUS,
+      paymentProvider: dpSub.PAYMENT_PROVIDER,
+      billingCustomerId: dpSub.BILLING_CUSTOMER_ID,
+      billingSubscriptionId: dpSub.BILLING_SUBSCRIPTION_ID
+    };
+  }
 };
 
 /**
@@ -592,8 +635,9 @@ async function getUserUsageData(userContext, orgId, period = 'current') {
       };
     }
     
-    // If no subscriptions, return empty data
-    if (!subscriptions || subscriptions.length === 0) {
+    // Only include active subscriptions
+    const activeSubs = (subscriptions || []).filter(sub => sub.PAYMENT_STATUS === 'ACTIVE');
+    if (activeSubs.length === 0) {
       return {
         totalRequests: 0,
         activeSubscriptions: 0,
@@ -602,7 +646,7 @@ async function getUserUsageData(userContext, orgId, period = 'current') {
         subscriptions: []
       };
     }
-    
+
     // Calculate date range based on period
     let startDate, endDate = new Date();
     if (period === 'current') {
@@ -612,15 +656,15 @@ async function getUserUsageData(userContext, orgId, period = 'current') {
     } else if (period === 'last90') {
       startDate = new Date(endDate.getTime() - 90 * 24 * 60 * 60 * 1000);
     }
-    
+
     let totalRequests = 0;
     let totalCost = 0;
     let totalResponseTime = 0;
     let responseTimeCount = 0;
-    
+
     const subscriptionData = [];
-    
-    for (const sub of subscriptions) {
+
+    for (const sub of activeSubs) {
       try {
         // Get usage from Moesif
         const usage = await moesifService.getUsage(
@@ -628,16 +672,16 @@ async function getUserUsageData(userContext, orgId, period = 'current') {
           startDate.toISOString(),
           endDate.toISOString()
         );
-        
+
         const requests = usage?.usage || 0;
         totalRequests += requests;
-        
+
         // Get policy details for pricing
         const policy = await adminDao.getSubscriptionPolicy(sub.POLICY_ID);
         const pricingModel = policy?.PRICING_MODEL || 'FLAT';
         const unitAmount = policy?.UNIT_AMOUNT || 0;
         const flatAmount = policy?.FLAT_AMOUNT || 0;
-        
+
         // Calculate cost
         let cost = 0;
         if (pricingModel === 'PER_UNIT') {
@@ -646,10 +690,10 @@ async function getUserUsageData(userContext, orgId, period = 'current') {
           cost = flatAmount;
         }
         totalCost += cost;
-        
+
         // Get API metadata
         const apiMetadata = await adminDao.getAPIMetadata(sub.API_ID);
-        
+
         subscriptionData.push({
           apiName: apiMetadata?.NAME || 'Unknown API',
           applicationName: sub.APPLICATION_NAME || 'Unknown App',
@@ -658,7 +702,7 @@ async function getUserUsageData(userContext, orgId, period = 'current') {
           pricingModel,
           cost
         });
-        
+
         // For response time, we would need to fetch from Moesif analytics
         if (usage?.avgResponseTime) {
           totalResponseTime += usage.avgResponseTime;
@@ -668,10 +712,10 @@ async function getUserUsageData(userContext, orgId, period = 'current') {
         logger.error({ err, subId: sub.ID }, "Failed to get usage for subscription");
       }
     }
-    
+
     return {
       totalRequests,
-      activeSubscriptions: subscriptions.length,
+      activeSubscriptions: activeSubs.length,
       estimatedCost: totalCost,
       avgResponseTime: responseTimeCount > 0 ? Math.round(totalResponseTime / responseTimeCount) : 0,
       subscriptions: subscriptionData
@@ -694,31 +738,34 @@ async function getUserUsageData(userContext, orgId, period = 'current') {
  */
 async function getPaymentMethods(userContext, orgId) {
   try {
+    logger.info({ orgId, userContext }, '[getPaymentMethods] Start');
     // Get all subscriptions for the organization to find the Stripe customer ID
     const subscriptions = await adminDao.listSubscriptionsByOrg(orgId);
-    
+    logger.info({ orgId, subscriptionsCount: subscriptions?.length }, '[getPaymentMethods] Subscriptions fetched');
     if (!subscriptions || subscriptions.length === 0) {
+      logger.warn({ orgId }, '[getPaymentMethods] No subscriptions found for org');
       return [];
     }
-    
     // Find a subscription with a Stripe customer ID
     const stripeSubscription = subscriptions.find(
       s => s.BILLING_CUSTOMER_ID && s.PAYMENT_PROVIDER === PAYMENT_PROVIDER.STRIPE
     );
-    
+    logger.info({ orgId, stripeSubscription }, '[getPaymentMethods] Stripe subscription found');
     if (!stripeSubscription || !stripeSubscription.BILLING_CUSTOMER_ID) {
+      logger.warn({ orgId }, '[getPaymentMethods] No Stripe customer ID found for org');
       return [];
     }
-    
     const customerId = stripeSubscription.BILLING_CUSTOMER_ID;
-    
+    logger.info({ orgId, customerId }, '[getPaymentMethods] Using Stripe customer ID');
+    // Get Stripe secret key for the org
+    const { secretKey: stripeSecretKey } = await getDecryptedStripeKeysForOrg(orgId);
     // Get payment methods from Stripe
-    const paymentMethods = await stripeService.listPaymentMethods(customerId);
-    
+    const paymentMethods = await stripeService.listPaymentMethods(customerId, stripeSecretKey);
+    logger.info({ orgId, customerId, paymentMethodsCount: paymentMethods?.length }, '[getPaymentMethods] Payment methods fetched');
     // Get customer default payment method
-    const customer = await stripeService.getCustomer(customerId);
+    const customer = await stripeService.getCustomer(customerId, stripeSecretKey);
+    logger.info({ orgId, customerId, customer }, '[getPaymentMethods] Stripe customer fetched');
     const defaultPaymentMethodId = customer.invoice_settings?.default_payment_method;
-    
     return paymentMethods.map(pm => ({
       id: pm.id,
       brand: pm.card?.brand || 'card',
@@ -728,7 +775,7 @@ async function getPaymentMethods(userContext, orgId) {
       isDefault: pm.id === defaultPaymentMethodId
     }));
   } catch (err) {
-    logger.error({ err }, "getPaymentMethods failed");
+    logger.error({ err, orgId, userContext }, "getPaymentMethods failed");
     throw err;
   }
 }
@@ -794,10 +841,10 @@ async function getBillingInfo(userContext, orgId) {
 /**
  * Get active subscriptions formatted for billing page display
  */
-async function getActiveSubscriptionsForBilling(orgId) {
+async function getSubscriptionsForBilling(orgId) {
   try {
     // Get subscriptions with all details using JOIN query
-    const subscriptions = await adminDao.getActiveSubscriptionsWithDetails(orgId);
+    const subscriptions = await adminDao.getSubscriptionsWithDetails(orgId);
     
     if (!subscriptions || subscriptions.length === 0) {
       return [];
@@ -815,12 +862,11 @@ async function getActiveSubscriptionsForBilling(orgId) {
           if (sub.BILLING_SUBSCRIPTION_ID && sub.PAYMENT_PROVIDER === PAYMENT_PROVIDER.STRIPE) {
             try {
               const stripeService = require('./stripeService');
-              const stripeSub = await stripeService.getSubscription(sub.BILLING_SUBSCRIPTION_ID);
-              
+              const { secretKey: stripeSecretKey } = await getDecryptedStripeKeysForOrg(orgId);
+              const stripeSub = await stripeService.getSubscription(sub.BILLING_SUBSCRIPTION_ID, stripeSecretKey);
               if (stripeSub) {
                 amount = stripeSub.items.data[0]?.price?.unit_amount || 0;
-                nextBillingDate = stripeSub.current_period_end;
-                
+                nextBillingDate = stripeSub.current_period_end ? stripeSub.current_period_end * 1000 : null;
                 // Override billing cycle from Stripe if available
                 const interval = stripeSub.items.data[0]?.price?.recurring?.interval;
                 if (interval) {
@@ -861,7 +907,7 @@ async function getActiveSubscriptionsForBilling(orgId) {
     
     return formattedSubs;
   } catch (err) {
-    logger.error({ err, orgId }, "getActiveSubscriptionsForBilling failed");
+    logger.error({ err, orgId }, "getSubscriptionsForBilling failed");
     throw err;
   }
 }

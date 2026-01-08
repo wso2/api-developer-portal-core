@@ -799,6 +799,16 @@ async function appendSubscriptionPlanDetails(orgID, subscriptionPolicies) {
     if (subscriptionPolicies) {
         for (const policy of subscriptionPolicies) {
             const subscriptionPlan = await loadSubscriptionPlan(orgID, policy.policyName);
+            const billingPlanRaw = subscriptionPlan.billingPlan;
+            const billingPlan = (typeof billingPlanRaw === 'string') ? billingPlanRaw.trim().toUpperCase() : '';
+            const isPaid = billingPlan === 'COMMERCIAL';
+            logger.info('[appendSubscriptionPlanDetails] Plan:', {
+                policyID: subscriptionPlan.policyID,
+                policyName: subscriptionPlan.policyName,
+                billingPlanRaw,
+                billingPlan,
+                isPaid
+            });
             subscriptionPlans.push({
                 policyID: subscriptionPlan.policyID,
                 displayName: subscriptionPlan.displayName,
@@ -811,7 +821,8 @@ async function appendSubscriptionPlanDetails(orgID, subscriptionPolicies) {
                 billingPeriod: subscriptionPlan.billingPeriod,
                 flatAmount: subscriptionPlan.flatAmount,
                 unitAmount: subscriptionPlan.unitAmount,
-                pricingMetadata: subscriptionPlan.pricingMetadata
+                pricingMetadata: subscriptionPlan.pricingMetadata,
+                isPaid: isPaid
             });
         }
     }

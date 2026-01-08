@@ -415,7 +415,8 @@ async function loadBillingInfo() {
 async function loadActiveSubscriptions() {
   const tableBody = document.getElementById('subscriptionsTableBody');
   const orgId = getOrgIdFromContext();
-  
+  const filterContainer = document.getElementById('subscriptionsFilterContainer');
+
   try {
     tableBody.innerHTML = `
       <tr>
@@ -427,43 +428,72 @@ async function loadActiveSubscriptions() {
     `;
 
     const response = await fetch(`/devportal/organizations/${orgId}/billing/subscriptions`);
-    
     if (!response.ok) {
       throw new Error('Failed to fetch subscriptions');
     }
 
     const data = await response.json();
-    
-    if (data.subscriptions && data.subscriptions.length > 0) {
-      tableBody.innerHTML = data.subscriptions.map(sub => `
-        <tr>
-          <td><strong>${escapeHtml(sub.apiName)}</strong></td>
-          <td>${escapeHtml(sub.applicationName || 'N/A')}</td>
-          <td><span class="badge bg-secondary">${escapeHtml(sub.planName)}</span></td>
-          <td>${escapeHtml(sub.billingCycle)}</td>
-          <td><strong>${formatCurrency(sub.amount)}</strong></td>
-          <td>${formatDate(sub.nextBillingDate)}</td>
-          <td>
-            <span class="badge-status badge-${sub.status === 'active' ? 'paid' : 'pending'}">
-              ${escapeHtml(sub.status)}
-            </span>
-          </td>
-          <td>
-            <button class="btn btn-sm btn-outline-secondary" onclick="manageSubscription('${sub.id}')">
-              <i class="fas fa-cog"></i> Manage
-            </button>
-          </td>
-        </tr>
-      `).join('');
-    } else {
-      tableBody.innerHTML = `
-        <tr>
-          <td colspan="8" class="text-center py-4 text-muted">
-            <i class="fas fa-inbox fa-2x mb-3"></i>
-            <p>No active subscriptions</p>
-          </td>
-        </tr>
+    const allStatuses = Array.from(new Set((data.subscriptions || []).map(sub => sub.status))).sort();
+
+    // Render filter dropdown
+    if (filterContainer) {
+      filterContainer.innerHTML = `
+        <label for="subscriptionStatusFilter" class="me-2">Filter by Status:</label>
+        <select id="subscriptionStatusFilter" class="form-select form-select-sm" style="width: auto; display: inline-block;">
+          <option value="ALL">All</option>
+          ${allStatuses.map(status => `<option value="${status}">${status}</option>`).join('')}
+        </select>
       `;
+    }
+
+    function renderTable(filteredSubs) {
+      if (filteredSubs.length > 0) {
+        tableBody.innerHTML = filteredSubs.map(sub => `
+          <tr>
+            <td><strong>${escapeHtml(sub.apiName)}</strong></td>
+            <td>${escapeHtml(sub.applicationName || 'N/A')}</td>
+            <td><span class="badge bg-secondary">${escapeHtml(sub.planName)}</span></td>
+            <td>${escapeHtml(sub.billingCycle)}</td>
+            <td><strong>${formatCurrency(sub.amount)}</strong></td>
+            <td>${formatDate(sub.nextBillingDate)}</td>
+            <td>
+              <span class="badge-status badge-${sub.status === 'active' ? 'paid' : 'pending'}">
+                ${escapeHtml(sub.status)}
+              </span>
+            </td>
+            <td>
+              <button class="btn btn-sm btn-outline-secondary" onclick="manageSubscription('${sub.id}')">
+                <i class="fas fa-cog"></i> Manage
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      } else {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="8" class="text-center py-4 text-muted">
+              <i class="fas fa-inbox fa-2x mb-3"></i>
+              <p>No subscriptions found</p>
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // Initial render (all)
+    renderTable(data.subscriptions || []);
+
+    // Filter logic
+    if (filterContainer) {
+      const filterSelect = document.getElementById('subscriptionStatusFilter');
+      filterSelect.addEventListener('change', function() {
+        const selected = this.value;
+        if (selected === 'ALL') {
+          renderTable(data.subscriptions || []);
+        } else {
+          renderTable((data.subscriptions || []).filter(sub => sub.status === selected));
+        }
+      });
     }
   } catch (error) {
     console.error('Error loading subscriptions:', error);
@@ -485,24 +515,30 @@ async function downloadInvoice(invoiceId) {
   const orgId = getOrgIdFromContext();
   try {
     const response = await fetch(`/devportal/organizations/${orgId}/invoices/${invoiceId}/pdf`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to download invoice');
+    let data = {};
+    try {
+      data = await response.json();
+    } catch (jsonErr) {
+      // If not JSON, fallback to text
+      data = { error: await response.text() };
     }
-
-    // The API returns JSON with the PDF URL
-    const data = await response.json();
-    
+    if (!response.ok) {
+      // Show backend error message if available
+      const msg = data && data.message ? data.message : 'Failed to download invoice';
+      showAlert(msg, 'danger');
+      throw new Error(msg);
+    }
     if (data.invoice_pdf) {
-      // Redirect to Stripe's PDF URL
       window.open(data.invoice_pdf, '_blank');
       showAlert('Invoice opened in new tab', 'success');
     } else {
-      throw new Error('Invoice PDF URL not available');
+      const msg = data && data.message ? data.message : 'Invoice PDF URL not available';
+      showAlert(msg, 'danger');
+      throw new Error(msg);
     }
   } catch (error) {
     console.error('Error downloading invoice:', error);
-    showAlert('Failed to download invoice', 'danger');
+    // showAlert already called above for most cases
   }
 }
 
@@ -694,7 +730,9 @@ function formatCurrency(amount) {
 }
 
 function formatDate(timestamp) {
-  return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+  // If timestamp is in milliseconds (e.g., > 10^12), use as is; if in seconds, multiply by 1000
+  const ts = (timestamp > 1e12) ? timestamp : timestamp * 1000;
+  return new Date(ts).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric'
