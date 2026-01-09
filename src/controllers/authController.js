@@ -248,11 +248,77 @@ const handleSilentSSO = async (req, res, next) => {
     });
 };
 
+// ***** Render Billing Page *****
+const renderBillingPage = async (req, res) => {
+    try {
+        const orgName = req.params.orgName;
+        const viewName = req.params.viewName || 'default';
+        
+        // Debug: Log user session info
+        logger.info('Rendering billing page', {
+            hasUser: !!req.user,
+            hasAccessToken: !!req.user?.accessToken,
+            userEmail: req.user?.email,
+            isAuthenticated: req.isAuthenticated ? req.isAuthenticated() : false
+        });
+        
+        // Get orgId from the orgName in the URL
+        let orgId;
+        try {
+            orgId = await adminDao.getOrgId(orgName);
+        } catch (err) {
+            logger.error('Organization not found, using orgName as orgId', { orgName });
+            orgId = orgName; // Use orgName as fallback if org not in database
+        }
+        
+        const templateContent = {
+            profile: {
+                name: req.user?.name || req.user?.email || 'User',
+                email: req.user?.email || req[constants.USER_ID],
+                firstName: req.user?.firstName || req.user?.name || 'User',
+                lastName: req.user?.lastName || '',
+                imageURL: req.user?.imageURL || '/images/default-avatar.png',
+                organization: orgName,
+                orgId: orgId
+            },
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+            devportalMode: config.devportalMode,
+            orgId: orgId,
+            orgIdentifier: orgName
+        };
+
+        const html = util.renderTemplate(
+            '../pages/billing/page.hbs',
+            './src/defaultContent/layout/main.hbs',
+            templateContent,
+            true
+        );
+        res.send(html);
+    } catch (error) {
+        logger.error('Error rendering billing page', { 
+            error: error.message,
+            stack: error.stack
+        });
+        const errorContent = {
+            message: 'Failed to load billing page',
+            error: config.devportalMode === 'developer' ? error : {}
+        };
+        const html = util.renderTemplate(
+            '../pages/error-page/page.hbs',
+            './src/defaultContent/layout/main.hbs',
+            errorContent,
+            true
+        );
+        res.status(500).send(html);
+    }
+};
+
 module.exports = {
     login,
     handleCallback,
     handleSignUp,
     handleLogOut,
     handleLogOutLanding,
-    handleSilentSSO
+    handleSilentSSO,
+    renderBillingPage
 };

@@ -43,6 +43,7 @@ const loadAPIs = async (req, res) => {
 
     const { orgName, viewName } = req.params;
     let html;
+    let allApplications = [];
     if (config.mode === constants.DEV_MODE) {
         const metaDataList = await loadAPIMetaDataList();
         for (const metaData of metaDataList) {
@@ -84,23 +85,31 @@ const loadAPIs = async (req, res) => {
                 }
             });
 
+            // Fetch all applications for the user/org once
+            if (req.user) {
+                allApplications = await adminDao.getApplications(orgID, req.user.sub);
+            }
             for (const metaData of metaDataList) {
                 metaData.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, metaData.subscriptionPolicies);
-                if (req.user) {
-                    let applications = await adminDao.getApplications(orgID, req.user.sub);
-                    if (applications.length > 0) {
-                        appList = await Promise.all(
-                            applications.map(async (app) => {
-                                const subscription = await adminDao.getAppApiSubscription(orgID, app.APP_ID, metaData.apiID);
-                                return {
-                                    ...new ApplicationDTO(app),
-                                    subscribed: subscription.length > 0,
-                                };
-                            })
-                        );
-                    }
+                let perApiAppList = [];
+                if (allApplications.length > 0) {
+                    perApiAppList = await Promise.all(
+                        allApplications.map(async (app) => {
+                            const subscription = await adminDao.getAppApiSubscription(orgID, app.APP_ID, metaData.apiID);
+                            const subscriptionData = subscription.length > 0 ? {
+                                policyId: subscription[0].POLICY_ID,
+                                policyName: metaData.subscriptionPolicies.find(p => p.policyID === subscription[0].POLICY_ID)?.policyName || 'Unknown'
+                            } : null;
+                            return {
+                                ...new ApplicationDTO(app),
+                                subscribed: subscription.length > 0,
+                                subscriptionPolicy: subscriptionData,
+                                subscriptionStatus: subscription.length > 0 ? subscription[0].PAYMENT_STATUS : null
+                            };
+                        })
+                    );
                 }
-                metaData.applications = appList;
+                metaData.applications = perApiAppList;
             }
             //retrieve api list from control plane
             if (config.controlPlane?.enabled !== false) {
@@ -144,7 +153,8 @@ const loadAPIs = async (req, res) => {
                 orgID: orgID,
                 profile: req.isAuthenticated() ? profile : null,
                 devportalMode: devportalMode,
-                isReadOnlyMode: config.readOnlyMode
+                isReadOnlyMode: config.readOnlyMode,
+                applications: allApplications.map(app => new ApplicationDTO(app)) // top-level applications array
             };
 
             if (req.originalUrl.includes("/mcps")) {
@@ -236,10 +246,15 @@ const loadAPIContent = async (req, res) => {
             //check whether user has access to the API via control plane
             if (config.controlPlane?.enabled !== false && !isFederatedAPI) {
                 try {
-                    let apiName = metaData ? metaData.apiHandle?.split('-v')[0] : "";
+                    let apiName = "";
+                    if (metaData && typeof metaData.apiHandle === "string" && metaData.apiHandle.includes("-v")) {
+                        apiName = metaData.apiHandle.split('-v')[0];
+                    } else if (metaData && metaData.apiInfo && metaData.apiInfo.apiName) {
+                        apiName = metaData.apiInfo.apiName;
+                    }
                     const version = metaData ? metaData.apiInfo.apiVersion : "";
                     let allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
-                    if (allowedAPIList.count === 0) {
+                    if (allowedAPIList.count === 0 && metaData && metaData.apiInfo && metaData.apiInfo.apiName) {
                         apiName = metaData.apiInfo.apiName;
                         allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
                     }
@@ -367,9 +382,14 @@ const loadAPIContent = async (req, res) => {
                     appList = await Promise.all(
                         applications.map(async (app) => {
                             const subscription = await adminDao.getAppApiSubscription(orgID, app.APP_ID, metaData.apiID);
+                            const subscriptionData = subscription.length > 0 ? {
+                                policyId: subscription[0].POLICY_ID,
+                                policyName: metaData.subscriptionPolicies.find(p => p.policyID === subscription[0].POLICY_ID)?.policyName || 'Unknown'
+                            } : null;
                             return {
                                 ...new ApplicationDTO(app),
                                 subscribed: subscription.length > 0,
+                                subscriptionPolicy: subscriptionData
                             };
                         })
                     );
@@ -570,10 +590,15 @@ const loadDocument = async (req, res) => {
         //check whether user has access to the API via control plane
         if (config.controlPlane?.enabled !== false && !isFederatedAPI) {
             try {
-                let apiName = apiMetadata ? apiMetadata.apiHandle?.split('-v')[0] : "";
+                let apiName = "";
+                if (apiMetadata && typeof apiMetadata.apiHandle === "string" && apiMetadata.apiHandle.includes("-v")) {
+                    apiName = apiMetadata.apiHandle.split('-v')[0];
+                } else if (apiMetadata && apiMetadata.apiInfo && apiMetadata.apiInfo.apiName) {
+                    apiName = apiMetadata.apiInfo.apiName;
+                }
                 const version = apiMetadata ? apiMetadata.apiInfo.apiVersion : "";
                 let allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
-                if (allowedAPIList.count == 0) {
+                if (allowedAPIList.count == 0 && apiMetadata && apiMetadata.apiInfo && apiMetadata.apiInfo.apiName) {
                     apiName = apiMetadata.apiInfo.apiName;
                     allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
                 }

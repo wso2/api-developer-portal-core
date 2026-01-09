@@ -51,20 +51,60 @@
                     <p class="subscription-plans-subtitle">Please select the most suitable subscription plan from the
                         options
                         available for this API</p>
+                    
+                    {{!-- Hidden field to store selected application ID passed from listing page --}}
+                    <input type="hidden" id="modal-selected-app-{{apiID}}" value="" />
+                    
                     <div class="row row-gap-4 pt-3">
                         {{#each subscriptionPolicyDetails}}
-                        <div class="col-12 col-md-6 col-lg-4">
-                            <div class="card dev-card">
-                                <div class="card-body align-items-center text-center p-0">
-                                    <span class="subscription-plans-card-title">{{displayName}}</h5>
-                                        <h1 class="subscription-plans-request-count">{{requestCount}}</h1>
-                                        <p class="subscription-plans-card-subtitle pb-4 pt-0">requests per minutes</p>
-                                        <a id="subscribe-btn-{{policyID}}" type="button"
-                                            class="common-btn-outlined p-1 ps-2 pe-2 w-100 subscription-plan-subscribe-btn"
-                                            onclick="showSubscribeButtonLoading(this); subscribe('{{@root.orgID}}', '', '{{../apiID}}', '{{../apiReferenceID}}', '{{policyID}}', '{{policyName}}')">Subscribe</a>
-                                </div>
-                            </div>
-                        </div>
+                                                <div class="col-12 col-md-6 col-lg-4">
+                                                        <div class="card dev-card d-flex flex-column h-100" style="min-height: 370px;">
+                                                                <div class="card-body align-items-center text-center p-4 d-flex flex-column h-100">
+                                                                        <span class="subscription-plans-card-title d-block mb-3">{{displayName}}</span>
+                                                                        <div class="mb-4 w-100">
+                                                                            <div class="d-flex flex-column align-items-center gap-2" style="width: 160px; min-width: 160px; margin: 0 auto;">
+                                                                                <span class="text-muted d-block mb-0" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom:0 !important; min-height: 18px;">Price</span>
+                                                                                {{#if pricingModel}}
+                                                                                    {{#compare pricingModel "===" "FLAT"}}
+                                                                                        {{#if flatAmount}}
+                                                                                        <span class="fw-bold d-inline" style="color: #0f172a; font-size: 22px;">{{currency}} {{formatPrice flatAmount}}<small class="text-muted d-inline" style="font-size: 10px;">/{{billingPeriod}}</small></span>
+                                                                                        {{else}}
+                                                                                        <span class="fw-bold d-inline" style="color: #16a34a; font-size: 22px;">Free</span>
+                                                                                        {{/if}}
+                                                                                    {{else}}
+                                                                                        {{#if unitAmount}}
+                                                                                        <span class="fw-bold d-inline" style="color: #0f172a; font-size: 22px;">{{currency}} {{formatPrice unitAmount}}<small class="text-muted d-inline" style="font-size: 10px;">/req</small></span>
+                                                                                        {{#if billingPeriod}}
+                                                                                        <span class="badge d-inline-block mt-2" style="background-color: #e0f2fe; color: #0369a1; font-size: 9px; padding: 3px 8px; border-radius: 10px;">Billed {{billingPeriod}}ly</span>
+                                                                                        {{/if}}
+                                                                                        {{else}}
+                                                                                        <span class="fw-bold d-inline" style="color: #16a34a; font-size: 22px;">Free</span>
+                                                                                        {{/if}}
+                                                                                    {{/compare}}
+                                                                                {{else}}
+                                                                                    <span class="fw-bold d-inline" style="color: #16a34a; font-size: 22px;">Free</span>
+                                                                                {{/if}}
+                                                                                <span class="text-muted d-block mt-3 mb-0" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom:0 !important; min-height: 18px;">Rate Limit</span>
+                                                                                <span class="fw-bold d-inline" style="color: #0f172a; font-size: 25px;">{{requestCount}}<small class="text-muted d-inline" style="font-size: 11px;">&nbsp;req/min</small></span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="mt-auto w-100 d-flex justify-content-center">
+                                                                            <a 
+                                                                                    id="subscribe-btn-{{policyID}}" 
+                                                                                    type="button"
+                                                                                    class="common-btn-outlined p-1 ps-2 pe-2 w-100 subscription-plan-subscribe-btn"
+                                                                                    data-policy-id="{{policyID}}"
+                                                                                    data-policy-name="{{policyName}}"
+                                                                                    data-external-price-id="{{pricingMetadata.external.priceId}}"
+                                                                                    data-is-paid="{{#if isPaid}}true{{else}}false{{/if}}"
+                                                                                    onclick="handlePlanSubscription('{{@root.orgID}}', '{{../apiID}}', '{{../apiReferenceID}}', '{{policyID}}', '{{policyName}}', this)"
+                                                                            >
+                                                                                    Subscribe
+                                                                            </a>
+                                                                        </div>
+                                                                </div>
+                                                        </div>
+                                                </div>
                         {{/each}}
                     </div>
                 </div>
