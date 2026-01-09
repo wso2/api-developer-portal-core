@@ -63,6 +63,15 @@ const createAPIMetadata = async (req, res) => {
         apiMetadata.endPoints.productionURL = changeEndpoint(apiMetadata.endPoints.productionURL);
         apiMetadata.endPoints.sandboxURL = changeEndpoint(apiMetadata.endPoints.sandboxURL);
         normalizeGraphQLEndpoints(apiMetadata);
+        const meterItems = apiMetadata?.monetizationInfo?.properties?.billingMeterData;
+        const meterByPolicyName = new Map(
+        Array.isArray(meterItems)
+            ? meterItems
+                .filter(x => x?.policyName && x?.billingMeterId)
+                .map(x => [String(x.policyName), String(x.billingMeterId)])
+            : []
+        );
+
         await sequelize.transaction({
             timeout: 60000,
         }, async (t) => {
@@ -82,7 +91,8 @@ const createAPIMetadata = async (req, res) => {
                         if (!subscriptionPolicy) {
                             throw new Sequelize.EmptyResultError("Subscription policy not found");
                         } else {
-                            subscriptionPolicies.push({ apiID: apiID, policyID: subscriptionPolicy.POLICY_ID });
+                            const meterId = meterByPolicyName.get(String(subscriptionPolicy.POLICY_NAME));
+                            subscriptionPolicies.push({ apiID: apiID, policyID: subscriptionPolicy.POLICY_ID, meterId: meterId });
                         }
                     };
                 }
@@ -334,6 +344,15 @@ const updateAPIMetadata = async (req, res) => {
         apiMetadata.endPoints.sandboxURL = changeEndpoint(apiMetadata.endPoints.sandboxURL);
         normalizeGraphQLEndpoints(apiMetadata);
 
+        const meterItems = apiMetadata?.monetizationInfo?.properties?.billingMeterData;
+        const meterByPolicyName = new Map(
+        Array.isArray(meterItems)
+            ? meterItems
+                .filter(x => x?.policyName && x?.billingMeterId)
+                .map(x => [String(x.policyName), String(x.billingMeterId)])
+            : []
+        );
+
         let allowStatusChange = await allowAPIStatusChange(apiMetadata.apiInfo.apiStatus, orgId, apiId);
         if (!allowStatusChange) {
             throw new CustomError(409, constants.ERROR_MESSAGE.ERR_SUB_EXIST, "API has subscriptions.");
@@ -386,7 +405,8 @@ const updateAPIMetadata = async (req, res) => {
                         if (!subscriptionPolicy) {
                             throw new Sequelize.EmptyResultError("Subscription policy not found");
                         } else {
-                            subscriptionPolicies.push({ apiID: apiId, policyID: subscriptionPolicy.POLICY_ID });
+                            const meterId = meterByPolicyName.get(String(subscriptionPolicy.POLICY_NAME));
+                            subscriptionPolicies.push({ apiID: apiId, policyID: subscriptionPolicy.POLICY_ID, meterId: meterId });
                         }
                     };
                 }

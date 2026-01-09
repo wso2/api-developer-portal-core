@@ -144,7 +144,12 @@ const SubscriptionMapping = sequelize.define('DP_API_SUBSCRIPTION', {
     ORG_ID: {
         type: DataTypes.UUID,
         allowNull: false
-    }
+    },
+    BILLING_CUSTOMER_ID: { type: DataTypes.STRING, allowNull: true },
+    BILLING_SUBSCRIPTION_ID: { type: DataTypes.STRING, allowNull: true },
+    PAYMENT_PROVIDER: { type: DataTypes.STRING, allowNull: true },
+    PAYMENT_STATUS: { type: DataTypes.STRING, allowNull: false, defaultValue: 'ACTIVE' },
+    CHECKOUT_SESSION_ID: { type: DataTypes.STRING, allowNull: true },
 }, {
     timestamps: false,
     tableName: 'DP_API_SUBSCRIPTION',
