@@ -68,51 +68,16 @@
     box-shadow: 0 0 0 2px var(--primary-lightest-color);
 }
 
-.accordion-item {
-    margin-bottom: 0.75rem;
-    border: 1px solid var(--secondary-bg-color);
-    border-radius: 8px !important;
-    background-color: var(--main-bg-color);
-    transition: box-shadow 0.2s ease;
-}
-
-.accordion-item:hover {
-    box-shadow: 0 2px 8px rgba(26, 76, 109, 0.08);
-}
-
 .accordion-button {
-    font-weight: 600;
-    color: var(--main-text-color);
-    padding: 0.875rem 1rem;
-    font-size: 0.9rem;
-    background-color: var(--secondary-bg-color);
-    border: none;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    background-color: var(--primary-main-color);
+    color: var(--light-text-color);
+    box-shadow: none;
 }
 
 .accordion-button:not(.collapsed) {
-    background-color: var(--primary-lightest-color);
-    color: var(--primary-main-color);
-    border-bottom: 1px solid var(--secondary-bg-color);
-}
-
-.accordion-button:focus {
-    background-color: var(--secondary-bg-color);
-    border-color: transparent;
-}
-
-.accordion-button:focus-visible {
-    outline: 2px solid var(--primary-main-color);
-    outline-offset: 2px;
-}
-
-.accordion-button:hover {
-    background-color: var(--primary-lightest-color);
-    color: var(--primary-main-color);
-}
-
-.accordion-button::after {
-    transition: transform 0.25s ease;
+    background-color: var(--primary-main-color);
+    color: var(--light-text-color);
+    box-shadow: none;
 }
 
 #sandbox-oauth2.accordion-header,
@@ -130,53 +95,6 @@
     max-height: 60vh;
     overflow-y: auto;
     overflow-x: hidden;
-}
-
-.accordion-body::-webkit-scrollbar {
-    width: 6px;
-}
-
-.accordion-body::-webkit-scrollbar-track {
-    background: var(--secondary-bg-color);
-    border-radius: 3px;
-}
-
-.accordion-body::-webkit-scrollbar-thumb {
-    background: var(--primary-light-color);
-    border-radius: 3px;
-}
-
-.accordion-body::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-main-color);
-}
-
-.accordion-body .row {
-    margin-bottom: 1rem;
-}
-
-.accordion-body .col-form-label {
-    font-weight: 500;
-    color: var(--main-text-color);
-    padding-top: 0.5rem;
-    font-size: 0.875rem;
-}
-
-.accordion-body .form-control {
-    display: block;
-    width: 100%;
-    border: 1px solid var(--secondary-bg-color);
-    border-radius: 6px;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-    background-color: var(--main-bg-color);
-    color: var(--main-text-color);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.accordion-body .form-control:focus {
-    border-color: var(--primary-main-color);
-    outline: 2px solid var(--primary-main-color);
-    outline-offset: 2px;
 }
 
 .accordion-body .input-group {
@@ -243,8 +161,6 @@
 
 .api-key-name-modal .form-control:focus {
     border-color: var(--primary-main-color);
-    outline: 2px solid var(--primary-main-color);
-    outline-offset: 1px;
 }
 
 /* Active Tab Content Styling */
