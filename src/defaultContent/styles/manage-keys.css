@@ -1,5 +1,10 @@
 /* Manage Keys Page Styles */
 
+:root {
+    --primary-shadow-color: rgba(135, 206, 250, 0.4);
+    --primary-border-color: rgba(135, 206, 250, 0.6);
+}
+
 .keys-section {
     margin-top: 0rem;
 }
@@ -8,7 +13,6 @@
     display: flex;
     flex-direction: row;
     gap: 0;
-    margin-bottom: 1.5rem;
     border-bottom: 2px solid var(--secondary-bg-color);
     background-color: transparent;
 }
@@ -22,7 +26,6 @@
     background-color: var(--main-bg-color);
     color: var(--main-text-color);
     border: 1px solid var(--secondary-bg-color);
-    border-bottom: none;
     font-size: 0.875rem;
     font-weight: 500;
     padding: 0.75rem 1.5rem;
@@ -35,6 +38,8 @@
     position: relative;
     margin-bottom: -2px;
     z-index: 0;
+    box-shadow: 0 1px 1px var(--primary-shadow-color);
+    border-bottom: 1px solid var(--primary-border-color);
 }
 
 .key-btn:hover {
@@ -44,12 +49,17 @@
 }
 
 .key-btn.active {
-    background-color: var(--primary-light-color);
-    color: var(--light-text-color);
-    border-color: var(--primary-light-color);
-    border-bottom: 2px solid var(--primary-light-color);
+    background-color: var(--main-bg-color);
+    color: var(--main-text-color);
+    border-top: 1px solid var(--primary-border-color);
+    border-left: 1px solid var(--primary-border-color);
+    border-right: 1px solid var(--primary-border-color);
+    border-bottom: none;
     font-weight: 600;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: -1px -1px 1px var(--primary-shadow-color), 
+                1px -1px 1px var(--primary-shadow-color), 
+                -1px 0 1px var(--primary-shadow-color), 
+                1px 0 1px var(--primary-shadow-color);
     z-index: 1;
 }
 
@@ -105,10 +115,10 @@
     transition: transform 0.25s ease;
 }
 
-#headingOne.accordion-header,
-#headingTwo.accordion-header,
-#headingThree.accordion-header,
-#headingFour.accordion-header {
+#sandbox-oauth2.accordion-header,
+#production-oauth2.accordion-header,
+#production-apikey.accordion-header,
+#sandbox-apikey.accordion-header {
     margin-bottom: 0;
 }
 
@@ -176,6 +186,10 @@
     width: 100%;
 }
 
+.accordion-body-content {
+    padding: 1rem;
+}
+
 /* Table Styling in Accordion */
 .app-table {
     border-collapse: separate;
@@ -195,4 +209,69 @@
     gap: 0.75rem;
     align-items: center;
     flex-wrap: wrap;
+}
+
+.key-action-buttons-row button {
+    min-width: 9rem;
+}
+
+/* API Key Name Modal */
+.api-key-name-modal-dialog {
+    max-width: 480px;
+    width: 100%;
+}
+
+.api-key-name-modal .custom-modal-content {
+    padding: 1.5rem 1.75rem;
+}
+
+.api-key-name-modal .custom-modal-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+
+.api-key-name-modal .form-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.api-key-name-modal .form-control {
+    border-radius: 6px;
+    border: 1px solid var(--secondary-bg-color);
+    box-shadow: none;
+}
+
+.api-key-name-modal .form-control:focus {
+    border-color: var(--primary-main-color);
+    outline: 2px solid var(--primary-main-color);
+    outline-offset: 1px;
+}
+
+/* Active Tab Content Styling */
+.tab-content .tab-pane {
+    border-radius: 0 0 8px 8px;
+    transition: border 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.tab-content .tab-pane.active {
+    border-left: 1px solid var(--primary-border-color);
+    border-right: 1px solid var(--primary-border-color);
+    border-bottom: 1px solid var(--primary-border-color);
+    border-top: none;
+    box-shadow: -1px 1px 1px var(--primary-shadow-color), 
+                1px 1px 1px var(--primary-shadow-color), 
+                -1px 0 1px var(--primary-shadow-color), 
+                1px 0 1px var(--primary-shadow-color);
+    padding: 1rem;
+    background-color: var(--main-bg-color);
+}
+
+.tab-content .tab-pane:not(.active) {
+    border: none;
+    box-shadow: none;
+}
+
+.app-th:first-child,
+.app-td:first-child {
+  padding-left: 1rem;
 }

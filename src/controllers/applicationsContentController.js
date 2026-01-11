@@ -590,6 +590,7 @@ async function getAPIKeys(req, apiId, applicationId, keyType) {
         if (key.application.id === applicationId) {
             apiKeys.key = key.keys;
             apiKeys.scopes = key.scopes;
+            apiKeys.name = key.alias;
         }
     }
     return apiKeys;

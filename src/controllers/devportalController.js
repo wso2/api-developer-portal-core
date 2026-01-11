@@ -206,7 +206,10 @@ const generateAPIKeys = async (req, res) => {
         if (!requestBody.keyType || ![constants.KEY_TYPE.PRODUCTION, constants.KEY_TYPE.SANDBOX].includes(requestBody.keyType)) {
             throw new Error('Invalid or missing keyType. Expected ' + constants.KEY_TYPE.PRODUCTION + ' or ' + constants.KEY_TYPE.SANDBOX + '.');
         }
-        requestBody.name = apiHandle + "-" + cpAppID + "-" + requestBody.keyType;
+        // If the client didn't provide a name, fall back to the existing auto-generated convention
+        if (!requestBody.name) {
+            requestBody.name = apiHandle + "-" + cpAppID + "-" + requestBody.keyType;
+        }
         requestBody.environmentTemplateId = environments.find(env => env.name === 'Production').templateId;
         requestBody.applicationId = cpAppID;
         delete requestBody.projectID;

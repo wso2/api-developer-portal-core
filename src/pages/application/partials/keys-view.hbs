@@ -138,14 +138,14 @@
                                                     <div class="keygen-checkbox-group" id="grant-types-view-{{keyType}}">
                                                         <label class="keygen-checkbox-container">
                                                             <input type="checkbox"
-                                                                id="grant-type-view-{{name}}-{{../../../id}}-{{keyType}}"
+                                                                id="grant-type-view-{{name}}-{{../id}}-{{keyType}}"
                                                                 name="grantTypes" value="{{name}}" {{#if (contains
                                                                 ../supportedGrantTypes name)}} checked {{else}}
                                                                 {{#unless ../supportedGrantTypes.length}} {{#if (eq
                                                                 name "client_credentials" ) }} checked
                                                                 {{/if}}{{/unless}} {{/if}} disabled readonly />
                                                             <label class="form-check-label fw-light ms-0"
-                                                                for="grant-type-view-{{name}}-{{../../../id}}-{{keyType}}">
+                                                                for="grant-type-view-{{name}}-{{../id}}-{{keyType}}">
                                                                 {{label}}
                                                             </label>
                                                         </label>
@@ -184,7 +184,7 @@
                                             <!-- Label -->
                                             <div class="col-md-4">
                                                 <label
-                                                    for="{{../name}}-{{../../../../id}}-{{keyType}}"
+                                                    for="{{../name}}-{{../id}}-{{keyType}}"
                                                     class="form-label">
                                                     {{../label}}
                                                     {{#if required}}<span class="text-danger">*</span>{{/if}}
@@ -195,21 +195,21 @@
                                             <div class="col-md-8">
                                                 {{#if (eq ../type 'input')}}
                                                 <input type="text" name="additionalProperties.{{{../name}}}"
-                                                    id="{{../name}}-{{../../../id}}-{{keyType}}"
+                                                    id="{{../name}}-{{../id}}-{{keyType}}"
                                                     class="form-control" value="{{propValue}}" {{#if
                                                     required}}required{{/if}} readonly disabled />
                                                 {{/if}}
 
                                                 {{#if (eq ../type 'text')}}
                                                 <input type="text" name="additionalProperties.{{../name}}"
-                                                    id="{{../name}}-{{../../../id}}-{{keyType}}"
+                                                    id="{{../name}}-{{../id}}-{{keyType}}"
                                                     class="form-control" value="{{propValue}}" {{#if
                                                     required}}required{{/if}} readonly disabled />
                                                 {{/if}}
 
                                                 {{#and (eq ../type 'select') (eq ../multiple false)}}
                                                 <select
-                                                    id="{{../name}}-{{../../../../id}}-{{keyType}}"
+                                                    id="{{../name}}-{{../id}}-{{keyType}}"
                                                     class="form-control" {{#if required}}required{{/if}}
                                                     name="additionalProperties.{{../name}}">
                                                     {{#each ../values}}
@@ -223,7 +223,7 @@
 
                                                 {{#and (eq ../type 'select') (eq ../multiple true)}}
                                                 <select
-                                                    id="{{../name}}-{{../../../../id}}-{{keyType}}"
+                                                    id="{{../name}}-{{../id}}-{{keyType}}"
                                                     class="form-control" name="additionalProperties.{{../name}}"
                                                     multiple>
                                                     {{#each ../values}}
@@ -236,7 +236,7 @@
                                                 {{#if (eq ../type 'checkbox')}}
                                                 <div class="form-check ps-0">
                                                     <input type="checkbox" name="additionalProperties.{{../name}}"
-                                                        id="{{../name}}-{{../../../id}}-{{keyType}}"
+                                                        id="{{../name}}-{{../id}}-{{keyType}}"
                                                         value="true" {{#if (eq propValue true)}} checked{{/if}} readonly
                                                         disabled />
                                                 </div>

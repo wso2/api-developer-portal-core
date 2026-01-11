@@ -1,5 +1,28 @@
 const e = require("express");
 
+function openApiKeyNameModal(projectID, apiRefID, subPlan, cpAppID, appID, subID, subIDs, subscribedScopes, keyType) {
+
+  const modal = document.getElementById('apiKeyNameModal-' + subID + '-' + keyType);
+  if (!modal) {
+    return;
+  }
+  modal.style.display = 'flex';
+
+  const confirmBtn = document.getElementById('confirmAPIKeyNameBtn-' + subID + '-' + keyType);
+  if (confirmBtn) {
+    confirmBtn.onclick = async function () {
+      const nameInput = document.getElementById('apiKeyName-' + subID + '-' + keyType);
+      const apiKeyName = nameInput ? nameInput.value.trim() : '';
+      if (!apiKeyName) {
+        await showAlert('Please enter an API Key name.', 'error');
+        return;
+      }
+      modal.style.display = 'none';
+      openApiKeyModal(projectID, apiRefID, subPlan, cpAppID, appID, subID, subIDs, subscribedScopes, keyType);
+    };
+  }
+}
+
 function openApiKeyModal(projectID, apiRefID, subPlan, cpAppID, appID, subID, subIDs, subscribedScopes, keyType) {
 
   let scopes = Array.isArray(subscribedScopes) ? subscribedScopes : JSON.parse(subscribedScopes);
@@ -59,6 +82,8 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
   const tokenBtn = document.getElementById(tokenBtnPrefix + subID + '-' + keyType);
   const normalState = tokenBtn.querySelector('.button-normal-state');
   const loadingState = tokenBtn.querySelector('.button-loading-state');
+  const nameInput = document.getElementById('apiKeyName-' + subID + '-' + keyType);
+  const apiKeyName = nameInput ? nameInput.value.trim() : '';
   const subscriptionPlan = document.getElementById('policy_' + subID).textContent;
   const scopeContainer = document.getElementById('scopeContainer-' + subID + '-' + keyType);
   const scopeTags = scopeContainer.querySelectorAll('.span-tag');
@@ -67,6 +92,13 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
 
   normalState.style.display = 'none';
   loadingState.style.display = 'inline-block';
+
+  if (!apiKeyName) {
+    await showAlert('Please enter an API Key name.', 'error');
+    normalState.style.display = 'inline-block';
+    loadingState.style.display = 'none';
+    return;
+  }
 
   const uri = `/devportal/api-keys/generate`;
 
@@ -79,6 +111,7 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
       "keyType": `${keyType.toUpperCase()}`,
       "projectID": `${projectID}`,
       "devportalAppId": `${appID}`,
+      "name": apiKeyName,
     });
 
   try {
@@ -125,6 +158,15 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
           manageLink.innerHTML = '<i class="bi bi-gear me-1"></i> ' + envLabel;
           
           generateBtn.parentNode.replaceChild(manageLink, generateBtn);
+        }
+      }
+
+      // Update API Key Name table cell on manage-keys page without reload
+      if (isManageKeysPage) {
+        const nameCellId = 'apiKeyNameCell-' + subID + '-' + keyType;
+        const nameCell = document.getElementById(nameCellId);
+        if (nameCell) {
+          nameCell.textContent = apiKeyName;
         }
       }
 
@@ -237,6 +279,15 @@ async function revokeAPIKey(apiKeyID, subID, appID, apiRefID, keyType) {
         }
       }
       // On manage-keys.hbs: regenerate/revoke buttons are already hidden above, generate button is shown
+
+      // Clear API Key Name cell on manage-keys page without reload
+      if (isManageKeysPage) {
+        const nameCellId = 'apiKeyNameCell-' + subID + '-' + keyType;
+        const nameCell = document.getElementById(nameCellId);
+        if (nameCell) {
+          nameCell.textContent = '';
+        }
+      }
 
       await showAlert('API Key revoked successfully!', 'success');
 
