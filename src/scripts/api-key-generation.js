@@ -36,13 +36,23 @@ function openApiKeyModal(projectID, apiRefID, subPlan, cpAppID, appID, subID, su
   }
   modal.style.display = 'flex';
 
-  document.getElementById("generateAPIKeyBtn-" + subID + '-' + keyType).style.display = 'block';
-  document.getElementById('apiKeyCard-' + subID + '-' + keyType).classList.add('d-none');
-  document.getElementById('apiKeyInfo-' + subID + '-' + keyType).classList.add('d-none');
+  const generateBtn = document.getElementById("generateAPIKeyBtn-" + subID + '-' + keyType);
+  if (generateBtn) {
+    generateBtn.style.display = 'block';
+  }
+  const apiKeyCard = document.getElementById('apiKeyCard-' + subID + '-' + keyType);
+  if (apiKeyCard) {
+    apiKeyCard.classList.add('d-none');
+  }
+  const apiKeyInfo = document.getElementById('apiKeyInfo-' + subID + '-' + keyType);
+  if (apiKeyInfo) {
+    apiKeyInfo.classList.add('d-none');
+  }
 
   const scopeContainer = document.getElementById('scopeContainer-' + subID + '-' + keyType);
-  scopeContainer.setAttribute('data-scopes', subscribedScopes);
-
+  if (scopeContainer) {
+    scopeContainer.setAttribute('data-scopes', subscribedScopes);
+  }
   const scopesData = scopeContainer?.dataset?.scopes;
 
   if (scopesData) {
@@ -93,8 +103,21 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
   }
   const nameInput = document.getElementById('apiKeyName-' + subID + '-' + keyType);
   const apiKeyName = nameInput ? nameInput.value.trim() : '';
-  const subscriptionPlan = document.getElementById('policy_' + subID).textContent.trim();
-  const scopeContainer = document.getElementById('scopeContainer-' + subID + '-' + keyType);
+
+  const policyElement = document.getElementById('policy_' + subID);
+  if (!policyElement) {
+    console.error('Unable to find subscription plan.');
+    normalState.style.display = 'inline-block';
+    loadingState.style.display = 'none';
+    return;
+  }
+  const subscriptionPlan = policyElement.textContent.trim();  const scopeContainer = document.getElementById('scopeContainer-' + subID + '-' + keyType);
+  if (!scopeContainer) {
+    console.error('Unable to find scope container.');
+    normalState.style.display = 'inline-block';
+    loadingState.style.display = 'none';
+    return;
+  }
   const scopeTags = scopeContainer.querySelectorAll('.span-tag');
   const scopes = Array.from(scopeTags).map(el => el.textContent.replace('×', '').trim());
   scopeContainer.setAttribute('data-scopes', [scopes]);
