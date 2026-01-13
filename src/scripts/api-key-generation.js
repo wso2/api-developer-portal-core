@@ -134,40 +134,23 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
       document.getElementById("token_apiKeyText-" + subID + '-' + keyType).textContent = responseData.value;
       
       // Hide the generate button in the modal
-      const generateAPIKeyBtn = document.getElementById('generateAPIKeyBtn-' + subID + '-' + keyType);
-      if (generateAPIKeyBtn) {
-        generateAPIKeyBtn.style.display = 'none';
+      const apiKeyModalGenerateBtn = document.getElementById('generateAPIKeyBtn-' + subID + '-' + keyType);
+      if (apiKeyModalGenerateBtn) {
+        apiKeyModalGenerateBtn.style.display = 'none';
       }
 
-      // Check if we're on the manage-keys page
-      const isManageKeysPage = window.location.pathname.includes('/manage-keys');
-      
-      const generateBtn = document.getElementById('generateKeyBtn-' + subID + '-' + keyType);
-      if (generateBtn) {
-        if (isManageKeysPage) {
-          // On manage-keys.hbs: Just hide the generate button, regenerate/revoke buttons will be shown
-          generateBtn.style.display = 'none';
-        } else {
-          // On apis.hbs: Replace generate button with "Manage Key" link
-          const envLabel = keyType === 'PRODUCTION' ? 'Production' : 'Sandbox';          
-          const manageLink = document.createElement('a');
-          manageLink.className = 'common-btn-outlined btn-sm';
-          manageLink.id = 'manageKeyBtn-' + subID + '-' + keyType;
-          manageLink.href = window.location.pathname.replace(/\/[^\/]*$/, '/manage-keys');
-          manageLink.setAttribute('title', 'Manage ' + envLabel + ' Key');
-          manageLink.innerHTML = '<i class="bi bi-gear me-1"></i> ' + envLabel;
-          
-          generateBtn.parentNode.replaceChild(manageLink, generateBtn);
-        }
+      const generateAPIKeyBtn = document.getElementById(
+        tokenBtnPrefix + subID + "-" + keyType
+      );
+      if (generateAPIKeyBtn) {
+        generateAPIKeyBtn.style.display = "none";
       }
 
       // Update API Key Name table cell on manage-keys page without reload
-      if (isManageKeysPage) {
-        const nameCellId = 'apiKeyNameCell-' + subID + '-' + keyType;
-        const nameCell = document.getElementById(nameCellId);
-        if (nameCell) {
-          nameCell.textContent = apiKeyName;
-        }
+      const nameCellId = "apiKeyNameCell-" + subID + "-" + keyType;
+      const nameCell = document.getElementById(nameCellId);
+      if (nameCell) {
+        nameCell.textContent = apiKeyName;
       }
 
       // Also update regenerate/revoke buttons in manage-keys page if they exist
@@ -252,41 +235,11 @@ async function revokeAPIKey(apiKeyID, subID, appID, apiRefID, keyType) {
         generateBtn.style.display = 'inline-flex';
       }
 
-      // Check if we're on the manage-keys page
-      const isManageKeysPage = window.location.pathname.includes('/manage-keys');
-      
-      if (!isManageKeysPage) {
-        // Only on apis.hbs: Replace "Manage Key" button with "Generate Key" button
-        // Note: "Manage Key" buttons only exist in apis.hbs page
-        let manageBtn = document.getElementById('manageKeyBtn-' + subID + '-' + keyType);
-        if (manageBtn) {
-          const envLabel = keyType === 'PRODUCTION' ? 'Production' : 'Sandbox';
-          const generateButton = document.createElement('button');
-          generateButton.className = 'common-btn-outlined btn-sm';
-          generateButton.id = 'generateKeyBtn-' + subID + '-' + keyType;
-          generateButton.setAttribute('data-app-ref-id', '');
-          generateButton.setAttribute('title', 'Generate ' + envLabel + ' Key');
-          generateButton.innerHTML = `
-            <span class="button-normal-state">
-              <i class="bi bi-key me-1"></i> ${envLabel}
-            </span>
-            <span class="button-loading-state" style="display: none;">
-              <span class="spinner-border spinner-border-sm me-1" role="status"> Revoking...</span>
-            </span>
-          `;
-          // Note: The page will need to be refreshed to get the onclick handler with proper parameters
-          manageBtn.parentNode.replaceChild(generateButton, manageBtn);
-        }
-      }
-      // On manage-keys.hbs: regenerate/revoke buttons are already hidden above, generate button is shown
-
       // Clear API Key Name cell on manage-keys page without reload
-      if (isManageKeysPage) {
-        const nameCellId = 'apiKeyNameCell-' + subID + '-' + keyType;
-        const nameCell = document.getElementById(nameCellId);
-        if (nameCell) {
-          nameCell.textContent = '';
-        }
+      const nameCellId = 'apiKeyNameCell-' + subID + '-' + keyType;
+      const nameCell = document.getElementById(nameCellId);
+      if (nameCell) {
+        nameCell.textContent = '';
       }
 
       await showAlert('API Key revoked successfully!', 'success');
