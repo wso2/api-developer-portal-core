@@ -88,6 +88,9 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
   }
   const normalState = tokenBtn.querySelector('.button-normal-state');
   const loadingState = tokenBtn.querySelector('.button-loading-state');
+  if (!normalState || !loadingState) {
+    return;
+  }
   const nameInput = document.getElementById('apiKeyName-' + subID + '-' + keyType);
   const apiKeyName = nameInput ? nameInput.value.trim() : '';
   const subscriptionPlan = document.getElementById('policy_' + subID).textContent.trim();
@@ -209,6 +212,9 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
 async function revokeAPIKey(apiKeyID, subID, appID, apiRefID, keyType) {
 
   let revokeBtn = document.getElementById('revokeKeyBtn-' + subID + '-' + keyType);
+  if (!revokeBtn) {
+    return;
+  }
   const normalState = revokeBtn.querySelector('.button-normal-state');
   const loadingState = revokeBtn.querySelector('.button-loading-state');
 
@@ -266,9 +272,14 @@ async function revokeAPIKey(apiKeyID, subID, appID, apiRefID, keyType) {
 async function regenerateAPIKey(apiKeyID, subID, keyType) {
 
   const tokenBtn = document.getElementById('regenerateKeyBtn-' + subID + '-' + keyType);
+  if (!tokenBtn) {
+    return;
+  }
   const normalState = tokenBtn.querySelector('.button-normal-state');
   const loadingState = tokenBtn.querySelector('.button-loading-state');
-
+  if (!normalState || !loadingState) {
+    return;
+  }
   normalState.style.display = 'none';
   loadingState.style.display = 'inline-block';
 
