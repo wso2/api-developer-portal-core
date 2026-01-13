@@ -1,7 +1,7 @@
 /* Manage Keys Page Styles */
 
 .keys-section {
-    margin-top: 0rem;
+    margin-top: 0;
 }
 
 .key-btn-container {
@@ -85,7 +85,6 @@
     border-radius: var(--bs-accordion-border-radius);
 }
 
-.accordion-button::after, 
 .accordion-button::after, 
 .accordion-button:not(.collapsed)::after {
     background-color: var(--light-text-color);
