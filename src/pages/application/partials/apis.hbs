@@ -60,7 +60,7 @@
                             <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'" class="app-td" style="width: 20%; cursor: pointer;">{{version}}</td>
                             {{!-- <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'" class="app-td" style="cursor: pointer;">{{apiType}}</td> --}}
                             <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'" id="policy_{{subID}}" class="app-td" style="width: 20%; cursor: pointer;">{{policyName}}</td>
-                            <td class="app-td action-column" style="width: 20%;">
+                            <td class="app-td action-column" style="width: 30%;">
                                 <div class="action-buttons-container">
                                     {{> warning }}
                                     <button type="button" class="btn application-btn-icon {{#if @root.isReadOnlyMode}}disabled border-0{{/if}}" onclick="loadModal('planModal-{{apiID}}')">
@@ -124,7 +124,7 @@
                             </td>
                             <td class="app-td" style="width: 25%;">{{version}}</td>
                             <td id="policy_{{subID}}" class="app-td" style="width: 25%;">{{policyName}}</td>
-                            <td class="app-td action-column" style="width: 25%;">
+                            <td class="app-td action-column" style="width: 30%;">
                                 <div class="action-buttons-container">
                                     {{> warning }}
                                     <button type="button" class="btn application-btn-icon {{#if @root.isReadOnlyMode}}disabled border-0{{/if}}" onclick="loadModal('planModal-{{apiID}}')">

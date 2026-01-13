@@ -84,7 +84,7 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
   const loadingState = tokenBtn.querySelector('.button-loading-state');
   const nameInput = document.getElementById('apiKeyName-' + subID + '-' + keyType);
   const apiKeyName = nameInput ? nameInput.value.trim() : '';
-  const subscriptionPlan = document.getElementById('policy_' + subID).textContent;
+  const subscriptionPlan = document.getElementById('policy_' + subID).textContent.trim();
   const scopeContainer = document.getElementById('scopeContainer-' + subID + '-' + keyType);
   const scopeTags = scopeContainer.querySelectorAll('.span-tag');
   const scopes = Array.from(scopeTags).map(el => el.textContent.replace('×', '').trim());
@@ -174,14 +174,14 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
       let regenerateBtn = document.getElementById('regenerateKeyBtn-' + subID + '-' + keyType);
       if (regenerateBtn) {
         regenerateBtn.style.display = 'inline-flex';
-        regenerateBtn.setAttribute('data-api-key-id', `'${responseData.id}'`);
+        regenerateBtn.setAttribute('data-api-key-id', responseData.id);
         regenerateBtn.setAttribute('data-scopes', `${JSON.stringify(scopes)}`);
       }
 
       let revokeBtn = document.getElementById('revokeKeyBtn-' + subID + '-' + keyType);
       if (revokeBtn) {
         revokeBtn.style.display = 'inline-flex';
-        revokeBtn.setAttribute('data-api-key-id', `'${responseData.id}'`);
+        revokeBtn.setAttribute('data-api-key-id', responseData.id);
       }
 
       const removeElementSpan = scopeContainer.querySelectorAll('.remove');
