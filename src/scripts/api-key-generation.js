@@ -31,6 +31,9 @@ function openApiKeyModal(projectID, apiRefID, subPlan, cpAppID, appID, subID, su
     return generateAPIKey(projectID, apiRefID, subPlan, cpAppID, appID, subID, subIDs, 'generateKeyBtn-', keyType)
   }
   const modal = document.getElementById('apiKeyModal-' + subID + '-' + keyType);
+  if (!modal) {
+    return;
+  }
   modal.style.display = 'flex';
 
   document.getElementById("generateAPIKeyBtn-" + subID + '-' + keyType).style.display = 'block';
@@ -80,6 +83,9 @@ function openApiKeyModal(projectID, apiRefID, subPlan, cpAppID, appID, subID, su
 async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, subIDs, tokenBtnPrefix, keyType) {
 
   const tokenBtn = document.getElementById(tokenBtnPrefix + subID + '-' + keyType);
+  if (!tokenBtn) {
+    return;
+  }
   const normalState = tokenBtn.querySelector('.button-normal-state');
   const loadingState = tokenBtn.querySelector('.button-loading-state');
   const nameInput = document.getElementById('apiKeyName-' + subID + '-' + keyType);
@@ -102,7 +108,7 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
 
   const uri = `/devportal/api-keys/generate`;
 
-  JSONbody = JSON.stringify(
+  const JSONbody = JSON.stringify(
     {
       "applicationId": cpAppID ? `${cpAppID}` : tokenBtn.getAttribute('data-app-ref-id'),
       "apiId": `${apiID}`,
@@ -127,6 +133,9 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
 
     if (response.ok) {
       const modal = document.getElementById('apiKeyModal-' + subID + '-' + keyType);
+      if (!modal) {
+        return;
+      }
       modal.style.display = 'flex';
 
       document.getElementById('apiKeyCard-' + subID + '-' + keyType).classList.remove('d-none');
