@@ -220,8 +220,8 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
     let subscriptionScopes = [];
     if (applicationReference) {
         let cpApplication = await getAPIMApplication(req, applicationReference);
-        if (cpApplication && Array.isArray(cpApplication?.subscriptionScopes)) {
-            for (const scope of cpApplication?.subscriptionScopes) {
+        if (cpApplication && Array.isArray(cpApplication.subscriptionScopes)) {
+            for (const scope of cpApplication.subscriptionScopes) {
                 subscriptionScopes.push(scope.key);
             }
         }
