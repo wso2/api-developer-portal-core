@@ -157,6 +157,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
                         consumerKeyEl.removeAttribute("style");
                     }
                     consumerKeyEl.classList.add("col-md-6");
+                    consumerKeyEl.value = consumerKey || '';
                 }
                 if (consumerKeyContainerView && consumerKeyContainerView.hasAttribute("style")) {
                     consumerKeyContainerView.removeAttribute("style");
@@ -164,8 +165,12 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
                 if (consumerSecretContainerView && consumerSecretContainerView.hasAttribute("style")) {
                     consumerSecretContainerView.removeAttribute("style");
                 }
-                if (consumerSecretEl && consumerSecretEl.hasAttribute("style")) {
-                    consumerSecretEl.removeAttribute("style");
+
+                if (consumerSecretEl) {
+                    consumerSecretEl.value = consumerSecret || '';
+                    if (consumerSecretEl.hasAttribute("style")) {
+                        consumerSecretEl.removeAttribute("style");
+                    }
                 }
                 if (keyActionsContainer && keyActionsContainer.hasAttribute("style")) {
                     keyActionsContainer.removeAttribute("style");
@@ -556,9 +561,10 @@ async function removeApplicationKey() {
 
 async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName, clientSecret, subscribedScopes, keyType) {
     let tokenBtn = document.getElementById('tokenKeyBtn-' + keyType);
+    let regenerateBtn = document.getElementById('regenerateButton_' + keyManager + '_' + keyType);
     const devAppId = tokenBtn?.dataset?.appId
     const scopeContainer = document.getElementById('scopeContainer-' + devAppId + '-' + keyType);
-    const scopeInput = document.getElementById('scope-' + devAppId);
+    const scopeInput = document.getElementById('scope-' + devAppId + '-' + keyType);
 
     if (!(subscribedScopes)) {
         // In the regenerate token request, the scopes are fetched from the span tags
@@ -574,25 +580,32 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
         if (subscribedScopes === '[]') {
             // If the scopes are empty, set it to an empty array
             subscribedScopes = [];
-            if (tokenBtn?.dataset?.scopes) {
+            if (tokenBtn && tokenBtn.dataset?.scopes) {
                 scopeContainer.setAttribute('data-scopes', tokenBtn?.dataset?.scopes);
-                subscribedScopes = JSON.parse(tokenBtn.dataset.scopes);
+            }
+            if (regenerateBtn && regenerateBtn.dataset?.scopes) {
+                scopeContainer.setAttribute("data-scopes", regenerateBtn.dataset?.scopes);
+            }
+
+            const existingScopes = Array.from(scopeContainer.querySelectorAll('.span-tag'))
+            .map(el => el.textContent.replace('×', '').trim());
+            if (existingScopes.length > 0) {
+                subscribedScopes = existingScopes;
             }
         } else { 
             scopeContainer.setAttribute('data-scopes', subscribedScopes);
             subscribedScopes = JSON.parse(subscribedScopes);
         }
-        if (tokenBtn) {
-            tokenBtn.setAttribute("data-scopes", JSON.stringify(subscribedScopes));
-        }
+        tokenBtn = document.getElementById('tokenKeyBtn-' + keyType);
+        regenerateBtn = document.getElementById('regenerateButton_' + keyManager + '_' + keyType);
     }
 
     const scopesData = scopeContainer?.dataset?.scopes;
-
     if (scopesData) {
         // Clear existing scopes
         scopeContainer.querySelectorAll('.span-tag').forEach(el => el.remove());
         const scopes = JSON.parse(scopesData);
+
         scopes.forEach(scope => {
             addScope(scope);
         });
@@ -639,8 +652,17 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
         scopeInput.focus();
     });
 
-    const normalState = tokenBtn?.querySelector('.button-normal-state');
-    const loadingState = tokenBtn?.querySelector('.button-loading-state');
+    const normalState = tokenBtn.querySelector('.button-normal-state');
+    const loadingState = tokenBtn.querySelector('.button-loading-state');
+
+    const regenerateNormalState = regenerateBtn.querySelector('.button-normal-state');
+    const regenerateLoadingState = regenerateBtn.querySelector('.button-loading-state');
+    
+    if (regenerateNormalState && regenerateLoadingState && regenerateBtn) {
+        regenerateNormalState.style.display = 'none';
+        regenerateLoadingState.style.display = 'inline-block';
+        regenerateBtn.disabled = true;
+    }
 
     // Clear any previous error messages
     const errorContainer = document.getElementById('keyGenerationErrorContainer-' + keyType);
@@ -660,7 +682,7 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
     const formData = new FormData(form);
 
     if (!keyMappingId) {
-        const tokenbtn = document.getElementById('tokenKeyBtn-' + keyType);   
+        const tokenbtn = document.getElementById('tokenKeyBtn-' + keyType);
         let clientSecretID = tokenbtn.getAttribute("data-consumerSecretID");
         clientSecret = document.getElementById(clientSecretID).value;
         keyMappingId = tokenbtn.getAttribute("data-keyMappingId");
@@ -722,6 +744,12 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
                 tokenBtn.disabled = false;
             }
 
+            if (regenerateNormalState && regenerateLoadingState && regenerateBtn) {
+                regenerateNormalState.style.display = 'inline-block';
+                regenerateLoadingState.style.display = 'none';
+                regenerateBtn.disabled = false;
+            }
+
             const responseScopeContainer = document.getElementById('responseScopeContainer-' + devAppId + '-' + keyType);
             if (responseScopeContainer) {
               responseScopeContainer.innerHTML = "";
@@ -763,6 +791,11 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
                 loadingState.style.display = 'none';
                 tokenBtn.disabled = false;
             }
+            if (regenerateNormalState && regenerateLoadingState && regenerateBtn) {
+                regenerateNormalState.style.display = 'inline-block';
+                regenerateLoadingState.style.display = 'none';
+                regenerateBtn.disabled = false;
+            }
         }
     } catch (error) {
         console.error('Error:', error);
@@ -778,6 +811,12 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
             normalState.style.display = 'inline-block';
             loadingState.style.display = 'none';
             tokenBtn.disabled = false;
+        }
+
+        if (regenerateNormalState && regenerateLoadingState && regenerateBtn) {
+            regenerateNormalState.style.display = 'inline-block';
+            regenerateLoadingState.style.display = 'none';
+            regenerateBtn.disabled = false;
         }
     }
 
