@@ -135,7 +135,7 @@
                                                 </div>
                                             </div>
                                             <button data-cyid="generateKey-PRODUCTION" id="generateKeyBtn-PRODUCTION"
-                                                class="common-btn-primary btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}} col-md-2"
+                                                class="common-btn-primary btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}} col-md-3"
                                                 style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
                                                 onclick="generateApplicationKey('keysview-{{../id}}-PRODUCTION', '{{../../applicationMetadata.id}}', 'PRODUCTION', '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-PRODUCTION', 'consumer-secret-{{../id}}-PRODUCTION')">
                                                 <span class="button-normal-state">
@@ -174,7 +174,7 @@
                             <div class="accordion-body p-0">
                                 <div class="accordion-body-content">
                                     {{#if subAPIs}}
-                                    <div class="app-table-container" id="app-table-container">
+                                    <div class="app-table-container my-2" id="app-table-container">
                                         <table class="app-table" id="app-table-{{applicationMetadata.id}}">
                                             <thead>
                                                 <tr>
@@ -191,6 +191,7 @@
                                             </thead>
                                             <tbody>
                                                 {{#each subAPIs}}
+                                                {{#if (contains security 'api_key')}}
                                                 {{> api-key apiID=apiID keyType="PRODUCTION"}}
                                                 {{#in apiType values="REST, WS, WEBSUB"}}
                                                 {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails
@@ -273,6 +274,7 @@
                                                     </td>
                                                 </tr>
                                                 {{/in}}
+                                                {{/if}}
                                                 {{/each}}
                                             </tbody>
                                         </table>
@@ -450,7 +452,7 @@
                             <div class="accordion-body p-0">
                                 <div class="accordion-body-content">
                                     {{#if subAPIs}}
-                                    <div class="app-table-container" id="app-table-container">
+                                    <div class="app-table-container my-2" id="app-table-container">
                                         <table class="app-table" id="app-table-{{applicationMetadata.id}}">
                                             <thead>
                                                 <tr>
