@@ -164,9 +164,18 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
       }
       modal.style.display = 'flex';
 
-      document.getElementById('apiKeyCard-' + subID + '-' + keyType).classList.remove('d-none');
-      document.getElementById('apiKeyInfo-' + subID + '-' + keyType).classList.remove('d-none');
-      document.getElementById("token_apiKeyText-" + subID + '-' + keyType).textContent = responseData.value;
+      const apiKeyCard = document.getElementById('apiKeyCard-' + subID + '-' + keyType);
+      if (apiKeyCard) {
+        apiKeyCard.classList.remove('d-none');
+      }
+      const apiKeyInfo = document.getElementById('apiKeyInfo-' + subID + '-' + keyType);
+      if (apiKeyInfo) {
+        apiKeyInfo.classList.remove('d-none');
+      }
+      const tokenApiKeyText = document.getElementById("token_apiKeyText-" + subID + '-' + keyType);
+      if (tokenApiKeyText) {
+        tokenApiKeyText.textContent = responseData.value;
+      }
       
       // Hide the generate button in the modal
       const apiKeyModalGenerateBtn = document.getElementById('generateAPIKeyBtn-' + subID + '-' + keyType);
@@ -319,12 +328,26 @@ async function regenerateAPIKey(apiKeyID, subID, keyType) {
     const responseData = await response.json();
 
     if (response.ok) {
-      document.getElementById('apiKeyModal-' + subID + '-' + keyType).style.display = 'flex';
-      document.getElementById("token_apiKeyText-" + subID + '-' + keyType).textContent = responseData.value;
-      document.getElementById("generateAPIKeyBtn-" + subID + '-' + keyType).style.display = 'none';
+      const modal = document.getElementById('apiKeyModal-' + subID + '-' + keyType);
+      if (!modal) {
+        return;
+      }
+      modal.style.display = 'flex';
+
+      const tokenText = document.getElementById("token_apiKeyText-" + subID + '-' + keyType);
+      if (tokenText) {
+        tokenText.textContent = responseData.value;
+      }
 
       const regenerateBtn = document.getElementById("regenerateKeyBtn-" + subID + '-' + keyType);
+      if (regenerateBtn) {
+        regenerateBtn.style.display = 'none';
+      }
+
       const scopeContainer = document.getElementById('scopeContainer-' + subID + '-' + keyType);
+      if (!scopeContainer) {
+        return;
+      }
       const scopes = regenerateBtn?.dataset?.scopes || '[]';
 
       if (JSON.parse(scopes).length > 0) {
