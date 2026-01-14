@@ -625,6 +625,36 @@ const loadDocument = async (req, res) => {
                         });
                     }
                 }
+                // Add x-env header parameter to all operations
+                for (let path in modifiedSwagger.paths) {
+                    for (let method in modifiedSwagger.paths[path]) {
+                        if (modifiedSwagger.paths[path].hasOwnProperty(method)) {
+                            const operation = modifiedSwagger.paths[path][method];
+                            // Initialize parameters array if it doesn't exist
+                            if (!operation.parameters) {
+                                operation.parameters = [];
+                            }
+                            // Check if x-env header already exists
+                            const hasXEnvHeader = operation.parameters.some(
+                                param => param.in === 'header' && param.name === 'X-ENV'
+                            );
+                            // Add x-env header if it doesn't exist
+                            if (!hasXEnvHeader) {
+                                operation.parameters.push({
+                                    name: 'X-ENV',
+                                    in: 'header',
+                                    description: 'Environment header (e.g., production, sandbox)',
+                                    required: true,
+                                    schema: {
+                                        type: 'string',
+                                        default: 'production'
+                                    },
+                                    example: 'production'
+                                });
+                            }
+                        }
+                    }
+                }
                 templateContent.swagger = JSON.stringify(modifiedSwagger);
             } else if (definitionResponse.apiType === constants.API_TYPE.GRAPHQL) {
                 if (templateContent.isGraphQLTryout && definitionResponse.graphql) {
@@ -878,11 +908,13 @@ function replaceEndpointParams(apiDefinition, prodEndpoint, sandboxEndpoint) {
     let servers = [];
     if (prodEndpoint.trim().length !== 0) {
         servers.push({
+            description: "Production",
             url: prodEndpoint
         });
     }
     if (sandboxEndpoint.trim().length !== 0) {
         servers.push({
+            description: "Sandbox",
             url: sandboxEndpoint
         });
     }

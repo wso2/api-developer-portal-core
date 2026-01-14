@@ -33,6 +33,19 @@ const loadCustomContent = async (req, res) => {
     let html = "";
     const { orgName, viewName } = req.params;
     let filePath = req.originalUrl.split("/" + orgName + constants.ROUTE.VIEWS_PATH + viewName + "/")[1];
+    
+    // Skip manage-keys routes - they should be handled by the application controller
+    // This is a safety check in case the route doesn't match properly
+    if (filePath && filePath.match(/^applications\/[^/]+\/manage-keys/)) {
+        logger.warn('Manage-keys route intercepted by catch-all route - this should not happen', {
+            orgName,
+            viewName,
+            filePath,
+            originalUrl: req.originalUrl
+        });
+        res.status(404).send('Not found');
+        return;
+    }
     if (config.mode === constants.DEV_MODE) {
         let templateContent = {};
         templateContent[constants.BASE_URL_NAME] = baseURLDev + viewName;
@@ -50,6 +63,20 @@ const loadCustomContent = async (req, res) => {
         let content = {};
         try {
             filePath = 'pages/' + filePath;
+            // Normalize application-specific manage-keys paths to the shared manage-keys page
+            const manageKeysMatch = filePath.match(/^pages\/applications\/[^/]+\/manage-keys/);
+            if (manageKeysMatch) {
+                filePath = 'pages/manage-keys';
+            }
+            // Check if the file exists before attempting to render
+            const resolvedPagePath = path.join(process.cwd(), filePrefix + filePath + '/page.hbs');
+            if (!fs.existsSync(resolvedPagePath)) {
+                // If it's a manage-keys route that doesn't exist, return 404 or redirect
+                if (filePath.includes('manage-keys')) {
+                    throw new Error(`Manage keys page not found. This route should be handled by the application controller.`);
+                }
+                throw new Error(`Content page not found at ${resolvedPagePath}`);
+            }
             let orgId = await adminDao.getOrgId(orgName);
             let markDownFiles = await adminDao.getOrgContent({
                 orgId: orgId,

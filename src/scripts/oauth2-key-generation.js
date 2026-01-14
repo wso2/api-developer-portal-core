@@ -1,13 +1,31 @@
 async function generateApplicationKey(formId, appId, keyType, keyManager, clientName, subscriptions, orgID, consumerKeyID, consumerSecretID) {
+    // Validate required parameters
+    if (!formId || !appId || !keyType || !keyManager || !clientName || !subscriptions || !orgID || !consumerKeyID || !consumerSecretID) {
+        console.error('generateApplicationKey: Missing required parameters');
+        return;
+    }
+
     // Get the generate button and set loading state
-    const generateBtn = document.getElementById('generateKeyBtn');
+    const generateBtn = document.getElementById('generateKeyBtn-' + keyType);
+    if (!generateBtn) {
+        console.error('generateApplicationKey: Generate button not found');
+        return;
+    }
+
     const normalState = generateBtn.querySelector('.button-normal-state');
     const loadingState = generateBtn.querySelector('.button-loading-state');
 
+    if (!normalState || !loadingState) {
+        console.error('generateApplicationKey: Button states not found');
+        return;
+    }
+
     // Clear any previous error messages
-    const errorContainer = document.getElementById('keyGenerationErrorContainer');
-    errorContainer.style.display = 'none';
-    errorContainer.textContent = '';
+    const errorContainer = document.getElementById('keyGenerationErrorContainer-' + keyType);
+    if (errorContainer) {
+        errorContainer.style.display = 'none';
+        errorContainer.textContent = '';
+    }
 
     // Show generating state
     normalState.style.display = 'none';
@@ -15,8 +33,34 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
     generateBtn.disabled = true;
 
     const form = document.getElementById(formId);
-    const apiList = []
-    const subList = JSON.parse(subscriptions);
+    if (!form) {
+        console.error('generateApplicationKey: Form not found', formId);
+        // Reset button state
+        normalState.style.display = 'inline-block';
+        loadingState.style.display = 'none';
+        generateBtn.disabled = false;
+        if (errorContainer) {
+            errorContainer.textContent = 'Please refresh the page and try again.';
+            errorContainer.style.display = 'block';
+        }
+        return;
+    }
+
+    const apiList = [];
+    let subList;
+    try {
+        subList = JSON.parse(subscriptions);
+    } catch (error) {
+        console.error('generateApplicationKey: Failed to parse subscriptions', error);
+        normalState.style.display = 'inline-block';
+        loadingState.style.display = 'none';
+        generateBtn.disabled = false;
+        if (errorContainer) {
+            errorContainer.textContent = 'Invalid subscriptions data. Please refresh the page and try again.';
+            errorContainer.style.display = 'block';
+        }
+        return;
+    }
     subList.forEach(subscription => {
         apiList.push({
             "apiName": subscription.name,
@@ -70,28 +114,79 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
 
             const consumerKey = responseData.consumerKey;
             const consumerSecret = responseData.consumerSecret;
-            const keyManagerId = formId.replace("keysview-", "").replace(/-(sandbox|production)$/, "");
-            document.getElementById(consumerKeyID).value = consumerKey;
-            document.getElementById(consumerSecretID).value = consumerSecret;
-            document.getElementById("app-ref-" + keyManagerId).value = responseData.appRefId;
-            document.getElementById("key-map-" + keyManagerId).value = responseData.keyMappingId;
+            const keyManagerId = formId.replace("keysview-", "").replace(/-(SANDBOX|PRODUCTION)$/, "");
+            const envSuffix = keyType;
+            
+            // Update form fields safely
+            const consumerKeyElement = document.getElementById(consumerKeyID);
+            const consumerSecretElement = document.getElementById(consumerSecretID);
+            const consumerKeyElementView = document.getElementById(consumerKeyID + "-view");
+            const consumerSecretElementView = document.getElementById(consumerSecretID + "-view");
+            const appRefElement = document.getElementById("app-ref-" + keyManagerId + "-" + envSuffix);
+            const keyMapElement = document.getElementById("key-map-" + keyManagerId + "-" + envSuffix);
+
+            if (consumerKeyElement) consumerKeyElement.value = consumerKey || '';
+            if (consumerSecretElement) consumerSecretElement.value = consumerSecret || '';
+
+            if (consumerKeyElementView) consumerKeyElementView.value = consumerKey || '';
+            if (consumerSecretElementView) consumerSecretElementView.value = consumerSecret || '';
+
+            if (appRefElement && responseData.appRefId) appRefElement.value = responseData.appRefId;
+            if (keyMapElement && responseData.keyMappingId) keyMapElement.value = responseData.keyMappingId;
 
             if (consumerSecret) {
-                document.getElementById("keysViewModalBody").removeAttribute("style");
-                document.getElementById("consumerKey").removeAttribute("class");
-                document.getElementById("consumerSecret").removeAttribute("style");
-                document.getElementById("consumerKey").classList.add("col-md-6");
-                document.getElementById("keyActionsContainer").removeAttribute("style");
-                document.getElementById("curlDisplay_" + keyManager).removeAttribute("style");
-                document.getElementById("KMData_" + keyManager).removeAttribute("style");
+                const modalBody = document.getElementById("keysViewModal-" + keyType + "-Body");
+                if (modalBody && modalBody.hasAttribute("style")) {
+                    modalBody.removeAttribute("style");
+                }
+
+                const consumerKeyEl = document.getElementById("consumerKey-" + keyType);
+                const consumerSecretEl = document.getElementById("consumerSecret-" + keyType);
+                const keyActionsContainer = document.getElementById("keyActionsContainer-" + keyType);
+
+                const consumerKeyContainer = document.getElementById("consumerKeyContainer-" + keyType);
+                const consumerKeyContainerView = document.getElementById("consumerKey-" + keyType + "-view");
+                const consumerSecretContainerView = document.getElementById("consumerSecret-" + keyType + "-view");
+
+                const curlDisplay = document.getElementById("curlDisplay_" + keyManager + "_" + keyType);
+                const kmData = document.getElementById("KMData_" + keyManager + "_" + keyType);
+
+                if (consumerKeyEl) {
+                    consumerKeyEl.removeAttribute("class");
+                    if (consumerKeyEl.hasAttribute("style")) {
+                        consumerKeyEl.removeAttribute("style");
+                    }
+                    consumerKeyEl.classList.add("col-md-6");
+                }
+                if (consumerKeyContainerView && consumerKeyContainerView.hasAttribute("style")) {
+                    consumerKeyContainerView.removeAttribute("style");
+                }
+                if (consumerSecretContainerView && consumerSecretContainerView.hasAttribute("style")) {
+                    consumerSecretContainerView.removeAttribute("style");
+                }
+                if (consumerSecretEl && consumerSecretEl.hasAttribute("style")) {
+                    consumerSecretEl.removeAttribute("style");
+                }
+                if (keyActionsContainer && keyActionsContainer.hasAttribute("style")) {
+                    keyActionsContainer.removeAttribute("style");
+                }
+                if (consumerKeyContainer && consumerKeyContainer.hasAttribute("style")) {
+                    consumerKeyContainer.removeAttribute("style");
+                }
+                if (curlDisplay && curlDisplay.hasAttribute("style")) {
+                    curlDisplay.removeAttribute("style");
+                }
+                if (kmData && kmData.hasAttribute("style")) {
+                    kmData.removeAttribute("style");
+                }
             }
 
-            const keyActionsContainer = document.getElementById("keyActionsContainer");
+            const keyActionsContainer = document.getElementById("keyActionsContainer-" + keyType);
             if (keyActionsContainer) {
                 keyActionsContainer.style.display = "flex";
             }
             // Update UI elements in the overview section
-            const generateKeyContainer = document.getElementById("generateKeyContainer");
+            const generateKeyContainer = document.getElementById("generateKeyContainer" + "-" +  keyType);
             if (generateKeyContainer) {
                 generateKeyContainer.style.display = "none";
             }
@@ -104,7 +199,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             // document.querySelectorAll("#token_" + keyManager).forEach(tokenDetails => {
             //     tokenDetails.textContent = responseData.accessToken;
             // });
-            const tokenbtn = document.getElementById('tokenKeyBtn');
+            const tokenbtn = document.getElementById('tokenKeyBtn-' + keyType);
             if (tokenbtn) {
                 tokenbtn.setAttribute("data-keyMappingId", responseData.keyMappingId);
                 tokenbtn.setAttribute("data-consumerSecretID", consumerSecretID);
@@ -114,12 +209,16 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
                 document.getElementById("generateApiKey_" + subscription.subID)?.setAttribute('data-app-ref-id', `${responseData.appRefId}`);
             })
 
-            document.getElementById("tokenKeyBtn")?.setAttribute("data-scopes", JSON.stringify(responseData.subscriptionScopes));
+            if (tokenbtn) {
+                tokenbtn.setAttribute("data-scopes", JSON.stringify(responseData.subscriptionScopes));
+            }
 
-            generateKeyContainer.style.display = 'none';
-            generateKeyContainer.classList.add('d-none');
+            if (generateKeyContainer) {
+                generateKeyContainer.style.display = 'none';
+                generateKeyContainer.classList.add('d-none');
+            }
             
-            loadKeysViewModal();
+            loadKeysViewModal(keyType);
 
 
             // // Hide the key action container
@@ -178,25 +277,35 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             console.error('Failed to generate keys:', responseData);
 
             // Show error in the error container
-            errorContainer.textContent = `Failed to generate application keys: ${responseData.description || 'Unknown error'}`;
-            errorContainer.style.display = 'block';
+            const errorMessage = responseData.description || responseData.message || 'Unknown error';
+            if (errorContainer) {
+                errorContainer.textContent = `Failed to generate application keys: ${errorMessage}`;
+                errorContainer.style.display = 'block';
+            }
 
             // Reset button state on error
+            if (normalState && loadingState && generateBtn) {
+                normalState.style.display = 'inline-block';
+                loadingState.style.display = 'none';
+                generateBtn.disabled = false;
+            }
+        }
+    } catch (error) {
+        console.error('Error generating application keys:', error);
+
+        // Show error in the error container
+        const errorMessage = error.message || 'Unknown error occurred';
+        if (errorContainer) {
+            errorContainer.textContent = `Error generating application keys: ${errorMessage}`;
+            errorContainer.style.display = 'block';
+        }
+
+        // Reset button state on error
+        if (normalState && loadingState && generateBtn) {
             normalState.style.display = 'inline-block';
             loadingState.style.display = 'none';
             generateBtn.disabled = false;
         }
-    } catch (error) {
-        console.error('Error:', error);
-
-        // Show error in the error container
-        errorContainer.textContent = `Error generating application keys: ${error.message || 'Unknown error'}`;
-        errorContainer.style.display = 'block';
-
-        // Reset button state on error
-        normalState.style.display = 'inline-block';
-        loadingState.style.display = 'none';
-        generateBtn.disabled = false;
     }
 }
 
@@ -302,23 +411,30 @@ function getFormData(formData, keyManager, clientName, appID) {
 async function updateApplicationKey(formId, appMap, keyType, keyManager, keyManagerId, clientName) {
     // Get the update button and set loading state
     console.log("Updating application key with formId:", formId);
-    const updateBtn = document.getElementById('applicationKeyUpdateButton');
+    const updateBtn = document.getElementById('applicationKeyUpdateButton' + '-' + keyType);
+    if (!updateBtn) {
+        console.error('updateApplicationKey: Update button not found for keyType:', keyType);
+        return;
+    }
     const originalContent = updateBtn.innerHTML;
     updateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
     updateBtn.disabled = true;
 
     // Clear any previous error messages
-    const errorContainer = document.getElementById('keyUpdateErrorContainer');
-    errorContainer.style.display = 'none';
-    errorContainer.textContent = '';
+    const errorContainer = document.getElementById('keyUpdateErrorContainer-' + keyType);
+    if (errorContainer) {
+        errorContainer.style.display = 'none';
+        errorContainer.textContent = '';
+    }
 
     const form = document.getElementById(formId);
     const formData = new FormData(form);
     const jsonAppdata = appMap ? JSON.parse(appMap) : null;
     //TODO: Handle multiple CP applications
-    const appKeyManagerId = formId.replace("applicationKeyGenerateForm-", "").replace(/-(sandbox|production)$/, "");
-    const appId = jsonAppdata ? jsonAppdata[0].appRefID : document.getElementById("app-ref-" + appKeyManagerId).value;
-    const keyMappingId = keyManagerId ? keyManagerId : document.getElementById("key-map-" + appKeyManagerId).value;
+    const appKeyManagerId = formId.replace("applicationKeyGenerateForm-", "").replace(/-(SANDBOX|PRODUCTION)$/, "");
+    const envSuffix = keyType;
+    const appId = jsonAppdata ? jsonAppdata[0].appRefID : document.getElementById("app-ref-" + appKeyManagerId + "-" + envSuffix)?.value;
+    const keyMappingId = keyManagerId ? keyManagerId : document.getElementById("key-map-" + appKeyManagerId + "-" + envSuffix)?.value;
     const jsonObject = getFormData(formData, keyManager, clientName, keyManagerId);
     const validationResponse = validateOauthUpdate(jsonObject);
     if (!validationResponse.valid) {
@@ -354,7 +470,7 @@ async function updateApplicationKey(formId, appMap, keyType, keyManager, keyMana
                 updateBtn.innerHTML = originalContent;
                 updateBtn.disabled = false;
 
-                closeModal('keysModifyModal')
+                closeModal('keysModifyModal-' + keyType);
                 await showAlert('Updated Oauth application successfully!', 'success');
                 const url = new URL(window.location.origin + window.location.pathname);
                 window.location.href = url.toString();
@@ -438,18 +554,18 @@ async function removeApplicationKey() {
     }
 }
 
-async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName, clientSecret, subscribedScopes) {
-    let tokenBtn = document.getElementById('tokenKeyBtn');
+async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientName, clientSecret, subscribedScopes, keyType) {
+    let tokenBtn = document.getElementById('tokenKeyBtn-' + keyType);
     const devAppId = tokenBtn?.dataset?.appId
-    const scopeContainer = document.getElementById('scopeContainer-' + devAppId);
+    const scopeContainer = document.getElementById('scopeContainer-' + devAppId + '-' + keyType);
     const scopeInput = document.getElementById('scope-' + devAppId);
 
     if (!(subscribedScopes)) {
         // In the regenerate token request, the scopes are fetched from the span tags
-        const scopeElements = document.querySelectorAll(`#scopeContainer-${devAppId} .span-tag`);
+        const scopeElements = document.querySelectorAll(`#scopeContainer-${devAppId}-${keyType} .span-tag`);
         subscribedScopes = Array.from(scopeElements).map(el => el.textContent.replace('×', '').trim());
         scopeContainer.setAttribute('data-scopes', JSON.stringify(subscribedScopes));
-        tokenBtn = document.getElementById('regenerateKeyBtn');
+        tokenBtn = document.getElementById('regenerateKeyBtn-' + keyType);
     } else {
         /**
          * During the intial generate token request, the data-scopes attribute is set with subcribed scopes
@@ -466,7 +582,9 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
             scopeContainer.setAttribute('data-scopes', subscribedScopes);
             subscribedScopes = JSON.parse(subscribedScopes);
         }
-        tokenBtn = document.getElementById('tokenKeyBtn');
+        if (tokenBtn) {
+            tokenBtn.setAttribute("data-scopes", JSON.stringify(subscribedScopes));
+        }
     }
 
     const scopesData = scopeContainer?.dataset?.scopes;
@@ -475,7 +593,6 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
         // Clear existing scopes
         scopeContainer.querySelectorAll('.span-tag').forEach(el => el.remove());
         const scopes = JSON.parse(scopesData);
-
         scopes.forEach(scope => {
             addScope(scope);
         });
@@ -522,24 +639,28 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
         scopeInput.focus();
     });
 
-    const normalState = tokenBtn.querySelector('.button-normal-state');
-    const loadingState = tokenBtn.querySelector('.button-loading-state');
+    const normalState = tokenBtn?.querySelector('.button-normal-state');
+    const loadingState = tokenBtn?.querySelector('.button-loading-state');
 
     // Clear any previous error messages
-    const errorContainer = document.getElementById('keyGenerationErrorContainer');
-    errorContainer.style.display = 'none';
-    errorContainer.textContent = '';
+    const errorContainer = document.getElementById('keyGenerationErrorContainer-' + keyType);
+    if (errorContainer) {
+        errorContainer.style.display = 'none';
+        errorContainer.textContent = '';
+    }
 
     // Show generating state
-    normalState.style.display = 'none';
-    loadingState.style.display = 'inline-block';
-    tokenBtn.disabled = true;
+    if (normalState && loadingState && tokenBtn) {
+        normalState.style.display = 'none';
+        loadingState.style.display = 'inline-block';
+        tokenBtn.disabled = true;
+    }
 
     const form = document.getElementById(formId);
     const formData = new FormData(form);
 
     if (!keyMappingId) {
-        const tokenbtn = document.getElementById('tokenKeyBtn');
+        const tokenbtn = document.getElementById('tokenKeyBtn-' + keyType);   
         let clientSecretID = tokenbtn.getAttribute("data-consumerSecretID");
         clientSecret = document.getElementById(clientSecretID).value;
         keyMappingId = tokenbtn.getAttribute("data-keyMappingId");
@@ -579,32 +700,51 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
             // document.querySelectorAll("#token_" + keyManager).forEach(tokenDetails => {
             //     tokenDetails.textContent = responseData.accessToken;
             // });
-            let tokenDetails = document.getElementById("tokenDisplay_" + keyManager);
-            tokenDetails.style.display = "block";
-            let tokenText = document.getElementById("token_" + keyManager);
-            tokenText.textContent = responseData.accessToken;
-            loadKeysTokenModal();
+            let tokenDetails = document.getElementById("tokenDisplay_" + keyManager + '_' + keyType);
+            if (tokenDetails) {
+                tokenDetails.style.display = "block";
+            }
+            let tokenText = document.getElementById("token_" + keyManager + '_' + keyType);
+            if (tokenText) {
+                tokenText.textContent = responseData.accessToken;
+                tokenText.style.display = "block";
+            }
+            let copyButton = document.getElementById("copyButton_" + keyManager + '_' + keyType);
+            if (copyButton) {
+                copyButton.style.display = "block";
+            }
+            loadKeysTokenModal(keyType);
 
             // Reset button state
-            normalState.style.display = 'inline-block';
-            loadingState.style.display = 'none';
-            tokenBtn.disabled = false;
+            if (normalState && loadingState && tokenBtn) {
+                normalState.style.display = 'inline-block';
+                loadingState.style.display = 'none';
+                tokenBtn.disabled = false;
+            }
 
-            const responseScopeContainer = document.getElementById('responseScopeContainer-' + devAppId);
-            responseScopeContainer.innerHTML = '';
-            for (const scope of responseData.tokenScopes) {
-                const span = document.createElement('span');
-                span.className = 'span-tag';
+            const responseScopeContainer = document.getElementById('responseScopeContainer-' + devAppId + '-' + keyType);
+            if (responseScopeContainer) {
+              responseScopeContainer.innerHTML = "";
+              for (const scope of responseData.tokenScopes) {
+                const span = document.createElement("span");
+                span.className = "span-tag";
                 span.innerHTML = `${scope}`;
 
                 responseScopeContainer.appendChild(span);
-            }
+              }
 
-            // If no scopes are present, hide the title
-            if (responseScopeContainer.innerHTML === '') {
-                document.getElementById('resScopeTitle').style.display = 'none';
-            } else {
-                document.getElementById('resScopeTitle').style.display = 'block';
+              // If no scopes are present, hide the title
+              const resScopeTitle = document.getElementById(
+                "resScopeTitle-" + keyType
+              );
+              if (resScopeTitle) {
+                if (responseScopeContainer.innerHTML === "") {
+                  resScopeTitle.style.display = "none";
+                } else {
+                  resScopeTitle.style.display = "block";
+                  responseScopeContainer.style.display = "block";
+                }
+              }
             }
 
             await showAlert('Token generated successfully!', 'success');
@@ -612,25 +752,33 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
             console.error('Failed to generate access token:', responseData);
 
             // Show error in the error container
-            errorContainer.textContent = `Failed to generate access token: ${responseData.description || 'Unknown error'}`;
-            errorContainer.style.display = 'block';
+            if (errorContainer) {
+                errorContainer.textContent = `Failed to generate access token: ${responseData.description || 'Unknown error'}`;
+                errorContainer.style.display = 'block';
+            }
 
             // Reset button state
-            normalState.style.display = 'inline-block';
-            loadingState.style.display = 'none';
-            tokenBtn.disabled = false;
+            if (normalState && loadingState && tokenBtn) {
+                normalState.style.display = 'inline-block';
+                loadingState.style.display = 'none';
+                tokenBtn.disabled = false;
+            }
         }
     } catch (error) {
         console.error('Error:', error);
 
         // Show error in the error container
-        errorContainer.textContent = `Error generating access token: ${error.message || 'Unknown error'}`;
-        errorContainer.style.display = 'block';
+        if (errorContainer) {
+            errorContainer.textContent = `Error generating access token: ${error.message || 'Unknown error'}`;
+            errorContainer.style.display = 'block';
+        }
 
         // Reset button state
-        normalState.style.display = 'inline-block';
-        loadingState.style.display = 'none';
-        tokenBtn.disabled = false;
+        if (normalState && loadingState && tokenBtn) {
+            normalState.style.display = 'inline-block';
+            loadingState.style.display = 'none';
+            tokenBtn.disabled = false;
+        }
     }
 
 
@@ -702,13 +850,17 @@ function loadKeyGenModal() {
     }
 }
 
-function loadKeysViewModal() {
-    const modal = document.getElementById('keysViewModal');
+function loadKeysViewModal(keyType) {
+    const modal = document.getElementById('keysViewModal-' + keyType);
+    if (!modal) {
+        console.error(`Modal keysViewModal-${keyType} not found`);
+        return;
+    }
     modal.style.display = 'flex';
 
     const authorizationCodeCheckbox = modal.querySelector('input[id^="grant-type-view-authorization_code-"]');
     if (authorizationCodeCheckbox) {
-        const pkceFields = modal.querySelectorAll('#row-pkceMandatory, #row-pkceSupportPlain');
+        const pkceFields = modal.querySelectorAll('[id^="row-pkceMandatory"], [id^="row-pkceSupportPlain"]');
         // Handle PKCE fields visibility
         pkceFields.forEach(field => {
             field.style.display = authorizationCodeCheckbox.checked ? 'flex' : 'none';
@@ -716,8 +868,13 @@ function loadKeysViewModal() {
     }
 }
 
-function loadKeysModifyModal() {
-    const modal = document.getElementById('keysModifyModal');
+function loadKeysModifyModal(keyType) {
+    const modalId = 'keysModifyModal-' + keyType;
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.error(`Modal ${modalId} not found`);
+        return;
+    }
     modal.style.display = 'flex';
 
     // Collapse all advanced configurations and reset UI state
@@ -726,9 +883,9 @@ function loadKeysModifyModal() {
     // Find the authorization_code checkbox inside this specific modal
     const authorizationCodeCheckbox = modal.querySelector('input[id^="grant-type-authorization_code-"]');
     if (authorizationCodeCheckbox) {
-        const callbackUrlRow = modal.querySelector('#callback-url-row');
+        const callbackUrlRow = modal.querySelector('[id^="callback-url-row"]');
         // Find PKCE-related configuration fields
-        const pkceFields = modal.querySelectorAll('#row-pkceMandatory, #row-pkceSupportPlain');
+        const pkceFields = modal.querySelectorAll('[id^="row-pkceMandatory"], [id^="row-pkceSupportPlain"]');
 
         // Handle callback URL visibility
         if (callbackUrlRow) {
@@ -764,20 +921,20 @@ function loadKeysModifyModal() {
     }
 
     // Add validation for grant types
-    validateGrantTypes(modal);
+    validateGrantTypes(modal, keyType);
 
     // Add event listeners to all grant type checkboxes
     const grantTypeCheckboxes = modal.querySelectorAll('input[name="grantTypes"]');
     grantTypeCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function () {
-            validateGrantTypes(modal);
+            validateGrantTypes(modal, keyType);
         });
     });
 }
 
-function validateGrantTypes(modal) {
-    // Find the update button
-    const updateButton = modal.querySelector('#applicationKeyUpdateButton');
+function validateGrantTypes(modal, keyType) {
+    // Find the update button with keyType suffix
+    const updateButton = modal.querySelector('[id^="applicationKeyUpdateButton"]');
     if (!updateButton) return;
 
     // Find all grant type checkboxes
@@ -795,19 +952,29 @@ function validateGrantTypes(modal) {
     updateButton.disabled = !isAnyChecked;
 
     // Show/hide validation message
-    const validationMsg = modal.querySelector('#grantTypeValidationMsg');
+    const validationMsg = modal.querySelector('[id^="grantTypeValidationMsg"]');
     if (validationMsg) {
         validationMsg.style.display = isAnyChecked ? 'none' : 'block';
     }
 }
 
-function loadKeysTokenModal() {
-    const modal = document.getElementById('keysTokenModal');
+function loadKeysTokenModal(keyType) {
+    const modalId = 'keysTokenModal-' + keyType;
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.error(`Modal ${modalId} not found`);
+        return;
+    }
     modal.style.display = 'flex';
 }
 
-function loadKeysInstructionsModal() {
-    const modal = document.getElementById('keysInstructionsModal');
+function loadKeysInstructionsModal(keyType) {
+    const modalId = 'keysInstructionsModal-' + keyType;
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.error(`Modal ${modalId} not found`);
+        return;
+    }
     modal.style.display = 'flex';
 }
 
@@ -849,9 +1016,9 @@ function showAdvanced(configId) {
 }
 
 
-async function copyToken(KMName) {
+async function copyToken(tokenId) {
     // Copy access token
-    const tokenElement = document.getElementById('token_' + KMName);
+    const tokenElement = document.getElementById('token_' + tokenId);
     if (!tokenElement) {
         return;
     }
