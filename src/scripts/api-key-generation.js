@@ -362,8 +362,11 @@ async function regenerateAPIKey(apiKeyID, subID, keyType) {
           scopeContainer.appendChild(span);
         });
       } else {
-        document.getElementById("scopeContainer-" + subID + '-' + keyType).style.display = 'none'
-        document.getElementById("scopeTitle-" + subID + '-' + keyType).style.display = 'none'
+        scopeContainer.style.display = 'none';
+        const scopeTitle = document.getElementById("scopeTitle-" + subID + '-' + keyType);
+        if (scopeTitle) {
+          scopeTitle.style.display = 'none';
+        }
       }
 
       await showAlert('API Key regenerated successfully!', 'success');
