@@ -84,6 +84,11 @@
                       src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/graphql.svg" 
                       style="height: 16px; object-fit: contain;"
                      />
+                    {{else if (eq apiInfo.apiType "WEBSUB")}}
+                    <img 
+                      src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/graphql.svg" 
+                      style="height: 16px; object-fit: contain;"
+                     />
                     {{else}}
                     <img
                       src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/REST.svg"
@@ -93,6 +98,8 @@
                   </div>
                   {{#if (eq apiInfo.apiType "WS")}}
                   <span>WebSocket</span>
+                  {{else if (eq apiInfo.apiType "WEBSUB")}}
+                  <span>WebSub</span>
                   {{else}}
                   <span>{{apiInfo.apiType}}</span>
                   {{/if}}
