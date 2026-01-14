@@ -111,7 +111,8 @@ async function generateAPIKey(projectID, apiID, subPlan, cpAppID, appID, subID, 
     loadingState.style.display = 'none';
     return;
   }
-  const subscriptionPlan = policyElement.textContent.trim();  const scopeContainer = document.getElementById('scopeContainer-' + subID + '-' + keyType);
+  const subscriptionPlan = policyElement.textContent.trim();
+  const scopeContainer = document.getElementById('scopeContainer-' + subID + '-' + keyType);
   if (!scopeContainer) {
     console.error('Unable to find scope container.');
     normalState.style.display = 'inline-block';
