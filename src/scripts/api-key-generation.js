@@ -341,9 +341,6 @@ async function regenerateAPIKey(apiKeyID, subID, keyType) {
       }
 
       const regenerateBtn = document.getElementById("regenerateKeyBtn-" + subID + '-' + keyType);
-      if (regenerateBtn) {
-        regenerateBtn.style.display = 'none';
-      }
 
       const scopeContainer = document.getElementById('scopeContainer-' + subID + '-' + keyType);
       if (!scopeContainer) {

@@ -191,7 +191,6 @@
                                             </thead>
                                             <tbody>
                                                 {{#each subAPIs}}
-                                                {{#if (contains security 'api_key')}}
                                                 {{> api-key apiID=apiID keyType="PRODUCTION"}}
                                                 {{#in apiType values="REST, WS, WEBSUB"}}
                                                 {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails
@@ -274,7 +273,6 @@
                                                     </td>
                                                 </tr>
                                                 {{/in}}
-                                                {{/if}}
                                                 {{/each}}
                                             </tbody>
                                         </table>
