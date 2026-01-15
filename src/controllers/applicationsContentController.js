@@ -152,9 +152,9 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
     // This temporary priority-based approach should be replaced with a proper configuration-based selection.
     if (Array.isArray(kMmetaData) && kMmetaData.length > 1) {
         kMmetaData = kMmetaData.filter(keyManager =>
-            (keyManager.name.includes("_appdev_sts_key_manager_") && keyManager.name.endsWith("_prod")) ||
-            (!kMmetaData.some(km => km.name.includes("_appdev_sts_key_manager_") && km.name.endsWith("_prod")) && keyManager.name.includes("_internal_key_manager_")) ||
-            (!kMmetaData.some(km => (km.name.includes("_appdev_sts_key_manager_") && km.name.endsWith("_prod")) || km.name.includes("_internal_key_manager_")) && keyManager.name.includes("Resident Key Manager"))
+            keyManager.name.includes("_internal_key_manager_") ||
+            (!kMmetaData.some(km => km.name.includes("_internal_key_manager_")) && keyManager.name.includes("Resident Key Manager")) ||
+            (!kMmetaData.some(km => km.name.includes("_internal_key_manager_") || km.name.includes("Resident Key Manager")) && keyManager.name.includes("_appdev_sts_key_manager_") && keyManager.name.endsWith("_prod"))
         );
     }
 
@@ -577,7 +577,7 @@ async function getAPIMApplication(req, applicationId) {
 }
 
 async function getAPIMKeyManagers(req) {
-    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers', null, null);
+    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers?devPortalAppEnv=prod', null, null);
     return responseData.list;
 }
 

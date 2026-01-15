@@ -91,7 +91,7 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
             "validityTime": 3600,
             "additionalProperties": jsonObject.additionalProperties,
         },
-        "clientID": document.getElementById("clientIDInput")?.textContent.trim(),
+        "clientID": document.getElementById("clientIDInput-" + keyType)?.value?.trim(),
     })
     try {
         const response = await fetch(`/devportal/organizations/${orgID}/app-key-mapping`, {
@@ -186,10 +186,25 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
                 }
             }
 
-            const keyActionsContainer = document.getElementById("keyActionsContainer-" + keyType);
-            if (keyActionsContainer) {
-                keyActionsContainer.style.display = "flex";
+            // Show containers after key generation (regardless of whether consumerSecret exists)
+            const consumerKeyContainerEl = document.getElementById("consumerKeyContainer-" + keyType);
+            const consumerKeyViewEl = document.getElementById("consumerKey-" + keyType + "-view");
+            const consumerSecretViewEl = document.getElementById("consumerSecret-" + keyType + "-view");
+            const keyActionsContainerEl = document.getElementById("keyActionsContainer-" + keyType);
+            
+            if (consumerKeyContainerEl) {
+                consumerKeyContainerEl.style.display = "block";
             }
+            if (consumerKeyViewEl) {
+                consumerKeyViewEl.style.display = "block";
+            }
+            if (consumerSecretViewEl && consumerSecret) {
+                consumerSecretViewEl.style.display = "block";
+            }
+            if (keyActionsContainerEl) {
+                keyActionsContainerEl.style.display = "flex";
+            }
+            
             // Update UI elements in the overview section
             const generateKeyContainer = document.getElementById("generateKeyContainer" + "-" +  keyType);
             if (generateKeyContainer) {
@@ -850,6 +865,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function updateKeyManagerInfo() {
+        if (!selectElement) return;
         document.querySelectorAll(".KMConfig").forEach((el) => {
             el.style.display = "none";
         });
@@ -859,9 +875,11 @@ document.addEventListener('DOMContentLoaded', () => {
             kmURL.style.display = "block";
         }
     }
-    selectElement.addEventListener("change", updateKeyManagerInfo);
-    // Initialize with selected value
-    updateKeyManagerInfo();
+    if (selectElement) {
+        selectElement.addEventListener("change", updateKeyManagerInfo);
+        // Initialize with selected value
+        updateKeyManagerInfo();
+    }
 
 });
 

@@ -1,5 +1,3 @@
-const e = require("express");
-
 function openApiKeyNameModal(projectID, apiRefID, subPlan, cpAppID, appID, subID, subIDs, subscribedScopes, keyType) {
 
   const modal = document.getElementById('apiKeyNameModal-' + subID + '-' + keyType);
