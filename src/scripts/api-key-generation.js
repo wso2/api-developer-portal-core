@@ -1,5 +1,3 @@
-const e = require("express");
-
 function openApiKeyNameModal(projectID, apiRefID, subPlan, cpAppID, appID, subID, subIDs, subscribedScopes, keyType) {
 
   const modal = document.getElementById('apiKeyNameModal-' + subID + '-' + keyType);
@@ -341,9 +339,6 @@ async function regenerateAPIKey(apiKeyID, subID, keyType) {
       }
 
       const regenerateBtn = document.getElementById("regenerateKeyBtn-" + subID + '-' + keyType);
-      if (regenerateBtn) {
-        regenerateBtn.style.display = 'none';
-      }
 
       const scopeContainer = document.getElementById('scopeContainer-' + subID + '-' + keyType);
       if (!scopeContainer) {

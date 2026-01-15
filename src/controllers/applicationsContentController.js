@@ -144,9 +144,12 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
     }));
 
     let kMmetaData = await getAPIMKeyManagers(req);
+
     kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
 
-    // TODO: handle multiple KM scenarios (kept as-is)
+    // TODO: Instead of using priority-based filtering, we should identify the key manager
+    // configured for the production environment from the Bijira console configuration.
+    // This temporary priority-based approach should be replaced with a proper configuration-based selection.
     if (Array.isArray(kMmetaData) && kMmetaData.length > 1) {
         kMmetaData = kMmetaData.filter(keyManager =>
             keyManager.name.includes("_internal_key_manager_") ||
@@ -574,7 +577,7 @@ async function getAPIMApplication(req, applicationId) {
 }
 
 async function getAPIMKeyManagers(req) {
-    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers', null, null);
+    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers?devPortalAppEnv=prod', null, null);
     return responseData.list;
 }
 
