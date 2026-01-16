@@ -40,10 +40,16 @@ const useStyles = makeStyles((theme: Theme) =>
       borderBottom: `1px solid ${theme.palette.grey[200]}`,
       gap: theme.spacing(1),
       marginRight: theme.spacing(1),
+      alignItems: 'center',
+      boxSizing: 'border-box',
     },
     textInput: {
-      width: "88%",
+      flex: 1,
+      minWidth: 0,
       backgroundColor: '#f5f5f5',
+      height: "100%",
+      display: 'flex',
+      alignItems: 'center',
     },
     payloadText: {
       borderTop: 1,

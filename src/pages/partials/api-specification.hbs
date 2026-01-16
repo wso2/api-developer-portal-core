@@ -63,10 +63,12 @@
       document.addEventListener('DOMContentLoaded', function () {
         const swaggerData = {{{ asyncapi }}};
         let serverUrl = swaggerData.servers && swaggerData.servers.production ? swaggerData.servers.production.url : '';
+        let sandboxURL = swaggerData.servers && swaggerData.servers.sandbox ? swaggerData.servers.sandbox.url : '';
         const rootElement = document.getElementById('root');
         rootElement.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: montserrat;">Loading AsyncAPI Viewer...</div>';
         ReactDOM.render(React.createElement(WebSocketViewer.default, {
             apiEndpoint: serverUrl,
+            sandboxEndpoint: sandboxURL,
             token: '<your-token-here>',
             asyncapi: swaggerData,
             isDevportal: true,

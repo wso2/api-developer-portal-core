@@ -34,7 +34,7 @@ import {
   Button,
   Chip,
 } from '../../designSystem';
-import { Box, CircularProgress, Tooltip, Typography } from '@material-ui/core';
+import { Box, CircularProgress, Tooltip, Typography, Select, MenuItem, FormControl } from '@material-ui/core';
 import { PlayArrow, Send } from '@material-ui/icons';
 import { APITypeEnum } from './WebsocketViewer';
 
@@ -45,6 +45,7 @@ interface TopicViewerProps {
   asyncType: APITypeEnum | undefined;
   token: string;
   apiEndpoint: string;
+  sandboxEndpoint: string;
   topic: string;
   publish: boolean;
   subscribe: boolean;
@@ -61,13 +62,14 @@ export interface CollectedLogLineWithKey {
 }
 
 const TopicViewer = (props: TopicViewerProps) => {
-  const { token, apiEndpoint, topic, publish, subscribe, parameters, payload, isDevportal, asyncType } =
+  const { token, apiEndpoint, sandboxEndpoint, topic, publish, subscribe, parameters, payload, isDevportal, asyncType } =
     props;
   const classes = useStyles();
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [messages, setMessages] = useState<Record<string, any>[]>([]);
   const [input, setInput] = useState(payload || '');
   const [endpoint, setEndpoint] = useState<string>(apiEndpoint);
+  const [selectedEndpointType, setSelectedEndpointType] = useState<string>('production');
   const [pathParams, setPathParams] = useState<{ [key: string]: string }>({});
   const [connect, setConnect] = useState(false);
   const [connectButtonText, setConnectButtonText] = useState('Connect');
@@ -79,14 +81,17 @@ const TopicViewer = (props: TopicViewerProps) => {
   };
 
   useEffect(() => {
+    const baseEndpoint = selectedEndpointType === 'production' ? apiEndpoint : sandboxEndpoint;
     if (topic !== '/*') {
       const formattedTopic =
-        topic.startsWith('/') || apiEndpoint.endsWith('/')
+        topic.startsWith('/') || baseEndpoint.endsWith('/')
           ? topic === '/'
             ? ''
             : topic
           : `/${topic}`;
-      setEndpoint(`${apiEndpoint}${formattedTopic}`);
+      setEndpoint(`${baseEndpoint}${formattedTopic}`);
+    } else {
+      setEndpoint(baseEndpoint + '/');
     }
     if (parameters != null) {
       setPathParams(
@@ -96,7 +101,11 @@ const TopicViewer = (props: TopicViewerProps) => {
         }, {} as { [key: string]: string })
       );
     }
-  }, [apiEndpoint, topic]);
+  }, [apiEndpoint, sandboxEndpoint, selectedEndpointType, topic]);
+
+  const handleEndpointTypeChange = (event: any) => {
+    setSelectedEndpointType(event.target.value as 'production' | 'sandbox');
+  };
 
   const sendMessage = () => {
     if (asyncType === APITypeEnum.WEBSUB) {
@@ -272,18 +281,18 @@ const TopicViewer = (props: TopicViewerProps) => {
           aria-controls="panel1a-content"
           testId="topic-accordion-summary"
         >
-            <Box className={classes.topicTypeContainer}>
+          <Box className={classes.topicTypeContainer}>
             {asyncType === APITypeEnum.WS && (
-            <Box className={classes.typeChipContainer}>
-              <Chip
-                label="PUB"
-                testId="default"
-                variant="contained"
-                color="info"
-                size="medium"
-                disabled={!publish}
-              />
-            </Box>
+              <Box className={classes.typeChipContainer}>
+                <Chip
+                  label="PUB"
+                  testId="default"
+                  variant="contained"
+                  color="info"
+                  size="medium"
+                  disabled={!publish}
+                />
+              </Box>
             )}
             <Box className={classes.typeChipContainer}>
               <Chip
@@ -314,28 +323,40 @@ const TopicViewer = (props: TopicViewerProps) => {
                   </Box>
                 }
               >
-              {asyncType === APITypeEnum.WS && (
-                <Box className={classes.endpointContainer}>
-                  <Box className={classes.textInput}>
-                    <CopyToClipboard
-                      value={endpoint}
+                {asyncType === APITypeEnum.WS && (
+                  <Box className={classes.endpointContainer}>
+                    <FormControl size="small" variant="outlined" style={{ width: 150, flexShrink: 0 }}>
+                      <Select
+                        value={selectedEndpointType}
+                        onChange={handleEndpointTypeChange}
+                        disabled={connect}
+                        data-testid="endpoint-type-select"
+                      >
+                        <MenuItem value="production">Production</MenuItem>
+                        <MenuItem value="sandbox">Sandbox</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <Box className={classes.textInput} style={{ width: '100%' }}>
+                      <CopyToClipboard
+                        value={endpoint}
+                        size="small"
+                        testId="endpoint-url"
+                      />
+                    </Box>
+                    <Button
+                      color={connect ? "secondary" : "primary"}
+                      variant="contained"
+                      pill={false}
                       size="small"
-                      testId="endpoint-url"
-                    />
+                      testId="disconnect"
+                      style={{ flexShrink: 0 }}
+                      onClick={() =>
+                        connect ? disconnectWebsocket() : connectWebsocket()
+                      }
+                    >
+                      {getButtonText(connectButtonText)}
+                    </Button>
                   </Box>
-                  <Button
-                    color={connect ? 'secondary' : 'primary'}
-                    variant="contained"
-                    pill={false}
-                    size="small"
-                    testId="disconnect"
-                    onClick={() =>
-                      connect ? disconnectWebsocket() : connectWebsocket()
-                    }
-                  >
-                    {getButtonText(connectButtonText)}
-                  </Button>
-                </Box>
                 )}
                 <Box>
                   <TabCard
@@ -370,7 +391,7 @@ const TopicViewer = (props: TopicViewerProps) => {
                                     };
                                     setPathParams(newParams);
                                   }}
-                                  error={pathParams[param] === ''}
+                                  error={pathParams[param] === ""}
                                   helperText="Enter parameter value"
                                 />
                               </Box>
@@ -425,26 +446,32 @@ const TopicViewer = (props: TopicViewerProps) => {
                         </Tooltip>
                       </Box>
                     </TabPanel>
-                    <TabPanel value={selectedTab} index={Object.keys(pathParams).length === 0 ? 1 : 2}>
-                        <Box className={classes.parameterContainerWrapper}>
-                          <Box key={'api-token'} className={classes.parameterContainer}>
-                              <TextInput
-                                testId={`input-headers`}
-                                className={classes.apiTokenTextInput}
-                                type="text"
-                                placeholder="API Token"
-                                label="API Token"
-                                value={apiToken}
-                                onChange={(e) => {
-                                  const newToken = e.target.value;
-                                  setApiToken(newToken);
-                                }}
-                                error={apiToken === ''}
-                                helperText="Enter API Token"
-                              />
-                            </Box>
-                          </Box>
-                      </TabPanel>
+                    <TabPanel
+                      value={selectedTab}
+                      index={Object.keys(pathParams).length === 0 ? 1 : 2}
+                    >
+                      <Box className={classes.parameterContainerWrapper}>
+                        <Box
+                          key={"api-token"}
+                          className={classes.parameterContainer}
+                        >
+                          <TextInput
+                            testId={`input-headers`}
+                            className={classes.apiTokenTextInput}
+                            type="text"
+                            placeholder="API Token"
+                            label="API Token"
+                            value={apiToken}
+                            onChange={(e) => {
+                              const newToken = e.target.value;
+                              setApiToken(newToken);
+                            }}
+                            error={apiToken === ""}
+                            helperText="Enter API Token"
+                          />
+                        </Box>
+                      </Box>
+                    </TabPanel>
                   </TabCard>
                   <OutputConsole
                     messages={messages}
@@ -455,8 +482,8 @@ const TopicViewer = (props: TopicViewerProps) => {
                     <Box className={classes.outputContainer}>
                       {messages.map((msg, index) =>
                         renderItem({
-                          timestamp: messages[index]['timestamp'],
-                          message: messages[index]['message'],
+                          timestamp: messages[index]["timestamp"],
+                          message: messages[index]["message"],
                           randomKey: index,
                           isNewLog: false,
                         })
