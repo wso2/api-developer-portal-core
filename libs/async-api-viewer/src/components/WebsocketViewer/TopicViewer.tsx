@@ -310,7 +310,7 @@ const TopicViewer = (props: TopicViewerProps) => {
           </Box>
         </AccordionSummary>
         <AccordionDetails testId="topic-accordion-details">
-          <Box width="100%">
+          <Box width="100%" style={{ maxWidth: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
             {topic && (
               <Suspense
                 fallback={
@@ -325,18 +325,32 @@ const TopicViewer = (props: TopicViewerProps) => {
               >
                 {asyncType === APITypeEnum.WS && (
                   <Box className={classes.endpointContainer}>
-                    <FormControl size="small" variant="outlined" style={{ width: 150, flexShrink: 0 }}>
+                    <FormControl 
+                      size="small" 
+                      variant="outlined" 
+                      style={{ 
+                        width: 150, 
+                        flexShrink: 0,
+                        height: 40,
+                      }}
+                    >
                       <Select
                         value={selectedEndpointType}
                         onChange={handleEndpointTypeChange}
                         disabled={connect}
                         data-testid="endpoint-type-select"
+                        style={{
+                          height: 40,
+                          borderRadius: 4,
+                          backgroundColor: '#ffffff',
+                          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
+                        }}
                       >
                         <MenuItem value="production">Production</MenuItem>
                         <MenuItem value="sandbox">Sandbox</MenuItem>
                       </Select>
                     </FormControl>
-                    <Box className={classes.textInput} style={{ width: '100%' }}>
+                    <Box className={classes.textInput}>
                       <CopyToClipboard
                         value={endpoint}
                         size="small"
@@ -349,7 +363,15 @@ const TopicViewer = (props: TopicViewerProps) => {
                       pill={false}
                       size="small"
                       testId="disconnect"
-                      style={{ flexShrink: 0 }}
+                      style={{ 
+                        flexShrink: 0, 
+                        height: 40, 
+                        minWidth: 120,
+                        fontWeight: 500,
+                        fontSize: 14,
+                        textTransform: 'none',
+                        borderRadius: 4,
+                      }}
                       onClick={() =>
                         connect ? disconnectWebsocket() : connectWebsocket()
                       }
@@ -358,7 +380,7 @@ const TopicViewer = (props: TopicViewerProps) => {
                     </Button>
                   </Box>
                 )}
-                <Box>
+                <Box style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
                   <TabCard
                     className={classes.tabs}
                     tabItems={
@@ -373,43 +395,45 @@ const TopicViewer = (props: TopicViewerProps) => {
                   >
                     {Object.keys(pathParams).length !== 0 && (
                       <TabPanel value={selectedTab} index={0}>
-                        <Box className={classes.parameterContainerWrapper}>
-                          <Box className={classes.parameterContainer}>
-                            {Object.keys(pathParams).map((param) => (
-                              <Box key={param}>
-                                <TextInput
-                                  testId={`input-${param}`}
-                                  className={classes.paramTextInput}
-                                  type="text"
-                                  placeholder={param}
-                                  label={param}
-                                  value={pathParams[param]}
-                                  onChange={(e) => {
-                                    const newParams = {
-                                      ...pathParams,
-                                      [param]: e.target.value,
-                                    };
-                                    setPathParams(newParams);
-                                  }}
-                                  error={pathParams[param] === ""}
-                                  helperText="Enter parameter value"
-                                />
-                              </Box>
-                            ))}
-                          </Box>
-                          <Box className={classes.executeButton}>
-                            <Button
-                              testId="execute"
-                              disabled={connect}
-                              variant="outlined"
-                              onClick={connectWebsocket}
-                              startIcon={<PlayArrow />}
-                              size="small"
-                            >
-                              <Typography variant="body1" align="center">
-                                Execute
-                              </Typography>
-                            </Button>
+                        <Box className={classes.tabPanelContent}>
+                          <Box className={classes.parameterContainerWrapper}>
+                            <Box className={classes.parameterContainer}>
+                              {Object.keys(pathParams).map((param) => (
+                                <Box key={param}>
+                                  <TextInput
+                                    testId={`input-${param}`}
+                                    className={classes.paramTextInput}
+                                    type="text"
+                                    placeholder={param}
+                                    label={param}
+                                    value={pathParams[param]}
+                                    onChange={(e) => {
+                                      const newParams = {
+                                        ...pathParams,
+                                        [param]: e.target.value,
+                                      };
+                                      setPathParams(newParams);
+                                    }}
+                                    error={pathParams[param] === ""}
+                                    helperText="Enter parameter value"
+                                  />
+                                </Box>
+                              ))}
+                            </Box>
+                            <Box className={classes.executeButton}>
+                              <Button
+                                testId="execute"
+                                disabled={connect}
+                                variant="outlined"
+                                onClick={connectWebsocket}
+                                startIcon={<PlayArrow />}
+                                size="small"
+                              >
+                                <Typography variant="body1" align="center">
+                                  Execute
+                                </Typography>
+                              </Button>
+                            </Box>
                           </Box>
                         </Box>
                       </TabPanel>
@@ -418,57 +442,61 @@ const TopicViewer = (props: TopicViewerProps) => {
                       value={selectedTab}
                       index={Object.keys(pathParams).length === 0 ? 0 : 1}
                     >
-                      <Box className={classes.payloadContainer}>
-                        <PayloadEditor
-                          fileContent={input}
-                          language="json"
-                          height="170px"
-                          width="1104px"
-                          setFileContent={setInput}
-                        />
-                      </Box>
-                      <Box mt={5}>
-                        <Tooltip title={tooltipText} placement="top-start">
-                          <Box className={classes.sendIcon}>
-                            <Button
-                              testId="payload-send"
-                              disabled={input.length === 0 || !connect}
-                              variant="outlined"
-                              startIcon={<Send />}
-                              onClick={sendMessage}
-                              size="small"
-                            >
-                              <Typography variant="body1" align="center">
-                                Send
-                              </Typography>
-                            </Button>
-                          </Box>
-                        </Tooltip>
+                      <Box className={classes.tabPanelContent}>
+                        <Box className={classes.payloadContainer}>
+                          <PayloadEditor
+                            fileContent={input}
+                            language="json"
+                            height="170px"
+                            width="100%"
+                            setFileContent={setInput}
+                          />
+                        </Box>
+                        <Box mt={5}>
+                          <Tooltip title={tooltipText} placement="top-start">
+                            <Box className={classes.sendIcon}>
+                              <Button
+                                testId="payload-send"
+                                disabled={input.length === 0 || !connect}
+                                variant="outlined"
+                                startIcon={<Send />}
+                                onClick={sendMessage}
+                                size="small"
+                              >
+                                <Typography variant="body1" align="center">
+                                  Send
+                                </Typography>
+                              </Button>
+                            </Box>
+                          </Tooltip>
+                        </Box>
                       </Box>
                     </TabPanel>
                     <TabPanel
                       value={selectedTab}
                       index={Object.keys(pathParams).length === 0 ? 1 : 2}
                     >
-                      <Box className={classes.parameterContainerWrapper}>
-                        <Box
-                          key={"api-token"}
-                          className={classes.parameterContainer}
-                        >
-                          <TextInput
-                            testId={`input-headers`}
-                            className={classes.apiTokenTextInput}
-                            type="text"
-                            placeholder="API Token"
-                            label="API Token"
-                            value={apiToken}
-                            onChange={(e) => {
-                              const newToken = e.target.value;
-                              setApiToken(newToken);
-                            }}
-                            error={apiToken === ""}
-                            helperText="Enter API Token"
-                          />
+                      <Box className={classes.tabPanelContent}>
+                        <Box className={classes.parameterContainerWrapper}>
+                          <Box
+                            key={"api-token"}
+                            className={classes.parameterContainer}
+                          >
+                            <TextInput
+                              testId={`input-headers`}
+                              className={classes.apiTokenTextInput}
+                              type="text"
+                              placeholder="API Token"
+                              label="API Token"
+                              value={apiToken}
+                              onChange={(e) => {
+                                const newToken = e.target.value;
+                                setApiToken(newToken);
+                              }}
+                              error={apiToken === ""}
+                              helperText="Enter API Token"
+                            />
+                          </Box>
                         </Box>
                       </Box>
                     </TabPanel>
