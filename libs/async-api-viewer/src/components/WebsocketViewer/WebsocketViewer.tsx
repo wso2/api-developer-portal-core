@@ -91,7 +91,7 @@ function mapAsyncApiTopics(asyncapi: AsyncApi) {
   return allTopicsList;
 }
 
-function WebSocketViewer(props: WebSocketViewerProps = {}) {
+function WebSocketViewer(props: WebSocketViewerProps) {
   const { 
     token = "", 
     apiEndpoint = "", 

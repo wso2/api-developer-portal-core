@@ -19021,6 +19021,7 @@ const C2 = "choreo-test-key", w2 = "choreo-oauth2-token", E2 = (t) => {
                     onChange: W,
                     disabled: z,
                     "data-testid": "endpoint-type-select",
+                    inputProps: { "aria-label": "Endpoint type" },
                     style: {
                       height: 40,
                       borderRadius: 4,
@@ -19209,7 +19210,7 @@ function ya(t) {
     })
   );
 }
-function R2(t = {}) {
+function R2(t) {
   const {
     token: e = "",
     apiEndpoint: a = "",

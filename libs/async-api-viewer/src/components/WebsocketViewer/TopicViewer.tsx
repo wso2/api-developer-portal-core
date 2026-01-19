@@ -339,6 +339,7 @@ const TopicViewer = (props: TopicViewerProps) => {
                         onChange={handleEndpointTypeChange}
                         disabled={connect}
                         data-testid="endpoint-type-select"
+                        inputProps={{ 'aria-label': 'Endpoint type' }}
                         style={{
                           height: 40,
                           borderRadius: 4,
