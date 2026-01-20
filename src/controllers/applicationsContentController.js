@@ -111,7 +111,7 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
             const projectId = projectIdEntry?.value;
             if (apiDetails) {
                 apiDTO.security = apiDetails.securityScheme;
-                if (apiDTO.security.includes('api_key')) {
+                if (apiDTO.security && apiDTO.security.includes('api_key')) {
                     apiKeyEnabledAPICount++;
                 }
             }
