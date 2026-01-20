@@ -277,8 +277,8 @@
                                 <div class="accordion-body p-0">
                                     <div class="accordion-body-content">
                                         {{#if subAPIs}}
-                                        <div class="app-table-container my-3" id="app-table-container" style="{{#unless apiKeyEnabledAPICount}}display: none;{{/unless}}">
-                                            <table class="app-table" id="app-table-{{applicationMetadata.id}}">
+                                        <div class="app-table-container my-3" id="app-table-container-PRODUCTION" style="{{#unless apiKeyEnabledAPICount}}display: none;{{/unless}}">
+                                            <table class="app-table" id="app-table-{{applicationMetadata.id}}-PRODUCTION">
                                                 <thead>
                                                     <tr>
                                                         <th class="app-th">API Name</th>
@@ -662,8 +662,8 @@
                             <div class="accordion-body p-0">
                                 <div class="accordion-body-content">
                                     {{#if subAPIs}}
-                                    <div class="app-table-container my-3" id="app-table-container" style="{{#unless apiKeyEnabledAPICount}}display: none;{{/unless}}">
-                                        <table class="app-table" id="app-table-{{applicationMetadata.id}}">
+                                    <div class="app-table-container my-3" id="app-table-container-SANDBOX" style="{{#unless apiKeyEnabledAPICount}}display: none;{{/unless}}">
+                                        <table class="app-table" id="app-table-{{applicationMetadata.id}}-SANDBOX">
                                             <thead>
                                                 <tr>
                                                     <th class="app-th">API Name</th>
