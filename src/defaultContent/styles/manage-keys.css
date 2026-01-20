@@ -51,6 +51,10 @@
        0 4px 8px var(--bs-gray-200);
   }
 
+.key-action-buttons-row {
+    gap: 8px;
+}
+
 .accordion-button {
     background-color: var(--primary-main-color);
     color: var(--light-text-color);
