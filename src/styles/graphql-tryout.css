@@ -27,7 +27,7 @@
   flex-direction: row;
   align-items: flex-start;
   gap: 12px;
-  max-height: 64px;
+  max-height: 160px;
 }
 
 .graphql-endpoint-type-wrapper {
@@ -143,6 +143,7 @@
 
   .graphql-control.graphql-control-row {
     flex-direction: column;
+    max-height: none;
   }
 
   .graphql-endpoint-type-wrapper {

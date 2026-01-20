@@ -91,7 +91,6 @@
 }
 
 .accordion-body {
-    padding-left: 0;
     padding: 1.25rem 1.25rem 1.25rem 0;
     background-color: var(--main-bg-color);
     border-top: none;

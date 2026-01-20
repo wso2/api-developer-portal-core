@@ -277,7 +277,7 @@
                                 <div class="accordion-body p-0">
                                     <div class="accordion-body-content">
                                         {{#if subAPIs}}
-                                        <div class="app-table-container my-3" id="app-table-container">
+                                        <div class="app-table-container my-3" id="app-table-container" style="{{#unless apiKeyEnabledAPICount}}display: none;{{/unless}}">
                                             <table class="app-table" id="app-table-{{applicationMetadata.id}}">
                                                 <thead>
                                                     <tr>
@@ -294,6 +294,7 @@
                                                 </thead>
                                                 <tbody>
                                                     {{#each subAPIs}}
+                                                    {{#if (contains security 'api_key')}}
                                                     {{> api-key apiID=apiID keyType="PRODUCTION"}}
                                                     {{#in apiType values="REST, WS, WEBSUB"}}
                                                     {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails
@@ -382,17 +383,17 @@
                                                         </td>
                                                     </tr>
                                                     {{/in}}
+                                                    {{/if}}
                                                     {{/each}}
                                                 </tbody>
                                             </table>
                                         </div>
                                         {{/if}}
-                                        <div class="ps-3" id="no-subscription"
-                                            style="{{#if subAPIs.length}}display:none{{/if}}">
+                                        <div class="ps-3" id="no-api-key-apis-PRODUCTION" style="{{#if apiKeyEnabledAPICount}}display: none;{{/if}}">
                                             <div class="info-box">
                                                 <div class="info-content">
                                                     <div class="info-title">
-                                                        No subscriptions available for this application. Please subscribe to an API.
+                                                        No API Key enabled APIs are subscribed to this application. Subscribe to an API that supports API Key authentication to generate keys.
                                                     </div>
                                                 </div>
                                             </div>
@@ -661,7 +662,7 @@
                             <div class="accordion-body p-0">
                                 <div class="accordion-body-content">
                                     {{#if subAPIs}}
-                                    <div class="app-table-container my-3" id="app-table-container">
+                                    <div class="app-table-container my-3" id="app-table-container" style="{{#unless apiKeyEnabledAPICount}}display: none;{{/unless}}">
                                         <table class="app-table" id="app-table-{{applicationMetadata.id}}">
                                             <thead>
                                                 <tr>
@@ -678,6 +679,7 @@
                                             </thead>
                                             <tbody>
                                                 {{#each subAPIs}}
+                                                {{#if (contains security 'api_key')}}
                                                 {{> api-key apiID=apiID keyType="SANDBOX"}}
                                                 {{#in apiType values="REST, WS, WEBSUB"}}
                                                 {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails
@@ -760,19 +762,17 @@
                                                     </td>
                                                 </tr>
                                                 {{/in}}
+                                                {{/if}}
                                                 {{/each}}
                                             </tbody>
                                         </table>
                                     </div>
                                     {{/if}}
-                                    <div class="ps-3" id="no-subscription"
-                                        style="{{#if subAPIs.length}}display:none{{/if}}">
+                                    <div class="ps-3" id="no-api-key-apis-SANDBOX" style="{{#if apiKeyEnabledAPICount}}display: none;{{/if}}">
                                         <div class="info-box">
                                             <div class="info-content">
                                                 <div class="info-title">
-                                                    No subscriptions available for this application. Please subscribe to
-                                                    an
-                                                    API to generate an API Key.
+                                                    No API Key enabled APIs are subscribed to this application. Subscribe to an API that supports API Key authentication to generate keys.
                                                 </div>
                                             </div>
                                         </div>
