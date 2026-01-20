@@ -1,63 +1,55 @@
 /* Manage Keys Page Styles */
 
-.keys-section {
-    margin-top: 0;
-}
-
 .key-btn-container {
     display: flex;
     flex-direction: row;
-    gap: 0;
-    border-bottom: 2px solid var(--secondary-bg-color);
-    background-color: transparent;
-}
-
-.key-btn-container .nav-item {
-    flex: 1;
-}
-
-/* Tab Buttons */
-.key-btn {
-    background-color: var(--main-bg-color);
-    color: var(--main-text-color);
-    font-size: 0.875rem;
-    font-weight: 500;
-    padding: 0.75rem 1.5rem;
-    text-decoration: none;
-    cursor: pointer;
-    text-align: center;
-    transition: all 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    border-radius: 8px 8px 0 0;
     width: 100%;
-    position: relative;
-    margin-bottom: -2px;
-    z-index: 0;
-    box-shadow: 0 2.5px 2.5px var(--bs-primary-border-subtle);
-    border: 1px solid var(--bs-primary-border-subtle);
-}
-
-.key-btn:hover {
-    background-color: var(--primary-lightest-color);
-    color: var(--primary-main-color);
-    border-color: var(--primary-lightest-color);
-}
-
-.key-btn.active,
-.key-btn:focus {
-    background-color: var(--main-bg-color);
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+  
+  .key-btn-container .nav-item {
+    flex: 1;
+  }
+  
+  .key-btn {
+    width: 100%;
+    padding: 14px 0;
+    text-align: center;
+    font-weight: 500;
+    background: var(--main-bg-color);
+    border: 1px solid var(--bs-gray-200);
+    border-bottom: none;
     color: var(--main-text-color);
-    border-top: 1px solid var(--bs-primary-border-subtle);
-    border-left: 1px solid var(--bs-primary-border-subtle);
-    border-right: 1px solid var(--bs-primary-border-subtle);
-    border-bottom: 1px solid transparent; /* Keeps height consistent so buttons don't jump */
-    font-weight: 600;
-    box-shadow: -1px -1px 5px var(--bs-primary-border-subtle),
-        1px -2px 5px var(--bs-primary-border-subtle), 
-        -1px 0 5px var(--bs-primary-border-subtle), 
-        1px 0 5px var(--bs-primary-border-subtle);
-    z-index: 1;
-    outline: none; /* Removes the default blue browser ring on focus */
-}
+    border-radius: 0;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    position: relative;
+  }
+  
+  .key-btn:focus {
+    box-shadow: none;
+  }
+  
+  .key-btn.active {
+    background: var(--main-bg-color);
+    z-index: 3;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    box-shadow:
+      -4px -4px 8px var(--bs-gray-200),
+       4px -4px 8px var(--bs-gray-200);
+  }
+  
+  #keysTabContent {
+    background: var(--main-bg-color);
+    padding: 24px;
+    border: 1px solid var(--bs-gray-200);
+    box-shadow:
+      -4px 0 8px var(--bs-gray-200),
+       4px 0 8px var(--bs-gray-200),
+       0 4px 8px var(--bs-gray-200);
+  }
 
 .accordion-button {
     background-color: var(--primary-main-color);
@@ -83,6 +75,7 @@
     color: var(--light-text-color);
     border: 1px solid var(--primary-lightest-color);
     border-radius: var(--bs-accordion-border-radius);
+    padding: 0;
 }
 
 .accordion-button::after, 
@@ -98,7 +91,8 @@
 }
 
 .accordion-body {
-    padding: 1.25rem;
+    padding-left: 0;
+    padding: 1.25rem 1.25rem 1.25rem 0;
     background-color: var(--main-bg-color);
     border-top: none;
     max-height: 60vh;
@@ -116,8 +110,8 @@
 }
 
 .accordion-body-content {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
 }
 
 /* Table Styling in Accordion */
@@ -130,19 +124,6 @@
     border-radius: 6px;
     overflow: hidden;
     border: 1px solid var(--secondary-bg-color);
-}
-
-/* Key Action Buttons Row */
-.key-action-buttons-row {
-    display: flex;
-    flex-direction: row;
-    gap: 0.675rem;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.key-action-buttons-row button {
-    min-width: 9rem;
 }
 
 /* API Key Name Modal */
@@ -170,30 +151,6 @@
     border: 1px solid var(--bs-primary-border-subtle);
     padding: 0.675rem;
     margin-top: 1rem;
-}
-
-/* Active Tab Content Styling */
-.tab-content .tab-pane {
-    border-radius: 0 0 8px 8px;
-    transition: border 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-.tab-content .tab-pane.active {
-    border-left: 1px solid var(--bs-primary-border-subtle);
-    border-right: 1px solid var(--bs-primary-border-subtle);
-    border-bottom: 1px solid var(--bs-primary-border-subtle);
-    border-top: none;
-    box-shadow: -1px 1px 5px var(--bs-primary-border-subtle), 
-                1px 1px 5px var(--bs-primary-border-subtle), 
-                -1px 0 5px var(--bs-primary-border-subtle), 
-                1px 0 5px var(--bs-primary-border-subtle);
-    padding: 1rem;
-    background-color: var(--main-bg-color);
-}
-
-.tab-content .tab-pane:not(.active) {
-    border: none;
-    box-shadow: none;
 }
 
 .app-th:first-child,

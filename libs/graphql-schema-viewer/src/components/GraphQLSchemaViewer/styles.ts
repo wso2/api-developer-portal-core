@@ -45,6 +45,7 @@ export const styles = {
   },
   endpointsContainer: {
     display: 'flex',
+    flexDirection: 'column' as const,
     gap: '12px',
     flexWrap: 'wrap' as const
   },

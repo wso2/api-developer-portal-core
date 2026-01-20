@@ -18859,7 +18859,12 @@ const C2 = "choreo-test-key", w2 = "choreo-oauth2-token", E2 = (t) => {
     );
   }, [a, r, f, n]);
   const W = (ie) => {
-    x(ie.target.value);
+    const pe = ie.target.value;
+    if (pe === "sandbox" && (!r || r === "")) {
+      x("production");
+      return;
+    }
+    x(pe);
   }, F = () => {
     c !== Ia.WEBSUB && p && y && p.readyState === p.OPEN && (p.send(y), m((ie) => [
       ...ie,
@@ -19030,7 +19035,7 @@ const C2 = "choreo-test-key", w2 = "choreo-oauth2-token", E2 = (t) => {
                     },
                     children: [
                       /* @__PURE__ */ U.jsx(kl, { value: "production", children: "Production" }),
-                      /* @__PURE__ */ U.jsx(kl, { value: "sandbox", children: "Sandbox" })
+                      /* @__PURE__ */ U.jsx(kl, { value: "sandbox", disabled: !r || r === "", children: "Sandbox" })
                     ]
                   }
                 )

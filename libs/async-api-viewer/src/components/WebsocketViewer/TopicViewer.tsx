@@ -104,7 +104,15 @@ const TopicViewer = (props: TopicViewerProps) => {
   }, [apiEndpoint, sandboxEndpoint, selectedEndpointType, topic]);
 
   const handleEndpointTypeChange = (event: any) => {
-    setSelectedEndpointType(event.target.value as 'production' | 'sandbox');
+    const newValue = event.target.value as 'production' | 'sandbox';
+    
+    // Prevent switching to sandbox if sandboxEndpoint is not available
+    if (newValue === 'sandbox' && (!sandboxEndpoint || sandboxEndpoint === '')) {
+      setSelectedEndpointType('production');
+      return;
+    }
+    
+    setSelectedEndpointType(newValue);
   };
 
   const sendMessage = () => {
@@ -348,7 +356,7 @@ const TopicViewer = (props: TopicViewerProps) => {
                         }}
                       >
                         <MenuItem value="production">Production</MenuItem>
-                        <MenuItem value="sandbox">Sandbox</MenuItem>
+                        <MenuItem value="sandbox" disabled={!sandboxEndpoint || sandboxEndpoint === ''}>Sandbox</MenuItem>
                       </Select>
                     </FormControl>
                     <Box className={classes.textInput}>
