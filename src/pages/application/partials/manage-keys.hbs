@@ -12,6 +12,7 @@
             <div class="container-header mb-4 d-sm-flex justify-content-between align-items-center">Manage Keys - {{applicationMetadata.name}}</div>
         </div>
 
+        <div>
         <ul class="nav nav-tabs key-btn-container" id="keysTab" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="key-btn active" id="production-tab" data-bs-toggle="tab" data-bs-target="#production"
@@ -276,8 +277,8 @@
                                 <div class="accordion-body p-0">
                                     <div class="accordion-body-content">
                                         {{#if subAPIs}}
-                                        <div class="app-table-container my-2" id="app-table-container">
-                                            <table class="app-table" id="app-table-{{applicationMetadata.id}}">
+                                        <div class="app-table-container my-3" id="app-table-container-PRODUCTION" style="{{#unless apiKeyEnabledAPICount}}display: none;{{/unless}}">
+                                            <table class="app-table" id="app-table-{{applicationMetadata.id}}-PRODUCTION">
                                                 <thead>
                                                     <tr>
                                                         <th class="app-th">API Name</th>
@@ -293,6 +294,7 @@
                                                 </thead>
                                                 <tbody>
                                                     {{#each subAPIs}}
+                                                    {{#if (contains security 'api_key')}}
                                                     {{> api-key apiID=apiID keyType="PRODUCTION"}}
                                                     {{#in apiType values="REST, WS, WEBSUB"}}
                                                     {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails
@@ -381,17 +383,17 @@
                                                         </td>
                                                     </tr>
                                                     {{/in}}
+                                                    {{/if}}
                                                     {{/each}}
                                                 </tbody>
                                             </table>
                                         </div>
                                         {{/if}}
-                                        <div class="ps-3" id="no-subscription"
-                                            style="{{#if subAPIs.length}}display:none{{/if}}">
+                                        <div class="ps-3" id="no-api-key-apis-PRODUCTION" style="{{#if apiKeyEnabledAPICount}}display: none;{{/if}}">
                                             <div class="info-box">
                                                 <div class="info-content">
                                                     <div class="info-title">
-                                                        No subscriptions available for this application. Please subscribe to an API.
+                                                        No API Key enabled APIs are subscribed to this application. Subscribe to an API that supports API Key authentication to generate keys.
                                                     </div>
                                                 </div>
                                             </div>
@@ -469,22 +471,23 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div id="keyActionsContainer-SANDBOX" class="key-actions-container"
+                                        <div id="keyActionsContainer-SANDBOX" class="key-actions-container col-md-6"
                                             style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
                                             <div class="key-action-row">
-                                                <div class="key-action-buttons-row col-md-7">
-                                                    <button id="viewKeyBtn-SANDBOX" class="common-btn-outlined btn-sm"
+                                                <div class="key-action-buttons-row col-md-7 d-flex w-100">
+                                                    <button id="viewKeyBtn-SANDBOX" class="common-btn-outlined btn-sm flex-grow-1"
                                                         onclick="loadKeysViewModal('SANDBOX')">
                                                         <i class="bi bi-eye"></i> View
                                                     </button>
-                                                    <button id="modifyKeyBtn-SANDBOX"
-                                                        class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                        
+                                                    <button id="modifyKeyBtn-SANDBOX" class="common-btn-outlined btn-sm flex-grow-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                         style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
                                                         onclick="loadKeysModifyModal('SANDBOX')">
                                                         <i class="bi bi-pencil-square"></i> Modify
                                                     </button>
+                                        
                                                     <button id="tokenKeyBtn-SANDBOX"
-                                                        class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                        class="common-btn-outlined btn-sm flex-grow-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                         data-app-id="{{@root.applicationMetadata.id}}"
                                                         style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
                                                         onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-SANDBOX', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}', '{{json @root.subscriptionScopes}}', 'SANDBOX')">
@@ -492,13 +495,12 @@
                                                             <i class="bi bi-key-fill"></i> Generate
                                                         </span>
                                                         <span class="button-loading-state" style="display: none;">
-                                                            <span class="spinner-border spinner-border-sm me-1"
-                                                                role="status"></span>
+                                                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
                                                             Generating...
                                                         </span>
                                                     </button>
-                                                    <button id="tokenInstructionsBtn-SANDBOX"
-                                                        class="common-btn-outlined btn-sm"
+                                        
+                                                    <button id="tokenInstructionsBtn-SANDBOX" class="common-btn-outlined btn-sm flex-grow-1"
                                                         onclick="loadKeysInstructionsModal('SANDBOX')">
                                                         <i class="bi bi-info-circle"></i> Instructions
                                                     </button>
@@ -660,8 +662,8 @@
                             <div class="accordion-body p-0">
                                 <div class="accordion-body-content">
                                     {{#if subAPIs}}
-                                    <div class="app-table-container my-2" id="app-table-container">
-                                        <table class="app-table" id="app-table-{{applicationMetadata.id}}">
+                                    <div class="app-table-container my-3" id="app-table-container-SANDBOX" style="{{#unless apiKeyEnabledAPICount}}display: none;{{/unless}}">
+                                        <table class="app-table" id="app-table-{{applicationMetadata.id}}-SANDBOX">
                                             <thead>
                                                 <tr>
                                                     <th class="app-th">API Name</th>
@@ -677,6 +679,7 @@
                                             </thead>
                                             <tbody>
                                                 {{#each subAPIs}}
+                                                {{#if (contains security 'api_key')}}
                                                 {{> api-key apiID=apiID keyType="SANDBOX"}}
                                                 {{#in apiType values="REST, WS, WEBSUB"}}
                                                 {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails
@@ -759,19 +762,17 @@
                                                     </td>
                                                 </tr>
                                                 {{/in}}
+                                                {{/if}}
                                                 {{/each}}
                                             </tbody>
                                         </table>
                                     </div>
                                     {{/if}}
-                                    <div class="ps-3" id="no-subscription"
-                                        style="{{#if subAPIs.length}}display:none{{/if}}">
+                                    <div class="ps-3" id="no-api-key-apis-SANDBOX" style="{{#if apiKeyEnabledAPICount}}display: none;{{/if}}">
                                         <div class="info-box">
                                             <div class="info-content">
                                                 <div class="info-title">
-                                                    No subscriptions available for this application. Please subscribe to
-                                                    an
-                                                    API to generate an API Key.
+                                                    No API Key enabled APIs are subscribed to this application. Subscribe to an API that supports API Key authentication to generate keys.
                                                 </div>
                                             </div>
                                         </div>
@@ -782,6 +783,7 @@
                     </div>
                 </div>
             </div>
+        </div>
         </div>
         {{> warning }}
     </section>

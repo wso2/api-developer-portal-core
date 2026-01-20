@@ -63,10 +63,12 @@
       document.addEventListener('DOMContentLoaded', function () {
         const swaggerData = {{{ asyncapi }}};
         let serverUrl = swaggerData.servers && swaggerData.servers.production ? swaggerData.servers.production.url : '';
+        let sandboxURL = swaggerData.servers && swaggerData.servers.sandbox ? swaggerData.servers.sandbox.url : '';
         const rootElement = document.getElementById('root');
         rootElement.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: montserrat;">Loading AsyncAPI Viewer...</div>';
         ReactDOM.render(React.createElement(WebSocketViewer.default, {
             apiEndpoint: serverUrl,
+            sandboxEndpoint: sandboxURL,
             token: '<your-token-here>',
             asyncapi: swaggerData,
             isDevportal: true,
@@ -135,10 +137,19 @@
 <main>
   <div class="graphql-tryout-container">
     <div class="graphql-controls" id="graphql-controls">
-      <div class="graphql-control">
-        <label for="graphql-endpoint-input">Endpoint URL</label>
-        <input id="graphql-endpoint-input" type="text" spellcheck="false" />
-        <div class="control-hint" id="graphql-endpoint-status"></div>
+      <div class="graphql-control graphql-control-row">
+        <div class="graphql-endpoint-type-wrapper">
+          <label for="graphql-endpoint-type">Environment</label>
+          <select id="graphql-endpoint-type" aria-label="Endpoint type">
+            <option value="production">Production</option>
+            <option value="sandbox">Sandbox</option>
+          </select>
+        </div>
+        <div class="graphql-endpoint-input-wrapper">
+          <label for="graphql-endpoint-input">Endpoint URL</label>
+          <input id="graphql-endpoint-input" type="text" spellcheck="false" />
+          <div class="control-hint" id="graphql-endpoint-status"></div>
+        </div>
       </div>
       <div class="graphql-control">
         <label for="graphql-token-input">Authorization Header</label>
@@ -156,15 +167,22 @@
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const apiEndpoint = '{{ apiMetadata.endPoints.productionURL }}';
+      const sandboxEndpoint = '{{ apiMetadata.endPoints.sandboxURL }}';
       const rootElement = document.getElementById('root');
       rootElement.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: montserrat;">Loading GraphiQL...</div>';
       
       const endpointInput = document.getElementById('graphql-endpoint-input');
       const endpointStatus = document.getElementById('graphql-endpoint-status');
+      const endpointTypeSelect = document.getElementById('graphql-endpoint-type');
       const tokenInput = document.getElementById('graphql-token-input');
       const tokenStatus = document.getElementById('graphql-token-status');
+      let selectedEndpointType = 'production';
       let currentEndpoint = apiEndpoint || '';
       let authToken = '';
+
+      const getEndpointForType = (type) => {
+        return type === 'sandbox' ? (sandboxEndpoint || '') : (apiEndpoint || '');
+      };
 
       const updateEndpointStatus = () => {
         if (!endpointStatus) {
@@ -189,11 +207,23 @@
         tokenStatus.style.color = authToken ? '#1f883d' : '#57606a';
       };
 
+      if (endpointTypeSelect) {
+        endpointTypeSelect.addEventListener('change', function (event) {
+          selectedEndpointType = event.target.value;
+          const newEndpoint = getEndpointForType(selectedEndpointType);
+          currentEndpoint = newEndpoint;
+          if (endpointInput) {
+            endpointInput.value = newEndpoint;
+          }
+          updateEndpointStatus();
+        });
+      }
+
       if (endpointInput) {
         endpointInput.value = apiEndpoint || '';
         endpointInput.addEventListener('input', function (event) {
           const value = (event.target.value || '').trim();
-          currentEndpoint = value || apiEndpoint || '';
+          currentEndpoint = value || getEndpointForType(selectedEndpointType) || '';
           updateEndpointStatus();
         });
       }

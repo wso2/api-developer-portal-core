@@ -87,6 +87,7 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
 
     let otherAPICount = 0;
     let mcpAPICount = 0;
+    let apiKeyEnabledAPICount = 0;
 
     let subList = [];
     if (subAPIs.length > 0) {
@@ -110,6 +111,9 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
             const projectId = projectIdEntry?.value;
             if (apiDetails) {
                 apiDTO.security = apiDetails.securityScheme;
+                if (apiDTO.security && apiDTO.security.includes('api_key')) {
+                    apiKeyEnabledAPICount++;
+                }
             }
             if (projectId) {
                 apiDTO.projectId = projectId;
@@ -243,6 +247,7 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
         subscriptionScopes,
         otherAPICount,
         mcpAPICount,
+        apiKeyEnabledAPICount,
         isApiKey,
         profile
     };
@@ -379,6 +384,7 @@ const loadApplication = async (req, res) => {
                 subscriptionScopes: data.subscriptionScopes,
                 otherAPICount: data.otherAPICount,
                 mcpAPICount: data.mcpAPICount,
+                apiKeyEnabledAPICount: data.apiKeyEnabledAPICount,
                 profile: req.isAuthenticated() ? data.profile : null,
                 devportalMode: devportalMode,
                 features: {
@@ -477,6 +483,7 @@ const loadApplicationKeys = async (req, res) => {
                 subscriptionScopes: data.subscriptionScopes,
                 otherAPICount: data.otherAPICount,
                 mcpAPICount: data.mcpAPICount,
+                apiKeyEnabledAPICount: data.apiKeyEnabledAPICount,
                 profile: req.isAuthenticated() ? data.profile : null,
                 devportalMode: devportalMode,
                 features: {
