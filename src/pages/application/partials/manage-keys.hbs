@@ -91,19 +91,19 @@
                                     <div id="keyActionsContainer-PRODUCTION" class="key-actions-container"
                                         style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
                                         <div class="key-action-row">
-                                            <div class="key-action-buttons-row col-md-7">
-                                                <button id="viewKeyBtn-PRODUCTION" class="common-btn-outlined btn-sm"
+                                            <div class="key-action-buttons-row col-md-7 d-flex w-100">
+                                                <button id="viewKeyBtn-PRODUCTION" class="common-btn-outlined btn-sm flex-grow-1"
                                                     onclick="loadKeysViewModal('PRODUCTION')">
                                                     <i class="bi bi-eye"></i> View
                                                 </button>
                                                 <button id="modifyKeyBtn-PRODUCTION"
-                                                    class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                    class="common-btn-outlined btn-sm flex-grow-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                     style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
                                                     onclick="loadKeysModifyModal('PRODUCTION')">
                                                     <i class="bi bi-pencil-square"></i> Modify
                                                 </button>
                                                 <button id="tokenKeyBtn-PRODUCTION"
-                                                    class="common-btn-outlined btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                    class="common-btn-outlined btn-sm flex-grow-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                     data-app-id="{{@root.applicationMetadata.id}}"
                                                     style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
                                                     onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-PRODUCTION', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}', '{{json @root.subscriptionScopes}}', 'PRODUCTION')">
@@ -117,7 +117,7 @@
                                                     </span>
                                                 </button>
                                                 <button id="tokenInstructionsBtn-PRODUCTION"
-                                                    class="common-btn-outlined btn-sm"
+                                                    class="common-btn-outlined btn-sm flex-grow-1"
                                                     onclick="loadKeysInstructionsModal('PRODUCTION')">
                                                     <i class="bi bi-info-circle"></i> Instructions
                                                 </button>
