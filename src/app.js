@@ -17,9 +17,6 @@
  */
 /* eslint-disable no-undef */
 
-// Load environment variables from .env file
-require('dotenv').config();
-
 const express = require('express');
 const { engine } = require('express-handlebars');
 const passport = require('passport');

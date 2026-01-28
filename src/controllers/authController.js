@@ -258,7 +258,7 @@ const renderBillingPage = async (req, res) => {
         logger.info('Rendering billing page', {
             hasUser: !!req.user,
             hasAccessToken: !!req.user?.accessToken,
-            userEmail: req.user?.email,
+            userId: req.user?.id || req.user?.sub || 'anonymous',
             isAuthenticated: req.isAuthenticated ? req.isAuthenticated() : false
         });
         
