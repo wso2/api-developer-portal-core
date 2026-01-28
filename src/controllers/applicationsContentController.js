@@ -149,6 +149,11 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
 
     let kMmetaData = await getAPIMKeyManagers(req);
 
+    // Ensure kMmetaData is an array before filtering
+    if (!Array.isArray(kMmetaData)) {
+        kMmetaData = [];
+    }
+
     kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
 
     // TODO: Instead of using priority-based filtering, we should identify the key manager
