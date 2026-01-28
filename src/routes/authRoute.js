@@ -18,7 +18,14 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
+const billingController = require('../controllers/billingController');
 const registerPartials = require('../middlewares/registerPartials');
+const { validateAuthentication, enforceSecuirty } = require('../middlewares/ensureAuthenticated');
+const constants = require('../utils/constants');
+
+// Billing routes
+router.get('/:orgName/views/:viewName/billing', registerPartials, authController.renderBillingPage);
+router.get("/billing/return", billingController.handleBillingReturn);
 
 // router.get('/portal/login', registerPartials, authController.login);
 // router.get('/portal/callback', authController.handleCallback);

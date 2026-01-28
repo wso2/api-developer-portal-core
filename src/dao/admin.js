@@ -1,3 +1,74 @@
+/**
+ * Get subscription details (API, application, plan info) for a given userId and orgId
+ * Only subscriptions for applications owned by the user are included
+ */
+const getUserSubscriptionsWithDetails = async (orgID, userID) => {
+    try {
+        if (!orgID || !userID) {
+            throw new Error('orgID and userID are required');
+        }
+        const sequelize = require('../db/sequelize');
+        const results = await sequelize.query(`
+            SELECT 
+                s."SUB_ID" as id,
+                s."PAYMENT_STATUS",
+                s."BILLING_SUBSCRIPTION_ID",
+                s."BILLING_CUSTOMER_ID",
+                s."PAYMENT_PROVIDER",
+                a."API_NAME" as "apiName",
+                app."NAME" as "applicationName",
+                p."POLICY_NAME" as "planName",
+                p."BILLING_PLAN" as "billingCycle",
+                p."FLAT_AMOUNT" as "flatAmount",
+                p."UNIT_AMOUNT" as "unitAmount",
+                p."PRICING_MODEL" as "pricingModel",
+                p."PRICING_METADATA" as "pricingMetadata",
+                asp."BILLING_METER_ID" as "meterId"
+            FROM "DP_API_SUBSCRIPTION" s
+            LEFT JOIN "DP_API_METADATA" a ON s."API_ID" = a."API_ID" AND s."ORG_ID" = a."ORG_ID"
+            LEFT JOIN "DP_APPLICATION" app ON s."APP_ID" = app."APP_ID" AND s."ORG_ID" = app."ORG_ID"
+            LEFT JOIN "DP_SUBSCRIPTION_POLICY" p ON s."POLICY_ID" = p."POLICY_ID" AND s."ORG_ID" = p."ORG_ID"
+            LEFT JOIN "DP_API_SUBSCRIPTION_POLICY" asp ON s."API_ID" = asp."API_ID" AND p."POLICY_ID" = asp."POLICY_ID"
+            WHERE s."ORG_ID" = :orgID
+            AND app."CREATED_BY" = :userID
+            AND p."BILLING_PLAN" = 'COMMERCIAL'
+            AND s."BILLING_CUSTOMER_ID" IS NOT NULL
+            AND s."BILLING_SUBSCRIPTION_ID" IS NOT NULL
+        `, {
+            replacements: { orgID, userID },
+            type: sequelize.QueryTypes.SELECT
+        });
+        return results || [];
+    } catch (error) {
+        logger.error({ error, orgID, userID }, 'getUserSubscriptionsWithDetails failed');
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+/**
+ * Delete subscription by Stripe billing subscription ID (for webhooks)
+ */
+const deleteSubscriptionByBillingId = async (billingSubscriptionID, t) => {
+    try {
+        if (!billingSubscriptionID) {
+            throw new Sequelize.ValidationError('billingSubscriptionID is required');
+        }
+        const deletedRowsCount = await SubscriptionMapping.destroy({
+            where: {
+                BILLING_SUBSCRIPTION_ID: billingSubscriptionID,
+            },
+            transaction: t
+        });
+        if (deletedRowsCount < 1) {
+            throw new Sequelize.EmptyResultError('Subscription not found');
+        }
+        return deletedRowsCount;
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+};
 /*
  * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
@@ -25,6 +96,27 @@ const { APIMetadata } = require('../models/apiMetadata');
 const APIImageMetadata = require('../models/apiImages');
 const SubscriptionPolicy = require('../models/subscriptionPolicy');
 const logger = require('../config/logger');
+const { decrypt } = require('../utils/cryptoUtil');
+
+/**
+ * Get all orgs' billing keys and webhook secrets for Stripe multi-tenant webhook verification.
+ * Returns: [{ orgId, webhookSecret, secretKey }]
+ */
+const getAllOrgBillingKeys = async () => {
+    try {
+        const records = await require('../models/billingEngineKey').findAll({
+            where: { BILLING_ENGINE: 'STRIPE' },
+            attributes: ['ORG_ID', 'WEBHOOK_SECRET_ENC', 'SECRET_KEY_ENC']
+        });
+        return records.map(r => ({
+            orgId: r.ORG_ID,
+            webhookSecret: decrypt(r.WEBHOOK_SECRET_ENC),
+            secretKey: decrypt(r.SECRET_KEY_ENC)
+        }));
+    } catch (error) {
+        throw new Sequelize.DatabaseError(error);
+    }
+};
 
 const createOrganization = async (orgData, t) => {
     let devPortalID = "";
@@ -732,7 +824,11 @@ const getSubscriptions = async (orgID, appID, apiID) => {
                     [Sequelize.Op.or]: [
                         { APP_ID: appID },
                         { API_ID: apiID }
-                    ]
+                    ],
+                    // Exclude PENDING subscriptions (not yet paid)
+                    PAYMENT_STATUS: {
+                        [Sequelize.Op.notIn]: ['PENDING']
+                    }
                 }
             });
     } catch (error) {
@@ -750,7 +846,11 @@ const getAppApiSubscription = async (orgID, appID, apiID) => {
                 where: {
                     ORG_ID: orgID,
                     APP_ID: appID,
-                    API_ID: apiID
+                    API_ID: apiID,
+                    // Exclude PENDING subscriptions (not yet paid)
+                    PAYMENT_STATUS: {
+                        [Sequelize.Op.notIn]: ['PENDING']
+                    }
                 }
             });
     } catch (error) {
@@ -777,6 +877,245 @@ const deleteSubscription = async (orgID, subID, t) => {
     } catch (error) {
         if (error instanceof Sequelize.EmptyResultError) {
             throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+/**
+ * Update billing-related fields for a subscription (for monetization)
+ */
+const updateBillingFields = async (orgID, subID, fields, t) => {
+    try {
+        const updateData = {};
+        
+        if (fields.BILLING_CUSTOMER_ID !== undefined) {
+            updateData.BILLING_CUSTOMER_ID = fields.BILLING_CUSTOMER_ID;
+        }
+        if (fields.BILLING_SUBSCRIPTION_ID !== undefined) {
+            updateData.BILLING_SUBSCRIPTION_ID = fields.BILLING_SUBSCRIPTION_ID;
+        }
+        if (fields.PAYMENT_PROVIDER !== undefined) {
+            updateData.PAYMENT_PROVIDER = fields.PAYMENT_PROVIDER;
+        }
+        if (fields.PAYMENT_STATUS !== undefined) {
+            updateData.PAYMENT_STATUS = fields.PAYMENT_STATUS;
+        }
+        if (fields.CHECKOUT_SESSION_ID !== undefined) {
+            updateData.CHECKOUT_SESSION_ID = fields.CHECKOUT_SESSION_ID;
+        }
+
+        if (Object.keys(updateData).length === 0) {
+            throw new Sequelize.ValidationError('No billing fields provided for update');
+        }
+
+        const [updatedCount] = await SubscriptionMapping.update(updateData, {
+            where: {
+                ORG_ID: orgID,
+                SUB_ID: subID,
+            },
+            transaction: t,
+        });
+
+        return updatedCount;
+    } catch (error) {
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+/**
+ * Find subscription by unique key (app, api, policy) - for duplicate check
+ */
+const findSubscriptionByUniqueKey = async (orgID, appID, apiID, policyID, t) => {
+    try {
+        return await SubscriptionMapping.findOne({
+            where: {
+                ORG_ID: orgID,
+                APP_ID: appID,
+                API_ID: apiID,
+                POLICY_ID: policyID,
+            },
+            transaction: t,
+        });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            return null;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+/**
+ * List all subscriptions for an organization
+ */
+const listSubscriptionsByOrg = async (orgID) => {
+    try {
+        return await SubscriptionMapping.findAll({
+            where: {
+                ORG_ID: orgID,
+                // Exclude PENDING and PAYMENT_FAILED subscriptions
+                // Include null PAYMENT_STATUS (free subscriptions), ACTIVE, CANCELED_SCHEDULED, PAST_DUE, etc.
+                [Sequelize.Op.or]: [
+                    { PAYMENT_STATUS: null },
+                    { PAYMENT_STATUS: { [Sequelize.Op.notIn]: ['PENDING', 'PAYMENT_FAILED'] } }
+                ]
+            },
+        });
+    } catch (error) {
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+/**
+ * List subscriptions for a specific user in an organization
+ * Filters subscriptions by user through the Application table
+ */
+const listSubscriptionsByUser = async (orgID, userID) => {
+    try {
+        // First get all application IDs owned by this user
+        const userApps = await Application.findAll({
+            where: {
+                ORG_ID: orgID,
+                CREATED_BY: userID
+            },
+            attributes: ['APP_ID']
+        });
+        
+        const appIds = userApps.map(app => app.APP_ID);
+        
+        if (appIds.length === 0) {
+            return [];
+        }
+        
+        // Then get subscriptions for those applications
+        return await SubscriptionMapping.findAll({
+            where: {
+                ORG_ID: orgID,
+                APP_ID: { [Sequelize.Op.in]: appIds },
+                // Exclude PENDING and PAYMENT_FAILED subscriptions
+                [Sequelize.Op.or]: [
+                    { PAYMENT_STATUS: null },
+                    { PAYMENT_STATUS: { [Sequelize.Op.notIn]: ['PENDING', 'PAYMENT_FAILED'] } }
+                ]
+            }
+        });
+    } catch (error) {
+        logger.error({ error, orgID, userID }, 'listSubscriptionsByUser failed');
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+/**
+ * Get active subscriptions with full details for billing page
+ */
+const getSubscriptionsWithDetails = async (orgID) => {
+    try {
+        if (!orgID) {
+            throw new Error('orgID is required');
+        }
+        
+        const sequelize = require('../db/sequelize');
+        const results = await sequelize.query(`
+            SELECT 
+                s."SUB_ID" as id,
+                s."PAYMENT_STATUS" as status,
+                s."BILLING_SUBSCRIPTION_ID",
+                s."PAYMENT_PROVIDER",
+                a."API_NAME" as "apiName",
+                app."NAME" as "applicationName",
+                p."POLICY_NAME" as "planName",
+                p."BILLING_PLAN" as "billingCycle"
+            FROM "DP_API_SUBSCRIPTION" s
+            LEFT JOIN "DP_API_METADATA" a ON s."API_ID" = a."API_ID" AND s."ORG_ID" = a."ORG_ID"
+            LEFT JOIN "DP_APPLICATION" app ON s."APP_ID" = app."APP_ID" AND s."ORG_ID" = app."ORG_ID"
+            LEFT JOIN "DP_SUBSCRIPTION_POLICY" p ON s."POLICY_ID" = p."POLICY_ID" AND s."ORG_ID" = p."ORG_ID"
+            WHERE s."ORG_ID" = :orgID
+            AND p."BILLING_PLAN" = 'COMMERCIAL'
+            AND s."BILLING_CUSTOMER_ID" IS NOT NULL
+            AND s."BILLING_SUBSCRIPTION_ID" IS NOT NULL
+        `, {
+            replacements: { orgID },
+            type: sequelize.QueryTypes.SELECT
+        });
+        
+        return results || [];
+    } catch (error) {
+        logger.error({ error, orgID }, 'getSubscriptionsWithDetails failed');
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+/**
+ * Update subscription by Stripe billing subscription ID (for webhooks)
+ */
+const updateSubscriptionByBillingId = async (billingSubscriptionID, fields) => {
+    try {
+        if (!billingSubscriptionID) {
+            throw new Sequelize.ValidationError('billingSubscriptionID is required');
+        }
+        const updateData = {};
+        
+        if (fields.PAYMENT_STATUS !== undefined) {
+            updateData.PAYMENT_STATUS = fields.PAYMENT_STATUS;
+        }
+        if (fields.BILLING_CUSTOMER_ID !== undefined) {
+            updateData.BILLING_CUSTOMER_ID = fields.BILLING_CUSTOMER_ID;
+        }
+        if (fields.PAYMENT_PROVIDER !== undefined) {
+            updateData.PAYMENT_PROVIDER = fields.PAYMENT_PROVIDER;
+        }
+
+        if (Object.keys(updateData).length === 0) {
+            throw new Sequelize.ValidationError('No fields provided for update');
+        }
+
+        const [updatedCount] = await SubscriptionMapping.update(updateData, {
+            where: {
+                BILLING_SUBSCRIPTION_ID: billingSubscriptionID,
+            },
+        });
+
+        return updatedCount;
+    } catch (error) {
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+/**
+ * Get API by ID (for monetization validation)
+ */
+const getAPIById = async (orgID, apiID, t) => {
+    try {
+        return await APIMetadata.findOne({
+            where: {
+                ORG_ID: orgID,
+                API_ID: apiID,
+            },
+            transaction: t,
+        });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            return null;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+/**
+ * Get subscription policy by ID (for monetization validation)
+ */
+const getSubscriptionPolicyById = async (orgID, policyID, t) => {
+    try {
+        return await SubscriptionPolicy.findOne({
+            where: {
+                ORG_ID: orgID,
+                POLICY_ID: policyID,
+            },
+            transaction: t,
+        });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            return null;
         }
         throw new Sequelize.DatabaseError(error);
     }
@@ -894,7 +1233,15 @@ const getSubscribedAPIs = async (orgID, appID) => {
                 model: Application,
                 where: { APP_ID: appID },
                 required: true,
-                through: { attributes: ["SUB_ID", "POLICY_ID"] }
+                through: { 
+                    attributes: ["SUB_ID", "POLICY_ID"],
+                    where: { 
+                        [Sequelize.Op.or]: [
+                            { PAYMENT_STATUS: null },
+                            { PAYMENT_STATUS: 'ACTIVE' }
+                        ]
+                    } // Only include paid/active subscriptions
+                }
             },
             {
                 model: APIImageMetadata,
@@ -1031,6 +1378,15 @@ module.exports = {
     getSubscription,
     getSubscriptions,
     deleteSubscription,
+    updateBillingFields,
+    findSubscriptionByUniqueKey,
+    listSubscriptionsByOrg,
+    listSubscriptionsByUser,
+    getSubscriptionsWithDetails,
+    getUserSubscriptionsWithDetails,
+    updateSubscriptionByBillingId,
+    getAPIById,
+    getSubscriptionPolicyById,
     deleteAppKeyMapping,
     getAPISubscriptionReference,
     getApplicationID,
@@ -1042,5 +1398,7 @@ module.exports = {
     createApplicationKeyMapping,
     updateApplicationKeyMapping,
     getApplicationAPIMapping,
-    deleteAppMappings
+    deleteAppMappings,
+    getAllOrgBillingKeys,
+    deleteSubscriptionByBillingId
 };

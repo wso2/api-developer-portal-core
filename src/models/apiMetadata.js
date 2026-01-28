@@ -103,6 +103,11 @@ const APIMetadata = sequelize.define('DP_API_METADATA', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  MONETIZATION_ENABLED: {
+    type: DataTypes.BOOLEAN,
+    allowNull: true,
+    defaultValue: false
+  },
 }, {
   timestamps: false,
   tableName: 'DP_API_METADATA',

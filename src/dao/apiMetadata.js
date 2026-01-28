@@ -427,67 +427,115 @@ const deleteAPILabels = async (orgID, apiID, labels, t) => {
     }
 }
 
-const createAPISubscriptionPolicy = async (apiSubscriptionPolicies, apiID, t) => {
+const toUpper = (v) => (v ? String(v).toUpperCase() : null);
 
-    let apiSubscriptionPolicyList = []
-    try {
-        apiSubscriptionPolicies.forEach(policy => {
-            apiSubscriptionPolicyList.push({
-                POLICY_ID: policy.policyID,
-                API_ID: apiID
-            })
-        });
-        const apiSubscriptionPolicyResponse = await APISubscriptionPolicy.bulkCreate(apiSubscriptionPolicyList, { transaction: t });
-        return apiSubscriptionPolicyResponse;
-    } catch (error) {
-        if (error instanceof Sequelize.ValidationError) {
-            throw error;
-        }
-        throw new Sequelize.DatabaseError(error);
+const computeRequestCount = (policy) => {
+  const type = (policy.type || "").toLowerCase();
+
+  if (type === "requestcount") {
+    return policy.requestCount === -1 ? "Unlimited" : String(policy.requestCount);
+  }
+  if (type === "eventcount") {
+    return policy.eventCount === -1 ? "Unlimited" : String(policy.eventCount);
+  }
+  return null;
+};
+
+const buildPricingMetadata = (policy) => {
+    const meta = {};
+
+    const productId = policy.externalProductId ?? null;
+    const priceId = policy.externalPriceId ?? null;
+
+    if (productId || priceId) {
+        meta.external = { productId, priceId };
     }
-}
+
+    const pricingModel = toUpper(policy.pricingModel);
+    const isTiered = pricingModel === "VOLUME_TIERS" || pricingModel === "GRADUATED_TIERS";
+    const tiers = Array.isArray(policy.tiers) ? policy.tiers : policy.pricingTiers;
+
+    if (isTiered && Array.isArray(tiers) && tiers.length > 0) {
+        meta.tiers = tiers.map((tier, idx) => ({
+            tierIndex: tier.tierIndex ?? (idx + 1),
+            startUnit: tier.startUnit,
+            endUnit: tier.endUnit ?? null,
+            unitPrice: tier.unitPrice ?? null,
+            flatPrice: tier.flatPrice ?? null
+        }));
+    }
+
+    return Object.keys(meta).length > 0 ? meta : null;
+};
+
+const buildSubscriptionPolicyRow = (orgID, policy) => {
+  const requestCount = computeRequestCount(policy);
+
+  return {
+    ORG_ID: orgID,
+
+    // IMPORTANT: if your table POLICY_ID is the APIM policy UUID, store it here
+    // (otherwise remove this line)
+    POLICY_ID: policy.policyId ?? policy.policyID ?? undefined,
+
+    POLICY_NAME: policy.policyName,
+    DISPLAY_NAME: policy.displayName,
+    BILLING_PLAN: policy.billingPlan,
+    DESCRIPTION: policy.description,
+    REQUEST_COUNT: requestCount,
+
+    PRICING_MODEL: toUpper(policy.pricingModel) ?? null,
+    CURRENCY: policy.currency ?? null,
+    BILLING_PERIOD: policy.billingPeriod ?? null,
+    FLAT_AMOUNT: policy.flatAmount ?? null,
+    UNIT_AMOUNT: policy.unitAmount ?? null,
+
+    PRICING_METADATA: buildPricingMetadata(policy)
+  };
+};
+
+const createAPISubscriptionPolicy = async (apiSubscriptionPolicies, apiID, t) => {
+  try {
+    const rows = apiSubscriptionPolicies.map((policy) => ({
+      POLICY_ID: policy.policyId ?? policy.policyID, // supports both
+      API_ID: apiID,
+      BILLING_METER_ID: policy.meterId
+    }));
+
+    return await APISubscriptionPolicy.bulkCreate(rows, { transaction: t });
+  } catch (error) {
+    if (error instanceof Sequelize.ValidationError) throw error;
+    throw new Sequelize.DatabaseError(error);
+  }
+};
 
 const putSubscriptionPolicy = async (orgID, policy, t) => {
-    const currentSubscriptionPolicy = await getSubscriptionPolicyByName(orgID, policy.policyName, t);
-    if (currentSubscriptionPolicy) {
-        const updatedPolicy = await updateSubscriptionPolicy(orgID, currentSubscriptionPolicy.POLICY_ID, policy, t); 
-        return {
-            subscriptionPolicyResponse: updatedPolicy,
-            statusCode: 200
-        };
-    } else {
-        const createdPolicy = await createSubscriptionPolicy(orgID, policy, t);
-        return {
-            subscriptionPolicyResponse: createdPolicy,
-            statusCode: 201
-        };
-    }
+  const current = await getSubscriptionPolicyByName(orgID, policy.policyName, t);
+  if (current) {
+    const updated = await updateSubscriptionPolicy(orgID, current.POLICY_ID, policy, t);
+    return { subscriptionPolicyResponse: updated, statusCode: 200 };
+  }
+  const created = await createSubscriptionPolicy(orgID, policy, t);
+  return { subscriptionPolicyResponse: created, statusCode: 201 };
 };
 
+
 const createSubscriptionPolicy = async (orgID, policy, t) => {
-    let requestCount = null;
-    if (policy.type.toLowerCase() == "requestcount") {
-        requestCount = policy.requestCount === -1 ? "Unlimited" : policy.requestCount;
-    } else if (policy.type.toLowerCase() == "eventcount") {
-        requestCount = policy.eventCount === -1 ? "Unlimited" : policy.eventCount;
+  try {
+    const row = buildSubscriptionPolicyRow(orgID, policy);
+
+    // If POLICY_ID is auto-generated in your DB, delete it from row:
+    // delete row.POLICY_ID;
+
+    return await SubscriptionPolicy.create(row, { transaction: t });
+  } catch (error) {
+    if (error instanceof Sequelize.UniqueConstraintError || error instanceof Sequelize.ValidationError) {
+      throw error;
     }
-    try {
-        const subscriptionPolicyResponse = await SubscriptionPolicy.create({
-            POLICY_NAME: policy.policyName,
-            DISPLAY_NAME: policy.displayName,
-            BILLING_PLAN: policy.billingPlan,
-            DESCRIPTION: policy.description,
-            REQUEST_COUNT: requestCount,
-            ORG_ID: orgID
-        }, { transaction: t });
-        return subscriptionPolicyResponse;
-    } catch (error) {
-        if (error instanceof Sequelize.UniqueConstraintError || error instanceof Sequelize.ValidationError) {
-            throw error;
-        }
-        throw new Sequelize.DatabaseError(error);
-    }
+    throw new Sequelize.DatabaseError(error);
+  }
 };
+
 /**
  * Bulk create subscription policies
  * @param {} orgID 
@@ -496,58 +544,44 @@ const createSubscriptionPolicy = async (orgID, policy, t) => {
  * @returns 
  */
 const bulkCreateSubscriptionPolicies = async (orgID, policies, t) => {
-    let subscriptionPoliciesList = [];
-    try {
-        policies.forEach(policy => {
-            const requestCount = policy.requestCount === -1 ? "Unlimited" : policy.requestCount;
-            subscriptionPoliciesList.push({
-                POLICY_NAME: policy.policyName,
-                DISPLAY_NAME: policy.displayName,
-                BILLING_PLAN: policy.billingPlan,
-                DESCRIPTION: policy.description,
-                REQUEST_COUNT: requestCount,
-                ORG_ID: orgID
-            });
-        });
-        return await SubscriptionPolicy.bulkCreate(subscriptionPoliciesList, { transaction: t });
-    } catch (error) {
-        if (error instanceof Sequelize.UniqueConstraintError || error instanceof Sequelize.ValidationError) {
-            throw error;
-        }
-        throw new Sequelize.DatabaseError(error);
+  try {
+    const rows = policies.map((policy) => buildSubscriptionPolicyRow(orgID, policy));
+
+    // If POLICY_ID is auto-generated in your DB, remove it for all rows:
+    // rows.forEach(r => delete r.POLICY_ID);
+
+    return await SubscriptionPolicy.bulkCreate(rows, { transaction: t });
+  } catch (error) {
+    if (error instanceof Sequelize.UniqueConstraintError || error instanceof Sequelize.ValidationError) {
+      throw error;
     }
-}
+    throw new Sequelize.DatabaseError(error);
+  }
+};
 
 const updateSubscriptionPolicy = async (orgID, policyID, policy, t) => {
-    let requestCount = null;
-    if (policy.type.toLowerCase() == "requestcount") {
-        requestCount = policy.requestCount === -1 ? "Unlimited" : policy.requestCount;
-    } else if (policy.type.toLowerCase() == "eventcount") {
-        requestCount = policy.eventCount === -1 ? "Unlimited" : policy.eventCount;
+  try {
+    const row = buildSubscriptionPolicyRow(orgID, policy);
+
+    // Don’t update primary keys
+    delete row.ORG_ID;
+    delete row.POLICY_ID;
+
+    const [_, updatedRows] = await SubscriptionPolicy.update(row, {
+      where: { POLICY_ID: policyID, ORG_ID: orgID },
+      returning: true,
+      transaction: t
+    });
+
+    return updatedRows[0];
+  } catch (error) {
+    if (error instanceof Sequelize.UniqueConstraintError || error instanceof Sequelize.ValidationError) {
+      throw error;
     }
-    try {
-        const [affectedCount, updatedRows] = await SubscriptionPolicy.update({
-            POLICY_NAME: policy.policyName,
-            DISPLAY_NAME: policy.displayName,
-            BILLING_PLAN: policy.billingPlan,
-            DESCRIPTION: policy.description,
-            REQUEST_COUNT: requestCount,
-        }, {
-            where: {
-                POLICY_ID: policyID,
-                ORG_ID: orgID
-            },
-            returning: true,
-            transaction: t
-        });
-        return updatedRows[0];
-    } catch (error) {
-        if (error instanceof Sequelize.UniqueConstraintError || error instanceof Sequelize.ValidationError) {
-            throw error;
-        }
-        throw new Sequelize.DatabaseError(error);
-    }
+    throw new Sequelize.DatabaseError(error);
+  }
 };
+
 
 const deleteSubscriptionPolicy = async (orgID, policyName, t) => {
 
@@ -1270,7 +1304,8 @@ async function updateAPISubscriptionPolicy(subscriptionPolicies, apiID, t) {
         for (const policy of subscriptionPolicies) {
             policiesToCreate.push({
                 POLICY_ID: policy.policyID,
-                API_ID: apiID
+                API_ID: apiID,
+                BILLING_METER_ID: policy.meterId
             })
         }
         if (policiesToCreate.length > 0) {
