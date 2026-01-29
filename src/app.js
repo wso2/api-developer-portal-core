@@ -16,6 +16,7 @@
  * under the License.
  */
 /* eslint-disable no-undef */
+
 const express = require('express');
 const { engine } = require('express-handlebars');
 const passport = require('passport');
@@ -87,6 +88,32 @@ app.set('view engine', 'hbs');
 
 // #region Register Handlebars helpers
 
+// Handlebars helper to filter subscriptions by status (case-insensitive, supports 'ALL')
+Handlebars.registerHelper('filterByStatus', function(array, status) {
+    if (!Array.isArray(array)) return [];
+    if (!status || status === 'ALL') return array;
+    const statusLower = status.toLowerCase();
+    return array.filter(item => (item.status && item.status.toLowerCase() === statusLower));
+});
+
+// Handlebars helper to check if an array is empty
+Handlebars.registerHelper('isEmpty', function(arr) {
+    return !arr || arr.length === 0;
+});
+
+// Handlebars 'filter' helper: returns a filtered array for use as a subexpression
+Handlebars.registerHelper('filter', function(array, property, value, include) {
+    if (!Array.isArray(array)) return [];
+    if (typeof include !== 'boolean') {
+       include = true;
+    }
+    if (include) {
+        return array.filter(item => item && item[property] === value);
+    } else {
+        return array.filter(item => item && item[property] !== value);
+    }
+});
+
 Handlebars.registerHelper('json', function (context) {
 
     if (context) {
@@ -148,6 +175,44 @@ Handlebars.registerHelper('eq', function (a, b) {
     return (a === b || (a != null && b != null && (a === b.toString() || a.toString() === b)));
 });
 
+Handlebars.registerHelper('compare', function (a, operator, b, options) {
+    if (arguments.length < 4) {
+        throw new Error('Handlebars Helper "compare" needs 3 parameters');
+    }
+
+    let result;
+    switch (operator) {
+        case '===':
+            result = a === b;
+            break;
+        case '!==':
+            result = a !== b;
+            break;
+        case '==':
+            result = a == b;
+            break;
+        case '!=':
+            result = a != b;
+            break;
+        case '<':
+            result = a < b;
+            break;
+        case '>':
+            result = a > b;
+            break;
+        case '<=':
+            result = a <= b;
+            break;
+        case '>=':
+            result = a >= b;
+            break;
+        default:
+            throw new Error('Handlebars Helper "compare" doesn\'t know the operator ' + operator);
+    }
+
+    return result ? options.fn(this) : options.inverse(this);
+});
+
 Handlebars.registerHelper('in', function (value, options) {
     const rawValues = Array.isArray(options.hash.values)
         ? options.hash.values
@@ -207,6 +272,12 @@ Handlebars.registerHelper('isFederatedAPI', function (gatewayVendor) {
     return constants.FEDERATED_GATEWAY_VENDORS.includes(gatewayVendor);
 });
 
+Handlebars.registerHelper('formatPrice', function (price) {
+    if (!price) return '0';
+    // Convert to number and remove trailing zeros
+    return parseFloat(price).toString();
+});
+
 // #endregion
 
 app.use(session({
@@ -224,6 +295,12 @@ app.use(session({
         maxAge: 60 * 60 * 1000,
     },
 }));
+
+// Stripe webhook endpoint MUST use raw body parser for signature verification
+const billingController = require('./controllers/billingController');
+app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), (req, res, next) => {
+    next();
+}, billingController.handleStripeWebhook);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

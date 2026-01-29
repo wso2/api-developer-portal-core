@@ -430,12 +430,16 @@ function getFormData(formData, keyManager, clientName, appID) {
 
 async function updateApplicationKey(formId, appMap, keyType, keyManager, keyManagerId, clientName) {
     // Get the update button and set loading state
+<<<<<<< HEAD
     console.log("Updating application key with formId:", formId);
     const updateBtn = document.getElementById('applicationKeyUpdateButton' + '-' + keyType);
     if (!updateBtn) {
         console.error('updateApplicationKey: Update button not found for keyType:', keyType);
         return;
     }
+=======
+    const updateBtn = document.getElementById('applicationKeyUpdateButton');
+>>>>>>> d8ab8986 (Adding monetization feature with Stripe integration)
     const originalContent = updateBtn.innerHTML;
     updateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
     updateBtn.disabled = true;

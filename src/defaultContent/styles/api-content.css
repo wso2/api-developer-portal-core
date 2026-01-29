@@ -1,3 +1,87 @@
+/* Modal-specific subscription plan card styles (only for subscription-plans.hbs) */
+.subscription-plans-body--modal .modal-plan-card {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(16,30,54,0.04);
+  padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 340px;
+}
+
+.subscription-plans-body--modal .modal-plan-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #23405c;
+  margin-bottom: 1.2rem;
+  text-align: center;
+}
+
+.subscription-plans-body--modal .modal-plan-kpi-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 40px;
+  margin-bottom: 1.2rem;
+}
+
+.subscription-plans-body--modal .modal-plan-kpi-label {
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  width: 80px;
+  text-align: center;
+}
+
+.subscription-plans-body--modal .modal-plan-kpi-divider {
+  color: #cbd5e1;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.subscription-plans-body--modal .modal-plan-kpi-value {
+  text-align: center;
+  width: 100px;
+}
+
+.subscription-plans-body--modal .modal-plan-price {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.subscription-plans-body--modal .modal-plan-price-free {
+  font-size: 22px;
+  font-weight: 700;
+  color: #16a34a;
+}
+.subscription-plans-body--modal .modal-plan-unit {
+  font-size: 10px;
+  color: #64748b;
+  margin-left: 2px;
+}
+.subscription-plans-body--modal .modal-plan-badge {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  font-size: 9px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  display: inline-block;
+  margin-top: 4px;
+}
+.subscription-plans-body--modal .modal-plan-rate {
+  font-size: 25px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.subscription-plans-body--modal .modal-plan-rate-unit {
+  font-size: 11px;
+  color: #64748b;
+  margin-left: 2px;
+}
 
 .api-overview-section {
   margin: 3rem 3.75rem;
@@ -893,4 +977,275 @@ hr {
     height: 95%; 
     margin: auto !important;
   }
+}
+
+.plans-summary { margin-top: 14px; }
+.plans-summary__top{
+  display:flex; align-items:center; gap:10px;
+  color:#475569; font-size:12px; font-weight:800;
+}
+.plans-summary__label{ display:inline-flex; gap:8px; align-items:center; }
+.plans-summary__link{
+  padding-left: 10px;
+  border-left: 1px solid #e2e8f0;
+  color:#2563eb;
+  font-size:12px; font-weight:700;
+  text-decoration:none;
+}
+.plans-summary__link:hover{ text-decoration:underline; }
+
+.plans-summary__names{
+  margin-top:6px;
+  color:#334155;
+  font-size:14px;
+  font-weight:600;
+
+  /* scalable for unknown plan counts */
+  max-width: 520px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.plans-summary__sep{ color:#cbd5e1; font-weight:700; margin: 0 8px; }
+.plans-summary__name{ color:#0f172a; }
+
+/* KPI panel */
+.plan-kpis{
+  width: 100%;
+  max-width: 440px;
+  margin: 16px auto 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+  overflow: hidden;
+  text-align: left !important; /* overrides card-body text-center */
+  box-sizing: border-box;
+}
+
+/* Each KPI row is a 2x2 grid:
+   line1: label + value (perfect alignment)
+   line2: empty + badge-slot (reserved height) */
+.plan-kpi-row{
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  grid-template-rows: auto 22px;
+  column-gap: 14px;
+  row-gap: 8px;
+  padding: 14px 22px 14px 16px; /* extra right padding avoids clipping */
+  align-items: center;          /* label aligns with valueTop */
+  box-sizing: border-box;
+}
+
+.plan-kpi-divider{
+  height: 1px;
+  background: #e2e8f0;
+}
+
+/* Label */
+.plan-kpi-label{
+  font-size: 16px;
+  font-weight: 500;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+/* Empty label sub-cell (row2, col1) */
+.plan-kpi-labelSub{
+  grid-column: 1;
+  grid-row: 2;
+}
+
+/* Top value line (row1, col2) */
+.plan-kpi-valueTop{
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  text-align: right !important;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 8px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Bottom badge slot (row2, col2) */
+.plan-kpi-valueSub{
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+  text-align: right !important;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* Values */
+.plan-kpi-amount{
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.plan-kpi-unit{
+  font-size: 16px;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.plan-kpi-free{
+  font-size: 20px;
+  font-weight: 850;
+  color: #16a34a;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+/* Badge */
+.plan-kpi-badge{
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #e0f2fe;
+  color: #0369a1;
+  white-space: nowrap;
+}
+
+/* Placeholder keeps row height consistent across all cards */
+.plan-kpi-badge-placeholder{
+  visibility: hidden;
+}
+
+/* ==============================
+   KPI PANEL V2 (MODAL ONLY)
+   ============================== */
+.subscription-plans-body--modal .plan-kpis{
+  background: #f8fafc;
+  border: 1px solid #dbeafe;
+  border-radius: 18px;
+  padding: 22px 24px;
+  text-align: left !important;   /* override card-body text-center */
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.subscription-plans-body--modal .plan-kpi-row{
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  column-gap: 16px;
+  align-items: start;
+  width: 100%;
+}
+
+.subscription-plans-body--modal .plan-kpi-label{
+  font-size: 14px;
+  font-weight: 500;
+  color: #0f172a;
+  line-height: 1.1;
+  white-space: normal;          /* IMPORTANT: prevent vertical letters */
+  word-break: normal;
+  text-align: left !important;
+}
+
+.subscription-plans-body--modal .plan-kpi-valueTop{
+  min-width: 0;
+  text-align: right !important;
+  overflow: hidden;             /* IMPORTANT: prevents painting over label */
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  white-space: normal;          /* IMPORTANT: stop overlap */
+  flex-wrap: wrap;              /* IMPORTANT: stop overlap */
+  font-variant-numeric: tabular-nums;
+}
+
+.subscription-plans-body--modal .plan-kpi-valueSub{
+  min-width: 0;
+  text-align: right !important;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.subscription-plans-body--modal .plan-kpi-divider{
+  height: 1px;
+  background: #e2e8f0;
+  margin: 16px 0;
+}
+
+.subscription-plans-body--modal .plan-kpi-amount{
+  font-size: 20px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.subscription-plans-body--modal .plan-kpi-unit{
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.subscription-plans-body--modal .plan-kpi-free{
+  font-size: 20px;
+  font-weight: 900;
+  color: #16a34a;
+}
+
+.subscription-plans-body--modal .plan-kpi-badge-slot{
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.subscription-plans-body--modal .plan-kpi-badge{
+  background-color: #e0f2fe;
+  color: #0369a1;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.subscription-plans-body--modal .plan-kpi-badge-placeholder{
+  display: block;
+  height: 30px;
+}
+
+/* Rate line */
+.subscription-plans-body--modal .plan-kpi-rateLine{
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+
+  white-space: normal;          /* IMPORTANT: stop overlap */
+  flex-wrap: wrap;              /* IMPORTANT: stop overlap */
+  font-variant-numeric: tabular-nums;
+}
+
+.subscription-plans-body--modal .plan-kpi-rateValue{
+  font-size: 20px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.subscription-plans-body--modal .plan-kpi-rateUnit{
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  white-space: nowrap;
 }

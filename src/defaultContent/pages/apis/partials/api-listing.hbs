@@ -112,6 +112,31 @@
           </div>
           <div class="api-card-body flex-grow-1" onclick="window.location.href='{{../baseUrl}}/api/{{apiHandle}}'" style="cursor: pointer;">
             <div class="truncate-text fw-light apilisting-api-description small mb-3">{{apiInfo.apiDescription}}</div>
+            
+            {{#if ../isAuthenticated}}
+              {{#if subscriptionPolicies}}
+                <div class="plans-summary-card">
+                  <div class="plans-summary-card__row">
+                    <div class="plans-summary-card__left">
+                      <span class="plans-summary-card__label">
+                        <i class="fas fa-tags" aria-hidden="true"></i>
+                        Plans
+                        <span class="plans-summary-card__count">({{subscriptionPolicies.length}})</span>
+                      </span>
+
+                      {{!-- optional: show “Free available” if any plan is free --}}
+                      {{#if (some subscriptionPolicies "isFreePlan")}}
+                        <span class="plans-summary-card__pill plans-summary-card__pill--free">Free available</span>
+                      {{/if}}
+                    </div>
+
+                    <a class="plans-summary-card__link" href="{{../baseUrl}}/api/{{apiHandle}}#subscriptionPlans">
+                      View plans
+                    </a>
+                  </div>
+                </div>
+              {{/if}}
+            {{/if}}
             <div class="row">
               <div class="apilisting-tags">
                 {{#apiInfo.tags}}
@@ -133,6 +158,8 @@
                 <p class="subscription-box-label">Application: </p>
                 <div class="custom-dropdown">
                   <input type="hidden" id="selectedAppId-{{apiID}}" value="" />
+                  {{!-- Hidden field for subscribeAndCheckout to find application ID --}}
+                  <input type="hidden" id="modal-selected-app-{{apiID}}" value="" />
                   <div class="custom-select-container">
                     <div class="select-selected" role="combobox" aria-expanded="false" aria-haspopup="listbox">
                       <span class="selected-text small">Create an app</span>
@@ -144,15 +171,40 @@
                           aria-label="Search applications">
                       </div>
                       <div class="select-items-container">
-                        {{#each applications}}
+                        {{#each (filter applications "subscriptionStatus" "CANCELED" false)}}
 
                         <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}"
                           data-app-name="{{name}}">
-                          <span>{{name}}</span>
-                          <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
-                            alt="Subscribed" class="subscription-icon" style="display: {{#if subscribed}}inline-block{{else}}none{{/if}};" />
+                          <div class="d-flex flex-column flex-grow-1">
+                            <span class="fw-semibold">{{name}}</span>
+                            {{#if subscriptionPolicy}}
+                            <small style="font-size: 11px; margin-top: 3px;">
+                              <span class="badge" style="background-color: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 10px; font-weight: 600; font-size: 10px;">
+                                {{subscriptionPolicy.policyName}}
+                              </span>
+                            </small>
+                            {{/if}}
+                          </div>
+                          {{#if subscribed}}
+                            {{#if (eq subscriptionStatus "ACTIVE")}}
+                              <span class="badge" style="background:#ecfdf5;color:#047857;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">
+                                Active
+                              </span>
+                            {{else if (eq subscriptionStatus "TRIALING")}}
+                              <span class="badge" style="background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">
+                                Trial
+                              </span>
+                            {{else if (eq subscriptionStatus "PAST_DUE")}}
+                              <span class="badge" style="background:#fef2f2;color:#b91c1c;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">
+                                Past due
+                              </span>
+                            {{else if (eq subscriptionStatus "CANCEL_SCHEDULED")}}
+                              <span class="badge" style="background:#fff7ed;color:#c2410c;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">
+                                Cancels soon
+                              </span>
+                            {{/if}}
+                          {{/if}}
                         </div>
-
                         {{/each}}
                       </div>
                       <div class="create-app-container" style="display: none;">
@@ -165,14 +217,35 @@
                 </div>
 
                 {{#if (eq subscriptionPolicies.length 1)}}
-                 <a type="button" class="common-btn-primary {{#if @root.isReadOnlyMode}}disabled{{/if}}"
-                   onclick="showSubscribeButtonLoading(this); subscribe('{{../orgID}}', '', '{{apiID}}', '{{apiReferenceID}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyID"}}', '{{lookup (lookup subscriptionPolicyDetails 0) "policyName"}}')"
-                   disabled>Subscribe</a>
-                 {{else}}
-                 <a type="button" class="common-btn-primary" onclick="loadModal('planModal-{{apiID}}')" disabled>Subscribe</a>
-                 {{/if}}
-
-                {{/if}}
+                 {{!-- Single plan: Check if paid or free --}}
+                 {{#with (lookup subscriptionPolicyDetails 0)}}
+                   {{#if pricingMetadata.externalPriceId}}
+                     {{!-- Paid plan: Route to Stripe checkout --}}
+                     <a type="button" 
+                        id="subscribe-btn-{{policyID}}"
+                        class="common-btn-primary subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                        data-policy-id="{{policyID}}"
+                        data-policy-name="{{policyName}}"
+                        data-external-price-id="{{pricingMetadata.externalPriceId}}"
+                        data-is-paid="true"
+                        onclick="showSubscribeButtonLoading(this); handleListingSubscribe('{{../../orgID}}', '{{../apiID}}', '{{../apiReferenceID}}', '{{policyID}}', '{{policyName}}', 'selectedAppId-{{../apiID}}', this)" 
+                        disabled>Subscribe &amp; Pay</a>
+                   {{else}}
+                     {{!-- Free plan: Direct subscription --}}
+                     <a type="button" 
+                        id="subscribe-btn-{{policyID}}"
+                        class="common-btn-primary subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                        data-policy-id="{{policyID}}"
+                        data-policy-name="{{policyName}}"
+                        data-is-paid="false"
+                        onclick="showSubscribeButtonLoading(this); handleListingSubscribe('{{../../orgID}}', '{{../apiID}}', '{{../apiReferenceID}}', '{{policyID}}', '{{policyName}}', 'selectedAppId-{{../apiID}}', this)" 
+                        disabled>Subscribe</a>
+                   {{/if}}
+                 {{/with}}
+                {{else}}
+                 {{!-- Multiple plans: Open modal --}}
+                 <a type="button" class="common-btn-primary subscribe-btn" onclick="openModalWithApp('planModal-{{apiID}}', 'selectedAppId-{{apiID}}')" disabled>Subscribe</a>
+                {{/if}}                {{/if}}
               </div>
               {{/if}}
             </div>
