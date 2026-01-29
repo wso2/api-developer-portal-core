@@ -62,9 +62,7 @@ const createAPIMetadata = async (req, res) => {
         }
         apiMetadata.endPoints.productionURL = changeEndpoint(apiMetadata.endPoints.productionURL);
         apiMetadata.endPoints.sandboxURL = changeEndpoint(apiMetadata.endPoints.sandboxURL);
-<<<<<<< HEAD
         normalizeGraphQLEndpoints(apiMetadata);
-=======
         const meterItems = apiMetadata?.monetizationInfo?.properties?.billingMeterData;
         const meterByPolicyName = new Map(
         Array.isArray(meterItems)
@@ -73,8 +71,6 @@ const createAPIMetadata = async (req, res) => {
                 .map(x => [String(x.policyName), String(x.billingMeterId)])
             : []
         );
-
->>>>>>> 614e22ff (Adding request changes)
         await sequelize.transaction({
             timeout: 60000,
         }, async (t) => {
