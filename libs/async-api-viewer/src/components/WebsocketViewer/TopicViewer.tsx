@@ -80,37 +80,29 @@ const TopicViewer = (props: TopicViewerProps) => {
   const [secret, setSecret] = useState('xxxxxxxxx');
 
   const handleTabChange = (event: any, newValue: SetStateAction<number>) => {
-    let subEvent;
-    if (newValue === 0) {
-      subEvent = 'subscribe';
-    } else if (newValue === 1) {
-      subEvent = 'unsubscribe';
-    }
-    console.log('subEvent', subEvent);
-    setInput(buildPayload(topic, subEvent, callbackURL, leaseSeconds, secret));
     setSelectedTab(newValue);
   };
 
-  function buildPayload(topic?: string, subEvent?: string, callback?: string, lease?: string, secretValue?: string) {
-    if (asyncType === APITypeEnum.WEBSUB) {
-      if (subEvent === 'unsubscribe') {
-        return JSON.stringify({
-          'hub.mode': 'unsubscribe',
-          'hub.topic': topic,
-          'hub.callback': callback || callbackURL,
-        }, null, 2);
-      } else if(subEvent === 'subscribe') {
-        return JSON.stringify({
-          'hub.mode': 'subscribe',
-          'hub.topic': topic || 'sample-topic',
-          'hub.callback': callback || callbackURL,
-          'hub.secret': secretValue || secret,
-          'hub.lease_seconds': parseInt(lease || leaseSeconds),
-        }, null, 2);
-      }
-    }
-    return '{ "message": "Hello Server" }';
-  }
+  // function buildPayload(topic?: string, subEvent?: string, callback?: string, lease?: string, secretValue?: string) {
+  //   if (asyncType === APITypeEnum.WEBSUB) {
+  //     if (subEvent === 'unsubscribe') {
+  //       return JSON.stringify({
+  //         'hub.mode': 'unsubscribe',
+  //         'hub.topic': topic,
+  //         'hub.callback': callback || callbackURL,
+  //       }, null, 2);
+  //     } else if(subEvent === 'subscribe') {
+  //       return JSON.stringify({
+  //         'hub.mode': 'subscribe',
+  //         'hub.topic': topic || 'sample-topic',
+  //         'hub.callback': callback || callbackURL,
+  //         'hub.secret': secretValue || secret,
+  //         'hub.lease_seconds': parseInt(lease || leaseSeconds),
+  //       }, null, 2);
+  //     }
+  //   }
+  //   return '{ "message": "Hello Server" }';
+  // }
 
   function generateCurlCommand() {
     const mode = selectedTab === 0 ? 'subscribe' : selectedTab === 1 ? 'unsubscribe' : 'subscribe';
@@ -122,7 +114,9 @@ const TopicViewer = (props: TopicViewerProps) => {
     curlCmd += ` -d 'hub.mode=${mode}'`;
     
     if (mode === 'subscribe') {
-      curlCmd += ` -d 'hub.lease_seconds=${leaseSeconds}'`;
+      if (leaseSeconds && leaseSeconds.trim()) {
+        curlCmd += ` -d 'hub.lease_seconds=${leaseSeconds}'`;
+      }
       curlCmd += ` -d 'hub.secret=${secret}'`;
     }
     
@@ -156,11 +150,11 @@ const TopicViewer = (props: TopicViewerProps) => {
     }
   }, [apiEndpoint, sandboxEndpoint, selectedEndpointType, topic]);
 
-  useEffect(() => {
-    if (asyncType === APITypeEnum.WEBSUB && selectedTab === 0) {
-      setInput(buildPayload(topic, 'subscribe', callbackURL, leaseSeconds, secret));
-    }
-  }, [callbackURL, leaseSeconds, secret]);
+  // useEffect(() => {
+  //   if (asyncType === APITypeEnum.WEBSUB && selectedTab === 0) {
+  //     setInput(buildPayload(topic, 'subscribe', callbackURL, leaseSeconds, secret));
+  //   }
+  // }, [callbackURL, leaseSeconds, secret]);
 
   const handleEndpointTypeChange = (event: any) => {
     const newValue = event.target.value as 'production' | 'sandbox';
