@@ -108,16 +108,16 @@ const TopicViewer = (props: TopicViewerProps) => {
     const mode = selectedTab === 0 ? 'subscribe' : selectedTab === 1 ? 'unsubscribe' : 'subscribe';
     let curlCmd = `curl -X POST ${endpoint}`;
     curlCmd += ` -H 'Content-Type: application/x-www-form-urlencoded'`;
-    curlCmd += ` -d 'hub.topic=${topic}'`;
-    curlCmd += ` -d 'hub.callback=${callbackURL}'`;
+    curlCmd += ` --data-urlencode 'hub.topic=${topic}'`;
+    curlCmd += ` --data-urlencode 'hub.callback=${callbackURL}'`;
     
-    curlCmd += ` -d 'hub.mode=${mode}'`;
+    curlCmd += ` --data-urlencode 'hub.mode=${mode}'`;
     
     if (mode === 'subscribe') {
       if (leaseSeconds && leaseSeconds.trim()) {
-        curlCmd += ` -d 'hub.lease_seconds=${leaseSeconds}'`;
+        curlCmd += ` --data-urlencode 'hub.lease_seconds=${leaseSeconds}'`;
       }
-      curlCmd += ` -d 'hub.secret=${secret}'`;
+      curlCmd += ` --data-urlencode 'hub.secret=${secret}'`;
     }
     
     if (apiToken && apiToken.trim()) {
