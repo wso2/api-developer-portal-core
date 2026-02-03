@@ -83,27 +83,6 @@ const TopicViewer = (props: TopicViewerProps) => {
     setSelectedTab(newValue);
   };
 
-  // function buildPayload(topic?: string, subEvent?: string, callback?: string, lease?: string, secretValue?: string) {
-  //   if (asyncType === APITypeEnum.WEBSUB) {
-  //     if (subEvent === 'unsubscribe') {
-  //       return JSON.stringify({
-  //         'hub.mode': 'unsubscribe',
-  //         'hub.topic': topic,
-  //         'hub.callback': callback || callbackURL,
-  //       }, null, 2);
-  //     } else if(subEvent === 'subscribe') {
-  //       return JSON.stringify({
-  //         'hub.mode': 'subscribe',
-  //         'hub.topic': topic || 'sample-topic',
-  //         'hub.callback': callback || callbackURL,
-  //         'hub.secret': secretValue || secret,
-  //         'hub.lease_seconds': parseInt(lease || leaseSeconds),
-  //       }, null, 2);
-  //     }
-  //   }
-  //   return '{ "message": "Hello Server" }';
-  // }
-
   function generateCurlCommand() {
     const mode = selectedTab === 0 ? 'subscribe' : selectedTab === 1 ? 'unsubscribe' : 'subscribe';
     let curlCmd = `curl -X POST ${endpoint}`;
@@ -149,12 +128,6 @@ const TopicViewer = (props: TopicViewerProps) => {
       );
     }
   }, [apiEndpoint, sandboxEndpoint, selectedEndpointType, topic]);
-
-  // useEffect(() => {
-  //   if (asyncType === APITypeEnum.WEBSUB && selectedTab === 0) {
-  //     setInput(buildPayload(topic, 'subscribe', callbackURL, leaseSeconds, secret));
-  //   }
-  // }, [callbackURL, leaseSeconds, secret]);
 
   const handleEndpointTypeChange = (event: any) => {
     const newValue = event.target.value as 'production' | 'sandbox';
@@ -489,15 +462,6 @@ const TopicViewer = (props: TopicViewerProps) => {
                               />
                             </Box>
                           </Box>
-                          {/* <Box className={classes.payloadContainer}>
-                            <PayloadEditor
-                              fileContent={input}
-                              language="json"
-                              height="170px"
-                              width="100%"
-                              setFileContent={setInput}
-                            />
-                          </Box> */}
                         <Grid>
                           <Typography
                             data-testid="curl-command-txt"
@@ -508,17 +472,6 @@ const TopicViewer = (props: TopicViewerProps) => {
                             Command
                           </Typography>
                           <Box className={classes.payloadContainer}>
-                            {/* <TextField
-                              label=""
-                              variant="outlined"
-                              InputLabelProps={{ shrink: false }}
-                              fullWidth
-                              className={classes.textArea}
-                              value={generateCurlCommand()}
-                              multiline
-                              rows={4}
-                              data-testid="curl-command"
-                            /> */}
                           <CopyToClipboard
                             value={generateCurlCommand()}
                             size="small"
@@ -527,24 +480,6 @@ const TopicViewer = (props: TopicViewerProps) => {
                           />
                           </Box>
                         </Grid>
-                          {/* <Box mt={5}>
-                            <Tooltip title={tooltipText} placement="top-start">
-                              <Box className={classes.sendIcon}>
-                                <Button
-                                  testId="payload-send"
-                                  disabled={input.length === 0 || !connect}
-                                  variant="outlined"
-                                  startIcon={<Send />}
-                                  onClick={sendMessage}
-                                  size="small"
-                                >
-                                  <Typography variant="body1" align="center">
-                                    Send
-                                  </Typography>
-                                </Button>
-                              </Box>
-                            </Tooltip>
-                          </Box> */}
                         </Box>
                       </TabPanel>
                       {/* Tab 1: Unsubscribe Payload */}
@@ -570,15 +505,6 @@ const TopicViewer = (props: TopicViewerProps) => {
                               />
                             </Box>
                           </Box>
-                          {/* <Box className={classes.payloadContainer}>
-                            <PayloadEditor
-                              fileContent={input}
-                              language="json"
-                              height="170px"
-                              width="100%"
-                              setFileContent={setInput}
-                            />
-                          </Box> */}
                         <Grid>
                           <Typography
                             data-testid="curl-command-txt"
@@ -589,17 +515,6 @@ const TopicViewer = (props: TopicViewerProps) => {
                             Command
                           </Typography>
                           <Box className={classes.payloadContainer}>
-                            {/* <TextField
-                              label=""
-                              variant="outlined"
-                              InputLabelProps={{ shrink: false }}
-                              fullWidth
-                              className={classes.textArea}
-                              value={generateCurlCommand()}
-                              multiline
-                              rows={4}
-                              data-testid="curl-command"
-                            /> */}
                           <CopyToClipboard
                             value={generateCurlCommand()}
                             size="small"
@@ -608,24 +523,6 @@ const TopicViewer = (props: TopicViewerProps) => {
                           />
                           </Box>
                         </Grid>
-                          {/* <Box mt={5}>
-                            <Tooltip title={tooltipText} placement="top-start">
-                              <Box className={classes.sendIcon}>
-                                <Button
-                                  testId="payload-send"
-                                  disabled={input.length === 0 || !connect}
-                                  variant="outlined"
-                                  startIcon={<Send />}
-                                  onClick={sendMessage}
-                                  size="small"
-                                >
-                                  <Typography variant="body1" align="center">
-                                    Send
-                                  </Typography>
-                                </Button>
-                              </Box>
-                            </Tooltip>
-                          </Box> */}
                         </Box>
                       </TabPanel>
                       {/* Tab 2: Headers (API Token) */}
