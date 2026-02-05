@@ -172,6 +172,8 @@ function WebSocketViewer(props: WebSocketViewerProps) {
         'hub.mode': 'subscribe',
         'hub.topic': topic || 'sample-topic',
         'hub.callback': 'http://example.com/callback',
+        'hub.secret': 'xxxxxxxxx',
+        'hub.lease_seconds': 864000,
       });
     }
     return '{ "message": "Hello Server" }';
@@ -203,8 +205,8 @@ function WebSocketViewer(props: WebSocketViewerProps) {
             publish={publish}
             subscribe={subscribe}
             parameters={parameters}
-            payload={buildPayload(name)}
             isDevportal={isDevportal}
+            payload={buildPayload(name)}
             asyncType={asyncApiType || APITypeEnum.WS}
           />
         ))}
