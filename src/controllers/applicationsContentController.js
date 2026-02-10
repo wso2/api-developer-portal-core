@@ -111,11 +111,9 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
             const projectId = projectIdEntry?.value;
             if (apiDetails) {
                 apiDTO.security = apiDetails.securityScheme;
-                // Temporarily count all APIs, not just those with api_key security
-                apiKeyEnabledAPICount++;
-                // if (apiDTO.security && apiDTO.security.includes('api_key')) {
-                //     apiKeyEnabledAPICount++;
-                // }
+                if (apiDTO.security && apiDTO.security.includes('api_key')) {
+                    apiKeyEnabledAPICount++;
+                }
             }
             if (projectId) {
                 apiDTO.projectId = projectId;
@@ -141,9 +139,7 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
         }));
     }
 
-    // Temporarily set to true to always show Key Actions column
-    const isApiKey = true;
-    // const isApiKey = subList.some(api => api.security !== null && api.security.includes('api_key'));
+    const isApiKey = subList.some(api => api.security !== null && api.security.includes('api_key'));
 
     util.appendAPIImageURL(subList, req, orgID);
 
