@@ -306,8 +306,7 @@
                                                 </thead>
                                                 <tbody>
                                                     {{#each subAPIs}}
-                                                    {{!-- Temporarily removed security check to show all APIs --}}
-                                                    {{!-- {{#if (contains security 'api_key')}} --}}
+                                                    {{#if (contains security 'api_key')}}
                                                     {{> api-key apiID=apiID keyType="PRODUCTION"}}
                                                     {{#in apiType values="REST, WS, WEBSUB"}}
                                                     {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails
@@ -336,8 +335,7 @@
                                                             {{/if}}
                                                         </td>
                                                         <td class="app-td" style="width: 20%;">
-                                                            {{!-- Temporarily removed security check to show actions for all APIs --}}
-                                                            {{!-- {{#if (contains security 'api_key')}} --}}
+                                                            {{#if (contains security 'api_key')}}
                                                             <div class="api-key-actions">
                                                                 <button
                                                                     class="common-btn-outlined btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
@@ -393,11 +391,11 @@
                                                                 </button>
                                                                 {{> api-key-name subID=subID keyType="PRODUCTION"}}
                                                             </div>
-                                                            {{!-- {{/if}} --}}
+                                                            {{/if}}
                                                         </td>
                                                     </tr>
                                                     {{/in}}
-                                                    {{!-- {{/if}} --}}
+                                                    {{/if}}
                                                     {{/each}}
                                                 </tbody>
                                             </table>
@@ -705,8 +703,7 @@
                                             </thead>
                                             <tbody>
                                                 {{#each subAPIs}}
-                                                {{!-- Temporarily removed security check to show all APIs --}}
-                                                {{!-- {{#if (contains security 'api_key')}} --}}
+                                                {{#if (contains security 'api_key')}}
                                                 {{> api-key apiID=apiID keyType="SANDBOX"}}
                                                 {{#in apiType values="REST, WS, WEBSUB"}}
                                                 {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails
@@ -732,8 +729,7 @@
                                                         {{/if}}
                                                     </td>
                                                     <td class="app-td" style="width: 20%;">
-                                                        {{!-- Temporarily removed security check to show actions for all APIs --}}
-                                                        {{!-- {{#if (contains security 'api_key')}} --}}
+                                                        {{#if (contains security 'api_key')}}
                                                         <div class="api-key-actions">
                                                             <button
                                                                 class="common-btn-outlined btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
@@ -786,11 +782,11 @@
                                                             </button>
                                                             {{> api-key-name subID=subID keyType="SANDBOX"}}
                                                         </div>
-                                                        {{!-- {{/if}} --}}
+                                                        {{/if}}
                                                     </td>
                                                 </tr>
                                                 {{/in}}
-                                                {{!-- {{/if}} --}}
+                                                {{/if}}
                                                 {{/each}}
                                             </tbody>
                                         </table>
