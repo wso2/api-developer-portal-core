@@ -89,7 +89,7 @@ const login = async (req, res, next) => {
             } else {
                 await passport.authenticate('oauth2', { fidp: config.fidp[fidp] })(req, res, next);
             }
-            trackLoginTrigger({ orgName });
+            trackLoginTrigger({ orgName }, req);
         } else if (fidp && fidp == 'default') {
             await passport.authenticate('oauth2')(req, res, next);
         } else { 
@@ -219,7 +219,7 @@ const handleLogOut = async (req, res) => {
                 orgName: req.params.orgName,
                 logoutURL: logoutURL
             });
-            trackLogoutTrigger({ orgName: req.params.orgName });
+            trackLogoutTrigger({ orgName: req.params.orgName }, req);
             req.session.currentPathURI = currentPathURI;
             res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${authJsonContent.logoutRedirectURI}&id_token_hint=${idToken}`);
         });
