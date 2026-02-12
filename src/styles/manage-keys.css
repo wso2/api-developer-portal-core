@@ -1,4 +1,4 @@
-/* Improved Manage Keys Page Styles */
+/* Improved Manage Keys Page Styles - All scoped to .keys-section */
 
 /* Page header positioning - bring it up for better visual appeal */
 .keys-section .container-header {
@@ -6,7 +6,7 @@
     margin-bottom: 1.5rem;
 }
 
-.key-btn-container {
+.keys-section .key-btn-container {
     display: flex;
     flex-direction: row;
     width: 100%;
@@ -14,11 +14,11 @@
     margin-bottom: 0;
   }
 
-  .key-btn-container .nav-item {
+  .keys-section .key-btn-container .nav-item {
     flex: 1;
   }
 
-  .key-btn {
+  .keys-section .key-btn {
     width: 100%;
     padding: 14px 0;
     text-align: center;
@@ -35,16 +35,16 @@
     opacity: 0.7;
   }
 
-  .key-btn:hover {
+  .keys-section .key-btn:hover {
     background: var(--main-bg-color);
     opacity: 0.9;
   }
 
-  .key-btn:focus {
+  .keys-section .key-btn:focus {
     outline: none;
   }
 
-  .key-btn.active {
+  .keys-section .key-btn.active {
     background: var(--main-bg-color);
     z-index: 3;
     border-top-left-radius: 12px;
@@ -59,7 +59,7 @@
        4px -4px 8px var(--bs-gray-200);
   }
 
-  #keysTabContent {
+  .keys-section #keysTabContent {
     background: var(--main-bg-color);
     padding: 24px;
     border: 1px solid var(--bs-gray-200);
@@ -70,12 +70,12 @@
        0 4px 8px var(--bs-gray-200);
   }
 
-.key-action-buttons-row {
+.keys-section .key-action-buttons-row {
     gap: 8px;
 }
 
 /* Accordion Headers - Changed from primary color to neutral with subtle accent */
-.accordion-button {
+.keys-section .accordion-button {
     background-color: var(--secondary-bg-color);
     color: var(--main-text-color);
     box-shadow: none;
@@ -83,25 +83,25 @@
     border-left: 3px solid var(--secondary-main-color);
 }
 
-.accordion-button:not(.collapsed) {
+.keys-section .accordion-button:not(.collapsed) {
     background-color: var(--secondary-bg-color);
     color: var(--main-text-color);
     box-shadow: none;
     border-left: 3px solid var(--secondary-main-color);
 }
 
-.accordion-button:hover {
+.keys-section .accordion-button:hover {
     background-color: var(--primary-lightest-color);
 }
 
-#sandbox-oauth2.accordion-header,
-#production-oauth2.accordion-header,
-#production-apikey.accordion-header,
-#sandbox-apikey.accordion-header {
+.keys-section #sandbox-oauth2.accordion-header,
+.keys-section #production-oauth2.accordion-header,
+.keys-section #production-apikey.accordion-header,
+.keys-section #sandbox-apikey.accordion-header {
     margin-bottom: 0;
 }
 
-.accordion-header {
+.keys-section .accordion-header {
     background-color: var(--main-bg-color);
     color: var(--main-text-color);
     border: 1px solid var(--bs-gray-300);
@@ -110,8 +110,8 @@
 }
 
 /* Accordion arrow indicator - Darker for better visibility */
-.accordion-button::after,
-.accordion-button:not(.collapsed)::after {
+.keys-section .accordion-button::after,
+.keys-section .accordion-button:not(.collapsed)::after {
     background-color: var(--main-text-color);
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23000' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23000' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
@@ -122,7 +122,7 @@
     background-image: none;
 }
 
-.accordion-body {
+.keys-section .accordion-body {
     padding: 1.25rem 1.25rem 1.25rem 0;
     background-color: var(--main-bg-color);
     border-top: none;
@@ -133,25 +133,25 @@
     border-bottom-right-radius: var(--bs-accordion-border-radius);
 }
 
-.accordion-body .input-group {
+.keys-section .accordion-body .input-group {
     display: flex;
     flex-wrap: wrap;
     align-items: stretch;
     width: 100%;
 }
 
-.accordion-body-content {
+.keys-section .accordion-body-content {
     padding-left: 1.25rem;
     padding-right: 1.25rem;
 }
 
 /* Table Styling in Accordion */
-.app-table {
+.keys-section .app-table {
     border-collapse: separate;
     border-spacing: 0;
 }
 
-.app-table-container {
+.keys-section .app-table-container {
     border-radius: 8px;
     overflow: hidden;
     border: 1px solid var(--bs-gray-300);
@@ -159,34 +159,34 @@
 }
 
 /* Table header styling */
-.app-table thead {
+.keys-section .app-table thead {
     background-color: var(--primary-lightest-color);
 }
 
-.app-table thead tr {
+.keys-section .app-table thead tr {
     background-color: var(--primary-lightest-color);
 }
 
-.app-table .app-th {
+.keys-section .app-table .app-th {
     background-color: var(--primary-lightest-color);
     font-weight: 600;
     color: var(--main-text-color);
     padding: 0.75rem 1rem;
 }
 
-/* Primary action buttons (in modals or primary CTAs) */
-.common-btn-primary.btn-sm {
+/* Primary action buttons - scoped to keys section */
+.keys-section .common-btn-primary.btn-sm {
     background-color: var(--primary-main-color);
     color: var(--light-text-color);
     border: none;
 }
 
-.common-btn-primary.btn-sm:hover {
+.keys-section .common-btn-primary.btn-sm:hover {
     background-color: var(--primary-light-color);
 }
 
 /* Main Generate Key button styling - make it more compact and visually appealing */
-button[id^="generateKeyBtn-"][data-cyid^="generateKey-"] {
+.keys-section button[id^="generateKeyBtn-"][data-cyid^="generateKey-"] {
     background-color: var(--primary-main-color) !important;
     color: var(--light-text-color) !important;
     border: none !important;
@@ -201,20 +201,20 @@ button[id^="generateKeyBtn-"][data-cyid^="generateKey-"] {
     gap: 0.5rem !important;
 }
 
-button[id^="generateKeyBtn-"][data-cyid^="generateKey-"]:hover {
+.keys-section button[id^="generateKeyBtn-"][data-cyid^="generateKey-"]:hover {
     background-color: var(--primary-light-color) !important;
     transform: translateY(-1px) !important;
 }
 
-button[id^="generateKeyBtn-"][data-cyid^="generateKey-"]:active {
+.keys-section button[id^="generateKeyBtn-"][data-cyid^="generateKey-"]:active {
     transform: translateY(0) !important;
 }
 
-button[id^="generateKeyBtn-"][data-cyid^="generateKey-"] i {
+.keys-section button[id^="generateKeyBtn-"][data-cyid^="generateKey-"] i {
     font-size: 1rem;
 }
 
-/* API Key Name Modal */
+/* API Key Name Modal - already specific enough, but add scoping for consistency */
 .api-key-name-modal-dialog {
     max-width: 480px;
     width: 100%;
@@ -242,44 +242,64 @@ button[id^="generateKeyBtn-"][data-cyid^="generateKey-"] i {
     margin-top: 1rem;
 }
 
+/* Consistent focus styling for modal */
 .api-key-name-modal .form-control:focus {
     border-color: var(--primary-light-color);
     box-shadow: 0 0 0 0.125rem var(--primary-light-color);
 }
 
-.app-th:first-child,
-.app-td:first-child {
+/* Fix modal close button - prevent our styles from affecting it */
+.keys-section .btn-close,
+.api-key-name-modal .btn-close,
+.modal .btn-close {
+    min-width: auto !important;
+    padding: 0.25em 0.25em !important;
+    width: 1em !important;
+    height: 1em !important;
+    border: none !important;
+    font-size: 1rem !important;
+    line-height: 1 !important;
+}
+
+.keys-section .btn-close:hover,
+.api-key-name-modal .btn-close:hover,
+.modal .btn-close:hover {
+    transform: none !important;
+}
+
+.keys-section .app-th:first-child,
+.keys-section .app-td:first-child {
   padding-left: 1rem;
 }
 
 /* Align table cells properly */
-.app-td {
+.keys-section .app-td {
   vertical-align: middle;
   padding: 0.75rem 0.5rem;
 }
 
-.app-th {
+.keys-section .app-th {
   vertical-align: middle;
   padding: 0.75rem 0.5rem;
 }
 
-/* Form inputs - Better focus states */
-.form-control:focus {
-    border-color: var(--secondary-main-color);
-    box-shadow: 0 0 0 0.25rem var(--primary-light-color);
+/* Form inputs - Better focus states - SCOPED to keys section only */
+.keys-section .form-control:focus {
+    border-color: var(--primary-light-color);
+    box-shadow: 0 0 0 0.125rem var(--primary-light-color);
 }
 
 /* Password toggle container improvements */
-.password-toggle-container {
+.keys-section .password-toggle-container {
     position: relative;
 }
 
-.password-toggle-container .form-control {
+.keys-section .password-toggle-container .form-control {
     padding-right: 80px;
 }
 
-.password-toggle-btn,
-.password-copy-btn {
+.keys-section .password-toggle-btn,
+.keys-section .password-copy-btn {
     background: transparent;
     border: none;
     color: var(--main-text-color);
@@ -289,32 +309,31 @@ button[id^="generateKeyBtn-"][data-cyid^="generateKey-"] i {
     transition: all 0.2s ease;
 }
 
-.password-toggle-btn:hover,
-.password-copy-btn:hover {
+.keys-section .password-toggle-btn:hover,
+.keys-section .password-copy-btn:hover {
     color: var(--secondary-main-color);
     opacity: 1;
 }
 
 /* Improved spacing and visual hierarchy */
-.accordion-item {
+.keys-section .accordion-item {
     border: 1px solid var(--bs-gray-300);
     border-radius: 8px;
     overflow: hidden;
     transition: border-color 0.2s ease;
 }
 
-.accordion-item:hover {
+.keys-section .accordion-item:hover {
     border-color: var(--bs-gray-400);
 }
 
-
 /* Table row hover effect */
-.app-table tbody tr:hover {
+.keys-section .app-table tbody tr:hover {
     background-color: var(--secondary-bg-color);
 }
 
 /* Better button spacing and alignment in action rows */
-.api-key-actions {
+.keys-section .api-key-actions {
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
@@ -322,22 +341,22 @@ button[id^="generateKeyBtn-"][data-cyid^="generateKey-"] i {
 }
 
 /* Standardize API key action button sizes and alignment */
-.api-key-actions button {
+.keys-section .api-key-actions button {
     min-width: 130px;
-    padding: 0.625rem 1rem !important;
-    font-size: 0.875rem;
+    /* padding: 0.425rem 1rem !important; */
+    /* font-size: 0.875rem; */
     text-align: center;
     justify-content: center;
     white-space: nowrap;
     font-weight: 500;
 }
 
-.api-key-actions button i {
+.keys-section .api-key-actions button i {
     margin-right: 0.25rem;
 }
 
 /* Ensure consistent button heights */
-.api-key-actions .common-btn-outlined {
+.keys-section .api-key-actions .common-btn-outlined {
     height: auto;
     line-height: 1.5;
 }
