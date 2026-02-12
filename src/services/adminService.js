@@ -917,7 +917,7 @@ const createSubscription = async (req, res) => {
                     appId: req.body.applicationID,
                     apiId: req.body.apiId,
                     idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
-                });
+                }, req);
                 return res.status(200).json({ message: 'Subscribed successfully' });
 
             } catch (error) {
@@ -1263,7 +1263,7 @@ const createAppKeyMapping = async (req, res) => {
             orgId: orgID,
             appName: req.body.applicationName,
             idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
-        });
+        }, req);
         return res.status(200).json(responseData);
     } catch (error) {
         logger.error('key mapping create error failed', {
@@ -1500,7 +1500,7 @@ const unsubscribeAPI = async (req, res) => {
                     appId: appID,
                     apiRefId: apiReferenceID,
                     idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
-                });
+                }, req);
                 return res.status(204).send();
             } catch (error) {
                 try {
@@ -1515,7 +1515,7 @@ const unsubscribeAPI = async (req, res) => {
                             appId: appID,
                             apiRefId: apiReferenceID,
                             idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
-                        });
+                        }, req);
                         return res.status(204).send();
                     }
                 } catch (error) {
