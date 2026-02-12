@@ -2,7 +2,7 @@
 
 /* Page header positioning - bring it up for better visual appeal */
 .keys-section .container-header {
-    margin-top: -1rem;
+    margin-top: -2rem;
     margin-bottom: 1.5rem;
 }
 
@@ -41,8 +41,8 @@
   }
 
   .keys-section .key-btn:focus {
-    outline: none;
-    box-shadow: 0 0 0 0.2rem var(--text-light-color);
+    outline: 0.1px solid var(--primary-lightest-color);
+    outline-offset: 0.1px;
   }
 
   .keys-section .key-btn.active {
@@ -251,10 +251,9 @@
 
 /* Fix modal close button - prevent our styles from affecting it */
 .keys-section .btn-close,
-.api-key-name-modal .btn-close,
-.modal .btn-close {
+.api-key-name-modal .btn-close {
     min-width: auto !important;
-    padding: 0.25em 0.25em !important;
+    padding: 0.25em !important;
     width: 1em !important;
     height: 1em !important;
     border: none !important;
@@ -263,8 +262,7 @@
 }
 
 .keys-section .btn-close:hover,
-.api-key-name-modal .btn-close:hover,
-.modal .btn-close:hover {
+.api-key-name-modal .btn-close:hover {
     transform: none !important;
 }
 
@@ -281,7 +279,7 @@
 
 .keys-section .app-th {
   vertical-align: middle;
-  padding: 0.75rem 0.5rem;
+  padding: 0.75rem 1rem;
 }
 
 /* Form inputs - Better focus states - SCOPED to keys section only */
