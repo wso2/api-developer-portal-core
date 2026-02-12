@@ -250,13 +250,13 @@ const revokeAPIKeys = async (req, res) => {
 const regenerateAPIKeys = async (req, res) => {
     const apiKeyID = req.params.apiKeyID;
     try {
-        const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/api-keys/${apiKeyID}/regenerate`, {}, {});
+        const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/api-keys/${apiKeyID}/regenerate`, { 'x-source-portal': 'bijira-devportal' }, {});
         res.status(200).json(responseData);
     } catch (error) {
-        logger.error("Error occurred while revoking the API key", { 
+        logger.error("Error occurred while regenerating the API key", {
             apiKeyID,
-            error: error.message, 
-            stack: error.stack 
+            error: error.message,
+            stack: error.stack
         });
         util.handleError(res, error);
     }
