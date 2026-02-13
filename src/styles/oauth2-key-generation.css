@@ -329,10 +329,9 @@ input[type="checkbox"]:checked {
 .api-key-warning {
   background-color: color-mix(in srgb, var(--warning-color) 15%, white);
   border-left: 6px solid var(--warning-color);
-  border: 1px solid var(--warning-color);
+  /* border: 1px solid var(--warning-color); */
   border-radius: 0 0.5rem 0.5rem 0;
-  padding: 1.25rem;
-  box-shadow: 0 4px 6px color-mix(in srgb, var(--warning-color) 20%, transparent);
+  /* padding: 1.25rem; */
   animation: highlightPulse 0.6s ease-out;
 }
 
