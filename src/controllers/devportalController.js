@@ -31,6 +31,9 @@ const { Sequelize } = require("sequelize");
 const adminService = require('../services/adminService');
 const apiDao = require('../dao/apiMetadata');
 const { trackAppCreationStart, trackAppCreationEnd, trackAppDeletion, trackGenerateKey } = require('../utils/telemetry');
+const fs = require('fs');
+const yaml = require('js-yaml');
+const { ImportedApplicationDTO } = require('../dto/importedApplication');
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
 
@@ -383,6 +386,53 @@ const login = async (req, res) => {
         });
     })(req, res);
 };
+// Import Application with API Subscriptions
+const importApplications = async (req, res) => {
+    try {
+        const orgDetails = await adminDao.getOrganization(req.params.orgId);
+
+        if (!req.file || !req.file.buffer) {
+            return res.status(400).json({ message: 'Missing application.yaml file' });
+        }
+        
+        const patToken = req.headers['pat_token'] || req.headers['PAT_TOKEN'];
+        let data;
+        let orgID;
+        let applicationTobeCreated;
+        
+        try {
+            // Read file content from buffer (memory storage)
+            const fileContent = req.file.buffer.toString('utf8');
+            data = yaml.load(fileContent);
+            const importedApplication = new ImportedApplicationDTO(data);
+            applicationTobeCreated = {
+                "name": importedApplication.applicationInfo.name,
+                "description": importedApplication.applicationInfo.description,
+                "type": "WEB"
+            };
+            orgID = orgDetails.ORG_ID;
+            const createDevPortalApplication = await adminDao.createApplication(orgID, importedApplication.applicationInfo.owner, applicationTobeCreated);
+            const cpApp = await adminService.createCPApplicationOnBehalfOfUser(createDevPortalApplication.APP_ID, importedApplication.applicationInfo.owner, orgDetails.ORGANIZATION_IDENTIFIER, patToken);
+
+        } catch (parseError) {
+            logger.error('Error occurred while parsing application.yaml', {
+                orgId: req.params.orgId,
+                error: parseError.message,
+                stack: parseError.stack
+            });
+            return util.handleError(res, parseError);
+        }
+
+        return res.status(200).json(data);
+    } catch (error) {
+        logger.error('Error occurred while importing applications', {
+            orgId: req.params.orgId,
+            error: error.message,
+            stack: error.stack
+        });
+        util.handleError(res, error);
+    }
+}
 
 module.exports = {
     saveApplication,
@@ -397,5 +447,6 @@ module.exports = {
     cleanUp,
     login,
     revokeAPIKeys,
-    regenerateAPIKeys
+    regenerateAPIKeys,
+    importApplications
 };

@@ -735,6 +735,10 @@ async function loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags,
         groups = req.user[constants.ROLES.GROUP_CLAIM];
     }
     if (groups !== "") {
+        logger.info("User groups found in the token", {
+            orgName: orgName,
+            groups: groups
+        });
         groupList = groups.split(" ");
     }
     let metaData = await apiMetadataService.getMetadataListFromDB(orgID, groupList, searchTerm, tags, null, null, viewName);

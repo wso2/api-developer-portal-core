@@ -1340,6 +1340,56 @@ function checkAdditionalValues(additionalValues) {
 
 }
 
+const createCPApplicationOnBehalfOfUser = async (cpApplicationName,owner,cpOrgId,patToken) => {
+    logger.info('Creating control plane application', {
+        cpApplicationName
+    });
+    headers = {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${patToken}`
+        }
+
+    try {
+        //create control plane application
+        url = `${controlPlaneUrl}/applications?preserveOwner=true`;
+        const cpAppCreationResponse = await util.apiRequest('POST', url, headers, {
+            name: cpApplicationName,
+            throttlingPolicy: 'Unlimited',
+            tokenType: 'JWT',
+            owner:owner,
+            groups: [],
+            attributes: {},
+            subscriptionScopes: []
+        },cpOrgId);
+        return cpAppCreationResponse;
+    } catch (error) {
+        //application already exists
+        logger.error('Application Creation Failed in CP', {
+            error: error.message,
+            stack: error.stack,
+            cpApplicationName
+        });
+        if (error.statusCode && error.statusCode === 409) {
+            try {
+                logger.info('Application already exists in control plane, retrieving existing application', {
+                    orgId: req.params?.orgId,
+                    cpApplicationName
+                });
+                const cpAppResponse = await utils.apiRequest('GET', `${controlPlaneUrl}/applications?query=${cpApplicationName}`,headers,{},cpOrgId);
+                return cpAppResponse.list[0];
+            } catch (error) {
+                logger.error('Error occurred while fetching application', {
+                    error: error.message,
+                    cpApplicationName
+                });
+                throw error;
+            }
+        } else {
+            throw error;
+        }
+    }
+}
+
 const createCPApplication = async (req, cpApplicationName) => {
     logger.info('Creating control plane application', {
         cpApplicationName
@@ -1627,5 +1677,6 @@ module.exports = {
     getApplicationKeyMap,
     checkAdditionalValues,
     createCPApplication,
-    createCPSubscription
+    createCPSubscription,
+    createCPApplicationOnBehalfOfUser
 };
