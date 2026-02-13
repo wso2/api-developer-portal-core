@@ -45,7 +45,7 @@ function openWarningModal(param1, param2, param3, param4, param5, param6) {
 
     if (param1 === 'regenerate') {
         modalTitle.innerText = "Regenerate API Key";
-        modalMessage.innerText = "Regenerating the API key will immediately revoke the current key and activate the new key. \nApplications using the current key will be impacted immediately. Copy the new key and update it in your applications to avoid service disruptions.";
+        modalMessage.innerText = "Your current key will be revoked immediately. Update your applications with the new key to avoid disruptions.";
         modalFunction.innerText = "Regenerate";
         // Use data attributes and event listeners instead of inline onclick to prevent XSS
         modalFunction.onclick = function() {
