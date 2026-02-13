@@ -1361,7 +1361,7 @@ const createCPApplicationOnBehalfOfUser = async (cpApplicationName,owner,cpOrgId
             attributes: {},
             subscriptionScopes: []
         },cpOrgId);
-        return cpAppCreationResponse;
+        return cpAppCreationResponse.data;
     } catch (error) {
         //application already exists
         logger.error('Application Creation Failed in CP', {
@@ -1387,6 +1387,40 @@ const createCPApplicationOnBehalfOfUser = async (cpApplicationName,owner,cpOrgId
         } else {
             throw error;
         }
+    }
+}
+
+const createCPSubscriptionOnBehalfOfUser = async (apiId,cpAppID,policyName,cpOrgId,patToken) => {
+    logger.info('Creating control plane subscription', {
+        apiId,
+        cpAppID,
+        policyName
+    });
+    try {
+        const requestBody = {
+            apiId: apiId,
+            applicationId: cpAppID,
+            throttlingPolicy: policyName
+        };
+        url = `${controlPlaneUrl}/subscriptions`;
+        headers = {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${patToken}`
+        }
+        const cpSubscribeResponse = await util.apiRequest('POST', url, headers, requestBody,cpOrgId);
+        return cpSubscribeResponse.data;
+    } catch (error) {
+        if (error.statusCode && error.statusCode === 409) {
+            const response = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?apiId=${apiId}&applicationId=${cpAppID}`, {});
+            return response.list[0];
+        }
+        logger.error('key mapping create error failed', {
+            error: error.message,
+            stack: error.stack,
+            apiId,
+            cpAppID
+        });
+        throw error;
     }
 }
 
@@ -1678,5 +1712,6 @@ module.exports = {
     checkAdditionalValues,
     createCPApplication,
     createCPSubscription,
-    createCPApplicationOnBehalfOfUser
+    createCPApplicationOnBehalfOfUser,
+    createCPSubscriptionOnBehalfOfUser
 };

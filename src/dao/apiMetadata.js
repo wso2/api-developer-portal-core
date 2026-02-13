@@ -1332,6 +1332,23 @@ const getSubscriptionPolicies = async (apiID, t) => {
     }
 }
 
+async function getAllSubscriptionPolicies(orgID,t) {
+        try {
+            
+            const subscriptionPoliciesResponse = await SubscriptionPolicy.findAll({
+            where: {
+                ORG_ID: orgID
+            },
+            transaction: t
+        });
+        return subscriptionPoliciesResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
 const updateAPIImageMetadata = async (apiImages, orgID, apiID, t) => {
 
     let imageCreateList = [];
@@ -1655,5 +1672,6 @@ module.exports = {
     updateLabel,
     addLabel,
     getImage,
-    deleteImage
+    deleteImage,
+    getAllSubscriptionPolicies
 };

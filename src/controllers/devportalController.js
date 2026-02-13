@@ -34,6 +34,10 @@ const { trackAppCreationStart, trackAppCreationEnd, trackAppDeletion, trackGener
 const fs = require('fs');
 const yaml = require('js-yaml');
 const { ImportedApplicationDTO } = require('../dto/importedApplication');
+const { CustomError } = require('../utils/errors/customErrors');
+const { APIMetadata, APILabels } = require('../models/apiMetadata');
+const sequelize = require('../db/sequelize');
+const { cat } = require('shelljs');
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
 
@@ -388,51 +392,214 @@ const login = async (req, res) => {
 };
 // Import Application with API Subscriptions
 const importApplications = async (req, res) => {
+    let orgID;
+    let createDevPortalApplication;
+    let controlPlaneApplication;
+    let orgDetails;
     try {
-        const orgDetails = await adminDao.getOrganization(req.params.orgId);
-
+        orgDetails = await adminDao.getOrganization(req.params.orgId);
+        orgID = orgDetails.ORG_ID;
+        // Validate required inputs
         if (!req.file || !req.file.buffer) {
             return res.status(400).json({ message: 'Missing application.yaml file' });
         }
-        
-        const patToken = req.headers['pat_token'] || req.headers['PAT_TOKEN'];
-        let data;
-        let orgID;
-        let applicationTobeCreated;
-        
-        try {
-            // Read file content from buffer (memory storage)
-            const fileContent = req.file.buffer.toString('utf8');
-            data = yaml.load(fileContent);
-            const importedApplication = new ImportedApplicationDTO(data);
-            applicationTobeCreated = {
-                "name": importedApplication.applicationInfo.name,
-                "description": importedApplication.applicationInfo.description,
-                "type": "WEB"
-            };
-            orgID = orgDetails.ORG_ID;
-            const createDevPortalApplication = await adminDao.createApplication(orgID, importedApplication.applicationInfo.owner, applicationTobeCreated);
-            const cpApp = await adminService.createCPApplicationOnBehalfOfUser(createDevPortalApplication.APP_ID, importedApplication.applicationInfo.owner, orgDetails.ORGANIZATION_IDENTIFIER, patToken);
 
-        } catch (parseError) {
-            logger.error('Error occurred while parsing application.yaml', {
-                orgId: req.params.orgId,
-                error: parseError.message,
-                stack: parseError.stack
-            });
-            return util.handleError(res, parseError);
+        const patToken = req.headers['pat_token'] || req.headers['PAT_TOKEN'];
+        if (!patToken) {
+            return res.status(400).json({ message: 'Missing PAT Token in request headers' });
         }
 
-        return res.status(200).json(data);
+        // Parse YAML file
+        let importedApplication;
+        try {
+            const fileContent = req.file.buffer.toString('utf8');
+            const data = yaml.load(fileContent);
+            importedApplication = new ImportedApplicationDTO(data);
+        } catch (fileReadError) {
+            logger.error('Error reading application.yaml file', {
+                orgId: req.params.orgId,
+                error: fileReadError.message,
+                stack: fileReadError.stack
+            });
+            const error = new CustomError(400, "Bad Request", "Unable to read application.yaml file");
+            return util.handleError(res, error);
+        }
+
+        // Create DevPortal application
+        const applicationTobeCreated = {
+            name: importedApplication.applicationInfo.name,
+            description: importedApplication.applicationInfo.description,
+            type: "WEB"
+        };
+
+        try {
+            createDevPortalApplication = await adminDao.createApplication(
+                orgID,
+                importedApplication.applicationInfo.owner,
+                applicationTobeCreated
+            );
+        } catch (appCreationError) {
+            logger.error('Error creating application in Devportal', {
+                orgId: req.params.orgId,
+                appName: importedApplication.applicationInfo.name,
+                error: appCreationError.message,
+                stack: appCreationError.stack
+            });
+            const error = new CustomError(500, "Internal Server Error", "Failed to create application in Devportal");
+            return util.handleError(res, error);
+        }
+
+        // Create Control Plane application
+        try {
+            controlPlaneApplication = await adminService.createCPApplicationOnBehalfOfUser(
+                createDevPortalApplication.APP_ID,
+                importedApplication.applicationInfo.owner,
+                orgDetails.ORGANIZATION_IDENTIFIER,
+                patToken
+            );
+        } catch (cpAppError) {
+            logger.error('Error creating application in Control Plane', {
+                orgId: req.params.orgId,
+                appName: importedApplication.applicationInfo.name,
+                error: cpAppError.message,
+                stack: cpAppError.stack
+            });
+
+            // Rollback DevPortal application
+            await adminDao.deleteApplication(orgID, createDevPortalApplication.APP_ID, importedApplication.applicationInfo.owner);
+            const error = new CustomError(500, "Internal Server Error", "Failed to create application in Control Plane");
+            return util.handleError(res, error);
+        }
+
+        // Create subscriptions
+        const failedSubscriptions = await createSubscriptions(
+            importedApplication.subscribedAPIs,
+            orgDetails,
+            createDevPortalApplication.APP_ID,
+            controlPlaneApplication.applicationId,
+            patToken
+        );
+
+        const response = failedSubscriptions.length > 0
+            ? { status: "Incomplete", failedSubscriptions }
+            : { status: "Success" };
+
+        return res.status(200).json(response);
+
     } catch (error) {
-        logger.error('Error occurred while importing applications', {
+        logger.error('Error importing applications', {
             orgId: req.params.orgId,
             error: error.message,
             stack: error.stack
         });
         util.handleError(res, error);
     }
-}
+};
+
+// Helper function for subscription creation
+const createSubscriptions = async (subscribedAPIs, orgDetails, appId, cpAppId,patToken) => {
+    const failedSubscriptions = [];
+
+    try {
+        const [allApis, subscriptionPolicies] = await Promise.all([
+            apiDao.getAllAPIMetadata(orgDetails.ORG_ID, [], "default"),
+            apiDao.getAllSubscriptionPolicies(orgDetails.ORG_ID)
+        ]);
+
+        for (const apiSubscription of subscribedAPIs) {
+            try {
+                const api = allApis.find(apiItem =>
+                    apiItem.API_NAME === apiSubscription.apiId.apiName &&
+                    apiItem.API_VERSION === apiSubscription.apiId.version
+                );
+
+                const policy = subscriptionPolicies.find(policy =>
+                    policy.POLICY_NAME === apiSubscription.throttlingPolicy
+                );
+
+                if (!api || !policy) {
+                    logger.warn(`Skipping subscription - API or policy not found`, {
+                        orgId: orgID,
+                        apiName: apiSubscription.apiId.apiName,
+                        policyName: apiSubscription.throttlingPolicy
+                    });
+                    failedSubscriptions.push(apiSubscription);
+                    continue;
+                }
+
+                await createSingleSubscription(api, policy, orgDetails, appId, cpAppId, apiSubscription, failedSubscriptions,patToken);
+
+            } catch (subscriptionError) {
+                logger.error(`Error creating subscription for API: ${apiSubscription.apiId.apiName}`, {
+                    orgId: orgID,
+                    apiName: apiSubscription.apiId.apiName,
+                    error: subscriptionError.message,
+                    stack: subscriptionError.stack
+                });
+                failedSubscriptions.push(apiSubscription);
+            }
+        }
+    } catch (error) {
+        logger.error('Failed to fetch APIs or policies', {
+            orgId: orgID,
+            error: error.message,
+            stack: error.stack
+        });
+        // Add all subscriptions to failed list if we can't fetch metadata
+        failedSubscriptions.push(...subscribedAPIs);
+    }
+
+    return failedSubscriptions;
+};
+
+// Helper function for creating individual subscriptions
+const createSingleSubscription = async (api, policy, orgDetails, appId, cpAppId, apiSubscription, failedSubscriptions,patToken) => {
+    const subscription = {
+        applicationID: appId,
+        apiId: api.API_ID,
+        policyId: policy.POLICY_ID
+    };
+
+    let subscriptionInDevportal;
+
+    try {
+        subscriptionInDevportal = await sequelize.transaction({ timeout: 60000 }, async (t) => {
+            return await adminDao.createSubscription(orgDetails.ORG_ID, subscription, t);
+        });
+
+        try {
+            await adminService.createCPSubscriptionOnBehalfOfUser(
+                api.REFERENCE_ID,
+                cpAppId,
+                policy.POLICY_NAME,
+                orgDetails.ORGANIZATION_IDENTIFIER,
+                patToken
+            );
+        } catch (cpSubError) {
+            logger.error(`Error creating CP subscription for API: ${apiSubscription.apiId.apiName}`, {
+                orgId: orgDetails.ORG_ID,
+                apiName: apiSubscription.apiId.apiName,
+                error: cpSubError.message,
+                stack: cpSubError.stack
+            });
+
+            // Rollback DevPortal subscription
+            await sequelize.transaction({ timeout: 60000 }, async (t) => {
+                await adminDao.deleteSubscription(orgDetails.ORG_ID, subscriptionInDevportal.SUBSCRIPTION_ID);
+            });
+
+            failedSubscriptions.push(apiSubscription);
+        }
+    } catch (devPortalSubError) {
+        logger.error(`Error creating DevPortal subscription for API: ${apiSubscription.apiId.apiName}`, {
+            orgId: orgDetails.ORG_ID,
+            apiName: apiSubscription.apiId.apiName,
+            error: devPortalSubError.message,
+            stack: devPortalSubError.stack
+        });
+        failedSubscriptions.push(apiSubscription);
+    }
+};
 
 module.exports = {
     saveApplication,
