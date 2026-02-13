@@ -81,14 +81,12 @@
     color: var(--main-text-color);
     box-shadow: none;
     font-weight: 600;
-    border-left: 3px solid var(--secondary-main-color);
 }
 
 .keys-section .accordion-button:not(.collapsed) {
     background-color: var(--secondary-bg-color);
     color: var(--main-text-color);
     box-shadow: none;
-    border-left: 3px solid var(--secondary-main-color);
 }
 
 .keys-section .accordion-button:hover {
