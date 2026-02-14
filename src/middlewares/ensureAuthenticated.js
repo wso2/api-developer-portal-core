@@ -30,6 +30,7 @@ const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const logger = require('../config/logger');
 const qs = require('qs');
+const { log } = require('console');
 
 function enforceSecuirty(scope) {
     return async function (req, res, next) {
@@ -282,11 +283,14 @@ function validateAuthentication(scope) {
             } else {
                 if (IDP.jwksURL) {
                     [valid, scopes] = await validateWithJWKS(accessToken, IDP.jwksURL, req);
+                    log("JWKS URL found",IDP.jwksURL);
+                    log("Token validation result",valid);
                 } else {
                     valid = false;
                 }
             }
             if (!config.advanced.disableScopeValidation && valid) {
+                log("Validating scopes",scopes);
                 if (scopes.split(" ").includes(scope)) {
                     return next();
                 } else {
@@ -337,8 +341,11 @@ const validateWithCert = async (token, publicKey) => {
 const validateWithJWKS = async (token, jwksURL, req) => {
 
     try {
+        log("Access token",token);
+        log("Validating token with JWKS",jwksURL);
         const jwks = await createRemoteJWKSet(new URL(jwksURL));
         const { payload } = await jwtVerify(token, jwks);
+        logger.info("Token successfully validated with JWKS",payload);
         return [true, payload.scope];
     } catch (err) {
         logger.error("Invalid token", { error: err.message, stack: err.stack, operation: "tokenValidation" });
