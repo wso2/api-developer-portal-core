@@ -34,7 +34,6 @@ const { Sequelize } = require('sequelize');
 const apiDao = require('../dao/apiMetadata');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const jwt = require('jsonwebtoken');
-const { log } = require('console');
 const filePrefix = '/src/defaultContent/';
 
 // Function to load and convert markdown file to HTML
@@ -360,7 +359,7 @@ async function readDocFiles(directory, baseDir = '') {
 
 
 const invokeGraphQLRequest = async (req, url, query, variables, headers) => {
-    logger.info(`Invoking GraphQL API: ${url}`, { 
+    logger.info(`Invoking GraphQL API: ${url}`, {
         userId: req.user?.id || req.user?.username || 'anonymous',
         method: 'GraphQL',
         endpoint: url
@@ -445,7 +444,7 @@ const invokeGraphQLRequest = async (req, url, query, variables, headers) => {
     }
 };
 
-const apiRequest = async (method, url, headers, body,organizationId) => {
+const apiRequest = async (method, url, headers, body, organizationId) => {
     let httpsAgent;
     url = url.includes("?") ? `${url}&organizationId=${organizationId}` : `${url}?organizationId=${organizationId}`;
 
@@ -460,21 +459,21 @@ const apiRequest = async (method, url, headers, body,organizationId) => {
             rejectUnauthorized: false,
         });
     }
-        const response = await axios({
-            method,
-            url,
-            headers,
-            data: body,
-            httpsAgent
-        });
-        return response;
+    const response = await axios({
+        method,
+        url,
+        headers,
+        data: body,
+        httpsAgent
+    });
+    return response;
 };
 
 const invokeApiRequest = async (req, method, url, headers, body, publicMode = false) => {
 
     logger.info(`Invoking API: ${url}`, {
         method: method,
-        userId: req.user?.id || req.user?.username || 'anonymous',        
+        userId: req.user?.id || req.user?.username || 'anonymous',
         endpoint: url
     });
     if (!publicMode) {
@@ -483,10 +482,6 @@ const invokeApiRequest = async (req, method, url, headers, body, publicMode = fa
     }
     let orgId = "";
     try {
-        if (!(body == null || body === '' || (Array.isArray(body) && body.length === 0) || (typeof body === 'object' && !Array.isArray(body) && Object.keys(body).length === 0))) {
-            options.data = body;
-        }
-        let orgId = "";
         if (config.advanced.tokenExchanger?.enabled) {
             if (req.cpOrgID) {
                 orgId = req.cpOrgID;
@@ -496,7 +491,7 @@ const invokeApiRequest = async (req, method, url, headers, body, publicMode = fa
             }
 
         }
-        const response = await apiRequest(method, url, headers, body,orgId);
+        const response = await apiRequest(method, url, headers, body, orgId);
         return response.data;
     } catch (error) {
         logger.error('Error while invoking API', {
@@ -512,8 +507,7 @@ const invokeApiRequest = async (req, method, url, headers, body, publicMode = fa
                 const newExchangedToken = await tokenExchanger(req.user.accessToken, req.originalUrl.split("/")[1]);
                 req.user.exchangeToken = newExchangedToken;
                 headers.Authorization = `Bearer ${newExchangedToken}`;
-                options.headers = headers;
-                const response = await apiRequest(method, url, headers, body,orgId);
+                const response = await apiRequest(method, url, headers, body, orgId);
                 return response.data;
             } catch (retryError) {
                 let retryMessage;
@@ -864,7 +858,6 @@ async function tokenExchanger(token, orgName) {
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-            logger.info("payload===",data)
             const response = await axios.post(url, data, {
                 headers: {
                     'Referer': '',
