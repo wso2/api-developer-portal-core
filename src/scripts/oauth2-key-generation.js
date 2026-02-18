@@ -913,6 +913,25 @@ function loadKeysViewModal(keyType) {
         console.error(`Modal keysViewModal-${keyType} not found`);
         return;
     }
+
+    // Re-populate consumer key if the modal input was cleared (e.g., by form.reset() on close)
+    const modalConsumerKeyInput = modal.querySelector('input[name="consumerKey"]');
+    if (modalConsumerKeyInput && !modalConsumerKeyInput.value && document.getElementById(modalConsumerKeyInput.id + '-view') != null) {
+        const mainPageInput = document.getElementById(modalConsumerKeyInput.id + '-view');
+        if (mainPageInput && mainPageInput.value) {
+            modalConsumerKeyInput.value = mainPageInput.value;
+        }
+    }
+
+    // Re-populate consumer secret if the modal input was cleared
+    const modalConsumerSecretInput = modal.querySelector('input[name="consumerSecret"]');
+    if (modalConsumerSecretInput && !modalConsumerSecretInput.value && document.getElementById(modalConsumerSecretInput.id + '-view') != null) {
+        const mainPageInput = document.getElementById(modalConsumerSecretInput.id + '-view');
+        if (mainPageInput && mainPageInput.value) {
+            modalConsumerSecretInput.value = mainPageInput.value;
+        }
+    }
+
     modal.style.display = 'flex';
 
     const authorizationCodeCheckbox = modal.querySelector('input[id^="grant-type-view-authorization_code-"]');
