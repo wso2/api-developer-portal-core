@@ -155,4 +155,7 @@ router.post('/applications/:applicationId/sdk/cancel/:jobId', enforceSecuirty(co
 router.get('/sdk/download/:filename', enforceSecuirty(constants.SCOPES.DEVELOPER),sdkJobService.downloadSDK);
 
 router.post('/login', devportalController.login);
+
+// Import Application with API Subscriptions
+router.post('/organizations/:orgId/applications/import', enforceSecuirty(constants.SCOPES.ADMIN),multipartHandler.single('file'), devportalController.importApplications);
 module.exports = router;

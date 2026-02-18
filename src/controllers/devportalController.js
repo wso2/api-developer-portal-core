@@ -31,6 +31,12 @@ const { Sequelize } = require("sequelize");
 const adminService = require('../services/adminService');
 const apiDao = require('../dao/apiMetadata');
 const { trackAppCreationStart, trackAppCreationEnd, trackAppDeletion, trackGenerateKey } = require('../utils/telemetry');
+const fs = require('fs');
+const yaml = require('js-yaml');
+const { ImportedApplicationDTO } = require('../dto/importedApplication');
+const { CustomError } = require('../utils/errors/customErrors');
+const { APIMetadata, APILabels } = require('../models/apiMetadata');
+const sequelize = require('../db/sequelize');
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
 
@@ -44,10 +50,10 @@ const saveApplication = async (req, res) => {
         trackAppCreationEnd({ orgId: orgID, appName: req.body.name, idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined }, req);
         return res.status(201).json(new ApplicationDTO(application.dataValues));
     } catch (error) {
-        logger.error('Error occurred while creating the application', { 
+        logger.error('Error occurred while creating the application', {
             orgId: req.user[constants.ORG_IDENTIFIER],
             appName: req.body.name,
-            error: error.message, 
+            error: error.message,
             stack: error.stack
         });
         util.handleError(res, error);
@@ -66,8 +72,8 @@ const updateApplication = async (req, res) => {
         }
         res.status(200).send(new ApplicationDTO(updatedApp[0].dataValues));
     } catch (error) {
-        logger.error("Error occurred while updating the application", { 
-            error: error.message, 
+        logger.error("Error occurred while updating the application", {
+            error: error.message,
             stack: error.stack
         });
         util.handleError(res, error);
@@ -104,18 +110,18 @@ const deleteApplication = async (req, res) => {
                     res.status(200).send("Resouce Deleted Successfully");
                 }
             }
-            logger.error('Error occurred while deleting the application', { 
+            logger.error('Error occurred while deleting the application', {
                 orgId: orgID,
                 appId: appID,
-                error: error.message, 
+                error: error.message,
                 stack: error.stack
             });
             util.handleError(res, error);
         }
     } catch (error) {
-        logger.error('Error occurred while deleting the application', { 
+        logger.error('Error occurred while deleting the application', {
             appId: req.params.appId,
-            error: error.message, 
+            error: error.message,
             stack: error.stack
         });
         util.handleError(res, error);
@@ -135,8 +141,8 @@ const resetThrottlingPolicy = async (req, res) => {
         });
         res.status(200).json({ message: responseData.message });
     } catch (error) {
-        logger.error("Error occurred while resetting the application", { 
-            error: error.message, 
+        logger.error("Error occurred while resetting the application", {
+            error: error.message,
             stack: error.stack
         });
         util.handleError(res, error);
@@ -155,7 +161,7 @@ const generateAPIKeys = async (req, res) => {
         const nonSharedKeyMapping = await adminDao.getApplicationAPIMapping(orgID, requestBody.devportalAppId, apiID, cpAppID, false);
         const sharedKeyMapping = await adminDao.getApplicationAPIMapping(orgID, requestBody.devportalAppId, apiID, cpAppID, true);
 
-        if (!(nonSharedKeyMapping.length > 0 || sharedKeyMapping.length > 0)) { 
+        if (!(nonSharedKeyMapping.length > 0 || sharedKeyMapping.length > 0)) {
             const cpApp = await adminService.createCPApplication(req, requestBody.devportalAppId);
             cpAppID = cpApp.applicationId;
 
@@ -184,7 +190,7 @@ const generateAPIKeys = async (req, res) => {
             }
             await adminDao.updateApplicationKeyMapping(apiSubscription.apiId, appKeyMappping);
         }
-        
+
         const query = `
         query ($orgUuid: String!, $projectId: String!) {
           environments(orgUuid: $orgUuid, projectId: $projectId) {
@@ -221,10 +227,10 @@ const generateAPIKeys = async (req, res) => {
         responseData.appRefId = cpAppID;
         res.status(200).json(responseData);
     } catch (error) {
-        logger.error('Error occurred while generating API keys', { 
+        logger.error('Error occurred while generating API keys', {
             apiId: req.body.apiId,
             appId: req.body.devportalAppId,
-            error: error.message, 
+            error: error.message,
             stack: error.stack
         });
         util.handleError(res, error);
@@ -238,9 +244,9 @@ const revokeAPIKeys = async (req, res) => {
         // await adminDao.deleteAppKeyMapping(await adminDao.getOrgId((req.user[constants.ORG_IDENTIFIER])), req.body.applicationId, req.body.apiRefID);
         res.status(200).json(responseData);
     } catch (error) {
-        logger.error("Error occurred while revoking the API key", { 
+        logger.error("Error occurred while revoking the API key", {
             apiKeyID,
-            error: error.message, 
+            error: error.message,
             stack: error.stack
         });
         util.handleError(res, error);
@@ -268,9 +274,9 @@ const generateApplicationKeys = async (req, res) => {
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/generate-keys`, {}, req.body);
         res.status(200).json(responseData);
     } catch (error) {
-        logger.error("Error occurred while generating the application keys", { 
+        logger.error("Error occurred while generating the application keys", {
             appId: req.params.applicationId,
-            error: error.message, 
+            error: error.message,
             stack: error.stack
         });
         util.handleError(res, error);
@@ -289,10 +295,10 @@ const generateOAuthKeys = async (req, res) => {
         }, req);
         res.status(200).json(responseData);
     } catch (error) {
-        logger.error("Error occurred while generating the OAuth keys", { 
+        logger.error("Error occurred while generating the OAuth keys", {
             appId: req.params.applicationId,
-            error: error.message, 
-            stack: error.stack 
+            error: error.message,
+            stack: error.stack
         });
         util.handleError(res, error);
     }
@@ -305,9 +311,9 @@ const revokeOAuthKeys = async (req, res) => {
         const responseData = await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}`, {}, {});
         res.status(200).json(responseData);
     } catch (error) {
-        logger.error("Error occurred while generating the OAuth keys", { 
+        logger.error("Error occurred while generating the OAuth keys", {
             appId: req.params.applicationId,
-            error: error.message, 
+            error: error.message,
             stack: error.stack
         });
         util.handleError(res, error);
@@ -321,9 +327,9 @@ const cleanUp = async (req, res) => {
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}/clean-up`, {}, req.body);
         res.status(200).json(responseData);
     } catch (error) {
-        logger.error("Error occurred while generating the OAuth keys", { 
+        logger.error("Error occurred while generating the OAuth keys", {
             appId: req.params.applicationId,
-            error: error.message, 
+            error: error.message,
             stack: error.stack
         });
         util.handleError(res, error);
@@ -338,10 +344,10 @@ const updateOAuthKeys = async (req, res) => {
         const responseData = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/applications/${applicationId}/oauth-keys/${keyMappingId}`, {}, tokenDetails);
         res.status(200).json(responseData);
     } catch (error) {
-        logger.error("Error occurred while generating the OAuth keys", { 
+        logger.error("Error occurred while generating the OAuth keys", {
             appId: req.params.applicationId,
-            error: error.message, 
-            stack: error.stack, 
+            error: error.message,
+            stack: error.stack,
         });
         util.handleError(res, error);
     }
@@ -366,8 +372,8 @@ const login = async (req, res) => {
 
     passport.authenticate('default-auth', (err, user, info) => {
         if (err) {
-            logger.error("Error occurred while logging in", { 
-                error: err.message, 
+            logger.error("Error occurred while logging in", {
+                error: err.message,
                 stack: err.stack
             });
             return util.handleError(res, err);
@@ -383,6 +389,224 @@ const login = async (req, res) => {
         });
     })(req, res);
 };
+// Import Application with API Subscriptions
+const importApplications = async (req, res) => {
+    let orgID;
+    let createDevPortalApplication;
+    let controlPlaneApplication;
+    let orgDetails;
+    try {
+        orgDetails = await adminDao.getOrganization(req.params.orgId);
+        orgID = orgDetails.ORG_ID;
+        // Validate required inputs
+        if (!req.file || !req.file.buffer) {
+            return res.status(400).json({ message: 'Missing application.yaml file' });
+        }
+
+        const patToken = req.headers['pat-token'];
+        if (!patToken) {
+            return res.status(400).json({ message: 'Missing PAT Token in request headers' });
+        }
+
+        // Parse YAML file
+        let importedApplication;
+        try {
+            const fileContent = req.file.buffer.toString('utf8');
+            const data = yaml.load(fileContent);
+            importedApplication = new ImportedApplicationDTO(data);
+        } catch (fileReadError) {
+            logger.error('Error reading application.yaml file', {
+                orgId: req.params.orgId,
+                error: fileReadError.message,
+                stack: fileReadError.stack
+            });
+            const error = new CustomError(400, "Bad Request", "Unable to read application.yaml file");
+            return util.handleError(res, error);
+        }
+
+        // Create DevPortal application
+        const applicationTobeCreated = {
+            name: importedApplication.applicationInfo.name,
+            description: importedApplication.applicationInfo.description,
+            type: "WEB"
+        };
+
+        try {
+            createDevPortalApplication = await adminDao.createApplication(
+                orgID,
+                importedApplication.applicationInfo.owner,
+                applicationTobeCreated
+            );
+        } catch (appCreationError) {
+            logger.error('Error creating application in Devportal', {
+                orgId: req.params.orgId,
+                appName: importedApplication.applicationInfo.name,
+                error: appCreationError.message,
+                stack: appCreationError.stack
+            });
+            const error = new CustomError(500, "Internal Server Error", "Failed to create application in Devportal");
+            return util.handleError(res, error);
+        }
+
+        // Create Control Plane application
+        try {
+            controlPlaneApplication = await adminService.createCPApplicationOnBehalfOfUser(
+                createDevPortalApplication.APP_ID,
+                importedApplication.applicationInfo.owner,
+                orgDetails.ORGANIZATION_IDENTIFIER,
+                patToken
+            );
+        } catch (cpAppError) {
+            logger.error('Error creating application in Control Plane', {
+                orgId: req.params.orgId,
+                appName: importedApplication.applicationInfo.name,
+                error: cpAppError.message,
+                stack: cpAppError.stack
+            });
+
+            // Rollback DevPortal application
+            try {
+                await adminDao.deleteApplication(orgID, createDevPortalApplication.APP_ID, importedApplication.applicationInfo.owner);
+            } catch (rollbackError) {
+                logger.error('Rollback failed: DevPortal application not deleted', {
+                    orgId: req.params.orgId,
+                    appId: createDevPortalApplication.APP_ID,
+                    error: rollbackError.message
+                });
+            }
+            const error = new CustomError(500, "Internal Server Error", "Failed to create application in Control Plane");
+            return util.handleError(res, error);
+        }
+
+        // Create subscriptions
+        const failedSubscriptions = await createSubscriptions(
+            importedApplication.subscribedAPIs,
+            orgDetails,
+            createDevPortalApplication.APP_ID,
+            controlPlaneApplication.applicationId,
+            patToken
+        );
+
+        const response = failedSubscriptions.length > 0
+            ? { status: "Incomplete", failedSubscriptions }
+            : { status: "Success" };
+
+        return res.status(200).json(response);
+
+    } catch (error) {
+        logger.error('Error importing applications', {
+            orgId: req.params.orgId,
+            error: error.message,
+            stack: error.stack
+        });
+        util.handleError(res, error);
+    }
+};
+
+// Helper function for subscription creation
+const createSubscriptions = async (subscribedAPIs, orgDetails, appId, cpAppId, patToken) => {
+    const failedSubscriptions = [];
+    const orgID = orgDetails.ORG_ID;
+    try {
+        const [allApis, subscriptionPolicies] = await Promise.all([
+            apiDao.getAllAPIMetadataFromAllViews(orgDetails.ORG_ID, []),
+            apiDao.getAllSubscriptionPolicies(orgDetails.ORG_ID)
+        ]);
+
+        for (const apiSubscription of subscribedAPIs) {
+            try {
+                const api = allApis.find(apiItem =>
+                    apiItem.API_NAME === apiSubscription.apiId.apiName &&
+                    apiItem.API_VERSION === apiSubscription.apiId.version
+                );
+
+                const policy = subscriptionPolicies.find(policy =>
+                    policy.POLICY_NAME === apiSubscription.throttlingPolicy
+                );
+
+                if (!api || !policy) {
+                    logger.warn(`Skipping subscription - API or policy not found`, {
+                        orgId: orgID,
+                        apiName: apiSubscription.apiId.apiName,
+                        policyName: apiSubscription.throttlingPolicy
+                    });
+                    failedSubscriptions.push(apiSubscription);
+                    continue;
+                }
+
+                await createSingleSubscription(api, policy, orgDetails, appId, cpAppId, apiSubscription, failedSubscriptions, patToken);
+
+            } catch (subscriptionError) {
+                logger.error(`Error creating subscription for API: ${apiSubscription.apiId.apiName}`, {
+                    orgId: orgID,
+                    apiName: apiSubscription.apiId.apiName,
+                    error: subscriptionError.message,
+                    stack: subscriptionError.stack
+                });
+                failedSubscriptions.push(apiSubscription);
+            }
+        }
+    } catch (error) {
+        logger.error('Failed to fetch APIs or policies', {
+            orgId: orgID,
+            error: error.message,
+            stack: error.stack
+        });
+        // Add all subscriptions to failed list if we can't fetch metadata
+        failedSubscriptions.push(...subscribedAPIs);
+    }
+
+    return failedSubscriptions;
+};
+
+// Helper function for creating individual subscriptions
+const createSingleSubscription = async (api, policy, orgDetails, appId, cpAppId, apiSubscription, failedSubscriptions, patToken) => {
+    const subscription = {
+        applicationID: appId,
+        apiId: api.API_ID,
+        policyId: policy.POLICY_ID
+    };
+
+    let subscriptionInDevportal;
+
+    try {
+        subscriptionInDevportal = await sequelize.transaction({ timeout: 60000 }, async (t) => {
+            return await adminDao.createSubscription(orgDetails.ORG_ID, subscription, t);
+        });
+
+        try {
+            await adminService.createCPSubscriptionOnBehalfOfUser(
+                api.REFERENCE_ID,
+                cpAppId,
+                policy.POLICY_NAME,
+                orgDetails.ORGANIZATION_IDENTIFIER,
+                patToken
+            );
+        } catch (cpSubError) {
+            logger.error(`Error creating CP subscription for API: ${apiSubscription.apiId.apiName}`, {
+                orgId: orgDetails.ORG_ID,
+                apiName: apiSubscription.apiId.apiName,
+                error: cpSubError.message,
+                stack: cpSubError.stack
+            });
+
+            // Rollback DevPortal subscription
+            await sequelize.transaction({ timeout: 60000 }, async (t) => {
+                await adminDao.deleteSubscription(orgDetails.ORG_ID, subscriptionInDevportal.SUBSCRIPTION_ID, t);
+            });
+
+            failedSubscriptions.push(apiSubscription);
+        }
+    } catch (devPortalSubError) {
+        logger.error(`Error creating DevPortal subscription for API: ${apiSubscription.apiId.apiName}`, {
+            orgId: orgDetails.ORG_ID,
+            apiName: apiSubscription.apiId.apiName,
+            error: devPortalSubError.message,
+            stack: devPortalSubError.stack
+        });
+        failedSubscriptions.push(apiSubscription);
+    }
+};
 
 module.exports = {
     saveApplication,
@@ -397,5 +621,6 @@ module.exports = {
     cleanUp,
     login,
     revokeAPIKeys,
-    regenerateAPIKeys
+    regenerateAPIKeys,
+    importApplications
 };
