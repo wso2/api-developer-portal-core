@@ -31,6 +31,7 @@ const { ApplicationDTO, SubscriptionDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
 const config = require(process.cwd() + '/config.json');
 const controlPlaneUrl = config.controlPlane.url;
+const controlPlaneGwUrl = config.controlPlane.gwUrl;
 const { invokeApiRequest } = require('../utils/util');
 const { Sequelize } = require("sequelize");
 const { trackGenerateCredentials, trackSubscribeApi, trackUnsubscribeApi } = require('../utils/telemetry');
@@ -374,7 +375,7 @@ const createOrgContent = async (req, res) => {
         orgId,
         viewName
     });
-    
+
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
 
     try {
@@ -1340,27 +1341,27 @@ function checkAdditionalValues(additionalValues) {
 
 }
 
-const createCPApplicationOnBehalfOfUser = async (cpApplicationName,owner,cpOrgId,patToken) => {
+const createCPApplicationOnBehalfOfUser = async (cpApplicationName, owner, cpOrgId, patToken) => {
     logger.info('Creating control plane application', {
         cpApplicationName
     });
     headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${patToken}`
-        }
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${patToken}`
+    }
 
     try {
         //create control plane application
-        url = `${controlPlaneUrl}/applications?preserveOwner=true`;
+        url = `${controlPlaneGwUrl}/applications?preserveOwner=true`;
         const cpAppCreationResponse = await util.apiRequest('POST', url, headers, {
             name: cpApplicationName,
             throttlingPolicy: 'Unlimited',
             tokenType: 'JWT',
-            owner:owner,
+            owner: owner,
             groups: [],
             attributes: {},
             subscriptionScopes: []
-        },cpOrgId);
+        }, cpOrgId);
         return cpAppCreationResponse.data;
     } catch (error) {
         //application already exists
@@ -1375,7 +1376,7 @@ const createCPApplicationOnBehalfOfUser = async (cpApplicationName,owner,cpOrgId
                     orgId: req.params?.orgId,
                     cpApplicationName
                 });
-                const cpAppResponse = await utils.apiRequest('GET', `${controlPlaneUrl}/applications?query=${cpApplicationName}`,headers,{},cpOrgId);
+                const cpAppResponse = await utils.apiRequest('GET', `${controlPlaneUrl}/applications?query=${cpApplicationName}`, headers, {}, cpOrgId);
                 return cpAppResponse.list[0];
             } catch (error) {
                 logger.error('Error occurred while fetching application', {
@@ -1390,7 +1391,7 @@ const createCPApplicationOnBehalfOfUser = async (cpApplicationName,owner,cpOrgId
     }
 }
 
-const createCPSubscriptionOnBehalfOfUser = async (apiId,cpAppID,policyName,cpOrgId,patToken) => {
+const createCPSubscriptionOnBehalfOfUser = async (apiId, cpAppID, policyName, cpOrgId, patToken) => {
     logger.info('Creating control plane subscription', {
         apiId,
         cpAppID,
@@ -1402,12 +1403,12 @@ const createCPSubscriptionOnBehalfOfUser = async (apiId,cpAppID,policyName,cpOrg
             applicationId: cpAppID,
             throttlingPolicy: policyName
         };
-        url = `${controlPlaneUrl}/subscriptions`;
+        url = `${controlPlaneGwUrl}/subscriptions`;
         headers = {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${patToken}`
         }
-        const cpSubscribeResponse = await util.apiRequest('POST', url, headers, requestBody,cpOrgId);
+        const cpSubscribeResponse = await util.apiRequest('POST', url, headers, requestBody, cpOrgId);
         return cpSubscribeResponse.data;
     } catch (error) {
         if (error.statusCode && error.statusCode === 409) {

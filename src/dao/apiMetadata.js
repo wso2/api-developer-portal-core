@@ -1117,6 +1117,84 @@ const getAllAPIMetadata = async (orgID, groups, viewName, t) => {
     return apiList;
 };
 
+const getAllAPIMetadataFromAllViews = async (orgID, groups, t) => {
+
+    let apiList = [];
+    for (const group of groups) {
+        try {
+            const apiMetadataResponse = await APIMetadata.findAll({
+                where: {
+                    ORG_ID: orgID,
+                    VISIBLE_GROUPS: {
+                        [Op.like]: `%${group}%`
+                    },
+                    STATUS: constants.API_STATUS.PUBLISHED
+                },
+                include: [{
+                    model: APIImageMetadata,
+                    required: false
+                }, {
+                    model: SubscriptionPolicy,
+                    through: { attributes: [] },
+                    required: false
+                },
+                {
+                    model: Labels,
+                    attributes: ["NAME"],
+                    required: false,
+                    through: { attributes: [] }
+                }
+                ],
+                transaction: t
+            });
+            if (apiMetadataResponse) {
+                apiList.push(...apiMetadataResponse);
+            }
+        } catch (error) {
+            {
+                if (error instanceof Sequelize.UniqueConstraintError) {
+                    throw error;
+                }
+                throw new Sequelize.DatabaseError(error);
+            }
+        }
+    }
+    // add all public apis
+    try {
+        const publicAPIS = await APIMetadata.findAll({
+            where: {
+                ORG_ID: orgID,
+                STATUS: constants.API_STATUS.PUBLISHED
+            },
+            include: [{
+                model: APIImageMetadata,
+                required: false
+            }, {
+                model: SubscriptionPolicy,
+                through: { attributes: [] },
+                required: false
+            },
+            {
+                model: Labels,
+                attributes: ["NAME"],
+                required: true,
+                through: { attributes: [] }
+            }
+            ],
+            transaction: t
+        });
+        apiList.push(...publicAPIS);
+    } catch (error) {
+        {
+            if (error instanceof Sequelize.UniqueConstraintError) {
+                throw error;
+            }
+            throw new Sequelize.DatabaseError(error);
+        }
+    }
+    return apiList;
+};
+
 const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
     try {
         const query = `
@@ -1673,5 +1751,6 @@ module.exports = {
     addLabel,
     getImage,
     deleteImage,
-    getAllSubscriptionPolicies
+    getAllSubscriptionPolicies,
+    getAllAPIMetadataFromAllViews
 };

@@ -157,5 +157,5 @@ router.get('/sdk/download/:filename', enforceSecuirty(constants.SCOPES.DEVELOPER
 router.post('/login', devportalController.login);
 
 // Import Application with API Subscriptions
-router.post('/applications/import', enforceSecuirty(constants.SCOPES.ADMIN),multipartHandler.single('file'), devportalController.importApplications);
+router.post('/organizations/:orgId/applications/import', enforceSecuirty(constants.SCOPES.ADMIN),multipartHandler.single('file'), devportalController.importApplications);
 module.exports = router;

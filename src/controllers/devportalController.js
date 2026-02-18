@@ -403,7 +403,7 @@ const importApplications = async (req, res) => {
             return res.status(400).json({ message: 'Missing application.yaml file' });
         }
 
-        const patToken = req.headers['pat_token'] || req.headers['PAT_TOKEN'];
+        const patToken = req.headers['pat-token'];
         if (!patToken) {
             return res.status(400).json({ message: 'Missing PAT Token in request headers' });
         }
@@ -465,7 +465,15 @@ const importApplications = async (req, res) => {
             });
 
             // Rollback DevPortal application
-            await adminDao.deleteApplication(orgID, createDevPortalApplication.APP_ID, importedApplication.applicationInfo.owner);
+            try {
+                await adminDao.deleteApplication(orgID, createDevPortalApplication.APP_ID, importedApplication.applicationInfo.owner);
+            } catch (rollbackError) {
+                logger.error('Rollback failed: DevPortal application not deleted', {
+                    orgId: req.params.orgId,
+                    appId: createDevPortalApplication.APP_ID,
+                    error: rollbackError.message
+                });
+            }
             const error = new CustomError(500, "Internal Server Error", "Failed to create application in Control Plane");
             return util.handleError(res, error);
         }
@@ -501,7 +509,7 @@ const createSubscriptions = async (subscribedAPIs, orgDetails, appId, cpAppId, p
     const orgID = orgDetails.ORG_ID;
     try {
         const [allApis, subscriptionPolicies] = await Promise.all([
-            apiDao.getAllAPIMetadata(orgDetails.ORG_ID, [], "default"),
+            apiDao.getAllAPIMetadataFromAllViews(orgDetails.ORG_ID, []),
             apiDao.getAllSubscriptionPolicies(orgDetails.ORG_ID)
         ]);
 
