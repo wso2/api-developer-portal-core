@@ -180,8 +180,8 @@
       const endpointTypeSelect = document.getElementById('graphql-endpoint-type');
       const tokenInput = document.getElementById('graphql-token-input');
       const tokenStatus = document.getElementById('graphql-token-status');
-      let selectedEndpointType = 'production';
-      let currentEndpoint = apiEndpoint || '';
+      let selectedEndpointType = apiEndpoint ? 'production' : 'sandbox';
+      let currentEndpoint = apiEndpoint || sandboxEndpoint || '';
       let authToken = '';
 
       const getEndpointForType = (type) => {
@@ -224,7 +224,7 @@
       }
 
       if (endpointInput) {
-        endpointInput.value = apiEndpoint || '';
+        endpointInput.value = apiEndpoint || sandboxEndpoint || '';
         endpointInput.addEventListener('input', function (event) {
           const value = (event.target.value || '').trim();
           currentEndpoint = value || getEndpointForType(selectedEndpointType) || '';
