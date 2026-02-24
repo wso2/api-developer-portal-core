@@ -141,8 +141,12 @@
         <div class="graphql-endpoint-type-wrapper">
           <label for="graphql-endpoint-type">Environment</label>
           <select id="graphql-endpoint-type" aria-label="Endpoint type">
+            {{#unless (eq apiMetadata.endPoints.endpointVisibility "SANDBOX_ONLY")}}
             <option value="production">Production</option>
+            {{/unless}}
+            {{#unless (eq apiMetadata.endPoints.endpointVisibility "PRODUCTION_ONLY")}}
             <option value="sandbox">Sandbox</option>
+            {{/unless}}
           </select>
         </div>
         <div class="graphql-endpoint-input-wrapper">

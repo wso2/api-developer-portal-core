@@ -304,12 +304,12 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
                   tabIndex={0}
                   aria-label="Copy production endpoint URL to clipboard"
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = '#22863a';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(34, 134, 58, 0.15)';
+                    e.currentTarget.style.borderColor = '#1a7f37';
+                    e.currentTarget.style.boxShadow = '0 2px 10px rgba(26, 127, 55, 0.12)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = '#e1e4e8';
-                    e.currentTarget.style.boxShadow = 'none';
+                    e.currentTarget.style.borderColor = '#e6e8eb';
+                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
                   }}
                   onClick={() => handleEndpointCopy('production', apiMetadata.endPoints?.productionURL)}
                   onKeyDown={(e) => {
@@ -318,22 +318,13 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
                       handleEndpointCopy('production', apiMetadata.endPoints?.productionURL);
                     }
                   }}
-                  title="Click to copy"
                 >
-                  <div style={{ ...styles.endpointIcon, ...styles.endpointIconProduction }}>
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M10 2L2 7L10 12L18 7L10 2Z" fill="white"/>
-                      <path d="M2 13L10 18L18 13" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M2 10L10 15L18 10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <div style={styles.endpointContent}>
-                    <div style={{ ...styles.endpointLabel, ...styles.endpointLabelProduction }}>
-                      Endpoint
-                    </div>
-                    <div style={styles.endpointUrl}>
-                      {apiMetadata.endPoints.productionURL}
-                    </div>
+                  <span style={{ ...styles.endpointBadge, ...styles.endpointBadgeProduction }}>
+                    <span style={{ ...styles.endpointDot, ...styles.endpointDotProduction }} />
+                    Production
+                  </span>
+                  <div style={styles.endpointUrl}>
+                    {apiMetadata.endPoints.productionURL}
                   </div>
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     {copiedEndpoint === 'production' && (
@@ -342,9 +333,9 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
                         <div style={styles.tooltipArrow} />
                       </div>
                     )}
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style={styles.copyIcon}>
-                      <path d="M4 2H12C13.1 2 14 2.9 14 4V12C14 13.1 13.1 14 12 14H4C2.9 14 2 13.1 2 12V4C2 2.9 2.9 2 4 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M6 6H10M6 10H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={styles.copyIcon}>
+                      <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
                 </div>
@@ -356,12 +347,12 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
                   tabIndex={0}
                   aria-label="Copy sandbox endpoint URL to clipboard"
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = '#d73a49';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(215, 58, 73, 0.15)';
+                    e.currentTarget.style.borderColor = '#e65c00';
+                    e.currentTarget.style.boxShadow = '0 2px 10px rgba(230, 92, 0, 0.12)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = '#e1e4e8';
-                    e.currentTarget.style.boxShadow = 'none';
+                    e.currentTarget.style.borderColor = '#e6e8eb';
+                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
                   }}
                   onClick={() => handleEndpointCopy('sandbox', apiMetadata.endPoints?.sandboxURL)}
                   onKeyDown={(e) => {
@@ -370,22 +361,13 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
                       handleEndpointCopy('sandbox', apiMetadata.endPoints?.sandboxURL);
                     }
                   }}
-                  title="Click to copy"
                 >
-                  <div style={{ ...styles.endpointIcon, ...styles.endpointIconSandbox }}>
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M10 2L2 7L10 12L18 7L10 2Z" fill="white"/>
-                      <path d="M2 13L10 18L18 13" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M2 10L10 15L18 10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <div style={styles.endpointContent}>
-                    <div style={{ ...styles.endpointLabel, ...styles.endpointLabelSandbox }}>
-                      Sandbox
-                    </div>
-                    <div style={styles.endpointUrl}>
-                      {apiMetadata.endPoints.sandboxURL}
-                    </div>
+                  <span style={{ ...styles.endpointBadge, ...styles.endpointBadgeSandbox }}>
+                    <span style={{ ...styles.endpointDot, ...styles.endpointDotSandbox }} />
+                    Sandbox
+                  </span>
+                  <div style={styles.endpointUrl}>
+                    {apiMetadata.endPoints.sandboxURL}
                   </div>
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     {copiedEndpoint === 'sandbox' && (
@@ -394,9 +376,9 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
                         <div style={styles.tooltipArrow} />
                       </div>
                     )}
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style={styles.copyIcon}>
-                      <path d="M4 2H12C13.1 2 14 2.9 14 4V12C14 13.1 13.1 14 12 14H4C2.9 14 2 13.1 2 12V4C2 2.9 2.9 2 4 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M6 6H10M6 10H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={styles.copyIcon}>
+                      <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
                 </div>
