@@ -46,91 +46,93 @@ export const styles = {
   endpointsContainer: {
     display: 'flex',
     flexDirection: 'column' as const,
-    gap: '12px',
-    flexWrap: 'wrap' as const
+    gap: '10px',
   },
   endpointCard: {
-    flex: '1 1 300px',
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
-    padding: '14px 16px',
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    border: '1px solid #e1e4e8',
-    transition: 'all 0.2s',
+    gap: '14px',
+    padding: '12px 16px',
+    backgroundColor: '#ffffff',
+    borderRadius: '10px',
+    border: '1px solid #e6e8eb',
+    transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
     cursor: 'pointer',
-    position: 'relative' as const
+    position: 'relative' as const,
+    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
   },
-  endpointIcon: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '8px',
-    display: 'flex',
+  endpointBadge: {
+    display: 'inline-flex',
     alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0
-  },
-  endpointIconProduction: {
-    backgroundColor: '#22863a'
-  },
-  endpointIconSandbox: {
-    backgroundColor: '#d73a49'
-  },
-  endpointContent: {
-    flex: 1,
-    minWidth: 0
-  },
-  endpointLabel: {
-    fontSize: '12px',
-    fontWeight: 600,
+    gap: '6px',
+    padding: '4px 12px',
+    borderRadius: '20px',
+    fontSize: '11px',
+    fontWeight: 700,
     textTransform: 'uppercase' as const,
-    letterSpacing: '0.5px',
-    marginBottom: '4px'
+    letterSpacing: '0.6px',
+    flexShrink: 0,
+    whiteSpace: 'nowrap' as const,
   },
-  endpointLabelProduction: {
-    color: '#22863a'
+  endpointBadgeProduction: {
+    backgroundColor: '#ddf4e4',
+    color: '#1a7f37',
   },
-  endpointLabelSandbox: {
-    color: '#d73a49'
+  endpointBadgeSandbox: {
+    backgroundColor: '#fff3e0',
+    color: '#e65c00',
+  },
+  endpointDot: {
+    width: '6px',
+    height: '6px',
+    borderRadius: '50%',
+    flexShrink: 0,
+  },
+  endpointDotProduction: {
+    backgroundColor: '#1a7f37',
+  },
+  endpointDotSandbox: {
+    backgroundColor: '#e65c00',
   },
   endpointUrl: {
-    fontSize: '14px',
-    color: '#24292e',
-    fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', monospace",
+    flex: 1,
+    minWidth: 0,
+    fontSize: '13px',
+    color: '#1f2328',
+    fontFamily: "'SF Mono', 'Monaco', 'Menlo', 'Courier New', monospace",
     wordBreak: 'break-all' as const,
-    lineHeight: '1.4'
+    lineHeight: '1.5',
   },
   copyIcon: {
     flexShrink: 0,
-    opacity: 0.5
+    color: '#8c959f',
+    transition: 'color 0.15s ease',
   },
   copiedTooltip: {
     position: 'absolute' as const,
-    top: '-40px',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    padding: '6px 12px',
-    backgroundColor: '#24292e',
+    top: '-36px',
+    right: 0,
+    padding: '5px 10px',
+    backgroundColor: '#1f2328',
     color: 'white',
     borderRadius: '6px',
-    fontSize: '12px',
-    fontWeight: 500,
+    fontSize: '11px',
+    fontWeight: 600,
     whiteSpace: 'nowrap' as const,
-    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
     zIndex: 1000,
-    pointerEvents: 'none' as const
+    pointerEvents: 'none' as const,
+    letterSpacing: '0.3px',
   },
   tooltipArrow: {
     position: 'absolute' as const,
     bottom: '-4px',
-    left: '50%',
-    transform: 'translateX(-50%)',
+    right: '10px',
     width: 0,
     height: 0,
     borderLeft: '4px solid transparent',
     borderRight: '4px solid transparent',
-    borderTop: '4px solid #24292e'
+    borderTop: '4px solid #1f2328',
   },
   content: {
     padding: '16px'

@@ -141,8 +141,12 @@
         <div class="graphql-endpoint-type-wrapper">
           <label for="graphql-endpoint-type">Environment</label>
           <select id="graphql-endpoint-type" aria-label="Endpoint type">
+            {{#unless (eq apiMetadata.endPoints.endpointVisibility "SANDBOX_ONLY")}}
             <option value="production">Production</option>
+            {{/unless}}
+            {{#unless (eq apiMetadata.endPoints.endpointVisibility "PRODUCTION_ONLY")}}
             <option value="sandbox">Sandbox</option>
+            {{/unless}}
           </select>
         </div>
         <div class="graphql-endpoint-input-wrapper">
@@ -176,8 +180,8 @@
       const endpointTypeSelect = document.getElementById('graphql-endpoint-type');
       const tokenInput = document.getElementById('graphql-token-input');
       const tokenStatus = document.getElementById('graphql-token-status');
-      let selectedEndpointType = 'production';
-      let currentEndpoint = apiEndpoint || '';
+      let selectedEndpointType = apiEndpoint ? 'production' : 'sandbox';
+      let currentEndpoint = apiEndpoint || sandboxEndpoint || '';
       let authToken = '';
 
       const getEndpointForType = (type) => {
@@ -220,7 +224,7 @@
       }
 
       if (endpointInput) {
-        endpointInput.value = apiEndpoint || '';
+        endpointInput.value = apiEndpoint || sandboxEndpoint || '';
         endpointInput.addEventListener('input', function (event) {
           const value = (event.target.value || '').trim();
           currentEndpoint = value || getEndpointForType(selectedEndpointType) || '';
