@@ -27,6 +27,10 @@ const REDIS_CONSTANTS = require('../utils/constants').REDIS_CONSTANTS;
 
 class RedisConnectionHelper {
     static async performConnection(service) {
+        if (!service.enabled) {
+            RedisConnectionHelper.enterOfflineMode(service);
+            return null;
+        }
         if (service.isShuttingDown) {
             throw new Error('Service is shutting down');
         }
@@ -42,6 +46,11 @@ class RedisConnectionHelper {
         try {
             await RedisConnectionHelper.cleanupConnections(service);
 
+            const tlsEnabled = config.redis?.tls?.enabled === true;
+            const tlsOptions = tlsEnabled ? {
+                rejectUnauthorized: config.redis?.tls?.rejectUnauthorized !== false
+            } : undefined;
+
             const redisConfig = {
                 host: config.redis?.host || process.env.REDIS_HOST || 'localhost',
                 port: Number(config.redis?.port || process.env.REDIS_PORT || 6379),
@@ -55,7 +64,7 @@ class RedisConnectionHelper {
                 keyPrefix: REDIS_CONSTANTS.KEY_PREFIX,
                 retryConnectOnFailure: false,
                 enableOfflineQueue: false,
-                tls: true
+                ...(tlsEnabled ? { tls: tlsOptions } : {})
             };
 
             logger.debug(`Attempting Redis connection ${service.reconnectAttempts + 1}/${service.maxReconnectAttempts} on pod: ${service.podId}`);
@@ -290,6 +299,9 @@ class RedisConnectionHelper {
     }
 
     static async performFileOnlyConnection(service) {
+        if (!service.enabled) {
+            return false;
+        }
         if (service.isShuttingDown) {
             throw new Error('Service is shutting down');
         }
@@ -298,6 +310,11 @@ class RedisConnectionHelper {
 
         try {
             await RedisConnectionHelper.cleanupFileConnection(service);
+
+            const tlsEnabled = config.redis?.tls?.enabled === true;
+            const tlsOptions = tlsEnabled ? {
+                rejectUnauthorized: config.redis?.tls?.rejectUnauthorized !== false
+            } : undefined;
 
             const redisConfig = {
                 host: config.redis?.host || process.env.REDIS_HOST || 'localhost',
@@ -312,7 +329,7 @@ class RedisConnectionHelper {
                 keyPrefix: REDIS_CONSTANTS.KEY_PREFIX,
                 retryConnectOnFailure: false,
                 enableOfflineQueue: false,
-                tls: true
+                ...(tlsEnabled ? { tls: tlsOptions } : {})
             };
 
             logger.debug(`📁 Creating new Redis file storage connection on pod: ${service.podId}`);
