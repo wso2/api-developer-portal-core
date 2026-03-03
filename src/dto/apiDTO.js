@@ -104,7 +104,6 @@ class Endpoints {
     constructor(api) {
         this.sandboxURL = api.SANDBOX_URL;
         this.productionURL = api.PRODUCTION_URL;
-        this.endpointVisibility = api.METADATA_SEARCH?.endPoints?.endpointVisibility || 'ALL';
     }
 }
 

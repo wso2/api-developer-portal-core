@@ -309,7 +309,7 @@ const loadAPIContent = async (req, res) => {
                         if (metaData.endPoints.productionURL === "" && metaData.endPoints.sandboxURL === "") {
                             apiDetails["serverDetails"] = "";
                         } else {
-                            apiDetails["serverDetails"] = filterEndpointsByVisibility(metaData.endPoints);
+                            apiDetails["serverDetails"] = metaData.endPoints;
                         }
                     }
                     if (metaData.apiInfo.apiType === "WS" || metaData.apiInfo.apiType === "WEBSUB") {
@@ -320,7 +320,7 @@ const loadAPIContent = async (req, res) => {
                         if (metaData.endPoints.productionURL === "" && metaData.endPoints.sandboxURL === "") {
                             apiDetails["serverDetails"] = "";
                         } else {
-                            apiDetails["serverDetails"] = filterEndpointsByVisibility(metaData.endPoints);
+                            apiDetails["serverDetails"] = metaData.endPoints;
                         }
                     }
                     if (metaData.apiInfo.apiType === constants.API_TYPE.GRAPHQL) {
@@ -330,12 +330,12 @@ const loadAPIContent = async (req, res) => {
                         apiDetails = {
                             title: metaData.apiInfo.apiName || "No title",
                             description: metaData.apiInfo.apiDescription || "No description",
-                            schema: apiDefinition
+                            schema: apiDefinition 
                         };
                         if (metaData.endPoints.productionURL === "" && metaData.endPoints.sandboxURL === "") {
                             apiDetails["serverDetails"] = "";
                         } else {
-                            apiDetails["serverDetails"] = filterEndpointsByVisibility(metaData.endPoints);
+                            apiDetails["serverDetails"] = metaData.endPoints;
                         }
                     }
                     if (constants.API_TYPE.MCP === metaData.apiInfo?.apiType) {
@@ -604,8 +604,7 @@ const loadDocument = async (req, res) => {
         if (req.originalUrl.includes(constants.FILE_NAME.API_SPECIFICATION_PATH)) {
 
             if (definitionResponse.apiType !== constants.API_TYPE.WS && definitionResponse.apiType !== constants.API_TYPE.GRAPHQL && definitionResponse.apiType !== constants.API_TYPE.WEBSUB) {
-                const filteredEndpoints = filterEndpointsByVisibility(apiMetadata.endPoints);
-                let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), filteredEndpoints.productionURL, filteredEndpoints.sandboxURL);
+                let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
                 if (config.controlPlane?.enabled !== false) {
                     try {
                         const response = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiMetadata.apiReferenceID}`, null, null);
@@ -628,9 +627,6 @@ const loadDocument = async (req, res) => {
                 }
                 templateContent.swagger = JSON.stringify(modifiedSwagger);
             } else if (definitionResponse.apiType === constants.API_TYPE.GRAPHQL) {
-                if (apiMetadata && apiMetadata.endPoints) {
-                    apiMetadata.endPoints = filterEndpointsByVisibility(apiMetadata.endPoints);
-                }
                 if (templateContent.isGraphQLTryout && definitionResponse.graphql) {
                     const schemaAsIntrospectionJSON = await convertSDLToIntrospection(definitionResponse.graphql);
                     templateContent.graphqlSchemaAsIntrospectionJSON = schemaAsIntrospectionJSON ? JSON.stringify(schemaAsIntrospectionJSON) : null;
@@ -641,8 +637,7 @@ const loadDocument = async (req, res) => {
                 templateContent.apiMetadata = apiMetadata;
             }
              else {
-                const filteredEndpointsAsync = filterEndpointsByVisibility(apiMetadata.endPoints);
-                let modifiedAsyncAPI = replaceEndpointParamsAsyncAPI(JSON.parse(definitionResponse.asyncapi), filteredEndpointsAsync.productionURL, filteredEndpointsAsync.sandboxURL);
+                let modifiedAsyncAPI = replaceEndpointParamsAsyncAPI(JSON.parse(definitionResponse.asyncapi), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
                 templateContent.asyncapi = JSON.stringify(modifiedAsyncAPI);
             }
             templateContent.isAPIDefinition = true;
@@ -872,17 +867,6 @@ async function parseAsyncAPI(api) {
     }
 }
 
-function filterEndpointsByVisibility(endPoints) {
-    const visibility = endPoints.endpointVisibility || 'ALL';
-    if (visibility === 'PRODUCTION_ONLY') {
-        return { ...endPoints, sandboxURL: "" };
-    }
-    if (visibility === 'SANDBOX_ONLY') {
-        return { ...endPoints, productionURL: "" };
-    }
-    return endPoints;
-}
-
 function replaceEndpointParams(apiDefinition, prodEndpoint, sandboxEndpoint) {
 
     if (apiDefinition?.swagger?.startsWith('2.')) {
@@ -910,12 +894,11 @@ function replaceEndpointParams(apiDefinition, prodEndpoint, sandboxEndpoint) {
 
 function replaceEndpointParamsAsyncAPI(apiDefinition, prodEndpoint, sandboxEndpoint) {
     if (apiDefinition?.asyncapi && apiDefinition.asyncapi.startsWith('2.')) {
-        apiDefinition.servers = {};
         if (prodEndpoint.trim().length !== 0) {
-            apiDefinition.servers["production"] = {
+            apiDefinition.servers = {"production": {
                 url: prodEndpoint,
                 protocol: prodEndpoint.startsWith('ws') ? 'ws' : 'wss'
-            };
+            }};
         }
         if (sandboxEndpoint.trim().length !== 0) {
             apiDefinition.servers["sandbox"] = {

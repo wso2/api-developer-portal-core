@@ -68,9 +68,8 @@ const TopicViewer = (props: TopicViewerProps) => {
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [messages, setMessages] = useState<Record<string, any>[]>([]);
   const [input, setInput] = useState(payload || '');
-  const initialEndpointType = apiEndpoint ? 'production' : 'sandbox';
-  const [endpoint, setEndpoint] = useState<string>(apiEndpoint || sandboxEndpoint);
-  const [selectedEndpointType, setSelectedEndpointType] = useState<string>(initialEndpointType);
+  const [endpoint, setEndpoint] = useState<string>(apiEndpoint);
+  const [selectedEndpointType, setSelectedEndpointType] = useState<string>('production');
   const [pathParams, setPathParams] = useState<{ [key: string]: string }>({});
   const [connect, setConnect] = useState(false);
   const [connectButtonText, setConnectButtonText] = useState('Connect');
@@ -371,8 +370,8 @@ const TopicViewer = (props: TopicViewerProps) => {
                           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
                         }}
                       >
-                        {apiEndpoint && <MenuItem value="production">Production</MenuItem>}
-                        {sandboxEndpoint && <MenuItem value="sandbox">Sandbox</MenuItem>}
+                        <MenuItem value="production">Production</MenuItem>
+                        <MenuItem value="sandbox" disabled={!sandboxEndpoint || sandboxEndpoint === ''}>Sandbox</MenuItem>
                       </Select>
                     </FormControl>
                     <Box className={classes.textInput}>
@@ -638,8 +637,8 @@ const TopicViewer = (props: TopicViewerProps) => {
                           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
                         }}
                       >
-                        {apiEndpoint && <MenuItem value="production">Production</MenuItem>}
-                        {sandboxEndpoint && <MenuItem value="sandbox">Sandbox</MenuItem>}
+                        <MenuItem value="production">Production</MenuItem>
+                        <MenuItem value="sandbox" disabled={!sandboxEndpoint || sandboxEndpoint === ''}>Sandbox</MenuItem>
                       </Select>
                     </FormControl>
                     <Box className={classes.textInput}>
