@@ -1376,7 +1376,7 @@ const createCPApplicationOnBehalfOfUser = async (cpApplicationName, owner, cpOrg
                     orgId: req.params?.orgId,
                     cpApplicationName
                 });
-                const cpAppResponse = await utils.apiRequest('GET', `${controlPlaneUrl}/applications?query=${cpApplicationName}`, headers, {}, cpOrgId);
+                const cpAppResponse = await util.apiRequest('GET', `${controlPlaneGwUrl}/applications?query=${cpApplicationName}`, headers, {}, cpOrgId);
                 return cpAppResponse.list[0];
             } catch (error) {
                 logger.error('Error occurred while fetching application', {
@@ -1412,7 +1412,7 @@ const createCPSubscriptionOnBehalfOfUser = async (apiId, cpAppID, policyName, cp
         return cpSubscribeResponse.data;
     } catch (error) {
         if (error.statusCode && error.statusCode === 409) {
-            const response = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?apiId=${apiId}&applicationId=${cpAppID}`, {});
+            const response = await util.apiRequest('GET', `${controlPlaneGwUrl}/subscriptions?apiId=${apiId}&applicationId=${cpAppID}`, {}, cpOrgId);
             return response.list[0];
         }
         logger.error('key mapping create error failed', {
@@ -1423,6 +1423,69 @@ const createCPSubscriptionOnBehalfOfUser = async (apiId, cpAppID, policyName, cp
         });
         throw error;
     }
+}
+
+const createAppKeyMappingOnBehalfOfUser = async (cpAppID, keyanager, clientId, keyType, cpOrgId, patToken) => {
+    logger.info('Creating control plane application key mapping', {
+        cpAppID,
+        keyanager,
+        clientId,
+        keyType
+    });
+    try {
+        const requestBody = {
+            "consumerKey": clientId,
+            "keyType": keyType,
+            "keyManager": keyanager
+        };
+        url = `${controlPlaneGwUrl}/applications/${cpAppID}/map-keys`;
+        headers = {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${patToken}`
+        }
+        const cpSubscribeResponse = await util.apiRequest('POST', url, headers, requestBody, cpOrgId);
+        return cpSubscribeResponse.data;
+    } catch (error) {
+        if (error.statusCode && error.statusCode === 409) {
+            const response = await util.apiRequest('GET', `${controlPlaneGwUrl}/applications/${cpAppID}/oauth-keys`, {}, cpOrgId);
+
+            // Validate response structure
+            if (!response || !Array.isArray(response.list)) {
+                throw new CustomError(500, "Internal Server Error", "Invalid response structure from control plane");
+            }
+
+            // Validate each key mapping has required fields
+            selectedKeyMapping = null;
+            for (const keyMapping of response.list) {
+                if (keyMapping.keyManager == keyanager || keyMapping.keyType == keyType || keyMapping.consumerKey == clientId) {
+                    selectedKeyMapping = keyMapping;
+                    break;
+                }
+            }
+            if (!selectedKeyMapping) {
+                throw new CustomError(500, "Internal Server Error", "Key Mapping creation failed");
+            }
+            return selectedKeyMapping;
+        }
+        logger.error('key mapping create error failed', {
+            error: error.message,
+            stack: error.stack,
+            cpAppID
+        });
+        throw error;
+    }
+}
+
+const getAPIMKeyManagersBehalfOfUser = async (cpOrgId, patToken) => {
+    //
+    headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${patToken}`
+    }
+    url = `${controlPlaneGwUrl}/key-managers?devPortalAppEnv=prod`;
+    const keyMAnagersResponse = await util.apiRequest('GET', url, headers, null, cpOrgId);
+
+    return keyMAnagersResponse.data.list;
 }
 
 const createCPApplication = async (req, cpApplicationName) => {
@@ -1714,5 +1777,7 @@ module.exports = {
     createCPApplication,
     createCPSubscription,
     createCPApplicationOnBehalfOfUser,
-    createCPSubscriptionOnBehalfOfUser
+    createCPSubscriptionOnBehalfOfUser,
+    createAppKeyMappingOnBehalfOfUser,
+    getAPIMKeyManagersBehalfOfUser
 };
