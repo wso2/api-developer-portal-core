@@ -302,7 +302,7 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
                   style={styles.endpointCard}
                   role="button"
                   tabIndex={0}
-                  aria-label="Copy production endpoint URL to clipboard"
+                  aria-label="Copy main endpoint URL to clipboard"
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = '#1a7f37';
                     e.currentTarget.style.boxShadow = '0 2px 10px rgba(26, 127, 55, 0.12)';
