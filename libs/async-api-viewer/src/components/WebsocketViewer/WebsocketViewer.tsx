@@ -130,7 +130,7 @@ function WebSocketViewer(props: WebSocketViewerProps) {
   }, [asyncapi]);
 
   const newAsyncapiObj = useMemo(() => {
-    if (asyncapi && Object.keys(asyncapi).length > 0 && (apiEndpoint || sandboxEndpoint)) {
+    if (asyncapi && Object.keys(asyncapi).length > 0 && apiEndpoint) {
       let newAsyncapi = cloneDeep(asyncapi);
       if (newAsyncapi.asyncapi?.startsWith('2')) {
         newAsyncapi = {
@@ -192,7 +192,7 @@ function WebSocketViewer(props: WebSocketViewerProps) {
     );
   }
 
-  if (apiEndpoint || sandboxEndpoint) {
+  if (apiEndpoint) {
     return (
       <Box>
         {allTopics.map(({ name, publish, subscribe, parameters }: Channel) => (
