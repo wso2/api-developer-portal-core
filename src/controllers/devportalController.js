@@ -176,7 +176,7 @@ const generateAPIKeys = async (req, res) => {
                 sharedToken: false,
                 tokenType: constants.TOKEN_TYPES.API_KEY
             }
-            applicationKeyMappingPortal = await sequelize.transaction({ timeout: 60000 }, async (t) => {
+            let applicationKeyMappingPortal = await sequelize.transaction({ timeout: 60000 }, async (t) => {
                 return await adminDao.createApplicationKeyMapping(appKeyMappping, t);
             });
 
@@ -419,14 +419,17 @@ const importApplications = async (req, res) => {
         if (withKeys && !keyManager) {
             return res.status(400).json({ message: 'keyManager parameter is required when withKeys is true' });
         }
-        const keyManagers = await adminService.getAPIMKeyManagersBehalfOfUser(orgDetails.ORGANIZATION_IDENTIFIER, patToken);
-        const isValidKeyManager = keyManagers.some(km => km.name === keyManager);
+        if (withKeys) {
+            const keyManagers = await adminService.getAPIMKeyManagersBehalfOfUser(orgDetails.ORGANIZATION_IDENTIFIER, patToken);
+            const isValidKeyManager = keyManagers.some(km => km.name === keyManager);
 
-        if (!isValidKeyManager) {
-            return res.status(400).json({
-                message: `Invalid keyManager: ${keyManager}. Key manager not found in organization.`
-            });
+            if (!isValidKeyManager) {
+                return res.status(400).json({
+                    message: `Invalid keyManager: ${keyManager}. Key manager not found in organization.`
+                });
+            }
         }
+
         // Parse YAML file
         let importedApplication;
         try {
@@ -524,16 +527,6 @@ const importApplications = async (req, res) => {
                                 orgDetails.ORGANIZATION_IDENTIFIER,
                                 patToken
                             );
-                            const appKeyMapppingdbEntry = {
-                                orgID: orgID,
-                                appID: createDevPortalApplication.APP_ID,
-                                cpAppRef: controlPlaneApplication.applicationId,
-                                apiRefID: null,
-                                subscriptionRefID: null,
-                                sharedToken: true,
-                                tokenType: constants.TOKEN_TYPES.OAUTH
-                            }
-                            await adminDao.createApplicationKeyMapping(appKeyMapppingdbEntry);
                         } catch (appKeyMappingError) {
                             logger.error('Error creating application-key mapping', {
                                 orgId: orgID,
@@ -543,10 +536,36 @@ const importApplications = async (req, res) => {
                                 error: appKeyMappingError.message,
                                 stack: appKeyMappingError.stack
                             });
+                            // Rollback: Delete CP application and DevPortal application
+                            try {
+                                await adminService.deleteCPApplication(controlPlaneApplication.applicationId, orgDetails.ORGANIZATION_IDENTIFIER, patToken);
+                            } catch (rollbackError) {
+                                logger.error('Rollback failed: CP application not deleted', { cpAppId: controlPlaneApplication.applicationId, error: rollbackError.message });
+                            }
+                            try {
+                                await adminDao.deleteApplication(orgID, createDevPortalApplication.APP_ID, importedApplication.applicationInfo.owner);
+                            } catch (rollbackError) {
+                                logger.error('Rollback failed: DevPortal application not deleted', {
+                                    appId: createDevPortalApplication.APP_ID,
+                                    error: rollbackError.message
+                                });
+                            }
                             const error = new CustomError(500, "Internal Server Error", "Failed to create application-key mapping");
                             return util.handleError(res, error);
                         }
                     }
+                }
+                if (keyEntries.length > 0) {
+                    const appKeyMapppingdbEntry = {
+                        orgID: orgID,
+                        appID: createDevPortalApplication.APP_ID,
+                        cpAppRef: controlPlaneApplication.applicationId,
+                        apiRefID: null,
+                        subscriptionRefID: null,
+                        sharedToken: true,
+                        tokenType: constants.TOKEN_TYPES.OAUTH
+                    }
+                    await adminDao.createApplicationKeyMapping(appKeyMapppingdbEntry);
                 }
             }
         }

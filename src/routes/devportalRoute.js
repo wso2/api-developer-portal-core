@@ -27,6 +27,7 @@ const storage = multer.memoryStorage()
 const multipartHandler = multer({storage: storage})
 const { ensureAuthenticated, validateAuthentication, enforceSecuirty } = require('../middlewares/ensureAuthenticated');
 const constants = require('../utils/constants');
+const config = require(process.cwd() + '/config.json');
 
 router.post('/organizations', enforceSecuirty(constants.SCOPES.ADMIN), adminService.createOrganization);
 router.get('/organizations', enforceSecuirty(constants.SCOPES.ADMIN), adminService.getOrganizations);
@@ -157,5 +158,7 @@ router.get('/sdk/download/:filename', enforceSecuirty(constants.SCOPES.DEVELOPER
 router.post('/login', devportalController.login);
 
 // Import Application with API Subscriptions
-router.post('/organizations/:orgId/applications/import', enforceSecuirty(constants.SCOPES.ADMIN),multipartHandler.single('file'), devportalController.importApplications);
+if (config.features?.importApplication?.enabled) {
+    router.post('/organizations/:orgId/applications/import', enforceSecuirty(constants.SCOPES.ADMIN),multipartHandler.single('file'), devportalController.importApplications);
+}
 module.exports = router;

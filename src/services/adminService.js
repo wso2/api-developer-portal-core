@@ -1345,7 +1345,7 @@ const createCPApplicationOnBehalfOfUser = async (cpApplicationName, owner, cpOrg
     logger.info('Creating control plane application', {
         cpApplicationName
     });
-    headers = {
+    let headers = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${patToken}`
     }
@@ -1373,11 +1373,11 @@ const createCPApplicationOnBehalfOfUser = async (cpApplicationName, owner, cpOrg
         if (error.statusCode && error.statusCode === 409) {
             try {
                 logger.info('Application already exists in control plane, retrieving existing application', {
-                    orgId: req.params?.orgId,
+                    orgId: cpOrgId,
                     cpApplicationName
                 });
                 const cpAppResponse = await util.apiRequest('GET', `${controlPlaneGwUrl}/applications?query=${cpApplicationName}`, headers, {}, cpOrgId);
-                return cpAppResponse.list[0];
+                return cpAppResponse.data.list[0];
             } catch (error) {
                 logger.error('Error occurred while fetching application', {
                     error: error.message,
@@ -1397,23 +1397,24 @@ const createCPSubscriptionOnBehalfOfUser = async (apiId, cpAppID, policyName, cp
         cpAppID,
         policyName
     });
+    const headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${patToken}`
+    }
+
     try {
         const requestBody = {
             apiId: apiId,
             applicationId: cpAppID,
             throttlingPolicy: policyName
         };
-        url = `${controlPlaneGwUrl}/subscriptions`;
-        headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${patToken}`
-        }
+        let url = `${controlPlaneGwUrl}/subscriptions`;
         const cpSubscribeResponse = await util.apiRequest('POST', url, headers, requestBody, cpOrgId);
         return cpSubscribeResponse.data;
     } catch (error) {
         if (error.statusCode && error.statusCode === 409) {
-            const response = await util.apiRequest('GET', `${controlPlaneGwUrl}/subscriptions?apiId=${apiId}&applicationId=${cpAppID}`, {}, cpOrgId);
-            return response.list[0];
+            const response = await util.apiRequest('GET', `${controlPlaneGwUrl}/subscriptions?apiId=${apiId}&applicationId=${cpAppID}`, headers, null, cpOrgId);
+            return response.data.list[0];
         }
         logger.error('key mapping create error failed', {
             error: error.message,
@@ -1425,39 +1426,39 @@ const createCPSubscriptionOnBehalfOfUser = async (apiId, cpAppID, policyName, cp
     }
 }
 
-const createAppKeyMappingOnBehalfOfUser = async (cpAppID, keyanager, clientId, keyType, cpOrgId, patToken) => {
-    logger.info('Creating control plane application key mapping', {
+const createAppKeyMappingOnBehalfOfUser = async (cpAppID, keymanager, clientId, keyType, cpOrgId, patToken) => {
+    logger.debug('Creating control plane application key mapping', {
         cpAppID,
-        keyanager,
+        keymanager,
         clientId,
         keyType
     });
+    let headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${patToken}`
+    }
     try {
         const requestBody = {
             "consumerKey": clientId,
             "keyType": keyType,
-            "keyManager": keyanager
+            "keyManager": keymanager
         };
-        url = `${controlPlaneGwUrl}/applications/${cpAppID}/map-keys`;
-        headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${patToken}`
-        }
+        let url = `${controlPlaneGwUrl}/applications/${cpAppID}/map-keys`;
         const cpSubscribeResponse = await util.apiRequest('POST', url, headers, requestBody, cpOrgId);
         return cpSubscribeResponse.data;
     } catch (error) {
         if (error.statusCode && error.statusCode === 409) {
-            const response = await util.apiRequest('GET', `${controlPlaneGwUrl}/applications/${cpAppID}/oauth-keys`, {}, cpOrgId);
+            const response = await util.apiRequest('GET', `${controlPlaneGwUrl}/applications/${cpAppID}/oauth-keys`, headers, null, cpOrgId);
 
             // Validate response structure
-            if (!response || !Array.isArray(response.list)) {
+            if (!response.data || !Array.isArray(response.data.list)) {
                 throw new CustomError(500, "Internal Server Error", "Invalid response structure from control plane");
             }
 
             // Validate each key mapping has required fields
-            selectedKeyMapping = null;
-            for (const keyMapping of response.list) {
-                if (keyMapping.keyManager == keyanager || keyMapping.keyType == keyType || keyMapping.consumerKey == clientId) {
+            let selectedKeyMapping = null;
+            for (const keyMapping of response.data.list) {
+                if (keyMapping.keyManager === keymanager && keyMapping.keyType === keyType && keyMapping.consumerKey === clientId) {
                     selectedKeyMapping = keyMapping;
                     break;
                 }
@@ -1477,15 +1478,15 @@ const createAppKeyMappingOnBehalfOfUser = async (cpAppID, keyanager, clientId, k
 }
 
 const getAPIMKeyManagersBehalfOfUser = async (cpOrgId, patToken) => {
-    //
-    headers = {
+
+    let headers = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${patToken}`
     }
-    url = `${controlPlaneGwUrl}/key-managers?devPortalAppEnv=prod`;
-    const keyMAnagersResponse = await util.apiRequest('GET', url, headers, null, cpOrgId);
+    let url = `${controlPlaneGwUrl}/key-managers?devPortalAppEnv=prod`;
+    const keymanagersResponse = await util.apiRequest('GET', url, headers, null, cpOrgId);
 
-    return keyMAnagersResponse.data.list;
+    return keymanagersResponse.data.list;
 }
 
 const createCPApplication = async (req, cpApplicationName) => {
