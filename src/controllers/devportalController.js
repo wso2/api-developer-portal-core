@@ -33,7 +33,7 @@ const apiDao = require('../dao/apiMetadata');
 const { trackAppCreationStart, trackAppCreationEnd, trackAppDeletion, trackGenerateKey } = require('../utils/telemetry');
 const fs = require('fs');
 const yaml = require('js-yaml');
-const { ImportedApplicationDTO } = require('../dto/importedApplication');
+const { ImportedApplicationDTO, ApplicationKey } = require('../dto/importedApplication');
 const { CustomError } = require('../utils/errors/customErrors');
 const { APIMetadata, APILabels } = require('../models/apiMetadata');
 const sequelize = require('../db/sequelize');
@@ -176,7 +176,10 @@ const generateAPIKeys = async (req, res) => {
                 sharedToken: false,
                 tokenType: constants.TOKEN_TYPES.API_KEY
             }
-            await adminDao.createApplicationKeyMapping(appKeyMappping);
+            let applicationKeyMappingPortal = await sequelize.transaction({ timeout: 60000 }, async (t) => {
+                return await adminDao.createApplicationKeyMapping(appKeyMappping, t);
+            });
+
         } else if (!(nonSharedKeyMapping[0]?.dataValues.SUBSCRIPTION_REF_ID || sharedKeyMapping[0]?.dataValues.SUBSCRIPTION_REF_ID)) {
             const apiSubscription = await adminService.createCPSubscription(req, apiID, cpAppID, requestBody.subscriptionPlan);
             const appKeyMappping = {
@@ -408,6 +411,25 @@ const importApplications = async (req, res) => {
             return res.status(400).json({ message: 'Missing PAT Token in request headers' });
         }
 
+        // read withKeys form Parameters, default to false if not provided
+        const withKeys = req.body.withKeys === 'true';
+        // read keyManager form parameter 
+        const keyManager = req.body.keyManager || null;
+
+        if (withKeys && !keyManager) {
+            return res.status(400).json({ message: 'keyManager parameter is required when withKeys is true' });
+        }
+        if (withKeys) {
+            const keyManagers = await adminService.getAPIMKeyManagersBehalfOfUser(orgDetails.ORGANIZATION_IDENTIFIER, patToken);
+            const isValidKeyManager = keyManagers.some(km => km.name === keyManager);
+
+            if (!isValidKeyManager) {
+                return res.status(400).json({
+                    message: `Invalid keyManager: ${keyManager}. Key manager not found in organization.`
+                });
+            }
+        }
+
         // Parse YAML file
         let importedApplication;
         try {
@@ -486,6 +508,67 @@ const importApplications = async (req, res) => {
             controlPlaneApplication.applicationId,
             patToken
         );
+
+        // Create Application-Key mapping
+        if (withKeys) {
+            const keys = importedApplication.applicationInfo.keys;
+            if (keys && Array.isArray(keys)) {
+                const keyEntries = keys.filter(key => key.keyManager === keyManager);
+                for (const keyEntry of keyEntries) {
+                    if (keyEntry) {
+                        const applicationKey = new ApplicationKey(keyEntry);
+                        // Use keyEntry data for creating application-key mapping
+                        try {
+                            const createdKeyMapping = await adminService.createAppKeyMappingOnBehalfOfUser(
+                                controlPlaneApplication.applicationId,
+                                keyManager,
+                                applicationKey.consumerKey,
+                                applicationKey.keyType,
+                                orgDetails.ORGANIZATION_IDENTIFIER,
+                                patToken
+                            );
+                        } catch (appKeyMappingError) {
+                            logger.error('Error creating application-key mapping', {
+                                orgId: orgID,
+                                appId: createDevPortalApplication.APP_ID,
+                                cpAppId: controlPlaneApplication.applicationId,
+                                keyManager: keyManager,
+                                error: appKeyMappingError.message,
+                                stack: appKeyMappingError.stack
+                            });
+                            // Rollback: Delete CP application and DevPortal application
+                            try {
+                                await adminService.deleteCPApplication(controlPlaneApplication.applicationId, orgDetails.ORGANIZATION_IDENTIFIER, patToken);
+                            } catch (rollbackError) {
+                                logger.error('Rollback failed: CP application not deleted', { cpAppId: controlPlaneApplication.applicationId, error: rollbackError.message });
+                            }
+                            try {
+                                await adminDao.deleteApplication(orgID, createDevPortalApplication.APP_ID, importedApplication.applicationInfo.owner);
+                            } catch (rollbackError) {
+                                logger.error('Rollback failed: DevPortal application not deleted', {
+                                    appId: createDevPortalApplication.APP_ID,
+                                    error: rollbackError.message
+                                });
+                            }
+                            const error = new CustomError(500, "Internal Server Error", "Failed to create application-key mapping");
+                            return util.handleError(res, error);
+                        }
+                    }
+                }
+                if (keyEntries.length > 0) {
+                    const appKeyMapppingdbEntry = {
+                        orgID: orgID,
+                        appID: createDevPortalApplication.APP_ID,
+                        cpAppRef: controlPlaneApplication.applicationId,
+                        apiRefID: null,
+                        subscriptionRefID: null,
+                        sharedToken: true,
+                        tokenType: constants.TOKEN_TYPES.OAUTH
+                    }
+                    await adminDao.createApplicationKeyMapping(appKeyMapppingdbEntry);
+                }
+            }
+        }
 
         const response = failedSubscriptions.length > 0
             ? { status: "Incomplete", failedSubscriptions }
