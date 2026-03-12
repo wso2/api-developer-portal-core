@@ -42,6 +42,7 @@
                         <div id="collapseProductionOauth2" class="accordion-collapse collapse show"
                             aria-labelledby="production-oauth2">
                             <div class="accordion-body">
+                                {{#if keyManagersMetadata}}
                                 {{#each keyManagersMetadata}}
                                 {{#in name values="_internal_key_manager_,Resident Key Manager,_appdev_sts_key_manager_"}}
                                 {{#if enabled}}
@@ -124,8 +125,8 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div id="generateKeyContainer-PRODUCTION"
-                                        style="{{#if keys.consumerKey}}display: none;{{else}}display: flex;{{/if}}">
+                                    <div id="generateKeyContainer-PRODUCTION" class="{{#unless keys.consumerKey}}d-flex{{/unless}}"
+                                        style="{{#if keys.consumerKey}}display: none;{{/if}}">
                                         <div class="d-flex align-items-left flex-column">
                                             <div class="info-box mt-0">
                                                 <div class="info-content">
@@ -259,6 +260,17 @@
                                 <div id="keyGenerationErrorContainer-PRODUCTION" class="mt-2 text-danger"
                                     style="display: none; font-size: 0.75rem; word-wrap: break-word;"></div>
                                 {{/each}}
+                                {{else}}
+                                <div style="margin-left: 1rem;">
+                                    <div class="info-box">
+                                        <div class="info-content">
+                                            <div class="info-title">
+                                                Key generation is currently unavailable. Please contact the organization administrator.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {{/if}}
                             </div>
                         </div>
                     </div>
@@ -425,6 +437,7 @@
                             <div id="collapseSandboxOAuth2" class="accordion-collapse collapse show"
                                 aria-labelledby="sandbox-oauth2">
                                 <div class="accordion-body">
+                                    {{#if keyManagersMetadata}}
                                     {{#each keyManagersMetadata}}
                                     {{#in name values="_internal_key_manager_,Resident Key Manager,_appdev_sts_key_manager_"}}
                                     {{#if enabled}}
@@ -507,8 +520,8 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div id="generateKeyContainer-SANDBOX"
-                                            style="{{#if keys.consumerKey}}display: none;{{else}}display: flex;{{/if}}">
+                                        <div id="generateKeyContainer-SANDBOX" class="{{#unless keys.consumerKey}}d-flex{{/unless}}"
+                                            style="{{#if keys.consumerKey}}display: none;{{/if}}">
                                             <div class="d-flex align-items-left flex-column">
                                                 <div class="info-box mt-0">
                                                     <div class="info-content">
@@ -644,6 +657,17 @@
                                     <div id="keyGenerationErrorContainer-SANDBOX" class="mt-2 text-danger"
                                         style="display: none; font-size: 0.75rem; word-wrap: break-word;"></div>
                                     {{/each}}
+                                    {{else}}
+                                    <div style="margin-left: 1rem;">
+                                        <div class="info-box">
+                                            <div class="info-content">
+                                                <div class="info-title">
+                                                    Key generation is currently unavailable. Please contact the organization administrator.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {{/if}}
                                 </div>
                             </div>
                         </div>

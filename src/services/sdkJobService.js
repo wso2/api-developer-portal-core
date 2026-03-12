@@ -1375,7 +1375,7 @@ class SDKJobService extends EventEmitter {
                 orgName: orgName,
                 appId: applicationId,
                 idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
-            });
+            }, req);
 
             // Validate input
             if (!orgName) {
@@ -1592,7 +1592,7 @@ class SDKJobService extends EventEmitter {
             });
 
             fileStream.pipe(res);      
-            trackSDKGenerationEnd();
+            trackSDKGenerationEnd(req);
         } catch (error) {
             console.error('Error downloading SDK:', error);
             res.status(500).json({

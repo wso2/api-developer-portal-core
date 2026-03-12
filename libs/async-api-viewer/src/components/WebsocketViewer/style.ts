@@ -104,6 +104,46 @@ const useStyles = makeStyles((theme: Theme) =>
       overflow: 'scroll',
       boxSizing: 'border-box',
     },
+    label: {
+      color: theme.palette.secondary.dark,
+      fontWeight: 400,
+      minWidth: theme.spacing(12.5),
+      marginTop: '10px',
+    },
+    textArea: {
+      borderRadius: 5,
+      '& .MuiOutlinedInput-root': {
+        borderRadius: 5,
+        padding: 0,
+        '& .MuiOutlinedInput-input': {
+          backgroundColor: theme.palette.common.white,
+          borderRadius: 5,
+          boxShadow:
+            'inset 0 0 0 1px rgba(85,103,213,0.4), inset 0 1px 1px 0 rgba(0,0,0,0.07), 0 0 0 0 rgba(50,50,77,0.07)',
+          padding: theme.spacing(2.0375),
+          '&:active, &:focus': {
+            borderRadius: 5,
+            borderColor: 'transparent',
+            boxShadow:
+              'inset 0 0 0 1px rgba(85,103,213,0.4), inset 0 1px 1px 0 rgba(0,0,0,0.07), 0 0 0 0 rgba(50,50,77,0.07)',
+          },
+          overflowY: 'auto',
+          '&::-webkit-scrollbar': {
+            width: 4,
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: '#e6e7ec',
+            borderRadius: 2,
+          },
+          '&::-webkit-scrollbar-track': {
+            backgroundColor: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb:hover': {
+            background: '#eee',
+          },
+        },
+      },
+    },
     parameterContainer: {
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -121,6 +161,11 @@ const useStyles = makeStyles((theme: Theme) =>
       maxWidth: '100%',
     },
     apiTokenTextInput: {
+      size: 'small',
+      width: "100%",
+      maxWidth: "100%",
+    },
+    callbackURLTextInput: {
       size: 'small',
       width: "100%",
       maxWidth: "100%",
