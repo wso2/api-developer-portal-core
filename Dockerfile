@@ -12,9 +12,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     default-jre-headless \
     && rm -rf /var/lib/apt/lists/*
 
-# Verify the installed wget version
-RUN wget --version
-
 # Set the working directory inside the container
 WORKDIR /app
 
@@ -23,9 +20,7 @@ COPY package*.json ./
 COPY openapitools.json ./
 
 # Install dependencies using npm ci for faster, cleaner installations in production
-RUN npm ci --only=production --ignore-scripts
-
-RUN npx @openapitools/openapi-generator-cli@2.21.3 version
+RUN npm ci --only=production --ignore-scripts && npm cache clean --force
 
 # Copy the rest of the application files
 COPY . .
