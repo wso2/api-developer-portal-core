@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     bash \
     coreutils \
-    default-jre \
+    default-jre-headless \
     && rm -rf /var/lib/apt/lists/*
 
 # Verify the installed wget version
