@@ -912,13 +912,9 @@ async function listFiles(path) {
 
 function filterAllowedAPIs(searchResults, allowedAPIs) {
 
-    searchResults = searchResults.filter(api => {
-        const gatewayVendor = api?.apiInfo?.gatewayVendor || 'wso2';
-        if (constants.FEDERATED_GATEWAY_VENDORS.includes(gatewayVendor)) {
-            return true;
-        }
-        return allowedAPIs.some(allowedAPI => api.apiReferenceID === allowedAPI.id);
-    });
+    searchResults = searchResults.filter(api =>
+        allowedAPIs.some(allowedAPI => api.apiReferenceID === allowedAPI.id)
+    );
     return searchResults;
 }
 
