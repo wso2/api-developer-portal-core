@@ -33,6 +33,7 @@ const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
 const { buildSchema, getIntrospectionQuery, graphql: executeGraphQL } = require('graphql');
+const { log } = require('console');
 const controlPlaneUrl = config.controlPlane.url;
 
 const filePrefix = config.pathToContent;
@@ -236,15 +237,8 @@ const loadAPIContent = async (req, res) => {
             //check whether user has access to the API via control plane
             if (config.controlPlane?.enabled !== false && !isFederatedAPI) {
                 try {
-                    let apiName = metaData ? metaData.apiHandle?.split('-v')[0] : "";
-                    const version = metaData ? metaData.apiInfo.apiVersion : "";
-                    let allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
-                    if (allowedAPIList.count === 0) {
-                        apiName = metaData.apiInfo.apiName;
-                        allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
-                    }
-
-                    if (allowedAPIList.count === 0) {
+                    apiDetail = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${metaData.apiReferenceID}`, null, null);
+                    if (!apiDetail) {
                         let templateContent = {
                             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                             errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API,
@@ -264,7 +258,6 @@ const loadAPIContent = async (req, res) => {
                             return;
                         }
                     }
-                    apiDetail = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${metaData.apiReferenceID}`, null, null);
                 } catch (error) {
                     logger.warn("Error checking API authorization from control plane, proceeding without authorization check", {
                         orgName: orgName,
