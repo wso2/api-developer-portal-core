@@ -442,30 +442,44 @@ const computeRequestCount = (policy) => {
 };
 
 const buildPricingMetadata = (policy) => {
-    const meta = {};
+    // array of pricing metadata entries to support multiple prices per env.
+    const entries = [];
 
-    const productId = policy.externalProductId ?? null;
-    const priceId = policy.externalPriceId ?? null;
+    // Support both older single-field names and newer structures.
+    const productId = policy.externalProductId ?? policy.external?.productId ?? null;
+    const priceId = policy.externalPriceId ?? policy.external?.priceId ?? null;
+    const env = policy.env ?? policy.environment ?? null;
 
+    // If top-level external identifiers exist, create a primary entry
     if (productId || priceId) {
-        meta.external = { productId, priceId };
+        const entry = { external: {} };
+        if (productId) entry.external.productId = productId;
+        if (priceId) entry.external.priceId = priceId;
+        if (env) entry.external.env = env;
+        entries.push(entry);
     }
 
+    // Handle tiered pricing stored on policy (backwards-compatible)
     const pricingModel = toUpper(policy.pricingModel);
     const isTiered = pricingModel === "VOLUME_TIERS" || pricingModel === "GRADUATED_TIERS";
     const tiers = Array.isArray(policy.tiers) ? policy.tiers : policy.pricingTiers;
-
     if (isTiered && Array.isArray(tiers) && tiers.length > 0) {
-        meta.tiers = tiers.map((tier, idx) => ({
+        // If we already have an entry, attach tiers to the first; otherwise create a new entry
+        const tierObjs = tiers.map((tier, idx) => ({
             tierIndex: tier.tierIndex ?? (idx + 1),
             startUnit: tier.startUnit,
             endUnit: tier.endUnit ?? null,
             unitPrice: tier.unitPrice ?? null,
             flatPrice: tier.flatPrice ?? null
         }));
+        if (entries.length > 0) {
+            entries[0].tiers = tierObjs;
+        } else {
+            entries.push({ tiers: tierObjs });
+        }
     }
 
-    return Object.keys(meta).length > 0 ? meta : null;
+    return entries.length > 0 ? entries : null;
 };
 
 const buildSubscriptionPolicyRow = (orgID, policy) => {

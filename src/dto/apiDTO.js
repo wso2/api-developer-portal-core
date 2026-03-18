@@ -99,7 +99,23 @@ class APISubscriptionPolicy {
         this.billingPeriod = apiSubscriptionPolicy.BILLING_PERIOD;
         this.flatAmount = apiSubscriptionPolicy.FLAT_AMOUNT;
         this.unitAmount = apiSubscriptionPolicy.UNIT_AMOUNT;
-        this.pricingMetadata = apiSubscriptionPolicy.PRICING_METADATA;
+        // Normalize pricing metadata array/object and expose a primary entry for templates
+        const rawMeta = apiSubscriptionPolicy.PRICING_METADATA;
+        if (Array.isArray(rawMeta)) {
+            this.pricingMetadataArray = rawMeta;
+            this.pricingMetadata = rawMeta[0] || null;
+            if (this.pricingMetadata && this.pricingMetadata.external) {
+                this.pricingMetadata.externalPriceId = this.pricingMetadata.external.priceId ?? null;
+                this.pricingMetadata.externalProductId = this.pricingMetadata.external.productId ?? null;
+            }
+        } else {
+            this.pricingMetadataArray = rawMeta ? [rawMeta] : null;
+            this.pricingMetadata = rawMeta || null;
+            if (this.pricingMetadata && this.pricingMetadata.external) {
+                this.pricingMetadata.externalPriceId = this.pricingMetadata.external.priceId ?? null;
+                this.pricingMetadata.externalProductId = this.pricingMetadata.external.productId ?? null;
+            }
+        }
     }
 }
 

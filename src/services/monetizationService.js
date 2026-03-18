@@ -71,20 +71,24 @@ function extractExternalPriceId(policyRow) {
   const metadata = policyRow?.PRICING_METADATA;
   if (!metadata) return null;
 
-  return (
-    (metadata.external && metadata.external.priceId) ||
-    null
-  );
+  // Support both object and array shapes. If it's an array, prefer the first entry's external.priceId
+  if (Array.isArray(metadata)) {
+    const primary = metadata[0] || {};
+    return primary.external?.priceId ?? null;
+  }
+
+  return metadata.external?.priceId ?? null;
 }
 
 function extractMoesifProductId(policyRow) {
   const metadata = policyRow?.PRICING_METADATA;
   if (!metadata) return null;
-  
-  return (
-    (metadata.external && metadata.external.productId) ||
-    null
-  );
+  if (Array.isArray(metadata)) {
+    const primary = metadata[0] || {};
+    return primary.external?.productId ?? null;
+  }
+
+  return metadata.external?.productId ?? null;
 }
 
 /**

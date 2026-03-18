@@ -32,7 +32,27 @@ class SubscriptionPolicy {
         this.billingPeriod = subscriptionPolicy.BILLING_PERIOD;
         this.flatAmount = subscriptionPolicy.FLAT_AMOUNT;
         this.unitAmount = subscriptionPolicy.UNIT_AMOUNT;
-        this.pricingMetadata = subscriptionPolicy.PRICING_METADATA;
+       
+        // - pricingMetadataArray: the raw array (if present)
+        // - pricingMetadata: the primary entry (first) for backward compatibility
+        const rawMeta = subscriptionPolicy.PRICING_METADATA;
+        if (Array.isArray(rawMeta)) {
+            this.pricingMetadataArray = rawMeta;
+            const primary = rawMeta[0] || {};
+            this.pricingMetadata = primary;
+            // convenience flat properties for older templates/code that expect them
+            if (primary && primary.external) {
+                this.pricingMetadata.externalPriceId = primary.external.priceId ?? null;
+                this.pricingMetadata.externalProductId = primary.external.productId ?? null;
+            }
+        } else {
+            this.pricingMetadataArray = rawMeta ? [rawMeta] : null;
+            this.pricingMetadata = rawMeta || null;
+            if (rawMeta && rawMeta.external) {
+                this.pricingMetadata.externalPriceId = rawMeta.external.priceId ?? null;
+                this.pricingMetadata.externalProductId = rawMeta.external.productId ?? null;
+            }
+        }
     }
 }
 
