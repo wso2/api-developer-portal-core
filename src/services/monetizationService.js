@@ -67,28 +67,58 @@ function isPaidPolicy(policyRow) {
   return String(billingPlan || "FREE").toUpperCase() !== "FREE";
 }
 
-function extractExternalPriceId(policyRow) {
-  const metadata = policyRow?.PRICING_METADATA;
-  if (!metadata) return null;
-
-  // Support both object and array shapes. If it's an array, prefer the first entry's external.priceId
-  if (Array.isArray(metadata)) {
-    const primary = metadata[0] || {};
-    return primary.external?.priceId ?? null;
-  }
-
-  return metadata.external?.priceId ?? null;
+function extractExternalPriceId(policyRow, billingAppId = null) {
+  const entry = selectPricingEntry(policyRow, billingAppId);
+  return entry?.external?.priceId ?? null;
 }
 
-function extractMoesifProductId(policyRow) {
+function extractMoesifProductId(policyRow, billingAppId = null) {
+  const entry = selectPricingEntry(policyRow, billingAppId);
+  return entry?.external?.productId ?? null;
+}
+
+/**
+ * Select the pricing metadata entry for a policy given billing info.
+ * Priority:
+ *  1. If billingAppId provided, match entry.billingAppId === billingAppId or entry.external.billingAppId === billingAppId
+ *  2. Fallback to first (primary) entry
+ *
+ * @param {object} policyRow - DB row for subscription policy (contains PRICING_METADATA)
+ * @param {string|null} billingAppId - billingAppId to match in the pricing metadata
+ * @returns {object|null} matched pricing entry or null
+ */
+function selectPricingEntry(policyRow, billingAppId = null) {
   const metadata = policyRow?.PRICING_METADATA;
   if (!metadata) return null;
+
   if (Array.isArray(metadata)) {
-    const primary = metadata[0] || {};
-    return primary.external?.productId ?? null;
+      // Prefer matching by billingAppId (from BILLING_INFO or DP subscription)
+      if (billingAppId) {
+        const byApp = metadata.find((entry) => {
+          const bid = entry.billingAppId ?? null;
+          return bid && String(bid) === String(billingAppId);
+        });
+        if (byApp) return byApp;
+      }
+
+    // fallback to primary
+    return metadata[0] || null;
   }
 
-  return metadata.external?.productId ?? null;
+  // legacy single-object shape
+  return metadata || null;
+}
+
+async function resolveBillingAppId(apiId, policyId, t = null) {
+  try {
+    if (!apiId || !policyId) return null;
+    const billingInfo = await adminDao.getAPISubscriptionBillingInfo(apiId, policyId, t);
+    const billingAppId = billingInfo ? (billingInfo.billingAppId ?? billingInfo.billingAppID ?? null) : null;
+    return billingAppId;
+  } catch (err) {
+    logger.warn({ err, apiId, policyId }, '[resolveBillingAppId] failed to read APISubscriptionPolicy');
+    return null;
+  }
 }
 
 /**
@@ -127,20 +157,49 @@ async function createCheckoutSession({
       throw new BadRequestError("This policy is FREE. Use /organizations/:orgId/subscriptions for free subscriptions.");
     }
 
-    const externalPriceId = extractExternalPriceId(policyRow);
+    // Try to resolve billingAppId from the API⇄policy billing info; fall back to provided applicationID
+    const resolvedBillingAppId = await resolveBillingAppId(apiId, policyId, t) || null;
+    const externalPriceId = extractExternalPriceId(policyRow, resolvedBillingAppId);
     if (!externalPriceId) {
       throw new BadRequestError("Paid policy is missing external price id configuration.");
     }
-
+    
     // Check if metered pricing (PER_UNIT model)
     const pricingModel = policyRow.PRICING_MODEL;
     const isMetered = pricingModel === 'PER_UNIT';
+    const isMeteredWithTiers = pricingModel === 'VOLUME_TIERS' || pricingModel === 'GRADUATED_TIERS';
 
-    // For metered pricing, validate that price is properly configured with meter in Stripe
-    if (isMetered) {
-      const pricingMetadata = policyRow.PRICING_METADATA || {};
-      
-      // If meter ID is missing, optionally handle as needed (no logs in production)
+    // For metered pricing, validate that meter configuration exists on the API policy
+    if (isMetered || isMeteredWithTiers) {
+      // Fetch full billing info from API⇄policy join row (may contain billingMeterId + billingAppId)
+      const billingInfo = await adminDao.getAPISubscriptionBillingInfo(apiId, policyId, t);
+
+      // Selected pricing entry according to billingAppId (or primary)
+      const selectedEntry = selectPricingEntry(policyRow, billingInfo?.billingAppId ?? null);
+
+      // billingMeterId is required for metered plans (used for usage metering)
+      const billingMeterId = billingInfo?.billingMeterId ?? null;
+      if (!billingMeterId) {
+        throw new BadRequestError(
+          'Metered policy requires a billing meter id. Please set BILLING_INFO.billingMeterId on the API⇄policy join row.'
+        );
+      }
+
+      if (isMeteredWithTiers) {
+        // Ensure the selected pricing entry includes tier information for metered billing
+        if (!selectedEntry || (!selectedEntry.tiers && !selectedEntry.tier && !Array.isArray(selectedEntry.tiers))) {
+          throw new BadRequestError(
+            'Metered policy pricing metadata missing tiers for the matched billingAppId. Please include tiers in PRICING_METADATA.'
+          );
+        }
+      }
+
+      // Ensure the selected entry has an external price id (Stripe price) as well
+      if (!selectedEntry.external || !selectedEntry.external.priceId) {
+        throw new BadRequestError(
+          'Metered policy is missing external.priceId in the selected pricing entry.'
+        );
+      }
     }
 
     // Optional: prevent duplicate ACTIVE/PENDING for same (app, api, policy) if you want
@@ -312,8 +371,12 @@ async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
     // Sync customer data to Moesif for usage tracking
     // Note: Billing meters are created when Moesif price/plan is created, not here
     const policyRow = await adminDao.getSubscriptionPolicyById(orgId, dpSub.POLICY_ID, t);
-    const moesifPriceId = extractExternalPriceId(policyRow);
-    const moesifPlanId = extractMoesifProductId(policyRow);
+    // Try to prefer pricing entry that matches the DP subscription's application id
+    // Prefer billingAppId defined on the API⇄policy join row. If missing, fall back to the DP subscription's application id.
+    const resolvedBillingAppIdAfter = await resolveBillingAppId(dpSub.API_ID, dpSub.POLICY_ID, t);
+    const billingAppId = resolvedBillingAppIdAfter || dpSub?.APPLICATION_ID || dpSub?.APP_ID || dpSub?.applicationID || dpSub?.applicationId || dpSub?.application || null;
+    const moesifPriceId = extractExternalPriceId(policyRow, billingAppId);
+    const moesifPlanId = extractMoesifProductId(policyRow, billingAppId);
     const moesifAppKey = process.env.MOESIF_APPLICATION_ID;
 
     if (moesifAppKey && moesifPlanId) {
@@ -596,7 +659,7 @@ async function getUserUsageData(userContext, orgId, period = 'current', t) {
         const companyId = sub.BILLING_CUSTOMER_ID || '';
         const subscriptionId = sub.BILLING_SUBSCRIPTION_ID || '';
         const pricingMetadata = sub?.pricingMetadata || {};
-        const meterId = sub?.meterId || '';
+        const meterId = billingInfo ? (billingInfo.billingMeterId ?? '') : '';
 
         let requests = 0;
         let avgRt = 0;

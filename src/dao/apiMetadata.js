@@ -449,6 +449,7 @@ const buildPricingMetadata = (policy) => {
     const productId = policy.externalProductId ?? policy.external?.productId ?? null;
     const priceId = policy.externalPriceId ?? policy.external?.priceId ?? null;
     const env = policy.env ?? policy.environment ?? null;
+    const billingAppId = policy.billingAppId ?? policy.billingAppID ?? policy.billingApp ?? null;
 
     // If top-level external identifiers exist, create a primary entry
     if (productId || priceId) {
@@ -456,6 +457,7 @@ const buildPricingMetadata = (policy) => {
         if (productId) entry.external.productId = productId;
         if (priceId) entry.external.priceId = priceId;
         if (env) entry.external.env = env;
+        if (billingAppId) entry.billingAppId = billingAppId;
         entries.push(entry);
     }
 
@@ -510,11 +512,14 @@ const buildSubscriptionPolicyRow = (orgID, policy) => {
 
 const createAPISubscriptionPolicy = async (apiSubscriptionPolicies, apiID, t) => {
   try {
-    const rows = apiSubscriptionPolicies.map((policy) => ({
-      POLICY_ID: policy.policyId ?? policy.policyID, // supports both
-      API_ID: apiID,
-      BILLING_METER_ID: policy.meterId
-    }));
+        const rows = apiSubscriptionPolicies.map((policy) => ({
+            POLICY_ID: policy.policyId ?? policy.policyID, // supports both
+            API_ID: apiID,
+            BILLING_INFO: {
+                billingMeterId: policy.meterId ?? null,
+                billingAppId: policy.billingAppId ?? null
+            }
+        }));
 
     return await APISubscriptionPolicy.bulkCreate(rows, { transaction: t });
   } catch (error) {
@@ -1319,7 +1324,10 @@ async function updateAPISubscriptionPolicy(subscriptionPolicies, apiID, t) {
             policiesToCreate.push({
                 POLICY_ID: policy.policyID,
                 API_ID: apiID,
-                BILLING_METER_ID: policy.meterId
+                BILLING_INFO: {
+                    billingMeterId: policy.meterId ?? null,
+                    billingAppId: policy.billingAppId ?? null
+                }
             })
         }
         if (policiesToCreate.length > 0) {

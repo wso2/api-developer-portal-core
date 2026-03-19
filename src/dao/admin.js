@@ -23,7 +23,7 @@ const getUserSubscriptionsWithDetails = async (orgID, userID) => {
                 p."UNIT_AMOUNT" as "unitAmount",
                 p."PRICING_MODEL" as "pricingModel",
                 p."PRICING_METADATA" as "pricingMetadata",
-                asp."BILLING_METER_ID" as "meterId"
+                asp."BILLING_INFO" as "billingInfo"
             FROM "DP_API_SUBSCRIPTION" s
             LEFT JOIN "DP_API_METADATA" a ON s."API_ID" = a."API_ID" AND s."ORG_ID" = a."ORG_ID"
             LEFT JOIN "DP_APPLICATION" app ON s."APP_ID" = app."APP_ID" AND s."ORG_ID" = app."ORG_ID"
@@ -95,6 +95,7 @@ const apiDao = require('./apiMetadata');
 const { APIMetadata } = require('../models/apiMetadata');
 const APIImageMetadata = require('../models/apiImages');
 const SubscriptionPolicy = require('../models/subscriptionPolicy');
+const APISubscriptionPolicy = require('../models/apiSubscriptionPolicy');
 const logger = require('../config/logger');
 const { decrypt } = require('../utils/cryptoUtil');
 
@@ -113,6 +114,19 @@ const getAllOrgBillingKeys = async () => {
             webhookSecret: decrypt(r.WEBHOOK_SECRET_ENC),
             secretKey: decrypt(r.SECRET_KEY_ENC)
         }));
+    } catch (error) {
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
+const getAPISubscriptionBillingInfo = async (apiID, policyID, t) => {
+    try {
+        if (!apiID || !policyID) return null;
+        const opts = { where: { API_ID: apiID, POLICY_ID: policyID } };
+        if (t) opts.transaction = t;
+        const asp = await APISubscriptionPolicy.findOne(opts);
+        if (!asp) return null;
+        return asp.BILLING_INFO ?? null;
     } catch (error) {
         throw new Sequelize.DatabaseError(error);
     }
@@ -1400,5 +1414,6 @@ module.exports = {
     getApplicationAPIMapping,
     deleteAppMappings,
     getAllOrgBillingKeys,
+    getAPISubscriptionBillingInfo,
     deleteSubscriptionByBillingId
 };
