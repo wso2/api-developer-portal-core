@@ -68,7 +68,7 @@ const createAPIMetadata = async (req, res) => {
         Array.isArray(meterItems)
             ? meterItems
                 .filter(x => x?.policyName && x?.billingMeterId)
-                .map(x => [String(x.policyName), String(x.billingMeterId)])
+                .map(x => [String(x.policyName), { billingMeterId: String(x.billingMeterId), billingAppId: x.billingAppId ?? x.billingAppID ?? x.billingApp ?? null }])
             : []
         );
         await sequelize.transaction({
@@ -90,8 +90,8 @@ const createAPIMetadata = async (req, res) => {
                         if (!subscriptionPolicy) {
                             throw new Sequelize.EmptyResultError("Subscription policy not found");
                         } else {
-                            const meterId = meterByPolicyName.get(String(subscriptionPolicy.POLICY_NAME));
-                            subscriptionPolicies.push({ apiID: apiID, policyID: subscriptionPolicy.POLICY_ID, meterId: meterId });
+                            const meterObj = meterByPolicyName.get(String(subscriptionPolicy.POLICY_NAME));
+                            subscriptionPolicies.push({ apiID: apiID, policyID: subscriptionPolicy.POLICY_ID, meterId: meterObj?.billingMeterId ?? null, billingAppId: meterObj?.billingAppId ?? null });
                         }
                     };
                 }
@@ -348,7 +348,7 @@ const updateAPIMetadata = async (req, res) => {
         Array.isArray(meterItems)
             ? meterItems
                 .filter(x => x?.policyName && x?.billingMeterId)
-                .map(x => [String(x.policyName), String(x.billingMeterId)])
+                .map(x => [String(x.policyName), { billingMeterId: String(x.billingMeterId), billingAppId: x.billingAppId ?? x.billingAppID ?? x.billingApp ?? null }])
             : []
         );
 
@@ -404,8 +404,8 @@ const updateAPIMetadata = async (req, res) => {
                         if (!subscriptionPolicy) {
                             throw new Sequelize.EmptyResultError("Subscription policy not found");
                         } else {
-                            const meterId = meterByPolicyName.get(String(subscriptionPolicy.POLICY_NAME));
-                            subscriptionPolicies.push({ apiID: apiId, policyID: subscriptionPolicy.POLICY_ID, meterId: meterId });
+                            const meterObj = meterByPolicyName.get(String(subscriptionPolicy.POLICY_NAME));
+                            subscriptionPolicies.push({ apiID: apiId, policyID: subscriptionPolicy.POLICY_ID, meterId: meterObj?.billingMeterId ?? null, billingAppId: meterObj?.billingAppId ?? null });
                         }
                     };
                 }
