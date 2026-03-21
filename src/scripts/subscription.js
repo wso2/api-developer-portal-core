@@ -167,6 +167,12 @@ function loadModal(modalID) {
     modal.style.display = 'flex';
 }
 
+function handleAppBasedSubscription(btnElement) {
+    showSubscribeButtonLoading(btnElement);
+    const { orgId, apiId, apiReferenceId, policyId, policyName } = btnElement.dataset;
+    subscribe(orgId, '', apiId, apiReferenceId, policyId, policyName);
+}
+
 async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, policyName) {
     console.log('Subscribing to API:', apiId);
 

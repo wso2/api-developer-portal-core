@@ -35,6 +35,7 @@ const apiContent = require('./routes/apiContentRoute');
 const applicationContent = require('./routes/applicationsContentRoute');
 const sdkJobService = require('./services/sdkJobService');
 const customContent = require('./routes/customPageRoute');
+const subscriptionsContent = require('./routes/subscriptionsContentRoute');
 const config = require(process.cwd() + '/config.json');
 const Handlebars = require('handlebars');
 const constants = require("./utils/constants");
@@ -105,6 +106,24 @@ Handlebars.registerHelper('jsonBeautify', function (context) {
         }
     } else {
         return '{}'; 
+    }
+});
+
+Handlebars.registerHelper('jsonSafePlatformSubscriptions', function (context) {
+    try {
+        if (!context || !Array.isArray(context)) return JSON.stringify([]);
+        const safe = context.map(function (s) {
+            return {
+                subscriptionId: s.subscriptionId,
+                subscriptionPlanName: s.subscriptionPlanName,
+                status: s.status,
+                customerName: s.customerName || s.customer || null,
+                maskedToken: s.subscriptionToken ? ('****' + String(s.subscriptionToken).slice(-4)) : '****'
+            };
+        });
+        return JSON.stringify(safe);
+    } catch (e) {
+        return JSON.stringify([]);
     }
 });
 
@@ -205,6 +224,16 @@ Handlebars.registerHelper('isFederatedAPI', function (gatewayVendor) {
         return false;
     }
     return constants.FEDERATED_GATEWAY_VENDORS.includes(gatewayVendor);
+});
+
+Handlebars.registerHelper('maskToken', function (token) {
+    if (!token || token.length <= 4) return '****';
+    return '****' + token.slice(-4);
+});
+
+Handlebars.registerHelper('isCurrentPlan', function (policyName, platformSubscriptions) {
+    if (!Array.isArray(platformSubscriptions) || !policyName) return false;
+    return platformSubscriptions.some(sub => sub.subscriptionPlanName === policyName);
 });
 
 // #endregion
@@ -446,6 +475,7 @@ if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.DEFAULT, applicationContent);
     app.use(constants.ROUTE.DEFAULT, orgContent);
     app.use(constants.ROUTE.DEFAULT, settingsRoute);
+    app.use(constants.ROUTE.DEFAULT, subscriptionsContent);
     app.use(constants.ROUTE.DEFAULT, customContent);
 }
 
