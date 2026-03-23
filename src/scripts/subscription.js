@@ -65,7 +65,7 @@ function isPaidPlan(policyId) {
 function getPriceId(policyId) {
   const el = document.getElementById(`subscribe-btn-${policyId}`);
   if (!el) return null;
-  return el.getAttribute("data-price-id") || null;
+  return el.getAttribute("data-external-price-id") || null;
 }
 
 /**
@@ -327,7 +327,8 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
         markSubscribedUI(card, applicationID);
       } else {
         console.error("Failed to create subscription:", responseData);
-        showSubscriptionMessage(messageOverlay, `Failed to subscribe: ${responseData.description || response.statusText}`, "error");
+        const errMsg = responseData.message || responseData.description || responseData.error || "Subscription failed. Please try again.";
+        showSubscriptionMessage(messageOverlay, errMsg, "error");
       }
       return;
     }
@@ -359,7 +360,13 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
 
     if (!checkoutRes.ok) {
       console.error("Checkout creation failed:", checkoutData);
-      showSubscriptionMessage(messageOverlay, `Failed to start checkout: ${checkoutData.description || checkoutRes.statusText}`, "error");
+      const errMsg = checkoutData.message || checkoutData.error || checkoutData.description || "Failed to start checkout. Please try again.";
+      // Treat an "already active" conflict as success info
+      if (checkoutRes.status === 409) {
+        showSubscriptionMessage(messageOverlay, errMsg, "info");
+      } else {
+        showSubscriptionMessage(messageOverlay, errMsg, "error");
+      }
       return;
     }
 
@@ -549,7 +556,7 @@ async function wireStripeReturnIfPresent() {
 
     if (response.ok) {
       const result = await response.json();
-      await showAlert("Payment successful! Subscription activated.", "success");
+      await showAlert("Payment successful! Your subscription is now active.", "success");
       
       // Wait a moment before reloading
       await new Promise(r => setTimeout(r, 2000));
@@ -564,7 +571,19 @@ async function wireStripeReturnIfPresent() {
       window.location.href = url.toString();
     } else {
       const errorData = await response.json().catch(() => ({}));
-      await showAlert(`Payment completed but subscription activation failed: ${errorData.message || "Unknown error"}`, "error");
+      const errMsg = errorData.message || errorData.error || "An error occurred while activating your subscription.";
+      // If already active (conflict), treat as success
+      if (response.status === 409 && errMsg.toLowerCase().includes("active")) {
+        await showAlert("Subscription already active.", "success");
+        await new Promise(r => setTimeout(r, 1500));
+        const url = new URL(window.location.href);
+        url.searchParams.delete("session_id");
+        url.searchParams.delete("dp_sub_id");
+        url.searchParams.delete("org_id");
+        window.location.href = url.toString();
+      } else {
+        await showAlert(errMsg, "error");
+      }
       isProcessingPayment = false;
     }
   } catch (error) {
@@ -923,7 +942,13 @@ async function landingSubscribeAndCheckout(orgID, apiID, apiReferenceID, policyI
 
     const result = await response.json();
     if (!response.ok) {
-      throw new Error(result.error || result.message || "Failed to create checkout session");
+      const errMsg = result.message || result.error || "Failed to start checkout. Please try again.";
+      if (response.status === 409) {
+        showAlert(errMsg, "info");
+        if (subscribeButton) { subscribeButton.innerHTML = 'Subscribe'; subscribeButton.disabled = false; }
+        return;
+      }
+      throw new Error(errMsg);
     }
 
     // Use embedded checkout (same as subscribeAndCheckout)
@@ -1017,8 +1042,12 @@ async function subscribeAndCheckout(orgID, apiID, apiReferenceID, policyID, poli
     
     if (!checkoutRes.ok) {
       console.error("❌ Checkout creation failed:", checkoutData);
-      const errorMsg = checkoutData.message || checkoutData.error || checkoutData.description || checkoutRes.statusText;
-      showSubscriptionMessage(messageOverlay, `Failed to start checkout: ${errorMsg}`, "error");
+      const errorMsg = checkoutData.message || checkoutData.error || checkoutData.description || "Failed to start checkout. Please try again.";
+      if (checkoutRes.status === 409) {
+        showSubscriptionMessage(messageOverlay, errorMsg, "info");
+      } else {
+        showSubscriptionMessage(messageOverlay, errorMsg, "error");
+      }
       return;
     }
 

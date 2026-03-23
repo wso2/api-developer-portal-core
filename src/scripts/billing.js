@@ -18,28 +18,28 @@
 
 // Function to initialize the billing page
 function initializeBillingPage() {
-  console.log('[initializeBillingPage] called');
+  console.log("[initializeBillingPage] called");
   // Load initial data based on active tab
-  const billingTabs = document.querySelector('.billing-tabs');  
-  const activeTab = document.querySelector('.billing-tabs .nav-link.active');
-  
+
   // Always load usage data on page load since Usage is the first/default tab
   setTimeout(() => {
     loadUsageData();
   }, 100);
-  
-  // Set up tab change listeners using Bootstrap's Tab API
-  const tabs = document.querySelectorAll('.billing-tabs .nav-link[data-bs-toggle="tab"]');
-  tabs.forEach(tab => {
-    tab.addEventListener('shown.bs.tab', function(event) {
-      // Bootstrap passes the newly activated tab as event.target
-      const targetId = tab.getAttribute('data-bs-target');
 
-      if (targetId === '#usage') {
+  // Set up tab change listeners using Bootstrap's Tab API
+  const tabs = document.querySelectorAll(
+    '.billing-tabs .nav-link[data-bs-toggle="tab"]',
+  );
+  tabs.forEach((tab) => {
+    tab.addEventListener("shown.bs.tab", function () {
+      // Bootstrap passes the newly activated tab as event.target
+      const targetId = tab.getAttribute("data-bs-target");
+
+      if (targetId === "#usage") {
         loadUsageData();
-      } else if (targetId === '#invoices') {
+      } else if (targetId === "#invoices") {
         loadInvoices();
-      } else if (targetId === '#payment') {
+      } else if (targetId === "#payment") {
         loadPaymentDetails();
       }
     });
@@ -47,8 +47,8 @@ function initializeBillingPage() {
 }
 
 // Initialize when DOM is loaded
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeBillingPage);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initializeBillingPage);
 } else {
   initializeBillingPage();
 }
@@ -57,14 +57,14 @@ if (document.readyState === 'loading') {
  * Load usage data for the selected period
  */
 async function loadUsageData() {
-  const period = document.getElementById('usagePeriod')?.value || 'current';
-  const tableBody = document.getElementById('usageTableBody');
+  const period = document.getElementById("usagePeriod")?.value || "current";
+  const tableBody = document.getElementById("usageTableBody");
   const orgId = getOrgIdFromContext();
   if (!tableBody) {
-    console.error(' usageTableBody element not found!');
+    console.error(" usageTableBody element not found!");
     return;
   }
-  
+
   try {
     tableBody.innerHTML = `
       <tr>
@@ -80,33 +80,48 @@ async function loadUsageData() {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Usage data error response:', errorText);
+      console.error("Usage data error response:", errorText);
       throw new Error(`Failed to fetch usage data: ${response.status}`);
     }
 
     const data = await response.json();
     // Update statistics cards
-    document.getElementById('totalRequests').textContent = formatNumber(data.totalRequests || 0);
-    document.getElementById('activeSubscriptions').textContent = data.activeSubscriptions || 0;
-    document.getElementById('estimatedCost').textContent = data.estimatedCost || 0;
-    document.getElementById('avgResponseTime').textContent = `${data.avgResponseTime || 0}ms`;
+    document.getElementById("totalRequests").textContent = formatNumber(
+      data.totalRequests || 0,
+    );
+    document.getElementById("activeSubscriptions").textContent =
+      data.activeSubscriptions || 0;
+    document.getElementById("estimatedCost").textContent = formatUsageCost(
+      data.estimatedCost || 0,
+      data.currency || "USD",
+    );
+    document.getElementById("avgResponseTime").textContent =
+      `${data.avgResponseTime || 0}ms`;
 
     // Populate usage table
     if (data.subscriptions && data.subscriptions.length > 0) {
-      tableBody.innerHTML = data.subscriptions.map(sub => `
+      tableBody.innerHTML = data.subscriptions
+        .map(
+          (sub) => `
         <tr>
           <td><strong>${escapeHtml(sub.apiName)}</strong></td>
           <td>${escapeHtml(sub.applicationName)}</td>
           <td><span class="badge bg-secondary">${escapeHtml(sub.planName)}</span></td>
           <td>${formatNumber(sub.requests)}</td>
           <td>
-            ${sub.pricingModel === 'PER_UNIT' 
-              ? '<span class="badge bg-info">Metered</span>' 
-              : '<span class="badge bg-success">Flat</span>'}
+            ${
+              sub.pricingModel === "PER_UNIT" ||
+              sub.pricingModel === "VOLUME_TIERS" ||
+              sub.pricingModel === "GRADUATED_TIERS"
+                ? '<span class="badge bg-info">Metered</span>'
+                : '<span class="badge bg-success">Flat</span>'
+            }
           </td>
-          <td><strong>${sub.cost}</strong></td>
+          <td><strong>${formatUsageCost(sub.cost, sub.currency || "USD")}</strong></td>
         </tr>
-      `).join('');
+      `,
+        )
+        .join("");
     } else {
       tableBody.innerHTML = `
         <tr>
@@ -118,7 +133,7 @@ async function loadUsageData() {
       `;
     }
   } catch (error) {
-    console.error('Error loading usage data:', error);
+    console.error("Error loading usage data:", error);
     tableBody.innerHTML = `
       <tr>
         <td colspan="6" class="text-center py-4 text-danger">
@@ -128,7 +143,7 @@ async function loadUsageData() {
         </td>
       </tr>
     `;
-    showAlert('Failed to load usage data', 'danger');
+    showAlert("Failed to load usage data", "danger");
   }
 }
 
@@ -136,11 +151,12 @@ async function loadUsageData() {
  * Load invoice history
  */
 async function loadInvoices() {
-  const tableBody = document.getElementById('invoicesTableBody');
-  const noInvoices = document.getElementById('noInvoices');
-  const period = document.getElementById('invoicePeriod')?.value || 'last3months';
+  const tableBody = document.getElementById("invoicesTableBody");
+  const noInvoices = document.getElementById("noInvoices");
+  const period =
+    document.getElementById("invoicePeriod")?.value || "last3months";
   const orgId = getOrgIdFromContext();
-  
+
   try {
     tableBody.innerHTML = `
       <tr>
@@ -151,17 +167,21 @@ async function loadInvoices() {
       </tr>
     `;
 
-    const response = await fetch(`/devportal/organizations/${orgId}/invoices?period=${period}`);
-    
+    const response = await fetch(
+      `/devportal/organizations/${orgId}/invoices?period=${period}`,
+    );
+
     if (!response.ok) {
-      throw new Error('Failed to fetch invoices');
+      throw new Error("Failed to fetch invoices");
     }
 
     const data = await response.json();
-    
+
     if (data.invoices && data.invoices.length > 0) {
-      noInvoices.style.display = 'none';
-      tableBody.innerHTML = data.invoices.map(invoice => `
+      noInvoices.style.display = "none";
+      tableBody.innerHTML = data.invoices
+        .map(
+          (invoice) => `
         <tr>
           <td><strong>${escapeHtml(invoice.number)}</strong></td>
           <td>${formatDate(invoice.created)}</td>
@@ -176,20 +196,26 @@ async function loadInvoices() {
             <button class="btn btn-sm btn-outline-primary" onclick="downloadInvoice('${invoice.id}')">
               <i class="fas fa-download"></i> Download
             </button>
-            ${invoice.hostedInvoiceUrl ? `
+            ${
+              invoice.hostedInvoiceUrl
+                ? `
               <a href="${escapeHtml(invoice.hostedInvoiceUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary ms-2">
                 <i class="fas fa-external-link-alt"></i> View
               </a>
-            ` : ''}
+            `
+                : ""
+            }
           </td>
         </tr>
-      `).join('');
+      `,
+        )
+        .join("");
     } else {
-      tableBody.innerHTML = '';
-      noInvoices.style.display = 'block';
+      tableBody.innerHTML = "";
+      noInvoices.style.display = "block";
     }
   } catch (error) {
-    console.error('Error loading invoices:', error);
+    console.error("Error loading invoices:", error);
     tableBody.innerHTML = `
       <tr>
         <td colspan="6" class="text-center py-4 text-danger">
@@ -198,7 +224,7 @@ async function loadInvoices() {
         </td>
       </tr>
     `;
-    showAlert('Failed to load invoices', 'danger');
+    showAlert("Failed to load invoices", "danger");
   }
 }
 
@@ -210,10 +236,10 @@ async function loadPaymentDetails() {
     await Promise.all([
       loadPaymentMethods(),
       loadBillingInfo(),
-      loadActiveSubscriptions()
+      loadActiveSubscriptions(),
     ]);
   } catch (error) {
-    console.error('💳 Error loading payment details:', error);
+    console.error("💳 Error loading payment details:", error);
   }
 }
 
@@ -221,9 +247,9 @@ async function loadPaymentDetails() {
  * Load payment methods
  */
 async function loadPaymentMethods() {
-  const container = document.getElementById('paymentMethodsList');
+  const container = document.getElementById("paymentMethodsList");
   const orgId = getOrgIdFromContext();
-  
+
   if (!orgId) {
     container.innerHTML = `
       <div class="text-center py-4 text-danger">
@@ -233,7 +259,7 @@ async function loadPaymentMethods() {
     `;
     return;
   }
-  
+
   if (!orgId) {
     container.innerHTML = `
       <div class="text-center py-4 text-danger">
@@ -243,7 +269,7 @@ async function loadPaymentMethods() {
     `;
     return;
   }
-  
+
   try {
     container.innerHTML = `
       <div class="text-center py-4">
@@ -252,28 +278,36 @@ async function loadPaymentMethods() {
       </div>
     `;
 
-    const response = await fetch(`/devportal/organizations/${orgId}/billing/payment-methods`);
-    
+    const response = await fetch(
+      `/devportal/organizations/${orgId}/billing/payment-methods`,
+    );
+
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Payment methods fetch failed:', response.status, errorText);
-      
+      console.error(
+        "Payment methods fetch failed:",
+        response.status,
+        errorText,
+      );
+
       // Try to parse error JSON
-      let errorMessage = 'Failed to load payment methods';
+      let errorMessage = "Failed to load payment methods";
       try {
         const errorData = JSON.parse(errorText);
         errorMessage = errorData.message || errorMessage;
       } catch (e) {
         // Use default message if not JSON
       }
-      
+
       throw new Error(errorMessage);
     }
 
-    const data = await response.json();    
+    const data = await response.json();
     if (data.paymentMethods && data.paymentMethods.length > 0) {
-      container.innerHTML = data.paymentMethods.map(method => `
-        <div class="payment-method-card ${method.isDefault ? 'default' : ''}">
+      container.innerHTML = data.paymentMethods
+        .map(
+          (method) => `
+        <div class="payment-method-card ${method.isDefault ? "default" : ""}">
           <div class="d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center">
               <i class="fab fa-cc-${method.brand.toLowerCase()} fa-2x me-3"></i>
@@ -283,11 +317,13 @@ async function loadPaymentMethods() {
               </div>
             </div>
             <div>
-              ${method.isDefault ? '<span class="badge bg-primary">Default</span>' : ''}
+              ${method.isDefault ? '<span class="badge bg-primary">Default</span>' : ""}
             </div>
           </div>
         </div>
-      `).join('');
+      `,
+        )
+        .join("");
     } else {
       container.innerHTML = `
         <div class="text-center py-4 text-muted">
@@ -298,7 +334,7 @@ async function loadPaymentMethods() {
       `;
     }
   } catch (error) {
-    console.error('Error loading payment methods:', error);
+    console.error("Error loading payment methods:", error);
     container.innerHTML = `
       <div class="text-center py-4">
         <div class="text-danger mb-3">
@@ -318,9 +354,9 @@ async function loadPaymentMethods() {
  * Load billing information
  */
 async function loadBillingInfo() {
-  const container = document.getElementById('billingInfoContent');
+  const container = document.getElementById("billingInfoContent");
   const orgId = getOrgIdFromContext();
-  
+
   try {
     container.innerHTML = `
       <div class="text-center py-4">
@@ -329,41 +365,51 @@ async function loadBillingInfo() {
       </div>
     `;
 
-    const response = await fetch(`/devportal/organizations/${orgId}/billing/info`);
-    
+    const response = await fetch(
+      `/devportal/organizations/${orgId}/billing/info`,
+    );
+
     if (!response.ok) {
-      throw new Error('Failed to fetch billing info');
+      throw new Error("Failed to fetch billing info");
     }
 
     const data = await response.json();
-    
+
     container.innerHTML = `
       <div class="billing-info">
         <div class="mb-3">
           <label class="text-muted small">Organization</label>
-          <div class="fw-bold">${escapeHtml(data.organizationName || 'N/A')}</div>
+          <div class="fw-bold">${escapeHtml(data.organizationName || "N/A")}</div>
         </div>
         <div class="mb-3">
           <label class="text-muted small">Email</label>
-          <div>${escapeHtml(data.email || 'N/A')}</div>
+          <div>${escapeHtml(data.email || "N/A")}</div>
         </div>
-        ${data.address ? `
+        ${
+          data.address
+            ? `
           <div class="mb-3">
             <label class="text-muted small">Billing Address</label>
             <div>
-              ${escapeHtml(data.address.line1 || '')}<br>
-              ${data.address.line2 ? escapeHtml(data.address.line2) + '<br>' : ''}
-              ${escapeHtml(data.address.city || '')}, ${escapeHtml(data.address.state || '')} ${escapeHtml(data.address.postalCode || '')}<br>
-              ${escapeHtml(data.address.country || '')}
+              ${escapeHtml(data.address.line1 || "")}<br>
+              ${data.address.line2 ? escapeHtml(data.address.line2) + "<br>" : ""}
+              ${escapeHtml(data.address.city || "")}, ${escapeHtml(data.address.state || "")} ${escapeHtml(data.address.postalCode || "")}<br>
+              ${escapeHtml(data.address.country || "")}
             </div>
           </div>
-        ` : ''}
-        ${data.taxId ? `
+        `
+            : ""
+        }
+        ${
+          data.taxId
+            ? `
           <div class="mb-3">
             <label class="text-muted small">Tax ID</label>
             <div>${escapeHtml(data.taxId)}</div>
           </div>
-        ` : ''}
+        `
+            : ""
+        }
         <div class="text-center mt-4">
           <button class="common-btn-outlined" onclick="editBillingInfo()">
             <i class="fas fa-external-link-alt me-2"></i>Update in Stripe Portal
@@ -372,7 +418,7 @@ async function loadBillingInfo() {
       </div>
     `;
   } catch (error) {
-    console.error('Error loading billing info:', error);
+    console.error("Error loading billing info:", error);
     container.innerHTML = `
       <div class="text-center py-4 text-danger">
         <i class="fas fa-exclamation-circle me-2"></i>
@@ -386,9 +432,11 @@ async function loadBillingInfo() {
  * Load active subscriptions
  */
 async function loadActiveSubscriptions() {
-  const tableBody = document.getElementById('subscriptionsTableBody');
+  const tableBody = document.getElementById("subscriptionsTableBody");
   const orgId = getOrgIdFromContext();
-  const filterContainer = document.getElementById('subscriptionsFilterContainer');
+  const filterContainer = document.getElementById(
+    "subscriptionsFilterContainer",
+  );
 
   try {
     tableBody.innerHTML = `
@@ -400,13 +448,17 @@ async function loadActiveSubscriptions() {
       </tr>
     `;
 
-    const response = await fetch(`/devportal/organizations/${orgId}/billing/subscriptions`);
+    const response = await fetch(
+      `/devportal/organizations/${orgId}/billing/subscriptions`,
+    );
     if (!response.ok) {
-      throw new Error('Failed to fetch subscriptions');
+      throw new Error("Failed to fetch subscriptions");
     }
 
     const data = await response.json();
-    const allStatuses = Array.from(new Set((data.subscriptions || []).map(sub => sub.status))).sort();
+    const allStatuses = Array.from(
+      new Set((data.subscriptions || []).map((sub) => sub.status)),
+    ).sort();
 
     // Render filter dropdown
     if (filterContainer) {
@@ -414,26 +466,30 @@ async function loadActiveSubscriptions() {
         <label for="subscriptionStatusFilter" class="me-2">Filter by Status:</label>
         <select id="subscriptionStatusFilter" class="form-select form-select-sm" style="width: auto; display: inline-block;">
           <option value="ALL">All</option>
-           ${allStatuses.map(status => {
-            const safeStatus = escapeHtml(status);
-            return `<option value="${safeStatus}">${safeStatus}</option>`;
-          }).join('')}
+           ${allStatuses
+             .map((status) => {
+               const safeStatus = escapeHtml(status);
+               return `<option value="${safeStatus}">${safeStatus}</option>`;
+             })
+             .join("")}
         </select>
       `;
     }
 
     function renderTable(filteredSubs) {
       if (filteredSubs.length > 0) {
-        tableBody.innerHTML = filteredSubs.map(sub => `
+        tableBody.innerHTML = filteredSubs
+          .map(
+            (sub) => `
           <tr>
             <td><strong>${escapeHtml(sub.apiName)}</strong></td>
-            <td>${escapeHtml(sub.applicationName || 'N/A')}</td>
+            <td>${escapeHtml(sub.applicationName || "N/A")}</td>
             <td><span class="badge bg-secondary">${escapeHtml(sub.planName)}</span></td>
             <td>${escapeHtml(sub.billingCycle)}</td>
             <td><strong>${formatCurrency(sub.amount)}</strong></td>
             <td>${formatDate(sub.nextBillingDate)}</td>
             <td>
-              <span class="badge-status badge-${sub.status === 'active' ? 'paid' : 'pending'}">
+              <span class="badge-status badge-${sub.status === "active" ? "paid" : "pending"}">
                 ${escapeHtml(sub.status)}
               </span>
             </td>
@@ -443,7 +499,9 @@ async function loadActiveSubscriptions() {
               </button>
             </td>
           </tr>
-        `).join('');
+        `,
+          )
+          .join("");
       } else {
         tableBody.innerHTML = `
           <tr>
@@ -461,18 +519,20 @@ async function loadActiveSubscriptions() {
 
     // Filter logic
     if (filterContainer) {
-      const filterSelect = document.getElementById('subscriptionStatusFilter');
-      filterSelect.addEventListener('change', function() {
+      const filterSelect = document.getElementById("subscriptionStatusFilter");
+      filterSelect.addEventListener("change", function () {
         const selected = this.value;
-        if (selected === 'ALL') {
+        if (selected === "ALL") {
           renderTable(data.subscriptions || []);
         } else {
-          renderTable((data.subscriptions || []).filter(sub => sub.status === selected));
+          renderTable(
+            (data.subscriptions || []).filter((sub) => sub.status === selected),
+          );
         }
       });
     }
   } catch (error) {
-    console.error('Error loading subscriptions:', error);
+    console.error("Error loading subscriptions:", error);
     tableBody.innerHTML = `
       <tr>
         <td colspan="8" class="text-center py-4 text-danger">
@@ -490,7 +550,9 @@ async function loadActiveSubscriptions() {
 async function downloadInvoice(invoiceId) {
   const orgId = getOrgIdFromContext();
   try {
-    const response = await fetch(`/devportal/organizations/${orgId}/invoices/${invoiceId}/pdf`);
+    const response = await fetch(
+      `/devportal/organizations/${orgId}/invoices/${invoiceId}/pdf`,
+    );
     let data = {};
     try {
       data = await response.json();
@@ -500,20 +562,22 @@ async function downloadInvoice(invoiceId) {
     }
     if (!response.ok) {
       // Show backend error message if available
-      const msg = data && data.message ? data.message : 'Failed to download invoice';
-      showAlert(msg, 'danger');
+      const msg =
+        data && data.message ? data.message : "Failed to download invoice";
+      showAlert(msg, "danger");
       throw new Error(msg);
     }
     if (data.invoice_pdf) {
-      window.open(data.invoice_pdf, '_blank', 'noopener,noreferrer');
-      showAlert('Invoice opened in new tab', 'success');
+      window.open(data.invoice_pdf, "_blank", "noopener,noreferrer");
+      showAlert("Invoice opened in new tab", "success");
     } else {
-      const msg = data && data.message ? data.message : 'Invoice PDF URL not available';
-      showAlert(msg, 'danger');
+      const msg =
+        data && data.message ? data.message : "Invoice PDF URL not available";
+      showAlert(msg, "danger");
       throw new Error(msg);
     }
   } catch (error) {
-    console.error('Error downloading invoice:', error);
+    console.error("Error downloading invoice:", error);
     // showAlert already called above for most cases
   }
 }
@@ -524,28 +588,30 @@ async function downloadInvoice(invoiceId) {
 async function downloadAllInvoices() {
   const orgId = getOrgIdFromContext();
   try {
-    showAlert('Preparing invoices for download...', 'info');
-    
-    const response = await fetch(`/devportal/organizations/${orgId}/invoices/download-all`);
-    
+    showAlert("Preparing invoices for download...", "info");
+
+    const response = await fetch(
+      `/devportal/organizations/${orgId}/invoices/download-all`,
+    );
+
     if (!response.ok) {
-      throw new Error('Failed to download invoices');
+      throw new Error("Failed to download invoices");
     }
 
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `all-invoices-${Date.now()}.zip`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
-    
-    showAlert('Invoices downloaded successfully', 'success');
+
+    showAlert("Invoices downloaded successfully", "success");
   } catch (error) {
-    console.error('Error downloading invoices:', error);
-    showAlert('Failed to download invoices', 'danger');
+    console.error("Error downloading invoices:", error);
+    showAlert("Failed to download invoices", "danger");
   }
 }
 
@@ -554,34 +620,37 @@ async function downloadAllInvoices() {
  */
 async function addPaymentMethod() {
   const orgId = getOrgIdFromContext();
-  
+
   try {
     // Use the new endpoint that doesn't require subscription ID
     const portalUrl = `/devportal/organizations/${orgId}/billing-portal`;
-    
+
     const response = await fetch(portalUrl, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json'
-      }
+        "Content-Type": "application/json",
+      },
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ Failed to create portal session:', errorText);
-      throw new Error(`Failed to create portal session: ${response.status}`);
+      console.error("Failed to create portal session:", errorText);
+      throw new Error("portal_session_failed");
     }
 
-    const data = await response.json();    
+    const data = await response.json();
     if (data.url) {
       // Open Stripe portal in new tab instead of redirecting
-      window.open(data.url, '_blank', 'noopener,noreferrer');
-      showAlert('Stripe Customer Portal opened in new tab', 'success');
+      window.open(data.url, "_blank", "noopener,noreferrer");
+      showAlert("Billing portal opened in new tab", "success");
     } else {
-      throw new Error('No portal URL returned');
+      throw new Error("No portal URL returned");
     }
   } catch (error) {
-    showAlert('Failed to open payment method management: ' + error.message, 'danger');
+    showAlert(
+      "Failed to open payment method management. Please try again.",
+      "danger",
+    );
   }
 }
 
@@ -592,41 +661,49 @@ async function editBillingInfo() {
   const orgId = getOrgIdFromContext();
   try {
     // First, get active subscriptions to find a subscription ID
-    const subsResponse = await fetch(`/devportal/organizations/${orgId}/subscriptions`);
+    const subsResponse = await fetch(
+      `/devportal/organizations/${orgId}/subscriptions`,
+    );
     if (!subsResponse.ok) {
-      throw new Error('Failed to get subscriptions');
+      throw new Error("Failed to get subscriptions");
     }
-    
+
     const subsData = await subsResponse.json();
-    
+
     // Check if there are any subscriptions
     if (!subsData.subscriptions || subsData.subscriptions.length === 0) {
-      showAlert('No subscriptions found. Please create a subscription first.', 'warning');
+      showAlert(
+        "No subscriptions found. Please create a subscription first.",
+        "warning",
+      );
       return;
     }
-    
+
     // Use the first subscription's ID
     const subId = subsData.subscriptions[0].id;
-    
+
     // Redirect to Stripe Customer Portal for billing info management
-    const response = await fetch(`/devportal/organizations/${orgId}/subscriptions/${subId}/billing-portal`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    
+    const response = await fetch(
+      `/devportal/organizations/${orgId}/subscriptions/${subId}/billing-portal`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
     if (!response.ok) {
-      throw new Error('Failed to create portal session');
+      throw new Error("Failed to create portal session");
     }
 
     const data = await response.json();
     // Open Stripe portal in new tab instead of redirecting
-    window.open(data.url, '_blank', 'noopener,noreferrer');
-    showAlert('Stripe Customer Portal opened in new tab', 'success');
+    window.open(data.url, "_blank", "noopener,noreferrer");
+    showAlert("Billing portal opened in new tab", "success");
   } catch (error) {
-    console.error('Error editing billing info:', error);
-    showAlert('Failed to open billing information editor', 'danger');
+    console.error("Error editing billing info:", error);
+    showAlert("Failed to open billing information editor", "danger");
   }
 }
 
@@ -637,24 +714,27 @@ async function manageSubscription(subscriptionId) {
   const orgId = getOrgIdFromContext();
   try {
     // Redirect to Stripe Customer Portal for subscription management
-    const response = await fetch(`/devportal/organizations/${orgId}/subscriptions/${subscriptionId}/billing-portal`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    
+    const response = await fetch(
+      `/devportal/organizations/${orgId}/subscriptions/${subscriptionId}/billing-portal`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
     if (!response.ok) {
-      throw new Error('Failed to create portal session');
+      throw new Error("Failed to create portal session");
     }
 
     const data = await response.json();
     // Open Stripe portal in new tab instead of redirecting
-    window.open(data.url, '_blank', 'noopener,noreferrer');
-    showAlert('Stripe Customer Portal opened in new tab', 'success');
+    window.open(data.url, "_blank", "noopener,noreferrer");
+    showAlert("Billing portal opened in new tab", "success");
   } catch (error) {
-    console.error('Error managing subscription:', error);
-    showAlert('Failed to open subscription management', 'danger');
+    console.error("Error managing subscription:", error);
+    showAlert("Failed to open subscription management", "danger");
   }
 }
 
@@ -664,70 +744,79 @@ function formatNumber(num) {
   return new Intl.NumberFormat().format(num);
 }
 
+function formatUsageCost(amount, currency) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency || "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
 function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
   }).format(amount / 100); // Stripe amounts are in cents
 }
 
 function formatDate(timestamp) {
   // If timestamp is in milliseconds (e.g., > 10^12), use as is; if in seconds, multiply by 1000
-  const ts = (timestamp > 1e12) ? timestamp : timestamp * 1000;
-  return new Date(ts).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
+  const ts = timestamp > 1e12 ? timestamp : timestamp * 1000;
+  return new Date(ts).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
 }
 
 function escapeHtml(text) {
-  const div = document.createElement('div');
+  const div = document.createElement("div");
   div.textContent = text;
   return div.innerHTML;
 }
 
 function getInvoiceStatusClass(status) {
   const statusMap = {
-    'paid': 'paid',
-    'open': 'pending',
-    'void': 'failed',
-    'uncollectible': 'failed',
-    'draft': 'pending'
+    paid: "paid",
+    open: "pending",
+    void: "failed",
+    uncollectible: "failed",
+    draft: "pending",
   };
-  return statusMap[status] || 'pending';
+  return statusMap[status] || "pending";
 }
 
 function getOrgIdFromContext() {
   // Get orgId from main or div element's data attribute
-  const element = document.querySelector('[data-org-id]');
+  const element = document.querySelector("[data-org-id]");
   if (element && element.dataset.orgId) {
     return element.dataset.orgId;
   }
-  
+
   // Fallback: try to extract from URL path (e.g., /hiranyakavi/views/default/billing)
-  const pathParts = window.location.pathname.split('/');
+  const pathParts = window.location.pathname.split("/");
   if (pathParts.length > 1 && pathParts[1]) {
     return pathParts[1];
   }
-  return 'default';
+  return "default";
 }
 
-function showAlert(message, type = 'info') {
-  const alertContainer = document.querySelector('.alert-container');
+function showAlert(message, type = "info") {
+  const alertContainer = document.querySelector(".alert-container");
   if (alertContainer) {
     const escapedMessage = escapeHtml(message);
-    const alertDiv = document.createElement('div');
+    const alertDiv = document.createElement("div");
     alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-    alertDiv.setAttribute('role', 'alert');
+    alertDiv.setAttribute("role", "alert");
     alertDiv.innerHTML = `
       ${escapedMessage}
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
     alertContainer.appendChild(alertDiv);
-    
+
     setTimeout(() => {
-      alertDiv.classList.remove('show');
+      alertDiv.classList.remove("show");
       setTimeout(() => alertDiv.remove(), 150);
     }, 5000);
   }

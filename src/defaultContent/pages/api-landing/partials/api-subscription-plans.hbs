@@ -28,13 +28,22 @@
                         <span class="plan-kpi-free">Free</span>
                       {{/if}}
                     {{else}}
-                      {{!-- PER_UNIT pricing --}}
-                      {{#if unitAmount}}
-                        <span class="plan-kpi-amount">{{currency}} {{formatPrice unitAmount}}</span>
-                        <span class="plan-kpi-unit">/req</span>
+                      {{#in pricingModel values="VOLUME_TIERS,GRADUATED_TIERS"}}
+                        {{#if pricingMetadata.tiers}}
+                          <span class="plan-kpi-amount">from {{currency}} {{formatPrice pricingMetadata.tiers.[0].unitPrice}}</span>
+                          <span class="plan-kpi-unit">/req</span>
+                        {{else}}
+                          <span class="plan-kpi-free">Tiered</span>
+                        {{/if}}
                       {{else}}
-                        <span class="plan-kpi-free">Free</span>
-                      {{/if}}
+                        {{!-- PER_UNIT pricing --}}
+                        {{#if unitAmount}}
+                          <span class="plan-kpi-amount">{{currency}} {{formatPrice unitAmount}}</span>
+                          <span class="plan-kpi-unit">/req</span>
+                        {{else}}
+                          <span class="plan-kpi-free">Free</span>
+                        {{/if}}
+                      {{/in}}
                     {{/compare}}
                   {{else}}
                     <span class="plan-kpi-free">Free</span>

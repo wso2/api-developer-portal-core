@@ -16,34 +16,93 @@
  * under the License.
  */
 
-const logger = require('../config/logger');
+const crypto = require("crypto");
+const logger = require("../config/logger");
+const config = require("../../config.json");
+const secret = require("../../secret.json");
 
-/**
- * Middleware to ensure user is authenticated for billing endpoints
- * This is a simpler check specifically for billing that works with session-based auth
- */
 function ensureBillingAuth(req, res, next) {
-    // Check if user is authenticated via session
-    if (req.isAuthenticated && req.isAuthenticated() && req.user) {
-        logger.debug('Billing auth check passed', { 
-            userEmail: req.user.email,
-            hasAccessToken: !!req.user.accessToken
+  if (req.isAuthenticated && req.isAuthenticated() && req.user) {
+    const orgId = req.params.orgId;
+    if (orgId) {
+      const userOrg = req.user.userOrg;
+      const authorizedOrgs = req.user.authorizedOrgs;
+      const orgMatches =
+        userOrg === orgId ||
+        (Array.isArray(authorizedOrgs) && authorizedOrgs.includes(orgId));
+      if (!orgMatches) {
+        logger.warn("Billing auth: org membership check failed", {
+          path: req.path,
+          requestedOrgId: orgId,
+          userOrg,
         });
-        return next();
+        return res.status(403).json({
+          error: "Forbidden",
+          message: "You do not have access to this organization",
+        });
+      }
     }
-    
-    logger.warn('Billing auth check failed - user not authenticated', {
-        path: req.path,
-        hasUser: !!req.user,
-        isAuthenticated: req.isAuthenticated ? req.isAuthenticated() : false
+    return next();
+  }
+
+  const keyType = config.advanced?.apiKey?.keyType;
+  if (keyType && secret.apiKeySecret) {
+    const apiKey = req.headers[keyType.toLowerCase()];
+    if (apiKey) {
+      const apiKeyBuf = Buffer.from(apiKey);
+      const secretBuf = Buffer.from(secret.apiKeySecret);
+      if (
+        apiKeyBuf.length === secretBuf.length &&
+        crypto.timingSafeEqual(apiKeyBuf, secretBuf)
+      ) {
+        return next();
+      }
+    }
+  }
+
+  logger.warn("Billing auth check failed - user not authenticated", {
+    path: req.path,
+    hasUser: !!req.user,
+    isAuthenticated: req.isAuthenticated ? req.isAuthenticated() : false,
+  });
+
+  return res.status(401).json({
+    error: "Unauthorized",
+    message: "Please log in to access billing information",
+  });
+}
+
+function verifyCsrfOrigin(req, res, next) {
+  const origin = req.headers["origin"];
+  const referer = req.headers["referer"];
+  const source = origin || referer;
+
+  if (!source) {
+    return next();
+  }
+
+  const expectedOrigin = config.baseUrl
+    ? new URL(config.baseUrl).origin
+    : `${req.protocol}://${req.get("host")}`;
+
+  const sourceOrigin = origin || new URL(referer).origin;
+
+  if (sourceOrigin !== expectedOrigin) {
+    logger.warn("CSRF origin check failed", {
+      path: req.path,
+      sourceOrigin,
+      expectedOrigin,
     });
-    
-    return res.status(401).json({ 
-        error: 'Unauthorized',
-        message: 'Please log in to access billing information'
+    return res.status(403).json({
+      error: "Forbidden",
+      message: "Invalid request origin",
     });
+  }
+
+  return next();
 }
 
 module.exports = {
-    ensureBillingAuth
+  ensureBillingAuth,
+  verifyCsrfOrigin,
 };

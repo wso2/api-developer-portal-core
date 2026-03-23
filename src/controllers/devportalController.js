@@ -100,6 +100,7 @@ const deleteApplication = async (req, res) => {
                                 billingSubscriptionId: subscription.BILLING_SUBSCRIPTION_ID
                             });
                             await monetizationService.cancelPaidSubscription({
+                                req,
                                 orgId: orgID,
                                 subId: subscription.SUB_ID,
                                 user: req.user || {}
@@ -196,11 +197,17 @@ const generateAPIKeys = async (req, res) => {
         const nonSharedKeyMapping = await adminDao.getApplicationAPIMapping(orgID, requestBody.devportalAppId, apiID, cpAppID, false);
         const sharedKeyMapping = await adminDao.getApplicationAPIMapping(orgID, requestBody.devportalAppId, apiID, cpAppID, true);
 
+        // Look up existing DP subscription billing data (set during Stripe checkout activation)
+        const dpSubscription = await adminDao.getAppApiSubscription(orgID, requestBody.devportalAppId, apiID);
+        const billingData = dpSubscription?.length > 0 && (dpSubscription[0].BILLING_CUSTOMER_ID || dpSubscription[0].BILLING_SUBSCRIPTION_ID)
+            ? { customerId: dpSubscription[0].BILLING_CUSTOMER_ID, subscriptionId: dpSubscription[0].BILLING_SUBSCRIPTION_ID, email: req.user?.email }
+            : null;
+
         if (!(nonSharedKeyMapping.length > 0 || sharedKeyMapping.length > 0)) {
             const cpApp = await adminService.createCPApplication(req, requestBody.devportalAppId);
             cpAppID = cpApp.applicationId;
 
-            const apiSubscription = await adminService.createCPSubscription(req, apiID, cpAppID, requestBody.subscriptionPlan);
+            const apiSubscription = await adminService.createCPSubscription(req, apiID, cpAppID, requestBody.subscriptionPlan, billingData);
 
             const appKeyMappping = {
                 orgID: orgID,
@@ -216,7 +223,7 @@ const generateAPIKeys = async (req, res) => {
             });
 
         } else if (!(nonSharedKeyMapping[0]?.dataValues.SUBSCRIPTION_REF_ID || sharedKeyMapping[0]?.dataValues.SUBSCRIPTION_REF_ID)) {
-            const apiSubscription = await adminService.createCPSubscription(req, apiID, cpAppID, requestBody.subscriptionPlan);
+            const apiSubscription = await adminService.createCPSubscription(req, apiID, cpAppID, requestBody.subscriptionPlan, billingData);
             const appKeyMappping = {
                 orgID: orgID,
                 appID: requestBody.devportalAppId,

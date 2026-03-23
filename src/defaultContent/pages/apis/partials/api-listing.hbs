@@ -219,14 +219,14 @@
                 {{#if (eq subscriptionPolicies.length 1)}}
                  {{!-- Single plan: Check if paid or free --}}
                  {{#with (lookup subscriptionPolicyDetails 0)}}
-                   {{#if pricingMetadata.externalPriceId}}
+                   {{#if pricingMetadata.external.priceId}}
                      {{!-- Paid plan: Route to Stripe checkout --}}
                      <a type="button" 
                         id="subscribe-btn-{{policyID}}"
                         class="common-btn-primary subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                         data-policy-id="{{policyID}}"
                         data-policy-name="{{policyName}}"
-                        data-external-price-id="{{pricingMetadata.externalPriceId}}"
+                        data-external-price-id="{{pricingMetadata.external.priceId}}"
                         data-is-paid="true"
                         onclick="showSubscribeButtonLoading(this); handleListingSubscribe('{{../../orgID}}', '{{../apiID}}', '{{../apiReferenceID}}', '{{policyID}}', '{{policyName}}', 'selectedAppId-{{../apiID}}', this)" 
                         disabled>Subscribe &amp; Pay</a>

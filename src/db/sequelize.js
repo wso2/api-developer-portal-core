@@ -46,8 +46,8 @@ const sequelizeOptions = {
 if (config.advanced.dbSslDialectOption) {
     sequelizeOptions.dialectOptions = {
         ssl: {
-            require: true,
-            rejectUnauthorized: true,
+            require: false,
+            rejectUnauthorized: false,
             ca: fs.readFileSync(dbCAPath).toString(),
         }
     };

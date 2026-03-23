@@ -52,7 +52,7 @@ async function getSubscriptionUsage(req, res) {
 
   try {
     const { from, to } = getRange(req);
-    const usage = await subscriptionService.getUsage({ orgId, subId, from, to });
+    const usage = await subscriptionService.getUsage({ req, orgId, subId, from, to });
     return res.status(200).json(usage);
   } catch (err) {
     const { status, body } = errorToResponse(err);

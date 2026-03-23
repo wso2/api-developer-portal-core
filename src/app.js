@@ -298,7 +298,7 @@ app.use(session({
 
 // Stripe webhook endpoint MUST use raw body parser for signature verification
 const billingController = require('./controllers/billingController');
-app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), (req, res, next) => {
+app.post('/webhooks/stripe/:orgId', express.raw({ type: 'application/json' }), (req, res, next) => {
     next();
 }, billingController.handleStripeWebhook);
 

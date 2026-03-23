@@ -856,7 +856,8 @@ const createSubscriptionPolicy = async (req, res) => {
         return res.status(400).json({ message: "Request body is missing or invalid" });
     }
 
-    if (subscriptionPolicy.type !== "requestCount") {
+    const validTypes = ["requestcount", "eventcount"];
+    if (!subscriptionPolicy.type || !validTypes.includes(subscriptionPolicy.type.toLowerCase())) {
         return res.status(400).json({ message: "Invalid or missing subscription policy type" });
     }
 
@@ -954,7 +955,8 @@ const updateSubscriptionPolicy = async (req, res) => {
         return res.status(400).json({ message: "Request body is missing or invalid" });
     }
 
-    if (subscriptionPolicy.type !== "requestCount") {
+    const validTypes = ["requestcount", "eventcount"];
+    if (!subscriptionPolicy.type || !validTypes.includes(subscriptionPolicy.type.toLowerCase())) {
         return res.status(400).json({ message: "Invalid or missing subscription policy type" });
     }
     
@@ -964,6 +966,18 @@ const updateSubscriptionPolicy = async (req, res) => {
         }, async (t) => {
             const { subscriptionPolicyResponse, statusCode } =  await apiDao.putSubscriptionPolicy(orgId, subscriptionPolicy, t);
             if (subscriptionPolicyResponse) {
+                // Process billingMeterData if provided (APIM sends meter-to-API mappings)
+                const policyID = subscriptionPolicyResponse.POLICY_ID;
+                if (policyID && Array.isArray(subscriptionPolicy.billingMeterData)) {
+                    for (const meterEntry of subscriptionPolicy.billingMeterData) {
+                        if (meterEntry?.apiId && meterEntry?.meterId) {
+                            const dpApiId = await apiDao.getApiIdByReferenceId(orgId, meterEntry.apiId, t);
+                            if (dpApiId) {
+                                await apiDao.upsertAPISubscriptionPolicyMeter(dpApiId, policyID, meterEntry.meterId, t);
+                            }
+                        }
+                    }
+                }
                 res.status(statusCode).send(new subscriptionPolicyDTO(subscriptionPolicyResponse));
             } else {
                 throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
