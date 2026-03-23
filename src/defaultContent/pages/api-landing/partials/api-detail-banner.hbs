@@ -33,7 +33,15 @@
         {{/if}}
 
         <div class="api-details-btn">
+          {{#if apiMetadata.apiInfo.tokenBasedSubscriptionEnabled}}
+            {{#unless platformSubscriptions.length}}
           <a type="button" class="common-btn-primary" href="#subscriptionPlans">Subscribe</a>
+            {{/unless}}
+          {{else if (eq apiMetadata.apiInfo.gatewayType "wso2/api-platform")}}
+          {{!-- Platform API without token-based subscription: no subscribe button --}}
+          {{else}}
+          <a type="button" class="common-btn-primary" href="#subscriptionPlans">Subscribe</a>
+          {{/if}}
           {{#in apiMetadata.apiInfo.apiType values="REST,WS,WEBSUB,GRAPHQL,MCP"}}
           <a type="button" class="common-btn-outlined"
             href="{{baseUrl}}/api/{{apiMetadata.apiHandle}}/docs/specification">Documentation</a>

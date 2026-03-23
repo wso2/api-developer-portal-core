@@ -272,12 +272,13 @@ function loadModal(modalID) {
     modal.style.display = 'flex';
 }
 
-/**
- * =========================
- *  Unified Subscribe (FREE + PAID)
- *  - This is what your HBS "Subscribe" buttons should call.
- * =========================
- */
+
+function handleAppBasedSubscription(btnElement) {
+    showSubscribeButtonLoading(btnElement);
+    const { orgId, apiId, apiReferenceId, policyId, policyName } = btnElement.dataset;
+    subscribe(orgId, '', apiId, apiReferenceId, policyId, policyName);
+}
+
 async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, policyName) {
   const card = getSubscriptionCard(apiId, policyId);
   const subscribeButton = card ? card.querySelector(".common-btn-primary") : null;

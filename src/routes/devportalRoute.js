@@ -32,6 +32,7 @@ const multipartHandler = multer({storage: storage})
 const { ensureAuthenticated, validateAuthentication, enforceSecuirty } = require('../middlewares/ensureAuthenticated');
 const constants = require('../utils/constants');
 const config = require(process.cwd() + '/config.json');
+const platformSubscriptionService = require('../services/platformSubscriptionService');
 
 router.post('/organizations', enforceSecuirty(constants.SCOPES.ADMIN), adminService.createOrganization);
 router.get('/organizations', enforceSecuirty(constants.SCOPES.ADMIN), adminService.getOrganizations);
@@ -117,6 +118,18 @@ router.put('/organizations/:orgId/applications/:appId', enforceSecuirty(constant
 router.get('/organizations/:orgId/applications/:appId', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.getDevPortalApplicationDetails);
 router.get('/organizations/:orgId/applications', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.getDevPortalApplications);
 router.delete('/organizations/:orgId/applications/:appId', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.deleteDevPortalApplication);
+
+// Platform Gateway Subscriptions (must be before :subscriptionId routes)
+router.post('/organizations/:orgId/api-platform-subscriptions',
+    enforceSecuirty(constants.SCOPES.DEVELOPER), platformSubscriptionService.createPlatformGatewaySubscription);
+router.get('/organizations/:orgId/api-platform-subscriptions',
+    enforceSecuirty(constants.SCOPES.DEVELOPER), platformSubscriptionService.listPlatformGatewaySubscriptions);
+router.get('/organizations/:orgId/api-platform-subscriptions/:subscriptionId',
+    enforceSecuirty(constants.SCOPES.DEVELOPER), platformSubscriptionService.getPlatformGatewaySubscription);
+router.put('/organizations/:orgId/api-platform-subscriptions/:subscriptionId',
+    enforceSecuirty(constants.SCOPES.DEVELOPER), platformSubscriptionService.updatePlatformGatewaySubscription);
+router.delete('/organizations/:orgId/api-platform-subscriptions/:subscriptionId',
+    enforceSecuirty(constants.SCOPES.DEVELOPER), platformSubscriptionService.deletePlatformGatewaySubscription);
 
 //store API subscription
 router.post('/organizations/:orgId/subscriptions', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.createSubscription);

@@ -108,6 +108,15 @@ const APIMetadata = sequelize.define('DP_API_METADATA', {
     allowNull: true,
     defaultValue: false
   },
+  TOKEN_BASED_SUBSCRIPTION_ENABLED: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    allowNull: false
+  },
+  GATEWAY_TYPE: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
 }, {
   timestamps: false,
   tableName: 'DP_API_METADATA',

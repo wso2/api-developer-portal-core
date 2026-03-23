@@ -107,7 +107,13 @@
               </div>
             </div>
             {{#if ../isAuthenticated}}
+            {{#if apiInfo.tokenBasedSubscriptionEnabled}}
+            <div class="subscription-flag fw-bold" style="display: {{#if hasPlatformSubscription}}block{{else}}none{{/if}};">Subscribed</div>
+            {{else if (eq apiInfo.gatewayType "wso2/api-platform")}}
+            {{!-- Platform API without token-based subscription: hide subscription flag --}}
+            {{else}}
             <div class="subscription-flag fw-bold" style="display: {{#if (some applications "subscribed")}}block{{else}}none{{/if}};">Subscribed</div>
+            {{/if}}
             {{/if}}
           </div>
           <div class="api-card-body flex-grow-1" onclick="window.location.href='{{../baseUrl}}/api/{{apiHandle}}'" style="cursor: pointer;">
@@ -146,12 +152,28 @@
             </div>
           </div>
           {{#if ../isAuthenticated}}
+          {{#unless (eq apiInfo.gatewayType "wso2/api-platform")}}
           <hr class="card-separator" />
+          {{else}}
+          {{#if apiInfo.tokenBasedSubscriptionEnabled}}
+          <hr class="card-separator" />
+          {{/if}}
+          {{/unless}}
           {{/if}}
           <div class="api-card-footer">
             <div id="btnSection" class="d-flex align-items-center gap-2 w-100">
               {{#if ../isAuthenticated}}
               <div id="subscriptionBox" class="subscription-container w-100">
+                {{#if apiInfo.tokenBasedSubscriptionEnabled}}
+                  {{!-- Token-based subscription: no app dropdown --}}
+                  {{#if hasPlatformSubscription}}
+                  <a type="button" class="common-btn-primary w-100" href="{{../baseUrl}}/api/{{apiHandle}}#subscriptionPlans">Manage Subscription</a>
+                  {{else}}
+                  <a type="button" class="common-btn-primary w-100" href="{{../baseUrl}}/api/{{apiHandle}}#subscriptionPlans">Subscribe</a>
+                  {{/if}}
+                {{else if (eq apiInfo.gatewayType "wso2/api-platform")}}
+                {{!-- Platform API without token-based subscription: no subscription needed --}}
+                {{else}}
                 {{> subscription-plans apiInfo=apiInfo apiName=apiInfo.apiName}}
                 {{#if subscriptionPolicies.length}}
 
@@ -245,7 +267,8 @@
                 {{else}}
                  {{!-- Multiple plans: Open modal --}}
                  <a type="button" class="common-btn-primary subscribe-btn" onclick="openModalWithApp('planModal-{{apiID}}', 'selectedAppId-{{apiID}}')" disabled>Subscribe</a>
-                {{/if}}                {{/if}}
+                {{/if}}
+                {{/if}}
               </div>
               {{/if}}
             </div>

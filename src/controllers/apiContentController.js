@@ -33,6 +33,7 @@ const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
 const { buildSchema, getIntrospectionQuery, graphql: executeGraphQL } = require('graphql');
+const { log } = require('console');
 const controlPlaneUrl = config.controlPlane.url;
 
 const filePrefix = config.pathToContent;
@@ -111,6 +112,28 @@ const loadAPIs = async (req, res) => {
                 }
                 metaData.applications = perApiAppList;
             }
+
+            // Load platform subscriptions for token-based APIs (single call for all)
+            if (req.user && config.controlPlane?.enabled !== false) {
+                try {
+                    const cpResponse = await util.invokeApiRequest(
+                        req, 'GET',
+                        `${controlPlaneUrl}/api-platform-subscriptions`
+                    );
+                    const cpSubs = cpResponse.list || cpResponse || [];
+                    const subscribedApiRefIds = new Set(cpSubs.map(sub => sub.apiId));
+                    for (const metaData of metaDataList) {
+                        if (metaData.apiInfo?.tokenBasedSubscriptionEnabled && metaData.apiReferenceID) {
+                            metaData.hasPlatformSubscription = subscribedApiRefIds.has(metaData.apiReferenceID);
+                        }
+                    }
+                } catch (cpError) {
+                    logger.warn('Failed to load platform subscriptions for API listing', {
+                        error: cpError.message
+                    });
+                }
+            }
+
             //retrieve api list from control plane
             if (config.controlPlane?.enabled !== false) {
                 let publicMode = false;
@@ -246,20 +269,8 @@ const loadAPIContent = async (req, res) => {
             //check whether user has access to the API via control plane
             if (config.controlPlane?.enabled !== false && !isFederatedAPI) {
                 try {
-                    let apiName = "";
-                    if (metaData && typeof metaData.apiHandle === "string" && metaData.apiHandle.includes("-v")) {
-                        apiName = metaData.apiHandle.split('-v')[0];
-                    } else if (metaData && metaData.apiInfo && metaData.apiInfo.apiName) {
-                        apiName = metaData.apiInfo.apiName;
-                    }
-                    const version = metaData ? metaData.apiInfo.apiVersion : "";
-                    let allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
-                    if (allowedAPIList.count === 0 && metaData && metaData.apiInfo && metaData.apiInfo.apiName) {
-                        apiName = metaData.apiInfo.apiName;
-                        allowedAPIList = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis?query=name:"${apiName}"+version:${version}`, {}, {});
-                    }
-
-                    if (allowedAPIList.count === 0) {
+                    apiDetail = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${metaData.apiReferenceID}`, null, null);
+                    if (!apiDetail) {
                         let templateContent = {
                             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                             errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API,
@@ -279,7 +290,6 @@ const loadAPIContent = async (req, res) => {
                             return;
                         }
                     }
-                    apiDetail = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${metaData.apiReferenceID}`, null, null);
                 } catch (error) {
                     logger.warn("Error checking API authorization from control plane, proceeding without authorization check", {
                         orgName: orgName,
@@ -395,6 +405,22 @@ const loadAPIContent = async (req, res) => {
                     );
                 }
             }
+
+            // Load platform gateway subscriptions for token-based APIs
+            let platformSubscriptions = [];
+            if (req.user && metaData.apiInfo?.tokenBasedSubscriptionEnabled && config.controlPlane?.enabled !== false) {
+                try {
+                    const cpResponse = await util.invokeApiRequest(
+                        req, 'GET',
+                        `${controlPlaneUrl}/api-platform-subscriptions?apiId=${metaData.apiReferenceID}`
+                    );
+                    platformSubscriptions = cpResponse.list || cpResponse || [];
+                } catch (cpError) {
+                    logger.warn('Failed to load platform subscriptions from CP', {
+                        error: cpError.message, orgID, apiID
+                    });
+                }
+            }
             let profile = null;
             if (req.user) {
                 profile = {
@@ -415,6 +441,7 @@ const loadAPIContent = async (req, res) => {
                 providerUrl: providerUrl,
                 apiMetadata: metaData,
                 subscriptionPlans: subscriptionPlans,
+                platformSubscriptions: platformSubscriptions,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 schemaUrl: `${req.protocol}://${req.get('host')}${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${schemaFileName}`,
                 loadDefault: loadDefault,
@@ -650,6 +677,37 @@ const loadDocument = async (req, res) => {
                         });
                     }
                 }
+
+                // Add apiKey security scheme headers as operation parameters
+                // so Stoplight Elements renders input fields in the try-it panel
+                if (modifiedSwagger.components?.securitySchemes) {
+                    for (const scheme of Object.values(modifiedSwagger.components.securitySchemes)) {
+                        if (scheme.type === 'apiKey' && scheme.in === 'header' && scheme.name) {
+                            for (const pathItem of Object.values(modifiedSwagger.paths || {})) {
+                                for (const method of ['get', 'post', 'put', 'delete', 'patch', 'head', 'options']) {
+                                    if (pathItem[method]) {
+                                        if (!pathItem[method].parameters) {
+                                            pathItem[method].parameters = [];
+                                        }
+                                        const exists = pathItem[method].parameters.some(
+                                            p => p.name === scheme.name && p.in === 'header'
+                                        );
+                                        if (!exists) {
+                                            pathItem[method].parameters.push({
+                                                name: scheme.name,
+                                                in: 'header',
+                                                required: false,
+                                                schema: { type: 'string' },
+                                                description: scheme.description || 'API key for subscription-based access'
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 templateContent.swagger = JSON.stringify(modifiedSwagger);
             } else if (definitionResponse.apiType === constants.API_TYPE.GRAPHQL) {
                 if (templateContent.isGraphQLTryout && definitionResponse.graphql) {
