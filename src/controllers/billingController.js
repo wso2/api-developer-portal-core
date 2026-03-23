@@ -19,7 +19,9 @@
 // src/controllers/billingController.js
 
 const monetizationService = require("../services/monetizationService");
-const { getDecryptedStripeKeysForOrg } = require("../services/orgBillingKeyService");
+const {
+  getDecryptedStripeKeysForOrg,
+} = require("../services/orgBillingKeyService");
 const { CustomError } = require("../utils/errors/customErrors");
 const logger = require("../config/logger");
 const constants = require("../utils/constants");
@@ -27,7 +29,7 @@ const util = require("../utils/util");
 
 class BadRequestError extends CustomError {
   constructor(message) {
-    super(400, "BadRequest", message);
+    super(400, message);
   }
 }
 
@@ -35,23 +37,59 @@ class BadRequestError extends CustomError {
 function getUserContext(req) {
   return {
     email: req.user?.email || req[constants.USER_ID],
-    sub: req.user?.sub || req.user?.[constants.USER_ID] || req[constants.USER_ID],
-    userId: req.user?.sub || req.user?.[constants.USER_ID] || req[constants.USER_ID],
+    sub:
+      req.user?.sub || req.user?.[constants.USER_ID] || req[constants.USER_ID],
+    userId:
+      req.user?.sub || req.user?.[constants.USER_ID] || req[constants.USER_ID],
   };
 }
 
 // Utility to convert errors to response format
 function errorToResponse(err) {
   if (err instanceof CustomError) {
+    // CustomError(statusCode, message, description) — err.message is the human-readable text
     return {
-      status: err.code,
-      body: { error: err.type, message: err.message, details: err.details },
+      status: err.statusCode,
+      body: {
+        message: err.message,
+        ...(err.description ? { description: err.description } : {}),
+      },
+    };
+  }
+  // Stripe SDK errors expose statusCode and type (e.g. "invalid_request_error")
+  if (typeof err.statusCode === "number" && err.type) {
+    const message = mapStripeErrorMessage(err);
+    return {
+      status: err.statusCode >= 500 ? 502 : 400,
+      body: { message },
     };
   }
   return {
     status: 500,
-    body: { error: "InternalServerError", message: err.message || "An unexpected error occurred" },
+    body: { message: err.message || "An unexpected error occurred" },
   };
+}
+
+function mapStripeErrorMessage(err) {
+  const msg = (err.message || "").toLowerCase();
+  if (
+    msg.includes("customer portal") ||
+    msg.includes("billing portal") ||
+    msg.includes("portal")
+  ) {
+    return "The billing portal is not yet activated. Please contact support.";
+  }
+  if (msg.includes("no such customer")) {
+    return "Payment account not found. Please contact support.";
+  }
+  if (
+    msg.includes("secret key") ||
+    msg.includes("api key") ||
+    msg.includes("invalid api")
+  ) {
+    return "Payment system is not configured correctly. Please contact support.";
+  }
+  return "A payment processing error occurred. Please try again or contact support.";
 }
 
 /**
@@ -64,18 +102,53 @@ async function createCheckoutSessionForSubscription(req, res) {
 
   try {
     const user = getUserContext(req);
-    
-    logger.info({ orgId, applicationID: req.body?.applicationID, apiId: req.body?.apiId, user: { email: user?.email } }, "💰 createCheckoutSession called");
-    const returnBaseUrl = process.env.FRONTEND_BASE_URL;
-    if (!returnBaseUrl) throw new BadRequestError("FRONTEND_BASE_URL is not configured");
 
-    const { applicationID, apiId, apiReferenceID, policyId, policyName, sourcePage } = req.body || {};
-    
-    logger.info({ applicationID, apiId, apiReferenceID, policyId, policyName, sourcePage }, "💰 Extracted fields");
-    
-    if (!applicationID || !apiId || !apiReferenceID || !policyId || !policyName) {
-      logger.error({ applicationID, apiId, apiReferenceID, policyId, policyName }, "❌ Missing required fields");
-      throw new BadRequestError("Missing required fields: applicationID, apiId, apiReferenceID, policyId, policyName");
+    logger.info(
+      {
+        orgId,
+        applicationID: req.body?.applicationID,
+        apiId: req.body?.apiId,
+        user: { email: user?.email },
+      },
+      "💰 createCheckoutSession called",
+    );
+    const returnBaseUrl = `${req.protocol}://${req.get("host")}`;
+
+    const {
+      applicationID,
+      apiId,
+      apiReferenceID,
+      policyId,
+      policyName,
+      sourcePage,
+    } = req.body || {};
+
+    logger.info(
+      {
+        applicationID,
+        apiId,
+        apiReferenceID,
+        policyId,
+        policyName,
+        sourcePage,
+      },
+      "💰 Extracted fields",
+    );
+
+    if (
+      !applicationID ||
+      !apiId ||
+      !apiReferenceID ||
+      !policyId ||
+      !policyName
+    ) {
+      logger.error(
+        { applicationID, apiId, apiReferenceID, policyId, policyName },
+        "❌ Missing required fields",
+      );
+      throw new BadRequestError(
+        "Missing required fields: applicationID, apiId, apiReferenceID, policyId, policyName",
+      );
     }
 
     const result = await monetizationService.createCheckoutSession({
@@ -93,7 +166,11 @@ async function createCheckoutSessionForSubscription(req, res) {
     return res.status(200).json(result);
   } catch (err) {
     const { status, body } = errorToResponse(err);
-    logger.error('[AUDIT] createCheckoutSession failed', { err, orgId, body: req.body })
+    logger.error("[AUDIT] createCheckoutSession failed", {
+      err,
+      orgId,
+      body: req.body,
+    });
     return res.status(status).json(body);
   }
 }
@@ -129,7 +206,12 @@ async function cancelSubscription(req, res) {
 
   try {
     const user = getUserContext(req);
-    const result = await monetizationService.cancelPaidSubscription({ orgId, subId, user });
+    const result = await monetizationService.cancelPaidSubscription({
+      req,
+      orgId,
+      subId,
+      user,
+    });
     return res.status(200).json(result);
   } catch (err) {
     const { status, body } = errorToResponse(err);
@@ -146,7 +228,10 @@ async function getSubscriptionBillingStatus(req, res) {
   const subId = req.params.subId;
 
   try {
-    const result = await monetizationService.getSubscriptionBillingStatus({ orgId, subId });
+    const result = await monetizationService.getSubscriptionBillingStatus({
+      orgId,
+      subId,
+    });
     return res.status(200).json(result);
   } catch (err) {
     const { status, body } = errorToResponse(err);
@@ -164,10 +249,13 @@ async function createBillingPortal(req, res) {
   const subId = req.params.subId;
 
   try {
-    const returnUrl = process.env.FRONTEND_BILLING_RETURN_URL || process.env.FRONTEND_BASE_URL;
-    if (!returnUrl) throw new BadRequestError("FRONTEND_BILLING_RETURN_URL or FRONTEND_BASE_URL is not configured");
+    const returnUrl = `${req.protocol}://${req.get("host")}`;
 
-    const portal = await monetizationService.createBillingPortal({ orgId, subId, returnUrl });
+    const portal = await monetizationService.createBillingPortal({
+      orgId,
+      subId,
+      returnUrl,
+    });
     return res.status(200).json({ url: portal.url });
   } catch (err) {
     const { status, body } = errorToResponse(err);
@@ -184,28 +272,41 @@ async function createBillingPortalByOrg(req, res) {
   const orgId = req.params.orgId;
 
   try {
-    const returnUrl = process.env.FRONTEND_BILLING_RETURN_URL || process.env.FRONTEND_BASE_URL;
-    if (!returnUrl) throw new BadRequestError("FRONTEND_BILLING_RETURN_URL or FRONTEND_BASE_URL is not configured");
+    const returnUrl = `${req.protocol}://${req.get("host")}`;
 
-    const portal = await monetizationService.createBillingPortalByOrg({ orgId, returnUrl });
+    const user = getUserContext(req);
+    const portal = await monetizationService.createBillingPortalByOrg({
+      orgId,
+      returnUrl,
+      user,
+    });
     return res.status(200).json({ url: portal.url });
   } catch (err) {
     const { status, body } = errorToResponse(err);
-    logger.error({ err, orgId }, "createBillingPortalByOrg failed");
+    logger.error("createBillingPortalByOrg failed", {
+      orgId,
+      message: err.message,
+      description: err.description,
+      statusCode: err.statusCode,
+      stripeType: err.type,
+    });
     return res.status(status).json(body);
   }
 }
 
 /**
- * POST /webhooks/stripe
+ * POST /webhooks/stripe/:orgId
  * Mounted with express.raw({ type: 'application/json' }) in app.js
  */
 async function handleStripeWebhook(req, res) {
   try {
-    await monetizationService.handleStripeWebhook(req);
+    await monetizationService.handleStripeWebhook(req, req.params.orgId);
     return res.status(200).send("ok");
   } catch (err) {
-    logger.error({ message: err.message, stack: err.stack }, "handleStripeWebhook failed");
+    logger.error(
+      { message: err.message, stack: err.stack },
+      "handleStripeWebhook failed",
+    );
     return res.status(400).send("webhook error");
   }
 }
@@ -227,18 +328,22 @@ async function handleBillingReturn(req, res) {
     const user = req.user || {};
     let activationResult = null;
     try {
-      activationResult = await monetizationService.handleStripeReturnAndActivate({
-        orgId: orgIdFinal,
-        sessionId: session_id,
-        user
-      });
-    } catch (activationErr) {
-    }
+      activationResult =
+        await monetizationService.handleStripeReturnAndActivate({
+          orgId: orgIdFinal,
+          sessionId: session_id,
+          user,
+        });
+    } catch (activationErr) {}
 
     // Retrieve the checkout session to get metadata for redirect
     const stripeService = require("../services/stripeService");
-    const { secretKey: stripeSecretKey } = await getDecryptedStripeKeysForOrg(orgIdFinal);
-    const session = await stripeService.retrieveCheckoutSession(session_id, stripeSecretKey);
+    const { secretKey: stripeSecretKey } =
+      await getDecryptedStripeKeysForOrg(orgIdFinal);
+    const session = await stripeService.retrieveCheckoutSession(
+      session_id,
+      stripeSecretKey,
+    );
     const apiReferenceID = session?.metadata?.apiReferenceID;
     const orgIdMeta = session?.metadata?.orgId;
     const sourcePageMeta = session?.metadata?.sourcePage;
@@ -248,14 +353,17 @@ async function handleBillingReturn(req, res) {
 
     // Priority 1: Use sourcePage from query params if present, else from session metadata
     const sourcePageFinal = req.query.sourcePage || sourcePageMeta;
-      if (sourcePageFinal) {
-        // Always append session_id (and org_id if available) to sourcePageFinal for frontend logic
-        const urlObj = new URL(sourcePageFinal, `${req.protocol}://${req.get('host')}`);
-        if (session_id) urlObj.searchParams.set('session_id', session_id);
-        if (orgIdFinal) urlObj.searchParams.set('org_id', orgIdFinal);
-        const redirectUrl = urlObj.pathname + urlObj.search;
-        return res.redirect(redirectUrl);
-      }
+    if (sourcePageFinal) {
+      // Always append session_id (and org_id if available) to sourcePageFinal for frontend logic
+      const urlObj = new URL(
+        sourcePageFinal,
+        `${req.protocol}://${req.get("host")}`,
+      );
+      if (session_id) urlObj.searchParams.set("session_id", session_id);
+      if (orgIdFinal) urlObj.searchParams.set("org_id", orgIdFinal);
+      const redirectUrl = urlObj.pathname + urlObj.search;
+      return res.redirect(redirectUrl);
+    }
 
     // Priority 2: If we have the API reference ID, redirect to the API page
     if (apiReferenceID && orgIdFinal) {
@@ -265,31 +373,37 @@ async function handleBillingReturn(req, res) {
         logger.error("❌ Organization not found for orgId:", orgIdFinal);
         throw new Error(`Organization not found: ${orgIdFinal}`);
       }
-      const orgName = org.IDENTIFIER || 'default';
-      const redirectUrl = `/${orgName}/apis/${apiReferenceID}?session_id=${session_id}&dp_sub_id=${dp_sub_id || ''}&org_id=${encodeURIComponent(orgIdFinal)}`;
+      const orgName = org.IDENTIFIER || "default";
+      const redirectUrl = `/${orgName}/apis/${apiReferenceID}?session_id=${session_id}&dp_sub_id=${dp_sub_id || ""}&org_id=${encodeURIComponent(orgIdFinal)}`;
       return res.redirect(redirectUrl);
     }
 
     // Fallback: redirect to applications page, always include org_id if available
-    const redirectUrl = `/applications?session_id=${session_id}&dp_sub_id=${dp_sub_id || ''}&org_id=${encodeURIComponent(orgIdFinal || '')}`;
+    const redirectUrl = `/applications?session_id=${session_id}&dp_sub_id=${dp_sub_id || ""}&org_id=${encodeURIComponent(orgIdFinal || "")}`;
     logger.info({ redirectUrl }, "💳 Fallback redirect to applications");
     return res.redirect(redirectUrl);
-
   } catch (err) {
     // Try to determine if subscription was activated
     let sourcePageFinal = req.query.sourcePage;
     if (!orgIdFinal) orgIdFinal = req.query.org_id || req.query.orgId;
     let activationSucceeded = false;
     // Try to get from session metadata if not in query
-    if ((!sourcePageFinal || !orgIdFinal) && typeof session_id === 'string') {
+    if ((!sourcePageFinal || !orgIdFinal) && typeof session_id === "string") {
       try {
         const stripeService = require("../services/stripeService");
-        const { secretKey: stripeSecretKey } = await getDecryptedStripeKeysForOrg(orgIdFinal);
-        const session = await stripeService.retrieveCheckoutSession(session_id, stripeSecretKey);
+        const { secretKey: stripeSecretKey } =
+          await getDecryptedStripeKeysForOrg(orgIdFinal);
+        const session = await stripeService.retrieveCheckoutSession(
+          session_id,
+          stripeSecretKey,
+        );
         if (!sourcePageFinal) sourcePageFinal = session?.metadata?.sourcePage;
         if (!orgIdFinal) orgIdFinal = session?.metadata?.orgId;
         // Check if subscription is active
-        if (session?.status === 'complete' || session?.payment_status === 'paid') {
+        if (
+          session?.status === "complete" ||
+          session?.payment_status === "paid"
+        ) {
           activationSucceeded = true;
         }
       } catch (e) {
@@ -299,14 +413,20 @@ async function handleBillingReturn(req, res) {
     if (sourcePageFinal) {
       if (activationSucceeded) {
         // Redirect to sourcePage with clean URL if activation succeeded
-        logger.info({ redirectUrl: sourcePageFinal }, "💳 Redirecting to sourcePage after successful activation (error in later step)");
+        logger.info(
+          { redirectUrl: sourcePageFinal },
+          "💳 Redirecting to sourcePage after successful activation (error in later step)",
+        );
         return res.redirect(sourcePageFinal);
       } else {
         // Only add payment_error=true if activation failed
         // Use & if sourcePageFinal already contains a ?
-        const paramJoin = sourcePageFinal.includes('?') ? '&' : '?';
-        const redirectUrl = `${sourcePageFinal}${paramJoin}payment_error=true&session_id=${session_id || ''}&org_id=${encodeURIComponent(orgIdFinal || '')}`;
-        logger.info({ redirectUrl }, "💳 Error redirecting to sourcePage (activation failed)");
+        const paramJoin = sourcePageFinal.includes("?") ? "&" : "?";
+        const redirectUrl = `${sourcePageFinal}${paramJoin}payment_error=true&session_id=${session_id || ""}&org_id=${encodeURIComponent(orgIdFinal || "")}`;
+        logger.info(
+          { redirectUrl },
+          "💳 Error redirecting to sourcePage (activation failed)",
+        );
         return res.redirect(redirectUrl);
       }
     }
@@ -314,7 +434,9 @@ async function handleBillingReturn(req, res) {
     if (activationSucceeded) {
       return res.redirect("/"); // or a default landing page
     }
-    return res.redirect(`/applications?payment_error=true&session_id=${session_id || ''}&org_id=${encodeURIComponent(orgIdFinal || '')}`);
+    return res.redirect(
+      `/applications?payment_error=true&session_id=${session_id || ""}&org_id=${encodeURIComponent(orgIdFinal || "")}`,
+    );
   }
 }
 
@@ -324,18 +446,25 @@ async function handleBillingReturn(req, res) {
 async function addBillingEngineKeys(req, res) {
   try {
     const orgId = req.params.orgId;
-    const { billingEngine, secretKey, publishableKey, webhookSecret } = req.body;
-    if (!orgId || !billingEngine || !secretKey || !publishableKey || !webhookSecret) {
+    const { billingEngine, secretKey, publishableKey, webhookSecret } =
+      req.body;
+    if (
+      !orgId ||
+      !billingEngine ||
+      !secretKey ||
+      !publishableKey ||
+      !webhookSecret
+    ) {
       return res.status(400).json({ message: "Missing required fields" });
     }
     const { encrypt } = require("../utils/cryptoUtil");
     const BillingEngineKey = require("../models/billingEngineKey");
     await BillingEngineKey.upsert({
       ORG_ID: orgId,
-      BILLING_ENGINE: billingEngine,
+      BILLING_ENGINE: billingEngine.toUpperCase(),
       SECRET_KEY_ENC: encrypt(secretKey),
       PUBLISHABLE_KEY_ENC: encrypt(publishableKey),
-      WEBHOOK_SECRET_ENC: encrypt(webhookSecret)
+      WEBHOOK_SECRET_ENC: encrypt(webhookSecret),
     });
     return res.status(201).json({ message: "Billing engine keys saved" });
   } catch (err) {
@@ -349,13 +478,22 @@ async function addBillingEngineKeys(req, res) {
 async function updateBillingEngineKeys(req, res) {
   try {
     const orgId = req.params.orgId;
-    const { billingEngine, secretKey, publishableKey, webhookSecret } = req.body;
-    if (!orgId || !billingEngine || !secretKey || !publishableKey || !webhookSecret) {
+    const { billingEngine, secretKey, publishableKey, webhookSecret } =
+      req.body;
+    if (
+      !orgId ||
+      !billingEngine ||
+      !secretKey ||
+      !publishableKey ||
+      !webhookSecret
+    ) {
       return res.status(400).json({ message: "Missing required fields" });
     }
     const { encrypt } = require("../utils/cryptoUtil");
     const BillingEngineKey = require("../models/billingEngineKey");
-    const record = await BillingEngineKey.findOne({ where: { ORG_ID: orgId, BILLING_ENGINE: billingEngine } });
+    const record = await BillingEngineKey.findOne({
+      where: { ORG_ID: orgId, BILLING_ENGINE: billingEngine.toUpperCase() },
+    });
     if (!record) {
       return res.status(404).json({ message: "Billing engine keys not found" });
     }
@@ -380,7 +518,9 @@ async function deleteBillingEngineKeys(req, res) {
       return res.status(400).json({ message: "Missing required fields" });
     }
     const BillingEngineKey = require("../models/billingEngineKey");
-    const deleted = await BillingEngineKey.destroy({ where: { ORG_ID: orgId, BILLING_ENGINE: billingEngine } });
+    const deleted = await BillingEngineKey.destroy({
+      where: { ORG_ID: orgId, BILLING_ENGINE: billingEngine.toUpperCase() },
+    });
     if (deleted === 0) {
       return res.status(404).json({ message: "Billing engine keys not found" });
     }
@@ -396,22 +536,23 @@ async function deleteBillingEngineKeys(req, res) {
 async function getBillingEngineKeys(req, res) {
   try {
     const orgId = req.params.orgId;
-    const billingEngine = req.query.billingEngine || 'stripe';
+    const billingEngine = (req.query.billingEngine || "STRIPE").toUpperCase();
     if (!orgId || !billingEngine) {
       return res.status(400).json({ message: "Missing required fields" });
     }
     const BillingEngineKey = require("../models/billingEngineKey");
     const { decrypt } = require("../utils/cryptoUtil");
-    const record = await BillingEngineKey.findOne({ where: { ORG_ID: orgId, BILLING_ENGINE: billingEngine } });
+    const record = await BillingEngineKey.findOne({
+      where: { ORG_ID: orgId, BILLING_ENGINE: billingEngine },
+    });
     if (!record) {
       return res.status(404).json({ message: "Billing engine keys not found" });
     }
     return res.status(200).json({
-      orgId: record.ORG_ID,
       billingEngine: record.BILLING_ENGINE,
       secretKey: decrypt(record.SECRET_KEY_ENC),
       publishableKey: decrypt(record.PUBLISHABLE_KEY_ENC),
-      webhookSecret: decrypt(record.WEBHOOK_SECRET_ENC)
+      webhookSecret: decrypt(record.WEBHOOK_SECRET_ENC),
     });
   } catch (err) {
     return res.status(500).json({ message: err.message });
@@ -426,14 +567,26 @@ async function getUsageData(req, res) {
   try {
     const { orgId } = req.params;
     const userContext = getUserContext(req);
-    const period = req.query.period || 'current';
+    const period = req.query.period || "current";
 
-    logger.info(`[AUDIT] Controller usage data fetch`, { orgId, userId: userContext.userId, period });    // Get usage data from monetization service
-    const usageData = await monetizationService.getUserUsageData(userContext, orgId, period);
+    logger.info(`[AUDIT] Controller usage data fetch`, {
+      orgId,
+      userId: userContext.userId,
+      period,
+    }); // Get usage data from monetization service
+    const usageData = await monetizationService.getUserUsageData(
+      req,
+      userContext,
+      orgId,
+      period,
+    );
 
     return res.json(usageData);
   } catch (err) {
-    logger.error({ err, userId: getUserContext(req).userId }, "getUsageData failed");
+    logger.error(
+      { err, userId: getUserContext(req).userId },
+      "getUsageData failed",
+    );
     const resp = errorToResponse(err);
     return res.status(resp.status).json(resp.body);
   }
@@ -447,16 +600,22 @@ async function getPaymentMethods(req, res) {
   const { orgId } = req.params;
   try {
     const userContext = getUserContext(req);
-    const paymentMethods = await monetizationService.getPaymentMethods(userContext, orgId);
+    const paymentMethods = await monetizationService.getPaymentMethods(
+      userContext,
+      orgId,
+    );
     return res.json({ paymentMethods });
   } catch (err) {
-    logger.error({
-      message: err.message,
-      stack: err.stack,
-      userId: getUserContext(req).userId,
-      stripeError: err.raw || err,
-      orgId
-    }, "getPaymentMethods failed - detailed");
+    logger.error(
+      {
+        message: err.message,
+        stack: err.stack,
+        userId: getUserContext(req).userId,
+        stripeError: err.raw || err,
+        orgId,
+      },
+      "getPaymentMethods failed - detailed",
+    );
     const resp = errorToResponse(err);
     return res.status(resp.status).json(resp.body);
   }
@@ -470,13 +629,19 @@ async function getBillingInfo(req, res) {
   try {
     const { orgId } = req.params;
     const userContext = getUserContext(req);
-    
+
     // Get billing info from Stripe customer
-    const billingInfo = await monetizationService.getBillingInfo(userContext, orgId);
-    
+    const billingInfo = await monetizationService.getBillingInfo(
+      userContext,
+      orgId,
+    );
+
     return res.json(billingInfo);
   } catch (err) {
-    logger.error({ err, userId: getUserContext(req).userId }, "getBillingInfo failed");
+    logger.error(
+      { err, userId: getUserContext(req).userId },
+      "getBillingInfo failed",
+    );
     const resp = errorToResponse(err);
     return res.status(resp.status).json(resp.body);
   }
@@ -490,11 +655,17 @@ async function getActiveSubscriptions(req, res) {
   const { orgId } = req.params;
   const userContext = getUserContext(req);
 
-  logger.info(`[AUDIT] Active Subscriptions`, { orgId, userId: userContext.userId });    // Get usage data from monetization service
+  logger.info(`[AUDIT] Active Subscriptions`, {
+    orgId,
+    userId: userContext.userId,
+  }); // Get usage data from monetization service
   try {
     // Get subscriptions from monetization service
-    const subscriptions = await monetizationService.getSubscriptionsForBilling(orgId, userContext.userId);
-    
+    const subscriptions = await monetizationService.getSubscriptionsForBilling(
+      orgId,
+      userContext.userId,
+    );
+
     return res.json({ subscriptions });
   } catch (err) {
     logger.error({ err, orgId }, "getSubscriptions failed");
@@ -515,9 +686,9 @@ module.exports = {
   getUsageData,
   getPaymentMethods,
   getBillingInfo,
-  getActiveSubscriptions, 
-  addBillingEngineKeys, 
-  updateBillingEngineKeys, 
+  getActiveSubscriptions,
+  addBillingEngineKeys,
+  updateBillingEngineKeys,
   deleteBillingEngineKeys,
-  getBillingEngineKeys
+  getBillingEngineKeys,
 };

@@ -16,23 +16,28 @@
  * under the License.
  *
  */
-const BillingEngineKey = require('../models/billingEngineKey');
-const { decrypt } = require('../utils/cryptoUtil');
+const BillingEngineKey = require("../models/billingEngineKey");
+const { decrypt } = require("../utils/cryptoUtil");
+const adminDao = require("../dao/admin");
 
 /**
  * Fetches and decrypts Stripe keys for a given orgId.
- * @param {string} orgId - The organization ID
+ * @param {string} orgId - The organization's ORG_ID, ORGANIZATION_IDENTIFIER, ORG_NAME, or ORG_HANDLE
  * @returns {Promise<{secretKey: string, publishableKey: string, webhookSecret: string}>}
  */
 async function getDecryptedStripeKeysForOrg(orgId) {
-  if (!orgId) throw new Error('orgId is required to fetch Stripe keys');
+  if (!orgId) throw new Error("orgId is required to fetch Stripe keys");
+  const org = await adminDao.getOrganization(orgId);
+  if (!org) throw new Error("Please contact your organization administrator.");
+  const resolvedOrgId = org.ORG_ID;
   const record = await BillingEngineKey.findOne({
     where: {
-      ORG_ID: orgId,
-      BILLING_ENGINE: 'STRIPE',
+      ORG_ID: resolvedOrgId,
+      BILLING_ENGINE: "STRIPE",
     },
   });
-  if (!record) throw new Error('Stripe keys not found for this org');
+  if (!record)
+    throw new Error("Please contact your organization administrator.");
   return {
     secretKey: decrypt(record.SECRET_KEY_ENC),
     publishableKey: decrypt(record.PUBLISHABLE_KEY_ENC),

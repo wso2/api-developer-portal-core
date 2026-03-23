@@ -176,6 +176,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     document.getElementById('mcp-overview')?.classList.add('active');
                 }
             }
+        } else if (currentPath.includes('/subscriptions')) {
+            document.getElementById('subscriptions')?.classList.add('active');
         }
     };
 

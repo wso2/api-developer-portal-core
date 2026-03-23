@@ -22,27 +22,35 @@ const { CustomError } = require("../utils/errors/customErrors");
 
 class BadRequestError extends CustomError {
   constructor(message) {
-    super(400, "BadRequest", message);
+    super(400, message);
   }
 }
 
 // Returns a new Stripe instance for the given secret key
 function getStripeInstance(stripeSecretKey) {
   if (!stripeSecretKey) {
-    throw new BadRequestError("Stripe secret key is not configured for this org");
+    throw new BadRequestError(
+      "Stripe secret key is not configured for this org",
+    );
   }
   return StripeSDK(stripeSecretKey, {
-    apiVersion: '2024-11-20.acacia',
+    apiVersion: "2024-11-20.acacia",
   });
 }
 
-// Remove assertStripeConfigured, all checks are now per-org
-async function findOrCreateCustomerByEmail(email, metadata = {}, stripeSecretKey) {
-  if (!email) throw new BadRequestError("email is required to create Stripe customer");
+async function findOrCreateCustomerByEmail(
+  email,
+  metadata = {},
+  stripeSecretKey,
+) {
+  if (!email)
+    throw new BadRequestError("email is required to create Stripe customer");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new BadRequestError("Invalid email format");
+  }
   const stripe = getStripeInstance(stripeSecretKey);
-  // Ensure orgId is present in metadata
-  if (!metadata.orgId && metadata.orgId !== '') {
-    metadata.orgId = metadata.orgId || process.env.DEFAULT_ORG_ID || 'default-org';
+  if (!metadata.orgId) {
+    throw new BadRequestError("orgId is required in customer metadata");
   }
   // Search customer by email (Stripe search)
   const result = await stripe.customers.search({
@@ -60,7 +68,15 @@ async function findOrCreateCustomerByEmail(email, metadata = {}, stripeSecretKey
  * Creates embedded Checkout session for subscription.
  * For metered usage, typically you don't pass quantity.
  */
-async function createCheckoutSession({ customerId, priceId, quantity, returnUrl, metadata, isMetered = false, stripeSecretKey }) {
+async function createCheckoutSession({
+  customerId,
+  priceId,
+  quantity,
+  returnUrl,
+  metadata,
+  isMetered = false,
+  stripeSecretKey,
+}) {
   const stripe = getStripeInstance(stripeSecretKey);
   if (!customerId) throw new BadRequestError("customerId is required");
   if (!priceId) throw new BadRequestError("priceId is required");
@@ -70,16 +86,14 @@ async function createCheckoutSession({ customerId, priceId, quantity, returnUrl,
   if (!isMetered) {
     lineItem.quantity = quantity ? parseInt(quantity, 10) : 1;
   }
-  // Ensure orgId is present in metadata
-  if (!metadata) metadata = {};
-  if (!metadata.orgId && metadata.orgId !== '') {
-    metadata.orgId = metadata.orgId || process.env.DEFAULT_ORG_ID || 'default-org';
-  }
-  
+  if (!metadata) throw new BadRequestError("metadata is required");
+  if (!metadata.orgId)
+    throw new BadRequestError("orgId is required in checkout metadata");
+
   // For metered/usage-based pricing, we MUST collect payment method upfront
   // so Stripe can charge at the end of the billing period based on usage
-  const paymentMethodCollection = isMetered ? 'always' : 'if_required';
-  
+  const paymentMethodCollection = isMetered ? "always" : "if_required";
+
   return stripe.checkout.sessions.create({
     ui_mode: "embedded",
     customer: customerId,
@@ -94,7 +108,8 @@ async function createCheckoutSession({ customerId, priceId, quantity, returnUrl,
 
 async function retrieveCheckoutSession(checkoutSessionId, stripeSecretKey) {
   const stripe = getStripeInstance(stripeSecretKey);
-  if (!checkoutSessionId) throw new BadRequestError("checkoutSessionId is required");
+  if (!checkoutSessionId)
+    throw new BadRequestError("checkoutSessionId is required");
   return stripe.checkout.sessions.retrieve(checkoutSessionId, {
     expand: ["subscription", "customer"],
   });
@@ -102,13 +117,19 @@ async function retrieveCheckoutSession(checkoutSessionId, stripeSecretKey) {
 
 async function cancelSubscription(stripeSubscriptionId, stripeSecretKey) {
   const stripe = getStripeInstance(stripeSecretKey);
-  if (!stripeSubscriptionId) throw new BadRequestError("stripeSubscriptionId is required");
+  if (!stripeSubscriptionId)
+    throw new BadRequestError("stripeSubscriptionId is required");
   return stripe.subscriptions.cancel(stripeSubscriptionId);
 }
 
-async function listInvoicesByCustomer(stripeCustomerId, { limit = 20 } = {}, stripeSecretKey) {
+async function listInvoicesByCustomer(
+  stripeCustomerId,
+  { limit = 20 } = {},
+  stripeSecretKey,
+) {
   const stripe = getStripeInstance(stripeSecretKey);
-  if (!stripeCustomerId) throw new BadRequestError("stripeCustomerId is required");
+  if (!stripeCustomerId)
+    throw new BadRequestError("stripeCustomerId is required");
   return stripe.invoices.list({ customer: stripeCustomerId, limit });
 }
 
@@ -118,7 +139,11 @@ async function getInvoice(invoiceId, stripeSecretKey) {
   return stripe.invoices.retrieve(invoiceId);
 }
 
-async function createCustomerPortalSession({ customerId, returnUrl, stripeSecretKey }) {
+async function createCustomerPortalSession({
+  customerId,
+  returnUrl,
+  stripeSecretKey,
+}) {
   const stripe = getStripeInstance(stripeSecretKey);
   if (!customerId) throw new BadRequestError("customerId is required");
   if (!returnUrl) throw new BadRequestError("returnUrl is required");
@@ -132,7 +157,11 @@ async function createCustomerPortalSession({ customerId, returnUrl, stripeSecret
  * Verifies Stripe webhook signature and constructs the event.
  * req.body must be the raw buffer (use express.raw middleware).
  */
-async function verifyAndConstructWebhookEvent(req, stripeSecretKey, webhookSecret) {
+async function verifyAndConstructWebhookEvent(
+  req,
+  stripeSecretKey,
+  webhookSecret,
+) {
   const signature = req.headers["stripe-signature"];
   if (!signature) {
     throw new BadRequestError("Missing stripe-signature header");
@@ -141,7 +170,9 @@ async function verifyAndConstructWebhookEvent(req, stripeSecretKey, webhookSecre
     const stripe = getStripeInstance(stripeSecretKey);
     return stripe.webhooks.constructEvent(req.body, signature, webhookSecret);
   } catch (err) {
-    throw new BadRequestError(`Webhook signature verification failed: ${err.message}`);
+    throw new BadRequestError(
+      `Webhook signature verification failed: ${err.message}`,
+    );
   }
 }
 
@@ -161,7 +192,10 @@ async function applyWebhookToLocalState(event, { adminDao }) {
       typeof event.data.object.subscription === "string"
         ? event.data.object.subscription
         : event.data.object.subscription?.id;
-  } else if (event?.data?.object?.id && eventType?.startsWith("customer.subscription.")) {
+  } else if (
+    event?.data?.object?.id &&
+    eventType?.startsWith("customer.subscription.")
+  ) {
     // customer.subscription.* events
     stripeSubscriptionId = event.data.object.id;
   }
@@ -269,7 +303,7 @@ module.exports = {
   listPaymentMethods,
   getCustomer,
   detachPaymentMethod,
-  getSubscription
+  getSubscription,
 };
 
 /**
@@ -279,7 +313,7 @@ async function listInvoices(customerId, stripeSecretKey) {
   const stripe = getStripeInstance(stripeSecretKey);
   const invoices = await stripe.invoices.list({
     customer: customerId,
-    limit: 100
+    limit: 100,
   });
   return invoices.data;
 }
@@ -291,7 +325,7 @@ async function listPaymentMethods(customerId, stripeSecretKey) {
   const stripe = getStripeInstance(stripeSecretKey);
   const paymentMethods = await stripe.paymentMethods.list({
     customer: customerId,
-    type: 'card'
+    type: "card",
   });
   return paymentMethods.data;
 }
@@ -324,5 +358,9 @@ async function getSubscription(subscriptionId, stripeSecretKey) {
  * Create portal session (alias for createCustomerPortalSession)
  */
 async function createPortalSession(customerId, returnUrl, stripeSecretKey) {
-  return createCustomerPortalSession({ customerId, returnUrl, stripeSecretKey });
+  return createCustomerPortalSession({
+    customerId,
+    returnUrl,
+    stripeSecretKey,
+  });
 }

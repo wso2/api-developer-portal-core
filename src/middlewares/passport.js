@@ -100,8 +100,13 @@ async function configurePassport(authJsonContent, claimNames) {
         //     [constants.USER_ID]: decodedAccessToken[constants.USER_ID]
         // };
 
+        const decodedIdToken = params.id_token ? jwt.decode(params.id_token) : null;
+        const decodedAccessToken = jwt.decode(accessToken);
         profile = {
             accessToken,
+            email: decodedIdToken?.email,
+            sub: decodedIdToken?.sub || decodedAccessToken?.sub,
+            [constants.USER_ID]: decodedAccessToken?.[constants.USER_ID] || decodedIdToken?.sub,
         };
 
         return done(null, profile);

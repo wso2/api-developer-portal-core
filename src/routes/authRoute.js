@@ -21,11 +21,12 @@ const authController = require('../controllers/authController');
 const billingController = require('../controllers/billingController');
 const registerPartials = require('../middlewares/registerPartials');
 const { validateAuthentication, enforceSecuirty } = require('../middlewares/ensureAuthenticated');
+const { ensureBillingAuth } = require('../middlewares/billingAuth');
 const constants = require('../utils/constants');
 
 // Billing routes
 router.get('/:orgName/views/:viewName/billing', registerPartials, authController.renderBillingPage);
-router.get("/billing/return", billingController.handleBillingReturn);
+router.get("/billing/return", ensureBillingAuth, billingController.handleBillingReturn);
 
 // router.get('/portal/login', registerPartials, authController.login);
 // router.get('/portal/callback', authController.handleCallback);

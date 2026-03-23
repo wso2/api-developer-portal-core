@@ -56,6 +56,8 @@ const createAPIMetadata = async (orgID, apiMetadata, t) => {
             SANDBOX_URL: apiMetadata.endPoints.sandboxURL,
             PRODUCTION_URL: apiMetadata.endPoints.productionURL,
             METADATA_SEARCH: apiMetadata,
+            TOKEN_BASED_SUBSCRIPTION_ENABLED: apiMetadata.apiInfo.tokenBasedSubscriptionEnabled || false,
+            GATEWAY_TYPE: apiMetadata.apiInfo.gatewayType || null,
             ORG_ID: orgID
         },
             { transaction: t }
@@ -509,9 +511,39 @@ const createAPISubscriptionPolicy = async (apiSubscriptionPolicies, apiID, t) =>
   }
 };
 
+/**
+ * Upsert a single API-policy-meter mapping (Bug 1.2 - meter ID sync during policy push)
+ */
+const upsertAPISubscriptionPolicyMeter = async (apiID, policyID, meterId, t) => {
+  try {
+    const [row, created] = await APISubscriptionPolicy.findOrCreate({
+      where: { API_ID: apiID, POLICY_ID: policyID },
+      defaults: { API_ID: apiID, POLICY_ID: policyID, BILLING_METER_ID: meterId },
+      transaction: t
+    });
+    if (!created && meterId !== undefined && meterId !== null) {
+      await row.update({ BILLING_METER_ID: meterId }, { transaction: t });
+    }
+    return row;
+  } catch (error) {
+    if (error instanceof Sequelize.ValidationError) throw error;
+    throw new Sequelize.DatabaseError(error);
+  }
+};
+
 const putSubscriptionPolicy = async (orgID, policy, t) => {
   const current = await getSubscriptionPolicyByName(orgID, policy.policyName, t);
   if (current) {
+    // Preserve existing externalProductId/externalPriceId if the incoming update
+    // doesn't carry them (e.g. a normal rate-limit update from APIM Publisher).
+    if (!policy.externalProductId && !policy.externalPriceId
+        && current.PRICING_METADATA?.external) {
+      policy = {
+        ...policy,
+        externalProductId: current.PRICING_METADATA.external.productId,
+        externalPriceId: current.PRICING_METADATA.external.priceId
+      };
+    }
     const updated = await updateSubscriptionPolicy(orgID, current.POLICY_ID, policy, t);
     return { subscriptionPolicyResponse: updated, statusCode: 200 };
   }
@@ -1358,6 +1390,8 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
             SANDBOX_URL: apiMetadata.endPoints.sandboxURL,
             PRODUCTION_URL: apiMetadata.endPoints.productionURL,
             METADATA_SEARCH: apiMetadata,
+            TOKEN_BASED_SUBSCRIPTION_ENABLED: apiMetadata.apiInfo.tokenBasedSubscriptionEnabled || false,
+            GATEWAY_TYPE: apiMetadata.apiInfo.gatewayType || null,
         }, {
             where: {
                 API_ID: apiID,
@@ -1734,9 +1768,29 @@ const getAPIHandle = async (orgID, apiRefID) => {
     }
 }
 
+const getApiIdByReferenceId = async (orgID, referenceId, t) => {
+    try {
+        const api = await APIMetadata.findOne({
+            attributes: ['API_ID'],
+            where: {
+                REFERENCE_ID: referenceId,
+                ORG_ID: orgID
+            },
+            transaction: t
+        });
+        return api?.API_ID;
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
 module.exports = {
     createAPIMetadata,
     createAPISubscriptionPolicy,
+    upsertAPISubscriptionPolicyMeter,
     storeAPIFile,
     getAPIMetadata,
     getAllAPIMetadata,
@@ -1787,5 +1841,6 @@ module.exports = {
     getImage,
     deleteImage,
     getAllSubscriptionPolicies,
-    getAllAPIMetadataFromAllViews
+    getAllAPIMetadataFromAllViews,
+    getApiIdByReferenceId
 };

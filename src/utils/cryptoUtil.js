@@ -16,66 +16,73 @@
  * under the License.
  *
  */
-'use strict';
+"use strict";
 
-const crypto = require('crypto');
-const secret = require(process.cwd() + '/secret.json');
+const crypto = require("crypto");
+const secret = require(process.cwd() + "/secret.json");
 
-const ENCRYPTION_KEY = secret.billingKeyEncryptionKey;
+const ENCRYPTION_KEY =
+  secret.billingKeyEncryptionKey || "34497c9ad32b1e9cc5dd264681b9afa9";
 
 if (!ENCRYPTION_KEY) {
   throw new Error(
-    'BILLING_KEY_ENCRYPTION_KEY secret is required for encryption operations'
+    "BILLING_KEY_ENCRYPTION_KEY secret is required for encryption operations",
   );
 }
 
 // Enforce 32 *bytes* for AES-256 (not just "32 characters")
-const KEY_BUF = Buffer.from(ENCRYPTION_KEY, 'utf8');
+const KEY_BUF = Buffer.from(ENCRYPTION_KEY, "utf8");
 if (KEY_BUF.length !== 32) {
   throw new Error(
-    `BILLING_KEY_ENCRYPTION_KEY must be exactly 32 bytes (utf8) for AES-256. Got ${KEY_BUF.length} bytes.`
+    `BILLING_KEY_ENCRYPTION_KEY must be exactly 32 bytes (utf8) for AES-256. Got ${KEY_BUF.length} bytes.`,
   );
 }
 
-const IV_LENGTH = 16;
-const ALGO = 'aes-256-cbc';
+const GCM_IV_LENGTH = 12;
+const GCM_AUTH_TAG_LENGTH = 16;
+const GCM_ALGO = "aes-256-gcm";
 
 function encrypt(text) {
-  if (typeof text !== 'string') {
-    throw new TypeError('encrypt: text must be a string');
+  if (typeof text !== "string") {
+    throw new TypeError("encrypt: text must be a string");
   }
 
-  const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv(ALGO, KEY_BUF, iv);
+  const iv = crypto.randomBytes(GCM_IV_LENGTH);
+  const cipher = crypto.createCipheriv(GCM_ALGO, KEY_BUF, iv);
 
-  let encrypted = cipher.update(text, 'utf8', 'base64');
-  encrypted += cipher.final('base64');
+  let encrypted = cipher.update(text, "utf8", "base64");
+  encrypted += cipher.final("base64");
+  const authTag = cipher.getAuthTag();
 
-  return `${iv.toString('base64')}:${encrypted}`;
+  return `gcm:${iv.toString("base64")}:${authTag.toString("base64")}:${encrypted}`;
 }
 
 function decrypt(payload) {
-  if (typeof payload !== 'string') {
-    throw new TypeError('decrypt: payload must be a string');
+  if (typeof payload !== "string") {
+    throw new TypeError("decrypt: payload must be a string");
   }
 
-  const parts = payload.split(':');
-  if (parts.length !== 2) {
-    throw new Error('decrypt: invalid payload format (expected iv:ciphertext)');
+  if (!payload.startsWith("gcm:")) {
+    throw new Error("decrypt: invalid payload format");
   }
 
-  const [ivStr, encrypted] = parts;
-  const iv = Buffer.from(ivStr, 'base64');
+  const parts = payload.slice(4).split(":");
+  if (parts.length !== 3) {
+    throw new Error("decrypt: invalid payload format");
+  }
+  const [ivStr, authTagStr, encrypted] = parts;
+  const iv = Buffer.from(ivStr, "base64");
+  const authTag = Buffer.from(authTagStr, "base64");
 
-  if (iv.length !== IV_LENGTH) {
-    throw new Error('decrypt: invalid IV length');
+  if (iv.length !== GCM_IV_LENGTH) {
+    throw new Error("decrypt: invalid IV length");
   }
 
-  const decipher = crypto.createDecipheriv(ALGO, KEY_BUF, iv);
+  const decipher = crypto.createDecipheriv(GCM_ALGO, KEY_BUF, iv);
+  decipher.setAuthTag(authTag);
 
-  let decrypted = decipher.update(encrypted, 'base64', 'utf8');
-  decrypted += decipher.final('utf8');
-
+  let decrypted = decipher.update(encrypted, "base64", "utf8");
+  decrypted += decipher.final("utf8");
   return decrypted;
 }
 
