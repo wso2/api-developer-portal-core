@@ -45,9 +45,9 @@
                         <div class="col-12 col-md-6 col-lg-4">
                             <div id="subscriptionCard-{{policyID}}" class="card dev-card subscription-card">
                                 <div class="card-body align-items-center text-center p-0">
-                                    <span class="subscription-plans-card-title">{{displayName}}</h5>
+                                    <span class="subscription-plans-card-title">{{displayName}}</span>
                                         <h1 class="subscription-plans-request-count">{{requestCount}}</h1>
-                                        <p class="subscription-plans-card-subtitle pb-4 pt-0">requests per minutes</p>
+                                        <p class="subscription-plans-card-subtitle pb-4 pt-0">requests per minute</p>
                                                 {{#if ../apiInfo.tokenBasedSubscriptionEnabled}}
                                                     <button id="subscribe-btn-{{policyID}}" type="button"
                                                         class="common-btn-primary p-1 ps-2 pe-2 w-100 subscription-plan-subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
@@ -55,7 +55,8 @@
                                                         data-api-id="{{#if apiID}}{{apiID}}{{else}}{{../apiID}}{{/if}}"
                                                         data-policy-name="{{policyName}}"
                                                         data-display-name="{{displayName}}"
-                                                        onclick="handlePlanSubscription(this)">Subscribe</button>
+                                                        {{#unless @root.isReadOnlyMode}}onclick="handlePlanSubscription(this)"{{/unless}}
+                                                        {{#if @root.isReadOnlyMode}}disabled aria-disabled="true"{{/if}}>Subscribe</button>
                                                 {{else if (eq ../apiInfo.gatewayType "wso2/api-platform")}}
                                                     <button id="subscribe-btn-{{policyID}}" type="button"
                                                         class="common-btn-primary p-1 ps-2 pe-2 w-100 subscription-plan-subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
@@ -63,7 +64,8 @@
                                                         data-api-id="{{#if apiID}}{{apiID}}{{else}}{{../apiID}}{{/if}}"
                                                         data-policy-name="{{policyName}}"
                                                         data-display-name="{{displayName}}"
-                                                        onclick="handlePlanSubscription(this)">Subscribe</button>
+                                                        {{#unless @root.isReadOnlyMode}}onclick="handlePlanSubscription(this)"{{/unless}}
+                                                        {{#if @root.isReadOnlyMode}}disabled aria-disabled="true"{{/if}}>Subscribe</button>
                                                 {{else}}
                                                     {{!-- App-based subscription flow: show dropdown above a full-width Subscribe button --}}
                                                     <div class="p-3 d-flex flex-column align-items-stretch">
@@ -100,7 +102,8 @@
                                                         </div>
                                                         <button id="subscribe-btn-{{policyID}}" type="button"
                                                             class="common-btn-primary w-100 subscription-plan-subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
-                                                            onclick="showSubscribeButtonLoading(this); subscribe('{{@root.orgID}}', '', '{{../apiID}}', '{{../apiReferenceID}}', '{{policyID}}', '{{policyName}}')">Subscribe</button>
+                                                            {{#unless @root.isReadOnlyMode}}onclick="showSubscribeButtonLoading(this); subscribe('{{@root.orgID}}', '', '{{../apiID}}', '{{#if ../apiReferenceID}}{{../apiReferenceID}}{{else}}{{../apiID}}{{/if}}', '{{policyID}}', '{{policyName}}')"{{/unless}}
+                                                            {{#if @root.isReadOnlyMode}}disabled aria-disabled="true"{{/if}}>Subscribe</button>
                                                     </div>
                                                 {{/if}}
                                 </div>

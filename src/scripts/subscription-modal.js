@@ -81,7 +81,7 @@ async function prepareSubscriptionModal(modalId) {
 
         // data may contain list (existing subscriptions) and subscriptionPlans
         const existing = data.list || data || [];
-        const plans = data.subscriptionPlans || data.subscriptionPlans || data.plans || [];
+        const plans = data.subscriptionPlans || data.plans || [];
 
         // expose token meta and org id for other helpers
         window.__subscriptionOrgID = window.__subscriptionOrgID || orgID;
@@ -108,21 +108,73 @@ async function prepareSubscriptionModal(modalId) {
                 window.__tokenMeta[sub.subscriptionId] = { maskedToken: sub.maskedToken, subscriptionPlanName: sub.subscriptionPlanName, status: sub.status };
 
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${escapeHtml(sub.subscriptionPlanName || '')}</td>
-                    <td><span class="badge ${sub.status === 'ACTIVE' ? 'bg-success' : 'bg-secondary'}">${escapeHtml(sub.status || '')}</span></td>
-                    <td>
-                        <div class="token-display">
-                            <code class="masked-token" id="token-${sub.subscriptionId}" data-revealed="false">****</code>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="toggleTokenVisibility('${sub.subscriptionId}')" title="Reveal token"><i class="bi bi-eye"></i></button>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="copySubscriptionToken('${sub.subscriptionId}')" title="Copy token"><i class="bi bi-clipboard"></i></button>
-                        </div>
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-warning" ${window.isReadOnly ? 'disabled' : ''} onclick="togglePlatformSubscriptionStatus('${orgID}', '${sub.subscriptionId}', '${sub.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'}')">${sub.status === 'ACTIVE' ? '<i class="bi bi-pause-circle"></i>' : '<i class="bi bi-play-circle"></i>'}</button>
-                        <button class="btn btn-sm btn-outline-danger" ${window.isReadOnly ? 'disabled' : ''} onclick="confirmDeletePlatformSubscription('${orgID}', '${sub.subscriptionId}')"><i class="bi bi-trash"></i></button>
-                    </td>
-                `;
+
+                // Plan name cell
+                const tdPlan = document.createElement('td');
+                tdPlan.textContent = sub.subscriptionPlanName || '';
+                tr.appendChild(tdPlan);
+
+                // Status cell
+                const tdStatus = document.createElement('td');
+                const statusBadge = document.createElement('span');
+                statusBadge.className = 'badge ' + (sub.status === 'ACTIVE' ? 'bg-success' : 'bg-secondary');
+                statusBadge.textContent = sub.status || '';
+                tdStatus.appendChild(statusBadge);
+                tr.appendChild(tdStatus);
+
+                // Token cell
+                const tdToken = document.createElement('td');
+                const tokenDisplay = document.createElement('div');
+                tokenDisplay.className = 'token-display';
+                const tokenCode = document.createElement('code');
+                tokenCode.className = 'masked-token';
+                tokenCode.id = 'token-' + sub.subscriptionId;
+                tokenCode.dataset.revealed = 'false';
+                tokenCode.textContent = '****';
+                const revealBtn = document.createElement('button');
+                revealBtn.className = 'btn btn-sm btn-outline-secondary';
+                revealBtn.title = 'Reveal token';
+                revealBtn.innerHTML = '<i class="bi bi-eye"></i>';
+                revealBtn.dataset.subscriptionId = sub.subscriptionId;
+                revealBtn.addEventListener('click', function() { toggleTokenVisibility(this.dataset.subscriptionId); });
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'btn btn-sm btn-outline-secondary';
+                copyBtn.title = 'Copy token';
+                copyBtn.innerHTML = '<i class="bi bi-clipboard"></i>';
+                copyBtn.dataset.subscriptionId = sub.subscriptionId;
+                copyBtn.addEventListener('click', function() { copySubscriptionToken(this.dataset.subscriptionId); });
+                tokenDisplay.appendChild(tokenCode);
+                tokenDisplay.appendChild(revealBtn);
+                tokenDisplay.appendChild(copyBtn);
+                tdToken.appendChild(tokenDisplay);
+                tr.appendChild(tdToken);
+
+                // Actions cell
+                const tdActions = document.createElement('td');
+                const newStatus = sub.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+                const toggleBtn = document.createElement('button');
+                toggleBtn.className = 'btn btn-sm btn-outline-warning';
+                toggleBtn.innerHTML = sub.status === 'ACTIVE' ? '<i class="bi bi-pause-circle"></i>' : '<i class="bi bi-play-circle"></i>';
+                toggleBtn.dataset.orgId = orgID;
+                toggleBtn.dataset.subscriptionId = sub.subscriptionId;
+                toggleBtn.dataset.newStatus = newStatus;
+                if (window.isReadOnly) toggleBtn.disabled = true;
+                toggleBtn.addEventListener('click', function() {
+                    togglePlatformSubscriptionStatus(this.dataset.orgId, this.dataset.subscriptionId, this.dataset.newStatus);
+                });
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn btn-sm btn-outline-danger';
+                deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                deleteBtn.dataset.orgId = orgID;
+                deleteBtn.dataset.subscriptionId = sub.subscriptionId;
+                if (window.isReadOnly) deleteBtn.disabled = true;
+                deleteBtn.addEventListener('click', function() {
+                    confirmDeletePlatformSubscription(this.dataset.orgId, this.dataset.subscriptionId);
+                });
+                tdActions.appendChild(toggleBtn);
+                tdActions.appendChild(deleteBtn);
+                tr.appendChild(tdActions);
+
                 tbody.appendChild(tr);
             });
             platformContainer.appendChild(table);
@@ -160,7 +212,13 @@ async function prepareSubscriptionModal(modalId) {
                 btn.dataset.apiId = apiId;
                 btn.dataset.policyName = plan.policyName || plan.subscriptionPlanName || '';
                 btn.dataset.displayName = plan.displayName || plan.subscriptionPlanName || '';
-                btn.addEventListener('click', function () { handlePlanSubscription(this); });
+                if (window.isReadOnly) {
+                    btn.disabled = true;
+                    btn.setAttribute('aria-disabled', 'true');
+                    btn.classList.add('disabled');
+                } else {
+                    btn.addEventListener('click', function () { handlePlanSubscription(this); });
+                }
                 card.querySelector('.position-relative').appendChild(btn);
 
                 row.appendChild(col);
@@ -186,10 +244,16 @@ async function prepareSubscriptionModal(modalId) {
             var planBtns = plansBody.querySelectorAll('.subscription-plan-subscribe-btn');
             planBtns.forEach(function(btn) {
                 btn.textContent = 'Subscribe';
-                btn.disabled = false;
-                btn.classList.remove('disabled');
                 btn.classList.add('common-btn-primary');
-                btn.setAttribute('onclick', 'handlePlanSubscription(this)');
+                if (window.isReadOnly) {
+                    btn.disabled = true;
+                    btn.classList.add('disabled');
+                    btn.removeAttribute('onclick');
+                } else {
+                    btn.disabled = false;
+                    btn.classList.remove('disabled');
+                    btn.setAttribute('onclick', 'handlePlanSubscription(this)');
+                }
             });
 
             if (existing && existing.length > 0) {
@@ -209,11 +273,11 @@ async function prepareSubscriptionModal(modalId) {
             }
         }
 
-        platformContainer.style.display = (existing && existing.length > 0) ? 'block' : 'none';
+        platformContainer.style.display = ((existing && existing.length > 0) || (plans && plans.length > 0)) ? 'block' : 'none';
     } catch (e) {
         platformContainer.innerHTML = '<div class="alert alert-danger">Could not load platform subscriptions.</div>';
         platformContainer.style.display = 'block';
-        if (plansBody) plansBody.style.display = 'none';
+        if (plansBody) plansBody.style.display = '';
     }
 }
 

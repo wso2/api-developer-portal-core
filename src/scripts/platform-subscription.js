@@ -209,14 +209,71 @@ async function refreshLandingPageSubscriptions() {
             var tbody = table.querySelector('tbody');
             existing.forEach(function(sub) {
                 var tr = document.createElement('tr');
-                tr.innerHTML =
-                    '<td>' + escapeHtml(sub.subscriptionPlanName || '') + '</td>' +
-                    '<td><span class="badge ' + (sub.status === 'ACTIVE' ? 'bg-success' : 'bg-secondary') + '">' + escapeHtml(sub.status || '') + '</span></td>' +
-                    '<td><div class="token-display"><code class="masked-token" id="token-' + sub.subscriptionId + '" data-revealed="false">****</code>' +
-                    '<button class="btn btn-sm btn-outline-secondary" onclick="toggleTokenVisibility(\'' + sub.subscriptionId + '\')" title="Reveal token"><i class="bi bi-eye"></i></button>' +
-                    '<button class="btn btn-sm btn-outline-secondary" onclick="copySubscriptionToken(\'' + sub.subscriptionId + '\')" title="Copy token"><i class="bi bi-clipboard"></i></button></div></td>' +
-                    '<td><button class="btn btn-sm btn-outline-warning" onclick="togglePlatformSubscriptionStatus(\'' + orgID + '\', \'' + sub.subscriptionId + '\', \'' + (sub.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE') + '\')">' + (sub.status === 'ACTIVE' ? '<i class="bi bi-pause-circle"></i>' : '<i class="bi bi-play-circle"></i>') + '</button>' +
-                    '<button class="btn btn-sm btn-outline-danger" onclick="confirmDeletePlatformSubscription(\'' + orgID + '\', \'' + sub.subscriptionId + '\')"><i class="bi bi-trash"></i></button></td>';
+
+                // Plan name cell
+                var tdPlan = document.createElement('td');
+                tdPlan.textContent = sub.subscriptionPlanName || '';
+                tr.appendChild(tdPlan);
+
+                // Status cell
+                var tdStatus = document.createElement('td');
+                var badge = document.createElement('span');
+                badge.className = 'badge ' + (sub.status === 'ACTIVE' ? 'bg-success' : 'bg-secondary');
+                badge.textContent = sub.status || '';
+                tdStatus.appendChild(badge);
+                tr.appendChild(tdStatus);
+
+                // Token cell
+                var tdToken = document.createElement('td');
+                var tokenDisplay = document.createElement('div');
+                tokenDisplay.className = 'token-display';
+                var code = document.createElement('code');
+                code.className = 'masked-token';
+                code.id = 'token-' + sub.subscriptionId;
+                code.dataset.revealed = 'false';
+                code.textContent = '****';
+                var revealBtn = document.createElement('button');
+                revealBtn.className = 'btn btn-sm btn-outline-secondary';
+                revealBtn.title = 'Reveal token';
+                revealBtn.innerHTML = '<i class="bi bi-eye"></i>';
+                revealBtn.dataset.subscriptionId = sub.subscriptionId;
+                revealBtn.addEventListener('click', function() { toggleTokenVisibility(this.dataset.subscriptionId); });
+                var copyBtn = document.createElement('button');
+                copyBtn.className = 'btn btn-sm btn-outline-secondary';
+                copyBtn.title = 'Copy token';
+                copyBtn.innerHTML = '<i class="bi bi-clipboard"></i>';
+                copyBtn.dataset.subscriptionId = sub.subscriptionId;
+                copyBtn.addEventListener('click', function() { copySubscriptionToken(this.dataset.subscriptionId); });
+                tokenDisplay.appendChild(code);
+                tokenDisplay.appendChild(revealBtn);
+                tokenDisplay.appendChild(copyBtn);
+                tdToken.appendChild(tokenDisplay);
+                tr.appendChild(tdToken);
+
+                // Actions cell
+                var tdActions = document.createElement('td');
+                var newStatus = sub.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+                var toggleBtn = document.createElement('button');
+                toggleBtn.className = 'btn btn-sm btn-outline-warning';
+                toggleBtn.innerHTML = sub.status === 'ACTIVE' ? '<i class="bi bi-pause-circle"></i>' : '<i class="bi bi-play-circle"></i>';
+                toggleBtn.dataset.orgId = orgID;
+                toggleBtn.dataset.subscriptionId = sub.subscriptionId;
+                toggleBtn.dataset.newStatus = newStatus;
+                toggleBtn.addEventListener('click', function() {
+                    togglePlatformSubscriptionStatus(this.dataset.orgId, this.dataset.subscriptionId, this.dataset.newStatus);
+                });
+                var deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn btn-sm btn-outline-danger';
+                deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                deleteBtn.dataset.orgId = orgID;
+                deleteBtn.dataset.subscriptionId = sub.subscriptionId;
+                deleteBtn.addEventListener('click', function() {
+                    confirmDeletePlatformSubscription(this.dataset.orgId, this.dataset.subscriptionId);
+                });
+                tdActions.appendChild(toggleBtn);
+                tdActions.appendChild(deleteBtn);
+                tr.appendChild(tdActions);
+
                 tbody.appendChild(tr);
             });
             existingSection.appendChild(table);
@@ -231,7 +288,7 @@ async function refreshLandingPageSubscriptions() {
 
         var planCards = document.querySelectorAll('#subscriptionPlans .subscription-card');
         planCards.forEach(function(card) {
-            var btn = card.querySelector('.subscribe-btn, .current-plan-btn');
+            var btn = card.querySelector('.subscription-plan-subscribe-btn, .subscribe-btn, .current-plan-btn');
             if (!btn) return;
             var policyName = (btn.dataset.policyName || '').toLowerCase();
             if (activePlanNames.indexOf(policyName) !== -1) {

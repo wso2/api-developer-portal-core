@@ -138,18 +138,24 @@
               {{#if ../isAuthenticated}}
               <div id="subscriptionBox" class="subscription-container w-100">
                 {{#if apiInfo.tokenBasedSubscriptionEnabled}}
-                  {{> subscription-modal apiID=apiID apiInfo=apiInfo}}
-                  <a type="button" class="common-btn-primary w-100 open-modal-btn" data-modal="planModal-{{apiID}}">Subscribe</a>
+                  {{> subscription-modal apiID=apiID apiInfo=apiInfo apiReferenceID=apiReferenceID}}
+                  <a type="button" class="common-btn-primary w-100 open-modal-btn {{#if @root.isReadOnlyMode}}is-readonly{{/if}}"
+                    {{#unless @root.isReadOnlyMode}}data-modal="planModal-{{apiID}}"{{/unless}}
+                    {{#if @root.isReadOnlyMode}}aria-disabled="true"{{/if}}>Subscribe</a>
                 {{else if (eq apiInfo.gatewayType "wso2/api-platform")}}
                   {{#if subscriptionPolicies.length}}
-                  {{> subscription-modal apiID=apiID apiInfo=apiInfo}}
-                  <a type="button" class="common-btn-primary w-100 open-modal-btn" data-modal="planModal-{{apiID}}" {{#if @root.isReadOnlyMode}}disabled{{/if}}>Subscribe</a>
+                  {{> subscription-modal apiID=apiID apiInfo=apiInfo apiReferenceID=apiReferenceID}}
+                  <a type="button" class="common-btn-primary w-100 open-modal-btn {{#if @root.isReadOnlyMode}}is-readonly{{/if}}"
+                    {{#unless @root.isReadOnlyMode}}data-modal="planModal-{{apiID}}"{{/unless}}
+                    {{#if @root.isReadOnlyMode}}aria-disabled="true"{{/if}}>Subscribe</a>
                   {{/if}}
                 {{else}}
                 {{> subscription-plans apiInfo=apiInfo apiName=apiInfo.apiName}}
                 {{#if subscriptionPolicies.length}}
                   {{!-- Application selection moved into the subscription modal. --}}
-                  <a type="button" class="common-btn-primary w-100 open-modal-btn" data-modal="planModal-{{apiID}}" {{#if @root.isReadOnlyMode}}disabled{{/if}}>Subscribe</a>
+                  <a type="button" class="common-btn-primary w-100 open-modal-btn {{#if @root.isReadOnlyMode}}is-readonly{{/if}}"
+                    {{#unless @root.isReadOnlyMode}}data-modal="planModal-{{apiID}}"{{/unless}}
+                    {{#if @root.isReadOnlyMode}}aria-disabled="true"{{/if}}>Subscribe</a>
                 {{/if}}
                 {{/if}}
               </div>
@@ -184,12 +190,21 @@
         var modalTrigger = findClosest(e.target, '[data-modal]');
         if(modalTrigger){
           e.preventDefault();
+          if(modalTrigger.classList.contains('is-readonly') || modalTrigger.getAttribute('aria-disabled') === 'true'){
+            return;
+          }
           if(typeof loadModal === 'function'){
             loadModal(modalTrigger.getAttribute('data-modal'));
           } else {
             var id = modalTrigger.getAttribute('data-modal');
             var el = document.getElementById(id);
-            if(el) el.style.display = '';
+            if(el) {
+              el.style.display = 'flex';
+              document.body.classList.add('modal-open');
+              if(typeof prepareSubscriptionModal === 'function') {
+                try { prepareSubscriptionModal(id); } catch(err) { /* noop */ }
+              }
+            }
           }
           return;
         }

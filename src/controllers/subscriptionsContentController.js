@@ -180,13 +180,26 @@ const loadAPISubscriptions = async (req, res) => {
         const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
 
         const apiID = await apiDao.getAPIId(orgID, apiHandle);
+        if (!apiID) {
+            const templateContent = {
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+                devportalMode: devportalMode,
+                errorMessage: constants.ERROR_MESSAGE.API_NOT_FOUND,
+            };
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+            return res.status(404).send(html);
+        }
         let metaData = await apiMetadataService.getMetadataFromDB(orgID, apiID, viewName);
-        if (metaData) {
+        if (metaData && typeof metaData === 'object') {
             metaData = JSON.parse(JSON.stringify(metaData));
-            const images = metaData.apiInfo.apiImageMetadata;
-            for (const key in images) {
-                images[key] = `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${images[key]}`;
+            const images = metaData.apiInfo?.apiImageMetadata;
+            if (images) {
+                for (const key in images) {
+                    images[key] = `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${images[key]}`;
+                }
             }
+        } else {
+            metaData = null;
         }
         const apiRefId = metaData?.apiReferenceID || apiID;
 
@@ -228,7 +241,7 @@ const loadAPISubscriptions = async (req, res) => {
             const subscribedAPIs = await adminDao.getSubscribedAPIs(orgID, app.APP_ID);
             for (const sub of subscribedAPIs) {
                 const api = new APIDTO(sub);
-                if (api.apiInfo.apiName !== metaData?.apiInfo?.apiName || api.apiInfo.apiVersion !== metaData?.apiInfo?.apiVersion) {
+                if (api.apiReferenceID !== apiRefId) {
                     continue;
                 }
                 const subMapping = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues;

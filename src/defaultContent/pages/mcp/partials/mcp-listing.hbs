@@ -106,7 +106,7 @@
               <div id="subscriptionBox" class="subscription-container w-100">
                 {{> subscription-plans apiInfo=apiInfo apiName=apiInfo.apiName}}
                 {{#if subscriptionPolicies.length}}
-                  <a type="button" class="common-btn-primary w-100" onclick="loadModal('planModal-{{apiID}}')" {{#if @root.isReadOnlyMode}}disabled{{/if}}>Subscribe</a>
+                  <button type="button" class="common-btn-primary w-100" onclick="loadModal('planModal-{{apiID}}')" {{#if @root.isReadOnlyMode}}disabled aria-disabled="true"{{/if}}>Subscribe</button>
                 {{/if}}
               </div>
               {{/if}}

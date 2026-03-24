@@ -48,25 +48,29 @@ function hideElementById(elementId) {
 
 function closeModal(elementId) {
     hideElementById(elementId);
-    var form = document.querySelector("form");
+
+    // Scope form reset to within the modal, not document-wide
+    var modalEl = elementId ? document.getElementById(elementId) : null;
+    var form = modalEl ? modalEl.querySelector('form') : null;
     if (form) form.reset();
 
-    // Clear inline token display so it's fresh next time the modal opens
-    var apiId = elementId.replace('planModal-', '');
-    var tokenArea = document.getElementById('subscriptionTokenArea-' + apiId);
-    if (tokenArea) { tokenArea.innerHTML = ''; tokenArea.style.display = 'none'; }
-
-    if (window.__platformSubscriptionChanged) {
-        window.__platformSubscriptionChanged = false;
+    if (elementId) {
+        // Clear inline token display so it's fresh next time the modal opens
         var apiId = elementId.replace('planModal-', '');
-        var apiCard = document.getElementById('apiCard-' + apiId);
-        if (apiCard) {
-            var flag = apiCard.querySelector('.subscription-flag');
-            if (flag) {
-                var hasActiveSubs = (window.existingPlatformSubscriptions || []).some(function(s) {
-                    return s.status === 'ACTIVE';
-                });
-                flag.style.display = hasActiveSubs ? 'block' : 'none';
+        var tokenArea = document.getElementById('subscriptionTokenArea-' + apiId);
+        if (tokenArea) { tokenArea.innerHTML = ''; tokenArea.style.display = 'none'; }
+
+        if (window.__platformSubscriptionChanged) {
+            window.__platformSubscriptionChanged = false;
+            var apiCard = document.getElementById('apiCard-' + apiId);
+            if (apiCard) {
+                var flag = apiCard.querySelector('.subscription-flag');
+                if (flag) {
+                    var hasActiveSubs = (window.existingPlatformSubscriptions || []).some(function(s) {
+                        return s.status === 'ACTIVE';
+                    });
+                    flag.style.display = hasActiveSubs ? 'block' : 'none';
+                }
             }
         }
     }
@@ -253,8 +257,11 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
                 }
             }
 
-            // Mark the application as subscribed in ALL dropdowns on the page
-            var allDropdowns = document.querySelectorAll('.custom-dropdown');
+            // Mark the application as subscribed in dropdowns scoped to the current API only
+            var apiContainer = document.getElementById('planModal-' + apiId) || document.getElementById('apiCard-' + apiId);
+            var allDropdowns = apiContainer
+                ? apiContainer.querySelectorAll('.custom-dropdown')
+                : document.querySelectorAll('.custom-dropdown');
             allDropdowns.forEach(function(dropdown) {
                 var appOption = dropdown.querySelector('.select-item[data-value="' + applicationID + '"]');
                 if (appOption) {
