@@ -48,7 +48,28 @@ function hideElementById(elementId) {
 
 function closeModal(elementId) {
     hideElementById(elementId);
-    document.querySelector("form").reset();
+    var form = document.querySelector("form");
+    if (form) form.reset();
+
+    // Clear inline token display so it's fresh next time the modal opens
+    var apiId = elementId.replace('planModal-', '');
+    var tokenArea = document.getElementById('subscriptionTokenArea-' + apiId);
+    if (tokenArea) { tokenArea.innerHTML = ''; tokenArea.style.display = 'none'; }
+
+    if (window.__platformSubscriptionChanged) {
+        window.__platformSubscriptionChanged = false;
+        var apiId = elementId.replace('planModal-', '');
+        var apiCard = document.getElementById('apiCard-' + apiId);
+        if (apiCard) {
+            var flag = apiCard.querySelector('.subscription-flag');
+            if (flag) {
+                var hasActiveSubs = (window.existingPlatformSubscriptions || []).some(function(s) {
+                    return s.status === 'ACTIVE';
+                });
+                flag.style.display = hasActiveSubs ? 'block' : 'none';
+            }
+        }
+    }
 }
 
 window.onclick = function (event) {
@@ -165,11 +186,21 @@ async function handleSubscribe(appId, apiName, apiVersion, apiRefId) {
 function loadModal(modalID) {
     const modal = document.getElementById(modalID);
     modal.style.display = 'flex';
+    if (typeof prepareSubscriptionModal === 'function') {
+        try { prepareSubscriptionModal(modalID); } catch (e) { /* noop */ }
+    }
 }
 
 function handleAppBasedSubscription(btnElement) {
-    showSubscribeButtonLoading(btnElement);
+    // If a plan modal exists for this API, open the modal to let the user choose/create app and confirm.
     const { orgId, apiId, apiReferenceId, policyId, policyName } = btnElement.dataset;
+    const modalId = 'planModal-' + apiId;
+    if (document.getElementById(modalId)) {
+        loadModal(modalId);
+        return;
+    }
+
+    showSubscribeButtonLoading(btnElement);
     subscribe(orgId, '', apiId, apiReferenceId, policyId, policyName);
 }
 
@@ -220,37 +251,25 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
                 if (subscriptionFlag) {
                     subscriptionFlag.style.display = 'block';
                 }
-
-                // Mark the application as subscribed
-                const dropdown = card.querySelector('.custom-dropdown');
-                if (dropdown) {
-                    // Mark the application as subscribed in the dropdown
-                    const appOption = dropdown.querySelector(`.select-item[data-value="${applicationID}"]`);
-                    if (appOption) {
-                        // Show the subscription icon by changing display style
-                        let subscriptionIcon = appOption.querySelector('.subscription-icon');
-                        if (subscriptionIcon) {
-                            subscriptionIcon.style.display = 'inline-block';
-                        } else {
-                            const subscriptionIconHtml = `<img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
-                            alt="Subscribed" class="subscription-icon" style="display: inline-block;" />`;
-                            const tempDiv = document.createElement('div');
-                            tempDiv.innerHTML = subscriptionIconHtml;
-                            subscriptionIcon = tempDiv.firstElementChild;
-                            appOption.appendChild(subscriptionIcon);
-                        }
-
-                        // Mark option as disabled
-                        appOption.classList.add('disabled');
-                    }
-
-                    // Disable the subscribe button
-                    const subscribeButton = card.querySelector('.common-btn-primary');
-                    if (subscribeButton) {
-                        subscribeButton.setAttribute('disabled', 'disabled');
-                    }
-                }
             }
+
+            // Mark the application as subscribed in ALL dropdowns on the page
+            var allDropdowns = document.querySelectorAll('.custom-dropdown');
+            allDropdowns.forEach(function(dropdown) {
+                var appOption = dropdown.querySelector('.select-item[data-value="' + applicationID + '"]');
+                if (appOption) {
+                    var subscriptionIcon = appOption.querySelector('.subscription-icon');
+                    if (subscriptionIcon) {
+                        subscriptionIcon.style.display = 'inline-block';
+                    } else {
+                        var iconHtml = '<img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg" alt="Subscribed" class="subscription-icon" style="display: inline-block;" />';
+                        var tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = iconHtml;
+                        appOption.appendChild(tempDiv.firstElementChild);
+                    }
+                    appOption.classList.add('disabled');
+                }
+            });
         } else {
             // Handle API error
             console.error('Failed to create subscription:', responseData);

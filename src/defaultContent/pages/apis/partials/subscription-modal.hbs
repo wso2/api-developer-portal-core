@@ -1,0 +1,119 @@
+<div id="planModal-{{apiID}}" class="modal custom-modal" tabindex="-1" role="dialog"
+    data-org-id="{{@root.orgID}}" data-api-refid="{{#if apiInfo.apiReferenceID}}{{apiInfo.apiReferenceID}}{{else}}{{apiID}}{{/if}}" data-token-based="{{apiInfo.tokenBasedSubscriptionEnabled}}" data-gateway-type="{{apiInfo.gatewayType}}">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content custom-modal-content">
+            <div class="custom-modal-header">
+                <h2 class="custom-modal-title m-0">{{#if modalTitle}}{{modalTitle}}{{else}}Choose Your Subscription Plan{{/if}}</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                    onclick="closeModal('planModal-{{apiID}}')"></button>
+            </div>
+            <div class="custom-modal-body">
+                <div class="api-banner-content py-4 px-5">
+                    <div class="d-flex align-items-center justify-content-between w-100">
+                        <div class="col-12 col-md-7">
+                            <div class="api-title pb-3">
+                                <h4>{{apiInfo.apiName}}</h4>
+                                <span class="mb-1"> {{apiInfo.apiVersion}}</span>
+                                <p class="api-description">{{apiInfo.apiDescription}}</p>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-5 text-md-right">
+                            {{#if apiInfo.apiImageMetadata.api-icon}}
+                            <img class="img-thumbnail api-image-small" src="{{apiInfo.apiImageMetadata.api-icon}}"
+                                alt="API Image" />
+                            {{else}}
+                            <div
+                                class="img-thumbnail api-image-small image-icon d-flex justify-content-center align-items-center">
+                                {{firstTwoLetters apiInfo.apiName}}</div>
+                            {{/if}}
+                        </div>
+                    </div>
+                </div>
+                <div id="subscriptionTokenArea-{{apiID}}" class="subscription-token-area px-4" style="display:none;">
+                    <!-- Token result will be injected here for platform token-based subscriptions -->
+                </div>
+                <div id="platformContent-{{apiID}}" class="platform-subscription-content px-4" style="display:none;">
+                    <!-- Platform subscription table and plans will be injected here dynamically -->
+                </div>
+                <div class="subscription-plans-body pb-4" {{#if apiInfo.tokenBasedSubscriptionEnabled}}style="display:none;"{{else if (eq apiInfo.gatewayType "wso2/api-platform")}}style="display:none;"{{/if}}>
+                    <div class="subscription-plans-title small">Subscription Plans</div>
+                    <p class="subscription-plans-subtitle">Please select the most suitable subscription plan from the
+                        options
+                        available for this API</p>
+                    <div class="row row-gap-4 pt-3">
+                        {{#each subscriptionPolicyDetails}}
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div id="subscriptionCard-{{policyID}}" class="card dev-card subscription-card">
+                                <div class="card-body align-items-center text-center p-0">
+                                    <span class="subscription-plans-card-title">{{displayName}}</h5>
+                                        <h1 class="subscription-plans-request-count">{{requestCount}}</h1>
+                                        <p class="subscription-plans-card-subtitle pb-4 pt-0">requests per minutes</p>
+                                                {{#if ../apiInfo.tokenBasedSubscriptionEnabled}}
+                                                    <button id="subscribe-btn-{{policyID}}" type="button"
+                                                        class="common-btn-primary p-1 ps-2 pe-2 w-100 subscription-plan-subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                        data-org-id="{{@root.orgID}}"
+                                                        data-api-id="{{#if apiID}}{{apiID}}{{else}}{{../apiID}}{{/if}}"
+                                                        data-policy-name="{{policyName}}"
+                                                        data-display-name="{{displayName}}"
+                                                        onclick="handlePlanSubscription(this)">Subscribe</button>
+                                                {{else if (eq ../apiInfo.gatewayType "wso2/api-platform")}}
+                                                    <button id="subscribe-btn-{{policyID}}" type="button"
+                                                        class="common-btn-primary p-1 ps-2 pe-2 w-100 subscription-plan-subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                        data-org-id="{{@root.orgID}}"
+                                                        data-api-id="{{#if apiID}}{{apiID}}{{else}}{{../apiID}}{{/if}}"
+                                                        data-policy-name="{{policyName}}"
+                                                        data-display-name="{{displayName}}"
+                                                        onclick="handlePlanSubscription(this)">Subscribe</button>
+                                                {{else}}
+                                                    {{!-- App-based subscription flow: show dropdown above a full-width Subscribe button --}}
+                                                    <div class="p-3 d-flex flex-column align-items-stretch">
+                                                        <div class="mb-2">
+                                                            <div class="custom-dropdown show" id="customDropdown-{{policyID}}">
+                                                                <input type="hidden" id="selectedAppId-{{policyID}}" value="" />
+                                                                <div class="custom-select-container">
+                                                                    <div class="select-selected" aria-expanded="false">
+                                                                        <span class="selected-text">Create an app</span>
+                                                                        <span class="select-arrow"></span>
+                                                                    </div>
+                                                                    <div class="select-items" role="listbox">
+                                                                        <div class="select-search-container">
+                                                                            <input type="text" class="select-search-input {{#if @root.isReadOnlyMode}}d-none{{/if}}" placeholder="Find or create an application..."
+                                                                                aria-label="Search applications">
+                                                                        </div>
+                                                                        <div class="select-items-container">
+                                                                            {{#each ../applications}}
+                                                                            <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}" data-app-name="{{name}}">
+                                                                                <span>{{name}}</span>
+                                                                                <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
+                                                                                    alt="Subscribed" class="subscription-icon" style="display: {{#if subscribed}}inline-block{{else}}none{{/if}};" />
+                                                                            </div>
+                                                                            {{/each}}
+                                                                        </div>
+                                                                        <div class="create-app-container" style="display: none;">
+                                                                            <div class="create-app-option" role="button">
+                                                                                Create application "<span class="search-term"></span>"
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <button id="subscribe-btn-{{policyID}}" type="button"
+                                                            class="common-btn-primary w-100 subscription-plan-subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                            onclick="showSubscribeButtonLoading(this); subscribe('{{@root.orgID}}', '', '{{../apiID}}', '{{../apiReferenceID}}', '{{policyID}}', '{{policyName}}')">Subscribe</button>
+                                                    </div>
+                                                {{/if}}
+                                </div>
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end mb-3" id="applicationKeyUpdateButtonContainer">
+                    <button class="common-btn-outlined pr-3 me-3" type="button"
+                        onclick="closeModal('planModal-{{apiID}}')">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
