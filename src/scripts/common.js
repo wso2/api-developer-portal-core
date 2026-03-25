@@ -122,9 +122,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Update the submenu links with the correct API ID and base path
                 document.getElementById('api-overview').href = `${basePath}/api/${apiId}`;
                 document.getElementById('api-docs').href = `${basePath}/api/${apiId}/docs/specification`;
+                document.getElementById('api-subscriptions').href = `${basePath}/api/${apiId}/subscriptions`;
 
                 // Set active submenu item
-                if (currentPath.includes('/docs')) {
+                if (currentPath.includes('/subscriptions')) {
+                    document.getElementById('api-subscriptions')?.classList.add('active');
+                } else if (currentPath.includes('/docs')) {
                     document.getElementById('api-docs')?.classList.add('active');
                 } else {
                     document.getElementById('api-overview')?.classList.add('active');
@@ -256,7 +259,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
                 
                 // Enable the Subscribe button
-                const subscribeButton = parentCard.querySelector('.subscribe-btn');
+                const subscribeButton = parentCard.querySelector('.subscription-plan-subscribe-btn[disabled]') || parentCard.querySelector('.common-btn-primary[disabled]');
                 if (subscribeButton) {
                     subscribeButton.removeAttribute('disabled');
                 }
@@ -285,7 +288,7 @@ document.addEventListener("DOMContentLoaded", function () {
     apiCards.forEach(card => {
         const dropdown = card.querySelector(".custom-dropdown");
 
-        if (dropdown) {
+        if (dropdown && !dropdown.closest('.modal')) {
             // Custom select functionality
             const selectSelected = dropdown.querySelector(".select-selected");
             const selectItems = dropdown.querySelector(".select-items");
@@ -634,7 +637,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const subscriptionCards = document.querySelectorAll(".subscription-card");
     subscriptionCards.forEach(card => {
         const dropdown = card.querySelector(".custom-dropdown");
-        const subscribeBtn = card.querySelector(".common-btn-primary");
+        const subscribeBtn = card.querySelector(".subscription-plan-subscribe-btn") || card.querySelector(".common-btn-primary");
 
         if (dropdown && subscribeBtn) {
             // Custom select functionality
@@ -666,7 +669,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                     
                     // Check if this app is already subscribed (disabled)
-                    const subscribeButton = card.querySelector(".subscribe-btn");
+                    const subscribeButton = card.querySelector(".subscription-plan-subscribe-btn[disabled]") || card.querySelector(".common-btn-primary[disabled]");
                     if (subscribeButton) {
                         subscribeButton.removeAttribute("disabled");
                     }
@@ -754,7 +757,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                     
                     // Enable the Subscribe button by removing the disabled attribute
-                    const subscribeButton = card.querySelector(".subscribe-btn");
+                    const subscribeButton = card.querySelector(".subscription-plan-subscribe-btn[disabled]") || card.querySelector(".common-btn-primary[disabled]");
                     if (subscribeButton) {
                         subscribeButton.removeAttribute("disabled");
                     }

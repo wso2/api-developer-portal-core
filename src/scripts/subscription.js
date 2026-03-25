@@ -153,7 +153,32 @@ function hideElementById(elementId) {
 
 function closeModal(elementId) {
     hideElementById(elementId);
-    document.querySelector("form").reset();
+
+    // Scope form reset to within the modal, not document-wide
+    var modalEl = elementId ? document.getElementById(elementId) : null;
+    var form = modalEl ? modalEl.querySelector('form') : null;
+    if (form) form.reset();
+
+    if (elementId) {
+        // Clear inline token display so it's fresh next time the modal opens
+        var apiId = elementId.replace('planModal-', '');
+        var tokenArea = document.getElementById('subscriptionTokenArea-' + apiId);
+        if (tokenArea) { tokenArea.innerHTML = ''; tokenArea.style.display = 'none'; }
+
+        if (window.__platformSubscriptionChanged) {
+            window.__platformSubscriptionChanged = false;
+            var apiCard = document.getElementById('apiCard-' + apiId);
+            if (apiCard) {
+                var flag = apiCard.querySelector('.subscription-flag');
+                if (flag) {
+                    var hasActiveSubs = (window.existingPlatformSubscriptions || []).some(function(s) {
+                        return s.status === 'ACTIVE';
+                    });
+                    flag.style.display = hasActiveSubs ? 'block' : 'none';
+                }
+            }
+        }
+    }
 }
 
 window.onclick = function (event) {
@@ -270,12 +295,21 @@ async function handleSubscribe(appId, apiName, apiVersion, apiRefId) {
 function loadModal(modalID) {
     const modal = document.getElementById(modalID);
     modal.style.display = 'flex';
+    if (typeof prepareSubscriptionModal === 'function') {
+        try { prepareSubscriptionModal(modalID); } catch (e) { /* noop */ }
+    }
 }
 
-
 function handleAppBasedSubscription(btnElement) {
-    showSubscribeButtonLoading(btnElement);
+    // If a plan modal exists for this API, open the modal to let the user choose/create app and confirm.
     const { orgId, apiId, apiReferenceId, policyId, policyName } = btnElement.dataset;
+    const modalId = 'planModal-' + apiId;
+    if (document.getElementById(modalId)) {
+        loadModal(modalId);
+        return;
+    }
+
+    showSubscribeButtonLoading(btnElement);
     subscribe(orgId, '', apiId, apiReferenceId, policyId, policyName);
 }
 

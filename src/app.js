@@ -16,29 +16,28 @@
  * under the License.
  */
 /* eslint-disable no-undef */
-
-const express = require("express");
-const { engine } = require("express-handlebars");
-const passport = require("passport");
-const session = require("express-session");
-const pgSession = require("connect-pg-simple")(session);
-const { Pool } = require("pg");
-const path = require("path");
-const http = require("http");
-const https = require("https");
-const fs = require("fs");
-const logger = require("./config/logger");
-const { auditMiddleware } = require("./middlewares/auditLogger");
-const authRoute = require("./routes/authRoute");
-const devportalRoute = require("./routes/devportalRoute");
-const orgContent = require("./routes/orgContentRoute");
-const apiContent = require("./routes/apiContentRoute");
-const applicationContent = require("./routes/applicationsContentRoute");
-const sdkJobService = require("./services/sdkJobService");
-const customContent = require("./routes/customPageRoute");
-const subscriptionsContent = require("./routes/subscriptionsContentRoute");
-const config = require(process.cwd() + "/config.json");
-const Handlebars = require("handlebars");
+const express = require('express');
+const { engine } = require('express-handlebars');
+const passport = require('passport');
+const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
+const { Pool } = require('pg');
+const path = require('path');
+const http = require('http');
+const https = require('https');
+const fs = require('fs');
+const logger = require('./config/logger');
+const { auditMiddleware } = require('./middlewares/auditLogger');
+const authRoute = require('./routes/authRoute');
+const devportalRoute = require('./routes/devportalRoute');
+const orgContent = require('./routes/orgContentRoute');
+const apiContent = require('./routes/apiContentRoute');
+const applicationContent = require('./routes/applicationsContentRoute');
+const sdkJobService = require('./services/sdkJobService');
+const customContent = require('./routes/customPageRoute');
+const subscriptionsContent = require('./routes/subscriptionsContentRoute');
+const config = require(process.cwd() + '/config.json');
+const Handlebars = require('handlebars');
 const constants = require("./utils/constants");
 const designRoute = require("./routes/designModeRoute");
 const settingsRoute = require("./routes/configureRoute");
@@ -316,15 +315,10 @@ Handlebars.registerHelper("maskToken", function (token) {
   return "****" + token.slice(-4);
 });
 
-Handlebars.registerHelper(
-  "isCurrentPlan",
-  function (policyName, platformSubscriptions) {
+Handlebars.registerHelper('isCurrentPlan', function (policyName, platformSubscriptions) {
     if (!Array.isArray(platformSubscriptions) || !policyName) return false;
-    return platformSubscriptions.some(
-      (sub) => sub.subscriptionPlanName === policyName,
-    );
-  },
-);
+    return platformSubscriptions.some(sub => sub.subscriptionPlanName === policyName);
+});
 
 // #endregion
 
