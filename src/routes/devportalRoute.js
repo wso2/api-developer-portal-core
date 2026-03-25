@@ -69,6 +69,7 @@ router.put(
     multipartHandler.fields([
         {name: 'apiDefinition', maxCount: 1},
         {name: 'schemaDefinition', maxCount: 1},
+        {name: 'apiArtifact', maxCount: 1},
     ]),
     apiMetadataService.updateAPIMetadata);
 router.delete('/organizations/:orgId/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIMetadata);
@@ -101,6 +102,7 @@ router.put(
     multipartHandler.fields([
         {name: 'apiDefinition', maxCount: 1},
         {name: 'schemaDefinition', maxCount: 1},
+        {name: 'apiArtifact', maxCount: 1},
     ]),
     apiMetadataService.updateAPIMetadata); // s2s applied
 router.delete('/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIMetadata); // s2s applied
