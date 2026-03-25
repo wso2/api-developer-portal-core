@@ -32,8 +32,25 @@ async function subscribePlatformGateway(orgID, apiId, planName, applicationId) {
         const responseData = await response.json();
 
         if (response.ok) {
-            await showSubscriptionTokenModal(responseData.subscriptionToken, planName);
-            window.location.reload();
+            window.__platformSubscriptionChanged = true;
+            window.existingPlatformSubscriptions = window.existingPlatformSubscriptions || [];
+            window.existingPlatformSubscriptions.push({
+                subscriptionId: responseData.subscriptionId,
+                subscriptionPlanName: planName,
+                status: 'ACTIVE'
+            });
+            const token = responseData.subscriptionToken;
+            const modalId = 'planModal-' + apiId;
+            const modalEl = document.getElementById(modalId);
+            if (modalEl && modalEl.style.display && modalEl.style.display !== 'none') {
+                try {
+                    showSubscriptionTokenInModal(apiId, token, planName);
+                } catch (e) {
+                    await showSubscriptionTokenModal(token, planName);
+                }
+            } else {
+                await showSubscriptionTokenModal(token, planName);
+            }
         } else {
             await showAlert(`Failed to subscribe: ${responseData.description || 'Unknown error'}`, 'error');
         }
@@ -47,6 +64,16 @@ async function handlePlanSubscription(btnElement) {
     const apiId = btnElement.dataset.apiId;
     const planName = btnElement.dataset.policyName;
     const displayName = btnElement.dataset.displayName;
+
+    // If a modal exists for this API and the button is NOT inside it, open the modal.
+    // If the button IS inside the modal, proceed directly to subscribe.
+    const modalId = 'planModal-' + apiId;
+    const modalEl = document.getElementById(modalId);
+    if (modalEl && !btnElement.closest('#' + modalId)) {
+        loadModal(modalId);
+        return;
+    }
+
     const existingSubs = window.existingPlatformSubscriptions || [];
 
     if (existingSubs.length === 0) {
@@ -89,8 +116,9 @@ async function togglePlatformSubscriptionStatus(orgID, subscriptionId, newStatus
         });
 
         if (response.ok) {
+            window.__platformSubscriptionChanged = true;
             await showAlert(`Subscription ${newStatus === 'ACTIVE' ? 'activated' : 'deactivated'} successfully!`, 'success');
-            window.location.reload();
+            refreshPlatformModalOrReload(orgID);
         } else {
             const responseData = await response.json();
             await showAlert(`Failed to update subscription: ${responseData.description || 'Unknown error'}`, 'error');
@@ -111,14 +139,172 @@ async function confirmDeletePlatformSubscription(orgID, subscriptionId) {
         });
 
         if (response.ok) {
+            window.__platformSubscriptionChanged = true;
             await showAlert('Subscription deleted successfully!', 'success');
-            window.location.reload();
+            refreshPlatformModalOrReload(orgID);
         } else {
             const responseData = await response.json();
             await showAlert(`Failed to delete subscription: ${responseData.description || 'Unknown error'}`, 'error');
         }
     } catch (error) {
         await showAlert(`Error: ${error.message}`, 'error');
+    }
+}
+
+function refreshPlatformModalOrReload(orgID) {
+    // If inside a visible modal, re-render its content instead of reloading the page
+    var visibleModal = document.querySelector('.modal.custom-modal[style*="flex"]');
+    if (visibleModal && visibleModal.id && typeof prepareSubscriptionModal === 'function') {
+        prepareSubscriptionModal(visibleModal.id);
+        return;
+    }
+    // On the landing page, refresh inline without full reload
+    if (document.getElementById('subscriptionPlans')) {
+        refreshLandingPageSubscriptions();
+        return;
+    }
+    window.location.reload();
+}
+
+async function refreshLandingPageSubscriptions() {
+    var planBtn = document.querySelector('#subscriptionPlans [data-api-id]');
+    var orgID = window.__subscriptionOrgID || (planBtn && planBtn.dataset.orgId);
+    if (!orgID) { window.location.reload(); return; }
+
+    var apiId = planBtn ? planBtn.dataset.apiId : null;
+    if (!apiId) { window.location.reload(); return; }
+
+    try {
+        var resp = await fetch('/devportal/organizations/' + encodeURIComponent(orgID) + '/api-platform-subscriptions?apiId=' + encodeURIComponent(apiId), { headers: { 'Content-Type': 'application/json' } });
+        if (!resp.ok) { window.location.reload(); return; }
+        var data = await resp.json();
+        var existing = data.list || data || [];
+
+        // Update window state
+        window.existingPlatformSubscriptions = existing.map(function(s) {
+            return { subscriptionId: s.subscriptionId, subscriptionPlanName: s.subscriptionPlanName, status: s.status };
+        });
+        window.__tokenMeta = window.__tokenMeta || {};
+        existing.forEach(function(sub) {
+            window.__tokenMeta[sub.subscriptionId] = { maskedToken: sub.maskedToken, subscriptionPlanName: sub.subscriptionPlanName, status: sub.status };
+        });
+
+        // Re-render existing subscriptions table
+        var existingSection = document.querySelector('#subscriptionPlans .existing-subscriptions');
+        if (existing.length > 0) {
+            if (!existingSection) {
+                existingSection = document.createElement('div');
+                existingSection.className = 'existing-subscriptions mb-4';
+                var plansHeader = document.querySelector('#subscriptionPlans .container-header');
+                if (plansHeader) {
+                    plansHeader.parentNode.insertBefore(existingSection, plansHeader);
+                } else {
+                    document.querySelector('#subscriptionPlans .container-fluid').prepend(existingSection);
+                }
+            }
+            existingSection.innerHTML = '<div class="container-header mb-4">Subscriptions</div>';
+            var table = document.createElement('table');
+            table.className = 'table';
+            table.innerHTML = '<thead><tr><th>Plan</th><th>Status</th><th>Subscription Token</th><th>Actions</th></tr></thead><tbody></tbody>';
+            var tbody = table.querySelector('tbody');
+            existing.forEach(function(sub) {
+                var tr = document.createElement('tr');
+
+                // Plan name cell
+                var tdPlan = document.createElement('td');
+                tdPlan.textContent = sub.subscriptionPlanName || '';
+                tr.appendChild(tdPlan);
+
+                // Status cell
+                var tdStatus = document.createElement('td');
+                var badge = document.createElement('span');
+                badge.className = 'badge ' + (sub.status === 'ACTIVE' ? 'bg-success' : 'bg-secondary');
+                badge.textContent = sub.status || '';
+                tdStatus.appendChild(badge);
+                tr.appendChild(tdStatus);
+
+                // Token cell
+                var tdToken = document.createElement('td');
+                var tokenDisplay = document.createElement('div');
+                tokenDisplay.className = 'token-display';
+                var code = document.createElement('code');
+                code.className = 'masked-token';
+                code.id = 'token-' + sub.subscriptionId;
+                code.dataset.revealed = 'false';
+                code.textContent = '****';
+                var revealBtn = document.createElement('button');
+                revealBtn.className = 'btn btn-sm btn-outline-secondary';
+                revealBtn.title = 'Reveal token';
+                revealBtn.innerHTML = '<i class="bi bi-eye"></i>';
+                revealBtn.dataset.subscriptionId = sub.subscriptionId;
+                revealBtn.addEventListener('click', function() { toggleTokenVisibility(this.dataset.subscriptionId); });
+                var copyBtn = document.createElement('button');
+                copyBtn.className = 'btn btn-sm btn-outline-secondary';
+                copyBtn.title = 'Copy token';
+                copyBtn.innerHTML = '<i class="bi bi-clipboard"></i>';
+                copyBtn.dataset.subscriptionId = sub.subscriptionId;
+                copyBtn.addEventListener('click', function() { copySubscriptionToken(this.dataset.subscriptionId); });
+                tokenDisplay.appendChild(code);
+                tokenDisplay.appendChild(revealBtn);
+                tokenDisplay.appendChild(copyBtn);
+                tdToken.appendChild(tokenDisplay);
+                tr.appendChild(tdToken);
+
+                // Actions cell
+                var tdActions = document.createElement('td');
+                var newStatus = sub.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+                var toggleBtn = document.createElement('button');
+                toggleBtn.className = 'btn btn-sm btn-outline-warning';
+                toggleBtn.innerHTML = sub.status === 'ACTIVE' ? '<i class="bi bi-pause-circle"></i>' : '<i class="bi bi-play-circle"></i>';
+                toggleBtn.dataset.orgId = orgID;
+                toggleBtn.dataset.subscriptionId = sub.subscriptionId;
+                toggleBtn.dataset.newStatus = newStatus;
+                toggleBtn.addEventListener('click', function() {
+                    togglePlatformSubscriptionStatus(this.dataset.orgId, this.dataset.subscriptionId, this.dataset.newStatus);
+                });
+                var deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn btn-sm btn-outline-danger';
+                deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                deleteBtn.dataset.orgId = orgID;
+                deleteBtn.dataset.subscriptionId = sub.subscriptionId;
+                deleteBtn.addEventListener('click', function() {
+                    confirmDeletePlatformSubscription(this.dataset.orgId, this.dataset.subscriptionId);
+                });
+                tdActions.appendChild(toggleBtn);
+                tdActions.appendChild(deleteBtn);
+                tr.appendChild(tdActions);
+
+                tbody.appendChild(tr);
+            });
+            existingSection.appendChild(table);
+        } else if (existingSection) {
+            existingSection.remove();
+        }
+
+        // Update plan card buttons: mark current plan or reset to Subscribe
+        var activePlanNames = existing
+            .filter(function(s) { return s.status === 'ACTIVE'; })
+            .map(function(s) { return (s.subscriptionPlanName || '').toLowerCase(); });
+
+        var planCards = document.querySelectorAll('#subscriptionPlans .subscription-card');
+        planCards.forEach(function(card) {
+            var btn = card.querySelector('.subscription-plan-subscribe-btn, .subscribe-btn, .current-plan-btn');
+            if (!btn) return;
+            var policyName = (btn.dataset.policyName || '').toLowerCase();
+            if (activePlanNames.indexOf(policyName) !== -1) {
+                btn.textContent = 'Current Plan';
+                btn.disabled = true;
+                btn.classList.add('disabled', 'current-plan-btn');
+                btn.removeAttribute('onclick');
+            } else {
+                btn.textContent = 'Subscribe';
+                btn.disabled = false;
+                btn.classList.remove('disabled', 'current-plan-btn');
+                btn.setAttribute('onclick', 'handlePlanSubscription(this)');
+            }
+        });
+    } catch (e) {
+        window.location.reload();
     }
 }
 
@@ -259,7 +445,68 @@ function showSubscriptionTokenModal(token, planName) {
 
         overlay.querySelector('#closeTokenModal').addEventListener('click', () => {
             overlay.remove();
+            if (window.__platformSubscriptionChanged) {
+                window.__platformSubscriptionChanged = false;
+                if (document.getElementById('subscriptionPlans')) {
+                    refreshLandingPageSubscriptions();
+                } else {
+                    window.location.reload();
+                }
+            }
             resolve();
         });
     });
+}
+
+function showSubscriptionTokenInModal(apiId, token, planName) {
+    const area = document.getElementById('subscriptionTokenArea-' + apiId);
+    if (!area) {
+        return showSubscriptionTokenModal(token, planName);
+    }
+
+    area.innerHTML = '';
+    const wrapper = document.createElement('div');
+    wrapper.className = 'p-3 mb-3 border rounded bg-light';
+
+    const title = document.createElement('div');
+    title.innerHTML = `<strong>Subscription Created</strong> — ${escapeHtml(planName)}`;
+
+    const tokenBlock = document.createElement('div');
+    tokenBlock.className = 'd-flex gap-2 align-items-center mt-2';
+    const code = document.createElement('code');
+    code.textContent = token;
+    code.style.wordBreak = 'break-all';
+    code.className = 'p-2 bg-white border rounded flex-grow-1';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'btn btn-sm btn-outline-secondary';
+    copyBtn.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
+    copyBtn.addEventListener('click', function() {
+        navigator.clipboard.writeText(token).then(() => showAlert('Subscription token copied to clipboard!', 'success'))
+            .catch(() => showAlert('Could not copy token', 'error'));
+    });
+
+    tokenBlock.appendChild(code);
+    tokenBlock.appendChild(copyBtn);
+    wrapper.appendChild(title);
+    wrapper.appendChild(tokenBlock);
+
+    const info = document.createElement('div');
+    info.className = 'alert alert-warning mt-2 mb-0';
+    info.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Use this token as the <code>Subscription-Key</code> header when invoking the API.';
+    wrapper.appendChild(info);
+
+    area.appendChild(wrapper);
+    area.style.display = 'block';
+
+    // Refresh the subscriptions/plans below the token with updated data
+    const modalEl = area.closest('.modal');
+    if (modalEl && modalEl.id && typeof prepareSubscriptionModal === 'function') {
+        window.__preserveTokenArea = true;
+        prepareSubscriptionModal(modalEl.id);
+    }
+}
+
+function escapeHtml(unsafe) {
+    return String(unsafe).replace(/[&<>"'`]/g, function (m) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;","`":"&#96;"})[m]; });
 }

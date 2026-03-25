@@ -24,6 +24,7 @@ const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const util = require('../utils/util');
 const APIDTO = require('../dto/apiDTO');
+const apiMetadataService = require('../services/apiMetadataService');
 
 const controlPlaneUrl = config.controlPlane.url;
 
@@ -161,4 +162,151 @@ const loadSubscriptions = async (req, res) => {
     }
 };
 
-module.exports = { loadSubscriptions };
+const loadAPISubscriptions = async (req, res) => {
+
+    let html;
+    const { orgName, viewName, apiHandle } = req.params;
+
+    try {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const orgID = orgDetails.ORG_ID;
+        const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
+        req.cpOrgID = cpOrgID;
+
+        if (!req.user) {
+            return res.redirect(`/${orgName}${constants.ROUTE.VIEWS_PATH}${viewName}/login`);
+        }
+        const userID = req.user.sub;
+        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+
+        const apiID = await apiDao.getAPIId(orgID, apiHandle);
+        if (!apiID) {
+            const templateContent = {
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+                devportalMode: devportalMode,
+                errorMessage: constants.ERROR_MESSAGE.API_NOT_FOUND,
+            };
+            html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+            return res.status(404).send(html);
+        }
+        let metaData = await apiMetadataService.getMetadataFromDB(orgID, apiID, viewName);
+        if (metaData && typeof metaData === 'object') {
+            metaData = JSON.parse(JSON.stringify(metaData));
+            const images = metaData.apiInfo?.apiImageMetadata;
+            if (images) {
+                for (const key in images) {
+                    images[key] = `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}${constants.ROUTE.API_FILE_PATH}${apiID}${constants.API_TEMPLATE_FILE_NAME}${images[key]}`;
+                }
+            }
+        } else {
+            metaData = null;
+        }
+        const apiRefId = metaData?.apiReferenceID || apiID;
+
+        // 1. Load TOKEN-BASED subscriptions filtered by this API
+        let tokenBasedSubscriptions = [];
+        if (config.controlPlane?.enabled !== false) {
+            try {
+                const cpResponse = await util.invokeApiRequest(
+                    req, 'GET',
+                    `${controlPlaneUrl}/api-platform-subscriptions?apiId=${encodeURIComponent(apiRefId)}`
+                );
+                const cpSubs = cpResponse.list || cpResponse || [];
+
+                tokenBasedSubscriptions = cpSubs.map(sub => ({
+                    id: sub.subscriptionId,
+                    type: 'TOKEN_BASED',
+                    apiName: metaData?.apiInfo?.apiName || sub.apiId,
+                    apiVersion: metaData?.apiInfo?.apiVersion || '',
+                    apiHandle: apiHandle,
+                    apiRefId: apiRefId,
+                    planName: sub.subscriptionPlanName || '',
+                    applicationName: sub.applicationName || null,
+                    applicationId: sub.applicationId || null,
+                    status: sub.status,
+                    subscriptionToken: sub.subscriptionToken,
+                    createdAt: sub.createdTime || null,
+                }));
+            } catch (cpError) {
+                logger.warn('Failed to load platform subscriptions from CP for API', {
+                    error: cpError.message, orgID, apiHandle
+                });
+            }
+        }
+
+        // 2. Load APP-BASED subscriptions filtered by this API
+        const applications = await adminDao.getApplications(orgID, userID);
+        const appBasedSubscriptions = [];
+        for (const app of applications) {
+            const subscribedAPIs = await adminDao.getSubscribedAPIs(orgID, app.APP_ID);
+            for (const sub of subscribedAPIs) {
+                const api = new APIDTO(sub);
+                if (api.apiReferenceID !== apiRefId) {
+                    continue;
+                }
+                const subMapping = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues;
+                const subPolicy = await apiDao.getSubscriptionPolicy(subMapping.POLICY_ID, orgID);
+                appBasedSubscriptions.push({
+                    id: subMapping.SUB_ID,
+                    type: 'APP_BASED',
+                    apiName: api.apiInfo.apiName,
+                    apiVersion: api.apiInfo.apiVersion,
+                    apiHandle: api.apiHandle,
+                    apiRefId: api.apiReferenceID,
+                    planName: subPolicy ? subPolicy.dataValues.POLICY_NAME : '',
+                    applicationName: app.NAME,
+                    appId: app.APP_ID,
+                    status: 'ACTIVE',
+                    subscriptionToken: null,
+                    createdAt: subMapping.createdAt || null,
+                });
+            }
+        }
+
+        // 3. Merge and sort (newest first)
+        const allSubscriptions = [...tokenBasedSubscriptions, ...appBasedSubscriptions]
+            .sort((a, b) => {
+                const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+                const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+                return dateB - dateA;
+            });
+
+        const profile = {
+            firstName: req.user.firstName,
+            lastName: req.user.lastName,
+            email: req.user.email,
+            imageURL: req.user.picture || req.user.imageURL || '/images/default-profile.png',
+        };
+
+        const templateContent = {
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+            profile: profile,
+            devportalMode: devportalMode,
+            orgID: orgID,
+            subscriptions: allSubscriptions,
+            apiMetadata: metaData,
+            apiHandle: apiHandle,
+            isReadOnlyMode: config.readOnlyMode,
+        };
+
+        html = await renderTemplateFromAPI(templateContent, orgID, orgName, 'pages/api-subscriptions', viewName);
+        res.send(html);
+    } catch (error) {
+        logger.error('Error loading API subscriptions page', {
+            error: error.message,
+            stack: error.stack,
+            orgName,
+            apiHandle
+        });
+        const devportalMode = constants.API_TYPE.DEFAULT;
+        const templateContent = {
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+            devportalMode: devportalMode,
+            errorMessage: constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE,
+        };
+        html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
+        res.status(500).send(html);
+    }
+};
+
+module.exports = { loadSubscriptions, loadAPISubscriptions };
