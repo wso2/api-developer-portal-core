@@ -44,6 +44,8 @@ module.exports = {
         UNPUBLISHED: "CREATED"
     },
     API_TYPE: {
+        REST: "REST",
+        SOAP: "SOAP",
         MCP: "MCP",
         MCP_ONLY: "MCPSERVERSONLY",
         API_PROXIES: "APISONLY",
@@ -74,6 +76,9 @@ module.exports = {
         HTML: 'text/html',
         TEXT: 'text/plain',
         JSON: 'application/json',
+        ZIP: 'application/zip',
+        ZIP_COMPRESSED: 'application/x-zip-compressed',
+        ZIP_MULTIPART: 'multipart/x-zip',
         YAML: 'application/x-yaml',
         XML: 'application/xml',
         CSS: 'text/css',
@@ -170,6 +175,14 @@ module.exports = {
         API_SPECIFICATION_PATH: 'specification',
         API_DEFINITION_GRAPHQL: 'apiDefinition.graphql',
         API_DEFINITION_XML: 'apiDefinition.xml',
+    },
+    API_IMPORT: {
+        MANIFEST_FILE_NAME: './manifest.yaml',
+        API_METADATA_PATH: './devportal-api.yaml',
+        API_DEFINITION_PATH: './devportal-api-definition.yaml',
+        DOCS_PATH: './docs',
+        API_CONTENT_PATH: './apiContent',
+        IMAGE_EXTENSIONS: ['.svg', '.jpg', '.jpeg', '.png', '.gif']
     },
     DEFAULT_SUBSCRIPTION_PLANS: [
         {

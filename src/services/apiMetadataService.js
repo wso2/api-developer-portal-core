@@ -40,6 +40,15 @@ const createAPIMetadata = async (req, res) => {
     logger.info('Creating API metadata...', {
         orgId
     });
+
+    if (util.isZipFileUpload(req.files?.apiArtifact?.[0])) {
+        logger.info('API artifact ZIP file detected. Routing through API import flow.', {
+            orgId,
+            fileName: req.files.apiArtifact[0].originalname
+        });
+        return importAPIZip(req, res);
+    }
+
     const apiMetadata = JSON.parse(req.body.apiMetadata);
     let apiDefinitionFile, apiFileName = "";
     if (req.files?.apiDefinition?.[0]) {
@@ -484,6 +493,383 @@ const deleteAPIMetadata = async (req, res) => {
             util.handleError(res, error);
         }
     });
+};
+
+const IMPORT_DEFAULTS = constants.API_IMPORT;
+const IMPORT_IMAGE_EXTENSIONS = new Set(constants.API_IMPORT.IMAGE_EXTENSIONS);
+
+const buildImportAPIMetadata = (apiMetadataPayload, apiType) => {
+    const metadata = apiMetadataPayload?.metadata || {};
+    const spec = apiMetadataPayload?.spec || {};
+    const businessInfo = spec.businessInformation || {};
+    const visibility = (spec.visibility || constants.API_VISIBILITY.PUBLIC).toUpperCase();
+
+    if (!metadata.name) {
+        throw new Sequelize.ValidationError("Missing required field: metadata.name in devportal-api.yaml");
+    }
+    if (!spec.displayName) {
+        throw new Sequelize.ValidationError("Missing required field: spec.displayName in devportal-api.yaml");
+    }
+    if (!spec.version) {
+        throw new Sequelize.ValidationError("Missing required field: spec.version in devportal-api.yaml");
+    }
+    if (![constants.API_VISIBILITY.PUBLIC, constants.API_VISIBILITY.PRIVATE].includes(visibility)) {
+        throw new Sequelize.ValidationError("spec.visibility must be either PUBLIC or PRIVATE");
+    }
+    if (labels !== undefined && !Array.isArray(labels)) {
+        throw new Sequelize.ValidationError("spec.labels must be an array");
+    }
+    if (visibleGroups !== undefined && !Array.isArray(visibleGroups)) {
+        throw new Sequelize.ValidationError("spec.visibleGroups must be an array");
+    }
+    if (visibility === constants.API_VISIBILITY.PUBLIC && visibleGroups?.length > 0) {
+        throw new Sequelize.ValidationError(
+            "Visible groups cannot be specified for a public API"
+        );
+    }
+
+    return {
+        apiInfo: {
+            referenceID: spec.referenceID || null,
+            apiStatus: constants.API_STATUS.PUBLISHED,
+            provider: spec.provider || "WSO2",
+            apiName: spec.displayName,
+            apiHandle: metadata.name,
+            apiDescription: spec.description || "",
+            apiVersion: spec.version,
+            apiType,
+            visibility,
+            visibleGroups: Array.isArray(spec.visibleGroups) ? spec.visibleGroups : [],
+            tags: Array.isArray(spec.tags) ? spec.tags : [],
+            labels: Array.isArray(spec.labels) ? spec.labels : undefined,
+            owners: {
+                businessOwner: businessInfo.businessOwner,
+                businessOwnerEmail: businessInfo.businessOwnerEmail,
+                technicalOwner: businessInfo.technicalOwner,
+                technicalOwnerEmail: businessInfo.technicalOwnerEmail,
+            }
+        },
+        endPoints: {
+            sandboxURL: spec.endpoints?.sandboxUrl || "",
+            productionURL: spec.endpoints?.productionUrl || ""
+        },
+        subscriptionPolicies: Array.isArray(spec.subscriptionPolicies)
+            ? spec.subscriptionPolicies
+            : []
+    };
+};
+
+const resolveSubscriptionPolicyMappings = async (orgId, policyNames, apiId, transaction) => {
+    if (!Array.isArray(policyNames) || policyNames.length === 0) {
+        return [];
+    }
+
+    const mappedPolicies = [];
+    for (const policyName of policyNames) {
+        if (typeof policyName !== "string" || !policyName.trim()) {
+            throw new Sequelize.ValidationError("Invalid subscription policy in devportal-api.yaml");
+        }
+        const subscriptionPolicy = await apiDao.getSubscriptionPolicyByName(orgId, policyName, transaction);
+        if (!subscriptionPolicy) {
+            throw new Sequelize.EmptyResultError(`Subscription policy not found: ${policyName}`);
+        }
+        mappedPolicies.push({ apiID: apiId, policyID: subscriptionPolicy.POLICY_ID });
+    }
+    return mappedPolicies;
+};
+
+const readApiDefinitionForImport = async (apiDefinitionPath, apiType) => {
+    const rawContent = await fs.readFile(apiDefinitionPath, constants.CHARSET_UTF8);
+    if (apiType === constants.API_TYPE.GRAPHQL) {
+        return {
+            apiDefinitionFileName: constants.FILE_NAME.API_DEFINITION_GRAPHQL,
+            apiDefinitionContent: rawContent
+        };
+    }
+
+    const parsedDefinition = util.parseStructuredData(rawContent, path.basename(apiDefinitionPath));
+    return {
+        apiDefinitionFileName: constants.FILE_NAME.API_DEFINITION_FILE_NAME,
+        apiDefinitionContent: JSON.stringify(parsedDefinition)
+    };
+};
+
+const buildAPIContentFromImport = async (docsPath, apiContentPath) => {
+    const apiContent = [];
+    const imageMetadata = {};
+    const contentUniquenessCheck = new Set();
+    let docsImported = 0;
+    let apiContentImported = 0;
+    let imagesImported = 0;
+
+    if (docsPath && await util.fileExists(docsPath)) {
+        const docsStat = await fs.stat(docsPath);
+        if (!docsStat.isDirectory()) {
+            throw new Sequelize.ValidationError("Configured docsPath is not a directory");
+        }
+        const docFiles = await util.readDirectoryFilesRecursively(docsPath);
+        for (const docFile of docFiles) {
+            const extension = path.extname(docFile.relativePath).toLowerCase();
+            if (extension !== constants.FILE_EXTENSIONS.MD) {
+                continue;
+            }
+            const fileName = path.basename(docFile.relativePath);
+            const relativeDir = path.dirname(docFile.relativePath).replace(/\\/g, "/");
+            const docTypeSuffix = relativeDir === "." ? "Other" : relativeDir;
+            const docType = `${constants.DOC_TYPES.DOC_ID}${docTypeSuffix}`;
+            const uniquenessKey = `${docType}:${fileName}`;
+            if (contentUniquenessCheck.has(uniquenessKey)) {
+                throw new Sequelize.ValidationError(`Duplicate documentation file found: ${fileName}`);
+            }
+            contentUniquenessCheck.add(uniquenessKey);
+            apiContent.push({
+                fileName,
+                content: await fs.readFile(docFile.absolutePath),
+                type: docType
+            });
+            docsImported++;
+        }
+    }
+
+    if (apiContentPath && await util.fileExists(apiContentPath)) {
+        const apiContentStat = await fs.stat(apiContentPath);
+        if (!apiContentStat.isDirectory()) {
+            throw new Sequelize.ValidationError("Configured apiContentPath is not a directory");
+        }
+        const apiContentFiles = await util.readDirectoryFilesRecursively(apiContentPath);
+        for (const webFile of apiContentFiles) {
+            const fileName = path.basename(webFile.relativePath);
+            const extension = path.extname(fileName).toLowerCase();
+            if (IMPORT_IMAGE_EXTENSIONS.has(extension)) {
+                const uniquenessKey = `${constants.DOC_TYPES.IMAGES}:${fileName}`;
+                if (contentUniquenessCheck.has(uniquenessKey)) {
+                    throw new Sequelize.ValidationError(`Duplicate apiContent image found: ${fileName}`);
+                }
+                contentUniquenessCheck.add(uniquenessKey);
+                apiContent.push({
+                    fileName,
+                    content: await fs.readFile(webFile.absolutePath),
+                    type: constants.DOC_TYPES.IMAGES
+                });
+                imageMetadata[path.parse(fileName).name] = fileName;
+                imagesImported++;
+                continue;
+            }
+
+            const uniquenessKey = `${constants.DOC_TYPES.API_LANDING}:${fileName}`;
+            if (contentUniquenessCheck.has(uniquenessKey)) {
+                throw new Sequelize.ValidationError(`Duplicate apiContent file found: ${fileName}`);
+            }
+            contentUniquenessCheck.add(uniquenessKey);
+            apiContent.push({
+                fileName,
+                content: await fs.readFile(webFile.absolutePath),
+                type: constants.DOC_TYPES.API_LANDING
+            });
+            apiContentImported++;
+        }
+    }
+
+    return {
+        apiContent,
+        imageMetadata,
+        docsImported,
+        apiContentImported,
+        imagesImported,
+    };
+};
+
+const importAPIZip = async (req, res) => {
+    const orgId = req.params.orgId;
+    const uploadedZip = req.file || (req.files?.apiArtifact?.[0] || null);
+    const importId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    let extractPath;
+    let uploadedZipPath = uploadedZip?.path;
+
+    logger.info("Importing API ZIP", {
+        orgId,
+        fileName: uploadedZip?.originalname
+    });
+
+    try {
+        if (!orgId) {
+            throw new Sequelize.ValidationError("Missing required path parameter: orgId");
+        }
+
+        if (!uploadedZipPath && uploadedZip?.buffer) {
+            const safeFileName = (uploadedZip.originalname || 'api-import.zip').replace(/[^a-zA-Z0-9._-]/g, '_');
+            uploadedZipPath = path.join('/tmp', 'api-import', orgId, `${importId}-${safeFileName}`);
+            await fs.mkdir(path.dirname(uploadedZipPath), { recursive: true });
+            await fs.writeFile(uploadedZipPath, uploadedZip.buffer);
+        }
+
+        if (!uploadedZipPath) {
+            throw new Sequelize.ValidationError("Missing zip file. Use multipart field 'apiArtifact'.");
+        }
+
+        extractPath = path.join("/tmp", "api-import", orgId, importId);
+        await fs.mkdir(extractPath, { recursive: true });
+        await util.unzipDirectory(uploadedZipPath, extractPath);
+
+        const archiveRootPath = await util.getArchiveRootPath(extractPath);
+
+        logger.info("Extracted API ZIP", {
+            archiveRootPath,
+            extractPath
+        });
+
+        const importConfig = {
+            apiMetadataPath: IMPORT_DEFAULTS.API_METADATA_PATH,
+            apiDefinitionPath: IMPORT_DEFAULTS.API_DEFINITION_PATH,
+            docsPath: IMPORT_DEFAULTS.DOCS_PATH,
+            apiContentPath: IMPORT_DEFAULTS.API_CONTENT_PATH,
+        };
+
+        const manifestPath = path.join(archiveRootPath, IMPORT_DEFAULTS.MANIFEST_FILE_NAME);
+        if (await util.fileExists(manifestPath)) {
+            const manifestRaw = await fs.readFile(manifestPath, constants.CHARSET_UTF8);
+            const manifest = util.parseStructuredData(manifestRaw, path.basename(manifestPath));
+
+            if (manifest.apiMetadataPath && typeof manifest.apiMetadataPath !== 'string') {
+                throw new Sequelize.ValidationError('manifest.apiMetadataPath must be a string');
+            }
+            if (manifest.apiDefinitionPath && typeof manifest.apiDefinitionPath !== 'string') {
+                throw new Sequelize.ValidationError('manifest.apiDefinitionPath must be a string');
+            }
+            if (manifest.docsPath && typeof manifest.docsPath !== 'string') {
+                throw new Sequelize.ValidationError('manifest.docsPath must be a string');
+            }
+            if (manifest.apiContentPath && typeof manifest.apiContentPath !== 'string') {
+                throw new Sequelize.ValidationError('manifest.apiContentPath must be a string');
+            }
+
+            importConfig.apiMetadataPath = manifest.apiMetadataPath || importConfig.apiMetadataPath;
+            importConfig.apiDefinitionPath = manifest.apiDefinitionPath || importConfig.apiDefinitionPath;
+            importConfig.docsPath = manifest.docsPath || importConfig.docsPath;
+            importConfig.apiContentPath = manifest.apiContentPath || importConfig.apiContentPath;
+        }
+
+        const apiMetadataPath = util.resolvePathInArchive(
+            archiveRootPath,
+            importConfig.apiMetadataPath,
+            IMPORT_DEFAULTS.API_METADATA_PATH
+        );
+        if (!(await util.fileExists(apiMetadataPath))) {
+            throw new Sequelize.ValidationError(`API metadata file not found: ${importConfig.apiMetadataPath}`);
+        }
+
+        const apiMetadataRaw = await fs.readFile(apiMetadataPath, constants.CHARSET_UTF8);
+        const apiMetadataPayload = util.parseStructuredData(apiMetadataRaw, path.basename(apiMetadataPath));
+
+        const apiType = util.toApiTypeFromKind(apiMetadataPayload.kind);
+        const importMetadata = buildImportAPIMetadata(apiMetadataPayload, apiType);
+        const definitionPath = util.resolvePathInArchive(
+            archiveRootPath,
+            importConfig.apiDefinitionPath,
+            IMPORT_DEFAULTS.API_DEFINITION_PATH
+        );
+
+        if (!(await util.fileExists(definitionPath))) {
+            throw new Sequelize.ValidationError(`API definition file not found: ${importConfig.apiDefinitionPath}`);
+        }
+
+        const docsPath = util.resolvePathInArchive(
+            archiveRootPath,
+            importConfig.docsPath,
+            IMPORT_DEFAULTS.DOCS_PATH
+        );
+        const apiContentPath = util.resolvePathInArchive(
+            archiveRootPath,
+            importConfig.apiContentPath,
+            IMPORT_DEFAULTS.API_CONTENT_PATH
+        );
+
+        const {
+            apiDefinitionFileName,
+            apiDefinitionContent,
+        } = await readApiDefinitionForImport(definitionPath, apiType);
+
+        const {
+            apiContent,
+            imageMetadata,
+            docsImported,
+            apiContentImported,
+            imagesImported,
+        } = await buildAPIContentFromImport(docsPath, apiContentPath);
+
+        importMetadata.endPoints.productionURL = changeEndpoint(importMetadata.endPoints.productionURL);
+        importMetadata.endPoints.sandboxURL = changeEndpoint(importMetadata.endPoints.sandboxURL);
+        normalizeGraphQLEndpoints(importMetadata);
+
+        let createdApiId;
+        await sequelize.transaction({ timeout: 60000 }, async (t) => {
+            const createdAPI = await apiDao.createAPIMetadata(orgId, importMetadata, t);
+            createdApiId = createdAPI.dataValues.API_ID;
+
+            const mappedPolicies = await resolveSubscriptionPolicyMappings(orgId,
+                importMetadata.subscriptionPolicies,
+                createdApiId,
+                t);
+            if (mappedPolicies.length > 0) {
+                await apiDao.createAPISubscriptionPolicy(mappedPolicies, createdApiId, t);
+            }
+
+            if (importMetadata.apiInfo.labels) {
+                await apiDao.createAPILabelMapping(orgId, createdApiId, importMetadata.apiInfo.labels, t);
+            } else {
+                await apiDao.createAPILabelMapping(orgId, createdApiId, ['default'], t);
+            }
+
+            await apiDao.storeAPIFile(
+                apiDefinitionContent,
+                apiDefinitionFileName,
+                createdApiId,
+                constants.DOC_TYPES.API_DEFINITION,
+                t
+            );
+
+            if (Object.keys(imageMetadata).length > 0) {
+                await apiDao.storeAPIImageMetadata(imageMetadata, createdApiId, t);
+            }
+            if (apiContent.length > 0) {
+                await apiDao.storeAPIFiles(apiContent, createdApiId, t);
+            }
+        });
+
+        res.status(201).send({
+            apiID: createdApiId,
+            apiHandle: importMetadata.apiInfo.apiHandle,
+            message: "API imported successfully",
+            imported: {
+                docs: docsImported,
+                apiContent: apiContentImported,
+                images: imagesImported
+            }
+        });
+    } catch (error) {
+        logger.error("API import failed", {
+            orgId,
+            fileName: uploadedZip?.originalname,
+            error: error.message,
+            stack: error.stack,
+        });
+        util.handleError(res, error);
+    } finally {
+        try {
+            if (extractPath) {
+                await fs.rm(extractPath, { recursive: true, force: true });
+            }
+        } catch (_cleanupError) {
+            logger.warn("Failed to clean import extraction directory", { extractPath });
+        }
+        if (uploadedZipPath) {
+            try {
+                await fs.unlink(uploadedZipPath);
+            } catch (_cleanupError) {
+                logger.warn("Failed to clean uploaded import ZIP", { uploadedPath: uploadedZipPath });
+            }
+        }
+    }
 };
 
 const createAPITemplate = async (req, res) => {
@@ -1345,6 +1731,7 @@ const getViewsFromDB = async (orgId) => {
 
 module.exports = {
     createAPIMetadata,
+    importAPIZip,
     getAPIMetadata,
     getAllAPIMetadata,
     updateAPIMetadata,

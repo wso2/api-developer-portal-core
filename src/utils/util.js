@@ -34,6 +34,7 @@ const { Sequelize } = require('sequelize');
 const apiDao = require('../dao/apiMetadata');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const jwt = require('jsonwebtoken');
+const yaml = require('js-yaml');
 const filePrefix = '/src/defaultContent/';
 
 // Function to load and convert markdown file to HTML
@@ -257,6 +258,38 @@ const unzipDirectory = async (zipPath, extractPath) => {
     }).catch((err) => {
         throw err;
     });
+}
+
+// Detect whether an uploaded multipart file is a ZIP artifact.
+function isZipFileUpload(file) {
+    if (!file) {
+        return false;
+    }
+
+    const fileName = (file.originalname || '').toLowerCase();
+    const mimeType = (file.mimetype || '').toLowerCase();
+    return fileName.endsWith('.zip')
+        || mimeType === constants.MIME_TYPES.ZIP
+        || mimeType === constants.MIME_TYPES.ZIP_COMPRESSED
+        || mimeType === constants.MIME_TYPES.ZIP_MULTIPART;
+}
+
+// Map imported API `kind` values to internal API type constants.
+function toApiTypeFromKind(kind) {
+    switch ((kind || '').toLowerCase()) {
+        case 'restapi':
+            return constants.API_TYPE.REST;
+        case 'ws':
+            return constants.API_TYPE.WS;
+        case 'graphql':
+            return constants.API_TYPE.GRAPHQL;
+        case 'soap':
+            return constants.API_TYPE.SOAP;
+        case 'websubapi':
+            return constants.API_TYPE.WEBSUB;
+        default:
+            throw new Sequelize.ValidationError(`Unsupported API kind: ${kind}`);
+    }
 }
 
 const imageMapping = {
@@ -657,6 +690,95 @@ const rejectExtraProperties = (allowedKeys, payload) => {
     return extraKeys;
 };
 
+// Returns true when a file or directory exists on disk.
+const fileExists = async (targetPath) => {
+    try {
+        await fs.promises.access(targetPath);
+        return true;
+    } catch (_error) {
+        return false;
+    }
+};
+
+// Checks whether a target path is inside a given base directory.
+const isPathWithinBase = (basePath, targetPath) => {
+    const normalizedBasePath = path.resolve(basePath);
+    const normalizedTargetPath = path.resolve(targetPath);
+    return normalizedTargetPath === normalizedBasePath
+        || normalizedTargetPath.startsWith(`${normalizedBasePath}${path.sep}`);
+};
+
+// Resolves a configured (or default) archive-relative path and blocks path traversal.
+const resolvePathInArchive = (basePath, configuredPath, defaultPath) => {
+    const relativePath = configuredPath || defaultPath;
+    const resolvedPath = path.resolve(basePath, relativePath);
+    if (!isPathWithinBase(basePath, resolvedPath)) {
+        throw new Sequelize.ValidationError(`Invalid import path: ${relativePath}. Path must stay within the extracted archive.`);
+    }
+    return resolvedPath;
+};
+
+// Detects if the archive was created with a single top-level folder (e.g., MyAPI/) and returns that as the root.
+const getArchiveRootPath = async (extractedPath) => {
+    const entries = await fs.promises.readdir(extractedPath, { withFileTypes: true });
+    const visibleEntries = entries.filter((entry) => entry.name !== '.DS_Store' && entry.name !== '__MACOSX');
+
+    if (visibleEntries.length === 1 && visibleEntries[0].isDirectory()) {
+        return path.join(extractedPath, visibleEntries[0].name);
+    }
+
+    return extractedPath;
+};
+
+// Recursively reads files from a directory while rejecting traversal and symbolic links.
+const readDirectoryFilesRecursively = async (directory, baseDirectory = directory) => {
+    const entries = await fs.promises.readdir(directory, { withFileTypes: true });
+    const files = [];
+
+    for (const entry of entries) {
+        if (entry.name === '.DS_Store') {
+            continue;
+        }
+
+        const absolutePath = path.resolve(path.join(directory, entry.name));
+        if (!isPathWithinBase(baseDirectory, absolutePath)) {
+            throw new Sequelize.ValidationError(`Invalid file path in archive: ${entry.name}`);
+        }
+
+        const stat = await fs.promises.lstat(absolutePath);
+        if (stat.isSymbolicLink()) {
+            throw new Sequelize.ValidationError(`Symbolic links are not allowed in archive: ${entry.name}`);
+        }
+
+        if (entry.isDirectory()) {
+            files.push(...await readDirectoryFilesRecursively(absolutePath, baseDirectory));
+        } else {
+            files.push({
+                absolutePath,
+                relativePath: path.relative(baseDirectory, absolutePath).replace(/\\/g, '/')
+            });
+        }
+    }
+    return files;
+};
+
+// Parses JSON first, then YAML, and returns a plain object payload.
+const parseStructuredData = (rawContent, sourceName = 'content') => {
+    try {
+        return JSON.parse(rawContent);
+    } catch (_jsonError) {
+        try {
+            const parsed = yaml.load(rawContent);
+            if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+                throw new Error('Parsed content is not a valid object');
+            }
+            return parsed;
+        } catch (yamlError) {
+            throw new Sequelize.ValidationError(`Failed to parse ${sourceName}: ${yamlError.message}`);
+        }
+    }
+};
+
 async function readFilesInDirectory(directory, orgId, protocol, host, viewName, baseDir = '') {
     try {
         const files = await fs.promises.readdir(directory, { withFileTypes: true });
@@ -949,6 +1071,8 @@ module.exports = {
     renderTemplateFromAPI,
     renderGivenTemplate,
     handleError,
+    isZipFileUpload,
+    toApiTypeFromKind,
     retrieveContentType,
     getAPIFileContent,
     getAPIImages,
@@ -962,6 +1086,11 @@ module.exports = {
     getErrors,
     validateProvider,
     validateRequestParameters,
+    parseStructuredData,
+    fileExists,
+    resolvePathInArchive,
+    getArchiveRootPath,
+    readDirectoryFilesRecursively,
     rejectExtraProperties,
     readFilesInDirectory,
     appendAPIImageURL,
