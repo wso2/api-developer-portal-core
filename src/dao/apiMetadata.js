@@ -58,6 +58,7 @@ const createAPIMetadata = async (orgID, apiMetadata, t) => {
             METADATA_SEARCH: apiMetadata,
             TOKEN_BASED_SUBSCRIPTION_ENABLED: apiMetadata.apiInfo.tokenBasedSubscriptionEnabled || false,
             GATEWAY_TYPE: apiMetadata.apiInfo.gatewayType || null,
+            MONETIZATION_ENABLED: apiMetadata.monetizationInfo?.enabled || false,
             ORG_ID: orgID
         },
             { transaction: t }
@@ -1392,6 +1393,7 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
             METADATA_SEARCH: apiMetadata,
             TOKEN_BASED_SUBSCRIPTION_ENABLED: apiMetadata.apiInfo.tokenBasedSubscriptionEnabled || false,
             GATEWAY_TYPE: apiMetadata.apiInfo.gatewayType || null,
+            MONETIZATION_ENABLED: apiMetadata.monetizationInfo?.enabled || false,
         }, {
             where: {
                 API_ID: apiID,

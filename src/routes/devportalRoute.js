@@ -25,7 +25,7 @@ const sdkJobService = require('../services/sdkJobService');
 const billingController = require("../controllers/billingController");
 const usageController = require("../controllers/usageController");
 const invoiceController = require("../controllers/invoiceController");
-const { ensureBillingAuth, verifyCsrfOrigin } = require("../middlewares/billingAuth");
+const { ensureBillingAuth, verifyRequestOrigin } = require("../middlewares/billingAuth");
 const multer = require('multer');
 const storage = multer.memoryStorage()
 const multipartHandler = multer({storage: storage})
@@ -177,18 +177,18 @@ router.get("/organizations/:orgId/billing/usage-data", ensureBillingAuth, billin
 router.get("/organizations/:orgId/billing/payment-methods", ensureBillingAuth, billingController.getPaymentMethods);
 
 // Billing Engine Keys CRUD
-router.post("/organizations/:orgId/billing-engine-keys", verifyCsrfOrigin, ensureBillingAuth, billingController.addBillingEngineKeys);
-router.put("/organizations/:orgId/billing-engine-keys", verifyCsrfOrigin, ensureBillingAuth, billingController.updateBillingEngineKeys);
-router.delete("/organizations/:orgId/billing-engine-keys", verifyCsrfOrigin, ensureBillingAuth, billingController.deleteBillingEngineKeys);
+router.post("/organizations/:orgId/billing-engine-keys", verifyRequestOrigin, ensureBillingAuth, billingController.addBillingEngineKeys);
+router.put("/organizations/:orgId/billing-engine-keys", verifyRequestOrigin, ensureBillingAuth, billingController.updateBillingEngineKeys);
+router.delete("/organizations/:orgId/billing-engine-keys", verifyRequestOrigin, ensureBillingAuth, billingController.deleteBillingEngineKeys);
 router.get("/organizations/:orgId/billing-engine-keys", ensureBillingAuth, billingController.getBillingEngineKeys);
 router.get("/organizations/:orgId/billing/info", ensureBillingAuth, billingController.getBillingInfo);
 router.get("/organizations/:orgId/billing/subscriptions", ensureBillingAuth, billingController.getActiveSubscriptions);
-router.post("/organizations/:orgId/monetization/checkout", verifyCsrfOrigin, ensureBillingAuth, billingController.createCheckoutSessionForSubscription);
-router.post("/organizations/:orgId/monetization/stripe/register/:checkoutSessionId", verifyCsrfOrigin, ensureBillingAuth, billingController.registerStripeCheckoutSession);
-router.post("/organizations/:orgId/subscriptions/:subId/cancel", verifyCsrfOrigin, ensureBillingAuth, billingController.cancelSubscription);
+router.post("/organizations/:orgId/monetization/checkout", verifyRequestOrigin, ensureBillingAuth, billingController.createCheckoutSessionForSubscription);
+router.post("/organizations/:orgId/monetization/stripe/register/:checkoutSessionId", verifyRequestOrigin, ensureBillingAuth, billingController.registerStripeCheckoutSession);
+router.post("/organizations/:orgId/subscriptions/:subId/cancel", verifyRequestOrigin, ensureBillingAuth, billingController.cancelSubscription);
 router.get("/organizations/:orgId/subscriptions/:subId/billing-status", ensureBillingAuth, billingController.getSubscriptionBillingStatus);
-router.post("/organizations/:orgId/billing-portal", verifyCsrfOrigin, ensureBillingAuth, billingController.createBillingPortalByOrg);
-router.post("/organizations/:orgId/subscriptions/:subId/billing-portal", verifyCsrfOrigin, ensureBillingAuth, billingController.createBillingPortal);
+router.post("/organizations/:orgId/billing-portal", verifyRequestOrigin, ensureBillingAuth, billingController.createBillingPortalByOrg);
+router.post("/organizations/:orgId/subscriptions/:subId/billing-portal", verifyRequestOrigin, ensureBillingAuth, billingController.createBillingPortal);
 
 // Usage
 router.get("/organizations/:orgId/subscriptions/:subId/usage", ensureBillingAuth, usageController.getSubscriptionUsage);

@@ -518,10 +518,29 @@ async function listInvoicesBySubscription({ orgId, subId }) {
   return { ...invoices, data: filtered };
 }
 
-async function getInvoice({ orgId, invoiceId }) {
+async function getInvoice({ orgId, invoiceId, userId }) {
   const { secretKey: stripeSecretKey } =
     await getDecryptedStripeKeysForOrg(orgId);
-  return stripeService.getInvoice(invoiceId, stripeSecretKey);
+  const invoice = await stripeService.getInvoice(invoiceId, stripeSecretKey);
+
+  // Verify the invoice belongs to a customer associated with this user
+  if (userId && invoice?.customer) {
+    const userSubs = await adminDao.listSubscriptionsByUser(orgId, userId);
+    const customerIds = new Set(
+      userSubs
+        .filter((s) => s.BILLING_CUSTOMER_ID)
+        .map((s) => s.BILLING_CUSTOMER_ID),
+    );
+    const invoiceCustomerId =
+      typeof invoice.customer === "string"
+        ? invoice.customer
+        : invoice.customer?.id;
+    if (!customerIds.has(invoiceCustomerId)) {
+      throw new NotFoundError("Invoice not found");
+    }
+  }
+
+  return invoice;
 }
 
 async function createBillingPortal({ orgId, subId, returnUrl }) {
@@ -712,7 +731,7 @@ async function handleStripeWebhook(req, orgId) {
     secretKey,
     webhookSecret,
   );
-  await stripeService.applyWebhookToLocalState(event, { adminDao });
+  const result = await stripeService.applyWebhookToLocalState(event, { adminDao });
   return true;
 }
 

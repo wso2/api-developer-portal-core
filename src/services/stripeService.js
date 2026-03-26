@@ -180,7 +180,7 @@ async function verifyAndConstructWebhookEvent(
  * Applies webhook event to local state (updates DP subscription rows).
  * Handles key events like invoice.paid, invoice.payment_failed, customer.subscription.deleted, etc.
  */
-async function applyWebhookToLocalState(event, { adminDao }) {
+async function applyWebhookToLocalState(event, { adminDao, orgId }) {
   const eventType = event?.type;
 
   // Extract subscription ID from the event object
@@ -283,9 +283,10 @@ async function applyWebhookToLocalState(event, { adminDao }) {
 
   if (!newStatus) return;
 
-  await adminDao.updateSubscriptionByBillingId(stripeSubscriptionId, {
+  await adminDao.updateSubscriptionByBillingId(orgId, stripeSubscriptionId, {
     PAYMENT_STATUS: newStatus,
   });
+  return { newStatus, stripeSubscriptionId, eventType };
 }
 
 module.exports = {

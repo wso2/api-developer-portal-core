@@ -26,6 +26,7 @@ const { CustomError } = require("../utils/errors/customErrors");
 const logger = require("../config/logger");
 const constants = require("../utils/constants");
 const util = require("../utils/util");
+const config = require("../../config.json");
 
 class BadRequestError extends CustomError {
   constructor(message) {
@@ -112,7 +113,7 @@ async function createCheckoutSessionForSubscription(req, res) {
       },
       "💰 createCheckoutSession called",
     );
-    const returnBaseUrl = `${req.protocol}://${req.get("host")}`;
+    const returnBaseUrl = config.baseUrl;
 
     const {
       applicationID,
@@ -411,18 +412,28 @@ async function handleBillingReturn(req, res) {
       }
     }
     if (sourcePageFinal) {
+      // Resolve to a local path to prevent off-site redirects
+      const parsedUrl = new URL(
+        sourcePageFinal,
+        `${req.protocol}://${req.get("host")}`,
+      );
+      const localPath = parsedUrl.pathname;
+
       if (activationSucceeded) {
-        // Redirect to sourcePage with clean URL if activation succeeded
         logger.info(
-          { redirectUrl: sourcePageFinal },
+          { redirectUrl: localPath },
           "💳 Redirecting to sourcePage after successful activation (error in later step)",
         );
-        return res.redirect(sourcePageFinal);
+        return res.redirect(localPath);
       } else {
-        // Only add payment_error=true if activation failed
-        // Use & if sourcePageFinal already contains a ?
-        const paramJoin = sourcePageFinal.includes("?") ? "&" : "?";
-        const redirectUrl = `${sourcePageFinal}${paramJoin}payment_error=true&session_id=${session_id || ""}&org_id=${encodeURIComponent(orgIdFinal || "")}`;
+        const urlObj = new URL(
+          sourcePageFinal,
+          `${req.protocol}://${req.get("host")}`,
+        );
+        urlObj.searchParams.set("payment_error", "true");
+        if (session_id) urlObj.searchParams.set("session_id", session_id);
+        if (orgIdFinal) urlObj.searchParams.set("org_id", orgIdFinal);
+        const redirectUrl = urlObj.pathname + urlObj.search;
         logger.info(
           { redirectUrl },
           "💳 Error redirecting to sourcePage (activation failed)",
@@ -541,7 +552,6 @@ async function getBillingEngineKeys(req, res) {
       return res.status(400).json({ message: "Missing required fields" });
     }
     const BillingEngineKey = require("../models/billingEngineKey");
-    const { decrypt } = require("../utils/cryptoUtil");
     const record = await BillingEngineKey.findOne({
       where: { ORG_ID: orgId, BILLING_ENGINE: billingEngine },
     });
@@ -550,9 +560,9 @@ async function getBillingEngineKeys(req, res) {
     }
     return res.status(200).json({
       billingEngine: record.BILLING_ENGINE,
-      secretKey: decrypt(record.SECRET_KEY_ENC),
-      publishableKey: decrypt(record.PUBLISHABLE_KEY_ENC),
-      webhookSecret: decrypt(record.WEBHOOK_SECRET_ENC),
+      secretKey: record.SECRET_KEY_ENC ? "****" : null,
+      publishableKey: record.PUBLISHABLE_KEY_ENC ? "****" : null,
+      webhookSecret: record.WEBHOOK_SECRET_ENC ? "****" : null,
     });
   } catch (err) {
     return res.status(500).json({ message: err.message });

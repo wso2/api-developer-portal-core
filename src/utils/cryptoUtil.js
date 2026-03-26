@@ -21,8 +21,7 @@
 const crypto = require("crypto");
 const secret = require(process.cwd() + "/secret.json");
 
-const ENCRYPTION_KEY =
-  secret.billingKeyEncryptionKey || "34497c9ad32b1e9cc5dd264681b9afa9";
+const ENCRYPTION_KEY = secret.billingKeyEncryptionKey;
 
 if (!ENCRYPTION_KEY) {
   throw new Error(
@@ -30,13 +29,12 @@ if (!ENCRYPTION_KEY) {
   );
 }
 
-// Enforce 32 *bytes* for AES-256 (not just "32 characters")
-const KEY_BUF = Buffer.from(ENCRYPTION_KEY, "utf8");
-if (KEY_BUF.length !== 32) {
+if (!/^[0-9a-fA-F]{64}$/.test(ENCRYPTION_KEY)) {
   throw new Error(
-    `BILLING_KEY_ENCRYPTION_KEY must be exactly 32 bytes (utf8) for AES-256. Got ${KEY_BUF.length} bytes.`,
+    "billingKeyEncryptionKey must be a 64-character hex string (32 random bytes).",
   );
 }
+const KEY_BUF = Buffer.from(ENCRYPTION_KEY, "hex");
 
 const GCM_IV_LENGTH = 12;
 const GCM_AUTH_TAG_LENGTH = 16;

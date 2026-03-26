@@ -22,6 +22,19 @@ const config = require("../../config.json");
 const secret = require("../../secret.json");
 const adminDao = require("../dao/admin");
 
+function isApiKeyAuthenticated(req) {
+  const keyType = config.advanced?.apiKey?.keyType;
+  if (!keyType || !secret.apiKeySecret) return false;
+  const apiKey = req.headers[keyType.toLowerCase()];
+  if (!apiKey) return false;
+  const apiKeyBuf = Buffer.from(apiKey);
+  const secretBuf = Buffer.from(secret.apiKeySecret);
+  return (
+    apiKeyBuf.length === secretBuf.length &&
+    crypto.timingSafeEqual(apiKeyBuf, secretBuf)
+  );
+}
+
 async function ensureBillingAuth(req, res, next) {
   if (req.isAuthenticated && req.isAuthenticated() && req.user) {
     const orgId = req.params.orgId;
@@ -60,19 +73,8 @@ async function ensureBillingAuth(req, res, next) {
     return next();
   }
 
-  const keyType = config.advanced?.apiKey?.keyType;
-  if (keyType && secret.apiKeySecret) {
-    const apiKey = req.headers[keyType.toLowerCase()];
-    if (apiKey) {
-      const apiKeyBuf = Buffer.from(apiKey);
-      const secretBuf = Buffer.from(secret.apiKeySecret);
-      if (
-        apiKeyBuf.length === secretBuf.length &&
-        crypto.timingSafeEqual(apiKeyBuf, secretBuf)
-      ) {
-        return next();
-      }
-    }
+  if (isApiKeyAuthenticated(req)) {
+    return next();
   }
 
   logger.warn("Billing auth check failed - user not authenticated", {
@@ -87,23 +89,31 @@ async function ensureBillingAuth(req, res, next) {
   });
 }
 
-function verifyCsrfOrigin(req, res, next) {
+function verifyRequestOrigin(req, res, next) {
+  if (isApiKeyAuthenticated(req)) {
+    return next();
+  }
+
   const origin = req.headers["origin"];
   const referer = req.headers["referer"];
   const source = origin || referer;
 
   if (!source) {
-    return next();
+    logger.warn("Request origin validation failed: missing Origin and Referer headers", {
+      path: req.path,
+      method: req.method,
+    });
+    return res.status(403).json({
+      error: "Forbidden",
+      message: "Invalid request origin",
+    });
   }
 
-  const expectedOrigin = config.baseUrl
-    ? new URL(config.baseUrl).origin
-    : `${req.protocol}://${req.get("host")}`;
-
+  const expectedOrigin = new URL(config.baseUrl).origin;
   const sourceOrigin = origin || new URL(referer).origin;
 
   if (sourceOrigin !== expectedOrigin) {
-    logger.warn("CSRF origin check failed", {
+    logger.warn("Request origin validation failed", {
       path: req.path,
       sourceOrigin,
       expectedOrigin,
@@ -119,5 +129,5 @@ function verifyCsrfOrigin(req, res, next) {
 
 module.exports = {
   ensureBillingAuth,
-  verifyCsrfOrigin,
+  verifyRequestOrigin,
 };

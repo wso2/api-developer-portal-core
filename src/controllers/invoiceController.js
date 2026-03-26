@@ -61,11 +61,14 @@ async function listInvoices(req, res) {
 async function listInvoicesBySubscription(req, res) {
   const orgId = req.params.orgId;
   const subId = req.params.subId;
+  const userId =
+    req.user?.sub || req.user?.[constants.USER_ID] || req[constants.USER_ID];
 
   try {
     const invoices = await subscriptionService.listInvoicesBySubscription({
       orgId,
       subId,
+      userId,
     });
     return res.status(200).json(invoices);
   } catch (err) {
@@ -81,9 +84,11 @@ async function listInvoicesBySubscription(req, res) {
 async function getInvoice(req, res) {
   const invoiceId = req.params.invoiceId;
   const orgId = req.params.orgId;
+  const userId =
+    req.user?.sub || req.user?.[constants.USER_ID] || req[constants.USER_ID];
 
   try {
-    const inv = await subscriptionService.getInvoice({ orgId, invoiceId });
+    const inv = await subscriptionService.getInvoice({ orgId, invoiceId, userId });
     return res.status(200).json(inv);
   } catch (err) {
     const { status, body } = errorToResponse(err);
@@ -95,9 +100,11 @@ async function getInvoice(req, res) {
 async function getInvoicePdfLink(req, res) {
   const orgId = req.params.orgId;
   const invoiceId = req.params.invoiceId;
+  const userId =
+    req.user?.sub || req.user?.[constants.USER_ID] || req[constants.USER_ID];
 
   try {
-    const inv = await subscriptionService.getInvoice({ orgId, invoiceId });
+    const inv = await subscriptionService.getInvoice({ orgId, invoiceId, userId });
     // Stripe returns hosted_invoice_url and invoice_pdf.
     if (!inv.invoice_pdf) {
       logger.warn(
@@ -129,9 +136,11 @@ async function getInvoicePdfLink(req, res) {
 async function redirectHostedInvoice(req, res) {
   const invoiceId = req.params.invoiceId;
   const orgId = req.params.orgId;
+  const userId =
+    req.user?.sub || req.user?.[constants.USER_ID] || req[constants.USER_ID];
 
   try {
-    const inv = await subscriptionService.getInvoice({ orgId, invoiceId });
+    const inv = await subscriptionService.getInvoice({ orgId, invoiceId, userId });
     if (inv.hosted_invoice_url) return res.redirect(inv.hosted_invoice_url);
     return res
       .status(404)

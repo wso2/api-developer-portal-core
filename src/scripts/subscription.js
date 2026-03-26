@@ -608,7 +608,6 @@ async function wireStripeReturnIfPresent() {
     await showAlert(`Error processing payment return: ${error.message}`, "error");
     isProcessingPayment = false;
   } finally {
-    // Clean URL to remove session_id, dp_sub_id, and org_id (if not already done)
     const url = new URL(window.location.href);
     if (url.searchParams.has("session_id")) {
       url.searchParams.delete("session_id");
