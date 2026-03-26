@@ -40,14 +40,41 @@
                     <p class="subscription-plans-subtitle">Please select the most suitable subscription plan from the
                         options
                         available for this API</p>
+                    <input type="hidden" id="modal-selected-app-{{apiID}}" value="" />
+                    
                     <div class="row row-gap-4 pt-3">
                         {{#each subscriptionPolicyDetails}}
                         <div class="col-12 col-md-6 col-lg-4">
                             <div id="subscriptionCard-{{policyID}}" class="card dev-card subscription-card">
                                 <div class="card-body align-items-center text-center p-0">
                                     <span class="subscription-plans-card-title">{{displayName}}</span>
-                                        <h1 class="subscription-plans-request-count">{{requestCount}}</h1>
-                                        <p class="subscription-plans-card-subtitle pb-4 pt-0">requests per minute</p>
+                                        <div class="mb-3 w-100">
+                                            <div class="d-flex flex-column align-items-center gap-2" style="width: 160px; min-width: 160px; margin: 0 auto;">
+                                                <span class="text-muted d-block mb-0" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom:0 !important; min-height: 18px;">Price</span>
+                                                {{#if pricingModel}}
+                                                    {{#compare pricingModel "===" "FLAT"}}
+                                                        {{#if flatAmount}}
+                                                        <span class="fw-bold d-inline" style="color: #0f172a; font-size: 22px;">{{currency}} {{formatPrice flatAmount}}<small class="text-muted d-inline" style="font-size: 10px;">/{{billingPeriod}}</small></span>
+                                                        {{else}}
+                                                        <span class="fw-bold d-inline" style="color: #16a34a; font-size: 22px;">Free</span>
+                                                        {{/if}}
+                                                    {{else}}
+                                                        {{#if unitAmount}}
+                                                        <span class="fw-bold d-inline" style="color: #0f172a; font-size: 22px;">{{currency}} {{formatPrice unitAmount}}<small class="text-muted d-inline" style="font-size: 10px;">/req</small></span>
+                                                        {{#if billingPeriod}}
+                                                        <span class="badge d-inline-block mt-2" style="background-color: #e0f2fe; color: #0369a1; font-size: 9px; padding: 3px 8px; border-radius: 10px;">Billed {{billingPeriod}}ly</span>
+                                                        {{/if}}
+                                                        {{else}}
+                                                        <span class="fw-bold d-inline" style="color: #16a34a; font-size: 22px;">Free</span>
+                                                        {{/if}}
+                                                    {{/compare}}
+                                                {{else}}
+                                                    <span class="fw-bold d-inline" style="color: #16a34a; font-size: 22px;">Free</span>
+                                                {{/if}}
+                                                <span class="text-muted d-block mt-3 mb-0" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom:0 !important; min-height: 18px;">Rate Limit</span>
+                                                <span class="fw-bold d-inline" style="color: #0f172a; font-size: 25px;">{{requestCount}}<small class="text-muted d-inline" style="font-size: 11px;">&nbsp;req/min</small></span>
+                                            </div>
+                                        </div>
                                                 {{#if ../apiInfo.tokenBasedSubscriptionEnabled}}
                                                     <button id="subscribe-btn-{{policyID}}" type="button"
                                                         class="common-btn-primary p-1 ps-2 pe-2 w-100 subscription-plan-subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
@@ -55,6 +82,8 @@
                                                         data-api-id="{{#if apiID}}{{apiID}}{{else}}{{../apiID}}{{/if}}"
                                                         data-policy-name="{{policyName}}"
                                                         data-display-name="{{displayName}}"
+                                                        data-external-price-id="{{pricingMetadata.external.priceId}}"
+                                                        data-is-paid="{{#if isPaid}}true{{else}}false{{/if}}"
                                                         {{#unless @root.isReadOnlyMode}}onclick="handlePlanSubscription(this)"{{/unless}}
                                                         {{#if @root.isReadOnlyMode}}disabled aria-disabled="true"{{/if}}>Subscribe</button>
                                                 {{else if (eq ../apiInfo.gatewayType "wso2/api-platform")}}
@@ -64,6 +93,8 @@
                                                         data-api-id="{{#if apiID}}{{apiID}}{{else}}{{../apiID}}{{/if}}"
                                                         data-policy-name="{{policyName}}"
                                                         data-display-name="{{displayName}}"
+                                                        data-external-price-id="{{pricingMetadata.external.priceId}}"
+                                                        data-is-paid="{{#if isPaid}}true{{else}}false{{/if}}"
                                                         {{#unless @root.isReadOnlyMode}}onclick="handlePlanSubscription(this)"{{/unless}}
                                                         {{#if @root.isReadOnlyMode}}disabled aria-disabled="true"{{/if}}>Subscribe</button>
                                                 {{else}}
@@ -83,11 +114,29 @@
                                                                                 aria-label="Search applications">
                                                                         </div>
                                                                         <div class="select-items-container">
-                                                                            {{#each ../applications}}
+                                                                            {{#each (filter ../applications "subscriptionStatus" "CANCELED" false)}}
                                                                             <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}" data-app-name="{{name}}">
-                                                                                <span>{{name}}</span>
-                                                                                <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
-                                                                                    alt="Subscribed" class="subscription-icon" style="display: {{#if subscribed}}inline-block{{else}}none{{/if}};" />
+                                                                                <div class="d-flex flex-column flex-grow-1">
+                                                                                    <span class="fw-semibold">{{name}}</span>
+                                                                                    {{#if subscriptionPolicy}}
+                                                                                    <small style="font-size: 11px; margin-top: 3px;">
+                                                                                        <span class="badge" style="background-color: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 10px; font-weight: 600; font-size: 10px;">
+                                                                                            {{subscriptionPolicy.policyName}}
+                                                                                        </span>
+                                                                                    </small>
+                                                                                    {{/if}}
+                                                                                </div>
+                                                                                {{#if subscribed}}
+                                                                                    {{#if (eq subscriptionStatus "ACTIVE")}}
+                                                                                    <span class="badge" style="background:#ecfdf5;color:#047857;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">Active</span>
+                                                                                    {{else if (eq subscriptionStatus "TRIALING")}}
+                                                                                    <span class="badge" style="background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">Trial</span>
+                                                                                    {{else if (eq subscriptionStatus "PAST_DUE")}}
+                                                                                    <span class="badge" style="background:#fef2f2;color:#b91c1c;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">Past due</span>
+                                                                                    {{else if (eq subscriptionStatus "CANCEL_SCHEDULED")}}
+                                                                                    <span class="badge" style="background:#fff7ed;color:#c2410c;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">Cancels soon</span>
+                                                                                    {{/if}}
+                                                                                {{/if}}
                                                                             </div>
                                                                             {{/each}}
                                                                         </div>
@@ -102,6 +151,8 @@
                                                         </div>
                                                         <button id="subscribe-btn-{{policyID}}" type="button"
                                                             class="common-btn-primary w-100 subscription-plan-subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                            data-external-price-id="{{pricingMetadata.external.priceId}}"
+                                                            data-is-paid="{{#if isPaid}}true{{else}}false{{/if}}"
                                                             {{#unless @root.isReadOnlyMode}}onclick="showSubscribeButtonLoading(this); subscribe('{{@root.orgID}}', '', '{{../apiID}}', '{{#if ../apiReferenceID}}{{../apiReferenceID}}{{else}}{{../apiID}}{{/if}}', '{{policyID}}', '{{policyName}}')"{{/unless}}
                                                             {{#if @root.isReadOnlyMode}}disabled aria-disabled="true"{{/if}}>Subscribe</button>
                                                     </div>

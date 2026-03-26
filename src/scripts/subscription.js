@@ -82,29 +82,6 @@ function safeText(input) {
   return String(input).replace(/[^a-zA-Z0-9\s-_.]/g, "");
 }
 
-function hideElementById(elementId) {
-  const element = document.getElementById(elementId);
-  if (element) element.style.display = "none";
-}
-
-function closeModal(elementId) {
-  hideElementById(elementId);
-  const form = document.querySelector("form");
-  if (form) form.reset();
-}
-
-window.onclick = function (event) {
-  const modal = document.getElementById("planModal");
-  if (event.target === modal) {
-    closeModal();
-  }
-};
-
-function loadModal(modalID) {
-  const modal = document.getElementById(modalID);
-  if (modal) modal.style.display = "flex";
-}
-
 function checkQueryParamsAndLoadModal() {
     const urlParams = new URLSearchParams(window.location.search);
     const subPlan = urlParams.get('policyName');
@@ -320,9 +297,14 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
 
   try {
     // applicationID from hidden if not provided
-    if (!applicationID && card) {
-      const hiddenField = card.querySelector('input[type="hidden"]');
-      if (hiddenField?.value) applicationID = hiddenField.value;
+    if (!applicationID) {
+      const policyField = document.getElementById('selectedAppId-' + policyId);
+      if (policyField?.value) {
+        applicationID = policyField.value;
+      } else if (card) {
+        const hiddenField = card.querySelector('input[type="hidden"]');
+        if (hiddenField?.value) applicationID = hiddenField.value;
+      }
     }
 
     if (!applicationID) {
@@ -330,8 +312,7 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
       return;
     }
 
-    const monetized = isMonetizationEnabled() && getBillingEngine() === "STRIPE";
-    const paid = monetized && isPaidPlan(policyId);
+    const paid = isPaidPlan(policyId);
 
     // Always reset UI button state safely on exit paths
     const resetUi = () => {
@@ -359,7 +340,8 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
 
       if (response.ok) {
         showSubscriptionMessage(messageOverlay, "Successfully subscribed", "success");
-        markSubscribedUI(card, applicationID);
+        closeModal('planModal-' + apiId);
+        markSubscribedUI(card, applicationID, apiId);
       } else {
         console.error("Failed to create subscription:", responseData);
         const errMsg = responseData.message || responseData.description || responseData.error || "Subscription failed. Please try again.";
@@ -387,6 +369,7 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
         policyId: safeId(policyId),
         policyName: safeText(policyName),
         priceId: safeId(priceId),
+        sourcePage: window.location.pathname,
       }),
     });
 
@@ -788,22 +771,29 @@ async function removeSubscription(orgID, appID, apiRefID, subID) {
     }
 }
 
-function markSubscribedUI(card, applicationID) {
+function markSubscribedUI(card, applicationID, apiId) {
   if (!card) return;
 
   const subscriptionFlag = card.querySelector(".subscription-flag");
   if (subscriptionFlag) subscriptionFlag.style.display = "block";
 
-  const dropdown = card.querySelector(".custom-dropdown");
-  if (dropdown) {
-    const appOption = dropdown.querySelector(`.select-item[data-value="${applicationID}"]`);
+  // Scope dropdown marking to both modal and card containers (like upstream)
+  var apiContainer = apiId
+    ? (document.getElementById('planModal-' + apiId) || document.getElementById('apiCard-' + apiId))
+    : null;
+  var allDropdowns = apiContainer
+    ? apiContainer.querySelectorAll('.custom-dropdown')
+    : card.querySelectorAll('.custom-dropdown');
+
+  allDropdowns.forEach(function(dropdown) {
+    const appOption = dropdown.querySelector('.select-item[data-value="' + applicationID + '"]');
     if (appOption) {
       let subscriptionIcon = appOption.querySelector(".subscription-icon");
       if (subscriptionIcon) {
         subscriptionIcon.style.display = "inline-block";
       } else {
-        const subscriptionIconHtml = `<img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
-          alt="Subscribed" class="subscription-icon" style="display: inline-block;" />`;
+        const subscriptionIconHtml = '<img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"'
+          + ' alt="Subscribed" class="subscription-icon" style="display: inline-block;" />';
         const tempDiv = document.createElement("div");
         tempDiv.innerHTML = subscriptionIconHtml;
         subscriptionIcon = tempDiv.firstElementChild;
@@ -811,10 +801,10 @@ function markSubscribedUI(card, applicationID) {
       }
       appOption.classList.add("disabled");
     }
+  });
 
-    const btn = card.querySelector(".common-btn-primary");
-    if (btn) btn.setAttribute("disabled", "disabled");
-  }
+  const btn = card.querySelector(".common-btn-primary");
+  if (btn) btn.setAttribute("disabled", "disabled");
 }
 
 /**

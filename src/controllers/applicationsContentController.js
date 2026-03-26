@@ -460,13 +460,9 @@ const loadApplications = async (req, res) => {
             const metaData = await Promise.all(
                 applications.map(async (application) => {
                     const subApis = await adminDao.getSubscriptions(orgID, application.APP_ID, '');
-                    // Only count ACTIVE subscriptions
-                    const activeSubscriptions = subApis.filter(sub => 
-                        sub.PAYMENT_STATUS === 'ACTIVE' || !sub.PAYMENT_STATUS
-                    );
                     return {
                         ...new ApplicationDTO(application),
-                        subscriptionCount: activeSubscriptions.length
+                        subscriptionCount: subApis.length
                     };
                 })
             );
