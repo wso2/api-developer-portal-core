@@ -63,8 +63,11 @@ function parseAndValidateName(raw) {
 const MIN_EXPIRY_MS = Date.UTC(1970, 0, 1);
 const MAX_EXPIRY_MS = Date.UTC(2100, 11, 31, 23, 59, 59, 999);
 
+/** Datetime strings passed to Date.parse must end with Z or ±HH:MM (offset). */
+const EXPIRES_AT_HAS_TZ = /(?:Z|[+-]\d{2}:\d{2})$/;
+
 /**
- * Optional expiresAt: ISO-8601 string or finite number (ms or seconds).
+ * Optional expiresAt: ISO-8601 string (with Z or offset) or finite number (ms or seconds).
  * @returns {{ ok: true, iso?: string } | { ok: false, description: string }}
  */
 function parseExpiresAtForCp(raw) {
@@ -83,6 +86,9 @@ function parseExpiresAtForCp(raw) {
         if (s !== '' && Number.isFinite(asNum) && String(asNum) === s) {
             ms = asNum < 1e12 ? Math.floor(asNum * 1000) : Math.floor(asNum);
         } else {
+            if (!EXPIRES_AT_HAS_TZ.test(s)) {
+                return { ok: false, description: 'expiresAt must include timezone (Z or +HH:MM)' };
+            }
             ms = Date.parse(s);
         }
     } else {

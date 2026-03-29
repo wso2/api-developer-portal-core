@@ -26,8 +26,9 @@ const securitySchemeHasApiKey = (securityScheme) =>
     Array.isArray(securityScheme) && securityScheme.includes('api_key');
 
 /**
- * API-level Platform API Keys nav: same rules as application-bound keys — platform gateway
- * and API Key security enabled on the API (CP GET /apis/{id}.securityScheme includes api_key).
+ * API-level Platform API Keys nav: platform gateway and API Key security enabled on the API
+ * (CP GET /apis/{id}.securityScheme includes api_key). When control plane is disabled, the link
+ * is hidden unless existingApiDetail already includes securityScheme (no CP fetch is possible).
  *
  * @param {object} req - Express request (for invokeApiRequest auth)
  * @param {object} metaData - Metadata with apiInfo.gatewayType and apiReferenceID (APIM DTO shape)
@@ -38,20 +39,17 @@ async function shouldShowPlatformApiKeysNav(req, metaData, existingApiDetail = n
     if (!metaData?.apiInfo || metaData.apiInfo.gatewayType !== PLATFORM_GATEWAY) {
         return false;
     }
-    if (config.controlPlane?.enabled === false) {
-        return true;
-    }
     const refId = metaData.apiReferenceID;
-    if (!refId) {
-        return false;
-    }
     let detail = existingApiDetail;
-    if (detail && securitySchemeHasApiKey(detail.securityScheme)) {
-        return true;
+
+    if (detail && detail.securityScheme !== undefined) {
+        return securitySchemeHasApiKey(detail.securityScheme);
     }
-    if (detail && !securitySchemeHasApiKey(detail.securityScheme)) {
+
+    if (config.controlPlane?.enabled === false || !refId) {
         return false;
     }
+
     try {
         detail = await util.invokeApiRequest(
             req,
