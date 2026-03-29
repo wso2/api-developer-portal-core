@@ -167,6 +167,32 @@ Handlebars.registerHelper('eq', function (a, b) {
     return (a === b || (a != null && b != null && (a === b.toString() || a.toString() === b)));
 });
 
+/**
+ * Formats API key expiry for display: ISO-8601 strings, Unix seconds, or Unix milliseconds
+ * (e.g. CP may return 1774923420000 as a number or string).
+ */
+Handlebars.registerHelper('formatExpiresAt', function (value) {
+    if (value === null || value === undefined || value === '') {
+        return '';
+    }
+    let d;
+    const s = String(value).trim();
+    if (/^\d+$/.test(s)) {
+        const n = parseInt(s, 10);
+        if (Number.isNaN(n)) {
+            return s;
+        }
+        const digitLen = String(n).length;
+        d = digitLen <= 10 ? new Date(n * 1000) : new Date(n);
+    } else {
+        d = new Date(s);
+    }
+    if (Number.isNaN(d.getTime())) {
+        return s;
+    }
+    return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+});
+
 Handlebars.registerHelper('in', function (value, options) {
     const rawValues = Array.isArray(options.hash.values)
         ? options.hash.values
