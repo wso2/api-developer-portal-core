@@ -28,6 +28,7 @@ const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const apiMetadataService = require('../services/apiMetadataService');
+const { shouldShowPlatformApiKeysNav } = require('../services/platformApiKeysNavService');
 const adminService = require('../services/adminService');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const { ApplicationDTO } = require('../dto/application');
@@ -233,6 +234,11 @@ const loadAPIContent = async (req, res) => {
             subscriptionPlans.push(subscriptionPlan);
         });
 
+        let schemaFileName = constants.FILE_NAME.API_DEFINITION_XML;
+        if (metaData.apiInfo?.apiType === constants.API_TYPE.GRAPHQL) {
+            schemaFileName = constants.FILE_NAME.API_DEFINITION_GRAPHQL;
+        }
+
         const templateContent = {
             devMode: true,
             providerUrl: '#subscriptionPlans',
@@ -240,7 +246,8 @@ const loadAPIContent = async (req, res) => {
             apiMetadata: metaData,
             subscriptionPlans: subscriptionPlans,
             baseUrl: baseURLDev + viewName,
-            schemaUrl: orgName + '/mock/' + apiHandle + '/apiDefinition.xml'
+            schemaUrl: `${orgName}/mock/${apiHandle}/${schemaFileName}`,
+            showPlatformApiKeysNav: await shouldShowPlatformApiKeysNav(req, metaData, null),
         }
         html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
         res.send(html);
@@ -452,8 +459,9 @@ const loadAPIContent = async (req, res) => {
                 devportalMode: devportalMode,
                 profile: req.isAuthenticated() ? profile : null,
                 isReadOnlyMode: config.readOnlyMode,
-                isFederatedAPI: isFederatedAPI
+                isFederatedAPI: isFederatedAPI,
             };
+            templateContent.showPlatformApiKeysNav = await shouldShowPlatformApiKeysNav(req, metaData, apiDetail);
             if (metaData.apiInfo.apiType == "MCP") {
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp-landing", viewName);
             } else {
@@ -528,12 +536,17 @@ const loadDocsPage = async (req, res) => {
         const docNames = apiMetadata.docTypes;
         const orgDetails = await adminDao.getOrganization(orgName);
         const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+        const metaForNav = {
+            apiInfo: { gatewayType: apiMetadata.apiInfo?.gatewayType },
+            apiReferenceID: apiMetadata.apiReferenceID,
+        };
         const templateContent = {
             apiMD: await loadMarkdown("api-doc.md", filePrefix + '../mock/' + apiHandle + "/" + docType),
             baseUrl: constants.BASE_URL + config.port + "/views/" + viewName + "/api/" + apiHandle,
             docTypes: docNames,
             devportalMode: devportalMode,
-            apiType: apiMetadata.apiInfo?.apiType
+            apiType: apiMetadata.apiInfo?.apiType,
+            showPlatformApiKeysNav: await shouldShowPlatformApiKeysNav(req, metaForNav, null),
         }
         html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
     } else {
@@ -558,12 +571,19 @@ const loadDocsPage = async (req, res) => {
 
             const apiMetadata = await apiDao.getAPIMetadata(orgID, apiID);
             let apiType = apiMetadata[0].dataValues.API_TYPE;
+            const gatewayType = apiMetadata[0].dataValues.GATEWAY_TYPE;
+            req.cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
+            const metaForNav = {
+                apiInfo: { gatewayType },
+                apiReferenceID: apiMetadata[0].dataValues.REFERENCE_ID,
+            };
             const templateContent = {
                 baseUrl: '/' + orgName + '/views/' + viewName + "/api/" + apiHandle,
                 docTypes: docNames,
                 apiType: apiType,
                 profile: req.isAuthenticated() ? profile : null,
                 devportalMode: devportalMode,
+                showPlatformApiKeysNav: await shouldShowPlatformApiKeysNav(req, metaForNav, null),
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
         } catch (error) {
@@ -740,6 +760,11 @@ const loadDocument = async (req, res) => {
             templateContent.docTypes = docNames;
             templateContent.apiMD = apiMD;
             templateContent.apiType = apiMetadata.apiInfo?.apiType;
+            const metaForNav = {
+                apiInfo: { gatewayType: apiMetadata.apiInfo?.gatewayType },
+                apiReferenceID: apiMetadata.apiReferenceID,
+            };
+            templateContent.showPlatformApiKeysNav = await shouldShowPlatformApiKeysNav(req, metaForNav, null);
             html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
         } else {
 
@@ -765,6 +790,12 @@ const loadDocument = async (req, res) => {
                 templateContent.profile = req.isAuthenticated() ? profile : null;
                 templateContent.apiType = apiType;
                 templateContent.devportalMode = devportalMode;
+                const row = apiMetadata[0].dataValues;
+                const metaForNav = {
+                    apiInfo: { gatewayType: row.GATEWAY_TYPE },
+                    apiReferenceID: row.REFERENCE_ID,
+                };
+                templateContent.showPlatformApiKeysNav = await shouldShowPlatformApiKeysNav(req, metaForNav, null);
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
             } catch (error) {
                 const templateContent = {

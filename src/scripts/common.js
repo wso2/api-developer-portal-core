@@ -123,10 +123,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 document.getElementById('api-overview').href = `${basePath}/api/${apiId}`;
                 document.getElementById('api-docs').href = `${basePath}/api/${apiId}/docs/specification`;
                 document.getElementById('api-subscriptions').href = `${basePath}/api/${apiId}/subscriptions`;
+                const apiKeysLink = document.getElementById('api-platform-keys');
+                if (apiKeysLink) {
+                    apiKeysLink.href = `${basePath}/api/${apiId}/api-keys`;
+                }
 
                 // Set active submenu item
                 if (currentPath.includes('/subscriptions')) {
                     document.getElementById('api-subscriptions')?.classList.add('active');
+                } else if (currentPath.includes('/api-keys')) {
+                    document.getElementById('api-platform-keys')?.classList.add('active');
                 } else if (currentPath.includes('/docs')) {
                     document.getElementById('api-docs')?.classList.add('active');
                 } else {

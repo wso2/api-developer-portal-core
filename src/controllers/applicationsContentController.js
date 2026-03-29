@@ -94,6 +94,7 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
     let otherAPICount = 0;
     let mcpAPICount = 0;
     let apiKeyEnabledAPICount = 0;
+    const PLATFORM_GATEWAY_TYPE = 'wso2/api-platform';
 
     let subList = [];
     if (subAPIs.length > 0) {
@@ -105,6 +106,7 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
             apiDTO.apiID = api.apiID;
             apiDTO.version = api.apiInfo.apiVersion;
             apiDTO.apiType = api.apiInfo.apiType;
+            apiDTO.gatewayType = api.apiInfo.gatewayType || null;
             apiDTO.apiInfo.apiImageMetadata = api.apiInfo.apiImageMetadata;
             apiDTO.image = api.apiInfo.apiImageMetadata["api-icon"];
             apiDTO.subID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.SUB_ID;
@@ -124,7 +126,7 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
             const projectId = projectIdEntry?.value;
             if (apiDetails) {
                 apiDTO.security = apiDetails.securityScheme;
-                if (apiDTO.security && apiDTO.security.includes('api_key')) {
+                if (apiDTO.security && apiDTO.security.includes('api_key') && apiDTO.gatewayType !== PLATFORM_GATEWAY_TYPE) {
                     apiKeyEnabledAPICount++;
                 }
             }
@@ -160,9 +162,12 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
         }));
     }
 
-    const isApiKey = subList.some(api => api.security !== null && api.security.includes('api_key'));
-
     util.appendAPIImageURL(subList, req, orgID);
+
+    const subAPIsForApplicationKeys = subList.filter(s => s.gatewayType !== PLATFORM_GATEWAY_TYPE);
+    const isApiKey = subAPIsForApplicationKeys.some(
+        api => api.security && api.security.includes('api_key')
+    );
 
     await Promise.all(nonSubscribedAPIs.map(async (api) => {
         api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
@@ -296,9 +301,6 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
                 const projectId = projectIdEntry?.value;
 
                 let security = apiDetails?.securityScheme || [];
-                if (security.includes('api_key')) {
-                    apiKeyEnabledAPICount++;
-                }
 
                 let productionApiKeys = [];
                 let sandboxApiKeys = [];
@@ -385,10 +387,6 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
                     }
                 }
 
-                if ((apiDetails?.securityScheme || []).includes('api_key')) {
-                    apiKeyEnabledAPICount++;
-                }
-
                 return {
                     subID: apiDTO.apiID,
                     apiID: apiDTO.apiID,
@@ -415,13 +413,14 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
 
     const profile = buildProfile(req);
 
-    const isPlatformApiKey = platformSubscriptions.length > 0 || noSubPlatformAPIs.length > 0;
-
     return {
         orgID,
         applicationList,
         keyManagersMetadata: kMmetaData,
         subAPIs: subList,
+        subAPIsForApplicationKeys,
+        platformSubscriptionsForApplicationKeys: [],
+        noSubPlatformAPIsForApplicationKeys: [],
         nonSubAPIs: nonSubscribedAPIs,
         productionKeys,
         sandboxKeys,
@@ -429,7 +428,7 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
         otherAPICount,
         mcpAPICount,
         apiKeyEnabledAPICount,
-        isApiKey: isApiKey || isPlatformApiKey,
+        isApiKey,
         platformSubscriptions,
         noSubPlatformAPIs,
         profile
@@ -632,6 +631,9 @@ const loadApplicationKeys = async (req, res) => {
                 orgID: null,
                 subscriptionScopes: [],
                 isApiKey: false,
+                subAPIsForApplicationKeys: [],
+                platformSubscriptionsForApplicationKeys: [],
+                noSubPlatformAPIsForApplicationKeys: [],
                 features: {
                     sdkGeneration: config.features?.sdkGeneration?.enabled || false
                 },
@@ -666,8 +668,11 @@ const loadApplicationKeys = async (req, res) => {
                     }
                 ],
                 isApiKey: data.isApiKey,
+                subAPIsForApplicationKeys: data.subAPIsForApplicationKeys,
                 platformSubscriptions: data.platformSubscriptions,
+                platformSubscriptionsForApplicationKeys: data.platformSubscriptionsForApplicationKeys,
                 noSubPlatformAPIs: data.noSubPlatformAPIs,
+                noSubPlatformAPIsForApplicationKeys: data.noSubPlatformAPIsForApplicationKeys,
                 subscriptionScopes: data.subscriptionScopes,
                 otherAPICount: data.otherAPICount,
                 mcpAPICount: data.mcpAPICount,
