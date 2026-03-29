@@ -19,6 +19,7 @@ const express = require('express');
 const router = express.Router();
 const apiController = require('../controllers/apiContentController');
 const subscriptionsController = require('../controllers/subscriptionsContentController');
+const platformApiKeysContentController = require('../controllers/platformApiKeysContentController');
 const registerPartials = require('../middlewares/registerPartials');
 const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
 const authController = require('../controllers/authController');
@@ -58,6 +59,13 @@ router.get('/:orgName/views/:viewName/api/:apiHandle/subscriptions', (req, res, 
     }
     next();
 }, authController.handleSilentSSO, registerPartials, util.enforcePortalMode, ensureAuthenticated, subscriptionsController.loadAPISubscriptions);
+
+router.get('/:orgName/views/:viewName/api/:apiHandle/api-keys', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, authController.handleSilentSSO, registerPartials, util.enforcePortalMode, ensureAuthenticated, platformApiKeysContentController.loadAPIPlatformApiKeys);
 
 router.get('/:orgName/views/:viewName/api/:apiHandle/docs/specification', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {

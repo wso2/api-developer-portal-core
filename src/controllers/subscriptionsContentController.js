@@ -25,6 +25,7 @@ const apiDao = require('../dao/apiMetadata');
 const util = require('../utils/util');
 const APIDTO = require('../dto/apiDTO');
 const apiMetadataService = require('../services/apiMetadataService');
+const { shouldShowPlatformApiKeysNav } = require('../services/platformApiKeysNavService');
 
 const controlPlaneUrl = config.controlPlane.url;
 
@@ -287,6 +288,7 @@ const loadAPISubscriptions = async (req, res) => {
             apiMetadata: metaData,
             apiHandle: apiHandle,
             isReadOnlyMode: config.readOnlyMode,
+            showPlatformApiKeysNav: await shouldShowPlatformApiKeysNav(req, metaData, null),
         };
 
         html = await renderTemplateFromAPI(templateContent, orgID, orgName, 'pages/api-subscriptions', viewName);

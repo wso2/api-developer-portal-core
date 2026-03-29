@@ -305,7 +305,7 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {{#each subAPIs}}
+                                                    {{#each subAPIsForApplicationKeys}}
                                                     {{#if (contains security 'api_key')}}
                                                     {{> api-key apiID=apiID keyType="PRODUCTION"}}
                                                     {{#in apiType values="REST, WS, WEBSUB"}}
@@ -377,7 +377,7 @@
                                                                     id="generateKeyBtn-{{subID}}-PRODUCTION"
                                                                     style="{{#if apiKeys.production.key}}display: none;{{else}}display: inline-flex;{{/if}}"
                                                                     data-app-ref-id=""
-                                                                    onclick="openApiKeyNameModal('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIs}}', '{{json scopes}}', 'PRODUCTION')">
+                                                                    onclick="openApiKeyNameModal('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIsForApplicationKeys}}', '{{json scopes}}', 'PRODUCTION')">
                                                                     <span class="button-normal-state">
                                                                         <i class="bi bi-key me-1"></i> Generate Key
                                                                     </span>
@@ -397,7 +397,7 @@
                                                     {{/in}}
                                                     {{/if}}
                                                     {{/each}}
-                                                    {{#each platformSubscriptions}}
+                                                    {{#each platformSubscriptionsForApplicationKeys}}
                                                     {{#if (contains security 'api_key')}}
                                                     {{> api-key apiID=apiID keyType="PRODUCTION"}}
                                                     <tr class="data-row" id="data-row-{{subID}}"
@@ -464,7 +464,7 @@
                                                                     id="generateKeyBtn-{{subID}}-PRODUCTION"
                                                                     style="{{#if apiKeys.production.key}}display: none;{{else}}display: inline-flex;{{/if}}"
                                                                     data-app-ref-id=""
-                                                                    onclick="openApiKeyNameModal('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../platformSubscriptions}}', '{{json scopes}}', 'PRODUCTION')">
+                                                                    onclick="openApiKeyNameModal('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../platformSubscriptionsForApplicationKeys}}', '{{json scopes}}', 'PRODUCTION')">
                                                                     <span class="button-normal-state">
                                                                         <i class="bi bi-key me-1"></i> Generate Key
                                                                     </span>
@@ -482,7 +482,7 @@
                                                     </tr>
                                                     {{/if}}
                                                     {{/each}}
-                                                    {{#each noSubPlatformAPIs}}
+                                                    {{#each noSubPlatformAPIsForApplicationKeys}}
                                                     {{#if (contains security 'api_key')}}
                                                     {{> api-key apiID=apiID keyType="PRODUCTION"}}
                                                     <tr class="data-row" id="data-row-{{subID}}"
@@ -549,7 +549,7 @@
                                                                     id="generateKeyBtn-{{subID}}-PRODUCTION"
                                                                     style="{{#if apiKeys.production.key}}display: none;{{else}}display: inline-flex;{{/if}}"
                                                                     data-app-ref-id=""
-                                                                    onclick="openApiKeyNameModal('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../noSubPlatformAPIs}}', '{{json scopes}}', 'PRODUCTION')">
+                                                                    onclick="openApiKeyNameModal('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../noSubPlatformAPIsForApplicationKeys}}', '{{json scopes}}', 'PRODUCTION')">
                                                                     <span class="button-normal-state">
                                                                         <i class="bi bi-key me-1"></i> Generate Key
                                                                     </span>
@@ -872,7 +872,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {{#each subAPIs}}
+                                                {{#each subAPIsForApplicationKeys}}
                                                 {{#if (contains security 'api_key')}}
                                                 {{> api-key apiID=apiID keyType="SANDBOX"}}
                                                 {{#in apiType values="REST, WS, WEBSUB"}}
@@ -939,7 +939,7 @@
                                                                 id="generateKeyBtn-{{subID}}-SANDBOX"
                                                                 style="{{#if apiKeys.sandbox.key}}display: none;{{else}}display: inline-flex;{{/if}}"
                                                                 data-app-ref-id=""
-                                                                onclick="openApiKeyNameModal('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIs}}', '{{json scopes}}', 'SANDBOX')">
+                                                                onclick="openApiKeyNameModal('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../subAPIsForApplicationKeys}}', '{{json scopes}}', 'SANDBOX')">
                                                                 <span class="button-normal-state">
                                                                     <i class="bi bi-key me-1"></i> Generate Key
                                                                 </span>
@@ -958,7 +958,7 @@
                                                 {{/in}}
                                                 {{/if}}
                                                 {{/each}}
-                                                {{#each platformSubscriptions}}
+                                                {{#each platformSubscriptionsForApplicationKeys}}
                                                 {{#if (contains security 'api_key')}}
                                                 {{> api-key apiID=apiID keyType="SANDBOX"}}
                                                 <tr class="data-row" id="data-row-{{subID}}"
@@ -1023,7 +1023,7 @@
                                                                 id="generateKeyBtn-{{subID}}-SANDBOX"
                                                                 style="{{#if apiKeys.sandbox.key}}display: none;{{else}}display: inline-flex;{{/if}}"
                                                                 data-app-ref-id=""
-                                                                onclick="openApiKeyNameModal('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../platformSubscriptions}}', '{{json scopes}}', 'SANDBOX')">
+                                                                onclick="openApiKeyNameModal('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../platformSubscriptionsForApplicationKeys}}', '{{json scopes}}', 'SANDBOX')">
                                                                 <span class="button-normal-state">
                                                                     <i class="bi bi-key me-1"></i> Generate Key
                                                                 </span>
@@ -1040,7 +1040,7 @@
                                                 </tr>
                                                 {{/if}}
                                                 {{/each}}
-                                                {{#each noSubPlatformAPIs}}
+                                                {{#each noSubPlatformAPIsForApplicationKeys}}
                                                 {{#if (contains security 'api_key')}}
                                                 {{> api-key apiID=apiID keyType="SANDBOX"}}
                                                 <tr class="data-row" id="data-row-{{subID}}"
@@ -1105,7 +1105,7 @@
                                                                 id="generateKeyBtn-{{subID}}-SANDBOX"
                                                                 style="{{#if apiKeys.sandbox.key}}display: none;{{else}}display: inline-flex;{{/if}}"
                                                                 data-app-ref-id=""
-                                                                onclick="openApiKeyNameModal('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../noSubPlatformAPIs}}', '{{json scopes}}', 'SANDBOX')">
+                                                                onclick="openApiKeyNameModal('{{projectId}}', '{{refID}}', '{{policyName}}', '{{../applicationMetadata.appMap.[0].appRefID}}', '{{../applicationMetadata.id}}', '{{subID}}', '{{getSubIDs ../noSubPlatformAPIsForApplicationKeys}}', '{{json scopes}}', 'SANDBOX')">
                                                                 <span class="button-normal-state">
                                                                     <i class="bi bi-key me-1"></i> Generate Key
                                                                 </span>
