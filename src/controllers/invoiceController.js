@@ -21,7 +21,6 @@ const { CustomError } = require("../utils/errors/customErrors");
 const logger = require("../config/logger");
 const constants = require("../utils/constants");
 
-// Utility to convert errors to response format
 function errorToResponse(err) {
   if (err instanceof CustomError) {
     return {
@@ -105,7 +104,6 @@ async function getInvoicePdfLink(req, res) {
 
   try {
     const inv = await subscriptionService.getInvoice({ orgId, invoiceId, userId });
-    // Stripe returns hosted_invoice_url and invoice_pdf.
     if (!inv.invoice_pdf) {
       logger.warn(
         { invoiceId, hosted_invoice_url: inv.hosted_invoice_url },

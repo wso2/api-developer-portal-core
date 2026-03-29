@@ -26,7 +26,6 @@ class BadRequestError extends CustomError {
   }
 }
 
-// Returns a new Stripe instance for the given secret key
 function getStripeInstance(stripeSecretKey) {
   if (!stripeSecretKey) {
     throw new BadRequestError(
@@ -52,7 +51,6 @@ async function findOrCreateCustomerByEmail(
   if (!metadata.orgId) {
     throw new BadRequestError("orgId is required in customer metadata");
   }
-  // Search customer by email (Stripe search)
   const result = await stripe.customers.search({
     query: `email:"${email.replace(/"/g, '\"')}"`,
     limit: 1,
@@ -81,7 +79,6 @@ async function createCheckoutSession({
   if (!customerId) throw new BadRequestError("customerId is required");
   if (!priceId) throw new BadRequestError("priceId is required");
   if (!returnUrl) throw new BadRequestError("returnUrl is required");
-  // For metered/usage-based pricing (PER_UNIT), quantity must not be specified
   const lineItem = { price: priceId };
   if (!isMetered) {
     lineItem.quantity = quantity ? parseInt(quantity, 10) : 1;
@@ -90,8 +87,6 @@ async function createCheckoutSession({
   if (!metadata.orgId)
     throw new BadRequestError("orgId is required in checkout metadata");
 
-  // For metered/usage-based pricing, we MUST collect payment method upfront
-  // so Stripe can charge at the end of the billing period based on usage
   const paymentMethodCollection = isMetered ? "always" : "if_required";
 
   return stripe.checkout.sessions.create({
@@ -102,7 +97,6 @@ async function createCheckoutSession({
     return_url: returnUrl,
     metadata: metadata,
     payment_method_collection: paymentMethodCollection,
-    // Stripe does not allow payment_method_options.setup_future_usage in subscription mode
   });
 }
 
@@ -180,14 +174,12 @@ async function verifyAndConstructWebhookEvent(
  * Applies webhook event to local state (updates DP subscription rows).
  * Handles key events like invoice.paid, invoice.payment_failed, customer.subscription.deleted, etc.
  */
-async function applyWebhookToLocalState(event, { adminDao, orgId }) {
+async function applyWebhookToLocalState(event, { adminDao }) {
   const eventType = event?.type;
 
-  // Extract subscription ID from the event object
   let stripeSubscriptionId = null;
 
   if (event?.data?.object?.subscription) {
-    // invoice.* events
     stripeSubscriptionId =
       typeof event.data.object.subscription === "string"
         ? event.data.object.subscription
@@ -196,7 +188,6 @@ async function applyWebhookToLocalState(event, { adminDao, orgId }) {
     event?.data?.object?.id &&
     eventType?.startsWith("customer.subscription.")
   ) {
-    // customer.subscription.* events
     stripeSubscriptionId = event.data.object.id;
   }
 
@@ -216,20 +207,17 @@ async function applyWebhookToLocalState(event, { adminDao, orgId }) {
   let newStatus = null;
 
   switch (eventType) {
-    // ✅ Recommended: don't set ACTIVE from invoice success events.
-    // They can arrive after a cancel-scheduled update and would flip UI back to ACTIVE.
+    // Recommended: don't set ACTIVE from invoice success events.
+    // They can arrive after a cancel-scheduled update and would flip the status back to ACTIVE.
     case "invoice.paid":
     case "invoice.payment_succeeded":
       return;
 
-    // Optional: keep this if you want a user-facing "payment failed" signal.
-    // Often you'll also get customer.subscription.updated with past_due/unpaid.
     case "invoice.payment_failed":
       newStatus = PAYMENT_STATUS.PAYMENT_FAILED;
       break;
 
     case "customer.subscription.deleted":
-      // Subscription has ended (immediate cancel or period-end reached)
       newStatus = PAYMENT_STATUS.CANCELED;
       break;
 
@@ -283,29 +271,11 @@ async function applyWebhookToLocalState(event, { adminDao, orgId }) {
 
   if (!newStatus) return;
 
-  await adminDao.updateSubscriptionByBillingId(orgId, stripeSubscriptionId, {
+  await adminDao.updateSubscriptionByBillingId(stripeSubscriptionId, {
     PAYMENT_STATUS: newStatus,
   });
   return { newStatus, stripeSubscriptionId, eventType };
 }
-
-module.exports = {
-  findOrCreateCustomerByEmail,
-  createCheckoutSession,
-  retrieveCheckoutSession,
-  cancelSubscription,
-  listInvoicesByCustomer,
-  listInvoices,
-  getInvoice,
-  createCustomerPortalSession,
-  createPortalSession,
-  verifyAndConstructWebhookEvent,
-  applyWebhookToLocalState,
-  listPaymentMethods,
-  getCustomer,
-  detachPaymentMethod,
-  getSubscription,
-};
 
 /**
  * List invoices for a customer
@@ -365,3 +335,21 @@ async function createPortalSession(customerId, returnUrl, stripeSecretKey) {
     stripeSecretKey,
   });
 }
+
+module.exports = {
+  findOrCreateCustomerByEmail,
+  createCheckoutSession,
+  retrieveCheckoutSession,
+  cancelSubscription,
+  listInvoicesByCustomer,
+  listInvoices,
+  getInvoice,
+  createCustomerPortalSession,
+  createPortalSession,
+  verifyAndConstructWebhookEvent,
+  applyWebhookToLocalState,
+  listPaymentMethods,
+  getCustomer,
+  detachPaymentMethod,
+  getSubscription,
+};

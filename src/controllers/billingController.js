@@ -16,16 +16,17 @@
  * under the License.
  *
  */
-// src/controllers/billingController.js
-
 const monetizationService = require("../services/monetizationService");
+const stripeService = require("../services/stripeService");
+const adminDao = require("../dao/admin");
 const {
   getDecryptedStripeKeysForOrg,
 } = require("../services/orgBillingKeyService");
 const { CustomError } = require("../utils/errors/customErrors");
+const { encrypt } = require("../utils/cryptoUtil");
+const BillingEngineKey = require("../models/billingEngineKey");
 const logger = require("../config/logger");
 const constants = require("../utils/constants");
-const util = require("../utils/util");
 const config = require("../../config.json");
 
 class BadRequestError extends CustomError {
@@ -34,7 +35,6 @@ class BadRequestError extends CustomError {
   }
 }
 
-// Utility to extract user context from request
 function getUserContext(req) {
   return {
     email: req.user?.email || req[constants.USER_ID],
@@ -45,10 +45,8 @@ function getUserContext(req) {
   };
 }
 
-// Utility to convert errors to response format
 function errorToResponse(err) {
   if (err instanceof CustomError) {
-    // CustomError(statusCode, message, description) — err.message is the human-readable text
     return {
       status: err.statusCode,
       body: {
@@ -57,7 +55,6 @@ function errorToResponse(err) {
       },
     };
   }
-  // Stripe SDK errors expose statusCode and type (e.g. "invalid_request_error")
   if (typeof err.statusCode === "number" && err.type) {
     const message = mapStripeErrorMessage(err);
     return {
@@ -103,16 +100,6 @@ async function createCheckoutSessionForSubscription(req, res) {
 
   try {
     const user = getUserContext(req);
-
-    logger.info(
-      {
-        orgId,
-        applicationID: req.body?.applicationID,
-        apiId: req.body?.apiId,
-        user: { email: user?.email },
-      },
-      "💰 createCheckoutSession called",
-    );
     const returnBaseUrl = config.baseUrl;
 
     const {
@@ -124,18 +111,6 @@ async function createCheckoutSessionForSubscription(req, res) {
       sourcePage,
     } = req.body || {};
 
-    logger.info(
-      {
-        applicationID,
-        apiId,
-        apiReferenceID,
-        policyId,
-        policyName,
-        sourcePage,
-      },
-      "💰 Extracted fields",
-    );
-
     if (
       !applicationID ||
       !apiId ||
@@ -143,10 +118,6 @@ async function createCheckoutSessionForSubscription(req, res) {
       !policyId ||
       !policyName
     ) {
-      logger.error(
-        { applicationID, apiId, apiReferenceID, policyId, policyName },
-        "❌ Missing required fields",
-      );
       throw new BadRequestError(
         "Missing required fields: applicationID, apiId, apiReferenceID, policyId, policyName",
       );
@@ -167,11 +138,7 @@ async function createCheckoutSessionForSubscription(req, res) {
     return res.status(200).json(result);
   } catch (err) {
     const { status, body } = errorToResponse(err);
-    logger.error("[AUDIT] createCheckoutSession failed", {
-      err,
-      orgId,
-      body: req.body,
-    });
+    logger.error({ err, orgId }, "createCheckoutSession failed");
     return res.status(status).json(body);
   }
 }
@@ -185,7 +152,7 @@ async function registerStripeCheckoutSession(req, res) {
   const checkoutSessionId = req.params.checkoutSessionId;
 
   try {
-    const user = getUserContext(req); // optional but good for audit
+    const user = getUserContext(req);
     const result = await monetizationService.registerCheckoutSession({
       orgId,
       checkoutSessionId,
@@ -229,9 +196,11 @@ async function getSubscriptionBillingStatus(req, res) {
   const subId = req.params.subId;
 
   try {
+    const { userId } = getUserContext(req);
     const result = await monetizationService.getSubscriptionBillingStatus({
       orgId,
       subId,
+      userId,
     });
     return res.status(200).json(result);
   } catch (err) {
@@ -243,7 +212,6 @@ async function getSubscriptionBillingStatus(req, res) {
 
 /**
  * POST /organizations/:orgId/subscriptions/:subId/billing-portal
- * NOTE: Stripe portal generally cannot be embedded in an iframe.
  */
 async function createBillingPortal(req, res) {
   const orgId = req.params.orgId;
@@ -251,11 +219,13 @@ async function createBillingPortal(req, res) {
 
   try {
     const returnUrl = `${req.protocol}://${req.get("host")}`;
+    const { userId } = getUserContext(req);
 
     const portal = await monetizationService.createBillingPortal({
       orgId,
       subId,
       returnUrl,
+      userId,
     });
     return res.status(200).json({ url: portal.url });
   } catch (err) {
@@ -324,21 +294,20 @@ async function handleBillingReturn(req, res) {
       return res.status(400).send("Missing session_id");
     }
 
-    // Wire in monetizationService logic to activate paid subscription if needed
-    const monetizationService = require("../services/monetizationService");
     const user = req.user || {};
-    let activationResult = null;
     try {
-      activationResult =
-        await monetizationService.handleStripeReturnAndActivate({
-          orgId: orgIdFinal,
-          sessionId: session_id,
-          user,
-        });
-    } catch (activationErr) {}
+      await monetizationService.handleStripeReturnAndActivate({
+        orgId: orgIdFinal,
+        sessionId: session_id,
+        user,
+      });
+    } catch (activationErr) {
+      logger.warn(
+        { err: activationErr, orgId: orgIdFinal, session_id },
+        "Stripe return activation failed",
+      );
+    }
 
-    // Retrieve the checkout session to get metadata for redirect
-    const stripeService = require("../services/stripeService");
     const { secretKey: stripeSecretKey } =
       await getDecryptedStripeKeysForOrg(orgIdFinal);
     const session = await stripeService.retrieveCheckoutSession(
@@ -349,49 +318,40 @@ async function handleBillingReturn(req, res) {
     const orgIdMeta = session?.metadata?.orgId;
     const sourcePageMeta = session?.metadata?.sourcePage;
 
-    // If orgIdFinal is still not set, use orgIdMeta from session
     if (!orgIdFinal && orgIdMeta) orgIdFinal = orgIdMeta;
 
-    // Priority 1: Use sourcePage from query params if present, else from session metadata
     const sourcePageFinal = req.query.sourcePage || sourcePageMeta;
     if (sourcePageFinal) {
-      // Always append session_id (and org_id if available) to sourcePageFinal for frontend logic
       const urlObj = new URL(
         sourcePageFinal,
         `${req.protocol}://${req.get("host")}`,
       );
       if (session_id) urlObj.searchParams.set("session_id", session_id);
       if (orgIdFinal) urlObj.searchParams.set("org_id", orgIdFinal);
-      const redirectUrl = urlObj.pathname + urlObj.search;
-      return res.redirect(redirectUrl);
+      return res.redirect(urlObj.pathname + urlObj.search);
     }
 
-    // Priority 2: If we have the API reference ID, redirect to the API page
     if (apiReferenceID && orgIdFinal) {
-      const adminDao = require("../dao/admin");
       const org = await adminDao.getOrganization(orgIdFinal);
       if (!org) {
-        logger.error("❌ Organization not found for orgId:", orgIdFinal);
         throw new Error(`Organization not found: ${orgIdFinal}`);
       }
       const orgName = org.IDENTIFIER || "default";
-      const redirectUrl = `/${orgName}/apis/${apiReferenceID}?session_id=${session_id}&dp_sub_id=${dp_sub_id || ""}&org_id=${encodeURIComponent(orgIdFinal)}`;
-      return res.redirect(redirectUrl);
+      return res.redirect(
+        `/${orgName}/apis/${encodeURIComponent(apiReferenceID)}?session_id=${session_id}&dp_sub_id=${dp_sub_id || ""}&org_id=${encodeURIComponent(orgIdFinal)}`,
+      );
     }
 
-    // Fallback: redirect to applications page, always include org_id if available
-    const redirectUrl = `/applications?session_id=${session_id}&dp_sub_id=${dp_sub_id || ""}&org_id=${encodeURIComponent(orgIdFinal || "")}`;
-    logger.info({ redirectUrl }, "💳 Fallback redirect to applications");
-    return res.redirect(redirectUrl);
+    return res.redirect(
+      `/applications?session_id=${session_id}&dp_sub_id=${dp_sub_id || ""}&org_id=${encodeURIComponent(orgIdFinal || "")}`,
+    );
   } catch (err) {
-    // Try to determine if subscription was activated
     let sourcePageFinal = req.query.sourcePage;
     if (!orgIdFinal) orgIdFinal = req.query.org_id || req.query.orgId;
     let activationSucceeded = false;
-    // Try to get from session metadata if not in query
+
     if ((!sourcePageFinal || !orgIdFinal) && typeof session_id === "string") {
       try {
-        const stripeService = require("../services/stripeService");
         const { secretKey: stripeSecretKey } =
           await getDecryptedStripeKeysForOrg(orgIdFinal);
         const session = await stripeService.retrieveCheckoutSession(
@@ -400,7 +360,6 @@ async function handleBillingReturn(req, res) {
         );
         if (!sourcePageFinal) sourcePageFinal = session?.metadata?.sourcePage;
         if (!orgIdFinal) orgIdFinal = session?.metadata?.orgId;
-        // Check if subscription is active
         if (
           session?.status === "complete" ||
           session?.payment_status === "paid"
@@ -408,42 +367,28 @@ async function handleBillingReturn(req, res) {
           activationSucceeded = true;
         }
       } catch (e) {
-        // Ignore errors here, we are in error handling already
+        // Session retrieval failed during error handling; use available query parameters
       }
     }
+
     if (sourcePageFinal) {
-      // Resolve to a local path to prevent off-site redirects
-      const parsedUrl = new URL(
+      const urlObj = new URL(
         sourcePageFinal,
         `${req.protocol}://${req.get("host")}`,
       );
-      const localPath = parsedUrl.pathname;
 
       if (activationSucceeded) {
-        logger.info(
-          { redirectUrl: localPath },
-          "💳 Redirecting to sourcePage after successful activation (error in later step)",
-        );
-        return res.redirect(localPath);
-      } else {
-        const urlObj = new URL(
-          sourcePageFinal,
-          `${req.protocol}://${req.get("host")}`,
-        );
-        urlObj.searchParams.set("payment_error", "true");
-        if (session_id) urlObj.searchParams.set("session_id", session_id);
-        if (orgIdFinal) urlObj.searchParams.set("org_id", orgIdFinal);
-        const redirectUrl = urlObj.pathname + urlObj.search;
-        logger.info(
-          { redirectUrl },
-          "💳 Error redirecting to sourcePage (activation failed)",
-        );
-        return res.redirect(redirectUrl);
+        return res.redirect(urlObj.pathname);
       }
+
+      urlObj.searchParams.set("payment_error", "true");
+      if (session_id) urlObj.searchParams.set("session_id", session_id);
+      if (orgIdFinal) urlObj.searchParams.set("org_id", orgIdFinal);
+      return res.redirect(urlObj.pathname + urlObj.search);
     }
-    // Fallback
+
     if (activationSucceeded) {
-      return res.redirect("/"); // or a default landing page
+      return res.redirect("/");
     }
     return res.redirect(
       `/applications?payment_error=true&session_id=${session_id || ""}&org_id=${encodeURIComponent(orgIdFinal || "")}`,
@@ -468,8 +413,6 @@ async function addBillingEngineKeys(req, res) {
     ) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-    const { encrypt } = require("../utils/cryptoUtil");
-    const BillingEngineKey = require("../models/billingEngineKey");
     await BillingEngineKey.upsert({
       ORG_ID: orgId,
       BILLING_ENGINE: billingEngine.toUpperCase(),
@@ -500,8 +443,6 @@ async function updateBillingEngineKeys(req, res) {
     ) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-    const { encrypt } = require("../utils/cryptoUtil");
-    const BillingEngineKey = require("../models/billingEngineKey");
     const record = await BillingEngineKey.findOne({
       where: { ORG_ID: orgId, BILLING_ENGINE: billingEngine.toUpperCase() },
     });
@@ -528,7 +469,6 @@ async function deleteBillingEngineKeys(req, res) {
     if (!orgId || !billingEngine) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-    const BillingEngineKey = require("../models/billingEngineKey");
     const deleted = await BillingEngineKey.destroy({
       where: { ORG_ID: orgId, BILLING_ENGINE: billingEngine.toUpperCase() },
     });
@@ -551,7 +491,6 @@ async function getBillingEngineKeys(req, res) {
     if (!orgId || !billingEngine) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-    const BillingEngineKey = require("../models/billingEngineKey");
     const record = await BillingEngineKey.findOne({
       where: { ORG_ID: orgId, BILLING_ENGINE: billingEngine },
     });
@@ -579,11 +518,6 @@ async function getUsageData(req, res) {
     const userContext = getUserContext(req);
     const period = req.query.period || "current";
 
-    logger.info(`[AUDIT] Controller usage data fetch`, {
-      orgId,
-      userId: userContext.userId,
-      period,
-    }); // Get usage data from monetization service
     const usageData = await monetizationService.getUserUsageData(
       req,
       userContext,
@@ -624,7 +558,7 @@ async function getPaymentMethods(req, res) {
         stripeError: err.raw || err,
         orgId,
       },
-      "getPaymentMethods failed - detailed",
+      "getPaymentMethods failed",
     );
     const resp = errorToResponse(err);
     return res.status(resp.status).json(resp.body);
@@ -640,7 +574,6 @@ async function getBillingInfo(req, res) {
     const { orgId } = req.params;
     const userContext = getUserContext(req);
 
-    // Get billing info from Stripe customer
     const billingInfo = await monetizationService.getBillingInfo(
       userContext,
       orgId,
@@ -665,12 +598,7 @@ async function getActiveSubscriptions(req, res) {
   const { orgId } = req.params;
   const userContext = getUserContext(req);
 
-  logger.info(`[AUDIT] Active Subscriptions`, {
-    orgId,
-    userId: userContext.userId,
-  }); // Get usage data from monetization service
   try {
-    // Get subscriptions from monetization service
     const subscriptions = await monetizationService.getSubscriptionsForBilling(
       orgId,
       userContext.userId,

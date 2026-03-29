@@ -63,6 +63,9 @@ const createAPIMetadata = async (req, res) => {
         apiMetadata.endPoints.productionURL = changeEndpoint(apiMetadata.endPoints.productionURL);
         apiMetadata.endPoints.sandboxURL = changeEndpoint(apiMetadata.endPoints.sandboxURL);
         normalizeGraphQLEndpoints(apiMetadata);
+        if (typeof apiMetadata.monetizationInfo === 'string') {
+            try { apiMetadata.monetizationInfo = JSON.parse(apiMetadata.monetizationInfo); } catch (_) { apiMetadata.monetizationInfo = {}; }
+        }
         let meterItems = apiMetadata?.monetizationInfo?.properties?.billingMeterData;
         if (typeof meterItems === 'string') {
             try { meterItems = JSON.parse(meterItems); } catch (_) { meterItems = []; }
@@ -345,7 +348,9 @@ const updateAPIMetadata = async (req, res) => {
         apiMetadata.endPoints.productionURL = changeEndpoint(apiMetadata.endPoints.productionURL);
         apiMetadata.endPoints.sandboxURL = changeEndpoint(apiMetadata.endPoints.sandboxURL);
         normalizeGraphQLEndpoints(apiMetadata);
-
+        if (typeof apiMetadata.monetizationInfo === 'string') {
+            try { apiMetadata.monetizationInfo = JSON.parse(apiMetadata.monetizationInfo); } catch (_) { apiMetadata.monetizationInfo = {}; }
+        }
         let meterItems = apiMetadata?.monetizationInfo?.properties?.billingMeterData;
         if (typeof meterItems === 'string') {
             try { meterItems = JSON.parse(meterItems); } catch (_) { meterItems = []; }

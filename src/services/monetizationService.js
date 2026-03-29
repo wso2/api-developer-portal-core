@@ -16,13 +16,10 @@
  * under the License.
  *
  */
-// src/services/monetizationService.js
 const sequelize = require("../db/sequelize");
 const { CustomError } = require("../utils/errors/customErrors");
 const logger = require("../config/logger");
 
-// Define monetization-specific error classes
-// CustomError signature: (statusCode, message, description)
 class BadRequestError extends CustomError {
   constructor(message, details) {
     super(400, message, details);
@@ -56,16 +53,15 @@ const PAYMENT_PROVIDER = {
 };
 
 const PAYMENT_STATUS = {
-  PENDING: "PENDING", // DP row created, waiting for payment completion
-  ACTIVE: "ACTIVE", // payment ok + CP subscription ok
+  PENDING: "PENDING",
+  ACTIVE: "ACTIVE",
   PAYMENT_FAILED: "PAYMENT_FAILED",
   CANCELED: "CANCELED",
   PAST_DUE: "PAST_DUE",
 };
 
 /**
- * Decide paid vs free.
- * You mentioned BILLING_PLAN values like FREE / COMMERCIAL.
+ * Returns true if the policy requires payment (BILLING_PLAN !== 'FREE').
  */
 function isPaidPolicy(policyRow) {
   const billingPlan = policyRow?.BILLING_PLAN;
@@ -161,11 +157,9 @@ async function createCheckoutSession({
     if (!email)
       throw new BadRequestError("User email is required to start checkout.");
 
-    // Validate API exists in DP
     const apiRow = await adminDao.getAPIById(orgId, apiId, t);
     if (!apiRow) throw new NotFoundError(`API not found: apiId=${apiId}`);
 
-    // Load policy
     const policyRow = await adminDao.getSubscriptionPolicyById(
       orgId,
       policyId,
@@ -174,7 +168,6 @@ async function createCheckoutSession({
     if (!policyRow)
       throw new NotFoundError(`Policy not found: policyId=${policyId}`);
 
-    // If FREE plan, do NOT go through Stripe checkout.
     if (!isPaidPolicy(policyRow)) {
       throw new BadRequestError(
         "This is a free plan. No payment is required — you can subscribe directly.",
@@ -188,22 +181,12 @@ async function createCheckoutSession({
       );
     }
 
-    // Check if metered pricing (PER_UNIT, VOLUME_TIERS, GRADUATED_TIERS all use Stripe usage_type=metered)
     const pricingModel = policyRow.PRICING_MODEL;
     const isMetered =
       pricingModel === "PER_UNIT" ||
       pricingModel === "VOLUME_TIERS" ||
       pricingModel === "GRADUATED_TIERS";
 
-    // For metered pricing, validate that price is properly configured with meter in Stripe
-    if (isMetered) {
-      const pricingMetadata = policyRow.PRICING_METADATA || {};
-
-      // If meter ID is missing, optionally handle as needed (no logs in production)
-    }
-
-    // Optional: prevent duplicate ACTIVE/PENDING for same (app, api, policy) if you want
-    // (Depends on your model; this is a safe guard)
     const existing = await adminDao.findSubscriptionByUniqueKey(
       orgId,
       applicationID,
@@ -211,22 +194,18 @@ async function createCheckoutSession({
       policyId,
       t,
     );
-    // Only block if ACTIVE subscription exists, allow retry if previous checkout was abandoned (PENDING)
     if (existing && existing.PAYMENT_STATUS === PAYMENT_STATUS.ACTIVE) {
       throw new ConflictError(
         "You already have an active subscription for this plan. No further action is needed.",
       );
     }
 
-    // If a PENDING subscription exists from abandoned checkout, delete it before creating new one
     if (existing && existing.PAYMENT_STATUS === PAYMENT_STATUS.PENDING) {
       await adminDao.deleteSubscription(orgId, existing.SUB_ID, t);
     }
 
-    // Fetch org-specific Stripe keys
     const { secretKey: stripeSecretKey, publishableKey } =
       await getDecryptedStripeKeysForOrg(orgId);
-    // Create Stripe customer (or find existing) for this user
     const customer = await stripeService.findOrCreateCustomerByEmail(
       email,
       {
@@ -237,36 +216,30 @@ async function createCheckoutSession({
       stripeSecretKey,
     );
 
-    // Create DP subscription row first (PENDING), so we have SUB_ID to tie into metadata + return URL.
     const dpSub = await adminDao.createSubscription(
       orgId,
       {
         applicationID: applicationID,
         apiId: apiId,
         policyId: policyId,
-        // You already store apiReferenceID in your request; store if you have a column, else skip.
         PAYMENT_PROVIDER: PAYMENT_PROVIDER.STRIPE,
         PAYMENT_STATUS: PAYMENT_STATUS.PENDING,
         BILLING_CUSTOMER_ID: customer.id,
         BILLING_SUBSCRIPTION_ID: null,
         CHECKOUT_SESSION_ID: null,
-        // keep anything else you already store (createdBy, timestamps, etc.)
       },
       t,
     );
 
     const dpSubId = dpSub.SUB_ID;
 
-    // Stripe embedded checkout return URL - always go to /billing/return, but include sourcePage for redirect after activation
-    // This ensures backend activation, then user is redirected to the original UI page
     const landingPage = sourcePage || "/devportal/apis";
     const returnUrl = `${returnBaseUrl}/billing/return?session_id={CHECKOUT_SESSION_ID}&dp_sub_id=${dpSubId}&org_id=${orgId}&sourcePage=${encodeURIComponent(landingPage)}`;
 
-    // isMetered already determined above during validation
     const session = await stripeService.createCheckoutSession({
       customerId: customer.id,
       priceId: externalPriceId,
-      isMetered, // Pass flag to omit quantity for metered pricing
+      isMetered,
       returnUrl,
       metadata: {
         orgId,
@@ -281,18 +254,11 @@ async function createCheckoutSession({
       stripeSecretKey,
     });
 
-    // Patch the returnUrl to include the actual Stripe session id
-    // Stripe requires the success_url to be set before session creation, so we must update it after
-    // If your stripeService.createCheckoutSession supports passing {CHECKOUT_SESSION_ID} as a placeholder, it will be replaced automatically
-    // Otherwise, you may need to update the session after creation (Stripe API supports this)
-
-    // Persist checkout session id on the DP row
     await adminDao.updateBillingFields(
       orgId,
       dpSubId,
       {
         CHECKOUT_SESSION_ID: session.id,
-        // keep in PENDING until register confirms
         PAYMENT_STATUS: PAYMENT_STATUS.PENDING,
       },
       t,
@@ -318,8 +284,8 @@ async function createCheckoutSession({
 async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
   return sequelize.transaction(async (t) => {
     logger.info(
-      { orgId, checkoutSessionId, user },
-      "[registerCheckoutSession] Stripe session registration started",
+      { orgId, checkoutSessionId },
+      "registerCheckoutSession called",
     );
     const { secretKey: stripeSecretKey } =
       await getDecryptedStripeKeysForOrg(orgId);
@@ -328,13 +294,10 @@ async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
       stripeSecretKey,
     );
 
-    // Validate session is paid/complete (depends on Stripe config; usually "complete")
-    // Accept either status === 'complete' or payment_status === 'paid'
     const status = String(session?.status || "").toLowerCase();
     const paymentStatus = String(session?.payment_status || "").toLowerCase();
     const isPaid = status === "complete" || paymentStatus === "paid";
     if (!isPaid) {
-      // mark failed
       const dpSubId = session?.metadata?.dpSubId;
       if (dpSubId) {
         await adminDao.updateBillingFields(
@@ -365,12 +328,10 @@ async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
     if (!dpSubId)
       throw new BadRequestError("Checkout session missing dpSubId metadata.");
 
-    // Load DP subscription row
     const dpSub = await adminDao.getSubscription(orgId, dpSubId, t);
     if (!dpSub)
       throw new NotFoundError(`DP subscription not found: subId=${dpSubId}`);
 
-    // Ensure same session (protect against mismatched URLs)
     if (
       dpSub.CHECKOUT_SESSION_ID &&
       dpSub.CHECKOUT_SESSION_ID !== checkoutSessionId
@@ -380,7 +341,6 @@ async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
       );
     }
 
-    // Update DP row with billing ids + ACTIVE
     const updatedCount = await adminDao.updateBillingFields(
       orgId,
       dpSubId,
@@ -394,17 +354,11 @@ async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
       t,
     );
     if (updatedCount !== 1) {
-      console.error(
-        "[registerCheckoutSession] updateBillingFields did not update exactly one row!",
+      logger.warn(
         { orgId, dpSubId, updatedCount },
+        "updateBillingFields did not update exactly one row",
       );
     }
-    // NOTE: CP subscription creation happens during token generation flow
-    // (same as free subscriptions - when user generates API key/OAuth token)
-    // This keeps the flow consistent for both free and paid plans
-
-    // NOTE: Moesif user sync is now handled by APIM (SubscriptionsApiServiceImpl)
-    // when the CP subscription is created. The userEmail is passed via billingMetadata.
 
     return {
       subId: dpSubId,
@@ -416,9 +370,6 @@ async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
   });
 }
 
-/**
- * GET usage for subscription (from Moesif) — Bugs 4.1+4.2: fix broken function call and add meterId lookup
- */
 async function getUsage({ req, orgId, subId, from, to }) {
   const sub = await adminDao.getSubscriptionWithMeter(orgId, subId);
   if (!sub) throw new NotFoundError(`Subscription not found: subId=${subId}`);
@@ -454,25 +405,24 @@ async function listInvoices({ orgId, userId, period = "last3months" }) {
   );
   if (!any) return { invoices: [] };
 
-  // Calculate date range based on period
   let created;
-  const now = Math.floor(Date.now() / 1000); // Unix timestamp in seconds
+  const now = Math.floor(Date.now() / 1000);
 
   switch (period) {
     case "last3months":
-      created = { gte: now - 90 * 24 * 60 * 60 }; // 3 months ago
+      created = { gte: now - 90 * 24 * 60 * 60 };
       break;
     case "last6months":
-      created = { gte: now - 180 * 24 * 60 * 60 }; // 6 months ago
+      created = { gte: now - 180 * 24 * 60 * 60 };
       break;
     case "last12months":
-      created = { gte: now - 365 * 24 * 60 * 60 }; // 12 months ago
+      created = { gte: now - 365 * 24 * 60 * 60 };
       break;
     case "all":
-      created = undefined; // No date filter
+      created = undefined;
       break;
     default:
-      created = { gte: now - 90 * 24 * 60 * 60 }; // Default to 3 months
+      created = { gte: now - 90 * 24 * 60 * 60 };
   }
 
   const { secretKey: stripeSecretKey } =
@@ -486,14 +436,13 @@ async function listInvoices({ orgId, userId, period = "last3months" }) {
     stripeSecretKey,
   );
 
-  // Transform the response to match the frontend expectations
   return {
     invoices: (result.data || []).map((invoice) => ({
       id: invoice.id,
       number: invoice.number,
       created: invoice.created,
       period: `${new Date(invoice.period_start * 1000).toLocaleDateString()} - ${new Date(invoice.period_end * 1000).toLocaleDateString()}`,
-      amount: invoice.amount_due, // Use raw amount (no conversion)
+      amount: invoice.amount_due,
       status: invoice.status,
       hostedInvoiceUrl: invoice.hosted_invoice_url,
       invoicePdf: invoice.invoice_pdf,
@@ -501,7 +450,22 @@ async function listInvoices({ orgId, userId, period = "last3months" }) {
   };
 }
 
-async function listInvoicesBySubscription({ orgId, subId }) {
+/**
+ * Verify a subscription belongs to an application owned by userId.
+ * Throws NotFoundError to avoid leaking subscription existence to other users.
+ */
+async function verifySubscriptionOwnership(orgId, subId, userId) {
+  if (!userId) return;
+  const sub = await adminDao.getSubscription(orgId, subId);
+  if (!sub) throw new NotFoundError(`Subscription not found: subId=${subId}`);
+  const app = await adminDao.getApplication(orgId, sub.APP_ID);
+  if (!app || app.CREATED_BY !== userId) {
+    throw new NotFoundError(`Subscription not found: subId=${subId}`);
+  }
+}
+
+async function listInvoicesBySubscription({ orgId, subId, userId }) {
+  await verifySubscriptionOwnership(orgId, subId, userId);
   const sub = await adminDao.getSubscription(orgId, subId);
   if (!sub?.BILLING_CUSTOMER_ID) return { data: [] };
 
@@ -523,7 +487,6 @@ async function getInvoice({ orgId, invoiceId, userId }) {
     await getDecryptedStripeKeysForOrg(orgId);
   const invoice = await stripeService.getInvoice(invoiceId, stripeSecretKey);
 
-  // Verify the invoice belongs to a customer associated with this user
   if (userId && invoice?.customer) {
     const userSubs = await adminDao.listSubscriptionsByUser(orgId, userId);
     const customerIds = new Set(
@@ -543,7 +506,8 @@ async function getInvoice({ orgId, invoiceId, userId }) {
   return invoice;
 }
 
-async function createBillingPortal({ orgId, subId, returnUrl }) {
+async function createBillingPortal({ orgId, subId, returnUrl, userId }) {
+  await verifySubscriptionOwnership(orgId, subId, userId);
   const sub = await adminDao.getSubscription(orgId, subId);
 
   if (!sub) {
@@ -570,10 +534,7 @@ async function createBillingPortal({ orgId, subId, returnUrl }) {
 }
 
 async function createBillingPortalByOrg({ orgId, returnUrl, user }) {
-  // Get any subscription for this org to find the Stripe customer ID
   const subscriptions = await adminDao.listSubscriptionsByOrg(orgId);
-
-  // Find a Stripe subscription with a customer ID
   const stripeSub = subscriptions.find(
     (s) =>
       s.PAYMENT_PROVIDER === PAYMENT_PROVIDER.STRIPE && s.BILLING_CUSTOMER_ID,
@@ -586,7 +547,6 @@ async function createBillingPortalByOrg({ orgId, returnUrl, user }) {
   if (stripeSub?.BILLING_CUSTOMER_ID) {
     customerId = stripeSub.BILLING_CUSTOMER_ID;
   } else {
-    // No paid subscription yet — find or create a Stripe customer so the portal can still be opened
     const email = user?.email;
     if (!email) {
       throw new BadRequestError(
@@ -618,12 +578,12 @@ async function createBillingPortalByOrg({ orgId, returnUrl, user }) {
         stripeMessage: stripeErr.message,
       },
     );
-    // Re-throw; billingController.errorToResponse maps Stripe errors to user-friendly messages
     throw stripeErr;
   }
 }
 
 async function cancelPaidSubscription({ req, orgId, subId, user }) {
+  await verifySubscriptionOwnership(orgId, subId, user?.userId);
   return sequelize.transaction(async (t) => {
     const sub = await adminDao.getSubscription(orgId, subId, t);
     if (!sub) throw new NotFoundError(`Subscription not found: subId=${subId}`);
@@ -632,7 +592,6 @@ async function cancelPaidSubscription({ req, orgId, subId, user }) {
 
     const { secretKey: stripeSecretKey } =
       await getDecryptedStripeKeysForOrg(orgId);
-    // Bug 5.4: Handle already-canceled Stripe subscriptions gracefully
     try {
       await stripeService.cancelSubscription(
         sub.BILLING_SUBSCRIPTION_ID,
@@ -662,7 +621,6 @@ async function cancelPaidSubscription({ req, orgId, subId, user }) {
       t,
     );
 
-    // Bug 5.3: Non-blocking Moesif subscription cleanup via APIM → Ballerina → Moesif
     const moesifCompanyId = sub.BILLING_CUSTOMER_ID;
     const moesifSubId = sub.BILLING_SUBSCRIPTION_ID;
     setImmediate(async () => {
@@ -687,8 +645,8 @@ async function cancelPaidSubscription({ req, orgId, subId, user }) {
 }
 
 /**
- * Cancel a Stripe subscription directly by billing ID (Bug 5.1).
- * Used after the DP row is already deleted — avoids calling cancelPaidSubscription which needs the DB row.
+ * Cancel a Stripe subscription directly by billing ID.
+ * Used when the DP row has already been deleted and only the Stripe subscription remains.
  */
 async function cancelStripeByBillingId(orgId, billingSubscriptionId) {
   const { secretKey: stripeSecretKey } =
@@ -719,8 +677,6 @@ async function cancelStripeByBillingId(orgId, billingSubscriptionId) {
  * - Update PAYMENT_STATUS to PAST_DUE/CANCELED/ACTIVE based on invoice/payment events.
  */
 async function handleStripeWebhook(req, orgId) {
-  // req.body must be raw buffer for signature verification in stripeService
-  // orgId comes from the per-org webhook URL (/webhooks/stripe/:orgId)
   if (!orgId) {
     throw new Error("Missing orgId in webhook URL");
   }
@@ -731,11 +687,12 @@ async function handleStripeWebhook(req, orgId) {
     secretKey,
     webhookSecret,
   );
-  const result = await stripeService.applyWebhookToLocalState(event, { adminDao });
+  await stripeService.applyWebhookToLocalState(event, { adminDao });
   return true;
 }
 
-async function getSubscriptionBillingStatus({ orgId, subId }) {
+async function getSubscriptionBillingStatus({ orgId, subId, userId }) {
+  await verifySubscriptionOwnership(orgId, subId, userId);
   const sub = await adminDao.getSubscription(orgId, subId);
   if (!sub) throw new NotFoundError(`Subscription not found: subId=${subId}`);
   return {
@@ -766,12 +723,10 @@ async function getUserUsageData(
   };
 
   try {
-    logger.info("[getUserUsageData] called", { orgId, period, userContext });
+    logger.info({ orgId, period }, "getUserUsageData called");
     const userId = userContext?.userId || userContext?.sub;
     if (!userId) {
-      logger.warn("[getUserUsageData] No userId found in userContext", {
-        userContext,
-      });
+      logger.warn({ orgId }, "No userId found in userContext");
       return empty;
     }
 
@@ -780,7 +735,6 @@ async function getUserUsageData(
       userId,
     );
 
-    // Be tolerant to different enum spellings
     const ACTIVE_STATUSES = new Set(["ACTIVE", "CANCEL_SCHEDULED"]);
 
     const activeSubs = (subscriptions || []).filter((sub) => {
@@ -795,7 +749,7 @@ async function getUserUsageData(
 
     if (activeSubs.length === 0) return empty;
 
-    logger.info(`[AUDIT] active subscriptions rows: ${activeSubs.length}`, {});
+    logger.info({ activeSubs: activeSubs.length }, "Active subscriptions");
 
     const rows = await Promise.all(
       activeSubs.map(async (sub) => {
@@ -819,7 +773,7 @@ async function getUserUsageData(
             if (!apimSubId) {
               logger.warn(
                 { orgId, userId, subId, policyId: sub.POLICY_ID },
-                "[AUDIT] Metered subscription missing APIM subscription reference",
+                "Metered subscription missing APIM subscription reference",
               );
               cost = 0;
               requests = 0;
@@ -869,13 +823,10 @@ async function getUserUsageData(
           };
           return usageRow;
         } catch (err) {
-          logger.error("[AUDIT] Failed to build usage row", {
-            subId: sub?.ID,
-            policyId: sub?.POLICY_ID,
-            apiId: sub?.API_ID,
-            errMessage: err?.message,
-            errStack: err?.stack,
-          });
+          logger.error(
+            { subId: sub?.ID, policyId: sub?.POLICY_ID, apiId: sub?.API_ID, err },
+            "Failed to build usage row",
+          );
           return null;
         }
       }),
@@ -914,11 +865,7 @@ async function getUserUsageData(
       subscriptions: subscriptionData,
     };
   } catch (err) {
-    logger.error("[getUserUsageData] Error occurred", {
-      err,
-      orgId,
-      userContext,
-    });
+    logger.error({ err, orgId }, "getUserUsageData failed");
     return empty;
   }
 }
@@ -928,12 +875,12 @@ async function getUserUsageData(
  */
 async function getPaymentMethods(userContext, orgId) {
   try {
-    logger.info({ orgId, userContext }, "[getPaymentMethods] Start");
+    logger.info({ orgId }, "getPaymentMethods called");
     // Get all subscriptions for the organization to find the Stripe customer ID
     const subscriptions = await adminDao.listSubscriptionsByOrg(orgId);
     logger.info(
       { orgId, subscriptionsCount: subscriptions?.length },
-      "[getPaymentMethods] Subscriptions fetched",
+      "Listing subscriptions for payment methods",
     );
 
     const { secretKey: stripeSecretKey } =
@@ -949,12 +896,11 @@ async function getPaymentMethods(userContext, orgId) {
     if (stripeSubscription?.BILLING_CUSTOMER_ID) {
       customerId = stripeSubscription.BILLING_CUSTOMER_ID;
     } else {
-      // No paid subscription yet — look up customer by email (may have been created via billing portal)
       const email = userContext?.email;
       if (!email) {
         logger.warn(
           { orgId },
-          "[getPaymentMethods] No Stripe customer ID and no user email available",
+          "No Stripe customer ID and no user email available",
         );
         return [];
       }
@@ -967,18 +913,16 @@ async function getPaymentMethods(userContext, orgId) {
     }
     logger.info(
       { orgId, customerId },
-      "[getPaymentMethods] Using Stripe customer ID",
+      "Using Stripe customer ID for payment methods",
     );
-    // Get payment methods from Stripe
     const paymentMethods = await stripeService.listPaymentMethods(
       customerId,
       stripeSecretKey,
     );
     logger.info(
       { orgId, customerId, paymentMethodsCount: paymentMethods?.length },
-      "[getPaymentMethods] Payment methods fetched",
+      "Payment methods fetched",
     );
-    // Get customer default payment method
     const stripeCustomer = await stripeService.getCustomer(
       customerId,
       stripeSecretKey,
@@ -1006,7 +950,6 @@ async function getBillingInfo(userContext, orgId) {
   try {
     const org = await adminDao.getOrganization(orgId);
 
-    // Get all subscriptions for the organization to find the Stripe customer ID
     const subscriptions = await adminDao.listSubscriptionsByOrg(orgId);
 
     if (!subscriptions || subscriptions.length === 0) {
@@ -1016,7 +959,6 @@ async function getBillingInfo(userContext, orgId) {
       };
     }
 
-    // Find a subscription with a Stripe customer ID
     const stripeSubscription = subscriptions.find(
       (s) =>
         s.BILLING_CUSTOMER_ID && s.PAYMENT_PROVIDER === PAYMENT_PROVIDER.STRIPE,
@@ -1033,7 +975,6 @@ async function getBillingInfo(userContext, orgId) {
 
     const { secretKey: stripeSecretKey } =
       await getDecryptedStripeKeysForOrg(orgId);
-    // Get customer from Stripe
     const customer = await stripeService.getCustomer(
       customerId,
       stripeSecretKey,
@@ -1066,7 +1007,6 @@ async function getSubscriptionsForBilling(orgId, userId) {
       return [];
     }
 
-    // Enhance with Stripe billing information
     const formattedSubs = await Promise.all(
       subscriptions.map(async (sub) => {
         try {
@@ -1075,13 +1015,11 @@ async function getSubscriptionsForBilling(orgId, userId) {
           let billingCycle = sub.billingCycle || "N/A";
           let status = sub.PAYMENT_STATUS || "";
 
-          // Get billing info from Stripe if available
           if (
             sub.BILLING_SUBSCRIPTION_ID &&
             sub.PAYMENT_PROVIDER === PAYMENT_PROVIDER.STRIPE
           ) {
             try {
-              const stripeService = require("./stripeService");
               const { secretKey: stripeSecretKey } =
                 await getDecryptedStripeKeysForOrg(orgId);
               const stripeSub = await stripeService.getSubscription(
@@ -1093,7 +1031,6 @@ async function getSubscriptionsForBilling(orgId, userId) {
                 nextBillingDate = stripeSub.current_period_end
                   ? stripeSub.current_period_end * 1000
                   : null;
-                // Override billing cycle from Stripe if available
                 const interval =
                   stripeSub.items.data[0]?.price?.recurring?.interval;
                 if (interval) {
@@ -1127,7 +1064,6 @@ async function getSubscriptionsForBilling(orgId, userId) {
             { err, subId: sub.id },
             "Failed to enhance subscription with Stripe data",
           );
-          // Return DB data if Stripe fetch fails
           return {
             id: sub.id,
             apiName: sub.apiName || "Unknown API",
@@ -1154,7 +1090,6 @@ async function getSubscriptionsForBilling(orgId, userId) {
  * Call this from your controller when handling Stripe return URL.
  */
 async function handleStripeReturnAndActivate({ orgId, sessionId, user }) {
-  // Retrieve Stripe session
   const { secretKey: stripeSecretKey } =
     await getDecryptedStripeKeysForOrg(orgId);
   const session = await stripeService.retrieveCheckoutSession(
@@ -1165,22 +1100,19 @@ async function handleStripeReturnAndActivate({ orgId, sessionId, user }) {
   if (!dpSubId) {
     throw new BadRequestError("Stripe session missing dpSubId metadata.");
   }
-  // Load DP subscription row
   const dpSub = await adminDao.getSubscription(orgId, dpSubId);
   if (!dpSub) {
     throw new NotFoundError(`DP subscription not found: subId=${dpSubId}`);
   }
-  // Fetch the policy row for billing plan check
   const policyRow = await adminDao.getSubscriptionPolicyById(
     orgId,
     dpSub.POLICY_ID,
   );
-  // If paid and still PENDING, activate
   if (
     isPaidPolicy(policyRow) &&
     dpSub.PAYMENT_STATUS === PAYMENT_STATUS.PENDING
   ) {
-    return await module.exports.registerCheckoutSession({
+    return module.exports.registerCheckoutSession({
       orgId,
       checkoutSessionId: sessionId,
       user,

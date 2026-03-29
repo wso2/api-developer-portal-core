@@ -110,7 +110,15 @@ function verifyRequestOrigin(req, res, next) {
   }
 
   const expectedOrigin = new URL(config.baseUrl).origin;
-  const sourceOrigin = origin || new URL(referer).origin;
+  let sourceOrigin;
+  try {
+    sourceOrigin = origin || new URL(referer).origin;
+  } catch {
+    return res.status(403).json({
+      error: "Forbidden",
+      message: "Invalid request origin",
+    });
+  }
 
   if (sourceOrigin !== expectedOrigin) {
     logger.warn("Request origin validation failed", {
