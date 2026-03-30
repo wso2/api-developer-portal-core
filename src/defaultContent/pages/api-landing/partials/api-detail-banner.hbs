@@ -14,23 +14,7 @@
           <span class="badge api-badge-custom2">{{this}}</span>
           {{/apiMetadata.apiInfo.tags}}
         </div>
-        {{#if apiMetadata.subscriptionPolicies}}
-          <div class="plans-summary">
-            <div class="plans-summary__top">
-              <span class="plans-summary__label">
-                <i class="fas fa-tags" aria-hidden="true"></i>
-                Plans ({{apiMetadata.subscriptionPolicies.length}})
-              </span>
-              <a class="plans-summary__link" href="#subscriptionPlans">View plans</a>
-            </div>
 
-            <div class="plans-summary__names">
-              {{#each apiMetadata.subscriptionPolicies}}
-                <span class="plans-summary__name">{{displayName}}</span>{{#unless @last}}<span class="plans-summary__sep">•</span>{{/unless}}
-              {{/each}}
-            </div>
-          </div>
-        {{/if}}
 
         <div class="api-details-btn">
           {{#if apiMetadata.apiInfo.tokenBasedSubscriptionEnabled}}

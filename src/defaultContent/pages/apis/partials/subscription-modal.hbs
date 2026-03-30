@@ -1,6 +1,6 @@
-<div id="planModal-{{apiID}}" class="modal custom-modal" tabindex="-1" role="dialog"
+<div id="planModal-{{apiID}}" class="modal custom-modal subscription-plan-modal" tabindex="-1" role="dialog"
     data-org-id="{{@root.orgID}}" data-api-refid="{{#if apiInfo.apiReferenceID}}{{apiInfo.apiReferenceID}}{{else}}{{apiID}}{{/if}}" data-token-based="{{apiInfo.tokenBasedSubscriptionEnabled}}" data-gateway-type="{{apiInfo.gatewayType}}">
-    <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-dialog modal-xl subscription-plan-modal-dialog" role="document">
         <div class="modal-content custom-modal-content">
             <div class="custom-modal-header">
                 <h2 class="custom-modal-title m-0">{{#if modalTitle}}{{modalTitle}}{{else}}Choose Your Subscription Plan{{/if}}</h2>
@@ -49,23 +49,67 @@
                                 <div class="card-body align-items-center text-center p-0">
                                     <span class="subscription-plans-card-title">{{displayName}}</span>
                                         <div class="mb-3 w-100">
-                                            <div class="d-flex flex-column align-items-center gap-2" style="width: 160px; min-width: 160px; margin: 0 auto;">
+                                            <div class="d-flex flex-column align-items-center gap-2" style="margin: 0 auto;">
                                                 <span class="text-muted d-block mb-0" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom:0 !important; min-height: 18px;">Price</span>
                                                 {{#if pricingModel}}
                                                     {{#compare pricingModel "===" "FLAT"}}
                                                         {{#if flatAmount}}
-                                                        <span class="fw-bold d-inline" style="color: #0f172a; font-size: 22px;">{{currency}} {{formatPrice flatAmount}}<small class="text-muted d-inline" style="font-size: 10px;">/{{billingPeriod}}</small></span>
+                                                        <span class="fw-bold d-inline" style="color: #0f172a; font-size: 22px;">{{currency}} {{formatPrice flatAmount}}<small class="text-muted d-inline" style="font-size: 10px;">/{{formatBillingPeriod billingPeriod}}</small></span>
                                                         {{else}}
                                                         <span class="fw-bold d-inline" style="color: #16a34a; font-size: 22px;">Free</span>
                                                         {{/if}}
                                                     {{else}}
+                                                        {{#if (eq pricingModel "VOLUME_TIERS")}}
+                                                        <div class="subscription-tier-wrapper mx-auto text-center" style="width: fit-content; min-width: 280px;">
+                                                            <details class="subscription-tier-details">
+                                                                <summary style="font-size: 12px; font-weight: 600; color: #0f172a; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: center; gap: 4px;"><span class="tier-chevron" style="font-size: 10px;">&#9654;</span> Tier-based pricing</summary>
+                                                                <table class="table table-sm mt-2 mb-0" style="font-size: 11px;">
+                                                                    <thead><tr><th style="color: #64748b; font-weight: 600; text-align: center; vertical-align: middle;">Total Request<br>Volume</th><th style="color: #64748b; font-weight: 600; text-align: center; vertical-align: middle;">Flat<br>Price</th><th style="color: #64748b; font-weight: 600; text-align: center; vertical-align: middle;">Price /<br>req</th></tr></thead>
+                                                                    <tbody>
+                                                                        {{#each pricingMetadata.tiers}}
+                                                                        <tr>
+                                                                            <td style="text-align: center; vertical-align: middle;">{{formatTierRange startUnit endUnit}}</td>
+                                                                            <td style="text-align: center; vertical-align: middle;">{{../currency}} {{formatPrice flatPrice}}</td>
+                                                                            <td style="text-align: center; vertical-align: middle;">{{../currency}} {{formatPrice unitPrice}}</td>
+                                                                        </tr>
+                                                                        {{/each}}
+                                                                    </tbody>
+                                                                </table>
+                                                            </details>
+                                                        </div>
+                                                        {{#if billingPeriod}}
+                                                        <span class="badge d-inline-block mt-2 mb-1" style="background-color: #e0f2fe; color: #0369a1; font-size: 9px; padding: 3px 8px; border-radius: 10px;">Billed {{formatBillingPeriod billingPeriod}}</span>
+                                                        {{/if}}
+                                                        {{else if (eq pricingModel "GRADUATED_TIERS")}}
+                                                        <div class="subscription-tier-wrapper mx-auto text-center" style="width: fit-content; min-width: 280px;">
+                                                            <details class="subscription-tier-details">
+                                                                <summary style="font-size: 12px; font-weight: 600; color: #0f172a; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: center; gap: 4px;"><span class="tier-chevron" style="font-size: 10px;">&#9654;</span> Tier-based pricing</summary>
+                                                                <table class="table table-sm mt-2 mb-0" style="font-size: 11px;">
+                                                                    <thead><tr><th style="color: #64748b; font-weight: 600; text-align: center; vertical-align: middle;">Request<br>Range</th><th style="color: #64748b; font-weight: 600; text-align: center; vertical-align: middle;">Flat<br>Price</th><th style="color: #64748b; font-weight: 600; text-align: center; vertical-align: middle;">Price /<br>req</th></tr></thead>
+                                                                    <tbody>
+                                                                        {{#each pricingMetadata.tiers}}
+                                                                        <tr>
+                                                                            <td style="text-align: center; vertical-align: middle;">{{formatTierRange startUnit endUnit}}</td>
+                                                                            <td style="text-align: center; vertical-align: middle;">{{../currency}} {{formatPrice flatPrice}}</td>
+                                                                            <td style="text-align: center; vertical-align: middle;">{{../currency}} {{formatPrice unitPrice}}</td>
+                                                                        </tr>
+                                                                        {{/each}}
+                                                                    </tbody>
+                                                                </table>
+                                                            </details>
+                                                        </div>
+                                                        {{#if billingPeriod}}
+                                                        <span class="badge d-inline-block mt-2 mb-1" style="background-color: #e0f2fe; color: #0369a1; font-size: 9px; padding: 3px 8px; border-radius: 10px;">Billed {{formatBillingPeriod billingPeriod}}</span>
+                                                        {{/if}}
+                                                        {{else}}
                                                         {{#if unitAmount}}
                                                         <span class="fw-bold d-inline" style="color: #0f172a; font-size: 22px;">{{currency}} {{formatPrice unitAmount}}<small class="text-muted d-inline" style="font-size: 10px;">/req</small></span>
                                                         {{#if billingPeriod}}
-                                                        <span class="badge d-inline-block mt-2" style="background-color: #e0f2fe; color: #0369a1; font-size: 9px; padding: 3px 8px; border-radius: 10px;">Billed {{billingPeriod}}ly</span>
+                                                        <span class="badge d-inline-block mt-2" style="background-color: #e0f2fe; color: #0369a1; font-size: 9px; padding: 3px 8px; border-radius: 10px;">Billed {{formatBillingPeriod billingPeriod}}</span>
                                                         {{/if}}
                                                         {{else}}
                                                         <span class="fw-bold d-inline" style="color: #16a34a; font-size: 22px;">Free</span>
+                                                        {{/if}}
                                                         {{/if}}
                                                     {{/compare}}
                                                 {{else}}

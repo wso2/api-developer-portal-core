@@ -513,7 +513,7 @@ const createAPISubscriptionPolicy = async (apiSubscriptionPolicies, apiID, t) =>
 };
 
 /**
- * Upsert a single API-policy-meter mapping (Bug 1.2 - meter ID sync during policy push)
+ * Upsert a single API-policy-meter mapping
  */
 const upsertAPISubscriptionPolicyMeter = async (apiID, policyID, meterId, t) => {
   try {

@@ -16,11 +16,10 @@
  * under the License.
  */
 
+let activeTabController = null;
+
 // Function to initialize the billing page
 function initializeBillingPage() {
-  console.log("[initializeBillingPage] called");
-  // Load initial data based on active tab
-
   // Always load usage data on page load since Usage is the first/default tab
   setTimeout(() => {
     loadUsageData();
@@ -32,15 +31,23 @@ function initializeBillingPage() {
   );
   tabs.forEach((tab) => {
     tab.addEventListener("shown.bs.tab", function () {
-      // Bootstrap passes the newly activated tab as event.target
+      // Cancel any in-flight requests from the previous tab.
+      if (activeTabController) {
+        activeTabController.abort();
+      }
+      activeTabController = new AbortController();
+      const signal = activeTabController.signal;
+
       const targetId = tab.getAttribute("data-bs-target");
 
-      if (targetId === "#usage") {
-        loadUsageData();
-      } else if (targetId === "#invoices") {
-        loadInvoices();
-      } else if (targetId === "#payment") {
-        loadPaymentDetails();
+      if (targetId === "#billing-usage") {
+        loadUsageData(signal);
+      } else if (targetId === "#billing-invoices") {
+        loadInvoices(signal);
+      } else if (targetId === "#billing-subscriptions") {
+        loadActiveSubscriptions(signal);
+      } else if (targetId === "#billing-payment") {
+        loadPaymentDetails(signal);
       }
     });
   });
@@ -56,7 +63,7 @@ if (document.readyState === "loading") {
 /**
  * Load usage data for the selected period
  */
-async function loadUsageData() {
+async function loadUsageData(signal) {
   const period = document.getElementById("usagePeriod")?.value || "current";
   const tableBody = document.getElementById("usageTableBody");
   const orgId = getOrgIdFromContext();
@@ -76,7 +83,7 @@ async function loadUsageData() {
     `;
 
     const url = `/devportal/organizations/${orgId}/billing/usage-data?period=${period}`;
-    const response = await fetch(url);
+    const response = await fetch(url, { signal });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -95,8 +102,6 @@ async function loadUsageData() {
       data.estimatedCost || 0,
       data.currency || "USD",
     );
-    document.getElementById("avgResponseTime").textContent =
-      `${data.avgResponseTime || 0}ms`;
 
     // Populate usage table
     if (data.subscriptions && data.subscriptions.length > 0) {
@@ -133,6 +138,7 @@ async function loadUsageData() {
       `;
     }
   } catch (error) {
+    if (error.name === "AbortError") return;
     console.error("Error loading usage data:", error);
     tableBody.innerHTML = `
       <tr>
@@ -150,7 +156,7 @@ async function loadUsageData() {
 /**
  * Load invoice history
  */
-async function loadInvoices() {
+async function loadInvoices(signal) {
   const tableBody = document.getElementById("invoicesTableBody");
   const noInvoices = document.getElementById("noInvoices");
   const period =
@@ -169,6 +175,7 @@ async function loadInvoices() {
 
     const response = await fetch(
       `/devportal/organizations/${orgId}/invoices?period=${period}`,
+      { signal },
     );
 
     if (!response.ok) {
@@ -215,6 +222,7 @@ async function loadInvoices() {
       noInvoices.style.display = "block";
     }
   } catch (error) {
+    if (error.name === "AbortError") return;
     console.error("Error loading invoices:", error);
     tableBody.innerHTML = `
       <tr>
@@ -231,22 +239,22 @@ async function loadInvoices() {
 /**
  * Load payment details including payment methods and billing info
  */
-async function loadPaymentDetails() {
+async function loadPaymentDetails(signal) {
   try {
     await Promise.all([
-      loadPaymentMethods(),
-      loadBillingInfo(),
-      loadActiveSubscriptions(),
+      loadPaymentMethods(signal),
+      loadBillingInfo(signal),
     ]);
   } catch (error) {
-    console.error("💳 Error loading payment details:", error);
+    if (error.name === "AbortError") return;
+    console.error("Error loading payment details:", error);
   }
 }
 
 /**
  * Load payment methods
  */
-async function loadPaymentMethods() {
+async function loadPaymentMethods(signal) {
   const container = document.getElementById("paymentMethodsList");
   const orgId = getOrgIdFromContext();
 
@@ -280,6 +288,7 @@ async function loadPaymentMethods() {
 
     const response = await fetch(
       `/devportal/organizations/${orgId}/billing/payment-methods`,
+      { signal },
     );
 
     if (!response.ok) {
@@ -334,6 +343,7 @@ async function loadPaymentMethods() {
       `;
     }
   } catch (error) {
+    if (error.name === "AbortError") return;
     console.error("Error loading payment methods:", error);
     container.innerHTML = `
       <div class="text-center py-4">
@@ -353,7 +363,7 @@ async function loadPaymentMethods() {
 /**
  * Load billing information
  */
-async function loadBillingInfo() {
+async function loadBillingInfo(signal) {
   const container = document.getElementById("billingInfoContent");
   const orgId = getOrgIdFromContext();
 
@@ -367,6 +377,7 @@ async function loadBillingInfo() {
 
     const response = await fetch(
       `/devportal/organizations/${orgId}/billing/info`,
+      { signal },
     );
 
     if (!response.ok) {
@@ -418,6 +429,7 @@ async function loadBillingInfo() {
       </div>
     `;
   } catch (error) {
+    if (error.name === "AbortError") return;
     console.error("Error loading billing info:", error);
     container.innerHTML = `
       <div class="text-center py-4 text-danger">
@@ -431,7 +443,7 @@ async function loadBillingInfo() {
 /**
  * Load active subscriptions
  */
-async function loadActiveSubscriptions() {
+async function loadActiveSubscriptions(signal) {
   const tableBody = document.getElementById("subscriptionsTableBody");
   const orgId = getOrgIdFromContext();
   const filterContainer = document.getElementById(
@@ -448,11 +460,12 @@ async function loadActiveSubscriptions() {
       </tr>
     `;
 
-    const response = await fetch(
-      `/devportal/organizations/${orgId}/billing/subscriptions`,
-    );
+    const url = `/devportal/organizations/${orgId}/billing/subscriptions`;
+    const response = await fetch(url, { signal });
     if (!response.ok) {
-      throw new Error("Failed to fetch subscriptions");
+      const errorText = await response.text();
+      console.error("Subscriptions error response:", errorText);
+      throw new Error("Failed to fetch subscriptions: " + response.status);
     }
 
     const data = await response.json();
@@ -532,12 +545,14 @@ async function loadActiveSubscriptions() {
       });
     }
   } catch (error) {
+    if (error.name === "AbortError") return;
     console.error("Error loading subscriptions:", error);
     tableBody.innerHTML = `
       <tr>
         <td colspan="8" class="text-center py-4 text-danger">
           <i class="fas fa-exclamation-circle me-2"></i>
           Failed to load subscriptions
+          <div class="small text-muted mt-2">${escapeHtml(error.message)}</div>
         </td>
       </tr>
     `;

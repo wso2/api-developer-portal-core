@@ -1012,7 +1012,7 @@ async function getSubscriptionsForBilling(orgId, userId) {
         try {
           let amount = 0;
           let nextBillingDate = null;
-          let billingCycle = sub.billingCycle || "N/A";
+          let billingCycle = sub.billingPlan || sub.billingCycle || "N/A";
           let status = sub.PAYMENT_STATUS || "";
 
           if (
@@ -1069,7 +1069,7 @@ async function getSubscriptionsForBilling(orgId, userId) {
             apiName: sub.apiName || "Unknown API",
             applicationName: sub.applicationName || "Unknown App",
             planName: sub.planName || "Unknown Plan",
-            billingCycle: sub.billingCycle || "N/A",
+            billingCycle: sub.billingPlan || sub.billingCycle || "N/A",
             amount: 0,
             nextBillingDate: null,
             status: sub.status?.toLowerCase() || "unknown",

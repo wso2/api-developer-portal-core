@@ -75,12 +75,14 @@ async function getUsageStats({ req, subscriptionId, from, to, period = "current"
 
   const response = await invokeApiRequest(req, "GET", url.toString());
 
-  const totalUsage = Number(response?.totalUsage ?? 0) || 0;
-  const estimatedCost = Number(response?.estimatedCost ?? 0) || 0;
-  const currency = response?.currency || "USD";
+  const records = Array.isArray(response) ? response : (response ? [response] : []);
 
-  logger.info(`[moesifService] APIM usage response`, {
-    subscriptionId, totalUsage, estimatedCost, currency
+  const totalUsage = records.reduce((sum, r) => sum + (Number(r?.report_total_usage ?? r?.meter_usage ?? 0) || 0), 0);
+  const estimatedCost = records.reduce((sum, r) => sum + (Number(r?.price_in_decimal ?? 0) || 0), 0);
+  const currency = records[0]?.currency || "USD";
+
+  logger.debug(`[moesifService] APIM usage response`, {
+    subscriptionId, records: records.length, totalUsage, estimatedCost, currency
   });
 
   return {

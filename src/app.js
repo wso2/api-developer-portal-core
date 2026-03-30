@@ -302,6 +302,20 @@ Handlebars.registerHelper('formatPrice', function (price) {
     return parseFloat(price).toString();
 });
 
+Handlebars.registerHelper('formatBillingPeriod', function (period) {
+    const map = { day: 'daily', week: 'weekly', month: 'monthly', year: 'yearly' };
+    const p = String(period || '').toLowerCase();
+    return map[p] || (p + 'ly');
+});
+
+Handlebars.registerHelper('formatTierRange', function (startUnit, endUnit) {
+    const start = startUnit != null ? Number(startUnit).toLocaleString() : '0';
+    if (endUnit == null || endUnit === '' || endUnit === Infinity) {
+        return start + ' +';
+    }
+    return start + ' – ' + Number(endUnit).toLocaleString();
+});
+
 Handlebars.registerHelper('maskToken', function (token) {
     if (!token || token.length <= 4) return '****';
     return '****' + token.slice(-4);

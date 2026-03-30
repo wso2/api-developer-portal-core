@@ -980,7 +980,6 @@ const createSubscription = async (req, res) => {
                                     applicationId: req.params?.applicationId
                                 });
                                 await handleSubscribe(orgID, req.body.applicationID, appRef.dataValues.API_REF_ID, appRef.dataValues.SUBSCRIPTION_REF_ID, subscription, sharedApp.length > 0 ? true : false, t);
-                                // Bug 3.1: Skip DP row creation if an ACTIVE subscription already exists
                                 const existingSub2 = await adminDao.findSubscriptionByUniqueKey(
                                     orgID,
                                     req.body.applicationID,
@@ -1193,7 +1192,6 @@ const deleteSubscription = async (req, res) => {
         subId: subID
     });
     try {
-        // Bug 5.1: Capture billing info before transaction (Stripe must not be called inside DB tx)
         const subscriptionPreTx = await adminDao.getSubscription(orgID, subID);
 
         await sequelize.transaction({
@@ -1217,7 +1215,6 @@ const deleteSubscription = async (req, res) => {
             }
         });
 
-        // Bug 5.1 + 5.4: Cancel Stripe AFTER DB transaction commits; skip if already canceled
         if (
             subscriptionPreTx &&
             subscriptionPreTx.BILLING_SUBSCRIPTION_ID &&
@@ -1317,7 +1314,6 @@ const createAppKeyMapping = async (req, res) => {
                 const api = new APIDTO(sub);
                 const policyDetails = await apiDao.getSubscriptionPolicy(api.policyID, orgID, t);
 
-                // Bug 3.3: Billing data is on the junction table (DP_API_SUBSCRIPTION), not directly on sub
                 const subJunction = sub.DP_APPLICATIONs?.[0]?.DP_API_SUBSCRIPTION?.dataValues;
                 let billingData = null;
                 if (subJunction?.BILLING_CUSTOMER_ID && subJunction?.BILLING_SUBSCRIPTION_ID) {

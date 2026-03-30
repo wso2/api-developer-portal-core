@@ -79,9 +79,9 @@
             {{#if subscriptionPlans.length}}
             <div class="container-header mb-4">Subscription Plans</div>
             {{/if}}
-            <div class="row row-gap-4 justify-content-center">
+            <div class="row row-gap-4 justify-content-center align-items-start">
                 {{#each subscriptionPlans}}
-                <div class="col-xl-3 col-lg-4 col-md-6 col-12" id="subscriptionCard-{{policyID}}">
+                <div class="col-lg-4 col-md-6 col-12" id="subscriptionCard-{{policyID}}">
                     <div class="card dev-card subscription-card">
                         <div class="card-body align-items-center text-center p-0">
                             <span class="subscription-plans-card-title">{{displayName}}</span>
@@ -147,13 +147,15 @@
             {{#if subscriptionPlans.length}}
             <div class="container-header mb-4">Subscription Plans</div>
             {{/if}}
-            <div class="row row-gap-4 justify-content-center">
+            <div class="row row-gap-4 justify-content-center align-items-start">
                 {{#each subscriptionPlans}}
-                <div class="col-xl-3 col-lg-4 col-md-6 col-12" id="subscriptionCard-{{policyID}}">
+                <div class="col-lg-4 col-md-6 col-12" id="subscriptionCard-{{policyID}}">
                     <div class="card dev-card subscription-card">
                         <div class="card-body align-items-center text-center p-4">
                             <span class="subscription-plans-card-title d-block mb-3">{{displayName}}</span>
-
+                            {{#if description}}
+                            <p class="text-muted small mb-3" style="font-size: 12px; line-height: 1.5;">{{description}}</p>
+                            {{/if}}
                             <div class="plan-kpis">
 
                                 <div class="plan-kpi-row">
@@ -163,16 +165,26 @@
                                             {{#compare pricingModel "===" "FLAT"}}
                                                 {{#if flatAmount}}
                                                     <span class="plan-kpi-amount">{{currency}} {{formatPrice flatAmount}}</span>
-                                                    <span class="plan-kpi-unit">/{{billingPeriod}}</span>
+                                                    <span class="plan-kpi-unit">/{{formatBillingPeriod billingPeriod}}</span>
                                                 {{else}}
                                                     <span class="plan-kpi-free">Free</span>
                                                 {{/if}}
                                             {{else}}
-                                                {{#if unitAmount}}
-                                                    <span class="plan-kpi-amount">{{currency}} {{formatPrice unitAmount}}</span>
-                                                    <span class="plan-kpi-unit">/req</span>
+                                                {{#if (eq pricingModel "VOLUME_TIERS")}}
+                                                    <details class="subscription-tier-details plan-kpi-tier-details">
+                                                        <summary><span class="tier-chevron" style="font-size: 10px;">&#9654;</span> Tier-based pricing</summary>
+                                                    </details>
+                                                {{else if (eq pricingModel "GRADUATED_TIERS")}}
+                                                    <details class="subscription-tier-details plan-kpi-tier-details">
+                                                        <summary><span class="tier-chevron" style="font-size: 10px;">&#9654;</span> Tier-based pricing</summary>
+                                                    </details>
                                                 {{else}}
-                                                    <span class="plan-kpi-free">Free</span>
+                                                    {{#if unitAmount}}
+                                                        <span class="plan-kpi-amount">{{currency}} {{formatPrice unitAmount}}</span>
+                                                        <span class="plan-kpi-unit">/req</span>
+                                                    {{else}}
+                                                        <span class="plan-kpi-free">Free</span>
+                                                    {{/if}}
                                                 {{/if}}
                                             {{/compare}}
                                         {{else}}
@@ -181,23 +193,47 @@
                                     </div>
                                     <div class="plan-kpi-labelSub"></div>
                                     <div class="plan-kpi-valueSub">
-                                        {{#compare pricingModel "===" "PER_UNIT"}}
-                                            {{#if unitAmount}}
-                                                {{#if billingPeriod}}
-                                                    <span class="plan-kpi-badge">
-                                                        Billed
-                                                        {{#compare billingPeriod "===" "month"}}monthly{{else}}{{billingPeriod}}ly{{/compare}}
-                                                    </span>
-                                                {{else}}
-                                                    <span class="plan-kpi-badge-placeholder">&nbsp;</span>
-                                                {{/if}}
-                                            {{else}}
-                                                <span class="plan-kpi-badge-placeholder">&nbsp;</span>
-                                            {{/if}}
+                                        {{#if billingPeriod}}
+                                            <span class="plan-kpi-badge">Billed {{formatBillingPeriod billingPeriod}}</span>
                                         {{else}}
                                             <span class="plan-kpi-badge-placeholder">&nbsp;</span>
-                                        {{/compare}}
+                                        {{/if}}
                                     </div>
+                                    {{#if (eq pricingModel "VOLUME_TIERS")}}
+                                    <div class="plan-kpi-tier-table-row">
+                                        <table class="table table-sm mt-2 mb-0" style="font-size: 11px;">
+                                            <thead><tr>
+                                                <th style="color: #64748b; font-weight: 600; text-align: center; vertical-align: middle;">Total Request<br>Volume</th>
+                                                <th style="color: #64748b; font-weight: 600; text-align: center; vertical-align: middle;">Price</th>
+                                            </tr></thead>
+                                            <tbody>
+                                                {{#each pricingMetadata.tiers}}
+                                                <tr>
+                                                    <td style="text-align: center; vertical-align: middle;">{{formatTierRange startUnit endUnit}}</td>
+                                                    <td style="text-align: center; vertical-align: middle;">{{../currency}} {{formatPrice flatPrice}} <span style="color: #94a3b8;">+</span> {{../currency}} {{formatPrice unitPrice}}/req</td>
+                                                </tr>
+                                                {{/each}}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {{else if (eq pricingModel "GRADUATED_TIERS")}}
+                                    <div class="plan-kpi-tier-table-row">
+                                        <table class="table table-sm mt-2 mb-0" style="font-size: 11px;">
+                                            <thead><tr>
+                                                <th style="color: #64748b; font-weight: 600; text-align: center; vertical-align: middle;">Request<br>Range</th>
+                                                <th style="color: #64748b; font-weight: 600; text-align: center; vertical-align: middle;">Price</th>
+                                            </tr></thead>
+                                            <tbody>
+                                                {{#each pricingMetadata.tiers}}
+                                                <tr>
+                                                    <td style="text-align: center; vertical-align: middle;">{{formatTierRange startUnit endUnit}}</td>
+                                                    <td style="text-align: center; vertical-align: middle;">{{../currency}} {{formatPrice flatPrice}} <span style="color: #94a3b8;">+</span> {{../currency}} {{formatPrice unitPrice}}/req</td>
+                                                </tr>
+                                                {{/each}}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {{/if}}
                                 </div>
 
                                 <div class="plan-kpi-divider"></div>
@@ -214,10 +250,6 @@
                                     </div>
                                 </div>
                             </div>
-
-                            {{#if description}}
-                            <p class="text-muted small mb-3" style="font-size: 12px; line-height: 1.5;">{{description}}</p>
-                            {{/if}}
                         </div>
 
                         <div class="position-relative">
