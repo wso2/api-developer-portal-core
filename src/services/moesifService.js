@@ -22,11 +22,11 @@ const logger = require("../config/logger");
 const { invokeApiRequest } = require("../utils/util");
 const config = require(process.cwd() + "/config.json");
 
-const controlPlaneUrl = config.controlPlane.url;
+const controlPlaneUrl = config.controlPlane?.url;
 
 class BadRequestError extends CustomError {
   constructor(message, details) {
-    super(400, "BadRequest", message, details);
+    super(400, message, details);
   }
 }
 
@@ -69,9 +69,7 @@ async function getUsageStats({ req, subscriptionId, from, to, period = "current"
   url.searchParams.set("from", from);
   url.searchParams.set("to", to);
 
-  logger.info(`[moesifService] Calling APIM usage endpoint`, {
-    subscriptionId, from, to
-  });
+  logger.info({ subscriptionId, from, to }, "[moesifService] Calling APIM usage endpoint");
 
   const response = await invokeApiRequest(req, "GET", url.toString());
 
@@ -81,9 +79,7 @@ async function getUsageStats({ req, subscriptionId, from, to, period = "current"
   const estimatedCost = records.reduce((sum, r) => sum + (Number(r?.price_in_decimal ?? 0) || 0), 0);
   const currency = records[0]?.currency || "USD";
 
-  logger.debug(`[moesifService] APIM usage response`, {
-    subscriptionId, records: records.length, totalUsage, estimatedCost, currency
-  });
+  logger.debug({ subscriptionId, records: records.length, totalUsage, estimatedCost, currency }, "[moesifService] APIM usage response");
 
   return {
     total_requests: totalUsage,

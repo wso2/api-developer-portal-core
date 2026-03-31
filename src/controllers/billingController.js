@@ -27,7 +27,7 @@ const { encrypt } = require("../utils/cryptoUtil");
 const BillingEngineKey = require("../models/billingEngineKey");
 const logger = require("../config/logger");
 const constants = require("../utils/constants");
-const config = require("../../config.json");
+const config = require(process.cwd() + "/config.json");
 
 class BadRequestError extends CustomError {
   constructor(message) {
@@ -322,13 +322,29 @@ async function handleBillingReturn(req, res) {
 
     const sourcePageFinal = req.query.sourcePage || sourcePageMeta;
     if (sourcePageFinal) {
-      const urlObj = new URL(
-        sourcePageFinal,
-        `${req.protocol}://${req.get("host")}`,
-      );
-      if (session_id) urlObj.searchParams.set("session_id", session_id);
-      if (orgIdFinal) urlObj.searchParams.set("org_id", orgIdFinal);
-      return res.redirect(urlObj.pathname + urlObj.search);
+      let safePath;
+      try {
+        const urlObj = new URL(
+          sourcePageFinal,
+          `${req.protocol}://${req.get("host")}`,
+        );
+        if (urlObj.origin !== `${req.protocol}://${req.get("host")}`) {
+          throw new Error("External redirect not allowed");
+        }
+        safePath = urlObj.pathname + urlObj.search;
+      } catch {
+        safePath = "/";
+      }
+      if (session_id) {
+        const safeUrl = new URL(
+          safePath,
+          `${req.protocol}://${req.get("host")}`,
+        );
+        safeUrl.searchParams.set("session_id", session_id);
+        if (orgIdFinal) safeUrl.searchParams.set("org_id", orgIdFinal);
+        return res.redirect(safeUrl.pathname + safeUrl.search);
+      }
+      return res.redirect(safePath);
     }
 
     if (apiReferenceID && orgIdFinal) {
@@ -338,7 +354,7 @@ async function handleBillingReturn(req, res) {
       }
       const orgName = org.IDENTIFIER || "default";
       return res.redirect(
-        `/${orgName}/apis/${encodeURIComponent(apiReferenceID)}?session_id=${session_id}&dp_sub_id=${dp_sub_id || ""}&org_id=${encodeURIComponent(orgIdFinal)}`,
+        `/${orgName}/apis/${encodeURIComponent(apiReferenceID)}?session_id=${encodeURIComponent(session_id)}&dp_sub_id=${encodeURIComponent(dp_sub_id || "")}&org_id=${encodeURIComponent(orgIdFinal)}`,
       );
     }
 

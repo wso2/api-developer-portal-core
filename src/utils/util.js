@@ -801,7 +801,7 @@ async function appendSubscriptionPlanDetails(orgID, subscriptionPolicies) {
             const billingPlanRaw = subscriptionPlan.billingPlan;
             const billingPlan = (typeof billingPlanRaw === 'string') ? billingPlanRaw.trim().toUpperCase() : '';
             const isPaid = billingPlan === 'COMMERCIAL';
-            logger.info('[appendSubscriptionPlanDetails] Plan:', {
+            logger.debug('[appendSubscriptionPlanDetails] Plan:', {
                 policyID: subscriptionPlan.policyID,
                 policyName: subscriptionPlan.policyName,
                 billingPlanRaw,

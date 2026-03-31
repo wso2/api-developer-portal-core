@@ -534,7 +534,7 @@ async function createBillingPortal({ orgId, subId, returnUrl, userId }) {
 }
 
 async function createBillingPortalByOrg({ orgId, returnUrl, user }) {
-  const subscriptions = await adminDao.listSubscriptionsByOrg(orgId);
+  const subscriptions = await adminDao.listSubscriptionsByUser(orgId, user?.userId);
   const stripeSub = subscriptions.find(
     (s) =>
       s.PAYMENT_PROVIDER === PAYMENT_PROVIDER.STRIPE && s.BILLING_CUSTOMER_ID,
@@ -623,21 +623,23 @@ async function cancelPaidSubscription({ req, orgId, subId, user }) {
 
     const moesifCompanyId = sub.BILLING_CUSTOMER_ID;
     const moesifSubId = sub.BILLING_SUBSCRIPTION_ID;
-    setImmediate(async () => {
-      try {
-        if (req && moesifCompanyId && moesifSubId) {
-          const url =
-            `${controlPlaneUrl}/billing/moesif/subscription` +
-            `?companyId=${encodeURIComponent(moesifCompanyId)}` +
-            `&subscriptionId=${encodeURIComponent(moesifSubId)}`;
-          await invokeApiRequest(req, "DELETE", url);
+    setImmediate(() => {
+      (async () => {
+        try {
+          if (req && moesifCompanyId && moesifSubId) {
+            const url =
+              `${controlPlaneUrl}/billing/moesif/subscription` +
+              `?companyId=${encodeURIComponent(moesifCompanyId)}` +
+              `&subscriptionId=${encodeURIComponent(moesifSubId)}`;
+            await invokeApiRequest(req, "DELETE", url);
+          }
+        } catch (err) {
+          logger.warn(
+            { subId, err: err.message },
+            "Moesif subscription cleanup failed (non-fatal)",
+          );
         }
-      } catch (err) {
-        logger.warn(
-          { subId, err: err.message },
-          "Moesif subscription cleanup failed (non-fatal)",
-        );
-      }
+      })().catch(err => logger.warn({ subId, err: err.message }, "Moesif cleanup promise rejected"));
     });
 
     return { subId, paymentStatus: PAYMENT_STATUS.CANCELED };
@@ -877,7 +879,7 @@ async function getPaymentMethods(userContext, orgId) {
   try {
     logger.info({ orgId }, "getPaymentMethods called");
     // Get all subscriptions for the organization to find the Stripe customer ID
-    const subscriptions = await adminDao.listSubscriptionsByOrg(orgId);
+    const subscriptions = await adminDao.listSubscriptionsByUser(orgId, userContext?.userId);
     logger.info(
       { orgId, subscriptionsCount: subscriptions?.length },
       "Listing subscriptions for payment methods",
@@ -950,7 +952,7 @@ async function getBillingInfo(userContext, orgId) {
   try {
     const org = await adminDao.getOrganization(orgId);
 
-    const subscriptions = await adminDao.listSubscriptionsByOrg(orgId);
+    const subscriptions = await adminDao.listSubscriptionsByUser(orgId, userContext?.userId);
 
     if (!subscriptions || subscriptions.length === 0) {
       return {

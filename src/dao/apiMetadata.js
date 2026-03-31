@@ -477,8 +477,7 @@ const buildSubscriptionPolicyRow = (orgID, policy) => {
   return {
     ORG_ID: orgID,
 
-    // IMPORTANT: if your table POLICY_ID is the APIM policy UUID, store it here
-    // (otherwise remove this line)
+    // Store the APIM policy UUID if provided
     POLICY_ID: policy.policyId ?? policy.policyID ?? undefined,
 
     POLICY_NAME: policy.policyName,
@@ -557,9 +556,6 @@ const createSubscriptionPolicy = async (orgID, policy, t) => {
   try {
     const row = buildSubscriptionPolicyRow(orgID, policy);
 
-    // If POLICY_ID is auto-generated in your DB, delete it from row:
-    // delete row.POLICY_ID;
-
     return await SubscriptionPolicy.create(row, { transaction: t });
   } catch (error) {
     if (error instanceof Sequelize.UniqueConstraintError || error instanceof Sequelize.ValidationError) {
@@ -579,9 +575,6 @@ const createSubscriptionPolicy = async (orgID, policy, t) => {
 const bulkCreateSubscriptionPolicies = async (orgID, policies, t) => {
   try {
     const rows = policies.map((policy) => buildSubscriptionPolicyRow(orgID, policy));
-
-    // If POLICY_ID is auto-generated in your DB, remove it for all rows:
-    // rows.forEach(r => delete r.POLICY_ID);
 
     return await SubscriptionPolicy.bulkCreate(rows, { transaction: t });
   } catch (error) {

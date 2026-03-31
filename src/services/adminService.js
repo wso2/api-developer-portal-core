@@ -895,15 +895,14 @@ const createSubscription = async (req, res) => {
             try {
                 sharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
                 nonSharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, false);
-                if (sharedApp.length > 0) {
-                    isShared = true;
+
+                const billingMetadata = await (async () => {
                     const subscription = await adminDao.getAppApiSubscription(
                         orgID,
                         req.body.applicationID,
                         req.body.apiId,
                     );
-                    const billingMetadata =
-                        subscription?.length > 0 &&
+                    return subscription?.length > 0 &&
                         (subscription[0].BILLING_CUSTOMER_ID ||
                             subscription[0].BILLING_SUBSCRIPTION_ID)
                             ? {
@@ -912,6 +911,10 @@ const createSubscription = async (req, res) => {
                                     subscription[0].BILLING_SUBSCRIPTION_ID,
                             }
                             : null;
+                })();
+
+                if (sharedApp.length > 0) {
+                    isShared = true;
                     const response = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, {
                         apiId: req.body.apiReferenceID,
                         applicationId: sharedApp[0].dataValues.CP_APP_REF,
@@ -921,21 +924,6 @@ const createSubscription = async (req, res) => {
                     await handleSubscribe(orgID, req.body.applicationID, sharedApp[0].dataValues.API_REF_ID, sharedApp[0].dataValues.SUBSCRIPTION_REF_ID, response, isShared, t);
                 } else if (nonSharedApp.length > 0) {
                     isShared = false;
-                    const subscription = await adminDao.getAppApiSubscription(
-                        orgID,
-                        req.body.applicationID,
-                        req.body.apiId,
-                    );
-                    const billingMetadata =
-                        subscription?.length > 0 &&
-                        (subscription[0].BILLING_CUSTOMER_ID ||
-                            subscription[0].BILLING_SUBSCRIPTION_ID)
-                            ? {
-                                billingCustomerId: subscription[0].BILLING_CUSTOMER_ID,
-                                billingSubscriptionId:
-                                    subscription[0].BILLING_SUBSCRIPTION_ID,
-                            }
-                            : null;
                     const response = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, {
                         apiId: req.body.apiReferenceID,
                         applicationId: nonSharedApp[0].dataValues.CP_APP_REF,
@@ -946,14 +934,14 @@ const createSubscription = async (req, res) => {
                 }
                 // No key mapping exists: skip CP call entirely.
                 // CP communication happens later when keys are generated (same for all plan types).
-                const existingSub1 = await adminDao.findSubscriptionByUniqueKey(
+                const existingSubscription = await adminDao.findSubscriptionByUniqueKey(
                     orgID,
                     req.body.applicationID,
                     req.body.apiId,
                     req.body.policyId,
                     t,
                 );
-                if (!existingSub1 || existingSub1.PAYMENT_STATUS !== "ACTIVE") {
+                if (!existingSubscription || existingSubscription.PAYMENT_STATUS !== "ACTIVE") {
                     await adminDao.createSubscription(orgID, req.body, t);
                 }
                 trackSubscribeApi({
@@ -980,14 +968,14 @@ const createSubscription = async (req, res) => {
                                     applicationId: req.params?.applicationId
                                 });
                                 await handleSubscribe(orgID, req.body.applicationID, appRef.dataValues.API_REF_ID, appRef.dataValues.SUBSCRIPTION_REF_ID, subscription, sharedApp.length > 0 ? true : false, t);
-                                const existingSub2 = await adminDao.findSubscriptionByUniqueKey(
+                                const existingSubAfterConflict = await adminDao.findSubscriptionByUniqueKey(
                                     orgID,
                                     req.body.applicationID,
                                     req.body.apiId,
                                     req.body.policyId,
                                     t,
                                 );
-                                if (!existingSub2 || existingSub2.PAYMENT_STATUS !== "ACTIVE") {
+                                if (!existingSubAfterConflict || existingSubAfterConflict.PAYMENT_STATUS !== "ACTIVE") {
                                     await adminDao.createSubscription(orgID, req.body, t);
                                 }
                                 return res.status(200).json({ message: 'Subscribed successfully' });

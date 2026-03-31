@@ -201,8 +201,6 @@ Handlebars.registerHelper('compare', function (a, operator, b, options) {
     switch (operator) {
         case '===': result = a === b; break;
         case '!==': result = a !== b; break;
-        case '==': result = a == b; break;
-        case '!=': result = a != b; break;
         case '<': result = a < b; break;
         case '>': result = a > b; break;
         case '<=': result = a <= b; break;

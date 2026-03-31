@@ -52,7 +52,7 @@ async function findOrCreateCustomerByEmail(
     throw new BadRequestError("orgId is required in customer metadata");
   }
   const result = await stripe.customers.search({
-    query: `email:"${email.replace(/"/g, '\"')}"`,
+    query: `email:"${email.replace(/"/g, '\\"')}"`,
     limit: 1,
   });
   if (result?.data?.[0]) return result.data[0];
@@ -118,13 +118,13 @@ async function cancelSubscription(stripeSubscriptionId, stripeSecretKey) {
 
 async function listInvoicesByCustomer(
   stripeCustomerId,
-  { limit = 20 } = {},
+  { limit = 20, created } = {},
   stripeSecretKey,
 ) {
   const stripe = getStripeInstance(stripeSecretKey);
   if (!stripeCustomerId)
     throw new BadRequestError("stripeCustomerId is required");
-  return stripe.invoices.list({ customer: stripeCustomerId, limit });
+  return stripe.invoices.list({ customer: stripeCustomerId, limit, ...(created && { created }) });
 }
 
 async function getInvoice(invoiceId, stripeSecretKey) {

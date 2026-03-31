@@ -189,10 +189,10 @@ router.get("/organizations/:orgId/billing/usage-data", ensureBillingAuth, billin
 router.get("/organizations/:orgId/billing/payment-methods", ensureBillingAuth, billingController.getPaymentMethods);
 
 // Billing Engine Keys CRUD
-router.post("/organizations/:orgId/billing-engine-keys", verifyRequestOrigin, ensureBillingAuth, billingController.addBillingEngineKeys);
-router.put("/organizations/:orgId/billing-engine-keys", verifyRequestOrigin, ensureBillingAuth, billingController.updateBillingEngineKeys);
-router.delete("/organizations/:orgId/billing-engine-keys", verifyRequestOrigin, ensureBillingAuth, billingController.deleteBillingEngineKeys);
-router.get("/organizations/:orgId/billing-engine-keys", ensureBillingAuth, billingController.getBillingEngineKeys);
+router.post("/organizations/:orgId/billing-engine-keys", verifyRequestOrigin, enforceSecuirty(constants.SCOPES.ADMIN), billingController.addBillingEngineKeys);
+router.put("/organizations/:orgId/billing-engine-keys", verifyRequestOrigin, enforceSecuirty(constants.SCOPES.ADMIN), billingController.updateBillingEngineKeys);
+router.delete("/organizations/:orgId/billing-engine-keys", verifyRequestOrigin, enforceSecuirty(constants.SCOPES.ADMIN), billingController.deleteBillingEngineKeys);
+router.get("/organizations/:orgId/billing-engine-keys", enforceSecuirty(constants.SCOPES.ADMIN), billingController.getBillingEngineKeys);
 router.get("/organizations/:orgId/billing/info", ensureBillingAuth, billingController.getBillingInfo);
 router.get("/organizations/:orgId/billing/subscriptions", ensureBillingAuth, billingController.getActiveSubscriptions);
 router.post("/organizations/:orgId/monetization/checkout", verifyRequestOrigin, ensureBillingAuth, billingController.createCheckoutSessionForSubscription);
@@ -212,8 +212,6 @@ router.get("/organizations/:orgId/subscriptions/:subId/invoices", ensureBillingA
 router.get("/organizations/:orgId/invoices/:invoiceId/pdf", ensureBillingAuth, invoiceController.getInvoicePdfLink);
 router.get("/organizations/:orgId/invoices/:invoiceId/hosted", ensureBillingAuth, invoiceController.redirectHostedInvoice);
 
-// TODO: devportalController doesn't exist - this route is commented out
-// router.post('/login', devportalController.login);
 router.post('/login', devportalController.login);
 
 // Import Application with API Subscriptions

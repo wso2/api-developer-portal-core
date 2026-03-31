@@ -254,21 +254,24 @@ const renderBillingPage = async (req, res) => {
         const orgName = req.params.orgName;
         const viewName = req.params.viewName || 'default';
         
-        // Debug: Log user session info
-        logger.info('Rendering billing page', {
-            hasUser: !!req.user,
-            hasAccessToken: !!req.user?.accessToken,
+        logger.debug('Rendering billing page', {
             userId: req.user?.id || req.user?.sub || 'anonymous',
             isAuthenticated: req.isAuthenticated ? req.isAuthenticated() : false
         });
         
-        // Get orgId from the orgName in the URL
         let orgId;
         try {
             orgId = await adminDao.getOrgId(orgName);
         } catch (err) {
-            logger.error('Organization not found, using orgName as orgId', { orgName });
-            orgId = orgName; // Use orgName as fallback if org not in database
+            logger.error('Organization not found', { orgName, error: err.message });
+            const errorContent = { message: 'Organization not found' };
+            const html = util.renderTemplate(
+                '../pages/error-page/page.hbs',
+                './src/defaultContent/layout/main.hbs',
+                errorContent,
+                true
+            );
+            return res.status(404).send(html);
         }
         
         const templateContent = {

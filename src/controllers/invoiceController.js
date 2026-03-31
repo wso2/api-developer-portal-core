@@ -24,8 +24,11 @@ const constants = require("../utils/constants");
 function errorToResponse(err) {
   if (err instanceof CustomError) {
     return {
-      status: err.code,
-      body: { error: err.type, message: err.message, details: err.details },
+      status: err.statusCode,
+      body: {
+        message: err.message,
+        ...(err.description ? { description: err.description } : {}),
+      },
     };
   }
   return {

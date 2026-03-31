@@ -27,12 +27,8 @@ function isApiKeyAuthenticated(req) {
   if (!keyType || !secret.apiKeySecret) return false;
   const apiKey = req.headers[keyType.toLowerCase()];
   if (!apiKey) return false;
-  const apiKeyBuf = Buffer.from(apiKey);
-  const secretBuf = Buffer.from(secret.apiKeySecret);
-  return (
-    apiKeyBuf.length === secretBuf.length &&
-    crypto.timingSafeEqual(apiKeyBuf, secretBuf)
-  );
+  const hash = (v) => crypto.createHash("sha256").update(v).digest();
+  return crypto.timingSafeEqual(hash(apiKey), hash(secret.apiKeySecret));
 }
 
 async function ensureBillingAuth(req, res, next) {

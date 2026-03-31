@@ -124,7 +124,7 @@ const loadAPIs = async (req, res) => {
                     const cpSubs = cpResponse.list || cpResponse || [];
                     const subscribedApiRefIds = new Set(cpSubs.map(sub => sub.apiId));
                     for (const metaData of metaDataList) {
-                        if (metaData.apiInfo?.tokenBasedSubscriptionEnabled && metaData.apiReferenceID) {
+                        if (metaData.apiInfo?.tokenBasedSubscriptionEnabled && metaData.apiReferenceID && metaData.apiInfo?.gatewayType === 'wso2/api-platform') {
                             metaData.hasPlatformSubscription = subscribedApiRefIds.has(metaData.apiReferenceID);
                         }
                     }

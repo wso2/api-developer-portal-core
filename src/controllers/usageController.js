@@ -24,8 +24,8 @@ const logger = require("../config/logger");
 function errorToResponse(err) {
   if (err instanceof CustomError) {
     return {
-      status: err.code,
-      body: { error: err.type, message: err.message, details: err.details },
+      status: err.statusCode,
+      body: { error: "CustomError", message: err.message, ...(err.description ? { description: err.description } : {}) },
     };
   }
   return {
@@ -38,10 +38,23 @@ function getRange(req) {
   const usageFrom = req.query.usageFrom;
   const usageTo = req.query.usageTo;
 
-  const to = usageTo ? new Date(usageTo).toISOString() : new Date().toISOString();
-  const from = usageFrom
-    ? new Date(usageFrom).toISOString()
-    : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  let to;
+  if (usageTo) {
+    const toDate = new Date(usageTo);
+    if (isNaN(toDate.getTime())) throw new CustomError(400, "Invalid usageTo date");
+    to = toDate.toISOString();
+  } else {
+    to = new Date().toISOString();
+  }
+
+  let from;
+  if (usageFrom) {
+    const fromDate = new Date(usageFrom);
+    if (isNaN(fromDate.getTime())) throw new CustomError(400, "Invalid usageFrom date");
+    from = fromDate.toISOString();
+  } else {
+    from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  }
 
   return { from, to };
 }

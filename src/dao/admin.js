@@ -26,6 +26,7 @@ const APIImageMetadata = require('../models/apiImages');
 const SubscriptionPolicy = require('../models/subscriptionPolicy');
 const logger = require('../config/logger');
 const { decrypt } = require('../utils/cryptoUtil');
+const sequelize = require('../db/sequelize');
 
 const createOrganization = async (orgData, t) => {
     let devPortalID = "";
@@ -1091,7 +1092,6 @@ const listSubscriptionsByUser = async (orgID, userID) => {
 const getSubscriptionsWithDetails = async (orgID) => {
     try {
         if (!orgID) throw new Error('orgID is required');
-        const sequelize = require('../db/sequelize');
         const results = await sequelize.query(
             `
             SELECT 
@@ -1128,7 +1128,6 @@ const getSubscriptionsWithDetails = async (orgID) => {
 const getUserSubscriptionsWithDetails = async (orgID, userID) => {
     try {
         if (!orgID || !userID) throw new Error('orgID and userID are required');
-        const sequelize = require('../db/sequelize');
         const results = await sequelize.query(
             `
             SELECT 
