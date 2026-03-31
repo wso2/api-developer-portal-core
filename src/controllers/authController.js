@@ -254,11 +254,6 @@ const renderBillingPage = async (req, res) => {
         const orgName = req.params.orgName;
         const viewName = req.params.viewName || 'default';
         
-        logger.debug('Rendering billing page', {
-            userId: req.user?.id || req.user?.sub || 'anonymous',
-            isAuthenticated: req.isAuthenticated ? req.isAuthenticated() : false
-        });
-        
         let orgId;
         try {
             orgId = await adminDao.getOrgId(orgName);

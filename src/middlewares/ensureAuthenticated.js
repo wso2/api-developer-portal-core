@@ -250,7 +250,7 @@ function validateAuthentication(scope) {
         }
         let IDP, valid, scopes, orgId, response;
         if (req.params.orgName) {
-            orgId = await adminDao.getOrgId(orgName);
+            orgId = await adminDao.getOrgId(req.params.orgName);
         } else {
             orgId = req.params.orgId;
         }

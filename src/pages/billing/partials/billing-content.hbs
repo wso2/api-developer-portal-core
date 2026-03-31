@@ -18,10 +18,9 @@
  -->
 <section class="section mt-0 mb-6">
   <div class="container-fluid">
-    <!-- Back to Home Button -->
     <div class="mb-3">
-      <a href="{{baseUrl}}/" class="common-btn-outlined d-inline-flex align-items-center" style="font-size: 15px;">
-        <i class="fas fa-arrow-left me-2"></i>Back to Home
+      <a href="{{baseUrl}}/" class="d-inline-flex align-items-center text-muted" style="text-decoration: none; font-size: 14px;">
+        <i class="fas fa-arrow-left me-2"></i>Home
       </a>
     </div>
     <div class="container-header mb-4 d-sm-flex justify-content-between align-items-center">
@@ -66,7 +65,7 @@
                 <div class="row mb-4">
                   <div class="col-md-4">
                     <label class="form-label">Period</label>
-                    <select class="form-select" id="usagePeriod" onchange="loadUsageData()">
+                    <select class="form-select" id="usagePeriod">
                       <option value="current">Current Month</option>
                       <option value="last30">Last 30 Days</option>
                       <option value="last90">Last 90 Days</option>
@@ -146,7 +145,7 @@
                   <h5 class="card-title mb-0">Invoice History</h5>
                   <div class="d-flex gap-2 align-items-center">
                     <label for="invoicePeriod" class="mb-0 me-2">Period:</label>
-                    <select id="invoicePeriod" class="form-select form-select-sm" style="width: auto;" onchange="loadInvoices()">
+                    <select id="invoicePeriod" class="form-select form-select-sm" style="width: auto;">
                       <option value="last3months">Last 3 Months</option>
                       <option value="last6months">Last 6 Months</option>
                       <option value="lastyear">Last Year</option>

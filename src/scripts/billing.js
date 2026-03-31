@@ -20,37 +20,108 @@ let activeTabController = null;
 
 // Function to initialize the billing page
 function initializeBillingPage() {
-  // Always load usage data on page load since Usage is the first/default tab
-  setTimeout(() => {
-    loadUsageData();
-  }, 100);
+  document.getElementById('usagePeriod')?.addEventListener('change', () => {
+    if (activeTabController) activeTabController.abort();
+    activeTabController = new AbortController();
+    loadUsageData(activeTabController.signal);
+  });
+  document.getElementById('invoicePeriod')?.addEventListener('change', () => {
+    if (activeTabController) activeTabController.abort();
+    activeTabController = new AbortController();
+    loadInvoices(activeTabController.signal);
+  });
 
-  // Set up tab change listeners using Bootstrap's Tab API
-  const tabs = document.querySelectorAll(
-    '.billing-tabs .nav-link[data-bs-toggle="tab"]',
-  );
+  const tabs = document.querySelectorAll('.billing-tabs .nav-link[data-bs-toggle="tab"]');
   tabs.forEach((tab) => {
-    tab.addEventListener("shown.bs.tab", function () {
-      // Cancel any in-flight requests from the previous tab.
+    const targetId = tab.getAttribute('data-bs-target');
+
+    tab.addEventListener('show.bs.tab', function (event) {
+      // event.relatedTarget is undefined when the previously-active tab was set
+      // active via static HTML classes (not via Bootstrap JS). Fall back to
+      // finding the currently-active pane directly in the DOM.
+      const activePane = document.querySelector('.tab-content .tab-pane.show.active');
+      const oldTarget = event.relatedTarget?.getAttribute('data-bs-target')
+        ?? (activePane ? '#' + activePane.id : null);
+
       if (activeTabController) {
         activeTabController.abort();
       }
       activeTabController = new AbortController();
+
+      // Immediately strip show+active from the outgoing pane so our CSS
+      // (.tab-content > .active { display: block }) stops displaying it.
+      // Without this, Bootstrap's fade-out keeps the outgoing pane visible
+      // while the incoming pane also becomes active — causing both to show.
+      if (oldTarget) {
+        const outgoing = document.querySelector(oldTarget);
+        if (outgoing) outgoing.classList.remove('show', 'active');
+        clearTabContent(oldTarget);
+      }
+      clearTabContent(targetId);
+    });
+
+    tab.addEventListener('shown.bs.tab', function () {
       const signal = activeTabController.signal;
-
-      const targetId = tab.getAttribute("data-bs-target");
-
-      if (targetId === "#billing-usage") {
+      if (targetId === '#billing-usage') {
         loadUsageData(signal);
-      } else if (targetId === "#billing-invoices") {
+      } else if (targetId === '#billing-invoices') {
         loadInvoices(signal);
-      } else if (targetId === "#billing-subscriptions") {
+      } else if (targetId === '#billing-subscriptions') {
         loadActiveSubscriptions(signal);
-      } else if (targetId === "#billing-payment") {
+      } else if (targetId === '#billing-payment') {
         loadPaymentDetails(signal);
       }
     });
   });
+
+
+  const usageTab = document.getElementById('billing-usage-tab');
+  const usagePane = document.getElementById('billing-usage');
+  if (usageTab) usageTab.classList.remove('active');
+  if (usagePane) usagePane.classList.remove('show', 'active');
+
+  if (usageTab && window.bootstrap?.Tab) {
+    new window.bootstrap.Tab(usageTab).show();
+  } else {
+    activeTabController = new AbortController();
+    if (usageTab) { usageTab.classList.add('active'); usageTab.setAttribute('aria-selected', 'true'); }
+    if (usagePane) usagePane.classList.add('show', 'active');
+    loadUsageData(activeTabController.signal);
+  }
+}
+
+
+function clearTabContent(tabId) {
+  const pane = document.querySelector(tabId);
+  if (!pane) return;
+
+  const tableSpinner = (cols) =>
+    `<tr><td colspan="${cols}" class="text-center py-4">` +
+    `<div class="spinner-border spinner-border-sm me-2" role="status"></div>Loading...</td></tr>`;
+
+  const tableMap = {
+    usageTableBody: tableSpinner(6),
+    invoicesTableBody: tableSpinner(6),
+    subscriptionsTableBody: tableSpinner(8),
+  };
+  Object.entries(tableMap).forEach(([id, html]) => {
+    const el = pane.querySelector('#' + id);
+    if (el) el.innerHTML = html;
+  });
+
+  const divSpinner = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Loading...</div>';
+  const divMap = {
+    paymentMethodsList: divSpinner,
+    billingInfoContent: divSpinner,
+    subscriptionsFilterContainer: '',
+  };
+  Object.entries(divMap).forEach(([id, html]) => {
+    const el = pane.querySelector('#' + id);
+    if (el) el.innerHTML = html;
+  });
+
+  const noInvoices = pane.querySelector('#noInvoices');
+  if (noInvoices) noInvoices.style.display = 'none';
 }
 
 // Initialize when DOM is loaded

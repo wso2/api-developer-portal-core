@@ -458,7 +458,7 @@ async function verifySubscriptionOwnership(orgId, subId, userId) {
   if (!userId) return;
   const sub = await adminDao.getSubscription(orgId, subId);
   if (!sub) throw new NotFoundError(`Subscription not found: subId=${subId}`);
-  const app = await adminDao.getApplication(orgId, sub.APP_ID);
+  const app = await adminDao.getApplication(orgId, sub.APP_ID, userId);
   if (!app || app.CREATED_BY !== userId) {
     throw new NotFoundError(`Subscription not found: subId=${subId}`);
   }
