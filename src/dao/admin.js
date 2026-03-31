@@ -1275,25 +1275,6 @@ const getSubscriptionWithMeter = async (orgID, subID, t) => {
     }
 };
 
-/**
- * Get all orgs' billing keys and webhook secrets for Stripe multi-tenant webhook verification
- */
-const getAllOrgBillingKeys = async () => {
-    try {
-        const records = await require('../models/billingEngineKey').findAll({
-            where: { BILLING_ENGINE: 'STRIPE' },
-            attributes: ['ORG_ID', 'WEBHOOK_SECRET_ENC', 'SECRET_KEY_ENC'],
-        });
-        return records.map((r) => ({
-            orgId: r.ORG_ID,
-            webhookSecret: decrypt(r.WEBHOOK_SECRET_ENC),
-            secretKey: decrypt(r.SECRET_KEY_ENC),
-        }));
-    } catch (error) {
-        throw new Sequelize.DatabaseError(error);
-    }
-};
-
 module.exports = {
     createOrganization,
     getOrganization,
@@ -1349,5 +1330,4 @@ module.exports = {
     getAPIById,
     getSubscriptionPolicyById,
     getSubscriptionWithMeter,
-    getAllOrgBillingKeys,
 };

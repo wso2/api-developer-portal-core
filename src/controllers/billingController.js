@@ -571,7 +571,7 @@ async function getPaymentMethods(req, res) {
         message: err.message,
         stack: err.stack,
         userId: getUserContext(req).userId,
-        stripeError: err.raw || err,
+        stripeError: err.raw ?? { type: err.type, code: err.code, message: err.message },
         orgId,
       },
       "getPaymentMethods failed",

@@ -430,10 +430,10 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
  */
 async function openStripeEmbeddedCheckout({ publishableKey, clientSecret, returnUrl }) {
   if (typeof publishableKey !== 'string' || publishableKey.length < 10) {
-    console.warn("⚠️ publishableKey seems too short or invalid:", publishableKey);
+    console.warn("publishableKey seems too short or invalid");
   }
   if (typeof clientSecret !== 'string' || clientSecret.length < 10) {
-    console.warn("⚠️ clientSecret seems too short or invalid:", clientSecret);
+    console.warn("clientSecret seems too short or invalid");
   }
   
   // Validate inputs

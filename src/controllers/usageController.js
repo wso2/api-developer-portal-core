@@ -28,9 +28,15 @@ function errorToResponse(err) {
       body: { error: "CustomError", message: err.message, ...(err.description ? { description: err.description } : {}) },
     };
   }
+  if (typeof err.statusCode === "number" && err.type) {
+    return {
+      status: err.statusCode >= 500 ? 502 : 400,
+      body: { error: "PaymentError", message: "A payment processing error occurred. Please try again or contact support." },
+    };
+  }
   return {
     status: 500,
-    body: { error: "InternalServerError", message: err.message || "An unexpected error occurred" },
+    body: { error: "InternalServerError", message: "An unexpected error occurred" },
   };
 }
 

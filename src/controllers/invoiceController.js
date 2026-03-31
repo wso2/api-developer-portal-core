@@ -31,11 +31,17 @@ function errorToResponse(err) {
       },
     };
   }
+  if (typeof err.statusCode === "number" && err.type) {
+    return {
+      status: err.statusCode >= 500 ? 502 : 400,
+      body: { error: "PaymentError", message: "A payment processing error occurred. Please try again or contact support." },
+    };
+  }
   return {
     status: 500,
     body: {
       error: "InternalServerError",
-      message: err.message || "An unexpected error occurred",
+      message: "An unexpected error occurred",
     },
   };
 }
