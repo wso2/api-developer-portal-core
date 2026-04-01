@@ -64,6 +64,7 @@ function getPeriodRange(period = "current") {
 async function getUsageStats({ req, subscriptionId, from, to, period = "current" }) {
   if (!req) throw new BadRequestError("Request object is required for APIM usage call");
   if (!subscriptionId) throw new BadRequestError("subscriptionId is required");
+  if (!controlPlaneUrl) throw new BadRequestError("controlPlane.url is not configured");
 
   // If from/to not provided, compute from period
   if (!from || !to) {

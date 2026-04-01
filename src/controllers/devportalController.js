@@ -145,7 +145,7 @@ const deleteApplication = async (req, res) => {
                 if (appDeleteResponse === 0) {
                     throw new Sequelize.EmptyResultError("Resource not found to delete");
                 } else {
-                    res.status(200).send("Resouce Deleted Successfully");
+                    return res.status(200).send("Resouce Deleted Successfully");
                 }
             }
             logger.error('Error occurred while deleting the application', {
@@ -201,9 +201,15 @@ const generateAPIKeys = async (req, res) => {
 
         // Look up existing DP subscription billing data (set during Stripe checkout activation)
         const dpSubscription = await adminDao.getAppApiSubscription(orgID, requestBody.devportalAppId, apiID);
-        const billingData = dpSubscription?.length > 0 && (dpSubscription[0].BILLING_CUSTOMER_ID || dpSubscription[0].BILLING_SUBSCRIPTION_ID)
-            ? { customerId: dpSubscription[0].BILLING_CUSTOMER_ID, subscriptionId: dpSubscription[0].BILLING_SUBSCRIPTION_ID, email: req.user?.email }
-            : null;
+        const dpSub = dpSubscription?.length > 0 ? dpSubscription[0] : null;
+        const billingData =
+            dpSub &&
+            dpSub.PAYMENT_PROVIDER === 'STRIPE' &&
+            dpSub.PAYMENT_STATUS === 'ACTIVE' &&
+            dpSub.BILLING_CUSTOMER_ID &&
+            dpSub.BILLING_SUBSCRIPTION_ID
+                ? { customerId: dpSub.BILLING_CUSTOMER_ID, subscriptionId: dpSub.BILLING_SUBSCRIPTION_ID, email: req.user?.email }
+                : null;
 
         if (!(nonSharedKeyMapping.length > 0 || sharedKeyMapping.length > 0)) {
             const cpApp = await adminService.createCPApplication(req, requestBody.devportalAppId);

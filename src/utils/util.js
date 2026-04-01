@@ -798,6 +798,13 @@ async function appendSubscriptionPlanDetails(orgID, subscriptionPolicies) {
     if (subscriptionPolicies) {
         for (const policy of subscriptionPolicies) {
             const subscriptionPlan = await loadSubscriptionPlan(orgID, policy.policyName);
+            if (!subscriptionPlan) {
+                logger.warn('[appendSubscriptionPlanDetails] Plan not found, skipping', {
+                    orgID,
+                    policyName: policy.policyName
+                });
+                continue;
+            }
             const billingPlanRaw = subscriptionPlan.billingPlan;
             const billingPlan = (typeof billingPlanRaw === 'string') ? billingPlanRaw.trim().toUpperCase() : '';
             const isPaid = billingPlan === 'COMMERCIAL';
@@ -844,7 +851,7 @@ const loadSubscriptionPlan = async (orgID, policyName) => {
             error: error.message,
             stack: error.stack
         });
-        util.handleError(res, error);
+        return null;
     }
 }
 

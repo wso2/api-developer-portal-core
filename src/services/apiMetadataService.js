@@ -64,11 +64,15 @@ const createAPIMetadata = async (req, res) => {
         apiMetadata.endPoints.sandboxURL = changeEndpoint(apiMetadata.endPoints.sandboxURL);
         normalizeGraphQLEndpoints(apiMetadata);
         if (typeof apiMetadata.monetizationInfo === 'string') {
-            try { apiMetadata.monetizationInfo = JSON.parse(apiMetadata.monetizationInfo); } catch (_) { apiMetadata.monetizationInfo = {}; }
+            try { apiMetadata.monetizationInfo = JSON.parse(apiMetadata.monetizationInfo); } catch (e) {
+                throw new Sequelize.ValidationError(`Invalid monetizationInfo JSON: ${e.message}`);
+            }
         }
         let meterItems = apiMetadata?.monetizationInfo?.properties?.billingMeterData;
         if (typeof meterItems === 'string') {
-            try { meterItems = JSON.parse(meterItems); } catch (_) { meterItems = []; }
+            try { meterItems = JSON.parse(meterItems); } catch (e) {
+                throw new Sequelize.ValidationError(`Invalid billingMeterData JSON: ${e.message}`);
+            }
         }
         const meterByPolicyName = new Map(
         Array.isArray(meterItems)
@@ -349,11 +353,15 @@ const updateAPIMetadata = async (req, res) => {
         apiMetadata.endPoints.sandboxURL = changeEndpoint(apiMetadata.endPoints.sandboxURL);
         normalizeGraphQLEndpoints(apiMetadata);
         if (typeof apiMetadata.monetizationInfo === 'string') {
-            try { apiMetadata.monetizationInfo = JSON.parse(apiMetadata.monetizationInfo); } catch (_) { apiMetadata.monetizationInfo = {}; }
+            try { apiMetadata.monetizationInfo = JSON.parse(apiMetadata.monetizationInfo); } catch (e) {
+                throw new Sequelize.ValidationError(`Invalid monetizationInfo JSON: ${e.message}`);
+            }
         }
         let meterItems = apiMetadata?.monetizationInfo?.properties?.billingMeterData;
         if (typeof meterItems === 'string') {
-            try { meterItems = JSON.parse(meterItems); } catch (_) { meterItems = []; }
+            try { meterItems = JSON.parse(meterItems); } catch (e) {
+                throw new Sequelize.ValidationError(`Invalid billingMeterData JSON: ${e.message}`);
+            }
         }
         const meterByPolicyName = new Map(
         Array.isArray(meterItems)
@@ -868,7 +876,7 @@ const createSubscriptionPolicy = async (req, res) => {
     }
 
     const validTypes = ["requestcount", "eventcount"];
-    if (!subscriptionPolicy.type || !validTypes.includes(subscriptionPolicy.type.toLowerCase())) {
+    if (!subscriptionPolicy.type || typeof subscriptionPolicy.type !== 'string' || !validTypes.includes(subscriptionPolicy.type.toLowerCase())) {
         return res.status(400).json({ message: "Invalid or missing subscription policy type" });
     }
 
@@ -923,6 +931,9 @@ const createSubscriptionPolicies = async (req, res) => {
             }, async (t) => {
                 // TODO: Try using SubscriptionPolicy.bulkCreate() once Table is finalised and manipulating each data is not needed
                 for (const policy of subscriptionPolicies) {
+                    if (typeof policy.type !== 'string') {
+                        throw new CustomError(400, constants.ERROR_CODE[400], 'subscriptionPolicy.type must be a string');
+                    }
                     if (policy.type.toLowerCase() == "requestcount" || policy.type.toLowerCase() == "eventcount") {
                         const created = await apiDao.createSubscriptionPolicy(orgId, policy, t);
                         if (!created) {
@@ -967,7 +978,7 @@ const updateSubscriptionPolicy = async (req, res) => {
     }
 
     const validTypes = ["requestcount", "eventcount"];
-    if (!subscriptionPolicy.type || !validTypes.includes(subscriptionPolicy.type.toLowerCase())) {
+    if (!subscriptionPolicy.type || typeof subscriptionPolicy.type !== 'string' || !validTypes.includes(subscriptionPolicy.type.toLowerCase())) {
         return res.status(400).json({ message: "Invalid or missing subscription policy type" });
     }
     
@@ -1030,6 +1041,9 @@ const updateSubscriptionPolicies = async (req, res) => {
                 timeout: 60000,
             }, async (t) => {
                 for (const policy of subscriptionPolicies) {
+                    if (typeof policy.type !== 'string') {
+                        throw new CustomError(400, constants.ERROR_CODE[400], 'subscriptionPolicy.type must be a string');
+                    }
                     if (policy.type.toLowerCase() == "requestcount" || policy.type.toLowerCase() == "eventcount") {
                         const created = await apiDao.putSubscriptionPolicy(orgId, policy, t);
                         if (!created) {

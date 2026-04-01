@@ -102,11 +102,18 @@ async function configurePassport(authJsonContent, claimNames) {
 
         const decodedIdToken = params.id_token ? jwt.decode(params.id_token) : null;
         const decodedAccessToken = jwt.decode(accessToken);
+
+        const sub = decodedIdToken?.sub || decodedAccessToken?.sub;
+        const userId = decodedAccessToken?.[constants.USER_ID] || decodedIdToken?.sub;
+        if (!sub && !userId) {
+            return done(new Error("Unable to determine user identity: no sub claim found in ID token or access token"));
+        }
+
         profile = {
             accessToken,
             email: decodedIdToken?.email,
-            sub: decodedIdToken?.sub || decodedAccessToken?.sub,
-            [constants.USER_ID]: decodedAccessToken?.[constants.USER_ID] || decodedIdToken?.sub,
+            sub: sub,
+            [constants.USER_ID]: userId || sub,
         };
 
         return done(null, profile);

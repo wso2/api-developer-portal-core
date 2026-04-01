@@ -225,6 +225,43 @@ async function applyWebhookToLocalState(event, { adminDao }) {
     case "invoice.payment_succeeded":
       return;
 
+    case "checkout.session.completed": {
+      const session = event?.data?.object;
+      if (!session?.id) return;
+
+      const billingSubscriptionId =
+        typeof session.subscription === "string"
+          ? session.subscription
+          : session.subscription?.id;
+
+      let status = PAYMENT_STATUS.ACTIVE;
+      if (
+        session.subscription &&
+        typeof session.subscription === "object" &&
+        session.subscription.cancel_at_period_end
+      ) {
+        status = PAYMENT_STATUS.CANCEL_SCHEDULED;
+      }
+
+      const updatedCount =
+        await adminDao.activateSubscriptionByCheckoutSessionId(session.id, {
+          PAYMENT_STATUS: status,
+          BILLING_SUBSCRIPTION_ID: billingSubscriptionId,
+        });
+
+      if (updatedCount > 0) {
+        logger.info(
+          "Stripe: activated pending subscription via checkout.session.completed",
+          {
+            checkoutSessionId: session.id,
+            billingSubscriptionId,
+            newStatus: status,
+          },
+        );
+      }
+      return { newStatus: status, stripeSubscriptionId: billingSubscriptionId, eventType };
+    }
+
     case "invoice.payment_failed":
       newStatus = PAYMENT_STATUS.PAYMENT_FAILED;
       break;

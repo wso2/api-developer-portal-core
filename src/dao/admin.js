@@ -1102,7 +1102,7 @@ const getSubscriptionsWithDetails = async (orgID) => {
                 a."API_NAME" as "apiName",
                 app."NAME" as "applicationName",
                 p."POLICY_NAME" as "planName",
-                p."BILLING_PLAN" as "billingCycle"
+                p."BILLING_PERIOD" as "billingCycle"
             FROM "DP_API_SUBSCRIPTION" s
             LEFT JOIN "DP_API_METADATA" a ON s."API_ID" = a."API_ID" AND s."ORG_ID" = a."ORG_ID"
             LEFT JOIN "DP_APPLICATION" app ON s."APP_ID" = app."APP_ID" AND s."ORG_ID" = app."ORG_ID"
@@ -1139,7 +1139,7 @@ const getUserSubscriptionsWithDetails = async (orgID, userID) => {
                 a."API_NAME" as "apiName",
                 app."NAME" as "applicationName",
                 p."POLICY_NAME" as "planName",
-                p."BILLING_PLAN" as "billingCycle",
+                p."BILLING_PERIOD" as "billingCycle",
                 p."FLAT_AMOUNT" as "flatAmount",
                 p."UNIT_AMOUNT" as "unitAmount",
                 p."PRICING_MODEL" as "pricingModel",
@@ -1186,6 +1186,29 @@ const updateSubscriptionByBillingId = async (billingSubscriptionID, fields) => {
         if (Object.keys(updateData).length === 0) throw new Sequelize.ValidationError('No fields provided for update');
         const [updatedCount] = await SubscriptionMapping.update(updateData, {
             where: { BILLING_SUBSCRIPTION_ID: billingSubscriptionID },
+        });
+        return updatedCount;
+    } catch (error) {
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
+/**
+ * Activate a PENDING subscription by its checkout session ID (webhook fallback).
+ * Only updates rows still in PENDING state to avoid overwriting later status changes.
+ */
+const activateSubscriptionByCheckoutSessionId = async (checkoutSessionId, fields) => {
+    try {
+        if (!checkoutSessionId) throw new Sequelize.ValidationError('checkoutSessionId is required');
+        const updateData = { PAYMENT_STATUS: fields.PAYMENT_STATUS };
+        if (fields.BILLING_SUBSCRIPTION_ID !== undefined) {
+            updateData.BILLING_SUBSCRIPTION_ID = fields.BILLING_SUBSCRIPTION_ID;
+        }
+        const [updatedCount] = await SubscriptionMapping.update(updateData, {
+            where: {
+                CHECKOUT_SESSION_ID: checkoutSessionId,
+                PAYMENT_STATUS: 'PENDING',
+            },
         });
         return updatedCount;
     } catch (error) {
@@ -1326,6 +1349,7 @@ module.exports = {
     getSubscriptionsWithDetails,
     getUserSubscriptionsWithDetails,
     updateSubscriptionByBillingId,
+    activateSubscriptionByCheckoutSessionId,
     deleteSubscriptionByBillingId,
     getAPIById,
     getSubscriptionPolicyById,
