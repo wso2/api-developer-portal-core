@@ -565,6 +565,29 @@ async function wireStripeReturnIfPresent() {
   // Show a loading indicator
   showAlert("Processing your payment...", "info");
 
+  const sourcePage = params.get("sourcePage");
+  let redirectTarget = null;
+  if (sourcePage) {
+    try {
+      const parsed = new URL(sourcePage, window.location.origin);
+      if (parsed.origin === window.location.origin) {
+        redirectTarget = parsed.pathname + parsed.search;
+      }
+    } catch (_) {
+      // handle exception
+    }
+  }
+
+  function buildCleanRedirectUrl() {
+    if (redirectTarget) return redirectTarget;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("session_id");
+    url.searchParams.delete("dp_sub_id");
+    url.searchParams.delete("org_id");
+    url.searchParams.delete("sourcePage");
+    return url.toString();
+  }
+
   try {
     // Call register endpoint to finalize the subscription
     const response = await fetch(`${DEVPORTAL_BASE}/organizations/${safeId(orgId)}/monetization/stripe/register/${encodeURIComponent(sessionId)}`, {
@@ -576,17 +599,11 @@ async function wireStripeReturnIfPresent() {
       const result = await response.json();
       await showAlert("Payment successful! Your subscription is now active.", "success");
       
-      // Wait a moment before reloading
+      // Wait a moment before redirecting
       await new Promise(r => setTimeout(r, 2000));
       
-      // Clean URL before reloading to prevent re-processing
-      const url = new URL(window.location.href);
-      url.searchParams.delete("session_id");
-      url.searchParams.delete("dp_sub_id");
-      url.searchParams.delete("org_id");
-      
-      // Reload the page to show updated subscription status
-      window.location.href = url.toString();
+      // Redirect to source page
+      window.location.href = buildCleanRedirectUrl();
     } else {
       const errorData = await response.json().catch(() => ({}));
       const errMsg = errorData.message || errorData.error || "An error occurred while activating your subscription.";
@@ -594,27 +611,17 @@ async function wireStripeReturnIfPresent() {
       if (response.status === 409 && errMsg.toLowerCase().includes("active")) {
         await showAlert("Subscription already active.", "success");
         await new Promise(r => setTimeout(r, 1500));
-        const url = new URL(window.location.href);
-        url.searchParams.delete("session_id");
-        url.searchParams.delete("dp_sub_id");
-        url.searchParams.delete("org_id");
-        window.location.href = url.toString();
+        // Terminal outcome — redirect to source page
+        window.location.href = buildCleanRedirectUrl();
       } else {
-        await showAlert(errMsg, "error");
+        // Non-terminal error — keep checkout params so user can retry
+        await showAlert("Unable to complete payment", "error");
       }
       isProcessingPayment = false;
     }
   } catch (error) {
-    await showAlert(`Error processing payment return: ${error.message}`, "error");
+    await showAlert("Error processing payment", "error");
     isProcessingPayment = false;
-  } finally {
-    const url = new URL(window.location.href);
-    if (url.searchParams.has("session_id")) {
-      url.searchParams.delete("session_id");
-      url.searchParams.delete("dp_sub_id");
-      url.searchParams.delete("org_id");
-      window.history.replaceState({}, document.title, url.toString());
-    }
   }
 }
 

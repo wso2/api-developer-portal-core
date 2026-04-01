@@ -196,6 +196,14 @@ async function createCheckoutSession({
 
     logger.info("createCheckoutSession: policy validated", { orgId, policyId, pricingModel, isMetered });
 
+    const userId = user?.sub || user?.userId;
+    if (applicationID) {
+      const app = await adminDao.getApplication(orgId, applicationID, userId);
+      if (!app) {
+        throw new ForbiddenError("Application not found or not owned by the current user.");
+      }
+    }
+
     const existing = await adminDao.findSubscriptionByUniqueKey(
       orgId,
       applicationID,
@@ -307,10 +315,10 @@ async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
       stripeSecretKey,
     );
 
-    const status = String(session?.status || "").toLowerCase();
     const paymentStatus = String(session?.payment_status || "").toLowerCase();
-    const isPaid = status === "complete" || paymentStatus === "paid";
-    logger.info("registerCheckoutSession: session status", { orgId, checkoutSessionId, status, paymentStatus, isPaid });
+    
+    const isPaid = paymentStatus === "paid";
+    logger.info("registerCheckoutSession: payment status check", { orgId, checkoutSessionId, paymentStatus, isPaid });
     if (!isPaid) {
       const dpSubId = session?.metadata?.dpSubId;
       if (dpSubId) {
@@ -606,35 +614,20 @@ async function createBillingPortalByOrg({ orgId, returnUrl, user }) {
 async function cancelPaidSubscription({ req, orgId, subId, user }) {
   logger.info("cancelPaidSubscription: initiated", { orgId, subId });
   await verifySubscriptionOwnership(orgId, subId, user?.userId);
-  return sequelize.transaction(async (t) => {
+
+  let billingSubscriptionId;
+  let billingCustomerId;
+  const { secretKey: stripeSecretKey } =
+    await getDecryptedStripeKeysForOrg(orgId);
+
+  await sequelize.transaction(async (t) => {
     const sub = await adminDao.getSubscription(orgId, subId, t);
     if (!sub) throw new NotFoundError(`Subscription not found: subId=${subId}`);
     if (!sub.BILLING_SUBSCRIPTION_ID)
       throw new BadRequestError("No billing subscription id found to cancel.");
 
-    logger.info("cancelPaidSubscription: canceling Stripe subscription", { orgId, subId });
-
-    const { secretKey: stripeSecretKey } =
-      await getDecryptedStripeKeysForOrg(orgId);
-    try {
-      await stripeService.cancelSubscription(
-        sub.BILLING_SUBSCRIPTION_ID,
-        stripeSecretKey,
-      );
-    } catch (stripeErr) {
-      if (
-        stripeErr?.code === "subscription_already_canceled" ||
-        (stripeErr?.statusCode === 400 &&
-          String(stripeErr?.message).includes("already canceled"))
-      ) {
-        logger.warn(
-          "Stripe subscription already canceled — continuing",
-          { subId },
-        );
-      } else {
-        throw stripeErr;
-      }
-    }
+    billingSubscriptionId = sub.BILLING_SUBSCRIPTION_ID;
+    billingCustomerId = sub.BILLING_CUSTOMER_ID;
 
     await adminDao.updateBillingFields(
       orgId,
@@ -644,31 +637,50 @@ async function cancelPaidSubscription({ req, orgId, subId, user }) {
       },
       t,
     );
-
-    const moesifCompanyId = sub.BILLING_CUSTOMER_ID;
-    const moesifSubId = sub.BILLING_SUBSCRIPTION_ID;
-    setImmediate(() => {
-      (async () => {
-        try {
-          if (req && moesifCompanyId && moesifSubId) {
-            const url =
-              `${controlPlaneUrl}/billing/moesif/subscription` +
-              `?companyId=${encodeURIComponent(moesifCompanyId)}` +
-              `&subscriptionId=${encodeURIComponent(moesifSubId)}`;
-            await invokeApiRequest(req, "DELETE", url);
-          }
-        } catch (err) {
-          logger.warn(
-            "Moesif subscription cleanup failed (non-fatal)",
-            { subId, err: err.message },
-          );
-        }
-      })().catch(err => logger.warn("Moesif cleanup promise rejected", { subId, err: err.message }));
-    });
-
-    logger.info("cancelPaidSubscription: subscription canceled", { orgId, subId });
-    return { subId, paymentStatus: PAYMENT_STATUS.CANCELED };
   });
+
+  logger.info("cancelPaidSubscription: canceling Stripe subscription", { orgId, subId, billingSubscriptionId });
+  try {
+    await stripeService.cancelSubscription(
+      billingSubscriptionId,
+      stripeSecretKey,
+    );
+  } catch (stripeErr) {
+    if (
+      stripeErr?.code === "subscription_already_canceled" ||
+      (stripeErr?.statusCode === 400 &&
+        String(stripeErr?.message).includes("already canceled"))
+    ) {
+      logger.warn(
+        "Stripe subscription already canceled — continuing",
+        { subId },
+      );
+    } else {
+      throw stripeErr;
+    }
+  }
+
+  setImmediate(() => {
+    (async () => {
+      try {
+        if (req && billingCustomerId && billingSubscriptionId) {
+          const url =
+            `${controlPlaneUrl}/billing/moesif/subscription` +
+            `?companyId=${encodeURIComponent(billingCustomerId)}` +
+            `&subscriptionId=${encodeURIComponent(billingSubscriptionId)}`;
+          await invokeApiRequest(req, "DELETE", url);
+        }
+      } catch (err) {
+        logger.warn(
+          "Moesif subscription cleanup failed (non-fatal)",
+          { subId, err: err.message },
+        );
+      }
+    })().catch(err => logger.warn("Moesif cleanup promise rejected", { subId, err: err.message }));
+  });
+
+  logger.info("cancelPaidSubscription: subscription canceled", { orgId, subId });
+  return { subId, paymentStatus: PAYMENT_STATUS.CANCELED };
 }
 
 /**
