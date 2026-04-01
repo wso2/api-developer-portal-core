@@ -25,7 +25,7 @@ const { ensureBillingAuth } = require('../middlewares/billingAuth');
 const constants = require('../utils/constants');
 
 // Billing routes
-router.get('/:orgName/views/:viewName/billing', registerPartials, validateAuthentication(), authController.renderBillingPage);
+router.get('/:orgName/views/:viewName/billing', authController.handleSilentSSO, registerPartials, validateAuthentication(), authController.renderBillingPage);
 router.get("/billing/return", ensureBillingAuth, billingController.handleBillingReturn);
 
 // router.get('/portal/login', registerPartials, authController.login);
