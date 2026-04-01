@@ -37,34 +37,42 @@ async function ensureBillingAuth(req, res, next) {
     if (orgId) {
       const userOrg = req.user.userOrg;
       const authorizedOrgs = req.user.authorizedOrgs;
-      if (userOrg !== undefined || Array.isArray(authorizedOrgs)) {
-        try {
-          const org = await adminDao.getOrganization(orgId);
-          const orgIdentifier = org?.ORGANIZATION_IDENTIFIER;
-          req.cpOrgID = orgIdentifier;
-          const orgMatches =
-            userOrg === orgIdentifier ||
-            (Array.isArray(authorizedOrgs) &&
-              authorizedOrgs.includes(orgIdentifier));
-          if (!orgMatches) {
-            logger.warn("Billing auth: org membership check failed", {
-              path: req.path,
-              requestedOrgId: orgId,
-              orgIdentifier,
-              userOrg,
-            });
-            return res.status(403).json({
-              error: "Forbidden",
-              message: "You do not have access to this organization",
-            });
-          }
-        } catch (err) {
-          logger.error("Billing auth: failed to resolve org", {
-            orgId,
-            error: err.message,
+      if (userOrg === undefined && !Array.isArray(authorizedOrgs)) {
+        logger.warn("Billing auth: org claims missing, denying access", {
+          path: req.path,
+          requestedOrgId: orgId,
+        });
+        return res.status(403).json({
+          error: "Forbidden",
+          message: "You do not have access to this organization",
+        });
+      }
+      try {
+        const org = await adminDao.getOrganization(orgId);
+        const orgIdentifier = org?.ORGANIZATION_IDENTIFIER;
+        req.cpOrgID = orgIdentifier;
+        const orgMatches =
+          userOrg === orgIdentifier ||
+          (Array.isArray(authorizedOrgs) &&
+            authorizedOrgs.includes(orgIdentifier));
+        if (!orgMatches) {
+          logger.warn("Billing auth: org membership check failed", {
+            path: req.path,
+            requestedOrgId: orgId,
+            orgIdentifier,
+            userOrg,
           });
-          return res.status(500).json({ error: "Internal server error" });
+          return res.status(403).json({
+            error: "Forbidden",
+            message: "You do not have access to this organization",
+          });
         }
+      } catch (err) {
+        logger.error("Billing auth: failed to resolve org", {
+          orgId,
+          error: err.message,
+        });
+        return res.status(500).json({ error: "Internal server error" });
       }
     }
     return next();

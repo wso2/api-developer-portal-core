@@ -812,17 +812,31 @@ function markSubscribedUI(card, applicationID, apiId) {
  *  - Called from subscription-plans.hbs modal
  * =========================
  */
-function handlePlanSubscription(orgID, apiID, apiReferenceID, policyID, policyName, buttonElement) {
+function handlePlanSubscription(buttonElement) {
 
+  const orgID = buttonElement.dataset.orgId;
+  const apiID = buttonElement.dataset.apiId;
+  const policyID = buttonElement.dataset.policyId;
+  const policyName = buttonElement.dataset.policyName;
   const isPaid = buttonElement.dataset.isPaid === 'true';
-  
-  // Get application ID from modal's hidden field (passed from listing page)
+
+  // Resolve apiReferenceID from the parent modal's data attribute
+  const modal = buttonElement.closest('.subscription-plan-modal');
+  const apiReferenceID = (modal && modal.dataset.apiRefid) || apiID;
+
+  // Get application ID from modal's hidden field (only present for app-based flow)
   const modalAppField = document.getElementById(`modal-selected-app-${apiID}`);
   const applicationID = modalAppField ? modalAppField.value : '';
 
-  if (!applicationID) {
-    showAlert('Please select an application first.', 'error');
-    return;
+  if (!applicationID && !isPaid) {
+    // Token-based and platform flows don't use an app selector;
+    // app-based free plans require one.
+    const isTokenBased = modal && modal.dataset.tokenBased === 'true';
+    const isPlatformGateway = modal && modal.dataset.gatewayType === 'wso2/api-platform';
+    if (!isTokenBased && !isPlatformGateway) {
+      showAlert('Please select an application first.', 'error');
+      return;
+    }
   }
 
   if (isPaid) {

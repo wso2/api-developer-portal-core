@@ -38,6 +38,12 @@ class ConflictError extends CustomError {
   }
 }
 
+class ForbiddenError extends CustomError {
+  constructor(message, details) {
+    super(403, message, details);
+  }
+}
+
 const adminDao = require("../dao/admin");
 
 const stripeService = require("./stripeService");
@@ -469,7 +475,7 @@ async function listInvoices({ orgId, userId, period = "last3months" }) {
  * Throws NotFoundError to avoid leaking subscription existence to other users.
  */
 async function verifySubscriptionOwnership(orgId, subId, userId) {
-  if (!userId) return;
+  if (!userId) throw new ForbiddenError("User identity required for subscription ownership check");
   const sub = await adminDao.getSubscription(orgId, subId);
   if (!sub) throw new NotFoundError(`Subscription not found: subId=${subId}`);
   const app = await adminDao.getApplication(orgId, sub.APP_ID, userId);

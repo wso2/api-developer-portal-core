@@ -1739,34 +1739,8 @@ const unsubscribeAPI = async (req, res) => {
     try {
         const { appID, apiReferenceID, subscriptionID } = req.query;
 
-        // Check if this is a paid subscription and cancel Stripe subscription if so
-        try {
-            const subscription = await adminDao.getSubscription(orgID, subscriptionID);
-            if (subscription && subscription.BILLING_SUBSCRIPTION_ID && subscription.PAYMENT_PROVIDER === 'STRIPE') {
-                logger.info("Canceling Stripe subscription for paid API subscription", {
-                    subscriptionID,
-                    billingSubscriptionId: subscription.BILLING_SUBSCRIPTION_ID,
-                });
-                const monetizationService = require("./monetizationService");
-                await monetizationService.cancelPaidSubscription({
-                    orgId: orgID,
-                    subId: subscriptionID,
-                    user: req.user || {},
-                });
-                logger.info("Stripe subscription canceled successfully", {
-                    subscriptionID,
-                });
-            }
-        } catch (stripeErr) {
-            // Log but don't fail the unsubscribe if Stripe cancellation fails
-            logger.warn(
-                "Failed to cancel Stripe subscription (continuing with unsubscribe)",
-                {
-                    subscriptionID,
-                    error: stripeErr.message,
-                },
-            );
-        }
+        // Capture billing IDs before the transaction so we can cancel externally afterwards
+        const subscriptionPreTx = await adminDao.getSubscription(orgID, subscriptionID);
 
         await sequelize.transaction({
             timeout: 60000,
@@ -1840,6 +1814,37 @@ const unsubscribeAPI = async (req, res) => {
                 return util.handleError(res, error);
             }
         });
+
+        // Cancel external Stripe subscription only after the unsubscribe transaction succeeds
+        if (
+            subscriptionPreTx &&
+            subscriptionPreTx.BILLING_SUBSCRIPTION_ID &&
+            subscriptionPreTx.PAYMENT_PROVIDER === 'STRIPE' &&
+            subscriptionPreTx.PAYMENT_STATUS !== 'CANCELED'
+        ) {
+            try {
+                logger.info("Canceling Stripe subscription after unsubscribe", {
+                    subscriptionID,
+                    billingSubscriptionId: subscriptionPreTx.BILLING_SUBSCRIPTION_ID,
+                });
+                const monetizationService = require("./monetizationService");
+                await monetizationService.cancelStripeByBillingId(
+                    orgID,
+                    subscriptionPreTx.BILLING_SUBSCRIPTION_ID,
+                );
+                logger.info("Stripe subscription canceled successfully", {
+                    subscriptionID,
+                });
+            } catch (stripeErr) {
+                logger.warn(
+                    "Failed to cancel Stripe subscription (continuing after unsubscribe)",
+                    {
+                        subscriptionID,
+                        error: stripeErr.message,
+                    },
+                );
+            }
+        }
     } catch (error) {
         logger.error('Error occurred while unsubscribing from API', {
             error: error.message,

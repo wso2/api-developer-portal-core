@@ -103,6 +103,7 @@
                                 class="common-btn-primary subscribe-btn w-100 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                 data-org-id="{{@root.orgID}}"
                                 data-api-id="{{../apiMetadata.apiID}}"
+                                data-policy-id="{{policyID}}"
                                 data-policy-name="{{policyName}}"
                                 data-display-name="{{displayName}}"
                                 onclick="handlePlanSubscription(this)"
