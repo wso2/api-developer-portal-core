@@ -1157,7 +1157,7 @@ const getUserSubscriptionsWithDetails = async (orgID, userID) => {
             LEFT JOIN "DP_API_METADATA" a ON s."API_ID" = a."API_ID" AND s."ORG_ID" = a."ORG_ID"
             LEFT JOIN "DP_APPLICATION" app ON s."APP_ID" = app."APP_ID" AND s."ORG_ID" = app."ORG_ID"
             LEFT JOIN "DP_SUBSCRIPTION_POLICY" p ON s."POLICY_ID" = p."POLICY_ID" AND s."ORG_ID" = p."ORG_ID"
-            LEFT JOIN "DP_API_SUBSCRIPTION_POLICY" asp ON s."API_ID" = asp."API_ID" AND p."POLICY_ID" = asp."POLICY_ID"
+            LEFT JOIN "DP_API_SUBSCRIPTION_POLICY" asp ON s."API_ID" = asp."API_ID" AND p."POLICY_ID" = asp."POLICY_ID" AND asp."ORG_ID" = s."ORG_ID"
             WHERE s."ORG_ID" = :orgID
             AND app."CREATED_BY" = :userID
             AND p."BILLING_PLAN" = 'COMMERCIAL'
@@ -1286,7 +1286,7 @@ const getSubscriptionWithMeter = async (orgID, subID, t) => {
                 ) as "apimSubscriptionId"
             FROM "DP_API_SUBSCRIPTION" s
             LEFT JOIN "DP_API_SUBSCRIPTION_POLICY" asp
-                ON s."API_ID" = asp."API_ID" AND s."POLICY_ID" = asp."POLICY_ID"
+                ON s."API_ID" = asp."API_ID" AND s."POLICY_ID" = asp."POLICY_ID" AND asp."ORG_ID" = s."ORG_ID"
             WHERE s."ORG_ID" = :orgID AND s."SUB_ID" = :subID
             LIMIT 1
             `,

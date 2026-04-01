@@ -111,8 +111,11 @@ async function configurePassport(authJsonContent, claimNames) {
 
         profile = {
             accessToken,
+            refreshToken,
+            idToken: params.id_token,
+            returnTo: req.session?.returnTo,
             email: decodedIdToken?.email,
-            sub: sub,
+            sub,
             [constants.USER_ID]: userId || sub,
         };
 

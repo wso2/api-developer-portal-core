@@ -308,8 +308,13 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
     }
 
     if (!applicationID) {
-      showSubscriptionMessage(messageOverlay, "Please select an application.", "error");
-      return;
+      const modal = card ? card.closest('.subscription-plan-modal') : document.getElementById('planModal-' + apiId);
+      const isTokenBased = modal && modal.dataset.tokenBased === 'true';
+      const isPlatformGateway = modal && modal.dataset.gatewayType === 'wso2/api-platform';
+      if (!isTokenBased && !isPlatformGateway) {
+        showSubscriptionMessage(messageOverlay, "Please select an application.", "error");
+        return;
+      }
     }
 
     const paid = isPaidPlan(policyId);
