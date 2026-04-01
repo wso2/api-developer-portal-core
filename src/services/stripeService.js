@@ -19,6 +19,7 @@
 
 const StripeSDK = require("stripe");
 const { CustomError } = require("../utils/errors/customErrors");
+const logger = require("../config/logger");
 
 class BadRequestError extends CustomError {
   constructor(message) {
@@ -51,11 +52,16 @@ async function findOrCreateCustomerByEmail(
   if (!metadata.orgId) {
     throw new BadRequestError("orgId is required in customer metadata");
   }
+  logger.info("Stripe: searching for existing customer", { orgId: metadata.orgId });
   const result = await stripe.customers.search({
     query: `email:"${email.replace(/"/g, '\\"')}"`,
     limit: 1,
   });
-  if (result?.data?.[0]) return result.data[0];
+  if (result?.data?.[0]) {
+    logger.info("Stripe: existing customer found", { orgId: metadata.orgId });
+    return result.data[0];
+  }
+  logger.info("Stripe: creating new customer", { orgId: metadata.orgId });
   return stripe.customers.create({
     email,
     metadata,
@@ -89,6 +95,7 @@ async function createCheckoutSession({
 
   const paymentMethodCollection = isMetered ? "always" : "if_required";
 
+  logger.info("Stripe: creating checkout session", { orgId: metadata.orgId, isMetered, mode: "subscription" });
   return stripe.checkout.sessions.create({
     ui_mode: "embedded",
     customer: customerId,
@@ -104,6 +111,7 @@ async function retrieveCheckoutSession(checkoutSessionId, stripeSecretKey) {
   const stripe = getStripeInstance(stripeSecretKey);
   if (!checkoutSessionId)
     throw new BadRequestError("checkoutSessionId is required");
+  logger.info("Stripe: retrieving checkout session", { checkoutSessionId });
   return stripe.checkout.sessions.retrieve(checkoutSessionId, {
     expand: ["subscription", "customer"],
   });
@@ -113,6 +121,7 @@ async function cancelSubscription(stripeSubscriptionId, stripeSecretKey) {
   const stripe = getStripeInstance(stripeSecretKey);
   if (!stripeSubscriptionId)
     throw new BadRequestError("stripeSubscriptionId is required");
+  logger.info("Stripe: canceling subscription", { stripeSubscriptionId });
   return stripe.subscriptions.cancel(stripeSubscriptionId);
 }
 
@@ -141,6 +150,7 @@ async function createCustomerPortalSession({
   const stripe = getStripeInstance(stripeSecretKey);
   if (!customerId) throw new BadRequestError("customerId is required");
   if (!returnUrl) throw new BadRequestError("returnUrl is required");
+  logger.info("Stripe: creating customer portal session");
   return stripe.billingPortal.sessions.create({
     customer: customerId,
     return_url: returnUrl,
@@ -160,6 +170,7 @@ async function verifyAndConstructWebhookEvent(
   if (!signature) {
     throw new BadRequestError("Missing stripe-signature header");
   }
+  logger.info("Stripe: verifying webhook signature");
   try {
     const stripe = getStripeInstance(stripeSecretKey);
     return stripe.webhooks.constructEvent(req.body, signature, webhookSecret);
@@ -176,6 +187,7 @@ async function verifyAndConstructWebhookEvent(
  */
 async function applyWebhookToLocalState(event, { adminDao }) {
   const eventType = event?.type;
+  logger.info("Stripe: processing webhook event", { eventType });
 
   let stripeSubscriptionId = null;
 
@@ -271,6 +283,7 @@ async function applyWebhookToLocalState(event, { adminDao }) {
 
   if (!newStatus) return;
 
+  logger.info("Stripe: updating local subscription status from webhook", { stripeSubscriptionId, eventType, newStatus });
   await adminDao.updateSubscriptionByBillingId(stripeSubscriptionId, {
     PAYMENT_STATUS: newStatus,
   });
@@ -325,6 +338,26 @@ async function getSubscription(subscriptionId, stripeSecretKey) {
   return stripe.subscriptions.retrieve(subscriptionId);
 }
 
+
+async function getUpcomingInvoice(subscriptionId, stripeSecretKey) {
+  const stripe = getStripeInstance(stripeSecretKey);
+  if (!subscriptionId) throw new BadRequestError("subscriptionId is required");
+  try {
+    return await stripe.invoices.createPreview({ subscription: subscriptionId });
+  } catch (err) {
+    if (err?.code === "invoice_upcoming_none") return null;
+    throw err;
+  }
+}
+
+
+async function listInvoicesByStripeSubscription(subscriptionId, { limit = 24, status = "paid" } = {}, stripeSecretKey) {
+  const stripe = getStripeInstance(stripeSecretKey);
+  if (!subscriptionId) throw new BadRequestError("subscriptionId is required");
+  const result = await stripe.invoices.list({ subscription: subscriptionId, limit, ...(status ? { status } : {}) });
+  return result.data || [];
+}
+
 /**
  * Create portal session (alias for createCustomerPortalSession)
  */
@@ -352,4 +385,6 @@ module.exports = {
   getCustomer,
   detachPaymentMethod,
   getSubscription,
+  getUpcomingInvoice,
+  listInvoicesByStripeSubscription,
 };

@@ -75,7 +75,7 @@ async function getSubscriptionUsage(req, res) {
     return res.status(200).json(usage);
   } catch (err) {
     const { status, body } = errorToResponse(err);
-    logger.error({ err, orgId, subId }, "getSubscriptionUsage failed");
+    logger.error("getSubscriptionUsage failed", { err, orgId, subId });
     return res.status(status).json(body);
   }
 }

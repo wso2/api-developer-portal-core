@@ -97,6 +97,7 @@ function mapStripeErrorMessage(err) {
  */
 async function createCheckoutSessionForSubscription(req, res) {
   const orgId = req.params.orgId;
+  logger.info("createCheckoutSession: initiated", { orgId });
 
   try {
     const user = getUserContext(req);
@@ -123,6 +124,7 @@ async function createCheckoutSessionForSubscription(req, res) {
       );
     }
 
+    logger.info("createCheckoutSession: creating session", { orgId, apiId, policyId, applicationID });
     const result = await monetizationService.createCheckoutSession({
       orgId,
       user,
@@ -135,10 +137,11 @@ async function createCheckoutSessionForSubscription(req, res) {
       sourcePage,
     });
 
+    logger.info("createCheckoutSession: session created successfully", { orgId, subId: result.subId, paymentStatus: result.paymentStatus });
     return res.status(200).json(result);
   } catch (err) {
     const { status, body } = errorToResponse(err);
-    logger.error({ err, orgId }, "createCheckoutSession failed");
+    logger.error("createCheckoutSession failed", { err, orgId });
     return res.status(status).json(body);
   }
 }
@@ -150,6 +153,7 @@ async function createCheckoutSessionForSubscription(req, res) {
 async function registerStripeCheckoutSession(req, res) {
   const orgId = req.params.orgId;
   const checkoutSessionId = req.params.checkoutSessionId;
+  logger.info("registerStripeCheckoutSession: initiated", { orgId, checkoutSessionId });
 
   try {
     const user = getUserContext(req);
@@ -158,8 +162,10 @@ async function registerStripeCheckoutSession(req, res) {
       checkoutSessionId,
       user,
     });
+    logger.info("registerStripeCheckoutSession: completed", { orgId, subId: result.subId, paymentStatus: result.paymentStatus });
     return res.status(201).json(result);
   } catch (err) {
+    logger.error("registerStripeCheckoutSession failed", { orgId, checkoutSessionId, message: err.message });
     const { status, body } = errorToResponse(err);
     return res.status(status).json(body);
   }
@@ -171,6 +177,7 @@ async function registerStripeCheckoutSession(req, res) {
 async function cancelSubscription(req, res) {
   const orgId = req.params.orgId;
   const subId = req.params.subId;
+  logger.info("cancelSubscription: initiated", { orgId, subId });
 
   try {
     const user = getUserContext(req);
@@ -180,10 +187,11 @@ async function cancelSubscription(req, res) {
       subId,
       user,
     });
+    logger.info("cancelSubscription: completed", { orgId, subId, paymentStatus: result.paymentStatus });
     return res.status(200).json(result);
   } catch (err) {
     const { status, body } = errorToResponse(err);
-    logger.error({ err, orgId, subId }, "cancelSubscription failed");
+    logger.error("cancelSubscription failed", { err, orgId, subId });
     return res.status(status).json(body);
   }
 }
@@ -194,6 +202,7 @@ async function cancelSubscription(req, res) {
 async function getSubscriptionBillingStatus(req, res) {
   const orgId = req.params.orgId;
   const subId = req.params.subId;
+  logger.info("getSubscriptionBillingStatus: initiated", { orgId, subId });
 
   try {
     const { userId } = getUserContext(req);
@@ -202,10 +211,11 @@ async function getSubscriptionBillingStatus(req, res) {
       subId,
       userId,
     });
+    logger.info("getSubscriptionBillingStatus: completed", { orgId, subId, paymentStatus: result.paymentStatus });
     return res.status(200).json(result);
   } catch (err) {
     const { status, body } = errorToResponse(err);
-    logger.error({ err, orgId, subId }, "getSubscriptionBillingStatus failed");
+    logger.error("getSubscriptionBillingStatus failed", { err, orgId, subId });
     return res.status(status).json(body);
   }
 }
@@ -216,6 +226,7 @@ async function getSubscriptionBillingStatus(req, res) {
 async function createBillingPortal(req, res) {
   const orgId = req.params.orgId;
   const subId = req.params.subId;
+  logger.info("createBillingPortal: initiated", { orgId, subId });
 
   try {
     const returnUrl = `${req.protocol}://${req.get("host")}`;
@@ -227,10 +238,11 @@ async function createBillingPortal(req, res) {
       returnUrl,
       userId,
     });
+    logger.info("createBillingPortal: portal session created", { orgId, subId });
     return res.status(200).json({ url: portal.url });
   } catch (err) {
     const { status, body } = errorToResponse(err);
-    logger.error({ err, orgId, subId }, "createBillingPortal failed");
+    logger.error("createBillingPortal failed", { err, orgId, subId });
     return res.status(status).json(body);
   }
 }
@@ -241,6 +253,7 @@ async function createBillingPortal(req, res) {
  */
 async function createBillingPortalByOrg(req, res) {
   const orgId = req.params.orgId;
+  logger.info("createBillingPortalByOrg: initiated", { orgId });
 
   try {
     const returnUrl = `${req.protocol}://${req.get("host")}`;
@@ -251,6 +264,7 @@ async function createBillingPortalByOrg(req, res) {
       returnUrl,
       user,
     });
+    logger.info("createBillingPortalByOrg: portal session created", { orgId });
     return res.status(200).json({ url: portal.url });
   } catch (err) {
     const { status, body } = errorToResponse(err);
@@ -270,8 +284,11 @@ async function createBillingPortalByOrg(req, res) {
  * Mounted with express.raw({ type: 'application/json' }) in app.js
  */
 async function handleStripeWebhook(req, res) {
+  const orgId = req.params.orgId;
+  logger.info("handleStripeWebhook: received", { orgId });
   try {
-    await monetizationService.handleStripeWebhook(req, req.params.orgId);
+    await monetizationService.handleStripeWebhook(req, orgId);
+    logger.info("handleStripeWebhook: processed successfully", { orgId });
     return res.status(200).send("ok");
   } catch (err) {
     logger.error(
@@ -289,6 +306,7 @@ async function handleStripeWebhook(req, res) {
 async function handleBillingReturn(req, res) {
   const { session_id, dp_sub_id, org_id } = req.query;
   let orgIdFinal = req.query.org_id || req.query.orgId || org_id;
+  logger.info("handleBillingReturn: initiated", { orgId: orgIdFinal, hasSessionId: !!session_id, hasDpSubId: !!dp_sub_id });
   try {
     if (!session_id) {
       return res.status(400).send("Missing session_id");
@@ -420,6 +438,7 @@ async function addBillingEngineKeys(req, res) {
     const orgId = req.params.orgId;
     const { billingEngine, secretKey, publishableKey, webhookSecret } =
       req.body;
+    logger.info("addBillingEngineKeys: initiated", { orgId, billingEngine });
     if (
       !orgId ||
       !billingEngine ||
@@ -436,6 +455,7 @@ async function addBillingEngineKeys(req, res) {
       PUBLISHABLE_KEY_ENC: encrypt(publishableKey),
       WEBHOOK_SECRET_ENC: encrypt(webhookSecret),
     });
+    logger.info("addBillingEngineKeys: keys saved", { orgId, billingEngine });
     return res.status(201).json({ message: "Billing engine keys saved" });
   } catch (err) {
     return res.status(500).json({ message: err.message });
@@ -450,6 +470,7 @@ async function updateBillingEngineKeys(req, res) {
     const orgId = req.params.orgId;
     const { billingEngine, secretKey, publishableKey, webhookSecret } =
       req.body;
+    logger.info("updateBillingEngineKeys: initiated", { orgId, billingEngine });
     if (
       !orgId ||
       !billingEngine ||
@@ -469,6 +490,7 @@ async function updateBillingEngineKeys(req, res) {
     record.PUBLISHABLE_KEY_ENC = encrypt(publishableKey);
     record.WEBHOOK_SECRET_ENC = encrypt(webhookSecret);
     await record.save();
+    logger.info("updateBillingEngineKeys: keys updated", { orgId, billingEngine });
     return res.status(200).json({ message: "Billing engine keys updated" });
   } catch (err) {
     return res.status(500).json({ message: err.message });
@@ -482,6 +504,7 @@ async function deleteBillingEngineKeys(req, res) {
   try {
     const orgId = req.params.orgId;
     const billingEngine = req.body.billingEngine || req.query.billingEngine;
+    logger.info("deleteBillingEngineKeys: initiated", { orgId, billingEngine });
     if (!orgId || !billingEngine) {
       return res.status(400).json({ message: "Missing required fields" });
     }
@@ -491,6 +514,7 @@ async function deleteBillingEngineKeys(req, res) {
     if (deleted === 0) {
       return res.status(404).json({ message: "Billing engine keys not found" });
     }
+    logger.info("deleteBillingEngineKeys: keys deleted", { orgId, billingEngine });
     return res.status(200).json({ message: "Billing engine keys deleted" });
   } catch (err) {
     return res.status(500).json({ message: err.message });
@@ -503,6 +527,7 @@ async function deleteBillingEngineKeys(req, res) {
 async function getBillingEngineKeys(req, res) {
   try {
     const orgId = req.params.orgId;
+    logger.info("getBillingEngineKeys: initiated", { orgId });
     const billingEngine = (req.query.billingEngine || "STRIPE").toUpperCase();
     if (!orgId || !billingEngine) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -531,16 +556,23 @@ async function getBillingEngineKeys(req, res) {
 async function getUsageData(req, res) {
   try {
     const { orgId } = req.params;
+    logger.info("getUsageData: initiated", { orgId });
     const userContext = getUserContext(req);
     const period = req.query.period || "current";
+    const customFrom = req.query.from;
+    const customTo = req.query.to;
 
     const usageData = await monetizationService.getUserUsageData(
       req,
       userContext,
       orgId,
       period,
+      undefined,
+      customFrom,
+      customTo,
     );
 
+    logger.info("getUsageData: completed", { orgId });
     return res.json(usageData);
   } catch (err) {
     logger.error(
@@ -558,20 +590,20 @@ async function getUsageData(req, res) {
  */
 async function getPaymentMethods(req, res) {
   const { orgId } = req.params;
+  logger.info("getPaymentMethods: initiated", { orgId });
   try {
     const userContext = getUserContext(req);
     const paymentMethods = await monetizationService.getPaymentMethods(
       userContext,
       orgId,
     );
+    logger.info("getPaymentMethods: completed", { orgId, count: paymentMethods?.length });
     return res.json({ paymentMethods });
   } catch (err) {
     logger.error(
       {
         message: err.message,
-        stack: err.stack,
         userId: getUserContext(req).userId,
-        stripeError: err.raw ?? { type: err.type, code: err.code, message: err.message },
         orgId,
       },
       "getPaymentMethods failed",
@@ -588,6 +620,7 @@ async function getPaymentMethods(req, res) {
 async function getBillingInfo(req, res) {
   try {
     const { orgId } = req.params;
+    logger.info("getBillingInfo: initiated", { orgId });
     const userContext = getUserContext(req);
 
     const billingInfo = await monetizationService.getBillingInfo(
@@ -595,6 +628,7 @@ async function getBillingInfo(req, res) {
       orgId,
     );
 
+    logger.info("getBillingInfo: completed", { orgId });
     return res.json(billingInfo);
   } catch (err) {
     logger.error(
@@ -613,6 +647,7 @@ async function getBillingInfo(req, res) {
 async function getActiveSubscriptions(req, res) {
   const { orgId } = req.params;
   const userContext = getUserContext(req);
+  logger.info("getActiveSubscriptions: initiated", { orgId });
 
   try {
     const subscriptions = await monetizationService.getSubscriptionsForBilling(
@@ -620,9 +655,10 @@ async function getActiveSubscriptions(req, res) {
       userContext.userId,
     );
 
+    logger.info("getActiveSubscriptions: completed", { orgId, count: subscriptions?.length });
     return res.json({ subscriptions });
   } catch (err) {
-    logger.error({ err, orgId }, "getSubscriptions failed");
+    logger.error("getSubscriptions failed", { err, orgId });
     const resp = errorToResponse(err);
     return res.status(resp.status).json(resp.body);
   }

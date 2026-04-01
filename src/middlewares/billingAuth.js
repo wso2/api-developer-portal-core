@@ -41,6 +41,7 @@ async function ensureBillingAuth(req, res, next) {
         try {
           const org = await adminDao.getOrganization(orgId);
           const orgIdentifier = org?.ORGANIZATION_IDENTIFIER;
+          req.cpOrgID = orgIdentifier;
           const orgMatches =
             userOrg === orgIdentifier ||
             (Array.isArray(authorizedOrgs) &&

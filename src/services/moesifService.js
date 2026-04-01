@@ -34,9 +34,17 @@ function getPeriodRange(period = "current") {
   const to = new Date();
   let from;
 
-  if (period === "last30") from = new Date(to.getTime() - 30 * 24 * 60 * 60 * 1000);
-  else if (period === "last90") from = new Date(to.getTime() - 90 * 24 * 60 * 60 * 1000);
-  else from = new Date(to.getFullYear(), to.getMonth(), 1); // current month
+  if (period === "lastMonth") {
+    const fom = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth() - 1, 1));
+    const eom = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), 0, 23, 59, 59, 999));
+    return { from: fom.toISOString(), to: eom.toISOString() };
+  } else if (period === "last3months" || period === "last90") {
+    from = new Date(to.getTime() - 90 * 24 * 60 * 60 * 1000);
+  } else if (period === "last30") {
+    from = new Date(to.getTime() - 30 * 24 * 60 * 60 * 1000);
+  } else {
+    from = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), 1));
+  }
 
   return { from: from.toISOString(), to: to.toISOString() };
 }
@@ -69,17 +77,25 @@ async function getUsageStats({ req, subscriptionId, from, to, period = "current"
   url.searchParams.set("from", from);
   url.searchParams.set("to", to);
 
-  logger.info({ subscriptionId, from, to }, "[moesifService] Calling APIM usage endpoint");
+  logger.info("[moesifService] Calling APIM usage endpoint", { subscriptionId, from, to });
 
-  const response = await invokeApiRequest(req, "GET", url.toString());
+  const raw = await invokeApiRequest(req, "GET", url.toString());
 
-  const records = Array.isArray(response) ? response : (response ? [response] : []);
+  const response = typeof raw === "string" ? JSON.parse(raw) : raw;
 
-  const totalUsage = records.reduce((sum, r) => sum + (Number(r?.report_total_usage ?? r?.meter_usage ?? 0) || 0), 0);
-  const estimatedCost = records.reduce((sum, r) => sum + (Number(r?.price_in_decimal ?? 0) || 0), 0);
-  const currency = records[0]?.currency || "USD";
+  let totalUsage, estimatedCost, currency;
 
-  logger.debug({ subscriptionId, records: records.length, totalUsage, estimatedCost, currency }, "[moesifService] APIM usage response");
+  if (Array.isArray(response)) {
+    totalUsage = response.reduce((sum, r) => sum + (Number(r?.report_total_usage ?? r?.meter_usage ?? r?.totalUsage ?? 0) || 0), 0);
+    estimatedCost = response.reduce((sum, r) => sum + (Number(r?.price_in_decimal ?? r?.estimatedCost ?? 0) || 0), 0);
+    currency = response[0]?.currency || "USD";
+  } else {
+    totalUsage = Number(response?.totalUsage ?? response?.total_usage ?? response?.meter_usage ?? 0) || 0;
+    estimatedCost = Number(response?.estimatedCost ?? response?.estimated_cost ?? response?.price_in_decimal ?? 0) || 0;
+    currency = response?.currency || "USD";
+  }
+
+  logger.info("[moesifService] APIM usage response", { subscriptionId, totalUsage });
 
   return {
     total_requests: totalUsage,

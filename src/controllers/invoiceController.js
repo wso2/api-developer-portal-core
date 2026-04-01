@@ -51,6 +51,7 @@ async function listInvoices(req, res) {
   const userId =
     req.user?.sub || req.user?.[constants.USER_ID] || req[constants.USER_ID];
   const period = req.query.period || "last3months";
+  logger.info("listInvoices: initiated", { orgId, period });
 
   try {
     const invoices = await subscriptionService.listInvoices({
@@ -58,10 +59,11 @@ async function listInvoices(req, res) {
       userId,
       period,
     });
+    logger.info("listInvoices: completed", { orgId, invoiceCount: invoices?.invoices?.length });
     return res.status(200).json(invoices);
   } catch (err) {
     const { status, body } = errorToResponse(err);
-    logger.error({ message: err.message, orgId }, "listInvoices failed");
+    logger.error("listInvoices failed", { message: err.message, orgId });
     return res.status(status).json(body);
   }
 }
@@ -71,6 +73,7 @@ async function listInvoicesBySubscription(req, res) {
   const subId = req.params.subId;
   const userId =
     req.user?.sub || req.user?.[constants.USER_ID] || req[constants.USER_ID];
+  logger.info("listInvoicesBySubscription: initiated", { orgId, subId });
 
   try {
     const invoices = await subscriptionService.listInvoicesBySubscription({
@@ -78,12 +81,13 @@ async function listInvoicesBySubscription(req, res) {
       subId,
       userId,
     });
+    logger.info("listInvoicesBySubscription: completed", { orgId, subId, invoiceCount: invoices?.data?.length });
     return res.status(200).json(invoices);
   } catch (err) {
     const { status, body } = errorToResponse(err);
     logger.error(
-      { message: err.message, orgId, subId },
       "listInvoicesBySubscription failed",
+      { message: err.message, orgId, subId },
     );
     return res.status(status).json(body);
   }
@@ -94,13 +98,15 @@ async function getInvoice(req, res) {
   const orgId = req.params.orgId;
   const userId =
     req.user?.sub || req.user?.[constants.USER_ID] || req[constants.USER_ID];
+  logger.info("getInvoice: initiated", { orgId, invoiceId });
 
   try {
     const inv = await subscriptionService.getInvoice({ orgId, invoiceId, userId });
+    logger.info("getInvoice: completed", { orgId, invoiceId });
     return res.status(200).json(inv);
   } catch (err) {
     const { status, body } = errorToResponse(err);
-    logger.error({ message: err.message, invoiceId }, "getInvoice failed");
+    logger.error("getInvoice failed", { message: err.message, invoiceId });
     return res.status(status).json(body);
   }
 }
@@ -110,12 +116,13 @@ async function getInvoicePdfLink(req, res) {
   const invoiceId = req.params.invoiceId;
   const userId =
     req.user?.sub || req.user?.[constants.USER_ID] || req[constants.USER_ID];
+  logger.info("getInvoicePdfLink: initiated", { orgId, invoiceId });
 
   try {
     const inv = await subscriptionService.getInvoice({ orgId, invoiceId, userId });
     if (!inv.invoice_pdf) {
       logger.warn(
-        { invoiceId, hosted_invoice_url: inv.hosted_invoice_url },
+        { invoiceId },
         "Invoice PDF not available",
       );
       return res.status(404).json({
@@ -145,6 +152,7 @@ async function redirectHostedInvoice(req, res) {
   const orgId = req.params.orgId;
   const userId =
     req.user?.sub || req.user?.[constants.USER_ID] || req[constants.USER_ID];
+  logger.info("redirectHostedInvoice: initiated", { orgId, invoiceId });
 
   try {
     const inv = await subscriptionService.getInvoice({ orgId, invoiceId, userId });

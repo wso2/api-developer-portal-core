@@ -62,14 +62,27 @@
                 <h5 class="card-title mb-4">API Usage Overview</h5>
                 
                 <!-- Usage Period Selector -->
-                <div class="row mb-4">
+                <div class="row mb-4 align-items-end">
                   <div class="col-md-4">
                     <label class="form-label">Period</label>
                     <select class="form-select" id="usagePeriod">
                       <option value="current">Current Month</option>
-                      <option value="last30">Last 30 Days</option>
-                      <option value="last90">Last 90 Days</option>
+                      <option value="lastMonth">Last Month</option>
+                      <option value="last3months">Last 3 Months</option>
+                      <option value="custom">Custom Date Range</option>
                     </select>
+                  </div>
+                  <div class="col-md-6" id="customDateRange" style="display:none;">
+                    <div class="row g-2">
+                      <div class="col-6">
+                        <label class="form-label">From</label>
+                        <input type="date" class="form-control" id="usageFrom">
+                      </div>
+                      <div class="col-6">
+                        <label class="form-label">To</label>
+                        <input type="date" class="form-control" id="usageTo">
+                      </div>
+                    </div>
                   </div>
                 </div>
 

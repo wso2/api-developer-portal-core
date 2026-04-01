@@ -1081,7 +1081,7 @@ const listSubscriptionsByUser = async (orgID, userID) => {
             },
         });
     } catch (error) {
-        logger.error({ error, orgID, userID }, 'listSubscriptionsByUser failed');
+        logger.error('listSubscriptionsByUser failed', { error, orgID, userID });
         throw new Sequelize.DatabaseError(error);
     }
 };
@@ -1116,7 +1116,7 @@ const getSubscriptionsWithDetails = async (orgID) => {
         );
         return results || [];
     } catch (error) {
-        logger.error({ error, orgID }, 'getSubscriptionsWithDetails failed');
+        logger.error('getSubscriptionsWithDetails failed', { error, orgID });
         throw new Sequelize.DatabaseError(error);
     }
 };
@@ -1168,7 +1168,7 @@ const getUserSubscriptionsWithDetails = async (orgID, userID) => {
         );
         return results || [];
     } catch (error) {
-        logger.error({ error, orgID, userID }, 'getUserSubscriptionsWithDetails failed');
+        logger.error('getUserSubscriptionsWithDetails failed', { error, orgID, userID });
         throw new Sequelize.DatabaseError(error);
     }
 };

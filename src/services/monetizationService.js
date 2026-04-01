@@ -157,6 +157,7 @@ async function createCheckoutSession({
     if (!email)
       throw new BadRequestError("User email is required to start checkout.");
 
+    logger.info("createCheckoutSession: validating API and policy", { orgId, apiId, policyId });
     const apiRow = await adminDao.getAPIById(orgId, apiId, t);
     if (!apiRow) throw new NotFoundError(`API not found: apiId=${apiId}`);
 
@@ -187,6 +188,8 @@ async function createCheckoutSession({
       pricingModel === "VOLUME_TIERS" ||
       pricingModel === "GRADUATED_TIERS";
 
+    logger.info("createCheckoutSession: policy validated", { orgId, policyId, pricingModel, isMetered });
+
     const existing = await adminDao.findSubscriptionByUniqueKey(
       orgId,
       applicationID,
@@ -201,6 +204,7 @@ async function createCheckoutSession({
     }
 
     if (existing && existing.PAYMENT_STATUS === PAYMENT_STATUS.PENDING) {
+      logger.info("createCheckoutSession: removing stale PENDING subscription", { orgId, oldSubId: existing.SUB_ID });
       await adminDao.deleteSubscription(orgId, existing.SUB_ID, t);
     }
 
@@ -232,6 +236,7 @@ async function createCheckoutSession({
     );
 
     const dpSubId = dpSub.SUB_ID;
+    logger.info("createCheckoutSession: DP subscription created", { orgId, dpSubId, policyId, applicationID });
 
     const landingPage = sourcePage || "/devportal/apis";
     const returnUrl = `${returnBaseUrl}/billing/return?session_id={CHECKOUT_SESSION_ID}&dp_sub_id=${dpSubId}&org_id=${orgId}&sourcePage=${encodeURIComponent(landingPage)}`;
@@ -253,6 +258,8 @@ async function createCheckoutSession({
       },
       stripeSecretKey,
     });
+
+    logger.info("createCheckoutSession: Stripe session created", { orgId, dpSubId, sessionId: session.id });
 
     await adminDao.updateBillingFields(
       orgId,
@@ -284,8 +291,8 @@ async function createCheckoutSession({
 async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
   return sequelize.transaction(async (t) => {
     logger.info(
-      { orgId, checkoutSessionId },
       "registerCheckoutSession called",
+      { orgId, checkoutSessionId },
     );
     const { secretKey: stripeSecretKey } =
       await getDecryptedStripeKeysForOrg(orgId);
@@ -297,6 +304,7 @@ async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
     const status = String(session?.status || "").toLowerCase();
     const paymentStatus = String(session?.payment_status || "").toLowerCase();
     const isPaid = status === "complete" || paymentStatus === "paid";
+    logger.info("registerCheckoutSession: session status", { orgId, checkoutSessionId, status, paymentStatus, isPaid });
     if (!isPaid) {
       const dpSubId = session?.metadata?.dpSubId;
       if (dpSubId) {
@@ -341,6 +349,7 @@ async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
       );
     }
 
+    logger.info("registerCheckoutSession: activating subscription", { orgId, dpSubId });
     const updatedCount = await adminDao.updateBillingFields(
       orgId,
       dpSubId,
@@ -355,8 +364,8 @@ async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
     );
     if (updatedCount !== 1) {
       logger.warn(
-        { orgId, dpSubId, updatedCount },
         "updateBillingFields did not update exactly one row",
+        { orgId, dpSubId, updatedCount },
       );
     }
 
@@ -371,6 +380,7 @@ async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
 }
 
 async function getUsage({ req, orgId, subId, from, to }) {
+  logger.info("getUsage: initiated", { orgId, subId });
   const sub = await adminDao.getSubscriptionWithMeter(orgId, subId);
   if (!sub) throw new NotFoundError(`Subscription not found: subId=${subId}`);
 
@@ -398,6 +408,7 @@ async function getUsage({ req, orgId, subId, from, to }) {
  * List invoices by customer
  */
 async function listInvoices({ orgId, userId, period = "last3months" }) {
+  logger.info("listInvoices: initiated", { orgId, period });
   const subs = await adminDao.listSubscriptionsByUser(orgId, userId);
   const any = subs.find(
     (s) =>
@@ -436,6 +447,8 @@ async function listInvoices({ orgId, userId, period = "last3months" }) {
     stripeSecretKey,
   );
 
+  logger.info("listInvoices: completed", { orgId, period, invoiceCount: result.data?.length });
+
   return {
     invoices: (result.data || []).map((invoice) => ({
       id: invoice.id,
@@ -443,6 +456,7 @@ async function listInvoices({ orgId, userId, period = "last3months" }) {
       created: invoice.created,
       period: `${new Date(invoice.period_start * 1000).toLocaleDateString()} - ${new Date(invoice.period_end * 1000).toLocaleDateString()}`,
       amount: invoice.amount_due,
+      currency: invoice.currency || "usd",
       status: invoice.status,
       hostedInvoiceUrl: invoice.hosted_invoice_url,
       invoicePdf: invoice.invoice_pdf,
@@ -465,6 +479,7 @@ async function verifySubscriptionOwnership(orgId, subId, userId) {
 }
 
 async function listInvoicesBySubscription({ orgId, subId, userId }) {
+  logger.info("listInvoicesBySubscription: initiated", { orgId, subId });
   await verifySubscriptionOwnership(orgId, subId, userId);
   const sub = await adminDao.getSubscription(orgId, subId);
   if (!sub?.BILLING_CUSTOMER_ID) return { data: [] };
@@ -507,6 +522,7 @@ async function getInvoice({ orgId, invoiceId, userId }) {
 }
 
 async function createBillingPortal({ orgId, subId, returnUrl, userId }) {
+  logger.info("createBillingPortal: initiated", { orgId, subId });
   await verifySubscriptionOwnership(orgId, subId, userId);
   const sub = await adminDao.getSubscription(orgId, subId);
 
@@ -516,8 +532,8 @@ async function createBillingPortal({ orgId, subId, returnUrl, userId }) {
 
   if (!sub.BILLING_CUSTOMER_ID) {
     logger.warn(
-      { orgId, subId, sub },
       "Subscription missing BILLING_CUSTOMER_ID",
+      { orgId, subId },
     );
     throw new BadRequestError(
       "This subscription does not have billing information. Please ensure the subscription was created through Stripe checkout.",
@@ -534,6 +550,7 @@ async function createBillingPortal({ orgId, subId, returnUrl, userId }) {
 }
 
 async function createBillingPortalByOrg({ orgId, returnUrl, user }) {
+  logger.info("createBillingPortalByOrg: initiated", { orgId });
   const subscriptions = await adminDao.listSubscriptionsByUser(orgId, user?.userId);
   const stripeSub = subscriptions.find(
     (s) =>
@@ -572,10 +589,8 @@ async function createBillingPortalByOrg({ orgId, returnUrl, user }) {
       "createBillingPortalByOrg: Stripe portal session creation failed",
       {
         orgId,
-        customerId,
         stripeType: stripeErr.type,
         stripeCode: stripeErr.code,
-        stripeMessage: stripeErr.message,
       },
     );
     throw stripeErr;
@@ -583,12 +598,15 @@ async function createBillingPortalByOrg({ orgId, returnUrl, user }) {
 }
 
 async function cancelPaidSubscription({ req, orgId, subId, user }) {
+  logger.info("cancelPaidSubscription: initiated", { orgId, subId });
   await verifySubscriptionOwnership(orgId, subId, user?.userId);
   return sequelize.transaction(async (t) => {
     const sub = await adminDao.getSubscription(orgId, subId, t);
     if (!sub) throw new NotFoundError(`Subscription not found: subId=${subId}`);
     if (!sub.BILLING_SUBSCRIPTION_ID)
       throw new BadRequestError("No billing subscription id found to cancel.");
+
+    logger.info("cancelPaidSubscription: canceling Stripe subscription", { orgId, subId });
 
     const { secretKey: stripeSecretKey } =
       await getDecryptedStripeKeysForOrg(orgId);
@@ -604,8 +622,8 @@ async function cancelPaidSubscription({ req, orgId, subId, user }) {
           String(stripeErr?.message).includes("already canceled"))
       ) {
         logger.warn(
-          { subId, msg: stripeErr.message },
           "Stripe subscription already canceled — continuing",
+          { subId },
         );
       } else {
         throw stripeErr;
@@ -635,13 +653,14 @@ async function cancelPaidSubscription({ req, orgId, subId, user }) {
           }
         } catch (err) {
           logger.warn(
-            { subId, err: err.message },
             "Moesif subscription cleanup failed (non-fatal)",
+            { subId, err: err.message },
           );
         }
-      })().catch(err => logger.warn({ subId, err: err.message }, "Moesif cleanup promise rejected"));
+      })().catch(err => logger.warn("Moesif cleanup promise rejected", { subId, err: err.message }));
     });
 
+    logger.info("cancelPaidSubscription: subscription canceled", { orgId, subId });
     return { subId, paymentStatus: PAYMENT_STATUS.CANCELED };
   });
 }
@@ -665,8 +684,8 @@ async function cancelStripeByBillingId(orgId, billingSubscriptionId) {
         String(err?.message).includes("already canceled"))
     ) {
       logger.warn(
-        { billingSubscriptionId },
         "Stripe subscription already canceled",
+        { billingSubscriptionId },
       );
     } else {
       throw err;
@@ -682,6 +701,7 @@ async function handleStripeWebhook(req, orgId) {
   if (!orgId) {
     throw new Error("Missing orgId in webhook URL");
   }
+  logger.info("handleStripeWebhook: verifying event", { orgId });
   const { secretKey, webhookSecret } =
     await getDecryptedStripeKeysForOrg(orgId);
   const event = await stripeService.verifyAndConstructWebhookEvent(
@@ -689,11 +709,14 @@ async function handleStripeWebhook(req, orgId) {
     secretKey,
     webhookSecret,
   );
+  logger.info("handleStripeWebhook: event verified", { orgId, eventType: event?.type });
   await stripeService.applyWebhookToLocalState(event, { adminDao });
+  logger.info("handleStripeWebhook: event processed", { orgId, eventType: event?.type });
   return true;
 }
 
 async function getSubscriptionBillingStatus({ orgId, subId, userId }) {
+  logger.info("getSubscriptionBillingStatus: initiated", { orgId, subId });
   await verifySubscriptionOwnership(orgId, subId, userId);
   const sub = await adminDao.getSubscription(orgId, subId);
   if (!sub) throw new NotFoundError(`Subscription not found: subId=${subId}`);
@@ -715,6 +738,8 @@ async function getUserUsageData(
   orgId,
   period = "current",
   t,
+  customFrom,
+  customTo,
 ) {
   const empty = {
     totalRequests: 0,
@@ -725,10 +750,10 @@ async function getUserUsageData(
   };
 
   try {
-    logger.info({ orgId, period }, "getUserUsageData called");
+    logger.info("getUserUsageData called", { orgId, period });
     const userId = userContext?.userId || userContext?.sub;
     if (!userId) {
-      logger.warn({ orgId }, "No userId found in userContext");
+      logger.warn("No userId found in userContext", { orgId });
       return empty;
     }
 
@@ -751,7 +776,7 @@ async function getUserUsageData(
 
     if (activeSubs.length === 0) return empty;
 
-    logger.info({ activeSubs: activeSubs.length }, "Active subscriptions");
+    logger.info("Active subscriptions", { activeSubs: activeSubs.length });
 
     const rows = await Promise.all(
       activeSubs.map(async (sub) => {
@@ -767,6 +792,8 @@ async function getUserUsageData(
           let cost = 0;
           let currency = "USD";
 
+          logger.info("[getUserUsageData] processing subscription", { subId, pricingModel });
+
           if (pricingModel === "FLAT") {
             // Flat plan: no Moesif usage needed
             cost = flatAmount;
@@ -774,13 +801,20 @@ async function getUserUsageData(
             const apimSubId = sub?.apimSubscriptionId || "";
             if (!apimSubId) {
               logger.warn(
-                { orgId, userId, subId, policyId: sub.POLICY_ID },
                 "Metered subscription missing APIM subscription reference",
+                { orgId, userId, subId, policyId: sub.POLICY_ID },
               );
               cost = 0;
               requests = 0;
             } else {
-              const { from, to } = moesifService.getPeriodRange(period);
+              let from, to;
+              if (customFrom || customTo) {
+                from = customFrom ? `${customFrom}T00:00:00.000Z` : moesifService.getPeriodRange(period).from;
+                to = customTo ? `${customTo}T23:59:59.999Z` : new Date().toISOString();
+              } else {
+                ({ from, to } = moesifService.getPeriodRange(period));
+              }
+              logger.info("[getUserUsageData] Moesif date range", { orgId, period, from, to });
               const usage = await moesifService.getUsageStats({
                 req,
                 subscriptionId: apimSubId,
@@ -790,26 +824,10 @@ async function getUserUsageData(
               requests =
                 Number(usage?.total_requests ?? usage?.usage ?? 0) || 0;
               avgRt = Number(usage?.avg_response_time ?? 0) || 0;
+              cost = Number(usage?.estimated_cost ?? 0) || 0;
               currency = usage?.currency || "USD";
 
-              if (
-                pricingModel === "VOLUME_TIERS" ||
-                pricingModel === "GRADUATED_TIERS"
-              ) {
-                // Moesif does not return an estimated_cost for tiered plans,
-                // so always calculate locally using the stored tier structure.
-                const tiers = sub?.pricingMetadata?.tiers;
-                cost = calculateTieredCost(requests, tiers, pricingModel);
-              } else {
-                const estimatedNum = Number(usage?.estimated_cost);
-                if (!Number.isNaN(estimatedNum) && estimatedNum > 0) {
-                  cost = estimatedNum;
-                } else if (pricingModel === "PER_UNIT") {
-                  cost = requests * unitAmount;
-                } else {
-                  cost = 0;
-                }
-              }
+              logger.info("[getUserUsageData] Moesif usage result", { subId, requests });
             }
           }
 
@@ -826,8 +844,8 @@ async function getUserUsageData(
           return usageRow;
         } catch (err) {
           logger.error(
-            { subId: sub?.ID, policyId: sub?.POLICY_ID, apiId: sub?.API_ID, err },
             "Failed to build usage row",
+            { subId: sub?.ID, policyId: sub?.POLICY_ID, apiId: sub?.API_ID, err },
           );
           return null;
         }
@@ -867,7 +885,7 @@ async function getUserUsageData(
       subscriptions: subscriptionData,
     };
   } catch (err) {
-    logger.error({ err, orgId }, "getUserUsageData failed");
+    logger.error("getUserUsageData failed", { err, orgId });
     return empty;
   }
 }
@@ -877,12 +895,12 @@ async function getUserUsageData(
  */
 async function getPaymentMethods(userContext, orgId) {
   try {
-    logger.info({ orgId }, "getPaymentMethods called");
+    logger.info("getPaymentMethods called", { orgId });
     // Get all subscriptions for the organization to find the Stripe customer ID
     const subscriptions = await adminDao.listSubscriptionsByUser(orgId, userContext?.userId);
     logger.info(
-      { orgId, subscriptionsCount: subscriptions?.length },
       "Listing subscriptions for payment methods",
+      { orgId, subscriptionsCount: subscriptions?.length },
     );
 
     const { secretKey: stripeSecretKey } =
@@ -901,8 +919,8 @@ async function getPaymentMethods(userContext, orgId) {
       const email = userContext?.email;
       if (!email) {
         logger.warn(
-          { orgId },
           "No Stripe customer ID and no user email available",
+          { orgId },
         );
         return [];
       }
@@ -914,16 +932,16 @@ async function getPaymentMethods(userContext, orgId) {
       customerId = customer.id;
     }
     logger.info(
-      { orgId, customerId },
-      "Using Stripe customer ID for payment methods",
+      "Using Stripe customer for payment methods",
+      { orgId },
     );
     const paymentMethods = await stripeService.listPaymentMethods(
       customerId,
       stripeSecretKey,
     );
     logger.info(
-      { orgId, customerId, paymentMethodsCount: paymentMethods?.length },
       "Payment methods fetched",
+      { orgId, paymentMethodsCount: paymentMethods?.length },
     );
     const stripeCustomer = await stripeService.getCustomer(
       customerId,
@@ -940,7 +958,7 @@ async function getPaymentMethods(userContext, orgId) {
       isDefault: pm.id === defaultPaymentMethodId,
     }));
   } catch (err) {
-    logger.error({ err, orgId, userContext }, "getPaymentMethods failed");
+    logger.error("getPaymentMethods failed", { err, orgId });
     throw err;
   }
 }
@@ -989,7 +1007,7 @@ async function getBillingInfo(userContext, orgId) {
       taxId: customer.tax_ids?.data?.[0]?.value,
     };
   } catch (err) {
-    logger.error({ err }, "getBillingInfo failed");
+    logger.error("getBillingInfo failed", { err });
     throw err;
   }
 }
@@ -1013,6 +1031,7 @@ async function getSubscriptionsForBilling(orgId, userId) {
       subscriptions.map(async (sub) => {
         try {
           let amount = 0;
+          let currency = "usd";
           let nextBillingDate = null;
           let billingCycle = sub.billingPlan || sub.billingCycle || "N/A";
           let status = sub.PAYMENT_STATUS || "";
@@ -1029,7 +1048,6 @@ async function getSubscriptionsForBilling(orgId, userId) {
                 stripeSecretKey,
               );
               if (stripeSub) {
-                amount = stripeSub.items.data[0]?.price?.unit_amount || 0;
                 nextBillingDate = stripeSub.current_period_end
                   ? stripeSub.current_period_end * 1000
                   : null;
@@ -1039,11 +1057,24 @@ async function getSubscriptionsForBilling(orgId, userId) {
                   billingCycle =
                     interval.charAt(0).toUpperCase() + interval.slice(1);
                 }
+                // Use upcoming invoice for actual billed amount (includes metered usage)
+                const upcomingInvoice = await stripeService.getUpcomingInvoice(
+                  sub.BILLING_SUBSCRIPTION_ID,
+                  stripeSecretKey,
+                );
+                if (upcomingInvoice) {
+                  amount = upcomingInvoice.amount_due || upcomingInvoice.total || 0;
+                  currency = upcomingInvoice.currency || stripeSub.currency || "usd";
+                } else {
+                  // Fallback to unit_amount if no upcoming invoice
+                  amount = stripeSub.items.data[0]?.price?.unit_amount || 0;
+                  currency = stripeSub.currency || stripeSub.items.data[0]?.price?.currency || "usd";
+                }
               }
             } catch (err) {
               logger.warn(
-                { err, subId: sub.id },
                 "Failed to get Stripe subscription details",
+                { err, subId: sub.id },
               );
             }
           }
@@ -1055,6 +1086,7 @@ async function getSubscriptionsForBilling(orgId, userId) {
             planName: sub.planName || "Unknown Plan",
             billingCycle,
             amount,
+            currency,
             nextBillingDate,
             status:
               status === "ACTIVE"
@@ -1063,8 +1095,8 @@ async function getSubscriptionsForBilling(orgId, userId) {
           };
         } catch (err) {
           logger.warn(
-            { err, subId: sub.id },
             "Failed to enhance subscription with Stripe data",
+            { err, subId: sub.id },
           );
           return {
             id: sub.id,
@@ -1082,7 +1114,7 @@ async function getSubscriptionsForBilling(orgId, userId) {
 
     return formattedSubs;
   } catch (err) {
-    logger.error({ err, orgId }, "getSubscriptionsForBilling failed");
+    logger.error("getSubscriptionsForBilling failed", { err, orgId });
     throw err;
   }
 }
@@ -1092,6 +1124,7 @@ async function getSubscriptionsForBilling(orgId, userId) {
  * Call this from your controller when handling Stripe return URL.
  */
 async function handleStripeReturnAndActivate({ orgId, sessionId, user }) {
+  logger.info("handleStripeReturnAndActivate: initiated", { orgId, sessionId });
   const { secretKey: stripeSecretKey } =
     await getDecryptedStripeKeysForOrg(orgId);
   const session = await stripeService.retrieveCheckoutSession(
@@ -1114,6 +1147,7 @@ async function handleStripeReturnAndActivate({ orgId, sessionId, user }) {
     isPaidPolicy(policyRow) &&
     dpSub.PAYMENT_STATUS === PAYMENT_STATUS.PENDING
   ) {
+    logger.info("handleStripeReturnAndActivate: activating pending subscription", { orgId, dpSubId, sessionId });
     return module.exports.registerCheckoutSession({
       orgId,
       checkoutSessionId: sessionId,

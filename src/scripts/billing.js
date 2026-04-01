@@ -21,10 +21,26 @@ let activeTabController = null;
 // Function to initialize the billing page
 function initializeBillingPage() {
   document.getElementById('usagePeriod')?.addEventListener('change', () => {
-    if (activeTabController) activeTabController.abort();
-    activeTabController = new AbortController();
-    loadUsageData(activeTabController.signal);
+    const period = document.getElementById('usagePeriod')?.value;
+    const customRange = document.getElementById('customDateRange');
+    if (customRange) customRange.style.display = period === 'custom' ? '' : 'none';
+    if (period !== 'custom') {
+      if (activeTabController) activeTabController.abort();
+      activeTabController = new AbortController();
+      loadUsageData(activeTabController.signal);
+    }
   });
+  const triggerCustomLoad = () => {
+    const from = document.getElementById('usageFrom')?.value;
+    const to = document.getElementById('usageTo')?.value;
+    if (from && to) {
+      if (activeTabController) activeTabController.abort();
+      activeTabController = new AbortController();
+      loadUsageData(activeTabController.signal);
+    }
+  };
+  document.getElementById('usageFrom')?.addEventListener('change', triggerCustomLoad);
+  document.getElementById('usageTo')?.addEventListener('change', triggerCustomLoad);
   document.getElementById('invoicePeriod')?.addEventListener('change', () => {
     if (activeTabController) activeTabController.abort();
     activeTabController = new AbortController();
@@ -154,7 +170,14 @@ async function loadUsageData(signal) {
     `;
 
     const url = `/devportal/organizations/${orgId}/billing/usage-data?period=${period}`;
-    const response = await fetch(url, { signal });
+    let fetchUrl = url;
+    if (period === "custom") {
+      const from = document.getElementById("usageFrom")?.value;
+      const to = document.getElementById("usageTo")?.value;
+      if (from) fetchUrl += `&from=${encodeURIComponent(from)}`;
+      if (to) fetchUrl += `&to=${encodeURIComponent(to)}`;
+    }
+    const response = await fetch(fetchUrl, { signal });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -264,7 +287,7 @@ async function loadInvoices(signal) {
           <td><strong>${escapeHtml(invoice.number)}</strong></td>
           <td>${formatDate(invoice.created)}</td>
           <td>${escapeHtml(invoice.period)}</td>
-          <td><strong>${formatCurrency(invoice.amount)}</strong></td>
+          <td><strong>${formatCurrency(invoice.amount, invoice.currency)}</strong></td>
           <td>
             <span class="badge-status badge-${getInvoiceStatusClass(invoice.status)}">
               ${escapeHtml(invoice.status)}
@@ -570,7 +593,7 @@ async function loadActiveSubscriptions(signal) {
             <td>${escapeHtml(sub.applicationName || "N/A")}</td>
             <td><span class="badge bg-secondary">${escapeHtml(sub.planName)}</span></td>
             <td>${escapeHtml(sub.billingCycle)}</td>
-            <td><strong>${formatCurrency(sub.amount)}</strong></td>
+            <td><strong>${formatCurrency(sub.amount, sub.currency)}</strong></td>
             <td>${formatDate(sub.nextBillingDate)}</td>
             <td>
               <span class="badge-status badge-${sub.status === "active" ? "paid" : "pending"}">
@@ -831,18 +854,18 @@ function formatNumber(num) {
 }
 
 function formatUsageCost(amount, currency) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency || "USD",
+  const c = (currency || "USD").toUpperCase();
+  return c + " " + new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
 }
 
-function formatCurrency(amount) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
+function formatCurrency(amount, currency) {
+  const c = (currency || "usd").toUpperCase();
+  return c + " " + new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(amount / 100); // Stripe amounts are in cents
 }
 
