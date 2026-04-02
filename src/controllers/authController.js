@@ -99,6 +99,7 @@ const login = async (req, res, next) => {
             const html = util.renderTemplate('../pages/login-page/page.hbs', 
                 'src/pages/login-page/layout.hbs', templateContent, true);
             res.send(html);
+            trackLoginTrigger({ orgName }, req);
         }
     } else {
         res.redirect(baseUrl);
@@ -152,6 +153,7 @@ const handleCallback = async (req, res, next) => {
                         returnTo = `/${req.params.orgName}`;
                     }
                     delete req.session.returnTo;
+                    // todo: track login success
                     req.session.save(() => {
                         res.redirect(returnTo);
                     })

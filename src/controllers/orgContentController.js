@@ -95,7 +95,6 @@ const loadOrgContentFromAPI = async (req, res) => {
             profile: req.isAuthenticated() ? profile : null
         };
         html = await renderTemplateFromAPI(templateContent, orgId, orgName, 'pages/home', req.params.viewName);
-        
         // Track home page visit telemetry
         trackHomePageVisit({ 
             orgId: orgId, 
