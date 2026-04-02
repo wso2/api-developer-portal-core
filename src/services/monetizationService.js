@@ -613,7 +613,7 @@ async function createBillingPortalByOrg({ orgId, returnUrl, user }) {
 
 async function cancelPaidSubscription({ req, orgId, subId, user }) {
   logger.info("cancelPaidSubscription: initiated", { orgId, subId });
-  await verifySubscriptionOwnership(orgId, subId, user?.userId);
+  await verifySubscriptionOwnership(orgId, subId, user?.sub);
 
   let billingSubscriptionId;
   let billingCustomerId;
