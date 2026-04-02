@@ -107,6 +107,7 @@ const deleteApplication = async (req, res) => {
                 if (appDeleteResponse === 0) {
                     throw new Sequelize.EmptyResultError("Resource not found to delete");
                 } else {
+                    trackAppDeletion({ orgId: orgID, appId: applicationId, idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined }, req);
                     res.status(200).send("Resouce Deleted Successfully");
                 }
             }
