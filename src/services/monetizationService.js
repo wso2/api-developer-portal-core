@@ -468,7 +468,6 @@ async function listInvoices({ orgId, userId, period = "last3months" }) {
       id: invoice.id,
       number: invoice.number,
       created: invoice.created,
-      period: `${new Date(invoice.period_start * 1000).toLocaleDateString()} - ${new Date(invoice.period_end * 1000).toLocaleDateString()}`,
       amount: invoice.amount_due,
       currency: invoice.currency || "usd",
       status: invoice.status,

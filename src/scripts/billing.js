@@ -260,7 +260,7 @@ async function loadInvoices(signal) {
   try {
     tableBody.innerHTML = `
       <tr>
-        <td colspan="6" class="text-center py-4">
+        <td colspan="5" class="text-center py-4">
           <div class="spinner-border spinner-border-sm me-2" role="status"></div>
           Loading invoices...
         </td>
@@ -286,7 +286,6 @@ async function loadInvoices(signal) {
         <tr>
           <td><strong>${escapeHtml(invoice.number)}</strong></td>
           <td>${formatDate(invoice.created)}</td>
-          <td>${escapeHtml(invoice.period)}</td>
           <td><strong>${formatCurrency(invoice.amount, invoice.currency)}</strong></td>
           <td>
             <span class="badge-status badge-${getInvoiceStatusClass(invoice.status)}">
@@ -320,7 +319,7 @@ async function loadInvoices(signal) {
     console.error("Error loading invoices:", error);
     tableBody.innerHTML = `
       <tr>
-        <td colspan="6" class="text-center py-4 text-danger">
+        <td colspan="5" class="text-center py-4 text-danger">
           <i class="fas fa-exclamation-circle me-2"></i>
           Failed to load invoices. Please try again.
         </td>
