@@ -376,11 +376,14 @@ async function getSubscription(subscriptionId, stripeSecretKey) {
 }
 
 
-async function getUpcomingInvoice(subscriptionId, stripeSecretKey) {
+async function getUpcomingInvoice(subscriptionId, stripeSecretKey, customerId) {
   const stripe = getStripeInstance(stripeSecretKey);
   if (!subscriptionId) throw new BadRequestError("subscriptionId is required");
   try {
-    return await stripe.invoices.createPreview({ subscription: subscriptionId });
+    const params = { subscription: subscriptionId };
+    if (customerId) params.customer = customerId;
+    const invoice = await stripe.invoices.createPreview(params);
+    return invoice;
   } catch (err) {
     if (err?.code === "invoice_upcoming_none") return null;
     throw err;

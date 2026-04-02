@@ -810,8 +810,6 @@ async function getUserUsageData(
           let cost = 0;
           let currency = "USD";
 
-          logger.info("[getUserUsageData] processing subscription", { subId, pricingModel });
-
           if (pricingModel === "FLAT") {
             // Flat plan: no Moesif usage needed
             cost = flatAmount;
@@ -832,7 +830,6 @@ async function getUserUsageData(
               } else {
                 ({ from, to } = moesifService.getPeriodRange(period));
               }
-              logger.info("[getUserUsageData] Moesif date range", { orgId, period, from, to });
               const usage = await moesifService.getUsageStats({
                 req,
                 subscriptionId: apimSubId,
@@ -842,10 +839,26 @@ async function getUserUsageData(
               requests =
                 Number(usage?.total_requests ?? usage?.usage ?? 0) || 0;
               avgRt = Number(usage?.avg_response_time ?? 0) || 0;
-              cost = Number(usage?.estimated_cost ?? 0) || 0;
               currency = usage?.currency || "USD";
 
-              logger.info("[getUserUsageData] Moesif usage result", { subId, requests });
+              if (sub.BILLING_SUBSCRIPTION_ID && sub.PAYMENT_PROVIDER === PAYMENT_PROVIDER.STRIPE) {
+                try {
+                  const { secretKey: stripeSecretKey } = await getDecryptedStripeKeysForOrg(orgId);
+                  const upcomingInvoice = await stripeService.getUpcomingInvoice(
+                    sub.BILLING_SUBSCRIPTION_ID,
+                    stripeSecretKey,
+                    sub.BILLING_CUSTOMER_ID,
+                  );
+                  if (upcomingInvoice) {
+                    const amountCents = upcomingInvoice.amount_due ?? upcomingInvoice.total ?? 0;
+                    cost = amountCents / 100; // Stripe amounts are in cents
+                    currency = (upcomingInvoice.currency || currency).toUpperCase();
+                  }
+                } catch (stripeErr) {
+                  logger.warn("Failed to get Stripe upcoming invoice", { subId, err: stripeErr.message });
+                }
+              }
+
             }
           }
 
@@ -1079,9 +1092,10 @@ async function getSubscriptionsForBilling(orgId, userId) {
                 const upcomingInvoice = await stripeService.getUpcomingInvoice(
                   sub.BILLING_SUBSCRIPTION_ID,
                   stripeSecretKey,
+                  sub.BILLING_CUSTOMER_ID,
                 );
                 if (upcomingInvoice) {
-                  amount = upcomingInvoice.amount_due || upcomingInvoice.total || 0;
+                  amount = upcomingInvoice.amount_due ?? upcomingInvoice.total ?? 0;
                   currency = upcomingInvoice.currency || stripeSub.currency || "usd";
                 } else {
                   // Fallback to unit_amount if no upcoming invoice
