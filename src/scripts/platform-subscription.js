@@ -84,27 +84,21 @@ async function handlePlanSubscription(btnElement) {
 
     const currentSub = existingSubs[0];
     const currentPlan = currentSub.subscriptionPlanName || 'current plan';
-    if (!confirm(`You are currently subscribed to the "${currentPlan}" plan. Switching to "${displayName}" will delete your existing subscription and generate a new token. Do you want to proceed?`)) {
+
+    if (typeof openWarningModal !== 'function') {
+        await showAlert('Confirmation dialog is not available. Please refresh the page.', 'error');
         return;
     }
-
-    showSubscribeButtonLoading(btnElement);
-    try {
-        const deleteResponse = await fetch(`/devportal/organizations/${encodeURIComponent(orgID)}/api-platform-subscriptions/${encodeURIComponent(currentSub.subscriptionId)}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-        });
-
-        if (!deleteResponse.ok) {
-            const errorData = await deleteResponse.json().catch(() => ({}));
-            await showAlert(`Failed to remove existing subscription: ${errorData.description || 'Unknown error'}`, 'error');
-            return;
-        }
-
-        await subscribePlatformGateway(orgID, apiId, planName);
-    } catch (error) {
-        await showAlert(`Error during plan change: ${error.message}`, 'error');
-    }
+    window.__pendingPlanSwitchBtn = btnElement;
+    openWarningModal(
+        'SwitchPlatformSubscriptionPlan',
+        orgID,
+        apiId,
+        planName,
+        displayName,
+        currentSub.subscriptionId,
+        currentPlan
+    );
 }
 
 async function togglePlatformSubscriptionStatus(orgID, subscriptionId, newStatus) {
@@ -128,10 +122,15 @@ async function togglePlatformSubscriptionStatus(orgID, subscriptionId, newStatus
     }
 }
 
-async function confirmDeletePlatformSubscription(orgID, subscriptionId) {
-    if (!confirm('Are you sure you want to delete this subscription? The subscription token will be immediately invalidated and any API calls using it will fail.')) {
+function confirmDeletePlatformSubscription(orgID, subscriptionId) {
+    if (typeof openWarningModal !== 'function') {
+        showAlert('Confirmation dialog is not available. Please refresh the page.', 'error');
         return;
     }
+    openWarningModal('DeletePlatformSubscription', orgID, subscriptionId, '', '', '', '');
+}
+
+async function executeDeletePlatformSubscription(orgID, subscriptionId) {
     try {
         const response = await fetch(`/devportal/organizations/${encodeURIComponent(orgID)}/api-platform-subscriptions/${encodeURIComponent(subscriptionId)}`, {
             method: 'DELETE',
@@ -143,11 +142,37 @@ async function confirmDeletePlatformSubscription(orgID, subscriptionId) {
             await showAlert('Subscription deleted successfully!', 'success');
             refreshPlatformModalOrReload(orgID);
         } else {
-            const responseData = await response.json();
+            const responseData = await response.json().catch(() => ({}));
             await showAlert(`Failed to delete subscription: ${responseData.description || 'Unknown error'}`, 'error');
         }
     } catch (error) {
         await showAlert(`Error: ${error.message}`, 'error');
+    }
+}
+
+async function runPendingPlatformPlanSwitch(orgID, apiId, planName, displayName, subscriptionId) {
+    const btnElement = window.__pendingPlanSwitchBtn;
+    window.__pendingPlanSwitchBtn = null;
+
+    if (btnElement && typeof showSubscribeButtonLoading === 'function') {
+        showSubscribeButtonLoading(btnElement);
+    }
+
+    try {
+        const deleteResponse = await fetch(`/devportal/organizations/${encodeURIComponent(orgID)}/api-platform-subscriptions/${encodeURIComponent(subscriptionId)}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!deleteResponse.ok) {
+            const errorData = await deleteResponse.json().catch(() => ({}));
+            await showAlert(`Failed to remove existing subscription: ${errorData.description || 'Unknown error'}`, 'error');
+            return;
+        }
+
+        await subscribePlatformGateway(orgID, apiId, planName);
+    } catch (error) {
+        await showAlert(`Error during plan change: ${error.message}`, 'error');
     }
 }
 

@@ -29,6 +29,15 @@ function prepareDeleteSubscription(orgID, subID, type, appID, apiRefID) {
     pendingDeleteAppID = appID || null;
     pendingDeleteApiRefID = apiRefID || null;
 
+    if (typeof openWarningModal === 'function') {
+        if (type === 'TOKEN_BASED') {
+            openWarningModal('DeleteTokenBasedSubscription', '', '', '', '', '', '');
+        } else {
+            openWarningModal('DeleteAppBasedSubscription', '', '', '', '', '', '');
+        }
+        return;
+    }
+
     const message = type === 'TOKEN_BASED'
         ? 'Are you sure you want to delete this subscription? The subscription token will be immediately invalidated.'
         : 'Are you sure you want to unsubscribe from this API?';
