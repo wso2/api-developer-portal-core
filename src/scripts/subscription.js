@@ -131,8 +131,22 @@ function hideElementById(elementId) {
 function closeModal(elementId) {
     hideElementById(elementId);
 
-    // Scope form reset to within the modal, not document-wide
+    // Reset any subscribe buttons left in loading state
     var modalEl = elementId ? document.getElementById(elementId) : null;
+    if (modalEl) {
+        modalEl.querySelectorAll('.subscription-plan-subscribe-btn, .subscribe-btn').forEach(function(btn) {
+            if (btn.dataset.originalText) {
+                btn.innerHTML = btn.dataset.originalText;
+                btn.disabled = false;
+                delete btn.dataset.originalText;
+            } else if ((btn.textContent || '').trim() === 'Subscribing...') {
+                btn.textContent = 'Subscribe';
+                btn.disabled = false;
+            }
+        });
+    }
+
+    // Scope form reset to within the modal, not document-wide
     var form = modalEl ? modalEl.querySelector('form') : null;
     if (form) form.reset();
 
@@ -272,6 +286,7 @@ async function handleSubscribe(appId, apiName, apiVersion, apiRefId) {
 function loadModal(modalID) {
     const modal = document.getElementById(modalID);
     modal.style.display = 'flex';
+
     if (typeof prepareSubscriptionModal === 'function') {
         try { prepareSubscriptionModal(modalID); } catch (e) { /* noop */ }
     }
@@ -296,9 +311,10 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
   const messageOverlay = card ? card.querySelector(".message-overlay") : null;
 
   try {
-    // applicationID from hidden if not provided
     if (!applicationID) {
-      const policyField = document.getElementById('selectedAppId-' + policyId);
+      const policyField = card
+        ? card.querySelector('input[type="hidden"][id^="selectedAppId-"]')
+        : document.getElementById('selectedAppId-' + policyId);
       if (policyField?.value) {
         applicationID = policyField.value;
       } else if (card) {
@@ -836,9 +852,14 @@ function handlePlanSubscription(buttonElement) {
   const modal = buttonElement.closest('.subscription-plan-modal');
   const apiReferenceID = (modal && modal.dataset.apiRefid) || apiID;
 
-  // Get application ID from modal's hidden field (only present for app-based flow)
+  const card = buttonElement.closest('.subscription-card');
+  const perPlanField = card
+    ? card.querySelector(`input[type="hidden"][id^="selectedAppId-"]`)
+    : document.getElementById(`selectedAppId-${policyID}`);
   const modalAppField = document.getElementById(`modal-selected-app-${apiID}`);
-  const applicationID = modalAppField ? modalAppField.value : '';
+
+  const applicationID = (perPlanField && perPlanField.value) ? perPlanField.value
+    : (modalAppField ? modalAppField.value : '');
 
   if (!applicationID && !isPaid) {
     // Token-based and platform flows don't use an app selector;
@@ -852,8 +873,7 @@ function handlePlanSubscription(buttonElement) {
   }
 
   if (isPaid) {
-    // Paid plan - trigger Stripe checkout flow
-    subscribeAndCheckout(orgID, apiID, apiReferenceID, policyID, policyName);
+    subscribeAndCheckout(orgID, apiID, apiReferenceID, policyID, policyName, applicationID);
   } else {
     // Free plan - direct subscription
     subscribe(orgID, applicationID, apiID, apiReferenceID, policyID, policyName);
@@ -1037,26 +1057,30 @@ async function landingSubscribeAndCheckout(orgID, apiID, apiReferenceID, policyI
  *  Stripe Checkout Flow (for paid plans)
  * =========================
  */
-async function subscribeAndCheckout(orgID, apiID, apiReferenceID, policyID, policyName) {
+async function subscribeAndCheckout(orgID, apiID, apiReferenceID, policyID, policyName, applicationID = '') {
   const card = getSubscriptionCard(apiID, policyID);
   const subscribeButton = card ? card.querySelector(".common-btn-primary") : null;
   const messageOverlay = card ? card.querySelector(".message-overlay") : null;
 
   try {
-    // Get application ID from hidden field or modal
-    let applicationID = '';
-    
-    // Try modal's hidden field first (from listing page)
-    const modalAppField = document.getElementById(`modal-selected-app-${apiID}`);
-    if (modalAppField && modalAppField.value) {
-      applicationID = modalAppField.value;
+    if (!applicationID) {
+      const perPlanField = card
+        ? card.querySelector('input[type="hidden"][id^="selectedAppId-"]')
+        : document.getElementById(`selectedAppId-${policyID}`);
+      if (perPlanField?.value) applicationID = perPlanField.value;
     }
-    
+
+    if (!applicationID) {
+      const modalAppField = document.getElementById(`modal-selected-app-${apiID}`);
+      if (modalAppField?.value) applicationID = modalAppField.value;
+    }
+
     // Fall back to card hidden field (for landing page)
     if (!applicationID && card) {
       const hiddenField = card.querySelector('input[type="hidden"]');
       if (hiddenField?.value) applicationID = hiddenField.value;
     }
+
     if (!applicationID) {
       showAlert("Please select an application.", "error");
       return;
