@@ -37,6 +37,7 @@ const { ImportedApplicationDTO, ApplicationKey } = require('../dto/importedAppli
 const { CustomError } = require('../utils/errors/customErrors');
 const { APIMetadata, APILabels } = require('../models/apiMetadata');
 const sequelize = require('../db/sequelize');
+const monetizationService = require('../services/monetizationService');
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
 
@@ -87,6 +88,43 @@ const deleteApplication = async (req, res) => {
         const orgID = await adminDao.getOrgId(req.user[constants.ORG_IDENTIFIER]);
         const applicationId = req.params.applicationId;
         try {
+            // Cancel all Stripe subscriptions for this application before deleting
+            try {
+                const subscriptions = await adminDao.getSubscriptions(orgID, applicationId, '');
+                for (const subscription of subscriptions) {
+                    if (subscription.BILLING_SUBSCRIPTION_ID && subscription.PAYMENT_PROVIDER === 'STRIPE') {
+                         try {
+                            logger.info('Canceling Stripe subscription before deleting application', {
+                                appId: applicationId,
+                                subId: subscription.SUB_ID,
+                                billingSubscriptionId: subscription.BILLING_SUBSCRIPTION_ID
+                            });
+                            await monetizationService.cancelPaidSubscription({
+                                req,
+                                orgId: orgID,
+                                subId: subscription.SUB_ID,
+                                user: req.user || {}
+                            });
+                        } catch (stripeErr) {
+                            logger.error('Failed to cancel Stripe subscription — aborting application delete', {
+                                appId: applicationId,
+                                subId: subscription.SUB_ID,
+                                error: stripeErr.message,
+                                stack: stripeErr.stack
+                            });
+                            throw stripeErr;
+                        }
+                    }
+                }
+            } catch (stripeErr) {
+                logger.error('Failed to cancel Stripe subscriptions — aborting application delete', {
+                    appId: applicationId,
+                    error: stripeErr.message,
+                    stack: stripeErr.stack
+                });
+                throw stripeErr;
+            }
+
             //delete the CP application
             //TODO: handle non-shared scenarios
             const app = await adminDao.getApplicationKeyMapping(orgID, applicationId, true);
@@ -108,13 +146,13 @@ const deleteApplication = async (req, res) => {
                     throw new Sequelize.EmptyResultError("Resource not found to delete");
                 } else {
                     trackAppDeletion({ orgId: orgID, appId: applicationId, idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined }, req);
-                    res.status(200).send("Resouce Deleted Successfully");
+                    return res.status(200).send("Resouce Deleted Successfully");
                 }
             }
             logger.error('Error occurred while deleting the application', {
                 orgId: orgID,
-                appId: appID,
-                error: error.message,
+                appId: applicationId,
+                error: error.message, 
                 stack: error.stack
             });
             util.handleError(res, error);
@@ -162,11 +200,23 @@ const generateAPIKeys = async (req, res) => {
         const nonSharedKeyMapping = await adminDao.getApplicationAPIMapping(orgID, requestBody.devportalAppId, apiID, cpAppID, false);
         const sharedKeyMapping = await adminDao.getApplicationAPIMapping(orgID, requestBody.devportalAppId, apiID, cpAppID, true);
 
+        // Look up existing DP subscription billing data (set during Stripe checkout activation)
+        const dpSubscription = await adminDao.getAppApiSubscription(orgID, requestBody.devportalAppId, apiID);
+        const dpSub = dpSubscription?.length > 0 ? dpSubscription[0] : null;
+        const billingData =
+            dpSub &&
+            dpSub.PAYMENT_PROVIDER === 'STRIPE' &&
+            dpSub.PAYMENT_STATUS === 'ACTIVE' &&
+            dpSub.BILLING_CUSTOMER_ID &&
+            dpSub.BILLING_SUBSCRIPTION_ID
+                ? { customerId: dpSub.BILLING_CUSTOMER_ID, subscriptionId: dpSub.BILLING_SUBSCRIPTION_ID, email: req.user?.email }
+                : null;
+
         if (!(nonSharedKeyMapping.length > 0 || sharedKeyMapping.length > 0)) {
             const cpApp = await adminService.createCPApplication(req, requestBody.devportalAppId);
             cpAppID = cpApp.applicationId;
 
-            const apiSubscription = await adminService.createCPSubscription(req, apiID, cpAppID, requestBody.subscriptionPlan);
+            const apiSubscription = await adminService.createCPSubscription(req, apiID, cpAppID, requestBody.subscriptionPlan, billingData);
 
             const appKeyMappping = {
                 orgID: orgID,
@@ -182,7 +232,7 @@ const generateAPIKeys = async (req, res) => {
             });
 
         } else if (!(nonSharedKeyMapping[0]?.dataValues.SUBSCRIPTION_REF_ID || sharedKeyMapping[0]?.dataValues.SUBSCRIPTION_REF_ID)) {
-            const apiSubscription = await adminService.createCPSubscription(req, apiID, cpAppID, requestBody.subscriptionPlan);
+            const apiSubscription = await adminService.createCPSubscription(req, apiID, cpAppID, requestBody.subscriptionPlan, billingData);
             const appKeyMappping = {
                 orgID: orgID,
                 appID: requestBody.devportalAppId,

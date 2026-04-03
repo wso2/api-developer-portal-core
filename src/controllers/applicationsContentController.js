@@ -82,7 +82,13 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
     let applicationKeyList;
     if (applicationList.appMap) {
         applicationReference = applicationList.appMap[0].appRefID;
-        applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
+        try {
+            applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
+        } catch (keyError) {
+            logger.warn('Failed to fetch application keys from CP', {
+                appRefID: applicationReference, error: keyError.message
+            });
+        }
     }
 
     let otherAPICount = 0;

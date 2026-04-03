@@ -250,11 +250,75 @@ const handleSilentSSO = async (req, res, next) => {
     });
 };
 
+// ***** Render Billing Page *****
+const renderBillingPage = async (req, res) => {
+    try {
+        const orgName = req.params.orgName;
+        const viewName = req.params.viewName || 'default';
+        
+        let orgId;
+        try {
+            orgId = await adminDao.getOrgId(orgName);
+        } catch (err) {
+            logger.error('Organization not found', { orgName, error: err.message });
+            const errorContent = { message: 'Organization not found' };
+            const html = util.renderTemplate(
+                '../pages/error-page/page.hbs',
+                './src/defaultContent/layout/main.hbs',
+                errorContent,
+                true
+            );
+            return res.status(404).send(html);
+        }
+        
+        const templateContent = {
+            profile: {
+                name: req.user?.name || req.user?.email || 'User',
+                email: req.user?.email || req[constants.USER_ID],
+                firstName: req.user?.firstName || req.user?.name || 'User',
+                lastName: req.user?.lastName || '',
+                imageURL: req.user?.imageURL || '/images/default-avatar.png',
+                organization: orgName,
+                orgId: orgId
+            },
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+            devportalMode: config.devportalMode,
+            orgId: orgId,
+            orgIdentifier: orgName
+        };
+
+        const html = util.renderTemplate(
+            '../pages/billing/page.hbs',
+            './src/defaultContent/layout/main.hbs',
+            templateContent,
+            true
+        );
+        res.send(html);
+    } catch (error) {
+        logger.error('Error rendering billing page', { 
+            error: error.message,
+            stack: error.stack
+        });
+        const errorContent = {
+            message: 'Failed to load billing page',
+            error: config.devportalMode === 'developer' ? error : {}
+        };
+        const html = util.renderTemplate(
+            '../pages/error-page/page.hbs',
+            './src/defaultContent/layout/main.hbs',
+            errorContent,
+            true
+        );
+        res.status(500).send(html);
+    }
+};
+
 module.exports = {
     login,
     handleCallback,
     handleSignUp,
     handleLogOut,
     handleLogOutLanding,
-    handleSilentSSO
+    handleSilentSSO,
+    renderBillingPage
 };

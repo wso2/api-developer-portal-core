@@ -63,6 +63,24 @@ const createAPIMetadata = async (req, res) => {
         apiMetadata.endPoints.productionURL = changeEndpoint(apiMetadata.endPoints.productionURL);
         apiMetadata.endPoints.sandboxURL = changeEndpoint(apiMetadata.endPoints.sandboxURL);
         normalizeGraphQLEndpoints(apiMetadata);
+        if (typeof apiMetadata.monetizationInfo === 'string') {
+            try { apiMetadata.monetizationInfo = JSON.parse(apiMetadata.monetizationInfo); } catch (e) {
+                throw new Sequelize.ValidationError(`Invalid monetizationInfo JSON: ${e.message}`);
+            }
+        }
+        let meterItems = apiMetadata?.monetizationInfo?.properties?.billingMeterData;
+        if (typeof meterItems === 'string') {
+            try { meterItems = JSON.parse(meterItems); } catch (e) {
+                throw new Sequelize.ValidationError(`Invalid billingMeterData JSON: ${e.message}`);
+            }
+        }
+        const meterByPolicyName = new Map(
+        Array.isArray(meterItems)
+            ? meterItems
+                .filter(x => x?.policyName && x?.billingMeterId)
+                .map(x => [String(x.policyName), String(x.billingMeterId)])
+            : []
+        );
         await sequelize.transaction({
             timeout: 60000,
         }, async (t) => {
@@ -82,7 +100,8 @@ const createAPIMetadata = async (req, res) => {
                         if (!subscriptionPolicy) {
                             throw new Sequelize.EmptyResultError("Subscription policy not found");
                         } else {
-                            subscriptionPolicies.push({ apiID: apiID, policyID: subscriptionPolicy.POLICY_ID });
+                            const meterId = meterByPolicyName.get(String(subscriptionPolicy.POLICY_NAME));
+                            subscriptionPolicies.push({ apiID: apiID, policyID: subscriptionPolicy.POLICY_ID, meterId: meterId });
                         }
                     };
                 }
@@ -333,6 +352,24 @@ const updateAPIMetadata = async (req, res) => {
         apiMetadata.endPoints.productionURL = changeEndpoint(apiMetadata.endPoints.productionURL);
         apiMetadata.endPoints.sandboxURL = changeEndpoint(apiMetadata.endPoints.sandboxURL);
         normalizeGraphQLEndpoints(apiMetadata);
+        if (typeof apiMetadata.monetizationInfo === 'string') {
+            try { apiMetadata.monetizationInfo = JSON.parse(apiMetadata.monetizationInfo); } catch (e) {
+                throw new Sequelize.ValidationError(`Invalid monetizationInfo JSON: ${e.message}`);
+            }
+        }
+        let meterItems = apiMetadata?.monetizationInfo?.properties?.billingMeterData;
+        if (typeof meterItems === 'string') {
+            try { meterItems = JSON.parse(meterItems); } catch (e) {
+                throw new Sequelize.ValidationError(`Invalid billingMeterData JSON: ${e.message}`);
+            }
+        }
+        const meterByPolicyName = new Map(
+        Array.isArray(meterItems)
+            ? meterItems
+                .filter(x => x?.policyName && x?.billingMeterId)
+                .map(x => [String(x.policyName), String(x.billingMeterId)])
+            : []
+        );
 
         let allowStatusChange = await allowAPIStatusChange(apiMetadata.apiInfo.apiStatus, orgId, apiId);
         if (!allowStatusChange) {
@@ -386,7 +423,8 @@ const updateAPIMetadata = async (req, res) => {
                         if (!subscriptionPolicy) {
                             throw new Sequelize.EmptyResultError("Subscription policy not found");
                         } else {
-                            subscriptionPolicies.push({ apiID: apiId, policyID: subscriptionPolicy.POLICY_ID });
+                            const meterId = meterByPolicyName.get(String(subscriptionPolicy.POLICY_NAME));
+                            subscriptionPolicies.push({ apiID: apiId, policyID: subscriptionPolicy.POLICY_ID, meterId: meterId });
                         }
                     };
                 }
@@ -837,7 +875,8 @@ const createSubscriptionPolicy = async (req, res) => {
         return res.status(400).json({ message: "Request body is missing or invalid" });
     }
 
-    if (subscriptionPolicy.type !== "requestCount") {
+    const validTypes = ["requestcount", "eventcount"];
+    if (!subscriptionPolicy.type || typeof subscriptionPolicy.type !== 'string' || !validTypes.includes(subscriptionPolicy.type.toLowerCase())) {
         return res.status(400).json({ message: "Invalid or missing subscription policy type" });
     }
 
@@ -892,6 +931,9 @@ const createSubscriptionPolicies = async (req, res) => {
             }, async (t) => {
                 // TODO: Try using SubscriptionPolicy.bulkCreate() once Table is finalised and manipulating each data is not needed
                 for (const policy of subscriptionPolicies) {
+                    if (typeof policy.type !== 'string') {
+                        throw new CustomError(400, constants.ERROR_CODE[400], 'subscriptionPolicy.type must be a string');
+                    }
                     if (policy.type.toLowerCase() == "requestcount" || policy.type.toLowerCase() == "eventcount") {
                         const created = await apiDao.createSubscriptionPolicy(orgId, policy, t);
                         if (!created) {
@@ -935,7 +977,8 @@ const updateSubscriptionPolicy = async (req, res) => {
         return res.status(400).json({ message: "Request body is missing or invalid" });
     }
 
-    if (subscriptionPolicy.type !== "requestCount") {
+    const validTypes = ["requestcount", "eventcount"];
+    if (!subscriptionPolicy.type || typeof subscriptionPolicy.type !== 'string' || !validTypes.includes(subscriptionPolicy.type.toLowerCase())) {
         return res.status(400).json({ message: "Invalid or missing subscription policy type" });
     }
     
@@ -945,6 +988,18 @@ const updateSubscriptionPolicy = async (req, res) => {
         }, async (t) => {
             const { subscriptionPolicyResponse, statusCode } =  await apiDao.putSubscriptionPolicy(orgId, subscriptionPolicy, t);
             if (subscriptionPolicyResponse) {
+                // Process billingMeterData if provided (APIM sends meter-to-API mappings)
+                const policyID = subscriptionPolicyResponse.POLICY_ID;
+                if (policyID && Array.isArray(subscriptionPolicy.billingMeterData)) {
+                    for (const meterEntry of subscriptionPolicy.billingMeterData) {
+                        if (meterEntry?.apiId && meterEntry?.meterId) {
+                            const dpApiId = await apiDao.getApiIdByReferenceId(orgId, meterEntry.apiId, t);
+                            if (dpApiId) {
+                                await apiDao.upsertAPISubscriptionPolicyMeter(dpApiId, policyID, meterEntry.meterId, t);
+                            }
+                        }
+                    }
+                }
                 res.status(statusCode).send(new subscriptionPolicyDTO(subscriptionPolicyResponse));
             } else {
                 throw new CustomError(404, constants.ERROR_CODE[404], constants.ERROR_MESSAGE.SUBSCRIPTION_POLICY_NOT_FOUND);
@@ -986,6 +1041,9 @@ const updateSubscriptionPolicies = async (req, res) => {
                 timeout: 60000,
             }, async (t) => {
                 for (const policy of subscriptionPolicies) {
+                    if (typeof policy.type !== 'string') {
+                        throw new CustomError(400, constants.ERROR_CODE[400], 'subscriptionPolicy.type must be a string');
+                    }
                     if (policy.type.toLowerCase() == "requestcount" || policy.type.toLowerCase() == "eventcount") {
                         const created = await apiDao.putSubscriptionPolicy(orgId, policy, t);
                         if (!created) {

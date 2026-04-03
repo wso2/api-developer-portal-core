@@ -336,7 +336,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         }
                         
                         // Check if this app is already subscribed (disabled)
-                        const subscribeButton = card.querySelector(".common-btn-primary[disabled]");
+                        const subscribeButton = card.querySelector(".subscribe-btn");
                         if (appItem.classList.contains("disabled")) {
                             // Keep the button disabled if the app is already subscribed
                             if (subscribeButton && !subscribeButton.disabled) {
@@ -373,7 +373,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                     
                     // Enable the Subscribe button
-                    const subscribeButton = card.querySelector(".common-btn-primary[disabled]");
+                    const subscribeButton = card.querySelector(".subscribe-btn");
                     if (subscribeButton) {
                         subscribeButton.removeAttribute("disabled");
                     }

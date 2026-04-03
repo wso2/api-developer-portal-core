@@ -22,6 +22,10 @@ const apiMetadataService = require('../services/apiMetadataService');
 const adminService = require('../services/adminService');
 const devportalController = require('../controllers/devportalController');
 const sdkJobService = require('../services/sdkJobService');
+const billingController = require("../controllers/billingController");
+const usageController = require("../controllers/usageController");
+const invoiceController = require("../controllers/invoiceController");
+const { ensureBillingAuth, verifyRequestOrigin } = require("../middlewares/billingAuth");
 const multer = require('multer');
 const storage = multer.memoryStorage()
 const multipartHandler = multer({storage: storage})
@@ -179,6 +183,34 @@ router.post('/applications/:applicationId/generate-sdk', enforceSecuirty(constan
 router.get('/applications/:applicationId/sdk/job-progress/:jobId', enforceSecuirty(constants.SCOPES.DEVELOPER),sdkJobService.streamSDKProgress);
 router.post('/applications/:applicationId/sdk/cancel/:jobId', enforceSecuirty(constants.SCOPES.DEVELOPER), sdkJobService.cancelSDK);
 router.get('/sdk/download/:filename', enforceSecuirty(constants.SCOPES.DEVELOPER),sdkJobService.downloadSDK);
+
+// Billing / Stripe
+router.get("/organizations/:orgId/billing/usage-data", ensureBillingAuth, billingController.getUsageData);
+router.get("/organizations/:orgId/billing/payment-methods", ensureBillingAuth, billingController.getPaymentMethods);
+
+// Billing Engine Keys CRUD
+router.post("/organizations/:orgId/billing-engine-keys", verifyRequestOrigin, enforceSecuirty(constants.SCOPES.ADMIN), billingController.addBillingEngineKeys);
+router.put("/organizations/:orgId/billing-engine-keys", verifyRequestOrigin, enforceSecuirty(constants.SCOPES.ADMIN), billingController.updateBillingEngineKeys);
+router.delete("/organizations/:orgId/billing-engine-keys", verifyRequestOrigin, enforceSecuirty(constants.SCOPES.ADMIN), billingController.deleteBillingEngineKeys);
+router.get("/organizations/:orgId/billing-engine-keys", enforceSecuirty(constants.SCOPES.ADMIN), billingController.getBillingEngineKeys);
+router.get("/organizations/:orgId/billing/info", ensureBillingAuth, billingController.getBillingInfo);
+router.get("/organizations/:orgId/billing/subscriptions", ensureBillingAuth, billingController.getActiveSubscriptions);
+router.post("/organizations/:orgId/monetization/checkout", verifyRequestOrigin, ensureBillingAuth, billingController.createCheckoutSessionForSubscription);
+router.post("/organizations/:orgId/monetization/stripe/register/:checkoutSessionId", verifyRequestOrigin, ensureBillingAuth, billingController.registerStripeCheckoutSession);
+router.post("/organizations/:orgId/subscriptions/:subId/cancel", verifyRequestOrigin, ensureBillingAuth, billingController.cancelSubscription);
+router.get("/organizations/:orgId/subscriptions/:subId/billing-status", ensureBillingAuth, billingController.getSubscriptionBillingStatus);
+router.post("/organizations/:orgId/billing-portal", verifyRequestOrigin, ensureBillingAuth, billingController.createBillingPortalByOrg);
+router.post("/organizations/:orgId/subscriptions/:subId/billing-portal", verifyRequestOrigin, ensureBillingAuth, billingController.createBillingPortal);
+
+// Usage
+router.get("/organizations/:orgId/subscriptions/:subId/usage", ensureBillingAuth, usageController.getSubscriptionUsage);
+
+// Invoices
+router.get("/organizations/:orgId/invoices", ensureBillingAuth, invoiceController.listInvoices);
+router.get("/organizations/:orgId/invoices/:invoiceId", ensureBillingAuth, invoiceController.getInvoice);
+router.get("/organizations/:orgId/subscriptions/:subId/invoices", ensureBillingAuth, invoiceController.listInvoicesBySubscription);
+router.get("/organizations/:orgId/invoices/:invoiceId/pdf", ensureBillingAuth, invoiceController.getInvoicePdfLink);
+router.get("/organizations/:orgId/invoices/:invoiceId/hosted", ensureBillingAuth, invoiceController.redirectHostedInvoice);
 
 router.post('/login', devportalController.login);
 

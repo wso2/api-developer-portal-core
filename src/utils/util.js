@@ -798,6 +798,23 @@ async function appendSubscriptionPlanDetails(orgID, subscriptionPolicies) {
     if (subscriptionPolicies) {
         for (const policy of subscriptionPolicies) {
             const subscriptionPlan = await loadSubscriptionPlan(orgID, policy.policyName);
+            if (!subscriptionPlan) {
+                logger.warn('[appendSubscriptionPlanDetails] Plan not found, skipping', {
+                    orgID,
+                    policyName: policy.policyName
+                });
+                continue;
+            }
+            const billingPlanRaw = subscriptionPlan.billingPlan;
+            const billingPlan = (typeof billingPlanRaw === 'string') ? billingPlanRaw.trim().toUpperCase() : '';
+            const isPaid = billingPlan === 'COMMERCIAL';
+            logger.debug('[appendSubscriptionPlanDetails] Plan:', {
+                policyID: subscriptionPlan.policyID,
+                policyName: subscriptionPlan.policyName,
+                billingPlanRaw,
+                billingPlan,
+                isPaid
+            });
             subscriptionPlans.push({
                 policyID: subscriptionPlan.policyID,
                 displayName: subscriptionPlan.displayName,
@@ -805,6 +822,13 @@ async function appendSubscriptionPlanDetails(orgID, subscriptionPolicies) {
                 description: subscriptionPlan.description,
                 billingPlan: subscriptionPlan.billingPlan,
                 requestCount: subscriptionPlan.requestCount,
+                pricingModel: subscriptionPlan.pricingModel,
+                currency: subscriptionPlan.currency,
+                billingPeriod: subscriptionPlan.billingPeriod,
+                flatAmount: subscriptionPlan.flatAmount,
+                unitAmount: subscriptionPlan.unitAmount,
+                pricingMetadata: subscriptionPlan.pricingMetadata,
+                isPaid: isPaid
             });
         }
     }
@@ -827,7 +851,7 @@ const loadSubscriptionPlan = async (orgID, policyName) => {
             error: error.message,
             stack: error.stack
         });
-        util.handleError(res, error);
+        return null;
     }
 }
 

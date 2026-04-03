@@ -16,4 +16,12 @@
  * under the License.
  */
  -->
-{{> subscription-modal modalTitle="Choose Your Subscription Plan" }}
+<link rel="stylesheet" href="/styles/billing.css">
+<script src="/technical-scripts/billing.js" defer></script>
+
+<div data-org-id="{{orgId}}">
+    {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode }}
+    {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode }}
+    {{> billing-content }}
+    {{> alert }}
+</div>

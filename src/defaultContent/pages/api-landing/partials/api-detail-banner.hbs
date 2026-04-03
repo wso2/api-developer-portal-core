@@ -8,11 +8,14 @@
           <p class="api-version"> {{apiMetadata.apiInfo.apiVersion}}</p>
         </div>
         <p class="api-description">{{apiMetadata.apiInfo.apiDescription}}</p>
+        <hr style="opacity: 0.3; margin: 8px 0; border: none; height: 1px; background-color: #ccc;">
         <div class="api-tags">
           {{#apiMetadata.apiInfo.tags}}
           <span class="badge api-badge-custom2">{{this}}</span>
           {{/apiMetadata.apiInfo.tags}}
         </div>
+
+
         <div class="api-details-btn">
           {{#if apiMetadata.apiInfo.tokenBasedSubscriptionEnabled}}
             {{#unless platformSubscriptions.length}}
