@@ -26,27 +26,6 @@ const moesif = require('moesif-nodejs');
 const config = require(process.cwd() + '/config.json');
 
 /**
- * The origin identifier for events tracked from this application.
- * Used to identify the source of analytics events in Moesif dashboard.
- * @constant {string}
- */
-const EVENT_ORIGIN = 'bijira';
-
-/**
- * The context identifier indicating this is from the developer portal.
- * Helps categorize events by application component in analytics.
- * @constant {string}
- */
-const EVENT_CONTEXT = 'devportal';
-
-/**
- * Email suffix used to identify WSO2 internal users.
- * Used to flag internal vs external user activity in analytics.
- * @constant {string}
- */
-const WSO2_EMAIL_SUFFIX = '@wso2.com';
-
-/**
  * Default URI used when request object is not available.
  * Fallback value for event tracking when no request context exists.
  * @constant {string}
@@ -60,6 +39,7 @@ const DEFAULT_URI = 'https://devportal.bijira.dev';
  */
 const middleware = config.moesifAppId ? moesif({
     applicationId: config.moesifAppId,
+    debug: false,
 }) : null;
 
 /**
@@ -79,15 +59,11 @@ function trackEvent(name, properties, req) {
     if (!middleware) {
         return;
     }
-    const email = req?.session?.passport?.user?.email || '';
     middleware.sendAction({
         actionName: name,
         userId: '',
         companyId: '',
         metadata: {
-            origin: EVENT_ORIGIN,
-            context: EVENT_CONTEXT,
-            isWSO2User: !!email.endsWith(WSO2_EMAIL_SUFFIX),
             ...properties,
         },
         request: {
