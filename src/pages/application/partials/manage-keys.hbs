@@ -44,6 +44,7 @@
                             <div class="accordion-body">
                                 {{#if keyManagersMetadata}}
                                 {{#each keyManagersMetadata}}
+                                {{#if (eq devPortalAppEnv 'PROD')}}
                                 {{#in name values="_internal_key_manager_,Resident Key Manager,_appdev_sts_key_manager_"}}
                                 {{#if enabled}}
                                 {{#let "keys" productionKeys}}
@@ -259,6 +260,7 @@
                                 <!-- Error message container for key generation and token generation -->
                                 <div id="keyGenerationErrorContainer-PRODUCTION" class="mt-2 text-danger"
                                     style="display: none; font-size: 0.75rem; word-wrap: break-word;"></div>
+                                {{/if}}
                                 {{/each}}
                                 {{else}}
                                 <div style="margin-left: 1rem;">
@@ -609,6 +611,7 @@
                                 <div class="accordion-body">
                                     {{#if keyManagersMetadata}}
                                     {{#each keyManagersMetadata}}
+                                    {{#if (eq devPortalAppEnv 'SANDBOX')}}
                                     {{#in name values="_internal_key_manager_,Resident Key Manager,_appdev_sts_key_manager_"}}
                                     {{#if enabled}}
                                     {{#let "keys" sandboxKeys}}
@@ -826,6 +829,7 @@
                                     <!-- Error message container for key generation and token generation -->
                                     <div id="keyGenerationErrorContainer-SANDBOX" class="mt-2 text-danger"
                                         style="display: none; font-size: 0.75rem; word-wrap: break-word;"></div>
+                                    {{/if}}
                                     {{/each}}
                                     {{else}}
                                     <div style="margin-left: 1rem;">
