@@ -1,4 +1,4 @@
-function openWarningModal(param1, param2, param3, param4, param5, param6) {
+function openWarningModal(param1, param2, param3, param4, param5, param6, param7) {
     const modal = document.getElementById('warningModal');
     if (!modal) {
         console.error('openWarningModal: Warning modal not found');
@@ -17,6 +17,7 @@ function openWarningModal(param1, param2, param3, param4, param5, param6) {
     const sanitizedParam4 = sanitizeParam(param4);
     const sanitizedParam5 = sanitizeParam(param5);
     const sanitizedParam6 = sanitizeParam(param6);
+    const sanitizedParam7 = sanitizeParam(param7);
 
 
     modal.dataset.param1 = sanitizedParam1;
@@ -25,6 +26,7 @@ function openWarningModal(param1, param2, param3, param4, param5, param6) {
     modal.dataset.param4 = sanitizedParam4;
     modal.dataset.param5 = sanitizedParam5;
     modal.dataset.param6 = sanitizedParam6;
+    modal.dataset.param7 = sanitizedParam7;
 
     try {
         const bootstrapModal = new bootstrap.Modal(modal);
@@ -69,6 +71,56 @@ function openWarningModal(param1, param2, param3, param4, param5, param6) {
         modalFunction.onclick = function() {
             if (typeof removeSubscription === 'function') {
                 removeSubscription(sanitizedParam2, sanitizedParam3, sanitizedParam4, sanitizedParam5);
+            }
+        };
+    } else if (param1 === 'DeletePlatformSubscription') {
+        modalTitle.innerText = 'Delete subscription?';
+        modalMessage.innerText =
+            'The subscription token will be immediately invalidated and any API calls using it will fail.';
+        modalFunction.innerText = 'Delete';
+        modalFunction.onclick = function() {
+            if (typeof executeDeletePlatformSubscription === 'function') {
+                executeDeletePlatformSubscription(sanitizedParam2, sanitizedParam3);
+            }
+        };
+    } else if (param1 === 'DeleteTokenBasedSubscription') {
+        modalTitle.innerText = 'Delete subscription?';
+        modalMessage.innerText =
+            'The subscription token will be immediately invalidated and any API calls using it will fail.';
+        modalFunction.innerText = 'Delete';
+        modalFunction.onclick = function() {
+            if (typeof executeDeleteSubscription === 'function') {
+                executeDeleteSubscription();
+            }
+        };
+    } else if (param1 === 'DeleteAppBasedSubscription') {
+        modalTitle.innerText = 'Unsubscribe from this API?';
+        modalMessage.innerText =
+            'This will remove the subscription entry stored in the devportal. Are you sure you want to unsubscribe from this API?';
+        modalFunction.innerText = 'Confirm';
+        modalFunction.onclick = function() {
+            if (typeof executeDeleteSubscription === 'function') {
+                executeDeleteSubscription();
+            }
+        };
+    } else if (param1 === 'SwitchPlatformSubscriptionPlan') {
+        modalTitle.innerText = 'Switch subscription plan?';
+        modalMessage.innerText =
+            'You are currently subscribed to the "' +
+            sanitizedParam7 +
+            '" plan. Switching to "' +
+            sanitizedParam5 +
+            '" will delete your existing subscription and generate a new token. Do you want to proceed?';
+        modalFunction.innerText = 'Confirm';
+        modalFunction.onclick = function() {
+            if (typeof runPendingPlatformPlanSwitch === 'function') {
+                runPendingPlatformPlanSwitch(
+                    sanitizedParam2,
+                    sanitizedParam3,
+                    sanitizedParam4,
+                    sanitizedParam5,
+                    sanitizedParam6
+                );
             }
         };
     }
