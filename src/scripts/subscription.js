@@ -553,7 +553,14 @@ function closeStripeCheckoutModal() {
   if (mountPoint) {
     mountPoint.innerHTML = "";
   }
-  
+
+  document.querySelectorAll('.subscription-plan-subscribe-btn, .subscribe-btn, [id^="landing-subscribe-btn-"], [id^="subscribe-btn-"]').forEach(function(btn) {
+    if (btn.dataset.originalText) {
+      btn.innerHTML = btn.dataset.originalText;
+      btn.disabled = false;
+      delete btn.dataset.originalText;
+    }
+  });
 }
 
 /**
@@ -806,6 +813,14 @@ function markSubscribedUI(card, applicationID, apiId) {
   const subscriptionFlag = card.querySelector(".subscription-flag");
   if (subscriptionFlag) subscriptionFlag.style.display = "block";
 
+  if (apiId) {
+    const apiCard = document.getElementById('apiCard-' + apiId);
+    if (apiCard) {
+      const listingFlag = apiCard.querySelector('.subscription-flag');
+      if (listingFlag) listingFlag.style.display = 'block';
+    }
+  }
+
   // Scope dropdown marking to both modal and card containers (like upstream)
   var apiContainer = apiId
     ? (document.getElementById('planModal-' + apiId) || document.getElementById('apiCard-' + apiId))
@@ -933,7 +948,11 @@ function landingSubscribe(orgID, apiID, apiReferenceID, policyID, policyName) {
  *  - Similar to handlePlanSubscription but uses landing-prefixed IDs
  * =========================
  */
-function handleLandingPlanSubscription(orgID, apiID, apiReferenceID, policyID, policyName, buttonElement) {  
+function handleLandingPlanSubscription(orgID, apiID, apiReferenceID, policyID, policyName, buttonElement) {
+  if (buttonElement && buttonElement.dataset.originalText) return;
+
+  showSubscribeButtonLoading(buttonElement);
+
   const isPaid = buttonElement.dataset.isPaid === 'true';  
   // Get application ID from landing page hidden field
   const hiddenField = document.getElementById(`landing-selectedAppId-${policyID}`);
@@ -941,11 +960,12 @@ function handleLandingPlanSubscription(orgID, apiID, apiReferenceID, policyID, p
 
   if (!applicationID) {
     showAlert('Please select an application first.', 'error');
+    resetSubscribeButtonState(buttonElement);
     return;
   }
 
   if (isPaid) {
-    landingSubscribeAndCheckout(orgID, apiID, apiReferenceID, policyID, policyName);
+    landingSubscribeAndCheckout(orgID, apiID, apiReferenceID, policyID, policyName, buttonElement);
   } else {
     subscribe(orgID, applicationID, apiID, apiReferenceID, policyID, policyName);
   }
@@ -957,10 +977,10 @@ function handleLandingPlanSubscription(orgID, apiID, apiReferenceID, policyID, p
  *  - Uses landing-prefixed element IDs
  * =========================
  */
-async function landingSubscribeAndCheckout(orgID, apiID, apiReferenceID, policyID, policyName) {
+async function landingSubscribeAndCheckout(orgID, apiID, apiReferenceID, policyID, policyName, buttonElement) {
 
   const card = document.getElementById(`subscriptionCard-${policyID}`);
-  const subscribeButton = card ? card.querySelector(".common-btn-primary") : null;
+  const subscribeButton = buttonElement || (card ? card.querySelector(".common-btn-primary") : null);
   const messageOverlay = card ? card.querySelector(".message-overlay") : null;
 
   try {
@@ -969,10 +989,7 @@ async function landingSubscribeAndCheckout(orgID, apiID, apiReferenceID, policyI
     const applicationID = hiddenField?.value || '';
     if (!applicationID) {
       showAlert("Please select an application.", "error");
-      if (subscribeButton) {
-        subscribeButton.innerHTML = 'Subscribe';
-        subscribeButton.disabled = false;
-      }
+      resetSubscribeButtonState(subscribeButton);
       return;
     }
 
@@ -981,17 +998,13 @@ async function landingSubscribeAndCheckout(orgID, apiID, apiReferenceID, policyI
     
     if (!priceId) {
       showAlert("Paid plan misconfigured (missing priceId).", "error");
-      if (subscribeButton) {
-        subscribeButton.innerHTML = 'Subscribe';
-        subscribeButton.disabled = false;
-      }
+      resetSubscribeButtonState(subscribeButton);
       return;
     }
 
-    // Show loading state
-    if (subscribeButton) {
-      subscribeButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
-      subscribeButton.disabled = true;
+    // Show loading state (only if not already set by caller)
+    if (subscribeButton && !subscribeButton.dataset.originalText) {
+      showSubscribeButtonLoading(subscribeButton);
     }
 
     // Get policy name from button data attribute
@@ -1017,7 +1030,7 @@ async function landingSubscribeAndCheckout(orgID, apiID, apiReferenceID, policyI
       const errMsg = result.message || result.error || "Failed to start checkout. Please try again.";
       if (response.status === 409) {
         showAlert(errMsg, "info");
-        if (subscribeButton) { subscribeButton.innerHTML = 'Subscribe'; subscribeButton.disabled = false; }
+        resetSubscribeButtonState(subscribeButton);
         return;
       }
       throw new Error(errMsg);
@@ -1031,10 +1044,7 @@ async function landingSubscribeAndCheckout(orgID, apiID, apiReferenceID, policyI
     }
 
     // Reset button state before opening modal
-    if (subscribeButton) {
-      subscribeButton.innerHTML = 'Subscribe';
-      subscribeButton.disabled = false;
-    }
+    resetSubscribeButtonState(subscribeButton);
 
     // Open Stripe embedded checkout modal
     await openStripeEmbeddedCheckout({
@@ -1047,10 +1057,7 @@ async function landingSubscribeAndCheckout(orgID, apiID, apiReferenceID, policyI
 
   } catch (error) {
     showAlert(error.message || "Failed to initiate checkout", "error");
-    if (subscribeButton) {
-      subscribeButton.innerHTML = 'Subscribe';
-      subscribeButton.disabled = false;
-    }
+    resetSubscribeButtonState(subscribeButton);
   }
 }
 
@@ -1206,7 +1213,7 @@ function handleListingSubscribe(orgID, apiID, apiReferenceID, policyID, policyNa
   
   if (isPaid) {
         // Paid plan - trigger Stripe checkout
-    subscribeAndCheckout(orgID, apiID, apiReferenceID, policyID, policyName);
+    subscribeAndCheckout(orgID, apiID, apiReferenceID, policyID, policyName, applicationID);
   } else {
     // Free plan - direct subscription
     subscribe(orgID, applicationID, apiID, apiReferenceID, policyID, policyName);
