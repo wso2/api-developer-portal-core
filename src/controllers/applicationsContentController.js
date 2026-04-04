@@ -173,11 +173,13 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
         api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
     }));
 
-    // Fetch prod and sandbox key managers in parallel
-    const [rawProdKeyManagers, rawSandboxKeyManagers] = await Promise.all([
+    // Fetch prod and sandbox key managers in parallel; each falls back to [] independently
+    const [prodResult, sandboxResult] = await Promise.allSettled([
         getAPIMKeyManagers(req, 'prod'),
         getAPIMKeyManagers(req, 'sandbox')
     ]);
+    const rawProdKeyManagers = prodResult.status === 'fulfilled' ? prodResult.value : [];
+    const rawSandboxKeyManagers = sandboxResult.status === 'fulfilled' ? sandboxResult.value : [];
 
     const prodKeyManagers = filterKeyManagers(rawProdKeyManagers, '_prod');
     const sandboxKeyManagers = filterKeyManagers(rawSandboxKeyManagers, '_sandbox');
@@ -237,6 +239,8 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
     });
 
     const kMmetaData = [...prodKeyManagers, ...sandboxKeyManagers];
+    const hasProdKeyManagers = prodKeyManagers.length > 0;
+    const hasSandboxKeyManagers = sandboxKeyManagers.length > 0;
 
     let subscriptionScopes = [];
     if (applicationReference) {
@@ -400,6 +404,8 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
         orgID,
         applicationList,
         keyManagersMetadata: kMmetaData,
+        hasProdKeyManagers,
+        hasSandboxKeyManagers,
         subAPIs: subList,
         subAPIsForApplicationKeys,
         platformSubscriptionsForApplicationKeys: [],
@@ -512,6 +518,8 @@ const loadApplication = async (req, res) => {
             templateContent = {
                 applicationMetadata: metaData,
                 keyManagersMetadata: kMmetaData,
+                hasProdKeyManagers: kMmetaData.some(km => km.devPortalAppEnv === 'PROD'),
+                hasSandboxKeyManagers: kMmetaData.some(km => km.devPortalAppEnv === 'SANDBOX'),
                 baseUrl: baseURLDev + viewName,
                 features: {
                     sdkGeneration: config.features?.sdkGeneration?.enabled || false
@@ -530,6 +538,8 @@ const loadApplication = async (req, res) => {
                     subscriptionCount: data.subAPIs.length
                 },
                 keyManagersMetadata: kMmetaData,
+                hasProdKeyManagers: data.hasProdKeyManagers,
+                hasSandboxKeyManagers: data.hasSandboxKeyManagers,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 subAPIs: data.subAPIs,
                 nonSubAPIs: data.nonSubAPIs,
@@ -607,6 +617,8 @@ const loadApplicationKeys = async (req, res) => {
             templateContent = {
                 applicationMetadata: metaData,
                 keyManagersMetadata: kMmetaData,
+                hasProdKeyManagers: kMmetaData.some(km => km.devPortalAppEnv === 'PROD'),
+                hasSandboxKeyManagers: kMmetaData.some(km => km.devPortalAppEnv === 'SANDBOX'),
                 baseUrl: baseURLDev + viewName,
                 productionKeys: [],
                 sandboxKeys: [],
@@ -635,6 +647,8 @@ const loadApplicationKeys = async (req, res) => {
                     subscriptionCount: data.subAPIs.length
                 },
                 keyManagersMetadata: kMmetaData,
+                hasProdKeyManagers: data.hasProdKeyManagers,
+                hasSandboxKeyManagers: data.hasSandboxKeyManagers,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 subAPIs: data.subAPIs,
                 nonSubAPIs: data.nonSubAPIs,

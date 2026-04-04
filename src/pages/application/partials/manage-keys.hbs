@@ -42,7 +42,7 @@
                         <div id="collapseProductionOauth2" class="accordion-collapse collapse show"
                             aria-labelledby="production-oauth2">
                             <div class="accordion-body">
-                                {{#if keyManagersMetadata}}
+                                {{#if hasProdKeyManagers}}
                                 {{#each keyManagersMetadata}}
                                 {{#if (eq devPortalAppEnv 'PROD')}}
                                 {{#in name values="_internal_key_manager_,Resident Key Manager,_appdev_sts_key_manager_"}}
@@ -609,7 +609,7 @@
                             <div id="collapseSandboxOAuth2" class="accordion-collapse collapse show"
                                 aria-labelledby="sandbox-oauth2">
                                 <div class="accordion-body">
-                                    {{#if keyManagersMetadata}}
+                                    {{#if hasSandboxKeyManagers}}
                                     {{#each keyManagersMetadata}}
                                     {{#if (eq devPortalAppEnv 'SANDBOX')}}
                                     {{#in name values="_internal_key_manager_,Resident Key Manager,_appdev_sts_key_manager_"}}
