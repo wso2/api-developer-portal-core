@@ -806,6 +806,14 @@ function markSubscribedUI(card, applicationID, apiId) {
   const subscriptionFlag = card.querySelector(".subscription-flag");
   if (subscriptionFlag) subscriptionFlag.style.display = "block";
 
+  if (apiId) {
+    const apiCard = document.getElementById('apiCard-' + apiId);
+    if (apiCard) {
+      const listingFlag = apiCard.querySelector('.subscription-flag');
+      if (listingFlag) listingFlag.style.display = 'block';
+    }
+  }
+
   // Scope dropdown marking to both modal and card containers (like upstream)
   var apiContainer = apiId
     ? (document.getElementById('planModal-' + apiId) || document.getElementById('apiCard-' + apiId))
@@ -933,7 +941,11 @@ function landingSubscribe(orgID, apiID, apiReferenceID, policyID, policyName) {
  *  - Similar to handlePlanSubscription but uses landing-prefixed IDs
  * =========================
  */
-function handleLandingPlanSubscription(orgID, apiID, apiReferenceID, policyID, policyName, buttonElement) {  
+function handleLandingPlanSubscription(orgID, apiID, apiReferenceID, policyID, policyName, buttonElement) {
+  if (buttonElement && buttonElement.dataset.originalText) return;
+
+  showSubscribeButtonLoading(buttonElement);
+
   const isPaid = buttonElement.dataset.isPaid === 'true';  
   // Get application ID from landing page hidden field
   const hiddenField = document.getElementById(`landing-selectedAppId-${policyID}`);
@@ -941,6 +953,7 @@ function handleLandingPlanSubscription(orgID, apiID, apiReferenceID, policyID, p
 
   if (!applicationID) {
     showAlert('Please select an application first.', 'error');
+    resetSubscribeButtonState(buttonElement);
     return;
   }
 

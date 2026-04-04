@@ -53,13 +53,15 @@ document.addEventListener("DOMContentLoaded", function () {
     // Function to show loading state on subscription button
     window.showSubscribeButtonLoading = function(button) {
         if (button) {
-            // Store original text
-            button.dataset.originalText = button.innerHTML;
+            if (!button.dataset.originalText) {
+                button.dataset.originalText = button.innerHTML;
+            }
             button.disabled = true;
 
-            if (button.textContent === 'Subscribe') {
+            const trimmed = (button.textContent || '').trim();
+            if (trimmed === 'Subscribe') {
                 button.textContent = 'Subscribing...';
-            } else if (button.textContent === 'Update') {
+            } else if (trimmed === 'Update') {
                 button.textContent = 'Updating...';
             }
         }
