@@ -68,9 +68,15 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
     }
 
     const subAPIs = await adminDao.getSubscribedAPIs(orgID, applicationId);
+
+    const filteredSubAPIs = subAPIs.filter(sub => {
+        const ps = sub.dataValues.DP_APPLICATIONs?.[0]?.dataValues?.DP_API_SUBSCRIPTION?.dataValues?.PAYMENT_STATUS;
+        return !ps || ps === 'ACTIVE';
+    });
+
     const allAPIs = await apiMetadata.getAllAPIMetadata(orgID, groupList, viewName);
 
-    const subscribedAPIIds = new Set(subAPIs.map(api => api.API_ID));
+    const subscribedAPIIds = new Set(filteredSubAPIs.map(api => api.API_ID));
     const nonSubscribedAPIs = allAPIs
         .filter(api => !subscribedAPIIds.has(api.API_ID) && api.DP_SUBSCRIPTION_POLICies.length > 0)
         .map(api => new APIDTO(api));
@@ -97,8 +103,8 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
     const PLATFORM_GATEWAY_TYPE = 'wso2/api-platform';
 
     let subList = [];
-    if (subAPIs.length > 0) {
-        subList = await Promise.all(subAPIs.map(async (sub) => {
+    if (filteredSubAPIs.length > 0) {
+        subList = await Promise.all(filteredSubAPIs.map(async (sub) => {
             const api = new APIDTO(sub);
             let apiDTO = {};
             apiDTO.apiInfo = {};
@@ -459,9 +465,13 @@ const loadApplications = async (req, res) => {
             const metaData = await Promise.all(
                 applications.map(async (application) => {
                     const subApis = await adminDao.getSubscriptions(orgID, application.APP_ID, '');
+                    const activeCount = subApis.filter(s => {
+                        const ps = s.PAYMENT_STATUS;
+                        return !ps || ps === 'ACTIVE';
+                    }).length;
                     return {
                         ...new ApplicationDTO(application),
-                        subscriptionCount: subApis.length
+                        subscriptionCount: activeCount
                     };
                 })
             );

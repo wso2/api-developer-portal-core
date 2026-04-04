@@ -97,6 +97,12 @@ const loadSubscriptions = async (req, res) => {
             for (const sub of subscribedAPIs) {
                 const api = new APIDTO(sub);
                 const subMapping = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues;
+
+                const paymentStatus = subMapping.PAYMENT_STATUS;
+                if (paymentStatus && paymentStatus !== 'ACTIVE') {
+                    continue;
+                }
+
                 const subPolicy = await apiDao.getSubscriptionPolicy(subMapping.POLICY_ID, orgID);
                 appBasedSubscriptions.push({
                     id: subMapping.SUB_ID,
@@ -246,6 +252,14 @@ const loadAPISubscriptions = async (req, res) => {
                     continue;
                 }
                 const subMapping = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues;
+
+                // Hide paid subscriptions that haven't completed payment yet.
+                // Free plans have null PAYMENT_STATUS and are always shown.
+                const paymentStatus = subMapping.PAYMENT_STATUS;
+                if (paymentStatus && paymentStatus !== 'ACTIVE') {
+                    continue;
+                }
+
                 const subPolicy = await apiDao.getSubscriptionPolicy(subMapping.POLICY_ID, orgID);
                 appBasedSubscriptions.push({
                     id: subMapping.SUB_ID,

@@ -72,6 +72,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (button && button.dataset.originalText) {
             button.innerHTML = button.dataset.originalText;
             button.disabled = false;
+            delete button.dataset.originalText;
         }
     };
 

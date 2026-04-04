@@ -363,6 +363,20 @@ async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
       );
     }
 
+    if (
+      dpSub.PAYMENT_STATUS === PAYMENT_STATUS.ACTIVE &&
+      dpSub.CHECKOUT_SESSION_ID === checkoutSessionId
+    ) {
+      logger.info("registerCheckoutSession: already active, skipping", { orgId, dpSubId });
+      return {
+        subId: dpSubId,
+        billingCustomerId: dpSub.BILLING_CUSTOMER_ID,
+        billingSubscriptionId: dpSub.BILLING_SUBSCRIPTION_ID,
+        paymentStatus: PAYMENT_STATUS.ACTIVE,
+        paymentProvider: PAYMENT_PROVIDER.STRIPE,
+      };
+    }
+
     logger.info("registerCheckoutSession: activating subscription", { orgId, dpSubId });
     const updatedCount = await adminDao.updateBillingFields(
       orgId,
