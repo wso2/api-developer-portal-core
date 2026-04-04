@@ -200,8 +200,9 @@ const generateAPIKeys = async (req, res) => {
         const nonSharedKeyMapping = await adminDao.getApplicationAPIMapping(orgID, requestBody.devportalAppId, apiID, cpAppID, false);
         const sharedKeyMapping = await adminDao.getApplicationAPIMapping(orgID, requestBody.devportalAppId, apiID, cpAppID, true);
 
+        const dpApiId = await apiDao.getApiIdByReferenceId(orgID, apiID);
         // Look up existing DP subscription billing data (set during Stripe checkout activation)
-        const dpSubscription = await adminDao.getAppApiSubscription(orgID, requestBody.devportalAppId, apiID);
+        const dpSubscription = dpApiId ? await adminDao.getAppApiSubscription(orgID, requestBody.devportalAppId, dpApiId) : null;
         const dpSub = dpSubscription?.length > 0 ? dpSubscription[0] : null;
         const billingData =
             dpSub &&
@@ -211,7 +212,6 @@ const generateAPIKeys = async (req, res) => {
             dpSub.BILLING_SUBSCRIPTION_ID
                 ? { customerId: dpSub.BILLING_CUSTOMER_ID, subscriptionId: dpSub.BILLING_SUBSCRIPTION_ID, email: req.user?.email }
                 : null;
-
         if (!(nonSharedKeyMapping.length > 0 || sharedKeyMapping.length > 0)) {
             const cpApp = await adminService.createCPApplication(req, requestBody.devportalAppId);
             cpAppID = cpApp.applicationId;
@@ -274,6 +274,11 @@ const generateAPIKeys = async (req, res) => {
         requestBody.applicationId = cpAppID;
         delete requestBody.projectID;
         delete requestBody.devportalAppId;
+
+        if (billingData) {
+            requestBody.billingCustomerId = billingData.customerId;
+            requestBody.billingSubscriptionId = billingData.subscriptionId;
+        }
 
         const responseData = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/api-keys/generate`, {
             'Content-Type': 'application/json'

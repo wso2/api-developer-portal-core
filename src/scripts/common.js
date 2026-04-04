@@ -320,10 +320,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     const appItem = dropdown.querySelector(`.select-item[data-value="${appId}"]`);
                     if (appItem) {
                         const appName = appItem.getAttribute("data-app-name");
-                        // Update hidden input with selected app ID
-                        const hiddenField = document.getElementById(
-                            dropdown.querySelector("[id^='selectedAppId-']").id
-                        );
+                        const hiddenField = dropdown.querySelector('input[type="hidden"]');
                         if (hiddenField) {
                             hiddenField.value = appId;
                         }
@@ -357,10 +354,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (firstAvailableApp) {
                     appId = firstAvailableApp.getAttribute("data-value");
                     const appName = firstAvailableApp.getAttribute("data-app-name");
-                    // Update hidden input with selected app ID
-                    const hiddenField = document.getElementById(
-                        dropdown.querySelector("[id^='selectedAppId-']").id
-                    );
+                    // Update hidden input with selected app ID (scoped to avoid duplicate-ID collision)
+                    const hiddenField = dropdown.querySelector('input[type="hidden"]');
                     if (hiddenField) {
                         hiddenField.value = appId;
                     }
@@ -448,9 +443,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     const appName = this.getAttribute("data-app-name");
                     
                     // Update hidden input with selected app ID
-                    const hiddenField = document.getElementById(
-                        dropdown.querySelector("[id^='selectedAppId-']").id
-                    );
+                    const hiddenField = dropdown.querySelector('input[type="hidden"]');
                     if (hiddenField) {
                         hiddenField.value = appId;
                     }
@@ -523,9 +516,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         createApplicationDirectly(appName)
                             .then(response => {
                                 // Update hidden input with the new application ID
-                                const hiddenField = document.getElementById(
-                                    dropdown.querySelector("[id^='selectedAppId-']").id
-                                );
+                                const hiddenField = dropdown.querySelector('input[type="hidden"]');
                                 if (hiddenField) {
                                     hiddenField.value = response.id;
                                 }
