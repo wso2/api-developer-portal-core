@@ -305,8 +305,10 @@ function handleAppBasedSubscription(btnElement) {
     subscribe(orgId, '', apiId, apiReferenceId, policyId, policyName);
 }
 
-async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, policyName) {
-  const card = getSubscriptionCard(apiId, policyId);
+async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, policyName, buttonElement) {
+  const card = (buttonElement && buttonElement.closest('.subscription-card'))
+    ? buttonElement.closest('.subscription-card')
+    : getSubscriptionCard(apiId, policyId);
   const subscribeButton = card ? card.querySelector(".common-btn-primary") : null;
   const messageOverlay = card ? card.querySelector(".message-overlay") : null;
 
@@ -729,8 +731,8 @@ async function updateSubscription(orgID, applicationID, apiId, apiReferenceID, p
 
 // Helper functions for the subscribe function
 function getSubscriptionCard(apiId, policyId) {
-    return document.getElementById('apiCard-' + apiId) ||
-        document.getElementById('subscriptionCard-' + policyId) ||
+    return document.getElementById('subscriptionCard-' + policyId) ||
+        document.getElementById('apiCard-' + apiId) ||
         null;
 }
 
