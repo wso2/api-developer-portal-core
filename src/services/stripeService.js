@@ -106,7 +106,6 @@ async function createCheckoutSession({
     payment_method_collection: paymentMethodCollection,
     saved_payment_method_options: {
       allow_redisplay_filters: ["always", "limited", "unspecified"],
-      payment_method_save: "enabled",
     },
   });
 }
