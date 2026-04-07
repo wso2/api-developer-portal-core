@@ -313,12 +313,14 @@ async function handleBillingReturn(req, res) {
     }
 
     const user = req.user || {};
+    let activationDone = false;
     try {
       await monetizationService.handleStripeReturnAndActivate({
         orgId: orgIdFinal,
         sessionId: session_id,
         user,
       });
+      activationDone = true;
     } catch (activationErr) {
       logger.warn(
         { err: activationErr, orgId: orgIdFinal, session_id },
@@ -358,8 +360,12 @@ async function handleBillingReturn(req, res) {
           safePath,
           `${req.protocol}://${req.get("host")}`,
         );
-        safeUrl.searchParams.set("session_id", session_id);
-        if (orgIdFinal) safeUrl.searchParams.set("org_id", orgIdFinal);
+        if (activationDone) {
+          safeUrl.searchParams.set("subscription", "success");
+        } else {
+          safeUrl.searchParams.set("session_id", session_id);
+          if (orgIdFinal) safeUrl.searchParams.set("org_id", orgIdFinal);
+        }
         return res.redirect(safeUrl.pathname + safeUrl.search);
       }
       return res.redirect(safePath);
@@ -371,11 +377,19 @@ async function handleBillingReturn(req, res) {
         throw new Error(`Organization not found: ${orgIdFinal}`);
       }
       const orgName = org.IDENTIFIER || "default";
+      if (activationDone) {
+        return res.redirect(
+          `/${orgName}/apis/${encodeURIComponent(apiReferenceID)}?subscription=success`,
+        );
+      }
       return res.redirect(
         `/${orgName}/apis/${encodeURIComponent(apiReferenceID)}?session_id=${encodeURIComponent(session_id)}&dp_sub_id=${encodeURIComponent(dp_sub_id || "")}&org_id=${encodeURIComponent(orgIdFinal)}`,
       );
     }
 
+    if (activationDone) {
+      return res.redirect(`/applications?subscription=success`);
+    }
     return res.redirect(
       `/applications?session_id=${session_id}&dp_sub_id=${dp_sub_id || ""}&org_id=${encodeURIComponent(orgIdFinal || "")}`,
     );

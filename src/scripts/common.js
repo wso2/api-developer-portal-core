@@ -53,13 +53,15 @@ document.addEventListener("DOMContentLoaded", function () {
     // Function to show loading state on subscription button
     window.showSubscribeButtonLoading = function(button) {
         if (button) {
-            // Store original text
-            button.dataset.originalText = button.innerHTML;
+            if (!button.dataset.originalText) {
+                button.dataset.originalText = button.innerHTML;
+            }
             button.disabled = true;
 
-            if (button.textContent === 'Subscribe') {
+            const trimmed = (button.textContent || '').trim();
+            if (trimmed === 'Subscribe') {
                 button.textContent = 'Subscribing...';
-            } else if (button.textContent === 'Update') {
+            } else if (trimmed === 'Update') {
                 button.textContent = 'Updating...';
             }
         }
@@ -70,6 +72,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (button && button.dataset.originalText) {
             button.innerHTML = button.dataset.originalText;
             button.disabled = false;
+            delete button.dataset.originalText;
         }
     };
 
@@ -320,10 +323,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     const appItem = dropdown.querySelector(`.select-item[data-value="${appId}"]`);
                     if (appItem) {
                         const appName = appItem.getAttribute("data-app-name");
-                        // Update hidden input with selected app ID
-                        const hiddenField = document.getElementById(
-                            dropdown.querySelector("[id^='selectedAppId-']").id
-                        );
+                        const hiddenField = dropdown.querySelector('input[type="hidden"]');
                         if (hiddenField) {
                             hiddenField.value = appId;
                         }
@@ -357,10 +357,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (firstAvailableApp) {
                     appId = firstAvailableApp.getAttribute("data-value");
                     const appName = firstAvailableApp.getAttribute("data-app-name");
-                    // Update hidden input with selected app ID
-                    const hiddenField = document.getElementById(
-                        dropdown.querySelector("[id^='selectedAppId-']").id
-                    );
+                    // Update hidden input with selected app ID (scoped to avoid duplicate-ID collision)
+                    const hiddenField = dropdown.querySelector('input[type="hidden"]');
                     if (hiddenField) {
                         hiddenField.value = appId;
                     }
@@ -448,9 +446,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     const appName = this.getAttribute("data-app-name");
                     
                     // Update hidden input with selected app ID
-                    const hiddenField = document.getElementById(
-                        dropdown.querySelector("[id^='selectedAppId-']").id
-                    );
+                    const hiddenField = dropdown.querySelector('input[type="hidden"]');
                     if (hiddenField) {
                         hiddenField.value = appId;
                     }
@@ -523,9 +519,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         createApplicationDirectly(appName)
                             .then(response => {
                                 // Update hidden input with the new application ID
-                                const hiddenField = document.getElementById(
-                                    dropdown.querySelector("[id^='selectedAppId-']").id
-                                );
+                                const hiddenField = dropdown.querySelector('input[type="hidden"]');
                                 if (hiddenField) {
                                     hiddenField.value = response.id;
                                 }

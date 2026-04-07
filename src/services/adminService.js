@@ -1157,7 +1157,12 @@ const getAllSubscriptions = async (req, res) => {
         let subList = [];
         // Create response object
         if (subscriptions.length > 0) {
-            subList = subscriptions.map((sub) => new SubscriptionDTO(sub));
+            subList = subscriptions
+                .filter((sub) => {
+                    const ps = sub.PAYMENT_STATUS;
+                    return !ps || ps === 'ACTIVE';
+                })
+                .map((sub) => new SubscriptionDTO(sub));
         }
         res.status(200).send(subList);
     } catch (error) {
