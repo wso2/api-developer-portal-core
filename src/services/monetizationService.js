@@ -45,6 +45,7 @@ class ForbiddenError extends CustomError {
 }
 
 const adminDao = require("../dao/admin");
+const constants = require("../utils/constants");
 
 const stripeService = require("./stripeService");
 const { getDecryptedStripeKeysForOrg } = require("./orgBillingKeyService");
@@ -302,7 +303,7 @@ async function createCheckoutSession({
  * Verifies checkout, updates DP row with BILLING_SUBSCRIPTION_ID, marks ACTIVE,
  * then creates CP subscription (idempotent).
  */
-async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
+async function registerCheckoutSession({ orgId, checkoutSessionId, user, req = null }) {
   return sequelize.transaction(async (t) => {
     logger.info(
       "registerCheckoutSession called",
@@ -395,6 +396,92 @@ async function registerCheckoutSession({ orgId, checkoutSessionId, user }) {
         "updateBillingFields did not update exactly one row",
         { orgId, dpSubId, updatedCount },
       );
+    }
+
+    if (req) {
+      const applicationID = session.metadata?.applicationID;
+      const apiReferenceID = session.metadata?.apiReferenceID;
+      const policyId = session.metadata?.policyId;
+      const policyName = session.metadata?.policyName;
+
+      if (applicationID && apiReferenceID) {
+        try {
+          const sharedMappings = await adminDao.getApplicationKeyMapping(orgId, applicationID, true);
+          const nonSharedMappings = await adminDao.getApplicationKeyMapping(orgId, applicationID, false);
+
+          // Only proceed if the app already has a CP app reference (i.e. keys have been generated)
+          const existingMapping =
+            sharedMappings.find((m) => m.dataValues.CP_APP_REF) ||
+            nonSharedMappings.find((m) => m.dataValues.CP_APP_REF);
+
+          if (existingMapping) {
+            const cpAppRef = existingMapping.dataValues.CP_APP_REF;
+            const isShared = sharedMappings.some((m) => m.dataValues.CP_APP_REF === cpAppRef);
+
+            // Only create if this API doesn't already have a mapping
+            const existingApiMapping = await adminDao.getApplicationAPIMapping(
+              orgId, applicationID, apiReferenceID, cpAppRef, isShared
+            );
+
+            if (existingApiMapping.length === 0) {
+              logger.info("registerCheckoutSession: syncing paid subscription to CP", {
+                orgId, applicationID, apiReferenceID, cpAppRef,
+              });
+
+              const resolvedPolicyName = policyName ||
+                (policyId
+                  ? (await adminDao.getSubscriptionPolicyById(orgId, policyId, t))?.dataValues?.POLICY_NAME
+                  : undefined);
+
+              const requestBody = {
+                apiId: apiReferenceID,
+                applicationId: cpAppRef,
+                throttlingPolicy: resolvedPolicyName,
+                billingMetadata: {
+                  billingCustomerId: billingCustomerId || dpSub.BILLING_CUSTOMER_ID,
+                  billingSubscriptionId: billingSubscriptionId,
+                },
+              };
+
+              let cpSubscribeResponse;
+              try {
+                cpSubscribeResponse = await invokeApiRequest(
+                  req, "POST", `${controlPlaneUrl}/subscriptions`, {}, requestBody
+                );
+              } catch (cpErr) {
+                if (cpErr.statusCode === 409) {
+                  const existing = await invokeApiRequest(
+                    req, "GET",
+                    `${controlPlaneUrl}/subscriptions?apiId=${apiReferenceID}&applicationId=${cpAppRef}`,
+                    {}
+                  );
+                  cpSubscribeResponse = existing?.list?.[0];
+                } else {
+                  throw cpErr;
+                }
+              }
+
+              if (cpSubscribeResponse) {
+                await adminDao.createApplicationKeyMapping({
+                  orgID: orgId,
+                  appID: applicationID,
+                  cpAppRef: cpSubscribeResponse.applicationId,
+                  apiRefID: cpSubscribeResponse.apiId,
+                  subscriptionRefID: cpSubscribeResponse.subscriptionId,
+                  sharedToken: isShared,
+                  tokenType: isShared
+                    ? constants.TOKEN_TYPES.OAUTH
+                    : constants.TOKEN_TYPES.API_KEY,
+                }, t);
+              }
+            }
+          }
+        } catch (cpSyncErr) {
+          logger.warn("registerCheckoutSession: CP subscription sync failed (non-fatal)", {
+            orgId, applicationID, apiReferenceID, err: cpSyncErr.message,
+          });
+        }
+      }
     }
 
     return {
@@ -1168,7 +1255,7 @@ async function getSubscriptionsForBilling(orgId, userId) {
  * Handles Stripe return and ensures paid subscription is activated.
  * Call this from your controller when handling Stripe return URL.
  */
-async function handleStripeReturnAndActivate({ orgId, sessionId, user }) {
+async function handleStripeReturnAndActivate({ orgId, sessionId, user, req = null }) {
   logger.info("handleStripeReturnAndActivate: initiated", { orgId, sessionId });
   const { secretKey: stripeSecretKey } =
     await getDecryptedStripeKeysForOrg(orgId);
@@ -1197,6 +1284,7 @@ async function handleStripeReturnAndActivate({ orgId, sessionId, user }) {
       orgId,
       checkoutSessionId: sessionId,
       user,
+      req,
     });
   }
   return {

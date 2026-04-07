@@ -161,6 +161,7 @@ async function registerStripeCheckoutSession(req, res) {
       orgId,
       checkoutSessionId,
       user,
+      req,
     });
     logger.info("registerStripeCheckoutSession: completed", { orgId, subId: result.subId, paymentStatus: result.paymentStatus });
     return res.status(201).json(result);
@@ -319,6 +320,7 @@ async function handleBillingReturn(req, res) {
         orgId: orgIdFinal,
         sessionId: session_id,
         user,
+        req,
       });
       activationDone = true;
     } catch (activationErr) {
