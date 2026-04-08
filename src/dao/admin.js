@@ -1298,6 +1298,37 @@ const getSubscriptionWithMeter = async (orgID, subID, t) => {
     }
 };
 
+/**
+ * Get CP subscription ref ID and org identifier by Stripe billing subscription ID.
+ */
+const getSubscriptionRefByBillingSubscriptionId = async (billingSubscriptionId) => {
+    try {
+        if (!billingSubscriptionId) throw new Sequelize.ValidationError('billingSubscriptionId is required');
+        const sequelize = require('../db/sequelize');
+        const results = await sequelize.query(
+            `
+            SELECT
+                akm."SUBSCRIPTION_REF_ID" as "subscriptionRefId",
+                o."ORGANIZATION_IDENTIFIER" as "orgIdentifier",
+                s."ORG_ID" as "orgId"
+            FROM "DP_API_SUBSCRIPTION" s
+            LEFT JOIN "DP_API_METADATA" a ON s."API_ID" = a."API_ID" AND s."ORG_ID" = a."ORG_ID"
+            LEFT JOIN "DP_APP_KEY_MAPPING" akm
+                ON akm."APP_ID" = s."APP_ID"
+                AND akm."API_REF_ID" = a."REFERENCE_ID"
+                AND akm."ORG_ID" = s."ORG_ID"
+            LEFT JOIN "DP_ORGANIZATION" o ON s."ORG_ID" = o."ORG_ID"
+            WHERE s."BILLING_SUBSCRIPTION_ID" = :billingSubscriptionId
+            LIMIT 1
+            `,
+            { replacements: { billingSubscriptionId }, type: sequelize.QueryTypes.SELECT },
+        );
+        return results?.[0] || null;
+    } catch (error) {
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
 module.exports = {
     createOrganization,
     getOrganization,
@@ -1354,4 +1385,5 @@ module.exports = {
     getAPIById,
     getSubscriptionPolicyById,
     getSubscriptionWithMeter,
+    getSubscriptionRefByBillingSubscriptionId,
 };

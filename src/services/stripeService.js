@@ -269,9 +269,11 @@ async function applyWebhookToLocalState(event, { adminDao }) {
       newStatus = PAYMENT_STATUS.PAYMENT_FAILED;
       break;
 
-    case "customer.subscription.deleted":
-      newStatus = PAYMENT_STATUS.CANCELED;
-      break;
+    case "customer.subscription.deleted": {
+      const subRef = await adminDao.getSubscriptionRefByBillingSubscriptionId(stripeSubscriptionId);
+      await adminDao.deleteSubscriptionByBillingId(stripeSubscriptionId);
+      return { newStatus: PAYMENT_STATUS.CANCELED, stripeSubscriptionId, eventType, subRef };
+    }
 
     case "customer.subscription.updated": {
       const sub = event?.data?.object;
