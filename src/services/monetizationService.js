@@ -82,7 +82,10 @@ async function getCPServiceToken() {
       "CP service principal not configured: devportalApimSPClientId / devportalApimSPClientSecret missing",
     );
   }
-  const tokenUrl = config.advanced.tokenExchanger.url;
+  const tokenUrl = config.advanced?.tokenExchanger?.url;
+  if (!tokenUrl) {
+    throw new Error("CP service token URL not configured: config.advanced.tokenExchanger.url missing");
+  }
   const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
   const response = await axios.post(
     tokenUrl,
@@ -92,9 +95,14 @@ async function getCPServiceToken() {
         "Content-Type": "application/x-www-form-urlencoded",
         Authorization: `Basic ${credentials}`,
       },
+      timeout: 10000,
     },
   );
-  return response.data.access_token;
+  const accessToken = response.data?.access_token;
+  if (!accessToken) {
+    throw new Error("CP service token response did not contain access_token");
+  }
+  return accessToken;
 }
 
 /**
@@ -886,6 +894,19 @@ async function handleStripeWebhook(req, orgId) {
               subscriptionRefId: subRef.subscriptionRefId,
               eventType: event?.type,
             });
+            try {
+              await adminDao.deleteAppKeyMappingBySubscriptionRef(subRef.orgId, subRef.subscriptionRefId);
+              logger.info("handleStripeWebhook: app key mapping deleted", {
+                orgId,
+                subscriptionRefId: subRef.subscriptionRefId,
+              });
+            } catch (mappingErr) {
+              logger.warn("handleStripeWebhook: app key mapping delete failed (non-fatal)", {
+                orgId,
+                subscriptionRefId: subRef.subscriptionRefId,
+                err: mappingErr.message,
+              });
+            }
           } else {
             logger.warn("handleStripeWebhook: no CP subscription ref found, skipping CP delete", {
               orgId,

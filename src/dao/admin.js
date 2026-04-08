@@ -830,6 +830,19 @@ const deleteAppMappings = async (orgID, appID, t) => {
     }
 }
 
+const deleteAppKeyMappingBySubscriptionRef = async (orgId, subscriptionRefId) => {
+    try {
+        return await ApplicationKeyMapping.destroy({
+            where: {
+                ORG_ID: orgId,
+                SUBSCRIPTION_REF_ID: subscriptionRefId
+            }
+        });
+    } catch (error) {
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
 const getAPISubscriptionReference = async (orgID, appID, apiID, t) => {
     try {
         const subscriptionReference = await ApplicationKeyMapping.findAll(
@@ -1386,4 +1399,5 @@ module.exports = {
     getSubscriptionPolicyById,
     getSubscriptionWithMeter,
     getSubscriptionRefByBillingSubscriptionId,
+    deleteAppKeyMappingBySubscriptionRef,
 };
