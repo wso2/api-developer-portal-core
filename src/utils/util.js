@@ -767,8 +767,25 @@ function validateScripts(strContent) {
             '<script src="/technical-scripts/api-key-generation.js" defer></script>',
             '<script src="/technical-scripts/billing.js" defer></script>',
         ]);
+        const allowedInlineScripts = new Set([
+            // Reo analytics loader (src/defaultContent/layout/main.hbs)
+            "<script type=\"text/javascript\">\n      !function(){var e,t,n;e=\"{{portalConfigs.reoClientID}}\",t=function(){Reo.init({clientID:\"{{portalConfigs.reoClientID}}\"})},(n=document.createElement(\"script\")).src=\"https://static.reo.dev/\"+e+\"/reo.js\",n.defer=!0,n.onload=t,document.head.appendChild(n)}();\n    </script>",
+            // Token-map JSON data island (api-landing/partials/api-subscription-plans.hbs)
+            "<script id=\"token-map-data\" type=\"application/json\">{{{jsonSafePlatformSubscriptions ../platformSubscriptions}}}</script>",
+            // Token-meta bootstrap (api-landing/partials/api-subscription-plans.hbs)
+            "<script>\n                    (function() {\n                        var data = JSON.parse(document.getElementById('token-map-data').textContent || '[]');\n                        window.__tokenMeta = window.__tokenMeta || {};\n                        data.forEach(function(sub) {\n                            // store only non-sensitive metadata and masked token\n                            window.__tokenMeta[sub.subscriptionId] = {\n                                maskedToken: sub.maskedToken,\n                                customerName: sub.customerName,\n                                subscriptionPlanName: sub.subscriptionPlanName,\n                                status: sub.status\n                            };\n                        });\n                        // expose orgID for on-demand fetches\n                        window.__subscriptionOrgID = \"{{@root.orgID}}\";\n                    })();\n                </script>",
+            // Existing-subs JSON data island (api-landing/partials/api-subscription-plans.hbs)
+            "<script id=\"existing-subs-data\" type=\"application/json\">{{{json platformSubscriptions}}}</script>",
+            // Existing-subs bootstrap (api-landing/partials/api-subscription-plans.hbs)
+            "<script>\n                (function() {\n                    window.__subscriptionOrgID = window.__subscriptionOrgID || \"{{@root.orgID}}\";\n                    var raw = document.getElementById('existing-subs-data').textContent || '[]';\n                    try {\n                        var parsed = JSON.parse(raw);\n                        window.existingPlatformSubscriptions = parsed.map(function(sub) {\n                            return { subscriptionId: sub.subscriptionId, subscriptionPlanName: sub.subscriptionPlanName, status: sub.status };\n                        });\n                    } catch (e) {\n                        window.existingPlatformSubscriptions = [];\n                    }\n                })();\n            </script>",
+            // tokenMap + orgID bootstrap (api-subscriptions/partials/api-subscription-list.hbs
+            // and subscriptions/partials/subscription-list.hbs)
+            "<script>\n                window.__tokenMap = window.__tokenMap || {};\n                window.__subscriptionOrgID = \"{{@root.orgID}}\";\n            </script>",
+            // Modal click handler (apis/partials/api-listing.hbs)
+            "<script>\n    (function(){\n      function findClosest(el, selector){\n        while(el && el !== document){\n          if(el.matches && el.matches(selector)) return el;\n          el = el.parentNode;\n        }\n        return null;\n      }\n\n      document.addEventListener('click', function(e){\n        var modalTrigger = findClosest(e.target, '[data-modal]');\n        if(modalTrigger){\n          e.preventDefault();\n          if(modalTrigger.classList.contains('is-readonly') || modalTrigger.getAttribute('aria-disabled') === 'true'){\n            return;\n          }\n          if(typeof loadModal === 'function'){\n            loadModal(modalTrigger.getAttribute('data-modal'));\n          } else {\n            var id = modalTrigger.getAttribute('data-modal');\n            var el = document.getElementById(id);\n            if(el) {\n              el.style.display = 'flex';\n              document.body.classList.add('modal-open');\n              if(typeof prepareSubscriptionModal === 'function') {\n                try { prepareSubscriptionModal(id); } catch(err) { /* noop */ }\n              }\n            }\n          }\n          return;\n        }\n\n        var nav = findClosest(e.target, '[data-href]');\n        if(nav){\n          var href = nav.getAttribute('data-href');\n          if(href){ window.location.href = href; }\n        }\n      }, false);\n    })();\n  </script>",
+        ]);
 
-        const scriptRegex = /<script(?:\s+[^>]*)?>[\s\S]*?<\/script>/g;
+        const scriptRegex = /<script(?:\s+[^>]*)?>[\s\S]*?<\/script>/gi;
         let match;
 
         while ((match = scriptRegex.exec(strContent)) !== null) {
@@ -778,11 +795,11 @@ function validateScripts(strContent) {
 
             if (!hasSrc) {
                 const isEmpty = /^<script[^>]*>\s*<\/script>$/i.test(script);
-                if (!isEmpty) {
-                    logger.error("Script validation failed: inline scripts are not allowed", { script });
-                    throw new CustomError(400, constants.ERROR_CODE[400], `Inline scripts are not allowed in uploaded themes: ${script}`);
+                if (isEmpty || allowedInlineScripts.has(script)) {
+                    continue;
                 }
-                continue;
+                logger.error("Script validation failed: inline scripts are not allowed", { script });
+                throw new CustomError(400, constants.ERROR_CODE[400], `Inline scripts are not allowed in uploaded themes: ${script}`);
             }
             if (!allowedScripts.has(script)) {
                 logger.error("Script validation failed: disallowed script tag found", { script });
