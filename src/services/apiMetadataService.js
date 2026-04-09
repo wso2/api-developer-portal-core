@@ -524,8 +524,28 @@ const deleteAPIMetadata = async (req, res) => {
     });
 };
 
-const createAPITemplate = async (req, res) => {
-    logger.info('Creating API template...', {
+const collectWebContentFiles = async (webPath) => {
+    const files = await fs.readdir(webPath, { withFileTypes: true });
+    const contentFiles = [];
+    for (const file of files) {
+        if (!file.isFile() || file.name === '.DS_Store') {
+            continue;
+        }
+        const filePath = path.join(webPath, file.name);
+        const fileExtension = path.extname(file.name).toLowerCase();
+        if (util.isTextFile(fileExtension)) {
+            const content = await fs.readFile(filePath, constants.CHARSET_UTF8);
+            contentFiles.push({ fileName: file.name, content: content, type: constants.DOC_TYPES.API_LANDING });
+        } else if (util.isImageFile(fileExtension)) {
+            const content = await fs.readFile(filePath);
+            contentFiles.push({ fileName: file.name, content: content, type: constants.DOC_TYPES.IMAGES });
+        }
+    }
+    return contentFiles;
+};
+
+const createAPIContent = async (req, res) => {
+    logger.info('Creating API content...', {
         orgId: req.params.orgId,
         apiId: req.params.apiId,
         fileName: req.file?.originalname,
@@ -543,50 +563,45 @@ const createAPITemplate = async (req, res) => {
         const apiContentFileName = req.file.originalname.split(".zip")[0];
 
         // Build complete paths
-        const contentPath = path.join(extractPath, apiContentFileName, "content");
-        const imagesPath = path.join(extractPath, apiContentFileName, "images");
-        const documentPath = path.join(extractPath, apiContentFileName, "documents");
+        const webPath = path.join(extractPath, apiContentFileName, "web");
+        const docsPath = path.join(extractPath, apiContentFileName, "docs");
 
         // Verify directories exist
         try {
-            if (fsDir.existsSync(contentPath)) {
-                await fs.access(contentPath);
+            const hasWebDir = fsDir.existsSync(webPath);
+            const hasDocsDir = fsDir.existsSync(docsPath);
+            if (!hasWebDir && !hasDocsDir) {
+                throw new Error("Missing required content directories in uploaded zip. At least one of web or docs is required");
             }
-            if (fsDir.existsSync(imagesPath)) {
-                await fs.access(imagesPath);
+            if (hasWebDir) {
+                await fs.access(webPath);
             }
-            if (fsDir.existsSync(documentPath)) {
-                await fs.access(documentPath);
+            if (hasDocsDir) {
+                await fs.access(docsPath);
             }
         } catch (err) {
             logger.error('Error while trying to access directories', {
                 error: err.message,
-                contentPath,
-                imagesPath,
-                documentPath,
+                webPath,
+                docsPath,
                 orgId,
                 apiId
             });
             throw new Error(
-                `Required directories not found after extraction. Content path: ${contentPath}, Images path: ${imagesPath}
-                , Documents path: ${documentPath}`
+                `Required directories not found after extraction. Web path: ${webPath}, Docs path: ${docsPath}`
             );
         }
         let apiContent = [];
 
-        //get api files
-        if (fsDir.existsSync(contentPath)) {
-            let apiLanding = await util.getAPIFileContent(contentPath);
-            apiContent.push(...apiLanding);
+        // get API web files (includes text files and images)
+        if (fsDir.existsSync(webPath)) {
+            const apiWebFiles = await collectWebContentFiles(webPath);
+            apiContent.push(...apiWebFiles);
         }
-        //get api images
-        if (fsDir.existsSync(imagesPath)) {
-            const apiImages = await util.getAPIImages(imagesPath);
-            apiContent.push(...apiImages);
-        }
-        //get api documents
-        if (fsDir.existsSync(documentPath)) {
-            const apiDocuments = await util.readDocFiles(documentPath);
+
+        // get API documents
+        if (fsDir.existsSync(docsPath)) {
+            const apiDocuments = await util.readDocFiles(docsPath);
             apiContent.push(...apiDocuments);
         }
         let docMetadata = "";
@@ -619,7 +634,7 @@ const createAPITemplate = async (req, res) => {
             }
         });
         await fs.rm(extractPath, { recursive: true, force: true });
-        res.status(201).type("application/json").send({ message: "API Template updated successfully" });
+        res.status(201).type("application/json").send({ message: "API content updated successfully" });
     } catch (error) {
         logger.error('API content creation failed', {
             error: error.message,
@@ -632,8 +647,8 @@ const createAPITemplate = async (req, res) => {
     }
 };
 
-const updateAPITemplate = async (req, res) => {
-    logger.info('Updating API template...', {
+const updateAPIContent = async (req, res) => {
+    logger.info('Updating API content...', {
         orgId: req.params.orgId,
         apiId: req.params.apiId,
         fileName: req.file?.originalname
@@ -653,55 +668,51 @@ const updateAPITemplate = async (req, res) => {
         await util.unzipDirectory(zipFilePath, extractPath);
         const apiContentFileName = req.file.originalname.split(".zip")[0];
 
-        // Build complete paths
-        const contentPath = path.join(extractPath, apiContentFileName, "content");
-        const imagesPath = path.join(extractPath, apiContentFileName, "images");
-        const documentPath = path.join(extractPath, apiContentFileName, "documents");
+        // Build complete paths (supported structure: <zip-root>/web and <zip-root>/docs)
+        const webPath = path.join(extractPath, apiContentFileName, "web");
+        const docsPath = path.join(extractPath, apiContentFileName, "docs");
 
         // Verify directories exist
         try {
-            if (fsDir.existsSync(contentPath)) {
-                await fs.access(contentPath);
+            const hasWebDir = fsDir.existsSync(webPath);
+            const hasDocsDir = fsDir.existsSync(docsPath);
+            if (!hasWebDir && !hasDocsDir) {
+                throw new Error("Missing required content directories in uploaded zip. At least one of web or docs is required");
             }
-            if (fsDir.existsSync(imagesPath)) {
-                await fs.access(imagesPath);
+            if (hasWebDir) {
+                await fs.access(webPath);
             }
-            if (fsDir.existsSync(documentPath)) {
-                await fs.access(documentPath);
+            if (hasDocsDir) {
+                await fs.access(docsPath);
             }
         } catch (err) {
-            logger.error('Error accessing directories during API template update', {
+            logger.error('Error accessing directories during API content update', {
                 error: err.message,
-                contentPath,
-                imagesPath,
-                documentPath,
+                webPath,
+                docsPath,
                 orgId: req.params.orgId,
                 apiId: req.params.apiId
             });
             throw new Error(
-                `Required directories not found after extraction. Content path: ${contentPath}, Images path: ${imagesPath},
-                Documents path: ${documentPath}`
+                `Required directories not found after extraction. Web path: ${webPath}, Docs path: ${docsPath}`
             );
         }
         let apiContent = [];
-        //get api files
-        if (fsDir.existsSync(contentPath)) {
-            let apiLanding = await util.getAPIFileContent(contentPath);
-            apiContent.push(...apiLanding);
+
+        // get API web files (includes text files and images)
+        if (fsDir.existsSync(webPath)) {
+            const apiWebFiles = await collectWebContentFiles(webPath);
+            apiContent.push(...apiWebFiles);
         }
-        //get api images
-        if (fsDir.existsSync(imagesPath)) {
-            const apiImages = await util.getAPIImages(imagesPath);
-            apiContent.push(...apiImages);
-        }
-        //get api documents
-        if (fsDir.existsSync(documentPath)) {
-            const apiDocuments = await util.readDocFiles(documentPath);
+
+        // get API documents
+        if (fsDir.existsSync(docsPath)) {
+            const apiDocuments = await util.readDocFiles(docsPath);
             apiContent.push(...apiDocuments);
         }
 
         if (req.body.docMetadata) {
-            docMetadata = JSON.parse(req.body.docMetadata);
+            const docMetadata = JSON.parse(req.body.docMetadata);
             const links = util.getAPIDocLinks(docMetadata);
             apiContent.push(...links);
         }
@@ -1407,8 +1418,8 @@ module.exports = {
     getAllAPIMetadata,
     updateAPIMetadata,
     deleteAPIMetadata,
-    createAPITemplate,
-    updateAPITemplate,
+    createAPIContent,
+    updateAPIContent,
     getAPIFile,
     getAPIDocTypes,
     deleteAPIFile,

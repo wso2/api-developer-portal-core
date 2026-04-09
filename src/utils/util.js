@@ -278,8 +278,17 @@ const textFiles = [
     constants.FILE_EXTENSIONS.JSON, constants.FILE_EXTENSIONS.YAML, constants.FILE_EXTENSIONS.YML
 ]
 
+const imageFiles = [
+    constants.FILE_EXTENSIONS.SVG, constants.FILE_EXTENSIONS.JPG,
+    constants.FILE_EXTENSIONS.JPEG, constants.FILE_EXTENSIONS.PNG
+]
+
 const isTextFile = (fileExtension) => {
     return textFiles.includes(fileExtension)
+}
+
+const isImageFile = (fileExtension) => {
+    return imageFiles.includes(fileExtension)
 }
 
 const retrieveContentType = (fileName, fileType) => {
@@ -307,18 +316,6 @@ const getAPIFileContent = (directory) => {
             files.push({ fileName: filename, content: fileContent, type: constants.DOC_TYPES.API_LANDING });
         }
     });
-    return files;
-};
-
-const getAPIImages = async (directory) => {
-    let files = [];
-    const filenames = await fs.promises.readdir(directory, { withFileTypes: true });
-    for (const filename of filenames) {
-        if (!(filename === '.DS_Store')) {
-            let fileContent = await fs.promises.readFile(path.join(directory, filename.name));
-            files.push({ fileName: filename.name, content: fileContent, type: constants.DOC_TYPES.IMAGES });
-        }
-    }
     return files;
 };
 
@@ -1013,9 +1010,9 @@ module.exports = {
     handleError,
     retrieveContentType,
     getAPIFileContent,
-    getAPIImages,
     getAPIDocLinks,
     isTextFile,
+    isImageFile,
     invokeApiRequest,
     apiRequest,
     invokeGraphQLRequest,
