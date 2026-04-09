@@ -50,8 +50,10 @@ const constants = require("../utils/constants");
 const stripeService = require("./stripeService");
 const { getDecryptedStripeKeysForOrg } = require("./orgBillingKeyService");
 const moesifService = require("./moesifService");
-const { invokeApiRequest } = require("../utils/util");
+const { invokeApiRequest, apiRequest } = require("../utils/util");
 const config = require(process.cwd() + "/config.json");
+const secret = require(process.cwd() + "/secret.json");
+const axios = require("axios");
 
 const controlPlaneUrl = config.controlPlane.url;
 
@@ -66,6 +68,42 @@ const PAYMENT_STATUS = {
   CANCELED: "CANCELED",
   PAST_DUE: "PAST_DUE",
 };
+
+/**
+ * Obtain a CP service token via client_credentials grant using the devportalApimSP
+ * service principal. Used for server-to-server CP calls from webhook handlers
+ * where there is no user session available.
+ */
+async function getCPServiceToken() {
+  const clientId = config.advanced?.devportalApimSPClientId;
+  const clientSecret = secret?.devportalApimSPClientSecret;
+  if (!clientId || !clientSecret) {
+    throw new Error(
+      "CP service principal not configured: devportalApimSPClientId / devportalApimSPClientSecret missing",
+    );
+  }
+  const tokenUrl = config.advanced?.tokenExchanger?.url;
+  if (!tokenUrl) {
+    throw new Error("CP service token URL not configured: config.advanced.tokenExchanger.url missing");
+  }
+  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+  const response = await axios.post(
+    tokenUrl,
+    "grant_type=client_credentials&scope=apim%3Aadmin",
+    {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${credentials}`,
+      },
+      timeout: 10000,
+    },
+  );
+  const accessToken = response.data?.access_token;
+  if (!accessToken) {
+    throw new Error("CP service token response did not contain access_token");
+  }
+  return accessToken;
+}
 
 /**
  * Returns true if the policy requires payment (BILLING_PLAN !== 'FREE').
@@ -828,8 +866,66 @@ async function handleStripeWebhook(req, orgId) {
     webhookSecret,
   );
   logger.info("handleStripeWebhook: event verified", { orgId, eventType: event?.type });
-  await stripeService.applyWebhookToLocalState(event, { adminDao });
+  const webhookResult = await stripeService.applyWebhookToLocalState(event, { adminDao });
   logger.info("handleStripeWebhook: event processed", { orgId, eventType: event?.type });
+
+  if (webhookResult?.newStatus === PAYMENT_STATUS.CANCELED && webhookResult?.stripeSubscriptionId) {
+    setImmediate(() => {
+      (async () => {
+        try {
+          const subRef = webhookResult.subRef;
+          const cpClientId = config.advanced?.devportalApimSPClientId;
+          const cpClientSecret = secret?.devportalApimSPClientSecret;
+          if (!cpClientId || !cpClientSecret) {
+            logger.warn("handleStripeWebhook: CP service principal not configured, skipping CP delete", { orgId });
+            return;
+          }
+          if (subRef?.subscriptionRefId && subRef?.orgIdentifier) {
+            const token = await getCPServiceToken();
+            await apiRequest(
+              "DELETE",
+              `${controlPlaneUrl}/subscriptions/${subRef.subscriptionRefId}`,
+              { Authorization: `Bearer ${token}` },
+              null,
+              subRef.orgIdentifier,
+            );
+            logger.info("handleStripeWebhook: CP subscription deleted", {
+              orgId,
+              subscriptionRefId: subRef.subscriptionRefId,
+              eventType: event?.type,
+            });
+            try {
+              await adminDao.deleteAppKeyMappingBySubscriptionRef(subRef.orgId, subRef.subscriptionRefId);
+              logger.info("handleStripeWebhook: app key mapping deleted", {
+                orgId,
+                subscriptionRefId: subRef.subscriptionRefId,
+              });
+            } catch (mappingErr) {
+              logger.warn("handleStripeWebhook: app key mapping delete failed (non-fatal)", {
+                orgId,
+                subscriptionRefId: subRef.subscriptionRefId,
+                err: mappingErr.message,
+              });
+            }
+          } else {
+            logger.warn("handleStripeWebhook: no CP subscription ref found, skipping CP delete", {
+              orgId,
+              stripeSubscriptionId: webhookResult.stripeSubscriptionId,
+            });
+          }
+        } catch (cpErr) {
+          logger.warn("handleStripeWebhook: CP subscription deletion failed (non-fatal)", {
+            orgId,
+            stripeSubscriptionId: webhookResult.stripeSubscriptionId,
+            err: cpErr.message,
+          });
+        }
+      })().catch((err) =>
+        logger.warn("handleStripeWebhook: CP cleanup promise rejected", { orgId, err: err.message }),
+      );
+    });
+  }
+
   return true;
 }
 
