@@ -777,8 +777,12 @@ function validateScripts(strContent) {
             const hasSrc = /\bsrc\s*=/i.test(openingTag);
 
             if (!hasSrc) {
-                logger.error("Script validation failed: inline scripts are not allowed", { script });
-                throw new CustomError(400, constants.ERROR_CODE[400], `Inline scripts are not allowed in uploaded themes: ${script}`);
+                const isEmpty = /^<script[^>]*>\s*<\/script>$/i.test(script);
+                if (!isEmpty) {
+                    logger.error("Script validation failed: inline scripts are not allowed", { script });
+                    throw new CustomError(400, constants.ERROR_CODE[400], `Inline scripts are not allowed in uploaded themes: ${script}`);
+                }
+                continue;
             }
             if (!allowedScripts.has(script)) {
                 logger.error("Script validation failed: disallowed script tag found", { script });
