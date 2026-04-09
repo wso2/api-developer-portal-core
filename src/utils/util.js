@@ -740,6 +740,7 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
             orgId: orgId,
             viewName: viewName,
             error: error.message,
+            description: error.description,
             stack: error.stack
         });
         throw new CustomError(error.statusCode || 500, error.message || 'Internal Server Error', error.description || 'Error reading files in directory');
@@ -751,31 +752,47 @@ function validateScripts(strContent) {
     try {
         const allowedScripts = new Set([
             "<script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'></script>",
+            '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>',
+            '<script src="https://js.stripe.com/v3/"></script>',
             "<script src='/technical-scripts/search.js' defer></script>",
             "<script src='/technical-scripts/filter.js' defer></script>",
             "<script src='/technical-scripts/common.js' defer></script>",
             "<script src='/technical-scripts/subscription.js' defer></script>",
-            "<script src='/technical-scripts/add-application-form.js' defer></script>"
+            "<script src='/technical-scripts/add-application-form.js' defer></script>",
+            "<script src='/technical-scripts/platform-subscription.js' defer></script>",
+            "<script src='/technical-scripts/subscription-modal.js' defer></script>",
+            "<script src='/technical-scripts/subscriptions-page.js' defer></script>",
+            "<script src='/technical-scripts/platform-api-keys-page.js' defer></script>",
+            '<script src="/technical-scripts/oauth2-key-generation.js" defer></script>',
+            '<script src="/technical-scripts/api-key-generation.js" defer></script>',
+            '<script src="/technical-scripts/billing.js" defer></script>',
         ]);
 
         const scriptRegex = /<script(?:\s+[^>]*)?>[\s\S]*?<\/script>/g;
         let match;
-        const extractedScripts = new Set();
 
         while ((match = scriptRegex.exec(strContent)) !== null) {
-            extractedScripts.add(match[0].trim());
-        }
+            const script = match[0].trim();
+            const openingTag = script.match(/^<script(?:\s+[^>]*)?>/i)?.[0] || '';
+            const hasSrc = /\bsrc\s*=/i.test(openingTag);
 
-        for (const script of extractedScripts) {
+            if (!hasSrc) {
+                logger.error("Script validation failed: inline scripts are not allowed", { script });
+                throw new CustomError(400, constants.ERROR_CODE[400], `Inline scripts are not allowed in uploaded themes: ${script}`);
+            }
             if (!allowedScripts.has(script)) {
-                throw new CustomError(400, constants.ERROR_CODE[400], `Additional scripts not allowed`);
+                logger.error("Script validation failed: disallowed script tag found", { script });
+                throw new CustomError(400, constants.ERROR_CODE[400], `Additional scripts not allowed: ${script}`);
             }
         }
     } catch (error) {
-        logger.error("Error occurred while validating scripts", {
-            error: error.message,
-            stack: error.stack,
-        });
+        if (!(error instanceof CustomError)) {
+            logger.error("Error occurred while validating scripts", {
+                error: error.message,
+                description: error.description,
+                stack: error.stack,
+            });
+        }
         throw error;
     }
 }
