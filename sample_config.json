@@ -16,7 +16,12 @@
     },
     "disabledRoleValidation": true,
     "disableOrgCallback": true,
-    "disableScopeValidation": true
+    "disableScopeValidation": true,
+    "tokenExchanger": {
+      "enabled": false,
+      "url": "<TOKEN_EXCHANGER_URL>"
+    },
+    "devportalApimSPClientId": "<DP_APIM_SP_CLIENT_ID>"
   },
   "pathToContent": "./resources/default-layout/",
   "pathToDBCert": "./resources/security/ca.pem",
