@@ -18,7 +18,6 @@
  */
 
 const StripeSDK = require("stripe");
-const Sequelize = require("sequelize");
 const { CustomError } = require("../utils/errors/customErrors");
 const logger = require("../config/logger");
 
@@ -270,20 +269,9 @@ async function applyWebhookToLocalState(event, { adminDao }) {
       newStatus = PAYMENT_STATUS.PAYMENT_FAILED;
       break;
 
-    case "customer.subscription.deleted": {
-      const subRef = await adminDao.getSubscriptionRefByBillingSubscriptionId(stripeSubscriptionId);
-      try {
-        await adminDao.deleteSubscriptionByBillingId(stripeSubscriptionId);
-      } catch (err) {
-        if (err instanceof Sequelize.EmptyResultError) {
-          // Row already deleted by a prior delivery — treat as idempotent success.
-          logger.info("applyWebhookToLocalState: subscription already deleted, skipping", { stripeSubscriptionId });
-        } else {
-          throw err;
-        }
-      }
-      return { newStatus: PAYMENT_STATUS.CANCELED, stripeSubscriptionId, eventType, subRef };
-    }
+    case "customer.subscription.deleted":
+      newStatus = PAYMENT_STATUS.CANCELED;
+      break;
 
     case "customer.subscription.updated": {
       const sub = event?.data?.object;
