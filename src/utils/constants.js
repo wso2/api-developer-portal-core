@@ -288,6 +288,7 @@ module.exports = {
         }
     },
     ERROR_CODE: {
+        400: "Bad Request",
         401: "Unauthenticated",
         403: "Forbidden",
         404: "Not Found",
