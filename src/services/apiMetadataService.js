@@ -26,6 +26,7 @@ const config = require(process.cwd() + '/config.json');
 const path = require("path");
 const fs = require("fs").promises;
 const fsDir = require("fs");
+const yaml = require('js-yaml');
 const { validationResult } = require('express-validator');
 const APIDTO = require("../dto/apiDTO");
 const ViewDTO = require("../dto/views");
@@ -40,7 +41,7 @@ const createAPIMetadata = async (req, res) => {
     logger.info('Creating API metadata...', {
         orgId
     });
-    const apiMetadata = JSON.parse(req.body.apiMetadata);
+    const apiMetadata = parseApiMetadataFromYamlRequest(req);
     let apiDefinitionFile, apiFileName = "";
     if (req.files?.apiDefinition?.[0]) {
         const file = req.files.apiDefinition[0];
@@ -328,7 +329,7 @@ const updateAPIMetadata = async (req, res) => {
         orgId,
         apiId
     });
-    const apiMetadata = JSON.parse(req.body.apiMetadata);
+    const apiMetadata = parseApiMetadataFromYamlRequest(req);
     let apiDefinitionFile, apiFileName = "";
     if (req.files?.apiDefinition?.[0]) {
         const file = req.files.apiDefinition[0];
@@ -349,6 +350,19 @@ const updateAPIMetadata = async (req, res) => {
                 "Missing or Invalid fields in the request payload"
             );
         }
+
+        // Check for existing API to determine added and removed labels
+        let existingAPI;
+        if (orgId && apiId && Array.isArray(apiMetadata.apiInfo.labels)) {
+            existingAPI = await getMetadataFromDB(orgId, apiId);
+        }
+        if (Array.isArray(apiMetadata.apiInfo.labels)) {
+            const desiredLabels = [...new Set(apiMetadata.apiInfo.labels.map(label => String(label)))];
+            const currentLabels = new Set(existingAPI?.apiInfo?.labels || []);
+            apiMetadata.apiInfo.addedLabels = desiredLabels.filter(label => !currentLabels.has(label));
+            apiMetadata.apiInfo.removedLabels = [...currentLabels].filter(label => !desiredLabels.includes(label));
+        }
+
         apiMetadata.endPoints.productionURL = changeEndpoint(apiMetadata.endPoints.productionURL);
         apiMetadata.endPoints.sandboxURL = changeEndpoint(apiMetadata.endPoints.sandboxURL);
         normalizeGraphQLEndpoints(apiMetadata);
@@ -1410,6 +1424,70 @@ const getViewsFromDB = async (orgId) => {
     } else {
         return [];
     }
+}
+
+function mapDevportalYamlToApiMetadata(parsedYaml) {
+    if (!parsedYaml || typeof parsedYaml !== 'object') {
+        throw new Sequelize.ValidationError('Invalid API YAML content');
+    }
+    const metadata = parsedYaml.metadata || {};
+    const spec = parsedYaml.spec || {};
+    const apiType = util.resolveApiType(spec.type);
+    const endpoints = spec.endpoints || {};
+    const businessInformation = spec.businessInformation || {};
+
+    const subscriptionPolicies = util.normalizeStringArray(spec.subscriptionPolicies)
+        .map(policyName => ({ policyName }));
+    const visibleGroups = util.normalizeStringArray(spec.visibleGroups);
+
+    return {
+        apiInfo: {
+            apiName: spec.displayName,
+            apiVersion: spec.version,
+            apiDescription: spec.description,
+            provider: spec.provider,
+            referenceID: spec.referenceID,
+            apiHandle: metadata.name,
+            apiType,
+            visibility: spec.visibility || constants.API_VISIBILITY.PUBLIC,
+            visibleGroups: visibleGroups.length > 0 ? visibleGroups : null,
+            tags: util.normalizeStringArray(spec.tags),
+            labels: util.normalizeStringArray(spec.labels),
+            owners: {
+                businessOwner: businessInformation.businessOwner,
+                businessOwnerEmail: businessInformation.businessOwnerEmail,
+                technicalOwner: businessInformation.technicalOwner,
+                technicalOwnerEmail: businessInformation.technicalOwnerEmail,
+            },
+        },
+        endPoints: {
+            sandboxURL: endpoints.sandboxUrl,
+            productionURL: endpoints.productionUrl,
+        },
+        subscriptionPolicies,
+        monetizationInfo: spec.monetizationInfo,
+    };
+}
+
+function parseApiMetadataFromYamlRequest(req) {
+    const apiFile = req.files?.api?.[0];
+    if (!apiFile?.buffer) {
+        throw new Sequelize.ValidationError(
+            "Missing required multipart file field: 'api'"
+        );
+    }
+    if (apiFile.originalname !== 'api.yaml') {
+        throw new Sequelize.ValidationError("Invalid metadata file name. Expected 'api.yaml'");
+    }
+
+    let parsedYaml;
+    try {
+        parsedYaml = yaml.load(apiFile.buffer.toString(constants.CHARSET_UTF8));
+    } catch (e) {
+        throw new Sequelize.ValidationError(`Invalid API YAML file: ${e.message}`);
+    }
+
+    return mapDevportalYamlToApiMetadata(parsedYaml);
 }
 
 module.exports = {

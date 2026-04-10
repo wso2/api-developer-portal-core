@@ -63,6 +63,7 @@ router.post(
     '/organizations/:orgId/apis',
     enforceSecuirty(constants.SCOPES.DEVELOPER),
     multipartHandler.fields([
+        {name: 'api', maxCount: 1},
         {name: 'apiDefinition', maxCount: 1},
         {name: 'schemaDefinition', maxCount: 1},
     ]),
@@ -73,6 +74,7 @@ router.put(
     '/organizations/:orgId/apis/:apiId',
     enforceSecuirty(constants.SCOPES.DEVELOPER),
     multipartHandler.fields([
+        {name: 'api', maxCount: 1},
         {name: 'apiDefinition', maxCount: 1},
         {name: 'schemaDefinition', maxCount: 1},
     ]),
@@ -95,6 +97,7 @@ router.post(
     '/apis',
     enforceSecuirty(constants.SCOPES.DEVELOPER),
     multipartHandler.fields([
+        {name: 'api', maxCount: 1},
         {name: 'apiDefinition', maxCount: 1},
         {name: 'schemaDefinition', maxCount: 1},
     ]),
@@ -104,6 +107,7 @@ router.put(
     '/apis/:apiId',
     enforceSecuirty(constants.SCOPES.DEVELOPER),
     multipartHandler.fields([
+        {name: 'api', maxCount: 1},
         {name: 'apiDefinition', maxCount: 1},
         {name: 'schemaDefinition', maxCount: 1},
     ]),

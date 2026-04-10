@@ -44,6 +44,8 @@ module.exports = {
         UNPUBLISHED: "CREATED"
     },
     API_TYPE: {
+        REST: "REST",
+        SOAP: "SOAP",
         MCP: "MCP",
         MCP_ONLY: "MCPSERVERSONLY",
         API_PROXIES: "APISONLY",
