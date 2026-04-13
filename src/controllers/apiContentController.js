@@ -1047,9 +1047,36 @@ async function convertSDLToIntrospection(sdl) {
     }
 }
 
+const loadAPIsMd = async (req, res) => {
+    const { orgName, viewName } = req.params;
+
+    try {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const orgID = orgDetails.ORG_ID;
+        const metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, null, null, viewName);
+
+        const templateContent = {
+            apiMetadata: metaDataList,
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+        };
+        const md = await util.renderMarkdownTemplateFromAPI(templateContent, orgID, 'pages/apis', viewName);
+
+        res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+        res.send(md);
+    } catch (error) {
+        logger.error('Error generating APIs markdown', {
+            orgName,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).send('# Error\n\nFailed to load API list.');
+    }
+};
+
 module.exports = {
     loadAPIs,
     loadAPIContent,
     loadDocsPage,
     loadDocument,
+    loadAPIsMd,
 };

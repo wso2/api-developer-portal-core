@@ -119,6 +119,30 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
 
 }
 
+async function renderMarkdownTemplateFromAPI(templateContent, orgID, filePath, viewName) {
+
+    const partialName = path.basename(filePath) + '-md';
+    const dbPartial = await adminDao.getOrgContent({
+        orgId: orgID,
+        fileType: 'partial',
+        viewName: viewName,
+        fileName: partialName + '.hbs'
+    });
+    const partialSource = dbPartial
+        ? dbPartial.FILE_CONTENT.toString(constants.CHARSET_UTF8)
+        : fs.readFileSync(
+            path.join(process.cwd(), filePrefix + filePath + '/partials/' + partialName + '.hbs'),
+            constants.CHARSET_UTF8
+        );
+    Handlebars.registerPartial(partialName, partialSource);
+
+    const pageSource = fs.readFileSync(
+        path.join(process.cwd(), filePrefix + filePath + '/page-md.hbs'),
+        constants.CHARSET_UTF8
+    );
+    return Handlebars.compile(pageSource)(templateContent);
+}
+
 async function renderGivenTemplate(templatePage, layoutPage, templateContent) {
 
     const template = Handlebars.compile(templatePage.toString());
@@ -1009,6 +1033,7 @@ module.exports = {
     loadLayoutFromAPI,
     loadTemplateFromAPI,
     renderTemplateFromAPI,
+    renderMarkdownTemplateFromAPI,
     renderGivenTemplate,
     handleError,
     retrieveContentType,
