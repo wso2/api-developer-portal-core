@@ -1094,11 +1094,15 @@ const loadAPIContentMd = async (req, res) => {
             }
         }
 
+        const specExt = apiType === constants.API_TYPE.GRAPHQL ? 'graphql'
+            : apiType === 'SOAP' ? 'xml'
+            : 'json';
         const templateContent = {
             apiMetadata: metaData,
             subscriptionPlans,
             apiDefinition,
             specHeading,
+            specUrl: `${linkBase}/docs/specification.${specExt}`,
             docs: docs.length > 0 ? docs : null,
             baseUrl,
         };
@@ -1142,6 +1146,57 @@ const loadAPIsMd = async (req, res) => {
     }
 };
 
+const loadSpecificationRaw = async (req, res) => {
+    const { orgName, apiHandle, format } = req.params;
+
+    try {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const orgID = orgDetails.ORG_ID;
+        const apiID = await apiDao.getAPIId(orgID, apiHandle);
+        const apiMetadata = await apiDao.getAPIMetadata(orgID, apiID);
+        const apiType = apiMetadata[0].dataValues.API_TYPE;
+
+        let fileName, docType, contentType;
+
+        if (apiType === constants.API_TYPE.GRAPHQL) {
+            if (format !== 'graphql') return res.status(404).send('GraphQL APIs only support specification.graphql.');
+            fileName = constants.FILE_NAME.API_DEFINITION_GRAPHQL;
+            docType = constants.DOC_TYPES.API_DEFINITION;
+            contentType = 'application/graphql';
+        } else if (apiType === 'SOAP') {
+            if (format !== 'xml') return res.status(404).send('SOAP APIs only support specification.xml.');
+            fileName = constants.FILE_NAME.API_DEFINITION_XML;
+            docType = constants.DOC_TYPES.API_DEFINITION;
+            contentType = 'application/xml';
+        } else if (apiType === constants.API_TYPE.MCP) {
+            if (format !== 'json') return res.status(404).send('MCP APIs only support specification.json.');
+            fileName = constants.FILE_NAME.SCHEMA_DEFINITION_FILE_NAME;
+            docType = constants.DOC_TYPES.SCHEMA_DEFINITION;
+            contentType = 'application/json';
+        } else {
+            // REST, WS, WEBSUB
+            if (format !== 'json') return res.status(404).send('This API type only supports specification.json.');
+            fileName = constants.FILE_NAME.API_DEFINITION_FILE_NAME;
+            docType = constants.DOC_TYPES.API_DEFINITION;
+            contentType = 'application/json';
+        }
+
+        const raw = await apiDao.getAPIFile(fileName, docType, orgID, apiID);
+        if (!raw) return res.status(404).send('Specification not found.');
+
+        res.setHeader('Content-Type', `${contentType}; charset=utf-8`);
+        res.send(raw.API_FILE.toString(constants.CHARSET_UTF8));
+    } catch (error) {
+        logger.error('Error loading raw specification', {
+            orgName,
+            format,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).send('Failed to load specification.');
+    }
+};
+
 const loadDocumentMd = async (req, res) => {
     const { orgName, apiHandle, docType, docName } = req.params;
 
@@ -1181,4 +1236,5 @@ module.exports = {
     loadAPIsMd,
     loadAPIContentMd,
     loadDocumentMd,
+    loadSpecificationRaw,
 };

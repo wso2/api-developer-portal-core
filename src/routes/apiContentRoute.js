@@ -88,6 +88,13 @@ router.get('/:orgName/views/:viewName/api/:apiHandle/api-keys', (req, res, next)
     next();
 }, authController.handleSilentSSO, registerPartials, util.enforcePortalMode, ensureAuthenticated, platformApiKeysContentController.loadAPIPlatformApiKeys);
 
+router.get('/:orgName/views/:viewName/:apiType(api|mcp)/:apiHandle/docs/specification.:format(json|graphql|xml)', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, authController.handleSilentSSO, util.enforcePortalMode, ensureAuthenticated, apiController.loadSpecificationRaw);
+
 router.get('/:orgName/views/:viewName/api/:apiHandle/docs/specification', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
         return res.status(404).send('Not Found');
