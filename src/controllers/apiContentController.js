@@ -278,7 +278,7 @@ const loadAPIContent = async (req, res) => {
             
             let apiDetail = null;
             //check whether user has access to the API via control plane
-            if (config.controlPlane?.enabled !== false && !isFederatedAPI) {
+            if (config.controlPlane?.enabled !== false) {
                 try {
                     apiDetail = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${metaData.apiReferenceID}`, null, null);
                     if (!apiDetail) {
@@ -635,11 +635,8 @@ const loadDocument = async (req, res) => {
             templateContent.isGraphQLTryout = tryoutEnabled;
         }
         let apiMetadata = definitionResponse.metaData;
-        
-        const gatewayVendor = apiMetadata?.apiInfo?.gatewayVendor || 'wso2';
-        const isFederatedAPI = constants.FEDERATED_GATEWAY_VENDORS.includes(gatewayVendor);
         //check whether user has access to the API via control plane
-        if (config.controlPlane?.enabled !== false && !isFederatedAPI) {
+        if (config.controlPlane?.enabled !== false) {
             try {
                 let apiName = "";
                 if (apiMetadata && typeof apiMetadata.apiHandle === "string" && apiMetadata.apiHandle.includes("-v")) {
