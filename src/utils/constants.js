@@ -300,6 +300,7 @@ module.exports = {
         'home',
         'api-content',
         'apis-md',
+        'api-landing-md',
     ],
     FEDERATED_GATEWAY_VENDORS: ['aws']
 }

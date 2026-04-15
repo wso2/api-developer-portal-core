@@ -46,6 +46,20 @@ router.get('/:orgName/views/:viewName/mcps', (req, res, next) => {
     next();
 }, registerPartials, ensureAuthenticated, util.enforcePortalMode, apiController.loadAPIs);
 
+router.get('/:orgName/views/:viewName/api/:apiHandle.md', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, authController.handleSilentSSO, util.enforcePortalMode, ensureAuthenticated, apiController.loadAPIContentMd);
+
+router.get('/:orgName/views/:viewName/mcp/:apiHandle.md', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, authController.handleSilentSSO, util.enforcePortalMode, ensureAuthenticated, apiController.loadAPIContentMd);
+
 router.get('/:orgName/views/:viewName/api/:apiHandle', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
         return res.status(404).send('Not Found');
