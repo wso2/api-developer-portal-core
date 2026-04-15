@@ -179,6 +179,13 @@ Handlebars.registerHelper('beforeSeparator', function (value, separator) {
     return value;
 });
 
+Handlebars.registerHelper('stripMdExtension', function (value) {
+    if (typeof value === 'string' && value.endsWith('.md')) {
+        return value.slice(0, -3);
+    }
+    return value;
+});
+
 Handlebars.registerHelper("some", function (array, key, options) {
     if (!Array.isArray(array)) {
         return options.inverse(this);

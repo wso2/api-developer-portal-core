@@ -102,6 +102,13 @@ router.get('/:orgName/views/:viewName/mcp/:apiHandle/docs/specification', (req, 
     next();
 }, authController.handleSilentSSO, registerPartials, util.enforcePortalMode, ensureAuthenticated, apiController.loadDocument);
 
+router.get('/:orgName/views/:viewName/:apiType(api|mcp)/:apiHandle/docs/:docType/:docName.md', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, authController.handleSilentSSO, util.enforcePortalMode, ensureAuthenticated, apiController.loadDocumentMd);
+
 router.get('/:orgName/views/:viewName/api/:apiHandle/docs/:docType/:docName', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
         return res.status(404).send('Not Found');

@@ -1142,6 +1142,37 @@ const loadAPIsMd = async (req, res) => {
     }
 };
 
+const loadDocumentMd = async (req, res) => {
+    const { orgName, apiHandle, docType, docName } = req.params;
+
+    try {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const orgID = orgDetails.ORG_ID;
+        const apiID = await apiDao.getAPIId(orgID, apiHandle);
+        // docName here is without the .md suffix (stripped by the route param)
+        const fullDocName = docName + '.md';
+        const docContentResponse = await apiDao.getAPIDocByName(
+            constants.DOC_TYPES.DOC_ID + docType,
+            fullDocName,
+            orgID,
+            apiID
+        );
+        if (!docContentResponse) {
+            return res.status(404).send('# Not Found\n\nDocument not found.');
+        }
+        const content = docContentResponse.API_FILE.toString(constants.CHARSET_UTF8);
+        res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+        res.send(content);
+    } catch (error) {
+        logger.error('Error loading raw document markdown', {
+            orgName,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).send('# Error\n\nFailed to load document.');
+    }
+};
+
 module.exports = {
     loadAPIs,
     loadAPIContent,
@@ -1149,4 +1180,5 @@ module.exports = {
     loadDocument,
     loadAPIsMd,
     loadAPIContentMd,
+    loadDocumentMd,
 };
