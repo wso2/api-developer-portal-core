@@ -51,16 +51,21 @@ const createAPIMetadata = async (req, res) => {
         if (apiArtifactFile?.buffer) {
             const fullApiBundle = await extractFullApiBundleFromUploadedZip(apiArtifactFile, orgId, 'new-api');
             apiMetadata = fullApiBundle.apiMetadata;
-            apiDefinitionFile = fullApiBundle.apiDefinitionFile;
-            apiFileName = fullApiBundle.apiDefinitionFileName;
+            const preparedDefinition = prepareApiDefinitionForStorage(
+                fullApiBundle.apiDefinitionFileName,
+                fullApiBundle.apiDefinitionFile
+            );
+            apiDefinitionFile = preparedDefinition.apiDefinitionFile;
+            apiFileName = preparedDefinition.apiDefinitionFileName;
             artifactApiContent = await extractApiContentFromUploadedZip(apiArtifactFile, orgId, 'new-api', 'artifact');
             resolvedImageMetadata = buildImageMetadataFromContent(artifactApiContent);
         } else {
             apiMetadata = parseApiMetadataFromYamlRequest(req);
             if (req.files?.apiDefinition?.[0]) {
                 const file = req.files.apiDefinition[0];
-                apiDefinitionFile = file.buffer;
-                apiFileName = file.originalname;
+                const preparedDefinition = prepareApiDefinitionForStorage(file.originalname, file.buffer);
+                apiDefinitionFile = preparedDefinition.apiDefinitionFile;
+                apiFileName = preparedDefinition.apiDefinitionFileName;
             }
         }
 
@@ -368,16 +373,21 @@ const updateAPIMetadata = async (req, res) => {
         if (apiArtifactFile?.buffer) {
             const fullApiBundle = await extractFullApiBundleFromUploadedZip(apiArtifactFile, orgId, apiId);
             apiMetadata = fullApiBundle.apiMetadata;
-            apiDefinitionFile = fullApiBundle.apiDefinitionFile;
-            apiFileName = fullApiBundle.apiDefinitionFileName;
+            const preparedDefinition = prepareApiDefinitionForStorage(
+                fullApiBundle.apiDefinitionFileName,
+                fullApiBundle.apiDefinitionFile
+            );
+            apiDefinitionFile = preparedDefinition.apiDefinitionFile;
+            apiFileName = preparedDefinition.apiDefinitionFileName;
             artifactApiContent = await extractApiContentFromUploadedZip(apiArtifactFile, orgId, apiId, 'artifact');
             resolvedImageMetadata = buildImageMetadataFromContent(artifactApiContent);
         } else {
             apiMetadata = parseApiMetadataFromYamlRequest(req);
             if (req.files?.apiDefinition?.[0]) {
                 const file = req.files.apiDefinition[0];
-                apiDefinitionFile = file.buffer;
-                apiFileName = file.originalname;
+                const preparedDefinition = prepareApiDefinitionForStorage(file.originalname, file.buffer);
+                apiDefinitionFile = preparedDefinition.apiDefinitionFile;
+                apiFileName = preparedDefinition.apiDefinitionFileName;
             }
         }
 
@@ -1534,6 +1544,7 @@ function mapDevportalYamlToApiMetadata(parsedYaml) {
     const metadata = parsedYaml.metadata || {};
     const spec = parsedYaml.spec || {};
     const apiType = util.resolveApiType(spec.type);
+    const apiStatus = spec.status || constants.API_STATUS.PUBLISHED;
     const endpoints = spec.endpoints || {};
     const businessInformation = spec.businessInformation || {};
 
@@ -1550,6 +1561,7 @@ function mapDevportalYamlToApiMetadata(parsedYaml) {
             referenceID: spec.referenceID,
             apiHandle: metadata.name,
             apiType,
+            apiStatus,
             visibility: spec.visibility || constants.API_VISIBILITY.PUBLIC,
             visibleGroups: visibleGroups.length > 0 ? visibleGroups : null,
             tags: util.normalizeStringArray(spec.tags),
@@ -1595,6 +1607,46 @@ function parseApiMetadataFromYamlRequest(req) {
     }
 
     return parseApiMetadataFromYamlFile(apiFile.originalname, apiFile.buffer);
+}
+
+function prepareApiDefinitionForStorage(fileName, fileBuffer) {
+    const sanitizedFileName = path.basename(String(fileName || ''));
+    const extension = path.extname(String(fileName || '')).toLowerCase();
+    const fileContent = fileBuffer.toString(constants.CHARSET_UTF8);
+    if (!sanitizedFileName) {
+        throw new Sequelize.ValidationError('Invalid API definition file name');
+    }
+
+    if (extension === '.json') {
+        try {
+            JSON.parse(fileContent);
+        } catch (e) {
+            throw new Sequelize.ValidationError(`Invalid API definition JSON file: ${e.message}`);
+        }
+    } else if (extension === '.yaml' || extension === '.yml') {
+        try {
+            const parsedDefinition = yaml.load(fileContent);
+            if (parsedDefinition === undefined) {
+                throw new Sequelize.ValidationError('Invalid API definition YAML file: empty content');
+            }
+        } catch (e) {
+            if (e instanceof Sequelize.ValidationError) {
+                throw e;
+            }
+            throw new Sequelize.ValidationError(`Invalid API definition YAML file: ${e.message}`);
+        }
+    } else if (extension === '.xml') {
+        if (!fileContent || fileContent.trim() === '') {
+            throw new Sequelize.ValidationError('Invalid API definition XML file: empty content');
+        }
+    } else {
+        throw new Sequelize.ValidationError("Invalid API definition file type. Expected '.json', '.yaml', '.yml', or '.xml'");
+    }
+
+    return {
+        apiDefinitionFile: fileBuffer,
+        apiDefinitionFileName: sanitizedFileName,
+    };
 }
 
 module.exports = {
