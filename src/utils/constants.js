@@ -301,6 +301,7 @@ module.exports = {
         'api-content',
         'apis-md',
         'api-landing-md',
+        'llms-txt',
     ],
     FEDERATED_GATEWAY_VENDORS: ['aws']
 }

@@ -25,6 +25,13 @@ const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
 const authController = require('../controllers/authController');
 const util = require('../utils/util');
 
+router.get('/:orgName/views/:viewName/llms.txt', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, apiController.loadLlmsTxt);
+
 router.get('/:orgName/views/:viewName/apis.md', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
         return res.status(404).send('Not Found');

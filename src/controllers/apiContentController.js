@@ -1120,6 +1120,43 @@ const loadAPIContentMd = async (req, res) => {
     }
 };
 
+const loadLlmsTxt = async (req, res) => {
+    const { orgName, viewName } = req.params;
+    try {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const orgID = orgDetails.ORG_ID;
+
+        const metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, null, null, viewName);
+        // TODO: filter public APIs
+        //  const publicAPIs = metaDataList.filter(api => api.apiInfo.visibility === 'PUBLIC');
+        const publicAPIs = metaDataList;
+
+        const byType = { REST: [], MCP: [], GraphQL: [], WS: [] };
+        for (const api of publicAPIs) {
+            const type = api.apiInfo.apiType;
+            if (byType[type]) byType[type].push(api);
+        }
+
+        const baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
+        const templateContent = {
+            orgName: orgDetails.ORG_NAME,
+            restAPIs:    byType.REST.length    ? byType.REST    : null,
+            mcpAPIs:     byType.MCP.length     ? byType.MCP     : null,
+            graphqlAPIs: byType.GraphQL.length ? byType.GraphQL : null,
+            wsAPIs:      byType.WS.length      ? byType.WS      : null,
+            baseUrl,
+        };
+
+        const md = await util.renderLlmsTxt(templateContent, orgID, viewName);
+
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.send(md);
+    } catch (error) {
+        logger.error('Error generating llms.txt', { orgName, error: error.message, stack: error.stack });
+        res.status(500).send('# Error\n\nFailed to generate portal index.');
+    }
+};
+
 const loadAPIsMd = async (req, res) => {
     const { orgName, viewName } = req.params;
 
@@ -1234,6 +1271,7 @@ module.exports = {
     loadDocsPage,
     loadDocument,
     loadAPIsMd,
+    loadLlmsTxt,
     loadAPIContentMd,
     loadDocumentMd,
     loadSpecificationRaw,

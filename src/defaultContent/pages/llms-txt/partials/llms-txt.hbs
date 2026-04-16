@@ -1,0 +1,35 @@
+# {{orgName}} Developer Portal
+
+Empower your development with our APIs & MCP Servers. Browse, subscribe, and integrate in minutes.
+{{#if restAPIs}}
+
+## APIs
+
+{{#restAPIs}}
+- [{{apiInfo.apiName}} {{apiInfo.apiVersion}}]({{../baseUrl}}/api/{{apiHandle}}.md){{#if apiInfo.apiDescription}} — {{apiInfo.apiDescription}}{{/if}}
+{{/restAPIs}}
+{{/if}}
+{{#if mcpAPIs}}
+
+## MCPs
+
+{{#mcpAPIs}}
+- [{{apiInfo.apiName}} {{apiInfo.apiVersion}}]({{../baseUrl}}/mcp/{{apiHandle}}.md){{#if apiInfo.apiDescription}} — {{apiInfo.apiDescription}}{{/if}}
+{{/mcpAPIs}}
+{{/if}}
+{{#if graphqlAPIs}}
+
+## GraphQL APIs
+
+{{#graphqlAPIs}}
+- [{{apiInfo.apiName}} {{apiInfo.apiVersion}}]({{../baseUrl}}/api/{{apiHandle}}.md){{#if apiInfo.apiDescription}} — {{apiInfo.apiDescription}}{{/if}}
+{{/graphqlAPIs}}
+{{/if}}
+{{#if wsAPIs}}
+
+## Async / WebSocket APIs
+
+{{#wsAPIs}}
+- [{{apiInfo.apiName}} {{apiInfo.apiVersion}}]({{../baseUrl}}/api/{{apiHandle}}.md){{#if apiInfo.apiDescription}} — {{apiInfo.apiDescription}}{{/if}}
+{{/wsAPIs}}
+{{/if}}

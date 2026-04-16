@@ -119,6 +119,29 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
 
 }
 
+async function renderLlmsTxt(templateContent, orgID, viewName) {
+
+    const dbPartial = await adminDao.getOrgContent({
+        orgId: orgID,
+        fileType: 'partial',
+        viewName: viewName,
+        fileName: 'llms-txt.hbs'
+    });
+    const partialSource = dbPartial
+        ? dbPartial.FILE_CONTENT.toString(constants.CHARSET_UTF8)
+        : fs.readFileSync(
+            path.join(process.cwd(), filePrefix + 'pages/llms-txt/partials/llms-txt.hbs'),
+            constants.CHARSET_UTF8
+        );
+    Handlebars.registerPartial('llms-txt', partialSource);
+
+    const pageSource = fs.readFileSync(
+        path.join(process.cwd(), filePrefix + 'pages/llms-txt/page.hbs'),
+        constants.CHARSET_UTF8
+    );
+    return Handlebars.compile(pageSource)(templateContent);
+}
+
 async function renderMarkdownTemplateFromAPI(templateContent, orgID, filePath, viewName) {
 
     const partialName = path.basename(filePath) + '-md';
@@ -1034,6 +1057,7 @@ module.exports = {
     loadTemplateFromAPI,
     renderTemplateFromAPI,
     renderMarkdownTemplateFromAPI,
+    renderLlmsTxt,
     renderGivenTemplate,
     handleError,
     retrieveContentType,
