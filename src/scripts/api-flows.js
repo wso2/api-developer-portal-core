@@ -141,7 +141,7 @@ function renderApiCards(query) {
                         <span class="fw-semibold small">${sanitizeInput(cb.dataset.apiName)}</span>
                         <span class="api-flow-type-pill">${sanitizeInput(cb.dataset.apiType || '')}</span>
                     </div>
-                    <p class="text-muted mb-0 af-api-card-desc">${sanitizeInput(cb.dataset.apiDescription || '')}</p>
+                    <p class="mb-0 af-api-card-desc">${sanitizeInput(cb.dataset.apiDescription || '')}</p>
                 </div>
             </div>
         `;
@@ -186,7 +186,7 @@ function setPickerSelection(apiIds) {
 // Agent Prompt Generation (client-side mirror)
 // ─────────────────────────────────────────────
 
-function buildAgentPrompt(name, description, apis, orgHandle, viewName = 'default') {
+function buildAgentPrompt(name, description, apis, orgHandle, viewName = 'default', handle = '') {
     if (!name && !description) return '';
 
     const apiSections = apis.map((api, i) => {
@@ -194,11 +194,12 @@ function buildAgentPrompt(name, description, apis, orgHandle, viewName = 'defaul
         const specPath = orgHandle
             ? `/${orgHandle}/views/${viewName}/api/${handle}/docs/specification.json`
             : `/views/${viewName}/api/${handle}/docs/specification.json`;
+        const specUrl = `${window.location.origin}${specPath}`;
         return `### ${i + 1}. ${api.apiName || api.API_NAME}
 - **Type**: ${api.apiType || api.API_TYPE || 'REST'}
 - **Base URL**: ${api.productionUrl || api.PRODUCTION_URL || '(not set)'}
 - **Description**: ${api.apiDescription || api.API_DESCRIPTION || '(no description)'}
-- **Specification**: ${specPath}`;
+- **Specification**: ${specUrl}`;
     }).join('\n\n');
 
     const apiListForConstraints = apis.map(a => `"${a.apiName || a.API_NAME}"`).join(', ');
@@ -211,13 +212,26 @@ function buildAgentPrompt(name, description, apis, orgHandle, viewName = 'defaul
         return `- **${name}** (${type}): ${desc}\n  Base URL: ${baseUrl}`;
     }).join('\n');
 
-    const section1 = `You are an API orchestration agent executing the "${name}" flow.
+    const workflowUrl = (handle && orgHandle)
+        ? `\nWorkflow details: ${window.location.origin}/${orgHandle}/views/${viewName}/api-workflows/${handle}/view.json`
+        : '';
+
+    const section1 = `You are an API orchestration agent executing the "${name}" flow.${workflowUrl}
 
 ## Objective
 ${description}
 
 ## Available APIs
 ${apiSections || '_(No APIs assigned to this flow yet)_'}
+
+## Authentication
+Before making any API calls:
+1. Read llms.txt to identify the required security scheme(s) for each API (e.g., API key, OAuth2).
+2. For each distinct credential required, ask the user to provide it. Example prompts:
+   - "Please provide your Bearer token for <API Name>:"
+   - "Please provide your API key for <API Name> (sent as the <header-name> header):"
+3. Do not proceed with execution until all required credentials have been supplied.
+4. Include the provided credentials in the appropriate headers or query parameters for every request to that API.
 
 ## Execution Instructions
 1. Read the specification of each API listed above before calling any endpoint.
@@ -229,13 +243,12 @@ ${apiSections || '_(No APIs assigned to this flow yet)_'}
 
 ## Constraints
 - Only call APIs listed in the **Available APIs** section above: ${apiListForConstraints || 'none assigned'}.
-- Always include required authentication headers as specified in each API's security scheme.
 - Do not retry a failed request more than 3 times before reporting a failure.
 - Never expose raw credentials or tokens in the final output summary.
 - Treat all 4xx responses as non-retryable errors unless the API specification explicitly states otherwise.`;
 
     const section2 = `You are a software development agent helping a developer build an application
-that implements the "${name}" workflow.
+that implements the "${name}" flow.${workflowUrl}
 
 ## Use Case Overview
 ${description}
@@ -283,7 +296,10 @@ function updatePromptFromForm() {
     const pathParts = window.location.pathname.split('/');
     const orgHandle = pathParts[1] || '';
     const viewName = pathParts[3] || 'default';
-    const prompt = buildAgentPrompt(name, description, apis, orgHandle, viewName);
+    const editingId = document.getElementById('editingApiFlowId')?.value || '';
+    const editingFlow = editingId ? (window.apiFlowsData || []).find(f => String(f.apiFlowId) === String(editingId)) : null;
+    const handle = editingFlow?.handle || '';
+    const prompt = buildAgentPrompt(name, description, apis, orgHandle, viewName, handle);
     const promptField = document.getElementById('agentPromptField');
     if (promptField) promptField.value = prompt;
 }
@@ -382,7 +398,22 @@ async function saveApiFlow(orgID, viewName, status) {
 // Delete
 // ─────────────────────────────────────────────
 
+function openDeleteApiFlowModal(orgID, viewName, apiFlowId, name) {
+    document.getElementById('deleteApiFlowModalTitle').textContent = `Delete API Flow`;
+    document.getElementById('deleteApiFlowModalMessage').textContent = `Are you sure you want to delete "${name}"? This action cannot be undone.`;
+    const confirmBtn = document.getElementById('deleteApiFlowConfirmBtn');
+    confirmBtn.disabled = false;
+    confirmBtn.innerHTML = 'Confirm';
+    confirmBtn.onclick = () => deleteApiFlow(orgID, viewName, apiFlowId);
+    const modal = new bootstrap.Modal(document.getElementById('deleteApiFlowModal'));
+    modal.show();
+}
+
 async function deleteApiFlow(orgID, viewName, apiFlowId) {
+    const confirmBtn = document.getElementById('deleteApiFlowConfirmBtn');
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1 common-btn-danger" role="status" aria-hidden="true"></span> Deleting…';
+
     const response = await fetch(`/devportal/organizations/${orgID}/views/${viewName}/api-flows/${apiFlowId}`, {
         method: 'DELETE',
         credentials: 'same-origin'
@@ -390,6 +421,8 @@ async function deleteApiFlow(orgID, viewName, apiFlowId) {
     if (response.ok) {
         window.location.reload();
     } else {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = 'Confirm';
         showAlert('Failed to delete API Flow', 'error');
     }
 }
@@ -428,6 +461,7 @@ function openEditApiFlow(apiFlowId) {
 // Agent Prompt modal
 // ─────────────────────────────────────────────
 
+
 function openPromptModal(apiFlowId) {
     const data = (window.apiFlowsData || []).find(f => f.apiFlowId === apiFlowId);
     if (!data) return;
@@ -438,14 +472,12 @@ function openPromptModal(apiFlowId) {
     modal.show();
 }
 
-function copyAgentPrompt() {
+function copyPrompt() {
     const content = document.getElementById('agentPromptContent').textContent;
     navigator.clipboard.writeText(content).then(() => {
         const btn = document.getElementById('copyPromptBtn');
         btn.innerHTML = '<i class="bi bi-check2 me-1"></i> Copied!';
-        setTimeout(() => {
-            btn.innerHTML = '<i class="bi bi-clipboard me-1"></i> Copy';
-        }, 2000);
+        setTimeout(() => { btn.innerHTML = '<i class="bi bi-clipboard me-1"></i> Copy'; }, 2000);
     });
 }
 

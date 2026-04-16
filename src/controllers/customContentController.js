@@ -97,6 +97,7 @@ const loadCustomContent = async (req, res) => {
                     firstName: req.user.firstName,
                     lastName: req.user.lastName,
                     email: req.user.email,
+                    isAdmin: req.user.isAdmin,
                 }
             }
             html = await renderTemplateFromAPI(content, orgId, orgName, filePath, viewName);

@@ -139,6 +139,7 @@ const loadSubscriptions = async (req, res) => {
             lastName: req.user.lastName,
             email: req.user.email,
             imageURL: req.user.picture || req.user.imageURL || '/images/default-profile.png',
+            isAdmin: req.user.isAdmin,
         };
 
         const templateContent = {
@@ -291,6 +292,7 @@ const loadAPISubscriptions = async (req, res) => {
             lastName: req.user.lastName,
             email: req.user.email,
             imageURL: req.user.picture || req.user.imageURL || '/images/default-profile.png',
+            isAdmin: req.user.isAdmin,
         };
 
         const templateContent = {

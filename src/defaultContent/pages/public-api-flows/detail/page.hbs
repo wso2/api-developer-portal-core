@@ -1,0 +1,193 @@
+<!--
+ * Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
+ *
+ * Public API Flow Detail Page
+ -->
+<head>
+    <link rel="stylesheet" href="/technical-styles/public-api-flows.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@jentic/arazzo-ui@latest/dist/arazzo-ui.css">
+    <script src="https://cdn.jsdelivr.net/npm/@jentic/arazzo-ui@latest/dist/arazzo-ui.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+</head>
+
+<main>
+    {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode}}
+    {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode}}
+
+    <div class="flow-detail-section">
+        {{!-- Back Button --}}
+        <a href="{{baseUrl}}/api-workflows" class="flow-detail-back">
+            <i class="bi bi-arrow-left"></i>
+            Back
+        </a>
+
+        {{!-- Header --}}
+        <div class="flow-detail-header">
+            <div class="flow-detail-header-content">
+                <h1>{{flow.name}}</h1>
+                <p>{{flow.description}}</p>
+            </div>
+            <div class="flow-header-actions">
+                <button class="btn-prompt" onclick="openAgentPromptModal()">
+                    <i class="bi bi-file-code"></i>
+                    Agent Prompt
+                </button>
+            </div>
+        </div>
+
+        {{!-- Content --}}
+        <div class="flow-detail-content">
+            {{!-- Arazzo UI Viewer --}}
+            <div class="arazzo-viewer-container">
+                <div id="arazzoViewer"></div>
+            </div>
+        </div>
+    </div>
+
+    {{> alert}}
+
+    {{!-- Agent Prompt Modal --}}
+    <div class="modal-overlay" id="agentPromptModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Agent Prompt</h2>
+                <div class="modal-header-actions">
+                    <button class="modal-close" onclick="closeAgentPromptModal()">&times;</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <p>Use this prompt to let your AI agent execute the workflow—handling API calls, dependencies, and errors automatically</p>
+                <div class="modal-prompt-box">
+                    <button class="modal-prompt-copy-btn" onclick="copyPromptFromModal('{{flow.name}}')"
+                        title="Copy prompt to clipboard" aria-label="Copy prompt">
+                        <i class="bi bi-clipboard"></i>
+                        <span>Copy</span>
+                    </button>
+                    <pre id="modalAgentPromptText">{{flow.agentPrompt}}</pre>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal-close" onclick="closeAgentPromptModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    {{!-- Hidden container for spec content --}}
+    <textarea id="specContent" style="display: none;">{{flow.content}}</textarea>
+</main>
+
+<script>
+function openAgentPromptModal() {
+    const modal = document.getElementById('agentPromptModal');
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeAgentPromptModal() {
+    const modal = document.getElementById('agentPromptModal');
+    modal.classList.remove('show');
+    document.body.style.overflow = 'auto';
+}
+
+// Close modal when clicking on overlay
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('agentPromptModal');
+    if (modal) {
+        modal.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                closeAgentPromptModal();
+            }
+        });
+    }
+});
+
+// Close modal with escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeAgentPromptModal();
+    }
+});
+
+function copyPromptFromModal(flowName) {
+    const promptText = document.getElementById('modalAgentPromptText').textContent;
+    navigator.clipboard.writeText(promptText).then(() => {
+        showNotification(`Prompt for "${flowName}" copied!`, 'success');
+    }).catch(() => {
+        showNotification('Failed to copy prompt', 'error');
+    });
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 10);
+
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 3000);
+}
+
+// Initialize Arazzo UI Component
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        const specContent = document.getElementById('specContent').value.trim();
+        const viewerContainer = document.getElementById('arazzoViewer');
+
+        if (!specContent) {
+            viewerContainer.innerHTML = '<p style="padding: 2rem; text-align: center; color: #999;">No specification content available</p>';
+            return;
+        }
+
+        console.log('Initializing Arazzo UI component...');
+        console.log('ArazzoUI available:', typeof window.ArazzoUI);
+
+        // Initialize Arazzo UI with the spec content
+        // The component accepts inline YAML/JSON strings
+        if (window.ArazzoUI) {
+            console.log('Starting Arazzo UI initialization...');
+            console.log('Container element:', document.getElementById('arazzoViewer'));
+            console.log('Container height:', document.getElementById('arazzoViewer').offsetHeight);
+
+            const ui = window.ArazzoUI({
+                dom_id: '#arazzoViewer',
+                document: specContent,  // Pass the YAML/JSON content directly
+                view: 'split'           // Show diagram and docs side-by-side
+            });
+
+            console.log('Arazzo UI initialized successfully');
+            console.log('UI instance:', ui);
+
+            // Log any errors that might have occurred
+            setTimeout(() => {
+                console.log('Container after init:', document.getElementById('arazzoViewer').innerHTML.substring(0, 200));
+            }, 1000);
+        } else {
+            throw new Error('Arazzo UI library not loaded. Check that the script loaded correctly.');
+        }
+
+    } catch (error) {
+        console.error('Error initializing Arazzo UI:', error);
+        document.getElementById('arazzoViewer').innerHTML = `
+            <div style="padding: 2rem; text-align: center; color: #e74c3c; font-family: sans-serif;">
+                <p><strong>Error loading Arazzo UI</strong></p>
+                <p style="font-size: 0.9rem; color: #999;">${error.message}</p>
+                <p style="font-size: 0.85rem; color: #999;">Check browser console for details</p>
+            </div>
+        `;
+    }
+});
+</script>

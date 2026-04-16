@@ -52,6 +52,7 @@ const buildProfile = (req) => {
         firstName: req.user.firstName,
         lastName: req.user.lastName,
         email: req.user.email,
+        isAdmin: req.user.isAdmin,
     };
 };
 
@@ -482,6 +483,7 @@ const loadApplications = async (req, res) => {
                     firstName: req.user.firstName,
                     lastName: req.user.lastName,
                     email: req.user.email,
+                    isAdmin: req.user.isAdmin,
                 }
             }
 

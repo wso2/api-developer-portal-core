@@ -171,6 +171,7 @@ const loadAPIs = async (req, res) => {
                     firstName: req.user.firstName,
                     lastName: req.user.lastName,
                     email: req.user.email,
+                    isAdmin: req.user.isAdmin,
                 }
             }
             const templateContent = {
@@ -439,6 +440,7 @@ const loadAPIContent = async (req, res) => {
                     firstName: req.user.firstName,
                     lastName: req.user.lastName,
                     email: req.user.email,
+                    isAdmin: req.user.isAdmin,
                 }
             }
             let schemaFileName = constants.FILE_NAME.API_DEFINITION_XML;
@@ -570,6 +572,7 @@ const loadDocsPage = async (req, res) => {
                     firstName: req.user.firstName,
                     lastName: req.user.lastName,
                     email: req.user.email,
+                    isAdmin: req.user.isAdmin,
                 }
             }
 
@@ -1047,9 +1050,26 @@ async function convertSDLToIntrospection(sdl) {
     }
 }
 
+const getAPISpecJSON = async (req, res) => {
+    const { orgName, apiHandle, viewName } = req.params;
+    try {
+        const definitionResponse = await loadAPIDefinition(orgName, viewName, apiHandle);
+        const raw = definitionResponse.swagger || definitionResponse.asyncapi || definitionResponse.graphql;
+        if (!raw) {
+            return res.status(404).json({ message: 'API specification not found' });
+        }
+        const spec = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        res.status(200).json(spec);
+    } catch (error) {
+        logger.error('Error serving API specification JSON', { error: error.message, orgName, apiHandle });
+        res.status(500).json({ message: 'Error retrieving API specification' });
+    }
+};
+
 module.exports = {
     loadAPIs,
     loadAPIContent,
     loadDocsPage,
     loadDocument,
+    getAPISpecJSON,
 };

@@ -1,0 +1,292 @@
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+            <span id="apiFlowFormTitle">Create API Workflow</span>
+            <span id="editingFlowStatusBadge" class="api-flow-status-badge d-none"></span>
+        </div>
+        <button type="button" class="btn-close" id="cancelApiFlowBtn" aria-label="Close"></button>
+    </div>
+    <div class="card-body px-4 py-4">
+
+        {{!-- Hidden field to track edit state --}}
+        <input type="hidden" id="editingApiFlowId" value="" />
+
+        {{!-- ── SECTION 1: Basic Information ── --}}
+        <div class="af-section">
+            <div class="af-section-header">
+                <div class="af-step-badge">1</div>
+                <div>
+                    <div class="af-section-title">Basic Information</div>
+                    <div class="af-section-subtitle">Name and describe your API flow</div>
+                </div>
+            </div>
+            <div class="af-section-body">
+
+                {{!-- Name --}}
+                <div class="mb-3">
+                    <label for="apiFlowName" class="form-label fw-semibold">
+                        Name <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" class="form-control" id="apiFlowName"
+                        placeholder="e.g. User Onboarding Flow" maxlength="120" />
+                    <div class="invalid-feedback">Name is required.</div>
+                </div>
+
+                {{!-- Description --}}
+                <div class="mb-3">
+                    <label for="apiFlowDescription" class="form-label fw-semibold">
+                        Description <span class="text-danger">*</span>
+                    </label>
+                    <textarea class="form-control" id="apiFlowDescription" rows="2"
+                        placeholder="Describe what this flow accomplishes…"></textarea>
+                    <div class="invalid-feedback">Description is required.</div>
+                </div>
+
+            </div>
+        </div>
+
+        {{!-- ── SECTION 2: Associated APIs ── --}}
+        <div class="af-section">
+            <div class="af-section-header">
+                <div class="af-step-badge">2</div>
+                <div>
+                    <div class="af-section-title">Associated APIs</div>
+                    <div class="af-section-subtitle">Select APIs that participate in this flow — their specs power the agent prompt and Arazzo template</div>
+                </div>
+            </div>
+            <div class="af-section-body">
+
+                {{#if orgAPIs.length}}
+
+                {{!-- Hidden checkboxes — source of truth for selection state --}}
+                <div style="display:none;" id="apiCheckboxStore">
+                    {{#each orgAPIs}}
+                    <input type="checkbox" class="api-flow-api-checkbox"
+                        value="{{this.apiId}}"
+                        data-api-name="{{this.apiName}}"
+                        data-api-handle="{{this.apiHandle}}"
+                        data-api-description="{{this.apiDescription}}"
+                        data-api-type="{{this.apiType}}"
+                        data-production-url="{{this.productionUrl}}" />
+                    {{/each}}
+                </div>
+
+                {{!-- Search --}}
+                <div class="mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0">
+                            <i class="bi bi-search text-muted" style="font-size: 0.85rem;"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0" id="apiCardSearch"
+                            placeholder="Filter APIs by name, type, or description…" autocomplete="off" />
+                    </div>
+                </div>
+
+                {{!-- API Card Grid --}}
+                <div class="af-api-grid" id="apiCardGrid"></div>
+
+                {{!-- Selected count --}}
+                <div class="mt-2">
+                    <span id="apiSelectedCount" class="text-muted small"></span>
+                </div>
+
+                {{else}}
+                <div class="text-muted small fst-italic border rounded p-3">
+                    No APIs found in this organization. <a href="apis">Add APIs</a> first.
+                </div>
+                {{/if}}
+
+            </div>
+        </div>
+
+        {{!-- ── SECTION 3: Flow Definition ── --}}
+        <div class="af-section af-section--last">
+            <div class="af-section-header">
+                <div class="af-step-badge">3</div>
+                <div>
+                    <div class="af-section-title">Flow Definition</div>
+                    <div class="af-section-subtitle">Define how your APIs should be orchestrated</div>
+                </div>
+            </div>
+            <div class="af-section-body">
+
+                {{!-- Tab Nav --}}
+                <ul class="nav nav-tabs af-flow-tabs mb-4 d-flex flex-row" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="af-flow-tab active" id="tab-arazzo" data-bs-toggle="tab"
+                            data-bs-target="#pane-arazzo" type="button" role="tab"
+                            aria-controls="pane-arazzo" aria-selected="true">
+                            <i class="bi bi-code-slash"></i> Arazzo Spec
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="af-flow-tab" id="tab-visual" data-bs-toggle="tab"
+                            data-bs-target="#pane-visual" type="button" role="tab"
+                            aria-controls="pane-visual" aria-selected="false">
+                            <i class="bi bi-diagram-3"></i> Agent Prompt
+                        </button>
+                    </li>
+                </ul>
+
+                {{!-- Tab Content --}}
+                <div class="tab-content">
+
+                    {{!-- Visual Builder Pane --}}
+                    <div class="tab-pane fade" id="pane-visual" role="tabpanel" aria-labelledby="tab-visual">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <label for="agentPromptField" class="form-label fw-semibold mb-0">
+                                    Agent Prompt <span class="text-danger">*</span>
+                                </label>
+                                <p class="text-muted small mb-0 mt-1">
+                                    Auto-generated prompt to guide AI agents in executing workflows and integrating
+                                    APIs—fully customizable to fit your use case.
+                                </p>
+                            </div>
+                            <div class="d-flex gap-2 flex-shrink-0 ms-3">
+                                <button type="button" class="common-btn-primary" id="regeneratePromptBtn"
+                                    onclick="regenerateAgentPrompt()"
+                                    title="Generate agent prompt from selected APIs and description">
+                                    <i class="bi bi-magic me-1"></i> Generate from APIs
+                                </button>
+                                <button type="button" class="common-btn-outlined"
+                                    onclick="copyFieldPrompt()" title="Copy to clipboard">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <textarea class="form-control api-flow-prompt-editor" id="agentPromptField" rows="14"
+                            placeholder="Click 'Generate from APIs' to create your agent prompt, or write one manually…"></textarea>
+                        <div class="invalid-feedback">Agent prompt is required.</div>
+                        <div class="form-text mt-1">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Regenerate after changing APIs or description.
+                        </div>
+                    </div>
+
+                    {{!-- Arazzo Spec Pane --}}
+                    <div class="tab-pane fade show active" id="pane-arazzo" role="tabpanel" aria-labelledby="tab-arazzo">
+
+                        {{!-- Spec Format --}}
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold mb-2">Spec Format</label>
+                            <div class="d-flex gap-2">
+                                <input type="radio" class="btn-check" name="apiFlowContentType" id="contentTypeArazzo"
+                                    value="ARAZZO" autocomplete="off" checked onchange="onContentTypeChange()" />
+                                <label class="btn btn-sm common-btn-outlined" for="contentTypeArazzo">Arazzo Spec</label>
+
+                                <input type="radio" class="btn-check" name="apiFlowContentType" id="contentTypeLlmsTxt"
+                                    value="LLMS_TXT" autocomplete="off" disabled onchange="onContentTypeChange()" />
+                                <label class="btn btn-sm common-btn-outlined disabled" for="contentTypeLlmsTxt"
+                                    title="Coming soon">llms.txt</label>
+                            </div>
+                        </div>
+
+                        {{!-- Arazzo Spec Editor --}}
+                        <div id="arazoContentWrapper">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <label for="arazoContent" class="form-label fw-semibold mb-0">
+                                        Arazzo Specification <span class="text-danger">*</span>
+                                    </label>
+                                    <p class="text-muted small mb-0 mt-1">
+                                        Define the exact API call sequence using the
+                                        <a href="https://spec.openapis.org/arazzo/latest.html" target="_blank" rel="noopener">Arazzo specification</a>.
+                                        Generate a starter template, upload an existing file, or write manually.
+                                    </p>
+                                </div>
+                                <div class="d-flex gap-2 flex-shrink-0 ms-3">
+                                    <button type="button" class="common-btn-primary" onclick="generateArazzoSpec()"
+                                        title="Generate a template from selected APIs">
+                                        <i class="bi bi-magic me-1"></i> Generate
+                                    </button>
+                                    <button type="button" class="common-btn-outlined"
+                                        onclick="document.getElementById('arazoFileInput').click()"
+                                        title="Upload Arazzo YAML or JSON file">
+                                        <i class="bi bi-upload me-1"></i> Upload
+                                    </button>
+                                    <button type="button" class="common-btn-outlined"
+                                        onclick="copyArazzoSpec()"
+                                        title="Copy to clipboard">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                    <input type="file" id="arazoFileInput" accept=".yaml,.yml,.json" style="display:none"
+                                        onchange="loadArazzoFile(event)" />
+                                </div>
+                            </div>
+                            <textarea class="form-control api-flow-code-editor" id="arazoContent"
+                                style="min-height: 320px; resize: vertical;"
+                                placeholder="arazzo: '1.0.0'&#10;info:&#10;  title: My Flow&#10;  version: 1.0.0&#10;workflows:&#10;  - workflowId: my-flow&#10;    steps: []"></textarea>
+                            <div class="invalid-feedback">Arazzo Specification is required.</div>
+                            <div class="form-text mt-1">
+                                <i class="bi bi-info-circle me-1"></i>
+                                YAML or JSON. Stored alongside the agent prompt and usable by Arazzo-compatible runtimes.
+                            </div>
+                        </div>
+
+                        {{!-- llms.txt Editor --}}
+                        <div id="llmsTxtContentWrapper" class="d-none">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <label for="llmsTxtContent" class="form-label fw-semibold mb-0">
+                                        llms.txt Content
+                                        <span class="text-muted fw-normal small ms-1">(optional)</span>
+                                    </label>
+                                    <p class="text-muted small mb-0 mt-1">
+                                        Markdown-based <a href="https://llmstxt.org" target="_blank" rel="noopener">llms.txt</a>
+                                        file describing how LLMs should interact with your APIs.
+                                    </p>
+                                </div>
+                                <div class="d-flex gap-2 flex-shrink-0 ms-3">
+                                    <button type="button" class="common-btn-outlined"
+                                        onclick="document.getElementById('llmsTxtFileInput').click()"
+                                        title="Upload llms.txt file">
+                                        <i class="bi bi-upload me-1"></i> Upload
+                                    </button>
+                                    <button type="button" class="common-btn-outlined af-icon-btn" onclick="copyLlmsTxt()"
+                                        title="Copy content to clipboard" aria-label="Copy content">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                    <input type="file" id="llmsTxtFileInput" accept=".txt,.md" style="display:none"
+                                        onchange="loadLlmsTxtFile(event)" />
+                                </div>
+                            </div>
+                            <textarea class="form-control api-flow-code-editor" id="llmsTxtContent"
+                                style="min-height: 320px; resize: vertical;"
+                                placeholder="# My API Flow&#10;&#10;> Brief description for LLMs&#10;&#10;## APIs&#10;&#10;- [API Name](url): Short description"></textarea>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        {{!-- Form actions --}}
+        <div class="d-flex justify-content-end align-items-center gap-2 mt-4 pt-3 border-top">
+            <button type="button" class="common-btn-outlined" id="cancelApiFlowBtn2">Cancel</button>
+            <div class="btn-group" id="saveApiFlowGroup">
+                <button type="button" class="common-btn-primary af-save-main" id="saveApiFlowBtn"
+                    onclick="saveApiFlow(currentOrgID, currentViewName, 'PUBLISHED')">
+                    <i class="bi bi-send me-1"></i> Publish Flow
+                </button>
+                <button type="button"
+                    class="common-btn-primary af-save-toggle dropdown-toggle dropdown-toggle-split"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="visually-hidden">More save options</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end af-save-dropdown">
+                    <li>
+                        <button type="button" class="dropdown-item af-save-dropdown-item"
+                            onclick="saveApiFlow(currentOrgID, currentViewName, 'DRAFT')">
+                            <i class="bi bi-file-earmark-text me-2"></i>
+                            <span class="fw-semibold">Save as Draft</span>
+                            <div class="af-save-dropdown-hint">Save without making it visible to consumers</div>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</div>
