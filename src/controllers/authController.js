@@ -279,7 +279,8 @@ const renderBillingPage = async (req, res) => {
                 lastName: req.user?.lastName || '',
                 imageURL: req.user?.imageURL || '/images/default-avatar.png',
                 organization: orgName,
-                orgId: orgId
+                orgId: orgId,
+                isAdmin: req.user?.isAdmin || false,
             },
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
             devportalMode: config.devportalMode,

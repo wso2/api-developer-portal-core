@@ -1,0 +1,13 @@
+<head>
+    <link rel="stylesheet" href="/technical-styles/api-flows.css">
+    <script src='/technical-scripts/api-flows.js' defer></script>
+</head>
+
+{{> header profile=profile baseUrl=baseUrl}}
+{{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode}}
+
+<div class="container mt-4 mb-4">
+    {{> api-flows}}
+</div>
+
+{{> alert}}
