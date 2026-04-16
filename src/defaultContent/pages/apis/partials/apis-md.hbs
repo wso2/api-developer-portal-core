@@ -1,0 +1,11 @@
+Discover, Integrate, and Innovate with Scalable APIs
+
+Explore our extensive API catalog and discover how to integrate them seamlessly into your application.
+
+# APIs
+
+{{#apiMetadata}}
+{{#unless (eq apiInfo.apiType "MCP")}}
+- [{{apiInfo.apiName}} v{{apiInfo.apiVersion}}]({{../baseUrl}}/api/{{apiHandle}}.md){{#if apiInfo.apiDescription}} - {{apiInfo.apiDescription}}{{/if}}
+{{/unless}}
+{{/apiMetadata}}

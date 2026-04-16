@@ -215,16 +215,11 @@ async function registerDocsPageContent(req, orgID, partialObject) {
   const { orgName, apiHandle, viewName, docType, docName } = req.params;
   const apiID = await apiDao.getAPIId(orgID, apiHandle);
   let markdownHtml = "";
-  let docContentResponse = await apiDao.getAPIDocByName(constants.DOC_TYPES.DOC_ID + docType, docName, orgID, apiID);
+  const docContentResponse = await apiDao.getAPIDocByName(constants.DOC_TYPES.DOC_ID + docType, docName + ".md", orgID, apiID);
   if (docContentResponse !== null) {
-    if (docName.endsWith(".md")) {
-      const markdownContent = docContentResponse.API_FILE.toString("utf8");
-      markdownHtml = markdownContent ? markdown.parse(markdownContent) : "";
-      partialObject[constants.FILE_NAME.API_DOC_PARTIAL_NAME] = hbs.handlebars.partials[constants.FILE_NAME.API_DOC_PARTIAL_NAME];
-    } else {
-      let additionalDocContent = docContentResponse.API_FILE.toString("utf8");
-      partialObject[constants.FILE_NAME.API_DOC_PARTIAL_NAME] = additionalDocContent ? additionalDocContent : "";
-    }
+    const markdownContent = docContentResponse.API_FILE.toString("utf8");
+    markdownHtml = markdownContent ? markdown.parse(markdownContent) : "";
+    partialObject[constants.FILE_NAME.API_DOC_PARTIAL_NAME] = hbs.handlebars.partials[constants.FILE_NAME.API_DOC_PARTIAL_NAME];
   }
   const apiMetadata = await apiDao.getAPIMetadata(orgID, apiID);
   let apiType = apiMetadata[0].dataValues.API_TYPE;
