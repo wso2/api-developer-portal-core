@@ -30,7 +30,7 @@ router.get('/:orgName/views/:viewName/apis.md', (req, res, next) => {
         return res.status(404).send('Not Found');
     }
     next();
-}, authController.handleSilentSSO, util.enforcePortalMode, ensureAuthenticated, apiController.loadAPIsMd);
+}, util.enforcePortalMode, apiController.loadAPIsMd);
 
 router.get('/:orgName/views/:viewName/apis', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
@@ -51,14 +51,14 @@ router.get('/:orgName/views/:viewName/api/:apiHandle.md', (req, res, next) => {
         return res.status(404).send('Not Found');
     }
     next();
-}, authController.handleSilentSSO, util.enforcePortalMode, ensureAuthenticated, apiController.loadAPIContentMd);
+}, util.enforcePortalMode, apiController.loadAPIContentMd);
 
 router.get('/:orgName/views/:viewName/mcp/:apiHandle.md', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
         return res.status(404).send('Not Found');
     }
     next();
-}, authController.handleSilentSSO, util.enforcePortalMode, ensureAuthenticated, apiController.loadAPIContentMd);
+}, util.enforcePortalMode, apiController.loadAPIContentMd);
 
 router.get('/:orgName/views/:viewName/api/:apiHandle', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
@@ -93,7 +93,7 @@ router.get('/:orgName/views/:viewName/:apiType(api|mcp)/:apiHandle/docs/specific
         return res.status(404).send('Not Found');
     }
     next();
-}, authController.handleSilentSSO, util.enforcePortalMode, ensureAuthenticated, apiController.loadSpecificationRaw);
+}, util.enforcePortalMode, apiController.loadSpecificationRaw);
 
 router.get('/:orgName/views/:viewName/api/:apiHandle/docs/specification', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
@@ -114,7 +114,7 @@ router.get('/:orgName/views/:viewName/:apiType(api|mcp)/:apiHandle/docs/:docType
         return res.status(404).send('Not Found');
     }
     next();
-}, authController.handleSilentSSO, util.enforcePortalMode, ensureAuthenticated, apiController.loadDocumentMd);
+}, util.enforcePortalMode, apiController.loadDocumentMd);
 
 router.get('/:orgName/views/:viewName/api/:apiHandle/docs/:docType/:docName', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
