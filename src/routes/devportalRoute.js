@@ -65,6 +65,7 @@ router.post(
     multipartHandler.fields([
         {name: 'api', maxCount: 1},
         {name: 'apiDefinition', maxCount: 1},
+        {name: 'artifact', maxCount: 1},
         {name: 'schemaDefinition', maxCount: 1},
     ]),
     apiMetadataService.createAPIMetadata);
@@ -76,6 +77,7 @@ router.put(
     multipartHandler.fields([
         {name: 'api', maxCount: 1},
         {name: 'apiDefinition', maxCount: 1},
+        {name: 'artifact', maxCount: 1},
         {name: 'schemaDefinition', maxCount: 1},
     ]),
     apiMetadataService.updateAPIMetadata);
@@ -99,6 +101,7 @@ router.post(
     multipartHandler.fields([
         {name: 'api', maxCount: 1},
         {name: 'apiDefinition', maxCount: 1},
+        {name: 'artifact', maxCount: 1},
         {name: 'schemaDefinition', maxCount: 1},
     ]),
     apiMetadataService.createAPIMetadata); // s2s applied
@@ -109,6 +112,7 @@ router.put(
     multipartHandler.fields([
         {name: 'api', maxCount: 1},
         {name: 'apiDefinition', maxCount: 1},
+        {name: 'artifact', maxCount: 1},
         {name: 'schemaDefinition', maxCount: 1},
     ]),
     apiMetadataService.updateAPIMetadata); // s2s applied

@@ -343,8 +343,11 @@ async function readDocFiles(directory, baseDir = '') {
         } else {
             if (!(file.name === '.DS_Store')) {
                 let content = await fs.promises.readFile(filePath);
+                const topLevelDocCategory = baseDir
+                    ? baseDir.split(path.sep)[0]
+                    : constants.DOC_TYPES.DOCS.OTHER;
                 fileDetails.push({
-                    type: constants.DOC_TYPES.DOC_ID + baseDir,
+                    type: constants.DOC_TYPES.DOC_ID + topLevelDocCategory,
                     fileName: file.name,
                     content: content,
                 });
@@ -352,6 +355,30 @@ async function readDocFiles(directory, baseDir = '') {
         }
     }
     return fileDetails;
+}
+
+async function findFileByNameRecursive(rootPath, targetNames) {
+    const normalizedTargetNames = new Set(Array.from(targetNames).map(name => String(name).toLowerCase()));
+    const stack = [rootPath];
+
+    while (stack.length > 0) {
+        const currentPath = stack.pop();
+        const entries = await fs.promises.readdir(currentPath, { withFileTypes: true });
+        for (const entry of entries) {
+            if (entry.name === '.DS_Store' || entry.name === '__MACOSX') {
+                continue;
+            }
+            const fullPath = path.join(currentPath, entry.name);
+            if (entry.isDirectory()) {
+                stack.push(fullPath);
+                continue;
+            }
+            if (normalizedTargetNames.has(entry.name.toLowerCase())) {
+                return fullPath;
+            }
+        }
+    }
+    return null;
 }
 
 
@@ -1051,6 +1078,7 @@ module.exports = {
     tokenExchanger,
     listFiles,
     readDocFiles,
+    findFileByNameRecursive,
     unzipDirectory,
     filterAllowedAPIs,
     enforcePortalMode,

@@ -1529,9 +1529,9 @@ const updateAPIImageMetadata = async (apiImages, orgID, apiID, t) => {
                     throw new Sequelize.EmptyResultError("Error updating API Image Metadata");
                 }
             }
-            if (imageCreateList.length > 0) {
-                await APIImageMetadata.bulkCreate(imageCreateList, { transaction: t });
-            }
+        }
+        if (imageCreateList.length > 0) {
+            await APIImageMetadata.bulkCreate(imageCreateList, { transaction: t });
         }
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {

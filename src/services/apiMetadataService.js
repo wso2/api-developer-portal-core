@@ -41,15 +41,29 @@ const createAPIMetadata = async (req, res) => {
     logger.info('Creating API metadata...', {
         orgId
     });
-    const apiMetadata = parseApiMetadataFromYamlRequest(req);
+    let apiMetadata;
     let apiDefinitionFile, apiFileName = "";
-    if (req.files?.apiDefinition?.[0]) {
-        const file = req.files.apiDefinition[0];
-        apiDefinitionFile = file.buffer;
-        apiFileName = file.originalname;
-    }
+    const apiArtifactFile = req.files?.artifact?.[0];
     
     try {
+        let artifactApiContent = [];
+        let resolvedImageMetadata = {};
+        if (apiArtifactFile?.buffer) {
+            const fullApiBundle = await extractFullApiBundleFromUploadedZip(apiArtifactFile, orgId, 'new-api');
+            apiMetadata = fullApiBundle.apiMetadata;
+            apiDefinitionFile = fullApiBundle.apiDefinitionFile;
+            apiFileName = fullApiBundle.apiDefinitionFileName;
+            artifactApiContent = await extractApiContentFromUploadedZip(apiArtifactFile, orgId, 'new-api', 'artifact');
+            resolvedImageMetadata = buildImageMetadataFromContent(artifactApiContent);
+        } else {
+            apiMetadata = parseApiMetadataFromYamlRequest(req);
+            if (req.files?.apiDefinition?.[0]) {
+                const file = req.files.apiDefinition[0];
+                apiDefinitionFile = file.buffer;
+                apiFileName = file.originalname;
+            }
+        }
+
         // Validate input
         if (!apiMetadata.apiInfo || !apiDefinitionFile || !apiMetadata.endPoints) {
             throw new Sequelize.ValidationError(
@@ -122,6 +136,9 @@ const createAPIMetadata = async (req, res) => {
             }
             // store api definition file
             await apiDao.storeAPIFile(apiDefinitionFile, apiFileName, apiID, constants.DOC_TYPES.API_DEFINITION, t);
+            if (Object.keys(resolvedImageMetadata).length > 0) {
+                await apiDao.storeAPIImageMetadata(resolvedImageMetadata, apiID, t);
+            }
             // Save MCP tools as schema definition if the API type is MCP
             if (constants.API_TYPE.MCP === apiMetadata.apiInfo.apiType && req.files?.schemaDefinition?.[0]) {
                 const file = req.files.schemaDefinition[0];
@@ -155,6 +172,12 @@ const createAPIMetadata = async (req, res) => {
                     apiId: apiID,
                     schemaFileName
                 });
+            }
+
+            if (apiArtifactFile?.buffer) {
+                if (artifactApiContent.length > 0) {
+                    await apiDao.storeAPIFiles(artifactApiContent, apiID, t);
+                }
             }
             apiMetadata.apiID = apiID;
         });
@@ -329,13 +352,9 @@ const updateAPIMetadata = async (req, res) => {
         orgId,
         apiId
     });
-    const apiMetadata = parseApiMetadataFromYamlRequest(req);
+    let apiMetadata;
     let apiDefinitionFile, apiFileName = "";
-    if (req.files?.apiDefinition?.[0]) {
-        const file = req.files.apiDefinition[0];
-        apiDefinitionFile = file.buffer;
-        apiFileName = file.originalname;
-    }
+    const apiArtifactFile = req.files?.artifact?.[0];
     logger.debug('MCP API Definition file', {
         apiFileName,
         hasApiDefinitionFile: !!apiDefinitionFile,
@@ -344,6 +363,24 @@ const updateAPIMetadata = async (req, res) => {
     });
 
     try {
+        let artifactApiContent = [];
+        let resolvedImageMetadata = {};
+        if (apiArtifactFile?.buffer) {
+            const fullApiBundle = await extractFullApiBundleFromUploadedZip(apiArtifactFile, orgId, apiId);
+            apiMetadata = fullApiBundle.apiMetadata;
+            apiDefinitionFile = fullApiBundle.apiDefinitionFile;
+            apiFileName = fullApiBundle.apiDefinitionFileName;
+            artifactApiContent = await extractApiContentFromUploadedZip(apiArtifactFile, orgId, apiId, 'artifact');
+            resolvedImageMetadata = buildImageMetadataFromContent(artifactApiContent);
+        } else {
+            apiMetadata = parseApiMetadataFromYamlRequest(req);
+            if (req.files?.apiDefinition?.[0]) {
+                const file = req.files.apiDefinition[0];
+                apiDefinitionFile = file.buffer;
+                apiFileName = file.originalname;
+            }
+        }
+
         // Validate input
         if (!apiMetadata.apiInfo || !apiDefinitionFile || !apiMetadata.endPoints) {
             throw new Sequelize.ValidationError(
@@ -400,6 +437,9 @@ const updateAPIMetadata = async (req, res) => {
             let [updatedRows, updatedAPI] = await apiDao.updateAPIMetadata(orgId, apiId, apiMetadata, t);
             if (!updatedRows) {
                 throw new Sequelize.EmptyResultError("No record found to update");
+            }
+            if (Object.keys(resolvedImageMetadata).length > 0) {
+                await apiDao.updateAPIImageMetadata(resolvedImageMetadata, orgId, apiId, t);
             }
             if (apiMetadata.apiInfo.addedLabels) {
                 const labels = apiMetadata.apiInfo.addedLabels;
@@ -491,6 +531,12 @@ const updateAPIMetadata = async (req, res) => {
                     apiId
                 });
             }
+
+            if (apiArtifactFile?.buffer) {
+                if (artifactApiContent.length > 0) {
+                    await apiDao.updateOrCreateAPIFiles(artifactApiContent, apiId, orgId, t);
+                }
+            }
             res.status(200).send(new APIDTO(updatedAPI[0].dataValues));
         });
     } catch (error) {
@@ -558,6 +604,152 @@ const collectWebContentFiles = async (webPath) => {
     return contentFiles;
 };
 
+const buildImageMetadataFromContent = (contentFiles = [], providedImageMetadata = {}) => {
+    const resolvedImageMetadata = { ...(providedImageMetadata || {}) };
+
+    for (const file of contentFiles) {
+        if (file?.type !== constants.DOC_TYPES.IMAGES || !file.fileName) {
+            continue;
+        }
+        const imageTag = path.parse(file.fileName).name;
+        if (imageTag && !resolvedImageMetadata[imageTag]) {
+            resolvedImageMetadata[imageTag] = file.fileName;
+        }
+    }
+
+    return resolvedImageMetadata;
+};
+
+async function resolveZipRootPath(extractPath) {
+    const entries = await fs.readdir(extractPath, { withFileTypes: true });
+    const relevantEntries = entries.filter(entry => entry.name !== '.DS_Store' && entry.name !== '__MACOSX');
+    if (relevantEntries.length === 1 && relevantEntries[0].isDirectory()) {
+        return path.join(extractPath, relevantEntries[0].name);
+    }
+    return extractPath;
+}
+
+async function extractApiContentFromUploadedZip(zipFile, orgId, apiId, mode = 'classic') {
+    if (!zipFile) {
+        throw new Sequelize.ValidationError("Missing required zip file");
+    }
+
+    const zipFileName = zipFile.originalname;
+    if (!zipFileName?.toLowerCase().endsWith('.zip')) {
+        throw new Sequelize.ValidationError('Invalid zip file. Expected a .zip file');
+    }
+
+    const extractionKey = `${orgId || 'org'}-${apiId || 'api'}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const tempBasePath = path.join('/tmp', 'api-content-upload', extractionKey);
+    const extractPath = path.join(tempBasePath, 'extracted');
+    const tempZipPath = path.join(tempBasePath, zipFileName);
+
+    try {
+        await fs.mkdir(extractPath, { recursive: true });
+
+        if (zipFile.path) {
+            await util.unzipDirectory(zipFile.path, extractPath);
+        } else if (zipFile.buffer) {
+            await fs.writeFile(tempZipPath, zipFile.buffer);
+            await util.unzipDirectory(tempZipPath, extractPath);
+        } else {
+            throw new Sequelize.ValidationError('Invalid zip input. Missing file path or buffer');
+        }
+
+        const rootPath = await resolveZipRootPath(extractPath);
+
+        const webPath = path.join(rootPath, 'web');
+        const docsPath = path.join(rootPath, 'docs');
+        const hasWebDir = fsDir.existsSync(webPath);
+        const hasDocsDir = fsDir.existsSync(docsPath);
+
+        if (!hasWebDir && !hasDocsDir) {
+            if (mode === 'artifact') {
+                return [];
+            }
+            throw new Sequelize.ValidationError('Missing required directories in uploaded zip. At least one of web or docs is required at root level');
+        }
+
+        const apiContent = [];
+        if (hasWebDir) {
+            await fs.access(webPath);
+            const apiWebFiles = await collectWebContentFiles(webPath);
+            apiContent.push(...apiWebFiles);
+        }
+        if (hasDocsDir) {
+            await fs.access(docsPath);
+            const apiDocuments = await util.readDocFiles(docsPath);
+            apiContent.push(...apiDocuments);
+        }
+
+        return apiContent;
+    } catch (error) {
+        if (error instanceof Sequelize.ValidationError) {
+            throw error;
+        }
+        throw new Sequelize.ValidationError(`Invalid zip file: ${error.message}`);
+    } finally {
+        await fs.rm(tempBasePath, { recursive: true, force: true });
+    }
+}
+
+async function extractFullApiBundleFromUploadedZip(zipFile, orgId, apiId) {
+    if (!zipFile?.buffer) {
+        throw new Sequelize.ValidationError("Missing required multipart file field: 'artifact'");
+    }
+
+    if (!zipFile.originalname?.toLowerCase().endsWith('.zip')) {
+        throw new Sequelize.ValidationError("Invalid artifact file. Expected a .zip file");
+    }
+
+    const extractionKey = `${orgId || 'org'}-${apiId || 'api'}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const tempBasePath = path.join('/tmp', 'api-content-upload', extractionKey);
+    const tempZipPath = path.join(tempBasePath, 'apiContent.zip');
+    const extractPath = path.join(tempBasePath, 'extracted');
+
+    try {
+        await fs.mkdir(extractPath, { recursive: true });
+        await fs.writeFile(tempZipPath, zipFile.buffer);
+        await util.unzipDirectory(tempZipPath, extractPath);
+
+        const rootPath = await resolveZipRootPath(extractPath);
+        const metadataFilePath = await util.findFileByNameRecursive(rootPath, ['api.yaml', 'devportal.yaml']);
+        if (!metadataFilePath) {
+            throw new Sequelize.ValidationError("Invalid full API zip: missing api.yaml or devportal.yaml");
+        }
+
+        const definitionFilePath = await util.findFileByNameRecursive(rootPath, [
+            'definition.yaml',
+            'definition.yml',
+            'definition.json',
+            'apiDefinition.yaml',
+            'apiDefinition.yml',
+            'apiDefinition.json',
+        ]);
+        if (!definitionFilePath) {
+            throw new Sequelize.ValidationError("Invalid full API zip: missing definition file (definition.yaml/yml/json)");
+        }
+
+        const apiMetadataBuffer = await fs.readFile(metadataFilePath);
+        const apiMetadata = parseApiMetadataFromYamlFile(path.basename(metadataFilePath), apiMetadataBuffer);
+        const apiDefinitionFile = await fs.readFile(definitionFilePath);
+        const apiDefinitionFileName = path.basename(definitionFilePath);
+
+        return {
+            apiMetadata,
+            apiDefinitionFile,
+            apiDefinitionFileName,
+        };
+    } catch (error) {
+        if (error instanceof Sequelize.ValidationError) {
+            throw error;
+        }
+        throw new Sequelize.ValidationError(`Invalid artifact zip file: ${error.message}`);
+    } finally {
+        await fs.rm(tempBasePath, { recursive: true, force: true });
+    }
+}
+
 const createAPIContent = async (req, res) => {
     logger.info('Creating API content...', {
         orgId: req.params.orgId,
@@ -569,55 +761,7 @@ const createAPIContent = async (req, res) => {
         if (!orgId) {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
-        const zipFilePath = req.file.path;
-        const extractPath = path.join("/tmp", orgId + "/" + apiId);
-        await fs.mkdir(extractPath, { recursive: true });
-        await util.unzipDirectory(zipFilePath, extractPath);
-
-        const apiContentFileName = req.file.originalname.split(".zip")[0];
-
-        // Build complete paths
-        const webPath = path.join(extractPath, apiContentFileName, "web");
-        const docsPath = path.join(extractPath, apiContentFileName, "docs");
-
-        // Verify directories exist
-        try {
-            const hasWebDir = fsDir.existsSync(webPath);
-            const hasDocsDir = fsDir.existsSync(docsPath);
-            if (!hasWebDir && !hasDocsDir) {
-                throw new Error("Missing required content directories in uploaded zip. At least one of web or docs is required");
-            }
-            if (hasWebDir) {
-                await fs.access(webPath);
-            }
-            if (hasDocsDir) {
-                await fs.access(docsPath);
-            }
-        } catch (err) {
-            logger.error('Error while trying to access directories', {
-                error: err.message,
-                webPath,
-                docsPath,
-                orgId,
-                apiId
-            });
-            throw new Error(
-                `Required directories not found after extraction. Web path: ${webPath}, Docs path: ${docsPath}`
-            );
-        }
-        let apiContent = [];
-
-        // get API web files (includes text files and images)
-        if (fsDir.existsSync(webPath)) {
-            const apiWebFiles = await collectWebContentFiles(webPath);
-            apiContent.push(...apiWebFiles);
-        }
-
-        // get API documents
-        if (fsDir.existsSync(docsPath)) {
-            const apiDocuments = await util.readDocFiles(docsPath);
-            apiContent.push(...apiDocuments);
-        }
+        let apiContent = await extractApiContentFromUploadedZip(req.file, orgId, apiId, 'classic');
         let docMetadata = "";
         if (req.body.docMetadata) {
             docMetadata = JSON.parse(req.body.docMetadata);
@@ -628,6 +772,7 @@ const createAPIContent = async (req, res) => {
         if (req.body.imageMetadata) {
             imageMetadata = JSON.parse(req.body.imageMetadata);
         }
+        const resolvedImageMetadata = buildImageMetadataFromContent(apiContent, imageMetadata);
         await sequelize.transaction({
             timeout: 60000,
         }, async (t) => {
@@ -641,13 +786,14 @@ const createAPIContent = async (req, res) => {
 
             if (apiMetadata) {
                 // Store image metadata
-                await apiDao.storeAPIImageMetadata(imageMetadata, apiId, t);
+                if (Object.keys(resolvedImageMetadata).length > 0) {
+                    await apiDao.storeAPIImageMetadata(resolvedImageMetadata, apiId, t);
+                }
                 await apiDao.storeAPIFiles(apiContent, apiId, t);
             } else {
                 throw new Sequelize.ValidationError(constants.ERROR_MESSAGE.API_NOT_IN_ORG);
             }
         });
-        await fs.rm(extractPath, { recursive: true, force: true });
         res.status(201).type("application/json").send({ message: "API content updated successfully" });
     } catch (error) {
         logger.error('API content creation failed', {
@@ -676,60 +822,14 @@ const updateAPIContent = async (req, res) => {
         if (!orgId) {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
-        const zipFilePath = req.file.path;
-        const extractPath = path.join("/tmp", orgId + "/" + apiId);
-        await fs.mkdir(extractPath, { recursive: true });
-        await util.unzipDirectory(zipFilePath, extractPath);
-        const apiContentFileName = req.file.originalname.split(".zip")[0];
-
-        // Build complete paths (supported structure: <zip-root>/web and <zip-root>/docs)
-        const webPath = path.join(extractPath, apiContentFileName, "web");
-        const docsPath = path.join(extractPath, apiContentFileName, "docs");
-
-        // Verify directories exist
-        try {
-            const hasWebDir = fsDir.existsSync(webPath);
-            const hasDocsDir = fsDir.existsSync(docsPath);
-            if (!hasWebDir && !hasDocsDir) {
-                throw new Error("Missing required content directories in uploaded zip. At least one of web or docs is required");
-            }
-            if (hasWebDir) {
-                await fs.access(webPath);
-            }
-            if (hasDocsDir) {
-                await fs.access(docsPath);
-            }
-        } catch (err) {
-            logger.error('Error accessing directories during API content update', {
-                error: err.message,
-                webPath,
-                docsPath,
-                orgId: req.params.orgId,
-                apiId: req.params.apiId
-            });
-            throw new Error(
-                `Required directories not found after extraction. Web path: ${webPath}, Docs path: ${docsPath}`
-            );
-        }
-        let apiContent = [];
-
-        // get API web files (includes text files and images)
-        if (fsDir.existsSync(webPath)) {
-            const apiWebFiles = await collectWebContentFiles(webPath);
-            apiContent.push(...apiWebFiles);
-        }
-
-        // get API documents
-        if (fsDir.existsSync(docsPath)) {
-            const apiDocuments = await util.readDocFiles(docsPath);
-            apiContent.push(...apiDocuments);
-        }
+        let apiContent = await extractApiContentFromUploadedZip(req.file, orgId, apiId, 'classic');
 
         if (req.body.docMetadata) {
             const docMetadata = JSON.parse(req.body.docMetadata);
             const links = util.getAPIDocLinks(docMetadata);
             apiContent.push(...links);
         }
+        const resolvedImageMetadata = buildImageMetadataFromContent(apiContent, imageMetadata || {});
         await sequelize.transaction({
             timeout: 60000,
         }, async (t) => {
@@ -737,14 +837,15 @@ const updateAPIContent = async (req, res) => {
             const apiMetadata = await apiDao.getAPIMetadata(orgId, apiId, t);
             if (apiMetadata) {
                 // Update image metadata
-                await apiDao.updateAPIImageMetadata(imageMetadata, orgId, apiId, t);
+                if (Object.keys(resolvedImageMetadata).length > 0) {
+                    await apiDao.updateAPIImageMetadata(resolvedImageMetadata, orgId, apiId, t);
+                }
                 // Update API files
                 await apiDao.updateOrCreateAPIFiles(apiContent, apiId, orgId, t);
             } else {
                 throw new Sequelize.ValidationError(constants.ERROR_MESSAGE.API_NOT_IN_ORG);
             }
         });
-        await fs.rm(extractPath, { recursive: true, force: true });
         res.status(201).send({ message: "API Files updated successfully" });
     } catch (error) {
         logger.error('API content update failed', {
@@ -1469,6 +1570,22 @@ function mapDevportalYamlToApiMetadata(parsedYaml) {
     };
 }
 
+function parseApiMetadataFromYamlFile(fileName, fileBuffer) {
+    const allowedMetadataFileNames = new Set(['api.yaml', 'devportal.yaml']);
+    if (!allowedMetadataFileNames.has(String(fileName).toLowerCase())) {
+        throw new Sequelize.ValidationError("Invalid metadata file name. Expected 'api.yaml' or 'devportal.yaml'");
+    }
+
+    let parsedYaml;
+    try {
+        parsedYaml = yaml.load(fileBuffer.toString(constants.CHARSET_UTF8));
+    } catch (e) {
+        throw new Sequelize.ValidationError(`Invalid API YAML file: ${e.message}`);
+    }
+
+    return mapDevportalYamlToApiMetadata(parsedYaml);
+}
+
 function parseApiMetadataFromYamlRequest(req) {
     const apiFile = req.files?.api?.[0];
     if (!apiFile?.buffer) {
@@ -1476,19 +1593,8 @@ function parseApiMetadataFromYamlRequest(req) {
             "Missing required multipart file field: 'api'"
         );
     }
-    const allowedMetadataFileNames = new Set(['api.yaml', 'devportal.yaml']);
-    if (!allowedMetadataFileNames.has(apiFile.originalname)) {
-        throw new Sequelize.ValidationError("Invalid metadata file name. Expected 'api.yaml' or 'devportal.yaml'");
-    }
 
-    let parsedYaml;
-    try {
-        parsedYaml = yaml.load(apiFile.buffer.toString(constants.CHARSET_UTF8));
-    } catch (e) {
-        throw new Sequelize.ValidationError(`Invalid API YAML file: ${e.message}`);
-    }
-
-    return mapDevportalYamlToApiMetadata(parsedYaml);
+    return parseApiMetadataFromYamlFile(apiFile.originalname, apiFile.buffer);
 }
 
 module.exports = {
