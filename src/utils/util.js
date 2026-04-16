@@ -68,6 +68,7 @@ function renderTemplate(templatePath, layoutPath, templateContent, isTechnical) 
     return layout({
         body: template(templateContent),
         portalConfigs: config.portalConfigs,
+        profile: templateContent.profile,
     });
 }
 
@@ -115,6 +116,7 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
     return layout({
         body: template(templateContent),
         portalConfigs: config.portalConfigs,
+        profile: templateContent.profile,
     });
 
 }
@@ -125,6 +127,7 @@ async function renderGivenTemplate(templatePage, layoutPage, templateContent) {
     const layout = Handlebars.compile(layoutPage.toString());
     return layout({
         body: template(templateContent),
+        profile: templateContent.profile,
     });
 }
 

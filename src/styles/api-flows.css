@@ -1,0 +1,414 @@
+/* ===== Configure Page — Header & Tabs ===== */
+
+.container-fluid .container-header {
+    color: var(--primary-main-color);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.configure-tabs {
+    border-bottom: 2px solid #e9ecef;
+    flex-wrap: nowrap !important;
+}
+
+.configure-tabs .nav-item {
+    flex: 0 0 auto;
+    margin-bottom: 0;
+}
+
+.configure-tabs .nav-link {
+    color: #6c757d;
+    font-weight: 500;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    padding: 0.625rem 1rem;
+    display: flex;
+    align-items: center;
+    border-radius: 0;
+}
+
+.configure-tabs .nav-link:hover {
+    color: var(--primary-main-color);
+    border-bottom-color: var(--primary-main-color);
+    background-color: transparent;
+}
+
+.configure-tabs .nav-link.active {
+    color: var(--primary-main-color);
+    background: transparent;
+    border-bottom-color: var(--primary-main-color);
+    font-weight: 600;
+}
+
+/* ===== API Flows — List View ===== */
+
+.api-flows-header {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--bs-gray-200);
+}
+
+.api-flows-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.25rem;
+}
+
+.api-flow-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--main-bg-color);
+    border: 1px solid var(--bs-gray-300);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.api-flow-card:hover {
+    box-shadow: 0px 0.5rem 1.25rem rgba(0, 0, 0, 0.15);
+    border-color: var(--primary-main-color);
+}
+
+.api-flow-card-header {
+    padding: 1.125rem 1.25rem 0.625rem;
+}
+
+.api-flow-card-title-section {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.api-flow-card-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--main-text-color);
+    margin-bottom: 0;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.api-flow-status-badge {
+    display: inline-block;
+    padding: 0.2em 0.6em;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.api-flow-status-published {
+    background-color: var(--bs-success-bg-subtle, #d1e7dd);
+    color: var(--bs-success-text-emphasis, #0a3622);
+}
+
+.api-flow-status-draft {
+    background-color: var(--bs-warning-bg-subtle, #fff3cd);
+    color: var(--bs-warning-text-emphasis, #664d03);
+}
+
+.api-flow-card-body {
+    padding: 0.375rem 1.25rem 1rem;
+    flex: 1;
+}
+
+.api-flow-card-description {
+    font-size: 0.8125rem;
+    color: var(--bs-secondary, #6c757d);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 0;
+}
+
+.api-flow-card-footer {
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid var(--bs-gray-200);
+    background: var(--secondary-bg-color, #f8f9fa);
+}
+
+.api-flow-card-actions {
+    display: flex;
+    gap: 0.375rem;
+    justify-content: flex-end;
+}
+
+.api-flow-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--bs-gray-300);
+    border-radius: 0.5rem;
+    background: var(--main-bg-color);
+    color: var(--main-text-color);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.api-flow-action-btn:hover {
+    border-color: var(--primary-main-color);
+    color: var(--primary-main-color);
+    background: var(--primary-light-color);
+}
+
+.api-flow-action-btn--danger:hover {
+    border-color: var(--danger-color);
+    color: var(--danger-color);
+    background: var(--main-bg-color);
+}
+
+.api-flow-empty-state {
+    display: flex;
+    justify-content: center;
+    padding: 3rem 1rem;
+}
+
+.api-flow-empty-state-content {
+    text-align: center;
+    max-width: 340px;
+}
+
+.api-flow-empty-state-content .bi-diagram-3 {
+    font-size: 3rem;
+    color: var(--primary-lightest-color, #e8e8f4);
+}
+
+.api-flow-prompt-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.625rem 1rem;
+    border-bottom: 1px solid var(--bs-gray-200);
+    background: var(--secondary-bg-color, #f8f9fa);
+}
+
+.api-flow-prompt-pre {
+    margin: 0;
+    padding: 1.25rem;
+    font-size: 0.8125rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: var(--main-bg-color);
+    color: var(--main-text-color);
+    border: none;
+    border-radius: 0;
+}
+
+/* ===== Create / Edit Form — Sections ===== */
+
+.af-section {
+    padding-bottom: 1.75rem;
+    margin-bottom: 1.75rem;
+    border-bottom: 1px solid var(--bs-gray-200);
+}
+
+.af-section--last {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.af-section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+    margin-bottom: 1.25rem;
+}
+
+.af-step-badge {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--primary-main-color);
+    color: var(--light-text-color);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.1rem;
+}
+
+.af-section-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--main-text-color);
+    line-height: 1.3;
+}
+
+.af-section-subtitle {
+    font-size: 0.8125rem;
+    color: var(--bs-secondary, #6c757d);
+    margin-top: 0.15rem;
+    line-height: 1.4;
+}
+
+.af-section-body {
+    padding-left: 2.875rem;
+}
+
+/* ===== Flow Definition — Tabs ===== */
+
+.af-flow-tabs {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.af-flow-tab {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--bs-secondary, #6c757d);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.af-flow-tab:hover {
+    color: var(--primary-main-color);
+}
+
+.af-flow-tab.active {
+    color: var(--primary-main-color);
+    border-bottom-color: var(--primary-main-color);
+    font-weight: 600;
+}
+
+/* ===== API Card Picker ===== */
+
+.af-api-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.625rem;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+}
+
+.af-api-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--bs-gray-300);
+    border-radius: 0.625rem;
+    background: var(--main-bg-color);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    user-select: none;
+}
+
+.af-api-card:hover {
+    border-color: var(--primary-main-color);
+    background: var(--main-bg-color);
+}
+
+.af-api-card--selected {
+    border-color: var(--primary-main-color);
+    border-width: 2px;
+    background: var(--main-bg-color);
+    box-shadow: 0 0 0 1px var(--primary-main-color);
+}
+
+.af-api-card-check {
+    flex-shrink: 0;
+    font-size: 1rem;
+    margin-top: 0.1rem;
+    color: var(--bs-gray-400, #ced4da);
+    transition: color 0.15s ease;
+}
+
+.af-api-card--selected .af-api-card-check {
+    color: var(--primary-main-color);
+}
+
+.af-api-card-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.af-api-card-desc {
+    font-size: 0.75rem;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.api-flow-type-pill {
+    display: inline-block;
+    padding: 0.1em 0.5em;
+    font-size: 0.65rem;
+    font-weight: 600;
+    border-radius: 999px;
+    background: var(--primary-lightest-color, #e8e8f4);
+    color: var(--primary-main-color);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+/* ===== Prompt / Code Textareas ===== */
+
+.api-flow-prompt-editor,
+.api-flow-code-editor {
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    resize: vertical;
+}
+
+.api-flow-code-editor {
+    min-height: 320px;
+}
+
+/* ===== Save Button Group ===== */
+
+.af-save-main {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.af-save-toggle {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    min-width: 0;
+}
+
+.af-save-dropdown {
+    min-width: 220px;
+}
+
+.af-save-dropdown-item {
+    padding: 0.625rem 1rem;
+}
+
+.af-save-dropdown-hint {
+    font-size: 0.75rem;
+    color: var(--bs-secondary, #6c757d);
+    margin-top: 0.1rem;
+    white-space: normal;
+}

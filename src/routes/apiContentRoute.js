@@ -67,6 +67,13 @@ router.get('/:orgName/views/:viewName/api/:apiHandle/api-keys', (req, res, next)
     next();
 }, authController.handleSilentSSO, registerPartials, util.enforcePortalMode, ensureAuthenticated, platformApiKeysContentController.loadAPIPlatformApiKeys);
 
+router.get('/:orgName/views/:viewName/api/:apiHandle/docs/specification.json', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, apiController.getAPISpecJSON);
+
 router.get('/:orgName/views/:viewName/api/:apiHandle/docs/specification', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
         return res.status(404).send('Not Found');

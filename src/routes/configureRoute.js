@@ -1,16 +1,21 @@
 const express = require('express');
 const router = express.Router();
-const settingsController = require('../controllers//settingsController');
+const settingsController = require('../controllers/settingsController');
+const viewConfigureController = require('../controllers/viewConfigureController');
 const registerPartials = require('../middlewares/registerPartials');
 const { ensureAuthenticated } = require('../middlewares/ensureAuthenticated');
+const authController = require('../controllers/authController');
 
-//TODO: Comment organization configuration routes for SAAS scenrio
-// router.get('/(((?!favicon.ico|images)):orgName/configure)', ensureAuthenticated, registerPartials, settingsController.loadSettingPage);
+// Org-level settings: Organizations, Views, Labels, IDP, API Provider
+router.get('/:orgName/configure', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') return res.status(404).send('Not Found');
+    next();
+}, authController.handleSilentSSO, registerPartials, ensureAuthenticated, settingsController.loadOrgSettingsPage);
 
-// router.get('/(((?!favicon.ico|images))portal)', registerPartials, ensureAuthenticated, settingsController.loadPortalPage);
-
-// router.get('/(((?!favicon.ico|images)):orgName/configure/edit)', registerPartials, ensureAuthenticated, settingsController.loadEditOrganizationPage);
-
-// router.get('/(((?!favicon.ico|images)):orgName/configure/create)', registerPartials, ensureAuthenticated, settingsController.loadCreateOrganizationPage);
+// View-level settings: API Workflows
+router.get('/:orgName/views/:viewName/configure', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') return res.status(404).send('Not Found');
+    next();
+}, authController.handleSilentSSO, registerPartials, ensureAuthenticated, viewConfigureController.loadViewSettingsPage);
 
 module.exports = router;
