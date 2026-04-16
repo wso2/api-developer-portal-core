@@ -1476,8 +1476,9 @@ function parseApiMetadataFromYamlRequest(req) {
             "Missing required multipart file field: 'api'"
         );
     }
-    if (apiFile.originalname !== 'api.yaml') {
-        throw new Sequelize.ValidationError("Invalid metadata file name. Expected 'api.yaml'");
+    const allowedMetadataFileNames = new Set(['api.yaml', 'devportal.yaml']);
+    if (!allowedMetadataFileNames.has(apiFile.originalname)) {
+        throw new Sequelize.ValidationError("Invalid metadata file name. Expected 'api.yaml' or 'devportal.yaml'");
     }
 
     let parsedYaml;
