@@ -325,9 +325,9 @@
 
 .af-api-card--selected {
     border-color: var(--primary-main-color);
-    border-width: 2px;
-    background: var(--main-bg-color);
-    box-shadow: 0 0 0 1px var(--primary-main-color);
+    border-width: 1.5px;
+    background: rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.05);
+    box-shadow: 0 2px 8px rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.12);
 }
 
 .af-api-card-check {
@@ -339,7 +339,7 @@
 }
 
 .af-api-card--selected .af-api-card-check {
-    color: var(--primary-main-color);
+    color: var(--primary-light-color);
 }
 
 .af-api-card-body {

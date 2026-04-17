@@ -106,12 +106,13 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('copyArazzoBtn')?.addEventListener('click', copyArazzoSpec);
     document.getElementById('arazoFileInput')?.addEventListener('change', loadArazzoFile);
 
-    // llms.txt buttons
-    document.getElementById('uploadLlmsTxtBtn')?.addEventListener('click', () => {
-        document.getElementById('llmsTxtFileInput')?.click();
+    // Markdown buttons
+    document.getElementById('generateMarkdownBtn')?.addEventListener('click', generateMarkdownDoc);
+    document.getElementById('uploadMarkdownBtn')?.addEventListener('click', () => {
+        document.getElementById('markdownFileInput')?.click();
     });
-    document.getElementById('copyLlmsTxtBtn')?.addEventListener('click', copyLlmsTxt);
-    document.getElementById('llmsTxtFileInput')?.addEventListener('change', loadLlmsTxtFile);
+    document.getElementById('copyMarkdownBtn')?.addEventListener('click', copyMarkdown);
+    document.getElementById('markdownFileInput')?.addEventListener('change', loadMarkdownFile);
 
     // Save buttons
     document.getElementById('saveApiFlowBtn')?.addEventListener('click', function() {
@@ -161,7 +162,7 @@ function resetApiFlowForm() {
     document.getElementById('apiFlowName').value = '';
     document.getElementById('apiFlowDescription').value = '';
     document.getElementById('arazoContent').value = '';
-    document.getElementById('llmsTxtContent').value = '';
+    document.getElementById('markdownContent').value = '';
     document.getElementById('agentPromptField').value = '';
 
     const arazzoBtn = document.getElementById('contentTypeArazzo');
@@ -175,7 +176,7 @@ function resetApiFlowForm() {
 function onContentTypeChange() {
     const selected = document.querySelector('input[name="apiFlowContentType"]:checked')?.value || 'ARAZZO';
     document.getElementById('arazoContentWrapper')?.classList.toggle('d-none', selected !== 'ARAZZO');
-    document.getElementById('llmsTxtContentWrapper')?.classList.toggle('d-none', selected !== 'LLMS_TXT');
+    document.getElementById('markdownContentWrapper')?.classList.toggle('d-none', selected !== 'MARKDOWN');
 }
 
 function getSelectedAPIs() {
@@ -347,7 +348,7 @@ async function saveApiFlow(orgID, viewName, status) {
     const agentPrompt = document.getElementById('agentPromptField').value.trim();
     const contentType = document.querySelector('input[name="apiFlowContentType"]:checked')?.value || 'ARAZZO';
     const arazoContent = contentType === 'ARAZZO' ? document.getElementById('arazoContent').value.trim() : '';
-    const llmsTxtContent = contentType === 'LLMS_TXT' ? document.getElementById('llmsTxtContent').value.trim() : '';
+    const markdownContent = contentType === 'MARKDOWN' ? document.getElementById('markdownContent').value.trim() : '';
     const apiFlowId = document.getElementById('editingApiFlowId').value;
     const selectedAPIs = getSelectedAPIs();
     const apiIds = selectedAPIs.map(a => a.apiId);
@@ -360,6 +361,7 @@ async function saveApiFlow(orgID, viewName, status) {
         ['agentPromptField', agentPrompt]
     ];
     if (contentType === 'ARAZZO') fieldsToValidate.push(['arazoContent', arazoContent]);
+    if (contentType === 'MARKDOWN') fieldsToValidate.push(['markdownContent', markdownContent]);
     fieldsToValidate.forEach(([id, val]) => {
         const el = document.getElementById(id);
         if (!val) {
@@ -372,7 +374,7 @@ async function saveApiFlow(orgID, viewName, status) {
     if (!valid) return;
 
     const handle = generateHandle(name);
-    const payload = { name, handle, description, agentPrompt, status, contentType, arazoContent, llmsTxtContent, apiIds };
+    const payload = { name, handle, description, agentPrompt, status, contentType, arazoContent, markdownContent, apiIds };
     const isEdit = !!apiFlowId;
     const url = isEdit
         ? `/devportal/organizations/${orgID}/views/${viewName}/api-flows/${apiFlowId}`
@@ -465,7 +467,7 @@ function openEditApiFlow(apiFlowId) {
     document.getElementById('apiFlowName').value = data.name || '';
     document.getElementById('apiFlowDescription').value = data.description || '';
     document.getElementById('arazoContent').value = data.arazoContent || '';
-    document.getElementById('llmsTxtContent').value = data.llmsTxtContent || '';
+    document.getElementById('markdownContent').value = data.markdownContent || '';
     document.getElementById('agentPromptField').value = data.agentPrompt || '';
     setSaveButtonMode('edit', data.status);
 
@@ -695,12 +697,12 @@ function loadArazzoFile(event) {
     event.target.value = '';
 }
 
-function loadLlmsTxtFile(event) {
+function loadMarkdownFile(event) {
     const file = event.target.files[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = e => {
-        const field = document.getElementById('llmsTxtContent');
+        const field = document.getElementById('markdownContent');
         if (field) field.value = e.target.result;
     };
     reader.readAsText(file);
@@ -712,7 +714,35 @@ function copyArazzoSpec() {
     navigator.clipboard.writeText(content).then(() => showAlert('Arazzo spec copied to clipboard', 'success'));
 }
 
-function copyLlmsTxt() {
-    const content = document.getElementById('llmsTxtContent')?.value || '';
-    navigator.clipboard.writeText(content).then(() => showAlert('llms.txt copied to clipboard', 'success'));
+function copyMarkdown() {
+    const content = document.getElementById('markdownContent')?.value || '';
+    navigator.clipboard.writeText(content).then(() => showAlert('Markdown copied to clipboard', 'success'));
+}
+
+function generateMarkdownDoc() {
+    const name = document.getElementById('apiFlowName')?.value?.trim() || 'API Workflow';
+    const description = document.getElementById('apiFlowDescription')?.value?.trim() || '';
+    const apis = getSelectedAPIs();
+
+    let markdownContent = `# ${name}\n\n`;
+    if (description) {
+        markdownContent += `${description}\n\n`;
+    }
+
+    if (apis.length > 0) {
+        markdownContent += `## API Dependencies\n\n`;
+        apis.forEach(api => {
+            markdownContent += `- **${api.apiName}** (${api.apiType}): ${api.apiDescription || 'N/A'}\n`;
+        });
+        markdownContent += `\n`;
+    }
+
+    markdownContent += `## Workflow Steps\n\n`;
+    markdownContent += `1. **Step Name**: Description of what this step does\n`;
+    markdownContent += `2. **Another Step**: Details of subsequent steps\n\n`;
+    markdownContent += `## Expected Outcomes\n\n`;
+    markdownContent += `Describe what the successful execution of this workflow produces.\n`;
+
+    const field = document.getElementById('markdownContent');
+    if (field) field.value = markdownContent;
 }
