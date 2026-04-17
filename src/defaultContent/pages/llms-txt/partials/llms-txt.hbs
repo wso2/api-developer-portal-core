@@ -7,31 +7,12 @@ Empower your development with our APIs & MCP Servers. Browse, subscribe, and int
 
 ## API Workflows
 
-These pre-defined workflows orchestrate multiple APIs to implement common use cases. Each workflow provides:
-- **Description**: What the workflow accomplishes
-- **APIs Used**: Which APIs are required and in what sequence
-- **Documentation Links**: Access to detailed workflow and API specifications
+These pre-defined workflows orchestrate multiple APIs to implement common use cases. Each workflow provides what the workflow accomplishes and access to detailed workflow and API specifications.
 
-For agents: To execute a workflow, follow the steps in the workflow definition at the provided URL. For each step, reference the linked API documentation to understand the exact operation, required credentials, and request/response formats.
+For agents: To execute/implement a workflow, follow the steps in the workflow definition at the provided URL. For each step, reference the linked API documentation to understand the exact operation, required credentials, and request/response formats.
 
 {{#workflows}}
-### {{name}}
-
-**Purpose:** {{description}}
-
-**Workflow Definition:** [{{name}}.md]({{../baseUrl}}/api-workflows/{{handle}}.md)
-
-**APIs Used:**
-
-{{#if apis}}
-{{#apis}}
-- [{{apiName}}]({{../../baseUrl}}/{{apiType}}/{{apiHandle}}.md)
-{{/apis}}
-{{else}}
-(See workflow definition for API list)
-{{/if}}
-
----
+[{{name}}]({{../baseUrl}}/api-workflows/{{handle}}.md) - {{description}}
 
 {{/workflows}}
 {{/if}}
