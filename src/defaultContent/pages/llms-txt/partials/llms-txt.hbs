@@ -1,6 +1,19 @@
 # {{orgName}} Developer Portal
 
 Empower your development with our APIs & MCP Servers. Browse, subscribe, and integrate in minutes.
+
+{{#if workflows}}
+---
+
+## API Workflows
+
+These pre-defined workflows orchestrate multiple APIs to implement common use cases. Each workflow provides what it accomplishes and access to detailed workflow and API specifications. To execute or implement a workflow, follow the steps in the workflow definition at the provided URL. For each step, reference the linked API documentation to understand the exact operation, required credentials, and request/response formats.
+
+{{#workflows}}
+- [{{name}}]({{../baseUrl}}/api-workflows/{{handle}}.md) - {{description}}
+
+{{/workflows}}
+{{/if}}
 {{#if restAPIs}}
 
 ## APIs

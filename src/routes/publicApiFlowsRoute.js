@@ -29,21 +29,13 @@ router.get('/:orgName/views/:viewName/api-workflows', (req, res, next) => {
     next();
 }, registerPartials, util.enforcePortalMode, publicApiFlowsController.loadPublicAPIFlows);
 
-// Get all published workflows as JSON
-router.get('/:orgName/views/:viewName/api-workflows.json', (req, res, next) => {
+// Get all published workflows as Markdown
+router.get('/:orgName/views/:viewName/api-workflows.md', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
         return res.status(404).send('Not Found');
     }
     next();
-}, publicApiFlowsController.getAllPublishedFlowsJSON);
-
-// Public API Workflow detail page
-router.get('/:orgName/views/:viewName/api-workflows/:handle', (req, res, next) => {
-    if (req.params.orgName === 'favicon.ico') {
-        return res.status(404).send('Not Found');
-    }
-    next();
-}, registerPartials, util.enforcePortalMode, publicApiFlowsController.loadPublicAPIFlowDetail);
+}, publicApiFlowsController.getAllPublishedFlowsMD);
 
 // Public API to get workflow prompt as JSON
 router.get('/:orgName/views/:viewName/api-workflows/:handle/prompt', (req, res, next) => {
@@ -53,13 +45,21 @@ router.get('/:orgName/views/:viewName/api-workflows/:handle/prompt', (req, res, 
     next();
 }, publicApiFlowsController.getFlowPromptJSON);
 
-// Get workflow detail as JSON
-router.get('/:orgName/views/:viewName/api-workflows/:handle/view.json', (req, res, next) => {
+// Get workflow detail as Markdown
+router.get('/:orgName/views/:viewName/api-workflows/:handle.md', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
         return res.status(404).send('Not Found');
     }
     next();
-}, publicApiFlowsController.getWorkflowDetailJSON);
+}, publicApiFlowsController.getWorkflowDetailMd);
+
+// Public API Workflow detail page (generic :handle route - must be last)
+router.get('/:orgName/views/:viewName/api-workflows/:handle', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, registerPartials, util.enforcePortalMode, publicApiFlowsController.loadPublicAPIFlowDetail);
 
 // Generate agent prompt from metadata
 router.post('/:orgName/views/:viewName/api-flows/generate-prompt', (req, res, next) => {

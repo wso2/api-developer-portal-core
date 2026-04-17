@@ -65,7 +65,7 @@ const normalizeToJSON = (content) => {
  */
 const generateAgentPrompt = (name, description, apis = [], orgHandle = '', viewName = 'default', baseUrl = '', handle = '') => {
     const workflowUrl = (handle && orgHandle && baseUrl)
-        ? `${baseUrl}/${orgHandle}/views/${viewName}/api-workflows/${handle}/view.json`
+        ? `${baseUrl}/${orgHandle}/views/${viewName}/api-workflows/${handle}.md`
         : '';
 
     const workflowReference = workflowUrl

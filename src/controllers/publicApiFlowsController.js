@@ -22,6 +22,9 @@ const apiFlowService = require('../services/apiFlowService');
 const logger = require('../config/logger');
 const { renderTemplate } = require('../utils/util');
 const config = require(process.cwd() + '/config.json');
+const fs = require('fs');
+const path = require('path');
+const Handlebars = require('handlebars');
 
 const resolveViewId = async (orgID, viewName) => {
     return await apiMetadataDao.getViewID(orgID, viewName);
@@ -92,54 +95,6 @@ const loadPublicAPIFlows = async (req, res) => {
         const templateContent = { errorMessage: 'Error loading API flows' };
         const html = renderTemplate('src/pages/error-page/page.hbs', 'src/defaultContent/layout/main.hbs', templateContent, false);
         return res.status(500).send(html);
-    }
-};
-
-const getAllPublishedFlowsJSON = async (req, res) => {
-    const { orgName, viewName } = req.params;
-
-    try {
-        const orgDetails = await adminDao.getOrganization(orgName);
-        if (!orgDetails) {
-            return res.status(404).json({ error: 'Organization not found' });
-        }
-
-        const orgID = orgDetails.ORG_ID;
-        const viewId = await resolveViewId(orgID, viewName);
-
-        const apiFlows = await apiFlowDao.getPublishedAPIFlows(orgID, viewId);
-
-        res.status(200).json({
-            success: true,
-            count: apiFlows.length,
-            flows: apiFlows.map(flow => ({
-                flowId: flow.API_FLOW_ID,
-                handle: flow.HANDLE,
-                name: flow.NAME,
-                description: flow.DESCRIPTION,
-                status: flow.STATUS,
-                contentType: flow.CONTENT_TYPE,
-                apiCount: flow.DP_API_METADATA ? flow.DP_API_METADATA.length : 0,
-                apis: flow.DP_API_METADATA ? flow.DP_API_METADATA.map(api => ({
-                    apiId: api.API_ID,
-                    apiName: api.API_NAME,
-                    apiHandle: api.API_HANDLE,
-                    apiDescription: api.API_DESCRIPTION,
-                    productionUrl: api.PRODUCTION_URL,
-                    apiType: api.API_TYPE
-                })) : [],
-                createdAt: flow.CREATED_AT,
-                updatedAt: flow.UPDATED_AT
-            }))
-        });
-    } catch (error) {
-        logger.error('Error fetching published flows as JSON', {
-            error: error.message,
-            stack: error.stack,
-            orgName,
-            viewName
-        });
-        res.status(500).json({ error: 'Error fetching API flows' });
     }
 };
 
@@ -278,13 +233,13 @@ const getFlowPromptJSON = async (req, res) => {
     }
 };
 
-const getWorkflowDetailJSON = async (req, res) => {
+const getWorkflowDetailMd = async (req, res) => {
     const { orgName, viewName, handle } = req.params;
 
     try {
         const orgDetails = await adminDao.getOrganization(orgName);
         if (!orgDetails) {
-            return res.status(404).json({ error: 'Organization not found' });
+            return res.status(404).send('# Error\n\nOrganization not found.');
         }
 
         const orgID = orgDetails.ORG_ID;
@@ -293,49 +248,113 @@ const getWorkflowDetailJSON = async (req, res) => {
         const apiFlow = await apiFlowDao.getPublishedAPIFlowByHandle(orgID, viewId, handle);
 
         if (!apiFlow) {
-            return res.status(404).json({ error: 'API Workflow not found or not published' });
+            return res.status(404).send('# Error\n\nWorkflow not found or not published.');
         }
 
+        // Get raw content as string
         const rawContent = apiFlow.FILE_CONTENT;
-        let content = null;
+        let workflowContent = '';
         if (rawContent != null) {
-            const str = Buffer.isBuffer(rawContent) ? rawContent.toString('utf8') : String(rawContent);
+            workflowContent = Buffer.isBuffer(rawContent) ? rawContent.toString('utf8') : String(rawContent);
+        }
+
+        // Convert to Markdown format if the content is Arazzo JSON
+        let markdownContent = workflowContent;
+        if (apiFlow.CONTENT_TYPE === 'ARAZZO') {
             try {
-                content = JSON.parse(str);
-            } catch {
-                content = str;
+                const arazoJson = JSON.parse(workflowContent);
+                markdownContent = generateWorkflowMarkdown(arazoJson, apiFlow, orgName, viewName);
+            } catch (e) {
+                // If parsing fails, use content as-is
+                logger.warn('Could not parse Arazzo JSON, using raw content', { handle, error: e.message });
+                markdownContent = workflowContent;
             }
         }
 
-        res.status(200).json({
-            flowId: apiFlow.API_FLOW_ID,
-            handle: apiFlow.HANDLE,
-            name: apiFlow.NAME,
-            description: apiFlow.DESCRIPTION,
-            agentPrompt: apiFlow.AGENT_PROMPT,
-            status: apiFlow.STATUS,
-            contentType: apiFlow.CONTENT_TYPE,
-            content,
-            apis: apiFlow.DP_API_METADATA ? apiFlow.DP_API_METADATA.map(api => ({
-                apiId: api.API_ID,
-                apiName: api.API_NAME,
-                apiHandle: api.API_HANDLE,
-                apiDescription: api.API_DESCRIPTION,
-                productionUrl: api.PRODUCTION_URL,
-                apiType: api.API_TYPE
-            })) : [],
-            createdAt: apiFlow.CREATED_AT,
-            updatedAt: apiFlow.UPDATED_AT
-        });
+        res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+        res.send(markdownContent);
     } catch (error) {
-        logger.error('Error fetching public API workflow detail as JSON', {
+        logger.error('Error fetching workflow detail as markdown', {
             error: error.message,
             stack: error.stack,
             orgName,
             viewName,
             handle
         });
-        res.status(500).json({ error: 'Error fetching API workflow' });
+        res.status(500).send('# Error\n\nFailed to load workflow.');
+    }
+};
+
+const generateWorkflowMarkdown = (arazoJson, apiFlow, orgName, viewName) => {
+    const templatePath = path.join(process.cwd(), 'src/defaultContent/pages/public-api-flows/workflow-markdown.hbs');
+    const templateContent = fs.readFileSync(templatePath, 'utf8');
+    const template = Handlebars.compile(templateContent);
+
+    const baseUrl = `/${orgName}/views/${viewName}`;
+    const data = {
+        flow: {
+            name: apiFlow.NAME,
+            status: apiFlow.STATUS,
+            description: apiFlow.DESCRIPTION,
+            apis: apiFlow.DP_API_METADATA ? apiFlow.DP_API_METADATA.map(api => ({
+                apiName: api.API_NAME,
+                apiHandle: api.API_HANDLE,
+                apiType: api.API_TYPE,
+                pathType: api.API_TYPE === 'MCP' ? 'mcp' : 'api'
+            })) : []
+        },
+        baseUrl,
+        arazoJson: JSON.stringify(arazoJson, null, 2)
+    };
+
+    return template(data);
+};
+
+const generateWorkflowsListMarkdown = (apiFlows, orgName, viewName) => {
+    const templatePath = path.join(process.cwd(), 'src/defaultContent/pages/public-api-flows/workflows-list-markdown.hbs');
+    const templateContent = fs.readFileSync(templatePath, 'utf8');
+    const template = Handlebars.compile(templateContent);
+
+    const baseUrl = `/${orgName}/views/${viewName}`;
+    const data = {
+        flows: apiFlows.map(flow => ({
+            name: flow.NAME,
+            handle: flow.HANDLE
+        })),
+        baseUrl,
+        orgName,
+        viewName
+    };
+
+    return template(data);
+};
+
+const getAllPublishedFlowsMD = async (req, res) => {
+    const { orgName, viewName } = req.params;
+
+    try {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        if (!orgDetails) {
+            return res.status(404).send('# Error\n\nOrganization not found.');
+        }
+
+        const orgID = orgDetails.ORG_ID;
+        const viewId = await resolveViewId(orgID, viewName);
+
+        const apiFlows = await apiFlowDao.getPublishedAPIFlows(orgID, viewId);
+
+        const md = generateWorkflowsListMarkdown(apiFlows, orgName, viewName);
+
+        res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+        res.send(md);
+    } catch (error) {
+        logger.error('Error fetching published flows as markdown', {
+            error: error.message,
+            stack: error.stack,
+            orgName,
+            viewName
+        });
+        res.status(500).send('# Error\n\nFailed to load workflows.');
     }
 };
 
@@ -353,9 +372,9 @@ const generatePrompt = async (req, res) => {
 
 module.exports = {
     loadPublicAPIFlows,
-    getAllPublishedFlowsJSON,
+    getAllPublishedFlowsMD,
     loadPublicAPIFlowDetail,
     getFlowPromptJSON,
-    getWorkflowDetailJSON,
+    getWorkflowDetailMd,
     generatePrompt
 };
