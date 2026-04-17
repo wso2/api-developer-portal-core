@@ -38,8 +38,12 @@
                         Description <span class="text-danger">*</span>
                     </label>
                     <textarea class="form-control" id="apiFlowDescription" rows="2"
-                        placeholder="Describe what this flow accomplishes…"></textarea>
+                        placeholder="e.g. Orchestrates a multi-step patient booking workflow across appointment scheduling and healthcare provider systems…"></textarea>
                     <div class="invalid-feedback">Description is required.</div>
+                    <div class="form-text mt-1">
+                        <i class="bi bi-lightbulb me-1"></i>
+                        Describe the use case clearly and concisely. This trains AI agents to recommend this workflow for similar scenarios.
+                    </div>
                 </div>
 
             </div>
@@ -116,7 +120,7 @@
                         <button class="af-flow-tab active" id="tab-arazzo" data-bs-toggle="tab"
                             data-bs-target="#pane-arazzo" type="button" role="tab"
                             aria-controls="pane-arazzo" aria-selected="true">
-                            <i class="bi bi-code-slash"></i> Arazzo Spec
+                            <i class="bi bi-code-slash"></i> Flow Specification
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
@@ -174,10 +178,10 @@
                                     value="ARAZZO" autocomplete="off" checked />
                                 <label class="btn btn-sm common-btn-outlined" for="contentTypeArazzo">Arazzo Spec</label>
 
-                                <input type="radio" class="btn-check api-flow-content-type-radio" name="apiFlowContentType" id="contentTypeLlmsTxt"
-                                    value="LLMS_TXT" autocomplete="off" disabled />
-                                <label class="btn btn-sm common-btn-outlined disabled" for="contentTypeLlmsTxt"
-                                    title="Coming soon">llms.txt</label>
+                                <input type="radio" class="btn-check api-flow-content-type-radio" name="apiFlowContentType" id="contentTypeMarkdown"
+                                    value="MARKDOWN" autocomplete="off" disabled />
+                                <label class="btn btn-sm common-btn-outlined disabled" for="contentTypeMarkdown"
+                                    title="Coming soon">Markdown</label>
                             </div>
                         </div>
 
@@ -189,9 +193,9 @@
                                         Arazzo Specification <span class="text-danger">*</span>
                                     </label>
                                     <p class="text-muted small mb-0 mt-1">
-                                        Define the exact API call sequence using the
-                                        <a href="https://spec.openapis.org/arazzo/latest.html" target="_blank" rel="noopener">Arazzo specification</a>.
-                                        Generate a starter template, upload an existing file, or write manually.
+                                        Define your API workflow using
+                                        <a href="https://spec.openapis.org/arazzo/latest.html" target="_blank" rel="noopener">Arazzo Specification</a>
+                                        for structured orchestration. This helps AI agents understand and recommend common patterns to users.
                                     </p>
                                 </div>
                                 <div class="d-flex gap-2 flex-shrink-0 ms-3">
@@ -220,34 +224,41 @@
                             </div>
                         </div>
 
-                        {{!-- llms.txt Editor --}}
-                        <div id="llmsTxtContentWrapper" class="d-none">
+                        {{!-- Markdown Editor --}}
+                        <div id="markdownContentWrapper" class="d-none">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div>
-                                    <label for="llmsTxtContent" class="form-label fw-semibold mb-0">
-                                        llms.txt Content
-                                        <span class="text-muted fw-normal small ms-1">(optional)</span>
+                                    <label for="markdownContent" class="form-label fw-semibold mb-0">
+                                        Markdown Documentation <span class="text-danger">*</span>
                                     </label>
                                     <p class="text-muted small mb-0 mt-1">
-                                        Markdown-based <a href="https://llmstxt.org" target="_blank" rel="noopener">llms.txt</a>
-                                        file describing how LLMs should interact with your APIs.
+                                        Define your API workflow using flexible Markdown documentation. Describe the sequence of API calls, dependencies, and expected outcomes. This helps AI agents understand and recommend common patterns to users.
                                     </p>
                                 </div>
                                 <div class="d-flex gap-2 flex-shrink-0 ms-3">
-                                    <button type="button" class="common-btn-outlined" id="uploadLlmsTxtBtn"
-                                        title="Upload llms.txt file">
+                                    <button type="button" class="common-btn-primary" id="generateMarkdownBtn"
+                                        title="Generate a template from selected APIs">
+                                        <i class="bi bi-magic me-1"></i> Generate
+                                    </button>
+                                    <button type="button" class="common-btn-outlined" id="uploadMarkdownBtn"
+                                        title="Upload Markdown file">
                                         <i class="bi bi-upload me-1"></i> Upload
                                     </button>
-                                    <button type="button" class="common-btn-outlined af-icon-btn" id="copyLlmsTxtBtn"
+                                    <button type="button" class="common-btn-outlined af-icon-btn" id="copyMarkdownBtn"
                                         title="Copy content to clipboard" aria-label="Copy content">
                                         <i class="bi bi-clipboard"></i>
                                     </button>
-                                    <input type="file" id="llmsTxtFileInput" accept=".txt,.md" style="display:none" />
+                                    <input type="file" id="markdownFileInput" accept=".md,.txt" style="display:none" />
                                 </div>
                             </div>
-                            <textarea class="form-control api-flow-code-editor" id="llmsTxtContent"
+                            <textarea class="form-control api-flow-code-editor" id="markdownContent"
                                 style="min-height: 320px; resize: vertical;"
-                                placeholder="# My API Flow&#10;&#10;> Brief description for LLMs&#10;&#10;## APIs&#10;&#10;- [API Name](url): Short description"></textarea>
+                                placeholder="# My API Workflow&#10;&#10;Brief description of the workflow and its purpose.&#10;&#10;## Steps&#10;&#10;1. **Step Name**: Description of what this step does&#10;2. **Another Step**: More details..."></textarea>
+                            <div class="invalid-feedback">Markdown content is required.</div>
+                            <div class="form-text mt-1">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Markdown (.md) format. Stored alongside the agent prompt for AI agent training.
+                            </div>
                         </div>
 
                     </div>
