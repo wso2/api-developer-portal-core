@@ -238,6 +238,9 @@ const handleLogOutLanding = async (req, res) => {
 
 const handleSilentSSO = async (req, res, next) => {
 
+    // Skip silent SSO redirect to IDP if disabled in config (advanced.disableSilentSSO)
+    if (config.advanced?.disableSilentSSO) return next();
+
     await req.session.save((err) => {
         req.session.returnTo = req.originalUrl;
 

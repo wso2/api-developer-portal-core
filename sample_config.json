@@ -16,7 +16,8 @@
     },
     "disabledRoleValidation": true,
     "disableOrgCallback": true,
-    "disableScopeValidation": true
+    "disableScopeValidation": true,
+    "disableSilentSSO": false
   },
   "pathToContent": "./resources/default-layout/",
   "pathToDBCert": "./resources/security/ca.pem",
