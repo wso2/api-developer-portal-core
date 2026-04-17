@@ -22,6 +22,7 @@ const adminDao = require('../dao/admin');
 const apiMetadataDao = require('../dao/apiMetadata');
 const apiFlowService = require('../services/apiFlowService');
 const { renderGivenTemplate } = require('../utils/util');
+const { getSessionCsrfToken } = require('../middlewares/csrfProtection');
 const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
 
@@ -34,7 +35,8 @@ const loadViewSettingsPage = async (req, res) => {
 
     let templateContent = {
         baseUrl: '/' + req.params.orgName + '/views/' + viewName,
-        viewName
+        viewName,
+        csrfToken: getSessionCsrfToken(req)
     };
     let layoutResponse = "";
     try {

@@ -40,97 +40,114 @@ const normalizeToJSON = (content) => {
         return str; // already valid JSON
     } catch {
         // try YAML parse
-        const parsed = yaml.load(str);
-        return JSON.stringify(parsed);
+        try {
+            const parsed = yaml.load(str);
+            return JSON.stringify(parsed);
+        } catch (yamlError) {
+            logger.error('Failed to parse content as JSON or YAML', { error: yamlError.message });
+            return null;
+        }
     }
 };
 
 /**
- * Generates a structured, LLM-ready agent prompt from APIFlow metadata and its associated APIs.
+ * Generates a minimal, LLM-ready agent prompt that references the workflow definition.
+ * The workflow (llms.txt) contains all execution details, API associations, and instructions.
+ * The prompt provides execution guidance for two personas: execution agents and app builder agents.
  * @param {string} name - APIFlow name
  * @param {string} description - APIFlow description
- * @param {Array} apis - Array of API metadata objects { API_NAME, API_DESCRIPTION, PRODUCTION_URL, API_HANDLE, API_TYPE }
- * @param {string} orgHandle - Organization handle for building spec URLs
+ * @param {Array} apis - Array of API metadata (unused, kept for backward compatibility)
+ * @param {string} orgHandle - Organization handle for building workflow URL
  * @param {string} viewName - View name
  * @param {string} baseUrl - Base URL of the portal
  * @param {string} handle - APIFlow handle for constructing the workflow detail URL
- * @returns {string} Structured agent prompt
+ * @returns {string} Agent prompt with two sections (execution and app building)
  */
 const generateAgentPrompt = (name, description, apis = [], orgHandle = '', viewName = 'default', baseUrl = '', handle = '') => {
-    const apiSections = apis.map((api, i) => {
-        const specPath = orgHandle
-            ? `/${orgHandle}/views/${viewName}/api/${api.API_HANDLE || api.apiHandle}/docs/specification.json`
-            : `/views/${viewName}/api/${api.API_HANDLE || api.apiHandle}/docs/specification.json`;
-        const specUrl = baseUrl ? `${baseUrl}${specPath}` : specPath;
-        return `### ${i + 1}. ${api.API_NAME || api.apiName}
-- **Type**: ${api.API_TYPE || api.apiType || 'REST'}
-- **Base URL**: ${api.PRODUCTION_URL || api.productionUrl || '(not set)'}
-- **Description**: ${api.API_DESCRIPTION || api.apiDescription || '(no description)'}
-- **Specification**: ${specUrl}`;
-    }).join('\n\n');
-
-    const apiListForConstraints = apis.map(a => `"${a.API_NAME || a.apiName}"`).join(', ');
-
     const workflowUrl = (handle && orgHandle && baseUrl)
         ? `${baseUrl}/${orgHandle}/views/${viewName}/api-workflows/${handle}/view.json`
         : '';
 
-    const workflowSourceLine = workflowUrl
-        ? `\nWorkflow definition (source of truth): ${workflowUrl}`
+    const workflowReference = workflowUrl
+        ? `\n\nWorkflow Definition (source of truth): ${workflowUrl}`
         : '';
 
-    return `You are an API orchestration agent executing the "${name}" flow.${workflowSourceLine}
-
-## Execution Mode
-- Be deterministic, not creative.
-- Do NOT assume or fabricate data — if a required input is missing, ask the user.
-- Fetch the workflow definition URL above and follow it exactly. Do not reorder, skip, or add steps.
+    const section1 = `You are an API orchestration agent executing the "${name}" workflow.${workflowReference}
 
 ## Objective
 ${description}
 
-## Available APIs
-${apiSections || '_(No APIs assigned to this flow yet)_'}
+## Execution Mode
+- Execute deterministically, following the workflow steps exactly as defined
+- Do not fabricate data or skip steps
+- Do not make creative interpretations—follow the workflow literally
+
+## Workflow Source
+Read the workflow definition for:
+- Complete execution steps and their sequence
+- Associated APIs and their OpenAPI specifications
+- Security schemes for each API
+- Any additional instructions or constraints
 
 ## Execution State
-Maintain the following state throughout execution:
-\`\`\`
-workflow_state = {
-  current_step: "",
-  completed_steps: [],
-  data: {},
-  errors: []
-}
-\`\`\`
-
-## Authentication
-Before making any API calls:
-1. Read each API's specification to identify the required security scheme(s) (e.g., Bearer token, API key, OAuth2, Basic auth).
-2. For each distinct credential required, ask the user to provide it. Example prompts:
-   - "Please provide your Bearer token for <API Name>:"
-   - "Please provide your API key for <API Name> (sent as the <header-name> header):"
-3. Do not proceed with execution until all required credentials have been supplied.
-4. Include the provided credentials in the appropriate headers or query parameters for every request to that API.
+Maintain state throughout execution:
+- Track the current step
+- Record completed steps
+- Store data outputs from each step
+- Track any errors encountered
+- Return the final state and results
 
 ## Step Execution Protocol
-For each step defined in the workflow:
-1. Identify the step ID and operation from the workflow definition.
-2. Resolve required inputs in this order — do NOT fabricate if not found:
-   a. \`workflow_state.data\` (outputs from previous steps)
-   b. API specification defaults
-   c. Ask the user
-3. Execute the API call using only endpoints defined in the specification.
-4. Validate the response (expect 2xx). Store outputs in \`workflow_state.data\` and mark the step complete.
-5. If the response is not 2xx, stop immediately and record the step ID, status code, and response body in \`workflow_state.errors\`.
+For each step in the workflow:
+1. Identify required inputs (from previous steps, user input, or defaults)
+2. Read the OpenAPI specification for the API endpoint
+3. Identify required security scheme(s) from the spec
+4. Collect any missing credentials from the user
+5. Execute the API call with proper authentication
+6. Validate response (expect 2xx status)
+7. Extract outputs and pass to next step
+8. On error: log step ID, status code, and response body
 
 ## Retry Policy
-- Retry only on network errors or 5xx responses. Maximum 3 attempts with backoff: 0s, +1s, +2s.
-- Do NOT retry 4xx responses — treat them as terminal failures.
+- On network errors or 5xx responses: retry up to 3 times with backoff (0s, 1s, 2s)
+- On 4xx responses: stop execution immediately (non-retryable)
+- Never expose raw credentials or tokens in output
 
 ## Constraints
-- Only call APIs listed in the **Available APIs** section above: ${apiListForConstraints || 'none assigned'}.
-- Never expose raw credentials or tokens in the final output summary.
-`;
+- Only call APIs explicitly listed in the workflow
+- Follow all instructions defined in the workflow`;
+
+    const section2 = `You are a software development agent helping a developer build an application
+that implements the "${name}" workflow.${workflowReference}
+
+## Use Case Overview
+${description}
+
+## Development Guidance
+1. Read the workflow definition to understand the complete API orchestration
+2. Review each API's OpenAPI specification to understand operations and security requirements
+3. Identify the sequence of API calls required by reading the workflow steps
+4. Recommend architecture patterns that structure the application as a service layer wrapping each API
+5. Suggest implementing a single orchestration function that executes the workflow steps
+6. Recommend using environment variables for all base URLs and credentials
+
+## Authentication & Security
+- Guide the developer to load credentials from environment variables at startup
+- Recommend using bearer tokens in headers as specified in each API's security scheme
+- Advise against logging credentials, tokens, or sensitive response fields
+- For APIs with OAuth2 security, recommend implementing token refresh logic before orchestration starts`;
+
+    return `${'━'.repeat(48)}
+SECTION 1 — API Execution Agent
+${'━'.repeat(48)}
+
+${section1}
+
+${'━'.repeat(48)}
+SECTION 2 — App Builder Agent
+${'━'.repeat(48)}
+
+${section2}`;
 };
 
 const createAPIFlow = async (req, res) => {

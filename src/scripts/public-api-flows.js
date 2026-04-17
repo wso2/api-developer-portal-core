@@ -109,9 +109,22 @@ function showNotification(message, type = 'info') {
 }
 
 /**
- * Close modal when clicking outside
+ * Wire up event listeners for modal controls
  */
 document.addEventListener('DOMContentLoaded', () => {
+    // Wire up modal close button
+    const promptModalClose = document.getElementById('promptModalClose');
+    if (promptModalClose) {
+        promptModalClose.addEventListener('click', closePromptModal);
+    }
+
+    // Wire up modal copy button
+    const btnCopyPrompt = document.getElementById('btnCopyPrompt');
+    if (btnCopyPrompt) {
+        btnCopyPrompt.addEventListener('click', copyPromptFromModal);
+    }
+
+    // Close modal when clicking outside
     const modal = document.getElementById('promptModal');
     if (modal) {
         modal.addEventListener('click', (e) => {

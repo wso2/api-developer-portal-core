@@ -145,12 +145,11 @@
                             </div>
                             <div class="d-flex gap-2 flex-shrink-0 ms-3">
                                 <button type="button" class="common-btn-primary" id="regeneratePromptBtn"
-                                    onclick="regenerateAgentPrompt()"
                                     title="Generate agent prompt from selected APIs and description">
                                     <i class="bi bi-magic me-1"></i> Generate from APIs
                                 </button>
-                                <button type="button" class="common-btn-outlined"
-                                    onclick="copyFieldPrompt()" title="Copy to clipboard">
+                                <button type="button" class="common-btn-outlined" id="copyFieldPromptBtn"
+                                    title="Copy to clipboard">
                                     <i class="bi bi-clipboard"></i>
                                 </button>
                             </div>
@@ -171,12 +170,12 @@
                         <div class="mb-4">
                             <label class="form-label fw-semibold mb-2">Spec Format</label>
                             <div class="d-flex gap-2">
-                                <input type="radio" class="btn-check" name="apiFlowContentType" id="contentTypeArazzo"
-                                    value="ARAZZO" autocomplete="off" checked onchange="onContentTypeChange()" />
+                                <input type="radio" class="btn-check api-flow-content-type-radio" name="apiFlowContentType" id="contentTypeArazzo"
+                                    value="ARAZZO" autocomplete="off" checked />
                                 <label class="btn btn-sm common-btn-outlined" for="contentTypeArazzo">Arazzo Spec</label>
 
-                                <input type="radio" class="btn-check" name="apiFlowContentType" id="contentTypeLlmsTxt"
-                                    value="LLMS_TXT" autocomplete="off" disabled onchange="onContentTypeChange()" />
+                                <input type="radio" class="btn-check api-flow-content-type-radio" name="apiFlowContentType" id="contentTypeLlmsTxt"
+                                    value="LLMS_TXT" autocomplete="off" disabled />
                                 <label class="btn btn-sm common-btn-outlined disabled" for="contentTypeLlmsTxt"
                                     title="Coming soon">llms.txt</label>
                             </div>
@@ -196,22 +195,19 @@
                                     </p>
                                 </div>
                                 <div class="d-flex gap-2 flex-shrink-0 ms-3">
-                                    <button type="button" class="common-btn-primary" onclick="generateArazzoSpec()"
+                                    <button type="button" class="common-btn-primary" id="generateArazzoBtn"
                                         title="Generate a template from selected APIs">
                                         <i class="bi bi-magic me-1"></i> Generate
                                     </button>
-                                    <button type="button" class="common-btn-outlined"
-                                        onclick="document.getElementById('arazoFileInput').click()"
+                                    <button type="button" class="common-btn-outlined" id="uploadArazzoBtn"
                                         title="Upload Arazzo YAML or JSON file">
                                         <i class="bi bi-upload me-1"></i> Upload
                                     </button>
-                                    <button type="button" class="common-btn-outlined"
-                                        onclick="copyArazzoSpec()"
+                                    <button type="button" class="common-btn-outlined" id="copyArazzoBtn"
                                         title="Copy to clipboard">
                                         <i class="bi bi-clipboard"></i>
                                     </button>
-                                    <input type="file" id="arazoFileInput" accept=".yaml,.yml,.json" style="display:none"
-                                        onchange="loadArazzoFile(event)" />
+                                    <input type="file" id="arazoFileInput" accept=".yaml,.yml,.json" style="display:none" />
                                 </div>
                             </div>
                             <textarea class="form-control api-flow-code-editor" id="arazoContent"
@@ -238,17 +234,15 @@
                                     </p>
                                 </div>
                                 <div class="d-flex gap-2 flex-shrink-0 ms-3">
-                                    <button type="button" class="common-btn-outlined"
-                                        onclick="document.getElementById('llmsTxtFileInput').click()"
+                                    <button type="button" class="common-btn-outlined" id="uploadLlmsTxtBtn"
                                         title="Upload llms.txt file">
                                         <i class="bi bi-upload me-1"></i> Upload
                                     </button>
-                                    <button type="button" class="common-btn-outlined af-icon-btn" onclick="copyLlmsTxt()"
+                                    <button type="button" class="common-btn-outlined af-icon-btn" id="copyLlmsTxtBtn"
                                         title="Copy content to clipboard" aria-label="Copy content">
                                         <i class="bi bi-clipboard"></i>
                                     </button>
-                                    <input type="file" id="llmsTxtFileInput" accept=".txt,.md" style="display:none"
-                                        onchange="loadLlmsTxtFile(event)" />
+                                    <input type="file" id="llmsTxtFileInput" accept=".txt,.md" style="display:none" />
                                 </div>
                             </div>
                             <textarea class="form-control api-flow-code-editor" id="llmsTxtContent"
@@ -266,8 +260,7 @@
         <div class="d-flex justify-content-end align-items-center gap-2 mt-4 pt-3 border-top">
             <button type="button" class="common-btn-outlined" id="cancelApiFlowBtn2">Cancel</button>
             <div class="btn-group" id="saveApiFlowGroup">
-                <button type="button" class="common-btn-primary af-save-main" id="saveApiFlowBtn"
-                    onclick="saveApiFlow(currentOrgID, currentViewName, 'PUBLISHED')">
+                <button type="button" class="common-btn-primary af-save-main" id="saveApiFlowBtn" data-status="PUBLISHED">
                     <i class="bi bi-send me-1"></i> Publish Flow
                 </button>
                 <button type="button"
@@ -277,8 +270,7 @@
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end af-save-dropdown">
                     <li>
-                        <button type="button" class="dropdown-item af-save-dropdown-item"
-                            onclick="saveApiFlow(currentOrgID, currentViewName, 'DRAFT')">
+                        <button type="button" class="dropdown-item af-save-dropdown-item" id="saveDraftBtn" data-status="DRAFT">
                             <i class="bi bi-file-earmark-text me-2"></i>
                             <span class="fw-semibold">Save as Draft</span>
                             <div class="af-save-dropdown-hint">Save without making it visible to consumers</div>

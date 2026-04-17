@@ -18,6 +18,7 @@
 const apiFlowDao = require('../dao/apiFlow');
 const adminDao = require('../dao/admin');
 const apiMetadataDao = require('../dao/apiMetadata');
+const apiFlowService = require('../services/apiFlowService');
 const logger = require('../config/logger');
 const { renderTemplate } = require('../utils/util');
 const config = require(process.cwd() + '/config.json');
@@ -175,6 +176,12 @@ const loadPublicAPIFlowDetail = async (req, res) => {
         } : null;
         const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || 'DEFAULT';
 
+        const rawContent = apiFlow.FILE_CONTENT;
+        let fileContentStr = '';
+        if (rawContent != null) {
+            fileContentStr = Buffer.isBuffer(rawContent) ? rawContent.toString('utf8') : String(rawContent);
+        }
+
         const templateContent = {
             flow: {
                 flowId: apiFlow.API_FLOW_ID,
@@ -183,7 +190,7 @@ const loadPublicAPIFlowDetail = async (req, res) => {
                 agentPrompt: apiFlow.AGENT_PROMPT,
                 status: apiFlow.STATUS,
                 contentType: apiFlow.CONTENT_TYPE,
-                content: apiFlow.FILE_CONTENT,
+                content: fileContentStr,
                 createdAt: apiFlow.CREATED_AT ? new Date(apiFlow.CREATED_AT).toLocaleDateString() : '',
                 updatedAt: apiFlow.UPDATED_AT ? new Date(apiFlow.UPDATED_AT).toLocaleDateString() : '',
                 apis: apiFlow.DP_API_METADATA ? apiFlow.DP_API_METADATA.map(api => ({
@@ -240,6 +247,12 @@ const getFlowPromptJSON = async (req, res) => {
             return res.status(404).json({ error: 'API Workflow not found or not published' });
         }
 
+        const rawContent = apiFlow.FILE_CONTENT;
+        let content = null;
+        if (rawContent != null) {
+            content = Buffer.isBuffer(rawContent) ? rawContent.toString('utf8') : String(rawContent);
+        }
+
         res.status(200).json({
             flowId: apiFlow.API_FLOW_ID,
             handle: apiFlow.HANDLE,
@@ -247,7 +260,7 @@ const getFlowPromptJSON = async (req, res) => {
             description: apiFlow.DESCRIPTION,
             agentPrompt: apiFlow.AGENT_PROMPT,
             contentType: apiFlow.CONTENT_TYPE,
-            content: apiFlow.FILE_CONTENT,
+            content,
             apis: apiFlow.DP_API_METADATA ? apiFlow.DP_API_METADATA.map(api => ({
                 apiName: api.API_NAME,
                 apiHandle: api.API_HANDLE
@@ -326,10 +339,23 @@ const getWorkflowDetailJSON = async (req, res) => {
     }
 };
 
+const generatePrompt = async (req, res) => {
+    const { name, description, apis, orgName, viewName, handle } = req.body;
+    try {
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const prompt = apiFlowService.generateAgentPrompt(name, description, apis || [], orgName || '', viewName || 'default', baseUrl, handle || '');
+        res.status(200).json({ agentPrompt: prompt });
+    } catch (error) {
+        logger.error('Error generating agent prompt', { error: error.message });
+        res.status(500).json({ message: 'Error generating agent prompt' });
+    }
+};
+
 module.exports = {
     loadPublicAPIFlows,
     getAllPublishedFlowsJSON,
     loadPublicAPIFlowDetail,
     getFlowPromptJSON,
-    getWorkflowDetailJSON
+    getWorkflowDetailJSON,
+    generatePrompt
 };

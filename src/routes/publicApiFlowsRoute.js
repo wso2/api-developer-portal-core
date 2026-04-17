@@ -61,4 +61,12 @@ router.get('/:orgName/views/:viewName/api-workflows/:handle/view.json', (req, re
     next();
 }, publicApiFlowsController.getWorkflowDetailJSON);
 
+// Generate agent prompt from metadata
+router.post('/:orgName/views/:viewName/api-flows/generate-prompt', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, publicApiFlowsController.generatePrompt);
+
 module.exports = router;

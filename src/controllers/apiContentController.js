@@ -1058,7 +1058,31 @@ const getAPISpecJSON = async (req, res) => {
         if (!raw) {
             return res.status(404).json({ message: 'API specification not found' });
         }
-        const spec = typeof raw === 'string' ? JSON.parse(raw) : raw;
+
+        let spec;
+        // Special-case GraphQL: convert SDL to introspection JSON
+        if (definitionResponse.graphql) {
+            try {
+                const schema = buildSchema(raw);
+                const introspectionQuery = getIntrospectionQuery();
+                const introspectionResult = await executeGraphQL({
+                    schema,
+                    source: introspectionQuery
+                });
+                spec = introspectionResult.data;
+            } catch (graphqlError) {
+                // Fallback: return structured wrapper if conversion fails
+                logger.warn('GraphQL SDL conversion failed, returning wrapped SDL', {
+                    apiHandle,
+                    error: graphqlError.message
+                });
+                spec = { graphql: raw };
+            }
+        } else {
+            // For Swagger/AsyncAPI, parse as JSON
+            spec = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        }
+
         res.status(200).json(spec);
     } catch (error) {
         logger.error('Error serving API specification JSON', { error: error.message, orgName, apiHandle });

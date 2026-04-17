@@ -180,7 +180,7 @@
 
 .api-flow-empty-state-content .bi-diagram-3 {
     font-size: 3rem;
-    color: var(--primary-lightest-color, #e8e8f4);
+    color: var(--primary-light-color, #e8e8f4);
 }
 
 .api-flow-prompt-toolbar {
