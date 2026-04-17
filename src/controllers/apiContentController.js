@@ -496,7 +496,7 @@ const loadAPIContent = async (req, res) => {
     }
 }
 
-const loadAPIDefinition = async (orgName, viewName, apiHandle) => {
+const getAPIDefinition = async (orgName, viewName, apiHandle) => {
 
     let metaData, templateContent = {};
     if (config.mode === constants.DEV_MODE) {
@@ -515,14 +515,17 @@ const loadAPIDefinition = async (orgName, viewName, apiHandle) => {
         metaData = JSON.parse(data);
         templateContent.apiType = metaData.apiInfo.apiType;
             let apiDefinition;
-            if (metaData.apiInfo.apiType === constants.API_TYPE.GRAPHQL) {
+            const apiType = metaData.apiInfo.apiType;
+            if (apiType === constants.API_TYPE.GRAPHQL) {
                 apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_GRAPHQL, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
-                apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
-                templateContent.graphql = apiDefinition;
+                templateContent.graphql = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
+            } else if (apiType === constants.API_TYPE.MCP) {
+                apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.SCHEMA_DEFINITION_FILE_NAME, constants.DOC_TYPES.SCHEMA_DEFINITION, orgID, apiID);
+                templateContent.schema = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
             } else {
                 apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
                 apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
-                if (metaData.apiInfo.apiType === constants.API_TYPE.WS || metaData.apiInfo.apiType === constants.API_TYPE.WEBSUB) {
+                if (apiType === constants.API_TYPE.WS || apiType === constants.API_TYPE.WEBSUB) {
                     templateContent.asyncapi = apiDefinition;
                 } else {
                     templateContent.swagger = apiDefinition;
@@ -628,7 +631,7 @@ const loadDocument = async (req, res) => {
         };
         const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
         req.cpOrgID = cpOrgID;
-        const definitionResponse = await loadAPIDefinition(orgName, viewName, apiHandle);
+        const definitionResponse = await getAPIDefinition(orgName, viewName, apiHandle);
         templateContent.apiType = definitionResponse.apiType;
         
         const tryoutEnabled = req.query.tryout ? true : false;
@@ -1050,43 +1053,205 @@ async function convertSDLToIntrospection(sdl) {
     }
 }
 
-const getAPISpecJSON = async (req, res) => {
+const loadAPIContentMd = async (req, res) => {
     const { orgName, apiHandle, viewName } = req.params;
+
     try {
-        const definitionResponse = await loadAPIDefinition(orgName, viewName, apiHandle);
-        const raw = definitionResponse.swagger || definitionResponse.asyncapi || definitionResponse.graphql;
-        if (!raw) {
-            return res.status(404).json({ message: 'API specification not found' });
-        }
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const orgID = orgDetails.ORG_ID;
+        const apiID = await apiDao.getAPIId(orgID, apiHandle);
+        const metaData = await loadAPIMetaData(req, orgID, apiID);
+        const subscriptionPlans = await util.appendSubscriptionPlanDetails(orgID, metaData.subscriptionPolicies);
 
-        let spec;
-        // Special-case GraphQL: convert SDL to introspection JSON
-        if (definitionResponse.graphql) {
-            try {
-                const schema = buildSchema(raw);
-                const introspectionQuery = getIntrospectionQuery();
-                const introspectionResult = await executeGraphQL({
-                    schema,
-                    source: introspectionQuery
-                });
-                spec = introspectionResult.data;
-            } catch (graphqlError) {
-                // Fallback: return structured wrapper if conversion fails
-                logger.warn('GraphQL SDL conversion failed, returning wrapped SDL', {
-                    apiHandle,
-                    error: graphqlError.message
-                });
-                spec = { graphql: raw };
+        // Load API definition
+        let apiDefinition = null;
+        let specHeading = 'OpenAPI Specification';
+        const apiType = metaData.apiInfo?.apiType;
+        try {
+            if (apiType === constants.API_TYPE.GRAPHQL) {
+                specHeading = 'GraphQL Schema';
+                const raw = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_GRAPHQL, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
+                if (raw) apiDefinition = raw.API_FILE.toString(constants.CHARSET_UTF8);
+            } else if (apiType === constants.API_TYPE.MCP) {
+                specHeading = 'Tool Schema';
+                const raw = await apiDao.getAPIFile(constants.FILE_NAME.SCHEMA_DEFINITION_FILE_NAME, constants.DOC_TYPES.SCHEMA_DEFINITION, orgID, apiID);
+                if (raw) apiDefinition = raw.API_FILE.toString(constants.CHARSET_UTF8);
+            } else {
+                if (apiType === constants.API_TYPE.WS || apiType === constants.API_TYPE.WEBSUB) specHeading = 'AsyncAPI Specification';
+                else if (apiType === 'SOAP') specHeading = 'WSDL';
+                const raw = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
+                if (raw) apiDefinition = raw.API_FILE.toString(constants.CHARSET_UTF8);
             }
-        } else {
-            // For Swagger/AsyncAPI, parse as JSON
-            spec = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        } catch (defErr) {
+            logger.warn('Could not load API definition for markdown', { orgID, apiID, error: defErr.message });
         }
 
+        // Load docs
+        const baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
+        const linkBase = apiType === constants.API_TYPE.MCP
+            ? `${baseUrl}/mcp/${apiHandle}`
+            : `${baseUrl}/api/${apiHandle}`;
+        const docTypes = await apiMetadataService.getAPIDocTypes(orgID, apiID);
+        const docs = [];
+        for (const docType of docTypes) {
+            if (docType.type === 'API_DEFINITION') continue;
+            for (const name of (docType.names || [])) {
+                docs.push({ name, type: docType.type, url: `${linkBase}/docs/${docType.type}/${name}` });
+            }
+        }
+
+        const specExt = apiType === constants.API_TYPE.GRAPHQL ? 'graphql'
+            : apiType === 'SOAP' ? 'xml'
+            : 'json';
+        const templateContent = {
+            apiMetadata: metaData,
+            subscriptionPlans,
+            apiDefinition,
+            specHeading,
+            specUrl: `${linkBase}/docs/specification.${specExt}`,
+            docs: docs.length > 0 ? docs : null,
+            baseUrl,
+        };
+        const md = await util.renderMarkdownTemplateFromAPI(templateContent, orgID, 'pages/api-landing', viewName);
+
+        res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+        res.send(md);
+    } catch (error) {
+        logger.error('Error generating API detail markdown', {
+            orgName,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).send('# Error\n\nFailed to load API details.');
+    }
+};
+
+const loadLlmsTxt = async (req, res) => {
+    const { orgName, viewName } = req.params;
+    try {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const orgID = orgDetails.ORG_ID;
+
+        const metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, null, null, viewName);
+        // TODO: filter public APIs
+        //  const publicAPIs = metaDataList.filter(api => api.apiInfo.visibility === 'PUBLIC');
+        const publicAPIs = metaDataList;
+
+        const byType = { REST: [], MCP: [], GraphQL: [], WS: [] };
+        for (const api of publicAPIs) {
+            const type = api.apiInfo.apiType;
+            if (byType[type]) byType[type].push(api);
+        }
+
+        const baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
+        const templateContent = {
+            orgName: orgDetails.ORG_NAME,
+            restAPIs:    byType.REST.length    ? byType.REST    : null,
+            mcpAPIs:     byType.MCP.length     ? byType.MCP     : null,
+            graphqlAPIs: byType.GraphQL.length ? byType.GraphQL : null,
+            wsAPIs:      byType.WS.length      ? byType.WS      : null,
+            baseUrl,
+        };
+
+        const md = await util.renderLlmsTxt(templateContent, orgID, viewName);
+
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.send(md);
+    } catch (error) {
+        logger.error('Error generating llms.txt', { orgName, error: error.message, stack: error.stack });
+        res.status(500).send('# Error\n\nFailed to generate portal index.');
+    }
+};
+
+const loadAPIsMd = async (req, res) => {
+    const { orgName, viewName } = req.params;
+
+    try {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const orgID = orgDetails.ORG_ID;
+        const metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, null, null, viewName);
+
+        const templateContent = {
+            apiMetadata: metaDataList,
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+        };
+        const md = await util.renderMarkdownTemplateFromAPI(templateContent, orgID, 'pages/apis', viewName);
+
+        res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+        res.send(md);
+    } catch (error) {
+        logger.error('Error generating APIs markdown', {
+            orgName,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).send('# Error\n\nFailed to load API list.');
+    }
+};
+
+const SPEC_FORMAT_MAP = {
+    [constants.API_TYPE.GRAPHQL]: { format: 'graphql', field: 'graphql',  label: 'GraphQL' },
+    [constants.API_TYPE.MCP]:     { format: 'json',    field: 'schema',   label: 'MCP'     },
+    [constants.API_TYPE.WS]:      { format: 'json',    field: 'asyncapi', label: 'WS'      },
+    [constants.API_TYPE.WEBSUB]:  { format: 'json',    field: 'asyncapi', label: 'WEBSUB'  },
+};
+const SPEC_FORMAT_DEFAULT = { format: 'json', field: 'swagger', label: 'REST' };
+
+const loadAPIDefinitionRaw = async (req, res) => {
+    const { orgName, apiHandle, viewName, format } = req.params;
+    try {
+        const definitionResponse = await getAPIDefinition(orgName, viewName, apiHandle);
+        const typeConfig = SPEC_FORMAT_MAP[definitionResponse.apiType] || SPEC_FORMAT_DEFAULT;
+
+        if (format !== typeConfig.format) {
+            return res.status(404).send(`${typeConfig.label} APIs only support specification.${typeConfig.format}.`);
+        }
+
+        const raw = definitionResponse[typeConfig.field];
+        if (!raw) return res.status(404).json({ message: 'API specification not found' });
+
+        const spec = typeof raw === 'string' ? JSON.parse(raw) : raw;
         res.status(200).json(spec);
     } catch (error) {
-        logger.error('Error serving API specification JSON', { error: error.message, orgName, apiHandle });
-        res.status(500).json({ message: 'Error retrieving API specification' });
+        logger.error('Error loading raw specification', {
+            orgName,
+            viewName,
+            format,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).json({ message: 'Failed to load specification.' });
+    }
+};
+
+const loadDocumentMd = async (req, res) => {
+    const { orgName, apiHandle, docType, docName } = req.params;
+
+    try {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const orgID = orgDetails.ORG_ID;
+        const apiID = await apiDao.getAPIId(orgID, apiHandle);
+        // docName here is without the .md suffix (stripped by the route param)
+        const fullDocName = docName + '.md';
+        const docContentResponse = await apiDao.getAPIDocByName(
+            constants.DOC_TYPES.DOC_ID + docType,
+            fullDocName,
+            orgID,
+            apiID
+        );
+        if (!docContentResponse) {
+            return res.status(404).send('# Not Found\n\nDocument not found.');
+        }
+        const content = docContentResponse.API_FILE.toString(constants.CHARSET_UTF8);
+        res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+        res.send(content);
+    } catch (error) {
+        logger.error('Error loading raw document markdown', {
+            orgName,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).send('# Error\n\nFailed to load document.');
     }
 };
 
@@ -1095,5 +1260,9 @@ module.exports = {
     loadAPIContent,
     loadDocsPage,
     loadDocument,
-    getAPISpecJSON,
+    loadAPIsMd,
+    loadLlmsTxt,
+    loadAPIContentMd,
+    loadDocumentMd,
+    loadSpecificationRaw: loadAPIDefinitionRaw,
 };

@@ -6,6 +6,7 @@
   "scripts": {
     "design-mode": "npm run build-css --watch & nodemon src/dev-server.js",
     "start": "nodemon --ignore 'generated-sdks/**/*' src/app.js",
+    "debug": "nodemon --inspect --ignore 'generated-sdks/**/*' src/app.js",
     "multi-tenant": "npm run build-css --watch & nodemon src/multi-tenant.js",
     "build-css": "node watcher.js",
     "build": "pkg ."
