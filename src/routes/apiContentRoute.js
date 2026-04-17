@@ -100,7 +100,7 @@ router.get('/:orgName/views/:viewName/:apiType(api|mcp)/:apiHandle/docs/specific
         return res.status(404).send('Not Found');
     }
     next();
-}, util.enforcePortalMode, apiController.loadSpecificationRaw);
+}, authController.handleSilentSSO, registerPartials, util.enforcePortalMode, ensureAuthenticated, apiController.loadSpecificationRaw);
 
 router.get('/:orgName/views/:viewName/api/:apiHandle/docs/specification', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {

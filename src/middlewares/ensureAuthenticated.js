@@ -188,8 +188,11 @@ const ensureAuthenticated = async (req, res, next) => {
                                     req.user[constants.ORG_IDENTIFIER] = userOrg;
 
                                     // Re-derive isAdmin from the freshly exchanged token's scope
+                                    // OR with the existing role-based admin check to preserve fallback
                                     const freshScopes = (decodedExchangedToken?.scope || '').split(' ');
-                                    req.user.isAdmin = freshScopes.includes(config.advanced.tokenExchanger.admin_scope || "apim:admin");
+                                    const freshScopeHasAdmin = freshScopes.includes(config.advanced.tokenExchanger.admin_scope || "apim:admin");
+                                    const roleBasedAdmin = role && (role.includes(adminRole) || role.includes(superAdminRole));
+                                    req.user.isAdmin = freshScopeHasAdmin || roleBasedAdmin;
                                 } catch (error) {
                                     logger.error("Error during token exchange", { error: error.message, stack: error.stack, operation: "tokenExchange" });
                                     const err = new Error('Authentication required');

@@ -19,6 +19,7 @@
     <script src='/technical-scripts/search.js' defer></script>
     <script src='/technical-scripts/filter.js' defer></script>
     <script src='/technical-scripts/common.js' defer></script>
+    <script src='/technical-scripts/delete-confirmation-modal.js' defer></script>
     <script src='/technical-scripts/subscription.js' defer></script>
     {{#if portalConfigs.reoClientID}}
     <!-- Start of Reo Javascript -->
@@ -44,7 +45,10 @@
         </div>
     </main>
     {{> footer }}
-    
+
+    {{!-- Global Delete Confirmation Modal --}}
+    {{> delete-confirmation modalTitle="Confirm" modalMessage="" }}
+
     {{!-- Global Stripe Checkout Modal --}}
     <div id="stripeCheckoutModal" class="modal hidden" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6);">
         <div class="modal-content" style="background-color: #fefefe; margin: 40px auto; padding: 30px 20px 20px 20px; border: none; width: 90%; max-width: 600px; border-radius: 12px; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto;">

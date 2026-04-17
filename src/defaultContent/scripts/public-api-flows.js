@@ -16,6 +16,23 @@
  * under the License.
  */
 
+let apiFlowsData = [];
+
+/**
+ * Initialize API flows data from non-executable container
+ */
+function initializeApiFlowsData() {
+    try {
+        const dataContainer = document.getElementById('apiFlowsDataContainer');
+        if (dataContainer) {
+            apiFlowsData = JSON.parse(dataContainer.textContent) || [];
+        }
+    } catch (e) {
+        console.error('Failed to parse apiFlowsData:', e);
+        apiFlowsData = [];
+    }
+}
+
 /**
  * Extract org and view names from the current URL
  * URL format: /orgName/views/viewName/api-flows
@@ -87,12 +104,19 @@ async function copyPromptFromModal() {
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
-    notification.innerHTML = `
-        <div class="notification-content">
-            <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-            <span>${message}</span>
-        </div>
-    `;
+
+    const content = document.createElement('div');
+    content.className = 'notification-content';
+
+    const icon = document.createElement('i');
+    icon.className = `bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'}`;
+
+    const text = document.createElement('span');
+    text.textContent = message;
+
+    content.appendChild(icon);
+    content.appendChild(text);
+    notification.appendChild(content);
 
     document.body.appendChild(notification);
 
@@ -109,9 +133,25 @@ function showNotification(message, type = 'info') {
 }
 
 /**
- * Close modal when clicking outside
+ * Wire up event listeners for modal controls
  */
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize data from non-executable container
+    initializeApiFlowsData();
+
+    // Wire up modal close button
+    const promptModalClose = document.getElementById('promptModalClose');
+    if (promptModalClose) {
+        promptModalClose.addEventListener('click', closePromptModal);
+    }
+
+    // Wire up modal copy button
+    const btnCopyPrompt = document.getElementById('btnCopyPrompt');
+    if (btnCopyPrompt) {
+        btnCopyPrompt.addEventListener('click', copyPromptFromModal);
+    }
+
+    // Close modal when clicking outside
     const modal = document.getElementById('promptModal');
     if (modal) {
         modal.addEventListener('click', (e) => {

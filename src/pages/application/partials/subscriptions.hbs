@@ -1,4 +1,4 @@
-{{> delete-confirmation modalTitle="Do you really want to remove the subscription?" modalMessage="This will remove the subscription entry stored in the devportal." modalFunction="removeSubscription()" }}
+{{> delete-confirmation modalTitle="Do you really want to remove the subscription?" modalMessage="This will remove the subscription entry stored in the devportal." }}
 <div class="row">
     {{#each apis}}
     {{#if isSubAvailable}}
@@ -12,7 +12,7 @@
             <ul class="policy-label">
                 <li>{{subscribedPolicy.policy}}</li>
         </h6>
-        <button class="common-btn-outlined mt-2" onclick="openDeleteModal('{{subscribedPolicy.id}}', '')">Unsubscribe</button>
+        <button class="common-btn-outlined mt-2" data-unsubscribe-id="{{subscribedPolicy.id}}" data-api-id="{{this.id}}">Unsubscribe</button>
 
         {{else}}
         <select id="subscriptionPlan" class="form-control items-label sub-api-card-item">

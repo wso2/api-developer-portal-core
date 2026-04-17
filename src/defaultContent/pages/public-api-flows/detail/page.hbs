@@ -28,7 +28,7 @@
                 <p>{{flow.description}}</p>
             </div>
             <div class="flow-header-actions">
-                <button class="btn-prompt" onclick="openAgentPromptModal()">
+                <button class="btn-prompt" id="openPromptBtn">
                     <i class="bi bi-file-code"></i>
                     Agent Prompt
                 </button>
@@ -52,13 +52,13 @@
             <div class="modal-header">
                 <h2>Agent Prompt</h2>
                 <div class="modal-header-actions">
-                    <button class="modal-close" onclick="closeAgentPromptModal()">&times;</button>
+                    <button class="modal-close" id="closePromptBtnHeader">&times;</button>
                 </div>
             </div>
             <div class="modal-body">
                 <p>Use this prompt to let your AI agent execute the workflow—handling API calls, dependencies, and errors automatically</p>
                 <div class="modal-prompt-box">
-                    <button class="modal-prompt-copy-btn" onclick="copyPromptFromModal('{{flow.name}}')"
+                    <button class="modal-prompt-copy-btn" data-flow-name="{{flow.name}}"
                         title="Copy prompt to clipboard" aria-label="Copy prompt">
                         <i class="bi bi-clipboard"></i>
                         <span>Copy</span>
@@ -67,7 +67,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-modal-close" onclick="closeAgentPromptModal()">Close</button>
+                <button class="btn-modal-close" id="closePromptBtnFooter">Close</button>
             </div>
         </div>
     </div>
@@ -99,6 +99,33 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Handle open prompt button
+    const openPromptBtn = document.getElementById('openPromptBtn');
+    if (openPromptBtn) {
+        openPromptBtn.addEventListener('click', openAgentPromptModal);
+    }
+
+    // Handle close prompt buttons
+    const closePromptBtnHeader = document.getElementById('closePromptBtnHeader');
+    if (closePromptBtnHeader) {
+        closePromptBtnHeader.addEventListener('click', closeAgentPromptModal);
+    }
+
+    const closePromptBtnFooter = document.getElementById('closePromptBtnFooter');
+    if (closePromptBtnFooter) {
+        closePromptBtnFooter.addEventListener('click', closeAgentPromptModal);
+    }
+
+    // Handle copy button click
+    const copyBtn = document.querySelector('.modal-prompt-copy-btn');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            const flowName = this.dataset.flowName;
+            copyPromptFromModal(flowName);
+        });
+    }
 });
 
 // Close modal with escape key
@@ -120,13 +147,20 @@ function copyPromptFromModal(flowName) {
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
-    notification.innerHTML = `
-        <div class="notification-content">
-            <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-            <span>${message}</span>
-        </div>
-    `;
 
+    const content = document.createElement('div');
+    content.className = 'notification-content';
+
+    const icon = document.createElement('i');
+    const iconClass = type === 'success' ? 'check-circle' : 'exclamation-circle';
+    icon.className = `bi bi-${iconClass}`;
+
+    const messageSpan = document.createElement('span');
+    messageSpan.textContent = message;
+
+    content.appendChild(icon);
+    content.appendChild(messageSpan);
+    notification.appendChild(content);
     document.body.appendChild(notification);
 
     setTimeout(() => {
@@ -181,13 +215,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
     } catch (error) {
         console.error('Error initializing Arazzo UI:', error);
-        document.getElementById('arazzoViewer').innerHTML = `
-            <div style="padding: 2rem; text-align: center; color: #e74c3c; font-family: sans-serif;">
-                <p><strong>Error loading Arazzo UI</strong></p>
-                <p style="font-size: 0.9rem; color: #999;">${error.message}</p>
-                <p style="font-size: 0.85rem; color: #999;">Check browser console for details</p>
-            </div>
-        `;
+        const viewerContainer = document.getElementById('arazzoViewer');
+        viewerContainer.innerHTML = '';
+
+        const errorDiv = document.createElement('div');
+        errorDiv.style.padding = '2rem';
+        errorDiv.style.textAlign = 'center';
+        errorDiv.style.color = '#e74c3c';
+        errorDiv.style.fontFamily = 'sans-serif';
+
+        const titleP = document.createElement('p');
+        const titleStrong = document.createElement('strong');
+        titleStrong.textContent = 'Error loading Arazzo UI';
+        titleP.appendChild(titleStrong);
+
+        const messageP = document.createElement('p');
+        messageP.style.fontSize = '0.9rem';
+        messageP.style.color = '#999';
+        messageP.textContent = error.message;
+
+        const consoleP = document.createElement('p');
+        consoleP.style.fontSize = '0.85rem';
+        consoleP.style.color = '#999';
+        consoleP.textContent = 'Check browser console for details';
+
+        errorDiv.appendChild(titleP);
+        errorDiv.appendChild(messageP);
+        errorDiv.appendChild(consoleP);
+        viewerContainer.appendChild(errorDiv);
     }
 });
 </script>

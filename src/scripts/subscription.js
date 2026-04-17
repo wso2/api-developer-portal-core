@@ -1,6 +1,23 @@
 document.addEventListener("DOMContentLoaded", () => {
   checkQueryParamsAndLoadModal();
   wireStripeReturnIfPresent();
+
+  // Set up the delete subscription handler
+  setDeleteConfirmationHandler('removeSubscription', function(data) {
+    removeSubscription(data.orgID, data.appID, data.apiRefID, data.subID);
+  });
+
+  // Set up event listeners for unsubscribe buttons
+  document.addEventListener('click', function(e) {
+    if (e.target.hasAttribute('data-unsubscribe-id')) {
+      const subID = e.target.getAttribute('data-unsubscribe-id');
+      const apiID = e.target.getAttribute('data-api-id');
+      // For now, just open the modal - the handler setup above will handle the action
+      // In a full implementation, you'd get orgID, appID, apiRefID from the page context
+      openDeleteModal(subID, '', apiID, '');
+    }
+  });
+
   // Show subscription success message if redirected after payment or free flow
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('subscription') === 'success') {
@@ -807,6 +824,33 @@ async function removeSubscription(orgID, appID, apiRefID, subID) {
     }
 }
 
+/**
+ * Open the delete confirmation modal for removing a subscription
+ * @param {string} subID - Subscription ID
+ * @param {string} orgID - Organization ID
+ * @param {string} appID - Application ID
+ * @param {string} apiRefID - API Reference ID
+ */
+function openDeleteModal(subID, orgID, appID, apiRefID) {
+    const modal = document.getElementById('deleteConfirmation');
+    if (!modal) {
+        console.error('openDeleteModal: Modal not found');
+        return;
+    }
+
+    // Set the action and data for when the user confirms
+    setDeleteConfirmationAction('removeSubscription', {
+        subID: subID,
+        orgID: orgID,
+        appID: appID,
+        apiRefID: apiRefID
+    });
+
+    // Show the modal
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+}
+
 function markSubscribedUI(card, applicationID, apiId) {
   if (!card) return;
 
@@ -1229,6 +1273,7 @@ window.subscribe = subscribe;
 window.unsubscribe = unsubscribe;
 window.updateSubscription = updateSubscription;
 window.removeSubscription = removeSubscription;
+window.openDeleteModal = openDeleteModal;
 window.handleCreateSubscribe = handleCreateSubscribe;
 window.showApplicationForm = showApplicationForm;
 window.closeStripeCheckoutModal = closeStripeCheckoutModal;

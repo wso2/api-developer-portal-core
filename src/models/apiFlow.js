@@ -38,14 +38,14 @@ const APIFlow = sequelize.define('DP_API_FLOW', {
         type: DataTypes.STRING,
         allowNull: false
     },
-    HANDLE: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true
-    },
     DESCRIPTION: {
         type: DataTypes.TEXT,
         allowNull: false
+    },
+    HANDLE: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true
     },
     AGENT_PROMPT: {
         type: DataTypes.TEXT,
@@ -63,9 +63,8 @@ const APIFlow = sequelize.define('DP_API_FLOW', {
     },
     CONTENT_TYPE: {
         type: DataTypes.ENUM,
-        values: ['ARAZZO', 'LLMS_TXT'],
-        allowNull: false,
-        defaultValue: 'ARAZZO'
+        values: ['ARAZZO', 'MD'],
+        allowNull: true
     },
     CREATED_AT: {
         type: DataTypes.DATE,

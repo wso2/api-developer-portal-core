@@ -5,7 +5,7 @@
  -->
 <head>
     <link rel="stylesheet" href="/technical-styles/public-api-flows.css">
-    <script>const apiFlowsData = {{{json apiFlows}}};</script>
+    <script type="application/json" id="apiFlowsDataContainer">{{{json apiFlows}}}</script>
     <script src='/technical-scripts/public-api-flows.js' defer></script>
 </head>
 
@@ -41,27 +41,14 @@
                         <p class="flow-description">{{this.description}}</p>
                         {{#if this.apis.length}}
                         <div class="flow-apis">
-                            <span class="flow-apis-label">APIs:</span>
+                            <span class="flow-apis-label">Powered by</span>
                             <div class="flow-apis-list">
                                 {{#each this.apis}}
-                                <span class="flow-api-tag">{{this.apiName}}</span>
+                                <span class="flow-api-chip">{{this.apiName}}</span>
                                 {{/each}}
                             </div>
                         </div>
                         {{/if}}
-                    </div>
-                    <div class="flow-card-footer">
-                        <div class="flow-stats">
-                            <i class="bi bi-diagram-3"></i>
-                            {{this.apiCount}} {{#if (eq this.apiCount 1)}}API{{else}}APIs{{/if}}
-                        </div>
-                        <button type="button"
-                                class="btn-view-prompt"
-                                onclick="event.stopPropagation(); openAgentPromptModal('{{this.handle}}', '{{this.name}}')"
-                                title="View agent prompt">
-                            <i class="bi bi-eye"></i>
-                            View Prompt
-                        </button>
                     </div>
                 </div>
                 {{/each}}
@@ -80,12 +67,12 @@
         <div class="prompt-modal-content">
             <div class="prompt-modal-header">
                 <h3 id="promptFlowName"></h3>
-                <button class="prompt-modal-close" onclick="closePromptModal()">&times;</button>
+                <button class="prompt-modal-close" id="promptModalClose" title="Close">&times;</button>
             </div>
             <div class="prompt-modal-body">
                 <div class="prompt-body-toolbar">
                     <span class="copy-feedback" id="copyFeedback" style="display:none;">Copied! ✓</span>
-                    <button class="btn-copy-modal" onclick="copyPromptFromModal()" title="Copy prompt">
+                    <button class="btn-copy-modal" id="btnCopyPrompt" title="Copy prompt">
                         <i class="bi bi-clipboard-check"></i> Copy
                     </button>
                 </div>
