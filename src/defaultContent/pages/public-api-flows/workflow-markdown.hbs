@@ -1,0 +1,21 @@
+# {{flow.name}}
+
+**Status:** {{flow.status}}
+
+**Description:** {{flow.description}}
+
+{{#if flow.apis}}
+## APIs Used
+
+{{#each flow.apis}}
+- [{{this.apiName}}]({{../baseUrl}}/{{this.pathType}}/{{this.apiHandle}}.md)
+{{/each}}
+
+For detailed API information (base URL, OpenAPI spec, security schemes, credentials), refer to each API's documentation page listed above.
+
+{{/if}}
+## API Flow Specification
+
+```
+{{{arazoJson}}}
+```

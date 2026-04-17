@@ -22,6 +22,9 @@ const apiFlowService = require('../services/apiFlowService');
 const logger = require('../config/logger');
 const { renderTemplate } = require('../utils/util');
 const config = require(process.cwd() + '/config.json');
+const fs = require('fs');
+const path = require('path');
+const Handlebars = require('handlebars');
 
 const resolveViewId = async (orgID, viewName) => {
     return await apiMetadataDao.getViewID(orgID, viewName);
@@ -283,29 +286,47 @@ const getWorkflowDetailMd = async (req, res) => {
 };
 
 const generateWorkflowMarkdown = (arazoJson, apiFlow, orgName, viewName) => {
+    const templatePath = path.join(process.cwd(), 'src/defaultContent/pages/public-api-flows/workflow-markdown.hbs');
+    const templateContent = fs.readFileSync(templatePath, 'utf8');
+    const template = Handlebars.compile(templateContent);
+
     const baseUrl = `/${orgName}/views/${viewName}`;
-    let md = `# ${apiFlow.NAME}\n\n`;
+    const data = {
+        flow: {
+            name: apiFlow.NAME,
+            status: apiFlow.STATUS,
+            description: apiFlow.DESCRIPTION,
+            apis: apiFlow.DP_API_METADATA ? apiFlow.DP_API_METADATA.map(api => ({
+                apiName: api.API_NAME,
+                apiHandle: api.API_HANDLE,
+                apiType: api.API_TYPE,
+                pathType: api.API_TYPE === 'MCP' ? 'mcp' : 'api'
+            })) : []
+        },
+        baseUrl,
+        arazoJson: JSON.stringify(arazoJson, null, 2)
+    };
 
-    md += `**Status:** ${apiFlow.STATUS}\n\n`;
-    md += `**Description:** ${apiFlow.DESCRIPTION}\n\n`;
+    return template(data);
+};
 
-    // Add API info
-    if (apiFlow.DP_API_METADATA && apiFlow.DP_API_METADATA.length > 0) {
-        md += `## APIs Used \n\n`;
-        apiFlow.DP_API_METADATA.forEach(api => {
-            const urlPath = api.API_TYPE === 'MCP' ? 'mcp' : 'api';
-            md += `- [${api.API_NAME}](${baseUrl}/${urlPath}/${api.API_HANDLE}.md)\n`;
-        });
-        md += `\nFor detailed API information (base URL, OpenAPI spec, security schemes, credentials), refer to each API's documentation page listed above.\n\n`;
-    }
+const generateWorkflowsListMarkdown = (apiFlows, orgName, viewName) => {
+    const templatePath = path.join(process.cwd(), 'src/defaultContent/pages/public-api-flows/workflows-list-markdown.hbs');
+    const templateContent = fs.readFileSync(templatePath, 'utf8');
+    const template = Handlebars.compile(templateContent);
 
-    // Add full Arazzo specification
-    md += `## API Flow Specification\n\n`;
-    md += '```\n';
-    md += JSON.stringify(arazoJson, null, 2);
-    md += '\n```\n';
+    const baseUrl = `/${orgName}/views/${viewName}`;
+    const data = {
+        flows: apiFlows.map(flow => ({
+            name: flow.NAME,
+            handle: flow.HANDLE
+        })),
+        baseUrl,
+        orgName,
+        viewName
+    };
 
-    return md;
+    return template(data);
 };
 
 const getAllPublishedFlowsMD = async (req, res) => {
@@ -322,16 +343,7 @@ const getAllPublishedFlowsMD = async (req, res) => {
 
         const apiFlows = await apiFlowDao.getPublishedAPIFlows(orgID, viewId);
 
-        const baseUrl = `/${orgName}/views/${viewName}`;
-        let md = `# API Workflows\n\n`;
-
-        if (apiFlows.length === 0) {
-            md += `No published workflows found.\n`;
-        } else {
-            apiFlows.forEach(flow => {
-                md += `- [${flow.NAME}](${baseUrl}/api-workflows/${flow.HANDLE}.md)\n`;
-            });
-        }
+        const md = generateWorkflowsListMarkdown(apiFlows, orgName, viewName);
 
         res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
         res.send(md);
