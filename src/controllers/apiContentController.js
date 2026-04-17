@@ -30,6 +30,7 @@ const apiDao = require('../dao/apiMetadata');
 const apiMetadataService = require('../services/apiMetadataService');
 const { shouldShowPlatformApiKeysNav } = require('../services/platformApiKeysNavService');
 const adminService = require('../services/adminService');
+const apiFlowService = require('../services/apiFlowService');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
@@ -1143,6 +1144,12 @@ const loadLlmsTxt = async (req, res) => {
             if (byType[type]) byType[type].push(api);
         }
 
+        // Fetch published API workflows
+        const apiMetadataDao = require('../dao/apiMetadata');
+        const viewId = await apiMetadataDao.getViewID(orgID, viewName);
+        const allApiFlows = await apiFlowService.getAllAPIFlowsFromDB(orgID, viewId);
+        const publishedWorkflows = allApiFlows.filter(flow => flow.status === 'PUBLISHED');
+
         const baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
         const templateContent = {
             orgName: orgDetails.ORG_NAME,
@@ -1150,6 +1157,7 @@ const loadLlmsTxt = async (req, res) => {
             mcpAPIs:     byType.MCP.length     ? byType.MCP     : null,
             graphqlAPIs: byType.GraphQL.length ? byType.GraphQL : null,
             wsAPIs:      byType.WS.length      ? byType.WS      : null,
+            workflows:   publishedWorkflows.length > 0 ? publishedWorkflows : null,
             baseUrl,
         };
 
