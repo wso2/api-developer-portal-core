@@ -58,12 +58,39 @@
                     </p>
                 </div>
                 <div class="api-flow-card-footer">
+                    <div class="api-flow-card-visibility-badges">
+                        {{#if (eq this.visibility "PRIVATE")}}
+                        <span class="api-flow-visibility-badge api-flow-visibility-private"
+                            title="Only logged-in users can view this workflow">
+                            <i class="bi bi-lock-fill"></i> Private
+                        </span>
+                        {{else}}
+                        <span class="api-flow-visibility-badge api-flow-visibility-public"
+                            title="Visible to all visitors">
+                            <i class="bi bi-globe"></i> Public
+                        </span>
+                        {{/if}}
+                        {{#if (eq this.agentVisibility "HIDDEN")}}
+                        <span class="api-flow-visibility-badge api-flow-agent-hidden"
+                            title="Not accessible to AI agents">
+                            <i class="bi bi-shield-slash"></i> AI Restricted
+                        </span>
+                        {{else}}
+                        <span class="api-flow-visibility-badge api-flow-agent-visible"
+                            title="AI agents can access this workflow">
+                            <i class="bi bi-robot"></i> Agent: Visible
+                        </span>
+                        {{/if}}
+                    </div>
                     <div class="api-flow-card-actions">
-                        <button type="button" class="api-flow-action-btn api-flow-view-prompt-btn"
+                        {{#unless (eq this.agentVisibility "HIDDEN")}}
+                        <button type="button"
+                            class="api-flow-action-btn api-flow-view-prompt-btn"
                             title="View agent prompt"
                             data-api-flow-id="{{this.apiFlowId}}">
                             <i class="bi bi-robot"></i>
                         </button>
+                        {{/unless}}
                         <button type="button" class="api-flow-action-btn api-flow-edit-btn"
                             title="Edit"
                             data-api-flow-id="{{this.apiFlowId}}">

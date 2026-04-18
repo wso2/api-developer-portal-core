@@ -30,7 +30,7 @@ const resolveViewId = async (orgID, viewName) => {
     return await apiMetadataDao.getViewID(orgID, viewName);
 };
 
-const loadPublicAPIFlows = async (req, res) => {
+const loadAPIFlows = async (req, res) => {
     const { orgName, viewName } = req.params;
 
     try {
@@ -44,7 +44,8 @@ const loadPublicAPIFlows = async (req, res) => {
         const orgID = orgDetails.ORG_ID;
         const viewId = await resolveViewId(orgID, viewName);
 
-        const apiFlows = await apiFlowDao.getPublishedAPIFlows(orgID, viewId);
+        const visibilityFilter = req.user ? undefined : 'PUBLIC';
+        const apiFlows = await apiFlowDao.getPublishedAPIFlows(orgID, viewId, { visibility: visibilityFilter });
 
         const profile = req.user ? {
             username: req.user.sub,
@@ -65,6 +66,8 @@ const loadPublicAPIFlows = async (req, res) => {
                 description: flow.DESCRIPTION,
                 agentPrompt: flow.AGENT_PROMPT,
                 status: flow.STATUS,
+                visibility: flow.VISIBILITY || 'PUBLIC',
+                agentVisibility: flow.AGENT_VISIBILITY || 'VISIBLE',
                 apiCount: flow.DP_API_METADATA ? flow.DP_API_METADATA.length : 0,
                 apis: flow.DP_API_METADATA ? flow.DP_API_METADATA.map(api => ({
                     apiName: api.API_NAME,
@@ -79,14 +82,14 @@ const loadPublicAPIFlows = async (req, res) => {
         };
 
         const html = renderTemplate(
-            'src/defaultContent/pages/public-api-flows/page.hbs',
+            'src/defaultContent/pages/api-flows/page.hbs',
             'src/defaultContent/layout/main.hbs',
             templateContent,
             false
         );
         res.send(html);
     } catch (error) {
-        logger.error('Error loading public API flows', {
+        logger.error('Error loading API flows', {
             error: error.message,
             stack: error.stack,
             orgName,
@@ -98,7 +101,7 @@ const loadPublicAPIFlows = async (req, res) => {
     }
 };
 
-const loadPublicAPIFlowDetail = async (req, res) => {
+const loadAPIFlowDetail = async (req, res) => {
     const { orgName, viewName, handle } = req.params;
 
     try {
@@ -118,6 +121,12 @@ const loadPublicAPIFlowDetail = async (req, res) => {
             const templateContent = { errorMessage: 'API Workflow not found or not published' };
             const html = renderTemplate('src/pages/error-page/page.hbs', 'src/defaultContent/layout/main.hbs', templateContent, false);
             return res.status(404).send(html);
+        }
+
+        if (apiFlow.VISIBILITY === 'PRIVATE' && !req.user) {
+            const templateContent = { errorMessage: 'You must be logged in to view this workflow' };
+            const html = renderTemplate('src/pages/error-page/page.hbs', 'src/defaultContent/layout/main.hbs', templateContent, false);
+            return res.status(401).send(html);
         }
 
         const profile = req.user ? {
@@ -144,6 +153,8 @@ const loadPublicAPIFlowDetail = async (req, res) => {
                 description: apiFlow.DESCRIPTION,
                 agentPrompt: apiFlow.AGENT_PROMPT,
                 status: apiFlow.STATUS,
+                visibility: apiFlow.VISIBILITY || 'PUBLIC',
+                agentVisibility: apiFlow.AGENT_VISIBILITY || 'VISIBLE',
                 contentType: apiFlow.CONTENT_TYPE,
                 content: fileContentStr,
                 createdAt: apiFlow.CREATED_AT ? new Date(apiFlow.CREATED_AT).toLocaleDateString() : '',
@@ -164,14 +175,14 @@ const loadPublicAPIFlowDetail = async (req, res) => {
         };
 
         const html = renderTemplate(
-            'src/defaultContent/pages/public-api-flows/detail/page.hbs',
+            'src/defaultContent/pages/api-flows/detail/page.hbs',
             'src/defaultContent/layout/main.hbs',
             templateContent,
             false
         );
         res.send(html);
     } catch (error) {
-        logger.error('Error loading public API flow detail', {
+        logger.error('Error loading API flow detail', {
             error: error.message,
             stack: error.stack,
             orgName,
@@ -196,7 +207,7 @@ const getFlowPromptJSON = async (req, res) => {
         const orgID = orgDetails.ORG_ID;
         const viewId = await resolveViewId(orgID, viewName);
 
-        const apiFlow = await apiFlowDao.getPublishedAPIFlowByHandle(orgID, viewId, handle);
+        const apiFlow = await apiFlowDao.getPublishedAPIFlowByHandle(orgID, viewId, handle, { agentVisibility: 'VISIBLE' });
 
         if (!apiFlow) {
             return res.status(404).json({ error: 'API Workflow not found or not published' });
@@ -222,7 +233,7 @@ const getFlowPromptJSON = async (req, res) => {
             })) : []
         });
     } catch (error) {
-        logger.error('Error fetching public API workflow prompt', {
+        logger.error('Error fetching API workflow prompt', {
             error: error.message,
             stack: error.stack,
             orgName,
@@ -245,7 +256,7 @@ const getWorkflowDetailMd = async (req, res) => {
         const orgID = orgDetails.ORG_ID;
         const viewId = await resolveViewId(orgID, viewName);
 
-        const apiFlow = await apiFlowDao.getPublishedAPIFlowByHandle(orgID, viewId, handle);
+        const apiFlow = await apiFlowDao.getPublishedAPIFlowByHandle(orgID, viewId, handle, { agentVisibility: 'VISIBLE' });
 
         if (!apiFlow) {
             return res.status(404).send('# Error\n\nWorkflow not found or not published.');
@@ -286,7 +297,7 @@ const getWorkflowDetailMd = async (req, res) => {
 };
 
 const generateWorkflowMarkdown = (arazoJson, apiFlow, orgName, viewName) => {
-    const templatePath = path.join(process.cwd(), 'src/defaultContent/pages/public-api-flows/workflow-markdown.hbs');
+    const templatePath = path.join(process.cwd(), 'src/defaultContent/pages/api-flows/workflow-markdown.hbs');
     const templateContent = fs.readFileSync(templatePath, 'utf8');
     const template = Handlebars.compile(templateContent);
 
@@ -311,7 +322,7 @@ const generateWorkflowMarkdown = (arazoJson, apiFlow, orgName, viewName) => {
 };
 
 const generateWorkflowsListMarkdown = (apiFlows, orgName, viewName) => {
-    const templatePath = path.join(process.cwd(), 'src/defaultContent/pages/public-api-flows/workflows-list-markdown.hbs');
+    const templatePath = path.join(process.cwd(), 'src/defaultContent/pages/api-flows/workflows-list-markdown.hbs');
     const templateContent = fs.readFileSync(templatePath, 'utf8');
     const template = Handlebars.compile(templateContent);
 
@@ -341,7 +352,7 @@ const getAllPublishedFlowsMD = async (req, res) => {
         const orgID = orgDetails.ORG_ID;
         const viewId = await resolveViewId(orgID, viewName);
 
-        const apiFlows = await apiFlowDao.getPublishedAPIFlows(orgID, viewId);
+        const apiFlows = await apiFlowDao.getPublishedAPIFlows(orgID, viewId, { agentVisibility: 'VISIBLE' });
 
         const md = generateWorkflowsListMarkdown(apiFlows, orgName, viewName);
 
@@ -371,9 +382,9 @@ const generatePrompt = async (req, res) => {
 };
 
 module.exports = {
-    loadPublicAPIFlows,
+    loadAPIFlows,
     getAllPublishedFlowsMD,
-    loadPublicAPIFlowDetail,
+    loadAPIFlowDetail,
     getFlowPromptJSON,
     getWorkflowDetailMd,
     generatePrompt

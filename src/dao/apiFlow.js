@@ -26,10 +26,12 @@ const createAPIFlow = async (orgID, viewId, apiFlowData, t) => {
             ORG_ID: orgID,
             VIEW_ID: viewId,
             NAME: apiFlowData.name,
-            HANDLE: apiFlowData.handle,
+            HANDLE: apiFlowData.handle || null,
             DESCRIPTION: apiFlowData.description,
             AGENT_PROMPT: apiFlowData.agentPrompt,
             STATUS: apiFlowData.status || 'PUBLISHED',
+            VISIBILITY: apiFlowData.visibility || 'PUBLIC',
+            AGENT_VISIBILITY: apiFlowData.agentVisibility || 'VISIBLE',
             FILE_CONTENT: apiFlowData.arazoContent != null ? Buffer.from(apiFlowData.arazoContent) : null,
             CONTENT_TYPE: apiFlowData.contentType || 'ARAZZO',
             CREATED_AT: new Date(),
@@ -48,10 +50,12 @@ const createAPIFlow = async (orgID, viewId, apiFlowData, t) => {
 const updateAPIFlow = async (orgID, viewId, apiFlowId, apiFlowData, t) => {
     const updateFields = { UPDATED_AT: new Date() };
     if (apiFlowData.name !== undefined) updateFields.NAME = apiFlowData.name;
-    if (apiFlowData.handle !== undefined) updateFields.HANDLE = apiFlowData.handle;
+    if (apiFlowData.handle !== undefined) updateFields.HANDLE = apiFlowData.handle || null;
     if (apiFlowData.description !== undefined) updateFields.DESCRIPTION = apiFlowData.description;
     if (apiFlowData.agentPrompt !== undefined) updateFields.AGENT_PROMPT = apiFlowData.agentPrompt;
     if (apiFlowData.status !== undefined) updateFields.STATUS = apiFlowData.status;
+    if (apiFlowData.visibility !== undefined) updateFields.VISIBILITY = apiFlowData.visibility;
+    if (apiFlowData.agentVisibility !== undefined) updateFields.AGENT_VISIBILITY = apiFlowData.agentVisibility;
     if (apiFlowData.arazoContent !== undefined) updateFields.FILE_CONTENT = apiFlowData.arazoContent != null ? Buffer.from(apiFlowData.arazoContent) : null;
     if (apiFlowData.contentType !== undefined) updateFields.CONTENT_TYPE = apiFlowData.contentType;
 
@@ -140,9 +144,12 @@ const replaceAPIFlowAPIs = async (apiFlowId, apiIds, orgID, viewId, t) => {
     }
 };
 
-const getPublishedAPIFlows = async (orgID, viewId) => {
+const getPublishedAPIFlows = async (orgID, viewId, { visibility, agentVisibility } = {}) => {
+    const where = { ORG_ID: orgID, VIEW_ID: viewId, STATUS: 'PUBLISHED' };
+    if (visibility) where.VISIBILITY = visibility;
+    if (agentVisibility) where.AGENT_VISIBILITY = agentVisibility;
     return await APIFlow.findAll({
-        where: { ORG_ID: orgID, VIEW_ID: viewId, STATUS: 'PUBLISHED' },
+        where,
         include: [{
             model: APIMetadata,
             through: { attributes: [] },
@@ -152,9 +159,12 @@ const getPublishedAPIFlows = async (orgID, viewId) => {
     });
 };
 
-const getPublishedAPIFlowByHandle = async (orgID, viewId, handle) => {
+const getPublishedAPIFlowByHandle = async (orgID, viewId, handle, { visibility, agentVisibility } = {}) => {
+    const where = { HANDLE: handle, ORG_ID: orgID, VIEW_ID: viewId, STATUS: 'PUBLISHED' };
+    if (visibility) where.VISIBILITY = visibility;
+    if (agentVisibility) where.AGENT_VISIBILITY = agentVisibility;
     return await APIFlow.findOne({
-        where: { HANDLE: handle, ORG_ID: orgID, VIEW_ID: viewId, STATUS: 'PUBLISHED' },
+        where,
         include: [{
             model: APIMetadata,
             through: { attributes: [] },

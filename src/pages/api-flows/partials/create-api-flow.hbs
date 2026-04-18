@@ -10,6 +10,8 @@
 
         {{!-- Hidden field to track edit state --}}
         <input type="hidden" id="editingApiFlowId" value="" />
+        <input type="hidden" id="editingApiFlowVisibility" value="PUBLIC" />
+        <input type="hidden" id="editingApiFlowAgentVisibility" value="VISIBLE" />
 
         {{!-- ── SECTION 1: Basic Information ── --}}
         <div class="af-section">
@@ -17,7 +19,7 @@
                 <div class="af-step-badge">1</div>
                 <div>
                     <div class="af-section-title">Basic Information</div>
-                    <div class="af-section-subtitle">Name and describe your API flow</div>
+                    <div class="af-section-subtitle">Name, describe, and configure visibility for your API workflow</div>
                 </div>
             </div>
             <div class="af-section-body">
@@ -33,7 +35,7 @@
                 </div>
 
                 {{!-- Description --}}
-                <div class="mb-3">
+                <div class="mb-4">
                     <label for="apiFlowDescription" class="form-label fw-semibold">
                         Description <span class="text-danger">*</span>
                     </label>
@@ -43,6 +45,44 @@
                     <div class="form-text mt-1">
                         <i class="bi bi-lightbulb me-1"></i>
                         Describe the use case clearly and concisely. This trains AI agents to recommend this workflow for similar scenarios.
+                    </div>
+                </div>
+
+                <hr class="af-section-divider" />
+
+                {{!-- Portal Visibility --}}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold mb-1">Portal Visibility</label>
+                    <div class="form-text mb-2">Control who can view this workflow on the portal</div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <input type="radio" class="btn-check" name="apiFlowVisibility" id="visibilityPublic"
+                            value="PUBLIC" autocomplete="off" checked />
+                        <label class="btn btn-sm common-btn-outlined" for="visibilityPublic">
+                            <i class="bi bi-globe me-1"></i> Public
+                        </label>
+                        <input type="radio" class="btn-check" name="apiFlowVisibility" id="visibilityPrivate"
+                            value="PRIVATE" autocomplete="off" />
+                        <label class="btn btn-sm common-btn-outlined" for="visibilityPrivate">
+                            <i class="bi bi-lock me-1"></i> Private
+                        </label>
+                    </div>
+                </div>
+
+                {{!-- Agent Visibility --}}
+                <div class="mb-1">
+                    <label class="form-label fw-semibold mb-1">Agent Visibility</label>
+                    <div class="form-text mb-2">Control whether AI agents can discover and use this workflow</div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <input type="radio" class="btn-check" name="apiFlowAgentVisibility" id="agentVisibilityVisible"
+                            value="VISIBLE" autocomplete="off" checked />
+                        <label class="btn btn-sm common-btn-outlined" for="agentVisibilityVisible">
+                            <i class="bi bi-robot me-1"></i> Visible to Agents
+                        </label>
+                        <input type="radio" class="btn-check" name="apiFlowAgentVisibility" id="agentVisibilityHidden"
+                            value="HIDDEN" autocomplete="off" />
+                        <label class="btn btn-sm common-btn-outlined" for="agentVisibilityHidden">
+                            <i class="bi bi-eye-slash me-1"></i> Hidden from Agents
+                        </label>
                     </div>
                 </div>
 

@@ -41,7 +41,7 @@ const Handlebars = require('handlebars');
 const constants = require("./utils/constants");
 const designRoute = require('./routes/designModeRoute');
 const settingsRoute = require('./routes/configureRoute');
-const publicApiFlowsRoute = require('./routes/publicApiFlowsRoute');
+const apiFlowsRoute = require('./routes/apiFlowsRoute');
 const AsyncLock = require('async-lock');
 const util = require('./utils/util');
 
@@ -578,7 +578,7 @@ if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.DEFAULT, applicationContent);
     app.use(constants.ROUTE.DEFAULT, orgContent);
     app.use(constants.ROUTE.DEFAULT, settingsRoute);
-    app.use(constants.ROUTE.DEFAULT, publicApiFlowsRoute);
+    app.use(constants.ROUTE.DEFAULT, apiFlowsRoute);
     app.use(constants.ROUTE.DEFAULT, subscriptionsContent);
     app.use(constants.ROUTE.DEFAULT, customContent);
 }

@@ -1,12 +1,12 @@
 <!--
  * Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * Public API Flows Gallery
+ * API Flows Gallery
  -->
 <head>
-    <link rel="stylesheet" href="/technical-styles/public-api-flows.css">
+    <link rel="stylesheet" href="/technical-styles/api-workflows.css">
     <script type="application/json" id="apiFlowsDataContainer">{{{json apiFlows}}}</script>
-    <script src='/technical-scripts/public-api-flows.js' defer></script>
+    <script src='/technical-scripts/api-workflows.js' defer></script>
 </head>
 
 <main>
@@ -48,6 +48,30 @@
                                 {{/each}}
                             </div>
                         </div>
+                        {{/if}}
+                    </div>
+                    <div class="flow-card-footer">
+                        {{#if (eq this.visibility "PRIVATE")}}
+                        <span class="flow-visibility-badge flow-visibility-private"
+                            title="Only logged-in users can view this workflow">
+                            <i class="bi bi-lock-fill"></i> Private
+                        </span>
+                        {{else}}
+                        <span class="flow-visibility-badge flow-visibility-public"
+                            title="Visible to all visitors">
+                            <i class="bi bi-globe"></i> Public
+                        </span>
+                        {{/if}}
+                        {{#if (eq this.agentVisibility "HIDDEN")}}
+                        <span class="flow-visibility-badge flow-agent-hidden"
+                            title="Not accessible to AI agents">
+                            <i class="bi bi-shield-slash"></i> AI Restricted
+                        </span>
+                        {{else}}
+                        <span class="flow-visibility-badge flow-agent-visible"
+                            title="AI agents can access this workflow">
+                            <i class="bi bi-robot"></i> Agent: Visible
+                        </span>
                         {{/if}}
                     </div>
                 </div>

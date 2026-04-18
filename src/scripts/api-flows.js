@@ -98,6 +98,11 @@ document.addEventListener('DOMContentLoaded', function () {
         radio.addEventListener('change', onContentTypeChange);
     });
 
+    // Agent visibility radios — toggle Agent Prompt tab
+    document.querySelectorAll('input[name="apiFlowAgentVisibility"]').forEach(radio => {
+        radio.addEventListener('change', () => syncAgentPromptTab(radio.value === 'HIDDEN' && radio.checked));
+    });
+
     // Arazzo buttons
     document.getElementById('generateArazzoBtn')?.addEventListener('click', generateArazzoSpec);
     document.getElementById('uploadArazzoBtn')?.addEventListener('click', () => {
@@ -167,7 +172,13 @@ function resetApiFlowForm() {
 
     const arazzoBtn = document.getElementById('contentTypeArazzo');
     if (arazzoBtn) arazzoBtn.checked = true;
-    onContentTypeChange(); // resets d-none classes
+    onContentTypeChange();
+
+    const visibilityPublicBtn = document.getElementById('visibilityPublic');
+    if (visibilityPublicBtn) visibilityPublicBtn.checked = true;
+    const agentVisibilityVisibleBtn = document.getElementById('agentVisibilityVisible');
+    if (agentVisibilityVisibleBtn) agentVisibilityVisibleBtn.checked = true;
+    syncAgentPromptTab(false);
 
     setPickerSelection([]);
     setSaveButtonMode('create');
@@ -177,6 +188,23 @@ function onContentTypeChange() {
     const selected = document.querySelector('input[name="apiFlowContentType"]:checked')?.value || 'ARAZZO';
     document.getElementById('arazoContentWrapper')?.classList.toggle('d-none', selected !== 'ARAZZO');
     document.getElementById('markdownContentWrapper')?.classList.toggle('d-none', selected !== 'MARKDOWN');
+}
+
+function syncAgentPromptTab(isHidden) {
+    const tab = document.getElementById('tab-visual');
+    if (!tab) return;
+    if (isHidden) {
+        tab.disabled = true;
+        tab.classList.add('disabled');
+        tab.title = 'Not available — workflow is hidden from agents';
+        if (tab.classList.contains('active')) {
+            document.getElementById('tab-arazzo')?.click();
+        }
+    } else {
+        tab.disabled = false;
+        tab.classList.remove('disabled');
+        tab.title = '';
+    }
 }
 
 function getSelectedAPIs() {
@@ -354,12 +382,13 @@ async function saveApiFlow(orgID, viewName, status) {
     const apiIds = selectedAPIs.map(a => a.apiId);
 
     // Validation
+    const agentVisibility = document.querySelector('input[name="apiFlowAgentVisibility"]:checked')?.value || 'VISIBLE';
     let valid = true;
     const fieldsToValidate = [
         ['apiFlowName', name],
         ['apiFlowDescription', description],
-        ['agentPromptField', agentPrompt]
     ];
+    if (agentVisibility !== 'HIDDEN') fieldsToValidate.push(['agentPromptField', agentPrompt]);
     if (contentType === 'ARAZZO') fieldsToValidate.push(['arazoContent', arazoContent]);
     if (contentType === 'MARKDOWN') fieldsToValidate.push(['markdownContent', markdownContent]);
     fieldsToValidate.forEach(([id, val]) => {
@@ -373,8 +402,9 @@ async function saveApiFlow(orgID, viewName, status) {
     });
     if (!valid) return;
 
+    const visibility = document.querySelector('input[name="apiFlowVisibility"]:checked')?.value || 'PUBLIC';
     const handle = generateHandle(name);
-    const payload = { name, handle, description, agentPrompt, status, contentType, arazoContent, markdownContent, apiIds };
+    const payload = { name, handle, description, agentPrompt, status, visibility, agentVisibility, contentType, arazoContent, markdownContent, apiIds };
     const isEdit = !!apiFlowId;
     const url = isEdit
         ? `/devportal/organizations/${orgID}/views/${viewName}/api-flows/${apiFlowId}`
@@ -475,6 +505,12 @@ function openEditApiFlow(apiFlowId) {
     const radioBtn = document.querySelector(`input[name="apiFlowContentType"][value="${contentType}"]`);
     if (radioBtn && !radioBtn.disabled) radioBtn.checked = true;
     onContentTypeChange();
+
+    const visibilityRadio = document.querySelector(`input[name="apiFlowVisibility"][value="${data.visibility || 'PUBLIC'}"]`);
+    if (visibilityRadio) visibilityRadio.checked = true;
+    const agentVisibilityRadio = document.querySelector(`input[name="apiFlowAgentVisibility"][value="${data.agentVisibility || 'VISIBLE'}"]`);
+    if (agentVisibilityRadio) agentVisibilityRadio.checked = true;
+    syncAgentPromptTab(data.agentVisibility === 'HIDDEN');
 
     setPickerSelection((data.apis || []).map(a => a.apiId));
 

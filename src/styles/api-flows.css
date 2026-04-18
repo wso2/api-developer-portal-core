@@ -112,6 +112,43 @@
     color: var(--bs-warning-text-emphasis, #664d03);
 }
 
+.api-flow-card-visibility-badges {
+    display: flex;
+    gap: 0.375rem;
+    flex-wrap: wrap;
+}
+
+.api-flow-visibility-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.28em 0.75em;
+    font-size: 0.68rem;
+    font-weight: 600;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.api-flow-visibility-public {
+    background-color: var(--bs-info-bg-subtle, #cff4fc);
+    color: var(--bs-info-text-emphasis, #055160);
+}
+
+.api-flow-visibility-private {
+    background-color: var(--bs-secondary-bg-subtle, #e2e3e5);
+    color: var(--bs-secondary-text-emphasis, #41464b);
+}
+
+.api-flow-agent-visible {
+    background-color: var(--success-color);
+    color: var(--primary-main-color);
+}
+
+.api-flow-agent-hidden {
+    background-color: color-mix(in srgb, var(--warning-color) 15%, white);
+    color: color-mix(in srgb, var(--warning-color) 80%, black);
+}
+
 .api-flow-card-body {
     padding: 0.375rem 1.25rem 1rem;
     flex: 1;
@@ -132,6 +169,10 @@
     padding: 0.75rem 1.25rem;
     border-top: 1px solid var(--bs-gray-200);
     background: var(--secondary-bg-color, #f8f9fa);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
 }
 
 .api-flow-card-actions {
@@ -257,6 +298,29 @@
 
 .af-section-body {
     padding-left: 2.875rem;
+}
+
+/* ===== Section internal divider ===== */
+
+.af-section-divider {
+    border-color: var(--bs-gray-200);
+    margin-top: 0.25rem;
+    margin-bottom: 1.25rem;
+}
+
+/* ===== Visibility Settings — Radio Toggles ===== */
+
+.af-section-body .btn-check:checked + .common-btn-outlined {
+    border-color: var(--primary-main-color);
+    border-width: 1.5px;
+    color: var(--primary-main-color);
+    background: rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.05);
+    box-shadow: 0 2px 8px rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.12);
+    font-weight: 500;
+}
+
+.af-section-body .btn-check:focus + .common-btn-outlined {
+    box-shadow: 0 2px 8px rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.12);
 }
 
 /* ===== Flow Definition — Tabs ===== */
