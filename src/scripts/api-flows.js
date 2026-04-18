@@ -9,6 +9,8 @@ let apiFlowsData = [];
 let currentOrgID = '';
 let currentViewName = '';
 let csrfToken = '';
+let arazoEditor = null;
+let showSelectedOnly = false;
 
 function initializeApiFlowsData() {
     try {
@@ -98,9 +100,16 @@ document.addEventListener('DOMContentLoaded', function () {
         radio.addEventListener('change', onContentTypeChange);
     });
 
-    // Agent visibility radios — toggle Agent Prompt tab
+    // Agent visibility radios — toggle Agent Prompt tab indicator and banner
     document.querySelectorAll('input[name="apiFlowAgentVisibility"]').forEach(radio => {
         radio.addEventListener('change', () => syncAgentPromptTab(radio.value === 'HIDDEN' && radio.checked));
+    });
+
+    // "Change visibility" banner action — scroll to Agent Visibility control
+    document.getElementById('changeVisibilityBtn')?.addEventListener('click', () => {
+        const agentVisSection = document.getElementById('agentVisibilityVisible')?.closest('.mb-1');
+        agentVisSection?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document.getElementById('agentVisibilityVisible')?.focus();
     });
 
     // Arazzo buttons
@@ -177,6 +186,21 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     initApiCardPicker();
+    initCodeMirrorEditor();
+    initSectionCollapse();
+
+    // Show selected only toggle
+    document.getElementById('showSelectedOnlyBtn')?.addEventListener('click', () => {
+        showSelectedOnly = !showSelectedOnly;
+        document.getElementById('showSelectedOnlyBtn')?.classList.toggle('af-show-selected-active', showSelectedOnly);
+        renderApiCards(document.getElementById('apiCardSearch')?.value.trim() || '');
+    });
+
+    // Update section 1 summary when name/visibility changes
+    document.getElementById('apiFlowName')?.addEventListener('input', updateSectionSummaries);
+    document.querySelectorAll('input[name="apiFlowVisibility"]').forEach(r => r.addEventListener('change', updateSectionSummaries));
+    document.querySelectorAll('input[name="apiFlowAgentVisibility"]').forEach(r => r.addEventListener('change', updateSectionSummaries));
+    document.querySelectorAll('.api-flow-content-type-radio').forEach(r => r.addEventListener('change', updateSectionSummaries));
 });
 
 // ─────────────────────────────────────────────
@@ -191,6 +215,8 @@ function resetApiFlowForm() {
     document.getElementById('markdownContent').value = '';
     document.getElementById('agentPromptField').value = '';
 
+    if (arazoEditor) arazoEditor.setValue('');
+
     const arazzoBtn = document.getElementById('contentTypeArazzo');
     if (arazzoBtn) arazzoBtn.checked = true;
     onContentTypeChange();
@@ -201,8 +227,12 @@ function resetApiFlowForm() {
     if (agentVisibilityVisibleBtn) agentVisibilityVisibleBtn.checked = true;
     syncAgentPromptTab(false);
 
+    showSelectedOnly = false;
+    document.getElementById('showSelectedOnlyBtn')?.classList.remove('af-show-selected-active');
     setPickerSelection([]);
     setSaveButtonMode('create');
+    updateSectionSummaries();
+    expandAllSections();
 }
 
 function onContentTypeChange() {
@@ -213,18 +243,28 @@ function onContentTypeChange() {
 
 function syncAgentPromptTab(isHidden) {
     const tab = document.getElementById('tab-visual');
+    const hiddenIcon = document.getElementById('tabVisualHiddenIcon');
+    const banner = document.getElementById('agentHiddenBanner');
     if (!tab) return;
+
     if (isHidden) {
-        tab.disabled = true;
-        tab.classList.add('disabled');
-        tab.title = 'Not available — workflow is hidden from agents';
-        if (tab.classList.contains('active')) {
-            document.getElementById('tab-arazzo')?.click();
+        hiddenIcon?.classList.remove('d-none');
+        tab.title = 'Hidden from agents — agents won\'t use this prompt';
+        if (banner) {
+            banner.classList.remove('d-none', 'af-banner-fade-out');
+            banner.classList.add('af-banner-fade-in');
         }
     } else {
-        tab.disabled = false;
-        tab.classList.remove('disabled');
+        hiddenIcon?.classList.add('d-none');
         tab.title = '';
+        if (banner && !banner.classList.contains('d-none')) {
+            banner.classList.remove('af-banner-fade-in');
+            banner.classList.add('af-banner-fade-out');
+            setTimeout(() => {
+                banner.classList.add('d-none');
+                banner.classList.remove('af-banner-fade-out');
+            }, 150);
+        }
     }
 }
 
@@ -261,6 +301,7 @@ function renderApiCards(query) {
     const checkboxes = [...document.querySelectorAll('.api-flow-api-checkbox')];
     const q = query.toLowerCase();
     const filtered = checkboxes.filter(cb => {
+        if (showSelectedOnly && !cb.checked) return false;
         if (!q) return true;
         return (cb.dataset.apiName || '').toLowerCase().includes(q)
             || (cb.dataset.apiDescription || '').toLowerCase().includes(q)
@@ -275,10 +316,11 @@ function renderApiCards(query) {
 
     grid.innerHTML = filtered.map(cb => {
         const isSelected = cb.checked;
+        const desc = sanitizeInput(cb.dataset.apiDescription || '');
         return `
             <div class="af-api-card${isSelected ? ' af-api-card--selected' : ''}"
                  data-api-id="${cb.value}" role="button" tabindex="0"
-                 aria-pressed="${isSelected}">
+                 aria-pressed="${isSelected}" title="${desc}">
                 <div class="af-api-card-check">
                     <i class="bi ${isSelected ? 'bi-check-circle-fill' : 'bi-circle'}"></i>
                 </div>
@@ -287,7 +329,7 @@ function renderApiCards(query) {
                         <span class="fw-semibold small">${sanitizeInput(cb.dataset.apiName)}</span>
                         <span class="api-flow-type-pill">${sanitizeInput(cb.dataset.apiType || '')}</span>
                     </div>
-                    <p class="mb-0 af-api-card-desc">${sanitizeInput(cb.dataset.apiDescription || '')}</p>
+                    <p class="mb-0 af-api-card-desc">${desc}</p>
                 </div>
             </div>
         `;
@@ -308,6 +350,8 @@ function renderApiCards(query) {
     });
 
     updateApiSelectedCount();
+    updateApiChips();
+    updateSectionSummaries();
 }
 
 function updateApiSelectedCount() {
@@ -392,6 +436,11 @@ function setSaveButtonMode(mode, currentStatus) {
 // ─────────────────────────────────────────────
 
 async function saveApiFlow(orgID, viewName, status) {
+    // Sync CodeMirror editor to hidden textarea before reading values
+    if (arazoEditor) {
+        document.getElementById('arazoContent').value = arazoEditor.getValue();
+    }
+
     const name = document.getElementById('apiFlowName').value.trim();
     const description = document.getElementById('apiFlowDescription').value.trim();
     const agentPrompt = document.getElementById('agentPromptField').value.trim();
@@ -413,12 +462,25 @@ async function saveApiFlow(orgID, viewName, status) {
     if (contentType === 'ARAZZO') fieldsToValidate.push(['arazoContent', arazoContent]);
     if (contentType === 'MARKDOWN') fieldsToValidate.push(['markdownContent', markdownContent]);
     fieldsToValidate.forEach(([id, val]) => {
-        const el = document.getElementById(id);
-        if (!val) {
-            el.classList.add('is-invalid');
-            valid = false;
+        if (id === 'arazoContent' && arazoEditor) {
+            const host = document.getElementById('arazoEditorHost');
+            const feedback = document.getElementById('arazoContentInvalid');
+            if (!val) {
+                host?.classList.add('af-cm-invalid');
+                if (feedback) feedback.style.display = 'block';
+                valid = false;
+            } else {
+                host?.classList.remove('af-cm-invalid');
+                if (feedback) feedback.style.display = 'none';
+            }
         } else {
-            el.classList.remove('is-invalid');
+            const el = document.getElementById(id);
+            if (!val) {
+                el?.classList.add('is-invalid');
+                valid = false;
+            } else {
+                el?.classList.remove('is-invalid');
+            }
         }
     });
     if (!valid) return;
@@ -517,7 +579,9 @@ function openEditApiFlow(apiFlowId) {
     document.getElementById('editingApiFlowId').value = apiFlowId;
     document.getElementById('apiFlowName').value = data.name || '';
     document.getElementById('apiFlowDescription').value = data.description || '';
-    document.getElementById('arazoContent').value = data.arazoContent || '';
+    const arazoVal = data.arazoContent || '';
+    document.getElementById('arazoContent').value = arazoVal;
+    if (arazoEditor) arazoEditor.setValue(arazoVal);
     document.getElementById('markdownContent').value = data.markdownContent || '';
     document.getElementById('agentPromptField').value = data.agentPrompt || '';
     setSaveButtonMode('edit', data.status);
@@ -752,8 +816,12 @@ function generateArazzoSpec() {
     const viewName = pathParts[3] || 'default';
 
     const spec = buildArazzoSpec(name, description, apis, orgHandle, viewName);
-    const field = document.getElementById('arazoContent');
-    if (field) field.value = spec;
+    if (arazoEditor) {
+        arazoEditor.setValue(spec);
+    } else {
+        const field = document.getElementById('arazoContent');
+        if (field) field.value = spec;
+    }
 }
 
 function loadArazzoFile(event) {
@@ -761,8 +829,13 @@ function loadArazzoFile(event) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = e => {
-        const field = document.getElementById('arazoContent');
-        if (field) field.value = e.target.result;
+        const content = e.target.result;
+        if (arazoEditor) {
+            arazoEditor.setValue(content);
+        } else {
+            const field = document.getElementById('arazoContent');
+            if (field) field.value = content;
+        }
     };
     reader.readAsText(file);
     event.target.value = '';
@@ -781,7 +854,7 @@ function loadMarkdownFile(event) {
 }
 
 function copyArazzoSpec() {
-    const content = document.getElementById('arazoContent')?.value || '';
+    const content = arazoEditor ? arazoEditor.getValue() : (document.getElementById('arazoContent')?.value || '');
     navigator.clipboard.writeText(content).then(() => showAlert('Arazzo spec copied to clipboard', 'success'));
 }
 
@@ -816,4 +889,95 @@ function generateMarkdownDoc() {
 
     const field = document.getElementById('markdownContent');
     if (field) field.value = markdownContent;
+}
+
+// ─────────────────────────────────────────────
+// CodeMirror Editor
+// ─────────────────────────────────────────────
+
+function initCodeMirrorEditor() {
+    const host = document.getElementById('arazoEditorHost');
+    if (!host || !window.CodeMirror) return;
+
+    arazoEditor = CodeMirror(host, {
+        value: document.getElementById('arazoContent')?.value || '',
+        mode: 'yaml',
+        lineNumbers: true,
+        tabSize: 2,
+        indentWithTabs: false,
+        lineWrapping: true,
+        extraKeys: { 'Tab': cm => cm.execCommand('insertSoftTab') }
+    });
+    arazoEditor.setSize(null, '420px');
+}
+
+// ─────────────────────────────────────────────
+// Section Collapse
+// ─────────────────────────────────────────────
+
+function initSectionCollapse() {
+    document.querySelectorAll('[data-af-collapse]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const section = btn.closest('.af-section');
+            const body = section?.querySelector('.af-section-body');
+            const summary = section?.querySelector('.af-section-summary');
+            const icon = btn.querySelector('i');
+            if (!body) return;
+            const isCollapsed = body.classList.contains('af-section-body--collapsed');
+            body.classList.toggle('af-section-body--collapsed', !isCollapsed);
+            if (summary) summary.classList.toggle('d-none', isCollapsed);
+            if (icon) icon.className = isCollapsed ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
+            // Refresh CodeMirror if it's in the newly expanded section
+            if (isCollapsed && arazoEditor) arazoEditor.refresh();
+        });
+    });
+}
+
+function expandAllSections() {
+    document.querySelectorAll('.af-section-body--collapsed').forEach(body => {
+        body.classList.remove('af-section-body--collapsed');
+    });
+    document.querySelectorAll('.af-section-summary').forEach(s => s.classList.add('d-none'));
+    document.querySelectorAll('[data-af-collapse] i').forEach(i => { i.className = 'bi bi-chevron-up'; });
+}
+
+// ─────────────────────────────────────────────
+// Section Summaries
+// ─────────────────────────────────────────────
+
+function updateSectionSummaries() {
+    const name = document.getElementById('apiFlowName')?.value?.trim() || '';
+    const vis = document.querySelector('input[name="apiFlowVisibility"]:checked')?.value || 'PUBLIC';
+    const agentVis = document.querySelector('input[name="apiFlowAgentVisibility"]:checked')?.value || 'VISIBLE';
+    const s1 = document.getElementById('af-summary-1');
+    if (s1) {
+        s1.textContent = name
+            ? `${name} · ${vis.charAt(0) + vis.slice(1).toLowerCase()} · Agent ${agentVis.charAt(0) + agentVis.slice(1).toLowerCase()}`
+            : 'Not configured';
+    }
+
+    const count = document.querySelectorAll('.api-flow-api-checkbox:checked').length;
+    const s2 = document.getElementById('af-summary-2');
+    if (s2) s2.textContent = `${count} API${count !== 1 ? 's' : ''} selected`;
+
+    const ct = document.querySelector('input[name="apiFlowContentType"]:checked')?.value || 'ARAZZO';
+    const s3 = document.getElementById('af-summary-3');
+    if (s3) s3.textContent = ct === 'ARAZZO' ? 'Arazzo Spec' : 'Markdown';
+}
+
+// ─────────────────────────────────────────────
+// Selected API Chips
+// ─────────────────────────────────────────────
+
+function updateApiChips() {
+    const chips = document.getElementById('apiSelectedChips');
+    if (!chips) return;
+    const selected = [...document.querySelectorAll('.api-flow-api-checkbox:checked')];
+    if (selected.length === 0) {
+        chips.innerHTML = '<span class="text-muted small fst-italic">No APIs selected</span>';
+    } else {
+        chips.innerHTML = selected.map(cb =>
+            `<span class="af-api-chip">${sanitizeInput(cb.dataset.apiName)}</span>`
+        ).join('');
+    }
 }
