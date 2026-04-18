@@ -1,4 +1,4 @@
-/* ===== Public API Flows — Gallery Page ===== */
+/* ===== API Flows — Gallery Page ===== */
 
 .flows-section {
     display: flex;
@@ -414,7 +414,7 @@
     color: var(--danger-color);
 }
 
-/* ===== Public API Flow — Detail Page ===== */
+/* ===== API Flow — Detail Page ===== */
 
 .flow-detail-section {
     display: flex;
