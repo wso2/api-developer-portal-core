@@ -19,6 +19,7 @@ const apiFlowDao = require('../dao/apiFlow');
 const adminDao = require('../dao/admin');
 const apiMetadataDao = require('../dao/apiMetadata');
 const sequelize = require('../db/sequelize');
+const { UniqueConstraintError } = require('sequelize');
 const logger = require('../config/logger');
 const constants = require('../utils/constants');
 const yaml = require('js-yaml');
@@ -33,6 +34,7 @@ const resolveViewId = async (orgID, viewName) => {
  */
 const normalizeToJSON = (content) => {
     if (content == null) return null;
+    if (typeof content === 'object') return JSON.stringify(content);
     const str = typeof content === 'string' ? content.trim() : String(content).trim();
     if (!str) return null;
     try {
@@ -153,7 +155,7 @@ ${section2}`;
 const createAPIFlow = async (req, res) => {
     const orgID = req.params.orgId;
     const viewName = req.params.viewName;
-    const { name, handle, description, agentPrompt, status, arazoContent, llmsTxtContent, contentType, apiIds } = req.body;
+    const { name, handle, description, agentPrompt, status, visibility, agentVisibility, arazoContent, llmsTxtContent, contentType, apiIds } = req.body;
     const resolvedContentType = contentType || 'ARAZZO';
     const resolvedContent = resolvedContentType === 'LLMS_TXT'
         ? (llmsTxtContent || null)
@@ -171,6 +173,8 @@ const createAPIFlow = async (req, res) => {
             description,
             agentPrompt: resolvedPrompt,
             status: status || 'PUBLISHED',
+            visibility: visibility || 'PUBLIC',
+            agentVisibility: agentVisibility || 'VISIBLE',
             arazoContent: resolvedContent,
             contentType: resolvedContentType
         }, t);
@@ -188,6 +192,9 @@ const createAPIFlow = async (req, res) => {
         });
     } catch (error) {
         await t.rollback();
+        if (error instanceof UniqueConstraintError) {
+            return res.status(409).json({ message: 'An API workflow with this handle already exists. Please use a different handle.' });
+        }
         logger.error('Error creating APIFlow', { error: error.message, stack: error.stack });
         res.status(500).json({ message: constants.ERROR_MESSAGE.API_FLOW_CREATE_ERROR });
     }
@@ -195,7 +202,7 @@ const createAPIFlow = async (req, res) => {
 
 const updateAPIFlow = async (req, res) => {
     const { orgId, apiFlowId, viewName } = req.params;
-    const { name, handle, description, agentPrompt, status, arazoContent, llmsTxtContent, contentType, apiIds } = req.body;
+    const { name, handle, description, agentPrompt, status, visibility, agentVisibility, arazoContent, llmsTxtContent, contentType, apiIds } = req.body;
     const resolvedContentType = contentType;
     const resolvedContent = resolvedContentType === 'LLMS_TXT'
         ? (llmsTxtContent || null)
@@ -209,6 +216,8 @@ const updateAPIFlow = async (req, res) => {
             description,
             agentPrompt,
             status,
+            visibility,
+            agentVisibility,
             arazoContent: resolvedContent,
             contentType: resolvedContentType
         }, t);
@@ -227,6 +236,9 @@ const updateAPIFlow = async (req, res) => {
         res.status(200).json({ message: 'APIFlow updated successfully' });
     } catch (error) {
         await t.rollback();
+        if (error instanceof UniqueConstraintError) {
+            return res.status(409).json({ message: 'An API workflow with this handle already exists. Please use a different handle.' });
+        }
         logger.error('Error updating APIFlow', { error: error.message, stack: error.stack });
         res.status(500).json({ message: constants.ERROR_MESSAGE.API_FLOW_UPDATE_ERROR });
     }
@@ -354,6 +366,8 @@ const toAPIFlowDTO = (apiFlow) => {
     description: apiFlow.DESCRIPTION,
     agentPrompt: apiFlow.AGENT_PROMPT,
     status: apiFlow.STATUS,
+    visibility: apiFlow.VISIBILITY || 'PUBLIC',
+    agentVisibility: apiFlow.AGENT_VISIBILITY || 'VISIBLE',
     contentType: apiFlow.CONTENT_TYPE || 'ARAZZO',
     arazoContent: (apiFlow.CONTENT_TYPE || 'ARAZZO') === 'ARAZZO' ? fileContent : null,
     llmsTxtContent: apiFlow.CONTENT_TYPE === 'LLMS_TXT' ? fileContent : null,

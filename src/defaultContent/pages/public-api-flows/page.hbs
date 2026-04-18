@@ -50,6 +50,30 @@
                         </div>
                         {{/if}}
                     </div>
+                    <div class="flow-card-footer">
+                        {{#if (eq this.visibility "PRIVATE")}}
+                        <span class="flow-visibility-badge flow-visibility-private"
+                            title="Only logged-in users can view this workflow">
+                            <i class="bi bi-lock-fill"></i> Private
+                        </span>
+                        {{else}}
+                        <span class="flow-visibility-badge flow-visibility-public"
+                            title="Visible to all visitors">
+                            <i class="bi bi-globe"></i> Public
+                        </span>
+                        {{/if}}
+                        {{#if (eq this.agentVisibility "HIDDEN")}}
+                        <span class="flow-visibility-badge flow-agent-hidden"
+                            title="Not accessible to AI agents">
+                            <i class="bi bi-shield-slash"></i> AI Restricted
+                        </span>
+                        {{else}}
+                        <span class="flow-visibility-badge flow-agent-visible"
+                            title="AI agents can access this workflow">
+                            <i class="bi bi-robot"></i> Agent: Visible
+                        </span>
+                        {{/if}}
+                    </div>
                 </div>
                 {{/each}}
             </div>

@@ -44,7 +44,8 @@ const loadPublicAPIFlows = async (req, res) => {
         const orgID = orgDetails.ORG_ID;
         const viewId = await resolveViewId(orgID, viewName);
 
-        const apiFlows = await apiFlowDao.getPublishedAPIFlows(orgID, viewId);
+        const visibilityFilter = req.user ? undefined : 'PUBLIC';
+        const apiFlows = await apiFlowDao.getPublishedAPIFlows(orgID, viewId, { visibility: visibilityFilter });
 
         const profile = req.user ? {
             username: req.user.sub,
@@ -65,6 +66,8 @@ const loadPublicAPIFlows = async (req, res) => {
                 description: flow.DESCRIPTION,
                 agentPrompt: flow.AGENT_PROMPT,
                 status: flow.STATUS,
+                visibility: flow.VISIBILITY || 'PUBLIC',
+                agentVisibility: flow.AGENT_VISIBILITY || 'VISIBLE',
                 apiCount: flow.DP_API_METADATA ? flow.DP_API_METADATA.length : 0,
                 apis: flow.DP_API_METADATA ? flow.DP_API_METADATA.map(api => ({
                     apiName: api.API_NAME,
@@ -120,6 +123,12 @@ const loadPublicAPIFlowDetail = async (req, res) => {
             return res.status(404).send(html);
         }
 
+        if (apiFlow.VISIBILITY === 'PRIVATE' && !req.user) {
+            const templateContent = { errorMessage: 'You must be logged in to view this workflow' };
+            const html = renderTemplate('src/pages/error-page/page.hbs', 'src/defaultContent/layout/main.hbs', templateContent, false);
+            return res.status(401).send(html);
+        }
+
         const profile = req.user ? {
             username: req.user.sub,
             authenticated: true,
@@ -144,6 +153,8 @@ const loadPublicAPIFlowDetail = async (req, res) => {
                 description: apiFlow.DESCRIPTION,
                 agentPrompt: apiFlow.AGENT_PROMPT,
                 status: apiFlow.STATUS,
+                visibility: apiFlow.VISIBILITY || 'PUBLIC',
+                agentVisibility: apiFlow.AGENT_VISIBILITY || 'VISIBLE',
                 contentType: apiFlow.CONTENT_TYPE,
                 content: fileContentStr,
                 createdAt: apiFlow.CREATED_AT ? new Date(apiFlow.CREATED_AT).toLocaleDateString() : '',
@@ -196,7 +207,7 @@ const getFlowPromptJSON = async (req, res) => {
         const orgID = orgDetails.ORG_ID;
         const viewId = await resolveViewId(orgID, viewName);
 
-        const apiFlow = await apiFlowDao.getPublishedAPIFlowByHandle(orgID, viewId, handle);
+        const apiFlow = await apiFlowDao.getPublishedAPIFlowByHandle(orgID, viewId, handle, { agentVisibility: 'VISIBLE' });
 
         if (!apiFlow) {
             return res.status(404).json({ error: 'API Workflow not found or not published' });
@@ -245,7 +256,7 @@ const getWorkflowDetailMd = async (req, res) => {
         const orgID = orgDetails.ORG_ID;
         const viewId = await resolveViewId(orgID, viewName);
 
-        const apiFlow = await apiFlowDao.getPublishedAPIFlowByHandle(orgID, viewId, handle);
+        const apiFlow = await apiFlowDao.getPublishedAPIFlowByHandle(orgID, viewId, handle, { agentVisibility: 'VISIBLE' });
 
         if (!apiFlow) {
             return res.status(404).send('# Error\n\nWorkflow not found or not published.');
@@ -341,7 +352,7 @@ const getAllPublishedFlowsMD = async (req, res) => {
         const orgID = orgDetails.ORG_ID;
         const viewId = await resolveViewId(orgID, viewName);
 
-        const apiFlows = await apiFlowDao.getPublishedAPIFlows(orgID, viewId);
+        const apiFlows = await apiFlowDao.getPublishedAPIFlows(orgID, viewId, { agentVisibility: 'VISIBLE' });
 
         const md = generateWorkflowsListMarkdown(apiFlows, orgName, viewName);
 
