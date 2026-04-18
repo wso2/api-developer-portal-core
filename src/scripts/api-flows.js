@@ -152,8 +152,29 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Attach listener to prompt modal copy button
     document.getElementById('copyPromptBtn')?.addEventListener('click', copyPrompt);
+    document.getElementById('downloadPromptBtn')?.addEventListener('click', downloadPrompt);
+
+    const runPromptBtn = document.getElementById('runPromptBtn');
+    if (runPromptBtn) {
+        runPromptBtn.addEventListener('click', function(event) {
+            event.stopPropagation();
+            document.getElementById('configRunDropdownMenu').classList.toggle('show');
+        });
+    }
+    document.getElementById('runInClaudeBtn')?.addEventListener('click', function() {
+        const prompt = document.getElementById('agentPromptContent').textContent;
+        window.open('https://claude.ai/new?q=' + encodeURIComponent(prompt), '_blank');
+        document.getElementById('configRunDropdownMenu').classList.remove('show');
+    });
+    document.getElementById('runInChatGPTBtn')?.addEventListener('click', function() {
+        const prompt = document.getElementById('agentPromptContent').textContent;
+        window.open('https://chatgpt.com/?prompt=' + encodeURIComponent(prompt), '_blank');
+        document.getElementById('configRunDropdownMenu').classList.remove('show');
+    });
+    document.addEventListener('click', function() {
+        document.getElementById('configRunDropdownMenu')?.classList.remove('show');
+    });
 
     initApiCardPicker();
 });
@@ -530,7 +551,8 @@ function openPromptModal(apiFlowId) {
     if (!data) return;
     document.getElementById('agentPromptFlowName').textContent = data.name;
     document.getElementById('agentPromptContent').textContent = data.agentPrompt || '';
-    document.getElementById('copyPromptBtn').innerHTML = '<i class="bi bi-clipboard me-1"></i> Copy';
+    const copyIcon = document.getElementById('copyPromptBtn')?.querySelector('i');
+    if (copyIcon) copyIcon.className = 'bi bi-clipboard';
     const modal = new bootstrap.Modal(document.getElementById('agentPromptModal'));
     modal.show();
 }
@@ -539,9 +561,22 @@ function copyPrompt() {
     const content = document.getElementById('agentPromptContent').textContent;
     navigator.clipboard.writeText(content).then(() => {
         const btn = document.getElementById('copyPromptBtn');
-        btn.innerHTML = '<i class="bi bi-check2 me-1"></i> Copied!';
-        setTimeout(() => { btn.innerHTML = '<i class="bi bi-clipboard me-1"></i> Copy'; }, 2000);
+        const icon = btn.querySelector('i');
+        icon.className = 'bi bi-clipboard-check';
+        setTimeout(() => { icon.className = 'bi bi-clipboard'; }, 2000);
     });
+}
+
+function downloadPrompt() {
+    const content = document.getElementById('agentPromptContent').textContent;
+    const name = document.getElementById('agentPromptFlowName').textContent || 'agent-prompt';
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name.toLowerCase().replace(/\s+/g, '-') + '.txt';
+    a.click();
+    URL.revokeObjectURL(url);
 }
 
 function copyFieldPrompt() {
