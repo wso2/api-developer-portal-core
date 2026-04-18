@@ -30,8 +30,8 @@
             <div class="flow-header-actions">
                 {{#if (eq flow.agentVisibility "HIDDEN")}}
                 <span class="flow-visibility-badge flow-agent-hidden"
-                    title="Not accessible to AI agents">
-                    <i class="bi bi-shield-slash"></i> AI Restricted
+                    title="This workflow is hidden from AI agents">
+                    <i class="bi bi-lock-fill"></i> Agent Restricted
                 </span>
                 {{else}}
                 <button class="btn-prompt" id="openPromptBtn">

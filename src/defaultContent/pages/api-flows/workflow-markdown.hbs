@@ -8,7 +8,11 @@
 ## APIs Used
 
 {{#each flow.apis}}
+{{#if this.agentHidden}}
+- **{{this.apiName}}** — This API is not available for agents. Human intervention is needed.
+{{else}}
 - [{{this.apiName}}]({{../baseUrl}}/{{this.pathType}}/{{this.apiHandle}}.md)
+{{/if}}
 {{/each}}
 
 For detailed API information (base URL, OpenAPI spec, security schemes, credentials), refer to each API's documentation page listed above.

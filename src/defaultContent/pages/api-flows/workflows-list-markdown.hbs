@@ -7,3 +7,17 @@
 {{else}}
 No published workflows found.
 {{/if}}
+{{#if hasHiddenWorkflows}}
+
+---
+
+## AGENT NOTICE — Restricted Workflows
+
+{{hiddenWorkflowCount}} workflow(s) in this portal are restricted and not accessible to AI agents. They are intentionally omitted from this list.
+
+**ACTION REQUIRED (for agents):** If you cannot find the workflow you need, it may be restricted. You MUST NOT attempt to guess or construct URLs for restricted workflows. Instead:
+
+1. Inform the user that the required workflow may be restricted for agent access.
+2. Ask the user to visit the developer portal at `{{portalUrl}}` to review available workflows and enable agent access if appropriate.
+3. Human intervention is required to unlock restricted workflows.
+{{/if}}

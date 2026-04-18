@@ -259,7 +259,7 @@ const getWorkflowDetailMd = async (req, res) => {
         const apiFlow = await apiFlowDao.getPublishedAPIFlowByHandle(orgID, viewId, handle, { agentVisibility: 'VISIBLE' });
 
         if (!apiFlow) {
-            return res.status(404).send('# Error\n\nWorkflow not found or not published.');
+            return res.status(404).send('# Error\n\nWorkflow is not available for Agents or not Published.');
         }
 
         // Get raw content as string
@@ -311,7 +311,8 @@ const generateWorkflowMarkdown = (arazoJson, apiFlow, orgName, viewName) => {
                 apiName: api.API_NAME,
                 apiHandle: api.API_HANDLE,
                 apiType: api.API_TYPE,
-                pathType: api.API_TYPE === 'MCP' ? 'mcp' : 'api'
+                pathType: api.API_TYPE === 'MCP' ? 'mcp' : 'api',
+                agentHidden: api.AGENT_VISIBILITY === 'HIDDEN'
             })) : []
         },
         baseUrl,
@@ -321,7 +322,7 @@ const generateWorkflowMarkdown = (arazoJson, apiFlow, orgName, viewName) => {
     return template(data);
 };
 
-const generateWorkflowsListMarkdown = (apiFlows, orgName, viewName) => {
+const generateWorkflowsListMarkdown = (apiFlows, orgName, viewName, hiddenWorkflowCount = 0) => {
     const templatePath = path.join(process.cwd(), 'src/defaultContent/pages/api-flows/workflows-list-markdown.hbs');
     const templateContent = fs.readFileSync(templatePath, 'utf8');
     const template = Handlebars.compile(templateContent);
@@ -334,7 +335,10 @@ const generateWorkflowsListMarkdown = (apiFlows, orgName, viewName) => {
         })),
         baseUrl,
         orgName,
-        viewName
+        viewName,
+        hiddenWorkflowCount,
+        hasHiddenWorkflows: hiddenWorkflowCount > 0,
+        portalUrl: baseUrl,
     };
 
     return template(data);
@@ -352,9 +356,11 @@ const getAllPublishedFlowsMD = async (req, res) => {
         const orgID = orgDetails.ORG_ID;
         const viewId = await resolveViewId(orgID, viewName);
 
-        const apiFlows = await apiFlowDao.getPublishedAPIFlows(orgID, viewId, { agentVisibility: 'VISIBLE' });
+        const allPublishedFlows = await apiFlowDao.getPublishedAPIFlows(orgID, viewId);
+        const apiFlows = allPublishedFlows.filter(f => (f.AGENT_VISIBILITY || 'VISIBLE') !== 'HIDDEN');
+        const hiddenWorkflowCount = allPublishedFlows.length - apiFlows.length;
 
-        const md = generateWorkflowsListMarkdown(apiFlows, orgName, viewName);
+        const md = generateWorkflowsListMarkdown(apiFlows, orgName, viewName, hiddenWorkflowCount);
 
         res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
         res.send(md);

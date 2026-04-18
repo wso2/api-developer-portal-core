@@ -71,7 +71,7 @@
             <div class="flex-grow-1">
               <h5 class="api-card-title mb-0">{{apiInfo.apiName}}</h5>
               <div class="d-flex align-items-center gap-2">
-                <p class="mb-0 mt-1" style="font-size: 16px;">{{apiInfo.apiVersion}}</p>                         
+                <p class="mb-0 mt-1" style="font-size: 16px;">{{apiInfo.apiVersion}}</p>
                 <div class="type-badge badge-custom2" style="display: flex; flex-direction: row; align-items: center;">
                   <div style="margin-right: 8px; display: flex;">
                     {{#if (eq apiInfo.apiType "WS")}}
@@ -80,13 +80,13 @@
                       style=" height: 16px; object-fit: contain;"
                     />
                     {{else if (eq apiInfo.apiType "GRAPHQL")}}
-                    <img 
-                      src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/graphql.svg" 
+                    <img
+                      src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/graphql.svg"
                       style="height: 16px; object-fit: contain;"
                      />
                     {{else if (eq apiInfo.apiType "WEBSUB")}}
-                    <img 
-                      src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/graphql.svg" 
+                    <img
+                      src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/graphql.svg"
                       style="height: 16px; object-fit: contain;"
                      />
                     {{else}}
@@ -104,6 +104,20 @@
                   <span>{{apiInfo.apiType}}</span>
                   {{/if}}
                 </div>
+              </div>
+              <div class="api-card-chips mt-2">
+                {{#if (eq apiInfo.agentVisibility "HIDDEN")}}
+                <span class="api-agent-chip api-agent-chip--hidden"
+                    title="This API is not accessible to AI agents">
+                    <i class="bi bi-lock-fill"></i> Agent Restricted
+                </span>
+                {{else}}
+                <span class="api-agent-chip api-agent-chip--ready"
+                    title="AI agents can discover and use this API">
+                    <span class="api-agent-chip__dot"></span>
+                    <i class="bi bi-robot"></i> Agent Ready
+                </span>
+                {{/if}}
               </div>
             </div>
             {{#if ../isAuthenticated}}
