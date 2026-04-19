@@ -43,13 +43,14 @@ const createAPIMetadata = async (req, res) => {
     });
     let apiMetadata;
     let apiDefinitionFile, apiFileName = "";
+    let fullApiBundle;
     const apiArtifactFile = req.files?.artifact?.[0];
     
     try {
         let artifactApiContent = [];
         let resolvedImageMetadata = {};
         if (apiArtifactFile?.buffer) {
-            const fullApiBundle = await extractFullApiBundleFromUploadedZip(apiArtifactFile, orgId, 'new-api');
+            fullApiBundle = await extractFullApiBundleFromUploadedZip(apiArtifactFile, orgId, 'new-api');
             apiMetadata = fullApiBundle.apiMetadata;
             const preparedDefinition = prepareApiDefinitionForStorage(
                 fullApiBundle.apiDefinitionFileName,
@@ -368,6 +369,7 @@ const updateAPIMetadata = async (req, res) => {
     });
     let apiMetadata;
     let apiDefinitionFile, apiFileName = "";
+    let fullApiBundle;
     const apiArtifactFile = req.files?.artifact?.[0];
     logger.debug('MCP API Definition file', {
         apiFileName,
@@ -380,7 +382,7 @@ const updateAPIMetadata = async (req, res) => {
         let artifactApiContent = [];
         let resolvedImageMetadata = {};
         if (apiArtifactFile?.buffer) {
-            const fullApiBundle = await extractFullApiBundleFromUploadedZip(apiArtifactFile, orgId, apiId);
+            fullApiBundle = await extractFullApiBundleFromUploadedZip(apiArtifactFile, orgId, apiId);
             apiMetadata = fullApiBundle.apiMetadata;
             const preparedDefinition = prepareApiDefinitionForStorage(
                 fullApiBundle.apiDefinitionFileName,
