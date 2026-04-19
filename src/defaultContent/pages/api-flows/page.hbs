@@ -62,18 +62,13 @@
                             <i class="bi bi-globe"></i> Public
                         </span>
                         {{/if}}
-                        {{#if (eq this.agentVisibility "HIDDEN")}}
-                        <span class="flow-visibility-badge flow-agent-hidden"
-                            title="This workflow is hidden from AI agents">
-                            <i class="bi bi-lock-fill"></i> Agent Restricted
-                        </span>
-                        {{else}}
+                        {{#unless (eq this.agentVisibility "HIDDEN")}}
                         <span class="flow-visibility-badge flow-agent-visible"
                             title="AI agents can discover and use this workflow">
                             <span class="agent-live-dot"></span>
                             <i class="bi bi-robot"></i> Agent Ready
                         </span>
-                        {{/if}}
+                        {{/unless}}
                     </div>
                 </div>
                 {{/each}}

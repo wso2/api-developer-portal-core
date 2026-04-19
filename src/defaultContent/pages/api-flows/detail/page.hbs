@@ -28,17 +28,12 @@
                 <p>{{flow.description}}</p>
             </div>
             <div class="flow-header-actions">
-                {{#if (eq flow.agentVisibility "HIDDEN")}}
-                <span class="flow-visibility-badge flow-agent-hidden"
-                    title="This workflow is hidden from AI agents">
-                    <i class="bi bi-lock-fill"></i> Agent Restricted
-                </span>
-                {{else}}
+                {{#unless (eq flow.agentVisibility "HIDDEN")}}
                 <button class="btn-prompt" id="openPromptBtn" data-bs-toggle="modal" data-bs-target="#agentPromptModal">
                     <i class="bi bi-file-code"></i>
                     Agent Prompt
                 </button>
-                {{/if}}
+                {{/unless}}
             </div>
         </div>
 

@@ -106,18 +106,13 @@
                 </div>
               </div>
               <div class="api-card-chips mt-2">
-                {{#if (eq apiInfo.agentVisibility "HIDDEN")}}
-                <span class="api-agent-chip api-agent-chip--hidden"
-                    title="This API is not accessible to AI agents">
-                    <i class="bi bi-lock-fill"></i> Agent Restricted
-                </span>
-                {{else}}
+                {{#unless (eq apiInfo.agentVisibility "HIDDEN")}}
                 <span class="api-agent-chip api-agent-chip--ready"
                     title="AI agents can discover and use this API">
                     <span class="api-agent-chip__dot"></span>
                     <i class="bi bi-robot"></i> Agent Ready
                 </span>
-                {{/if}}
+                {{/unless}}
               </div>
             </div>
             {{#if ../isAuthenticated}}
