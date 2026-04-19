@@ -170,6 +170,7 @@ module.exports = {
         API_DEFINITION_FILE_NAME: 'apiDefinition.json',
         API_DEFINITION_YAML_FILE_NAME: 'apiDefinition.yaml',
         SCHEMA_DEFINITION_FILE_NAME: 'schemaDefinition.json',
+        SCHEMA_DEFINITION_YAML_FILE_NAME: 'schemaDefinition.yaml',
         API_SPECIFICATION_PATH: 'specification',
         API_DEFINITION_GRAPHQL: 'apiDefinition.graphql',
         API_DEFINITION_XML: 'apiDefinition.xml',

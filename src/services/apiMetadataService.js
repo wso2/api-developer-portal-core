@@ -145,21 +145,30 @@ const createAPIMetadata = async (req, res) => {
                 await apiDao.storeAPIImageMetadata(resolvedImageMetadata, apiID, t);
             }
             // Save MCP tools as schema definition if the API type is MCP
-            if (constants.API_TYPE.MCP === apiMetadata.apiInfo.apiType && req.files?.schemaDefinition?.[0]) {
-                const file = req.files.schemaDefinition[0];
-                const schemaDefinitionFile = file.buffer;
-                logger.debug('Schema definition file received', {
-                    apiId: apiID,
-                    schemaDefinitionFileSize: schemaDefinitionFile.length,
-                    schemaFileName: file.originalname
-                });
-                const schemaFileName = file.originalname;
-                await apiDao.storeAPIFile(schemaDefinitionFile, schemaFileName, apiID,
-                    constants.DOC_TYPES.SCHEMA_DEFINITION, t);
-                logger.info('Schema definition file stored', {
-                    apiId: apiID,
-                    schemaFileName
-                });
+            if (constants.API_TYPE.MCP === apiMetadata.apiInfo.apiType) {
+                let schemaFile;
+                if (req.files?.schemaDefinition?.[0]) {
+                    schemaFile = req.files.schemaDefinition[0];
+                } else if (fullApiBundle?.schemaDefinitionFile) {
+                    schemaFile = {
+                        originalname: fullApiBundle.schemaDefinitionFileName,
+                        buffer: fullApiBundle.schemaDefinitionFile
+                    };
+                }
+                if (schemaFile) {
+                    const schemaDefinition = prepareSchemaDefinitionForStorage(schemaFile.originalname, schemaFile.buffer);
+                    logger.debug('Schema definition file received', {
+                        apiId: apiID,
+                        schemaDefinitionFileSize: schemaDefinition.schemaDefinitionFile.length,
+                        schemaFileName: schemaDefinition.schemaDefinitionFileName
+                    });
+                    await apiDao.storeAPIFile(schemaDefinition.schemaDefinitionFile, schemaDefinition.schemaDefinitionFileName, apiID,
+                        constants.DOC_TYPES.SCHEMA_DEFINITION, t);
+                    logger.info('Schema definition file stored', {
+                        apiId: apiID,
+                        schemaDefinitionFileName: schemaDefinition.schemaDefinitionFileName
+                    });
+                }
             }
 
             if (constants.API_TYPE.GRAPHQL === apiMetadata.apiInfo.apiType && req.files?.schemaDefinition?.[0]) {
@@ -503,26 +512,36 @@ const updateAPIMetadata = async (req, res) => {
                 throw new Sequelize.EmptyResultError("No record found to update");
             }
             // Update MCP tools schema definition if the API type is MCP
+            const hasSchemaDefinitionFile = !!req.files?.schemaDefinition?.[0] || !!fullApiBundle?.schemaDefinitionFile;
             logger.debug('Processing MCP API schema definition', {
-                hasSchemaDefinition: !!req.files?.schemaDefinition?.[0],
+                hasSchemaDefinition: hasSchemaDefinitionFile,
                 apiType: apiMetadata.apiInfo.apiType,
                 apiId
             });
-            if (constants.API_TYPE.MCP === apiMetadata.apiInfo.apiType && req.files?.schemaDefinition?.[0]) {
-                const file = req.files.schemaDefinition[0];
-                const schemaDefinitionFile = file.buffer;
-                const schemaFileName = file.originalname;
-                logger.debug('Schema definition file received for update', {
-                    schemaDefinitionFileSize: schemaDefinitionFile.length,
-                    schemaFileName,
-                    apiId
-                });
-                await apiDao.updateAPIFile(schemaDefinitionFile, schemaFileName, apiId, orgId,
-                    constants.DOC_TYPES.SCHEMA_DEFINITION, t);
-                logger.info('Schema definition file updated', {
-                    schemaFileName,
-                    apiId
-                });
+            if (constants.API_TYPE.MCP === apiMetadata.apiInfo.apiType && hasSchemaDefinitionFile) {
+                let schemaFile;
+                if (req.files?.schemaDefinition?.[0]) {
+                    schemaFile = req.files.schemaDefinition[0];
+                } else if (fullApiBundle?.schemaDefinitionFile) {
+                    schemaFile = {
+                        originalname: fullApiBundle.schemaDefinitionFileName,
+                        buffer: fullApiBundle.schemaDefinitionFile
+                    };
+                }
+                if (schemaFile) {
+                    const schemaDefinition = prepareSchemaDefinitionForStorage(schemaFile.originalname, schemaFile.buffer);
+                    logger.debug('Schema definition file received for update', {
+                        schemaDefinitionFileSize: schemaDefinition.schemaDefinitionFile.length,
+                        schemaFileName: schemaDefinition.schemaDefinitionFileName,
+                        apiId
+                    });
+                    await apiDao.upsertAPIFileByType(schemaDefinition.schemaDefinitionFile, schemaDefinition.schemaDefinitionFileName, apiId, orgId,
+                        constants.DOC_TYPES.SCHEMA_DEFINITION, t);
+                    logger.info('Schema definition file updated', {
+                        schemaFileName: schemaDefinition.schemaDefinitionFileName,
+                        apiId
+                    });
+                }
             }
 
             if (constants.API_TYPE.GRAPHQL === apiMetadata.apiInfo.apiType && req.files?.schemaDefinition?.[0]) {
@@ -723,9 +742,9 @@ async function extractFullApiBundleFromUploadedZip(zipFile, orgId, apiId) {
         await util.unzipDirectory(tempZipPath, extractPath);
 
         const rootPath = await resolveZipRootPath(extractPath);
-        const metadataFilePath = await util.findFileByNameRecursive(rootPath, ['api.yaml', 'devportal.yaml']);
+        const metadataFilePath = await util.findFileByNameRecursive(rootPath, ['api.yaml', 'mcp.yaml', 'devportal.yaml']);
         if (!metadataFilePath) {
-            throw new Sequelize.ValidationError("Invalid full API zip: missing api.yaml or devportal.yaml");
+            throw new Sequelize.ValidationError("Invalid full API zip: missing api.yaml, mcp.yaml or devportal.yaml");
         }
 
         const definitionFilePath = await util.findFileByNameRecursive(rootPath, [
@@ -745,10 +764,23 @@ async function extractFullApiBundleFromUploadedZip(zipFile, orgId, apiId) {
         const apiDefinitionFile = await fs.readFile(definitionFilePath);
         const apiDefinitionFileName = path.basename(definitionFilePath);
 
+        const schemaDefinitionFilePath = await util.findFileByNameRecursive(rootPath, [
+            constants.FILE_NAME.SCHEMA_DEFINITION_FILE_NAME,
+            constants.FILE_NAME.SCHEMA_DEFINITION_YAML_FILE_NAME,
+        ]);
+        let schemaDefinitionFile;
+        let schemaDefinitionFileName;
+        if (schemaDefinitionFilePath) {
+            schemaDefinitionFile = await fs.readFile(schemaDefinitionFilePath);
+            schemaDefinitionFileName = path.basename(schemaDefinitionFilePath);
+        }
+
         return {
             apiMetadata,
             apiDefinitionFile,
             apiDefinitionFileName,
+            schemaDefinitionFile,
+            schemaDefinitionFileName,
         };
     } catch (error) {
         if (error instanceof Sequelize.ValidationError) {
@@ -1583,9 +1615,9 @@ function mapDevportalYamlToApiMetadata(parsedYaml) {
 }
 
 function parseApiMetadataFromYamlFile(fileName, fileBuffer) {
-    const allowedMetadataFileNames = new Set(['api.yaml', 'devportal.yaml']);
+    const allowedMetadataFileNames = new Set(['api.yaml', 'mcp.yaml', 'devportal.yaml']);
     if (!allowedMetadataFileNames.has(String(fileName).toLowerCase())) {
-        throw new Sequelize.ValidationError("Invalid metadata file name. Expected 'api.yaml' or 'devportal.yaml'");
+        throw new Sequelize.ValidationError("Invalid metadata file name. Expected 'api.yaml', 'mcp.yaml' or 'devportal.yaml'");
     }
 
     let parsedYaml;
@@ -1646,6 +1678,44 @@ function prepareApiDefinitionForStorage(fileName, fileBuffer) {
     return {
         apiDefinitionFile: fileBuffer,
         apiDefinitionFileName: sanitizedFileName,
+    };
+}
+
+function validateSchemaDefinitionFileName(fileName) {
+    const sanitizedFileName = path.basename(String(fileName || ''));
+    const extension = path.extname(sanitizedFileName).toLowerCase();
+    if (extension !== '.json' && extension !== '.yaml') {
+        throw new Sequelize.ValidationError("Invalid schema definition file type. Expected '.json' or '.yaml'");
+    }
+    return sanitizedFileName;
+}
+
+function prepareSchemaDefinitionForStorage(fileName, fileBuffer) {
+    const sanitizedFileName = validateSchemaDefinitionFileName(fileName);
+    const fileContent = fileBuffer.toString(constants.CHARSET_UTF8);
+    if (sanitizedFileName.toLowerCase().endsWith('.json')) {
+        try {
+            JSON.parse(fileContent);
+        } catch (e) {
+            throw new Sequelize.ValidationError(`Invalid schema definition JSON file: ${e.message}`);
+        }
+    } else {
+        try {
+            const parsedDefinition = yaml.load(fileContent);
+            if (parsedDefinition === undefined) {
+                throw new Sequelize.ValidationError('Invalid schema definition YAML file: empty content');
+            }
+        } catch (e) {
+            if (e instanceof Sequelize.ValidationError) {
+                throw e;
+            }
+            throw new Sequelize.ValidationError(`Invalid schema definition YAML file: ${e.message}`);
+        }
+    }
+
+    return {
+        schemaDefinitionFile: fileBuffer,
+        schemaDefinitionFileName: sanitizedFileName,
     };
 }
 

@@ -789,6 +789,74 @@ const getAPIFile = async (fileName, type, orgID, apiID, t) => {
     }
 }
 
+const getAPIFileByType = async (type, orgID, apiID, t) => {
+    try {
+        const apiFileResponse = await APIContent.findOne({
+            where: {
+                API_ID: apiID,
+                TYPE: type
+            },
+            include: [
+                {
+                    model: APIMetadata,
+                    where: {
+                        ORG_ID: orgID
+                    }
+                }
+            ],
+            transaction: t
+        });
+        return apiFileResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
+const upsertAPIFileByType = async (apiFile, fileName, apiID, orgID, type, t) => {
+    try {
+        const apiFileResponse = await getAPIFileByType(type, orgID, apiID, t);
+        let fileUpdateResponse;
+        if (apiFileResponse == null || apiFileResponse == undefined) {
+            fileUpdateResponse = await APIContent.create({
+                API_FILE: apiFile,
+                FILE_NAME: fileName,
+                API_ID: apiID,
+                TYPE: type
+            }, { transaction: t });
+        } else {
+            fileUpdateResponse = await APIContent.update({
+                API_FILE: apiFile,
+                FILE_NAME: fileName
+            },
+                {
+                    where: {
+                        API_ID: apiID,
+                        TYPE: type
+                    },
+                    include: [
+                        {
+                            model: APIMetadata,
+                            where: {
+                                ORG_ID: orgID
+                            }
+                        }
+                    ],
+                    transaction: t
+                }
+            );
+        }
+        return fileUpdateResponse;
+    } catch (error) {
+        if (error instanceof Sequelize.UniqueConstraintError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
 const getAPIDoc = async (type, orgID, apiID, t) => {
 
     try {
@@ -1798,6 +1866,8 @@ module.exports = {
     storeAPIFiles,
     updateOrCreateAPIFiles,
     getAPIFile,
+    getAPIFileByType,
+    upsertAPIFileByType,
     getAPIDoc,
     deleteAPIFile,
     deleteAllAPIFiles,

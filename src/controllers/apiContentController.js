@@ -373,19 +373,26 @@ const loadAPIContent = async (req, res) => {
                     }
                     if (constants.API_TYPE.MCP === metaData.apiInfo?.apiType) {
                         try {
-                            let rawSchema = await apiDao.getAPIFile(
-                                constants.FILE_NAME.SCHEMA_DEFINITION_FILE_NAME,
+                            let rawSchema = await apiDao.getAPIFileByType(
                                 constants.DOC_TYPES.SCHEMA_DEFINITION,
                                 orgID,
                                 apiID
                             );
+                            if (!rawSchema) {
+                                throw new Error('Missing MCP schema definition file');
+                            }
                             const schemaString = rawSchema.API_FILE.toString(constants.CHARSET_UTF8);
-                            schemaDefinition = JSON.parse(schemaString);
+                            const schemaFileName = String(rawSchema.FILE_NAME || '').toLowerCase();
+                            if (schemaFileName.endsWith('.yaml')) {
+                                schemaDefinition = yaml.load(schemaString);
+                            } else {
+                                schemaDefinition = JSON.parse(schemaString);
+                            }
                         } catch (err) {
                             logger.error("Failed to load or parse schema definition", {
                                 orgID: orgID,
                                 apiID: apiID,
-                                error: err.message, 
+                                error: err.message,
                                 stack: err.stack
                             });
                             throw err;
