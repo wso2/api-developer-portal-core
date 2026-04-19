@@ -8,7 +8,7 @@
     </div>
     <div class="card-body px-4 py-4">
 
-        {{!-- Hidden field to track edit state --}}
+        {{!-- Hidden fields to track edit state --}}
         <input type="hidden" id="editingApiFlowId" value="" />
         <input type="hidden" id="editingApiFlowVisibility" value="PUBLIC" />
         <input type="hidden" id="editingApiFlowAgentVisibility" value="VISIBLE" />
@@ -17,10 +17,16 @@
         <div class="af-section">
             <div class="af-section-header">
                 <div class="af-step-badge">1</div>
-                <div>
-                    <div class="af-section-title">Basic Information</div>
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <div class="af-section-title">Basic Information</div>
+                        <span class="af-section-summary d-none" id="af-summary-1"></span>
+                    </div>
                     <div class="af-section-subtitle">Name, describe, and configure visibility for your API workflow</div>
                 </div>
+                <button type="button" class="af-collapse-btn" data-af-collapse aria-label="Toggle section">
+                    <i class="bi bi-chevron-up"></i>
+                </button>
             </div>
             <div class="af-section-body">
 
@@ -39,7 +45,7 @@
                     <label for="apiFlowDescription" class="form-label fw-semibold">
                         Description <span class="text-danger">*</span>
                     </label>
-                    <textarea class="form-control" id="apiFlowDescription" rows="2"
+                    <textarea class="form-control" id="apiFlowDescription" rows="4"
                         placeholder="e.g. Orchestrates a multi-step patient booking workflow across appointment scheduling and healthcare provider systems…"></textarea>
                     <div class="invalid-feedback">Description is required.</div>
                     <div class="form-text mt-1">
@@ -52,36 +58,54 @@
 
                 {{!-- Portal Visibility --}}
                 <div class="mb-3">
-                    <label class="form-label fw-semibold mb-1">Portal Visibility</label>
-                    <div class="form-text mb-2">Control who can view this workflow on the portal</div>
-                    <div class="d-flex gap-2 flex-wrap">
+                    <label class="form-label fw-semibold mb-1 d-block">Portal Visibility</label>
+                    <div class="af-seg" role="radiogroup" aria-label="Portal visibility">
                         <input type="radio" class="btn-check" name="apiFlowVisibility" id="visibilityPublic"
                             value="PUBLIC" autocomplete="off" checked />
-                        <label class="btn btn-sm common-btn-outlined" for="visibilityPublic">
-                            <i class="bi bi-globe me-1"></i> Public
+                        <label class="af-seg-option" for="visibilityPublic">
+                            <i class="bi bi-globe af-seg-icon"></i>
+                            <div class="af-seg-label">
+                                <span class="af-seg-name">Public</span>
+                                <span class="af-seg-sub">Anyone on portal</span>
+                            </div>
+                            <i class="bi bi-check2 af-seg-check"></i>
                         </label>
                         <input type="radio" class="btn-check" name="apiFlowVisibility" id="visibilityPrivate"
                             value="PRIVATE" autocomplete="off" />
-                        <label class="btn btn-sm common-btn-outlined" for="visibilityPrivate">
-                            <i class="bi bi-lock me-1"></i> Private
+                        <label class="af-seg-option" for="visibilityPrivate">
+                            <i class="bi bi-lock af-seg-icon"></i>
+                            <div class="af-seg-label">
+                                <span class="af-seg-name">Private</span>
+                                <span class="af-seg-sub">Restricted access</span>
+                            </div>
+                            <i class="bi bi-check2 af-seg-check"></i>
                         </label>
                     </div>
                 </div>
 
                 {{!-- Agent Visibility --}}
                 <div class="mb-1">
-                    <label class="form-label fw-semibold mb-1">Agent Visibility</label>
-                    <div class="form-text mb-2">Control whether AI agents can discover and use this workflow</div>
-                    <div class="d-flex gap-2 flex-wrap">
+                    <label class="form-label fw-semibold mb-1 d-block">Agent Visibility</label>
+                    <div class="af-seg" role="radiogroup" aria-label="Agent visibility">
                         <input type="radio" class="btn-check" name="apiFlowAgentVisibility" id="agentVisibilityVisible"
                             value="VISIBLE" autocomplete="off" checked />
-                        <label class="btn btn-sm common-btn-outlined" for="agentVisibilityVisible">
-                            <i class="bi bi-robot me-1"></i> Visible to Agents
+                        <label class="af-seg-option" for="agentVisibilityVisible">
+                            <i class="bi bi-robot af-seg-icon"></i>
+                            <div class="af-seg-label">
+                                <span class="af-seg-name">Visible to Agents</span>
+                                <span class="af-seg-sub">Agents can discover</span>
+                            </div>
+                            <i class="bi bi-check2 af-seg-check"></i>
                         </label>
                         <input type="radio" class="btn-check" name="apiFlowAgentVisibility" id="agentVisibilityHidden"
                             value="HIDDEN" autocomplete="off" />
-                        <label class="btn btn-sm common-btn-outlined" for="agentVisibilityHidden">
-                            <i class="bi bi-eye-slash me-1"></i> Hidden from Agents
+                        <label class="af-seg-option" for="agentVisibilityHidden">
+                            <i class="bi bi-eye-slash af-seg-icon"></i>
+                            <div class="af-seg-label">
+                                <span class="af-seg-name">Hidden from Agents</span>
+                                <span class="af-seg-sub">Excluded from discovery</span>
+                            </div>
+                            <i class="bi bi-check2 af-seg-check"></i>
                         </label>
                     </div>
                 </div>
@@ -93,10 +117,16 @@
         <div class="af-section">
             <div class="af-section-header">
                 <div class="af-step-badge">2</div>
-                <div>
-                    <div class="af-section-title">Associated APIs</div>
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <div class="af-section-title">Associated APIs</div>
+                        <span class="af-section-summary d-none" id="af-summary-2"></span>
+                    </div>
                     <div class="af-section-subtitle">Select APIs that participate in this flow — their specs power the agent prompt and Arazzo template</div>
                 </div>
+                <button type="button" class="af-collapse-btn" data-af-collapse aria-label="Toggle section">
+                    <i class="bi bi-chevron-up"></i>
+                </button>
             </div>
             <div class="af-section-body">
 
@@ -115,14 +145,23 @@
                     {{/each}}
                 </div>
 
-                {{!-- Search --}}
+                {{!-- Selected APIs chip summary --}}
+                <div class="af-api-chips-row mb-3" id="apiSelectedChips">
+                    <span class="text-muted small fst-italic">No APIs selected</span>
+                </div>
+
+                {{!-- Search + filter --}}
                 <div class="mb-3">
                     <div class="input-group">
                         <span class="input-group-text bg-transparent border-end-0">
                             <i class="bi bi-search text-muted" style="font-size: 0.85rem;"></i>
                         </span>
-                        <input type="text" class="form-control border-start-0" id="apiCardSearch"
+                        <input type="text" class="form-control border-start-0 border-end-0" id="apiCardSearch"
                             placeholder="Filter APIs by name, type, or description…" autocomplete="off" />
+                        <button type="button" class="btn btn-sm common-btn-outlined af-show-selected-btn" id="showSelectedOnlyBtn"
+                            title="Show selected APIs only">
+                            <i class="bi bi-funnel me-1"></i> Selected only
+                        </button>
                     </div>
                 </div>
 
@@ -147,10 +186,16 @@
         <div class="af-section af-section--last">
             <div class="af-section-header">
                 <div class="af-step-badge">3</div>
-                <div>
-                    <div class="af-section-title">Flow Definition</div>
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <div class="af-section-title">Flow Definition</div>
+                        <span class="af-section-summary d-none" id="af-summary-3"></span>
+                    </div>
                     <div class="af-section-subtitle">Define how your APIs should be orchestrated</div>
                 </div>
+                <button type="button" class="af-collapse-btn" data-af-collapse aria-label="Toggle section">
+                    <i class="bi bi-chevron-up"></i>
+                </button>
             </div>
             <div class="af-section-body">
 
@@ -167,7 +212,7 @@
                         <button class="af-flow-tab" id="tab-visual" data-bs-toggle="tab"
                             data-bs-target="#pane-visual" type="button" role="tab"
                             aria-controls="pane-visual" aria-selected="false">
-                            <i class="bi bi-diagram-3"></i> Agent Prompt
+                            <i class="bi bi-eye-slash af-agent-hidden-icon d-none" id="tabVisualHiddenIcon" aria-hidden="true"></i><i class="bi bi-diagram-3"></i> Agent Prompt
                         </button>
                     </li>
                 </ul>
@@ -175,8 +220,23 @@
                 {{!-- Tab Content --}}
                 <div class="tab-content">
 
-                    {{!-- Visual Builder Pane --}}
+                    {{!-- Agent Prompt Pane --}}
                     <div class="tab-pane fade" id="pane-visual" role="tabpanel" aria-labelledby="tab-visual">
+
+                        {{!-- Hidden-from-agents warning banner --}}
+                        <div class="af-agent-hidden-banner d-none" id="agentHiddenBanner" role="status" aria-live="polite">
+                            <div class="af-agent-hidden-banner-body">
+                                <i class="bi bi-exclamation-triangle-fill af-agent-hidden-banner-icon" aria-hidden="true"></i>
+                                <div class="af-agent-hidden-banner-text">
+                                    <strong>This flow is hidden from agents.</strong>
+                                    <span>Agents won't use this prompt until you change Agent Visibility to Visible.</span>
+                                </div>
+                                <button type="button" class="af-agent-hidden-banner-action" id="changeVisibilityBtn">
+                                    Change visibility <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <label for="agentPromptField" class="form-label fw-semibold mb-0">
@@ -212,16 +272,28 @@
 
                         {{!-- Spec Format --}}
                         <div class="mb-4">
-                            <label class="form-label fw-semibold mb-2">Spec Format</label>
-                            <div class="d-flex gap-2">
+                            <div class="form-label fw-semibold mb-1">Spec Format</div>
+                            <div class="form-text mb-3">Choose how to define your workflow orchestration.</div>
+                            <div class="af-seg" role="radiogroup" aria-label="Spec Format">
                                 <input type="radio" class="btn-check api-flow-content-type-radio" name="apiFlowContentType" id="contentTypeArazzo"
                                     value="ARAZZO" autocomplete="off" checked />
-                                <label class="btn btn-sm common-btn-outlined" for="contentTypeArazzo">Arazzo Spec</label>
-
+                                <label class="af-seg-option" for="contentTypeArazzo">
+                                    <i class="bi bi-code-slash af-seg-icon"></i>
+                                    <div class="af-seg-label">
+                                        <span class="af-seg-name">Arazzo Spec</span>
+                                        <span class="af-seg-sub">Structured · machine-readable</span>
+                                    </div>
+                                    <i class="bi bi-check2 af-seg-check"></i>
+                                </label>
                                 <input type="radio" class="btn-check api-flow-content-type-radio" name="apiFlowContentType" id="contentTypeMarkdown"
                                     value="MARKDOWN" autocomplete="off" disabled />
-                                <label class="btn btn-sm common-btn-outlined disabled" for="contentTypeMarkdown"
-                                    title="Coming soon">Markdown</label>
+                                <label class="af-seg-option af-seg-option--disabled" for="contentTypeMarkdown" aria-disabled="true">
+                                    <i class="bi bi-file-text af-seg-icon"></i>
+                                    <div class="af-seg-label">
+                                        <span class="af-seg-name">Markdown <span class="af-spec-soon">SOON</span></span>
+                                        <span class="af-seg-sub">Prose · human-friendly</span>
+                                    </div>
+                                </label>
                             </div>
                         </div>
 
@@ -229,7 +301,7 @@
                         <div id="arazoContentWrapper">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div>
-                                    <label for="arazoContent" class="form-label fw-semibold mb-0">
+                                    <label class="form-label fw-semibold mb-0">
                                         Arazzo Specification <span class="text-danger">*</span>
                                     </label>
                                     <p class="text-muted small mb-0 mt-1">
@@ -240,7 +312,7 @@
                                 </div>
                                 <div class="d-flex gap-2 flex-shrink-0 ms-3">
                                     <button type="button" class="common-btn-primary" id="generateArazzoBtn"
-                                        title="Generate a template from selected APIs">
+                                        title="Generate a starter Arazzo template from your selected APIs and workflow description">
                                         <i class="bi bi-magic me-1"></i> Generate
                                     </button>
                                     <button type="button" class="common-btn-outlined" id="uploadArazzoBtn"
@@ -248,16 +320,17 @@
                                         <i class="bi bi-upload me-1"></i> Upload
                                     </button>
                                     <button type="button" class="common-btn-outlined" id="copyArazzoBtn"
-                                        title="Copy to clipboard">
+                                        title="Copy spec to clipboard">
                                         <i class="bi bi-clipboard"></i>
                                     </button>
                                     <input type="file" id="arazoFileInput" accept=".yaml,.yml,.json" style="display:none" />
                                 </div>
                             </div>
-                            <textarea class="form-control api-flow-code-editor" id="arazoContent"
-                                style="min-height: 320px; resize: vertical;"
+                            {{!-- CodeMirror mounts here; hidden textarea is source of truth for save --}}
+                            <div id="arazoEditorHost" class="af-cm-host"></div>
+                            <textarea id="arazoContent" style="display:none;"
                                 placeholder="arazzo: '1.0.0'&#10;info:&#10;  title: My Flow&#10;  version: 1.0.0&#10;workflows:&#10;  - workflowId: my-flow&#10;    steps: []"></textarea>
-                            <div class="invalid-feedback">Arazzo Specification is required.</div>
+                            <div id="arazoContentInvalid" class="invalid-feedback" style="display:none;">Arazzo Specification is required.</div>
                             <div class="form-text mt-1">
                                 <i class="bi bi-info-circle me-1"></i>
                                 YAML or JSON. Stored alongside the agent prompt and usable by Arazzo-compatible runtimes.
@@ -307,8 +380,8 @@
             </div>
         </div>
 
-        {{!-- Form actions --}}
-        <div class="d-flex justify-content-end align-items-center gap-2 mt-4 pt-3 border-top">
+        {{!-- ── Sticky form actions ── --}}
+        <div class="af-form-actions-sticky">
             <button type="button" class="common-btn-outlined" id="cancelApiFlowBtn2">Cancel</button>
             <div class="btn-group" id="saveApiFlowGroup">
                 <button type="button" class="common-btn-primary af-save-main" id="saveApiFlowBtn" data-status="PUBLISHED">

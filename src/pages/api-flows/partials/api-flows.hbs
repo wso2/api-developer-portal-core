@@ -70,17 +70,13 @@
                             <i class="bi bi-globe"></i> Public
                         </span>
                         {{/if}}
-                        {{#if (eq this.agentVisibility "HIDDEN")}}
-                        <span class="api-flow-visibility-badge api-flow-agent-hidden"
-                            title="Not accessible to AI agents">
-                            <i class="bi bi-shield-slash"></i> AI Restricted
-                        </span>
-                        {{else}}
+                        {{#unless (eq this.agentVisibility "HIDDEN")}}
                         <span class="api-flow-visibility-badge api-flow-agent-visible"
-                            title="AI agents can access this workflow">
+                            title="AI agents can discover and use this workflow">
+                            <span class="agent-live-dot"></span>
                             <i class="bi bi-robot"></i> Agent Ready
                         </span>
-                        {{/if}}
+                        {{/unless}}
                     </div>
                     <div class="api-flow-card-actions">
                         {{#unless (eq this.agentVisibility "HIDDEN")}}
@@ -160,10 +156,24 @@
             </div>
             <div class="modal-body p-0">
                 <div class="api-flow-prompt-toolbar">
-                    <span class="small text-muted">Use this prompt with an AI agent.</span>
-                    <button type="button" class="common-btn-outlined" id="copyPromptBtn">
-                        <i class="bi bi-clipboard me-1"></i> Copy
-                    </button>
+                    <span class="small text-muted">Use this prompt to let your AI agent execute the workflow—handling API calls, dependencies, and errors automatically</span>
+                    <div class="prompt-modal-toolbar">
+                        <button type="button" class="prompt-tool-btn" id="downloadPromptBtn" title="Download as .txt">
+                            <i class="bi bi-download"></i>
+                        </button>
+                        <button type="button" class="prompt-tool-btn" id="copyPromptBtn" title="Copy prompt">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                        <div class="prompt-run-dropdown">
+                            <button type="button" class="btn-run-prompt" id="runPromptBtn">
+                                <i class="bi bi-play-fill"></i> Run
+                            </button>
+                            <div class="run-dropdown-menu" id="configRunDropdownMenu">
+                                <button type="button" class="run-option" id="runInClaudeBtn">Run in Claude</button>
+                                <button type="button" class="run-option" id="runInChatGPTBtn">Run in ChatGPT</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <pre id="agentPromptContent" class="api-flow-prompt-pre"></pre>
             </div>

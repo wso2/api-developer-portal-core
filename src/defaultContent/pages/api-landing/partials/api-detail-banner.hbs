@@ -13,6 +13,13 @@
           {{#apiMetadata.apiInfo.tags}}
           <span class="badge api-badge-custom2">{{this}}</span>
           {{/apiMetadata.apiInfo.tags}}
+          {{#unless (eq apiMetadata.apiInfo.agentVisibility "HIDDEN")}}
+          <span class="api-agent-chip api-agent-chip--ready"
+              title="AI agents can discover and use this API">
+              <span class="api-agent-chip__dot"></span>
+              <i class="bi bi-robot"></i> Agent Ready
+          </span>
+          {{/unless}}
         </div>
 
 

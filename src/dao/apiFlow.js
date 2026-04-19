@@ -80,7 +80,7 @@ const getAPIFlow = async (orgID, viewId, apiFlowId) => {
         include: [{
             model: APIMetadata,
             through: { attributes: [] },
-            attributes: ['API_ID', 'API_NAME', 'API_HANDLE', 'API_DESCRIPTION', 'PRODUCTION_URL', 'API_TYPE']
+            attributes: ['API_ID', 'API_NAME', 'API_HANDLE', 'API_DESCRIPTION', 'PRODUCTION_URL', 'API_TYPE', 'AGENT_VISIBILITY']
         }]
     });
 };
@@ -91,7 +91,7 @@ const getAPIFlowByHandle = async (orgID, viewId, handle) => {
         include: [{
             model: APIMetadata,
             through: { attributes: [] },
-            attributes: ['API_ID', 'API_NAME', 'API_HANDLE', 'API_DESCRIPTION', 'PRODUCTION_URL', 'API_TYPE']
+            attributes: ['API_ID', 'API_NAME', 'API_HANDLE', 'API_DESCRIPTION', 'PRODUCTION_URL', 'API_TYPE', 'AGENT_VISIBILITY']
         }]
     });
 };
@@ -153,7 +153,7 @@ const getPublishedAPIFlows = async (orgID, viewId, { visibility, agentVisibility
         include: [{
             model: APIMetadata,
             through: { attributes: [] },
-            attributes: ['API_ID', 'API_NAME', 'API_HANDLE', 'API_DESCRIPTION', 'PRODUCTION_URL', 'API_TYPE']
+            attributes: ['API_ID', 'API_NAME', 'API_HANDLE', 'API_DESCRIPTION', 'PRODUCTION_URL', 'API_TYPE', 'AGENT_VISIBILITY']
         }],
         order: [['CREATED_AT', 'DESC']]
     });
@@ -168,7 +168,7 @@ const getPublishedAPIFlowByHandle = async (orgID, viewId, handle, { visibility, 
         include: [{
             model: APIMetadata,
             through: { attributes: [] },
-            attributes: ['API_ID', 'API_NAME', 'API_HANDLE', 'API_DESCRIPTION', 'PRODUCTION_URL', 'API_TYPE']
+            attributes: ['API_ID', 'API_NAME', 'API_HANDLE', 'API_DESCRIPTION', 'PRODUCTION_URL', 'API_TYPE', 'AGENT_VISIBILITY']
         }]
     });
 };

@@ -1062,6 +1062,11 @@ const loadAPIContentMd = async (req, res) => {
         const orgID = orgDetails.ORG_ID;
         const apiID = await apiDao.getAPIId(orgID, apiHandle);
         const metaData = await loadAPIMetaData(req, orgID, apiID);
+
+        if (metaData.apiInfo?.agentVisibility === 'HIDDEN') {
+            return res.status(404).send('# Not Found\n\nThis API is not available for agents.');
+        }
+
         const subscriptionPlans = await util.appendSubscriptionPlanDetails(orgID, metaData.subscriptionPolicies);
 
         // Load API definition
@@ -1134,21 +1139,22 @@ const loadLlmsTxt = async (req, res) => {
         const orgID = orgDetails.ORG_ID;
 
         const metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, null, null, viewName);
-        // TODO: filter public APIs
-        //  const publicAPIs = metaDataList.filter(api => api.apiInfo.visibility === 'PUBLIC');
-        const publicAPIs = metaDataList;
+        const agentVisibleAPIs = metaDataList.filter(api => api.apiInfo.agentVisibility !== 'HIDDEN');
+        const hiddenAPICount = metaDataList.length - agentVisibleAPIs.length;
 
         const byType = { REST: [], MCP: [], GraphQL: [], WS: [] };
-        for (const api of publicAPIs) {
+        for (const api of agentVisibleAPIs) {
             const type = api.apiInfo.apiType;
             if (byType[type]) byType[type].push(api);
         }
 
-        // Fetch published API workflows
+        // Fetch published agent-visible API workflows
         const apiMetadataDao = require('../dao/apiMetadata');
         const viewId = await apiMetadataDao.getViewID(orgID, viewName);
         const allApiFlows = await apiFlowService.getAllAPIFlowsFromDB(orgID, viewId);
-        const publishedWorkflows = allApiFlows.filter(flow => flow.status === 'PUBLISHED');
+        const allPublishedWorkflows = allApiFlows.filter(flow => flow.status === 'PUBLISHED');
+        const publishedWorkflows = allPublishedWorkflows.filter(flow => flow.agentVisibility !== 'HIDDEN');
+        const hiddenWorkflowCount = allPublishedWorkflows.length - publishedWorkflows.length;
 
         const baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
         const templateContent = {
@@ -1158,6 +1164,10 @@ const loadLlmsTxt = async (req, res) => {
             graphqlAPIs: byType.GraphQL.length ? byType.GraphQL : null,
             wsAPIs:      byType.WS.length      ? byType.WS      : null,
             workflows:   publishedWorkflows.length > 0 ? publishedWorkflows : null,
+            hiddenAPICount: hiddenAPICount > 0 ? hiddenAPICount : 0,
+            hiddenWorkflowCount: hiddenWorkflowCount > 0 ? hiddenWorkflowCount : 0,
+            hasHiddenResources: hiddenAPICount > 0 || hiddenWorkflowCount > 0,
+            portalUrl: baseUrl,
             baseUrl,
         };
 
@@ -1178,10 +1188,15 @@ const loadAPIsMd = async (req, res) => {
         const orgDetails = await adminDao.getOrganization(orgName);
         const orgID = orgDetails.ORG_ID;
         const metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, null, null, viewName);
+        const agentVisibleAPIs = metaDataList.filter(api => api.apiInfo.agentVisibility !== 'HIDDEN');
+        const hiddenAPICount = metaDataList.length - agentVisibleAPIs.length;
 
         const templateContent = {
-            apiMetadata: metaDataList,
+            apiMetadata: agentVisibleAPIs,
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+            hiddenAPICount: hiddenAPICount > 0 ? hiddenAPICount : 0,
+            hasHiddenAPIs: hiddenAPICount > 0,
+            portalUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
         };
         const md = await util.renderMarkdownTemplateFromAPI(templateContent, orgID, 'pages/apis', viewName);
 
@@ -1239,6 +1254,10 @@ const loadDocumentMd = async (req, res) => {
         const orgDetails = await adminDao.getOrganization(orgName);
         const orgID = orgDetails.ORG_ID;
         const apiID = await apiDao.getAPIId(orgID, apiHandle);
+        const docMetaData = await loadAPIMetaData(req, orgID, apiID);
+        if (docMetaData.apiInfo?.agentVisibility === 'HIDDEN') {
+            return res.status(404).send('# Not Found\n\nThis API is not available for agents.');
+        }
         // docName here is without the .md suffix (stripped by the route param)
         const fullDocName = docName + '.md';
         const docContentResponse = await apiDao.getAPIDocByName(
