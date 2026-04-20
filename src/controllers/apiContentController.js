@@ -34,6 +34,7 @@ const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
 const { buildSchema, getIntrospectionQuery, graphql: executeGraphQL } = require('graphql');
+const yaml = require('js-yaml');
 const { log } = require('console');
 const controlPlaneUrl = config.controlPlane.url;
 
@@ -338,10 +339,8 @@ const loadAPIContent = async (req, res) => {
                       metaData.apiInfo.apiType !== constants.API_TYPE.WS &&
                       metaData.apiInfo.apiType !== constants.API_TYPE.WEBSUB
                     ) {
-                        apiDefinition = "";
-                        apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
-                        apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
-                        apiDetails = await parseSwagger(JSON.parse(apiDefinition))
+                        apiDefinition = await getApiDefinitionFileContent(orgID, apiID);
+                        apiDetails = await parseSwagger(parseApiDefinitionContent(apiDefinition))
                         if (metaData.endPoints.productionURL === "" && metaData.endPoints.sandboxURL === "") {
                             apiDetails["serverDetails"] = "";
                         } else {
@@ -349,10 +348,8 @@ const loadAPIContent = async (req, res) => {
                         }
                     }
                     if (metaData.apiInfo.apiType === "WS" || metaData.apiInfo.apiType === "WEBSUB") {
-                        apiDefinition = "";
-                        apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
-                        apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
-                        apiDetails = await parseAsyncAPI(JSON.parse(apiDefinition))
+                        apiDefinition = await getApiDefinitionFileContent(orgID, apiID);
+                        apiDetails = await parseAsyncAPI(parseApiDefinitionContent(apiDefinition))
                         if (metaData.endPoints.productionURL === "" && metaData.endPoints.sandboxURL === "") {
                             apiDetails["serverDetails"] = "";
                         } else {
@@ -376,19 +373,26 @@ const loadAPIContent = async (req, res) => {
                     }
                     if (constants.API_TYPE.MCP === metaData.apiInfo?.apiType) {
                         try {
-                            let rawSchema = await apiDao.getAPIFile(
-                                constants.FILE_NAME.SCHEMA_DEFINITION_FILE_NAME,
+                            let rawSchema = await apiDao.getAPIFileByType(
                                 constants.DOC_TYPES.SCHEMA_DEFINITION,
                                 orgID,
                                 apiID
                             );
+                            if (!rawSchema) {
+                                throw new Error('Missing MCP schema definition file');
+                            }
                             const schemaString = rawSchema.API_FILE.toString(constants.CHARSET_UTF8);
-                            schemaDefinition = JSON.parse(schemaString);
+                            const schemaFileName = String(rawSchema.FILE_NAME || '').toLowerCase();
+                            if (schemaFileName.endsWith('.yaml')) {
+                                schemaDefinition = yaml.load(schemaString);
+                            } else {
+                                schemaDefinition = JSON.parse(schemaString);
+                            }
                         } catch (err) {
                             logger.error("Failed to load or parse schema definition", {
                                 orgID: orgID,
                                 apiID: apiID,
-                                error: err.message, 
+                                error: err.message,
                                 stack: err.stack
                             });
                             throw err;
@@ -518,8 +522,7 @@ const loadAPIDefinition = async (orgName, viewName, apiHandle) => {
                 apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
                 templateContent.graphql = apiDefinition;
             } else {
-                apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
-                apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
+                apiDefinition = await getApiDefinitionFileContent(orgID, apiID);
                 if (metaData.apiInfo.apiType === constants.API_TYPE.WS || metaData.apiInfo.apiType === constants.API_TYPE.WEBSUB) {
                     templateContent.asyncapi = apiDefinition;
                 } else {
@@ -680,59 +683,77 @@ const loadDocument = async (req, res) => {
         if (req.originalUrl.includes(constants.FILE_NAME.API_SPECIFICATION_PATH)) {
 
             if (definitionResponse.apiType !== constants.API_TYPE.WS && definitionResponse.apiType !== constants.API_TYPE.GRAPHQL && definitionResponse.apiType !== constants.API_TYPE.WEBSUB) {
-                let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
-                if (config.controlPlane?.enabled !== false) {
-                    try {
-                        const response = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiMetadata.apiReferenceID}`, null, null);
-                        if (response.securityScheme.includes("api_key")) {
-                            modifiedSwagger.components.securitySchemes.ApiKeyAuth = { "type": "apiKey", "name": `${response.apiKeyHeader}`, "in": "header" };
-                            for (let path in modifiedSwagger.paths) {
-                                for (let method in modifiedSwagger.paths[path]) {
-                                    if (modifiedSwagger.paths[path].hasOwnProperty(method)) {
-                                        modifiedSwagger.paths[path][method].security[0].ApiKeyAuth = [];
-                                    }
-                                }
-                            }
-                        }
-                    } catch (error) {
-                        logger.warn("Error fetching API security details from control plane", {
-                            orgName: orgName,
+                let modifiedSwagger;
+                try {
+                    const parsedSwagger = parseApiDefinitionContent(definitionResponse.swagger);
+                    modifiedSwagger = replaceEndpointParams(parsedSwagger, apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
+                } catch (error) {
+                    if (definitionResponse.apiType === constants.API_TYPE.SOAP) {
+                        logger.warn('SOAP XML definition is not supported for interactive spec rendering. Skipping parse step.', {
+                            orgName,
+                            apiHandle,
                             error: error.message
                         });
+                        modifiedSwagger = null;
+                    } else {
+                        throw error;
                     }
                 }
 
-                // Add apiKey security scheme headers as operation parameters
-                // so Stoplight Elements renders input fields in the try-it panel
-                if (modifiedSwagger.components?.securitySchemes) {
-                    for (const scheme of Object.values(modifiedSwagger.components.securitySchemes)) {
-                        if (scheme.type === 'apiKey' && scheme.in === 'header' && scheme.name) {
-                            for (const pathItem of Object.values(modifiedSwagger.paths || {})) {
-                                for (const method of ['get', 'post', 'put', 'delete', 'patch', 'head', 'options']) {
-                                    if (pathItem[method]) {
-                                        if (!pathItem[method].parameters) {
-                                            pathItem[method].parameters = [];
+                if (modifiedSwagger) {
+                    if (config.controlPlane?.enabled !== false) {
+                        try {
+                            const response = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiMetadata.apiReferenceID}`, null, null);
+                            if (response.securityScheme.includes("api_key")) {
+                                modifiedSwagger.components.securitySchemes.ApiKeyAuth = { "type": "apiKey", "name": `${response.apiKeyHeader}`, "in": "header" };
+                                for (let path in modifiedSwagger.paths) {
+                                    for (let method in modifiedSwagger.paths[path]) {
+                                        if (modifiedSwagger.paths[path].hasOwnProperty(method)) {
+                                            modifiedSwagger.paths[path][method].security[0].ApiKeyAuth = [];
                                         }
-                                        const exists = pathItem[method].parameters.some(
-                                            p => p.name === scheme.name && p.in === 'header'
-                                        );
-                                        if (!exists) {
-                                            pathItem[method].parameters.push({
-                                                name: scheme.name,
-                                                in: 'header',
-                                                required: false,
-                                                schema: { type: 'string' },
-                                                description: scheme.description || 'API key for subscription-based access'
-                                            });
+                                    }
+                                }
+                            }
+                        } catch (error) {
+                            logger.warn("Error fetching API security details from control plane", {
+                                orgName: orgName,
+                                error: error.message
+                            });
+                        }
+                    }
+
+                    // Add apiKey security scheme headers as operation parameters
+                    // so Stoplight Elements renders input fields in the try-it panel
+                    if (modifiedSwagger.components?.securitySchemes) {
+                        for (const scheme of Object.values(modifiedSwagger.components.securitySchemes)) {
+                            if (scheme.type === 'apiKey' && scheme.in === 'header' && scheme.name) {
+                                for (const pathItem of Object.values(modifiedSwagger.paths || {})) {
+                                    for (const method of ['get', 'post', 'put', 'delete', 'patch', 'head', 'options']) {
+                                        if (pathItem[method]) {
+                                            if (!pathItem[method].parameters) {
+                                                pathItem[method].parameters = [];
+                                            }
+                                            const exists = pathItem[method].parameters.some(
+                                                p => p.name === scheme.name && p.in === 'header'
+                                            );
+                                            if (!exists) {
+                                                pathItem[method].parameters.push({
+                                                    name: scheme.name,
+                                                    in: 'header',
+                                                    required: false,
+                                                    schema: { type: 'string' },
+                                                    description: scheme.description || 'API key for subscription-based access'
+                                                });
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                templateContent.swagger = JSON.stringify(modifiedSwagger);
+                    templateContent.swagger = JSON.stringify(modifiedSwagger);
+                }
             } else if (definitionResponse.apiType === constants.API_TYPE.GRAPHQL) {
                 if (templateContent.isGraphQLTryout && definitionResponse.graphql) {
                     const schemaAsIntrospectionJSON = await convertSDLToIntrospection(definitionResponse.graphql);
@@ -744,7 +765,8 @@ const loadDocument = async (req, res) => {
                 templateContent.apiMetadata = apiMetadata;
             }
              else {
-                let modifiedAsyncAPI = replaceEndpointParamsAsyncAPI(JSON.parse(definitionResponse.asyncapi), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
+                const parsedAsyncAPI = parseApiDefinitionContent(definitionResponse.asyncapi);
+                let modifiedAsyncAPI = replaceEndpointParamsAsyncAPI(parsedAsyncAPI, apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
                 templateContent.asyncapi = JSON.stringify(modifiedAsyncAPI);
             }
             templateContent.isAPIDefinition = true;
@@ -889,6 +911,35 @@ function loadAPIMetaDataFromFile(apiName) {
 
     const mockAPIDataPath = path.join(process.cwd(), filePrefix + '../mock', apiName + '/apiMetadata.json');
     return JSON.parse(fs.readFileSync(mockAPIDataPath, constants.CHARSET_UTF8));
+}
+
+async function getApiDefinitionFileContent(orgID, apiID) {
+    const apiDefinition = await apiDao.getAPIDoc(constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
+    if (apiDefinition?.API_FILE) {
+        return apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
+    }
+
+    throw new Error('API definition file not found');
+}
+
+function parseApiDefinitionContent(apiDefinitionContent) {
+    if (!apiDefinitionContent || typeof apiDefinitionContent !== 'string') {
+        throw new Error('Invalid API definition content');
+    }
+
+    try {
+        return JSON.parse(apiDefinitionContent);
+    } catch (jsonError) {
+        try {
+            const parsedYaml = yaml.load(apiDefinitionContent);
+            if (!parsedYaml || typeof parsedYaml !== 'object') {
+                throw new Error('Parsed API definition is empty or invalid');
+            }
+            return parsedYaml;
+        } catch (yamlError) {
+            throw new Error(`Failed to parse API definition as JSON or YAML: ${yamlError.message}`);
+        }
+    }
 }
 
 async function parseSwagger(api) {

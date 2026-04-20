@@ -278,8 +278,17 @@ const textFiles = [
     constants.FILE_EXTENSIONS.JSON, constants.FILE_EXTENSIONS.YAML, constants.FILE_EXTENSIONS.YML
 ]
 
+const imageFiles = [
+    constants.FILE_EXTENSIONS.SVG, constants.FILE_EXTENSIONS.JPG,
+    constants.FILE_EXTENSIONS.JPEG, constants.FILE_EXTENSIONS.PNG
+]
+
 const isTextFile = (fileExtension) => {
     return textFiles.includes(fileExtension)
+}
+
+const isImageFile = (fileExtension) => {
+    return imageFiles.includes(fileExtension)
 }
 
 const retrieveContentType = (fileName, fileType) => {
@@ -310,18 +319,6 @@ const getAPIFileContent = (directory) => {
     return files;
 };
 
-const getAPIImages = async (directory) => {
-    let files = [];
-    const filenames = await fs.promises.readdir(directory, { withFileTypes: true });
-    for (const filename of filenames) {
-        if (!(filename === '.DS_Store')) {
-            let fileContent = await fs.promises.readFile(path.join(directory, filename.name));
-            files.push({ fileName: filename.name, content: fileContent, type: constants.DOC_TYPES.IMAGES });
-        }
-    }
-    return files;
-};
-
 const getAPIDocLinks = (documentMetadata) => {
 
     let files = [];
@@ -346,8 +343,11 @@ async function readDocFiles(directory, baseDir = '') {
         } else {
             if (!(file.name === '.DS_Store')) {
                 let content = await fs.promises.readFile(filePath);
+                const topLevelDocCategory = baseDir
+                    ? baseDir.split(path.sep)[0]
+                    : constants.DOC_TYPES.DOCS.OTHER;
                 fileDetails.push({
-                    type: constants.DOC_TYPES.DOC_ID + baseDir,
+                    type: constants.DOC_TYPES.DOC_ID + topLevelDocCategory,
                     fileName: file.name,
                     content: content,
                 });
@@ -355,6 +355,30 @@ async function readDocFiles(directory, baseDir = '') {
         }
     }
     return fileDetails;
+}
+
+async function findFileByNameRecursive(rootPath, targetNames) {
+    const normalizedTargetNames = new Set(Array.from(targetNames).map(name => String(name).toLowerCase()));
+    const stack = [rootPath];
+
+    while (stack.length > 0) {
+        const currentPath = stack.pop();
+        const entries = await fs.promises.readdir(currentPath, { withFileTypes: true });
+        for (const entry of entries) {
+            if (entry.name === '.DS_Store' || entry.name === '__MACOSX') {
+                continue;
+            }
+            const fullPath = path.join(currentPath, entry.name);
+            if (entry.isDirectory()) {
+                stack.push(fullPath);
+                continue;
+            }
+            if (normalizedTargetNames.has(entry.name.toLowerCase())) {
+                return fullPath;
+            }
+        }
+    }
+    return null;
 }
 
 
@@ -984,6 +1008,29 @@ function filterAllowedAPIs(searchResults, allowedAPIs) {
     return searchResults;
 }
 
+function normalizeStringArray(value) {
+    if (!Array.isArray(value)) {
+        return [];
+    }
+    return value
+        .filter(item => item !== undefined && item !== null && String(item).trim() !== '')
+        .map(item => String(item));
+}
+
+function resolveApiType(apiType) {
+    if (!apiType || typeof apiType !== 'string') {
+        return constants.API_TYPE.REST;
+    }
+
+    const resolvedType = apiType.replace(/\s+/g, '').toUpperCase();
+    if (!Object.values(constants.API_TYPE).includes(resolvedType)) {
+        throw new Sequelize.ValidationError(
+            "Invalid api type. Supported values: REST, WS, GRAPHQL, SOAP, WEBSUB, MCP"
+        );
+    }
+    return resolvedType;
+}
+
 const enforcePortalMode = async (req, res, next) => {
     const orgDetails = await adminDao.getOrganization(req.params.orgName);
     const portalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
@@ -1013,9 +1060,9 @@ module.exports = {
     handleError,
     retrieveContentType,
     getAPIFileContent,
-    getAPIImages,
     getAPIDocLinks,
     isTextFile,
+    isImageFile,
     invokeApiRequest,
     apiRequest,
     invokeGraphQLRequest,
@@ -1031,7 +1078,10 @@ module.exports = {
     tokenExchanger,
     listFiles,
     readDocFiles,
+    findFileByNameRecursive,
     unzipDirectory,
     filterAllowedAPIs,
-    enforcePortalMode
+    enforcePortalMode,
+    normalizeStringArray,
+    resolveApiType
 }
