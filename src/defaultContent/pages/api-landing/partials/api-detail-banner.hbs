@@ -51,6 +51,12 @@
           {{#if showPlatformApiKeysNav}}
           <a type="button" class="common-btn-outlined" href="{{baseUrl}}/api/{{apiMetadata.apiHandle}}/api-keys">API Keys</a>
           {{/if}}
+          {{#unless (eq apiMetadata.apiInfo.agentVisibility "HIDDEN")}}
+          <button type="button" class="btn-prompt" data-bs-toggle="modal" data-bs-target="#apiAgentPromptModal">
+              <i class="bi bi-file-code"></i>
+              Agent Prompt
+          </button>
+          {{/unless}}
         </div>
       </div>
       <div class="col-12 col-md-5 text-md-right api-banner-icon">
