@@ -19,6 +19,7 @@
 {{/if}}
 ## Authentication
 
+{{#if showOAuth2}}
 ### OAuth2
 
 To call this API, obtain an OAuth2 access token from the token endpoint:
@@ -37,6 +38,8 @@ To call this API, obtain an OAuth2 access token from the token endpoint:
    Authorization: Bearer <access_token>
    ```
 
+{{/if}}
+{{#if showApiKey}}
 ### API Key
 
 To call this API using an API key:
@@ -48,6 +51,12 @@ To call this API using an API key:
    ```
    x-api-key: <your-api-key>
    ```
+
+{{/if}}
+{{#if noAuth}}
+This API does not require authentication.
+
+{{/if}}
 
 {{#if docs}}
 ## Documentation

@@ -1069,6 +1069,29 @@ const loadAPIContentMd = async (req, res) => {
 
         const subscriptionPlans = await util.appendSubscriptionPlanDetails(orgID, metaData.subscriptionPolicies);
 
+        // Determine auth type from control plane (unauthenticated call)
+        req.cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
+        let showOAuth2 = true;
+        let showApiKey = false;
+        let noAuth = false;
+        if (config.controlPlane?.enabled !== false && metaData.apiReferenceID) {
+            try {
+                const cpApiDetail = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis/${metaData.apiReferenceID}`, {}, null, true);
+                const securityScheme = cpApiDetail?.securityScheme || [];
+                if (securityScheme.length === 0) {
+                    showOAuth2 = false;
+                    showApiKey = false;
+                    noAuth = true;
+                } else {
+                    showOAuth2 = securityScheme.includes('oauth2');
+                    showApiKey = securityScheme.includes('api_key');
+                    noAuth = false;
+                }
+            } catch (authErr) {
+                logger.warn('Could not fetch security scheme from control plane, defaulting to OAuth2', { orgID, apiID, error: authErr.message });
+            }
+        }
+
         // Load API definition
         let apiDefinition = null;
         let specHeading = 'OpenAPI Specification';
@@ -1117,6 +1140,9 @@ const loadAPIContentMd = async (req, res) => {
             specUrl: `${linkBase}/docs/specification.${specExt}`,
             docs: docs.length > 0 ? docs : null,
             baseUrl,
+            showOAuth2,
+            showApiKey,
+            noAuth,
         };
         const md = await util.renderMarkdownTemplateFromAPI(templateContent, orgID, 'pages/api-landing', viewName);
 
