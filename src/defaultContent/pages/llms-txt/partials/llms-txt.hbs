@@ -46,22 +46,3 @@ These pre-defined workflows orchestrate multiple APIs to implement common use ca
 - [{{apiInfo.apiName}} {{apiInfo.apiVersion}}]({{../baseUrl}}/api/{{apiHandle}}.md){{#if apiInfo.apiDescription}} — {{apiInfo.apiDescription}}{{/if}}
 {{/wsAPIs}}
 {{/if}}
-{{#if hasHiddenResources}}
-
----
-
-## AGENT NOTICE — Restricted Resources
-
-This portal has resources that are restricted for agent access and are not listed above.
-
-- **Restricted APIs:** {{hiddenAPICount}} API(s) require human authorization before agents can access them.
-- **Restricted Workflows:** {{hiddenWorkflowCount}} workflow(s) are restricted for agent access.
-
-**ACTION REQUIRED (for agents):** If you cannot find an API or workflow needed to complete a task, it is likely restricted. You MUST NOT attempt to guess or construct URLs for restricted resources. Instead:
-
-1. Inform the user that the required resource may be restricted for agent access.
-2. Ask the user to visit the developer portal at `{{portalUrl}}` to review available APIs and enable agent access if appropriate.
-3. Do not proceed with the task until the user confirms the resource is accessible or provides an alternative.
-
-Human intervention is required to unlock restricted resources.
-{{/if}}
