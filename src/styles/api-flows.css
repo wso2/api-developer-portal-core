@@ -606,7 +606,7 @@
 
 .af-api-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 0.625rem;
     max-height: 280px;
     overflow-y: auto;
@@ -668,6 +668,36 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
     white-space: nowrap;
+}
+
+.af-api-agent-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.7rem;
+    border-radius: 999px;
+    padding: 0.1em 0.4em;
+    white-space: nowrap;
+}
+
+.af-api-agent-badge--ready {
+    background: color-mix(in srgb, var(--bs-success, #198754) 15%, transparent);
+    color: var(--bs-success, #198754);
+}
+
+.af-api-agent-badge--not-ready {
+    background: color-mix(in srgb, var(--bs-secondary, #6c757d) 12%, transparent);
+    color: var(--bs-secondary, #6c757d);
+}
+
+.af-api-card--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: auto;
+}
+
+.af-api-card--disabled:hover {
+    border-color: var(--bs-gray-300);
+    background: var(--main-bg-color);
 }
 
 /* ===== Prompt / Code Textareas ===== */

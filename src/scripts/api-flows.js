@@ -84,12 +84,14 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('cancelApiFlowBtn')?.addEventListener('click', showList);
     document.getElementById('cancelApiFlowBtn2')?.addEventListener('click', showList);
 
-    // Re-generate prompt when description changes (debounced)
-    let descDebounce;
-    document.getElementById('apiFlowDescription')?.addEventListener('input', () => {
-        clearTimeout(descDebounce);
-        descDebounce = setTimeout(updatePromptFromForm, 600);
-    });
+    // Re-generate prompt when name or description changes (debounced)
+    let promptDebounce;
+    const debouncePromptUpdate = () => {
+        clearTimeout(promptDebounce);
+        promptDebounce = setTimeout(updatePromptFromForm, 600);
+    };
+    document.getElementById('apiFlowName')?.addEventListener('input', debouncePromptUpdate);
+    document.getElementById('apiFlowDescription')?.addEventListener('input', debouncePromptUpdate);
 
     // Form action buttons
     document.getElementById('regeneratePromptBtn')?.addEventListener('click', regenerateAgentPrompt);
@@ -100,9 +102,18 @@ document.addEventListener('DOMContentLoaded', function () {
         radio.addEventListener('change', onContentTypeChange);
     });
 
-    // Agent visibility radios — toggle Agent Prompt tab indicator and banner
+    // Agent visibility radios — toggle Agent Prompt tab indicator, banner, and re-render API cards
     document.querySelectorAll('input[name="apiFlowAgentVisibility"]').forEach(radio => {
-        radio.addEventListener('change', () => syncAgentPromptTab(radio.value === 'HIDDEN' && radio.checked));
+        radio.addEventListener('change', () => {
+            syncAgentPromptTab(radio.value === 'HIDDEN' && radio.checked);
+            if (radio.value === 'VISIBLE' && radio.checked) {
+                // Deselect any APIs that are not agent-ready
+                document.querySelectorAll('.api-flow-api-checkbox:checked').forEach(cb => {
+                    if (cb.dataset.agentVisibility !== 'VISIBLE') cb.checked = false;
+                });
+            }
+            renderApiCards(document.getElementById('apiCardSearch')?.value.trim() || '');
+        });
     });
 
     // "Change visibility" banner action — scroll to Agent Visibility control
@@ -314,13 +325,21 @@ function renderApiCards(query) {
         return;
     }
 
+    const workflowVisibleToAgents = document.querySelector('input[name="apiFlowAgentVisibility"]:checked')?.value === 'VISIBLE';
+
     grid.innerHTML = filtered.map(cb => {
         const isSelected = cb.checked;
+        const isAgentReady = cb.dataset.agentVisibility === 'VISIBLE';
+        const isDisabled = workflowVisibleToAgents && !isAgentReady;
         const desc = sanitizeInput(cb.dataset.apiDescription || '');
+        const agentBadge = isAgentReady
+            ? `<span class="af-api-agent-badge af-api-agent-badge--ready" title="Agent ready"><i class="bi bi-robot"></i></span>`
+            : `<span class="af-api-agent-badge af-api-agent-badge--not-ready" title="Not agent ready"><i class="bi bi-robot"></i></span>`;
         return `
-            <div class="af-api-card${isSelected ? ' af-api-card--selected' : ''}"
-                 data-api-id="${cb.value}" role="button" tabindex="0"
-                 aria-pressed="${isSelected}" title="${desc}">
+            <div class="af-api-card${isSelected ? ' af-api-card--selected' : ''}${isDisabled ? ' af-api-card--disabled' : ''}"
+                 data-api-id="${cb.value}" role="button" tabindex="${isDisabled ? -1 : 0}"
+                 aria-pressed="${isSelected}" aria-disabled="${isDisabled}"
+                 title="${isDisabled ? 'This API is not agent ready and cannot be selected for an agent-visible workflow' : desc}">
                 <div class="af-api-card-check">
                     <i class="bi ${isSelected ? 'bi-check-circle-fill' : 'bi-circle'}"></i>
                 </div>
@@ -328,6 +347,7 @@ function renderApiCards(query) {
                     <div class="d-flex align-items-center gap-2 mb-1">
                         <span class="fw-semibold small">${sanitizeInput(cb.dataset.apiName)}</span>
                         <span class="api-flow-type-pill">${sanitizeInput(cb.dataset.apiType || '')}</span>
+                        ${agentBadge}
                     </div>
                     <p class="mb-0 af-api-card-desc">${desc}</p>
                 </div>
@@ -339,6 +359,7 @@ function renderApiCards(query) {
         function toggle() {
             const cb = document.querySelector(`.api-flow-api-checkbox[value="${card.dataset.apiId}"]`);
             if (!cb) return;
+            if (card.classList.contains('af-api-card--disabled')) return;
             cb.checked = !cb.checked;
             renderApiCards(document.getElementById('apiCardSearch')?.value.trim() || '');
             updatePromptFromForm();
@@ -386,7 +407,7 @@ async function updatePromptFromForm() {
     const viewName = pathParts[3] || 'default';
     const editingId = document.getElementById('editingApiFlowId')?.value || '';
     const editingFlow = editingId ? (window.apiFlowsData || []).find(f => String(f.apiFlowId) === String(editingId)) : null;
-    const handle = editingFlow?.handle || '';
+    const handle = editingFlow?.handle || generateHandle(name);
 
     try {
         const response = await fetch(`/${orgName}/views/${viewName}/api-flows/generate-prompt`, {
@@ -616,7 +637,7 @@ function openPromptModal(apiFlowId) {
     document.getElementById('agentPromptFlowName').textContent = data.name;
     document.getElementById('agentPromptContent').textContent = data.agentPrompt || '';
     const copyIcon = document.getElementById('copyPromptBtn')?.querySelector('i');
-    if (copyIcon) copyIcon.className = 'bi bi-clipboard';
+    if (copyIcon) copyIcon.className = 'bi bi-copy';
     const modal = new bootstrap.Modal(document.getElementById('agentPromptModal'));
     modal.show();
 }

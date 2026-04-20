@@ -68,15 +68,11 @@ async function copyPromptFromModal() {
     try {
         const promptText = document.getElementById('promptText').textContent;
         await navigator.clipboard.writeText(promptText);
-
-        // Show feedback
-        const feedback = document.getElementById('copyFeedback');
-        feedback.style.display = 'inline';
-        setTimeout(() => {
-            feedback.style.display = 'none';
-        }, 2000);
+        const btn = document.getElementById('btnCopyPrompt');
+        const icon = btn.querySelector('i');
+        icon.className = 'bi bi-check-lg';
+        setTimeout(() => { icon.className = 'bi bi-copy'; }, 2000);
     } catch (error) {
-        console.error('Error copying prompt:', error);
         showNotification('Error copying prompt', 'error');
     }
 }
