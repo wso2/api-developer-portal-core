@@ -1133,9 +1133,22 @@ const loadAPIContentMd = async (req, res) => {
         if (config.controlPlane?.enabled !== false) {
             try {
                 const kmResponse = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers?devPortalAppEnv=prod', null, null);
-                const kmList = kmResponse?.list || [];
-                if (kmList.length > 0 && kmList[0].tokenEndpoint) {
-                    tokenEndpoint = kmList[0].tokenEndpoint;
+                let kmList = (kmResponse?.list || []).filter(km => km.enabled);
+                if (kmList.length > 1) {
+                    const filtered = kmList.filter(km =>
+                        km.name.includes("_internal_key_manager_") ||
+                        (!kmList.some(k => k.name.includes("_internal_key_manager_")) && km.name.includes("Resident Key Manager")) ||
+                        (!kmList.some(k => k.name.includes("_internal_key_manager_") || k.name.includes("Resident Key Manager")) && km.name.includes("_appdev_sts_key_manager_") && km.name.endsWith("_prod"))
+                    );
+                    if (filtered.length > 0) kmList = filtered;
+                }
+                if (kmList.length > 0) {
+                    const km = kmList[0];
+                    if (km.name === 'Resident Key Manager') {
+                        tokenEndpoint = 'https://sts.choreo.dev/oauth2/token';
+                    } else if (km.tokenEndpoint) {
+                        tokenEndpoint = km.tokenEndpoint;
+                    }
                 }
             } catch (kmErr) {
                 logger.warn('Failed to fetch key managers from control plane for markdown', { orgID, apiID, error: kmErr.message });
