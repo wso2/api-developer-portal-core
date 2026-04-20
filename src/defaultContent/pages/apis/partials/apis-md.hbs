@@ -9,17 +9,3 @@ Explore our extensive API catalog and discover how to integrate them seamlessly 
 - [{{apiInfo.apiName}} v{{apiInfo.apiVersion}}]({{../baseUrl}}/api/{{apiHandle}}.md){{#if apiInfo.apiDescription}} - {{apiInfo.apiDescription}}{{/if}}
 {{/unless}}
 {{/apiMetadata}}
-{{#if hasHiddenAPIs}}
-
----
-
-## AGENT NOTICE — Restricted APIs
-
-{{hiddenAPICount}} API(s) in this portal are restricted and not accessible to AI agents. They are intentionally omitted from this list.
-
-**ACTION REQUIRED (for agents):** If you cannot find the API you need, it may be restricted. You MUST NOT attempt to guess or construct URLs for restricted APIs. Instead:
-
-1. Inform the user that the required API may be restricted for agent access.
-2. Ask the user to visit the developer portal at `{{portalUrl}}` to review available APIs and enable agent access if appropriate.
-3. Human intervention is required to unlock restricted APIs.
-{{/if}}
