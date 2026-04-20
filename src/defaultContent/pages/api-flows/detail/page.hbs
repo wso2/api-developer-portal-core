@@ -66,7 +66,7 @@
                                 <i class="bi bi-download"></i>
                             </button>
                             <button type="button" class="prompt-tool-btn" id="btnCopyPrompt" title="Copy prompt">
-                                <i class="bi bi-clipboard"></i>
+                                <i class="bi bi-copy"></i>
                             </button>
                             <div class="prompt-run-dropdown">
                                 <button type="button" class="btn-run-prompt" id="btnRunPrompt">
@@ -98,8 +98,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const promptText = document.getElementById('modalAgentPromptText').textContent;
             navigator.clipboard.writeText(promptText).then(() => {
                 const icon = btnCopyPrompt.querySelector('i');
-                icon.className = 'bi bi-clipboard-check';
-                setTimeout(() => { icon.className = 'bi bi-clipboard'; }, 2000);
+                icon.className = 'bi bi-check-lg';
+                setTimeout(() => { icon.className = 'bi bi-copy'; }, 2000);
             }).catch(() => showNotification('Failed to copy prompt', 'error'));
         });
     }

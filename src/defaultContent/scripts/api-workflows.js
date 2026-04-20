@@ -67,8 +67,8 @@ async function copyPromptFromModal() {
         await navigator.clipboard.writeText(promptText);
         const btn = document.getElementById('btnCopyPrompt');
         const icon = btn.querySelector('i');
-        icon.className = 'bi bi-clipboard-check';
-        setTimeout(() => { icon.className = 'bi bi-clipboard'; }, 2000);
+        icon.className = 'bi bi bi-check-lg';
+        setTimeout(() => { icon.className = 'bi bi-copy'; }, 2000);
     } catch (error) {
         showNotification('Error copying prompt', 'error');
     }

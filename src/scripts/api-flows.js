@@ -616,7 +616,7 @@ function openPromptModal(apiFlowId) {
     document.getElementById('agentPromptFlowName').textContent = data.name;
     document.getElementById('agentPromptContent').textContent = data.agentPrompt || '';
     const copyIcon = document.getElementById('copyPromptBtn')?.querySelector('i');
-    if (copyIcon) copyIcon.className = 'bi bi-clipboard';
+    if (copyIcon) copyIcon.className = 'bi bi-copy';
     const modal = new bootstrap.Modal(document.getElementById('agentPromptModal'));
     modal.show();
 }
