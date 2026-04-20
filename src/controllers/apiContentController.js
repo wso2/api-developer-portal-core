@@ -1106,6 +1106,19 @@ const loadAPIContentMd = async (req, res) => {
             }
         }
 
+        let tokenEndpoint = null;
+        if (config.controlPlane?.enabled !== false) {
+            try {
+                const kmResponse = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers?devPortalAppEnv=prod', null, null);
+                const kmList = kmResponse?.list || [];
+                if (kmList.length > 0 && kmList[0].tokenEndpoint) {
+                    tokenEndpoint = kmList[0].tokenEndpoint;
+                }
+            } catch (kmErr) {
+                logger.warn('Failed to fetch key managers from control plane for markdown', { orgID, apiID, error: kmErr.message });
+            }
+        }
+
         const specExt = apiType === constants.API_TYPE.GRAPHQL ? 'graphql'
             : apiType === 'SOAP' ? 'xml'
             : 'json';
@@ -1117,6 +1130,7 @@ const loadAPIContentMd = async (req, res) => {
             specUrl: `${linkBase}/docs/specification.${specExt}`,
             docs: docs.length > 0 ? docs : null,
             baseUrl,
+            tokenEndpoint,
         };
         const md = await util.renderMarkdownTemplateFromAPI(templateContent, orgID, 'pages/api-landing', viewName);
 
