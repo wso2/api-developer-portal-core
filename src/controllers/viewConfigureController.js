@@ -63,7 +63,8 @@ const loadViewSettingsPage = async (req, res) => {
                 apiHandle: api.API_HANDLE,
                 apiDescription: api.API_DESCRIPTION,
                 apiType: api.API_TYPE,
-                productionUrl: api.PRODUCTION_URL
+                productionUrl: api.PRODUCTION_URL,
+                agentVisibility: api.AGENT_VISIBILITY
             }));
 
             templateContent.profile = req.user;
