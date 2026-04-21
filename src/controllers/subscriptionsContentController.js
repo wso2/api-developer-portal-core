@@ -193,6 +193,7 @@ const loadAPISubscriptions = async (req, res) => {
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 devportalMode: devportalMode,
                 errorMessage: constants.ERROR_MESSAGE.API_NOT_FOUND,
+                profile: req.isAuthenticated() ? req.user : null,
             };
             html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
             return res.status(404).send(html);

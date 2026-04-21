@@ -106,6 +106,7 @@ const loadCustomContent = async (req, res) => {
                 devportalMode: constants.API_TYPE.DEFAULT,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 errorMessage: constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE,
+                profile: req.isAuthenticated() ? req.user : null,
             }
             logger.error('Error while loading custom content', { 
                 orgName,

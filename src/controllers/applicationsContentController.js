@@ -609,7 +609,8 @@ const loadApplication = async (req, res) => {
             devportalMode: devportalMode,
             features: {
                 sdkGeneration: config.features?.sdkGeneration?.enabled || false
-            }
+            },
+            profile: req.isAuthenticated() ? req.user : null,
         }
         if (Number(error?.statusCode) === 401) {
             templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_AUTH_ERROR_MESSAGE;
@@ -716,7 +717,8 @@ const loadApplicationKeys = async (req, res) => {
             devportalMode: devportalMode,
             features: {
                 sdkGeneration: config.features?.sdkGeneration?.enabled || false
-            }
+            },
+            profile: req.isAuthenticated() ? req.user : null,
         }
         if (Number(error?.statusCode) === 401) {
             templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_AUTH_ERROR_MESSAGE;

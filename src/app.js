@@ -597,7 +597,8 @@ app.use( (err, req, res, next) => {
     let templateContent = {
         devportalMode: 'DEFAULT',
         baseUrl: '/' + req.originalUrl?.split('/')[1] + '/' + constants.ROUTE.VIEWS_PATH + "default",
-        errorMessage: "Oops! Something went wrong"
+        errorMessage: "Oops! Something went wrong",
+        profile: req.isAuthenticated() ? req.user : null,
     }
     let html = "";
     if (err.status === 401) {
