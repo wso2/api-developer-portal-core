@@ -34,7 +34,7 @@ import {
   Button,
   Chip,
 } from '../../designSystem';
-import { Box, CircularProgress, Tooltip, Typography, Select, MenuItem, FormControl, Grid, TextField } from '@material-ui/core';
+import { Box, CircularProgress, Tooltip, Typography, Select, MenuItem, FormControl, Grid } from '@material-ui/core';
 import { PlayArrow, Send } from '@material-ui/icons';
 import { APITypeEnum } from './WebsocketViewer';
 
@@ -75,6 +75,8 @@ const TopicViewer = (props: TopicViewerProps) => {
   const [connectButtonText, setConnectButtonText] = useState('Connect');
   const [selectedTab, setSelectedTab] = useState(0);
   const [apiToken, setApiToken] = useState(token);
+  const [webSubHeader, setWebSubHeader] = useState('<your-header-here>');
+  const [webSubHeaderValue, setWebSubHeaderValue] = useState('<your-header-value-here>');
   const [callbackURL, setCallbackURL] = useState('http://example.com/callback');
   const [leaseSeconds, setLeaseSeconds] = useState('864000');
   const [secret, setSecret] = useState('xxxxxxxxx');
@@ -96,11 +98,10 @@ const TopicViewer = (props: TopicViewerProps) => {
       if (leaseSeconds && leaseSeconds.trim()) {
         curlCmd += ` --data-urlencode 'hub.lease_seconds=${leaseSeconds}'`;
       }
-      curlCmd += ` --data-urlencode 'hub.secret=${secret}'`;
     }
     
-    if (apiToken && apiToken.trim()) {
-      curlCmd += ` -H 'Authorization: Bearer ${apiToken}'`;
+    if (webSubHeader && webSubHeader.trim() && webSubHeaderValue && webSubHeaderValue.trim()) {
+      curlCmd += ` -H '${webSubHeader}: ${webSubHeaderValue}'`;
     }
     
     return curlCmd;
@@ -108,7 +109,9 @@ const TopicViewer = (props: TopicViewerProps) => {
 
   useEffect(() => {
     const baseEndpoint = selectedEndpointType === 'production' ? apiEndpoint : sandboxEndpoint;
-    if (topic !== '/*') {
+    if (asyncType === APITypeEnum.WEBSUB) {
+      setEndpoint(`${baseEndpoint}/hub`);
+    } else if (topic !== '/*') {
       const formattedTopic =
         topic.startsWith('/') || baseEndpoint.endsWith('/')
           ? topic === '/'
@@ -307,7 +310,7 @@ const TopicViewer = (props: TopicViewerProps) => {
 
   const tabItems = [{ name: 'Parameters' }, { name: 'Payload' }, { name: 'Headers' }];
   const tabItemsWithoutParams = [{ name: 'Payload' }, { name: 'Headers' }];
-  const tabItemsForWebSub = [{ name: 'Subscribe' }, { name: 'Unsubscribe' }, { name: 'Headers' }];
+  const tabItemsForWebSub = [{ name: 'Subscribe' }, { name: 'Unsubscribe' }];
 
   if (asyncType === APITypeEnum.WEBSUB) {
     return (
@@ -381,28 +384,78 @@ const TopicViewer = (props: TopicViewerProps) => {
                         testId="endpoint-url"
                       />
                     </Box>
-                    <Button
-                      color={connect ? "secondary" : "primary"}
-                      variant="contained"
-                      pill={false}
-                      size="small"
-                      disabled={asyncType === APITypeEnum.WEBSUB}
-                      testId="disconnect"
-                      style={{ 
-                        flexShrink: 0, 
-                        height: 40, 
-                        minWidth: 120,
-                        fontWeight: 500,
-                        fontSize: 14,
-                        textTransform: 'none',
-                        borderRadius: 4,
-                      }}
-                      onClick={() =>
-                        connect ? disconnectWebsocket() : connectWebsocket()
-                      }
-                    >
-                      {getButtonText(connectButtonText)}
-                    </Button>
+                    {asyncType !== APITypeEnum.WEBSUB && (
+                      <Button
+                        color={connect ? "secondary" : "primary"}
+                        variant="contained"
+                        pill={false}
+                        size="small"
+                        disabled={asyncType === APITypeEnum.WEBSUB}
+                        testId="disconnect"
+                        style={{ 
+                          flexShrink: 0, 
+                          height: 40, 
+                          minWidth: 120,
+                          fontWeight: 500,
+                          fontSize: 14,
+                          textTransform: 'none',
+                          borderRadius: 4,
+                        }}
+                        onClick={() =>
+                          connect ? disconnectWebsocket() : connectWebsocket()
+                        }
+                      >
+                        {getButtonText(connectButtonText)}
+                      </Button>                      
+                    )}
+                  </Box>
+                  <Box style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+                    <Box className={classes.tabs}>
+                      <Box className={classes.tabPanelContent}>
+                        <Typography
+                          data-testid="token-heading"
+                          variant="body1"
+                          className={classes.label}
+                          display="block"
+                        >
+                          Token
+                        </Typography>
+                        <Box className={classes.parameterContainerWrapper} style={{ height: 'auto', overflow: 'visible' }}>
+                          <Box
+                            key={"api-token"}
+                            className={classes.parameterContainer}
+                            style={{ height: 'auto', overflow: 'visible' }}
+                          >
+                            <TextInput
+                              testId={`input-headers`}
+                              className={classes.callbackURLTextInput}
+                              type="text"
+                              placeholder="Header"
+                              label="Header"
+                              value={webSubHeader}
+                              onChange={(e) => {
+                                setWebSubHeader(e.target.value);
+                              }}
+                              error={webSubHeader === ""}
+                              helperText="Enter Header"
+                            />
+                            <TextInput
+                              testId={`input-header-value`}
+                              className={classes.callbackURLTextInput}
+                              type="text"
+                              placeholder="Value"
+                              label="Value"
+                              value={webSubHeaderValue}
+                              onChange={(e) => {
+                                setWebSubHeaderValue(e.target.value);
+                              }}
+                              error={webSubHeaderValue === ""}
+                              helperText="Enter Value"
+                            />
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Box>
                   </Box>
                   <Box style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
                     <TabCard
@@ -447,19 +500,7 @@ const TopicViewer = (props: TopicViewerProps) => {
                                 }}
                                 helperText="Enter Lease Seconds"
                               />
-                              <TextInput
-                                testId={`input-secret`}
-                                className={classes.callbackURLTextInput}
-                                type="text"
-                                placeholder="Secret"
-                                label="Secret"
-                                value={secret}
-                                onChange={(e) => {
-                                  const newSecret = e.target.value;
-                                  setSecret(newSecret);
-                                }}
-                                helperText="Enter Secret"
-                              />
+                              
                             </Box>
                           </Box>
                         <Grid>
@@ -523,35 +564,6 @@ const TopicViewer = (props: TopicViewerProps) => {
                           />
                           </Box>
                         </Grid>
-                        </Box>
-                      </TabPanel>
-                      {/* Tab 2: Headers (API Token) */}
-                      <TabPanel
-                        value={selectedTab}
-                        index={2}
-                      >
-                        <Box className={classes.tabPanelContent}>
-                          <Box className={classes.parameterContainerWrapper}>
-                            <Box
-                              key={"api-token"}
-                              className={classes.parameterContainer}
-                            >
-                              <TextInput
-                                testId={`input-headers`}
-                                className={classes.apiTokenTextInput}
-                                type="text"
-                                placeholder="API Token"
-                                label="API Token"
-                                value={apiToken}
-                                onChange={(e) => {
-                                  const newToken = e.target.value;
-                                  setApiToken(newToken);
-                                }}
-                                error={apiToken === ""}
-                                helperText="Enter API Token"
-                              />
-                            </Box>
-                          </Box>
                         </Box>
                       </TabPanel>
                     </TabCard>
