@@ -4,21 +4,28 @@
 
 **Description:** {{flow.description}}
 
-{{#if flow.apis}}
-## APIs Used
+{{#if sources}}
+## Sources
 
-{{#each flow.apis}}
-{{#if this.agentHidden}}
-- **{{this.apiName}}** — This API is not available for agents. Human intervention is needed.
-{{else}}
-- [{{this.apiName}}]({{../baseUrl}}/{{this.pathType}}/{{this.apiHandle}}.md)
-{{/if}}
+{{#each sources}}
+- **{{this.name}}**{{#if this.url}} — [OpenAPI Spec]({{this.url}}){{/if}}
 {{/each}}
 
-For detailed API information (base URL, OpenAPI spec, security schemes, credentials), refer to each API's documentation page listed above.
+> Refer to each source's OpenAPI spec for base URL, endpoints, and security schemes. If an API with a matching name is listed in the [API catalogue]({{baseUrl}}/apis.md), you can use that page for additional details.
+
+## Authentication
+
+Before executing this workflow, read the `securitySchemes` section of each source's OpenAPI spec to determine the authentication method required:
+
+- **OAuth2**: Request the user's `client_id` and `client_secret`, then obtain an access token from the `tokenUrl` specified in the spec using the client credentials grant (`grant_type=client_credentials`). Use the token as a Bearer token in the `Authorization` header.
+- **API Key**: Each source may require its own API key. Request the API key for each source separately and pass it in the header or query parameter as specified in that source's spec.
+
+Never hardcode or log credentials. Store them only for the duration of the workflow execution.
 
 {{/if}}
 ## API Flow Specification
+
+[arazzo.json]({{baseUrl}}/api-workflows/{{flow.handle}}/arazzo.json)
 
 ```
 {{{arazoJson}}}

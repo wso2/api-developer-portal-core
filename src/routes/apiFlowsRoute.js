@@ -37,6 +37,14 @@ router.get('/:orgName/views/:viewName/api-workflows.md', (req, res, next) => {
     next();
 }, apiFlowsController.getAllPublishedFlowsMD);
 
+// Get raw Arazzo specification as JSON
+router.get('/:orgName/views/:viewName/api-workflows/:handle/arazzo.json', (req, res, next) => {
+    if (req.params.orgName === 'favicon.ico') {
+        return res.status(404).send('Not Found');
+    }
+    next();
+}, apiFlowsController.getWorkflowArazzoSpec);
+
 // API to get workflow prompt as JSON
 router.get('/:orgName/views/:viewName/api-workflows/:handle/prompt', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {

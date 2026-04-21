@@ -17,6 +17,9 @@
  */
 const express = require('express');
 const router = express.Router();
+const os = require('os');
+const path = require('path');
+const fs = require('fs').promises;
 const devportalService = require('../services/devportalService');
 const apiMetadataService = require('../services/apiMetadataService');
 const adminService = require('../services/adminService');
@@ -220,6 +223,20 @@ router.get('/organizations/:orgId/views/:viewName/api-flows/:apiFlowId', enforce
 router.put('/organizations/:orgId/views/:viewName/api-flows/:apiFlowId', enforceSecuirty(constants.SCOPES.ADMIN), requireCsrfForMutatingApi, apiFlowService.updateAPIFlow);
 router.delete('/organizations/:orgId/views/:viewName/api-flows/:apiFlowId', enforceSecuirty(constants.SCOPES.ADMIN), requireCsrfForMutatingApi, apiFlowService.deleteAPIFlow);
 router.post('/organizations/:orgId/views/:viewName/api-flows/generate-prompt', enforceSecuirty(constants.SCOPES.ADMIN), requireCsrfForMutatingApi, apiFlowService.generatePrompt);
+
+router.post('/temp-arazzo-file', enforceSecuirty(constants.SCOPES.ADMIN), requireCsrfForMutatingApi, async (req, res) => {
+    const { content, filename } = req.body;
+    if (!content || typeof content !== 'string') {
+        return res.status(400).json({ error: 'content is required' });
+    }
+    const safeName = (filename || 'workflow.arazzo.yaml')
+        .replace(/[^a-zA-Z0-9._-]/g, '-')
+        .replace(/\.\.+/g, '.')
+        .substring(0, 120);
+    const tmpPath = path.join(os.tmpdir(), safeName);
+    await fs.writeFile(tmpPath, content, 'utf8');
+    res.json({ path: tmpPath });
+});
 
 router.post('/login', devportalController.login);
 

@@ -1017,6 +1017,49 @@ function replaceEndpointParams(apiDefinition, prodEndpoint, sandboxEndpoint) {
     return apiDefinition;
 }
 
+function fixSecuritySchemes(spec, tokenEndpoint) {
+    if (!spec?.components?.securitySchemes) return spec;
+    const authUrl = tokenEndpoint ? tokenEndpoint.replace(/\/token([?#].*)?$/, '/authorize') : '';
+    const companionBearerSchemes = {};
+
+    for (const [schemeName, scheme] of Object.entries(spec.components.securitySchemes)) {
+        if (scheme.type !== 'oauth2' || !scheme.flows) continue;
+
+        // If the spec declares only an implicit flow but the token endpoint indicates
+        // client_credentials is the actual grant type, replace the flow to avoid misleading tooling.
+        if (tokenEndpoint && scheme.flows.implicit && !scheme.flows.clientCredentials && !scheme.flows.authorizationCode) {
+            scheme.flows.clientCredentials = scheme.flows.implicit;
+            delete scheme.flows.implicit;
+            delete scheme.flows.clientCredentials.authorizationUrl;
+        }
+
+        for (const [flowName, flow] of Object.entries(scheme.flows)) {
+            if (tokenEndpoint && ['clientCredentials', 'password', 'authorizationCode'].includes(flowName)) {
+                flow.tokenUrl = tokenEndpoint;
+            }
+            if (authUrl && ['implicit', 'authorizationCode'].includes(flowName)) {
+                flow.authorizationUrl = authUrl;
+            }
+        }
+
+        scheme.description = tokenEndpoint
+            ? `OAuth2 secured. Obtain an access token from ${tokenEndpoint} using client_id and client_secret (grant_type=client_credentials). Then call the API with header: Authorization: Bearer <access_token>`
+            : 'OAuth2 secured. Obtain an access token and call the API with header: Authorization: Bearer <access_token>';
+
+        companionBearerSchemes[`${schemeName}Bearer`] = {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+            description: tokenEndpoint
+                ? `Pass the OAuth2 access token obtained from ${tokenEndpoint} as a Bearer token. Header: Authorization: Bearer <access_token>`
+                : 'Pass the OAuth2 access token as a Bearer token. Header: Authorization: Bearer <access_token>'
+        };
+    }
+
+    Object.assign(spec.components.securitySchemes, companionBearerSchemes);
+    return spec;
+}
+
 function replaceEndpointParamsAsyncAPI(apiDefinition, prodEndpoint, sandboxEndpoint) {
     if (apiDefinition?.asyncapi && apiDefinition.asyncapi.startsWith('2.')) {
         if (prodEndpoint.trim().length !== 0) {
@@ -1286,7 +1329,59 @@ const loadAPIDefinitionRaw = async (req, res) => {
         const raw = definitionResponse[typeConfig.field];
         if (!raw) return res.status(404).json({ message: 'API specification not found' });
 
-        const spec = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        let spec = typeof raw === 'string' ? JSON.parse(raw) : raw;
+
+        const prodUrl = definitionResponse.metaData?.endPoints?.productionURL || '';
+        const sandboxUrl = definitionResponse.metaData?.endPoints?.sandboxURL || '';
+        const apiType = definitionResponse.apiType;
+        if (apiType === constants.API_TYPE.WS || apiType === constants.API_TYPE.WEBSUB) {
+            spec = replaceEndpointParamsAsyncAPI(spec, prodUrl, sandboxUrl);
+        } else if (apiType !== constants.API_TYPE.GRAPHQL && apiType !== constants.API_TYPE.MCP) {
+            spec = replaceEndpointParams(spec, prodUrl, sandboxUrl);
+        }
+
+        if (config.controlPlane?.enabled !== false && apiType !== constants.API_TYPE.GRAPHQL && apiType !== constants.API_TYPE.MCP) {
+            let tokenEndpoint = null;
+            try {
+                const kmResponse = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers?devPortalAppEnv=prod', null, null);
+                let kmList = (kmResponse?.list || []).filter(km => km.enabled);
+                if (kmList.length > 1) {
+                    const filtered = kmList.filter(km =>
+                        km.name.includes("_internal_key_manager_") ||
+                        (!kmList.some(k => k.name.includes("_internal_key_manager_")) && km.name.includes("Resident Key Manager")) ||
+                        (!kmList.some(k => k.name.includes("_internal_key_manager_") || k.name.includes("Resident Key Manager")) && km.name.includes("_appdev_sts_key_manager_") && km.name.endsWith("_prod"))
+                    );
+                    if (filtered.length > 0) kmList = filtered;
+                }
+                if (kmList.length > 0) {
+                    const km = kmList[0];
+                    tokenEndpoint = km.name === 'Resident Key Manager' ? 'https://sts.choreo.dev/oauth2/token' : (km.tokenEndpoint || null);
+                }
+            } catch (kmErr) {
+                logger.warn('Failed to fetch key managers for raw spec', { orgName, apiHandle, error: kmErr.message });
+            }
+
+            const referenceId = definitionResponse.metaData?.apiReferenceID;
+            if (referenceId) {
+                try {
+                    const cpApi = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${referenceId}`, null, null);
+                    if (cpApi?.securityScheme?.includes('api_key')) {
+                        if (!spec.components) spec.components = {};
+                        if (!spec.components.securitySchemes) spec.components.securitySchemes = {};
+                        spec.components.securitySchemes.ApiKeyAuth = {
+                            type: 'apiKey',
+                            name: cpApi.apiKeyHeader || 'apikey',
+                            in: 'header'
+                        };
+                    }
+                } catch (cpErr) {
+                    logger.warn('Failed to fetch API security from control plane for raw spec', { orgName, apiHandle, error: cpErr.message });
+                }
+            }
+
+            spec = fixSecuritySchemes(spec, tokenEndpoint);
+        }
+
         res.status(200).json(spec);
     } catch (error) {
         logger.error('Error loading raw specification', {
