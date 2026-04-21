@@ -155,11 +155,11 @@ ${section2}`;
 const createAPIFlow = async (req, res) => {
     const orgID = req.params.orgId;
     const viewName = req.params.viewName;
-    const { name, handle, description, agentPrompt, status, visibility, agentVisibility, arazoContent, llmsTxtContent, contentType, apiIds } = req.body;
+    const { name, handle, description, agentPrompt, status, visibility, agentVisibility, apiFlowDefinition, markdownContent, contentType } = req.body;
     const resolvedContentType = contentType || 'ARAZZO';
-    const resolvedContent = resolvedContentType === 'LLMS_TXT'
-        ? (llmsTxtContent || null)
-        : normalizeToJSON(arazoContent);
+    const resolvedContent = resolvedContentType === 'MD'
+        ? (markdownContent || null)
+        : normalizeToJSON(apiFlowDefinition);
     const t = await sequelize.transaction();
     try {
         const viewId = await resolveViewId(orgID, viewName);
@@ -175,13 +175,9 @@ const createAPIFlow = async (req, res) => {
             status: status || 'PUBLISHED',
             visibility: visibility || 'PUBLIC',
             agentVisibility: agentVisibility || 'VISIBLE',
-            arazoContent: resolvedContent,
+            apiFlowDefinition: resolvedContent,
             contentType: resolvedContentType
         }, t);
-
-        if (apiIds && apiIds.length > 0) {
-            await apiFlowDao.addAPIFlowAPIs(apiFlow.API_FLOW_ID, apiIds, orgID, viewId, t);
-        }
 
         await t.commit();
         logger.info('APIFlow created', { apiFlowId: apiFlow.API_FLOW_ID, orgID, viewId });
@@ -202,11 +198,11 @@ const createAPIFlow = async (req, res) => {
 
 const updateAPIFlow = async (req, res) => {
     const { orgId, apiFlowId, viewName } = req.params;
-    const { name, handle, description, agentPrompt, status, visibility, agentVisibility, arazoContent, llmsTxtContent, contentType, apiIds } = req.body;
+    const { name, handle, description, agentPrompt, status, visibility, agentVisibility, apiFlowDefinition, markdownContent, contentType } = req.body;
     const resolvedContentType = contentType;
-    const resolvedContent = resolvedContentType === 'LLMS_TXT'
-        ? (llmsTxtContent || null)
-        : (arazoContent !== undefined ? normalizeToJSON(arazoContent) : undefined);
+    const resolvedContent = resolvedContentType === 'MD'
+        ? (markdownContent !== undefined ? markdownContent : undefined)
+        : (apiFlowDefinition !== undefined ? normalizeToJSON(apiFlowDefinition) : undefined);
     const t = await sequelize.transaction();
     try {
         const viewId = await resolveViewId(orgId, viewName);
@@ -218,17 +214,13 @@ const updateAPIFlow = async (req, res) => {
             status,
             visibility,
             agentVisibility,
-            arazoContent: resolvedContent,
+            apiFlowDefinition: resolvedContent,
             contentType: resolvedContentType
         }, t);
 
         if (count === 0) {
             await t.rollback();
             return res.status(404).json({ message: constants.ERROR_MESSAGE.API_FLOW_NOT_FOUND });
-        }
-
-        if (apiIds !== undefined) {
-            await apiFlowDao.replaceAPIFlowAPIs(apiFlowId, apiIds, orgId, viewId, t);
         }
 
         await t.commit();
@@ -291,48 +283,6 @@ const getAllAPIFlows = async (req, res) => {
     }
 };
 
-const addAPIFlowAPIs = async (req, res) => {
-    const { orgId, apiFlowId, viewName } = req.params;
-    const { apiIds } = req.body;
-    const t = await sequelize.transaction();
-    try {
-        if (!apiIds || apiIds.length === 0) {
-            await t.rollback();
-            return res.status(400).json({ message: 'apiIds array is required' });
-        }
-        const viewId = await resolveViewId(orgId, viewName);
-        await apiFlowDao.addAPIFlowAPIs(apiFlowId, apiIds, orgId, viewId, t);
-        await apiFlowDao.updateAPIFlow(orgId, viewId, apiFlowId, { updatedAt: new Date() }, t);
-        await t.commit();
-        res.status(200).json({ message: 'APIs added to APIFlow successfully' });
-    } catch (error) {
-        await t.rollback();
-        logger.error('Error adding APIs to APIFlow', { error: error.message });
-        res.status(500).json({ message: constants.ERROR_MESSAGE.API_FLOW_UPDATE_ERROR });
-    }
-};
-
-const removeAPIFlowAPIs = async (req, res) => {
-    const { orgId, apiFlowId, viewName } = req.params;
-    const { apiIds } = req.body;
-    const t = await sequelize.transaction();
-    try {
-        if (!apiIds || apiIds.length === 0) {
-            await t.rollback();
-            return res.status(400).json({ message: 'apiIds array is required' });
-        }
-        const viewId = await resolveViewId(orgId, viewName);
-        await apiFlowDao.removeAPIFlowAPIs(apiFlowId, apiIds, orgId, viewId, t);
-        await apiFlowDao.updateAPIFlow(orgId, viewId, apiFlowId, { updatedAt: new Date() }, t);
-        await t.commit();
-        res.status(200).json({ message: 'APIs removed from APIFlow successfully' });
-    } catch (error) {
-        await t.rollback();
-        logger.error('Error removing APIs from APIFlow', { error: error.message });
-        res.status(500).json({ message: constants.ERROR_MESSAGE.API_FLOW_UPDATE_ERROR });
-    }
-};
-
 const generatePrompt = async (req, res) => {
     const { name, description, apis, orgHandle, viewName, handle } = req.body;
     try {
@@ -369,20 +319,12 @@ const toAPIFlowDTO = (apiFlow) => {
     visibility: apiFlow.VISIBILITY || 'PUBLIC',
     agentVisibility: apiFlow.AGENT_VISIBILITY || 'VISIBLE',
     contentType: apiFlow.CONTENT_TYPE || 'ARAZZO',
-    arazoContent: (apiFlow.CONTENT_TYPE || 'ARAZZO') === 'ARAZZO' ? fileContent : null,
-    llmsTxtContent: apiFlow.CONTENT_TYPE === 'LLMS_TXT' ? fileContent : null,
+    apiFlowDefinition: (apiFlow.CONTENT_TYPE || 'ARAZZO') === 'ARAZZO' ? fileContent : null,
+    markdownContent: apiFlow.CONTENT_TYPE === 'MD' ? fileContent : null,
     createdAt: apiFlow.CREATED_AT ? new Date(apiFlow.CREATED_AT).toLocaleDateString('en-US', {
         year: 'numeric', month: 'short', day: 'numeric'
     }) : '',
-    updatedAt: apiFlow.UPDATED_AT,
-    apis: (apiFlow.DP_API_METADATA || []).map(api => ({
-        apiId: api.API_ID,
-        apiName: api.API_NAME,
-        apiHandle: api.API_HANDLE,
-        apiDescription: api.API_DESCRIPTION,
-        productionUrl: api.PRODUCTION_URL,
-        apiType: api.API_TYPE
-    }))
+    updatedAt: apiFlow.UPDATED_AT
     };
 };
 
@@ -392,8 +334,6 @@ module.exports = {
     deleteAPIFlow,
     getAPIFlow,
     getAllAPIFlows,
-    addAPIFlowAPIs,
-    removeAPIFlowAPIs,
     generatePrompt,
     getAllAPIFlowsFromDB,
     generateAgentPrompt

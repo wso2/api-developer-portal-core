@@ -624,6 +624,7 @@
     cursor: pointer;
     transition: border-color 0.15s ease, background 0.15s ease;
     user-select: none;
+    position: relative;
 }
 
 .af-api-card:hover {
@@ -691,13 +692,35 @@
 
 .af-api-card--disabled {
     opacity: 0.5;
-    cursor: not-allowed;
     pointer-events: auto;
 }
 
 .af-api-card--disabled:hover {
     border-color: var(--bs-gray-300);
     background: var(--main-bg-color);
+}
+
+.af-api-card--disabled:hover .af-api-card-tooltip {
+    opacity: 1;
+}
+
+.af-api-card-tooltip {
+    opacity: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    inset: 0;
+    border-radius: 0.625rem;
+    background-color: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    font-size: 0.72rem;
+    line-height: 1.4;
+    text-align: center;
+    padding: 0.5rem;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 1;
 }
 
 /* ===== Prompt / Code Textareas ===== */
@@ -892,4 +915,597 @@
 .af-cm-invalid {
     border-color: var(--bs-danger, #dc3545) !important;
     box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
+}
+
+/* ===== Workflow Path Chooser ===== */
+
+.af-path-chooser {
+    display: flex;
+    gap: 1rem;
+}
+
+@media (max-width: 600px) {
+    .af-path-chooser { flex-direction: column; }
+}
+
+.af-path-card {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.125rem 1.25rem;
+    border: 2px solid var(--bs-gray-200, #e9ecef);
+    border-radius: 1rem;
+    cursor: pointer;
+    background: var(--main-bg-color);
+    transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+    user-select: none;
+    position: relative;
+}
+
+.af-path-card:hover {
+    border-color: var(--primary-main-color);
+    box-shadow: 0 2px 12px rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.1);
+}
+
+.af-path-card--active {
+    border-color: var(--primary-main-color);
+    background: rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.04);
+    box-shadow: 0 0 0 1px var(--primary-main-color);
+}
+
+.af-path-card-icon-wrap {
+    flex-shrink: 0;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.75rem;
+    background: rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.18s ease;
+}
+
+.af-path-card--active .af-path-card-icon-wrap,
+.af-path-card:hover .af-path-card-icon-wrap {
+    background: rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.15);
+}
+
+.af-path-card-icon {
+    font-size: 1.4rem;
+    color: var(--primary-main-color);
+}
+
+.af-path-card-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.af-path-card-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--main-text-color);
+    margin-bottom: 0.2rem;
+}
+
+.af-path-card-desc {
+    font-size: 0.78rem;
+    color: var(--bs-secondary, #6c757d);
+    line-height: 1.4;
+}
+
+.af-path-card-check {
+    font-size: 1.25rem;
+    color: var(--primary-main-color);
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+}
+
+.af-path-card--active .af-path-card-check {
+    opacity: 1;
+}
+
+/* ===== Upload Zone ===== */
+
+.af-upload-zone {
+    border: 2px dashed var(--bs-gray-300, #dee2e6);
+    border-radius: 1rem;
+    padding: 2.75rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    background: var(--secondary-bg-color, #f8f9fa);
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.af-upload-zone:hover,
+.af-upload-zone--dragover {
+    border-color: var(--primary-main-color);
+    background: rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.04);
+}
+
+.af-upload-zone-inner {
+    pointer-events: none;
+}
+
+.af-upload-zone-icon {
+    font-size: 3rem;
+    color: var(--bs-gray-400, #ced4da);
+    display: block;
+    margin-bottom: 0.875rem;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.af-upload-zone:hover .af-upload-zone-icon,
+.af-upload-zone--dragover .af-upload-zone-icon {
+    color: var(--primary-main-color);
+    transform: translateY(-3px);
+}
+
+.af-upload-zone-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--main-text-color);
+    margin-bottom: 0.375rem;
+}
+
+.af-upload-zone-sub {
+    font-size: 0.8125rem;
+    color: var(--bs-secondary, #6c757d);
+    pointer-events: auto;
+}
+
+.af-upload-browse-btn {
+    background: none;
+    border: none;
+    color: var(--primary-main-color);
+    font-size: inherit;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+.af-upload-browse-btn:hover {
+    text-decoration: none;
+}
+
+.af-upload-format-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.af-upload-format-sep {
+    display: inline-block;
+    margin: 0 0.5rem;
+    color: var(--bs-gray-400, #ced4da);
+}
+
+.af-upload-format-pill {
+    display: inline-block;
+    padding: 0.15em 0.55em;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border-radius: 999px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+.af-upload-format-pill--arazzo {
+    background: rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.1);
+    color: var(--primary-main-color);
+}
+
+.af-upload-format-pill--md {
+    background: color-mix(in srgb, #16a34a 12%, transparent);
+    color: #15803d;
+}
+
+/* ===== Upload File Strip ===== */
+
+.af-upload-file-strip {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 1rem;
+    background: color-mix(in srgb, var(--bs-success, #198754) 8%, var(--main-bg-color));
+    border: 1px solid color-mix(in srgb, var(--bs-success, #198754) 30%, var(--bs-gray-200));
+    border-radius: 0.625rem;
+}
+
+.af-upload-file-strip-icon {
+    font-size: 1.25rem;
+    color: var(--bs-success, #198754);
+    flex-shrink: 0;
+}
+
+.af-upload-file-name {
+    flex: 1;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--main-text-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.af-upload-type-badge {
+    flex-shrink: 0;
+    display: inline-block;
+    padding: 0.18em 0.6em;
+    font-size: 0.68rem;
+    font-weight: 700;
+    border-radius: 999px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.af-upload-type-badge--arazzo {
+    background: rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.1);
+    color: var(--primary-main-color);
+}
+
+.af-upload-type-badge--md {
+    background: color-mix(in srgb, #16a34a 12%, transparent);
+    color: #15803d;
+}
+
+.af-upload-file-remove {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid var(--bs-gray-300);
+    border-radius: 0.375rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--bs-secondary, #6c757d);
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.af-upload-file-remove:hover {
+    border-color: var(--bs-danger, #dc3545);
+    color: var(--bs-danger, #dc3545);
+    background: rgba(220, 53, 69, 0.06);
+}
+
+/* ===== Source Description Validation ===== */
+
+.af-sd-validation {
+    border: 1px solid var(--bs-gray-200, #e9ecef);
+    border-radius: 0.625rem;
+    overflow: hidden;
+}
+
+.af-sd-validation-header {
+    padding: 0.5rem 0.875rem;
+    background: var(--secondary-bg-color, #f8f9fa);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--bs-secondary, #6c757d);
+    border-bottom: 1px solid var(--bs-gray-200, #e9ecef);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.af-sd-validation-hint {
+    font-weight: 400;
+    font-style: italic;
+    margin-left: 0.25rem;
+}
+
+.af-sd-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.875rem;
+    border-bottom: 1px solid var(--bs-gray-100, #f8f9fa);
+    font-size: 0.8125rem;
+}
+
+.af-sd-item:last-child {
+    border-bottom: none;
+}
+
+.af-sd-item--loading {
+    gap: 0.625rem;
+}
+
+.af-sd-item-meta {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.af-sd-item-name {
+    font-weight: 500;
+    color: var(--main-text-color);
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.af-sd-item-url {
+    font-size: 0.72rem;
+    color: var(--bs-secondary, #6c757d);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.af-sd-status {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2em 0.6em;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.af-sd-status--valid {
+    background: var(--bs-success-bg-subtle, #d1e7dd);
+    color: var(--bs-success-text-emphasis, #0a3622);
+}
+
+.af-sd-status--invalid {
+    background: var(--bs-danger-bg-subtle, #f8d7da);
+    color: var(--bs-danger-text-emphasis, #58151c);
+}
+
+.af-sd-status--checking {
+    background: var(--bs-gray-200, #e9ecef);
+    color: var(--bs-secondary, #6c757d);
+}
+
+.af-sd-status--not-a-spec {
+    background: var(--bs-warning-bg-subtle, #fff3cd);
+    color: var(--bs-warning-text-emphasis, #664d03);
+}
+
+.af-sd-status--unreachable {
+    background: var(--bs-secondary-bg-subtle, #e9ecef);
+    color: var(--bs-secondary-text-emphasis, #495057);
+}
+
+.af-sd-checking-spinner {
+    display: inline-block;
+    width: 0.875rem;
+    height: 0.875rem;
+    border: 2px solid var(--bs-gray-300);
+    border-top-color: var(--primary-main-color);
+    border-radius: 50%;
+    animation: af-spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes af-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ===== Markdown Summary Strip ===== */
+
+.af-md-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.875rem;
+    background: color-mix(in srgb, #16a34a 6%, var(--main-bg-color));
+    border: 1px solid color-mix(in srgb, #16a34a 20%, var(--bs-gray-200));
+    border-radius: 0.5rem;
+    font-size: 0.8125rem;
+    color: #15803d;
+}
+
+/* ===== Markdown Editor ===== */
+
+.af-md-editor {
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.8125rem;
+    line-height: 1.7;
+    resize: vertical;
+    min-height: 320px;
+    tab-size: 2;
+}
+
+.af-md-word-count {
+    font-size: 0.75rem;
+    color: var(--bs-secondary, #6c757d);
+    white-space: nowrap;
+}
+
+/* ===== Create Path Format Toggle ===== */
+
+.af-create-format-toggle {
+    display: inline-flex;
+    background: var(--bs-gray-100, #f8f9fa);
+    border: 1px solid var(--bs-gray-300, #dee2e6);
+    border-radius: 0.5rem;
+    padding: 3px;
+    gap: 2px;
+}
+
+.af-create-format-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.875rem;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--bs-secondary, #6c757d);
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+}
+
+.af-create-format-btn:hover {
+    color: var(--main-text-color);
+    background: rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.06);
+}
+
+.af-create-format-btn--active {
+    background: var(--main-bg-color);
+    color: var(--primary-main-color);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.af-create-format-btn--active:hover {
+    background: var(--main-bg-color);
+}
+
+/* ===== Create Path Action Buttons ===== */
+
+.af-create-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.af-generate-claude-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.125rem;
+    background: #c96a43;
+    color: #fff;
+    border: 1px solid #b85c39;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.af-generate-claude-btn:hover {
+    background: #b85c39;
+}
+
+.af-generate-claude-btn:active {
+    background: #a5522f;
+}
+
+.af-generate-chatgpt-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.125rem;
+    background: #10a37f;
+    color: #fff;
+    border: 1px solid #0d8f6e;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.af-generate-chatgpt-btn:hover {
+    background: #0d8f6e;
+}
+
+.af-generate-chatgpt-btn:active {
+    background: #0b7d5f;
+}
+
+.af-vscode-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.125rem;
+    background: #007acc;
+    color: #fff;
+    border: 1px solid #006bb3;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.af-vscode-btn:hover {
+    background: #006bb3;
+}
+
+.af-vscode-btn:active {
+    background: #005a9a;
+}
+
+.af-btn-icon {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
+
+/* ===== Inline Info Tooltip ===== */
+
+.af-info-tip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: default;
+    color: var(--bs-secondary, #6c757d);
+    font-size: 0.85rem;
+    font-weight: 400;
+}
+
+.af-info-tip:hover {
+    color: var(--primary-main-color);
+}
+
+.af-info-tip-content {
+    display: none;
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    width: 280px;
+    background: #1e2230;
+    color: #f0f0f5;
+    font-size: 0.78rem;
+    font-weight: 400;
+    line-height: 1.5;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    white-space: normal;
+    z-index: 1050;
+    pointer-events: none;
+}
+
+.af-info-tip-content::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #1e2230;
+}
+
+.af-info-tip-content code {
+    font-size: 0.76rem;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
+    padding: 0.05em 0.3em;
+    color: #c9d1f5;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+.af-info-tip:hover .af-info-tip-content,
+.af-info-tip:focus-within .af-info-tip-content {
+    display: block;
 }

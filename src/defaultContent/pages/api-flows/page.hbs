@@ -10,8 +10,8 @@
 </head>
 
 <main>
-    {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode}}
-    {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode}}
+    {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav}}
+    {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav}}
 
     <div class="flows-section">
         {{!-- Hero --}}
@@ -39,12 +39,12 @@
                     </div>
                     <div class="flow-card-body">
                         <p class="flow-description">{{this.description}}</p>
-                        {{#if this.apis.length}}
+                        {{#if this.sources.length}}
                         <div class="flow-apis">
                             <span class="flow-apis-label">Powered by</span>
                             <div class="flow-apis-list">
-                                {{#each this.apis}}
-                                <span class="flow-api-chip">{{this.apiName}}</span>
+                                {{#each this.sources}}
+                                <span class="flow-api-chip">{{this.name}}</span>
                                 {{/each}}
                             </div>
                         </div>
@@ -66,7 +66,7 @@
                         <span class="flow-visibility-badge flow-agent-visible"
                             title="AI agents can discover and use this workflow">
                             <span class="agent-live-dot"></span>
-                            <i class="bi bi-robot"></i> Agent Ready
+                            <i class="bi bi-robot"></i> AI Ready
                         </span>
                         {{/unless}}
                     </div>

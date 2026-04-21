@@ -5,14 +5,19 @@
  -->
 <head>
     <link rel="stylesheet" href="/technical-styles/api-workflows.css">
+    {{#unless (eq flow.contentType "MD")}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@jentic/arazzo-ui@latest/dist/arazzo-ui.css">
     <script src="https://cdn.jsdelivr.net/npm/@jentic/arazzo-ui@latest/dist/arazzo-ui.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    {{/unless}}
+    {{#if (eq flow.contentType "MD")}}
+    <script src="https://cdn.jsdelivr.net/npm/marked@13/marked.min.js"></script>
+    {{/if}}
 </head>
 
 <main>
-    {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode}}
-    {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode}}
+    {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav}}
+    {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav}}
 
     <div class="flow-detail-section">
         {{!-- Back Button --}}
@@ -39,10 +44,15 @@
 
         {{!-- Content --}}
         <div class="flow-detail-content">
+            {{#if (eq flow.contentType "MD")}}
+            {{!-- Markdown Preview --}}
+            <div class="af-md-detail-container" id="markdownViewer"></div>
+            {{else}}
             {{!-- Arazzo UI Viewer --}}
             <div class="arazzo-viewer-container">
                 <div id="arazzoViewer"></div>
             </div>
+            {{/if}}
         </div>
     </div>
 
@@ -182,74 +192,63 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-// Initialize Arazzo UI Component
 document.addEventListener('DOMContentLoaded', function() {
-    try {
-        const specContent = document.getElementById('specContent').value.trim();
-        const viewerContainer = document.getElementById('arazzoViewer');
+    const specContent = document.getElementById('specContent').value.trim();
+    const contentType = '{{flow.contentType}}';
 
-        if (!specContent) {
-            viewerContainer.innerHTML = '<p style="padding: 2rem; text-align: center; color: #999;">No specification content available</p>';
-            return;
-        }
-
-        console.log('Initializing Arazzo UI component...');
-        console.log('ArazzoUI available:', typeof window.ArazzoUI);
-
-        // Initialize Arazzo UI with the spec content
-        // The component accepts inline YAML/JSON strings
-        if (window.ArazzoUI) {
-            console.log('Starting Arazzo UI initialization...');
-            console.log('Container element:', document.getElementById('arazzoViewer'));
-            console.log('Container height:', document.getElementById('arazzoViewer').offsetHeight);
-
-            const ui = window.ArazzoUI({
-                dom_id: '#arazzoViewer',
-                document: specContent,  // Pass the YAML/JSON content directly
-                view: 'split'           // Show diagram and docs side-by-side
-            });
-
-            console.log('Arazzo UI initialized successfully');
-            console.log('UI instance:', ui);
-
-            // Log any errors that might have occurred
-            setTimeout(() => {
-                console.log('Container after init:', document.getElementById('arazzoViewer').innerHTML.substring(0, 200));
-            }, 1000);
-        } else {
-            throw new Error('Arazzo UI library not loaded. Check that the script loaded correctly.');
-        }
-
-    } catch (error) {
-        console.error('Error initializing Arazzo UI:', error);
-        const viewerContainer = document.getElementById('arazzoViewer');
-        viewerContainer.innerHTML = '';
-
-        const errorDiv = document.createElement('div');
-        errorDiv.style.padding = '2rem';
-        errorDiv.style.textAlign = 'center';
-        errorDiv.style.color = '#e74c3c';
-        errorDiv.style.fontFamily = 'sans-serif';
-
-        const titleP = document.createElement('p');
-        const titleStrong = document.createElement('strong');
-        titleStrong.textContent = 'Error loading Arazzo UI';
-        titleP.appendChild(titleStrong);
-
-        const messageP = document.createElement('p');
-        messageP.style.fontSize = '0.9rem';
-        messageP.style.color = '#999';
-        messageP.textContent = error.message;
-
-        const consoleP = document.createElement('p');
-        consoleP.style.fontSize = '0.85rem';
-        consoleP.style.color = '#999';
-        consoleP.textContent = 'Check browser console for details';
-
-        errorDiv.appendChild(titleP);
-        errorDiv.appendChild(messageP);
-        errorDiv.appendChild(consoleP);
-        viewerContainer.appendChild(errorDiv);
+    if (contentType === 'MD') {
+        renderMarkdownPreview(specContent);
+    } else {
+        initArazzoUI(specContent);
     }
 });
+
+function renderMarkdownPreview(content) {
+    const container = document.getElementById('markdownViewer');
+    if (!container) return;
+
+    if (!content) {
+        container.innerHTML = '<p class="af-md-empty">No workflow description available.</p>';
+        return;
+    }
+
+    if (window.marked) {
+        marked.setOptions({ breaks: true, gfm: true });
+        container.innerHTML = marked.parse(content);
+    } else {
+        const pre = document.createElement('pre');
+        pre.className = 'af-md-fallback';
+        pre.textContent = content;
+        container.appendChild(pre);
+    }
+}
+
+function initArazzoUI(specContent) {
+    const viewerContainer = document.getElementById('arazzoViewer');
+    if (!viewerContainer) return;
+
+    if (!specContent) {
+        viewerContainer.innerHTML = '<p style="padding: 2rem; text-align: center; color: #999;">No specification content available</p>';
+        return;
+    }
+
+    try {
+        if (window.ArazzoUI) {
+            window.ArazzoUI({
+                dom_id: '#arazzoViewer',
+                document: specContent,
+                view: 'split'
+            });
+        } else {
+            throw new Error('Arazzo UI library not loaded.');
+        }
+    } catch (error) {
+        console.error('Error initializing Arazzo UI:', error);
+        viewerContainer.innerHTML = `
+            <div style="padding:2rem;text-align:center;color:#e74c3c;">
+                <p><strong>Error loading Arazzo UI</strong></p>
+                <p style="font-size:0.9rem;color:#999;">${error.message}</p>
+            </div>`;
+    }
+}
 </script>

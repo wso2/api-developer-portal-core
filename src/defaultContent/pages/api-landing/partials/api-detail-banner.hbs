@@ -13,13 +13,15 @@
           {{#apiMetadata.apiInfo.tags}}
           <span class="badge api-badge-custom2">{{this}}</span>
           {{/apiMetadata.apiInfo.tags}}
+          {{#if showApiWorkflowsNav}}
           {{#unless (eq apiMetadata.apiInfo.agentVisibility "HIDDEN")}}
           <span class="api-agent-chip api-agent-chip--ready"
               title="AI agents can discover and use this API">
               <span class="api-agent-chip__dot"></span>
-              <i class="bi bi-robot"></i> Agent Ready
+              <i class="bi bi-robot"></i> AI Ready
           </span>
           {{/unless}}
+          {{/if}}
         </div>
 
 
@@ -51,12 +53,14 @@
           {{#if showPlatformApiKeysNav}}
           <a type="button" class="common-btn-outlined" href="{{baseUrl}}/api/{{apiMetadata.apiHandle}}/api-keys">API Keys</a>
           {{/if}}
+          {{#if showApiWorkflowsNav}}
           {{#unless (eq apiMetadata.apiInfo.agentVisibility "HIDDEN")}}
           <button type="button" class="btn-prompt" data-bs-toggle="modal" data-bs-target="#apiAgentPromptModal">
               <i class="bi bi-file-code"></i>
               Agent Prompt
           </button>
           {{/unless}}
+          {{/if}}
         </div>
       </div>
       <div class="col-12 col-md-5 text-md-right api-banner-icon">

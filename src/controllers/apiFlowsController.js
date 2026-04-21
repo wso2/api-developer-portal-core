@@ -25,10 +25,25 @@ const config = require(process.cwd() + '/config.json');
 const fs = require('fs');
 const path = require('path');
 const Handlebars = require('handlebars');
+const yaml = require('js-yaml');
 
 const resolveViewId = async (orgID, viewName) => {
     return await apiMetadataDao.getViewID(orgID, viewName);
 };
+
+const extractSourceDescriptions = (flow) => {
+    if ((flow.CONTENT_TYPE || 'ARAZZO') !== 'ARAZZO' || !flow.FILE_CONTENT) return [];
+    try {
+        const raw = Buffer.isBuffer(flow.FILE_CONTENT) ? flow.FILE_CONTENT.toString('utf8') : String(flow.FILE_CONTENT);
+        const spec = yaml.load(raw);
+        return Array.isArray(spec?.sourceDescriptions)
+            ? spec.sourceDescriptions.map(sd => ({ name: sd.name, url: sd.url || null })).filter(sd => sd.name)
+            : [];
+    } catch {
+        return [];
+    }
+};
+
 
 const loadAPIFlows = async (req, res) => {
     const { orgName, viewName } = req.params;
@@ -58,8 +73,9 @@ const loadAPIFlows = async (req, res) => {
         } : null;
         const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || 'DEFAULT';
 
-        const templateContent = {
-            apiFlows: apiFlows.map(flow => ({
+        const resolvedFlows = apiFlows.map(flow => {
+            const sources = extractSourceDescriptions(flow);
+            return {
                 apiFlowId: flow.API_FLOW_ID,
                 handle: flow.HANDLE,
                 name: flow.NAME,
@@ -68,12 +84,12 @@ const loadAPIFlows = async (req, res) => {
                 status: flow.STATUS,
                 visibility: flow.VISIBILITY || 'PUBLIC',
                 agentVisibility: flow.AGENT_VISIBILITY || 'VISIBLE',
-                apiCount: flow.DP_API_METADATA ? flow.DP_API_METADATA.length : 0,
-                apis: flow.DP_API_METADATA ? flow.DP_API_METADATA.map(api => ({
-                    apiName: api.API_NAME,
-                    apiHandle: api.API_HANDLE
-                })) : []
-            })),
+                sources
+            };
+        });
+
+        const templateContent = {
+            apiFlows: resolvedFlows,
             orgName,
             viewName,
             baseUrl: `/${orgName}/views/${viewName}`,
@@ -158,14 +174,7 @@ const loadAPIFlowDetail = async (req, res) => {
                 contentType: apiFlow.CONTENT_TYPE,
                 content: fileContentStr,
                 createdAt: apiFlow.CREATED_AT ? new Date(apiFlow.CREATED_AT).toLocaleDateString() : '',
-                updatedAt: apiFlow.UPDATED_AT ? new Date(apiFlow.UPDATED_AT).toLocaleDateString() : '',
-                apis: apiFlow.DP_API_METADATA ? apiFlow.DP_API_METADATA.map(api => ({
-                    apiName: api.API_NAME,
-                    apiHandle: api.API_HANDLE,
-                    apiDescription: api.API_DESCRIPTION,
-                    productionUrl: api.PRODUCTION_URL,
-                    apiType: api.API_TYPE
-                })) : []
+                updatedAt: apiFlow.UPDATED_AT ? new Date(apiFlow.UPDATED_AT).toLocaleDateString() : ''
             },
             orgName,
             viewName,
@@ -227,10 +236,7 @@ const getFlowPromptJSON = async (req, res) => {
             agentPrompt: apiFlow.AGENT_PROMPT,
             contentType: apiFlow.CONTENT_TYPE,
             content,
-            apis: apiFlow.DP_API_METADATA ? apiFlow.DP_API_METADATA.map(api => ({
-                apiName: api.API_NAME,
-                apiHandle: api.API_HANDLE
-            })) : []
+            sources: extractSourceDescriptions(apiFlow)
         });
     } catch (error) {
         logger.error('Error fetching API workflow prompt', {
@@ -274,9 +280,9 @@ const getWorkflowDetailMd = async (req, res) => {
         if (apiFlow.CONTENT_TYPE === 'ARAZZO') {
             try {
                 const arazoJson = JSON.parse(workflowContent);
-                markdownContent = generateWorkflowMarkdown(arazoJson, apiFlow, orgName, viewName);
+                const sources = extractSourceDescriptions(apiFlow);
+                markdownContent = generateWorkflowMarkdown(arazoJson, apiFlow, orgName, viewName, sources);
             } catch (e) {
-                // If parsing fails, use content as-is
                 logger.warn('Could not parse Arazzo JSON, using raw content', { handle, error: e.message });
                 markdownContent = workflowContent;
             }
@@ -296,7 +302,7 @@ const getWorkflowDetailMd = async (req, res) => {
     }
 };
 
-const generateWorkflowMarkdown = (arazoJson, apiFlow, orgName, viewName) => {
+const generateWorkflowMarkdown = (arazoJson, apiFlow, orgName, viewName, sources = []) => {
     const templatePath = path.join(process.cwd(), 'src/defaultContent/pages/api-flows/workflow-markdown.hbs');
     const templateContent = fs.readFileSync(templatePath, 'utf8');
     const template = Handlebars.compile(templateContent);
@@ -305,16 +311,11 @@ const generateWorkflowMarkdown = (arazoJson, apiFlow, orgName, viewName) => {
     const data = {
         flow: {
             name: apiFlow.NAME,
+            handle: apiFlow.HANDLE,
             status: apiFlow.STATUS,
-            description: apiFlow.DESCRIPTION,
-            apis: apiFlow.DP_API_METADATA ? apiFlow.DP_API_METADATA.map(api => ({
-                apiName: api.API_NAME,
-                apiHandle: api.API_HANDLE,
-                apiType: api.API_TYPE,
-                pathType: api.API_TYPE === 'MCP' ? 'mcp' : 'api',
-                agentHidden: api.AGENT_VISIBILITY === 'HIDDEN'
-            })) : []
+            description: apiFlow.DESCRIPTION
         },
+        sources,
         baseUrl,
         arazoJson: JSON.stringify(arazoJson, null, 2)
     };
@@ -387,11 +388,50 @@ const generatePrompt = async (req, res) => {
     }
 };
 
+const getWorkflowArazzoSpec = async (req, res) => {
+    const { orgName, viewName, handle } = req.params;
+
+    try {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        if (!orgDetails) {
+            return res.status(404).json({ error: 'Organization not found' });
+        }
+
+        const orgID = orgDetails.ORG_ID;
+        const viewId = await resolveViewId(orgID, viewName);
+
+        const apiFlow = await apiFlowDao.getPublishedAPIFlowByHandle(orgID, viewId, handle);
+        if (!apiFlow) {
+            return res.status(404).json({ error: 'API Workflow not found or not published' });
+        }
+
+        if (apiFlow.CONTENT_TYPE !== 'ARAZZO') {
+            return res.status(404).json({ error: 'This workflow does not have an Arazzo specification' });
+        }
+
+        const rawContent = apiFlow.FILE_CONTENT;
+        const content = Buffer.isBuffer(rawContent) ? rawContent.toString('utf8') : String(rawContent);
+
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.status(200).send(content);
+    } catch (error) {
+        logger.error('Error fetching Arazzo spec', {
+            error: error.message,
+            stack: error.stack,
+            orgName,
+            viewName,
+            handle
+        });
+        res.status(500).json({ error: 'Error fetching Arazzo specification' });
+    }
+};
+
 module.exports = {
     loadAPIFlows,
     getAllPublishedFlowsMD,
     loadAPIFlowDetail,
     getFlowPromptJSON,
     getWorkflowDetailMd,
+    getWorkflowArazzoSpec,
     generatePrompt
 };

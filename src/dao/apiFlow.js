@@ -15,8 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-const { APIFlow, APIFlowAPIs } = require('../models/apiFlow');
-const { APIMetadata } = require('../models/apiMetadata');
+const { APIFlow } = require('../models/apiFlow');
 const { Sequelize } = require('sequelize');
 const logger = require('../config/logger');
 
@@ -32,7 +31,7 @@ const createAPIFlow = async (orgID, viewId, apiFlowData, t) => {
             STATUS: apiFlowData.status || 'PUBLISHED',
             VISIBILITY: apiFlowData.visibility || 'PUBLIC',
             AGENT_VISIBILITY: apiFlowData.agentVisibility || 'VISIBLE',
-            FILE_CONTENT: apiFlowData.arazoContent != null ? Buffer.from(apiFlowData.arazoContent) : null,
+            FILE_CONTENT: apiFlowData.apiFlowDefinition != null ? Buffer.from(apiFlowData.apiFlowDefinition) : null,
             CONTENT_TYPE: apiFlowData.contentType || 'ARAZZO',
             CREATED_AT: new Date(),
             UPDATED_AT: new Date()
@@ -56,7 +55,7 @@ const updateAPIFlow = async (orgID, viewId, apiFlowId, apiFlowData, t) => {
     if (apiFlowData.status !== undefined) updateFields.STATUS = apiFlowData.status;
     if (apiFlowData.visibility !== undefined) updateFields.VISIBILITY = apiFlowData.visibility;
     if (apiFlowData.agentVisibility !== undefined) updateFields.AGENT_VISIBILITY = apiFlowData.agentVisibility;
-    if (apiFlowData.arazoContent !== undefined) updateFields.FILE_CONTENT = apiFlowData.arazoContent != null ? Buffer.from(apiFlowData.arazoContent) : null;
+    if (apiFlowData.apiFlowDefinition !== undefined) updateFields.FILE_CONTENT = apiFlowData.apiFlowDefinition != null ? Buffer.from(apiFlowData.apiFlowDefinition) : null;
     if (apiFlowData.contentType !== undefined) updateFields.CONTENT_TYPE = apiFlowData.contentType;
 
     const [count, rows] = await APIFlow.update(updateFields, {
@@ -76,72 +75,21 @@ const deleteAPIFlow = async (orgID, viewId, apiFlowId, t) => {
 
 const getAPIFlow = async (orgID, viewId, apiFlowId) => {
     return await APIFlow.findOne({
-        where: { API_FLOW_ID: apiFlowId, ORG_ID: orgID, VIEW_ID: viewId },
-        include: [{
-            model: APIMetadata,
-            through: { attributes: [] },
-            attributes: ['API_ID', 'API_NAME', 'API_HANDLE', 'API_DESCRIPTION', 'PRODUCTION_URL', 'API_TYPE', 'AGENT_VISIBILITY']
-        }]
+        where: { API_FLOW_ID: apiFlowId, ORG_ID: orgID, VIEW_ID: viewId }
     });
 };
 
 const getAPIFlowByHandle = async (orgID, viewId, handle) => {
     return await APIFlow.findOne({
-        where: { HANDLE: handle, ORG_ID: orgID, VIEW_ID: viewId },
-        include: [{
-            model: APIMetadata,
-            through: { attributes: [] },
-            attributes: ['API_ID', 'API_NAME', 'API_HANDLE', 'API_DESCRIPTION', 'PRODUCTION_URL', 'API_TYPE', 'AGENT_VISIBILITY']
-        }]
+        where: { HANDLE: handle, ORG_ID: orgID, VIEW_ID: viewId }
     });
 };
 
 const getAllAPIFlows = async (orgID, viewId) => {
     return await APIFlow.findAll({
         where: { ORG_ID: orgID, VIEW_ID: viewId },
-        include: [{
-            model: APIMetadata,
-            through: { attributes: [] },
-            attributes: ['API_ID', 'API_NAME', 'API_HANDLE', 'API_DESCRIPTION']
-        }],
         order: [['CREATED_AT', 'DESC']]
     });
-};
-
-const addAPIFlowAPIs = async (apiFlowId, apiIds, orgID, viewId, t) => {
-    const mappings = apiIds.map(apiId => ({
-        API_FLOW_ID: apiFlowId,
-        API_ID: apiId,
-        ORG_ID: orgID,
-        VIEW_ID: viewId
-    }));
-    return await APIFlowAPIs.bulkCreate(mappings, {
-        ignoreDuplicates: true,
-        transaction: t
-    });
-};
-
-const removeAPIFlowAPIs = async (apiFlowId, apiIds, orgID, viewId, t) => {
-    const { Op } = require('sequelize');
-    return await APIFlowAPIs.destroy({
-        where: {
-            API_FLOW_ID: apiFlowId,
-            API_ID: { [Op.in]: apiIds },
-            ORG_ID: orgID,
-            VIEW_ID: viewId
-        },
-        transaction: t
-    });
-};
-
-const replaceAPIFlowAPIs = async (apiFlowId, apiIds, orgID, viewId, t) => {
-    await APIFlowAPIs.destroy({
-        where: { API_FLOW_ID: apiFlowId, ORG_ID: orgID, VIEW_ID: viewId },
-        transaction: t
-    });
-    if (apiIds && apiIds.length > 0) {
-        await addAPIFlowAPIs(apiFlowId, apiIds, orgID, viewId, t);
-    }
 };
 
 const getPublishedAPIFlows = async (orgID, viewId, { visibility, agentVisibility } = {}) => {
@@ -150,11 +98,6 @@ const getPublishedAPIFlows = async (orgID, viewId, { visibility, agentVisibility
     if (agentVisibility) where.AGENT_VISIBILITY = agentVisibility;
     return await APIFlow.findAll({
         where,
-        include: [{
-            model: APIMetadata,
-            through: { attributes: [] },
-            attributes: ['API_ID', 'API_NAME', 'API_HANDLE', 'API_DESCRIPTION', 'PRODUCTION_URL', 'API_TYPE', 'AGENT_VISIBILITY']
-        }],
         order: [['CREATED_AT', 'DESC']]
     });
 };
@@ -163,14 +106,7 @@ const getPublishedAPIFlowByHandle = async (orgID, viewId, handle, { visibility, 
     const where = { HANDLE: handle, ORG_ID: orgID, VIEW_ID: viewId, STATUS: 'PUBLISHED' };
     if (visibility) where.VISIBILITY = visibility;
     if (agentVisibility) where.AGENT_VISIBILITY = agentVisibility;
-    return await APIFlow.findOne({
-        where,
-        include: [{
-            model: APIMetadata,
-            through: { attributes: [] },
-            attributes: ['API_ID', 'API_NAME', 'API_HANDLE', 'API_DESCRIPTION', 'PRODUCTION_URL', 'API_TYPE', 'AGENT_VISIBILITY']
-        }]
-    });
+    return await APIFlow.findOne({ where });
 };
 
 module.exports = {
@@ -180,9 +116,6 @@ module.exports = {
     getAPIFlow,
     getAPIFlowByHandle,
     getAllAPIFlows,
-    addAPIFlowAPIs,
-    removeAPIFlowAPIs,
-    replaceAPIFlowAPIs,
     getPublishedAPIFlows,
     getPublishedAPIFlowByHandle
 };

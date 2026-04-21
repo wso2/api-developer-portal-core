@@ -65,10 +65,13 @@ function renderTemplate(templatePath, layoutPath, templateContent, isTechnical) 
     const template = Handlebars.compile(templateResponse.toString());
     const layout = Handlebars.compile(layoutResponse.toString());
 
+    const showApiWorkflowsNav = config.features?.apiWorkflows?.enabled === true;
+    const enrichedContent = { ...templateContent, showApiWorkflowsNav };
     return layout({
-        body: template(templateContent),
+        body: template(enrichedContent),
         portalConfigs: config.portalConfigs,
         profile: templateContent.profile,
+        showApiWorkflowsNav,
     });
 }
 
@@ -113,10 +116,13 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
     const template = Handlebars.compile(templateResponse.toString());
     const layout = Handlebars.compile(layoutResponse.toString());
 
+    const showApiWorkflowsNav = config.features?.apiWorkflows?.enabled === true;
+    const enrichedContent = { ...templateContent, showApiWorkflowsNav };
     return layout({
-        body: template(templateContent),
+        body: template(enrichedContent),
         portalConfigs: config.portalConfigs,
         profile: templateContent.profile,
+        showApiWorkflowsNav,
     });
 
 }
