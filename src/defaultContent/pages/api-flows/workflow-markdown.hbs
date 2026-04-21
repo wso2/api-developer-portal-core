@@ -8,10 +8,10 @@
 ## Sources
 
 {{#each sources}}
-- **{{this.name}}**{{#if this.url}} — [OpenAPI Spec]({{this.url}}){{/if}}
+- **{{this.name}}**{{#if this.url}} — {{#if this.isDevportalApi}}[API Documentation]({{this.url}}){{else}}[OpenAPI Spec]({{this.url}}){{/if}}{{/if}}
 {{/each}}
 
-> Refer to each source's OpenAPI spec for base URL, endpoints, and security schemes. If an API with a matching name is listed in the [API catalogue]({{baseUrl}}/apis.md), you can use that page for additional details.
+> Refer to each source for base URLs, endpoints, security schemes, and any additional documentation needed to execute this workflow.
 
 ## Authentication
 
