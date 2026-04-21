@@ -1179,7 +1179,11 @@ function buildArazzoSpec(name, description, apis, orgHandle, viewName) {
         return `  - name: '${sdName.replace(/'/g, "''")}'\n    url: '${url}'\n    type: openapi`;
     }).join('\n');
 
-    return `arazzo: '1.0.0'
+    return `# IMPORTANT: THIS IS A GENERATED TEMPLATE AND IS NOT COMPLETE.
+# You must fill in the 'inputs', 'steps', and 'outputs' sections before this workflow can be executed.
+# Read each source's OpenAPI spec to determine the correct operations, parameters, and response shapes.
+
+arazzo: '1.0.0'
 info:
   title: '${(name || 'My Flow').replace(/'/g, "''")}'
   version: 1.0.0
@@ -1307,6 +1311,15 @@ function initCodeMirrorEditor() {
         extraKeys: { 'Tab': cm => cm.execCommand('insertSoftTab') }
     });
     arazoEditor.setSize(null, '420px');
+
+    let sdValidationTimer = null;
+    arazoEditor.on('change', () => {
+        clearTimeout(sdValidationTimer);
+        sdValidationTimer = setTimeout(() => {
+            const content = arazoEditor.getValue();
+            if (content.trim()) validateAndRenderSourceDescriptions(content);
+        }, 800);
+    });
 }
 
 // ─────────────────────────────────────────────
