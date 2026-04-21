@@ -44,6 +44,26 @@ const extractSourceDescriptions = (flow) => {
     }
 };
 
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const buildSpecUrlPattern = (orgName, viewName) =>
+    new RegExp(
+        `^(?:https?://[^/]+)?/${escapeRegex(orgName)}/views/${escapeRegex(viewName)}/(api|mcp)/([^/]+)/docs/specification\\.(json|graphql|xml)$`
+    );
+
+const resolveSourceUrls = async (sources, orgName, viewName, orgID) => {
+    const pattern = buildSpecUrlPattern(orgName, viewName);
+    return Promise.all(sources.map(async (source) => {
+        if (!source.url) return source;
+        const match = source.url.match(pattern);
+        if (!match) return source;
+        const [, apiType, apiHandle] = match;
+        const apiId = await apiMetadataDao.getAPIId(orgID, apiHandle);
+        if (!apiId) return source;
+        return { ...source, url: `/${orgName}/views/${viewName}/${apiType}/${apiHandle}.md`, isDevportalApi: true };
+    }));
+};
+
 
 const loadAPIFlows = async (req, res) => {
     const { orgName, viewName } = req.params;
@@ -280,7 +300,8 @@ const getWorkflowDetailMd = async (req, res) => {
         if (apiFlow.CONTENT_TYPE === 'ARAZZO') {
             try {
                 const arazoJson = JSON.parse(workflowContent);
-                const sources = extractSourceDescriptions(apiFlow);
+                const rawSources = extractSourceDescriptions(apiFlow);
+                const sources = await resolveSourceUrls(rawSources, orgName, viewName, orgID);
                 markdownContent = generateWorkflowMarkdown(arazoJson, apiFlow, orgName, viewName, sources);
             } catch (e) {
                 logger.warn('Could not parse Arazzo JSON, using raw content', { handle, error: e.message });
