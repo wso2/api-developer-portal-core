@@ -17,7 +17,7 @@
  * under the License.
  */
 const { invokeApiRequest, invokeGraphQLRequest } = require('../utils/util');
-const config = require(process.cwd() + '/config');
+const config = require('../config/config');
 const logger = require('../config/logger');
 const controlPlaneUrl = config.controlPlane.url;
 const controlPlaneGraphqlUrl = config.controlPlane.graphqlURL;

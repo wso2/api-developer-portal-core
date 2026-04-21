@@ -17,7 +17,7 @@
  */
 /* eslint-disable no-undef */
 const { renderTemplate, renderTemplateFromAPI, loadMarkdown } = require('../utils/util');
-const config = require(process.cwd() + '/config.json');
+const config = require('../config/config');
 const markdown = require('marked');
 const fs = require('fs');
 const path = require('path');

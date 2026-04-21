@@ -20,8 +20,8 @@
  */
 
 const Redis = require('ioredis');
-const config = require(process.cwd() + '/config');
-const secret = require(process.cwd() + '/secret.json');
+const config = require('../config/config');
+
 const logger = require('../config/logger');
 const REDIS_CONSTANTS = require('../utils/constants').REDIS_CONSTANTS;
 
@@ -54,7 +54,7 @@ class RedisConnectionHelper {
             const redisConfig = {
                 host: config.redis?.host || process.env.REDIS_HOST || 'localhost',
                 port: Number(config.redis?.port || process.env.REDIS_PORT || 6379),
-                password: secret.redisSecret || process.env.REDIS_PASSWORD || '',
+                password: config.redisSecret || process.env.REDIS_PASSWORD || '',
                 db: Number(config.redis?.db || process.env.REDIS_DB || 0),
                 retryDelayOnFailover: Number(config.redis?.configs?.retryDelayOnFailover || 1000),
                 maxRetriesPerRequest: 0,
@@ -319,7 +319,7 @@ class RedisConnectionHelper {
             const redisConfig = {
                 host: config.redis?.host || process.env.REDIS_HOST || 'localhost',
                 port: Number(config.redis?.port || process.env.REDIS_PORT || 6379),
-                password: secret.redisSecret || process.env.REDIS_PASSWORD || '',
+                password: config.redisSecret || process.env.REDIS_PASSWORD || '',
                 db: Number(config.redis?.db || process.env.REDIS_DB || 0),
                 retryDelayOnFailover: Number(config.redis?.configs?.retryDelayOnFailover || 1000),
                 maxRetriesPerRequest: 0,

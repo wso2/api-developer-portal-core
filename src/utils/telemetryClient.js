@@ -1,12 +1,12 @@
 // process.env.APPLICATIONINSIGHTS_LOGGING_LEVEL = 'verbose';
 const appInsights = require('applicationinsights');
-const secret = require(process.cwd() + '/secret.json');
-const config = require(process.cwd() + '/config.json');
+
+const config = require('../config/config');
 
 let telemetryClient = null;
 
-if (config.telemetry && secret.azureInsightsConnectionString) {
-    appInsights.setup(secret.azureInsightsConnectionString);
+if (config.telemetry && config.azureInsightsConnectionString) {
+    appInsights.setup(config.azureInsightsConnectionString);
     telemetryClient = appInsights.defaultClient;
 } else {
     // Provide a no-op client when telemetry is disabled

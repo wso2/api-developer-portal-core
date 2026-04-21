@@ -51,7 +51,7 @@ const stripeService = require("./stripeService");
 const { getDecryptedStripeKeysForOrg } = require("./orgBillingKeyService");
 const moesifService = require("./moesifService");
 const { invokeApiRequest } = require("../utils/util");
-const config = require(process.cwd() + "/config.json");
+const config = require('../config/config');
 
 const controlPlaneUrl = config.controlPlane.url;
 

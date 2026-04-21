@@ -20,7 +20,7 @@
  */
 
 const EventEmitter = require('events');
-const config = require(process.cwd() + '/config');
+const config = require('../config/config');
 const path = require('path');
 const fs = require('fs');
 const RedisConnectionHelper = require('./redisConnectionHelper');

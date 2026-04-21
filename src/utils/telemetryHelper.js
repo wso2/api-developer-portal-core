@@ -24,7 +24,7 @@
 
 const { telemetryClient } = require('./telemetryClient');
 const moesif = require('../middlewares/moesif');
-const config = require(process.cwd() + '/config.json');
+const config = require('../config/config');
 
 /**
  * Email suffix used to identify WSO2 internal users.

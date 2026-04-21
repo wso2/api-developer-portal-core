@@ -22,8 +22,8 @@ const jwt = require('jsonwebtoken');
 const https = require('https');
 const constants = require('../utils/constants');
 const util = require('../utils/util');
-const config = require(process.cwd() + '/config.json');
-const secret = require(process.cwd() + '/secret.json');
+const config = require('../config/config');
+
 
 
 async function configurePassport(authJsonContent, claimNames) {

@@ -17,7 +17,7 @@
  */
 /* eslint-disable no-undef */
 const crypto = require('crypto');
-const config = require(process.cwd() + '/config.json');
+const config = require('../config/config');
 
 const CSRF_HMAC_LABEL = 'devportal-platform-api-keys-csrf';
 

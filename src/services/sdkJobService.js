@@ -25,7 +25,7 @@ const adminDao = require('../dao/admin');
 const constants = require('../utils/constants');
 const path = require('path');
 const fs = require('fs');
-const config = require(process.cwd() + '/config');
+const config = require('../config/config');
 const aiSDKServiceUrl = config.aiSDKService?.url || 'http://localhost:5001';
 const aiSDKServiceEndpoints = config.aiSDKService?.endpoints || {
     mergeSpecs: '/merge-openapi-specs',
@@ -36,7 +36,7 @@ const archiver = require('archiver');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const execAsync = promisify(exec);
-const secret = require(process.cwd() + '/secret.json');
+
 const redisService = require('./redisService');
 class SDKJobService extends EventEmitter {
     constructor() {
@@ -672,7 +672,7 @@ class SDKJobService extends EventEmitter {
             mergeSpecs: '/merge-openapi-specs',
             generateApp: '/generate-application-code'
         };
-        const { authHeaderName, apiKey } = secret.aiSDKService || {};
+        const { authHeaderName, apiKey } = config.aiSDKService || {};
 
         try {
             const response = await fetch(`${aiSDKServiceUrl}${aiSDKServiceEndpoints.mergeSpecs}`, {
@@ -919,7 +919,7 @@ class SDKJobService extends EventEmitter {
      */
     async invokeApplicationCodeGenApi(requestData) {
         try {
-            const { authHeaderName, apiKey } = secret.aiSDKService || {};
+            const { authHeaderName, apiKey } = config.aiSDKService || {};
             const response = await fetch(`${aiSDKServiceUrl}${aiSDKServiceEndpoints.generateApp}`, {
                 method: 'POST',
                 headers: {

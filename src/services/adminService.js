@@ -21,6 +21,7 @@ const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const util = require('../utils/util');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const logger = require('../config/logger');
 const IdentityProviderDTO = require("../dto/identityProvider");
@@ -29,7 +30,7 @@ const { validationResult } = require('express-validator');
 const sequelize = require("../db/sequelize");
 const { ApplicationDTO, SubscriptionDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
-const config = require(process.cwd() + '/config.json');
+const config = require('../config/config');
 const controlPlaneUrl = config.controlPlane.url;
 const controlPlaneGwUrl = config.controlPlane.gwUrl;
 const { invokeApiRequest } = require('../utils/util');
@@ -376,7 +377,8 @@ const createOrgContent = async (req, res) => {
         viewName
     });
 
-    const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
+    const extractPath = path.join(os.tmpdir(), 'devportal', orgId);
+    fs.mkdirSync(extractPath, { recursive: true });
 
     try {
         if (!orgId) {
@@ -441,7 +443,8 @@ const updateOrgContent = async (req, res) => {
         orgId,
         viewName
     });
-    const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
+    const extractPath = path.join(os.tmpdir(), 'devportal', orgId);
+    fs.mkdirSync(extractPath, { recursive: true });
     try {
         if (!orgId) {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");

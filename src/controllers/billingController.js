@@ -27,7 +27,7 @@ const { encrypt } = require("../utils/cryptoUtil");
 const BillingEngineKey = require("../models/billingEngineKey");
 const logger = require("../config/logger");
 const constants = require("../utils/constants");
-const config = require(process.cwd() + "/config.json");
+const config = require('../config/config');
 
 class BadRequestError extends CustomError {
   constructor(message) {

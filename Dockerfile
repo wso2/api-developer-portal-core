@@ -31,13 +31,19 @@ RUN npx @openapitools/openapi-generator-cli@2.21.3 version
 COPY . .
 
 # Expose the application port
-EXPOSE 8080
+EXPOSE 3000
 
 # Create a non-root user with UID 10001 to satisfy Checkov CKV_CHOREO_1
 RUN groupadd -g 10001 appgroup && useradd -m -u 10001 -g appgroup -s /bin/bash appuser
 
+# Create dedicated writable directories and assign ownership
+RUN mkdir -p /tmp/devportal /app/logs && chown -R appuser:appgroup /tmp/devportal /app/logs
+
+# Copy and permission the entrypoint before switching to non-root
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
 # Explicitly switch to UID 10001 instead of using "appuser"
 USER 10001
 
-# Start the Node.js application
-CMD ["node", "src/app.js"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

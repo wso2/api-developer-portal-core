@@ -19,9 +19,9 @@
 "use strict";
 
 const crypto = require("crypto");
-const secret = require(process.cwd() + "/secret.json");
+const config = require('../config/config');
 
-const ENCRYPTION_KEY = secret.billingKeyEncryptionKey;
+const ENCRYPTION_KEY = config.billingKeyEncryptionKey;
 
 if (!ENCRYPTION_KEY) {
   throw new Error(
