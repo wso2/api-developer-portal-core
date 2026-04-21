@@ -289,6 +289,7 @@ const loadAPIContent = async (req, res) => {
                             errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API,
                             devportalMode: devportalMode,
                             isFederatedAPI,
+                            profile: req.isAuthenticated() ? req.user : null,
                         }
                         if (!(req.user)) {
                             logger.warn("User is not authorized to access the API or user session expired, hence redirecting to login page", {
@@ -666,6 +667,7 @@ const loadDocument = async (req, res) => {
                         baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                         baseDocUrl: baseDocUrl,
                         devportalMode: devportalMode,
+                        profile: req.isAuthenticated() ? req.user : null,
                     }
                     html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
                     res.send(html);
@@ -814,9 +816,10 @@ const loadDocument = async (req, res) => {
                     baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                     baseDocUrl: baseDocUrl,
                     errorMessage: constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE,
+                    profile: req.isAuthenticated() ? req.user : null,
                 }
-                logger.error('Failed to load api content', { 
-                    error: error.message, 
+                logger.error('Failed to load api content', {
+                    error: error.message,
                     stack: error.stack
                 });
                 html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
@@ -828,6 +831,7 @@ const loadDocument = async (req, res) => {
             baseUrl: '/' + orgName + '/views/' + viewName,
             baseDocUrl: baseDocUrl,
             devportalMode: orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT,
+            profile: req.isAuthenticated() ? req.user : null,
         }
         if (Number(error?.statusCode) === 401) {
             templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_AUTH_ERROR_MESSAGE;

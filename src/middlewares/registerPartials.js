@@ -86,7 +86,8 @@ const registerPartials = async (req, res, next) => {
         let templateContent = {
           errorMessage: constants.ERROR_MESSAGE.API_NOT_FOUND,
           baseUrl: '/' + req.params.orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName,
-          devportalMode: devportalMode
+          devportalMode: devportalMode,
+          profile: req.isAuthenticated() ? req.user : null,
         }
         const html = util.renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
         return res.send(html);
