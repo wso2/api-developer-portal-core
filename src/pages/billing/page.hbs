@@ -20,8 +20,8 @@
 <script src="/technical-scripts/billing.js" defer></script>
 
 <main data-org-id="{{orgId}}">
-    {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode }}
-    {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode }}
+    {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav }}
+    {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav }}
     {{> billing-content }}
     {{> alert }}
 </main>

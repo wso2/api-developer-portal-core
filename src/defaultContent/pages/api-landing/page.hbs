@@ -25,8 +25,8 @@
   <link rel="stylesheet" href="/technical-styles/agent-prompt.css">
 </head>
 <main>
-    {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode }}
-    {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode showPlatformApiKeysNav=showPlatformApiKeysNav }}
+    {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav }}
+    {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode showPlatformApiKeysNav=showPlatformApiKeysNav showApiWorkflowsNav=showApiWorkflowsNav }}
     {{> api-detail-banner }}
     {{#if loadDefault}}
     {{> api-default}}
@@ -39,6 +39,7 @@
     {{> alert }}
 
     {{!-- ── AGENT PROMPT MODAL ── --}}
+    {{#if showApiWorkflowsNav}}
     {{#unless (eq apiMetadata.apiInfo.agentVisibility "HIDDEN")}}
     <div class="modal fade" id="apiAgentPromptModal" tabindex="-1" aria-labelledby="apiAgentPromptModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -157,4 +158,5 @@
     })();
     </script>
     {{/unless}}
+    {{/if}}
 </main>
