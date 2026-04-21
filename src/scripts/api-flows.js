@@ -119,7 +119,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Arazzo editor buttons
-    document.getElementById('generateArazzoBtn')?.addEventListener('click', generateArazzoSpec);
     document.getElementById('copyArazzoBtn')?.addEventListener('click', copyArazzoSpec);
     document.getElementById('copyMarkdownBtn')?.addEventListener('click', copyMarkdown);
 
@@ -576,6 +575,7 @@ function renderSdItem(name, url, type, status, statusCode) {
 
 function initCreatePathButtons() {
     document.getElementById('generateWithClaudeBtn')?.addEventListener('click', generateWithClaude);
+    document.getElementById('generateWithChatGPTBtn')?.addEventListener('click', generateWithChatGPT);
     document.getElementById('openInVSCodeBtn')?.addEventListener('click', openInVSCode);
 }
 
@@ -588,77 +588,195 @@ function generateWithClaude() {
 }
 
 function generateArazzoWithClaude() {
-    const name = document.getElementById('apiFlowName')?.value?.trim() || 'API Workflow';
+    const name = document.getElementById('apiFlowName')?.value?.trim() || '';
     const description = document.getElementById('apiFlowDescription')?.value?.trim() || '';
     const apis = getSelectedAPIs();
-
-    const apiList = apis.length > 0
-        ? apis.map(a => `- **${a.apiName}** (${a.apiType || 'REST'}): ${a.apiDescription || 'No description provided'}`).join('\n')
-        : '*(No APIs selected)*';
 
     const pathParts = window.location.pathname.split('/');
     const orgHandle = pathParts[1] || '';
     const viewName = pathParts[3] || 'default';
 
-    const sourceDescSnippet = apis.length > 0
+    const apiContext = apis.length > 0
         ? apis.map(a => {
             const url = `${window.location.origin}/${orgHandle}/views/${viewName}/api/${a.apiHandle}/docs/specification.json`;
-            return `  - name: ${a.apiHandle || 'api'}\n    url: '${url}'\n    type: openapi`;
+            return `- **${a.apiName}** (${a.apiType || 'REST'}): ${a.apiDescription || 'No description provided'}\n  OpenAPI spec: ${url}`;
         }).join('\n')
-        : '  # Add your API OpenAPI spec URLs here';
+        : '*(No APIs pre-selected — select the required APIs from the Associated APIs section above. For APIs published in the developer portal, the Source Description will be auto-generated.)*';
 
-    const prompt = `Please write a complete Arazzo 1.0.0 workflow specification for the following use case:
+    const contextBlock = [
+        name ? `**Workflow name:** ${name}` : null,
+        description ? `**Initial description:** ${description}` : null,
+    ].filter(Boolean).join('\n');
 
-**Workflow Name:** ${name}
-**Description:** ${description}
+    const prompt = `You are helping a developer define an API workflow that will be saved to their developer portal.
 
-**Available APIs:**
-${apiList}
+${contextBlock ? `Here is some context they have already provided:\n${contextBlock}\n` : ''}**Available APIs on their portal:**
+${apiContext}
 
-Generate a valid Arazzo 1.0.0 YAML spec that:
-1. Uses the correct \`arazzo: '1.0.0'\` header
-2. Includes \`sourceDescriptions\` pointing to the OpenAPI specs:
-\`\`\`yaml
-sourceDescriptions:
-${sourceDescSnippet}
-\`\`\`
-3. Defines a \`workflows\` array with a single workflow containing well-structured \`steps\`
-4. Each step must have: \`stepId\`, \`description\`, \`operationPath\`, \`successCriteria\`, \`outputs\`, \`onSuccess\`, \`onFailure\`
-5. Includes proper \`inputs\` with required fields derived from the APIs
-6. Includes \`outputs\` at the workflow level
+Before doing anything else, fetch and read each OpenAPI spec URL above. Use the specs to identify the available API operations, required inputs and parameters, response shapes, and documented error codes — this will drive the steps and inputs you generate.
 
-Return ONLY the YAML, no prose explanation.`;
+Your job is to have a short conversation to understand exactly what the workflow should do, then produce a complete Arazzo 1.0.0 YAML spec.
+
+**Step 1 — Ask the developer to describe the workflow in natural language.** Ask them: what triggers it, what each API call should do in sequence, what data flows between steps, and what the expected outcome is. If any detail is unclear, ask a follow-up question before proceeding.
+
+**Step 2 — Once you have enough detail, generate a complete Arazzo 1.0.0 YAML spec that:**
+1. Uses the \`arazzo: '1.0.0'\` header
+2. Includes \`sourceDescriptions\` with the OpenAPI spec URLs listed above
+3. Defines a \`workflows\` array with a single workflow and well-structured \`steps\`
+4. Each step includes: \`stepId\`, \`description\`, \`operationPath\`, \`successCriteria\`, \`outputs\`, \`onSuccess\`, \`onFailure\`
+5. Includes \`inputs\` with required fields and \`outputs\` at the workflow level
+
+Output the raw YAML only — no prose around it.
+
+**Step 3 — After outputting the YAML, tell the developer:** "Your Arazzo spec is ready. Please copy the YAML above, switch back to your developer portal tab, and paste it into the workflow editor."`;
 
     window.open('https://claude.ai/new?q=' + encodeURIComponent(prompt), '_blank');
 }
 
 function generateMarkdownWithClaude() {
-    const name = document.getElementById('apiFlowName')?.value?.trim() || 'API Workflow';
+    const name = document.getElementById('apiFlowName')?.value?.trim() || '';
     const description = document.getElementById('apiFlowDescription')?.value?.trim() || '';
     const apis = getSelectedAPIs();
 
-    const apiList = apis.length > 0
-        ? apis.map(a => `- **${a.apiName}** (${a.apiType || 'REST'}): ${a.apiDescription || 'No description provided'}`).join('\n')
-        : '*(No APIs selected)*';
+    const pathParts = window.location.pathname.split('/');
+    const orgHandle = pathParts[1] || '';
+    const viewName = pathParts[3] || 'default';
 
-    const prompt = `Please write a natural-language workflow description in Markdown for the following use case:
+    const apiContext = apis.length > 0
+        ? apis.map(a => {
+            const url = `${window.location.origin}/${orgHandle}/views/${viewName}/api/${a.apiHandle}/docs/specification.json`;
+            return `- **${a.apiName}** (${a.apiType || 'REST'}): ${a.apiDescription || 'No description provided'}\n  OpenAPI spec: ${url}`;
+        }).join('\n')
+        : '*(No APIs pre-selected — select the required APIs from the Associated APIs section above. For APIs published in the developer portal, the Source Description will be auto-generated.)*';
 
-**Workflow Name:** ${name}
-**Description:** ${description}
+    const contextBlock = [
+        name ? `**Workflow name:** ${name}` : null,
+        description ? `**Initial description:** ${description}` : null,
+    ].filter(Boolean).join('\n');
 
-**APIs involved:**
-${apiList}
+    const prompt = `You are helping a developer describe an API workflow in plain language. The result will be saved as a Markdown document in their developer portal so that AI agents can understand and execute the workflow.
 
-Write a clear, well-structured Markdown document that:
-1. Opens with a brief summary of what the workflow does and why
-2. Lists the APIs used with a one-line explanation of each
-3. Describes every step in plain English — what API is called, what data is passed, what comes back, and why it's needed
-4. Explains what a successful run produces
+${contextBlock ? `Here is some context they have already provided:\n${contextBlock}\n` : ''}**APIs available on their portal:**
+${apiContext}
+
+Before doing anything else, fetch and read each OpenAPI spec URL above. Use the specs to identify the available API operations, required inputs and parameters, response shapes, and documented error codes — this will inform the steps and error handling you describe.
+
+Your job is to have a short conversation to understand the workflow, then produce a clear Markdown document describing it.
+
+**Step 1 — Ask the developer to describe the workflow in natural language.** Ask them: what triggers it, which APIs are called and in what order, what data is passed between steps, and what the final outcome is. Ask follow-up questions if anything is unclear.
+
+**Step 2 — Once you have enough detail, write a well-structured Markdown document that:**
+1. Opens with a concise summary of what the workflow does and why
+2. Lists the APIs involved with a one-line explanation of each
+3. Describes every step in plain English — which API is called, what data is sent, what comes back, and why that step is needed
+4. Explains what a successful run produces for the caller
 5. Covers error scenarios in a simple table: what can go wrong and what happens
 
-Use Markdown formatting (headers, numbered lists, tables, bold for emphasis). Write for a developer who needs to understand the flow at a glance. Return ONLY the Markdown, no extra commentary.`;
+Use Markdown formatting (headers, numbered lists, tables, bold for emphasis). Write for a developer who needs to understand the flow at a glance. Output the raw Markdown only — no prose around it.
+
+**Step 3 — After outputting the Markdown, tell the developer:** "Your workflow description is ready. Please copy the Markdown above, switch back to your developer portal tab, and paste it into the workflow editor."`;
 
     window.open('https://claude.ai/new?q=' + encodeURIComponent(prompt), '_blank');
+}
+
+function generateWithChatGPT() {
+    if (createPathFormat === 'markdown') {
+        generateMarkdownWithChatGPT();
+    } else {
+        generateArazzoWithChatGPT();
+    }
+}
+
+function generateArazzoWithChatGPT() {
+    const name = document.getElementById('apiFlowName')?.value?.trim() || '';
+    const description = document.getElementById('apiFlowDescription')?.value?.trim() || '';
+    const apis = getSelectedAPIs();
+
+    const pathParts = window.location.pathname.split('/');
+    const orgHandle = pathParts[1] || '';
+    const viewName = pathParts[3] || 'default';
+
+    const apiContext = apis.length > 0
+        ? apis.map(a => {
+            const url = `${window.location.origin}/${orgHandle}/views/${viewName}/api/${a.apiHandle}/docs/specification.json`;
+            return `- **${a.apiName}** (${a.apiType || 'REST'}): ${a.apiDescription || 'No description provided'}\n  OpenAPI spec: ${url}`;
+        }).join('\n')
+        : '*(No APIs pre-selected — select the required APIs from the Associated APIs section above. For APIs published in the developer portal, the Source Description will be auto-generated.)*';
+
+    const contextBlock = [
+        name ? `**Workflow name:** ${name}` : null,
+        description ? `**Initial description:** ${description}` : null,
+    ].filter(Boolean).join('\n');
+
+    const prompt = `You are helping a developer define an API workflow that will be saved to their developer portal.
+
+${contextBlock ? `Here is some context they have already provided:\n${contextBlock}\n` : ''}**Available APIs on their portal:**
+${apiContext}
+
+Before doing anything else, fetch and read each OpenAPI spec URL above. Use the specs to identify the available API operations, required inputs and parameters, response shapes, and documented error codes — this will drive the steps and inputs you generate.
+
+Your job is to have a short conversation to understand exactly what the workflow should do, then produce a complete Arazzo 1.0.0 YAML spec.
+
+**Step 1 — Ask the developer to describe the workflow in natural language.** Ask them: what triggers it, what each API call should do in sequence, what data flows between steps, and what the expected outcome is. If any detail is unclear, ask a follow-up question before proceeding.
+
+**Step 2 — Once you have enough detail, generate a complete Arazzo 1.0.0 YAML spec that:**
+1. Uses the \`arazzo: '1.0.0'\` header
+2. Includes \`sourceDescriptions\` with the OpenAPI spec URLs listed above
+3. Defines a \`workflows\` array with a single workflow and well-structured \`steps\`
+4. Each step includes: \`stepId\`, \`description\`, \`operationPath\`, \`successCriteria\`, \`outputs\`, \`onSuccess\`, \`onFailure\`
+5. Includes \`inputs\` with required fields and \`outputs\` at the workflow level
+
+Output the raw YAML only — no prose around it.
+
+**Step 3 — After outputting the YAML, tell the developer:** "Your Arazzo spec is ready. Please copy the YAML above, switch back to your developer portal tab, and paste it into the workflow editor."`;
+
+    window.open('https://chatgpt.com/?prompt=' + encodeURIComponent(prompt), '_blank');
+}
+
+function generateMarkdownWithChatGPT() {
+    const name = document.getElementById('apiFlowName')?.value?.trim() || '';
+    const description = document.getElementById('apiFlowDescription')?.value?.trim() || '';
+    const apis = getSelectedAPIs();
+
+    const pathParts = window.location.pathname.split('/');
+    const orgHandle = pathParts[1] || '';
+    const viewName = pathParts[3] || 'default';
+
+    const apiContext = apis.length > 0
+        ? apis.map(a => {
+            const url = `${window.location.origin}/${orgHandle}/views/${viewName}/api/${a.apiHandle}/docs/specification.json`;
+            return `- **${a.apiName}** (${a.apiType || 'REST'}): ${a.apiDescription || 'No description provided'}\n  OpenAPI spec: ${url}`;
+        }).join('\n')
+        : '*(No APIs pre-selected — select the required APIs from the Associated APIs section above. For APIs published in the developer portal, the Source Description will be auto-generated.)*';
+
+    const contextBlock = [
+        name ? `**Workflow name:** ${name}` : null,
+        description ? `**Initial description:** ${description}` : null,
+    ].filter(Boolean).join('\n');
+
+    const prompt = `You are helping a developer describe an API workflow in plain language. The result will be saved as a Markdown document in their developer portal so that AI agents can understand and execute the workflow.
+
+${contextBlock ? `Here is some context they have already provided:\n${contextBlock}\n` : ''}**APIs available on their portal:**
+${apiContext}
+
+Before doing anything else, fetch and read each OpenAPI spec URL above. Use the specs to identify the available API operations, required inputs and parameters, response shapes, and documented error codes — this will inform the steps and error handling you describe.
+
+Your job is to have a short conversation to understand the workflow, then produce a clear Markdown document describing it.
+
+**Step 1 — Ask the developer to describe the workflow in natural language.** Ask them: what triggers it, which APIs are called and in what order, what data is passed between steps, and what the final outcome is. Ask follow-up questions if anything is unclear.
+
+**Step 2 — Once you have enough detail, write a well-structured Markdown document that:**
+1. Opens with a concise summary of what the workflow does and why
+2. Lists the APIs involved with a one-line explanation of each
+3. Describes every step in plain English — which API is called, what data is sent, what comes back, and why that step is needed
+4. Explains what a successful run produces for the caller
+5. Covers error scenarios in a simple table: what can go wrong and what happens
+
+Use Markdown formatting (headers, numbered lists, tables, bold for emphasis). Write for a developer who needs to understand the flow at a glance. Output the raw Markdown only — no prose around it.
+
+**Step 3 — After outputting the Markdown, tell the developer:** "Your workflow description is ready. Please copy the Markdown above, switch back to your developer portal tab, and paste it into the workflow editor."`;
+
+    window.open('https://chatgpt.com/?prompt=' + encodeURIComponent(prompt), '_blank');
 }
 
 async function openInVSCode() {
@@ -823,13 +941,16 @@ function renderApiCards(query) {
         const isDisabled = workflowVisibleToAgents && !isAgentReady;
         const desc = sanitizeInput(cb.dataset.apiDescription || '');
         const agentBadge = isAgentReady
-            ? `<span class="af-api-agent-badge af-api-agent-badge--ready" title="Agent ready"><i class="bi bi-robot"></i></span>`
-            : `<span class="af-api-agent-badge af-api-agent-badge--not-ready" title="Not agent ready"><i class="bi bi-robot"></i></span>`;
+            ? `<span class="af-api-agent-badge af-api-agent-badge--ready" title="AI ready"><i class="bi bi-robot"></i></span>`
+            : `<span class="af-api-agent-badge af-api-agent-badge--not-ready" title="Not AI ready"><i class="bi bi-robot"></i></span>`;
+        const disabledTooltip = isDisabled
+            ? `<span class="af-api-card-tooltip">This API is not AI ready and cannot be selected for an AI-visible workflow</span>`
+            : '';
         return `
             <div class="af-api-card${isSelected ? ' af-api-card--selected' : ''}${isDisabled ? ' af-api-card--disabled' : ''}"
                  data-api-id="${cb.value}" role="button" tabindex="${isDisabled ? -1 : 0}"
-                 aria-pressed="${isSelected}" aria-disabled="${isDisabled}"
-                 title="${isDisabled ? 'This API is not agent ready and cannot be selected for an agent-visible workflow' : desc}">
+                 aria-pressed="${isSelected}" aria-disabled="${isDisabled}">
+                ${disabledTooltip}
                 <div class="af-api-card-check">
                     <i class="bi ${isSelected ? 'bi-check-circle-fill' : 'bi-circle'}"></i>
                 </div>
@@ -852,6 +973,7 @@ function renderApiCards(query) {
             cb.checked = !cb.checked;
             renderApiCards(document.getElementById('apiCardSearch')?.value.trim() || '');
             updatePromptFromForm();
+            if (currentWorkflowPath === 'create') generateArazzoSpec();
         }
         card.addEventListener('click', toggle);
         card.addEventListener('keydown', e => {

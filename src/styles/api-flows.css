@@ -624,6 +624,7 @@
     cursor: pointer;
     transition: border-color 0.15s ease, background 0.15s ease;
     user-select: none;
+    position: relative;
 }
 
 .af-api-card:hover {
@@ -691,13 +692,35 @@
 
 .af-api-card--disabled {
     opacity: 0.5;
-    cursor: not-allowed;
     pointer-events: auto;
 }
 
 .af-api-card--disabled:hover {
     border-color: var(--bs-gray-300);
     background: var(--main-bg-color);
+}
+
+.af-api-card--disabled:hover .af-api-card-tooltip {
+    opacity: 1;
+}
+
+.af-api-card-tooltip {
+    opacity: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    inset: 0;
+    border-radius: 0.625rem;
+    background-color: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    font-size: 0.72rem;
+    line-height: 1.4;
+    text-align: center;
+    padding: 0.5rem;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 1;
 }
 
 /* ===== Prompt / Code Textareas ===== */
@@ -1352,29 +1375,6 @@
     align-items: center;
 }
 
-.af-generate-template-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1.125rem;
-    background: var(--primary-main-color);
-    color: var(--white-text-color, #fff);
-    border: 1px solid var(--primary-main-color);
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity 0.15s ease;
-}
-
-.af-generate-template-btn:hover {
-    opacity: 0.88;
-}
-
-.af-generate-template-btn:active {
-    opacity: 0.78;
-}
-
 .af-generate-claude-btn {
     display: inline-flex;
     align-items: center;
@@ -1396,6 +1396,29 @@
 
 .af-generate-claude-btn:active {
     background: #a5522f;
+}
+
+.af-generate-chatgpt-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.125rem;
+    background: #10a37f;
+    color: #fff;
+    border: 1px solid #0d8f6e;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.af-generate-chatgpt-btn:hover {
+    background: #0d8f6e;
+}
+
+.af-generate-chatgpt-btn:active {
+    background: #0b7d5f;
 }
 
 .af-vscode-btn {
@@ -1425,4 +1448,64 @@
     width: 15px;
     height: 15px;
     flex-shrink: 0;
+}
+
+/* ===== Inline Info Tooltip ===== */
+
+.af-info-tip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: default;
+    color: var(--bs-secondary, #6c757d);
+    font-size: 0.85rem;
+    font-weight: 400;
+}
+
+.af-info-tip:hover {
+    color: var(--primary-main-color);
+}
+
+.af-info-tip-content {
+    display: none;
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    width: 280px;
+    background: #1e2230;
+    color: #f0f0f5;
+    font-size: 0.78rem;
+    font-weight: 400;
+    line-height: 1.5;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    white-space: normal;
+    z-index: 1050;
+    pointer-events: none;
+}
+
+.af-info-tip-content::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #1e2230;
+}
+
+.af-info-tip-content code {
+    font-size: 0.76rem;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
+    padding: 0.05em 0.3em;
+    color: #c9d1f5;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+.af-info-tip:hover .af-info-tip-content,
+.af-info-tip:focus-within .af-info-tip-content {
+    display: block;
 }
