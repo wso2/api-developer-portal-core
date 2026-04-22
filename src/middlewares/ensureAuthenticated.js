@@ -426,13 +426,13 @@ const enforceMTLS = (req, res, next) => {
 const enforceAPIKey = (req, res, next) => {
     const keyType = config.advanced?.apiKey?.keyType;
 
-    if (!keyType || !config.apiKeySecret) {
+    if (!keyType || !config.advanced?.apiKey?.secret) {
         return res.status(500).json({ error: "Server configuration error" });
     }
 
     const apiKey = req.headers[keyType.toLowerCase()];
 
-    if (!apiKey || apiKey !== config.apiKeySecret) {
+    if (!apiKey || apiKey !== config.advanced?.apiKey?.secret) {
         return res.status(401).json({ error: "Unauthorized: API key is invalid or not found" });
     }
     return next();

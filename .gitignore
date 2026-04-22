@@ -93,8 +93,7 @@ eslint.config.mjs
 
 .prettierrc
 
-config*.yaml
-secret*.yaml
+config.yaml
 resources/default-layout
 resources/mock
 

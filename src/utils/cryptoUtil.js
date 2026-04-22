@@ -21,7 +21,7 @@
 const crypto = require("crypto");
 const config = require('../config/config');
 
-const ENCRYPTION_KEY = config.billingKeyEncryptionKey;
+const ENCRYPTION_KEY = config.billing?.encryptionKey;
 
 if (!ENCRYPTION_KEY) {
   throw new Error(

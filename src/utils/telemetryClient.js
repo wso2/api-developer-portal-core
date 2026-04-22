@@ -5,8 +5,8 @@ const config = require('../config/config');
 
 let telemetryClient = null;
 
-if (config.telemetry && config.azureInsightsConnectionString) {
-    appInsights.setup(config.azureInsightsConnectionString);
+if (config.telemetry?.enabled && config.azureInsightsConnectionStringconfig.telemetry && config.telemetry?.azureInsightsConnectionString) {
+    appInsights.setup(config.telemetry.azureInsightsConnectionString);
     telemetryClient = appInsights.defaultClient;
 } else {
     // Provide a no-op client when telemetry is disabled

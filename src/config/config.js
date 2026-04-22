@@ -44,14 +44,7 @@ function loadConfig() {
         merged = deepMerge(defaults, userConfig);
     }
 
-    // 3. Deep-merge secret.yaml if present (secrets kept separate from main config)
-    const secretPath = path.join(process.cwd(), 'secret.yaml');
-    if (fs.existsSync(secretPath)) {
-        const userSecrets = yaml.load(fs.readFileSync(secretPath, 'utf8')) || {};
-        merged = deepMerge(merged, userSecrets);
-    }
-
-    // 4. Apply DP_* environment variable overrides
+    // 3. Apply DP_* environment variable overrides
     const e = process.env;
 
     if (e.DP_DB_HOST)     merged.db.host     = e.DP_DB_HOST;

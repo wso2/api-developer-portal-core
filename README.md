@@ -9,23 +9,18 @@
 
 The fastest way to run the portal. No manual DB setup or schema scripts needed — everything is auto-initialized on first startup.
 
-**1. Copy the example config files:**
+**1. Copy the example config:**
 
 ```bash
 cp config.yaml.example config.yaml
-cp sample_secret.yaml secret.yaml
 ```
 
-**2. Set your DB password and org name in `secret.yaml` and `config.yaml`:**
+**2. Set your DB password in `config.yaml`:**
 
-`secret.yaml`:
 ```yaml
 db:
   password: "yourpassword"
-```
 
-`config.yaml`:
-```yaml
 portal:
   orgName: MyCompany   # optional — defaults to ACME
 ```
@@ -59,14 +54,13 @@ http://localhost:3000/ACME/views/default
 
 ## Local development (npm start)
 
-### 1. Create config files
+### 1. Create config file
 
 ```bash
 cp config.yaml.example config.yaml
-cp sample_secret.yaml secret.yaml
 ```
 
-`config.yaml` and `secret.yaml` are gitignored — never commit them.
+`config.yaml` is gitignored — never commit it.
 
 ### 2. Configure `config.yaml`
 
@@ -83,16 +77,10 @@ db:
   host: localhost
   username: postgres
   database: devportal
-```
-
-### 3. Configure `secret.yaml`
-
-```yaml
-db:
   password: "yourpassword"
 ```
 
-### 4. Configure Identity Provider (login)
+### 3. Configure Identity Provider (login)
 
 Update `identityProvider` in `config.yaml` to point to your IdP:
 
@@ -103,11 +91,12 @@ identityProvider:
   tokenURL: "https://your-idp.example.com/oauth2/token"
   jwksURL: "https://your-idp.example.com/oauth2/jwks"
   clientId: "your-client-id"
+  clientSecret: "your-client-secret"
   callbackURL: "http://localhost:3000/ACME/callback"
   logoutURL: "https://your-idp.example.com/oidc/logout"
 ```
 
-### 5. Database setup
+### 4. Database setup
 
 Create the database:
 
@@ -128,14 +117,14 @@ docker run --name devportal-postgres \
 
 The schema and default org are created automatically on first `npm start`. No need to run any SQL scripts manually.
 
-### 6. Install and run
+### 5. Install and run
 
 ```bash
 npm install
 npm start
 ```
 
-### 7. Verify
+### 6. Verify
 
 ```
 http://localhost:3000/ACME/views/default
@@ -149,8 +138,7 @@ http://localhost:3000/ACME/views/default
 
 ```
 DP_* environment variables   (highest — for CI/CD, Kubernetes secrets)
-secret.yaml                  (secrets — gitignored)
-config.yaml                  (your overrides — gitignored)
+config.yaml                  (your config — gitignored)
 sample_config.yaml           (built-in defaults — committed)
 ```
 
@@ -159,9 +147,7 @@ sample_config.yaml           (built-in defaults — committed)
 | File | Purpose | Committed? |
 |---|---|---|
 | `sample_config.yaml` | Built-in defaults | Yes |
-| `sample_secret.yaml` | Secrets template | Yes |
-| `config.yaml` | Your config overrides | No (gitignored) |
-| `secret.yaml` | Your secrets | No (gitignored) |
+| `config.yaml` | Your config and secrets | No (gitignored) |
 | `config.yaml.example` | Full reference with comments | Yes |
 
 ### `DP_*` environment variables

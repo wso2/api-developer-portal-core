@@ -37,8 +37,8 @@ const DEFAULT_URI = 'https://devportal.bijira.dev';
  * This middleware automatically tracks HTTP requests and responses for analytics.
  * @type {Function}
  */
-const middleware = config.moesifAppId ? moesif({
-    applicationId: config.moesifAppId,
+const middleware = config.analytics?.moesifAppId ? moesif({
+    applicationId: config.analytics?.moesifAppId,
     debug: false,
 }) : null;
 

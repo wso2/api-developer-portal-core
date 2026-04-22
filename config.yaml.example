@@ -3,20 +3,20 @@
 # Unset fields fall back to the built-in defaults in sample_config.yaml.
 # All values can also be overridden via DP_* environment variables (highest priority).
 #
-# Priority: DP_* env vars  >  secret.yaml  >  config.yaml  >  sample_config.yaml defaults
+# Priority: DP_* env vars  >  config.yaml  >  sample_config.yaml defaults
 #
-# Secrets (db.password, identityProvider.clientSecret, etc.) belong in secret.yaml,
-# not here. Copy sample_secret.yaml → secret.yaml and fill in your secrets there.
+# config.yaml is gitignored — safe to store secrets here.
+# For CI/CD or Kubernetes, use DP_* env vars instead.
 
 # ─────────────────────────────────────────────────────────
-# Database
+# Application
 # ─────────────────────────────────────────────────────────
-db:
-  host: localhost          # env: DP_DB_HOST
-  port: 5432               # env: DP_DB_PORT
-  username: postgres       # env: DP_DB_USER
-  database: devportal      # env: DP_DB_NAME
-  dialect: postgres
+baseUrl: "http://localhost:3000"   # env: DP_BASE_URL
+defaultPort: 3000
+mode: production                   # production | development
+disableTLS: true
+pathToContent: "./resources/default-layout/"
+pathToDBCert: ""
 
 # ─────────────────────────────────────────────────────────
 # Portal bootstrap
@@ -27,17 +27,39 @@ portal:
                            # Has no effect if an org already exists in the database.
 
 # ─────────────────────────────────────────────────────────
-# Application
+# Database
 # ─────────────────────────────────────────────────────────
-baseUrl: "http://localhost:3000"   # env: DP_BASE_URL
-defaultPort: 3000
-mode: production           # production | development
+db:
+  host: localhost          # env: DP_DB_HOST
+  port: 5432               # env: DP_DB_PORT
+  username: postgres       # env: DP_DB_USER
+  password: ""             # env: DP_DB_PASSWORD
+  database: devportal      # env: DP_DB_NAME
+  dialect: postgres
 
+# ─────────────────────────────────────────────────────────
+# Advanced
+# ─────────────────────────────────────────────────────────
 advanced:
-  http: true               # Set false to enable HTTPS (requires serverCerts)
+  http: true                       # Set false to enable HTTPS (requires serverCerts)
   dbSslDialectOption: false
-
-generateDefaultSubPolicies: true   # Create Bronze/Silver/Gold/Unlimited plans on first run
+  resourceLoadFromBaseUrl: false
+  disabledRoleValidation: false
+  disableOrgCallback: false
+  disableScopeValidation: false
+  apiKey:
+    enabled: false
+    keyType: "x-wso2-api-key"
+    keyValue: "x-wso2-api-key"
+    secret: ""                     # Secret for API key validation
+  tokenExchanger:
+    enabled: false
+    url: ""
+    client_id: ""
+    grant_type: "urn:ietf:params:oauth:grant-type:token-exchange"
+    subject_token_type: "urn:ietf:params:oauth:token-type:jwt"
+    requested_token_type: "urn:ietf:params:oauth:token-type:jwt"
+    scope: ""
 
 # ─────────────────────────────────────────────────────────
 # Identity Provider (OIDC)
@@ -49,6 +71,7 @@ identityProvider:
   tokenURL: "https://localhost:9443/oauth2/token"             # env: DP_OIDC_TOKEN_URL
   userInfoURL: "https://localhost:9443/oauth2/userinfo"
   clientId: "<CLIENT_ID>"                                     # env: DP_OIDC_CLIENT_ID
+  clientSecret: ""                                            # env: DP_OIDC_CLIENT_SECRET
   callbackURL: "http://localhost:3000/ACME/callback"          # env: DP_OIDC_CALLBACK_URL
   scope: "openid profile"                                     # env: DP_OIDC_SCOPE
   logoutURL: "https://localhost:9443/oidc/logout"             # env: DP_OIDC_LOGOUT_URL
@@ -56,6 +79,47 @@ identityProvider:
   jwksURL: "https://localhost:9443/oauth2/jwks"               # env: DP_OIDC_JWKS_URL
   certificate: ""
   signUpURL: ""
+
+# Federated IdP hints
+fidp:
+  google: "google"
+  github: "github"
+  microsoft: "microsoft"
+  enterprise: "EnterpriseIDP"
+  email: "LOCAL"
+
+# ─────────────────────────────────────────────────────────
+# Role / claim mapping
+# ─────────────────────────────────────────────────────────
+roleClaim: "roles"
+orgIDClaim: "organization.uuid"
+groupsClaim: "groups"
+adminRole: "admin"
+subscriberRole: "Internal/subscriber"
+superAdminRole: "superAdmin"
+
+# ─────────────────────────────────────────────────────────
+# Page access control
+# ─────────────────────────────────────────────────────────
+authenticatedPages:
+  - "/portal/*/edit"
+  - "/portal"
+  - "/*/configure"
+  - "**/applications"
+  - "**/applications/**"
+  - "**/myapis"
+  - "**/myapis/**"
+  - "**/myapis?**"
+
+authorizedPages:
+  - "**/applications"
+  - "**/applications/**"
+  - "/*/configure"
+  - "/portal/*/edit"
+  - "/portal"
+  - "**/myapis"
+  - "**/myapis/**"
+  - "**/myapis?**"
 
 # ─────────────────────────────────────────────────────────
 # Control Plane (WSO2 API Manager / Choreo)
@@ -68,6 +132,17 @@ controlPlane:
   pathToCertificate: "./resources/security/client-truststore.pem"
 
 # ─────────────────────────────────────────────────────────
+# AI SDK Service (optional)
+# ─────────────────────────────────────────────────────────
+aiSDKService:
+  url: "http://localhost:5001"
+  authHeaderName: ""
+  apiKey: ""
+  endpoints:
+    mergeSpecs: "/merge-openapi-specs"
+    generateApp: "/generate-application-code"
+
+# ─────────────────────────────────────────────────────────
 # Redis (optional caching)
 # ─────────────────────────────────────────────────────────
 redis:
@@ -75,14 +150,69 @@ redis:
   host: ""
   port: 6379
   db: 0
+  password: ""
+  tls:
+    enabled: false
+    rejectUnauthorized: true
+  configs:
+    ttl: 600
+    maxFileSize: 52428800
+    maxReconnectAttempts: 3
+    sseConnectionTimeout: 120000
+    commandTimeout: 20000
+    connectionTimeout: 8000
+    pipelineTimeout: 30000
+    retryDelayOnFailover: 1000
 
 # ─────────────────────────────────────────────────────────
 # HTTPS server certs (only needed when advanced.http = false)
 # ─────────────────────────────────────────────────────────
-# serverCerts:
-#   pathToCert: "./resources/security/client-truststore.pem"
-#   pathToPK: "./resources/security/private-key.pem"
-#   pathToCA: "./resources/security/client-truststore.pem"
+serverCerts:
+  pathToCert: "./resources/security/client-truststore.pem"
+  pathToPK: "./resources/security/private-key.pem"
+  pathToCA: "./resources/security/client-truststore.pem"
+
+# ─────────────────────────────────────────────────────────
+# Features
+# ─────────────────────────────────────────────────────────
+features:
+  sdkGeneration:
+    enabled: false
+
+generateDefaultSubPolicies: true
+
+billing:
+  encryptionKey: ""        # 64-char hex string (32 random bytes)
+
+# ─────────────────────────────────────────────────────────
+# Portal UI config
+# ─────────────────────────────────────────────────────────
+portalConfigs:
+  showMaintenanceBanner: false
+  maintenanceBannerText: ""
+  reoClientID: ""
+
+# ─────────────────────────────────────────────────────────
+# Telemetry & monitoring
+# ─────────────────────────────────────────────────────────
+telemetry:
+  enabled: false
+  azureInsightsConnectionString: ""
+
+analytics:
+  moesifAppId: ""
+
+# ─────────────────────────────────────────────────────────
+# Logging
+# ─────────────────────────────────────────────────────────
+logging:
+  consoleOnly: false
+
+# ─────────────────────────────────────────────────────────
+# Provider URLs
+# ─────────────────────────────────────────────────────────
+providerURL:
+  AWS: "https://aws.amazon.com"
 
 # ─────────────────────────────────────────────────────────
 # Default admin user (development / testing only)
