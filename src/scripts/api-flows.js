@@ -1031,7 +1031,7 @@ function updateWorkflowMdPreview() {
     const name = document.getElementById('apiFlowName')?.value?.trim() || '';
     const desc = document.getElementById('apiFlowDescription')?.value?.trim() || '';
     const apis = getSelectedAPIs();
-    const spec = arazoEditor ? arazoEditor.getValue().trim() : (document.getElementById('apiFlowDefinition')?.value?.trim() || '');
+    const isMarkdown = createPathFormat === 'markdown';
 
     if (!name && !desc) {
         el.textContent = 'Fill in name and description to see a preview.';
@@ -1063,12 +1063,20 @@ function updateWorkflowMdPreview() {
         md += `- **OpenAPI Spec sources**: Read the \`securitySchemes\` section of the spec to determine the authentication method.\n`;
     }
 
-    md += `\n## API Flow Specification\n\n`;
-    md += `[arazzo.json](/${orgHandle}/views/${viewName}/api-workflows/${handle}/arazzo.json)\n\n`;
-    if (spec) {
-        md += '```\n' + spec + '\n```\n';
+    if (isMarkdown) {
+        const workflowDesc = document.getElementById('markdownContent')?.value?.trim() || '';
+        md += `\n## Workflow Description\n\n`;
+        md += workflowDesc || '_No workflow description defined yet._';
+        md += '\n';
     } else {
-        md += '_No specification defined yet._\n';
+        const spec = arazoEditor ? arazoEditor.getValue().trim() : (document.getElementById('apiFlowDefinition')?.value?.trim() || '');
+        md += `\n## API Flow Specification\n\n`;
+        md += `[arazzo.json](/${orgHandle}/views/${viewName}/api-workflows/${handle}/arazzo.json)\n\n`;
+        if (spec) {
+            md += '```\n' + spec + '\n```\n';
+        } else {
+            md += '_No specification defined yet._\n';
+        }
     }
 
     el.textContent = md;
@@ -1702,11 +1710,18 @@ function initWizard() {
     document.getElementById('afContinueBtn')?.addEventListener('click', () => {
         if (validateWizardStep(currentStep)) goToStep(currentStep + 1);
     });
-    // Clicking a complete stepper step navigates back
+    // Clicking or keyboard-activating a complete stepper step navigates back
     document.querySelectorAll('.af-stepper-step').forEach(el => {
         el.addEventListener('click', () => {
             const s = parseInt(el.dataset.step);
             if (s < currentStep) goToStep(s);
+        });
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                const s = parseInt(el.dataset.step);
+                if (s < currentStep) goToStep(s);
+            }
         });
     });
 
@@ -1749,11 +1764,10 @@ function validateWizardStep(step) {
         return valid;
     }
     if (step === 2) {
-        // Require spec content if agent-visible
-        const agentVis = document.querySelector('input[name="apiFlowAgentVisibility"]:checked')?.value;
-        const hasArazzo = arazoEditor ? arazoEditor.getValue().trim().length > 0 : (document.getElementById('apiFlowDefinition')?.value?.trim().length > 0);
-        const hasMd = document.getElementById('markdownContent')?.value?.trim().length > 0;
-        const hasContent = hasArazzo || hasMd;
+        const isMarkdown = currentContentType === 'MD';
+        const hasContent = isMarkdown
+            ? document.getElementById('markdownContent')?.value?.trim().length > 0
+            : arazoEditor ? arazoEditor.getValue().trim().length > 0 : document.getElementById('apiFlowDefinition')?.value?.trim().length > 0;
         if (!hasContent) {
             showAlert('Add an API workflow spec before continuing', 'warning');
             return false;
@@ -1769,7 +1783,7 @@ function updateWizardUI() {
         document.getElementById(`afStep${i}`)?.classList.toggle('d-none', i !== currentStep);
         document.getElementById(`afRight${i}`)?.classList.toggle('d-none', i !== currentStep);
     }
-    // Stepper dots
+    // Stepper dots + ARIA state
     document.querySelectorAll('.af-stepper-step').forEach(el => {
         const s = parseInt(el.dataset.step);
         el.classList.toggle('is-active', s === currentStep);
@@ -1777,6 +1791,11 @@ function updateWizardUI() {
         if (s > currentStep) {
             el.classList.remove('is-active', 'is-complete');
         }
+        const isComplete = s < currentStep;
+        const isCurrent = s === currentStep;
+        el.setAttribute('aria-current', isCurrent ? 'step' : 'false');
+        el.setAttribute('aria-disabled', isComplete ? 'false' : 'true');
+        el.setAttribute('tabindex', isComplete ? '0' : '-1');
         const dot = el.querySelector('.af-stepper-dot');
         if (dot) dot.innerHTML = s < currentStep ? '<i class="bi bi-check2"></i>' : String(s);
     });

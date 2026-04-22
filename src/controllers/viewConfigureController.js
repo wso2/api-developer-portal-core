@@ -33,10 +33,12 @@ const loadViewSettingsPage = async (req, res) => {
     const completeTemplatePath = path.join(require.main.filename, '..', 'pages', 'api-flows', 'page.hbs');
     const layoutPath = path.join(process.cwd(), 'src', 'defaultContent', 'layout', 'main.hbs');
 
+    const baseUrl = '/' + req.params.orgName + '/views/' + viewName;
+    const csrfToken = getSessionCsrfToken(req);
     let templateContent = {
-        baseUrl: '/' + req.params.orgName + '/views/' + viewName,
+        baseUrl,
         viewName,
-        csrfToken: getSessionCsrfToken(req),
+        csrfToken,
         showApiWorkflowsNav: config.features?.apiWorkflows?.enabled === true
     };
     try {
@@ -45,6 +47,7 @@ const loadViewSettingsPage = async (req, res) => {
             templateContent.orgAPIs = [];
             templateContent.devportalMode = constants.API_TYPE.DEFAULT;
             templateContent.llmsConfig = { aiEnabled: true, portalName: '', portalDescription: '' };
+            templateContent.llmsConfigContext = { orgID: '', viewName, csrfToken, baseUrl };
         } else {
             const orgName = req.params.orgName;
             templateContent.loggedOrg = orgName;
@@ -76,6 +79,7 @@ const loadViewSettingsPage = async (req, res) => {
                 try { llmsConfig = { ...llmsConfig, ...JSON.parse(configAsset.FILE_CONTENT.toString('utf8')) }; } catch (e) { /* ignore */ }
             }
             templateContent.llmsConfig = llmsConfig;
+            templateContent.llmsConfigContext = { orgID, viewName, csrfToken, baseUrl };
 
             templateContent.profile = req.user;
         }
@@ -117,7 +121,14 @@ const getLlmsConfig = async (req, res) => {
 
 const saveLlmsConfig = async (req, res) => {
     const { orgName, viewName } = req.params;
-    const { aiEnabled, portalName, portalDescription } = req.body;
+    const { aiEnabled: rawAiEnabled, portalName: rawPortalName, portalDescription: rawPortalDescription } = req.body;
+
+    const aiEnabled = rawAiEnabled === true || rawAiEnabled === 'true' || rawAiEnabled === '1' || rawAiEnabled === 1;
+    const portalName = (typeof rawPortalName === 'string' ? rawPortalName : String(rawPortalName ?? ''))
+        .trim().replace(/[<>"'&]/g, '').slice(0, 100);
+    const portalDescription = (typeof rawPortalDescription === 'string' ? rawPortalDescription : String(rawPortalDescription ?? ''))
+        .trim().replace(/[<>"'&]/g, '').slice(0, 1000);
+
     try {
         const orgID = await adminDao.getOrgId(orgName);
         const content = Buffer.from(JSON.stringify({ aiEnabled, portalName, portalDescription }));
