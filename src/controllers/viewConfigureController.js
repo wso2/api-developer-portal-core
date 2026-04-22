@@ -21,7 +21,7 @@ const logger = require('../config/logger');
 const adminDao = require('../dao/admin');
 const apiMetadataDao = require('../dao/apiMetadata');
 const apiFlowService = require('../services/apiFlowService');
-const { renderGivenTemplate } = require('../utils/util');
+const { renderGivenTemplate, loadLayoutFromAPI } = require('../utils/util');
 const { getSessionCsrfToken } = require('../middlewares/csrfProtection');
 const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
@@ -38,7 +38,6 @@ const loadViewSettingsPage = async (req, res) => {
         viewName,
         csrfToken: getSessionCsrfToken(req)
     };
-    let layoutResponse = "";
     try {
         if (config.mode === constants.DEV_MODE) {
             templateContent.apiFlows = [];
@@ -56,7 +55,7 @@ const loadViewSettingsPage = async (req, res) => {
             const apiFlows = await apiFlowService.getAllAPIFlowsFromDB(orgID, viewId);
             templateContent.apiFlows = apiFlows;
 
-            const allAPIs = await apiMetadataDao.getAPIMetadataByCondition({ ORG_ID: orgID });
+            const allAPIs = await apiMetadataDao.getAPIMetadataByCondition({ ORG_ID: orgID, STATUS: constants.API_STATUS.PUBLISHED });
             templateContent.orgAPIs = allAPIs.map(api => ({
                 apiId: api.API_ID,
                 apiName: api.API_NAME,
@@ -69,9 +68,15 @@ const loadViewSettingsPage = async (req, res) => {
 
             templateContent.profile = req.user;
         }
-        layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
         const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
-        const html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        const dbLayout = orgID ? await loadLayoutFromAPI(orgID, viewName) : '';
+        let html;
+        if (dbLayout) {
+            html = await renderGivenTemplate(templateResponse, dbLayout, templateContent);
+        } else {
+            layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
+            html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
+        }
         res.send(html);
     } catch (error) {
         logger.error(`Error while loading view settings page`, {

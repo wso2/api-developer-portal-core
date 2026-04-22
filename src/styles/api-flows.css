@@ -1509,3 +1509,19 @@
 .af-info-tip:focus-within .af-info-tip-content {
     display: block;
 }
+
+.af-info-tip--right .af-info-tip-content {
+    left: calc(100% + 8px);
+    bottom: auto;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.af-info-tip--right .af-info-tip-content::after {
+    top: 50%;
+    left: auto;
+    right: 100%;
+    transform: translateY(-50%);
+    border-top-color: transparent;
+    border-right-color: #1e2230;
+}

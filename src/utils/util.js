@@ -178,9 +178,13 @@ async function renderGivenTemplate(templatePage, layoutPage, templateContent) {
 
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutPage.toString());
+    const showApiWorkflowsNav = config.features?.apiWorkflows?.enabled === true;
+    const enrichedContent = { ...templateContent, showApiWorkflowsNav };
     return layout({
-        body: template(templateContent),
+        body: template(enrichedContent),
+        portalConfigs: config.portalConfigs,
         profile: templateContent.profile,
+        showApiWorkflowsNav,
     });
 }
 

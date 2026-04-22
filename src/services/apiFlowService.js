@@ -21,6 +21,7 @@ const apiMetadataDao = require('../dao/apiMetadata');
 const sequelize = require('../db/sequelize');
 const { UniqueConstraintError } = require('sequelize');
 const logger = require('../config/logger');
+const config = require(process.cwd() + '/config.json');
 const constants = require('../utils/constants');
 const yaml = require('js-yaml');
 
@@ -286,7 +287,7 @@ const getAllAPIFlows = async (req, res) => {
 const generatePrompt = async (req, res) => {
     const { name, description, apis, orgHandle, viewName, handle } = req.body;
     try {
-        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const baseUrl = config.baseUrl || `${req.protocol}://${req.get('host')}`;
         const prompt = generateAgentPrompt(name, description, apis || [], orgHandle || '', viewName || 'default', baseUrl, handle || '');
         res.status(200).json({ agentPrompt: prompt });
     } catch (error) {
