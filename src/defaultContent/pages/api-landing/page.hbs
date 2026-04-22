@@ -66,7 +66,6 @@
                                 </button>
                                 <div class="run-dropdown-menu" id="apiRunDropdownMenu">
                                     <button class="run-option" id="apiBtnRunClaude">Run in Claude</button>
-                                    <button class="run-option" id="apiBtnRunChatGPT">Run in ChatGPT</button>
                                 </div>
                             </div>
                         </div>
@@ -138,15 +137,6 @@
             apiBtnRunClaude.addEventListener('click', function() {
                 const text = document.getElementById('apiAgentPromptText').textContent;
                 window.open('https://claude.ai/new?q=' + encodeURIComponent(text), '_blank');
-                document.getElementById('apiRunDropdownMenu').classList.remove('show');
-            });
-        }
-
-        const apiBtnRunChatGPT = document.getElementById('apiBtnRunChatGPT');
-        if (apiBtnRunChatGPT) {
-            apiBtnRunChatGPT.addEventListener('click', function() {
-                const text = document.getElementById('apiAgentPromptText').textContent;
-                window.open('https://chatgpt.com/?prompt=' + encodeURIComponent(text), '_blank');
                 document.getElementById('apiRunDropdownMenu').classList.remove('show');
             });
         }

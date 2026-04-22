@@ -97,12 +97,6 @@ function runInClaude() {
     document.getElementById('runDropdownMenu').classList.remove('show');
 }
 
-function runInChatGPT() {
-    const prompt = document.getElementById('promptText').textContent;
-    window.open('https://chatgpt.com/?prompt=' + encodeURIComponent(prompt), '_blank');
-    document.getElementById('runDropdownMenu').classList.remove('show');
-}
-
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
@@ -145,9 +139,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const btnRunClaude = document.getElementById('btnRunClaude');
     if (btnRunClaude) btnRunClaude.addEventListener('click', runInClaude);
-
-    const btnRunChatGPT = document.getElementById('btnRunChatGPT');
-    if (btnRunChatGPT) btnRunChatGPT.addEventListener('click', runInChatGPT);
 
     const modal = document.getElementById('promptModal');
     if (modal) {

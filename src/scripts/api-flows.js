@@ -176,11 +176,6 @@ document.addEventListener('DOMContentLoaded', function () {
         window.open('https://claude.ai/new?q=' + encodeURIComponent(prompt), '_blank');
         document.getElementById('configRunDropdownMenu').classList.remove('show');
     });
-    document.getElementById('runInChatGPTBtn')?.addEventListener('click', function() {
-        const prompt = document.getElementById('agentPromptContent').textContent;
-        window.open('https://chatgpt.com/?prompt=' + encodeURIComponent(prompt), '_blank');
-        document.getElementById('configRunDropdownMenu').classList.remove('show');
-    });
     document.addEventListener('click', function() {
         document.getElementById('configRunDropdownMenu')?.classList.remove('show');
     });
