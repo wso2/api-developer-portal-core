@@ -182,7 +182,8 @@ features:
 generateDefaultSubPolicies: true
 
 billing:
-  encryptionKey: ""        # 64-char hex string (32 random bytes)
+  enabled: false
+  encryptionKey: ""        # 64-char hex string (32 random bytes) — required when enabled
 
 # ─────────────────────────────────────────────────────────
 # Portal UI config

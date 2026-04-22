@@ -115,7 +115,16 @@ portalConfigs:
   showMaintenanceBanner: true
   maintenanceBannerText: "This portal is under maintenance today from 10 PM to 12 AM."
 
-telemetry: true
+billing:
+  enabled: false
+  encryptionKey: ""
+
+telemetry:
+  enabled: false
+  azureInsightsConnectionString: ""
+
+analytics:
+  moesifAppId: ""
 generateDefaultSubPolicies: true
 
 fidp:
