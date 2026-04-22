@@ -20,7 +20,8 @@ const adminDao = require('../dao/admin');
 const apiMetadataDao = require('../dao/apiMetadata');
 const apiFlowService = require('../services/apiFlowService');
 const logger = require('../config/logger');
-const { renderTemplate } = require('../utils/util');
+const { renderTemplate, loadLayoutFromAPI, renderGivenTemplate, renderTemplateFromAPI } = require('../utils/util');
+const constants = require('../utils/constants');
 const config = require(process.cwd() + '/config.json');
 const fs = require('fs');
 const path = require('path');
@@ -117,12 +118,19 @@ const loadAPIFlows = async (req, res) => {
             devportalMode
         };
 
-        const html = renderTemplate(
-            'src/defaultContent/pages/api-flows/page.hbs',
-            'src/defaultContent/layout/main.hbs',
-            templateContent,
-            false
-        );
+        const dbLayout = await loadLayoutFromAPI(orgID, viewName);
+        let html;
+        if (dbLayout) {
+            const templatePath = path.join(process.cwd(), 'src/defaultContent/pages/api-flows/page.hbs');
+            const templateResponse = fs.readFileSync(templatePath, 'utf8');
+            const styleContent = await adminDao.getOrgContent({ orgId: orgID, fileType: 'style', viewName: viewName, fileName: 'main.css' });
+            const themedLayout = styleContent
+                ? dbLayout.replace(/\/styles\//g, `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/views/${viewName}/layout?fileType=style&fileName=`)
+                : dbLayout;
+            html = await renderGivenTemplate(templateResponse, themedLayout, templateContent);
+        } else {
+            html = await renderTemplateFromAPI(templateContent, orgID, orgName, 'pages/api-flows', viewName);
+        }
         res.send(html);
     } catch (error) {
         logger.error('Error loading API flows', {
@@ -203,12 +211,19 @@ const loadAPIFlowDetail = async (req, res) => {
             devportalMode
         };
 
-        const html = renderTemplate(
-            'src/defaultContent/pages/api-flows/detail/page.hbs',
-            'src/defaultContent/layout/main.hbs',
-            templateContent,
-            false
-        );
+        const dbLayout = await loadLayoutFromAPI(orgID, viewName);
+        let html;
+        if (dbLayout) {
+            const templatePath = path.join(process.cwd(), 'src/defaultContent/pages/api-flows/detail/page.hbs');
+            const templateResponse = fs.readFileSync(templatePath, 'utf8');
+            const styleContent = await adminDao.getOrgContent({ orgId: orgID, fileType: 'style', viewName: viewName, fileName: 'main.css' });
+            const themedLayout = styleContent
+                ? dbLayout.replace(/\/styles\//g, `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgID}/views/${viewName}/layout?fileType=style&fileName=`)
+                : dbLayout;
+            html = await renderGivenTemplate(templateResponse, themedLayout, templateContent);
+        } else {
+            html = await renderTemplateFromAPI(templateContent, orgID, orgName, 'pages/api-flows/detail', viewName);
+        }
         res.send(html);
     } catch (error) {
         logger.error('Error loading API flow detail', {
@@ -400,7 +415,7 @@ const getAllPublishedFlowsMD = async (req, res) => {
 const generatePrompt = async (req, res) => {
     const { name, description, apis, orgName, viewName, handle } = req.body;
     try {
-        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const baseUrl = config.baseUrl || `${req.protocol}://${req.get('host')}`;
         const prompt = apiFlowService.generateAgentPrompt(name, description, apis || [], orgName || '', viewName || 'default', baseUrl, handle || '');
         res.status(200).json({ agentPrompt: prompt });
     } catch (error) {

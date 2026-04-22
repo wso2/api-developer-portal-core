@@ -1179,7 +1179,7 @@
 .af-sd-validation {
     border: 1px solid var(--bs-gray-200, #e9ecef);
     border-radius: 0.625rem;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .af-sd-validation-header {
@@ -1189,9 +1189,11 @@
     font-weight: 600;
     color: var(--bs-secondary, #6c757d);
     border-bottom: 1px solid var(--bs-gray-200, #e9ecef);
+    border-radius: 0.625rem 0.625rem 0 0;
     display: flex;
     align-items: center;
     gap: 0.25rem;
+    position: relative;
 }
 
 .af-sd-validation-hint {
@@ -1508,4 +1510,20 @@
 .af-info-tip:hover .af-info-tip-content,
 .af-info-tip:focus-within .af-info-tip-content {
     display: block;
+}
+
+.af-info-tip--right .af-info-tip-content {
+    left: calc(100% + 8px);
+    bottom: auto;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.af-info-tip--right .af-info-tip-content::after {
+    top: 50%;
+    left: auto;
+    right: 100%;
+    transform: translateY(-50%);
+    border-top-color: transparent;
+    border-right-color: #1e2230;
 }
