@@ -14,12 +14,6 @@
 
     {{!-- ── LIST VIEW ── --}}
     <div id="apiFlowList">
-        <div class="mb-3">
-            <a href="{{baseUrl}}/" class="d-inline-flex align-items-center text-muted"
-                style="text-decoration: none; font-size: 14px;">
-                <i class="fas fa-arrow-left me-2"></i>Home
-            </a>
-        </div>
         <!-- Header -->
         <div class="api-flows-header mb-4">
             <div class="d-flex justify-content-between align-items-center">
@@ -45,14 +39,35 @@
             {{#each apiFlows}}
             <div class="api-flow-card">
                 <div class="api-flow-card-header">
-                    <div class="api-flow-card-title-section">
-                        <h6 class="api-flow-card-title">{{this.name}}</h6>
-                        <span class="api-flow-status-badge api-flow-status-{{lowercase this.status}}">
-                            {{this.status}}
-                        </span>
+                    <div class="api-flow-card-meta-row">
+                        <span class="api-flow-status-dot api-flow-status-dot--{{lowercase this.status}}"></span>
+                        <span class="api-flow-status-label">{{this.status}}</span>
+                        <span class="api-flow-card-sep">·</span>
+                        <span class="api-flow-content-type-badge api-flow-content-type--{{lowercase this.contentType}}">{{this.contentType}}</span>
+                    </div>
+                    <div class="api-flow-card-actions api-flow-card-actions--hover">
+                        {{#unless (eq this.agentVisibility "HIDDEN")}}
+                        <button type="button"
+                            class="api-flow-action-btn api-flow-view-prompt-btn"
+                            title="View agent prompt"
+                            data-api-flow-id="{{this.apiFlowId}}">
+                            <i class="bi bi-robot"></i>
+                        </button>
+                        {{/unless}}
+                        <button type="button" class="api-flow-action-btn api-flow-edit-btn"
+                            title="Edit"
+                            data-api-flow-id="{{this.apiFlowId}}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button type="button" class="api-flow-action-btn api-flow-action-btn--danger api-flow-delete-btn"
+                            title="Delete"
+                            data-api-flow-id="{{this.apiFlowId}}">
+                            <i class="bi bi-trash"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="api-flow-card-body">
+                    <h5 class="api-flow-card-title">{{this.name}}</h5>
                     <p class="api-flow-card-description" title="{{this.description}}">
                         {{this.description}}
                     </p>
@@ -77,26 +92,6 @@
                             <i class="bi bi-robot"></i> AI Ready
                         </span>
                         {{/unless}}
-                    </div>
-                    <div class="api-flow-card-actions">
-                        {{#unless (eq this.agentVisibility "HIDDEN")}}
-                        <button type="button"
-                            class="api-flow-action-btn api-flow-view-prompt-btn"
-                            title="View agent prompt"
-                            data-api-flow-id="{{this.apiFlowId}}">
-                            <i class="bi bi-robot"></i>
-                        </button>
-                        {{/unless}}
-                        <button type="button" class="api-flow-action-btn api-flow-edit-btn"
-                            title="Edit"
-                            data-api-flow-id="{{this.apiFlowId}}">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button type="button" class="api-flow-action-btn api-flow-action-btn--danger api-flow-delete-btn"
-                            title="Delete"
-                            data-api-flow-id="{{this.apiFlowId}}">
-                            <i class="bi bi-trash"></i>
-                        </button>
                     </div>
                 </div>
             </div>

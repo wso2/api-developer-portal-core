@@ -14,6 +14,7 @@ let showSelectedOnly = false;
 let currentWorkflowPath = 'upload';
 let currentContentType = 'ARAZZO';
 let createPathFormat = 'arazzo'; // 'arazzo' | 'md'
+let currentStep = 1;
 
 function initializeApiFlowsData() {
     try {
@@ -113,17 +114,22 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.getElementById('changeVisibilityBtn')?.addEventListener('click', () => {
-        const agentVisSection = document.getElementById('agentVisibilityVisible')?.closest('.mb-1');
-        agentVisSection?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        document.getElementById('agentVisibilityVisible')?.focus();
+        goToStep(1);
+        setTimeout(() => {
+            document.getElementById('agentVisibleCard')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 80);
     });
 
-    // Arazzo editor buttons
-    document.getElementById('copyArazzoBtn')?.addEventListener('click', copyArazzoSpec);
-    document.getElementById('copyMarkdownBtn')?.addEventListener('click', copyMarkdown);
+    // Unified editor copy button
+    document.getElementById('copySpecBtn')?.addEventListener('click', () => {
+        if (createPathFormat === 'markdown') copyMarkdown(); else copyArazzoSpec();
+    });
 
     // Markdown word count
-    document.getElementById('markdownContent')?.addEventListener('input', updateMarkdownWordCount);
+    document.getElementById('markdownContent')?.addEventListener('input', () => {
+        updateMarkdownWordCount();
+        if (createPathFormat === 'markdown') updateEditorFooter('markdown');
+    });
 
     // Save buttons
     document.getElementById('saveApiFlowBtn')?.addEventListener('click', function() {
@@ -198,6 +204,12 @@ document.addEventListener('DOMContentLoaded', function () {
     initUploadZone();
     initCreateFormatToggle();
     initCreatePathButtons();
+    initWizard();
+    initAccessMatrix();
+
+    // Keep access matrix in sync when radios change by other means
+    document.querySelectorAll('input[name="apiFlowVisibility"]').forEach(r => r.addEventListener('change', syncAccessMatrixFromRadios));
+    document.querySelectorAll('input[name="apiFlowAgentVisibility"]').forEach(r => r.addEventListener('change', syncAccessMatrixFromRadios));
 });
 
 // ─────────────────────────────────────────────
@@ -230,6 +242,7 @@ function switchWorkflowPath(path) {
     // In create path: honour the format toggle (createPathFormat owns currentContentType).
     // In upload path: show whichever editor matches the uploaded file type (or hide both).
     if (path === 'create') {
+        document.getElementById('specFormatTabs')?.classList.remove('d-none');
         switchCreateFormat(createPathFormat);
     } else {
         showUploadedContentEditor();
@@ -257,10 +270,17 @@ function switchCreateFormat(format) {
         btn.classList.toggle('af-create-format-btn--active', btn.dataset.format === format);
     });
 
-    // Show/hide the right editor
+    // Show/hide the right editor pane
     document.getElementById('apiFlowDefinitionWrapper')?.classList.toggle('d-none', format !== 'arazzo');
     document.getElementById('markdownContentWrapper')?.classList.toggle('d-none', format !== 'markdown');
     if (format === 'arazzo') setTimeout(() => arazoEditor?.refresh(), 50);
+
+    // Show the card and actions whenever we're in create mode with a format selected
+    document.getElementById('specEditorCard')?.classList.remove('d-none');
+    document.querySelector('.af-rp-actions')?.classList.remove('d-none');
+
+    // Update footer copy button label for the active format
+    updateEditorFooter(format);
 
     // "Open in VS Code" only makes sense for Arazzo
     document.getElementById('openInVSCodeBtn')?.classList.toggle('d-none', format !== 'arazzo');
@@ -374,6 +394,7 @@ async function handleArazzoUpload(content) {
     showUploadedContentEditor();
 
     await validateAndRenderSourceDescriptions(content);
+    updateCopyArazzoBtn(content.trim().length > 0);
 }
 
 async function handleMarkdownUpload(content) {
@@ -422,21 +443,35 @@ function setUploadTypeBadge(type) {
 function showUploadedContentEditor() {
     const arazoWrapper = document.getElementById('apiFlowDefinitionWrapper');
     const mdWrapper = document.getElementById('markdownContentWrapper');
+    const card = document.getElementById('specEditorCard');
     const hasArazzo = arazoEditor
         ? arazoEditor.getValue().trim().length > 0
         : (document.getElementById('apiFlowDefinition')?.value?.trim().length > 0);
     const hasMd = (document.getElementById('markdownContent')?.value?.trim().length > 0);
 
+    // Hide format tabs in upload mode — they're create-only
+    document.getElementById('specFormatTabs')?.classList.add('d-none');
+
+    const actionsRow = document.querySelector('.af-rp-actions');
     if (currentContentType === 'MD' && hasMd) {
         arazoWrapper?.classList.add('d-none');
         mdWrapper?.classList.remove('d-none');
+        card?.classList.remove('d-none');
+        actionsRow?.classList.remove('d-none');
+        updateEditorFooter('markdown');
     } else if (currentContentType === 'ARAZZO' && hasArazzo) {
         mdWrapper?.classList.add('d-none');
         arazoWrapper?.classList.remove('d-none');
+        card?.classList.remove('d-none');
+        actionsRow?.classList.remove('d-none');
         setTimeout(() => arazoEditor?.refresh(), 50);
+        updateEditorFooter('arazzo');
     } else {
-        arazoWrapper?.classList.add('d-none');
+        // No file uploaded yet — show the editor shell (with its built-in empty state) but no action buttons
         mdWrapper?.classList.add('d-none');
+        arazoWrapper?.classList.remove('d-none');
+        card?.classList.remove('d-none');
+        actionsRow?.classList.add('d-none');
     }
 }
 
@@ -452,6 +487,7 @@ function clearUploadedFile() {
     document.getElementById('uploadValidationPanel')?.classList.add('d-none');
     document.getElementById('apiFlowDefinitionWrapper')?.classList.add('d-none');
     document.getElementById('markdownContentWrapper')?.classList.add('d-none');
+    document.getElementById('specEditorCard')?.classList.add('d-none');
     document.getElementById('arazzoDropZone')?.classList.remove('d-none');
     document.getElementById('sdValidationContainer')?.classList.add('d-none');
     document.getElementById('mdSummaryPanel')?.classList.add('d-none');
@@ -575,8 +611,103 @@ function renderSdItem(name, url, type, status, statusCode) {
 
 function initCreatePathButtons() {
     document.getElementById('generateWithClaudeBtn')?.addEventListener('click', generateWithClaude);
-    document.getElementById('generateWithChatGPTBtn')?.addEventListener('click', generateWithChatGPT);
+    document.getElementById('copyPromptSpecBtn')?.addEventListener('click', copySpecPrompt);
     document.getElementById('openInVSCodeBtn')?.addEventListener('click', openInVSCode);
+}
+
+function updateGenerateButtonsState() {
+    const count = document.querySelectorAll('.api-flow-api-checkbox:checked').length;
+    const hasAPIs = count > 0;
+    const tip = document.getElementById('specActionsTip');
+
+    ['generateWithClaudeBtn', 'copyPromptSpecBtn', 'openInVSCodeBtn'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.disabled = !hasAPIs;
+        if (hasAPIs) {
+            btn.removeAttribute('aria-describedby');
+        } else {
+            btn.setAttribute('aria-describedby', 'specActionsTip');
+        }
+    });
+
+    if (tip) tip.textContent = hasAPIs ? '' : 'Select at least one API to enable';
+}
+
+function copySpecPrompt() {
+    const apis = getSelectedAPIs();
+    if (apis.length === 0) return;
+
+    const pathParts = window.location.pathname.split('/');
+    const orgHandle = pathParts[1] || '';
+    const viewName = pathParts[3] || 'default';
+    const name = document.getElementById('apiFlowName')?.value?.trim() || '';
+    const description = document.getElementById('apiFlowDescription')?.value?.trim() || '';
+
+    const apiContext = apis.map(a => {
+        const url = `${window.location.origin}/${orgHandle}/views/${viewName}/api/${a.apiHandle}/docs/specification.json`;
+        return `- **${a.apiName}** (${a.apiType || 'REST'}): ${a.apiDescription || 'No description provided'}\n  OpenAPI spec: ${url}`;
+    }).join('\n');
+
+    const contextBlock = [
+        name ? `**Workflow name:** ${name}` : null,
+        description ? `**Initial description:** ${description}` : null,
+    ].filter(Boolean).join('\n');
+
+    const isMarkdown = createPathFormat === 'markdown';
+    const prompt = isMarkdown
+        ? buildMarkdownPrompt(contextBlock, apiContext)
+        : buildArazzoPrompt(contextBlock, apiContext);
+
+    navigator.clipboard.writeText(prompt).then(() => showAlert('Prompt copied to clipboard', 'success'));
+}
+
+function buildArazzoPrompt(contextBlock, apiContext) {
+    return `You are helping a developer define an API workflow that will be saved to their developer portal.
+
+${contextBlock ? `Here is some context they have already provided:\n${contextBlock}\n` : ''}**Available APIs on their portal:**
+${apiContext}
+
+Before doing anything else, fetch and read each OpenAPI spec URL above. Use the specs to identify the available API operations, required inputs and parameters, response shapes, and documented error codes — this will drive the steps and inputs you generate.
+
+Your job is to have a short conversation to understand exactly what the workflow should do, then produce a complete Arazzo 1.0.0 YAML spec.
+
+**Step 1 — Ask the developer to describe the workflow in natural language.** Ask them: what triggers it, what each API call should do in sequence, what data flows between steps, and what the expected outcome is. If any detail is unclear, ask a follow-up question before proceeding.
+
+**Step 2 — Once you have enough detail, generate a complete Arazzo 1.0.0 YAML spec that:**
+1. Uses the \`arazzo: '1.0.0'\` header
+2. Includes \`sourceDescriptions\` with the OpenAPI spec URLs listed above
+3. Defines a \`workflows\` array with a single workflow and well-structured \`steps\`
+4. Each step includes: \`stepId\`, \`description\`, \`operationPath\`, \`successCriteria\`, \`outputs\`, \`onSuccess\`, \`onFailure\`
+5. Includes \`inputs\` with required fields and \`outputs\` at the workflow level
+
+Output the raw YAML only — no prose around it.
+
+**Step 3 — After outputting the YAML, tell the developer:** "Your Arazzo spec is ready. Please copy the YAML above, switch back to your developer portal tab, and paste it into the workflow editor."`;
+}
+
+function buildMarkdownPrompt(contextBlock, apiContext) {
+    return `You are helping a developer describe an API workflow in plain language. The result will be saved as a Markdown document in their developer portal so that AI agents can understand and execute the workflow.
+
+${contextBlock ? `Here is some context they have already provided:\n${contextBlock}\n` : ''}**APIs available on their portal:**
+${apiContext}
+
+Before doing anything else, fetch and read each OpenAPI spec URL above. Use the specs to identify the available API operations, required inputs and parameters, response shapes, and documented error codes — this will inform the steps and error handling you describe.
+
+Your job is to have a short conversation to understand the workflow, then produce a clear Markdown document describing it.
+
+**Step 1 — Ask the developer to describe the workflow in natural language.** Ask them: what triggers it, which APIs are called and in what order, what data is passed between steps, and what the final outcome is. Ask follow-up questions if anything is unclear.
+
+**Step 2 — Once you have enough detail, write a well-structured Markdown document that:**
+1. Opens with a concise summary of what the workflow does and why
+2. Lists the APIs involved with a one-line explanation of each
+3. Describes every step in plain English — which API is called, what data is sent, what comes back, and why that step is needed
+4. Explains what a successful run produces for the caller
+5. Covers error scenarios in a simple table: what can go wrong and what happens
+
+Use Markdown formatting (headers, numbered lists, tables, bold for emphasis). Write for a developer who needs to understand the flow at a glance. Output the raw Markdown only — no prose around it.
+
+**Step 3 — After outputting the Markdown, tell the developer:** "Your workflow description is ready. Please copy the Markdown above, switch back to your developer portal tab, and paste it into the workflow editor."`;
 }
 
 function generateWithClaude() {
@@ -588,110 +719,21 @@ function generateWithClaude() {
 }
 
 function generateArazzoWithClaude() {
-    const name = document.getElementById('apiFlowName')?.value?.trim() || '';
-    const description = document.getElementById('apiFlowDescription')?.value?.trim() || '';
-    const apis = getSelectedAPIs();
-
-    const pathParts = window.location.pathname.split('/');
-    const orgHandle = pathParts[1] || '';
-    const viewName = pathParts[3] || 'default';
-
-    const apiContext = apis.length > 0
-        ? apis.map(a => {
-            const url = `${window.location.origin}/${orgHandle}/views/${viewName}/api/${a.apiHandle}/docs/specification.json`;
-            return `- **${a.apiName}** (${a.apiType || 'REST'}): ${a.apiDescription || 'No description provided'}\n  OpenAPI spec: ${url}`;
-        }).join('\n')
-        : '*(No APIs pre-selected — select the required APIs from the Associated APIs section above. For APIs published in the developer portal, the Source Description will be auto-generated.)*';
-
-    const contextBlock = [
-        name ? `**Workflow name:** ${name}` : null,
-        description ? `**Initial description:** ${description}` : null,
-    ].filter(Boolean).join('\n');
-
-    const prompt = `You are helping a developer define an API workflow that will be saved to their developer portal.
-
-${contextBlock ? `Here is some context they have already provided:\n${contextBlock}\n` : ''}**Available APIs on their portal:**
-${apiContext}
-
-Before doing anything else, fetch and read each OpenAPI spec URL above. Use the specs to identify the available API operations, required inputs and parameters, response shapes, and documented error codes — this will drive the steps and inputs you generate.
-
-Your job is to have a short conversation to understand exactly what the workflow should do, then produce a complete Arazzo 1.0.0 YAML spec.
-
-**Step 1 — Ask the developer to describe the workflow in natural language.** Ask them: what triggers it, what each API call should do in sequence, what data flows between steps, and what the expected outcome is. If any detail is unclear, ask a follow-up question before proceeding.
-
-**Step 2 — Once you have enough detail, generate a complete Arazzo 1.0.0 YAML spec that:**
-1. Uses the \`arazzo: '1.0.0'\` header
-2. Includes \`sourceDescriptions\` with the OpenAPI spec URLs listed above
-3. Defines a \`workflows\` array with a single workflow and well-structured \`steps\`
-4. Each step includes: \`stepId\`, \`description\`, \`operationPath\`, \`successCriteria\`, \`outputs\`, \`onSuccess\`, \`onFailure\`
-5. Includes \`inputs\` with required fields and \`outputs\` at the workflow level
-
-Output the raw YAML only — no prose around it.
-
-**Step 3 — After outputting the YAML, tell the developer:** "Your Arazzo spec is ready. Please copy the YAML above, switch back to your developer portal tab, and paste it into the workflow editor."`;
-
+    const { contextBlock, apiContext } = buildPromptContext();
+    const prompt = buildArazzoPrompt(contextBlock, apiContext);
     window.open('https://claude.ai/new?q=' + encodeURIComponent(prompt), '_blank');
 }
 
 function generateMarkdownWithClaude() {
-    const name = document.getElementById('apiFlowName')?.value?.trim() || '';
-    const description = document.getElementById('apiFlowDescription')?.value?.trim() || '';
-    const apis = getSelectedAPIs();
-
-    const pathParts = window.location.pathname.split('/');
-    const orgHandle = pathParts[1] || '';
-    const viewName = pathParts[3] || 'default';
-
-    const apiContext = apis.length > 0
-        ? apis.map(a => {
-            const url = `${window.location.origin}/${orgHandle}/views/${viewName}/api/${a.apiHandle}/docs/specification.json`;
-            return `- **${a.apiName}** (${a.apiType || 'REST'}): ${a.apiDescription || 'No description provided'}\n  OpenAPI spec: ${url}`;
-        }).join('\n')
-        : '*(No APIs pre-selected — select the required APIs from the Associated APIs section above. For APIs published in the developer portal, the Source Description will be auto-generated.)*';
-
-    const contextBlock = [
-        name ? `**Workflow name:** ${name}` : null,
-        description ? `**Initial description:** ${description}` : null,
-    ].filter(Boolean).join('\n');
-
-    const prompt = `You are helping a developer describe an API workflow in plain language. The result will be saved as a Markdown document in their developer portal so that AI agents can understand and execute the workflow.
-
-${contextBlock ? `Here is some context they have already provided:\n${contextBlock}\n` : ''}**APIs available on their portal:**
-${apiContext}
-
-Before doing anything else, fetch and read each OpenAPI spec URL above. Use the specs to identify the available API operations, required inputs and parameters, response shapes, and documented error codes — this will inform the steps and error handling you describe.
-
-Your job is to have a short conversation to understand the workflow, then produce a clear Markdown document describing it.
-
-**Step 1 — Ask the developer to describe the workflow in natural language.** Ask them: what triggers it, which APIs are called and in what order, what data is passed between steps, and what the final outcome is. Ask follow-up questions if anything is unclear.
-
-**Step 2 — Once you have enough detail, write a well-structured Markdown document that:**
-1. Opens with a concise summary of what the workflow does and why
-2. Lists the APIs involved with a one-line explanation of each
-3. Describes every step in plain English — which API is called, what data is sent, what comes back, and why that step is needed
-4. Explains what a successful run produces for the caller
-5. Covers error scenarios in a simple table: what can go wrong and what happens
-
-Use Markdown formatting (headers, numbered lists, tables, bold for emphasis). Write for a developer who needs to understand the flow at a glance. Output the raw Markdown only — no prose around it.
-
-**Step 3 — After outputting the Markdown, tell the developer:** "Your workflow description is ready. Please copy the Markdown above, switch back to your developer portal tab, and paste it into the workflow editor."`;
-
+    const { contextBlock, apiContext } = buildPromptContext();
+    const prompt = buildMarkdownPrompt(contextBlock, apiContext);
     window.open('https://claude.ai/new?q=' + encodeURIComponent(prompt), '_blank');
 }
 
-function generateWithChatGPT() {
-    if (createPathFormat === 'markdown') {
-        generateMarkdownWithChatGPT();
-    } else {
-        generateArazzoWithChatGPT();
-    }
-}
-
-function generateArazzoWithChatGPT() {
+function buildPromptContext() {
     const name = document.getElementById('apiFlowName')?.value?.trim() || '';
     const description = document.getElementById('apiFlowDescription')?.value?.trim() || '';
     const apis = getSelectedAPIs();
-
     const pathParts = window.location.pathname.split('/');
     const orgHandle = pathParts[1] || '';
     const viewName = pathParts[3] || 'default';
@@ -708,75 +750,7 @@ function generateArazzoWithChatGPT() {
         description ? `**Initial description:** ${description}` : null,
     ].filter(Boolean).join('\n');
 
-    const prompt = `You are helping a developer define an API workflow that will be saved to their developer portal.
-
-${contextBlock ? `Here is some context they have already provided:\n${contextBlock}\n` : ''}**Available APIs on their portal:**
-${apiContext}
-
-Before doing anything else, fetch and read each OpenAPI spec URL above. Use the specs to identify the available API operations, required inputs and parameters, response shapes, and documented error codes — this will drive the steps and inputs you generate.
-
-Your job is to have a short conversation to understand exactly what the workflow should do, then produce a complete Arazzo 1.0.0 YAML spec.
-
-**Step 1 — Ask the developer to describe the workflow in natural language.** Ask them: what triggers it, what each API call should do in sequence, what data flows between steps, and what the expected outcome is. If any detail is unclear, ask a follow-up question before proceeding.
-
-**Step 2 — Once you have enough detail, generate a complete Arazzo 1.0.0 YAML spec that:**
-1. Uses the \`arazzo: '1.0.0'\` header
-2. Includes \`sourceDescriptions\` with the OpenAPI spec URLs listed above
-3. Defines a \`workflows\` array with a single workflow and well-structured \`steps\`
-4. Each step includes: \`stepId\`, \`description\`, \`operationPath\`, \`successCriteria\`, \`outputs\`, \`onSuccess\`, \`onFailure\`
-5. Includes \`inputs\` with required fields and \`outputs\` at the workflow level
-
-Output the raw YAML only — no prose around it.
-
-**Step 3 — After outputting the YAML, tell the developer:** "Your Arazzo spec is ready. Please copy the YAML above, switch back to your developer portal tab, and paste it into the workflow editor."`;
-
-    window.open('https://chatgpt.com/?prompt=' + encodeURIComponent(prompt), '_blank');
-}
-
-function generateMarkdownWithChatGPT() {
-    const name = document.getElementById('apiFlowName')?.value?.trim() || '';
-    const description = document.getElementById('apiFlowDescription')?.value?.trim() || '';
-    const apis = getSelectedAPIs();
-
-    const pathParts = window.location.pathname.split('/');
-    const orgHandle = pathParts[1] || '';
-    const viewName = pathParts[3] || 'default';
-
-    const apiContext = apis.length > 0
-        ? apis.map(a => {
-            const url = `${window.location.origin}/${orgHandle}/views/${viewName}/api/${a.apiHandle}/docs/specification.json`;
-            return `- **${a.apiName}** (${a.apiType || 'REST'}): ${a.apiDescription || 'No description provided'}\n  OpenAPI spec: ${url}`;
-        }).join('\n')
-        : '*(No APIs pre-selected — select the required APIs from the Associated APIs section above. For APIs published in the developer portal, the Source Description will be auto-generated.)*';
-
-    const contextBlock = [
-        name ? `**Workflow name:** ${name}` : null,
-        description ? `**Initial description:** ${description}` : null,
-    ].filter(Boolean).join('\n');
-
-    const prompt = `You are helping a developer describe an API workflow in plain language. The result will be saved as a Markdown document in their developer portal so that AI agents can understand and execute the workflow.
-
-${contextBlock ? `Here is some context they have already provided:\n${contextBlock}\n` : ''}**APIs available on their portal:**
-${apiContext}
-
-Before doing anything else, fetch and read each OpenAPI spec URL above. Use the specs to identify the available API operations, required inputs and parameters, response shapes, and documented error codes — this will inform the steps and error handling you describe.
-
-Your job is to have a short conversation to understand the workflow, then produce a clear Markdown document describing it.
-
-**Step 1 — Ask the developer to describe the workflow in natural language.** Ask them: what triggers it, which APIs are called and in what order, what data is passed between steps, and what the final outcome is. Ask follow-up questions if anything is unclear.
-
-**Step 2 — Once you have enough detail, write a well-structured Markdown document that:**
-1. Opens with a concise summary of what the workflow does and why
-2. Lists the APIs involved with a one-line explanation of each
-3. Describes every step in plain English — which API is called, what data is sent, what comes back, and why that step is needed
-4. Explains what a successful run produces for the caller
-5. Covers error scenarios in a simple table: what can go wrong and what happens
-
-Use Markdown formatting (headers, numbered lists, tables, bold for emphasis). Write for a developer who needs to understand the flow at a glance. Output the raw Markdown only — no prose around it.
-
-**Step 3 — After outputting the Markdown, tell the developer:** "Your workflow description is ready. Please copy the Markdown above, switch back to your developer portal tab, and paste it into the workflow editor."`;
-
-    window.open('https://chatgpt.com/?prompt=' + encodeURIComponent(prompt), '_blank');
+    return { contextBlock, apiContext };
 }
 
 async function openInVSCode() {
@@ -839,7 +813,9 @@ async function openInVSCode() {
 
 function resetApiFlowForm() {
     document.getElementById('editingApiFlowId').value = '';
-    document.getElementById('apiFlowName').value = '';
+    const nameField = document.getElementById('apiFlowName');
+    if (nameField) { nameField.value = ''; nameField.readOnly = false; nameField.classList.remove('af-field-readonly'); }
+
     document.getElementById('apiFlowDescription').value = '';
     document.getElementById('apiFlowDefinition').value = '';
     document.getElementById('markdownContent').value = '';
@@ -862,15 +838,23 @@ function resetApiFlowForm() {
     updateSectionSummaries();
     expandAllSections();
 
-    // Reset to upload path and arazzo create format
+    // Reset to upload path
     clearUploadedFile();
     switchWorkflowPath('upload');
     switchCreateFormat('arazzo');
+
+    // Reset wizard to step 1
+    currentStep = 1;
+    if (typeof updateWizardUI === 'function') updateWizardUI();
 }
 
 function syncAgentPromptTab(isHidden) {
     const hiddenIcon = document.getElementById('tabVisualHiddenIcon');
     const banner = document.getElementById('agentHiddenBanner');
+    const toolbar = document.querySelector('.af-prompt-action-toolbar');
+    const promptField = document.getElementById('agentPromptField');
+    const ready3 = document.getElementById('afReady3');
+    const agentHiddenNotice = document.getElementById('afAgentHiddenNotice');
 
     if (isHidden) {
         hiddenIcon?.classList.remove('d-none');
@@ -878,6 +862,10 @@ function syncAgentPromptTab(isHidden) {
             banner.classList.remove('d-none', 'af-banner-fade-out');
             banner.classList.add('af-banner-fade-in');
         }
+        toolbar?.classList.add('d-none');
+        promptField?.classList.add('d-none');
+        ready3?.classList.add('d-none');
+        agentHiddenNotice?.classList.remove('d-none');
     } else {
         hiddenIcon?.classList.add('d-none');
         if (banner && !banner.classList.contains('d-none')) {
@@ -888,6 +876,10 @@ function syncAgentPromptTab(isHidden) {
                 banner.classList.remove('af-banner-fade-out');
             }, 150);
         }
+        toolbar?.classList.remove('d-none');
+        promptField?.classList.remove('d-none');
+        ready3?.classList.remove('d-none');
+        agentHiddenNotice?.classList.add('d-none');
     }
 }
 
@@ -989,8 +981,8 @@ function renderApiCards(query) {
 function updateApiSelectedCount() {
     const count = document.querySelectorAll('.api-flow-api-checkbox:checked').length;
     const el = document.getElementById('apiSelectedCount');
-    if (!el) return;
-    el.textContent = count === 0 ? 'No APIs selected' : count === 1 ? '1 API selected' : `${count} APIs selected`;
+    if (el) el.textContent = count === 0 ? 'No APIs selected' : count === 1 ? '1 API selected' : `${count} APIs selected`;
+    updateGenerateButtonsState();
 }
 
 function setPickerSelection(apiIds) {
@@ -1026,6 +1018,7 @@ async function updatePromptFromForm() {
             const data = await response.json();
             const promptField = document.getElementById('agentPromptField');
             if (promptField) promptField.value = data.agentPrompt || '';
+            updateStep3Readiness();
         }
     } catch (error) {
         console.error('Error generating prompt:', error);
@@ -1034,6 +1027,65 @@ async function updatePromptFromForm() {
 
 function regenerateAgentPrompt() {
     updatePromptFromForm();
+}
+
+
+function updateWorkflowMdPreview() {
+    const el = document.getElementById('afWorkflowMdPreview');
+    if (!el) return;
+
+    const name = document.getElementById('apiFlowName')?.value?.trim() || '';
+    const desc = document.getElementById('apiFlowDescription')?.value?.trim() || '';
+    const apis = getSelectedAPIs();
+    const isMarkdown = createPathFormat === 'markdown';
+
+    if (!name && !desc) {
+        el.textContent = 'Fill in name and description to see a preview.';
+        return;
+    }
+
+    const pathParts = window.location.pathname.split('/');
+    const orgHandle = pathParts[1] || '';
+    const viewName = pathParts[3] || 'default';
+    const handle = (document.getElementById('editingApiFlowId')?.value
+        ? (window.apiFlowsData || []).find(f => String(f.apiFlowId) === document.getElementById('editingApiFlowId').value)?.handle
+        : null) || generateHandle(name);
+
+    let md = '';
+    md += `# ${name}\n\n`;
+    md += `**Status:** DRAFT\n\n`;
+    if (desc) md += `**Description:** ${desc}\n`;
+
+    if (apis.length > 0) {
+        md += `\n## Sources\n\n`;
+        apis.forEach(a => {
+            const url = `/${orgHandle}/views/${viewName}/api/${a.apiHandle}/docs/specification.json`;
+            md += `- **${a.apiName}** — [API Documentation](${url})\n`;
+        });
+        md += `\n> Refer to each source for base URLs, endpoints, security schemes, and any additional documentation needed to execute this workflow.\n`;
+        md += `\n## Authentication\n\n`;
+        md += `To determine the authentication method required for each source:\n\n`;
+        md += `- **API Documentation sources**: Check the source's documentation page for an **API Key** section or an **OAuth2** section.\n`;
+        md += `- **OpenAPI Spec sources**: Read the \`securitySchemes\` section of the spec to determine the authentication method.\n`;
+    }
+
+    if (isMarkdown) {
+        const workflowDesc = document.getElementById('markdownContent')?.value?.trim() || '';
+        md += `\n## Workflow Description\n\n`;
+        md += workflowDesc || '_No workflow description defined yet._';
+        md += '\n';
+    } else {
+        const spec = arazoEditor ? arazoEditor.getValue().trim() : (document.getElementById('apiFlowDefinition')?.value?.trim() || '');
+        md += `\n## API Flow Specification\n\n`;
+        md += `[arazzo.json](/${orgHandle}/views/${viewName}/api-workflows/${handle}/arazzo.json)\n\n`;
+        if (spec) {
+            md += '```\n' + spec + '\n```\n';
+        } else {
+            md += '_No specification defined yet._\n';
+        }
+    }
+
+    el.textContent = md;
 }
 
 // ─────────────────────────────────────────────
@@ -1187,13 +1239,63 @@ async function deleteApiFlow(orgID, viewName, apiFlowId) {
 // Edit — pre-fill form from existing data
 // ─────────────────────────────────────────────
 
+function inferApiIdsFromContent(data) {
+    const checkboxes = [...document.querySelectorAll('.api-flow-api-checkbox')];
+    if (!checkboxes.length) return [];
+    const contentType = data.contentType || 'ARAZZO';
+    if (contentType === 'ARAZZO' && data.apiFlowDefinition) {
+        return inferApiIdsFromArazzo(data.apiFlowDefinition, checkboxes);
+    }
+    if (contentType === 'MD' && data.markdownContent) {
+        return inferApiIdsFromMarkdown(data.markdownContent, checkboxes);
+    }
+    return [];
+}
+
+function inferApiIdsFromArazzo(specContent, checkboxes) {
+    let spec = null;
+    try { spec = JSON.parse(specContent); } catch { /* not JSON */ }
+    if (!spec && window.jsyaml) {
+        try { spec = window.jsyaml.load(specContent); } catch { /* not valid */ }
+    }
+    if (!spec || !Array.isArray(spec.sourceDescriptions)) return [];
+
+    const sdNames = spec.sourceDescriptions.map(sd => (sd.name || '').toLowerCase().trim());
+    const sdUrls = spec.sourceDescriptions.map(sd => (sd.url || '').toLowerCase());
+
+    return checkboxes
+        .filter(cb => {
+            const name = (cb.dataset.apiName || '').toLowerCase().trim();
+            const handle = (cb.dataset.apiHandle || '').toLowerCase().trim();
+            return sdNames.includes(name)
+                || sdNames.includes(handle)
+                || sdUrls.some(url => handle && url.includes('/' + handle + '/'));
+        })
+        .map(cb => cb.value);
+}
+
+function inferApiIdsFromMarkdown(mdContent, checkboxes) {
+    const lower = mdContent.toLowerCase();
+    return checkboxes
+        .filter(cb => {
+            const name = (cb.dataset.apiName || '').toLowerCase().trim();
+            const handle = (cb.dataset.apiHandle || '').toLowerCase().trim();
+            const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const matches = token => token.length >= 3 && new RegExp('\\b' + escape(token) + '\\b', 'i').test(lower);
+            return matches(name) || matches(handle);
+        })
+        .map(cb => cb.value);
+}
+
 function openEditApiFlow(apiFlowId) {
     const data = (window.apiFlowsData || apiFlowsData || []).find(f => f.apiFlowId === apiFlowId);
     if (!data) return;
     resetApiFlowForm();
     document.getElementById('apiFlowFormTitle').textContent = 'Edit API Flow';
     document.getElementById('editingApiFlowId').value = apiFlowId;
-    document.getElementById('apiFlowName').value = data.name || '';
+    const nameField = document.getElementById('apiFlowName');
+    if (nameField) { nameField.value = data.name || ''; nameField.readOnly = true; nameField.classList.add('af-field-readonly'); }
+
     document.getElementById('apiFlowDescription').value = data.description || '';
 
     currentContentType = data.contentType || 'ARAZZO';
@@ -1202,6 +1304,7 @@ function openEditApiFlow(apiFlowId) {
     const arazoVal = data.apiFlowDefinition || '';
     document.getElementById('apiFlowDefinition').value = arazoVal;
     if (arazoEditor) arazoEditor.setValue(arazoVal);
+    updateCopyArazzoBtn(arazoVal.trim().length > 0);
 
     const mdVal = data.markdownContent || '';
     document.getElementById('markdownContent').value = mdVal;
@@ -1214,9 +1317,11 @@ function openEditApiFlow(apiFlowId) {
     if (visibilityRadio) visibilityRadio.checked = true;
     const agentVisibilityRadio = document.querySelector(`input[name="apiFlowAgentVisibility"][value="${data.agentVisibility || 'VISIBLE'}"]`);
     if (agentVisibilityRadio) agentVisibilityRadio.checked = true;
+    syncAccessMatrixFromRadios();
     syncAgentPromptTab(data.agentVisibility === 'HIDDEN');
 
-    setPickerSelection((data.apis || []).map(a => a.apiId));
+    const preSelectedIds = inferApiIdsFromContent(data);
+    setPickerSelection(preSelectedIds);
 
     // In edit mode use "Create from Template" path so APIs + editor are visible,
     // but honour the stored content type when deciding which editor to show.
@@ -1359,7 +1464,9 @@ function generateArazzoSpec() {
     }
 
     document.getElementById('apiFlowDefinitionWrapper')?.classList.remove('d-none');
+    document.getElementById('specEditorCard')?.classList.remove('d-none');
     setTimeout(() => arazoEditor?.refresh(), 50);
+    updateCopyArazzoBtn(spec.trim().length > 0);
 }
 
 function generateMarkdownTemplate() {
@@ -1408,6 +1515,7 @@ _Describe what a successful execution produces for the caller._
     }
 
     document.getElementById('markdownContentWrapper')?.classList.remove('d-none');
+    document.getElementById('specEditorCard')?.classList.remove('d-none');
 }
 
 function copyArazzoSpec() {
@@ -1437,11 +1545,66 @@ function initCodeMirrorEditor() {
     let sdValidationTimer = null;
     arazoEditor.on('change', () => {
         clearTimeout(sdValidationTimer);
+        const content = arazoEditor.getValue();
+        updateArazzoEditorUI(content);
+        updateWorkflowMdPreview();
         sdValidationTimer = setTimeout(() => {
-            const content = arazoEditor.getValue();
             if (content.trim()) validateAndRenderSourceDescriptions(content);
         }, 800);
     });
+}
+
+function updateArazzoEditorUI(content) {
+    const hasContent = content.trim().length > 0;
+    const lineCount = content ? content.split('\n').length : 0;
+
+    // Line count in bar
+    const lineCountEl = document.getElementById('arazoLineCount');
+    if (lineCountEl) lineCountEl.textContent = lineCount === 1 && !content.trim() ? '0 lines' : `${lineCount} line${lineCount === 1 ? '' : 's'}`;
+
+    // Empty state overlay
+    const emptyState = document.getElementById('arazoEmptyState');
+    if (emptyState) {
+        emptyState.style.display = hasContent ? 'none' : '';
+        emptyState.setAttribute('aria-hidden', String(hasContent));
+    }
+
+    // Copy button
+    const btn = document.getElementById('copySpecBtn');
+    if (btn) {
+        btn.disabled = !hasContent;
+        btn.title = hasContent ? 'Copy Arazzo spec from editor' : 'Generate a spec first';
+    }
+
+    // Footer status text
+    const status = document.getElementById('editorStatusText');
+    if (status) status.textContent = hasContent ? `${lineCount} line${lineCount === 1 ? '' : 's'}` : 'Editor is empty';
+}
+
+function updateCopyArazzoBtn(hasContent) {
+    const content = hasContent
+        ? (arazoEditor ? arazoEditor.getValue() : (document.getElementById('apiFlowDefinition')?.value || ''))
+        : '';
+    updateArazzoEditorUI(content);
+}
+
+function updateEditorFooter(format) {
+    const labelEl = document.getElementById('copySpecBtnLabel');
+    const copyBtn = document.getElementById('copySpecBtn');
+    if (labelEl) labelEl.textContent = format === 'markdown' ? 'Copy from editor' : 'Copy Arazzo spec from editor';
+    if (copyBtn) copyBtn.title = format === 'markdown' ? 'Copy to clipboard' : 'Generate a spec first';
+    if (format === 'markdown') {
+        const mdContent = document.getElementById('markdownContent')?.value || '';
+        if (copyBtn) {
+            copyBtn.disabled = !mdContent.trim();
+            copyBtn.title = mdContent.trim() ? 'Copy to clipboard' : 'Add content first';
+        }
+        const status = document.getElementById('editorStatusText');
+        if (status) status.textContent = mdContent.trim() ? `${mdContent.split('\n').length} lines` : 'Editor is empty';
+    } else {
+        const content = arazoEditor ? arazoEditor.getValue() : (document.getElementById('apiFlowDefinition')?.value || '');
+        updateArazzoEditorUI(content);
+    }
 }
 
 // ─────────────────────────────────────────────
@@ -1521,9 +1684,15 @@ function copyMarkdown() {
 function updateMarkdownWordCount() {
     const field = document.getElementById('markdownContent');
     const counter = document.getElementById('mdWordCount');
-    if (!field || !counter) return;
+    if (!field) return;
     const words = field.value.trim().split(/\s+/).filter(Boolean).length;
-    counter.textContent = words > 0 ? `${words.toLocaleString()} words` : '';
+    if (counter) counter.textContent = words > 0 ? `${words.toLocaleString()} words` : '';
+    // Keep footer status in sync when in markdown mode
+    if (createPathFormat === 'markdown') {
+        const lines = field.value ? field.value.split('\n').length : 0;
+        const status = document.getElementById('editorStatusText');
+        if (status) status.textContent = field.value.trim() ? `${lines} line${lines === 1 ? '' : 's'}` : 'Editor is empty';
+    }
 }
 
 function updateApiChips() {
@@ -1538,3 +1707,381 @@ function updateApiChips() {
         ).join('');
     }
 }
+
+// ─────────────────────────────────────────────
+// Wizard Navigation
+// ─────────────────────────────────────────────
+
+function initWizard() {
+    document.getElementById('afContinueBtn')?.addEventListener('click', () => {
+        if (validateWizardStep(currentStep)) goToStep(currentStep + 1);
+    });
+    // Clicking or keyboard-activating a complete stepper step navigates back
+    document.querySelectorAll('.af-stepper-step').forEach(el => {
+        el.addEventListener('click', () => {
+            const s = parseInt(el.dataset.step);
+            if (s < currentStep) goToStep(s);
+        });
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                const s = parseInt(el.dataset.step);
+                if (s < currentStep) goToStep(s);
+            }
+        });
+    });
+
+    updateWizardUI();
+    updateStep1Preview();
+    updateStep3Readiness();
+
+    // Live preview updates + clear validation errors on input
+    document.getElementById('apiFlowName')?.addEventListener('input', (e) => {
+        if (e.target.value.trim()) e.target.classList.remove('is-invalid');
+        updateStep1Preview();
+        updateStep3Readiness();
+        updateWorkflowMdPreview();
+    });
+    document.getElementById('apiFlowDescription')?.addEventListener('input', (e) => {
+        if (e.target.value.trim()) e.target.classList.remove('is-invalid');
+        updateStep1Preview();
+        updateStep3Readiness();
+        updateWorkflowMdPreview();
+    });
+    document.getElementById('agentPromptField')?.addEventListener('input', updateStep3Readiness);
+
+}
+
+function goToStep(n) {
+    if (n < 1 || n > 3) return;
+    currentStep = n;
+    updateWizardUI();
+    if (n === 2) setTimeout(() => arazoEditor?.refresh(), 80);
+    if (n === 3) updateStep3Readiness();
+}
+
+function validateWizardStep(step) {
+    if (step === 1) {
+        const name = document.getElementById('apiFlowName');
+        const desc = document.getElementById('apiFlowDescription');
+        let valid = true;
+        if (!name?.value.trim()) { name?.classList.add('is-invalid'); valid = false; } else name?.classList.remove('is-invalid');
+        if (!desc?.value.trim()) { desc?.classList.add('is-invalid'); valid = false; } else desc?.classList.remove('is-invalid');
+        return valid;
+    }
+    if (step === 2) {
+        const isMarkdown = currentContentType === 'MD';
+        const hasContent = isMarkdown
+            ? document.getElementById('markdownContent')?.value?.trim().length > 0
+            : arazoEditor ? arazoEditor.getValue().trim().length > 0 : document.getElementById('apiFlowDefinition')?.value?.trim().length > 0;
+        if (!hasContent) {
+            showAlert('Add an API workflow spec before continuing', 'warning');
+            return false;
+        }
+        return true;
+    }
+    return true;
+}
+
+function updateWizardUI() {
+    // Single-column layout for step 2
+    document.querySelector('.af-wizard-body')?.classList.toggle('af-wizard-body--single-col', currentStep === 2);
+    // Step panels
+    for (let i = 1; i <= 3; i++) {
+        document.getElementById(`afStep${i}`)?.classList.toggle('d-none', i !== currentStep);
+        document.getElementById(`afRight${i}`)?.classList.toggle('d-none', i !== currentStep);
+    }
+    // Stepper dots + ARIA state
+    document.querySelectorAll('.af-stepper-step').forEach(el => {
+        const s = parseInt(el.dataset.step);
+        el.classList.toggle('is-active', s === currentStep);
+        el.classList.toggle('is-complete', s < currentStep);
+        if (s > currentStep) {
+            el.classList.remove('is-active', 'is-complete');
+        }
+        const isComplete = s < currentStep;
+        const isCurrent = s === currentStep;
+        el.setAttribute('aria-current', isCurrent ? 'step' : 'false');
+        el.setAttribute('aria-disabled', isComplete ? 'false' : 'true');
+        el.setAttribute('tabindex', isComplete ? '0' : '-1');
+        const dot = el.querySelector('.af-stepper-dot');
+        if (dot) dot.innerHTML = s < currentStep ? '<i class="bi bi-check2"></i>' : String(s);
+    });
+    // Stepper lines
+    document.querySelectorAll('.af-stepper-line').forEach((line, idx) => {
+        line.classList.toggle('is-complete', idx + 1 < currentStep);
+    });
+    // Footer
+    const label = document.getElementById('afFooterStepLabel');
+    if (label) label.textContent = `Step ${currentStep} of 3`;
+    const continueBtn = document.getElementById('afContinueBtn');
+    if (continueBtn) continueBtn.classList.toggle('d-none', currentStep === 3);
+    const saveGroup = document.getElementById('saveApiFlowGroup');
+    if (saveGroup) saveGroup.classList.toggle('d-none', currentStep !== 3);
+}
+
+// ─────────────────────────────────────────────
+// Step 1 Right Pane — Live Preview
+// ─────────────────────────────────────────────
+
+function updateStep1Preview() {
+    const name = document.getElementById('apiFlowName')?.value?.trim() || '';
+    const desc = document.getElementById('apiFlowDescription')?.value?.trim() || '';
+    const vis = document.querySelector('input[name="apiFlowVisibility"]:checked')?.value || 'PUBLIC';
+
+    // Preview card
+    const nameEl = document.getElementById('afPreviewName');
+    const emptyEl = document.getElementById('afPreviewNameEmpty');
+    if (nameEl) nameEl.textContent = name;
+    if (emptyEl) emptyEl.classList.toggle('d-none', !!name);
+
+    const descEl = document.getElementById('afPreviewDesc');
+    if (descEl) descEl.textContent = desc;
+    const badge = document.getElementById('afPreviewBadge');
+    if (badge) {
+        badge.textContent = vis.toLowerCase();
+        badge.className = `af-preview-badge${vis === 'PUBLIC' ? ' af-preview-badge--public' : ''}`;
+    }
+
+    // Checklist
+    setChecklistItem('afCheck1', name.length >= 5 ? 'ok' : name.length > 0 ? 'warn' : 'info');
+    setChecklistItem('afCheck2', desc.length >= 20 ? 'ok' : desc.length > 0 ? 'warn' : 'info');
+    setChecklistItem('afCheck3', 'info');
+
+    // Sync access matrix visual state
+    syncAccessMatrixFromRadios();
+}
+
+function setChecklistItem(id, state) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('is-ok', 'is-warn', 'is-info');
+    if (state) el.classList.add(`is-${state}`);
+}
+
+// ─────────────────────────────────────────────
+// Step 3 Right Pane — Readiness
+// ─────────────────────────────────────────────
+
+function updateStep3Readiness() {
+    const name = document.getElementById('apiFlowName')?.value?.trim() || '';
+    const desc = document.getElementById('apiFlowDescription')?.value?.trim() || '';
+    const hasArazzo = arazoEditor ? arazoEditor.getValue().trim().length > 0 : (document.getElementById('apiFlowDefinition')?.value?.trim().length > 0);
+    const hasMd = document.getElementById('markdownContent')?.value?.trim().length > 0;
+    const hasSpec = hasArazzo || hasMd;
+    const hasPrompt = document.getElementById('agentPromptField')?.value?.trim().length > 0;
+
+    setChecklistItem('afReady1', (name && desc) ? 'ok' : 'warn');
+    setChecklistItem('afReady2', hasSpec ? 'ok' : 'warn');
+    setChecklistItem('afReady3', hasPrompt ? 'ok' : 'warn');
+
+    // Sync step 3 preview name/desc (kept for any external usage)
+    const n3 = document.getElementById('afPreviewName3');
+    if (n3) n3.textContent = name;
+    const d3 = document.getElementById('afPreviewDesc3');
+    if (d3) d3.textContent = desc;
+
+    updateWorkflowMdPreview();
+}
+
+// ─────────────────────────────────────────────
+// Access Visibility Cards
+// ─────────────────────────────────────────────
+
+function initAccessMatrix() {
+    const bind = (id, type, value) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const activate = () => setAccessValue(type, value);
+        el.addEventListener('click', activate);
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+                if (e.key !== 'Enter') e.preventDefault();
+                activate();
+            }
+        });
+    };
+    bind('portalPublicCard', 'visibility', 'PUBLIC');
+    bind('portalPrivateCard', 'visibility', 'PRIVATE');
+    bind('agentVisibleCard', 'agent', 'VISIBLE');
+    bind('agentHiddenCard', 'agent', 'HIDDEN');
+    syncAccessMatrixFromRadios();
+}
+
+function setAccessValue(type, value) {
+    if (type === 'visibility') {
+        const radio = document.querySelector(`input[name="apiFlowVisibility"][value="${value}"]`);
+        if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change', { bubbles: true })); }
+    } else {
+        const radio = document.querySelector(`input[name="apiFlowAgentVisibility"][value="${value}"]`);
+        if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change', { bubbles: true })); }
+    }
+    syncAccessMatrixFromRadios();
+    updateStep1Preview();
+}
+
+function syncAccessMatrixFromRadios() {
+    const vis = document.querySelector('input[name="apiFlowVisibility"]:checked')?.value || 'PUBLIC';
+    const agentVis = document.querySelector('input[name="apiFlowAgentVisibility"]:checked')?.value || 'VISIBLE';
+
+    const portalPublic = document.getElementById('portalPublicCard');
+    const portalPrivate = document.getElementById('portalPrivateCard');
+    const agentVisible = document.getElementById('agentVisibleCard');
+    const agentHidden = document.getElementById('agentHiddenCard');
+
+    if (portalPublic) {
+        portalPublic.classList.toggle('af-visibility-card--active', vis === 'PUBLIC');
+        portalPublic.setAttribute('aria-pressed', String(vis === 'PUBLIC'));
+    }
+    if (portalPrivate) {
+        portalPrivate.classList.toggle('af-visibility-card--active', vis === 'PRIVATE');
+        portalPrivate.setAttribute('aria-pressed', String(vis === 'PRIVATE'));
+    }
+    if (agentVisible) {
+        agentVisible.classList.toggle('af-visibility-card--active', agentVis === 'VISIBLE');
+        agentVisible.setAttribute('aria-pressed', String(agentVis === 'VISIBLE'));
+    }
+    if (agentHidden) {
+        agentHidden.classList.toggle('af-visibility-card--active', agentVis === 'HIDDEN');
+        agentHidden.setAttribute('aria-pressed', String(agentVis === 'HIDDEN'));
+    }
+}
+// LLM Instructions Tab
+// ─────────────────────────────────────────────
+
+let llmsOrgID = '';
+let llmsViewName = '';
+let llmsBaseUrl = '';
+let llmsPreviewDebounce = null;
+
+function initLlmsConfig() {
+    const dataEl = document.getElementById('llmsConfigData');
+    const ctxEl = document.getElementById('llmsConfigContext');
+    if (!dataEl || !ctxEl) return;
+
+    let config = {};
+    let ctx = {};
+    try { config = JSON.parse(dataEl.textContent) || {}; } catch (e) { /* ignore */ }
+    try { ctx = JSON.parse(ctxEl.textContent) || {}; } catch (e) { /* ignore */ }
+
+    llmsOrgID = ctx.orgID || '';
+    llmsViewName = ctx.viewName || '';
+    llmsBaseUrl = ctx.baseUrl || '';
+    csrfToken = ctx.csrfToken || csrfToken;
+
+    const toggle = document.getElementById('aiEnabledToggle');
+    const nameEl = document.getElementById('llmsPortalName');
+    const descEl = document.getElementById('llmsPortalDescription');
+    const formArea = document.getElementById('llmsConfigFormArea');
+
+    if (toggle) {
+        toggle.checked = config.aiEnabled !== false;
+        toggle.addEventListener('change', () => {
+            if (formArea) formArea.style.opacity = toggle.checked ? '1' : '0.4';
+            if (formArea) formArea.style.pointerEvents = toggle.checked ? '' : 'none';
+            scheduleLlmsPreview();
+        });
+        if (formArea) {
+            formArea.style.opacity = toggle.checked ? '1' : '0.4';
+            formArea.style.pointerEvents = toggle.checked ? '' : 'none';
+        }
+    }
+
+    if (nameEl) nameEl.value = config.portalName || '';
+    if (descEl) descEl.value = config.portalDescription || '';
+
+    [nameEl, descEl].forEach(el => {
+        if (el) el.addEventListener('input', scheduleLlmsPreview);
+    });
+
+    const saveBtn = document.getElementById('saveLlmsConfigBtn');
+    if (saveBtn) saveBtn.addEventListener('click', saveLlmsConfig);
+
+    scheduleLlmsPreview();
+}
+
+function scheduleLlmsPreview() {
+    clearTimeout(llmsPreviewDebounce);
+    llmsPreviewDebounce = setTimeout(fetchLlmsPreview, 600);
+}
+
+async function fetchLlmsPreview() {
+    const toggle = document.getElementById('aiEnabledToggle');
+    const previewEl = document.getElementById('llmsPreviewContent');
+    const refreshingEl = document.getElementById('llmsPreviewRefreshing');
+    if (!previewEl) return;
+
+    if (toggle && !toggle.checked) {
+        previewEl.textContent = '(llms.txt is disabled — AI agents will receive 404)';
+        return;
+    }
+
+    if (refreshingEl) refreshingEl.style.display = '';
+    try {
+        const response = await fetch(`${llmsBaseUrl}/llms.txt/preview`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                portalName: document.getElementById('llmsPortalName')?.value || '',
+                portalDescription: document.getElementById('llmsPortalDescription')?.value || '',
+            })
+        });
+        const text = await response.text();
+        previewEl.textContent = text;
+    } catch (e) {
+        previewEl.textContent = 'Preview unavailable.';
+    } finally {
+        if (refreshingEl) refreshingEl.style.display = 'none';
+    }
+}
+
+async function saveLlmsConfig() {
+    const saveBtn = document.getElementById('saveLlmsConfigBtn');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Publishing…';
+    }
+    try {
+        const response = await fetch(`${llmsBaseUrl}/llms-config`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                aiEnabled: document.getElementById('aiEnabledToggle')?.checked !== false,
+                portalName: document.getElementById('llmsPortalName')?.value || '',
+                portalDescription: document.getElementById('llmsPortalDescription')?.value || '',
+            })
+        });
+        if (response.ok) {
+            showAlert('LLM Instructions saved successfully', 'success');
+        } else {
+            const err = await response.json().catch(() => ({ message: 'Save failed' }));
+            showAlert(err.message || 'Save failed', 'error');
+        }
+    } catch (e) {
+        showAlert(e.message || 'Network error', 'error');
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="bi bi-floppy me-1"></i> Publish';
+        }
+
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    initLlmsConfig();
+
+    // Refresh CodeMirror when the workflows tab becomes visible — it renders
+    // with 0 dimensions if initialised while the pane is hidden (display:none).
+    const workflowsBtn = document.getElementById('workflows-tab-btn');
+    workflowsBtn?.addEventListener('shown.bs.tab', () => arazoEditor?.refresh());
+
+    // Activate the workflows tab when redirected here after a save, then clear
+    // the hash so manual reloads default back to the LLM Instructions tab.
+    if (window.location.hash === '#apiflows') {
+        if (workflowsBtn) workflowsBtn.click();
+        history.replaceState(null, '', window.location.pathname);
+    }
+});

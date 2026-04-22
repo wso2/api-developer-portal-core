@@ -96,6 +96,16 @@
         <img src="/images/subscriptions-icon.svg" />
         <span class="nav-text">Subscriptions</span>
       </a>
+      {{#if showApiWorkflowsNav}}
+      {{#if profile.isAdmin}}
+      <div class="nav-section-divider"></div>
+      <span class="nav-section-label">Admin</span>
+      <a href="{{baseUrl}}/configure" class="nav-link" id="ai-settings">
+        <img src="/images/ai-settings-icon.svg" />
+        <span class="nav-text">AI Settings</span>
+      </a>
+      {{/if}}
+      {{/if}}
   </nav>
 
   <button class="collapse-btn" id="collapseBtn">

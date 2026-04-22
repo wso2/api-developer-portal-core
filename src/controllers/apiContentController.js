@@ -1232,52 +1232,93 @@ const loadAPIContentMd = async (req, res) => {
     }
 };
 
+async function buildLlmsTxtTemplateContent(req, orgID, orgName, viewName, configOverrides = {}) {
+    const metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, null, null, viewName);
+    const agentVisibleAPIs = metaDataList.filter(api => api.apiInfo.agentVisibility !== 'HIDDEN');
+    const hiddenAPICount = metaDataList.length - agentVisibleAPIs.length;
+
+    const byType = { REST: [], MCP: [], GraphQL: [], WS: [] };
+    for (const api of agentVisibleAPIs) {
+        const type = api.apiInfo.apiType;
+        if (byType[type]) byType[type].push(api);
+    }
+
+    const apiMetadataDao = require('../dao/apiMetadata');
+    const viewId = await apiMetadataDao.getViewID(orgID, viewName);
+    const allApiFlows = await apiFlowService.getAllAPIFlowsFromDB(orgID, viewId);
+    const allPublishedWorkflows = allApiFlows.filter(flow => flow.status === 'PUBLISHED');
+    const publishedWorkflows = allPublishedWorkflows.filter(flow => flow.agentVisibility !== 'HIDDEN');
+    const hiddenWorkflowCount = allPublishedWorkflows.length - publishedWorkflows.length;
+
+    const baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
+    return {
+        orgName: configOverrides.orgName,
+        portalName: configOverrides.portalName || null,
+        portalDescription: configOverrides.portalDescription || null,
+        restAPIs:    byType.REST.length    ? byType.REST    : null,
+        mcpAPIs:     byType.MCP.length     ? byType.MCP     : null,
+        graphqlAPIs: byType.GraphQL.length ? byType.GraphQL : null,
+        wsAPIs:      byType.WS.length      ? byType.WS      : null,
+        workflows:   publishedWorkflows.length > 0 ? publishedWorkflows : null,
+        hiddenAPICount: hiddenAPICount > 0 ? hiddenAPICount : 0,
+        hiddenWorkflowCount: hiddenWorkflowCount > 0 ? hiddenWorkflowCount : 0,
+        hasHiddenResources: hiddenAPICount > 0 || hiddenWorkflowCount > 0,
+        portalUrl: baseUrl,
+        baseUrl,
+    };
+}
+
 const loadLlmsTxt = async (req, res) => {
     const { orgName, viewName } = req.params;
     try {
         const orgDetails = await adminDao.getOrganization(orgName);
         const orgID = orgDetails.ORG_ID;
 
-        const metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, null, null, viewName);
-        const agentVisibleAPIs = metaDataList.filter(api => api.apiInfo.agentVisibility !== 'HIDDEN');
-        const hiddenAPICount = metaDataList.length - agentVisibleAPIs.length;
-
-        const byType = { REST: [], MCP: [], GraphQL: [], WS: [] };
-        for (const api of agentVisibleAPIs) {
-            const type = api.apiInfo.apiType;
-            if (byType[type]) byType[type].push(api);
+        const configAsset = await adminDao.getOrgContent({
+            orgId: orgID, fileType: 'llms-config', viewName, fileName: 'llms-config.json'
+        });
+        let llmsConfig = {};
+        if (configAsset) {
+            try { llmsConfig = JSON.parse(configAsset.FILE_CONTENT.toString('utf8')); } catch (e) { /* ignore */ }
+        }
+        if (llmsConfig.aiEnabled === false) {
+            return res.status(404).send('Not Found');
         }
 
-        // Fetch published agent-visible API workflows
-        const apiMetadataDao = require('../dao/apiMetadata');
-        const viewId = await apiMetadataDao.getViewID(orgID, viewName);
-        const allApiFlows = await apiFlowService.getAllAPIFlowsFromDB(orgID, viewId);
-        const allPublishedWorkflows = allApiFlows.filter(flow => flow.status === 'PUBLISHED');
-        const publishedWorkflows = allPublishedWorkflows.filter(flow => flow.agentVisibility !== 'HIDDEN');
-        const hiddenWorkflowCount = allPublishedWorkflows.length - publishedWorkflows.length;
-
-        const baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
-        const templateContent = {
+        const templateContent = await buildLlmsTxtTemplateContent(req, orgID, orgName, viewName, {
             orgName: orgDetails.ORG_NAME,
-            restAPIs:    byType.REST.length    ? byType.REST    : null,
-            mcpAPIs:     byType.MCP.length     ? byType.MCP     : null,
-            graphqlAPIs: byType.GraphQL.length ? byType.GraphQL : null,
-            wsAPIs:      byType.WS.length      ? byType.WS      : null,
-            workflows:   publishedWorkflows.length > 0 ? publishedWorkflows : null,
-            hiddenAPICount: hiddenAPICount > 0 ? hiddenAPICount : 0,
-            hiddenWorkflowCount: hiddenWorkflowCount > 0 ? hiddenWorkflowCount : 0,
-            hasHiddenResources: hiddenAPICount > 0 || hiddenWorkflowCount > 0,
-            portalUrl: baseUrl,
-            baseUrl,
-        };
+            portalName: llmsConfig.portalName || null,
+            portalDescription: llmsConfig.portalDescription || null,
+        });
 
         const md = await util.renderLlmsTxt(templateContent, orgID, viewName);
-
         res.setHeader('Content-Type', 'text/plain; charset=utf-8');
         res.send(md);
     } catch (error) {
         logger.error('Error generating llms.txt', { orgName, error: error.message, stack: error.stack });
         res.status(500).send('# Error\n\nFailed to generate portal index.');
+    }
+};
+
+const previewLlmsTxt = async (req, res) => {
+    const { orgName, viewName } = req.params;
+    try {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const orgID = orgDetails.ORG_ID;
+        const { portalName, portalDescription } = req.body;
+
+        const templateContent = await buildLlmsTxtTemplateContent(req, orgID, orgName, viewName, {
+            orgName: orgDetails.ORG_NAME,
+            portalName: portalName || null,
+            portalDescription: portalDescription || null,
+        });
+
+        const md = await util.renderLlmsTxt(templateContent, orgID, viewName);
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.send(md);
+    } catch (error) {
+        logger.error('Error previewing llms.txt', { orgName, error: error.message, stack: error.stack });
+        res.status(500).send('# Error\n\nFailed to generate preview.');
     }
 };
 
@@ -1441,6 +1482,7 @@ module.exports = {
     loadDocument,
     loadAPIsMd,
     loadLlmsTxt,
+    previewLlmsTxt,
     loadAPIContentMd,
     loadDocumentMd,
     loadSpecificationRaw: loadAPIDefinitionRaw,
