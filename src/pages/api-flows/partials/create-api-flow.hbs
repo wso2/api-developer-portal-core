@@ -405,7 +405,7 @@
                         </svg>
                         Generate with Claude
                     </button>
-                    <button type="button" class="common-btn-outlined af-copy-prompt-btn" id="copyPromptSpecBtn" disabled
+                    <button type="button" class="af-rp-outlined-btn af-copy-prompt-btn" id="copyPromptSpecBtn" disabled
                         aria-describedby="specActionsTip">
                         <i class="bi bi-clipboard me-1" aria-hidden="true"></i> Copy prompt
                     </button>
@@ -489,12 +489,19 @@
 
                 {{!-- Workflow .md preview card --}}
                 <div class="af-rp-section-card">
-                    <div class="af-rp-header">
-                        <span>Workflow Preview</span>
-                        <span class="af-rp-live-badge">Live</span>
-                    </div>
                     <pre class="af-workflow-md-preview"
                         id="afWorkflowMdPreview">Fill in name and description to see a preview.</pre>
+                </div>
+
+                {{!-- Not visible for agents notice --}}
+                <div class="af-rp-section-card af-agent-hidden-notice d-none" id="afAgentHiddenNotice">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-eye-slash" style="font-size:1.25rem; color:var(--bs-secondary);" aria-hidden="true"></i>
+                        <div>
+                            <div class="fw-semibold" style="font-size:0.875rem;">Not visible for agents</div>
+                            <div class="text-muted" style="font-size:0.8125rem;">This workflow won't appear in agent discovery. Change Agent Visibility to make it available.</div>
+                        </div>
+                    </div>
                 </div>
 
                 {{!-- Readiness card --}}

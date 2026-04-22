@@ -7,8 +7,10 @@
 }
 
 .configure-tabs {
-    border-bottom: 2px solid #e9ecef;
+    display: flex !important;
+    flex-direction: row !important;
     flex-wrap: nowrap !important;
+    border-bottom: 2px solid #e9ecef;
 }
 
 .configure-tabs .nav-item {
@@ -1581,6 +1583,32 @@
     opacity: 0.6;
 }
 
+.af-rp-outlined-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.125rem;
+    background: transparent;
+    color: var(--primary-main-color);
+    border: 1px solid var(--primary-main-color);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.af-rp-outlined-btn:hover {
+    background: var(--primary-main-color);
+    color: #fff;
+}
+
+.af-rp-outlined-btn:disabled,
+.af-rp-outlined-btn[disabled] {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
 .af-copy-prompt-btn:disabled,
 .af-copy-prompt-btn[disabled] {
     cursor: not-allowed;
@@ -1752,12 +1780,6 @@
     padding:0.875rem 1rem;
     display:flex; flex-direction:column; gap:0.625rem;
 }
-.af-rp-live-badge {
-    font-size:0.65rem; font-weight:700; letter-spacing:0.04em;
-    padding:0.15em 0.6em; border-radius:999px;
-    background:color-mix(in srgb,#16a34a 12%,transparent);
-    color:#15803d; text-transform:uppercase;
-}
 .af-rp-divider { border:none; border-top:1px solid var(--bs-gray-200); margin:0; }
 
 /* Agent preview card */
@@ -1916,10 +1938,10 @@
 /* Wizard footer */
 .af-wizard-footer {
     display:flex; justify-content:space-between; align-items:center;
-    padding:0.875rem 1.5rem;
+    padding:0.5rem 1.5rem;
     background:var(--main-bg-color);
     border-top:1px solid var(--bs-gray-200);
-    box-shadow:0 -4px 16px rgba(0,0,0,0.06);
+    box-shadow:0 -2px 8px rgba(0,0,0,0.05);
     flex-shrink:0;
 }
 .af-wizard-footer-left {
@@ -2056,7 +2078,7 @@
     line-height: 1.65;
     color: var(--main-text-color);
     white-space: pre-wrap;
-    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .af-prompt-section-edit {
@@ -2114,7 +2136,129 @@
     padding: 0.75rem;
     margin: 0;
     white-space: pre-wrap;
-    word-break: break-word;
+    overflow-wrap: break-word;
     max-height: 420px;
     overflow-y: auto;
+}
+
+/* ===== LLM Instructions Tab ===== */
+
+.llms-config-toggle-card {
+    border: 1px solid var(--bs-gray-200);
+    border-radius: 0.75rem;
+    background: color-mix(in srgb, var(--primary-main-color) 4%, var(--main-bg-color));
+    padding: 1rem 1.25rem;
+}
+
+.llms-toggle-icon {
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.625rem;
+    background: rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: var(--primary-main-color);
+}
+
+.llms-url-code {
+    font-size: 0.78rem;
+    color: var(--primary-main-color);
+    background: rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.08);
+    padding: 0.1em 0.4em;
+    border-radius: 0.25rem;
+}
+
+.llms-section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--bs-secondary, #6c757d);
+    margin-bottom: 0.875rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--bs-gray-200);
+}
+
+.llms-config-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .llms-config-split {
+        grid-template-columns: 1fr;
+    }
+}
+
+.llms-config-editor-pane {
+    min-width: 0;
+}
+
+.llms-instructions-textarea {
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    resize: vertical;
+}
+
+.llms-config-preview-pane {
+    position: sticky;
+    top: 1rem;
+    border: 1px solid var(--bs-gray-300);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background: var(--main-bg-color);
+    min-width: 0;
+}
+
+.llms-config-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.625rem 1rem;
+    border-bottom: 1px solid var(--bs-gray-200);
+    background: var(--secondary-bg-color, #f8f9fa);
+}
+
+.llms-preview-link {
+    text-decoration: none;
+    font-size: 0.85rem;
+}
+
+.llms-preview-link:hover {
+    color: var(--primary-main-color) !important;
+}
+
+.llms-config-preview-body {
+    margin: 0;
+    padding: 1rem;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 70vh;
+    overflow-y: auto;
+    color: var(--main-text-color);
+}
+
+.llms-config-preview-body:empty::before {
+    content: 'Preview will appear here…';
+    color: var(--bs-secondary, #6c757d);
+    font-style: italic;
+    font-family: inherit;
+}
+
+.llms-config-header .container-header {
+    font-size: 1.5rem;
+}
+
+.llms-config-header {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--bs-gray-200);
 }

@@ -36,13 +36,15 @@ const loadViewSettingsPage = async (req, res) => {
     let templateContent = {
         baseUrl: '/' + req.params.orgName + '/views/' + viewName,
         viewName,
-        csrfToken: getSessionCsrfToken(req)
+        csrfToken: getSessionCsrfToken(req),
+        showApiWorkflowsNav: config.features?.apiWorkflows?.enabled === true
     };
     try {
         if (config.mode === constants.DEV_MODE) {
             templateContent.apiFlows = [];
             templateContent.orgAPIs = [];
             templateContent.devportalMode = constants.API_TYPE.DEFAULT;
+            templateContent.llmsConfig = { aiEnabled: true, portalName: '', portalDescription: '' };
         } else {
             const orgName = req.params.orgName;
             templateContent.loggedOrg = orgName;
@@ -66,6 +68,15 @@ const loadViewSettingsPage = async (req, res) => {
                 agentVisibility: api.AGENT_VISIBILITY
             }));
 
+            const configAsset = await adminDao.getOrgContent({
+                orgId: orgID, fileType: 'llms-config', viewName, fileName: 'llms-config.json'
+            });
+            let llmsConfig = { aiEnabled: true, portalName: '', portalDescription: '' };
+            if (configAsset) {
+                try { llmsConfig = { ...llmsConfig, ...JSON.parse(configAsset.FILE_CONTENT.toString('utf8')) }; } catch (e) { /* ignore */ }
+            }
+            templateContent.llmsConfig = llmsConfig;
+
             templateContent.profile = req.user;
         }
         const templateResponse = fs.readFileSync(completeTemplatePath, constants.CHARSET_UTF8);
@@ -87,6 +98,50 @@ const loadViewSettingsPage = async (req, res) => {
     }
 };
 
+const getLlmsConfig = async (req, res) => {
+    const { orgName, viewName } = req.params;
+    try {
+        const orgID = await adminDao.getOrgId(orgName);
+        const asset = await adminDao.getOrgContent({
+            orgId: orgID, fileType: 'llms-config', viewName, fileName: 'llms-config.json'
+        });
+        if (!asset) {
+            return res.json({ aiEnabled: true, portalName: '', portalDescription: '' });
+        }
+        res.json(JSON.parse(asset.FILE_CONTENT.toString('utf8')));
+    } catch (err) {
+        logger.error('Error getting llms config', { error: err.message, stack: err.stack });
+        res.status(500).json({ error: err.message });
+    }
+};
+
+const saveLlmsConfig = async (req, res) => {
+    const { orgName, viewName } = req.params;
+    const { aiEnabled, portalName, portalDescription } = req.body;
+    try {
+        const orgID = await adminDao.getOrgId(orgName);
+        const content = Buffer.from(JSON.stringify({ aiEnabled, portalName, portalDescription }));
+        const orgData = {
+            orgId: orgID, fileType: 'llms-config', viewName,
+            fileName: 'llms-config.json', fileContent: content, filePath: 'llms-config'
+        };
+        const existing = await adminDao.getOrgContent({
+            orgId: orgID, fileType: 'llms-config', viewName, fileName: 'llms-config.json'
+        });
+        if (existing) {
+            await adminDao.updateOrgContent(orgData);
+        } else {
+            await adminDao.createOrgContent(orgData);
+        }
+        res.json({ message: 'Saved successfully' });
+    } catch (err) {
+        logger.error('Error saving llms config', { error: err.message, stack: err.stack });
+        res.status(500).json({ error: err.message });
+    }
+};
+
 module.exports = {
-    loadViewSettingsPage
+    loadViewSettingsPage,
+    getLlmsConfig,
+    saveLlmsConfig,
 };

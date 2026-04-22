@@ -845,6 +845,10 @@ function resetApiFlowForm() {
 function syncAgentPromptTab(isHidden) {
     const hiddenIcon = document.getElementById('tabVisualHiddenIcon');
     const banner = document.getElementById('agentHiddenBanner');
+    const toolbar = document.querySelector('.af-prompt-action-toolbar');
+    const promptField = document.getElementById('agentPromptField');
+    const ready3 = document.getElementById('afReady3');
+    const agentHiddenNotice = document.getElementById('afAgentHiddenNotice');
 
     if (isHidden) {
         hiddenIcon?.classList.remove('d-none');
@@ -852,6 +856,10 @@ function syncAgentPromptTab(isHidden) {
             banner.classList.remove('d-none', 'af-banner-fade-out');
             banner.classList.add('af-banner-fade-in');
         }
+        toolbar?.classList.add('d-none');
+        promptField?.classList.add('d-none');
+        ready3?.classList.add('d-none');
+        agentHiddenNotice?.classList.remove('d-none');
     } else {
         hiddenIcon?.classList.add('d-none');
         if (banner && !banner.classList.contains('d-none')) {
@@ -862,6 +870,10 @@ function syncAgentPromptTab(isHidden) {
                 banner.classList.remove('af-banner-fade-out');
             }, 150);
         }
+        toolbar?.classList.remove('d-none');
+        promptField?.classList.remove('d-none');
+        ready3?.classList.remove('d-none');
+        agentHiddenNotice?.classList.add('d-none');
     }
 }
 
@@ -1254,7 +1266,9 @@ function inferApiIdsFromMarkdown(mdContent, checkboxes) {
         .filter(cb => {
             const name = (cb.dataset.apiName || '').toLowerCase().trim();
             const handle = (cb.dataset.apiHandle || '').toLowerCase().trim();
-            return (name && lower.includes(name)) || (handle && lower.includes(handle));
+            const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const matches = token => token.length >= 3 && new RegExp('\\b' + escape(token) + '\\b', 'i').test(lower);
+            return matches(name) || matches(handle);
         })
         .map(cb => cb.value);
 }
@@ -1740,7 +1754,7 @@ function validateWizardStep(step) {
         const hasArazzo = arazoEditor ? arazoEditor.getValue().trim().length > 0 : (document.getElementById('apiFlowDefinition')?.value?.trim().length > 0);
         const hasMd = document.getElementById('markdownContent')?.value?.trim().length > 0;
         const hasContent = hasArazzo || hasMd;
-        if (!hasContent && agentVis !== 'HIDDEN') {
+        if (!hasContent) {
             showAlert('Add an API workflow spec before continuing', 'warning');
             return false;
         }
@@ -1848,20 +1862,22 @@ function updateStep3Readiness() {
 // ─────────────────────────────────────────────
 
 function initAccessMatrix() {
-    // Portal cards
-    document.getElementById('portalPublicCard')?.addEventListener('click', () => {
-        setAccessValue('visibility', 'PUBLIC');
-    });
-    document.getElementById('portalPrivateCard')?.addEventListener('click', () => {
-        setAccessValue('visibility', 'PRIVATE');
-    });
-    // Agent cards
-    document.getElementById('agentVisibleCard')?.addEventListener('click', () => {
-        setAccessValue('agent', 'VISIBLE');
-    });
-    document.getElementById('agentHiddenCard')?.addEventListener('click', () => {
-        setAccessValue('agent', 'HIDDEN');
-    });
+    const bind = (id, type, value) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const activate = () => setAccessValue(type, value);
+        el.addEventListener('click', activate);
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+                if (e.key !== 'Enter') e.preventDefault();
+                activate();
+            }
+        });
+    };
+    bind('portalPublicCard', 'visibility', 'PUBLIC');
+    bind('portalPrivateCard', 'visibility', 'PRIVATE');
+    bind('agentVisibleCard', 'agent', 'VISIBLE');
+    bind('agentHiddenCard', 'agent', 'HIDDEN');
     syncAccessMatrixFromRadios();
 }
 
@@ -1903,3 +1919,142 @@ function syncAccessMatrixFromRadios() {
         agentHidden.setAttribute('aria-pressed', String(agentVis === 'HIDDEN'));
     }
 }
+// LLM Instructions Tab
+// ─────────────────────────────────────────────
+
+let llmsOrgID = '';
+let llmsViewName = '';
+let llmsBaseUrl = '';
+let llmsPreviewDebounce = null;
+
+function initLlmsConfig() {
+    const dataEl = document.getElementById('llmsConfigData');
+    const ctxEl = document.getElementById('llmsConfigContext');
+    if (!dataEl || !ctxEl) return;
+
+    let config = {};
+    let ctx = {};
+    try { config = JSON.parse(dataEl.textContent) || {}; } catch (e) { /* ignore */ }
+    try { ctx = JSON.parse(ctxEl.textContent) || {}; } catch (e) { /* ignore */ }
+
+    llmsOrgID = ctx.orgID || '';
+    llmsViewName = ctx.viewName || '';
+    llmsBaseUrl = ctx.baseUrl || '';
+    csrfToken = ctx.csrfToken || csrfToken;
+
+    const toggle = document.getElementById('aiEnabledToggle');
+    const nameEl = document.getElementById('llmsPortalName');
+    const descEl = document.getElementById('llmsPortalDescription');
+    const formArea = document.getElementById('llmsConfigFormArea');
+
+    if (toggle) {
+        toggle.checked = config.aiEnabled !== false;
+        toggle.addEventListener('change', () => {
+            if (formArea) formArea.style.opacity = toggle.checked ? '1' : '0.4';
+            if (formArea) formArea.style.pointerEvents = toggle.checked ? '' : 'none';
+            scheduleLlmsPreview();
+        });
+        if (formArea) {
+            formArea.style.opacity = toggle.checked ? '1' : '0.4';
+            formArea.style.pointerEvents = toggle.checked ? '' : 'none';
+        }
+    }
+
+    if (nameEl) nameEl.value = config.portalName || '';
+    if (descEl) descEl.value = config.portalDescription || '';
+
+    [nameEl, descEl].forEach(el => {
+        if (el) el.addEventListener('input', scheduleLlmsPreview);
+    });
+
+    const saveBtn = document.getElementById('saveLlmsConfigBtn');
+    if (saveBtn) saveBtn.addEventListener('click', saveLlmsConfig);
+
+    scheduleLlmsPreview();
+}
+
+function scheduleLlmsPreview() {
+    clearTimeout(llmsPreviewDebounce);
+    llmsPreviewDebounce = setTimeout(fetchLlmsPreview, 600);
+}
+
+async function fetchLlmsPreview() {
+    const toggle = document.getElementById('aiEnabledToggle');
+    const previewEl = document.getElementById('llmsPreviewContent');
+    const refreshingEl = document.getElementById('llmsPreviewRefreshing');
+    if (!previewEl) return;
+
+    if (toggle && !toggle.checked) {
+        previewEl.textContent = '(llms.txt is disabled — AI agents will receive 404)';
+        return;
+    }
+
+    if (refreshingEl) refreshingEl.style.display = '';
+    try {
+        const response = await fetch(`${llmsBaseUrl}/llms.txt/preview`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                portalName: document.getElementById('llmsPortalName')?.value || '',
+                portalDescription: document.getElementById('llmsPortalDescription')?.value || '',
+            })
+        });
+        const text = await response.text();
+        previewEl.textContent = text;
+    } catch (e) {
+        previewEl.textContent = 'Preview unavailable.';
+    } finally {
+        if (refreshingEl) refreshingEl.style.display = 'none';
+    }
+}
+
+async function saveLlmsConfig() {
+    const saveBtn = document.getElementById('saveLlmsConfigBtn');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Saving…';
+    }
+    try {
+        const response = await fetch(`${llmsBaseUrl}/llms-config`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                aiEnabled: document.getElementById('aiEnabledToggle')?.checked !== false,
+                portalName: document.getElementById('llmsPortalName')?.value || '',
+                portalDescription: document.getElementById('llmsPortalDescription')?.value || '',
+            })
+        });
+        if (response.ok) {
+            showAlert('LLM Instructions saved successfully', 'success');
+        } else {
+            const err = await response.json().catch(() => ({ message: 'Save failed' }));
+            showAlert(err.message || 'Save failed', 'error');
+        }
+    } catch (e) {
+        showAlert(e.message || 'Network error', 'error');
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="bi bi-floppy me-1"></i> Save';
+        }
+
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    initLlmsConfig();
+
+    // Refresh CodeMirror when the workflows tab becomes visible — it renders
+    // with 0 dimensions if initialised while the pane is hidden (display:none).
+    const workflowsBtn = document.getElementById('workflows-tab-btn');
+    workflowsBtn?.addEventListener('shown.bs.tab', () => arazoEditor?.refresh());
+
+    // Activate the workflows tab when redirected here after a save, then clear
+    // the hash so manual reloads default back to the LLM Instructions tab.
+    if (window.location.hash === '#apiflows') {
+        if (workflowsBtn) workflowsBtn.click();
+        history.replaceState(null, '', window.location.pathname);
+    }
+});
