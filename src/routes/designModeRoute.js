@@ -43,7 +43,7 @@ router.get('/views/:viewName/applications', registerPartials, applicationControl
 router.get('/views/:viewName/applications/:applicationId', registerPartials, applicationController.loadApplication);
 router.get('/views/:viewName/applications/:applicationId/manage-keys', registerPartials, applicationController.loadApplicationKeys);
 
-router.get('/configure', registerPartials, settingsController.loadSettingPage);
+router.get('/configure', registerPartials, settingsController.loadOrgSettingsPage);
 
 router.get('/login', registerPartials, authController.login);
 router.get('/callback', registerPartials, authController.handleCallback);

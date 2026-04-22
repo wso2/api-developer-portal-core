@@ -1,0 +1,254 @@
+<!--
+ * Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
+ *
+ * API Flow Detail Page
+ -->
+<head>
+    <link rel="stylesheet" href="/technical-styles/api-workflows.css">
+    {{#unless (eq flow.contentType "MD")}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@jentic/arazzo-ui@latest/dist/arazzo-ui.css">
+    <script src="https://cdn.jsdelivr.net/npm/@jentic/arazzo-ui@latest/dist/arazzo-ui.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    {{/unless}}
+    {{#if (eq flow.contentType "MD")}}
+    <script src="https://cdn.jsdelivr.net/npm/marked@13/marked.min.js"></script>
+    {{/if}}
+</head>
+
+<main>
+    {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav}}
+    {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav}}
+
+    <div class="flow-detail-section">
+        {{!-- Back Button --}}
+        <a href="{{baseUrl}}/api-workflows" class="flow-detail-back">
+            <i class="bi bi-arrow-left"></i>
+            Back
+        </a>
+
+        {{!-- Header --}}
+        <div class="flow-detail-header">
+            <div class="flow-detail-header-content">
+                <h1>{{flow.name}}</h1>
+                <p>{{flow.description}}</p>
+            </div>
+            <div class="flow-header-actions">
+                {{#unless (eq flow.agentVisibility "HIDDEN")}}
+                <button class="btn-prompt" id="openPromptBtn" data-bs-toggle="modal" data-bs-target="#agentPromptModal">
+                    <i class="bi bi-file-code"></i>
+                    Agent Prompt
+                </button>
+                {{/unless}}
+            </div>
+        </div>
+
+        {{!-- Content --}}
+        <div class="flow-detail-content">
+            {{#if (eq flow.contentType "MD")}}
+            {{!-- Markdown Preview --}}
+            <div class="af-md-detail-container" id="markdownViewer"></div>
+            {{else}}
+            {{!-- Arazzo UI Viewer --}}
+            <div class="arazzo-viewer-container">
+                <div id="arazzoViewer"></div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+
+    {{> alert}}
+
+    {{!-- ── AGENT PROMPT MODAL ── --}}
+    <div class="modal fade" id="agentPromptModal" tabindex="-1" aria-labelledby="agentPromptModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title mb-0" id="agentPromptModalLabel">Agent Prompt</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="api-flow-prompt-toolbar">
+                        <span class="small text-muted">Use this prompt to let your AI agent execute the workflow—handling API calls, dependencies, and errors automatically</span>
+                        <div class="prompt-modal-toolbar">
+                            <button type="button" class="prompt-tool-btn" id="btnDownloadPrompt" title="Download as .txt">
+                                <i class="bi bi-download"></i>
+                            </button>
+                            <button type="button" class="prompt-tool-btn" id="btnCopyPrompt" title="Copy prompt">
+                                <i class="bi bi-copy"></i>
+                            </button>
+                            <div class="prompt-run-dropdown">
+                                <button type="button" class="btn-run-prompt" id="btnRunPrompt">
+                                    <i class="bi bi-play-fill"></i> Run
+                                </button>
+                                <div class="run-dropdown-menu" id="runDropdownMenu">
+                                    <button class="run-option" id="btnRunClaude">Run in Claude</button>
+                                    <button class="run-option" id="btnRunChatGPT">Run in ChatGPT</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <pre id="modalAgentPromptText" class="api-flow-prompt-pre">{{flow.agentPrompt}}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{!-- Hidden container for spec content --}}
+    <textarea id="specContent" style="display: none;">{{flow.content}}</textarea>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    const btnCopyPrompt = document.getElementById('btnCopyPrompt');
+    if (btnCopyPrompt) {
+        btnCopyPrompt.addEventListener('click', function() {
+            const promptText = document.getElementById('modalAgentPromptText').textContent;
+            navigator.clipboard.writeText(promptText).then(() => {
+                const icon = btnCopyPrompt.querySelector('i');
+                icon.className = 'bi bi-check-lg';
+                setTimeout(() => { icon.className = 'bi bi-copy'; }, 2000);
+            }).catch(() => showNotification('Failed to copy prompt', 'error'));
+        });
+    }
+
+    const btnDownloadPrompt = document.getElementById('btnDownloadPrompt');
+    if (btnDownloadPrompt) {
+        btnDownloadPrompt.addEventListener('click', function() {
+            const promptText = document.getElementById('modalAgentPromptText').textContent;
+            const blob = new Blob([promptText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '{{flow.handle}}.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+    }
+
+    const btnRunPrompt = document.getElementById('btnRunPrompt');
+    if (btnRunPrompt) {
+        btnRunPrompt.addEventListener('click', function(event) {
+            event.stopPropagation();
+            document.getElementById('runDropdownMenu').classList.toggle('show');
+        });
+    }
+
+    const btnRunClaude = document.getElementById('btnRunClaude');
+    if (btnRunClaude) {
+        btnRunClaude.addEventListener('click', function() {
+            const prompt = document.getElementById('modalAgentPromptText').textContent;
+            window.open('https://claude.ai/new?q=' + encodeURIComponent(prompt), '_blank');
+            document.getElementById('runDropdownMenu').classList.remove('show');
+        });
+    }
+
+    const btnRunChatGPT = document.getElementById('btnRunChatGPT');
+    if (btnRunChatGPT) {
+        btnRunChatGPT.addEventListener('click', function() {
+            const prompt = document.getElementById('modalAgentPromptText').textContent;
+            window.open('https://chatgpt.com/?prompt=' + encodeURIComponent(prompt), '_blank');
+            document.getElementById('runDropdownMenu').classList.remove('show');
+        });
+    }
+
+    document.addEventListener('click', function() {
+        const menu = document.getElementById('runDropdownMenu');
+        if (menu) menu.classList.remove('show');
+    });
+});
+
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+
+    const content = document.createElement('div');
+    content.className = 'notification-content';
+
+    const icon = document.createElement('i');
+    const iconClass = type === 'success' ? 'check-circle' : 'exclamation-circle';
+    icon.className = `bi bi-${iconClass}`;
+
+    const messageSpan = document.createElement('span');
+    messageSpan.textContent = message;
+
+    content.appendChild(icon);
+    content.appendChild(messageSpan);
+    notification.appendChild(content);
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 10);
+
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 3000);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const specContent = document.getElementById('specContent').value.trim();
+    const contentType = '{{flow.contentType}}';
+
+    if (contentType === 'MD') {
+        renderMarkdownPreview(specContent);
+    } else {
+        initArazzoUI(specContent);
+    }
+});
+
+function renderMarkdownPreview(content) {
+    const container = document.getElementById('markdownViewer');
+    if (!container) return;
+
+    if (!content) {
+        container.innerHTML = '<p class="af-md-empty">No workflow description available.</p>';
+        return;
+    }
+
+    if (window.marked) {
+        marked.setOptions({ breaks: true, gfm: true });
+        container.innerHTML = marked.parse(content);
+    } else {
+        const pre = document.createElement('pre');
+        pre.className = 'af-md-fallback';
+        pre.textContent = content;
+        container.appendChild(pre);
+    }
+}
+
+function initArazzoUI(specContent) {
+    const viewerContainer = document.getElementById('arazzoViewer');
+    if (!viewerContainer) return;
+
+    if (!specContent) {
+        viewerContainer.innerHTML = '<p style="padding: 2rem; text-align: center; color: #999;">No specification content available</p>';
+        return;
+    }
+
+    try {
+        if (window.ArazzoUI) {
+            window.ArazzoUI({
+                dom_id: '#arazzoViewer',
+                document: specContent,
+                view: 'split'
+            });
+        } else {
+            throw new Error('Arazzo UI library not loaded.');
+        }
+    } catch (error) {
+        console.error('Error initializing Arazzo UI:', error);
+        viewerContainer.innerHTML = `
+            <div style="padding:2rem;text-align:center;color:#e74c3c;">
+                <p><strong>Error loading Arazzo UI</strong></p>
+                <p style="font-size:0.9rem;color:#999;">${error.message}</p>
+            </div>`;
+    }
+}
+</script>

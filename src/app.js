@@ -41,6 +41,7 @@ const Handlebars = require('handlebars');
 const constants = require("./utils/constants");
 const designRoute = require('./routes/designModeRoute');
 const settingsRoute = require('./routes/configureRoute');
+const apiFlowsRoute = require('./routes/apiFlowsRoute');
 const AsyncLock = require('async-lock');
 const util = require('./utils/util');
 
@@ -175,6 +176,13 @@ Handlebars.registerHelper('getSubIDs', function (subAPIs) {
 Handlebars.registerHelper('beforeSeparator', function (value, separator) {
     if (typeof value === 'string' && typeof separator === 'string') {
         return value.split(separator)[0];
+    }
+    return value;
+});
+
+Handlebars.registerHelper('stripMdExtension', function (value) {
+    if (typeof value === 'string' && value.endsWith('.md')) {
+        return value.slice(0, -3);
     }
     return value;
 });
@@ -358,6 +366,7 @@ app.use(auditMiddleware({
 app.use(passport.initialize());
 app.use(passport.session());
 
+
 let claimNames = {
     [constants.ROLES.ROLE_CLAIM]: config.roleClaim,
     [constants.ROLES.GROUP_CLAIM]: config.groupsClaim,
@@ -386,6 +395,7 @@ const strategy = new OAuth2Strategy({
         return done(new Error('Access token missing'));
     }
     let orgList, userOrg;
+    let isAdmin, isSuperAdmin = false;
     if (config.advanced.tokenExchanger?.enabled) {
         try {
             const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
@@ -393,6 +403,8 @@ const strategy = new OAuth2Strategy({
             orgList = decodedExchangedToken.organizations;
             userOrg = decodedExchangedToken.organization.uuid;
             req['exchangedToken'] = exchangedToken;
+            const exchangeTokenScopes = (decodedExchangedToken?.scope || '').split(' ');
+            isAdmin = exchangeTokenScopes.includes(config.advanced.tokenExchanger.admin_scope || "apim:admin");
         } catch (error) {
             logger.error('Token exchange failed during authentication', {
                 error: error.message,
@@ -408,7 +420,6 @@ const strategy = new OAuth2Strategy({
     const organizationID = decodedJWT[claimNames[constants.ROLES.ORGANIZATION_CLAIM]] ? decodedJWT[config.orgIDClaim] : '';
     const roles = decodedJWT[claimNames[constants.ROLES.ROLE_CLAIM]] ? decodedJWT[config.roleClaim] : '';
     const groups = decodedJWT[claimNames[constants.ROLES.GROUP_CLAIM]] ? decodedJWT[config.groupsClaim] : '';
-    let isAdmin, isSuperAdmin = false;
     if (roles.includes(constants.ROLES.SUPER_ADMIN) || roles.includes(constants.ROLES.ADMIN)) {
         isAdmin = true;
     }
@@ -567,6 +578,7 @@ if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.DEFAULT, applicationContent);
     app.use(constants.ROUTE.DEFAULT, orgContent);
     app.use(constants.ROUTE.DEFAULT, settingsRoute);
+    app.use(constants.ROUTE.DEFAULT, apiFlowsRoute);
     app.use(constants.ROUTE.DEFAULT, subscriptionsContent);
     app.use(constants.ROUTE.DEFAULT, customContent);
 }
@@ -585,7 +597,8 @@ app.use( (err, req, res, next) => {
     let templateContent = {
         devportalMode: 'DEFAULT',
         baseUrl: '/' + req.originalUrl?.split('/')[1] + '/' + constants.ROUTE.VIEWS_PATH + "default",
-        errorMessage: "Oops! Something went wrong"
+        errorMessage: "Oops! Something went wrong",
+        profile: req.isAuthenticated() ? req.user : null,
     }
     let html = "";
     if (err.status === 401) {

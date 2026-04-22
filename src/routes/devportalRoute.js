@@ -17,6 +17,9 @@
  */
 const express = require('express');
 const router = express.Router();
+const os = require('os');
+const path = require('path');
+const fs = require('fs').promises;
 const devportalService = require('../services/devportalService');
 const apiMetadataService = require('../services/apiMetadataService');
 const adminService = require('../services/adminService');
@@ -35,6 +38,7 @@ const constants = require('../utils/constants');
 const config = require(process.cwd() + '/config.json');
 const platformSubscriptionService = require('../services/platformSubscriptionService');
 const platformApiKeyService = require('../services/platformApiKeyService');
+const apiFlowService = require('../services/apiFlowService');
 
 router.post('/organizations', enforceSecuirty(constants.SCOPES.ADMIN), adminService.createOrganization);
 router.get('/organizations', enforceSecuirty(constants.SCOPES.ADMIN), adminService.getOrganizations);
@@ -211,6 +215,28 @@ router.get("/organizations/:orgId/invoices/:invoiceId", ensureBillingAuth, invoi
 router.get("/organizations/:orgId/subscriptions/:subId/invoices", ensureBillingAuth, invoiceController.listInvoicesBySubscription);
 router.get("/organizations/:orgId/invoices/:invoiceId/pdf", ensureBillingAuth, invoiceController.getInvoicePdfLink);
 router.get("/organizations/:orgId/invoices/:invoiceId/hosted", ensureBillingAuth, invoiceController.redirectHostedInvoice);
+
+// API Flows (admin)
+router.post('/organizations/:orgId/views/:viewName/api-flows', enforceSecuirty(constants.SCOPES.ADMIN), requireCsrfForMutatingApi, apiFlowService.createAPIFlow);
+router.get('/organizations/:orgId/views/:viewName/api-flows', enforceSecuirty(constants.SCOPES.ADMIN), apiFlowService.getAllAPIFlows);
+router.get('/organizations/:orgId/views/:viewName/api-flows/:apiFlowId', enforceSecuirty(constants.SCOPES.ADMIN), apiFlowService.getAPIFlow);
+router.put('/organizations/:orgId/views/:viewName/api-flows/:apiFlowId', enforceSecuirty(constants.SCOPES.ADMIN), requireCsrfForMutatingApi, apiFlowService.updateAPIFlow);
+router.delete('/organizations/:orgId/views/:viewName/api-flows/:apiFlowId', enforceSecuirty(constants.SCOPES.ADMIN), requireCsrfForMutatingApi, apiFlowService.deleteAPIFlow);
+router.post('/organizations/:orgId/views/:viewName/api-flows/generate-prompt', enforceSecuirty(constants.SCOPES.ADMIN), requireCsrfForMutatingApi, apiFlowService.generatePrompt);
+
+router.post('/temp-arazzo-file', enforceSecuirty(constants.SCOPES.ADMIN), requireCsrfForMutatingApi, async (req, res) => {
+    const { content, filename } = req.body;
+    if (!content || typeof content !== 'string') {
+        return res.status(400).json({ error: 'content is required' });
+    }
+    const safeName = (filename || 'workflow.arazzo.yaml')
+        .replace(/[^a-zA-Z0-9._-]/g, '-')
+        .replace(/\.\.+/g, '.')
+        .substring(0, 120);
+    const tmpPath = path.join(os.tmpdir(), safeName);
+    await fs.writeFile(tmpPath, content, 'utf8');
+    res.json({ path: tmpPath });
+});
 
 router.post('/login', devportalController.login);
 

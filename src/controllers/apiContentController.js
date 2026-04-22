@@ -30,6 +30,7 @@ const apiDao = require('../dao/apiMetadata');
 const apiMetadataService = require('../services/apiMetadataService');
 const { shouldShowPlatformApiKeysNav } = require('../services/platformApiKeysNavService');
 const adminService = require('../services/adminService');
+const apiFlowService = require('../services/apiFlowService');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
@@ -171,6 +172,7 @@ const loadAPIs = async (req, res) => {
                     firstName: req.user.firstName,
                     lastName: req.user.lastName,
                     email: req.user.email,
+                    isAdmin: req.user.isAdmin,
                 }
             }
             const templateContent = {
@@ -287,6 +289,7 @@ const loadAPIContent = async (req, res) => {
                             errorMessage: constants.ERROR_MESSAGE.UNAUTHORIZED_API,
                             devportalMode: devportalMode,
                             isFederatedAPI,
+                            profile: req.isAuthenticated() ? req.user : null,
                         }
                         if (!(req.user)) {
                             logger.warn("User is not authorized to access the API or user session expired, hence redirecting to login page", {
@@ -439,6 +442,7 @@ const loadAPIContent = async (req, res) => {
                     firstName: req.user.firstName,
                     lastName: req.user.lastName,
                     email: req.user.email,
+                    isAdmin: req.user.isAdmin,
                 }
             }
             let schemaFileName = constants.FILE_NAME.API_DEFINITION_XML;
@@ -494,7 +498,7 @@ const loadAPIContent = async (req, res) => {
     }
 }
 
-const loadAPIDefinition = async (orgName, viewName, apiHandle) => {
+const getAPIDefinition = async (orgName, viewName, apiHandle) => {
 
     let metaData, templateContent = {};
     if (config.mode === constants.DEV_MODE) {
@@ -513,14 +517,17 @@ const loadAPIDefinition = async (orgName, viewName, apiHandle) => {
         metaData = JSON.parse(data);
         templateContent.apiType = metaData.apiInfo.apiType;
             let apiDefinition;
-            if (metaData.apiInfo.apiType === constants.API_TYPE.GRAPHQL) {
+            const apiType = metaData.apiInfo.apiType;
+            if (apiType === constants.API_TYPE.GRAPHQL) {
                 apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_GRAPHQL, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
-                apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
-                templateContent.graphql = apiDefinition;
+                templateContent.graphql = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
+            } else if (apiType === constants.API_TYPE.MCP) {
+                apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.SCHEMA_DEFINITION_FILE_NAME, constants.DOC_TYPES.SCHEMA_DEFINITION, orgID, apiID);
+                templateContent.schema = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
             } else {
                 apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
                 apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
-                if (metaData.apiInfo.apiType === constants.API_TYPE.WS || metaData.apiInfo.apiType === constants.API_TYPE.WEBSUB) {
+                if (apiType === constants.API_TYPE.WS || apiType === constants.API_TYPE.WEBSUB) {
                     templateContent.asyncapi = apiDefinition;
                 } else {
                     templateContent.swagger = apiDefinition;
@@ -570,6 +577,7 @@ const loadDocsPage = async (req, res) => {
                     firstName: req.user.firstName,
                     lastName: req.user.lastName,
                     email: req.user.email,
+                    isAdmin: req.user.isAdmin,
                 }
             }
 
@@ -625,7 +633,7 @@ const loadDocument = async (req, res) => {
         };
         const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
         req.cpOrgID = cpOrgID;
-        const definitionResponse = await loadAPIDefinition(orgName, viewName, apiHandle);
+        const definitionResponse = await getAPIDefinition(orgName, viewName, apiHandle);
         templateContent.apiType = definitionResponse.apiType;
         
         const tryoutEnabled = req.query.tryout ? true : false;
@@ -659,6 +667,7 @@ const loadDocument = async (req, res) => {
                         baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                         baseDocUrl: baseDocUrl,
                         devportalMode: devportalMode,
+                        profile: req.isAuthenticated() ? req.user : null,
                     }
                     html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
                     res.send(html);
@@ -807,9 +816,10 @@ const loadDocument = async (req, res) => {
                     baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                     baseDocUrl: baseDocUrl,
                     errorMessage: constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE,
+                    profile: req.isAuthenticated() ? req.user : null,
                 }
-                logger.error('Failed to load api content', { 
-                    error: error.message, 
+                logger.error('Failed to load api content', {
+                    error: error.message,
                     stack: error.stack
                 });
                 html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
@@ -821,6 +831,7 @@ const loadDocument = async (req, res) => {
             baseUrl: '/' + orgName + '/views/' + viewName,
             baseDocUrl: baseDocUrl,
             devportalMode: orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT,
+            profile: req.isAuthenticated() ? req.user : null,
         }
         if (Number(error?.statusCode) === 401) {
             templateContent.errorMessage = constants.ERROR_MESSAGE.COMMON_AUTH_ERROR_MESSAGE;
@@ -1010,6 +1021,49 @@ function replaceEndpointParams(apiDefinition, prodEndpoint, sandboxEndpoint) {
     return apiDefinition;
 }
 
+function fixSecuritySchemes(spec, tokenEndpoint) {
+    if (!spec?.components?.securitySchemes) return spec;
+    const authUrl = tokenEndpoint ? tokenEndpoint.replace(/\/token([?#].*)?$/, '/authorize') : '';
+    const companionBearerSchemes = {};
+
+    for (const [schemeName, scheme] of Object.entries(spec.components.securitySchemes)) {
+        if (scheme.type !== 'oauth2' || !scheme.flows) continue;
+
+        // If the spec declares only an implicit flow but the token endpoint indicates
+        // client_credentials is the actual grant type, replace the flow to avoid misleading tooling.
+        if (tokenEndpoint && scheme.flows.implicit && !scheme.flows.clientCredentials && !scheme.flows.authorizationCode) {
+            scheme.flows.clientCredentials = scheme.flows.implicit;
+            delete scheme.flows.implicit;
+            delete scheme.flows.clientCredentials.authorizationUrl;
+        }
+
+        for (const [flowName, flow] of Object.entries(scheme.flows)) {
+            if (tokenEndpoint && ['clientCredentials', 'password', 'authorizationCode'].includes(flowName)) {
+                flow.tokenUrl = tokenEndpoint;
+            }
+            if (authUrl && ['implicit', 'authorizationCode'].includes(flowName)) {
+                flow.authorizationUrl = authUrl;
+            }
+        }
+
+        scheme.description = tokenEndpoint
+            ? `OAuth2 secured. Obtain an access token from ${tokenEndpoint} using client_id and client_secret (grant_type=client_credentials). Then call the API with header: Authorization: Bearer <access_token>`
+            : 'OAuth2 secured. Obtain an access token and call the API with header: Authorization: Bearer <access_token>';
+
+        companionBearerSchemes[`${schemeName}Bearer`] = {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+            description: tokenEndpoint
+                ? `Pass the OAuth2 access token obtained from ${tokenEndpoint} as a Bearer token. Header: Authorization: Bearer <access_token>`
+                : 'Pass the OAuth2 access token as a Bearer token. Header: Authorization: Bearer <access_token>'
+        };
+    }
+
+    Object.assign(spec.components.securitySchemes, companionBearerSchemes);
+    return spec;
+}
+
 function replaceEndpointParamsAsyncAPI(apiDefinition, prodEndpoint, sandboxEndpoint) {
     if (apiDefinition?.asyncapi && apiDefinition.asyncapi.startsWith('2.')) {
         if (prodEndpoint.trim().length !== 0) {
@@ -1047,9 +1101,347 @@ async function convertSDLToIntrospection(sdl) {
     }
 }
 
+const loadAPIContentMd = async (req, res) => {
+    const { orgName, apiHandle, viewName } = req.params;
+
+    try {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const orgID = orgDetails.ORG_ID;
+        const apiID = await apiDao.getAPIId(orgID, apiHandle);
+        const metaData = await loadAPIMetaData(req, orgID, apiID);
+
+        if (metaData.apiInfo?.agentVisibility === 'HIDDEN') {
+            return res.status(404).send('# Not Found\n\nThis API is not available for agents.');
+        }
+
+        const subscriptionPlans = await util.appendSubscriptionPlanDetails(orgID, metaData.subscriptionPolicies);
+
+        // Determine auth type from control plane (unauthenticated call)
+        req.cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
+        let showOAuth2 = true;
+        let showApiKey = false;
+        let noAuth = false;
+        if (config.controlPlane?.enabled !== false && metaData.apiReferenceID) {
+            try {
+                const cpApiDetail = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/apis/${metaData.apiReferenceID}`, {}, null, true);
+                const securityScheme = cpApiDetail?.securityScheme || [];
+                if (securityScheme.length === 0) {
+                    showOAuth2 = false;
+                    showApiKey = false;
+                    noAuth = true;
+                } else {
+                    showOAuth2 = securityScheme.includes('oauth2');
+                    showApiKey = securityScheme.includes('api_key');
+                    noAuth = false;
+                }
+            } catch (authErr) {
+                logger.warn('Could not fetch security scheme from control plane, defaulting to OAuth2', { orgID, apiID, error: authErr.message });
+            }
+        }
+
+        // Load API definition
+        let apiDefinition = null;
+        let specHeading = 'OpenAPI Specification';
+        const apiType = metaData.apiInfo?.apiType;
+        try {
+            if (apiType === constants.API_TYPE.GRAPHQL) {
+                specHeading = 'GraphQL Schema';
+                const raw = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_GRAPHQL, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
+                if (raw) apiDefinition = raw.API_FILE.toString(constants.CHARSET_UTF8);
+            } else if (apiType === constants.API_TYPE.MCP) {
+                specHeading = 'Tool Schema';
+                const raw = await apiDao.getAPIFile(constants.FILE_NAME.SCHEMA_DEFINITION_FILE_NAME, constants.DOC_TYPES.SCHEMA_DEFINITION, orgID, apiID);
+                if (raw) apiDefinition = raw.API_FILE.toString(constants.CHARSET_UTF8);
+            } else {
+                if (apiType === constants.API_TYPE.WS || apiType === constants.API_TYPE.WEBSUB) specHeading = 'AsyncAPI Specification';
+                else if (apiType === 'SOAP') specHeading = 'WSDL';
+                const raw = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
+                if (raw) apiDefinition = raw.API_FILE.toString(constants.CHARSET_UTF8);
+            }
+        } catch (defErr) {
+            logger.warn('Could not load API definition for markdown', { orgID, apiID, error: defErr.message });
+        }
+
+        // Load docs
+        const baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
+        const linkBase = apiType === constants.API_TYPE.MCP
+            ? `${baseUrl}/mcp/${apiHandle}`
+            : `${baseUrl}/api/${apiHandle}`;
+        const docTypes = await apiMetadataService.getAPIDocTypes(orgID, apiID);
+        const docs = [];
+        for (const docType of docTypes) {
+            if (docType.type === 'API_DEFINITION') continue;
+            for (const name of (docType.names || [])) {
+                docs.push({ name, type: docType.type, url: `${linkBase}/docs/${docType.type}/${name}` });
+            }
+        }
+
+        let tokenEndpoint = null;
+        if (config.controlPlane?.enabled !== false) {
+            try {
+                const kmResponse = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers?devPortalAppEnv=prod', null, null);
+                let kmList = (kmResponse?.list || []).filter(km => km.enabled);
+                if (kmList.length > 1) {
+                    const filtered = kmList.filter(km =>
+                        km.name.includes("_internal_key_manager_") ||
+                        (!kmList.some(k => k.name.includes("_internal_key_manager_")) && km.name.includes("Resident Key Manager")) ||
+                        (!kmList.some(k => k.name.includes("_internal_key_manager_") || k.name.includes("Resident Key Manager")) && km.name.includes("_appdev_sts_key_manager_") && km.name.endsWith("_prod"))
+                    );
+                    if (filtered.length > 0) kmList = filtered;
+                }
+                if (kmList.length > 0) {
+                    const km = kmList[0];
+                    if (km.name === 'Resident Key Manager') {
+                        tokenEndpoint = 'https://sts.choreo.dev/oauth2/token';
+                    } else if (km.tokenEndpoint) {
+                        tokenEndpoint = km.tokenEndpoint;
+                    }
+                }
+            } catch (kmErr) {
+                logger.warn('Failed to fetch key managers from control plane for markdown', { orgID, apiID, error: kmErr.message });
+            }
+        }
+
+        const specExt = apiType === constants.API_TYPE.GRAPHQL ? 'graphql'
+            : apiType === 'SOAP' ? 'xml'
+            : 'json';
+        const templateContent = {
+            apiMetadata: metaData,
+            subscriptionPlans,
+            apiDefinition,
+            specHeading,
+            specUrl: `${linkBase}/docs/specification.${specExt}`,
+            docs: docs.length > 0 ? docs : null,
+            baseUrl,
+            tokenEndpoint,
+            showOAuth2,
+            showApiKey,
+            noAuth,
+        };
+        const md = await util.renderMarkdownTemplateFromAPI(templateContent, orgID, 'pages/api-landing', viewName);
+
+        res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+        res.send(md);
+    } catch (error) {
+        logger.error('Error generating API detail markdown', {
+            orgName,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).send('# Error\n\nFailed to load API details.');
+    }
+};
+
+const loadLlmsTxt = async (req, res) => {
+    const { orgName, viewName } = req.params;
+    try {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const orgID = orgDetails.ORG_ID;
+
+        const metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, null, null, viewName);
+        const agentVisibleAPIs = metaDataList.filter(api => api.apiInfo.agentVisibility !== 'HIDDEN');
+        const hiddenAPICount = metaDataList.length - agentVisibleAPIs.length;
+
+        const byType = { REST: [], MCP: [], GraphQL: [], WS: [] };
+        for (const api of agentVisibleAPIs) {
+            const type = api.apiInfo.apiType;
+            if (byType[type]) byType[type].push(api);
+        }
+
+        // Fetch published agent-visible API workflows
+        const apiMetadataDao = require('../dao/apiMetadata');
+        const viewId = await apiMetadataDao.getViewID(orgID, viewName);
+        const allApiFlows = await apiFlowService.getAllAPIFlowsFromDB(orgID, viewId);
+        const allPublishedWorkflows = allApiFlows.filter(flow => flow.status === 'PUBLISHED');
+        const publishedWorkflows = allPublishedWorkflows.filter(flow => flow.agentVisibility !== 'HIDDEN');
+        const hiddenWorkflowCount = allPublishedWorkflows.length - publishedWorkflows.length;
+
+        const baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
+        const templateContent = {
+            orgName: orgDetails.ORG_NAME,
+            restAPIs:    byType.REST.length    ? byType.REST    : null,
+            mcpAPIs:     byType.MCP.length     ? byType.MCP     : null,
+            graphqlAPIs: byType.GraphQL.length ? byType.GraphQL : null,
+            wsAPIs:      byType.WS.length      ? byType.WS      : null,
+            workflows:   publishedWorkflows.length > 0 ? publishedWorkflows : null,
+            hiddenAPICount: hiddenAPICount > 0 ? hiddenAPICount : 0,
+            hiddenWorkflowCount: hiddenWorkflowCount > 0 ? hiddenWorkflowCount : 0,
+            hasHiddenResources: hiddenAPICount > 0 || hiddenWorkflowCount > 0,
+            portalUrl: baseUrl,
+            baseUrl,
+        };
+
+        const md = await util.renderLlmsTxt(templateContent, orgID, viewName);
+
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.send(md);
+    } catch (error) {
+        logger.error('Error generating llms.txt', { orgName, error: error.message, stack: error.stack });
+        res.status(500).send('# Error\n\nFailed to generate portal index.');
+    }
+};
+
+const loadAPIsMd = async (req, res) => {
+    const { orgName, viewName } = req.params;
+
+    try {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const orgID = orgDetails.ORG_ID;
+        const metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, null, null, viewName);
+        const agentVisibleAPIs = metaDataList.filter(api => api.apiInfo.agentVisibility !== 'HIDDEN');
+        const hiddenAPICount = metaDataList.length - agentVisibleAPIs.length;
+
+        const templateContent = {
+            apiMetadata: agentVisibleAPIs,
+            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+            hiddenAPICount: hiddenAPICount > 0 ? hiddenAPICount : 0,
+            hasHiddenAPIs: hiddenAPICount > 0,
+            portalUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+        };
+        const md = await util.renderMarkdownTemplateFromAPI(templateContent, orgID, 'pages/apis', viewName);
+
+        res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+        res.send(md);
+    } catch (error) {
+        logger.error('Error generating APIs markdown', {
+            orgName,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).send('# Error\n\nFailed to load API list.');
+    }
+};
+
+const SPEC_FORMAT_MAP = {
+    [constants.API_TYPE.GRAPHQL]: { format: 'graphql', field: 'graphql',  label: 'GraphQL' },
+    [constants.API_TYPE.MCP]:     { format: 'json',    field: 'schema',   label: 'MCP'     },
+    [constants.API_TYPE.WS]:      { format: 'json',    field: 'asyncapi', label: 'WS'      },
+    [constants.API_TYPE.WEBSUB]:  { format: 'json',    field: 'asyncapi', label: 'WEBSUB'  },
+};
+const SPEC_FORMAT_DEFAULT = { format: 'json', field: 'swagger', label: 'REST' };
+
+const loadAPIDefinitionRaw = async (req, res) => {
+    const { orgName, apiHandle, viewName, format } = req.params;
+    try {
+        const definitionResponse = await getAPIDefinition(orgName, viewName, apiHandle);
+        const typeConfig = SPEC_FORMAT_MAP[definitionResponse.apiType] || SPEC_FORMAT_DEFAULT;
+
+        if (format !== typeConfig.format) {
+            return res.status(404).send(`${typeConfig.label} APIs only support specification.${typeConfig.format}.`);
+        }
+
+        const raw = definitionResponse[typeConfig.field];
+        if (!raw) return res.status(404).json({ message: 'API specification not found' });
+
+        let spec = typeof raw === 'string' ? JSON.parse(raw) : raw;
+
+        const prodUrl = definitionResponse.metaData?.endPoints?.productionURL || '';
+        const sandboxUrl = definitionResponse.metaData?.endPoints?.sandboxURL || '';
+        const apiType = definitionResponse.apiType;
+        if (apiType === constants.API_TYPE.WS || apiType === constants.API_TYPE.WEBSUB) {
+            spec = replaceEndpointParamsAsyncAPI(spec, prodUrl, sandboxUrl);
+        } else if (apiType !== constants.API_TYPE.GRAPHQL && apiType !== constants.API_TYPE.MCP) {
+            spec = replaceEndpointParams(spec, prodUrl, sandboxUrl);
+        }
+
+        if (config.controlPlane?.enabled !== false && apiType !== constants.API_TYPE.GRAPHQL && apiType !== constants.API_TYPE.MCP) {
+            let tokenEndpoint = null;
+            try {
+                const kmResponse = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers?devPortalAppEnv=prod', null, null);
+                let kmList = (kmResponse?.list || []).filter(km => km.enabled);
+                if (kmList.length > 1) {
+                    const filtered = kmList.filter(km =>
+                        km.name.includes("_internal_key_manager_") ||
+                        (!kmList.some(k => k.name.includes("_internal_key_manager_")) && km.name.includes("Resident Key Manager")) ||
+                        (!kmList.some(k => k.name.includes("_internal_key_manager_") || k.name.includes("Resident Key Manager")) && km.name.includes("_appdev_sts_key_manager_") && km.name.endsWith("_prod"))
+                    );
+                    if (filtered.length > 0) kmList = filtered;
+                }
+                if (kmList.length > 0) {
+                    const km = kmList[0];
+                    tokenEndpoint = km.name === 'Resident Key Manager' ? 'https://sts.choreo.dev/oauth2/token' : (km.tokenEndpoint || null);
+                }
+            } catch (kmErr) {
+                logger.warn('Failed to fetch key managers for raw spec', { orgName, apiHandle, error: kmErr.message });
+            }
+
+            const referenceId = definitionResponse.metaData?.apiReferenceID;
+            if (referenceId) {
+                try {
+                    const cpApi = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${referenceId}`, null, null);
+                    if (cpApi?.securityScheme?.includes('api_key')) {
+                        if (!spec.components) spec.components = {};
+                        if (!spec.components.securitySchemes) spec.components.securitySchemes = {};
+                        spec.components.securitySchemes.ApiKeyAuth = {
+                            type: 'apiKey',
+                            name: cpApi.apiKeyHeader || 'apikey',
+                            in: 'header'
+                        };
+                    }
+                } catch (cpErr) {
+                    logger.warn('Failed to fetch API security from control plane for raw spec', { orgName, apiHandle, error: cpErr.message });
+                }
+            }
+
+            spec = fixSecuritySchemes(spec, tokenEndpoint);
+        }
+
+        res.status(200).json(spec);
+    } catch (error) {
+        logger.error('Error loading raw specification', {
+            orgName,
+            viewName,
+            format,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).json({ message: 'Failed to load specification.' });
+    }
+};
+
+const loadDocumentMd = async (req, res) => {
+    const { orgName, apiHandle, docType, docName } = req.params;
+
+    try {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const orgID = orgDetails.ORG_ID;
+        const apiID = await apiDao.getAPIId(orgID, apiHandle);
+        const docMetaData = await loadAPIMetaData(req, orgID, apiID);
+        if (docMetaData.apiInfo?.agentVisibility === 'HIDDEN') {
+            return res.status(404).send('# Not Found\n\nThis API is not available for agents.');
+        }
+        // docName here is without the .md suffix (stripped by the route param)
+        const fullDocName = docName + '.md';
+        const docContentResponse = await apiDao.getAPIDocByName(
+            constants.DOC_TYPES.DOC_ID + docType,
+            fullDocName,
+            orgID,
+            apiID
+        );
+        if (!docContentResponse) {
+            return res.status(404).send('# Not Found\n\nDocument not found.');
+        }
+        const content = docContentResponse.API_FILE.toString(constants.CHARSET_UTF8);
+        res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+        res.send(content);
+    } catch (error) {
+        logger.error('Error loading raw document markdown', {
+            orgName,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).send('# Error\n\nFailed to load document.');
+    }
+};
+
 module.exports = {
     loadAPIs,
     loadAPIContent,
     loadDocsPage,
     loadDocument,
+    loadAPIsMd,
+    loadLlmsTxt,
+    loadAPIContentMd,
+    loadDocumentMd,
+    loadSpecificationRaw: loadAPIDefinitionRaw,
 };

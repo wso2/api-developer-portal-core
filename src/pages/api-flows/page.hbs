@@ -1,0 +1,17 @@
+<head>
+    <link rel="stylesheet" href="/technical-styles/api-flows.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <script src='/technical-scripts/api-flows.js' defer></script>
+</head>
+
+{{> header profile=profile baseUrl=baseUrl showApiWorkflowsNav=showApiWorkflowsNav}}
+{{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav}}
+
+<div class="container mt-4 mb-4">
+    {{> api-flows}}
+</div>
+
+{{> alert}}
