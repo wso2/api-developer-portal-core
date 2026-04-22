@@ -200,7 +200,7 @@
     overflow: hidden;
     width: 0;
     font-weight: normal; 
-    color: white;
+    color: var(--light-text-color);
     font-size: smaller;
 }
 
@@ -279,4 +279,25 @@
 .sidebar.collapsed .submenu-icon {
     display: block;
     margin: 0;
+}
+
+.nav-section-divider {
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.15);
+    margin: 0.5rem 1rem;
+}
+
+.nav-section-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+    padding: 0 1.5rem;
+    display: none;
+}
+
+.sidebar:hover:not(.force-collapse) .nav-section-label,
+.sidebar.expanded .nav-section-label {
+    display: block;
 }

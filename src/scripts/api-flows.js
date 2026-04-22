@@ -11,7 +11,7 @@ let currentViewName = '';
 let csrfToken = '';
 let arazoEditor = null;
 let showSelectedOnly = false;
-let currentWorkflowPath = 'create';
+let currentWorkflowPath = 'upload';
 let currentContentType = 'ARAZZO';
 let createPathFormat = 'arazzo'; // 'arazzo' | 'md'
 let currentStep = 1;
@@ -275,8 +275,9 @@ function switchCreateFormat(format) {
     document.getElementById('markdownContentWrapper')?.classList.toggle('d-none', format !== 'markdown');
     if (format === 'arazzo') setTimeout(() => arazoEditor?.refresh(), 50);
 
-    // Show the card whenever we're in create mode with a format selected
+    // Show the card and actions whenever we're in create mode with a format selected
     document.getElementById('specEditorCard')?.classList.remove('d-none');
+    document.querySelector('.af-rp-actions')?.classList.remove('d-none');
 
     // Update footer copy button label for the active format
     updateEditorFooter(format);
@@ -451,21 +452,26 @@ function showUploadedContentEditor() {
     // Hide format tabs in upload mode — they're create-only
     document.getElementById('specFormatTabs')?.classList.add('d-none');
 
+    const actionsRow = document.querySelector('.af-rp-actions');
     if (currentContentType === 'MD' && hasMd) {
         arazoWrapper?.classList.add('d-none');
         mdWrapper?.classList.remove('d-none');
         card?.classList.remove('d-none');
+        actionsRow?.classList.remove('d-none');
         updateEditorFooter('markdown');
     } else if (currentContentType === 'ARAZZO' && hasArazzo) {
         mdWrapper?.classList.add('d-none');
         arazoWrapper?.classList.remove('d-none');
         card?.classList.remove('d-none');
+        actionsRow?.classList.remove('d-none');
         setTimeout(() => arazoEditor?.refresh(), 50);
         updateEditorFooter('arazzo');
     } else {
-        arazoWrapper?.classList.add('d-none');
+        // No file uploaded yet — show the editor shell (with its built-in empty state) but no action buttons
         mdWrapper?.classList.add('d-none');
-        card?.classList.add('d-none');
+        arazoWrapper?.classList.remove('d-none');
+        card?.classList.remove('d-none');
+        actionsRow?.classList.add('d-none');
     }
 }
 
@@ -832,9 +838,9 @@ function resetApiFlowForm() {
     updateSectionSummaries();
     expandAllSections();
 
-    // Reset to create/template path and arazzo format
+    // Reset to upload path
     clearUploadedFile();
-    switchWorkflowPath('create');
+    switchWorkflowPath('upload');
     switchCreateFormat('arazzo');
 
     // Reset wizard to step 1
@@ -1778,6 +1784,8 @@ function validateWizardStep(step) {
 }
 
 function updateWizardUI() {
+    // Single-column layout for step 2
+    document.querySelector('.af-wizard-body')?.classList.toggle('af-wizard-body--single-col', currentStep === 2);
     // Step panels
     for (let i = 1; i <= 3; i++) {
         document.getElementById(`afStep${i}`)?.classList.toggle('d-none', i !== currentStep);

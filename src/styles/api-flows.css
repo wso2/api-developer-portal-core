@@ -1446,23 +1446,22 @@
     margin-top: 0.75rem;
 }
 
-.af-spec-editor-tabs {
+.af-spec-format-row {
     display: flex;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem 0;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.75rem 1rem;
     border-bottom: 1px solid var(--bs-gray-200, #e9ecef);
     background: var(--secondary-bg-color, #f8f9fa);
 }
 
-.af-spec-editor-tabs .af-create-format-btn {
-    margin-bottom: -1px;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
-.af-spec-editor-tabs .af-create-format-btn--active {
-    background: var(--main-bg-color, #fff);
-    border-bottom-color: var(--main-bg-color, #fff);
+.af-spec-format-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--bs-secondary, #6c757d);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
 }
 
 /* ── Editor bar (filename + line count) ── */
@@ -1826,6 +1825,19 @@
     flex:1;
     position:sticky; top:0;
     padding:1.25rem;
+}
+
+/* Single-column layout for step 2 */
+.af-wizard-body--single-col {
+    flex-direction:column;
+}
+.af-wizard-body--single-col .af-pane-left {
+    flex:none; width:100%;
+    border-right:none; border-bottom:1px solid var(--bs-gray-200);
+}
+.af-wizard-body--single-col .af-pane-right {
+    flex:none; width:100%;
+    position:static;
 }
 
 /* Step panels */
