@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
+ * Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -32,19 +32,14 @@ function deepMerge(target, source) {
 }
 
 function loadConfig() {
-    // 1. Built-in defaults from sample_config.yaml
-    const defaultsPath = path.join(process.cwd(), 'sample_config.yaml');
-    const defaults = yaml.load(fs.readFileSync(defaultsPath, 'utf8'));
-
-    // 2. Deep-merge user's config.yaml if present
+    // 1. Load config.yaml (required — copy config.yaml.example to config.yaml to get started)
     const userConfigPath = path.join(process.cwd(), 'config.yaml');
-    let merged = defaults;
-    if (fs.existsSync(userConfigPath)) {
-        const userConfig = yaml.load(fs.readFileSync(userConfigPath, 'utf8')) || {};
-        merged = deepMerge(defaults, userConfig);
+    if (!fs.existsSync(userConfigPath)) {
+        throw new Error('config.yaml not found. Copy config.yaml.example to config.yaml and fill in your values.');
     }
+    let merged = yaml.load(fs.readFileSync(userConfigPath, 'utf8')) || {};
 
-    // 3. Apply DP_* environment variable overrides
+    // 2. Apply DP_* environment variable overrides
     const e = process.env;
 
     if (e.DP_DB_HOST)     merged.db.host     = e.DP_DB_HOST;

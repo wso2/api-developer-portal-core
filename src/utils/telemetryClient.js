@@ -5,7 +5,7 @@ const config = require('../config/config');
 
 let telemetryClient = null;
 
-if (config.telemetry?.enabled && config.azureInsightsConnectionStringconfig.telemetry && config.telemetry?.azureInsightsConnectionString) {
+if (config.telemetry?.enabled && config.telemetry?.azureInsightsConnectionStringconfig && config.telemetry?.azureInsightsConnectionString) {
     appInsights.setup(config.telemetry.azureInsightsConnectionString);
     telemetryClient = appInsights.defaultClient;
 } else {

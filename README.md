@@ -9,7 +9,7 @@
 
 The fastest way to run the portal. No manual DB setup or schema scripts needed — everything is auto-initialized on first startup.
 
-**1. Copy the example config:**
+**1. Copy the sample config (required):**
 
 ```bash
 cp config.yaml.example config.yaml
@@ -60,7 +60,7 @@ http://localhost:3000/ACME/views/default
 cp config.yaml.example config.yaml
 ```
 
-`config.yaml` is gitignored — never commit it.
+`config.yaml` is required and gitignored — never commit it.
 
 ### 2. Configure `config.yaml`
 
@@ -138,17 +138,15 @@ http://localhost:3000/ACME/views/default
 
 ```
 DP_* environment variables   (highest — for CI/CD, Kubernetes secrets)
-config.yaml                  (your config — gitignored)
-sample_config.yaml           (built-in defaults — committed)
+config.yaml                  (required — copy from config.yaml.example)
 ```
 
 ### Key files
 
 | File | Purpose | Committed? |
 |---|---|---|
-| `sample_config.yaml` | Built-in defaults | Yes |
-| `config.yaml` | Your config and secrets | No (gitignored) |
-| `config.yaml.example` | Full reference with comments | Yes |
+| `config.yaml.example` | Template with all defaults and comments — copy to `config.yaml` | Yes |
+| `config.yaml` | Your config and secrets (required at runtime) | No (gitignored) |
 
 ### `DP_*` environment variables
 

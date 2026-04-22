@@ -14,6 +14,7 @@
 baseUrl: "http://localhost:3000"   # env: DP_BASE_URL
 defaultPort: 3000
 mode: production                   # production | development
+readOnlyMode: false
 disableTLS: true
 pathToContent: "./resources/default-layout/"
 pathToDBCert: ""
