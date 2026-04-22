@@ -2040,7 +2040,7 @@ async function saveLlmsConfig() {
     const saveBtn = document.getElementById('saveLlmsConfigBtn');
     if (saveBtn) {
         saveBtn.disabled = true;
-        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Saving…';
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Publishing…';
     }
     try {
         const response = await fetch(`${llmsBaseUrl}/llms-config`, {
@@ -2064,7 +2064,7 @@ async function saveLlmsConfig() {
     } finally {
         if (saveBtn) {
             saveBtn.disabled = false;
-            saveBtn.innerHTML = '<i class="bi bi-floppy me-1"></i> Save';
+            saveBtn.innerHTML = '<i class="bi bi-floppy me-1"></i> Publish';
         }
 
     }
