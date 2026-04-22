@@ -565,6 +565,10 @@ app.use(constants.ROUTE.TECHNICAL_SCRIPTS, express.static(path.join(require.main
 //backend routes
 app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
 
+app.get('/robots.txt', (req, res) => {
+    res.redirect('/');
+});
+
 if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), filePrefix + 'styles')));
     app.use(constants.ROUTE.IMAGES, express.static(path.join(process.cwd(), filePrefix + 'images')));
