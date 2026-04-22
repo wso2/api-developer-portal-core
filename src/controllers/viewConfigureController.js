@@ -74,7 +74,7 @@ const loadViewSettingsPage = async (req, res) => {
         if (dbLayout) {
             html = await renderGivenTemplate(templateResponse, dbLayout, templateContent);
         } else {
-            layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
+            const layoutResponse = fs.readFileSync(layoutPath, constants.CHARSET_UTF8);
             html = await renderGivenTemplate(templateResponse, layoutResponse, templateContent);
         }
         res.send(html);

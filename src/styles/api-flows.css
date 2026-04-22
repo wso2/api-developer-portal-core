@@ -1179,7 +1179,7 @@
 .af-sd-validation {
     border: 1px solid var(--bs-gray-200, #e9ecef);
     border-radius: 0.625rem;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .af-sd-validation-header {
@@ -1189,9 +1189,11 @@
     font-weight: 600;
     color: var(--bs-secondary, #6c757d);
     border-bottom: 1px solid var(--bs-gray-200, #e9ecef);
+    border-radius: 0.625rem 0.625rem 0 0;
     display: flex;
     align-items: center;
     gap: 0.25rem;
+    position: relative;
 }
 
 .af-sd-validation-hint {
