@@ -1,7 +1,10 @@
-# {{orgName}} Developer Portal
+# {{#if portalName}}{{portalName}}{{else}}{{orgName}} Developer Portal{{/if}}
 
-Empower your development with our APIs & MCP Servers. Browse, subscribe, and integrate in minutes.
+{{#if portalDescription}}{{portalDescription}}{{else}}Empower your development with our APIs & MCP Servers. Browse, subscribe, and integrate in minutes.{{/if}}
+{{#if customInstructions}}
 
+{{customInstructions}}
+{{/if}}
 {{#if workflows}}
 ---
 

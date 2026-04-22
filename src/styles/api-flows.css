@@ -7,8 +7,10 @@
 }
 
 .configure-tabs {
-    border-bottom: 2px solid #e9ecef;
+    display: flex !important;
+    flex-direction: row !important;
     flex-wrap: nowrap !important;
+    border-bottom: 2px solid #e9ecef;
 }
 
 .configure-tabs .nav-item {
@@ -1508,4 +1510,88 @@
 .af-info-tip:hover .af-info-tip-content,
 .af-info-tip:focus-within .af-info-tip-content {
     display: block;
+}
+
+/* ===== LLM Instructions Tab ===== */
+
+.llms-config-toggle-card {
+    border: 1px solid var(--bs-gray-300);
+    border-radius: 0.75rem;
+    background: var(--main-bg-color);
+}
+
+.llms-config-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .llms-config-split {
+        grid-template-columns: 1fr;
+    }
+}
+
+.llms-config-editor-pane {
+    min-width: 0;
+}
+
+.llms-instructions-textarea {
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    resize: vertical;
+}
+
+.llms-config-preview-pane {
+    position: sticky;
+    top: 1rem;
+    border: 1px solid var(--bs-gray-300);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background: var(--main-bg-color);
+    min-width: 0;
+}
+
+.llms-config-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.625rem 1rem;
+    border-bottom: 1px solid var(--bs-gray-200);
+    background: var(--secondary-bg-color, #f8f9fa);
+}
+
+.llms-preview-link {
+    text-decoration: none;
+    font-size: 0.85rem;
+}
+
+.llms-preview-link:hover {
+    color: var(--primary-main-color) !important;
+}
+
+.llms-config-preview-body {
+    margin: 0;
+    padding: 1rem;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 70vh;
+    overflow-y: auto;
+    color: var(--main-text-color);
+}
+
+.llms-config-preview-body:empty::before {
+    content: 'Preview will appear here…';
+    color: var(--bs-secondary, #6c757d);
+    font-style: italic;
+    font-family: inherit;
+}
+
+.llms-config-header .container-header {
+    font-size: 1.5rem;
 }

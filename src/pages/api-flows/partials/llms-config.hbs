@@ -1,0 +1,85 @@
+<script type="application/json" id="llmsConfigData">
+{{{ json llmsConfig }}}
+</script>
+
+<script type="application/json" id="llmsConfigContext">
+{
+    "orgID": "{{orgID}}",
+    "viewName": "{{viewName}}",
+    "csrfToken": "{{csrfToken}}",
+    "baseUrl": "{{baseUrl}}"
+}
+</script>
+
+<div class="llms-config-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="p-1">
+            <div class="container-header mb-2">LLM Instructions</div>
+            <p class="text-muted mb-0 small">
+                Control how AI agents discover and understand your developer portal via
+                <a href="{{baseUrl}}/llms.txt" target="_blank" class="text-muted">llms.txt</a>.
+            </p>
+        </div>
+        <button type="button" class="common-btn-primary text-nowrap flex-shrink-0" id="saveLlmsConfigBtn">
+            <i class="bi bi-floppy me-1"></i> Save
+        </button>
+    </div>
+</div>
+
+{{!-- AI Ready toggle --}}
+<div class="card llms-config-toggle-card mb-4">
+    <div class="card-body d-flex align-items-center justify-content-between">
+        <div>
+            <div class="fw-semibold mb-1"><i class="bi bi-robot me-2"></i>AI Ready</div>
+            <div class="text-muted small">
+                When disabled, <code>llms.txt</code> returns 404 — AI agents cannot discover this portal.
+            </div>
+        </div>
+        <div class="form-check form-switch ms-4">
+            <input class="form-check-input llms-ai-toggle" type="checkbox" id="aiEnabledToggle" role="switch" style="width:2.5rem;height:1.4rem;">
+        </div>
+    </div>
+</div>
+
+{{!-- Form + Preview split --}}
+<div id="llmsConfigFormArea">
+    <div class="llms-config-split">
+        {{!-- Left: editor --}}
+        <div class="llms-config-editor-pane">
+            <div class="mb-4">
+                <label class="form-label fw-semibold small" for="llmsPortalName">Portal Name</label>
+                <input type="text" class="form-control" id="llmsPortalName"
+                    placeholder="e.g. Acme Developer Portal">
+                <div class="form-text">Replaces the default <em>{{"{{"}}orgName{{"}}"}} Developer Portal</em> heading.</div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-semibold small" for="llmsPortalDescription">Description</label>
+                <textarea class="form-control" id="llmsPortalDescription" rows="3"
+                    placeholder="Describe your portal in 1–2 sentences…"></textarea>
+                <div class="form-text">Shown below the portal name to orient AI agents.</div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-semibold small" for="llmsCustomInstructions">Additional Instructions</label>
+                <textarea class="form-control llms-instructions-textarea" id="llmsCustomInstructions" rows="10"
+                    placeholder="Add extra guidance for AI agents — e.g. authentication hints, rate-limit warnings, preferred usage patterns."></textarea>
+                <div class="form-text">Injected after the description and before the API listings in <code>llms.txt</code>.</div>
+            </div>
+        </div>
+
+        {{!-- Right: preview --}}
+        <div class="llms-config-preview-pane">
+            <div class="llms-config-preview-header">
+                <span class="fw-semibold small"><i class="bi bi-eye me-1"></i>Preview</span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="llms-preview-refreshing text-muted small" id="llmsPreviewRefreshing" style="display:none;">
+                        <span class="spinner-border spinner-border-sm me-1"></span>Refreshing…
+                    </span>
+                    <a href="{{baseUrl}}/llms.txt" target="_blank" class="small text-muted llms-preview-link">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                </div>
+            </div>
+            <pre id="llmsPreviewContent" class="llms-config-preview-body"></pre>
+        </div>
+    </div>
+</div>

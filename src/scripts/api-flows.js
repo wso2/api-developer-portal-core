@@ -1538,3 +1538,142 @@ function updateApiChips() {
         ).join('');
     }
 }
+
+// ─────────────────────────────────────────────
+// LLM Instructions Tab
+// ─────────────────────────────────────────────
+
+let llmsOrgID = '';
+let llmsViewName = '';
+let llmsBaseUrl = '';
+let llmsPreviewDebounce = null;
+
+function initLlmsConfig() {
+    const dataEl = document.getElementById('llmsConfigData');
+    const ctxEl = document.getElementById('llmsConfigContext');
+    if (!dataEl || !ctxEl) return;
+
+    let config = {};
+    let ctx = {};
+    try { config = JSON.parse(dataEl.textContent) || {}; } catch (e) { /* ignore */ }
+    try { ctx = JSON.parse(ctxEl.textContent) || {}; } catch (e) { /* ignore */ }
+
+    llmsOrgID = ctx.orgID || '';
+    llmsViewName = ctx.viewName || '';
+    llmsBaseUrl = ctx.baseUrl || '';
+    csrfToken = ctx.csrfToken || csrfToken;
+
+    const toggle = document.getElementById('aiEnabledToggle');
+    const nameEl = document.getElementById('llmsPortalName');
+    const descEl = document.getElementById('llmsPortalDescription');
+    const instrEl = document.getElementById('llmsCustomInstructions');
+    const formArea = document.getElementById('llmsConfigFormArea');
+
+    if (toggle) {
+        toggle.checked = config.aiEnabled !== false;
+        toggle.addEventListener('change', () => {
+            if (formArea) formArea.style.opacity = toggle.checked ? '1' : '0.4';
+            if (formArea) formArea.style.pointerEvents = toggle.checked ? '' : 'none';
+            scheduleLlmsPreview();
+        });
+        if (formArea) {
+            formArea.style.opacity = toggle.checked ? '1' : '0.4';
+            formArea.style.pointerEvents = toggle.checked ? '' : 'none';
+        }
+    }
+
+    if (nameEl) nameEl.value = config.portalName || '';
+    if (descEl) descEl.value = config.portalDescription || '';
+    if (instrEl) instrEl.value = config.customInstructions || '';
+
+    [nameEl, descEl, instrEl].forEach(el => {
+        if (el) el.addEventListener('input', scheduleLlmsPreview);
+    });
+
+    const saveBtn = document.getElementById('saveLlmsConfigBtn');
+    if (saveBtn) saveBtn.addEventListener('click', saveLlmsConfig);
+
+    scheduleLlmsPreview();
+}
+
+function scheduleLlmsPreview() {
+    clearTimeout(llmsPreviewDebounce);
+    llmsPreviewDebounce = setTimeout(fetchLlmsPreview, 600);
+}
+
+async function fetchLlmsPreview() {
+    const toggle = document.getElementById('aiEnabledToggle');
+    const previewEl = document.getElementById('llmsPreviewContent');
+    const refreshingEl = document.getElementById('llmsPreviewRefreshing');
+    if (!previewEl) return;
+
+    if (toggle && !toggle.checked) {
+        previewEl.textContent = '(llms.txt is disabled — AI agents will receive 404)';
+        return;
+    }
+
+    if (refreshingEl) refreshingEl.style.display = '';
+    try {
+        const response = await fetch(`${llmsBaseUrl}/llms.txt/preview`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                portalName: document.getElementById('llmsPortalName')?.value || '',
+                portalDescription: document.getElementById('llmsPortalDescription')?.value || '',
+                customInstructions: document.getElementById('llmsCustomInstructions')?.value || '',
+            })
+        });
+        const text = await response.text();
+        previewEl.textContent = text;
+    } catch (e) {
+        previewEl.textContent = 'Preview unavailable.';
+    } finally {
+        if (refreshingEl) refreshingEl.style.display = 'none';
+    }
+}
+
+async function saveLlmsConfig() {
+    const saveBtn = document.getElementById('saveLlmsConfigBtn');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Saving…';
+    }
+    try {
+        const response = await fetch(`${llmsBaseUrl}/llms-config`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                aiEnabled: document.getElementById('aiEnabledToggle')?.checked !== false,
+                portalName: document.getElementById('llmsPortalName')?.value || '',
+                portalDescription: document.getElementById('llmsPortalDescription')?.value || '',
+                customInstructions: document.getElementById('llmsCustomInstructions')?.value || '',
+            })
+        });
+        if (response.ok) {
+            showAlert('LLM Instructions saved successfully', 'success');
+        } else {
+            const err = await response.json().catch(() => ({ message: 'Save failed' }));
+            showAlert(err.message || 'Save failed', 'error');
+        }
+    } catch (e) {
+        showAlert(e.message || 'Network error', 'error');
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="bi bi-floppy me-1"></i> Save';
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    initLlmsConfig();
+
+    // Restore active tab from URL hash
+    const hash = window.location.hash;
+    if (hash === '#apiflows') {
+        const workflowsBtn = document.getElementById('workflows-tab-btn');
+        if (workflowsBtn) workflowsBtn.click();
+    }
+});
