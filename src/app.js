@@ -354,6 +354,12 @@ app.use(session({
 const billingController = require('./controllers/billingController');
 app.post('/webhooks/stripe/:orgId', express.raw({ type: 'application/json' }), billingController.handleStripeWebhook);
 
+app.get('/robots.txt', (req, res) => {
+    res.type('text/plain').send(
+        'User-agent: *\nAllow: /\n\n# AI agent guidance: /{orgName}/views/{viewName}/llms.txt\n'
+    );
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
