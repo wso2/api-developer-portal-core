@@ -164,20 +164,9 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('copyPromptBtn')?.addEventListener('click', copyPrompt);
     document.getElementById('downloadPromptBtn')?.addEventListener('click', downloadPrompt);
 
-    const runPromptBtn = document.getElementById('runPromptBtn');
-    if (runPromptBtn) {
-        runPromptBtn.addEventListener('click', function(event) {
-            event.stopPropagation();
-            document.getElementById('configRunDropdownMenu').classList.toggle('show');
-        });
-    }
     document.getElementById('runInClaudeBtn')?.addEventListener('click', function() {
         const prompt = document.getElementById('agentPromptContent').textContent;
         window.open('https://claude.ai/new?q=' + encodeURIComponent(prompt), '_blank');
-        document.getElementById('configRunDropdownMenu').classList.remove('show');
-    });
-    document.addEventListener('click', function() {
-        document.getElementById('configRunDropdownMenu')?.classList.remove('show');
     });
 
     // Show selected only toggle

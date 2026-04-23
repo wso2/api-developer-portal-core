@@ -86,15 +86,9 @@ function downloadPrompt() {
     URL.revokeObjectURL(url);
 }
 
-function toggleRunDropdown(event) {
-    event.stopPropagation();
-    document.getElementById('runDropdownMenu').classList.toggle('show');
-}
-
 function runInClaude() {
     const prompt = document.getElementById('promptText').textContent;
     window.open('https://claude.ai/new?q=' + encodeURIComponent(prompt), '_blank');
-    document.getElementById('runDropdownMenu').classList.remove('show');
 }
 
 function showNotification(message, type = 'info') {
@@ -134,9 +128,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnDownloadPrompt = document.getElementById('btnDownloadPrompt');
     if (btnDownloadPrompt) btnDownloadPrompt.addEventListener('click', downloadPrompt);
 
-    const btnRunPrompt = document.getElementById('btnRunPrompt');
-    if (btnRunPrompt) btnRunPrompt.addEventListener('click', toggleRunDropdown);
-
     const btnRunClaude = document.getElementById('btnRunClaude');
     if (btnRunClaude) btnRunClaude.addEventListener('click', runInClaude);
 
@@ -146,10 +137,4 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.target === modal) closePromptModal();
         });
     }
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', () => {
-        const menu = document.getElementById('runDropdownMenu');
-        if (menu) menu.classList.remove('show');
-    });
 });

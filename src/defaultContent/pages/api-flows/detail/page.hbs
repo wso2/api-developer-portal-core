@@ -78,14 +78,9 @@
                             <button type="button" class="prompt-tool-btn" id="btnCopyPrompt" title="Copy prompt">
                                 <i class="bi bi-copy"></i>
                             </button>
-                            <div class="prompt-run-dropdown">
-                                <button type="button" class="btn-run-prompt" id="btnRunPrompt">
-                                    <i class="bi bi-play-fill"></i> Run
-                                </button>
-                                <div class="run-dropdown-menu" id="runDropdownMenu">
-                                    <button class="run-option" id="btnRunClaude">Run in Claude</button>
-                                </div>
-                            </div>
+                            <button type="button" class="btn-run-prompt" id="btnRunClaude">
+                                <i class="bi bi-play-fill"></i> Run in Claude
+                            </button>
                         </div>
                     </div>
                     <pre id="modalAgentPromptText" class="api-flow-prompt-pre">{{flow.agentPrompt}}</pre>
@@ -127,27 +122,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    const btnRunPrompt = document.getElementById('btnRunPrompt');
-    if (btnRunPrompt) {
-        btnRunPrompt.addEventListener('click', function(event) {
-            event.stopPropagation();
-            document.getElementById('runDropdownMenu').classList.toggle('show');
-        });
-    }
-
     const btnRunClaude = document.getElementById('btnRunClaude');
     if (btnRunClaude) {
         btnRunClaude.addEventListener('click', function() {
             const prompt = document.getElementById('modalAgentPromptText').textContent;
             window.open('https://claude.ai/new?q=' + encodeURIComponent(prompt), '_blank');
-            document.getElementById('runDropdownMenu').classList.remove('show');
         });
     }
-
-    document.addEventListener('click', function() {
-        const menu = document.getElementById('runDropdownMenu');
-        if (menu) menu.classList.remove('show');
-    });
 });
 
 

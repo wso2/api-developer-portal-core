@@ -62,14 +62,9 @@
                             <button type="button" class="prompt-tool-btn" id="apiBtnCopyPrompt" title="Copy prompt">
                                 <i class="bi bi-copy"></i>
                             </button>
-                            <div class="prompt-run-dropdown">
-                                <button type="button" class="btn-run-prompt" id="apiBtnRunPrompt">
-                                    <i class="bi bi-play-fill"></i> Run
-                                </button>
-                                <div class="run-dropdown-menu" id="apiRunDropdownMenu">
-                                    <button class="run-option" id="apiBtnRunClaude">Run in Claude</button>
-                                </div>
-                            </div>
+                            <button type="button" class="btn-run-prompt" id="apiBtnRunClaude">
+                                <i class="bi bi-play-fill"></i> Run in Claude
+                            </button>
                         </div>
                     </div>
                     <pre id="apiAgentPromptText" class="api-flow-prompt-pre">Loading...</pre>
@@ -78,6 +73,63 @@
         </div>
     </div>
 
+    <script>
+    (function() {
+        const mdUrl = '{{baseUrl}}/api/{{apiMetadata.apiHandle}}.md';
+        const apiName = '{{apiMetadata.apiHandle}}';
+        let promptLoaded = false;
+
+        const modalEl = document.getElementById('apiAgentPromptModal');
+        if (modalEl) {
+            modalEl.addEventListener('show.bs.modal', function() {
+                if (promptLoaded) return;
+                fetch(mdUrl)
+                    .then(r => r.text())
+                    .then(text => {
+                        document.getElementById('apiAgentPromptText').textContent = text;
+                        promptLoaded = true;
+                    })
+                    .catch(() => {
+                        document.getElementById('apiAgentPromptText').textContent = 'Failed to load agent prompt.';
+                    });
+            });
+        }
+
+        const apiBtnCopyPrompt = document.getElementById('apiBtnCopyPrompt');
+        if (apiBtnCopyPrompt) {
+            apiBtnCopyPrompt.addEventListener('click', function() {
+                const text = document.getElementById('apiAgentPromptText').textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    const icon = apiBtnCopyPrompt.querySelector('i');
+                    icon.className = 'bi bi-check2';
+                    setTimeout(() => { icon.className = 'bi bi-copy'; }, 2000);
+                });
+            });
+        }
+
+        const apiBtnDownloadPrompt = document.getElementById('apiBtnDownloadPrompt');
+        if (apiBtnDownloadPrompt) {
+            apiBtnDownloadPrompt.addEventListener('click', function() {
+                const text = document.getElementById('apiAgentPromptText').textContent;
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = apiName + '.txt';
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        }
+
+        const apiBtnRunClaude = document.getElementById('apiBtnRunClaude');
+        if (apiBtnRunClaude) {
+            apiBtnRunClaude.addEventListener('click', function() {
+                const text = document.getElementById('apiAgentPromptText').textContent;
+                window.open('https://claude.ai/new?q=' + encodeURIComponent(text), '_blank');
+            });
+        }
+    })();
+    </script>
     {{/unless}}
     {{/if}}
 </main>
