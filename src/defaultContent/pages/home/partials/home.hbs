@@ -35,7 +35,12 @@
                             subscribe, and get going in minutes.
                         </p>
                         {{/if}}
-                        <div class="hero-buttons d-flex gap-3">
+                        <div class="hero-buttons d-flex gap-3 flex-wrap">
+                            {{#if showApiWorkflowsNav}}
+                            <button type="button" class="common-btn-primary common-btn-secondary" data-bs-toggle="modal" data-bs-target="#discoverAiModal">
+                                Discover with AI Agents →
+                            </button>
+                            {{/if}}
                             {{#in devportalMode values="DEFAULT,APISONLY"}}
                             <a href="{{baseUrl}}/apis" class="common-btn-primary common-btn-secondary">Browse our APIs →</a>
                             {{/in}}
@@ -141,3 +146,32 @@
         </div>
     </div>
 </section>
+
+{{#if showApiWorkflowsNav}}
+<div class="modal fade" id="discoverAiModal" tabindex="-1" aria-labelledby="discoverAiModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="d-flex align-items-center gap-2">
+                    <h5 class="modal-title mb-0" id="discoverAiModalLabel">Discover with AI Agents</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="api-flow-prompt-toolbar">
+                    <span class="small text-muted">Use this prompt to let your AI agent explore and discover what's available in this portal</span>
+                    <div class="prompt-modal-toolbar">
+                        <button type="button" class="prompt-tool-btn" id="discoverBtnCopyPrompt" title="Copy prompt">
+                            <i class="bi bi-copy"></i>
+                        </button>
+                        <button type="button" class="btn-run-prompt" id="discoverBtnRunClaude">
+                            <i class="bi bi-play-fill"></i> Run in Claude
+                        </button>
+                    </div>
+                </div>
+                <pre id="discoverPromptText" class="api-flow-prompt-pre"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+{{/if}}
