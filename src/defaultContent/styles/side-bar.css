@@ -301,3 +301,53 @@
 .sidebar.expanded .nav-section-label {
     display: block;
 }
+
+/* New badge — dot in collapsed state, pill in expanded state */
+#ai-settings {
+    position: relative;
+}
+
+#ai-settings::after {
+    content: '';
+    position: absolute;
+    top: 0.5rem;
+    left: 2.3rem;
+    width: 0.45rem;
+    height: 0.45rem;
+    background-color: var(--secondary-light-color);
+    border-radius: 50%;
+    transition: opacity 0.2s ease;
+}
+
+.sidebar:hover:not(.force-collapse) #ai-settings::after,
+.sidebar.expanded #ai-settings::after {
+    opacity: 0;
+}
+
+.nav-new-badge {
+    opacity: 0;
+    visibility: hidden;
+    width: 0;
+    overflow: hidden;
+    font-size: 0.55rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background-color: var(--secondary-light-color);
+    color: #fff;
+    border-radius: 999px;
+    padding: 0;
+    white-space: nowrap;
+    line-height: 1.2;
+    align-self: center;
+    transition: opacity 0.2s ease, visibility 0.2s ease, padding 0.2s ease, width 0.2s ease;
+}
+
+.sidebar:hover:not(.force-collapse) .nav-new-badge,
+.sidebar.expanded .nav-new-badge {
+    opacity: 1;
+    visibility: visible;
+    width: auto;
+    padding: 0.2rem 0.45rem;
+    margin-left: 0.5rem;
+}

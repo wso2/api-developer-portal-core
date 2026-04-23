@@ -343,6 +343,9 @@ const generateWorkflowMarkdown = (arazoJson, apiFlow, orgName, viewName, sources
     const templateContent = fs.readFileSync(templatePath, 'utf8');
     const template = Handlebars.compile(templateContent);
 
+    const toEnvVarPrefix = (name) =>
+        name.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+
     const baseUrl = `/${orgName}/views/${viewName}`;
     const data = {
         flow: {
@@ -351,7 +354,11 @@ const generateWorkflowMarkdown = (arazoJson, apiFlow, orgName, viewName, sources
             status: apiFlow.STATUS,
             description: apiFlow.DESCRIPTION
         },
-        sources,
+        sources: sources.map(s => ({
+            ...s,
+            envVarApiKey: `${toEnvVarPrefix(s.name)}_API_KEY`,
+            envVarOAuth2Prefix: toEnvVarPrefix(s.name)
+        })),
         baseUrl,
         arazoJson: JSON.stringify(arazoJson, null, 2)
     };

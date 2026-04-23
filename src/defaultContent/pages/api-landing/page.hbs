@@ -62,15 +62,9 @@
                             <button type="button" class="prompt-tool-btn" id="apiBtnCopyPrompt" title="Copy prompt">
                                 <i class="bi bi-copy"></i>
                             </button>
-                            <div class="prompt-run-dropdown">
-                                <button type="button" class="btn-run-prompt" id="apiBtnRunPrompt">
-                                    <i class="bi bi-play-fill"></i> Run
-                                </button>
-                                <div class="run-dropdown-menu" id="apiRunDropdownMenu">
-                                    <button class="run-option" id="apiBtnRunClaude">Run in Claude</button>
-                                    <button class="run-option" id="apiBtnRunChatGPT">Run in ChatGPT</button>
-                                </div>
-                            </div>
+                            <button type="button" class="btn-run-prompt" id="apiBtnRunClaude">
+                                <i class="bi bi-play-fill"></i> Run in Claude
+                            </button>
                         </div>
                     </div>
                     <pre id="apiAgentPromptText" class="api-flow-prompt-pre">Loading...</pre>
@@ -78,7 +72,6 @@
             </div>
         </div>
     </div>
-
     {{/unless}}
     {{/if}}
 </main>
