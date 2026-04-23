@@ -71,6 +71,21 @@ document.addEventListener('DOMContentLoaded', function () {
         listSection.style.display = 'block';
         formSection.style.display = 'none';
         resetApiFlowForm();
+        // Ensure the API Workflows tab is active whenever the list is shown.
+        const llmsTabBtn = document.getElementById('llms-tab-btn');
+        const wfBtn = document.getElementById('workflows-tab-btn');
+        if (llmsTabBtn && wfBtn) {
+            llmsTabBtn.classList.remove('active');
+            llmsTabBtn.setAttribute('aria-selected', 'false');
+            wfBtn.classList.add('active');
+            wfBtn.setAttribute('aria-selected', 'true');
+        }
+        document.querySelectorAll('#viewConfigureTabContent > .tab-pane').forEach(p => {
+            const isWorkflows = p.id === 'workflowsTabContent';
+            p.classList.toggle('active', isWorkflows);
+            p.classList.toggle('show', isWorkflows);
+        });
+        if (wfBtn) bootstrap.Tab.getOrCreateInstance(wfBtn).show();
     }
 
     function handleCreateClick() {
@@ -187,6 +202,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initWorkflowPathChooser();
     initUploadZone();
     initCreateFormatToggle();
+    initBringBack();
     initCreatePathButtons();
     initWizard();
     initAccessMatrix();
@@ -274,6 +290,88 @@ function switchCreateFormat(format) {
     if (label) label.textContent = format === 'markdown' ? 'Generate Template' : 'Generate Template';
 
     updateSectionSummaries();
+}
+
+// ─────────────────────────────────────────────
+// Bring it Back (re-import edited file)
+// ─────────────────────────────────────────────
+
+function initBringBack() {
+    const btn = document.getElementById('bringBackBtn');
+    const fileInput = document.getElementById('bringBackFileInput');
+    if (!btn || !fileInput) return;
+
+    btn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (file) handleBringBackFile(file);
+        e.target.value = '';
+    });
+}
+
+function showBringBackFeedback(msg, type) {
+    const el = document.getElementById('bringBackFeedback');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'af-bring-back-feedback' + (type ? ` af-bring-back-feedback--${type}` : '');
+    if (type === 'success') {
+        setTimeout(() => {
+            if (el.textContent === msg) {
+                el.textContent = '';
+                el.className = 'af-bring-back-feedback';
+            }
+        }, 3000);
+    }
+}
+
+function handleBringBackFile(file) {
+    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    const valid = ['.yaml', '.yml', '.json', '.md'];
+    if (!valid.includes(ext)) {
+        showBringBackFeedback('Use a .yaml, .json, or .md file.', 'error');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onerror = () => showBringBackFeedback("Couldn't read that file. Try again.", 'error');
+    reader.onload = e => {
+        const content = e.target.result;
+        if (!content.trim()) {
+            showBringBackFeedback('That file is empty.', 'error');
+            return;
+        }
+
+        const isMarkdown = ext === '.md';
+        const targetFormat = isMarkdown ? 'markdown' : 'arazzo';
+
+        switchCreateFormat(targetFormat);
+
+        if (isMarkdown) {
+            const mdField = document.getElementById('markdownContent');
+            if (mdField) mdField.value = content;
+            const filenameEl = document.querySelector('#markdownContentWrapper .af-editor-filename');
+            if (filenameEl) filenameEl.textContent = file.name;
+            const lineCount = content.split('\n').length;
+            const mdWordCount = document.getElementById('mdWordCount');
+            if (mdWordCount) mdWordCount.textContent = `${lineCount} line${lineCount === 1 ? '' : 's'}`;
+            updateEditorFooter('markdown');
+        } else {
+            if (arazoEditor) {
+                arazoEditor.setValue(content);
+                setTimeout(() => arazoEditor.refresh(), 50);
+            } else {
+                const field = document.getElementById('apiFlowDefinition');
+                if (field) field.value = content;
+            }
+            const filenameEl = document.querySelector('#apiFlowDefinitionWrapper .af-editor-filename');
+            if (filenameEl) filenameEl.textContent = file.name;
+            updateArazzoEditorUI(content);
+        }
+
+        showBringBackFeedback(`Template updated from ${file.name}`, 'success');
+        updateSectionSummaries();
+    };
+    reader.readAsText(file);
 }
 
 // ─────────────────────────────────────────────
@@ -767,14 +865,11 @@ async function openInVSCode() {
         const { path: filePath } = await res.json();
 
         // Use vscode:// URI to open the file directly in VS Code
-        const vscodeUri = `vscode://file/${filePath}`;
-        const anchor = document.createElement('a');
-        anchor.href = vscodeUri;
-        document.body.appendChild(anchor);
-        anchor.click();
-        document.body.removeChild(anchor);
+        // filePath is absolute (starts with /), so omit the extra slash after "file"
+        const vscodeUri = `vscode://file${filePath}`;
+        window.location.href = vscodeUri;
 
-    } catch {
+    } catch (err) {
         // Fallback: download the file
         const blob = new Blob([content], { type: 'application/yaml' });
         const url = URL.createObjectURL(blob);
@@ -785,7 +880,7 @@ async function openInVSCode() {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        showAlert(`VS Code not detected — "${filename}" downloaded instead`, 'info');
+        showAlert(`VS Code open failed (${err?.message || err}) — "${filename}" downloaded instead`, 'warning');
     } finally {
         if (btn && originalHtml) btn.innerHTML = originalHtml;
     }
@@ -821,6 +916,12 @@ function resetApiFlowForm() {
     setSaveButtonMode('create');
     updateSectionSummaries();
     expandAllSections();
+
+    // Re-enable format toggle for new flows.
+    document.querySelectorAll('.af-create-format-btn').forEach(btn => {
+        btn.disabled = false;
+        btn.title = '';
+    });
 
     // Reset to upload path
     clearUploadedFile();
@@ -911,16 +1012,26 @@ function renderApiCards(query) {
 
     const workflowVisibleToAgents = document.querySelector('input[name="apiFlowAgentVisibility"]:checked')?.value === 'VISIBLE';
 
+    const pathParts = window.location.pathname.split('/');
+    const orgHandle = pathParts[1] || '';
+    const viewName  = pathParts[3] || 'default';
+
     grid.innerHTML = filtered.map(cb => {
         const isSelected = cb.checked;
         const isAgentReady = cb.dataset.agentVisibility === 'VISIBLE';
         const isDisabled = workflowVisibleToAgents && !isAgentReady;
-        const desc = sanitizeInput(cb.dataset.apiDescription || '');
         const agentBadge = isAgentReady
             ? `<span class="af-api-agent-badge af-api-agent-badge--ready" title="AI ready"><i class="bi bi-robot"></i></span>`
             : `<span class="af-api-agent-badge af-api-agent-badge--not-ready" title="Not AI ready"><i class="bi bi-robot"></i></span>`;
         const disabledTooltip = isDisabled
             ? `<span class="af-api-card-tooltip">This API is not AI ready and cannot be selected for an AI-visible workflow</span>`
+            : '';
+        const docsUrl = `/${orgHandle}/views/${viewName}/api/${cb.dataset.apiHandle}.md`;
+        const extLink = isAgentReady
+            ? `<a class="af-api-card-ext-link" href="${docsUrl}" target="_blank" rel="noopener"
+                  title="Open API docs" aria-label="Open ${sanitizeInput(cb.dataset.apiName)} docs in new tab">
+                   <i class="bi bi-box-arrow-up-right"></i>
+               </a>`
             : '';
         return `
             <div class="af-api-card${isSelected ? ' af-api-card--selected' : ''}${isDisabled ? ' af-api-card--disabled' : ''}"
@@ -936,8 +1047,8 @@ function renderApiCards(query) {
                         <span class="api-flow-type-pill">${sanitizeInput(cb.dataset.apiType || '')}</span>
                         ${agentBadge}
                     </div>
-                    <p class="mb-0 af-api-card-desc">${desc}</p>
                 </div>
+                ${extLink}
             </div>
         `;
     }).join('');
@@ -955,6 +1066,8 @@ function renderApiCards(query) {
         card.addEventListener('keydown', e => {
             if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
         });
+        // Prevent the ext-link click from toggling selection.
+        card.querySelector('.af-api-card-ext-link')?.addEventListener('click', e => e.stopPropagation());
     });
 
     updateApiSelectedCount();
@@ -963,9 +1076,6 @@ function renderApiCards(query) {
 }
 
 function updateApiSelectedCount() {
-    const count = document.querySelectorAll('.api-flow-api-checkbox:checked').length;
-    const el = document.getElementById('apiSelectedCount');
-    if (el) el.textContent = count === 0 ? 'No APIs selected' : count === 1 ? '1 API selected' : `${count} APIs selected`;
     updateGenerateButtonsState();
 }
 
@@ -1318,6 +1428,15 @@ function openEditApiFlow(apiFlowId) {
     // but honour the stored content type when deciding which editor to show.
     switchWorkflowPath('create');
     switchCreateFormat(createPathFormat);
+
+    // Disable format toggle in edit mode — format cannot be changed after creation.
+    document.querySelectorAll('.af-create-format-btn').forEach(btn => {
+        btn.disabled = true;
+        btn.title = 'Format cannot be changed when editing';
+    });
+
+    updateSectionSummaries();
+    updateStep1Preview();
 
     const listSection = document.getElementById('apiFlowList');
     const formSection = document.getElementById('apiFlowForm');
@@ -1691,11 +1810,13 @@ function updateApiChips() {
     if (!chips) return;
     const selected = [...document.querySelectorAll('.api-flow-api-checkbox:checked')];
     if (selected.length === 0) {
-        chips.innerHTML = '<span class="text-muted small fst-italic">No APIs selected</span>';
+        chips.innerHTML = '';
+        chips.style.display = 'none';
     } else {
         chips.innerHTML = selected.map(cb =>
             `<span class="af-api-chip">${sanitizeInput(cb.dataset.apiName)}</span>`
         ).join('');
+        chips.style.display = '';
     }
 }
 
@@ -2064,15 +2185,41 @@ async function saveLlmsConfig() {
 document.addEventListener('DOMContentLoaded', function () {
     initLlmsConfig();
 
+    const llmsBtn = document.getElementById('llms-tab-btn');
+    const workflowsBtn = document.getElementById('workflows-tab-btn');
+
+    // Wire up tab buttons explicitly so tab switching works regardless of
+    // Bootstrap's event-delegation state (e.g. docs.css overrides, CDN race).
+    function activateTab(btn, paneId) {
+        const pane = document.getElementById(paneId);
+        if (!pane) return;
+        [llmsBtn, workflowsBtn].forEach(b => {
+            if (!b) return;
+            b.classList.toggle('active', b === btn);
+            b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+        });
+        document.querySelectorAll('#viewConfigureTabContent > .tab-pane').forEach(p => {
+            const isTarget = p.id === paneId;
+            p.classList.toggle('active', isTarget);
+            p.classList.toggle('show', isTarget);
+        });
+        // Keep Bootstrap's Tab instance in sync so shown.bs.tab fires normally.
+        bootstrap.Tab.getOrCreateInstance(btn).show();
+    }
+
+    llmsBtn?.addEventListener('click', () => activateTab(llmsBtn, 'llmsTabContent'));
+    workflowsBtn?.addEventListener('click', () => activateTab(workflowsBtn, 'workflowsTabContent'));
+
     // Refresh CodeMirror when the workflows tab becomes visible — it renders
     // with 0 dimensions if initialised while the pane is hidden (display:none).
-    const workflowsBtn = document.getElementById('workflows-tab-btn');
     workflowsBtn?.addEventListener('shown.bs.tab', () => arazoEditor?.refresh());
 
     // Activate the workflows tab when redirected here after a save, then clear
     // the hash so manual reloads default back to the LLM Instructions tab.
     if (window.location.hash === '#apiflows') {
-        if (workflowsBtn) workflowsBtn.click();
         history.replaceState(null, '', window.location.pathname);
+        if (workflowsBtn) {
+            setTimeout(() => activateTab(workflowsBtn, 'workflowsTabContent'), 0);
+        }
     }
 });

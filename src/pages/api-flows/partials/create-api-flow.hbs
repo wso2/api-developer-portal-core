@@ -269,9 +269,7 @@
                         {{/each}}
                     </div>
 
-                    <div class="af-api-chips-row mb-3" id="apiSelectedChips">
-                        <span class="text-muted small fst-italic">No APIs selected</span>
-                    </div>
+                    <div class="af-api-chips-row mb-3" id="apiSelectedChips" style="display:none;"></div>
 
                     <div class="mb-3">
                         <div class="input-group">
@@ -288,10 +286,6 @@
                     </div>
 
                     <div class="af-api-grid mb-2" id="apiCardGrid"></div>
-
-                    <div class="mb-4 mt-1">
-                        <span id="apiSelectedCount" class="text-muted small"></span>
-                    </div>
 
                     {{else}}
                     <div class="text-muted small fst-italic border rounded p-3 mb-4">
@@ -439,6 +433,19 @@
                                 <i class="bi bi-markdown" aria-hidden="true"></i> Markdown
                             </button>
                         </div>
+                        {{!-- Bring it back: re-import affordance --}}
+                        <div class="af-bring-back-group">
+                            <span class="af-bring-back-hint" aria-hidden="true">Edited in Claude or VS Code?</span>
+                            <button type="button" class="af-bring-back-btn" id="bringBackBtn"
+                                aria-label="Bring back edited template from Claude or VS Code">
+                                {{> icon-file-arrow-in}}
+                                Bring it back
+                            </button>
+                            <input type="file" id="bringBackFileInput" accept=".yaml,.yml,.json,.md"
+                                aria-hidden="true" tabindex="-1" style="display:none;">
+                            <span class="af-bring-back-feedback" id="bringBackFeedback"
+                                role="status" aria-live="polite"></span>
+                        </div>
                     </div>
 
                     {{!-- Arazzo editor pane --}}
@@ -479,10 +486,9 @@
                         <button type="button" class="common-btn-outlined af-editor-copy-btn" id="copySpecBtn" disabled
                             title="Generate a spec first">
                             <i class="bi bi-clipboard me-1" aria-hidden="true"></i>
-                            <span id="copySpecBtnLabel">Copy Arazzo spec from editor</span>
+                            <span id="copySpecBtnLabel">Copy Arazzo spec</span>
                         </button>
                     </div>
-
                 </div>{{!-- end specEditorCard --}}
 
             </div>{{!-- end afRight2 --}}
