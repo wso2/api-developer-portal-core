@@ -146,15 +146,16 @@ All configurations must use environment variables. Use per-API API keys (e.g. TR
 
 Fail fast if any required configuration is missing. Never log API keys, tokens, or sensitive data. Do not assume undocumented behavior or invent endpoints—rely only on the OpenAPI specs. Ask for clarification if anything is unclear.`;
 
-    return `${'━'.repeat(48)}
-SECTION 1 — API Execution Agent
-${'━'.repeat(48)}
+    return `> **Which prompt should I use?**
+> If you are a web-based agent (e.g. claude.ai or any browser-based AI assistant), use **Section 1: API Execution Agent** below.
+> If you are a coding/IDE agent building an application, use **Section 2: App Builder Agent**.
+> If you are unsure which applies to you, ask the user how they intend to use this workflow.
+
+# Section 1: API Execution Agent
 
 ${section1}
 
-${'━'.repeat(48)}
-SECTION 2 — App Builder Agent
-${'━'.repeat(48)}
+# Section 2: App Builder Agent
 
 ${section2}`;
 };

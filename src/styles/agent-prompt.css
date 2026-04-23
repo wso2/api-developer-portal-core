@@ -78,7 +78,7 @@
     padding: 0 1rem;
     height: 34px;
     white-space: nowrap;
-    background: #16a34a;
+    background: #D97757;;
     color: #fff;
     border: none;
     border-radius: 0.375rem;
@@ -89,7 +89,7 @@
 }
 
 .btn-run-prompt:hover {
-    background: #15803d;
+    background: #D97757;
 }
 
 .run-dropdown-menu {
