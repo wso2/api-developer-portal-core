@@ -72,7 +72,7 @@ const loadViewSettingsPage = async (req, res) => {
             }));
 
             const configAsset = await adminDao.getOrgContent({
-                orgId: orgID, fileType: 'llms-config', viewName, fileName: 'llms-config.json'
+                orgId: orgID, fileType: constants.FILE_TYPE.LLMS_CONFIG, viewName, fileName: constants.FILE_NAME.LLMS_CONFIG
             });
             let llmsConfig = { aiEnabled: true, portalName: '', portalDescription: '' };
             if (configAsset) {
@@ -107,7 +107,7 @@ const getLlmsConfig = async (req, res) => {
     try {
         const orgID = await adminDao.getOrgId(orgName);
         const asset = await adminDao.getOrgContent({
-            orgId: orgID, fileType: 'llms-config', viewName, fileName: 'llms-config.json'
+            orgId: orgID, fileType: constants.FILE_TYPE.LLMS_CONFIG, viewName, fileName: constants.FILE_NAME.LLMS_CONFIG
         });
         if (!asset) {
             return res.json({ aiEnabled: true, portalName: '', portalDescription: '' });
@@ -133,11 +133,11 @@ const saveLlmsConfig = async (req, res) => {
         const orgID = await adminDao.getOrgId(orgName);
         const content = Buffer.from(JSON.stringify({ aiEnabled, portalName, portalDescription }));
         const orgData = {
-            orgId: orgID, fileType: 'llms-config', viewName,
-            fileName: 'llms-config.json', fileContent: content, filePath: 'llms-config'
+            orgId: orgID, fileType: constants.FILE_TYPE.LLMS_CONFIG, viewName,
+            fileName: constants.FILE_NAME.LLMS_CONFIG, fileContent: content, filePath: constants.FILE_TYPE.LLMS_CONFIG
         };
         const existing = await adminDao.getOrgContent({
-            orgId: orgID, fileType: 'llms-config', viewName, fileName: 'llms-config.json'
+            orgId: orgID, fileType: constants.FILE_TYPE.LLMS_CONFIG, viewName, fileName: constants.FILE_NAME.LLMS_CONFIG
         });
         if (existing) {
             await adminDao.updateOrgContent(orgData);

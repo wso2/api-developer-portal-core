@@ -224,7 +224,8 @@ router.put('/organizations/:orgId/views/:viewName/api-flows/:apiFlowId', enforce
 router.delete('/organizations/:orgId/views/:viewName/api-flows/:apiFlowId', enforceSecuirty(constants.SCOPES.ADMIN), requireCsrfForMutatingApi, apiFlowService.deleteAPIFlow);
 router.post('/organizations/:orgId/views/:viewName/api-flows/generate-prompt', enforceSecuirty(constants.SCOPES.ADMIN), requireCsrfForMutatingApi, apiFlowService.generatePrompt);
 
-router.post('/temp-arazzo-file', enforceSecuirty(constants.SCOPES.ADMIN), requireCsrfForMutatingApi, async (req, res) => {
+// Writes Arazzo YAML to a unique temp file so the "Open in VS Code" button can launch it via vscode://file/<path>
+router.post('/temp-arazzo-file', enforceSecuirty(constants.SCOPES.ADMIN), requireCsrfForMutatingApi, async (req, res, next) => {
     const { content, filename } = req.body;
     if (!content || typeof content !== 'string') {
         return res.status(400).json({ error: 'content is required' });
@@ -233,9 +234,14 @@ router.post('/temp-arazzo-file', enforceSecuirty(constants.SCOPES.ADMIN), requir
         .replace(/[^a-zA-Z0-9._-]/g, '-')
         .replace(/\.\.+/g, '.')
         .substring(0, 120);
-    const tmpPath = path.join(os.tmpdir(), safeName);
-    await fs.writeFile(tmpPath, content, 'utf8');
-    res.json({ path: tmpPath });
+    try {
+        const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'arazzo-'));
+        const tmpPath = path.join(tmpDir, safeName);
+        await fs.writeFile(tmpPath, content, 'utf8');
+        res.json({ path: tmpPath });
+    } catch (err) {
+        next(err);
+    }
 });
 
 router.post('/login', devportalController.login);

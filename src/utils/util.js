@@ -1063,6 +1063,19 @@ const enforcePortalMode = async (req, res, next) => {
     }
 }
 
+async function isAiDisabledForPortal(orgID, viewName) {
+    const configAsset = await adminDao.getOrgContent({
+        orgId: orgID, fileType: constants.FILE_TYPE.LLMS_CONFIG, viewName, fileName: constants.FILE_NAME.LLMS_CONFIG
+    });
+    if (!configAsset) return false;
+    try {
+        const llmsConfig = JSON.parse(configAsset.FILE_CONTENT.toString('utf8'));
+        return llmsConfig.aiEnabled === false;
+    } catch (e) {
+        return false;
+    }
+}
+
 module.exports = {
     loadMarkdown,
     renderTemplate,
@@ -1095,5 +1108,6 @@ module.exports = {
     readDocFiles,
     unzipDirectory,
     filterAllowedAPIs,
-    enforcePortalMode
+    enforcePortalMode,
+    isAiDisabledForPortal
 }

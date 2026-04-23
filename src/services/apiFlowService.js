@@ -160,24 +160,35 @@ ${section1}
 ${section2}`;
 };
 
+const generateHandle = (name) =>
+    name.toLowerCase().trim()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .substring(0, 100);
+
 const createAPIFlow = async (req, res) => {
     const orgID = req.params.orgId;
     const viewName = req.params.viewName;
     const { name, handle, description, agentPrompt, status, visibility, agentVisibility, apiFlowDefinition, markdownContent, contentType } = req.body;
+    const resolvedHandle = (handle && handle.trim()) ? handle.trim() : generateHandle(name);
     const resolvedContentType = contentType || 'ARAZZO';
     const resolvedContent = resolvedContentType === 'MD'
         ? (markdownContent || null)
         : normalizeToJSON(apiFlowDefinition);
+    if (resolvedContentType !== 'MD' && resolvedContent === null) {
+        return res.status(400).json({ message: 'Invalid API flow definition: content could not be parsed as valid JSON or YAML.' });
+    }
     const t = await sequelize.transaction();
     try {
         const viewId = await resolveViewId(orgID, viewName);
         const resolvedPrompt = agentPrompt && agentPrompt.trim()
             ? agentPrompt.trim()
-            : generateAgentPrompt(name, description, [], req.params.orgName, viewName);
+            : generateAgentPrompt(name, description, [], req.params.orgName, viewName, '', resolvedHandle);
 
         const apiFlow = await apiFlowDao.createAPIFlow(orgID, viewId, {
             name,
-            handle,
+            handle: resolvedHandle,
             description,
             agentPrompt: resolvedPrompt,
             status: status || 'PUBLISHED',
@@ -211,6 +222,9 @@ const updateAPIFlow = async (req, res) => {
     const resolvedContent = resolvedContentType === 'MD'
         ? (markdownContent !== undefined ? markdownContent : undefined)
         : (apiFlowDefinition !== undefined ? normalizeToJSON(apiFlowDefinition) : undefined);
+    if (resolvedContentType !== 'MD' && apiFlowDefinition !== undefined && resolvedContent === null) {
+        return res.status(400).json({ message: 'Invalid API flow definition: content could not be parsed as valid JSON or YAML.' });
+    }
     const t = await sequelize.transaction();
     try {
         const viewId = await resolveViewId(orgId, viewName);

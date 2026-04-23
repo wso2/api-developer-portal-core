@@ -1205,17 +1205,23 @@ async function deleteApiFlow(orgID, viewName, apiFlowId) {
     confirmBtn.disabled = true;
     confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1 common-btn-danger" role="status" aria-hidden="true"></span> Deleting…';
 
-    const response = await fetch(`/devportal/organizations/${orgID}/views/${viewName}/api-flows/${apiFlowId}`, {
-        method: 'DELETE',
-        headers: { 'X-CSRF-Token': csrfToken },
-        credentials: 'same-origin'
-    });
-    if (response.ok) {
-        window.location.reload();
-    } else {
+    try {
+        const response = await fetch(`/devportal/organizations/${orgID}/views/${viewName}/api-flows/${apiFlowId}`, {
+            method: 'DELETE',
+            headers: { 'X-CSRF-Token': csrfToken },
+            credentials: 'same-origin'
+        });
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = 'Confirm';
+            showAlert('Failed to delete API Flow', 'error');
+        }
+    } catch (error) {
         confirmBtn.disabled = false;
         confirmBtn.innerHTML = 'Confirm';
-        showAlert('Failed to delete API Flow', 'error');
+        showAlert(`Failed to delete API Flow: ${error.message}`, 'error');
     }
 }
 
@@ -1272,7 +1278,7 @@ function inferApiIdsFromMarkdown(mdContent, checkboxes) {
 }
 
 function openEditApiFlow(apiFlowId) {
-    const data = (window.apiFlowsData || apiFlowsData || []).find(f => f.apiFlowId === apiFlowId);
+    const data = (window.apiFlowsData || apiFlowsData || []).find(f => String(f.apiFlowId) === String(apiFlowId));
     if (!data) return;
     resetApiFlowForm();
     document.getElementById('apiFlowFormTitle').textContent = 'Edit API Flow';
@@ -1323,7 +1329,7 @@ function openEditApiFlow(apiFlowId) {
 // ─────────────────────────────────────────────
 
 function openPromptModal(apiFlowId) {
-    const data = (window.apiFlowsData || apiFlowsData || []).find(f => f.apiFlowId === apiFlowId);
+    const data = (window.apiFlowsData || apiFlowsData || []).find(f => String(f.apiFlowId) === String(apiFlowId));
     if (!data) return;
     document.getElementById('agentPromptFlowName').textContent = data.name;
     document.getElementById('agentPromptContent').textContent = data.agentPrompt || '';

@@ -16,7 +16,7 @@
  * under the License.
  */
 /* eslint-disable no-undef */
-const { renderTemplate, renderTemplateFromAPI, renderGivenTemplate, loadLayoutFromAPI, loadMarkdown } = require('../utils/util');
+const { renderTemplate, renderTemplateFromAPI, renderGivenTemplate, loadLayoutFromAPI, loadMarkdown, isAiDisabledForPortal } = require('../utils/util');
 const config = require(process.cwd() + '/config.json');
 const logger = require('../config/logger');
 const { logUserAction } = require('../middlewares/auditLogger');
@@ -1101,12 +1101,18 @@ async function convertSDLToIntrospection(sdl) {
     }
 }
 
+
 const loadAPIContentMd = async (req, res) => {
     const { orgName, apiHandle, viewName } = req.params;
 
     try {
         const orgDetails = await adminDao.getOrganization(orgName);
         const orgID = orgDetails.ORG_ID;
+
+        if (await isAiDisabledForPortal(orgID, viewName)) {
+            return res.status(404).send('# Not Found\n\nThis resource is not available for agents.');
+        }
+
         const apiID = await apiDao.getAPIId(orgID, apiHandle);
         const metaData = await loadAPIMetaData(req, orgID, apiID);
 
@@ -1275,7 +1281,7 @@ const loadLlmsTxt = async (req, res) => {
         const orgID = orgDetails.ORG_ID;
 
         const configAsset = await adminDao.getOrgContent({
-            orgId: orgID, fileType: 'llms-config', viewName, fileName: 'llms-config.json'
+            orgId: orgID, fileType: constants.FILE_TYPE.LLMS_CONFIG, viewName, fileName: constants.FILE_NAME.LLMS_CONFIG
         });
         let llmsConfig = {};
         if (configAsset) {
@@ -1328,6 +1334,11 @@ const loadAPIsMd = async (req, res) => {
     try {
         const orgDetails = await adminDao.getOrganization(orgName);
         const orgID = orgDetails.ORG_ID;
+
+        if (await isAiDisabledForPortal(orgID, viewName)) {
+            return res.status(404).send('# Not Found\n\nThis resource is not available for agents.');
+        }
+
         const metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, null, null, viewName);
         const agentVisibleAPIs = metaDataList.filter(api => api.apiInfo.agentVisibility !== 'HIDDEN');
         const hiddenAPICount = metaDataList.length - agentVisibleAPIs.length;
@@ -1364,7 +1375,19 @@ const SPEC_FORMAT_DEFAULT = { format: 'json', field: 'swagger', label: 'REST' };
 const loadAPIDefinitionRaw = async (req, res) => {
     const { orgName, apiHandle, viewName, format } = req.params;
     try {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const orgID = orgDetails.ORG_ID;
+
+        if (await isAiDisabledForPortal(orgID, viewName)) {
+            return res.status(404).json({ message: 'Not Found' });
+        }
+
         const definitionResponse = await getAPIDefinition(orgName, viewName, apiHandle);
+
+        if (definitionResponse.metaData?.apiInfo?.agentVisibility === 'HIDDEN') {
+            return res.status(404).json({ message: 'API specification not found' });
+        }
+
         const typeConfig = SPEC_FORMAT_MAP[definitionResponse.apiType] || SPEC_FORMAT_DEFAULT;
 
         if (format !== typeConfig.format) {
@@ -1441,11 +1464,16 @@ const loadAPIDefinitionRaw = async (req, res) => {
 };
 
 const loadDocumentMd = async (req, res) => {
-    const { orgName, apiHandle, docType, docName } = req.params;
+    const { orgName, apiHandle, viewName, docType, docName } = req.params;
 
     try {
         const orgDetails = await adminDao.getOrganization(orgName);
         const orgID = orgDetails.ORG_ID;
+
+        if (await isAiDisabledForPortal(orgID, viewName)) {
+            return res.status(404).send('# Not Found\n\nThis resource is not available for agents.');
+        }
+
         const apiID = await apiDao.getAPIId(orgID, apiHandle);
         const docMetaData = await loadAPIMetaData(req, orgID, apiID);
         if (docMetaData.apiInfo?.agentVisibility === 'HIDDEN') {

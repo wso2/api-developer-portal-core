@@ -136,10 +136,13 @@ function openOrgDeleteModal(orgID) {
         return;
     }
 
-    // Set the action and data for when the user confirms
+    const titleEl = modal.querySelector('.modal-title');
+    const messageEl = modal.querySelector('.modal-message');
+    if (titleEl) titleEl.textContent = 'Do you really want to delete this organization?';
+    if (messageEl) messageEl.textContent = 'This will remove the organization stored in devportal';
+
     setDeleteConfirmationAction('deleteOrg', { orgID: orgID });
 
-    // Show the modal
     const bootstrapModal = new bootstrap.Modal(modal);
     bootstrapModal.show();
 }

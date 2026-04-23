@@ -151,6 +151,7 @@ module.exports = {
     FILE_TYPE: {
         LAYOUT: 'layout',
         TEMPLATE: 'template',
+        LLMS_CONFIG: 'llms-config',
     },
     KEY_TYPE: {
         PRODUCTION: 'PRODUCTION',
@@ -170,6 +171,7 @@ module.exports = {
         API_SPECIFICATION_PATH: 'specification',
         API_DEFINITION_GRAPHQL: 'apiDefinition.graphql',
         API_DEFINITION_XML: 'apiDefinition.xml',
+        LLMS_CONFIG: 'llms-config.json',
     },
     DEFAULT_SUBSCRIPTION_PLANS: [
         {
