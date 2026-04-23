@@ -11,7 +11,7 @@
                             for your AI agents
                         </h1>
                         <p class="hero-description">
-                            Use our MCP Servers to deploy and manage tools for your AI agents. Browse the MCP Server catalog, 
+                            Use our MCP Servers to deploy and manage tools for your AI agents. Browse the MCP Server catalog,
                             configure tools, & get started instantly.
                         </p>
                         {{/if}}
@@ -36,11 +36,6 @@
                         </p>
                         {{/if}}
                         <div class="hero-buttons d-flex gap-3 flex-wrap">
-                            {{#if showApiWorkflowsNav}}
-                            <button type="button" class="common-btn-primary common-btn-secondary" data-bs-toggle="modal" data-bs-target="#discoverAiModal">
-                                Discover with AI Agents →
-                            </button>
-                            {{/if}}
                             {{#in devportalMode values="DEFAULT,APISONLY"}}
                             <a href="{{baseUrl}}/apis" class="common-btn-primary common-btn-secondary">Browse our APIs →</a>
                             {{/in}}
@@ -59,6 +54,11 @@
                     </div>
                 </div>
             </div>
+            {{#if showApiWorkflowsNav}}
+            <button type="button" class="discover-ai-btn common-btn-primary common-btn-secondary" data-bs-toggle="modal" data-bs-target="#discoverAiModal">
+                Discover with AI
+            </button>
+            {{/if}}
         </div>
     </div>
 </section>

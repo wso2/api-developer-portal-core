@@ -13,10 +13,8 @@
         '1. What APIs are available in this portal? List each API with a brief description.',
         '2. What API workflows are available? Describe what each workflow does.',
         '3. What MCP Servers are available and what tools do they expose?',
-        '4. What authentication methods are supported (e.g. API keys, OAuth2)?',
-        '5. How can I get started? What are the first steps to subscribe and call an API?',
-        '',
-        'After answering, suggest the most relevant API or workflow based on common developer use cases.'
+
+        'After answering, ask for a use case suggest the most relevant API or workflow based on that.'
     ];
     const prompt = lines.join('\n');
 
