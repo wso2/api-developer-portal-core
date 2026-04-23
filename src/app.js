@@ -568,8 +568,19 @@ passport.deserializeUser(async (sessionData, done) => {
 app.use(constants.ROUTE.TECHNICAL_STYLES, express.static(path.join(require.main.filename, '../styles')));
 app.use(constants.ROUTE.TECHNICAL_SCRIPTS, express.static(path.join(require.main.filename, '../scripts')));
 
+// Redirect unrecognised root-level paths (e.g. /robots.txt, /sitemap.xml) before
+// the /:orgName route can treat them as org IDs.
+app.use((req, res, next) => {
+    const segments = req.path.split('/').filter(Boolean);
+    if (segments.length === 1 && segments[0].includes('.')) {
+        return res.redirect('/');
+    }
+    next();
+});
+
 //backend routes
 app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
+
 
 if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), filePrefix + 'styles')));
@@ -589,6 +600,10 @@ if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.DEFAULT, customContent);
 }
 
+
+app.use((req, res) => {
+    res.redirect('/');
+});
 
 app.use( (err, req, res, next) => {
     Handlebars.registerPartial('header', '');
