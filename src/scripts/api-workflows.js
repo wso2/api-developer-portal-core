@@ -46,6 +46,10 @@ function openAgentPromptModal(handle, flowName) {
             return;
         }
     }
+    if (!Array.isArray(flows)) {
+        showNotification('No prompt available for this workflow.', 'error');
+        return;
+    }
     const flow = flows.find(f => f.handle === handle);
     if (!flow || !flow.agentPrompt) {
         showNotification('No prompt available for this workflow.', 'error');

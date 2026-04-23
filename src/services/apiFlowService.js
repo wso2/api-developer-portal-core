@@ -171,7 +171,11 @@ const createAPIFlow = async (req, res) => {
     const orgID = req.params.orgId;
     const viewName = req.params.viewName;
     const { name, handle, description, agentPrompt, status, visibility, agentVisibility, apiFlowDefinition, markdownContent, contentType } = req.body;
-    const resolvedHandle = (handle && handle.trim()) ? handle.trim() : generateHandle(name);
+    let resolvedHandle = (handle && handle.trim()) ? handle.trim() : generateHandle(name);
+    if (!resolvedHandle) {
+        const suffix = Math.random().toString(36).slice(2, 10);
+        resolvedHandle = `flow-${suffix}`;
+    }
     const resolvedContentType = contentType || 'ARAZZO';
     const resolvedContent = resolvedContentType === 'MD'
         ? (markdownContent || null)

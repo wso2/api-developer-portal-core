@@ -1031,13 +1031,14 @@ function updateWorkflowMdPreview() {
     const pathParts = window.location.pathname.split('/');
     const orgHandle = pathParts[1] || '';
     const viewName = pathParts[3] || 'default';
-    const handle = (document.getElementById('editingApiFlowId')?.value
-        ? (window.apiFlowsData || []).find(f => String(f.apiFlowId) === document.getElementById('editingApiFlowId').value)?.handle
-        : null) || generateHandle(name);
+    const editingId = document.getElementById('editingApiFlowId')?.value;
+    const editingFlow = editingId ? (window.apiFlowsData || []).find(f => String(f.apiFlowId) === editingId) : null;
+    const handle = editingFlow?.handle || generateHandle(name);
+    const flowStatus = (editingFlow?.status || 'PUBLISHED').toUpperCase();
 
     let md = '';
     md += `# ${name}\n\n`;
-    md += `**Status:** DRAFT\n\n`;
+    md += `**Status:** ${flowStatus}\n\n`;
     if (desc) md += `**Description:** ${desc}\n`;
 
     if (apis.length > 0) {

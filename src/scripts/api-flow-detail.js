@@ -57,7 +57,8 @@ function renderMarkdownPreview(content) {
 
     if (window.marked) {
         marked.setOptions({ breaks: true, gfm: true });
-        container.innerHTML = marked.parse(content);
+        const rawHtml = marked.parse(content);
+        container.innerHTML = window.DOMPurify ? DOMPurify.sanitize(rawHtml) : rawHtml;
     } else {
         const pre = document.createElement('pre');
         pre.className = 'af-md-fallback';
@@ -90,11 +91,16 @@ function initArazzoUI(specContent) {
         }
     } catch (error) {
         console.error('Error initializing Arazzo UI:', error);
-        viewerContainer.innerHTML = `
-            <div style="padding:2rem;text-align:center;color:#e74c3c;">
-                <p><strong>Error loading Arazzo UI</strong></p>
-                <p style="font-size:0.9rem;color:#999;">${error.message}</p>
-            </div>`;
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'padding:2rem;text-align:center;color:#e74c3c;';
+        const title = document.createElement('p');
+        title.innerHTML = '<strong>Error loading Arazzo UI</strong>';
+        const message = document.createElement('p');
+        message.style.cssText = 'font-size:0.9rem;color:#999;';
+        message.textContent = error.message;
+        wrapper.appendChild(title);
+        wrapper.appendChild(message);
+        viewerContainer.replaceChildren(wrapper);
     }
 }
 
@@ -122,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = document.querySelector('main').dataset.flowHandle + '.txt';
+            a.download = (document.querySelector('main').dataset.flowHandle || 'workflow') + '.txt';
             a.click();
             URL.revokeObjectURL(url);
         });
