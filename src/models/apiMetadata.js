@@ -67,7 +67,7 @@ const APIMetadata = sequelize.define('DP_API_METADATA', {
     type: DataTypes.ENUM,
     values: ['VISIBLE', 'HIDDEN'],
     allowNull: false,
-    defaultValue: 'HIDDEN'
+    defaultValue: 'VISIBLE'
   },
   TECHNICAL_OWNER: {
     type: DataTypes.STRING,
