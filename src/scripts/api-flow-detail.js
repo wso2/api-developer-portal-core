@@ -113,7 +113,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnCopyPrompt = document.getElementById('btnCopyPrompt');
     if (btnCopyPrompt) {
         btnCopyPrompt.addEventListener('click', function() {
-            const promptText = document.getElementById('modalAgentPromptText').textContent;
+            const promptEl = document.getElementById('modalAgentPromptText');
+            if (!promptEl) { showNotification('Prompt not available', 'error'); return; }
+            const promptText = promptEl.textContent;
             navigator.clipboard.writeText(promptText).then(() => {
                 const icon = btnCopyPrompt.querySelector('i');
                 icon.className = 'bi bi-check-lg';
@@ -125,7 +127,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnDownloadPrompt = document.getElementById('btnDownloadPrompt');
     if (btnDownloadPrompt) {
         btnDownloadPrompt.addEventListener('click', function() {
-            const promptText = document.getElementById('modalAgentPromptText').textContent;
+            const promptEl = document.getElementById('modalAgentPromptText');
+            if (!promptEl) return;
+            const promptText = promptEl.textContent;
             const blob = new Blob([promptText], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -139,7 +143,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnRunClaude = document.getElementById('btnRunClaude');
     if (btnRunClaude) {
         btnRunClaude.addEventListener('click', function() {
-            const prompt = document.getElementById('modalAgentPromptText').textContent;
+            const promptEl = document.getElementById('modalAgentPromptText');
+            if (!promptEl) return;
+            const prompt = promptEl.textContent;
             window.open('https://claude.ai/new?q=' + encodeURIComponent(prompt), '_blank');
         });
     }
