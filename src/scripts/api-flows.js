@@ -1314,7 +1314,14 @@ function openDeleteApiFlowModal(orgID, viewName, apiFlowId) {
 async function deleteApiFlow(orgID, viewName, apiFlowId) {
     const confirmBtn = document.getElementById('deleteApiFlowConfirmBtn');
     confirmBtn.disabled = true;
-    confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1 common-btn-danger" role="status" aria-hidden="true"></span> Deleting…';
+    confirmBtn.style.backgroundColor = 'var(--danger-color)';
+    confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Deleting…';
+
+    const resetBtn = () => {
+        confirmBtn.disabled = false;
+        confirmBtn.style.backgroundColor = '';
+        confirmBtn.innerHTML = 'Confirm';
+    };
 
     try {
         const response = await fetch(`/devportal/organizations/${orgID}/views/${viewName}/api-flows/${apiFlowId}`, {
@@ -1325,13 +1332,11 @@ async function deleteApiFlow(orgID, viewName, apiFlowId) {
         if (response.ok) {
             window.location.reload();
         } else {
-            confirmBtn.disabled = false;
-            confirmBtn.innerHTML = 'Confirm';
+            resetBtn();
             showAlert('Failed to delete API Flow', 'error');
         }
     } catch (error) {
-        confirmBtn.disabled = false;
-        confirmBtn.innerHTML = 'Confirm';
+        resetBtn();
         showAlert(`Failed to delete API Flow: ${error.message}`, 'error');
     }
 }

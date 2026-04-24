@@ -2443,3 +2443,17 @@
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--bs-gray-200);
 }
+
+.common-btn-danger {
+    background-color: var(--danger-color);
+}
+
+.common-btn-danger:hover {
+    background-color: #bb2d3b;
+}
+
+.btn.common-btn-danger:disabled,
+.btn.common-btn-danger.disabled {
+    background-color: var(--danger-color);
+    opacity: 0.65;
+}
