@@ -63,7 +63,7 @@ class ServerResponseDTO {
                 updatedAt: registryMeta.updatedAt || undefined,
                 isLatest: true
             },
-            ...(schema ? { 'io.choreo/mcp-capabilities': choreoCapabilities } : {})
+            ...(schema ? { 'io.api-platform/mcp-capabilities': choreoCapabilities } : {})
         };
     }
 }

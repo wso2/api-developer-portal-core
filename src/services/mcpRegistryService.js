@@ -167,6 +167,18 @@ const listServers = async (req, res) => {
         const limit = normalizeLimit(req.query.limit);
         const search = req.query.search;
 
+        let currentOffset = 0;
+        if (req.query.cursor) {
+            try {
+                const decoded = JSON.parse(Buffer.from(req.query.cursor, 'base64url').toString('utf-8'));
+                if (typeof decoded.offset === 'number' && decoded.offset >= 0) {
+                    currentOffset = decoded.offset;
+                }
+            } catch {
+                return sendError(res, 400, 'Invalid cursor');
+            }
+        }
+
         const where = { ORG_ID: orgId, API_TYPE: constants.API_TYPE.MCP };
         if (!includeDeleted) {
             where.STATUS = { [Op.ne]: 'DELETED' };
@@ -178,14 +190,15 @@ const listServers = async (req, res) => {
         const rows = await APIMetadata.findAll({
             where,
             order: [[sequelize.literal("(\"METADATA_SEARCH\"->'apiInfo'->>'publishedAt')"), 'DESC NULLS LAST']],
-            limit: limit + 1
+            limit: limit + 1,
+            offset: currentOffset
         });
 
         const hasMore = rows.length > limit;
         const pageRows = hasMore ? rows.slice(0, limit) : rows;
         const metadata = { count: pageRows.length };
         if (hasMore) {
-            metadata.nextCursor = Buffer.from(JSON.stringify({ offset: limit })).toString('base64url');
+            metadata.nextCursor = Buffer.from(JSON.stringify({ offset: currentOffset + limit })).toString('base64url');
         }
 
         return res.status(200).json({
@@ -275,16 +288,18 @@ const publishServer = async (req, res) => {
         const orgId = await resolveOrgId(orgHandle);
         const { name, version, title, description, _meta } = detail;
         const remotes = detail.remotes || [];
-        const choreoMeta = (_meta && _meta['io.choreo/mcp-capabilities']) || {};
-        const tools = choreoMeta.tools || [];
-        const resources = choreoMeta.resources || [];
-        const prompts = choreoMeta.prompts || [];
+        const choreoMeta = _meta && _meta['io.api-platform/mcp-capabilities'];
+        const tools = choreoMeta?.tools || [];
+        const resources = choreoMeta?.resources || [];
+        const prompts = choreoMeta?.prompts || [];
         const now = new Date().toISOString();
-        const schemaContent = JSON.stringify({ tools, resources, prompts });
-        const schemaBuffer = Buffer.from(schemaContent, 'utf-8');
+        const schemaBuffer = choreoMeta
+            ? Buffer.from(JSON.stringify({ tools, resources, prompts }), 'utf-8')
+            : null;
 
         let row;
         let created = false;
+        let existingApiId = null;
 
         await sequelize.transaction(async (t) => {
             const existing = await APIMetadata.findOne({
@@ -293,28 +308,40 @@ const publishServer = async (req, res) => {
             });
 
             if (existing) {
+                existingApiId = existing.API_ID;
                 const existingPublishedAt = existing.METADATA_SEARCH?.apiInfo?.publishedAt || now;
                 const apiMetadataPayload = buildApiMetadataPayload(name, version, description, remotes, title, existingPublishedAt, now);
                 await apiDao.updateAPIMetadata(orgId, existing.API_ID, apiMetadataPayload, t);
                 await apiDao.createAPILabelMapping(orgId, existing.API_ID, ['default'], t);
-                await apiDao.updateOrCreateAPIFiles(
-                    [{ content: schemaBuffer, fileName: SCHEMA_FILE_NAME, type: constants.DOC_TYPES.SCHEMA_DEFINITION }],
-                    existing.API_ID, orgId, t
-                );
+                if (schemaBuffer) {
+                    await apiDao.updateOrCreateAPIFiles(
+                        [{ content: schemaBuffer, fileName: SCHEMA_FILE_NAME, type: constants.DOC_TYPES.SCHEMA_DEFINITION }],
+                        existing.API_ID, orgId, t
+                    );
+                }
                 row = await APIMetadata.findOne({ where: { API_ID: existing.API_ID }, transaction: t });
             } else {
                 const apiMetadataPayload = buildApiMetadataPayload(name, version, description, remotes, title, now, now);
                 const created_row = await apiDao.createAPIMetadata(orgId, apiMetadataPayload, t);
                 const apiId = created_row.dataValues.API_ID;
                 await apiDao.createAPILabelMapping(orgId, apiId, ['default'], t);
-                await apiDao.storeAPIFile(schemaBuffer, SCHEMA_FILE_NAME, apiId, constants.DOC_TYPES.SCHEMA_DEFINITION, t);
+                const newSchemaBuffer = schemaBuffer || Buffer.from(JSON.stringify({ tools: [], resources: [], prompts: [] }), 'utf-8');
+                await apiDao.storeAPIFile(newSchemaBuffer, SCHEMA_FILE_NAME, apiId, constants.DOC_TYPES.SCHEMA_DEFINITION, t);
                 row = await APIMetadata.findOne({ where: { API_ID: apiId }, transaction: t });
                 created = true;
             }
         });
 
         logger.info('MCP server published', { name, version, orgHandle });
-        const schema = { tools: tools || [], resources: resources || [], prompts: prompts || [] };
+        let schema;
+        if (choreoMeta) {
+            schema = { tools, resources, prompts };
+        } else if (existingApiId) {
+            const schemaContent = await apiDao.getAPIDoc(constants.DOC_TYPES.SCHEMA_DEFINITION, orgId, existingApiId, null);
+            schema = parseSchema(schemaContent);
+        } else {
+            schema = { tools: [], resources: [], prompts: [] };
+        }
         return res.status(created ? 201 : 200).json(new ServerResponseDTO(row, schema));
     } catch (error) {
         return handleUnexpectedError(res, error, 'publishServer', 'Failed to publish server');
@@ -342,14 +369,16 @@ const updateVersion = async (req, res) => {
 
         const { title, description, _meta } = detail;
         const remotes = detail.remotes || [];
-        const choreoMeta = (_meta && _meta['io.choreo/mcp-capabilities']) || {};
-        const tools = choreoMeta.tools || [];
-        const resources = choreoMeta.resources || [];
-        const prompts = choreoMeta.prompts || [];
-        const schemaContent = JSON.stringify({ tools, resources, prompts });
-        const schemaBuffer = Buffer.from(schemaContent, 'utf-8');
+        const choreoMeta = _meta && _meta['io.api-platform/mcp-capabilities'];
+        const tools = choreoMeta?.tools || [];
+        const resources = choreoMeta?.resources || [];
+        const prompts = choreoMeta?.prompts || [];
+        const schemaBuffer = choreoMeta
+            ? Buffer.from(JSON.stringify({ tools, resources, prompts }), 'utf-8')
+            : null;
 
         let row;
+        let updatedApiId = null;
         await sequelize.transaction(async (t) => {
             const existing = await APIMetadata.findOne({
                 where: { ORG_ID: orgId, API_TYPE: constants.API_TYPE.MCP, API_NAME: serverName, API_VERSION: version },
@@ -357,21 +386,30 @@ const updateVersion = async (req, res) => {
             });
             if (!existing) return;
 
+            updatedApiId = existing.API_ID;
             const existingPublishedAt = existing.METADATA_SEARCH?.apiInfo?.publishedAt || new Date().toISOString();
             const apiMetadataPayload = buildApiMetadataPayload(serverName, version, description, remotes, title, existingPublishedAt, new Date().toISOString());
             await apiDao.updateAPIMetadata(orgId, existing.API_ID, apiMetadataPayload, t);
             await apiDao.createAPILabelMapping(orgId, existing.API_ID, ['default'], t);
-            await apiDao.updateOrCreateAPIFiles(
-                [{ content: schemaBuffer, fileName: SCHEMA_FILE_NAME, type: constants.DOC_TYPES.SCHEMA_DEFINITION }],
-                existing.API_ID, orgId, t
-            );
+            if (schemaBuffer) {
+                await apiDao.updateOrCreateAPIFiles(
+                    [{ content: schemaBuffer, fileName: SCHEMA_FILE_NAME, type: constants.DOC_TYPES.SCHEMA_DEFINITION }],
+                    existing.API_ID, orgId, t
+                );
+            }
             row = await APIMetadata.findOne({ where: { API_ID: existing.API_ID }, transaction: t });
         });
 
         if (!row) {
             return sendError(res, 404, 'Server version not found');
         }
-        const schema = { tools: tools || [], resources: resources || [], prompts: prompts || [] };
+        let schema;
+        if (choreoMeta) {
+            schema = { tools, resources, prompts };
+        } else {
+            const schemaContent = await apiDao.getAPIDoc(constants.DOC_TYPES.SCHEMA_DEFINITION, orgId, updatedApiId, null);
+            schema = parseSchema(schemaContent);
+        }
         return res.status(200).json(new ServerResponseDTO(row, schema));
     } catch (error) {
         return handleUnexpectedError(res, error, 'updateVersion', 'Failed to update server version');
