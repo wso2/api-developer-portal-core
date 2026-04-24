@@ -343,8 +343,21 @@ function handleBringBackFile(file) {
 
         const isMarkdown = ext === '.md';
         const targetFormat = isMarkdown ? 'markdown' : 'arazzo';
+        const targetContentType = isMarkdown ? 'MD' : 'ARAZZO';
 
-        switchCreateFormat(targetFormat);
+        const editingApiFlowId = document.getElementById('editingApiFlowId')?.value || '';
+        if (editingApiFlowId) {
+            if (currentContentType !== targetContentType) {
+                showBringBackFeedback(
+                    `Cannot import: this flow uses ${currentContentType === 'MD' ? 'Markdown' : 'Arazzo'} format, but the uploaded file is ${targetContentType === 'MD' ? 'Markdown' : 'Arazzo'}.`,
+                    'error'
+                );
+                return;
+            }
+            // Types match — load content without mutating currentContentType
+        } else {
+            switchCreateFormat(targetFormat);
+        }
 
         if (isMarkdown) {
             const mdField = document.getElementById('markdownContent');
@@ -867,7 +880,61 @@ async function openInVSCode() {
         // Use vscode:// URI to open the file directly in VS Code
         // filePath is absolute (starts with /), so omit the extra slash after "file"
         const vscodeUri = `vscode://file${filePath}`;
-        window.location.href = vscodeUri;
+
+        await new Promise((resolve) => {
+            let handled = false;
+
+            const cleanup = () => {
+                clearTimeout(timer);
+                document.removeEventListener('visibilitychange', onVisibilityChange);
+                window.removeEventListener('pagehide', onPageHide);
+            };
+
+            const onVisibilityChange = () => {
+                if (document.hidden) {
+                    handled = true;
+                    cleanup();
+                    resolve();
+                }
+            };
+
+            const onPageHide = () => {
+                handled = true;
+                cleanup();
+                resolve();
+            };
+
+            document.addEventListener('visibilitychange', onVisibilityChange);
+            window.addEventListener('pagehide', onPageHide);
+
+            // Attempt to open via hidden iframe to avoid navigating away
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = vscodeUri;
+            document.body.appendChild(iframe);
+            setTimeout(() => document.body.removeChild(iframe), 2000);
+
+            const timer = setTimeout(() => {
+                cleanup();
+                if (!handled) {
+                    // VS Code protocol handler not available — offer download fallback
+                    const blob = new Blob([content], { type: 'application/yaml' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    showAlert(
+                        `VS Code does not appear to be installed or the protocol handler is not registered — "${filename}" downloaded instead.`,
+                        'warning'
+                    );
+                }
+                resolve();
+            }, 1200);
+        });
 
     } catch (err) {
         // Fallback: download the file
