@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${DP_DB_USER:-devportal}
+      POSTGRES_PASSWORD: ${DP_DB_PASSWORD:-devportal}
+      POSTGRES_DB: ${DP_DB_NAME:-devportal}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DP_DB_USER:-devportal} -d ${DP_DB_NAME:-devportal}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  devportal:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database connection — required
+      DP_DB_HOST: postgres
+      DP_DB_PORT: 5432
+      DP_DB_USER: ${DP_DB_USER:-devportal}
+      DP_DB_PASSWORD: ${DP_DB_PASSWORD:-devportal}
+      DP_DB_NAME: ${DP_DB_NAME:-devportal}
+      # Application
+      PORT: ${PORT:-3000}
+      # Optional overrides (also configurable via config.yaml)
+      DP_PORTAL_ORG_NAME: ${DP_PORTAL_ORG_NAME:-ACME}
+      DP_BASE_URL: ${DP_BASE_URL:-http://localhost:3000}
+      # IdP (optional — configure via config.yaml or env vars)
+      # DP_OIDC_ISSUER: ""
+      # DP_OIDC_CLIENT_ID: ""
+      # DP_OIDC_AUTH_URL: ""
+      # DP_OIDC_TOKEN_URL: ""
+      # DP_OIDC_CALLBACK_URL: ""
+      # DP_OIDC_LOGOUT_URL: ""
+      # DP_OIDC_JWKS_URL: ""
+    volumes:
+      # Mount your config.yaml for full structured configuration (optional)
+      # - ./config.yaml:/app/config.yaml:ro
+      - portalcontent:/app/resources
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+
+volumes:
+  pgdata:
+  portalcontent:

@@ -16,6 +16,9 @@
  * under the License.
  */
 const express = require('express');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const router = express.Router();
 const devportalService = require('../services/devportalService');
 const apiMetadataService = require('../services/apiMetadataService');
@@ -32,9 +35,12 @@ const multipartHandler = multer({storage: storage})
 const { ensureAuthenticated, validateAuthentication, enforceSecuirty } = require('../middlewares/ensureAuthenticated');
 const { requireCsrfForMutatingApi } = require('../middlewares/csrfProtection');
 const constants = require('../utils/constants');
-const config = require(process.cwd() + '/config.json');
+const config = require('../config/config');
 const platformSubscriptionService = require('../services/platformSubscriptionService');
 const platformApiKeyService = require('../services/platformApiKeyService');
+
+const uploadTempDir = path.join(os.tmpdir(), 'devportal');
+fs.mkdirSync(uploadTempDir, { recursive: true });
 
 router.post('/organizations', enforceSecuirty(constants.SCOPES.ADMIN), adminService.createOrganization);
 router.get('/organizations', enforceSecuirty(constants.SCOPES.ADMIN), adminService.getOrganizations);
@@ -47,7 +53,7 @@ router.put('/organizations/:orgId/identityProvider', enforceSecuirty(constants.S
 router.get('/organizations/:orgId/identityProvider', enforceSecuirty(constants.SCOPES.ADMIN), adminService.getIdentityProvider);
 router.delete('/organizations/:orgId/identityProvider', enforceSecuirty(constants.SCOPES.ADMIN), adminService.deleteIdentityProvider);
 
-const upload = multer({ dest: '../.tmp/' });
+const upload = multer({ dest: uploadTempDir });
 router.post('/organizations/:orgId/views/:name/layout', enforceSecuirty(constants.SCOPES.ADMIN), upload.single('file'), adminService.createOrgContent);
 router.put('/organizations/:orgId/views/:name/layout', enforceSecuirty(constants.SCOPES.ADMIN), upload.single('file'), adminService.updateOrgContent);
 router.get('/organizations/:orgId/views/:name/layout', devportalService.getOrgContent);

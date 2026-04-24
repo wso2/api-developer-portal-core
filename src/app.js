@@ -36,17 +36,17 @@ const applicationContent = require('./routes/applicationsContentRoute');
 const sdkJobService = require('./services/sdkJobService');
 const customContent = require('./routes/customPageRoute');
 const subscriptionsContent = require('./routes/subscriptionsContentRoute');
-const config = require(process.cwd() + '/config.json');
+const config = require('./config/config');
 const Handlebars = require('handlebars');
 const constants = require("./utils/constants");
 const designRoute = require('./routes/designModeRoute');
 const settingsRoute = require('./routes/configureRoute');
 const AsyncLock = require('async-lock');
 const util = require('./utils/util');
+const { runStartupInit } = require('./startup/init');
 
 const OAuth2Strategy = require('passport-oauth2');
 const jwt = require('jsonwebtoken');
-const secretConf = require(process.cwd() + '/secret.json');
 const { v4: uuidv4 } = require('uuid');
 
 const lock = new AsyncLock();
@@ -66,7 +66,7 @@ if (config.advanced.dbSslDialectOption) {
         user: config.db.username,
         host: config.db.host,
         database: config.db.database,
-        password: secretConf.dbSecret,
+        password: config.db.password,
         port: config.db.port,
         ssl: { require: true, rejectUnauthorized: false }
     });
@@ -75,7 +75,7 @@ if (config.advanced.dbSslDialectOption) {
         user: config.db.username,
         host: config.db.host,
         database: config.db.database,
-        password: secretConf.dbSecret,
+        password: config.db.password,
         port: config.db.port
     });
 }
@@ -605,64 +605,73 @@ app.use( (err, req, res, next) => {
 });
 
 
-const PORT = process.env.PORT || config.defaultPort;
-if (config.advanced.http) {
-    http.createServer(app).listen(PORT, '0.0.0.0', () => {
-        logStartupInfo();
-    });
-
-} else {
-    try {
-        const certPath = path.join(process.cwd(), config.serverCerts.pathToCert);
-        const keyPath = path.join(process.cwd(), config.serverCerts.pathToPK);
-        const caPath = path.join(process.cwd(), config.serverCerts.pathToCA);
-
-        const serverCert = fs.readFileSync(certPath);
-        const serverKey = fs.readFileSync(keyPath);
-        const caCert = fs.readFileSync(caPath);
-
-        https.createServer({
-            key: serverKey,
-            cert: serverCert,
-            ca: caCert,
-            requestCert: true,
-            rejectUnauthorized: false
-        }, app).listen(PORT, () => {
-            logStartupInfo();
-        });
-
-    } catch (err) {
-        logger.error('Error setting up HTTPS server', { 
-            error: err.message, 
-            stack: err.stack,
-            operation: 'httpsServerSetup'
-        });
-    }
-}
-
-const logStartupInfo = () => {
-    logger.info(`Developer Portal V2 is running on port ${PORT}`);
+const logStartupInfo = (port) => {
+    logger.info(`Developer Portal V2 is running on port ${port}`);
     logger.info(`Mode: ${config.mode}`);
 
     if (config.mode === constants.DEV_MODE) {
-        logger.info('⚠️  Since you are in DEV mode, ensure default content is available at configured pathToContent ' + 
+        logger.info('⚠️  Since you are in DEV mode, ensure default content is available at configured pathToContent ' +
             'and mock folder must exist in root directory');
     }
 
     const visitUrl = config.baseUrl + (config.mode === constants.DEV_MODE ? "/views/default" : "/<organization>/views/default");
     logger.info(`Visit ${visitUrl}`);
-    
+
     // Start SDK cleanup scheduler
     try {
         sdkJobService.startSDKCleanupScheduler();
         logger.info('SDK cleanup scheduler started successfully');
     } catch (error) {
-        logger.warn('Could not start SDK cleanup scheduler', { 
-            error: error.message, 
-            stack: error.stack 
+        logger.warn('Could not start SDK cleanup scheduler', {
+            error: error.message,
+            stack: error.stack
         });
     }
 };
+
+async function start() {
+    try {
+        await runStartupInit();
+    } catch (err) {
+        logger.error('[startup] Initialization failed, exiting', { error: err.message, stack: err.stack });
+        process.exit(1);
+    }
+
+    const PORT = process.env.PORT || config.defaultPort;
+    if (config.advanced.http) {
+        http.createServer(app).listen(PORT, '0.0.0.0', () => {
+            logStartupInfo(PORT);
+        });
+    } else {
+        try {
+            const certPath = path.join(process.cwd(), config.serverCerts.pathToCert);
+            const keyPath = path.join(process.cwd(), config.serverCerts.pathToPK);
+            const caPath = path.join(process.cwd(), config.serverCerts.pathToCA);
+
+            const serverCert = fs.readFileSync(certPath);
+            const serverKey = fs.readFileSync(keyPath);
+            const caCert = fs.readFileSync(caPath);
+
+            https.createServer({
+                key: serverKey,
+                cert: serverCert,
+                ca: caCert,
+                requestCert: true,
+                rejectUnauthorized: false
+            }, app).listen(PORT, () => {
+                logStartupInfo(PORT);
+            });
+        } catch (err) {
+            logger.error('Error setting up HTTPS server', {
+                error: err.message,
+                stack: err.stack,
+                operation: 'httpsServerSetup'
+            });
+        }
+    }
+}
+
+start();
 
 // Handle Uncaught Exceptions
 process.on('uncaughtException', (err) => {

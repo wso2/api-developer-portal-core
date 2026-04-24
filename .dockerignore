@@ -1,0 +1,7 @@
+# Git files
+.git
+.gitignore
+.github
+
+# Unwanted source files
+libs

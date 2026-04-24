@@ -19,20 +19,21 @@
 "use strict";
 
 const crypto = require("crypto");
-const secret = require(process.cwd() + "/secret.json");
+const config = require('../config/config');
 
-const ENCRYPTION_KEY = secret.billingKeyEncryptionKey;
+const ENCRYPTION_KEY = config.billing?.encryptionKey;
 
-if (!ENCRYPTION_KEY) {
-  throw new Error(
-    "BILLING_KEY_ENCRYPTION_KEY secret is required for encryption operations",
-  );
-}
-
-if (!/^[0-9a-fA-F]{64}$/.test(ENCRYPTION_KEY)) {
-  throw new Error(
-    "billingKeyEncryptionKey must be a 64-character hex string (32 random bytes).",
-  );
+if (config.billing?.enabled) {
+  if (!ENCRYPTION_KEY) {
+    throw new Error(
+      "BILLING_KEY_ENCRYPTION_KEY secret is required for encryption operations",
+    );
+  }
+  if (!/^[0-9a-fA-F]{64}$/.test(ENCRYPTION_KEY)) {
+    throw new Error(
+      "billingKeyEncryptionKey must be a 64-character hex string (32 random bytes).",
+    );
+  }
 }
 const KEY_BUF = Buffer.from(ENCRYPTION_KEY, "hex");
 

@@ -18,7 +18,6 @@
 
 /src/.tmp
 
-/src/config/config.js
 # misc
 .DS_Store
 *.pem
@@ -94,8 +93,7 @@ eslint.config.mjs
 
 .prettierrc
 
-config*.json
-secret*.json
+config.yaml
 resources/default-layout
 resources/mock
 

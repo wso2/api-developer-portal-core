@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-const config = require(process.cwd() + '/config.json');
+const config = require('../config/config');
 const util = require('../utils/util');
 const logger = require('../config/logger');
 

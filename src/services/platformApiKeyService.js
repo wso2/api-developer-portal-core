@@ -18,7 +18,7 @@
 const apiDao = require('../dao/apiMetadata');
 const util = require('../utils/util');
 const logger = require('../config/logger');
-const config = require(process.cwd() + '/config.json');
+const config = require('../config/config');
 
 const controlPlaneUrl = config.controlPlane.url;
 const PLATFORM_GATEWAY = 'wso2/api-platform';

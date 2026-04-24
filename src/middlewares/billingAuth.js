@@ -18,17 +18,17 @@
 
 const crypto = require("crypto");
 const logger = require("../config/logger");
-const config = require("../../config.json");
-const secret = require("../../secret.json");
+const config = require('../config/config');
+
 const adminDao = require("../dao/admin");
 
 function isApiKeyAuthenticated(req) {
   const keyType = config.advanced?.apiKey?.keyType;
-  if (!keyType || !secret.apiKeySecret) return false;
+  if (!keyType || !config.advanced?.apiKey?.secret) return false;
   const apiKey = req.headers[keyType.toLowerCase()];
   if (!apiKey) return false;
   const hash = (v) => crypto.createHash("sha256").update(v).digest();
-  return crypto.timingSafeEqual(hash(apiKey), hash(secret.apiKeySecret));
+  return crypto.timingSafeEqual(hash(apiKey), hash(config.advanced?.apiKey?.secret));
 }
 
 async function ensureBillingAuth(req, res, next) {
