@@ -273,8 +273,8 @@ const publishServer = async (req, res) => {
         }
 
         const orgId = await resolveOrgId(orgHandle);
-        const { name, version, title, description, _meta, mcpData } = detail;
-        const remotes = mcpData?.remotes || detail.remotes || [];
+        const { name, version, title, description, _meta } = detail;
+        const remotes = detail.remotes || [];
         const choreoMeta = (_meta && _meta['io.choreo/mcp-capabilities']) || {};
         const tools = choreoMeta.tools || [];
         const resources = choreoMeta.resources || [];
@@ -340,8 +340,8 @@ const updateVersion = async (req, res) => {
             return sendError(res, 400, 'Version in body must match path');
         }
 
-        const { title, description, _meta, mcpData } = detail;
-        const remotes = mcpData?.remotes || detail.remotes || [];
+        const { title, description, _meta } = detail;
+        const remotes = detail.remotes || [];
         const choreoMeta = (_meta && _meta['io.choreo/mcp-capabilities']) || {};
         const tools = choreoMeta.tools || [];
         const resources = choreoMeta.resources || [];
