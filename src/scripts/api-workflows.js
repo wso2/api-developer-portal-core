@@ -32,8 +32,25 @@ function getOrgAndViewFromURL() {
  * Open the agent prompt modal using data already on the page
  */
 function openAgentPromptModal(handle, flowName) {
-    console.log(apiFlowsData)
-    const flow = apiFlowsData.find(f => f.handle === handle);
+    let flows = window.apiFlowsData;
+    if (!flows) {
+        const container = document.getElementById('apiFlowsDataContainer');
+        if (!container) {
+            showNotification('No prompt available for this workflow.', 'error');
+            return;
+        }
+        try {
+            flows = JSON.parse(container.textContent);
+        } catch (e) {
+            showNotification('No prompt available for this workflow.', 'error');
+            return;
+        }
+    }
+    if (!Array.isArray(flows)) {
+        showNotification('No prompt available for this workflow.', 'error');
+        return;
+    }
+    const flow = flows.find(f => f.handle === handle);
     if (!flow || !flow.agentPrompt) {
         showNotification('No prompt available for this workflow.', 'error');
         return;

@@ -43,6 +43,11 @@
     font-weight: 600;
 }
 
+.configure-tabs .nav-link:hover img,
+.configure-tabs .nav-link.active img {
+    filter: none;
+}
+
 /* ===== API Flows — List View ===== */
 
 .api-flows-header {
@@ -404,7 +409,7 @@
     font-size: 0.8125rem;
     line-height: 1.7;
     white-space: pre-wrap;
-    word-break: break-word;
+    overflow-wrap: anywhere;
     background: var(--main-bg-color);
     color: var(--main-text-color);
     border: none;
@@ -719,6 +724,23 @@
     min-width: 0;
 }
 
+.af-api-card-ext-link {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 0.125rem 0.25rem;
+    margin: -0.125rem -0.25rem;
+    color: var(--bs-gray-500);
+    text-decoration: none;
+    font-size: 0.7rem;
+    border-radius: 0.25rem;
+    transition: color 0.15s ease;
+}
+
+.af-api-card-ext-link:hover {
+    color: var(--bs-gray-700);
+}
+
 .af-api-card-desc {
     font-size: 0.75rem;
     line-height: 1.4;
@@ -938,9 +960,8 @@
 
 .af-api-card--selected {
     border-color: var(--primary-main-color);
-    border-width: 1.5px;
-    background: rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.05);
-    box-shadow: 0 2px 8px rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.12);
+    border-width: 1px;
+    background: rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.035);
     border-left: 3px solid var(--primary-main-color);
 }
 
@@ -1004,7 +1025,7 @@
     align-items: center;
     gap: 1rem;
     padding: 1.125rem 1.25rem;
-    border: 2px solid var(--bs-gray-200, #e9ecef);
+    border: 1px solid var(--bs-gray-200, #e9ecef);
     border-radius: 1rem;
     cursor: pointer;
     background: var(--main-bg-color);
@@ -1021,7 +1042,6 @@
 .af-path-card--active {
     border-color: var(--primary-main-color);
     background: rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.04);
-    box-shadow: 0 0 0 1px var(--primary-main-color);
 }
 
 .af-path-card-icon-wrap {
@@ -1437,6 +1457,17 @@
     background: var(--main-bg-color);
 }
 
+.af-create-format-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.af-create-format-btn--active:disabled {
+    pointer-events: none;
+    opacity: 0.75;
+}
+
 /* ===== Spec Editor Card ===== */
 
 .af-spec-editor-card {
@@ -1463,6 +1494,75 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     white-space: nowrap;
+}
+
+/* ── Bring it back affordance ── */
+
+.af-bring-back-group {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.af-bring-back-hint {
+    font-size: 0.75rem;
+    color: var(--bs-secondary, #6c757d);
+    white-space: nowrap;
+}
+
+.af-bring-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.1rem 0.25rem;
+    border: none;
+    background: none;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--primary-main-color);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    white-space: nowrap;
+    border-radius: 3px;
+    line-height: 1.4;
+}
+
+.af-bring-back-btn:hover {
+    opacity: 0.8;
+}
+
+.af-bring-back-btn:focus-visible {
+    outline: 2px solid var(--primary-main-color);
+    outline-offset: 2px;
+    text-decoration: none;
+}
+
+.af-bring-back-icon {
+    flex-shrink: 0;
+}
+
+.af-bring-back-feedback {
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.af-bring-back-feedback--error {
+    color: var(--bs-danger, #dc3545);
+}
+
+.af-bring-back-feedback--success {
+    color: var(--success-color, #198754);
+    font-weight: 500;
+}
+
+.af-bring-back-caption {
+    font-size: 0.75rem;
+    color: var(--bs-secondary, #6c757d);
+    margin: 0.375rem 1rem 0.25rem;
+    padding: 0;
 }
 
 /* ── Editor bar (filename + line count) ── */
@@ -1539,7 +1639,8 @@
 }
 
 .af-editor-copy-btn {
-    font-size: 0.8125rem;
+    font-size: 0.8rem;
+    padding: 0.35rem 0.875rem;
 }
 
 /* ── Strip border/radius from CodeMirror inside card ── */
@@ -1566,13 +1667,13 @@
 .af-generate-claude-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1.125rem;
+    gap: 0.375rem;
+    padding: 0.35rem 0.875rem;
     background: #c96a43;
     color: #fff;
     border: 1px solid #b85c39;
     border-radius: 0.5rem;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.15s ease;
@@ -1621,13 +1722,13 @@
 .af-vscode-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1.125rem;
+    gap: 0.375rem;
+    padding: 0.35rem 0.875rem;
     background: #007acc;
     color: #fff;
     border: 1px solid #006bb3;
     border-radius: 0.5rem;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.15s ease;
@@ -1653,13 +1754,13 @@
 .af-rp-outlined-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1.125rem;
+    gap: 0.375rem;
+    padding: 0.35rem 0.875rem;
     background: transparent;
     color: var(--primary-main-color);
     border: 1px solid var(--primary-main-color);
     border-radius: 0.5rem;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease;
@@ -2321,7 +2422,7 @@
     line-height: 1.6;
     font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
     white-space: pre-wrap;
-    word-break: break-word;
+    overflow-wrap: anywhere;
     max-height: 70vh;
     overflow-y: auto;
     color: var(--main-text-color);
@@ -2341,4 +2442,18 @@
 .llms-config-header {
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--bs-gray-200);
+}
+
+.common-btn-danger {
+    background-color: var(--danger-color);
+}
+
+.common-btn-danger:hover {
+    background-color: #bb2d3b;
+}
+
+.btn.common-btn-danger:disabled,
+.btn.common-btn-danger.disabled {
+    background-color: var(--danger-color);
+    opacity: 0.65;
 }

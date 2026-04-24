@@ -9,12 +9,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Set up event listeners for unsubscribe buttons
   document.addEventListener('click', function(e) {
-    if (e.target.hasAttribute('data-unsubscribe-id')) {
-      const subID = e.target.getAttribute('data-unsubscribe-id');
-      const apiID = e.target.getAttribute('data-api-id');
-      // For now, just open the modal - the handler setup above will handle the action
-      // In a full implementation, you'd get orgID, appID, apiRefID from the page context
-      openDeleteModal(subID, '', apiID, '');
+    const btn = e.target.closest('[data-unsubscribe-id]');
+    if (btn) {
+      const subID = btn.getAttribute('data-unsubscribe-id');
+      const orgID = btn.getAttribute('data-org-id');
+      const appID = btn.getAttribute('data-app-id');
+      const apiRefID = btn.getAttribute('data-api-ref-id');
+      openDeleteModal(subID, orgID, appID, apiRefID);
     }
   });
 
@@ -838,7 +839,11 @@ function openDeleteModal(subID, orgID, appID, apiRefID) {
         return;
     }
 
-    // Set the action and data for when the user confirms
+    const titleEl = modal.querySelector('.modal-title');
+    const messageEl = modal.querySelector('.modal-message');
+    if (titleEl) titleEl.textContent = 'Do you really want to remove the subscription?';
+    if (messageEl) messageEl.textContent = 'This will remove the subscription entry stored in the devportal.';
+
     setDeleteConfirmationAction('removeSubscription', {
         subID: subID,
         orgID: orgID,
@@ -846,7 +851,6 @@ function openDeleteModal(subID, orgID, appID, apiRefID) {
         apiRefID: apiRefID
     });
 
-    // Show the modal
     const bootstrapModal = new bootstrap.Modal(modal);
     bootstrapModal.show();
 }

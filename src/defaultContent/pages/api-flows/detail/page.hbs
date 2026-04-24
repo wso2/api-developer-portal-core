@@ -4,18 +4,20 @@
  * API Flow Detail Page
  -->
 <head>
+    <link rel="stylesheet" href="/technical-styles/agent-prompt.css">
     <link rel="stylesheet" href="/technical-styles/api-workflows.css">
     {{#unless (eq flow.contentType "MD")}}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@jentic/arazzo-ui@latest/dist/arazzo-ui.css">
-    <script src="https://cdn.jsdelivr.net/npm/@jentic/arazzo-ui@latest/dist/arazzo-ui.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@jentic/arazzo-ui@1.0.0-alpha.30/dist/arazzo-ui.css" integrity="sha256-WHPlCD3ecWnrluuPAx7VypEZtfvv4DrIMfdLYzLshsM=" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/@jentic/arazzo-ui@1.0.0-alpha.30/dist/arazzo-ui.js" integrity="sha256-OYzURPQLK+lup5rGo+IQmVbjWOjVgjURBWDDtMHIOaw=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js" integrity="sha256-Rdw90D3AegZwWiwpibjH9wkBPwS9U4bjJ51ORH8H69c=" crossorigin="anonymous"></script>
     {{/unless}}
     {{#if (eq flow.contentType "MD")}}
-    <script src="https://cdn.jsdelivr.net/npm/marked@13/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@13.0.3/marked.min.js" integrity="sha256-Wt6n2O5BpwD8zBS7nVAxBPBHDMF6hK0+Fn0/UlHq4No=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.7/purify.min.js" integrity="sha512-78KH17QLT5e55GJqP76vutp1D2iAoy06WcYBXB6iBCsmO6wWzx0Qdg8EDpm8mKXv68BcvHOyeeP4wxAL0twJGQ==" crossorigin="anonymous"></script>
     {{/if}}
 </head>
 
-<main>
+<main data-flow-handle="{{flow.handle}}" data-flow-content-type="{{flow.contentType}}">
     {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav}}
     {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav}}
 
@@ -92,134 +94,4 @@
     {{!-- Hidden container for spec content --}}
     <textarea id="specContent" style="display: none;">{{flow.content}}</textarea>
 </main>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-
-    const btnCopyPrompt = document.getElementById('btnCopyPrompt');
-    if (btnCopyPrompt) {
-        btnCopyPrompt.addEventListener('click', function() {
-            const promptText = document.getElementById('modalAgentPromptText').textContent;
-            navigator.clipboard.writeText(promptText).then(() => {
-                const icon = btnCopyPrompt.querySelector('i');
-                icon.className = 'bi bi-check-lg';
-                setTimeout(() => { icon.className = 'bi bi-copy'; }, 2000);
-            }).catch(() => showNotification('Failed to copy prompt', 'error'));
-        });
-    }
-
-    const btnDownloadPrompt = document.getElementById('btnDownloadPrompt');
-    if (btnDownloadPrompt) {
-        btnDownloadPrompt.addEventListener('click', function() {
-            const promptText = document.getElementById('modalAgentPromptText').textContent;
-            const blob = new Blob([promptText], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = '{{flow.handle}}.txt';
-            a.click();
-            URL.revokeObjectURL(url);
-        });
-    }
-
-    const btnRunClaude = document.getElementById('btnRunClaude');
-    if (btnRunClaude) {
-        btnRunClaude.addEventListener('click', function() {
-            const prompt = document.getElementById('modalAgentPromptText').textContent;
-            window.open('https://claude.ai/new?q=' + encodeURIComponent(prompt), '_blank');
-        });
-    }
-});
-
-
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-
-    const content = document.createElement('div');
-    content.className = 'notification-content';
-
-    const icon = document.createElement('i');
-    const iconClass = type === 'success' ? 'check-circle' : 'exclamation-circle';
-    icon.className = `bi bi-${iconClass}`;
-
-    const messageSpan = document.createElement('span');
-    messageSpan.textContent = message;
-
-    content.appendChild(icon);
-    content.appendChild(messageSpan);
-    notification.appendChild(content);
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-        notification.classList.add('show');
-    }, 10);
-
-    setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => {
-            notification.remove();
-        }, 300);
-    }, 3000);
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    const specContent = document.getElementById('specContent').value.trim();
-    const contentType = '{{flow.contentType}}';
-
-    if (contentType === 'MD') {
-        renderMarkdownPreview(specContent);
-    } else {
-        initArazzoUI(specContent);
-    }
-});
-
-function renderMarkdownPreview(content) {
-    const container = document.getElementById('markdownViewer');
-    if (!container) return;
-
-    if (!content) {
-        container.innerHTML = '<p class="af-md-empty">No workflow description available.</p>';
-        return;
-    }
-
-    if (window.marked) {
-        marked.setOptions({ breaks: true, gfm: true });
-        container.innerHTML = marked.parse(content);
-    } else {
-        const pre = document.createElement('pre');
-        pre.className = 'af-md-fallback';
-        pre.textContent = content;
-        container.appendChild(pre);
-    }
-}
-
-function initArazzoUI(specContent) {
-    const viewerContainer = document.getElementById('arazzoViewer');
-    if (!viewerContainer) return;
-
-    if (!specContent) {
-        viewerContainer.innerHTML = '<p style="padding: 2rem; text-align: center; color: #999;">No specification content available</p>';
-        return;
-    }
-
-    try {
-        if (window.ArazzoUI) {
-            window.ArazzoUI({
-                dom_id: '#arazzoViewer',
-                document: specContent,
-                view: 'split'
-            });
-        } else {
-            throw new Error('Arazzo UI library not loaded.');
-        }
-    } catch (error) {
-        console.error('Error initializing Arazzo UI:', error);
-        viewerContainer.innerHTML = `
-            <div style="padding:2rem;text-align:center;color:#e74c3c;">
-                <p><strong>Error loading Arazzo UI</strong></p>
-                <p style="font-size:0.9rem;color:#999;">${error.message}</p>
-            </div>`;
-    }
-}
-</script>
+<script src='/technical-scripts/api-flow-detail.js' defer></script>

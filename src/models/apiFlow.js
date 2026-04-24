@@ -43,7 +43,7 @@ const APIFlow = sequelize.define('DP_API_FLOW', {
     },
     HANDLE: {
         type: DataTypes.STRING,
-        allowNull: true
+        allowNull: false
     },
     AGENT_PROMPT: {
         type: DataTypes.TEXT,
@@ -90,6 +90,9 @@ const APIFlow = sequelize.define('DP_API_FLOW', {
     timestamps: false,
     tableName: 'DP_API_FLOW',
     returning: true,
+    indexes: [
+        { unique: true, fields: ['ORG_ID', 'VIEW_ID', 'HANDLE'] }
+    ]
 });
 
 APIFlow.belongsTo(Organization, { foreignKey: 'ORG_ID' });

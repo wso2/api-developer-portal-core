@@ -25,7 +25,7 @@ const createAPIFlow = async (orgID, viewId, apiFlowData, t) => {
             ORG_ID: orgID,
             VIEW_ID: viewId,
             NAME: apiFlowData.name,
-            HANDLE: apiFlowData.handle || null,
+            HANDLE: apiFlowData.handle,
             DESCRIPTION: apiFlowData.description,
             AGENT_PROMPT: apiFlowData.agentPrompt,
             STATUS: apiFlowData.status || 'PUBLISHED',
@@ -49,7 +49,7 @@ const createAPIFlow = async (orgID, viewId, apiFlowData, t) => {
 const updateAPIFlow = async (orgID, viewId, apiFlowId, apiFlowData, t) => {
     const updateFields = { UPDATED_AT: new Date() };
     if (apiFlowData.name !== undefined) updateFields.NAME = apiFlowData.name;
-    if (apiFlowData.handle !== undefined) updateFields.HANDLE = apiFlowData.handle || null;
+    if (apiFlowData.handle !== undefined) updateFields.HANDLE = apiFlowData.handle;
     if (apiFlowData.description !== undefined) updateFields.DESCRIPTION = apiFlowData.description;
     if (apiFlowData.agentPrompt !== undefined) updateFields.AGENT_PROMPT = apiFlowData.agentPrompt;
     if (apiFlowData.status !== undefined) updateFields.STATUS = apiFlowData.status;

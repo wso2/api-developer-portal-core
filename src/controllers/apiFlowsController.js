@@ -20,7 +20,7 @@ const adminDao = require('../dao/admin');
 const apiMetadataDao = require('../dao/apiMetadata');
 const apiFlowService = require('../services/apiFlowService');
 const logger = require('../config/logger');
-const { renderTemplate, loadLayoutFromAPI, renderGivenTemplate, renderTemplateFromAPI } = require('../utils/util');
+const { renderTemplate, loadLayoutFromAPI, renderGivenTemplate, renderTemplateFromAPI, isAiDisabledForPortal } = require('../utils/util');
 const constants = require('../utils/constants');
 const config = require(process.cwd() + '/config.json');
 const fs = require('fs');
@@ -31,6 +31,7 @@ const yaml = require('js-yaml');
 const resolveViewId = async (orgID, viewName) => {
     return await apiMetadataDao.getViewID(orgID, viewName);
 };
+
 
 const extractSourceDescriptions = (flow) => {
     if ((flow.CONTENT_TYPE || 'ARAZZO') !== 'ARAZZO' || !flow.FILE_CONTENT) return [];
@@ -249,6 +250,11 @@ const getFlowPromptJSON = async (req, res) => {
         }
 
         const orgID = orgDetails.ORG_ID;
+
+        if (await isAiDisabledForPortal(orgID, viewName)) {
+            return res.status(404).json({ error: 'Not Found' });
+        }
+
         const viewId = await resolveViewId(orgID, viewName);
 
         const apiFlow = await apiFlowDao.getPublishedAPIFlowByHandle(orgID, viewId, handle, { agentVisibility: 'VISIBLE' });
@@ -295,6 +301,11 @@ const getWorkflowDetailMd = async (req, res) => {
         }
 
         const orgID = orgDetails.ORG_ID;
+
+        if (await isAiDisabledForPortal(orgID, viewName)) {
+            return res.status(404).send('# Not Found\n\nThis resource is not available for agents.');
+        }
+
         const viewId = await resolveViewId(orgID, viewName);
 
         const apiFlow = await apiFlowDao.getPublishedAPIFlowByHandle(orgID, viewId, handle, { agentVisibility: 'VISIBLE' });
@@ -398,6 +409,11 @@ const getAllPublishedFlowsMD = async (req, res) => {
         }
 
         const orgID = orgDetails.ORG_ID;
+
+        if (await isAiDisabledForPortal(orgID, viewName)) {
+            return res.status(404).send('# Not Found\n\nThis resource is not available for agents.');
+        }
+
         const viewId = await resolveViewId(orgID, viewName);
 
         const allPublishedFlows = await apiFlowDao.getPublishedAPIFlows(orgID, viewId);
@@ -441,10 +457,19 @@ const getWorkflowArazzoSpec = async (req, res) => {
         }
 
         const orgID = orgDetails.ORG_ID;
+
+        if (await isAiDisabledForPortal(orgID, viewName)) {
+            return res.status(404).json({ error: 'Not Found' });
+        }
+
         const viewId = await resolveViewId(orgID, viewName);
 
         const apiFlow = await apiFlowDao.getPublishedAPIFlowByHandle(orgID, viewId, handle);
         if (!apiFlow) {
+            return res.status(404).json({ error: 'API Workflow not found or not published' });
+        }
+
+        if ((apiFlow.AGENT_VISIBILITY || 'VISIBLE') === 'HIDDEN') {
             return res.status(404).json({ error: 'API Workflow not found or not published' });
         }
 
