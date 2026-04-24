@@ -328,7 +328,7 @@ function handleBringBackFile(file) {
     const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
     const valid = ['.yaml', '.yml', '.json', '.md'];
     if (!valid.includes(ext)) {
-        showBringBackFeedback('Use a .yaml, .json, or .md file.', 'error');
+        showBringBackFeedback(`Use a ${valid.join(', ')} file.`, 'error');
         return;
     }
 

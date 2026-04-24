@@ -22,12 +22,14 @@
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
-    notification.innerHTML = `
-        <div class="notification-content">
-            <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-            <span>${message}</span>
-        </div>
-    `;
+    const content = document.createElement('div');
+    content.className = 'notification-content';
+    const icon = document.createElement('i');
+    icon.classList.add('bi', type === 'success' ? 'bi-check-circle' : 'bi-exclamation-circle');
+    const span = document.createElement('span');
+    span.textContent = message;
+    content.append(icon, span);
+    notification.appendChild(content);
 
     document.body.appendChild(notification);
 
@@ -55,15 +57,15 @@ function renderMarkdownPreview(content) {
         return;
     }
 
-    if (window.marked) {
+    if (window.marked && window.DOMPurify) {
         marked.setOptions({ breaks: true, gfm: true });
         const rawHtml = marked.parse(content);
-        container.innerHTML = window.DOMPurify ? DOMPurify.sanitize(rawHtml) : rawHtml;
+        container.innerHTML = DOMPurify.sanitize(rawHtml);
     } else {
         const pre = document.createElement('pre');
         pre.className = 'af-md-fallback';
         pre.textContent = content;
-        container.appendChild(pre);
+        container.replaceChildren(pre);
     }
 }
 
