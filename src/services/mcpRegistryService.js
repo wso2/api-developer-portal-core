@@ -491,21 +491,30 @@ const updateAllVersionsStatus = async (req, res) => {
             return sendError(res, 400, 'Invalid status value');
         }
 
-        const existing = await APIMetadata.findAll({
-            where: { ORG_ID: orgId, API_TYPE: constants.API_TYPE.MCP, REFERENCE_ID: null, API_NAME: serverName }
+        const dbStatus = REGISTRY_TO_DB_STATUS[status];
+        let updated;
+
+        await sequelize.transaction(async (t) => {
+            const existing = await APIMetadata.findAll({
+                where: { ORG_ID: orgId, API_TYPE: constants.API_TYPE.MCP, REFERENCE_ID: null, API_NAME: serverName },
+                lock: t.LOCK.UPDATE,
+                transaction: t
+            });
+            if (existing.length === 0) return;
+
+            await APIMetadata.update(
+                { STATUS: dbStatus },
+                { where: { ORG_ID: orgId, API_TYPE: constants.API_TYPE.MCP, REFERENCE_ID: null, API_NAME: serverName }, transaction: t }
+            );
+            updated = await APIMetadata.findAll({
+                where: { ORG_ID: orgId, API_TYPE: constants.API_TYPE.MCP, REFERENCE_ID: null, API_NAME: serverName },
+                transaction: t
+            });
         });
-        if (existing.length === 0) {
+
+        if (!updated) {
             return sendError(res, 404, 'Server not found');
         }
-
-        const dbStatus = REGISTRY_TO_DB_STATUS[status];
-        await APIMetadata.update(
-            { STATUS: dbStatus },
-            { where: { ORG_ID: orgId, API_TYPE: constants.API_TYPE.MCP, REFERENCE_ID: null, API_NAME: serverName } }
-        );
-        const updated = await APIMetadata.findAll({
-            where: { ORG_ID: orgId, API_TYPE: constants.API_TYPE.MCP, REFERENCE_ID: null, API_NAME: serverName }
-        });
         return res.status(200).json({
             updatedCount: updated.length,
             servers: updated.map(row => new ServerResponseDTO(row))
