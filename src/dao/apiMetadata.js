@@ -48,8 +48,12 @@ const createAPIMetadata = async (orgID, apiMetadata, t) => {
             API_TYPE: apiInfo.apiType,
             VISIBILITY: apiInfo.visibility,
             VISIBLE_GROUPS: apiInfo.visibleGroups ? apiInfo.visibleGroups.join(' ') : null,
+<<<<<<< fixcoderabbit
             AGENT_VISIBILITY: apiMetadata.agentVisibility || apiInfo.agentVisibility || 'VISIBLE',
             TAGS: apiInfo.tags ? apiInfo.tags.join(' ') : null,
+=======
+            AGENT_VISIBILITY: apiMetadata.agentVisibility || apiInfo.agentVisibility || 'VISIBLE',            TAGS: apiInfo.tags ? apiInfo.tags.join(' ') : null,
+>>>>>>> main
             TECHNICAL_OWNER: owners.technicalOwner,
             TECHNICAL_OWNER_EMAIL: owners.technicalOwnerEmail,
             BUSINESS_OWNER_EMAIL: owners.businessOwnerEmail,
@@ -1378,8 +1382,12 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
             TAGS: apiInfo.tags ? apiInfo.tags.join(' ') : null,
             VISIBILITY: apiInfo.visibility,
             VISIBLE_GROUPS: apiInfo.visibleGroups ? apiInfo.visibleGroups.join(' ') : null,
+<<<<<<< fixcoderabbit
             AGENT_VISIBILITY: apiMetadata.agentVisibility || apiInfo.agentVisibility || 'VISIBLE',
             TECHNICAL_OWNER: owners.technicalOwner,
+=======
+            AGENT_VISIBILITY: apiMetadata.agentVisibility || apiInfo.agentVisibility || 'VISIBLE',            TECHNICAL_OWNER: owners.technicalOwner,
+>>>>>>> main
             TECHNICAL_OWNER_EMAIL: owners.technicalOwnerEmail,
             BUSINESS_OWNER_EMAIL: owners.businessOwnerEmail,
             BUSINESS_OWNER: owners.businessOwner,
