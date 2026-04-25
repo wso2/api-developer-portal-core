@@ -1444,18 +1444,25 @@ const loadAPIDefinitionRaw = async (req, res) => {
         const raw = definitionResponse[typeConfig.field];
         if (!raw) return res.status(404).json({ message: 'API specification not found' });
 
+        const apiType = definitionResponse.apiType;
+
+        if (apiType === constants.API_TYPE.GRAPHQL) {
+            const sdl = typeof raw === 'string' ? raw : JSON.stringify(raw);
+            res.setHeader('Content-Type', 'application/graphql; charset=utf-8');
+            return res.status(200).send(sdl);
+        }
+
         let spec = typeof raw === 'string' ? JSON.parse(raw) : raw;
 
         const prodUrl = definitionResponse.metaData?.endPoints?.productionURL || '';
         const sandboxUrl = definitionResponse.metaData?.endPoints?.sandboxURL || '';
-        const apiType = definitionResponse.apiType;
         if (apiType === constants.API_TYPE.WS || apiType === constants.API_TYPE.WEBSUB) {
             spec = replaceEndpointParamsAsyncAPI(spec, prodUrl, sandboxUrl);
-        } else if (apiType !== constants.API_TYPE.GRAPHQL && apiType !== constants.API_TYPE.MCP) {
+        } else if (apiType !== constants.API_TYPE.MCP) {
             spec = replaceEndpointParams(spec, prodUrl, sandboxUrl);
         }
 
-        if (config.controlPlane?.enabled !== false && apiType !== constants.API_TYPE.GRAPHQL && apiType !== constants.API_TYPE.MCP) {
+        if (config.controlPlane?.enabled !== false && apiType !== constants.API_TYPE.MCP) {
             let tokenEndpoint = null;
             try {
                 const kmResponse = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers?devPortalAppEnv=prod', null, null);
