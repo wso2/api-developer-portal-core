@@ -1343,12 +1343,21 @@ const loadAPIsMd = async (req, res) => {
         const agentVisibleAPIs = metaDataList.filter(api => api.apiInfo.agentVisibility !== 'HIDDEN');
         const hiddenAPICount = metaDataList.length - agentVisibleAPIs.length;
 
+        const nonMcpAPIs = agentVisibleAPIs.filter(api => api.apiInfo.apiType !== constants.API_TYPE.MCP);
+        const byType = { REST: [], GRAPHQL: [], WS: [] };
+        for (const api of nonMcpAPIs) {
+            const type = api.apiInfo.apiType;
+            if (byType[type]) byType[type].push(api);
+        }
+        const baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
         const templateContent = {
-            apiMetadata: agentVisibleAPIs,
-            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+            restAPIs:    byType.REST.length    ? byType.REST    : null,
+            graphqlAPIs: byType.GRAPHQL.length ? byType.GRAPHQL : null,
+            wsAPIs:      byType.WS.length      ? byType.WS      : null,
+            baseUrl,
             hiddenAPICount: hiddenAPICount > 0 ? hiddenAPICount : 0,
             hasHiddenAPIs: hiddenAPICount > 0,
-            portalUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+            portalUrl: baseUrl,
         };
         const md = await util.renderMarkdownTemplateFromAPI(templateContent, orgID, 'pages/apis', viewName);
 
