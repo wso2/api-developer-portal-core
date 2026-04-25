@@ -1243,7 +1243,7 @@ async function buildLlmsTxtTemplateContent(req, orgID, orgName, viewName, config
     const agentVisibleAPIs = metaDataList.filter(api => api.apiInfo.agentVisibility !== 'HIDDEN');
     const hiddenAPICount = metaDataList.length - agentVisibleAPIs.length;
 
-    const byType = { REST: [], MCP: [], GraphQL: [], WS: [] };
+    const byType = { REST: [], MCP: [], GRAPHQL: [], WS: [] };
     for (const api of agentVisibleAPIs) {
         const type = api.apiInfo.apiType;
         if (byType[type]) byType[type].push(api);
@@ -1263,7 +1263,7 @@ async function buildLlmsTxtTemplateContent(req, orgID, orgName, viewName, config
         portalDescription: configOverrides.portalDescription || null,
         restAPIs:    byType.REST.length    ? byType.REST    : null,
         mcpAPIs:     byType.MCP.length     ? byType.MCP     : null,
-        graphqlAPIs: byType.GraphQL.length ? byType.GraphQL : null,
+        graphqlAPIs: byType.GRAPHQL.length ? byType.GRAPHQL : null,
         wsAPIs:      byType.WS.length      ? byType.WS      : null,
         workflows:   publishedWorkflows.length > 0 ? publishedWorkflows : null,
         hiddenAPICount: hiddenAPICount > 0 ? hiddenAPICount : 0,
