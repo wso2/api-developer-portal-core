@@ -1373,6 +1373,44 @@ const loadAPIsMd = async (req, res) => {
     }
 };
 
+const loadMCPsMd = async (req, res) => {
+    const { orgName, viewName } = req.params;
+
+    try {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const orgID = orgDetails.ORG_ID;
+
+        if (await isAiDisabledForPortal(orgID, viewName)) {
+            return res.status(404).send('# Not Found\n\nThis resource is not available for agents.');
+        }
+
+        const metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, null, null, viewName);
+        const agentVisibleAPIs = metaDataList.filter(api => api.apiInfo.agentVisibility !== 'HIDDEN');
+        const mcpAPIs = agentVisibleAPIs.filter(api => api.apiInfo.apiType === constants.API_TYPE.MCP);
+        const hiddenAPICount = metaDataList.filter(api => api.apiInfo.apiType === constants.API_TYPE.MCP).length - mcpAPIs.length;
+
+        const baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
+        const templateContent = {
+            mcpAPIs: mcpAPIs.length ? mcpAPIs : null,
+            baseUrl,
+            hiddenAPICount: hiddenAPICount > 0 ? hiddenAPICount : 0,
+            hasHiddenAPIs: hiddenAPICount > 0,
+            portalUrl: baseUrl,
+        };
+        const md = await util.renderMarkdownTemplateFromAPI(templateContent, orgID, 'pages/mcps', viewName);
+
+        res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+        res.send(md);
+    } catch (error) {
+        logger.error('Error generating MCPs markdown', {
+            orgName,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).send('# Error\n\nFailed to load MCP list.');
+    }
+};
+
 const SPEC_FORMAT_MAP = {
     [constants.API_TYPE.GRAPHQL]: { format: 'graphql', field: 'graphql',  label: 'GraphQL' },
     [constants.API_TYPE.MCP]:     { format: 'json',    field: 'schema',   label: 'MCP'     },
@@ -1518,6 +1556,7 @@ module.exports = {
     loadDocsPage,
     loadDocument,
     loadAPIsMd,
+    loadMCPsMd,
     loadLlmsTxt,
     previewLlmsTxt,
     loadAPIContentMd,
