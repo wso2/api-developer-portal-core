@@ -1242,7 +1242,8 @@ const loadAPIContentMd = async (req, res) => {
             showApiKey,
             noAuth,
         };
-        const md = await util.renderMarkdownTemplateFromAPI(templateContent, orgID, 'pages/api-landing', viewName);
+        const templateDir = apiType === constants.API_TYPE.MCP ? 'pages/mcp-landing' : 'pages/api-landing';
+        const md = await util.renderMarkdownTemplateFromAPI(templateContent, orgID, templateDir, viewName);
 
         res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
         res.send(md);
@@ -1261,7 +1262,7 @@ async function buildLlmsTxtTemplateContent(req, orgID, orgName, viewName, config
     const agentVisibleAPIs = metaDataList.filter(api => api.apiInfo.agentVisibility !== 'HIDDEN');
     const hiddenAPICount = metaDataList.length - agentVisibleAPIs.length;
 
-    const byType = { REST: [], MCP: [], GraphQL: [], WS: [] };
+    const byType = { REST: [], MCP: [], GRAPHQL: [], WS: [], WEBSUB: [] };
     for (const api of agentVisibleAPIs) {
         const type = api.apiInfo.apiType;
         if (byType[type]) byType[type].push(api);
@@ -1281,8 +1282,9 @@ async function buildLlmsTxtTemplateContent(req, orgID, orgName, viewName, config
         portalDescription: configOverrides.portalDescription || null,
         restAPIs:    byType.REST.length    ? byType.REST    : null,
         mcpAPIs:     byType.MCP.length     ? byType.MCP     : null,
-        graphqlAPIs: byType.GraphQL.length ? byType.GraphQL : null,
+        graphqlAPIs: byType.GRAPHQL.length ? byType.GRAPHQL : null,
         wsAPIs:      byType.WS.length      ? byType.WS      : null,
+        websubAPIs:  byType.WEBSUB.length  ? byType.WEBSUB  : null,
         workflows:   publishedWorkflows.length > 0 ? publishedWorkflows : null,
         hiddenAPICount: hiddenAPICount > 0 ? hiddenAPICount : 0,
         hiddenWorkflowCount: hiddenWorkflowCount > 0 ? hiddenWorkflowCount : 0,
@@ -1361,12 +1363,22 @@ const loadAPIsMd = async (req, res) => {
         const agentVisibleAPIs = metaDataList.filter(api => api.apiInfo.agentVisibility !== 'HIDDEN');
         const hiddenAPICount = metaDataList.length - agentVisibleAPIs.length;
 
+        const nonMcpAPIs = agentVisibleAPIs.filter(api => api.apiInfo.apiType !== constants.API_TYPE.MCP);
+        const byType = { REST: [], GRAPHQL: [], WS: [], WEBSUB: [] };
+        for (const api of nonMcpAPIs) {
+            const type = api.apiInfo.apiType;
+            if (byType[type]) byType[type].push(api);
+        }
+        const baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
         const templateContent = {
-            apiMetadata: agentVisibleAPIs,
-            baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+            restAPIs:    byType.REST.length    ? byType.REST    : null,
+            graphqlAPIs: byType.GRAPHQL.length ? byType.GRAPHQL : null,
+            wsAPIs:      byType.WS.length      ? byType.WS      : null,
+            websubAPIs:  byType.WEBSUB.length  ? byType.WEBSUB  : null,
+            baseUrl,
             hiddenAPICount: hiddenAPICount > 0 ? hiddenAPICount : 0,
             hasHiddenAPIs: hiddenAPICount > 0,
-            portalUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
+            portalUrl: baseUrl,
         };
         const md = await util.renderMarkdownTemplateFromAPI(templateContent, orgID, 'pages/apis', viewName);
 
@@ -1379,6 +1391,44 @@ const loadAPIsMd = async (req, res) => {
             stack: error.stack
         });
         res.status(500).send('# Error\n\nFailed to load API list.');
+    }
+};
+
+const loadMCPsMd = async (req, res) => {
+    const { orgName, viewName } = req.params;
+
+    try {
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const orgID = orgDetails.ORG_ID;
+
+        if (await isAiDisabledForPortal(orgID, viewName)) {
+            return res.status(404).send('# Not Found\n\nThis resource is not available for agents.');
+        }
+
+        const metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, null, null, viewName);
+        const agentVisibleAPIs = metaDataList.filter(api => api.apiInfo.agentVisibility !== 'HIDDEN');
+        const mcpAPIs = agentVisibleAPIs.filter(api => api.apiInfo.apiType === constants.API_TYPE.MCP);
+        const hiddenAPICount = metaDataList.filter(api => api.apiInfo.apiType === constants.API_TYPE.MCP).length - mcpAPIs.length;
+
+        const baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
+        const templateContent = {
+            mcpAPIs: mcpAPIs.length ? mcpAPIs : null,
+            baseUrl,
+            hiddenAPICount: hiddenAPICount > 0 ? hiddenAPICount : 0,
+            hasHiddenAPIs: hiddenAPICount > 0,
+            portalUrl: baseUrl,
+        };
+        const md = await util.renderMarkdownTemplateFromAPI(templateContent, orgID, 'pages/mcps', viewName);
+
+        res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+        res.send(md);
+    } catch (error) {
+        logger.error('Error generating MCPs markdown', {
+            orgName,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).send('# Error\n\nFailed to load MCP list.');
     }
 };
 
@@ -1415,18 +1465,25 @@ const loadAPIDefinitionRaw = async (req, res) => {
         const raw = definitionResponse[typeConfig.field];
         if (!raw) return res.status(404).json({ message: 'API specification not found' });
 
+        const apiType = definitionResponse.apiType;
+
+        if (apiType === constants.API_TYPE.GRAPHQL) {
+            const sdl = typeof raw === 'string' ? raw : JSON.stringify(raw);
+            res.setHeader('Content-Type', 'application/graphql; charset=utf-8');
+            return res.status(200).send(sdl);
+        }
+
         let spec = typeof raw === 'string' ? JSON.parse(raw) : raw;
 
         const prodUrl = definitionResponse.metaData?.endPoints?.productionURL || '';
         const sandboxUrl = definitionResponse.metaData?.endPoints?.sandboxURL || '';
-        const apiType = definitionResponse.apiType;
         if (apiType === constants.API_TYPE.WS || apiType === constants.API_TYPE.WEBSUB) {
             spec = replaceEndpointParamsAsyncAPI(spec, prodUrl, sandboxUrl);
-        } else if (apiType !== constants.API_TYPE.GRAPHQL && apiType !== constants.API_TYPE.MCP) {
+        } else if (apiType !== constants.API_TYPE.MCP) {
             spec = replaceEndpointParams(spec, prodUrl, sandboxUrl);
         }
 
-        if (config.controlPlane?.enabled !== false && apiType !== constants.API_TYPE.GRAPHQL && apiType !== constants.API_TYPE.MCP) {
+        if (config.controlPlane?.enabled !== false && apiType !== constants.API_TYPE.MCP) {
             let tokenEndpoint = null;
             try {
                 const kmResponse = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers?devPortalAppEnv=prod', null, null);
@@ -1527,6 +1584,7 @@ module.exports = {
     loadDocsPage,
     loadDocument,
     loadAPIsMd,
+    loadMCPsMd,
     loadLlmsTxt,
     previewLlmsTxt,
     loadAPIContentMd,
