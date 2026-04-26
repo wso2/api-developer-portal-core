@@ -51,7 +51,7 @@ const APIMetadata = sequelize.define('DP_API_METADATA', {
   },
   API_TYPE: {
     type: DataTypes.ENUM,
-    values: ['REST', 'WS', 'GRAPHQL', 'SOAP', 'WEBSUB'],
+    values: ['REST', 'WS', 'GRAPHQL', 'SOAP', 'WEBSUB', 'MCP'],
     allowNull: false
   },
   VISIBILITY: {

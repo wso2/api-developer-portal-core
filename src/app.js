@@ -36,6 +36,7 @@ const applicationContent = require('./routes/applicationsContentRoute');
 const sdkJobService = require('./services/sdkJobService');
 const customContent = require('./routes/customPageRoute');
 const subscriptionsContent = require('./routes/subscriptionsContentRoute');
+const mcpRegistryRoute = require('./routes/mcpRegistryRoute');
 const config = require(process.cwd() + '/config.json');
 const Handlebars = require('handlebars');
 const constants = require("./utils/constants");
@@ -273,6 +274,12 @@ Handlebars.registerHelper('and', function () {
     const args = Array.prototype.slice.call(arguments);
     const lastArg = args.pop();
     return args.every(Boolean) ? lastArg.fn(this) : lastArg.inverse(this);
+});
+
+Handlebars.registerHelper('or', function (...args) {
+    // Last arg is the Handlebars options hash; find first truthy value before it
+    const vals = args.slice(0, -1);
+    return vals.find(v => v) || vals[vals.length - 1];
 });
 
 Handlebars.registerHelper('getValue', function (obj, key) {
@@ -581,6 +588,8 @@ app.use((req, res, next) => {
 //backend routes
 app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
 
+// MCP Server Registry (OpenAPI v0.1)
+app.use('/registry/:orgHandle', mcpRegistryRoute);
 
 if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), filePrefix + 'styles')));
