@@ -21,6 +21,15 @@ const mcpRegistryService = require('../services/mcpRegistryService');
 const { enforceSecuirty } = require('../middlewares/ensureAuthenticated');
 const constants = require('../utils/constants');
 
+router.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(204);
+    }
+    next();
+});
+
 // Discovery endpoints (public)
 router.get('/v0.1/servers', mcpRegistryService.listServers);
 router.get('/v0.1/servers/:serverName/versions', mcpRegistryService.listVersions);

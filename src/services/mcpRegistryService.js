@@ -26,7 +26,7 @@ const logger = require('../config/logger');
 const constants = require('../utils/constants');
 
 const MCP_STATUSES = ['active', 'deprecated', 'deleted'];
-const SERVER_NAME_PATTERN = /^[a-zA-Z0-9.-]+\/[a-zA-Z0-9._-]+$/;
+const SERVER_NAME_PATTERN = /^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/;
 const VERSION_RANGE_PATTERN = /^[\^~]|^>=?|^<=?|\*|(^|\.)x(\.|$)/i;
 const DEFAULT_LIMIT = 30;
 const MAX_LIMIT = 100;
@@ -111,7 +111,7 @@ async function resolveOrgId(orgHandle) {
 /**
  * Builds the apiMetadata shape expected by apiDao.createAPIMetadata / updateAPIMetadata.
  */
-function buildApiMetadataPayload(name, version, description, remotes, title, publishedAt, updatedAt) {
+function buildApiMetadataPayload(name, version, description, remotes, title, publishedAt, updatedAt, proxyId) {
     const normalizedRemotes = (Array.isArray(remotes) ? remotes : []).map(r => ({
         type: r.type || 'streamable-http',
         url: r.url || ''
@@ -133,7 +133,8 @@ function buildApiMetadataPayload(name, version, description, remotes, title, pub
             gatewayType: null,
             remotes: normalizedRemotes,
             publishedAt: publishedAt || null,
-            updatedAt: updatedAt || null
+            updatedAt: updatedAt || null,
+            proxyId: proxyId || null
         },
         endPoints: {
             productionURL: primaryUrl,
@@ -289,6 +290,7 @@ const publishServer = async (req, res) => {
         const { name, version, title, description, _meta } = detail;
         const remotes = detail.remotes || [];
         const choreoMeta = _meta && _meta['io.api-platform/mcp-capabilities'];
+        const proxyId = (_meta && _meta['io.api-platform/proxy-info']?.id) || null;
         const tools = choreoMeta?.tools || [];
         const resources = choreoMeta?.resources || [];
         const prompts = choreoMeta?.prompts || [];
@@ -302,15 +304,33 @@ const publishServer = async (req, res) => {
         let existingApiId = null;
 
         await sequelize.transaction(async (t) => {
-            const existing = await APIMetadata.findOne({
-                where: { ORG_ID: orgId, API_TYPE: constants.API_TYPE.MCP, API_NAME: name, API_VERSION: version },
-                transaction: t
-            });
+            let existing = null;
+            if (proxyId) {
+                existing = await APIMetadata.findOne({
+                    where: {
+                        ORG_ID: orgId,
+                        API_TYPE: constants.API_TYPE.MCP,
+                        API_VERSION: version,
+                        [Op.and]: sequelize.where(
+                            sequelize.literal("\"METADATA_SEARCH\"->'apiInfo'->>'proxyId'"),
+                            proxyId
+                        )
+                    },
+                    transaction: t
+                });
+            }
+
+            if (!existing) {
+                existing = await APIMetadata.findOne({
+                    where: { ORG_ID: orgId, API_TYPE: constants.API_TYPE.MCP, API_NAME: name, API_VERSION: version },
+                    transaction: t
+                });
+            }
 
             if (existing) {
                 existingApiId = existing.API_ID;
                 const existingPublishedAt = existing.METADATA_SEARCH?.apiInfo?.publishedAt || now;
-                const apiMetadataPayload = buildApiMetadataPayload(name, version, description, remotes, title, existingPublishedAt, now);
+                const apiMetadataPayload = buildApiMetadataPayload(name, version, description, remotes, title, existingPublishedAt, now, proxyId);
                 await apiDao.updateAPIMetadata(orgId, existing.API_ID, apiMetadataPayload, t);
                 await apiDao.createAPILabelMapping(orgId, existing.API_ID, ['default'], t);
                 if (schemaBuffer) {
@@ -321,7 +341,7 @@ const publishServer = async (req, res) => {
                 }
                 row = await APIMetadata.findOne({ where: { API_ID: existing.API_ID }, transaction: t });
             } else {
-                const apiMetadataPayload = buildApiMetadataPayload(name, version, description, remotes, title, now, now);
+                const apiMetadataPayload = buildApiMetadataPayload(name, version, description, remotes, title, now, now, proxyId);
                 const created_row = await apiDao.createAPIMetadata(orgId, apiMetadataPayload, t);
                 const apiId = created_row.dataValues.API_ID;
                 await apiDao.createAPILabelMapping(orgId, apiId, ['default'], t);
@@ -370,6 +390,7 @@ const updateVersion = async (req, res) => {
         const { title, description, _meta } = detail;
         const remotes = detail.remotes || [];
         const choreoMeta = _meta && _meta['io.api-platform/mcp-capabilities'];
+        const proxyId = (_meta && _meta['io.api-platform/proxy-info']?.id) || null;
         const tools = choreoMeta?.tools || [];
         const resources = choreoMeta?.resources || [];
         const prompts = choreoMeta?.prompts || [];
@@ -388,7 +409,8 @@ const updateVersion = async (req, res) => {
 
             updatedApiId = existing.API_ID;
             const existingPublishedAt = existing.METADATA_SEARCH?.apiInfo?.publishedAt || new Date().toISOString();
-            const apiMetadataPayload = buildApiMetadataPayload(serverName, version, description, remotes, title, existingPublishedAt, new Date().toISOString());
+            const existingProxyId = proxyId || existing.METADATA_SEARCH?.apiInfo?.proxyId || null;
+            const apiMetadataPayload = buildApiMetadataPayload(serverName, version, description, remotes, title, existingPublishedAt, new Date().toISOString(), existingProxyId);
             await apiDao.updateAPIMetadata(orgId, existing.API_ID, apiMetadataPayload, t);
             await apiDao.createAPILabelMapping(orgId, existing.API_ID, ['default'], t);
             if (schemaBuffer) {
