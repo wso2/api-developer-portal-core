@@ -1224,7 +1224,8 @@ const loadAPIContentMd = async (req, res) => {
             showApiKey,
             noAuth,
         };
-        const md = await util.renderMarkdownTemplateFromAPI(templateContent, orgID, 'pages/api-landing', viewName);
+        const templateDir = apiType === constants.API_TYPE.MCP ? 'pages/mcp-landing' : 'pages/api-landing';
+        const md = await util.renderMarkdownTemplateFromAPI(templateContent, orgID, templateDir, viewName);
 
         res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
         res.send(md);
