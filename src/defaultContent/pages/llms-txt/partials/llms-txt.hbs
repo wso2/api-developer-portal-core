@@ -45,3 +45,11 @@ These pre-defined workflows orchestrate multiple APIs to implement common use ca
 - [{{apiInfo.apiName}} {{apiInfo.apiVersion}}]({{../baseUrl}}/api/{{apiHandle}}.md){{#if apiInfo.apiDescription}} — {{apiInfo.apiDescription}}{{/if}}
 {{/wsAPIs}}
 {{/if}}
+{{#if websubAPIs}}
+
+## WebSub APIs
+
+{{#websubAPIs}}
+- [{{apiInfo.apiName}} {{apiInfo.apiVersion}}]({{../baseUrl}}/api/{{apiHandle}}.md){{#if apiInfo.apiDescription}} — {{apiInfo.apiDescription}}{{/if}}
+{{/websubAPIs}}
+{{/if}}

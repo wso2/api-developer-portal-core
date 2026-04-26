@@ -25,3 +25,11 @@ Explore our extensive API catalog and discover how to integrate them seamlessly 
 - [{{apiInfo.apiName}} v{{apiInfo.apiVersion}}]({{../baseUrl}}/api/{{apiHandle}}.md){{#if apiInfo.apiDescription}} - {{apiInfo.apiDescription}}{{/if}}
 {{/wsAPIs}}
 {{/if}}
+{{#if websubAPIs}}
+
+# WebSub APIs
+
+{{#websubAPIs}}
+- [{{apiInfo.apiName}} v{{apiInfo.apiVersion}}]({{../baseUrl}}/api/{{apiHandle}}.md){{#if apiInfo.apiDescription}} - {{apiInfo.apiDescription}}{{/if}}
+{{/websubAPIs}}
+{{/if}}

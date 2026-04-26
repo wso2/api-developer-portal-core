@@ -1244,7 +1244,7 @@ async function buildLlmsTxtTemplateContent(req, orgID, orgName, viewName, config
     const agentVisibleAPIs = metaDataList.filter(api => api.apiInfo.agentVisibility !== 'HIDDEN');
     const hiddenAPICount = metaDataList.length - agentVisibleAPIs.length;
 
-    const byType = { REST: [], MCP: [], GRAPHQL: [], WS: [] };
+    const byType = { REST: [], MCP: [], GRAPHQL: [], WS: [], WEBSUB: [] };
     for (const api of agentVisibleAPIs) {
         const type = api.apiInfo.apiType;
         if (byType[type]) byType[type].push(api);
@@ -1266,6 +1266,7 @@ async function buildLlmsTxtTemplateContent(req, orgID, orgName, viewName, config
         mcpAPIs:     byType.MCP.length     ? byType.MCP     : null,
         graphqlAPIs: byType.GRAPHQL.length ? byType.GRAPHQL : null,
         wsAPIs:      byType.WS.length      ? byType.WS      : null,
+        websubAPIs:  byType.WEBSUB.length  ? byType.WEBSUB  : null,
         workflows:   publishedWorkflows.length > 0 ? publishedWorkflows : null,
         hiddenAPICount: hiddenAPICount > 0 ? hiddenAPICount : 0,
         hiddenWorkflowCount: hiddenWorkflowCount > 0 ? hiddenWorkflowCount : 0,
@@ -1345,7 +1346,7 @@ const loadAPIsMd = async (req, res) => {
         const hiddenAPICount = metaDataList.length - agentVisibleAPIs.length;
 
         const nonMcpAPIs = agentVisibleAPIs.filter(api => api.apiInfo.apiType !== constants.API_TYPE.MCP);
-        const byType = { REST: [], GRAPHQL: [], WS: [] };
+        const byType = { REST: [], GRAPHQL: [], WS: [], WEBSUB: [] };
         for (const api of nonMcpAPIs) {
             const type = api.apiInfo.apiType;
             if (byType[type]) byType[type].push(api);
@@ -1355,6 +1356,7 @@ const loadAPIsMd = async (req, res) => {
             restAPIs:    byType.REST.length    ? byType.REST    : null,
             graphqlAPIs: byType.GRAPHQL.length ? byType.GRAPHQL : null,
             wsAPIs:      byType.WS.length      ? byType.WS      : null,
+            websubAPIs:  byType.WEBSUB.length  ? byType.WEBSUB  : null,
             baseUrl,
             hiddenAPICount: hiddenAPICount > 0 ? hiddenAPICount : 0,
             hasHiddenAPIs: hiddenAPICount > 0,
