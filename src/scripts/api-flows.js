@@ -1241,7 +1241,7 @@ function updateWorkflowMdPreview() {
         md += `\n## API Flow Specification\n\n`;
         md += `[arazzo.json](/${orgHandle}/views/${viewName}/api-workflows/${handle}/arazzo.json)\n\n`;
         if (spec) {
-            md += '```\n' + spec + '\n```\n';
+            md += '``````\n' + spec + '\n``````\n'; // Use 6 backticks so rendering holds even if the spec contains up to 5
         } else {
             md += '_No specification defined yet._\n';
         }
