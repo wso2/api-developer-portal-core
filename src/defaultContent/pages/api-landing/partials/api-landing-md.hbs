@@ -24,6 +24,7 @@
 
 To call this API, obtain an OAuth2 access token from the token endpoint:
 
+{{#if subscriptionPlans.length}}
 1. Register or use an existing application in the developer portal.
 2. Subscribe to this API under your application.
 3. Generate OAuth2 keys (client credentials) for your application.
@@ -37,6 +38,20 @@ To call this API, obtain an OAuth2 access token from the token endpoint:
    ```
    Authorization: Bearer <access_token>
    ```
+{{else}}
+1. Register or use an existing application in the developer portal.
+2. Generate OAuth2 keys (client credentials) for your application.
+3. Exchange your client credentials for an access token:
+   ```
+   POST {{#if tokenEndpoint}}{{tokenEndpoint}}{{else}}<tokenEndpoint>{{/if}}
+   Content-Type: application/x-www-form-urlencoded
+   grant_type=client_credentials&client_id=<clientId>&client_secret=<clientSecret>
+   ```
+4. Include the token in the Authorization header:
+   ```
+   Authorization: Bearer <access_token>
+   ```
+{{/if}}
 
 {{/if}}
 {{#if showApiKey}}
@@ -44,6 +59,7 @@ To call this API, obtain an OAuth2 access token from the token endpoint:
 
 To call this API using an API key:
 
+{{#if subscriptionPlans.length}}
 1. Register or use an existing application in the developer portal.
 2. Subscribe to this API under your application.
 3. Generate an API key for your application.
@@ -51,6 +67,14 @@ To call this API using an API key:
    ```
    api-key: <your-api-key>
    ```
+{{else}}
+1. Register or use an existing application in the developer portal.
+2. Generate an API key for your application.
+3. Include the key in the request header:
+   ```
+   api-key: <your-api-key>
+   ```
+{{/if}}
 
 {{/if}}
 {{#if noAuth}}
