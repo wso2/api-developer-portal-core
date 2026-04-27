@@ -1533,29 +1533,28 @@
 .af-bring-back-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
-    padding: 0.1rem 0.25rem;
-    border: none;
+    gap: 0.25rem;
+    padding: 0 0.4rem;
+    height: calc(0.75rem * 1.8);
+    border: 1px solid var(--primary-main-color);
     background: none;
-    font-size: 0.8125rem;
-    font-weight: 500;
+    font-size: 0.75rem;
     color: var(--primary-main-color);
     cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    border-radius: 4px;
+    line-height: 1;
     white-space: nowrap;
-    border-radius: 3px;
-    line-height: 1.4;
+    flex-shrink: 0;
 }
 
 .af-bring-back-btn:hover {
-    opacity: 0.8;
+    background-color: var(--primary-main-color);
+    color: #fff;
 }
 
 .af-bring-back-btn:focus-visible {
     outline: 2px solid var(--primary-main-color);
     outline-offset: 2px;
-    text-decoration: none;
 }
 
 .af-bring-back-icon {
@@ -1982,6 +1981,13 @@
     padding:0.875rem 1rem;
     display:flex; flex-direction:column; gap:0.625rem;
 }
+.af-rp-section-card-title {
+    font-size:0.75rem;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:var(--bs-secondary);
+}
 .af-rp-divider { border:none; border-top:1px solid var(--bs-gray-200); margin:0; }
 
 /* Agent preview card */
@@ -2197,18 +2203,24 @@
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
-    padding: 0.4375rem 0.875rem;
-    background: #c96a43;
+    padding: 0.3rem 0.65rem;
+    background: var(--primary-light-color);
     color: #fff;
-    border: 1px solid #b85c39;
+    border: 1px solid var(--primary-light-color);
     border-radius: 0.5rem;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.15s;
 }
 .af-regen-all-btn:hover { background: #b85c39; }
 .af-regen-all-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Match copy prompt button size to regen button */
+.af-prompt-action-toolbar .common-btn-outlined {
+    padding: 0.3rem 0.65rem;
+    font-size: 0.8125rem;
+}
 
 /* ===== Step 3 — Prompt Sections ===== */
 .af-prompt-sections {

@@ -1,21 +1,30 @@
 .btn-prompt {
-    background: var(--primary-main-color);
-    color: var(--light-text-color);
+    background: linear-gradient(135deg, #6B4FE8, #E040D0);
+    background-size: 200% 200%;
+    color: #ffffff;
     border: none;
     padding: 0.65rem 1.25rem;
-    border-radius: 0.25rem;
+    border-radius: 2rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    animation: btn-prompt-shimmer 4s ease infinite;
+    transition: box-shadow 0.2s ease;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     white-space: nowrap;
     font-size: 0.9rem;
+    box-shadow: 0 2px 10px rgba(107, 79, 232, 0.35);
 }
 
 .btn-prompt:hover {
-    opacity: 0.85;
+    box-shadow: 0 4px 16px rgba(107, 79, 232, 0.45);
+}
+
+@keyframes btn-prompt-shimmer {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 .api-flow-prompt-toolbar {

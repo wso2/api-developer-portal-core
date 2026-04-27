@@ -460,9 +460,10 @@
                         <div class="af-bring-back-group">
                             <span class="af-bring-back-hint" aria-hidden="true">Edited in Claude or VS Code?</span>
                             <button type="button" class="af-bring-back-btn" id="bringBackBtn"
-                                aria-label="Bring back edited template from Claude or VS Code">
-                                {{> icon-file-arrow-in}}
-                                Bring it back
+                                title="Upload edited file"
+                                aria-label="Upload edited template from Claude or VS Code">
+                                <i class="bi bi-upload" aria-hidden="true"></i>
+                                Upload
                             </button>
                             <input type="file" id="bringBackFileInput" accept=".yaml,.yml,.json,.md"
                                 aria-hidden="true" tabindex="-1" style="display:none;">
@@ -521,6 +522,7 @@
 
                 {{!-- Workflow .md preview card --}}
                 <div class="af-rp-section-card">
+                    <div class="af-rp-section-card-title">Workflow File Preview</div>
                     <pre class="af-workflow-md-preview"
                         id="afWorkflowMdPreview">Fill in name and description to see a preview.</pre>
                 </div>
