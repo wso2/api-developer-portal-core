@@ -106,7 +106,9 @@ const loadAPIFlows = async (req, res) => {
                 status: flow.STATUS,
                 visibility: flow.VISIBILITY || 'PUBLIC',
                 agentVisibility: flow.AGENT_VISIBILITY || 'VISIBLE',
-                sources
+                sources,
+                sourcesPreview: sources.slice(0, 4),
+                sourcesMoreCount: Math.max(0, sources.length - 4)
             };
         });
 

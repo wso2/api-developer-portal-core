@@ -62,8 +62,13 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="apiFlowName" class="form-label fw-semibold">
-                        Name <span class="text-danger">*</span>
+                    <label for="apiFlowName" class="form-label fw-semibold d-flex align-items-center gap-2">
+                        <span>Name <span class="text-danger">*</span></span>
+                        <span class="af-field-status d-none" id="afNameStatus"
+                            data-bs-toggle="tooltip" data-bs-placement="right" data-bs-trigger="hover focus"
+                            data-bs-title="">
+                            <i class="bi af-fsi" id="afNameStatusIcon"></i>
+                        </span>
                     </label>
                     <input type="text" class="form-control" id="apiFlowName" placeholder="e.g. User Onboarding Flow"
                         maxlength="120" />
@@ -71,8 +76,13 @@
                 </div>
 
                 <div class="mb-4">
-                    <label for="apiFlowDescription" class="form-label fw-semibold">
-                        Description <span class="text-danger">*</span>
+                    <label for="apiFlowDescription" class="form-label fw-semibold d-flex align-items-center gap-2">
+                        <span>Description <span class="text-danger">*</span></span>
+                        <span class="af-field-status d-none" id="afDescStatus"
+                            data-bs-toggle="tooltip" data-bs-placement="right" data-bs-trigger="hover focus"
+                            data-bs-title="">
+                            <i class="bi af-fsi" id="afDescStatusIcon"></i>
+                        </span>
                     </label>
                     <textarea class="form-control" id="apiFlowDescription" rows="4"
                         placeholder="e.g. Orchestrates a multi-step patient booking workflow across appointment scheduling and healthcare provider systems…"></textarea>
@@ -218,18 +228,22 @@
 
                         {{!-- Arazzo: source description validation --}}
                         <div class="af-sd-validation mt-2 d-none" id="sdValidationContainer">
-                            <div class="af-sd-validation-header">
-                                <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>Source Descriptions
-                                <span class="af-sd-validation-hint" id="sdValidationHint"></span>
-                                <span class="af-info-tip af-info-tip--right ms-1" tabindex="0"
-                                    aria-describedby="sdInfoTip" aria-label="Tip about source descriptions">
-                                    <i class="bi bi-info-circle" aria-hidden="true"></i>
-                                    <span class="af-info-tip-content" id="sdInfoTip" role="tooltip">
-                                        Use <strong>Create from Template</strong> to auto-populate source descriptions
-                                        with raw OpenAPI specs from APIs published in this developer portal.
+                            <button type="button" class="af-sd-validation-header" id="sdValidationToggle"
+                                aria-expanded="true" aria-controls="sdValidationItems">
+                                <span class="d-flex align-items-center gap-1">
+                                    <i class="bi bi-link-45deg" aria-hidden="true"></i>Source Descriptions
+                                    <span class="af-sd-validation-hint" id="sdValidationHint"></span>
+                                    <span class="af-info-tip af-info-tip--right ms-1" tabindex="0"
+                                        aria-describedby="sdInfoTip" aria-label="Tip about source descriptions">
+                                        <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                        <span class="af-info-tip-content" id="sdInfoTip" role="tooltip">
+                                            Use <strong>Create from Template</strong> to auto-populate source descriptions
+                                            with raw OpenAPI specs from APIs published in this developer portal.
+                                        </span>
                                     </span>
                                 </span>
-                            </div>
+                                <i class="bi bi-chevron-down af-sd-chevron" aria-hidden="true"></i>
+                            </button>
                             <div id="sdValidationItems"></div>
                         </div>
 
@@ -278,10 +292,30 @@
                             </span>
                             <input type="text" class="form-control border-start-0 border-end-0" id="apiCardSearch"
                                 placeholder="Filter APIs by name, type, or description…" autocomplete="off" />
-                            <button type="button" class="btn btn-sm common-btn-outlined af-show-selected-btn"
-                                id="showSelectedOnlyBtn" title="Show selected APIs only">
-                                <i class="bi bi-funnel me-1"></i> Selected only
-                            </button>
+                            <div class="af-api-filter-dropdown-wrap">
+                                <button type="button" class="btn btn-sm common-btn-outlined af-api-filter-toggle"
+                                    id="apiFilterDropdownBtn" aria-expanded="false" aria-haspopup="true">
+                                    <i class="bi bi-funnel me-1"></i> Filter
+                                    <span class="af-api-filter-badge d-none" id="apiFilterBadge"></span>
+                                </button>
+                                <div class="af-api-filter-menu" id="apiFilterMenu" role="menu">
+                                    <label class="af-api-filter-option">
+                                        <input type="checkbox" class="af-api-filter-check" data-af-filter="selectedOnly" />
+                                        <span>Selected only</span>
+                                    </label>
+                                    <div class="af-api-filter-divider"></div>
+                                    <label class="af-api-filter-option">
+                                        <input type="checkbox" class="af-api-filter-check" data-af-filter="aiReady" />
+                                        <i class="bi bi-robot"></i>
+                                        <span>AI Ready</span>
+                                    </label>
+                                    <label class="af-api-filter-option">
+                                        <input type="checkbox" class="af-api-filter-check" data-af-filter="aiRestricted" />
+                                        <i class="bi bi-slash-circle"></i>
+                                        <span>AI Restricted</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -354,7 +388,7 @@
         {{!-- RIGHT PANE --}}
         <div class="af-pane-right">
 
-            {{!-- RIGHT PANEL — Step 1: Agent Preview + Checklist --}}
+            {{!-- RIGHT PANEL — Step 1: Agent Preview --}}
             <div class="af-right-panel" id="afRight1">
                 <div class="af-rp-section-card">
                     <div class="af-rp-header">
@@ -368,17 +402,6 @@
                     </div>
                     <p class="af-preview-desc" id="afPreviewDesc"></p>
                     <span class="af-preview-badge af-preview-badge--public" id="afPreviewBadge">public</span>
-                </div>
-                <div class="af-rp-section-card">
-                    <div class="af-rp-header mb-2">Checklist</div>
-                    <ul class="af-checklist">
-                        <li class="af-checklist-item is-info" id="afCheck1" data-check="name">Name looks clear and
-                            specific</li>
-                        <li class="af-checklist-item is-info" id="afCheck2" data-check="desc">Description explains the
-                            use case</li>
-                        <li class="af-checklist-item is-info" id="afCheck3" data-check="step2">Step 2 — define the API
-                            workflow</li>
-                    </ul>
                 </div>
             </div>
 

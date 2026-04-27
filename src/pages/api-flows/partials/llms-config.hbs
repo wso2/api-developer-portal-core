@@ -7,18 +7,11 @@
 </script>
 
 <div class="llms-config-header mb-4">
-    <div class="d-flex justify-content-between align-items-start gap-3">
-        <div>
-            <div class="container-header mb-1">LLM Instructions</div>
-            <p class="text-muted mb-0 small">
-                Control how AI agents discover and understand your developer portal via
-                <a href="{{baseUrl}}/llms.txt" target="_blank" class="text-muted text-decoration-none"><code>llms.txt</code></a>.
-            </p>
-        </div>
-        <button type="button" class="common-btn-primary text-nowrap flex-shrink-0" id="saveLlmsConfigBtn">
-            <i class="bi bi-floppy me-1"></i> Publish
-        </button>
-    </div>
+    <div class="container-header mb-1">LLM Instructions</div>
+    <p class="text-muted mb-0 small">
+        Control how AI agents discover and understand your developer portal via
+        <a href="{{baseUrl}}/llms.txt" target="_blank" class="text-muted text-decoration-none"><code>llms.txt</code></a>.
+    </p>
 </div>
 
 {{!-- AI-discoverable toggle --}}
@@ -50,17 +43,25 @@
             <div class="llms-section-label">Portal Identity</div>
 
             <div class="mb-3">
-                <label class="form-label fw-semibold small" for="llmsPortalName">Portal name</label>
+                <label class="form-label fw-semibold small" for="llmsPortalName">Portal name
+                    <i class="bi bi-info-circle text-muted ms-1" data-bs-toggle="tooltip"
+                        data-bs-title="Replaces the default orgName Developer Portal heading."></i>
+                </label>
                 <input type="text" class="form-control" id="llmsPortalName"
                     placeholder="e.g. Acme Developer Portal">
-                <div class="form-text">Replaces the default <em>{{"{{"}}orgName{{"}}"}} Developer Portal</em> heading.</div>
             </div>
             <div class="mb-4">
-                <label class="form-label fw-semibold small" for="llmsPortalDescription">Description</label>
+                <label class="form-label fw-semibold small" for="llmsPortalDescription">Description
+                    <i class="bi bi-info-circle text-muted ms-1" data-bs-toggle="tooltip"
+                        data-bs-title="Shown below the portal name to orient AI agents."></i>
+                </label>
                 <textarea class="form-control" id="llmsPortalDescription" rows="3"
                     placeholder="Describe your portal in 1–2 sentences…"></textarea>
-                <div class="form-text">Shown below the portal name to orient AI agents.</div>
             </div>
+
+            <button type="button" class="common-btn-primary text-nowrap" id="saveLlmsConfigBtn">
+                <i class="bi bi-floppy me-1"></i> Publish
+            </button>
 
         </div>
 

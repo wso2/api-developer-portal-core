@@ -529,13 +529,13 @@ const getAPIDefinition = async (orgName, viewName, apiHandle) => {
             } else if (metaData.apiInfo.apiType === constants.API_TYPE.GRAPHQL) {
                 apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_GRAPHQL, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
                 templateContent.graphql = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
-            } else if (apiType === constants.API_TYPE.MCP) {
+            } else if (metaData.apiInfo.apiType === constants.API_TYPE.MCP) {
                 apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.SCHEMA_DEFINITION_FILE_NAME, constants.DOC_TYPES.SCHEMA_DEFINITION, orgID, apiID);
                 templateContent.schema = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
             } else {
                 apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
                 apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
-                if (apiType === constants.API_TYPE.WS || apiType === constants.API_TYPE.WEBSUB) {
+                if (metaData.apiInfo.apiType === constants.API_TYPE.WS || metaData.apiInfo.apiType === constants.API_TYPE.WEBSUB) {
                     templateContent.asyncapi = apiDefinition;
                 } else {
                     templateContent.swagger = apiDefinition;

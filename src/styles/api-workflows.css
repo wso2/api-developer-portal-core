@@ -157,6 +157,19 @@
     border-color: var(--primary-main-color);
 }
 
+.flow-api-chip--more {
+    background: transparent;
+    border-color: transparent;
+    color: var(--primary-main-color);
+    font-weight: 600;
+    padding-left: 0.1rem;
+}
+
+.flow-api-chip--more:hover {
+    background: transparent;
+    border-color: transparent;
+}
+
 .flow-arrow {
     color: var(--main-text-color);
     font-size: 0.9rem;

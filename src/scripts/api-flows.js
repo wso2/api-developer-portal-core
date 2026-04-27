@@ -11,10 +11,26 @@ let currentViewName = '';
 let csrfToken = '';
 let arazoEditor = null;
 let showSelectedOnly = false;
+const activeApiFilters = new Set();
 let currentWorkflowPath = 'upload';
 let currentContentType = 'ARAZZO';
 let createPathFormat = 'arazzo'; // 'arazzo' | 'md'
 let currentStep = 1;
+
+function activateTab(activeBtn) {
+    const tabMap = [
+        { btnId: 'llms-tab-btn',      paneId: 'llmsTabContent' },
+        { btnId: 'workflows-tab-btn', paneId: 'workflowsTabContent' },
+    ];
+    tabMap.forEach(({ btnId, paneId }) => {
+        const btn  = document.getElementById(btnId);
+        const pane = document.getElementById(paneId);
+        const isActive = btn === activeBtn;
+        if (btn)  { btn.classList.toggle('active', isActive); btn.setAttribute('aria-selected', String(isActive)); }
+        if (pane) pane.style.display = isActive ? '' : 'none';
+    });
+    if (activeBtn?.id === 'workflows-tab-btn') arazoEditor?.refresh();
+}
 
 function initializeApiFlowsData() {
     try {
@@ -71,21 +87,9 @@ document.addEventListener('DOMContentLoaded', function () {
         listSection.style.display = 'block';
         formSection.style.display = 'none';
         resetApiFlowForm();
-        // Ensure the API Workflows tab is active whenever the list is shown.
-        const llmsTabBtn = document.getElementById('llms-tab-btn');
+        // Switch to the API Workflows tab when returning to the list.
         const wfBtn = document.getElementById('workflows-tab-btn');
-        if (llmsTabBtn && wfBtn) {
-            llmsTabBtn.classList.remove('active');
-            llmsTabBtn.setAttribute('aria-selected', 'false');
-            wfBtn.classList.add('active');
-            wfBtn.setAttribute('aria-selected', 'true');
-        }
-        document.querySelectorAll('#viewConfigureTabContent > .tab-pane').forEach(p => {
-            const isWorkflows = p.id === 'workflowsTabContent';
-            p.classList.toggle('active', isWorkflows);
-            p.classList.toggle('show', isWorkflows);
-        });
-        if (wfBtn) bootstrap.Tab.getOrCreateInstance(wfBtn).show();
+        if (wfBtn) activateTab(wfBtn);
     }
 
     function handleCreateClick() {
@@ -184,13 +188,6 @@ document.addEventListener('DOMContentLoaded', function () {
         window.open('https://claude.ai/new?q=' + encodeURIComponent(prompt), '_blank');
     });
 
-    // Show selected only toggle
-    document.getElementById('showSelectedOnlyBtn')?.addEventListener('click', () => {
-        showSelectedOnly = !showSelectedOnly;
-        document.getElementById('showSelectedOnlyBtn')?.classList.toggle('af-show-selected-active', showSelectedOnly);
-        renderApiCards(document.getElementById('apiCardSearch')?.value.trim() || '');
-    });
-
     // Section summaries
     document.getElementById('apiFlowName')?.addEventListener('input', updateSectionSummaries);
     document.querySelectorAll('input[name="apiFlowVisibility"]').forEach(r => r.addEventListener('change', updateSectionSummaries));
@@ -239,6 +236,9 @@ function switchWorkflowPath(path) {
     uploadContent?.classList.toggle('d-none', path !== 'upload');
     createContent?.classList.toggle('d-none', path !== 'create');
 
+    // Actions (Generate with Claude, VS Code, Copy Prompt) are only relevant in the create path.
+    document.querySelector('.af-rp-actions')?.classList.toggle('d-none', path === 'upload');
+
     // In create path: honour the format toggle (createPathFormat owns currentContentType).
     // In upload path: show whichever editor matches the uploaded file type (or hide both).
     if (path === 'create') {
@@ -275,9 +275,7 @@ function switchCreateFormat(format) {
     document.getElementById('markdownContentWrapper')?.classList.toggle('d-none', format !== 'markdown');
     if (format === 'arazzo') setTimeout(() => arazoEditor?.refresh(), 50);
 
-    // Show the card and actions whenever we're in create mode with a format selected
     document.getElementById('specEditorCard')?.classList.remove('d-none');
-    document.querySelector('.af-rp-actions')?.classList.remove('d-none');
 
     // Update footer copy button label for the active format
     updateEditorFooter(format);
@@ -433,6 +431,16 @@ function initUploadZone() {
 
     // Remove file
     document.getElementById('removeUploadBtn')?.addEventListener('click', clearUploadedFile);
+
+    // Source Descriptions accordion toggle
+    document.getElementById('sdValidationToggle')?.addEventListener('click', () => {
+        const body = document.getElementById('sdValidationItems');
+        const toggle = document.getElementById('sdValidationToggle');
+        if (!body || !toggle) return;
+        const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+        toggle.setAttribute('aria-expanded', String(!isExpanded));
+        body.classList.toggle('af-sd-collapsed', isExpanded);
+    });
 }
 
 function processArazzoFile(file) {
@@ -547,26 +555,22 @@ function showUploadedContentEditor() {
     // Hide format tabs in upload mode — they're create-only
     document.getElementById('specFormatTabs')?.classList.add('d-none');
 
-    const actionsRow = document.querySelector('.af-rp-actions');
     if (currentContentType === 'MD' && hasMd) {
         arazoWrapper?.classList.add('d-none');
         mdWrapper?.classList.remove('d-none');
         card?.classList.remove('d-none');
-        actionsRow?.classList.remove('d-none');
         updateEditorFooter('markdown');
     } else if (currentContentType === 'ARAZZO' && hasArazzo) {
         mdWrapper?.classList.add('d-none');
         arazoWrapper?.classList.remove('d-none');
         card?.classList.remove('d-none');
-        actionsRow?.classList.remove('d-none');
         setTimeout(() => arazoEditor?.refresh(), 50);
         updateEditorFooter('arazzo');
     } else {
-        // No file uploaded yet — show the editor shell (with its built-in empty state) but no action buttons
+        // No file uploaded yet — show the editor shell (with its built-in empty state)
         mdWrapper?.classList.add('d-none');
         arazoWrapper?.classList.remove('d-none');
         card?.classList.remove('d-none');
-        actionsRow?.classList.add('d-none');
     }
 }
 
@@ -603,6 +607,11 @@ async function validateAndRenderSourceDescriptions(specContent) {
     hintEl.textContent = '';
     itemsEl.innerHTML = '<div class="af-sd-item af-sd-item--loading"><span class="af-sd-checking-spinner"></span><span class="text-muted small">Validating source descriptions…</span></div>';
 
+    // Always expand while checking so the loading state is visible.
+    const toggleEl = document.getElementById('sdValidationToggle');
+    if (toggleEl) toggleEl.setAttribute('aria-expanded', 'true');
+    itemsEl.classList.remove('af-sd-collapsed');
+
     let spec = null;
     try {
         spec = JSON.parse(specContent);
@@ -636,6 +645,12 @@ async function validateAndRenderSourceDescriptions(specContent) {
     const validCount = results.filter(r => r.status === 'valid').length;
     const total = results.length;
     hintEl.textContent = `— ${validCount}/${total} valid`;
+
+    // Collapse automatically when everything is valid; expand if any issue found.
+    const allValid = total > 0 && validCount === total;
+    const toggle = document.getElementById('sdValidationToggle');
+    if (toggle) toggle.setAttribute('aria-expanded', String(!allValid));
+    itemsEl.classList.toggle('af-sd-collapsed', allValid);
 }
 
 async function checkSourceDescriptionUrl(sd) {
@@ -978,7 +993,9 @@ function resetApiFlowForm() {
     syncAgentPromptTab(false);
 
     showSelectedOnly = false;
-    document.getElementById('showSelectedOnlyBtn')?.classList.remove('af-show-selected-active');
+    activeApiFilters.clear();
+    document.querySelectorAll('.af-api-filter-check').forEach(cb => { cb.checked = false; });
+    updateApiFilterBadge();
     setPickerSelection([]);
     setSaveButtonMode('create');
     updateSectionSummaries();
@@ -1050,10 +1067,59 @@ function getSelectedAPIs() {
 // API Card Picker
 // ─────────────────────────────────────────────
 
+function updateApiFilterBadge() {
+    const badge = document.getElementById('apiFilterBadge');
+    const btn = document.getElementById('apiFilterDropdownBtn');
+    if (!badge) return;
+    const count = activeApiFilters.size + (showSelectedOnly ? 1 : 0);
+    if (count > 0) {
+        badge.textContent = count;
+        badge.classList.remove('d-none');
+        btn?.classList.add('af-api-filter-toggle--active');
+    } else {
+        badge.classList.add('d-none');
+        btn?.classList.remove('af-api-filter-toggle--active');
+    }
+}
+
 function initApiCardPicker() {
     const searchEl = document.getElementById('apiCardSearch');
     if (!searchEl) return;
     searchEl.addEventListener('input', () => renderApiCards(searchEl.value.trim()));
+
+    // Filter dropdown toggle
+    const dropdownBtn = document.getElementById('apiFilterDropdownBtn');
+    const filterMenu = document.getElementById('apiFilterMenu');
+    if (dropdownBtn && filterMenu) {
+        dropdownBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            const open = filterMenu.classList.toggle('af-api-filter-menu--open');
+            dropdownBtn.setAttribute('aria-expanded', open);
+        });
+        document.addEventListener('click', e => {
+            if (!filterMenu.contains(e.target) && e.target !== dropdownBtn) {
+                filterMenu.classList.remove('af-api-filter-menu--open');
+                dropdownBtn.setAttribute('aria-expanded', false);
+            }
+        });
+    }
+
+    // Filter checkboxes
+    document.querySelectorAll('.af-api-filter-check').forEach(cb => {
+        cb.addEventListener('change', () => {
+            const key = cb.dataset.afFilter;
+            if (key === 'selectedOnly') {
+                showSelectedOnly = cb.checked;
+            } else if (cb.checked) {
+                activeApiFilters.add(key);
+            } else {
+                activeApiFilters.delete(key);
+            }
+            updateApiFilterBadge();
+            renderApiCards(searchEl.value.trim());
+        });
+    });
+
     renderApiCards('');
 }
 
@@ -1063,8 +1129,13 @@ function renderApiCards(query) {
 
     const checkboxes = [...document.querySelectorAll('.api-flow-api-checkbox')];
     const q = query.toLowerCase();
+    const FILTER_FNS = {
+        aiReady:      cb => cb.dataset.agentVisibility === 'VISIBLE',
+        aiRestricted: cb => cb.dataset.agentVisibility !== 'VISIBLE',
+    };
     const filtered = checkboxes.filter(cb => {
         if (showSelectedOnly && !cb.checked) return false;
+        if (activeApiFilters.size > 0 && ![...activeApiFilters].every(f => FILTER_FNS[f]?.(cb))) return false;
         if (!q) return true;
         return (cb.dataset.apiName || '').toLowerCase().includes(q)
             || (cb.dataset.apiDescription || '').toLowerCase().includes(q)
@@ -1110,8 +1181,8 @@ function renderApiCards(query) {
                 </div>
                 <div class="af-api-card-body">
                     <div class="d-flex align-items-center gap-2 mb-1">
-                        <span class="fw-semibold small">${sanitizeInput(cb.dataset.apiName)}</span>
-                        <span class="api-flow-type-pill">${sanitizeInput(cb.dataset.apiType || '')}</span>
+                        <span class="fw-semibold small af-api-card-name" title="${sanitizeInput(cb.dataset.apiName)}">${sanitizeInput(cb.dataset.apiName)}</span>
+                        <span class="api-flow-type-pill flex-shrink-0">${sanitizeInput(cb.dataset.apiType || '')}</span>
                         ${agentBadge}
                     </div>
                 </div>
@@ -2027,13 +2098,50 @@ function updateStep1Preview() {
         badge.className = `af-preview-badge${vis === 'PUBLIC' ? ' af-preview-badge--public' : ''}`;
     }
 
-    // Checklist
-    setChecklistItem('afCheck1', name.length >= 5 ? 'ok' : name.length > 0 ? 'warn' : 'info');
-    setChecklistItem('afCheck2', desc.length >= 20 ? 'ok' : desc.length > 0 ? 'warn' : 'info');
-    setChecklistItem('afCheck3', 'info');
+    // Inline field status icons
+    if (name.length === 0) {
+        updateFieldStatus('afNameStatus', 'hidden', '');
+    } else if (name.length < 5) {
+        updateFieldStatus('afNameStatus', 'warn', 'Name is too short — aim for at least 5 characters');
+    } else {
+        updateFieldStatus('afNameStatus', 'ok', '');
+    }
+
+    if (desc.length === 0) {
+        updateFieldStatus('afDescStatus', 'hidden', '');
+    } else if (desc.length < 20) {
+        updateFieldStatus('afDescStatus', 'warn', 'Description is too short — aim for at least 20 characters');
+    } else {
+        updateFieldStatus('afDescStatus', 'ok', '');
+    }
 
     // Sync access matrix visual state
     syncAccessMatrixFromRadios();
+}
+
+function updateFieldStatus(statusId, state, tooltipMsg) {
+    const el = document.getElementById(statusId);
+    if (!el) return;
+    const icon = el.querySelector('i');
+    if (state === 'hidden') {
+        el.classList.add('d-none');
+        bootstrap.Tooltip.getInstance(el)?.dispose();
+        return;
+    }
+    el.classList.remove('d-none');
+    if (icon) {
+        icon.className = 'bi af-fsi';
+        if (state === 'ok') icon.classList.add('bi-check-circle-fill', 'af-fsi-ok');
+        else icon.classList.add('bi-exclamation-circle-fill', 'af-fsi-warn');
+    }
+    if (tooltipMsg) {
+        el.setAttribute('data-bs-title', tooltipMsg);
+        const existing = bootstrap.Tooltip.getInstance(el);
+        if (existing) existing.setContent({ '.tooltip-inner': tooltipMsg });
+        else new bootstrap.Tooltip(el);
+    } else {
+        bootstrap.Tooltip.getInstance(el)?.dispose();
+    }
 }
 
 function setChecklistItem(id, state) {
@@ -2181,6 +2289,10 @@ function initLlmsConfig() {
     const saveBtn = document.getElementById('saveLlmsConfigBtn');
     if (saveBtn) saveBtn.addEventListener('click', saveLlmsConfig);
 
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+        new bootstrap.Tooltip(el);
+    });
+
     scheduleLlmsPreview();
 }
 
@@ -2257,41 +2369,18 @@ async function saveLlmsConfig() {
 document.addEventListener('DOMContentLoaded', function () {
     initLlmsConfig();
 
-    const llmsBtn = document.getElementById('llms-tab-btn');
+    const llmsBtn      = document.getElementById('llms-tab-btn');
     const workflowsBtn = document.getElementById('workflows-tab-btn');
 
-    // Wire up tab buttons explicitly so tab switching works regardless of
-    // Bootstrap's event-delegation state (e.g. docs.css overrides, CDN race).
-    function activateTab(btn, paneId) {
-        const pane = document.getElementById(paneId);
-        if (!pane) return;
-        [llmsBtn, workflowsBtn].forEach(b => {
-            if (!b) return;
-            b.classList.toggle('active', b === btn);
-            b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
-        });
-        document.querySelectorAll('#viewConfigureTabContent > .tab-pane').forEach(p => {
-            const isTarget = p.id === paneId;
-            p.classList.toggle('active', isTarget);
-            p.classList.toggle('show', isTarget);
-        });
-        // Keep Bootstrap's Tab instance in sync so shown.bs.tab fires normally.
-        bootstrap.Tab.getOrCreateInstance(btn).show();
+    function syncTabFromHash() {
+        if (window.location.hash === '#apiflows' && workflowsBtn) activateTab(workflowsBtn);
+        else if (llmsBtn) activateTab(llmsBtn);
     }
 
-    llmsBtn?.addEventListener('click', () => activateTab(llmsBtn, 'llmsTabContent'));
-    workflowsBtn?.addEventListener('click', () => activateTab(workflowsBtn, 'workflowsTabContent'));
+    // On fresh page load: activate the correct tab based on URL hash.
+    syncTabFromHash();
 
-    // Refresh CodeMirror when the workflows tab becomes visible — it renders
-    // with 0 dimensions if initialised while the pane is hidden (display:none).
-    workflowsBtn?.addEventListener('shown.bs.tab', () => arazoEditor?.refresh());
-
-    // Activate the workflows tab when redirected here after a save, then clear
-    // the hash so manual reloads default back to the LLM Instructions tab.
-    if (window.location.hash === '#apiflows') {
-        history.replaceState(null, '', window.location.pathname);
-        if (workflowsBtn) {
-            setTimeout(() => activateTab(workflowsBtn, 'workflowsTabContent'), 0);
-        }
-    }
+    // On same-page hash navigation (e.g. clicking the Settings sidebar link
+    // while already on the configure page): re-sync without a full reload.
+    window.addEventListener('hashchange', syncTabFromHash);
 });
