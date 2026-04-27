@@ -525,12 +525,14 @@ const getAPIDefinition = async (orgName, viewName, apiHandle) => {
         const apiType = metaData.apiInfo.apiType;
         templateContent.apiType = apiType;
         let apiDefinition;
-        if (apiType === constants.API_TYPE.MCP) {
-            apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.SCHEMA_DEFINITION_FILE_NAME, constants.DOC_TYPES.SCHEMA_DEFINITION, orgID, apiID);
-            templateContent.schema = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
-        } else if (apiType === constants.API_TYPE.GRAPHQL) {
+        if (metaData.apiInfo.apiType === constants.API_TYPE.MCP) {
+            templateContent.swagger = null;
+        } else if (metaData.apiInfo.apiType === constants.API_TYPE.GRAPHQL) {
             apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_GRAPHQL, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
             templateContent.graphql = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
+        } else if (apiType === constants.API_TYPE.MCP) {
+            apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.SCHEMA_DEFINITION_FILE_NAME, constants.DOC_TYPES.SCHEMA_DEFINITION, orgID, apiID);
+            templateContent.schema = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
         } else {
             apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_FILE_NAME, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
             apiDefinition = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
