@@ -19,6 +19,7 @@ import TopicViewer from './TopicViewer';
 export interface WebSocketViewerProps {
   token?: string;
   apiEndpoint?: string;
+  sandboxEndpoint?: string;
   asyncapi?: AsyncApi;
   isDevportal?: boolean;
   asyncApiType: APITypeEnum | undefined;
@@ -90,10 +91,11 @@ function mapAsyncApiTopics(asyncapi: AsyncApi) {
   return allTopicsList;
 }
 
-function WebSocketViewer(props: WebSocketViewerProps = {}) {
+function WebSocketViewer(props: WebSocketViewerProps) {
   const { 
     token = "", 
     apiEndpoint = "", 
+    sandboxEndpoint = "",
     asyncapi = {
       asyncapi: "2.0.0",
       info: {
@@ -114,7 +116,7 @@ function WebSocketViewer(props: WebSocketViewerProps = {}) {
       }
     },
     isDevportal = false,
-    asyncApiType = undefined
+    asyncApiType = APITypeEnum.WS
   } = props;
 
   const [allTopics, setAllTopics] = useState([
@@ -128,13 +130,14 @@ function WebSocketViewer(props: WebSocketViewerProps = {}) {
   }, [asyncapi]);
 
   const newAsyncapiObj = useMemo(() => {
-    if (asyncapi && Object.keys(asyncapi).length > 0 && apiEndpoint) {
+    if (asyncapi && Object.keys(asyncapi).length > 0 && (apiEndpoint || sandboxEndpoint)) {
       let newAsyncapi = cloneDeep(asyncapi);
       if (newAsyncapi.asyncapi?.startsWith('2')) {
         newAsyncapi = {
           ...newAsyncapi,
           servers: {
             default: { url: apiEndpoint, protocol: 'ws' },
+            sandbox: { url: sandboxEndpoint, protocol: 'ws' },
           },
         };
       } else if (newAsyncapi.asyncapi?.startsWith('3')) {
@@ -142,6 +145,7 @@ function WebSocketViewer(props: WebSocketViewerProps = {}) {
           ...newAsyncapi,
           servers: {
             default: { url: apiEndpoint, protocol: 'ws' },
+            sandbox: { url: sandboxEndpoint, protocol: 'ws' },
           },
         };
       }
@@ -154,7 +158,7 @@ function WebSocketViewer(props: WebSocketViewerProps = {}) {
       setAllTopics(mapAsyncApiTopics(newAsyncapi));
     }
     return null;
-  }, [asyncapi, apiEndpoint]);
+  }, [asyncapi, apiEndpoint, sandboxEndpoint]);
 
   useEffect(() => {
     if (newAsyncapiObj?.channels) {
@@ -168,6 +172,8 @@ function WebSocketViewer(props: WebSocketViewerProps = {}) {
         'hub.mode': 'subscribe',
         'hub.topic': topic || 'sample-topic',
         'hub.callback': 'http://example.com/callback',
+        'hub.secret': 'xxxxxxxxx',
+        'hub.lease_seconds': 864000,
       });
     }
     return '{ "message": "Hello Server" }';
@@ -186,7 +192,7 @@ function WebSocketViewer(props: WebSocketViewerProps = {}) {
     );
   }
 
-  if (apiEndpoint) {
+  if (apiEndpoint || sandboxEndpoint) {
     return (
       <Box>
         {allTopics.map(({ name, publish, subscribe, parameters }: Channel) => (
@@ -194,13 +200,14 @@ function WebSocketViewer(props: WebSocketViewerProps = {}) {
             key={name}
             token={token}
             apiEndpoint={apiEndpoint}
+            sandboxEndpoint={sandboxEndpoint || ''}
             topic={name}
             publish={publish}
             subscribe={subscribe}
             parameters={parameters}
-            payload={buildPayload(name)}
             isDevportal={isDevportal}
-            asyncType={asyncApiType}
+            payload={buildPayload(name)}
+            asyncType={asyncApiType || APITypeEnum.WS}
           />
         ))}
       </Box>

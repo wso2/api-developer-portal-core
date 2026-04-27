@@ -67,7 +67,7 @@ class RedisConnectionHelper {
                 ...(tlsEnabled ? { tls: tlsOptions } : {})
             };
 
-            logger.info(`Attempting Redis connection ${service.reconnectAttempts + 1}/${service.maxReconnectAttempts} on pod: ${service.podId}`);
+            logger.debug(`Attempting Redis connection ${service.reconnectAttempts + 1}/${service.maxReconnectAttempts} on pod: ${service.podId}`);
 
             // Create new connections
             service.redis = new Redis(redisConfig);
@@ -93,7 +93,7 @@ class RedisConnectionHelper {
             service.isConnecting = false;
             service.reconnectAttempts = 0;
             
-            logger.info(`✅ RedisService fully connected on pod: ${service.podId}`);
+            logger.debug(`✅ RedisService fully connected on pod: ${service.podId}`);
             
         } catch (error) {
             service.isConnecting = false;
@@ -122,7 +122,7 @@ class RedisConnectionHelper {
         // Publisher events
         service.publisher.removeAllListeners(); 
         service.publisher.on('connect', () => {
-            logger.info(`Publisher connected to Redis from pod: ${service.podId}`);
+            logger.debug(`Publisher connected to Redis from pod: ${service.podId}`);
         });
         service.publisher.on('error', (error) => {
             logger.error(`Redis publisher error on pod ${service.podId}`, {
@@ -144,7 +144,7 @@ class RedisConnectionHelper {
         // Subscriber events
         service.subscriber.removeAllListeners();
         service.subscriber.on('connect', () => {
-            logger.info(`Subscriber connected to Redis from pod: ${service.podId}`);
+            logger.debug(`Subscriber connected to Redis from pod: ${service.podId}`);
         });
 
         service.subscriber.on('error', (error) => {
@@ -181,7 +181,7 @@ class RedisConnectionHelper {
         // Main Redis events
         service.redis.removeAllListeners();
         service.redis.on('connect', () => {
-            logger.info(`Redis file storage connected successfully on pod: ${service.podId}`);
+            logger.debug(`Redis file storage connected successfully on pod: ${service.podId}`);
         });
 
         service.redis.on('error', (error) => {
@@ -195,7 +195,7 @@ class RedisConnectionHelper {
         });
 
         service.redis.on('close', () => {
-            logger.info(`Redis file storage connection closed on pod: ${service.podId}`);
+            logger.debug(`Redis file storage connection closed on pod: ${service.podId}`);
             service.isConnected = false;
             if (!service.isShuttingDown) {
                 RedisConnectionHelper.handleConnectionLoss(service);
@@ -233,13 +233,13 @@ class RedisConnectionHelper {
 
         const delay = Math.min(1000 * Math.pow(2, service.reconnectAttempts), 30000); // Exponential backoff, max 30s
 
-        logger.info(`Scheduling reconnect attempt ${service.reconnectAttempts + 1}/${service.maxReconnectAttempts} in ${delay}ms for pod: ${service.podId}`);
+        logger.debug(`Scheduling reconnect attempt ${service.reconnectAttempts + 1}/${service.maxReconnectAttempts} in ${delay}ms for pod: ${service.podId}`);
 
         service.reconnectTimeout = setTimeout(async () => {
             service.reconnectTimeout = null;
             
             if (service.isShuttingDown) {
-                logger.info(`Skipping reconnect - service is shutting down on pod: ${service.podId}`);
+                logger.debug(`Skipping reconnect - service is shutting down on pod: ${service.podId}`);
                 return;
             }
             
@@ -306,7 +306,7 @@ class RedisConnectionHelper {
             throw new Error('Service is shutting down');
         }
 
-        logger.info(`Attempting Redis file storage reconnection on pod: ${service.podId}`);
+        logger.debug(`Attempting Redis file storage reconnection on pod: ${service.podId}`);
 
         try {
             await RedisConnectionHelper.cleanupFileConnection(service);
@@ -332,7 +332,7 @@ class RedisConnectionHelper {
                 ...(tlsEnabled ? { tls: tlsOptions } : {})
             };
 
-            logger.info(`📁 Creating new Redis file storage connection on pod: ${service.podId}`);
+            logger.debug(`📁 Creating new Redis file storage connection on pod: ${service.podId}`);
 
             service.redis = new Redis(redisConfig);
 
@@ -345,7 +345,7 @@ class RedisConnectionHelper {
                 )
             ]);
             
-            logger.info(`Redis file storage reconnected successfully on pod: ${service.podId}`);
+            logger.debug(`Redis file storage reconnected successfully on pod: ${service.podId}`);
             return true;
         } catch (error) {
             logger.error(`Redis file storage reconnection failed on pod: ${service.podId}`, {
@@ -365,7 +365,7 @@ class RedisConnectionHelper {
         service.redis.removeAllListeners();
         
         service.redis.on('connect', () => {
-            logger.info(`Redis file storage connected successfully on pod: ${service.podId}`);
+            logger.debug(`Redis file storage connected successfully on pod: ${service.podId}`);
         });
 
         service.redis.on('error', (error) => {
@@ -375,7 +375,7 @@ class RedisConnectionHelper {
         });
 
         service.redis.on('close', () => {
-            logger.info(`🔌 Redis file storage connection closed on pod: ${service.podId}`);
+            logger.debug(`🔌 Redis file storage connection closed on pod: ${service.podId}`);
         });
     }
 

@@ -359,7 +359,7 @@ async function readDocFiles(directory, baseDir = '') {
 
 
 const invokeGraphQLRequest = async (req, url, query, variables, headers) => {
-    logger.info(`Invoking GraphQL API: ${url}`, { 
+    logger.info(`Invoking GraphQL API: ${url}`, {
         userId: req.user?.id || req.user?.username || 'anonymous',
         method: 'GraphQL',
         endpoint: url
@@ -444,18 +444,9 @@ const invokeGraphQLRequest = async (req, url, query, variables, headers) => {
     }
 };
 
-const invokeApiRequest = async (req, method, url, headers, body, publicMode = false) => {
-
-    logger.info(`Invoking API: ${url}`, {
-        method: method,
-        userId: req.user?.id || req.user?.username || 'anonymous',        
-        endpoint: url
-    });
-    if (!publicMode) {
-        headers = headers || {};
-        headers.Authorization = req.user?.exchangeToken ? `Bearer ${req.user.exchangeToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
-    }
+const apiRequest = async (method, url, headers, body, organizationId) => {
     let httpsAgent;
+    url = url.includes("?") ? `${url}&organizationId=${organizationId}` : `${url}?organizationId=${organizationId}`;
 
     if (config.controlPlane.disableCertValidation) {
         httpsAgent = new https.Agent({
@@ -468,30 +459,39 @@ const invokeApiRequest = async (req, method, url, headers, body, publicMode = fa
             rejectUnauthorized: false,
         });
     }
-
-    const options = {
+    const response = await axios({
         method,
+        url,
         headers,
-        httpsAgent,
-    };
+        data: body,
+        httpsAgent
+    });
+    return response;
+};
 
+const invokeApiRequest = async (req, method, url, headers, body, publicMode = false) => {
+
+    logger.info(`Invoking API: ${url}`, {
+        method: method,
+        userId: req.user?.id || req.user?.username || 'anonymous',
+        endpoint: url
+    });
+    if (!publicMode) {
+        headers = headers || {};
+        headers.Authorization = req.user?.exchangeToken ? `Bearer ${req.user.exchangeToken}` : req.user ? `Bearer ${req.user.accessToken}` : req.headers.authorization;
+    }
+    let orgId = "";
     try {
-        if (!(body == null || body === '' || (Array.isArray(body) && body.length === 0) || (typeof body === 'object' && !Array.isArray(body) && Object.keys(body).length === 0))) {
-            options.data = body;
-        }
         if (config.advanced.tokenExchanger?.enabled) {
-            let orgId = "";
             if (req.cpOrgID) {
                 orgId = req.cpOrgID;
-                url = url.includes("?") ? `${url}&organizationId=${orgId}` : `${url}?organizationId=${orgId}`;
             } else {
                 const decodedToken = jwt.decode(req.user.exchangeToken);
                 orgId = decodedToken?.organization.uuid;
-                url = url.includes("?") ? `${url}&organizationId=${orgId}` : `${url}?organizationId=${orgId}`;
             }
 
         }
-        const response = await axios(url, options);
+        const response = await apiRequest(method, url, headers, body, orgId);
         return response.data;
     } catch (error) {
         logger.error('Error while invoking API', {
@@ -507,8 +507,7 @@ const invokeApiRequest = async (req, method, url, headers, body, publicMode = fa
                 const newExchangedToken = await tokenExchanger(req.user.accessToken, req.originalUrl.split("/")[1]);
                 req.user.exchangeToken = newExchangedToken;
                 headers.Authorization = `Bearer ${newExchangedToken}`;
-                options.headers = headers;
-                const response = await axios(url, options);
+                const response = await apiRequest(method, url, headers, body, orgId);
                 return response.data;
             } catch (retryError) {
                 let retryMessage;
@@ -956,6 +955,7 @@ module.exports = {
     getAPIDocLinks,
     isTextFile,
     invokeApiRequest,
+    apiRequest,
     invokeGraphQLRequest,
     validateIDP,
     validateOrganization,

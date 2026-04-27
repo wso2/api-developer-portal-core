@@ -11,21 +11,27 @@ document.addEventListener('DOMContentLoaded', function () {
     const cancelEditBtn = document.getElementById('cancelEditBtn');
 
     // Show form
-    createOrgBtn.addEventListener('click', function () {
-        orgDefaultContent.style.display = 'none';
-        addOrg.style.display = 'block';
-    });
+    if (createOrgBtn && orgDefaultContent && addOrg) {
+        createOrgBtn.addEventListener('click', function () {
+            orgDefaultContent.style.display = 'none';
+            addOrg.style.display = 'block';
+        });
+    }
 
     // Hide form (cancel)
-    cancelAddBtn.addEventListener('click', function () {
-        orgDefaultContent.style.display = 'block';
-        addOrg.style.display = 'none';
-    });
+    if (cancelAddBtn && orgDefaultContent && addOrg) {
+        cancelAddBtn.addEventListener('click', function () {
+            orgDefaultContent.style.display = 'block';
+            addOrg.style.display = 'none';
+        });
+    }
 
-    cancelEditBtn.addEventListener('click', function () {
-        orgDefaultContent.style.display = 'block';
-        editOrg.style.display = 'none';
-    });
+    if (cancelEditBtn && orgDefaultContent && editOrg) {
+        cancelEditBtn.addEventListener('click', function () {
+            orgDefaultContent.style.display = 'block';
+            editOrg.style.display = 'none';
+        });
+    }
 
     const editButtons = document.querySelectorAll('.edit-btn');
     editButtons.forEach(button => {

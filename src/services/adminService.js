@@ -31,6 +31,7 @@ const { ApplicationDTO, SubscriptionDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
 const config = require(process.cwd() + '/config.json');
 const controlPlaneUrl = config.controlPlane.url;
+const controlPlaneGwUrl = config.controlPlane.gwUrl;
 const { invokeApiRequest } = require('../utils/util');
 const { Sequelize } = require("sequelize");
 const { trackGenerateCredentials, trackSubscribeApi, trackUnsubscribeApi } = require('../utils/telemetry');
@@ -374,7 +375,7 @@ const createOrgContent = async (req, res) => {
         orgId,
         viewName
     });
-    
+
     const extractPath = path.join(process.cwd(), '..', '.tmp', orgId);
 
     try {
@@ -917,7 +918,7 @@ const createSubscription = async (req, res) => {
                     appId: req.body.applicationID,
                     apiId: req.body.apiId,
                     idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
-                });
+                }, req);
                 return res.status(200).json({ message: 'Subscribed successfully' });
 
             } catch (error) {
@@ -1236,14 +1237,15 @@ const createAppKeyMapping = async (req, res) => {
             }
 
             tokenDetails.additionalProperties = checkAdditionalValues(tokenDetails.additionalProperties);
-            //TODO: need to support both key types
-            tokenDetails.keyType = "PRODUCTION";
 
             if (tokenDetails.keyManager.startsWith(constants.KEY_MANAGERS.INTERNAL_KEY_MANAGER) || tokenDetails.keyManager.startsWith(constants.KEY_MANAGERS.RESIDENT_KEY_MANAGER) || tokenDetails.keyManager.startsWith(constants.KEY_MANAGERS.APP_DEV_STS_KEY_MANAGER)) {
                 //generate oauth key
                 responseData = await generateOAuthKey(req, cpAppID, tokenDetails);
             } else {
-                responseData = await mapKeys(req, clientID, tokenDetails.keyManager, cpAppID);
+                if (!tokenDetails.keyType) {
+                    return util.handleError(res, new CustomError(400, constants.ERROR_CODE[400], "keyType is required in tokenDetails"));
+                }
+                responseData = await mapKeys(req, clientID, tokenDetails.keyManager, cpAppID, tokenDetails.keyType);
             }
             // Add the appRefId to the response data
             responseData.appRefId = cpAppID;
@@ -1262,7 +1264,7 @@ const createAppKeyMapping = async (req, res) => {
             orgId: orgID,
             appName: req.body.applicationName,
             idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
-        });
+        }, req);
         return res.status(200).json(responseData);
     } catch (error) {
         logger.error('key mapping create error failed', {
@@ -1279,14 +1281,14 @@ const createAppKeyMapping = async (req, res) => {
     }
 }
 
-async function mapKeys(req, clientID, keyManager, applicationId) {
+async function mapKeys(req, clientID, keyManager, applicationId, keyType) {
     logger.info('Mapping existing client ID with application', {
         applicationId
     });
     const body = {
         "consumerKey": clientID,
         "keyManager": keyManager,
-        "keyType": 'PRODUCTION',
+        "keyType": keyType,
     };
     try {
         return await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/applications/${applicationId}/map-keys`, {}, body);
@@ -1337,6 +1339,90 @@ function checkAdditionalValues(additionalValues) {
     }
     return props;
 
+}
+
+const createCPApplicationOnBehalfOfUser = async (cpApplicationName, owner, cpOrgId, patToken) => {
+    logger.info('Creating control plane application', {
+        cpApplicationName
+    });
+    headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${patToken}`
+    }
+
+    try {
+        //create control plane application
+        url = `${controlPlaneGwUrl}/applications?preserveOwner=true`;
+        const cpAppCreationResponse = await util.apiRequest('POST', url, headers, {
+            name: cpApplicationName,
+            throttlingPolicy: 'Unlimited',
+            tokenType: 'JWT',
+            owner: owner,
+            groups: [],
+            attributes: {},
+            subscriptionScopes: []
+        }, cpOrgId);
+        return cpAppCreationResponse.data;
+    } catch (error) {
+        //application already exists
+        logger.error('Application Creation Failed in CP', {
+            error: error.message,
+            stack: error.stack,
+            cpApplicationName
+        });
+        if (error.statusCode && error.statusCode === 409) {
+            try {
+                logger.info('Application already exists in control plane, retrieving existing application', {
+                    orgId: req.params?.orgId,
+                    cpApplicationName
+                });
+                const cpAppResponse = await utils.apiRequest('GET', `${controlPlaneUrl}/applications?query=${cpApplicationName}`, headers, {}, cpOrgId);
+                return cpAppResponse.list[0];
+            } catch (error) {
+                logger.error('Error occurred while fetching application', {
+                    error: error.message,
+                    cpApplicationName
+                });
+                throw error;
+            }
+        } else {
+            throw error;
+        }
+    }
+}
+
+const createCPSubscriptionOnBehalfOfUser = async (apiId, cpAppID, policyName, cpOrgId, patToken) => {
+    logger.info('Creating control plane subscription', {
+        apiId,
+        cpAppID,
+        policyName
+    });
+    try {
+        const requestBody = {
+            apiId: apiId,
+            applicationId: cpAppID,
+            throttlingPolicy: policyName
+        };
+        url = `${controlPlaneGwUrl}/subscriptions`;
+        headers = {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${patToken}`
+        }
+        const cpSubscribeResponse = await util.apiRequest('POST', url, headers, requestBody, cpOrgId);
+        return cpSubscribeResponse.data;
+    } catch (error) {
+        if (error.statusCode && error.statusCode === 409) {
+            const response = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?apiId=${apiId}&applicationId=${cpAppID}`, {});
+            return response.list[0];
+        }
+        logger.error('key mapping create error failed', {
+            error: error.message,
+            stack: error.stack,
+            apiId,
+            cpAppID
+        });
+        throw error;
+    }
 }
 
 const createCPApplication = async (req, cpApplicationName) => {
@@ -1499,7 +1585,7 @@ const unsubscribeAPI = async (req, res) => {
                     appId: appID,
                     apiRefId: apiReferenceID,
                     idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
-                });
+                }, req);
                 return res.status(204).send();
             } catch (error) {
                 try {
@@ -1514,7 +1600,7 @@ const unsubscribeAPI = async (req, res) => {
                             appId: appID,
                             apiRefId: apiReferenceID,
                             idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined
-                        });
+                        }, req);
                         return res.status(204).send();
                     }
                 } catch (error) {
@@ -1626,5 +1712,7 @@ module.exports = {
     getApplicationKeyMap,
     checkAdditionalValues,
     createCPApplication,
-    createCPSubscription
+    createCPSubscription,
+    createCPApplicationOnBehalfOfUser,
+    createCPSubscriptionOnBehalfOfUser
 };
