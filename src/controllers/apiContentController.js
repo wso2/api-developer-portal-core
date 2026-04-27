@@ -1174,7 +1174,7 @@ function correctAsyncAPISpec(spec, endpoints, cpApiDetail, tokenEndpoint) {
     if (spec.servers) {
         const activeSchemes = Object.keys(spec.components.securitySchemes);
         const securityReqs = activeSchemes.length > 0
-            ? [Object.fromEntries(activeSchemes.map(name => [name, []]))]
+            ? activeSchemes.map(name => ({ [name]: [] }))
             : [];
         for (const server of Object.values(spec.servers)) {
             if (securityReqs.length > 0) {
@@ -1609,7 +1609,7 @@ const loadAPIDefinitionRaw = async (req, res) => {
             spec = replaceEndpointParams(spec, prodUrl, sandboxUrl);
         }
 
-        if (config.controlPlane?.enabled !== false && isRestAPI || isAsyncAPI) {
+        if (config.controlPlane?.enabled !== false && (isRestAPI || isAsyncAPI)) {
             let tokenEndpoint = null;
             let cpApiDetail = null;
 
