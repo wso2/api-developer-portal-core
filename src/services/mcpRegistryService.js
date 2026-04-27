@@ -45,6 +45,11 @@ function normalizeLimit(limit) {
     return Math.min(n, MAX_LIMIT);
 }
 
+function unescapeParam(str) {
+    return str
+        .replace(/&#x2F;/gi, '/');
+}
+
 
 
 async function findRowByServerIdentifier(orgId, serverIdentifier, version, transaction) {
@@ -68,7 +73,6 @@ async function findRowByServerIdentifier(orgId, serverIdentifier, version, trans
         transaction
     });
     if (byApiName) return byApiName;
-
 
     const slashIdx = serverIdentifier.indexOf('/');
     if (slashIdx !== -1) {
@@ -272,10 +276,10 @@ const listVersions = async (req, res) => {
     try {
         const orgHandle = req.params.orgHandle;
         const orgId = await resolveOrgId(orgHandle);
-        const serverIdentifier = decodeURIComponent(req.params.serverName);
+        const serverIdentifier = unescapeParam(decodeURIComponent(req.params.serverName));
         const includeDeleted = parseBool(req.query.include_deleted, false);
 
-        const baseWhere = { ORG_ID: orgId, API_TYPE: constants.API_TYPE.MCP, REFERENCE_ID: null };
+        const baseWhere = { ORG_ID: orgId, API_TYPE: constants.API_TYPE.MCP };
         if (!includeDeleted) {
             baseWhere.STATUS = { [Op.ne]: 'DELETED' };
         }
@@ -315,8 +319,8 @@ const getVersion = async (req, res) => {
     try {
         const orgHandle = req.params.orgHandle;
         const orgId = await resolveOrgId(orgHandle);
-        const serverIdentifier = decodeURIComponent(req.params.serverName);
-        const version = decodeURIComponent(req.params.version);
+        const serverIdentifier = unescapeParam(decodeURIComponent(req.params.serverName));
+        const version = unescapeParam(decodeURIComponent(req.params.version));
 
         let row = await findRowByServerIdentifier(orgId, serverIdentifier, version, null);
         if (!row) {
@@ -435,8 +439,8 @@ const updateVersion = async (req, res) => {
     try {
         const orgHandle = req.params.orgHandle;
         const orgId = await resolveOrgId(orgHandle);
-        const serverIdentifier = decodeURIComponent(req.params.serverName);
-        const version = decodeURIComponent(req.params.version);
+        const serverIdentifier = unescapeParam(decodeURIComponent(req.params.serverName));
+        const version = unescapeParam(decodeURIComponent(req.params.version));
         const detail = req.body;
 
         const validationError = validateServerDetail(detail);
@@ -499,8 +503,8 @@ const deleteVersion = async (req, res) => {
     try {
         const orgHandle = req.params.orgHandle;
         const orgId = await resolveOrgId(orgHandle);
-        const serverIdentifier = decodeURIComponent(req.params.serverName);
-        const version = decodeURIComponent(req.params.version);
+        const serverIdentifier = unescapeParam(decodeURIComponent(req.params.serverName));
+        const version = unescapeParam(decodeURIComponent(req.params.version));
 
         const existing = await findRowByServerIdentifier(orgId, serverIdentifier, version, null);
         if (!existing) {
@@ -526,8 +530,8 @@ const updateVersionStatus = async (req, res) => {
     try {
         const orgHandle = req.params.orgHandle;
         const orgId = await resolveOrgId(orgHandle);
-        const serverIdentifier = decodeURIComponent(req.params.serverName);
-        const version = decodeURIComponent(req.params.version);
+        const serverIdentifier = unescapeParam(decodeURIComponent(req.params.serverName));
+        const version = unescapeParam(decodeURIComponent(req.params.version));
         const { status } = req.body || {};
 
         if (!status || !MCP_STATUSES.includes(status)) {
@@ -559,7 +563,7 @@ const updateAllVersionsStatus = async (req, res) => {
     try {
         const orgHandle = req.params.orgHandle;
         const orgId = await resolveOrgId(orgHandle);
-        const serverIdentifier = decodeURIComponent(req.params.serverName);
+        const serverIdentifier = unescapeParam(decodeURIComponent(req.params.serverName));
         const { status } = req.body || {};
 
         if (!status || !MCP_STATUSES.includes(status)) {
