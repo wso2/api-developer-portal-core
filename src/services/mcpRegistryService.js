@@ -74,7 +74,7 @@ async function findRowByServerIdentifier(orgId, serverIdentifier, version, trans
     if (slashIdx !== -1) {
         const bareHandle = serverIdentifier.slice(slashIdx + 1);
         if (bareHandle) {
-            return APIMetadata.findOne({
+            const proxyIdData = await APIMetadata.findOne({
                 where: {
                     ...baseWhere,
                     [Op.and]: sequelize.where(
@@ -82,6 +82,12 @@ async function findRowByServerIdentifier(orgId, serverIdentifier, version, trans
                         bareHandle
                     )
                 },
+                transaction
+            });
+            if (proxyIdData) return proxyIdData;
+
+            return APIMetadata.findOne({
+                where: { ...baseWhere, API_NAME: bareHandle },
                 transaction
             });
         }
@@ -233,7 +239,7 @@ const listServers = async (req, res) => {
             where[Op.or] = [
                 { API_NAME: { [Op.iLike]: `%${search}%` } },
                 sequelize.where(
-                    sequelize.literal("\"METADATA_SEARCH\"->>'apiInfo'->>'proxyId'"),
+                    sequelize.literal("\"METADATA_SEARCH\"->'apiInfo'->>'proxyId'"),
                     { [Op.iLike]: `%${search}%` }
                 )
             ];
@@ -269,20 +275,28 @@ const listVersions = async (req, res) => {
         const serverIdentifier = decodeURIComponent(req.params.serverName);
         const includeDeleted = parseBool(req.query.include_deleted, false);
 
-        const anchor = await findRowByServerIdentifier(orgId, serverIdentifier, null, null);
-        if (!anchor) {
-            return sendError(res, 404, 'Server not found');
-        }
-
-        const where = { ORG_ID: orgId, API_TYPE: constants.API_TYPE.MCP, API_NAME: anchor.API_NAME };
+        const baseWhere = { ORG_ID: orgId, API_TYPE: constants.API_TYPE.MCP, REFERENCE_ID: null };
         if (!includeDeleted) {
-            where.STATUS = { [Op.ne]: 'DELETED' };
+            baseWhere.STATUS = { [Op.ne]: 'DELETED' };
         }
 
-        const rows = await APIMetadata.findAll({
-            where,
+        let rows = await APIMetadata.findAll({
+            where: {
+                ...baseWhere,
+                [Op.and]: sequelize.where(
+                    sequelize.literal("\"METADATA_SEARCH\"->'apiInfo'->>'proxyId'"),
+                    serverIdentifier
+                )
+            },
             order: [[sequelize.literal("(\"METADATA_SEARCH\"->'apiInfo'->>'publishedAt')"), 'DESC NULLS LAST']]
         });
+
+        if (rows.length === 0) {
+            rows = await APIMetadata.findAll({
+                where: { ...baseWhere, API_NAME: serverIdentifier },
+                order: [[sequelize.literal("(\"METADATA_SEARCH\"->'apiInfo'->>'publishedAt')"), 'DESC NULLS LAST']]
+            });
+        }
 
         if (rows.length === 0) {
             return sendError(res, 404, 'Server not found');
