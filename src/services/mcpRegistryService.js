@@ -45,6 +45,14 @@ function normalizeLimit(limit) {
     return Math.min(n, MAX_LIMIT);
 }
 
+
+function resolveServerName(orgHandle, rawParam) {
+    const decoded = decodeURIComponent(rawParam);
+    const prefix = orgHandle + '/';
+    const unprefixed = decoded.startsWith(prefix) ? decoded.slice(prefix.length) : decoded;
+    return prefix + unprefixed;
+}
+
 function parseBool(value, defaultValue) {
     if (value === undefined || value === null || value === '') return defaultValue;
     return String(value).toLowerCase() === 'true';
@@ -215,7 +223,7 @@ const listVersions = async (req, res) => {
     try {
         const orgHandle = req.params.orgHandle;
         const orgId = await resolveOrgId(orgHandle);
-        const serverName = orgHandle + '/' + decodeURIComponent(req.params.serverName);
+        const serverName = resolveServerName(orgHandle, req.params.serverName);
         const includeDeleted = parseBool(req.query.include_deleted, false);
 
         const where = { ORG_ID: orgId, API_TYPE: constants.API_TYPE.MCP, API_NAME: serverName };
@@ -245,7 +253,7 @@ const getVersion = async (req, res) => {
     try {
         const orgHandle = req.params.orgHandle;
         const orgId = await resolveOrgId(orgHandle);
-        const serverName = orgHandle + '/' + decodeURIComponent(req.params.serverName);
+        const serverName = resolveServerName(orgHandle, req.params.serverName);
         const version = decodeURIComponent(req.params.version);
 
         const where = {
@@ -372,7 +380,7 @@ const updateVersion = async (req, res) => {
     try {
         const orgHandle = req.params.orgHandle;
         const orgId = await resolveOrgId(orgHandle);
-        const serverName = orgHandle + '/' + decodeURIComponent(req.params.serverName);
+        const serverName = resolveServerName(orgHandle, req.params.serverName);
         const version = decodeURIComponent(req.params.version);
         const detail = req.body;
 
@@ -442,7 +450,7 @@ const deleteVersion = async (req, res) => {
     try {
         const orgHandle = req.params.orgHandle;
         const orgId = await resolveOrgId(orgHandle);
-        const serverName = orgHandle + '/' + decodeURIComponent(req.params.serverName);
+        const serverName = resolveServerName(orgHandle, req.params.serverName);
         const version = decodeURIComponent(req.params.version);
 
         const existing = await APIMetadata.findOne({
@@ -471,7 +479,7 @@ const updateVersionStatus = async (req, res) => {
     try {
         const orgHandle = req.params.orgHandle;
         const orgId = await resolveOrgId(orgHandle);
-        const serverName = orgHandle + '/' + decodeURIComponent(req.params.serverName);
+        const serverName = resolveServerName(orgHandle, req.params.serverName);
         const version = decodeURIComponent(req.params.version);
         const { status } = req.body || {};
 
@@ -506,7 +514,7 @@ const updateAllVersionsStatus = async (req, res) => {
     try {
         const orgHandle = req.params.orgHandle;
         const orgId = await resolveOrgId(orgHandle);
-        const serverName = orgHandle + '/' + decodeURIComponent(req.params.serverName);
+        const serverName = resolveServerName(orgHandle, req.params.serverName);
         const { status } = req.body || {};
 
         if (!status || !MCP_STATUSES.includes(status)) {
