@@ -5,6 +5,13 @@
 .hero-content {
   border-radius: 0.75rem;
   padding-left: 3rem;
+  position: relative;
+}
+
+.discover-ai-btn {
+  position: absolute;
+  bottom: 1.25rem;
+  right: 1.25rem;
 }
 
 .hero-title {

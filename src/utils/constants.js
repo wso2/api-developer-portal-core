@@ -134,7 +134,7 @@ module.exports = {
         API_LANDING_PAGE_PATH: '/api/',
         API_DOCS_PATH: '/docs/',
         DEVPORTAL_ASSETS_BASE_PATH: '/devportal/organizations/',
-        DEVPORTAL_CONFIGURE: '/*/configure',
+        DEVPORTAL_CONFIGURE: ['/*/configure', '/*/views/*/configure'],
         DEVPORTAL_ROOT: ['/portal', '/portal/*/edit', '/devportal'],
         DEVPORTAL_API_LISTING: '/*/apis',
         DEVPORTAL_TECHNICAL_PAGES: ['*/application'],
@@ -151,6 +151,7 @@ module.exports = {
     FILE_TYPE: {
         LAYOUT: 'layout',
         TEMPLATE: 'template',
+        LLMS_CONFIG: 'llms-config',
     },
     KEY_TYPE: {
         PRODUCTION: 'PRODUCTION',
@@ -170,6 +171,7 @@ module.exports = {
         API_SPECIFICATION_PATH: 'specification',
         API_DEFINITION_GRAPHQL: 'apiDefinition.graphql',
         API_DEFINITION_XML: 'apiDefinition.xml',
+        LLMS_CONFIG: 'llms-config.json',
     },
     DEFAULT_SUBSCRIPTION_PLANS: [
         {
@@ -288,6 +290,7 @@ module.exports = {
         }
     },
     ERROR_CODE: {
+        400: "Bad Request",
         401: "Unauthenticated",
         403: "Forbidden",
         404: "Not Found",
@@ -298,6 +301,9 @@ module.exports = {
         'main',
         'home',
         'api-content',
+        'apis-md',
+        'api-landing-md',
+        'llms-txt',
     ],
     FEDERATED_GATEWAY_VENDORS: ['aws']
 }

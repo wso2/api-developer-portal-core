@@ -6,6 +6,7 @@
   "scripts": {
     "design-mode": "npm run build-css --watch & nodemon src/dev-server.js",
     "start": "nodemon --ignore 'generated-sdks/**/*' src/app.js",
+    "debug": "nodemon --inspect --ignore 'generated-sdks/**/*' src/app.js",
     "multi-tenant": "npm run build-css --watch & nodemon src/multi-tenant.js",
     "build-css": "node watcher.js",
     "build": "pkg ."
@@ -28,6 +29,7 @@
     "@openapitools/openapi-generator-cli": "2.21.3",
     "applicationinsights": "2.9.7",
     "archiver": "7.0.1",
+    "basic-ftp": "5.2.0",
     "async-lock": "1.4.1",
     "axios": "1.11.0",
     "bootstrap-icons": "1.11.3",
@@ -42,7 +44,7 @@
     "fs-extra": "11.2.0",
     "graphiql": "3.7.1",
     "graphql": "16.9.0",
-    "handlebars": "4.7.8",
+    "handlebars": "4.7.9",
     "hbs": "4.2.0",
     "https": "1.0.0",
     "install": "0.13.0",
@@ -55,7 +57,7 @@
     "moesif-nodejs": "^3.11.0",
     "multer": "1.4.5-lts.1",
     "node": "22.0.0",
-    "node-fetch": "3.3.2",
+    "node-fetch": "^2.7.0",
     "nodemon": "3.1.4",
     "npm": "11.2.0",
     "passport": "0.7.0",
@@ -71,10 +73,17 @@
     "redis": "4.6.0",
     "sequelize": "6.37.3",
     "shelljs": "0.8.5",
+    "stripe": "20.0.0",
     "unzipper": "0.12.3",
     "uuid": "11.1.0",
     "winston": "3.17.0",
     "winston-daily-rotate-file": "5.0.0"
+  },
+  "overrides": {
+    "handlebars": "4.7.9"
+  },
+  "applicationInsights": {
+    "excludeModules": ["basic-ftp"]
   },
   "bin": {
     "app": "src/app.js"

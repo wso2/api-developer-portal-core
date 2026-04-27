@@ -35,11 +35,14 @@ const apiContent = require('./routes/apiContentRoute');
 const applicationContent = require('./routes/applicationsContentRoute');
 const sdkJobService = require('./services/sdkJobService');
 const customContent = require('./routes/customPageRoute');
+const subscriptionsContent = require('./routes/subscriptionsContentRoute');
+const mcpRegistryRoute = require('./routes/mcpRegistryRoute');
 const config = require(process.cwd() + '/config.json');
 const Handlebars = require('handlebars');
 const constants = require("./utils/constants");
 const designRoute = require('./routes/designModeRoute');
 const settingsRoute = require('./routes/configureRoute');
+const apiFlowsRoute = require('./routes/apiFlowsRoute');
 const AsyncLock = require('async-lock');
 const util = require('./utils/util');
 
@@ -87,6 +90,32 @@ app.set('view engine', 'hbs');
 
 // #region Register Handlebars helpers
 
+// Handlebars helper to filter subscriptions by status (case-insensitive, supports 'ALL')
+Handlebars.registerHelper('filterByStatus', function (array, status) {
+    if (!Array.isArray(array)) return [];
+    if (!status || status === 'ALL') return array;
+    const statusLower = status.toLowerCase();
+    return array.filter(item => item.status && item.status.toLowerCase() === statusLower);
+});
+
+// Handlebars helper to check if an array is empty
+Handlebars.registerHelper('isEmpty', function (arr) {
+    return !arr || arr.length === 0;
+});
+
+// Handlebars 'filter' helper: returns a filtered array for use as a subexpression
+Handlebars.registerHelper('filter', function (array, property, value, include) {
+    if (!Array.isArray(array)) return [];
+    if (typeof include !== 'boolean') {
+        include = true;
+    }
+    if (include) {
+        return array.filter(item => item && item[property] === value);
+    } else {
+        return array.filter(item => item && item[property] !== value);
+    }
+});
+
 Handlebars.registerHelper('json', function (context) {
 
     if (context) {
@@ -105,6 +134,24 @@ Handlebars.registerHelper('jsonBeautify', function (context) {
         }
     } else {
         return '{}'; 
+    }
+});
+
+Handlebars.registerHelper('jsonSafePlatformSubscriptions', function (context) {
+    try {
+        if (!context || !Array.isArray(context)) return JSON.stringify([]);
+        const safe = context.map(function (s) {
+            return {
+                subscriptionId: s.subscriptionId,
+                subscriptionPlanName: s.subscriptionPlanName,
+                status: s.status,
+                customerName: s.customerName || s.customer || null,
+                maskedToken: s.subscriptionToken ? ('****' + String(s.subscriptionToken).slice(-4)) : '****'
+            };
+        });
+        return JSON.stringify(safe);
+    } catch (e) {
+        return JSON.stringify([]);
     }
 });
 
@@ -134,6 +181,13 @@ Handlebars.registerHelper('beforeSeparator', function (value, separator) {
     return value;
 });
 
+Handlebars.registerHelper('stripMdExtension', function (value) {
+    if (typeof value === 'string' && value.endsWith('.md')) {
+        return value.slice(0, -3);
+    }
+    return value;
+});
+
 Handlebars.registerHelper("some", function (array, key, options) {
     if (!Array.isArray(array)) {
         return options.inverse(this);
@@ -146,6 +200,49 @@ Handlebars.registerHelper("some", function (array, key, options) {
 
 Handlebars.registerHelper('eq', function (a, b) {
     return (a === b || (a != null && b != null && (a === b.toString() || a.toString() === b)));
+});
+
+Handlebars.registerHelper('compare', function (a, operator, b, options) {
+    if (arguments.length < 4) {
+        throw new Error('Handlebars Helper "compare" needs 3 parameters');
+    }
+    let result;
+    switch (operator) {
+        case '===': result = a === b; break;
+        case '!==': result = a !== b; break;
+        case '<': result = a < b; break;
+        case '>': result = a > b; break;
+        case '<=': result = a <= b; break;
+        case '>=': result = a >= b; break;
+        default: throw new Error('Handlebars Helper "compare" doesn\'t know the operator ' + operator);
+    }
+    return result ? options.fn(this) : options.inverse(this);
+});
+
+/**
+ * Formats API key expiry for display: ISO-8601 strings, Unix seconds, or Unix milliseconds
+ * (e.g. CP may return 1774923420000 as a number or string).
+ */
+Handlebars.registerHelper('formatExpiresAt', function (value) {
+    if (value === null || value === undefined || value === '') {
+        return '';
+    }
+    let d;
+    const s = String(value).trim();
+    if (/^\d+$/.test(s)) {
+        const n = parseInt(s, 10);
+        if (Number.isNaN(n)) {
+            return s;
+        }
+        const digitLen = String(n).length;
+        d = digitLen <= 10 ? new Date(n * 1000) : new Date(n);
+    } else {
+        d = new Date(s);
+    }
+    if (Number.isNaN(d.getTime())) {
+        return s;
+    }
+    return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 });
 
 Handlebars.registerHelper('in', function (value, options) {
@@ -179,6 +276,12 @@ Handlebars.registerHelper('and', function () {
     return args.every(Boolean) ? lastArg.fn(this) : lastArg.inverse(this);
 });
 
+Handlebars.registerHelper('or', function (...args) {
+    // Last arg is the Handlebars options hash; find first truthy value before it
+    const vals = args.slice(0, -1);
+    return vals.find(v => v) || vals[vals.length - 1];
+});
+
 Handlebars.registerHelper('getValue', function (obj, key) {
     return obj[key];
 });
@@ -207,6 +310,35 @@ Handlebars.registerHelper('isFederatedAPI', function (gatewayVendor) {
     return constants.FEDERATED_GATEWAY_VENDORS.includes(gatewayVendor);
 });
 
+Handlebars.registerHelper('formatPrice', function (price) {
+    if (!price) return '0';
+    return parseFloat(price).toString();
+});
+
+Handlebars.registerHelper('formatBillingPeriod', function (period) {
+    const map = { day: 'daily', week: 'weekly', month: 'monthly', year: 'yearly' };
+    const p = String(period || '').toLowerCase();
+    return map[p] || (p + 'ly');
+});
+
+Handlebars.registerHelper('formatTierRange', function (startUnit, endUnit) {
+    const start = startUnit != null ? Number(startUnit).toLocaleString() : '0';
+    if (endUnit == null || endUnit === '' || endUnit === Infinity) {
+        return start + ' +';
+    }
+    return start + ' – ' + Number(endUnit).toLocaleString();
+});
+
+Handlebars.registerHelper('maskToken', function (token) {
+    if (!token || token.length <= 4) return '****';
+    return '****' + token.slice(-4);
+});
+
+Handlebars.registerHelper('isCurrentPlan', function (policyName, platformSubscriptions) {
+    if (!Array.isArray(platformSubscriptions) || !policyName) return false;
+    return platformSubscriptions.some(sub => sub.subscriptionPlanName === policyName);
+});
+
 // #endregion
 
 app.use(session({
@@ -225,6 +357,16 @@ app.use(session({
     },
 }));
 
+// Stripe webhook endpoint MUST use raw body parser for signature verification
+const billingController = require('./controllers/billingController');
+app.post('/webhooks/stripe/:orgId', express.raw({ type: 'application/json' }), billingController.handleStripeWebhook);
+
+app.get('/robots.txt', (req, res) => {
+    res.type('text/plain').send(
+        'User-agent: *\nAllow: /\n\n# AI agent guidance: /{orgName}/views/{viewName}/llms.txt\n'
+    );
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -236,6 +378,7 @@ app.use(auditMiddleware({
 
 app.use(passport.initialize());
 app.use(passport.session());
+
 
 let claimNames = {
     [constants.ROLES.ROLE_CLAIM]: config.roleClaim,
@@ -265,6 +408,7 @@ const strategy = new OAuth2Strategy({
         return done(new Error('Access token missing'));
     }
     let orgList, userOrg;
+    let isAdmin, isSuperAdmin = false;
     if (config.advanced.tokenExchanger?.enabled) {
         try {
             const exchangedToken = await util.tokenExchanger(accessToken, req.session.returnTo.split("/")[1]);
@@ -272,6 +416,8 @@ const strategy = new OAuth2Strategy({
             orgList = decodedExchangedToken.organizations;
             userOrg = decodedExchangedToken.organization.uuid;
             req['exchangedToken'] = exchangedToken;
+            const exchangeTokenScopes = (decodedExchangedToken?.scope || '').split(' ');
+            isAdmin = exchangeTokenScopes.includes(config.advanced.tokenExchanger.admin_scope || "apim:admin");
         } catch (error) {
             logger.error('Token exchange failed during authentication', {
                 error: error.message,
@@ -287,7 +433,6 @@ const strategy = new OAuth2Strategy({
     const organizationID = decodedJWT[claimNames[constants.ROLES.ORGANIZATION_CLAIM]] ? decodedJWT[config.orgIDClaim] : '';
     const roles = decodedJWT[claimNames[constants.ROLES.ROLE_CLAIM]] ? decodedJWT[config.roleClaim] : '';
     const groups = decodedJWT[claimNames[constants.ROLES.GROUP_CLAIM]] ? decodedJWT[config.groupsClaim] : '';
-    let isAdmin, isSuperAdmin = false;
     if (roles.includes(constants.ROLES.SUPER_ADMIN) || roles.includes(constants.ROLES.ADMIN)) {
         isAdmin = true;
     }
@@ -430,8 +575,21 @@ passport.deserializeUser(async (sessionData, done) => {
 app.use(constants.ROUTE.TECHNICAL_STYLES, express.static(path.join(require.main.filename, '../styles')));
 app.use(constants.ROUTE.TECHNICAL_SCRIPTS, express.static(path.join(require.main.filename, '../scripts')));
 
+// Redirect unrecognised root-level paths (e.g. /robots.txt, /sitemap.xml) before
+// the /:orgName route can treat them as org IDs.
+app.use((req, res, next) => {
+    const segments = req.path.split('/').filter(Boolean);
+    if (segments.length === 1 && segments[0].includes('.')) {
+        return res.redirect('/');
+    }
+    next();
+});
+
 //backend routes
 app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
+
+// MCP Server Registry (OpenAPI v0.1)
+app.use('/registry/:orgHandle', mcpRegistryRoute);
 
 if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), filePrefix + 'styles')));
@@ -446,9 +604,15 @@ if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.DEFAULT, applicationContent);
     app.use(constants.ROUTE.DEFAULT, orgContent);
     app.use(constants.ROUTE.DEFAULT, settingsRoute);
+    app.use(constants.ROUTE.DEFAULT, apiFlowsRoute);
+    app.use(constants.ROUTE.DEFAULT, subscriptionsContent);
     app.use(constants.ROUTE.DEFAULT, customContent);
 }
 
+
+app.use((req, res) => {
+    res.redirect('/');
+});
 
 app.use( (err, req, res, next) => {
     Handlebars.registerPartial('header', '');
@@ -463,7 +627,8 @@ app.use( (err, req, res, next) => {
     let templateContent = {
         devportalMode: 'DEFAULT',
         baseUrl: '/' + req.originalUrl?.split('/')[1] + '/' + constants.ROUTE.VIEWS_PATH + "default",
-        errorMessage: "Oops! Something went wrong"
+        errorMessage: "Oops! Something went wrong",
+        profile: req.isAuthenticated() ? req.user : null,
     }
     let html = "";
     if (err.status === 401) {

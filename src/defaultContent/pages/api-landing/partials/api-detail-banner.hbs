@@ -8,19 +8,59 @@
           <p class="api-version"> {{apiMetadata.apiInfo.apiVersion}}</p>
         </div>
         <p class="api-description">{{apiMetadata.apiInfo.apiDescription}}</p>
+        <hr style="opacity: 0.3; margin: 8px 0; border: none; height: 1px; background-color: #ccc;">
         <div class="api-tags">
           {{#apiMetadata.apiInfo.tags}}
           <span class="badge api-badge-custom2">{{this}}</span>
           {{/apiMetadata.apiInfo.tags}}
+          {{#if showApiWorkflowsNav}}
+          {{#unless (eq apiMetadata.apiInfo.agentVisibility "HIDDEN")}}
+          <span class="api-agent-chip api-agent-chip--ready"
+              title="AI agents can discover and use this API">
+              <span class="api-agent-chip__dot"></span>
+              <i class="bi bi-robot"></i> AI Ready
+          </span>
+          {{/unless}}
+          {{/if}}
         </div>
+
+
         <div class="api-details-btn">
+          {{#if apiMetadata.apiInfo.tokenBasedSubscriptionEnabled}}
+            {{#unless platformSubscriptions.length}}
           <a type="button" class="common-btn-primary" href="#subscriptionPlans">Subscribe</a>
+            {{/unless}}
+          {{else if (eq apiMetadata.apiInfo.gatewayType "wso2/api-platform")}}
+          {{!-- Platform API without token-based subscription: no subscribe button --}}
+          {{else}}
+          <a type="button" class="common-btn-primary" href="#subscriptionPlans">Subscribe</a>
+          {{/if}}
           {{#in apiMetadata.apiInfo.apiType values="REST,WS,WEBSUB,GRAPHQL,MCP"}}
           <a type="button" class="common-btn-outlined"
             href="{{baseUrl}}/api/{{apiMetadata.apiHandle}}/docs/specification">Documentation</a>
           {{else}}
           <a type="button" class="common-btn-outlined" href="{{{schemaUrl}}}" download>Download</a>
           {{/in}}
+          {{#if (eq apiMetadata.apiInfo.gatewayType "wso2/api-platform")}}
+            {{#if apiMetadata.apiInfo.tokenBasedSubscriptionEnabled}}
+              {{#if subscriptionPlans.length}}
+          <a type="button" class="common-btn-outlined" href="{{baseUrl}}/api/{{apiMetadata.apiHandle}}/subscriptions">Subscriptions</a>
+              {{/if}}
+            {{/if}}
+          {{else}}
+          <a type="button" class="common-btn-outlined" href="{{baseUrl}}/api/{{apiMetadata.apiHandle}}/subscriptions">Subscriptions</a>
+          {{/if}}
+          {{#if showPlatformApiKeysNav}}
+          <a type="button" class="common-btn-outlined" href="{{baseUrl}}/api/{{apiMetadata.apiHandle}}/api-keys">API Keys</a>
+          {{/if}}
+          {{#if showApiWorkflowsNav}}
+          {{#unless (eq apiMetadata.apiInfo.agentVisibility "HIDDEN")}}
+          <button type="button" class="btn-prompt" data-bs-toggle="modal" data-bs-target="#apiAgentPromptModal">
+              <i class="bi bi-file-code"></i>
+              Agent Prompt
+          </button>
+          {{/unless}}
+          {{/if}}
         </div>
       </div>
       <div class="col-12 col-md-5 text-md-right api-banner-icon">

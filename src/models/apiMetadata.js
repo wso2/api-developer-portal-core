@@ -51,7 +51,7 @@ const APIMetadata = sequelize.define('DP_API_METADATA', {
   },
   API_TYPE: {
     type: DataTypes.ENUM,
-    values: ['REST', 'WS', 'GRAPHQL', 'SOAP', 'WEBSUB'],
+    values: ['REST', 'WS', 'GRAPHQL', 'SOAP', 'WEBSUB', 'MCP'],
     allowNull: false
   },
   VISIBILITY: {
@@ -62,6 +62,12 @@ const APIMetadata = sequelize.define('DP_API_METADATA', {
   VISIBLE_GROUPS: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  AGENT_VISIBILITY: {
+    type: DataTypes.ENUM,
+    values: ['VISIBLE', 'HIDDEN'],
+    allowNull: false,
+    defaultValue: 'VISIBLE'
   },
   TECHNICAL_OWNER: {
     type: DataTypes.STRING,
@@ -100,6 +106,20 @@ const APIMetadata = sequelize.define('DP_API_METADATA', {
     allowNull: true
   },
   API_HANDLE: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  MONETIZATION_ENABLED: {
+    type: DataTypes.BOOLEAN,
+    allowNull: true,
+    defaultValue: false
+  },
+  TOKEN_BASED_SUBSCRIPTION_ENABLED: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    allowNull: false
+  },
+  GATEWAY_TYPE: {
     type: DataTypes.STRING,
     allowNull: true
   },

@@ -100,7 +100,7 @@ const ensurePermission = (currentPage, role, req) => {
         adminRole = req.user[constants.ROLES.ADMIN];
         superAdminRole = req.user[constants.ROLES.SUPER_ADMIN];
         subscriberRole = req.user[constants.ROLES.SUBSCRIBER];
-        if (minimatch.minimatch(currentPage, constants.ROUTE.DEVPORTAL_CONFIGURE)) {
+        if (constants.ROUTE.DEVPORTAL_CONFIGURE.some(pattern => minimatch.minimatch(currentPage, pattern))) {
             return role.includes(superAdminRole) || role.includes(adminRole);
         } else if (constants.ROUTE.DEVPORTAL_ROOT.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
             return role.includes(superAdminRole);
@@ -186,6 +186,13 @@ const ensureAuthenticated = async (req, res, next) => {
                                     req.user['userOrg'] = userOrg;
                                     req.user[constants.ROLES.ORGANIZATION_CLAIM] = userOrg;
                                     req.user[constants.ORG_IDENTIFIER] = userOrg;
+
+                                    // Re-derive isAdmin from the freshly exchanged token's scope
+                                    // OR with the existing role-based admin check to preserve fallback
+                                    const freshScopes = (decodedExchangedToken?.scope || '').split(' ');
+                                    const freshScopeHasAdmin = freshScopes.includes(config.advanced.tokenExchanger.admin_scope || "apim:admin");
+                                    const roleBasedAdmin = role && (role.includes(adminRole) || role.includes(superAdminRole));
+                                    req.user.isAdmin = freshScopeHasAdmin || roleBasedAdmin;
                                 } catch (error) {
                                     logger.error("Error during token exchange", { error: error.message, stack: error.stack, operation: "tokenExchange" });
                                     const err = new Error('Authentication required');
@@ -250,7 +257,7 @@ function validateAuthentication(scope) {
         }
         let IDP, valid, scopes, orgId, response;
         if (req.params.orgName) {
-            orgId = await adminDao.getOrgId(orgName);
+            orgId = await adminDao.getOrgId(req.params.orgName);
         } else {
             orgId = req.params.orgId;
         }

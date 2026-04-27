@@ -895,12 +895,31 @@ const createSubscription = async (req, res) => {
             try {
                 sharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
                 nonSharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, false);
+
+                const billingMetadata = await (async () => {
+                    const subscription = await adminDao.getAppApiSubscription(
+                        orgID,
+                        req.body.applicationID,
+                        req.body.apiId,
+                    );
+                    return subscription?.length > 0 &&
+                        (subscription[0].BILLING_CUSTOMER_ID ||
+                            subscription[0].BILLING_SUBSCRIPTION_ID)
+                            ? {
+                                billingCustomerId: subscription[0].BILLING_CUSTOMER_ID,
+                                billingSubscriptionId:
+                                    subscription[0].BILLING_SUBSCRIPTION_ID,
+                            }
+                            : null;
+                })();
+
                 if (sharedApp.length > 0) {
                     isShared = true;
                     const response = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, {
                         apiId: req.body.apiReferenceID,
                         applicationId: sharedApp[0].dataValues.CP_APP_REF,
-                        throttlingPolicy: req.body.policyName
+                        throttlingPolicy: req.body.policyName,
+                        ...(billingMetadata ? { billingMetadata } : {}),
                     });
                     await handleSubscribe(orgID, req.body.applicationID, sharedApp[0].dataValues.API_REF_ID, sharedApp[0].dataValues.SUBSCRIPTION_REF_ID, response, isShared, t);
                 } else if (nonSharedApp.length > 0) {
@@ -908,11 +927,23 @@ const createSubscription = async (req, res) => {
                     const response = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, {
                         apiId: req.body.apiReferenceID,
                         applicationId: nonSharedApp[0].dataValues.CP_APP_REF,
-                        throttlingPolicy: req.body.policyName
+                        throttlingPolicy: req.body.policyName,
+                        ...(billingMetadata ? { billingMetadata } : {}),
                     });
                     await handleSubscribe(orgID, req.body.applicationID, nonSharedApp[0].dataValues.API_REF_ID, nonSharedApp[0].dataValues.SUBSCRIPTION_REF_ID, response, isShared, t);
                 }
-                await adminDao.createSubscription(orgID, req.body, t);
+                // No key mapping exists: skip CP call entirely.
+                // CP communication happens later when keys are generated (same for all plan types).
+                const existingSubscription = await adminDao.findSubscriptionByUniqueKey(
+                    orgID,
+                    req.body.applicationID,
+                    req.body.apiId,
+                    req.body.policyId,
+                    t,
+                );
+                if (!existingSubscription || existingSubscription.PAYMENT_STATUS !== "ACTIVE") {
+                    await adminDao.createSubscription(orgID, req.body, t);
+                }
                 trackSubscribeApi({
                     orgId: orgID,
                     appId: req.body.applicationID,
@@ -937,7 +968,16 @@ const createSubscription = async (req, res) => {
                                     applicationId: req.params?.applicationId
                                 });
                                 await handleSubscribe(orgID, req.body.applicationID, appRef.dataValues.API_REF_ID, appRef.dataValues.SUBSCRIPTION_REF_ID, subscription, sharedApp.length > 0 ? true : false, t);
-                                await adminDao.createSubscription(orgID, req.body, t);
+                                const existingSubAfterConflict = await adminDao.findSubscriptionByUniqueKey(
+                                    orgID,
+                                    req.body.applicationID,
+                                    req.body.apiId,
+                                    req.body.policyId,
+                                    t,
+                                );
+                                if (!existingSubAfterConflict || existingSubAfterConflict.PAYMENT_STATUS !== "ACTIVE") {
+                                    await adminDao.createSubscription(orgID, req.body, t);
+                                }
                                 return res.status(200).json({ message: 'Subscribed successfully' });
                             }
                         }
@@ -984,6 +1024,7 @@ const updateSubscription = async (req, res) => {
         }, async (t) => {
             try {
                 let app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
+                let status = "UNBLOCKED";
                 if (app.length === 0) {
                     app = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, false);
                 }
@@ -1000,14 +1041,38 @@ const updateSubscription = async (req, res) => {
                         if (subscruibedPolicy) {
                             throttlingPolicy = subscruibedPolicy.dataValues.POLICY_NAME;
                         }
-                        const subscriptionID = appAPIMapping[0].dataValues.SUBSCRIPTION_REF_ID;
-                        const response = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/subscriptions/${subscriptionID}`, {}, {
+                        const subscriptionRefID = appAPIMapping[0].dataValues.SUBSCRIPTION_REF_ID;
+
+                        const subscription = await adminDao.getAppApiSubscription(
+                            orgID,
+                            req.body.applicationID,
+                            req.body.apiId,
+                        );
+                        const billingMetadata =
+                            subscription?.length > 0 &&
+                            (subscription[0].BILLING_CUSTOMER_ID ||
+                                subscription[0].BILLING_SUBSCRIPTION_ID)
+                                ? {
+                                    billingCustomerId: subscription[0].BILLING_CUSTOMER_ID,
+                                    billingSubscriptionId:
+                                        subscription[0].BILLING_SUBSCRIPTION_ID,
+                                }
+                                : null;
+
+                        const paymentStatus =
+                            subscription?.length > 0 && subscription[0].PAYMENT_STATUS;
+                        if (paymentStatus === "CANCELED") {
+                            status = "BLOCKED";
+                        }
+
+                        const response = await invokeApiRequest(req, 'PUT', `${controlPlaneUrl}/subscriptions/${subscriptionRefID}`, {}, {
                             apiId: req.body.apiReferenceID,
                             applicationId: cpAppRef,
                             requestedThrottlingPolicy: req.body.policyName,
-                            subscriptionId: subscriptionID,
-                            status: 'UNBLOCKED',
-                            throttlingPolicy: throttlingPolicy
+                            subscriptionId: subscriptionRefID,
+                            status: status,
+                            throttlingPolicy: throttlingPolicy,
+                            ...(billingMetadata ? { billingMetadata } : {}),
                         });
                     }
                 }
@@ -1092,7 +1157,12 @@ const getAllSubscriptions = async (req, res) => {
         let subList = [];
         // Create response object
         if (subscriptions.length > 0) {
-            subList = subscriptions.map((sub) => new SubscriptionDTO(sub));
+            subList = subscriptions
+                .filter((sub) => {
+                    const ps = sub.PAYMENT_STATUS;
+                    return !ps || ps === 'ACTIVE';
+                })
+                .map((sub) => new SubscriptionDTO(sub));
         }
         res.status(200).send(subList);
     } catch (error) {
@@ -1115,10 +1185,13 @@ const deleteSubscription = async (req, res) => {
         subId: subID
     });
     try {
+        const subscriptionPreTx = await adminDao.getSubscription(orgID, subID);
+
         await sequelize.transaction({
             timeout: 60000,
         }, async (t) => {
             const subscription = await adminDao.getSubscription(orgID, subID, t);
+
             const subDeleteResponse = await adminDao.deleteSubscription(orgID, subID, t);
             if (subDeleteResponse === 0) {
                 throw new Sequelize.EmptyResultError("Resource not found to delete");
@@ -1134,6 +1207,36 @@ const deleteSubscription = async (req, res) => {
                 res.status(200).send("Resouce Deleted Successfully");
             }
         });
+
+        if (
+            subscriptionPreTx &&
+            subscriptionPreTx.BILLING_SUBSCRIPTION_ID &&
+            subscriptionPreTx.PAYMENT_PROVIDER === "STRIPE" &&
+            subscriptionPreTx.PAYMENT_STATUS !== "CANCELED"
+        ) {
+            try {
+                logger.info("Canceling Stripe subscription after DP delete", {
+                    subId: subID,
+                    billingSubscriptionId: subscriptionPreTx.BILLING_SUBSCRIPTION_ID,
+                });
+                const monetizationService = require("./monetizationService");
+                await monetizationService.cancelStripeByBillingId(
+                    orgID,
+                    subscriptionPreTx.BILLING_SUBSCRIPTION_ID,
+                );
+                logger.info("Stripe subscription canceled successfully", {
+                    subId: subID,
+                });
+            } catch (stripeErr) {
+                logger.warn(
+                    "Failed to cancel Stripe subscription (continuing after delete)",
+                    {
+                        subId: subID,
+                        error: stripeErr.message,
+                    },
+                );
+            }
+        }
     } catch (error) {
         logger.error('Subscription deletion failed', {
             error: error.message,
@@ -1203,7 +1306,18 @@ const createAppKeyMapping = async (req, res) => {
             for (const sub of subAPIs) {
                 const api = new APIDTO(sub);
                 const policyDetails = await apiDao.getSubscriptionPolicy(api.policyID, orgID, t);
-                const cpSubscribeResponse = await createCPSubscription(req, api.apiReferenceID, cpAppID, policyDetails);
+
+                const subJunction = sub.DP_APPLICATIONs?.[0]?.DP_API_SUBSCRIPTION?.dataValues;
+                let billingData = null;
+                if (subJunction?.BILLING_CUSTOMER_ID && subJunction?.BILLING_SUBSCRIPTION_ID) {
+                    billingData = {
+                        customerId: subJunction.BILLING_CUSTOMER_ID,
+                        subscriptionId: subJunction.BILLING_SUBSCRIPTION_ID,
+                        email: req.user?.email,
+                    };
+                }
+
+                const cpSubscribeResponse = await createCPSubscription(req, api.apiReferenceID, cpAppID, policyDetails, billingData);
                 apiSubscriptions.push(cpSubscribeResponse);
             }
             //create app key mapping
@@ -1224,6 +1338,16 @@ const createAppKeyMapping = async (req, res) => {
 
                 if (sharedKeyMapping.length === 0 && nonSharedKeyMapping.length === 0) {
                     await adminDao.createApplicationKeyMapping(appKeyMappping, t);
+                } else if (apiSubscription.subscriptionId) {
+                    // Update existing mapping with subscription ref id if it is missing
+                    const existingMapping = sharedKeyMapping[0] || nonSharedKeyMapping[0];
+                    if (!existingMapping.dataValues.SUBSCRIPTION_REF_ID) {
+                        await adminDao.updateApplicationKeyMapping(
+                            apiSubscription.apiId,
+                            appKeyMappping,
+                            t,
+                        );
+                    }
                 }
             }
 
@@ -1345,7 +1469,7 @@ const createCPApplicationOnBehalfOfUser = async (cpApplicationName, owner, cpOrg
     logger.info('Creating control plane application', {
         cpApplicationName
     });
-    headers = {
+    let headers = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${patToken}`
     }
@@ -1373,11 +1497,11 @@ const createCPApplicationOnBehalfOfUser = async (cpApplicationName, owner, cpOrg
         if (error.statusCode && error.statusCode === 409) {
             try {
                 logger.info('Application already exists in control plane, retrieving existing application', {
-                    orgId: req.params?.orgId,
+                    orgId: cpOrgId,
                     cpApplicationName
                 });
-                const cpAppResponse = await utils.apiRequest('GET', `${controlPlaneUrl}/applications?query=${cpApplicationName}`, headers, {}, cpOrgId);
-                return cpAppResponse.list[0];
+                const cpAppResponse = await util.apiRequest('GET', `${controlPlaneGwUrl}/applications?query=${cpApplicationName}`, headers, {}, cpOrgId);
+                return cpAppResponse.data.list[0];
             } catch (error) {
                 logger.error('Error occurred while fetching application', {
                     error: error.message,
@@ -1397,23 +1521,24 @@ const createCPSubscriptionOnBehalfOfUser = async (apiId, cpAppID, policyName, cp
         cpAppID,
         policyName
     });
+    const headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${patToken}`
+    }
+
     try {
         const requestBody = {
             apiId: apiId,
             applicationId: cpAppID,
             throttlingPolicy: policyName
         };
-        url = `${controlPlaneGwUrl}/subscriptions`;
-        headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${patToken}`
-        }
+        let url = `${controlPlaneGwUrl}/subscriptions`;
         const cpSubscribeResponse = await util.apiRequest('POST', url, headers, requestBody, cpOrgId);
         return cpSubscribeResponse.data;
     } catch (error) {
         if (error.statusCode && error.statusCode === 409) {
-            const response = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/subscriptions?apiId=${apiId}&applicationId=${cpAppID}`, {});
-            return response.list[0];
+            const response = await util.apiRequest('GET', `${controlPlaneGwUrl}/subscriptions?apiId=${apiId}&applicationId=${cpAppID}`, headers, null, cpOrgId);
+            return response.data.list[0];
         }
         logger.error('key mapping create error failed', {
             error: error.message,
@@ -1423,6 +1548,69 @@ const createCPSubscriptionOnBehalfOfUser = async (apiId, cpAppID, policyName, cp
         });
         throw error;
     }
+}
+
+const createAppKeyMappingOnBehalfOfUser = async (cpAppID, keymanager, clientId, keyType, cpOrgId, patToken) => {
+    logger.debug('Creating control plane application key mapping', {
+        cpAppID,
+        keymanager,
+        clientId,
+        keyType
+    });
+    let headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${patToken}`
+    }
+    try {
+        const requestBody = {
+            "consumerKey": clientId,
+            "keyType": keyType,
+            "keyManager": keymanager
+        };
+        let url = `${controlPlaneGwUrl}/applications/${cpAppID}/map-keys`;
+        const cpSubscribeResponse = await util.apiRequest('POST', url, headers, requestBody, cpOrgId);
+        return cpSubscribeResponse.data;
+    } catch (error) {
+        if (error.statusCode && error.statusCode === 409) {
+            const response = await util.apiRequest('GET', `${controlPlaneGwUrl}/applications/${cpAppID}/oauth-keys`, headers, null, cpOrgId);
+
+            // Validate response structure
+            if (!response.data || !Array.isArray(response.data.list)) {
+                throw new CustomError(500, "Internal Server Error", "Invalid response structure from control plane");
+            }
+
+            // Validate each key mapping has required fields
+            let selectedKeyMapping = null;
+            for (const keyMapping of response.data.list) {
+                if (keyMapping.keyManager === keymanager && keyMapping.keyType === keyType && keyMapping.consumerKey === clientId) {
+                    selectedKeyMapping = keyMapping;
+                    break;
+                }
+            }
+            if (!selectedKeyMapping) {
+                throw new CustomError(500, "Internal Server Error", "Key Mapping creation failed");
+            }
+            return selectedKeyMapping;
+        }
+        logger.error('key mapping create error failed', {
+            error: error.message,
+            stack: error.stack,
+            cpAppID
+        });
+        throw error;
+    }
+}
+
+const getAPIMKeyManagersBehalfOfUser = async (cpOrgId, patToken) => {
+
+    let headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${patToken}`
+    }
+    let url = `${controlPlaneGwUrl}/key-managers?devPortalAppEnv=prod`;
+    const keymanagersResponse = await util.apiRequest('GET', url, headers, null, cpOrgId);
+
+    return keymanagersResponse.data.list;
 }
 
 const createCPApplication = async (req, cpApplicationName) => {
@@ -1470,11 +1658,12 @@ const createCPApplication = async (req, cpApplicationName) => {
     }
 }
 
-const createCPSubscription = async (req, apiId, cpAppID, policyDetails) => {
+const createCPSubscription = async (req, apiId, cpAppID, policyDetails, billingData = null) => {
     logger.info('Creating control plane subscription', {
         apiId,
         cpAppID,
-        policyDetails: policyDetails.dataValues ? policyDetails.dataValues.POLICY_NAME : policyDetails
+        policyDetails: policyDetails.dataValues ? policyDetails.dataValues.POLICY_NAME : policyDetails,
+        billingData: billingData ? { customerId: billingData.customerId, subscriptionId: billingData.subscriptionId } : null
     });
     try {
         const requestBody = {
@@ -1482,6 +1671,15 @@ const createCPSubscription = async (req, apiId, cpAppID, policyDetails) => {
             applicationId: cpAppID,
             throttlingPolicy: policyDetails.dataValues ? policyDetails.dataValues.POLICY_NAME : policyDetails
         };
+
+        // Add billing metadata if available (for paid subscriptions)
+        if (billingData) {
+            requestBody.billingMetadata = {
+                billingCustomerId: billingData.customerId,
+                billingSubscriptionId: billingData.subscriptionId,
+            };
+        }
+
         const cpSubscribeResponse = await invokeApiRequest(req, 'POST', `${controlPlaneUrl}/subscriptions`, {}, requestBody);
         return cpSubscribeResponse;
     } catch (error) {
@@ -1545,6 +1743,10 @@ const unsubscribeAPI = async (req, res) => {
     });
     try {
         const { appID, apiReferenceID, subscriptionID } = req.query;
+
+        // Capture billing IDs before the transaction so we can cancel externally afterwards
+        const subscriptionPreTx = await adminDao.getSubscription(orgID, subscriptionID);
+
         await sequelize.transaction({
             timeout: 60000,
         }, async (t) => {
@@ -1617,6 +1819,37 @@ const unsubscribeAPI = async (req, res) => {
                 return util.handleError(res, error);
             }
         });
+
+        // Cancel external Stripe subscription only after the unsubscribe transaction succeeds
+        if (
+            subscriptionPreTx &&
+            subscriptionPreTx.BILLING_SUBSCRIPTION_ID &&
+            subscriptionPreTx.PAYMENT_PROVIDER === 'STRIPE' &&
+            subscriptionPreTx.PAYMENT_STATUS !== 'CANCELED'
+        ) {
+            try {
+                logger.info("Canceling Stripe subscription after unsubscribe", {
+                    subscriptionID,
+                    billingSubscriptionId: subscriptionPreTx.BILLING_SUBSCRIPTION_ID,
+                });
+                const monetizationService = require("./monetizationService");
+                await monetizationService.cancelStripeByBillingId(
+                    orgID,
+                    subscriptionPreTx.BILLING_SUBSCRIPTION_ID,
+                );
+                logger.info("Stripe subscription canceled successfully", {
+                    subscriptionID,
+                });
+            } catch (stripeErr) {
+                logger.warn(
+                    "Failed to cancel Stripe subscription (continuing after unsubscribe)",
+                    {
+                        subscriptionID,
+                        error: stripeErr.message,
+                    },
+                );
+            }
+        }
     } catch (error) {
         logger.error('Error occurred while unsubscribing from API', {
             error: error.message,
@@ -1714,5 +1947,8 @@ module.exports = {
     createCPApplication,
     createCPSubscription,
     createCPApplicationOnBehalfOfUser,
-    createCPSubscriptionOnBehalfOfUser
+    createCPSubscriptionOnBehalfOfUser,
+    createAppKeyMappingOnBehalfOfUser,
+    getAPIMKeyManagersBehalfOfUser
 };
+

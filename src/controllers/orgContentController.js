@@ -87,6 +87,7 @@ const loadOrgContentFromAPI = async (req, res) => {
                 firstName: req.user.firstName,
                 lastName: req.user.lastName,
                 email: req.user.email,
+                isAdmin: req.user.isAdmin,
             }
         }
         templateContent = {
@@ -95,7 +96,6 @@ const loadOrgContentFromAPI = async (req, res) => {
             profile: req.isAuthenticated() ? profile : null
         };
         html = await renderTemplateFromAPI(templateContent, orgId, orgName, 'pages/home', req.params.viewName);
-        
         // Track home page visit telemetry
         trackHomePageVisit({ 
             orgId: orgId, 

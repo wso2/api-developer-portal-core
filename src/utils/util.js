@@ -65,9 +65,13 @@ function renderTemplate(templatePath, layoutPath, templateContent, isTechnical) 
     const template = Handlebars.compile(templateResponse.toString());
     const layout = Handlebars.compile(layoutResponse.toString());
 
+    const showApiWorkflowsNav = config.features?.apiWorkflows?.enabled === true;
+    const enrichedContent = { ...templateContent, showApiWorkflowsNav };
     return layout({
-        body: template(templateContent),
+        body: template(enrichedContent),
         portalConfigs: config.portalConfigs,
+        profile: templateContent.profile,
+        showApiWorkflowsNav,
     });
 }
 
@@ -112,19 +116,75 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
     const template = Handlebars.compile(templateResponse.toString());
     const layout = Handlebars.compile(layoutResponse.toString());
 
+    const showApiWorkflowsNav = config.features?.apiWorkflows?.enabled === true;
+    const enrichedContent = { ...templateContent, showApiWorkflowsNav };
     return layout({
-        body: template(templateContent),
+        body: template(enrichedContent),
         portalConfigs: config.portalConfigs,
+        profile: templateContent.profile,
+        showApiWorkflowsNav,
     });
 
+}
+
+async function renderLlmsTxt(templateContent, orgID, viewName) {
+
+    const dbPartial = await adminDao.getOrgContent({
+        orgId: orgID,
+        fileType: 'partial',
+        viewName: viewName,
+        fileName: 'llms-txt.hbs'
+    });
+    const partialSource = dbPartial
+        ? dbPartial.FILE_CONTENT.toString(constants.CHARSET_UTF8)
+        : fs.readFileSync(
+            path.join(process.cwd(), filePrefix + 'pages/llms-txt/partials/llms-txt.hbs'),
+            constants.CHARSET_UTF8
+        );
+    Handlebars.registerPartial('llms-txt', partialSource);
+
+    const pageSource = fs.readFileSync(
+        path.join(process.cwd(), filePrefix + 'pages/llms-txt/page.hbs'),
+        constants.CHARSET_UTF8
+    );
+    return Handlebars.compile(pageSource)(templateContent);
+}
+
+async function renderMarkdownTemplateFromAPI(templateContent, orgID, filePath, viewName) {
+
+    const partialName = path.basename(filePath) + '-md';
+    const dbPartial = await adminDao.getOrgContent({
+        orgId: orgID,
+        fileType: 'partial',
+        viewName: viewName,
+        fileName: partialName + '.hbs'
+    });
+    const partialSource = dbPartial
+        ? dbPartial.FILE_CONTENT.toString(constants.CHARSET_UTF8)
+        : fs.readFileSync(
+            path.join(process.cwd(), filePrefix + filePath + '/partials/' + partialName + '.hbs'),
+            constants.CHARSET_UTF8
+        );
+    Handlebars.registerPartial(partialName, partialSource);
+
+    const pageSource = fs.readFileSync(
+        path.join(process.cwd(), filePrefix + filePath + '/page-md.hbs'),
+        constants.CHARSET_UTF8
+    );
+    return Handlebars.compile(pageSource)(templateContent);
 }
 
 async function renderGivenTemplate(templatePage, layoutPage, templateContent) {
 
     const template = Handlebars.compile(templatePage.toString());
     const layout = Handlebars.compile(layoutPage.toString());
+    const showApiWorkflowsNav = config.features?.apiWorkflows?.enabled === true;
+    const enrichedContent = { ...templateContent, showApiWorkflowsNav };
     return layout({
-        body: template(templateContent),
+        body: template(enrichedContent),
+        portalConfigs: config.portalConfigs,
+        profile: templateContent.profile,
+        showApiWorkflowsNav,
     });
 }
 
@@ -489,7 +549,8 @@ const invokeApiRequest = async (req, method, url, headers, body, publicMode = fa
                 const decodedToken = jwt.decode(req.user.exchangeToken);
                 orgId = decodedToken?.organization.uuid;
             }
-
+        } else if (req.cpOrgID) {
+            orgId = req.cpOrgID;
         }
         const response = await apiRequest(method, url, headers, body, orgId);
         return response.data;
@@ -740,6 +801,7 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
             orgId: orgId,
             viewName: viewName,
             error: error.message,
+            description: error.description,
             stack: error.stack
         });
         throw new CustomError(error.statusCode || 500, error.message || 'Internal Server Error', error.description || 'Error reading files in directory');
@@ -751,31 +813,68 @@ function validateScripts(strContent) {
     try {
         const allowedScripts = new Set([
             "<script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'></script>",
+            '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>',
+            '<script src="https://js.stripe.com/v3/"></script>',
             "<script src='/technical-scripts/search.js' defer></script>",
             "<script src='/technical-scripts/filter.js' defer></script>",
             "<script src='/technical-scripts/common.js' defer></script>",
             "<script src='/technical-scripts/subscription.js' defer></script>",
-            "<script src='/technical-scripts/add-application-form.js' defer></script>"
+            "<script src='/technical-scripts/add-application-form.js' defer></script>",
+            "<script src='/technical-scripts/platform-subscription.js' defer></script>",
+            "<script src='/technical-scripts/subscription-modal.js' defer></script>",
+            "<script src='/technical-scripts/subscriptions-page.js' defer></script>",
+            "<script src='/technical-scripts/platform-api-keys-page.js' defer></script>",
+            '<script src="/technical-scripts/oauth2-key-generation.js" defer></script>',
+            '<script src="/technical-scripts/api-key-generation.js" defer></script>',
+            '<script src="/technical-scripts/billing.js" defer></script>',
+        ]);
+        const allowedInlineScripts = new Set([
+            // Reo analytics loader (src/defaultContent/layout/main.hbs)
+            "<script type=\"text/javascript\">\n      !function(){var e,t,n;e=\"{{portalConfigs.reoClientID}}\",t=function(){Reo.init({clientID:\"{{portalConfigs.reoClientID}}\"})},(n=document.createElement(\"script\")).src=\"https://static.reo.dev/\"+e+\"/reo.js\",n.defer=!0,n.onload=t,document.head.appendChild(n)}();\n    </script>",
+            // Token-map JSON data island (api-landing/partials/api-subscription-plans.hbs)
+            "<script id=\"token-map-data\" type=\"application/json\">{{{jsonSafePlatformSubscriptions ../platformSubscriptions}}}</script>",
+            // Token-meta bootstrap (api-landing/partials/api-subscription-plans.hbs)
+            "<script>\n                    (function() {\n                        var data = JSON.parse(document.getElementById('token-map-data').textContent || '[]');\n                        window.__tokenMeta = window.__tokenMeta || {};\n                        data.forEach(function(sub) {\n                            // store only non-sensitive metadata and masked token\n                            window.__tokenMeta[sub.subscriptionId] = {\n                                maskedToken: sub.maskedToken,\n                                customerName: sub.customerName,\n                                subscriptionPlanName: sub.subscriptionPlanName,\n                                status: sub.status\n                            };\n                        });\n                        // expose orgID for on-demand fetches\n                        window.__subscriptionOrgID = \"{{@root.orgID}}\";\n                    })();\n                </script>",
+            // Existing-subs JSON data island (api-landing/partials/api-subscription-plans.hbs)
+            "<script id=\"existing-subs-data\" type=\"application/json\">{{{json platformSubscriptions}}}</script>",
+            // Existing-subs bootstrap (api-landing/partials/api-subscription-plans.hbs)
+            "<script>\n                (function() {\n                    window.__subscriptionOrgID = window.__subscriptionOrgID || \"{{@root.orgID}}\";\n                    var raw = document.getElementById('existing-subs-data').textContent || '[]';\n                    try {\n                        var parsed = JSON.parse(raw);\n                        window.existingPlatformSubscriptions = parsed.map(function(sub) {\n                            return { subscriptionId: sub.subscriptionId, subscriptionPlanName: sub.subscriptionPlanName, status: sub.status };\n                        });\n                    } catch (e) {\n                        window.existingPlatformSubscriptions = [];\n                    }\n                })();\n            </script>",
+            // tokenMap + orgID bootstrap (api-subscriptions/partials/api-subscription-list.hbs
+            // and subscriptions/partials/subscription-list.hbs)
+            "<script>\n                window.__tokenMap = window.__tokenMap || {};\n                window.__subscriptionOrgID = \"{{@root.orgID}}\";\n            </script>",
+            // Modal click handler (apis/partials/api-listing.hbs)
+            "<script>\n    (function(){\n      function findClosest(el, selector){\n        while(el && el !== document){\n          if(el.matches && el.matches(selector)) return el;\n          el = el.parentNode;\n        }\n        return null;\n      }\n\n      document.addEventListener('click', function(e){\n        var modalTrigger = findClosest(e.target, '[data-modal]');\n        if(modalTrigger){\n          e.preventDefault();\n          if(modalTrigger.classList.contains('is-readonly') || modalTrigger.getAttribute('aria-disabled') === 'true'){\n            return;\n          }\n          if(typeof loadModal === 'function'){\n            loadModal(modalTrigger.getAttribute('data-modal'));\n          } else {\n            var id = modalTrigger.getAttribute('data-modal');\n            var el = document.getElementById(id);\n            if(el) {\n              el.style.display = 'flex';\n              document.body.classList.add('modal-open');\n              if(typeof prepareSubscriptionModal === 'function') {\n                try { prepareSubscriptionModal(id); } catch(err) { /* noop */ }\n              }\n            }\n          }\n          return;\n        }\n\n        var nav = findClosest(e.target, '[data-href]');\n        if(nav){\n          var href = nav.getAttribute('data-href');\n          if(href){ window.location.href = href; }\n        }\n      }, false);\n    })();\n  </script>",
         ]);
 
-        const scriptRegex = /<script(?:\s+[^>]*)?>[\s\S]*?<\/script>/g;
+        const scriptRegex = /<script(?:\s+[^>]*)?>[\s\S]*?<\/script>/gi;
         let match;
-        const extractedScripts = new Set();
 
         while ((match = scriptRegex.exec(strContent)) !== null) {
-            extractedScripts.add(match[0].trim());
-        }
+            const script = match[0].trim();
+            const openingTag = script.match(/^<script(?:\s+[^>]*)?>/i)?.[0] || '';
+            const hasSrc = /\bsrc\s*=/i.test(openingTag);
 
-        for (const script of extractedScripts) {
+            if (!hasSrc) {
+                const isEmpty = /^<script[^>]*>\s*<\/script>$/i.test(script);
+                if (isEmpty || allowedInlineScripts.has(script)) {
+                    continue;
+                }
+                logger.error("Script validation failed: inline scripts are not allowed", { script });
+                throw new CustomError(400, constants.ERROR_CODE[400], `Inline scripts are not allowed in uploaded themes: ${script}`);
+            }
             if (!allowedScripts.has(script)) {
-                throw new CustomError(400, constants.ERROR_CODE[400], `Additional scripts not allowed`);
+                logger.error("Script validation failed: disallowed script tag found", { script });
+                throw new CustomError(400, constants.ERROR_CODE[400], `Additional scripts not allowed: ${script}`);
             }
         }
     } catch (error) {
-        logger.error("Error occurred while validating scripts", {
-            error: error.message,
-            stack: error.stack,
-        });
+        if (!(error instanceof CustomError)) {
+            logger.error("Error occurred while validating scripts", {
+                error: error.message,
+                description: error.description,
+                stack: error.stack,
+            });
+        }
         throw error;
     }
 }
@@ -798,6 +897,23 @@ async function appendSubscriptionPlanDetails(orgID, subscriptionPolicies) {
     if (subscriptionPolicies) {
         for (const policy of subscriptionPolicies) {
             const subscriptionPlan = await loadSubscriptionPlan(orgID, policy.policyName);
+            if (!subscriptionPlan) {
+                logger.warn('[appendSubscriptionPlanDetails] Plan not found, skipping', {
+                    orgID,
+                    policyName: policy.policyName
+                });
+                continue;
+            }
+            const billingPlanRaw = subscriptionPlan.billingPlan;
+            const billingPlan = (typeof billingPlanRaw === 'string') ? billingPlanRaw.trim().toUpperCase() : '';
+            const isPaid = billingPlan === 'COMMERCIAL';
+            logger.debug('[appendSubscriptionPlanDetails] Plan:', {
+                policyID: subscriptionPlan.policyID,
+                policyName: subscriptionPlan.policyName,
+                billingPlanRaw,
+                billingPlan,
+                isPaid
+            });
             subscriptionPlans.push({
                 policyID: subscriptionPlan.policyID,
                 displayName: subscriptionPlan.displayName,
@@ -805,6 +921,13 @@ async function appendSubscriptionPlanDetails(orgID, subscriptionPolicies) {
                 description: subscriptionPlan.description,
                 billingPlan: subscriptionPlan.billingPlan,
                 requestCount: subscriptionPlan.requestCount,
+                pricingModel: subscriptionPlan.pricingModel,
+                currency: subscriptionPlan.currency,
+                billingPeriod: subscriptionPlan.billingPeriod,
+                flatAmount: subscriptionPlan.flatAmount,
+                unitAmount: subscriptionPlan.unitAmount,
+                pricingMetadata: subscriptionPlan.pricingMetadata,
+                isPaid: isPaid
             });
         }
     }
@@ -827,7 +950,7 @@ const loadSubscriptionPlan = async (orgID, policyName) => {
             error: error.message,
             stack: error.stack
         });
-        util.handleError(res, error);
+        return null;
     }
 }
 
@@ -917,6 +1040,10 @@ function filterAllowedAPIs(searchResults, allowedAPIs) {
         if (constants.FEDERATED_GATEWAY_VENDORS.includes(gatewayVendor)) {
             return true;
         }
+        // MCP servers published via the registry have no referenceID – skip control plane check
+        if (api?.apiInfo?.apiType === constants.API_TYPE.MCP && !api.apiReferenceID) {
+            return true;
+        }
         return allowedAPIs.some(allowedAPI => api.apiReferenceID === allowedAPI.id);
     });
     return searchResults;
@@ -941,12 +1068,27 @@ const enforcePortalMode = async (req, res, next) => {
     }
 }
 
+async function isAiDisabledForPortal(orgID, viewName) {
+    const configAsset = await adminDao.getOrgContent({
+        orgId: orgID, fileType: constants.FILE_TYPE.LLMS_CONFIG, viewName, fileName: constants.FILE_NAME.LLMS_CONFIG
+    });
+    if (!configAsset) return false;
+    try {
+        const llmsConfig = JSON.parse(configAsset.FILE_CONTENT.toString('utf8'));
+        return llmsConfig.aiEnabled === false;
+    } catch (e) {
+        return false;
+    }
+}
+
 module.exports = {
     loadMarkdown,
     renderTemplate,
     loadLayoutFromAPI,
     loadTemplateFromAPI,
     renderTemplateFromAPI,
+    renderMarkdownTemplateFromAPI,
+    renderLlmsTxt,
     renderGivenTemplate,
     handleError,
     retrieveContentType,
@@ -971,5 +1113,6 @@ module.exports = {
     readDocFiles,
     unzipDirectory,
     filterAllowedAPIs,
-    enforcePortalMode
+    enforcePortalMode,
+    isAiDisabledForPortal
 }
