@@ -549,7 +549,8 @@ const invokeApiRequest = async (req, method, url, headers, body, publicMode = fa
                 const decodedToken = jwt.decode(req.user.exchangeToken);
                 orgId = decodedToken?.organization.uuid;
             }
-
+        } else if (req.cpOrgID) {
+            orgId = req.cpOrgID;
         }
         const response = await apiRequest(method, url, headers, body, orgId);
         return response.data;
