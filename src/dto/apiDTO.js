@@ -58,7 +58,7 @@ class APIInfo {
         this.apiDescription = apiInfo.API_DESCRIPTION;
         this.apiType = apiInfo.API_TYPE;
         this.visibility = apiInfo.VISIBILITY;
-        this.agentVisibility = apiInfo.AGENT_VISIBILITY || 'HIDDEN';
+        this.agentVisibility = apiInfo.AGENT_VISIBILITY || 'VISIBLE';
         this.gatewayVendor = apiInfo.METADATA_SEARCH?.apiInfo?.gatewayVendor || 'wso2';
         this.tokenBasedSubscriptionEnabled = apiInfo.TOKEN_BASED_SUBSCRIPTION_ENABLED || false;
         this.gatewayType = apiInfo.GATEWAY_TYPE || null;
