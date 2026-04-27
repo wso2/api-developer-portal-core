@@ -85,7 +85,7 @@ const createAPILabelMapping = async (orgID, apiID, labels, t) => {
                 ORG_ID: orgID
             });
         });
-        const labelResponse = await APILabels.bulkCreate(labelList, { transaction: t });
+        const labelResponse = await APILabels.bulkCreate(labelList, { transaction: t, ignoreDuplicates: true });
         return labelResponse;
     } catch (error) {
         if (error instanceof Sequelize.UniqueConstraintError) {

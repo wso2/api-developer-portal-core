@@ -1040,6 +1040,10 @@ function filterAllowedAPIs(searchResults, allowedAPIs) {
         if (constants.FEDERATED_GATEWAY_VENDORS.includes(gatewayVendor)) {
             return true;
         }
+        // MCP servers published via the registry have no referenceID – skip control plane check
+        if (api?.apiInfo?.apiType === constants.API_TYPE.MCP && !api.apiReferenceID) {
+            return true;
+        }
         return allowedAPIs.some(allowedAPI => api.apiReferenceID === allowedAPI.id);
     });
     return searchResults;

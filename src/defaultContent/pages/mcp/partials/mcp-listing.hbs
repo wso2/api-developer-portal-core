@@ -66,10 +66,10 @@
                {{#if apiInfo.apiImageMetadata.api-icon}}
                   <img src="{{apiInfo.apiImageMetadata.api-icon}}" class="api-card-img" alt="..." />
                 {{else}}
-                  <div class="image-icon">{{firstTwoLetters apiInfo.apiName}}</div>
+                  <div class="image-icon">{{firstTwoLetters (or apiInfo.apiTitle apiInfo.apiName)}}</div>
                 {{/if}}
             <div class="flex-grow-1">
-              <h5 class="api-card-title mb-0">{{apiInfo.apiName}}</h5>
+              <h5 class="api-card-title mb-0">{{or apiInfo.apiTitle apiInfo.apiName}}</h5>
               <div class="d-flex align-items-center gap-2">
                 <p class="mb-0 mt-1" style="font-size: 16px;">{{apiInfo.apiVersion}}</p>
                   <div class="type-badge badge-custom2" style="display: flex; flex-direction: row; align-items: center;">
