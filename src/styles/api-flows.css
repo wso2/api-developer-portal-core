@@ -724,6 +724,13 @@
     min-width: 0;
 }
 
+.af-api-card-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
 .af-api-card-ext-link {
     flex-shrink: 0;
     display: flex;
@@ -1272,18 +1279,29 @@
 }
 
 .af-sd-validation-header {
+    width: 100%;
     padding: 0.5rem 0.875rem;
     background: var(--secondary-bg-color, #f8f9fa);
     font-size: 0.78rem;
     font-weight: 600;
     color: var(--bs-secondary, #6c757d);
+    border: none;
     border-bottom: 1px solid var(--bs-gray-200, #e9ecef);
     border-radius: 0.625rem 0.625rem 0 0;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 0.25rem;
     position: relative;
+    cursor: pointer;
+    text-align: left;
 }
+.af-sd-validation-header:hover { background: var(--bs-gray-200, #e9ecef); }
+.af-sd-chevron { font-size: 0.7rem; transition: transform 0.2s ease; flex-shrink: 0; }
+.af-sd-validation-header[aria-expanded="false"] .af-sd-chevron { transform: rotate(-90deg); }
+.af-sd-collapsed { display: none; }
+.af-sd-validation:has(> .af-sd-validation-header[aria-expanded="false"]) { border-bottom: none; }
+.af-sd-validation-header[aria-expanded="false"] { border-bottom: none; border-radius: 0.625rem; }
 
 .af-sd-validation-hint {
     font-weight: 400;
@@ -1515,29 +1533,28 @@
 .af-bring-back-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
-    padding: 0.1rem 0.25rem;
-    border: none;
+    gap: 0.25rem;
+    padding: 0 0.4rem;
+    height: calc(0.75rem * 1.8);
+    border: 1px solid var(--primary-main-color);
     background: none;
-    font-size: 0.8125rem;
-    font-weight: 500;
+    font-size: 0.75rem;
     color: var(--primary-main-color);
     cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    border-radius: 4px;
+    line-height: 1;
     white-space: nowrap;
-    border-radius: 3px;
-    line-height: 1.4;
+    flex-shrink: 0;
 }
 
 .af-bring-back-btn:hover {
-    opacity: 0.8;
+    background-color: var(--primary-main-color);
+    color: #fff;
 }
 
 .af-bring-back-btn:focus-visible {
     outline: 2px solid var(--primary-main-color);
     outline-offset: 2px;
-    text-decoration: none;
 }
 
 .af-bring-back-icon {
@@ -1870,8 +1887,7 @@
 .af-wizard { display:flex; flex-direction:column; }
 
 .af-wizard-header {
-    padding: 1rem 1.5rem 0;
-    border-bottom: 1px solid var(--bs-gray-200);
+    padding: 1rem 1.5rem 1rem;
     background: var(--main-bg-color);
 }
 
@@ -1884,8 +1900,12 @@
 /* Stepper */
 .af-stepper {
     display:flex; align-items:center; gap:0;
-    padding-bottom:0;
     overflow-x:auto;
+    background: var(--secondary-bg-color, #f8f9fa);
+    border: 1px solid var(--bs-gray-200);
+    border-radius: 0.75rem;
+    padding: 0.375rem 1rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 .af-stepper-step {
     display:flex; align-items:center; gap:0.5rem;
@@ -1960,6 +1980,13 @@
     border-radius:0.75rem;
     padding:0.875rem 1rem;
     display:flex; flex-direction:column; gap:0.625rem;
+}
+.af-rp-section-card-title {
+    font-size:0.75rem;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:var(--bs-secondary);
 }
 .af-rp-divider { border:none; border-top:1px solid var(--bs-gray-200); margin:0; }
 
@@ -2039,6 +2066,12 @@
     background-repeat:no-repeat; background-position:center;
     background-size:10px;
 }
+
+/* Field status inline indicator */
+.af-field-status { display:inline-flex; align-items:center; line-height:1; }
+.af-fsi { font-size:0.875rem; }
+.af-fsi-ok { color:#16a34a; }
+.af-fsi-warn { color:#f59e0b; }
 
 /* Visibility Card Selector (Portal / Agent) */
 .af-visibility-cards {
@@ -2170,18 +2203,24 @@
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
-    padding: 0.4375rem 0.875rem;
-    background: #c96a43;
+    padding: 0.3rem 0.65rem;
+    background: var(--primary-light-color);
     color: #fff;
-    border: 1px solid #b85c39;
+    border: 1px solid var(--primary-light-color);
     border-radius: 0.5rem;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.15s;
 }
 .af-regen-all-btn:hover { background: #b85c39; }
 .af-regen-all-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Match copy prompt button size to regen button */
+.af-prompt-action-toolbar .common-btn-outlined {
+    padding: 0.3rem 0.65rem;
+    font-size: 0.8125rem;
+}
 
 /* ===== Step 3 — Prompt Sections ===== */
 .af-prompt-sections {
@@ -2440,8 +2479,7 @@
 }
 
 .llms-config-header {
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--bs-gray-200);
+    padding-bottom: 0.25rem;
 }
 
 .common-btn-danger {
@@ -2456,4 +2494,86 @@
 .btn.common-btn-danger.disabled {
     background-color: var(--danger-color);
     opacity: 0.65;
+}
+
+/* ── API card picker filter dropdown ── */
+.af-api-filter-dropdown-wrap {
+    position: relative;
+}
+
+.af-api-filter-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+    border-radius: 0 0.375rem 0.375rem 0 !important;
+}
+
+.af-api-filter-toggle--active {
+    background: color-mix(in srgb, var(--primary-main-color) 12%, transparent);
+    border-color: var(--primary-main-color) !important;
+    color: var(--primary-main-color) !important;
+}
+
+.af-api-filter-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.1em;
+    height: 1.1em;
+    padding: 0 0.25em;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1;
+    border-radius: 999px;
+    background: var(--primary-main-color);
+    color: var(--light-text-color, #fff);
+}
+
+.af-api-filter-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 200;
+    min-width: 170px;
+    background: var(--main-bg-color, #fff);
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 0.35rem 0;
+}
+
+.af-api-filter-menu--open {
+    display: block;
+}
+
+.af-api-filter-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--main-text-color);
+    cursor: pointer;
+    margin: 0;
+    user-select: none;
+}
+
+.af-api-filter-option:hover {
+    background: color-mix(in srgb, var(--primary-main-color) 8%, transparent);
+}
+
+.af-api-filter-option input[type="checkbox"] {
+    accent-color: var(--primary-main-color);
+    width: 0.9rem;
+    height: 0.9rem;
+    flex-shrink: 0;
+}
+
+.af-api-filter-divider {
+    height: 1px;
+    background: #dee2e6;
+    margin: 0.25rem 0;
 }

@@ -372,9 +372,23 @@ hr {
 }
 
 .api-banner-icon {
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   justify-content: flex-end;
+}
+
+.api-banner-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  margin-right: 2rem;
+  align-items: center;
+}
+
+.api-banner-icon-wrap .btn-try-ai {
+  position: absolute;
+  bottom: 0.5rem;
+  right: -1.5rem;
 }
 
 .api-image {
@@ -385,7 +399,6 @@ hr {
   object-fit: cover;
   margin-bottom: 0;
   margin-right: 2.5rem;
-  float: right;
 }
 
 .api-image-small {
@@ -456,10 +469,10 @@ hr {
   font-weight: 600;
   color: var(--primary-main-color);
   margin: 0;
-  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
-  overflow: hidden;      
-  text-overflow: ellipsis;    
 }
 
 .api-version {
@@ -1353,4 +1366,44 @@ hr {
   font-weight: 700;
   color: #64748b;
   white-space: nowrap;
+}
+
+.api-version-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.api-version-row .api-version {
+  margin-bottom: 0;
+}
+
+.btn-try-ai {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: linear-gradient(135deg, #6B4FE8, #E040D0);
+  background-size: 200% 200%;
+  color: #ffffff;
+  border: none;
+  padding: 0.5rem 1.1rem;
+  border-radius: 2rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  animation: btn-try-ai-shimmer 4s ease infinite;
+  transition: box-shadow 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 10px rgba(107, 79, 232, 0.35);
+}
+
+.btn-try-ai:hover {
+  box-shadow: 0 4px 16px rgba(107, 79, 232, 0.45);
+}
+
+@keyframes btn-try-ai-shimmer {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
