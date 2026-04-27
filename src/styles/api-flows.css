@@ -1300,7 +1300,7 @@
 .af-sd-chevron { font-size: 0.7rem; transition: transform 0.2s ease; flex-shrink: 0; }
 .af-sd-validation-header[aria-expanded="false"] .af-sd-chevron { transform: rotate(-90deg); }
 .af-sd-collapsed { display: none; }
-.af-sd-validation[aria-expanded="false"] { border-bottom: none; }
+.af-sd-validation:has(> .af-sd-validation-header[aria-expanded="false"]) { border-bottom: none; }
 .af-sd-validation-header[aria-expanded="false"] { border-bottom: none; border-radius: 0.625rem; }
 
 .af-sd-validation-hint {

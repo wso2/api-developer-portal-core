@@ -44,16 +44,22 @@
 
             <div class="mb-3">
                 <label class="form-label fw-semibold small" for="llmsPortalName">Portal name
-                    <i class="bi bi-info-circle text-muted ms-1" data-bs-toggle="tooltip"
-                        data-bs-title="Replaces the default orgName Developer Portal heading."></i>
+                    <button type="button" class="btn btn-link p-0 border-0 text-muted ms-1 align-baseline"
+                        aria-label="Portal name help" data-bs-toggle="tooltip"
+                        data-bs-title="Replaces the default orgName Developer Portal heading.">
+                        <i class="bi bi-info-circle" aria-hidden="true"></i>
+                    </button>
                 </label>
                 <input type="text" class="form-control" id="llmsPortalName"
                     placeholder="e.g. Acme Developer Portal">
             </div>
             <div class="mb-4">
                 <label class="form-label fw-semibold small" for="llmsPortalDescription">Description
-                    <i class="bi bi-info-circle text-muted ms-1" data-bs-toggle="tooltip"
-                        data-bs-title="Shown below the portal name to orient AI agents."></i>
+                    <button type="button" class="btn btn-link p-0 border-0 text-muted ms-1 align-baseline"
+                        aria-label="Description help" data-bs-toggle="tooltip"
+                        data-bs-title="Shown below the portal name to orient AI agents.">
+                        <i class="bi bi-info-circle" aria-hidden="true"></i>
+                    </button>
                 </label>
                 <textarea class="form-control" id="llmsPortalDescription" rows="3"
                     placeholder="Describe your portal in 1–2 sentences…"></textarea>

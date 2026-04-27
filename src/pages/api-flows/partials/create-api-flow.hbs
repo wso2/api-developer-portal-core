@@ -229,12 +229,12 @@
                         {{!-- Arazzo: source description validation --}}
                         <div class="af-sd-validation mt-2 d-none" id="sdValidationContainer">
                             <button type="button" class="af-sd-validation-header" id="sdValidationToggle"
-                                aria-expanded="true" aria-controls="sdValidationItems">
+                                aria-expanded="true" aria-controls="sdValidationItems"
+                                aria-describedby="sdInfoTip">
                                 <span class="d-flex align-items-center gap-1">
                                     <i class="bi bi-link-45deg" aria-hidden="true"></i>Source Descriptions
                                     <span class="af-sd-validation-hint" id="sdValidationHint"></span>
-                                    <span class="af-info-tip af-info-tip--right ms-1" tabindex="0"
-                                        aria-describedby="sdInfoTip" aria-label="Tip about source descriptions">
+                                    <span class="af-info-tip af-info-tip--right ms-1">
                                         <i class="bi bi-info-circle" aria-hidden="true"></i>
                                         <span class="af-info-tip-content" id="sdInfoTip" role="tooltip">
                                             Use <strong>Create from Template</strong> to auto-populate source descriptions
@@ -294,11 +294,11 @@
                                 placeholder="Filter APIs by name, type, or description…" autocomplete="off" />
                             <div class="af-api-filter-dropdown-wrap">
                                 <button type="button" class="btn btn-sm common-btn-outlined af-api-filter-toggle"
-                                    id="apiFilterDropdownBtn" aria-expanded="false" aria-haspopup="true">
+                                    id="apiFilterDropdownBtn" aria-expanded="false" aria-controls="apiFilterMenu">
                                     <i class="bi bi-funnel me-1"></i> Filter
                                     <span class="af-api-filter-badge d-none" id="apiFilterBadge"></span>
                                 </button>
-                                <div class="af-api-filter-menu" id="apiFilterMenu" role="menu">
+                                <div class="af-api-filter-menu" id="apiFilterMenu" role="group" aria-labelledby="apiFilterDropdownBtn">
                                     <label class="af-api-filter-option">
                                         <input type="checkbox" class="af-api-filter-check" data-af-filter="selectedOnly" />
                                         <span>Selected only</span>

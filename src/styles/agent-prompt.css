@@ -27,6 +27,14 @@
     100% { background-position: 0% 50%; }
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .btn-prompt {
+        animation: none;
+        transition: none;
+        background-position: 0% 50%;
+    }
+}
+
 .api-flow-prompt-toolbar {
     display: flex;
     align-items: center;
