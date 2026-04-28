@@ -385,15 +385,24 @@ const loadAPIContent = async (req, res) => {
                         apiDetails = {};
                         apiDetails['serverDetails'] = mcpProductionURL ? { productionURL: mcpProductionURL, sandboxURL: '' } : '';
                         try {
-                            let rawSchema = await apiDao.getAPIFile(
-                                'schema.json',
+                            let rawSchema = await apiDao.getAPIDoc(
                                 constants.DOC_TYPES.SCHEMA_DEFINITION,
                                 orgID,
-                                apiID
+                                apiID,
+                                null
                             );
                             if (rawSchema) {
                                 const schemaString = rawSchema.API_FILE.toString(constants.CHARSET_UTF8);
-                                schemaDefinition = JSON.parse(schemaString);
+                                const parsed = JSON.parse(schemaString);
+                                if (Array.isArray(parsed)) {
+                                    schemaDefinition = {
+                                        tools: parsed.filter(item => item.type === 'TOOL'),
+                                        resources: parsed.filter(item => item.type === 'RESOURCE'),
+                                        prompts: parsed.filter(item => item.type === 'PROMPT'),
+                                    };
+                                } else {
+                                    schemaDefinition = parsed;
+                                }
                             }
                         } catch (err) {
                             logger.error("Failed to load or parse schema definition", {
@@ -526,7 +535,8 @@ const getAPIDefinition = async (orgName, viewName, apiHandle) => {
         templateContent.apiType = apiType;
         let apiDefinition;
         if (metaData.apiInfo.apiType === constants.API_TYPE.MCP) {
-            templateContent.swagger = null;
+            const productionURL = metaData.endPoints?.productionURL || '';
+            templateContent.swagger = JSON.stringify({ servers: [{ url: productionURL }] });
         } else if (metaData.apiInfo.apiType === constants.API_TYPE.GRAPHQL) {
             apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_GRAPHQL, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
             templateContent.graphql = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
@@ -699,6 +709,9 @@ const loadDocument = async (req, res) => {
                 const remotes = apiMetadata?.apiInfo?.remotes || [];
                 const serverUrl = remotes.length > 0 ? remotes[0].url : '';
                 templateContent.swagger = JSON.stringify({ servers: [{ url: serverUrl }] });
+            } else if (definitionResponse.apiType === constants.API_TYPE.MCP) {
+                // CP-registered MCP: use server URL from endPoints
+                templateContent.swagger = definitionResponse.swagger;
             } else if (definitionResponse.apiType !== constants.API_TYPE.WS && definitionResponse.apiType !== constants.API_TYPE.GRAPHQL && definitionResponse.apiType !== constants.API_TYPE.WEBSUB) {
                 let modifiedSwagger = replaceEndpointParams(JSON.parse(definitionResponse.swagger), apiMetadata.endPoints.productionURL, apiMetadata.endPoints.sandboxURL);
                 if (config.controlPlane?.enabled !== false) {
@@ -800,9 +813,9 @@ const loadDocument = async (req, res) => {
                 const apiMetadata = await apiDao.getAPIMetadata(orgID, apiID);
                 let apiType = apiMetadata[0].dataValues.API_TYPE;
                 const referenceID = apiMetadata[0].dataValues.REFERENCE_ID;
-                // Registry MCPs have no stored doc types — inject Specification entry so sidebar renders
-                if (apiType === constants.API_TYPE.MCP && !referenceID && docNames.length === 0) {
-                    docNames = [{ type: constants.DOC_TYPES.DOCS.API_DEFINITION }];
+                // All MCPs (registry and CP) need a Specification entry in the sidebar
+                if (apiType === constants.API_TYPE.MCP && !docNames.some(d => d.type === constants.DOC_TYPES.DOCS.API_DEFINITION)) {
+                    docNames = [{ type: constants.DOC_TYPES.DOCS.API_DEFINITION }, ...docNames];
                 }
                 templateContent.baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
                 templateContent.baseDocUrl = baseDocUrl;                
@@ -1248,6 +1261,7 @@ const loadAPIContentMd = async (req, res) => {
 
         // Determine auth type from control plane (unauthenticated call)
         req.cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
+        const isMCPFromRegistry = metaData.apiInfo?.apiType === constants.API_TYPE.MCP && !metaData.apiReferenceID;
         let showOAuth2 = true;
         let showApiKey = false;
         let noAuth = false;
@@ -1281,7 +1295,7 @@ const loadAPIContentMd = async (req, res) => {
                 if (raw) apiDefinition = raw.API_FILE.toString(constants.CHARSET_UTF8);
             } else if (apiType === constants.API_TYPE.MCP) {
                 specHeading = 'Tool Schema';
-                const raw = await apiDao.getAPIFile(constants.FILE_NAME.SCHEMA_DEFINITION_FILE_NAME, constants.DOC_TYPES.SCHEMA_DEFINITION, orgID, apiID);
+                const raw = await apiDao.getAPIDoc(constants.DOC_TYPES.SCHEMA_DEFINITION, orgID, apiID, null);
                 if (raw) apiDefinition = raw.API_FILE.toString(constants.CHARSET_UTF8);
             } else {
                 if (apiType === constants.API_TYPE.WS || apiType === constants.API_TYPE.WEBSUB) specHeading = 'AsyncAPI Specification';
@@ -1350,10 +1364,28 @@ const loadAPIContentMd = async (req, res) => {
         const specExt = apiType === constants.API_TYPE.GRAPHQL ? 'graphql'
             : apiType === 'SOAP' ? 'xml'
             : 'json';
+        let schemaDefinition = null;
+        if (apiType === constants.API_TYPE.MCP && apiDefinition) {
+            try {
+                const parsed = JSON.parse(apiDefinition);
+                if (Array.isArray(parsed)) {
+                    schemaDefinition = {
+                        tools: parsed.filter(item => item.type === 'TOOL'),
+                        resources: parsed.filter(item => item.type === 'RESOURCE'),
+                        prompts: parsed.filter(item => item.type === 'PROMPT'),
+                    };
+                } else {
+                    schemaDefinition = parsed;
+                }
+            } catch (parseErr) {
+                logger.warn('Could not parse MCP schema definition for markdown', { orgID, apiID, error: parseErr.message });
+            }
+        }
         const templateContent = {
             apiMetadata: metaData,
             subscriptionPlans,
             apiDefinition,
+            schemaDefinition,
             specHeading,
             specUrl: `${linkBase}/docs/specification.${specExt}`,
             docs: docs.length > 0 ? docs : null,
@@ -1362,6 +1394,7 @@ const loadAPIContentMd = async (req, res) => {
             showOAuth2,
             showApiKey,
             noAuth,
+            isMCPFromRegistry,
         };
         const templateDir = apiType === constants.API_TYPE.MCP ? 'pages/mcp-landing' : 'pages/api-landing';
         const md = await util.renderMarkdownTemplateFromAPI(templateContent, orgID, templateDir, viewName);
