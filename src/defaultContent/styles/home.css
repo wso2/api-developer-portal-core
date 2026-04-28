@@ -58,6 +58,20 @@
   100% { transform: translateX(280%) skewX(-15deg); }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .discover-ai-btn {
+    animation: none;
+    transition: none;
+  }
+  .discover-ai-btn::before {
+    animation: none;
+  }
+  .discover-ai-btn:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
 .hero-title {
   font-size: 2.75rem;
   font-weight: 600;
