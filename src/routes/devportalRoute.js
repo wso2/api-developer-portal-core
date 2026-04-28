@@ -67,7 +67,9 @@ router.post(
     '/organizations/:orgId/apis',
     enforceSecuirty(constants.SCOPES.DEVELOPER),
     multipartHandler.fields([
+        {name: 'api', maxCount: 1},
         {name: 'apiDefinition', maxCount: 1},
+        {name: 'artifact', maxCount: 1},
         {name: 'schemaDefinition', maxCount: 1},
     ]),
     apiMetadataService.createAPIMetadata);
@@ -77,7 +79,9 @@ router.put(
     '/organizations/:orgId/apis/:apiId',
     enforceSecuirty(constants.SCOPES.DEVELOPER),
     multipartHandler.fields([
+        {name: 'api', maxCount: 1},
         {name: 'apiDefinition', maxCount: 1},
+        {name: 'artifact', maxCount: 1},
         {name: 'schemaDefinition', maxCount: 1},
     ]),
     apiMetadataService.updateAPIMetadata);
@@ -89,6 +93,12 @@ router.put('/organizations/:orgId/subscription-policies', enforceSecuirty(consta
 router.delete('/organizations/:orgId/subscription-policies/:policyName', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.deleteSubscriptionPolicy);
 
 const apiZip = multer({ dest: '/tmp' });
+// New /content routes (ZIP structure: web/ + docs/)
+router.post('/organizations/:orgId/apis/:apiId/content', enforceSecuirty(constants.SCOPES.DEVELOPER), apiZip.single('apiContent'), apiMetadataService.createAPIContent);
+router.put('/organizations/:orgId/apis/:apiId/content', enforceSecuirty(constants.SCOPES.DEVELOPER), apiZip.single('apiContent'), apiMetadataService.updateAPIContent);
+router.get('/organizations/:orgId/apis/:apiId/content', apiMetadataService.getAPIFile);
+router.delete('/organizations/:orgId/apis/:apiId/content', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIFile);
+// Legacy /template routes (ZIP structure: {name}/content/ + images/ + documents/)
 router.post('/organizations/:orgId/apis/:apiId/template', enforceSecuirty(constants.SCOPES.DEVELOPER), apiZip.single('apiContent'), apiMetadataService.createAPITemplate);
 router.put('/organizations/:orgId/apis/:apiId/template', enforceSecuirty(constants.SCOPES.DEVELOPER), apiZip.single('apiContent'), apiMetadataService.updateAPITemplate);
 router.get('/organizations/:orgId/apis/:apiId/template', apiMetadataService.getAPIFile);
@@ -99,7 +109,9 @@ router.post(
     '/apis',
     enforceSecuirty(constants.SCOPES.DEVELOPER),
     multipartHandler.fields([
+        {name: 'api', maxCount: 1},
         {name: 'apiDefinition', maxCount: 1},
+        {name: 'artifact', maxCount: 1},
         {name: 'schemaDefinition', maxCount: 1},
     ]),
     apiMetadataService.createAPIMetadata); // s2s applied
@@ -108,7 +120,9 @@ router.put(
     '/apis/:apiId',
     enforceSecuirty(constants.SCOPES.DEVELOPER),
     multipartHandler.fields([
+        {name: 'api', maxCount: 1},
         {name: 'apiDefinition', maxCount: 1},
+        {name: 'artifact', maxCount: 1},
         {name: 'schemaDefinition', maxCount: 1},
     ]),
     apiMetadataService.updateAPIMetadata); // s2s applied

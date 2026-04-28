@@ -338,8 +338,17 @@ const textFiles = [
     constants.FILE_EXTENSIONS.JSON, constants.FILE_EXTENSIONS.YAML, constants.FILE_EXTENSIONS.YML
 ]
 
+const imageFiles = [
+    constants.FILE_EXTENSIONS.SVG, constants.FILE_EXTENSIONS.JPG,
+    constants.FILE_EXTENSIONS.JPEG, constants.FILE_EXTENSIONS.PNG
+]
+
 const isTextFile = (fileExtension) => {
     return textFiles.includes(fileExtension)
+}
+
+const isImageFile = (fileExtension) => {
+    return imageFiles.includes(fileExtension)
 }
 
 const retrieveContentType = (fileName, fileType) => {
@@ -393,7 +402,7 @@ const getAPIDocLinks = (documentMetadata) => {
     return files;
 };
 
-async function readDocFiles(directory, baseDir = '') {
+async function readDocFiles(directory, baseDir = '', topLevelOnly = false) {
 
     const files = await fs.promises.readdir(directory, { withFileTypes: true });
     let fileDetails = [];
@@ -401,13 +410,21 @@ async function readDocFiles(directory, baseDir = '') {
         const filePath = path.join(directory, file.name);
         const relativePath = path.join(baseDir, file.name);
         if (file.isDirectory()) {
-            const subDirContents = await readDocFiles(filePath, relativePath);
+            const subDirContents = await readDocFiles(filePath, relativePath, topLevelOnly);
             fileDetails = fileDetails.concat(subDirContents);
         } else {
             if (!(file.name === '.DS_Store')) {
                 let content = await fs.promises.readFile(filePath);
+                let docType;
+                if (topLevelOnly) {
+                    docType = baseDir
+                        ? baseDir.split(path.sep)[0]
+                        : constants.DOC_TYPES.DOCS.OTHER;
+                } else {
+                    docType = baseDir;
+                }
                 fileDetails.push({
-                    type: constants.DOC_TYPES.DOC_ID + baseDir,
+                    type: constants.DOC_TYPES.DOC_ID + docType,
                     fileName: file.name,
                     content: content,
                 });
@@ -1033,6 +1050,53 @@ async function listFiles(path) {
     return files;
 }
 
+async function findFileByNameRecursive(rootPath, targetNames) {
+    const normalizedTargetNames = new Set(Array.from(targetNames).map(name => String(name).toLowerCase()));
+    const stack = [rootPath];
+
+    while (stack.length > 0) {
+        const currentPath = stack.pop();
+        const entries = await fs.promises.readdir(currentPath, { withFileTypes: true });
+        for (const entry of entries) {
+            if (entry.name === '.DS_Store' || entry.name === '__MACOSX') {
+                continue;
+            }
+            const fullPath = path.join(currentPath, entry.name);
+            if (entry.isDirectory()) {
+                stack.push(fullPath);
+                continue;
+            }
+            if (normalizedTargetNames.has(entry.name.toLowerCase())) {
+                return fullPath;
+            }
+        }
+    }
+    return null;
+}
+
+function normalizeStringArray(value) {
+    if (!Array.isArray(value)) {
+        return [];
+    }
+    return value
+        .filter(item => item !== undefined && item !== null && String(item).trim() !== '')
+        .map(item => String(item));
+}
+
+function resolveApiType(apiType) {
+    if (!apiType || typeof apiType !== 'string') {
+        return constants.API_TYPE.REST;
+    }
+
+    const resolvedType = apiType.replace(/\s+/g, '').toUpperCase();
+    if (!Object.values(constants.API_TYPE).includes(resolvedType)) {
+        throw new Sequelize.ValidationError(
+            "Invalid api type. Supported values: REST, WS, GRAPHQL, SOAP, WEBSUB, MCP"
+        );
+    }
+    return resolvedType;
+}
+
 function filterAllowedAPIs(searchResults, allowedAPIs) {
 
     searchResults = searchResults.filter(api => {
@@ -1111,8 +1175,12 @@ module.exports = {
     tokenExchanger,
     listFiles,
     readDocFiles,
+    findFileByNameRecursive,
     unzipDirectory,
     filterAllowedAPIs,
     enforcePortalMode,
-    isAiDisabledForPortal
+    isAiDisabledForPortal,
+    isImageFile,
+    normalizeStringArray,
+    resolveApiType
 }
