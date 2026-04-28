@@ -44,7 +44,7 @@ const loadSubscriptions = async (req, res) => {
             return res.redirect(`/${orgName}${constants.ROUTE.VIEWS_PATH}${viewName}/login`);
         }
         const userID = req.user.sub;
-        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.DEVPORTAL_MODE.DEFAULT;
 
         // 1. Load TOKEN-BASED subscriptions from CP (all user subscriptions, no apiId filter)
         let tokenBasedSubscriptions = [];
@@ -159,7 +159,7 @@ const loadSubscriptions = async (req, res) => {
             stack: error.stack,
             orgName
         });
-        const devportalMode = constants.API_TYPE.DEFAULT;
+        const devportalMode = constants.DEVPORTAL_MODE.DEFAULT;
         const templateContent = {
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
             devportalMode: devportalMode,
@@ -185,7 +185,7 @@ const loadAPISubscriptions = async (req, res) => {
             return res.redirect(`/${orgName}${constants.ROUTE.VIEWS_PATH}${viewName}/login`);
         }
         const userID = req.user.sub;
-        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.DEVPORTAL_MODE.DEFAULT;
 
         const apiID = await apiDao.getAPIId(orgID, apiHandle);
         if (!apiID) {
@@ -317,7 +317,7 @@ const loadAPISubscriptions = async (req, res) => {
             orgName,
             apiHandle
         });
-        const devportalMode = constants.API_TYPE.DEFAULT;
+        const devportalMode = constants.DEVPORTAL_MODE.DEFAULT;
         const templateContent = {
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
             devportalMode: devportalMode,

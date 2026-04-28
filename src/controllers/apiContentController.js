@@ -68,7 +68,7 @@ const loadAPIs = async (req, res) => {
         html = renderTemplate(filePrefix + 'pages/apis/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
     } else {
         const orgDetails = await adminDao.getOrganization(orgName);
-        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.DEVPORTAL_MODE.DEFAULT;
         try {
             const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
             req.cpOrgID = cpOrgID;
@@ -260,7 +260,7 @@ const loadAPIContent = async (req, res) => {
         res.send(html);
     } else {
         const orgDetails = await adminDao.getOrganization(orgName);
-        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.DEVPORTAL_MODE.DEFAULT;
         try {
             const orgDetails = await adminDao.getOrganization(orgName);
             const cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
@@ -563,7 +563,7 @@ const loadDocsPage = async (req, res) => {
         const apiMetadata = await loadAPIMetaDataFromFile(apiHandle);
         const docNames = apiMetadata.docTypes;
         const orgDetails = await adminDao.getOrganization(orgName);
-        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.DEVPORTAL_MODE.DEFAULT;
         const metaForNav = {
             apiInfo: { gatewayType: apiMetadata.apiInfo?.gatewayType },
             apiReferenceID: apiMetadata.apiReferenceID,
@@ -579,7 +579,7 @@ const loadDocsPage = async (req, res) => {
         html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
     } else {
         const orgDetails = await adminDao.getOrganization(orgName);
-        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.DEVPORTAL_MODE.DEFAULT;
 
         try {
             const orgID = await adminDao.getOrgId(orgName);
@@ -636,7 +636,7 @@ const loadDocsPage = async (req, res) => {
 const loadDocument = async (req, res) => {
     const { orgName, apiHandle, viewName, docType, docName } = req.params;
     const orgDetails = await adminDao.getOrganization(orgName);
-    const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+    const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.DEVPORTAL_MODE.DEFAULT;
     let baseDocUrl = '/' + orgName + '/views/' + viewName + "/api/" + apiHandle
     if (req.originalUrl.includes('/mcp')) {
         baseDocUrl = '/' + orgName + '/views/' + viewName + "/mcp/" + apiHandle
@@ -879,7 +879,7 @@ const loadDocument = async (req, res) => {
         const templateContent = {
             baseUrl: '/' + orgName + '/views/' + viewName,
             baseDocUrl: baseDocUrl,
-            devportalMode: orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT,
+            devportalMode: orgDetails.ORG_CONFIG?.devportalMode || constants.DEVPORTAL_MODE.DEFAULT,
             profile: req.isAuthenticated() ? req.user : null,
         }
         if (Number(error?.statusCode) === 401) {
