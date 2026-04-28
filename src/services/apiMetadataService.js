@@ -705,9 +705,9 @@ const createAPITemplate = async (req, res) => {
         }, async (t) => {
             //check whether api belongs to given org
             let apiMetadata = await apiDao.getAPIMetadata(orgId, apiId, t);
-            let exsistingAPIImage = await apiDao.getImage(constants.API_ICON, apiId, t);
+            let existingAPIImage = await apiDao.getImage(constants.API_ICON, apiId, t);
 
-            if (imageMetadata[constants.API_ICON], exsistingAPIImage) {
+            if (imageMetadata[constants.API_ICON] && existingAPIImage) {
                 await apiDao.deleteImage(constants.API_ICON, apiId, t);
             }
 
@@ -761,9 +761,9 @@ const createAPIContent = async (req, res) => {
         }, async (t) => {
             //check whether api belongs to given org
             let apiMetadata = await apiDao.getAPIMetadata(orgId, apiId, t);
-            let exsistingAPIImage = await apiDao.getImage(constants.API_ICON, apiId, t);
+            let existingAPIImage = await apiDao.getImage(constants.API_ICON, apiId, t);
 
-            if (imageMetadata[constants.API_ICON], exsistingAPIImage) {
+            if (imageMetadata[constants.API_ICON] && existingAPIImage) {
                 await apiDao.deleteImage(constants.API_ICON, apiId, t);
             }
 
