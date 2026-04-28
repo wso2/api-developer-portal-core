@@ -57,8 +57,32 @@ function runApiPromptInChatGPT() {
     document.getElementById('apiRunDropdownMenu').classList.remove('show');
 }
 
+function addRipple(btn, e) {
+    const existing = btn.querySelector('.btn-ripple');
+    if (existing) existing.remove();
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height) * 2;
+    const x = e.clientX - rect.left - size / 2;
+    const y = e.clientY - rect.top - size / 2;
+    const ripple = document.createElement('span');
+    ripple.className = 'btn-ripple';
+    Object.assign(ripple.style, {
+        position: 'absolute', borderRadius: '50%',
+        width: size + 'px', height: size + 'px',
+        left: x + 'px', top: y + 'px',
+        background: 'rgba(255,255,255,0.35)',
+        transform: 'scale(0)', pointerEvents: 'none',
+        animation: 'btn-ripple-anim 0.55s ease-out forwards',
+    });
+    btn.appendChild(ripple);
+    ripple.addEventListener('animationend', () => ripple.remove());
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     let apiName = '';
+
+    const aiBtn = document.querySelector('.btn-icon-ai');
+    if (aiBtn) aiBtn.addEventListener('click', (e) => addRipple(aiBtn, e));
 
     const dataEl = document.getElementById('apiAgentData');
     if (dataEl) {

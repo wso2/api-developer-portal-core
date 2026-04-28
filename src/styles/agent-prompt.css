@@ -18,6 +18,143 @@
     opacity: 0.85;
 }
 
+/* ── API detail banner: uniform 42px button heights ── */
+.api-details-btn .common-btn-primary,
+.api-details-btn .common-btn-outlined {
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    border-radius: 9px;
+}
+
+/* Documentation icon button */
+.btn-icon-docs {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    background: var(--primary-main-color);
+    color: #fff;
+    border: 2px solid transparent;
+    border-radius: 9px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+    box-sizing: border-box;
+}
+
+.btn-icon-docs:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    color: #fff;
+    text-decoration: none;
+}
+
+.btn-icon-docs:active {
+    transform: translateY(0) scale(0.97);
+}
+
+.btn-icon-docs .btn-icon-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.78);
+    color: #fff;
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    border-radius: 5px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+.btn-icon-docs:hover .btn-icon-tooltip {
+    opacity: 1;
+}
+
+/* Try with AI icon button */
+@keyframes btn-ripple-anim {
+    to { transform: scale(1); opacity: 0; }
+}
+
+@keyframes ai-shimmer {
+    0% { transform: translateX(-120%) skewX(-15deg); }
+    100% { transform: translateX(280%) skewX(-15deg); }
+}
+
+@keyframes ai-glow-pulse {
+    0%, 100% { box-shadow: 0 0 5px 1px rgba(168, 85, 247, 0.25); }
+    50% { box-shadow: 0 0 12px 3px rgba(124, 58, 237, 0.4); }
+}
+
+.btn-icon-ai {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    background: linear-gradient(135deg, #a855f7, #7c3aed, #4f46e5);
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    overflow: hidden;
+    box-sizing: border-box;
+    animation: ai-glow-pulse 2s ease-in-out infinite;
+    transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.btn-icon-ai::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 45%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+    animation: ai-shimmer 2.5s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.btn-icon-ai:hover {
+    transform: translateY(-2px) scale(1.06);
+    filter: brightness(1.12);
+}
+
+.btn-icon-ai:active {
+    transform: scale(0.95);
+}
+
+.btn-icon-ai .btn-icon-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.78);
+    color: #fff;
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    border-radius: 5px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+.btn-icon-ai:hover .btn-icon-tooltip {
+    opacity: 1;
+}
+
 .api-flow-prompt-toolbar {
     display: flex;
     align-items: center;
