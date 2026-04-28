@@ -1637,6 +1637,7 @@ const loadMCPsMd = async (req, res) => {
 
 const SPEC_FORMAT_MAP = {
     [constants.API_TYPE.GRAPHQL]: { format: 'graphql', field: 'graphql',  label: 'GraphQL' },
+    [constants.API_TYPE.SOAP]:    { format: 'xml',     field: 'swagger',  label: 'SOAP'    },
     [constants.API_TYPE.MCP]:     { format: 'json',    field: 'schema',   label: 'MCP'     },
     [constants.API_TYPE.WS]:      { format: 'json',    field: 'asyncapi', label: 'WS'      },
     [constants.API_TYPE.WEBSUB]:  { format: 'json',    field: 'asyncapi', label: 'WEBSUB'  },
@@ -1675,6 +1676,11 @@ const loadAPIDefinitionRaw = async (req, res) => {
             const sdl = typeof raw === 'string' ? raw : JSON.stringify(raw);
             res.setHeader('Content-Type', 'application/graphql; charset=utf-8');
             return res.status(200).send(sdl);
+        }
+
+        if (apiType === constants.API_TYPE.SOAP) {
+            res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+            return res.status(200).send(typeof raw === 'string' ? raw : String(raw));
         }
 
         let spec = typeof raw === 'string' ? JSON.parse(raw) : raw;
