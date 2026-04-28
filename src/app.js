@@ -367,6 +367,21 @@ app.get('/robots.txt', (req, res) => {
     );
 });
 
+app.get('/llms.txt', (req, res) => {
+    const baseUrl = config.baseUrl;
+    res.type('text/plain').send(
+        `# API Developer Portal — AI Agent Entry Point\n\n` +
+        `This portal provides APIs, MCP servers, and API workflows organized by organization and view.\n` +
+        `The portal host is the origin you fetched this file from: ${baseUrl}\n\n` +
+        `## Exploring APIs\n\n` +
+        `To discover APIs, MCP servers, and API workflows published by an organization, fetch the org/view-specific index:\n\n` +
+        `  ${baseUrl}/{orgName}/views/{viewName}/llms.txt\n\n` +
+        `If the user has provided a URL that contains the organization name and view name, extract them from it.\n\n` +
+        `If the organization name is not known, ask the user to provide it — do not guess.\n` +
+        `If the view name is not specified, use \`default\`.\n`
+    );
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
