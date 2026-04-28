@@ -49,7 +49,7 @@ const registerPartials = async (req, res, next) => {
     if (req.session.returnTo) {
       matchURL = req.session.returnTo;
     }
-    let devportalMode = constants.API_TYPE.DEFAULT;
+    let devportalMode = constants.DEVPORTAL_MODE.DEFAULT;
 
     try {
       const orgDetails = await adminDao.getOrganization(req.params.orgName);

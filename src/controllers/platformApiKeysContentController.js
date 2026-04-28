@@ -42,7 +42,7 @@ const loadAPIPlatformApiKeys = async (req, res) => {
         if (!req.user) {
             return res.redirect(`/${orgName}${constants.ROUTE.VIEWS_PATH}${viewName}/login`);
         }
-        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.DEVPORTAL_MODE.DEFAULT;
 
         const apiID = await apiDao.getAPIId(orgID, apiHandle);
         if (!apiID) {
@@ -142,7 +142,7 @@ const loadAPIPlatformApiKeys = async (req, res) => {
         });
         const templateContent = {
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-            devportalMode: constants.API_TYPE.DEFAULT,
+            devportalMode: constants.DEVPORTAL_MODE.DEFAULT,
             errorMessage: constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE,
         };
         html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);

@@ -45,7 +45,7 @@ const loadViewSettingsPage = async (req, res) => {
         if (config.mode === constants.DEV_MODE) {
             templateContent.apiFlows = [];
             templateContent.orgAPIs = [];
-            templateContent.devportalMode = constants.API_TYPE.DEFAULT;
+            templateContent.devportalMode = constants.DEVPORTAL_MODE.DEFAULT;
             templateContent.llmsConfig = { aiEnabled: true, portalName: '', portalDescription: '' };
             templateContent.llmsConfigContext = { orgID: '', viewName, csrfToken, baseUrl };
         } else {
@@ -53,7 +53,7 @@ const loadViewSettingsPage = async (req, res) => {
             templateContent.loggedOrg = orgName;
             orgID = await adminDao.getOrgId(orgName);
             const orgDetails = await adminDao.getOrganization(orgName);
-            templateContent.devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+            templateContent.devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.DEVPORTAL_MODE.DEFAULT;
             templateContent.orgID = orgID;
 
             const viewId = await apiMetadataDao.getViewID(orgID, viewName);

@@ -77,7 +77,7 @@ const loadOrgContentFromAPI = async (req, res) => {
     let html;
     const orgName = req.params.orgName;
     const orgDetails = await adminDao.getOrganization(orgName);
-    const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+    const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.DEVPORTAL_MODE.DEFAULT;
     try {
         const orgId = await adminDao.getOrgId(orgName);
         let profile = null;

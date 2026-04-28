@@ -456,7 +456,7 @@ const loadApplications = async (req, res) => {
     const viewName = req.params.viewName;
     const orgName = req.params.orgName;
     const orgDetails = await adminDao.getOrganization(orgName);
-    const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+    const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.DEVPORTAL_MODE.DEFAULT;
     let html, metaData, templateContent;
     try {
         if (config.mode === constants.DEV_MODE) {
@@ -538,7 +538,7 @@ const loadApplication = async (req, res) => {
     const viewName = req.params.viewName;
     const orgName = req.params.orgName;
     const orgDetails = await adminDao.getOrganization(orgName);
-    const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+    const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.DEVPORTAL_MODE.DEFAULT;
     req.cpOrgID = orgDetails.ORGANIZATION_IDENTIFIER;
     try {
         const applicationId = req.params.applicationId;
@@ -635,7 +635,7 @@ const loadApplicationKeys = async (req, res) => {
     const viewName = req.params.viewName;
     const orgName = req.params.orgName;
     const orgDetails = await adminDao.getOrganization(orgName);
-    const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.API_TYPE.DEFAULT;
+    const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.DEVPORTAL_MODE.DEFAULT;
     try {
         const applicationId = req.params.applicationId;
         if (config.mode === constants.DEV_MODE) {
