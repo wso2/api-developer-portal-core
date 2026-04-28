@@ -736,11 +736,16 @@ const loadDocument = async (req, res) => {
                         try {
                             const response = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiMetadata.apiReferenceID}`, null, null);
                             if (response.securityScheme.includes("api_key")) {
+                                if (!modifiedSwagger.components) modifiedSwagger.components = {};
+                                if (!modifiedSwagger.components.securitySchemes) modifiedSwagger.components.securitySchemes = {};
                                 modifiedSwagger.components.securitySchemes.ApiKeyAuth = { "type": "apiKey", "name": `${response.apiKeyHeader}`, "in": "header" };
                                 for (let path in modifiedSwagger.paths) {
                                     for (let method in modifiedSwagger.paths[path]) {
                                         if (modifiedSwagger.paths[path].hasOwnProperty(method)) {
-                                            modifiedSwagger.paths[path][method].security[0].ApiKeyAuth = [];
+                                            const operation = modifiedSwagger.paths[path][method];
+                                            if (!operation.security) operation.security = [{}];
+                                            if (!operation.security[0] || typeof operation.security[0] !== 'object') operation.security[0] = {};
+                                            operation.security[0].ApiKeyAuth = [];
                                         }
                                     }
                                 }
