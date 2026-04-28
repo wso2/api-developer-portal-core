@@ -28,6 +28,7 @@
 
 
         <div class="api-details-btn">
+          {{!-- Subscribe --}}
           {{#if apiMetadata.apiInfo.tokenBasedSubscriptionEnabled}}
             {{#unless platformSubscriptions.length}}
           <a type="button" class="common-btn-primary" href="#subscriptionPlans">Subscribe</a>
@@ -43,6 +44,7 @@
           {{else}}
           <a type="button" class="common-btn-outlined" href="{{{schemaUrl}}}" download>Download</a>
           {{/in}}
+          {{!-- Subscriptions --}}
           {{#if (eq apiMetadata.apiInfo.gatewayType "wso2/api-platform")}}
             {{#if apiMetadata.apiInfo.tokenBasedSubscriptionEnabled}}
               {{#if subscriptionPlans.length}}
@@ -58,20 +60,19 @@
         </div>
       </div>
       <div class="col-12 col-md-5 api-banner-icon">
-        <div class="api-banner-icon-wrap">
-          {{#if apiMetadata.apiInfo.apiImageMetadata.api-icon}}
-          <img class="img-thumbnail api-image" src="{{apiMetadata.apiInfo.apiImageMetadata.api-icon}}" alt="API Image" />
-          {{else}}
-          <div class="img-thumbnail api-image image-icon d-flex justify-content-center align-items-center">{{firstTwoLetters apiMetadata.apiInfo.apiName}}</div>
-          {{/if}}
-          {{#if showApiWorkflowsNav}}
-          {{#unless (eq apiMetadata.apiInfo.agentVisibility "HIDDEN")}}
-          <button type="button" class="btn-try-ai" data-bs-toggle="modal" data-bs-target="#apiAgentPromptModal">
-              <i class="bi bi-stars"></i> Try with AI
-          </button>
-          {{/unless}}
-          {{/if}}
-        </div>
+        {{#if apiMetadata.apiInfo.apiImageMetadata.api-icon}}
+        <img class="img-thumbnail api-image" src="{{apiMetadata.apiInfo.apiImageMetadata.api-icon}}" alt="API Image" />
+        {{else}}
+        <div class="img-thumbnail api-image image-icon d-flex justify-content-center align-items-center">{{firstTwoLetters apiMetadata.apiInfo.apiName}}</div>
+        {{/if}}
+        {{#if showApiWorkflowsNav}}
+        {{#unless (eq apiMetadata.apiInfo.agentVisibility "HIDDEN")}}
+        <button type="button" class="btn-icon-ai api-banner-ai-btn" data-bs-toggle="modal" data-bs-target="#apiAgentPromptModal">
+          <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/ai-stars-icon.svg" width="18" height="18" aria-hidden="true" alt="">
+          <span class="btn-icon-tooltip">Try with AI</span>
+        </button>
+        {{/unless}}
+        {{/if}}
       </div>
     </div>
   </div>
