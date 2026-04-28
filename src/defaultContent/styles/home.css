@@ -8,10 +8,62 @@
   position: relative;
 }
 
+.hero-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+  max-width: 660px;
+}
+
+.hero-buttons .common-btn-primary {
+  height: 42px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+}
+
 .discover-ai-btn {
+  position: relative;
+  overflow: hidden;
+  height: 42px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(124,58,237,0.85), rgba(79,70,229,0.85));
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  animation: ai-glow-pulse 3s ease-in-out infinite;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.discover-ai-btn::before {
+  content: "";
   position: absolute;
-  bottom: 1.25rem;
-  right: 1.25rem;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.18) 50%, transparent 70%);
+  background-size: 200% 100%;
+  background-position: 100% 0;
+  animation: ai-shimmer 2.8s linear infinite;
+  pointer-events: none;
+}
+
+.discover-ai-btn:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 0 18px 4px rgba(124,58,237,0.55);
+}
+
+@keyframes ai-glow-pulse {
+  0%, 100% { box-shadow: 0 0 6px 1px rgba(124,58,237,0.35); }
+  50%       { box-shadow: 0 0 14px 3px rgba(124,58,237,0.6); }
+}
+
+@keyframes ai-shimmer {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
 }
 
 .hero-title {
@@ -152,7 +204,8 @@
   }
 
   .hero-buttons {
-    flex-direction: column;
+    flex-wrap: wrap;
+    max-width: 100%;
   }
 
   .hero-image-container {

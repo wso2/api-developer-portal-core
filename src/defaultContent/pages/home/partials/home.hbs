@@ -35,13 +35,18 @@
                             subscribe, and get going in minutes.
                         </p>
                         {{/if}}
-                        <div class="hero-buttons d-flex gap-3 flex-wrap">
+                        <div class="hero-buttons" role="group" aria-label="Hero actions">
                             {{#in devportalMode values="DEFAULT,APISONLY"}}
                             <a href="{{baseUrl}}/apis" class="common-btn-primary common-btn-secondary">Browse our APIs →</a>
                             {{/in}}
                             {{#in devportalMode values="DEFAULT,MCPSERVERSONLY"}}
                             <a href="{{baseUrl}}/mcps" class="common-btn-primary common-btn-secondary">Browse our MCP Servers →</a>
                             {{/in}}
+                            {{#if showApiWorkflowsNav}}
+                            <button type="button" class="discover-ai-btn" data-bs-toggle="modal" data-bs-target="#discoverAiModal">
+                                ✦ Discover with AI
+                            </button>
+                            {{/if}}
                         </div>
                     </div>
                 </div>
@@ -54,11 +59,6 @@
                     </div>
                 </div>
             </div>
-            {{#if showApiWorkflowsNav}}
-            <button type="button" class="discover-ai-btn common-btn-primary common-btn-secondary" data-bs-toggle="modal" data-bs-target="#discoverAiModal">
-                Discover with AI
-            </button>
-            {{/if}}
         </div>
     </div>
 </section>
