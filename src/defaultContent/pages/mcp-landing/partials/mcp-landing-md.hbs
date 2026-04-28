@@ -17,6 +17,7 @@
 {{#each subscriptionPlans}}| {{displayName}} | {{requestCount}} | {{description}} |
 {{/each}}
 {{/if}}
+{{#unless isMCPFromRegistry}}
 ## Authentication
 
 {{#if showOAuth2}}
@@ -81,6 +82,7 @@ To connect to this MCP server using an API key:
 This MCP server does not require authentication.
 
 {{/if}}
+{{/unless}}
 
 {{#if docs}}
 ## Documentation
@@ -89,6 +91,64 @@ This MCP server does not require authentication.
 {{/each}}
 {{/if}}
 
+{{#if schemaDefinition.tools.length}}
+## Tools
+
+{{#each schemaDefinition.tools}}
+### {{this.name}}
+
+{{#if this.description}}{{this.description}}
+
+{{/if}}
+{{#if this.inputSchema}}
+**Input Schema:**
+
+```json
+{{{jsonBeautify this.inputSchema}}}
+```
+
+{{/if}}
+{{/each}}
+{{/if}}
+
+{{#if schemaDefinition.resources.length}}
+## Resources
+
+{{#each schemaDefinition.resources}}
+### {{this.name}}
+
+{{#if this.description}}{{this.description}}
+
+{{/if}}
+{{#if this.uri}}- **URI:** {{this.uri}}
+{{/if}}
+{{#if this.mimeType}}- **MIME Type:** {{this.mimeType}}
+{{/if}}
+
+{{/each}}
+{{/if}}
+
+{{#if schemaDefinition.prompts.length}}
+## Prompts
+
+{{#each schemaDefinition.prompts}}
+### {{this.name}}
+
+{{#if this.description}}{{this.description}}
+
+{{/if}}
+{{#if this.arguments}}
+**Arguments:**
+
+```json
+{{{jsonBeautify this.arguments}}}
+```
+
+{{/if}}
+{{/each}}
+{{/if}}
+
+{{#unless schemaDefinition}}
 {{#if apiDefinition}}
 ## {{specHeading}}
 
@@ -98,3 +158,4 @@ This MCP server does not require authentication.
 {{{apiDefinition}}}
 ``````
 {{/if}}
+{{/unless}}
