@@ -367,6 +367,25 @@ app.get('/robots.txt', (req, res) => {
     );
 });
 
+app.get('/llms.txt', (req, res) => {
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    res.type('text/plain').send(
+        `# API Developer Portal — AI Agent Entry Point\n\n` +
+        `This portal hosts APIs organized by organization and view.\n\n` +
+        `## If you already have a portal URL\n\n` +
+        `If the user provided a URL such as:\n\n` +
+        `  https://host/{orgName}/views/{viewName}\n\n` +
+        `Extract the \`{orgName}\` and \`{viewName}\` from it and fetch directly:\n\n` +
+        `  ${baseUrl}/{orgName}/views/{viewName}/llms.txt\n\n` +
+        `## If you do not have a portal URL\n\n` +
+        `If the user has already provided an organization name, use it directly:\n\n` +
+        `  ${baseUrl}/{orgName}/views/default/llms.txt\n\n` +
+        `If the user also specified a view name, replace \`default\` with it.\n\n` +
+        `If you have neither a URL nor an organization name, ask the user:\n` +
+        `"Which organization's APIs would you like to explore?"\n`
+    );
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
