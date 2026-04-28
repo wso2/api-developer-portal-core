@@ -38,6 +38,12 @@
           {{else}}
           <a type="button" class="common-btn-primary" href="#subscriptionPlans">Subscribe</a>
           {{/if}}
+          {{#in apiMetadata.apiInfo.apiType values="REST,WS,WEBSUB,GRAPHQL,MCP"}}
+          <a type="button" class="common-btn-outlined"
+            href="{{baseUrl}}/api/{{apiMetadata.apiHandle}}/docs/specification">Documentation</a>
+          {{else}}
+          <a type="button" class="common-btn-outlined" href="{{{schemaUrl}}}" download>Download</a>
+          {{/in}}
           {{!-- Subscriptions --}}
           {{#if (eq apiMetadata.apiInfo.gatewayType "wso2/api-platform")}}
             {{#if apiMetadata.apiInfo.tokenBasedSubscriptionEnabled}}
@@ -51,12 +57,6 @@
           {{#if showPlatformApiKeysNav}}
           <a type="button" class="common-btn-outlined" href="{{baseUrl}}/api/{{apiMetadata.apiHandle}}/api-keys">API Keys</a>
           {{/if}}
-          {{!-- Documentation (icon) / Download --}}
-          {{#in apiMetadata.apiInfo.apiType values="REST,WS,WEBSUB,GRAPHQL,MCP"}}
-          <a type="button" class="common-btn-outlined" href="{{baseUrl}}/api/{{apiMetadata.apiHandle}}/docs/specification">Documentation</a>
-          {{else}}
-          <a type="button" class="common-btn-outlined" href="{{{schemaUrl}}}" download>Download</a>
-          {{/in}}
         </div>
       </div>
       <div class="col-12 col-md-5 api-banner-icon">
