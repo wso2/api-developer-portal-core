@@ -119,8 +119,12 @@ router.put('/organizations/:orgId/labels', enforceSecuirty(constants.SCOPES.ADMI
 router.get('/organizations/:orgId/labels', enforceSecuirty(constants.SCOPES.ADMIN), apiMetadataService.retrieveLabels);
 router.delete('/organizations/:orgId/labels', enforceSecuirty(constants.SCOPES.ADMIN), apiMetadataService.deleteLabels);
 
-router.post('/organizations/:orgId/applications', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.createDevPortalApplication);
-router.put('/organizations/:orgId/applications/:appId', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.updateDevPortalApplication);
+router.post('/organizations/:orgId/applications', enforceSecuirty(constants.SCOPES.DEVELOPER),
+    multipartHandler.fields([{name: 'application', maxCount: 1}]),
+    adminService.createDevPortalApplication);
+router.put('/organizations/:orgId/applications/:appId', enforceSecuirty(constants.SCOPES.DEVELOPER),
+    multipartHandler.fields([{name: 'application', maxCount: 1}]),
+    adminService.updateDevPortalApplication);
 router.get('/organizations/:orgId/applications/:appId', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.getDevPortalApplicationDetails);
 router.get('/organizations/:orgId/applications', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.getDevPortalApplications);
 router.delete('/organizations/:orgId/applications/:appId', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.deleteDevPortalApplication);
@@ -166,8 +170,12 @@ router.get('/organizations/:orgId/views/:name', enforceSecuirty(constants.SCOPES
 router.get('/organizations/:orgId/views', enforceSecuirty(constants.SCOPES.ADMIN), apiMetadataService.getAllViews);
 router.delete('/organizations/:orgId/views/:name', enforceSecuirty(constants.SCOPES.ADMIN), apiMetadataService.deleteView);
 
-router.post('/applications', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.saveApplication);
-router.put('/applications/:applicationId', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.updateApplication);
+router.post('/applications', enforceSecuirty(constants.SCOPES.DEVELOPER),
+    multipartHandler.fields([{name: 'application', maxCount: 1}]),
+    devportalController.saveApplication);
+router.put('/applications/:applicationId', enforceSecuirty(constants.SCOPES.DEVELOPER),
+    multipartHandler.fields([{name: 'application', maxCount: 1}]),
+    devportalController.updateApplication);
 router.delete('/applications/:applicationId', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.deleteApplication);
 router.post('/applications/:applicationId/reset-throttle-policy', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.resetThrottlingPolicy);
 router.post('/applications/:applicationId/api-keys/generate', enforceSecuirty(constants.SCOPES.DEVELOPER), devportalController.generateAPIKeys);
