@@ -26,44 +26,36 @@
 .discover-ai-btn {
   position: relative;
   overflow: hidden;
-  height: 42px;
-  padding: 0 18px;
-  border: none;
-  border-radius: 6px;
-  background: linear-gradient(135deg, rgba(124,58,237,0.85), rgba(79,70,229,0.85));
-  color: #fff;
-  font-size: 0.875rem;
-  font-weight: 500;
-  white-space: nowrap;
-  cursor: pointer;
-  animation: ai-glow-pulse 3s ease-in-out infinite;
+  background: linear-gradient(135deg, rgba(168,85,247,0.9), rgba(124,58,237,0.9), rgba(236,72,153,0.85));
+  animation: discover-glow-pulse 3s ease-in-out infinite;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .discover-ai-btn::before {
   content: "";
   position: absolute;
-  inset: 0;
-  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.18) 50%, transparent 70%);
-  background-size: 200% 100%;
-  background-position: 100% 0;
-  animation: ai-shimmer 2.8s linear infinite;
+  top: 0;
+  left: 0;
+  width: 45%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: discover-shimmer 2.8s ease-in-out infinite;
   pointer-events: none;
 }
 
 .discover-ai-btn:hover {
   transform: translateY(-2px) scale(1.04);
-  box-shadow: 0 0 18px 4px rgba(124,58,237,0.55);
+  box-shadow: 0 0 8px 2px rgba(200,80,200,0.25);
 }
 
-@keyframes ai-glow-pulse {
-  0%, 100% { box-shadow: 0 0 6px 1px rgba(124,58,237,0.35); }
-  50%       { box-shadow: 0 0 14px 3px rgba(124,58,237,0.6); }
+@keyframes discover-glow-pulse {
+  0%, 100% { box-shadow: 0 0 3px 1px rgba(168,85,247,0.15); }
+  50%       { box-shadow: 0 0 6px 2px rgba(236,72,153,0.25); }
 }
 
-@keyframes ai-shimmer {
-  0%   { background-position: 100% 0; }
-  100% { background-position: -100% 0; }
+@keyframes discover-shimmer {
+  0%   { transform: translateX(-120%) skewX(-15deg); }
+  100% { transform: translateX(280%) skewX(-15deg); }
 }
 
 .hero-title {

@@ -102,14 +102,14 @@
     to { transform: scale(1); opacity: 0; }
 }
 
-@keyframes ai-shimmer {
-    0% { transform: translateX(-120%) skewX(-15deg); }
-    100% { transform: translateX(280%) skewX(-15deg); }
+@keyframes ai-glow-pulse {
+    0%, 100% { box-shadow: 0 0 3px 1px rgba(168, 85, 247, 0.15); }
+    50%       { box-shadow: 0 0 6px 2px rgba(236, 72, 153, 0.25); }
 }
 
-@keyframes ai-glow-pulse {
-    0%, 100% { box-shadow: 0 0 5px 1px rgba(168, 85, 247, 0.25); }
-    50% { box-shadow: 0 0 12px 3px rgba(124, 58, 237, 0.4); }
+@keyframes btn-icon-ai-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 
 .btn-icon-ai {
@@ -119,36 +119,38 @@
     justify-content: center;
     width: 42px;
     height: 42px;
-    background: linear-gradient(135deg, #a855f7, #7c3aed, #4f46e5);
+    background: linear-gradient(135deg, rgba(168,85,247,0.9), rgba(124,58,237,0.9), rgba(236,72,153,0.85));
     color: #fff;
     border: none;
     border-radius: 9px;
     cursor: pointer;
-    overflow: hidden;
     box-sizing: border-box;
-    animation: ai-glow-pulse 2s ease-in-out infinite;
-    transition: transform 0.25s ease, filter 0.25s ease;
+    box-shadow: 0 2px 6px rgba(124,58,237,0.3);
+    animation: ai-glow-pulse 3s ease-in-out infinite;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
 .btn-icon-ai::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 45%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
-    animation: ai-shimmer 2.5s ease-in-out infinite;
+    inset: 0;
+    border-radius: 9px;
+    background: linear-gradient(90deg, transparent 20%, rgba(255,255,255,0.18) 50%, transparent 80%);
+    background-size: 200% 100%;
+    background-position: 200% 0;
+    animation: btn-icon-ai-shimmer 3s ease-in-out infinite;
     pointer-events: none;
 }
 
 .btn-icon-ai:hover {
     transform: translateY(-2px) scale(1.06);
-    filter: brightness(1.12);
+    box-shadow: 0 4px 12px rgba(200,80,200,0.35);
+    filter: brightness(1.1);
 }
 
 .btn-icon-ai:active {
     transform: scale(0.95);
+    box-shadow: 0 1px 4px rgba(124,58,237,0.2);
 }
 
 .btn-icon-ai .btn-icon-tooltip {
