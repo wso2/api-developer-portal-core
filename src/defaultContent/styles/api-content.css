@@ -374,7 +374,14 @@ hr {
 .api-banner-icon {
   overflow: visible;
   display: flex;
+  flex-direction: row;
   justify-content: flex-end;
+  align-items: flex-start;
+}
+
+.api-banner-ai-btn {
+  margin-left: 0.5rem;
+  flex-shrink: 0;
 }
 
 .api-banner-icon-wrap {
