@@ -643,7 +643,7 @@ app.use( (err, req, res, next) => {
         devportalMode: 'DEFAULT',
         baseUrl: '/' + req.originalUrl?.split('/')[1] + '/' + constants.ROUTE.VIEWS_PATH + "default",
         errorMessage: "Oops! Something went wrong",
-        profile: req.isAuthenticated() ? req.user : null,
+        profile: typeof req.isAuthenticated === 'function' && req.isAuthenticated() ? req.user : null,
     }
     let html = "";
     if (err.status === 401) {
