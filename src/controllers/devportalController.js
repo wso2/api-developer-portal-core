@@ -41,19 +41,48 @@ const monetizationService = require('../services/monetizationService');
 
 // ***** POST / DELETE / PUT Functions ***** (Only work in production)
 
+function parseApplicationDataFromRequest(req) {
+    const file = req.files?.application?.[0];
+    if (file?.buffer) {
+        let parsed;
+        try {
+            parsed = yaml.load(file.buffer.toString('utf8'));
+        } catch (e) {
+            throw new CustomError(400, "Bad Request", `Invalid application YAML: ${e.message}`);
+        }
+        if (!parsed || typeof parsed !== 'object') {
+            throw new CustomError(400, "Bad Request", "Invalid application YAML: expected an object");
+        }
+        const spec = parsed.spec || {};
+        const name = spec.displayName || parsed.metadata?.name;
+        if (!name) {
+            throw new CustomError(400, "Bad Request", "Missing required application field: name");
+        }
+        if (!spec.description) {
+            throw new CustomError(400, "Bad Request", "Missing required application field: description");
+        }
+        return {
+            name,
+            description: spec.description,
+            type: "WEB"
+        };
+    }
+    return req.body;
+}
+
 // ***** Save Application *****
 
 const saveApplication = async (req, res) => {
     try {
         const orgID = await adminDao.getOrgId(req.user[constants.ORG_IDENTIFIER]);
-        trackAppCreationStart({ orgId: orgID, appName: req.body.name, idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined }, req);
-        const application = await adminDao.createApplication(orgID, req.user.sub, req.body);
-        trackAppCreationEnd({ orgId: orgID, appName: req.body.name, idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined }, req);
+        const applicationData = parseApplicationDataFromRequest(req);
+        trackAppCreationStart({ orgId: orgID, appName: applicationData.name, idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined }, req);
+        const application = await adminDao.createApplication(orgID, req.user.sub, applicationData);
+        trackAppCreationEnd({ orgId: orgID, appName: applicationData.name, idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined }, req);
         return res.status(201).json(new ApplicationDTO(application.dataValues));
     } catch (error) {
         logger.error('Error occurred while creating the application', {
             orgId: req.user[constants.ORG_IDENTIFIER],
-            appName: req.body.name,
             error: error.message,
             stack: error.stack
         });
@@ -67,7 +96,8 @@ const updateApplication = async (req, res) => {
     try {
         const orgID = await adminDao.getOrgId(req.user[constants.ORG_IDENTIFIER]);
         const appID = req.params.applicationId;
-        const [updatedRows, updatedApp] = await adminDao.updateApplication(orgID, appID, req.user.sub, req.body);
+        const applicationData = parseApplicationDataFromRequest(req);
+        const [updatedRows, updatedApp] = await adminDao.updateApplication(orgID, appID, req.user.sub, applicationData);
         if (!updatedRows) {
             throw new Sequelize.EmptyResultError("No record found to update");
         }

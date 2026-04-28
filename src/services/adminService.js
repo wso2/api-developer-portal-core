@@ -33,6 +33,7 @@ const config = require(process.cwd() + '/config.json');
 const controlPlaneUrl = config.controlPlane.url;
 const controlPlaneGwUrl = config.controlPlane.gwUrl;
 const { invokeApiRequest } = require('../utils/util');
+const yaml = require('js-yaml');
 const { Sequelize } = require("sequelize");
 const { trackGenerateCredentials, trackSubscribeApi, trackUnsubscribeApi } = require('../utils/telemetry');
 
@@ -742,7 +743,7 @@ const createDevPortalApplication = async (req, res) => {
         if (!orgId) {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
-        const applicationData = req.body;
+        const applicationData = parseApplicationDataFromRequest(req);
         try {
             const application = await adminDao.createApplication(orgId, userID, applicationData);
             res.status(201).send(new ApplicationDTO(application.dataValues));
@@ -773,7 +774,7 @@ const updateDevPortalApplication = async (req, res) => {
     });
     try {
         const userId = req[constants.USER_ID]
-        const applicationData = req.body;
+        const applicationData = parseApplicationDataFromRequest(req);
         if (!orgId) {
             logger.warn('Missing required parameter: orgId');
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
@@ -1905,6 +1906,35 @@ async function handleUnsubscribe(nonSharedToken, sharedToken, orgID, appID, apiR
         });
         throw error;
     }
+}
+
+function parseApplicationDataFromRequest(req) {
+    const file = req.files?.application?.[0];
+    if (file?.buffer) {
+        let parsed;
+        try {
+            parsed = yaml.load(file.buffer.toString('utf8'));
+        } catch (e) {
+            throw new CustomError(400, "Bad Request", `Invalid application YAML: ${e.message}`);
+        }
+        if (!parsed || typeof parsed !== 'object') {
+            throw new CustomError(400, "Bad Request", "Invalid application YAML: expected an object");
+        }
+        const spec = parsed.spec || {};
+        const name = spec.displayName || parsed.metadata?.name;
+        if (!name) {
+            throw new CustomError(400, "Bad Request", "Missing application name");
+        }
+        if (!spec.description) {
+            throw new CustomError(400, "Bad Request", "Missing required application field: description");
+        }
+        return {
+            name,
+            description: spec.description,
+            type: "WEB"
+        };
+    }
+    return req.body;
 }
 
 module.exports = {
