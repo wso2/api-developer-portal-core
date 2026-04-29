@@ -765,7 +765,7 @@ const createAPIContent = async (req, res) => {
             let apiMetadata = await apiDao.getAPIMetadata(orgId, apiId, t);
             let existingAPIImage = await apiDao.getImage(constants.API_ICON, apiId, t);
 
-            if (imageMetadata[constants.API_ICON] && existingAPIImage) {
+            if (resolvedImageMetadata[constants.API_ICON] && existingAPIImage) {
                 await apiDao.deleteImage(constants.API_ICON, apiId, t);
             }
 
@@ -1719,6 +1719,10 @@ async function extractApiContentFromUploadedZip(zipFile, orgId, apiId, mode = 'c
         throw new Sequelize.ValidationError(`Invalid zip file: ${error.message}`);
     } finally {
         await fs.rm(tempBasePath, { recursive: true, force: true });
+        // Clean up the original upload file when multer saved it to disk (zipFile.path)
+        if (zipFile.path) {
+            await fs.rm(zipFile.path, { force: true });
+        }
     }
 }
 
