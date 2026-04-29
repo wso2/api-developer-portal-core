@@ -163,6 +163,20 @@ async function resolveOrgId(orgHandle) {
     return adminDao.getOrgId(orgHandle);
 }
 
+
+function deriveApiHandle(name, orgHandle) {
+    if (name.includes('/')) {
+        return name.slice(name.indexOf('/') + 1);
+    }
+    if (orgHandle) {
+        const prefix = orgHandle.toLowerCase() + '-';
+        if (name.toLowerCase().startsWith(prefix)) {
+            return name.slice(prefix.length);
+        }
+    }
+    return name;
+}
+
 /**
  * Builds the apiMetadata shape expected by apiDao.createAPIMetadata / updateAPIMetadata.
  */
@@ -172,11 +186,7 @@ function buildApiMetadataPayload(name, version, description, remotes, title, pub
         url: r.url || ''
     }));
     const primaryUrl = normalizedRemotes.length > 0 ? normalizedRemotes[0].url : '';
-    const apiHandle = name.includes('/')
-        ? name.slice(name.indexOf('/') + 1)
-        : (orgHandle && name.toLowerCase().startsWith(orgHandle.toLowerCase() + '-')
-            ? name.slice(orgHandle.length + 1)
-            : name);
+    const apiHandle = deriveApiHandle(name, orgHandle);
     return {
         apiInfo: {
             referenceID: null,
@@ -516,13 +526,13 @@ const deleteVersion = async (req, res) => {
             return sendError(res, 404, 'Server version not found');
         }
 
-        await sequelize.transaction(async (t) => {
-            await apiDao.deleteAPIMetadata(orgId, existing.API_ID, t);
-        });
+        await APIMetadata.update(
+            { STATUS: 'DELETED' },
+            { where: { API_ID: existing.API_ID, ORG_ID: orgId } }
+        );
+        const deleted = await APIMetadata.findOne({ where: { API_ID: existing.API_ID } });
         logger.info('MCP server deleted', { serverIdentifier, version, orgHandle });
-        return res.status(200).json(new ServerResponseDTO(
-            Object.assign(existing.get({ plain: true }), { STATUS: 'DELETED' })
-        ));
+        return res.status(200).json(new ServerResponseDTO(deleted));
     } catch (error) {
         return handleUnexpectedError(res, error, 'deleteVersion', 'Failed to delete server version');
     }
