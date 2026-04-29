@@ -827,6 +827,7 @@ function validateScripts(strContent) {
             '<script src="/technical-scripts/oauth2-key-generation.js" defer></script>',
             '<script src="/technical-scripts/api-key-generation.js" defer></script>',
             '<script src="/technical-scripts/billing.js" defer></script>',
+            "<script src='/technical-scripts/delete-confirmation-modal.js' defer></script>",
         ]);
         const allowedInlineScripts = new Set([
             // Reo analytics loader (src/defaultContent/layout/main.hbs)
