@@ -61,6 +61,7 @@ const loadCustomContent = async (req, res) => {
 
     } else {
         let content = {};
+        let devportalMode = constants.DEVPORTAL_MODE.DEFAULT;
         try {
             filePath = 'pages/' + filePath;
             // Normalize application-specific manage-keys paths to the shared manage-keys page
@@ -77,7 +78,9 @@ const loadCustomContent = async (req, res) => {
                 }
                 throw new Error(`Content page not found at ${resolvedPagePath}`);
             }
-            let orgId = await adminDao.getOrgId(orgName);
+            const orgDetails = await adminDao.getOrganization(orgName);
+            const orgId = orgDetails.ORG_ID;
+            devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.DEVPORTAL_MODE.DEFAULT;
             let markDownFiles = await adminDao.getOrgContent({
                 orgId: orgId,
                 fileType: 'markDown',
@@ -103,7 +106,7 @@ const loadCustomContent = async (req, res) => {
             html = await renderTemplateFromAPI(content, orgId, orgName, filePath, viewName);
         } catch (error) {
             const templateContent = {
-                devportalMode: constants.DEVPORTAL_MODE.DEFAULT,
+                devportalMode: devportalMode,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 errorMessage: constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE,
                 profile: req.isAuthenticated() ? req.user : null,

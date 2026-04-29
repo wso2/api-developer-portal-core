@@ -539,6 +539,15 @@ const getAPIDefinition = async (orgName, viewName, apiHandle) => {
         if (metaData.apiInfo.apiType === constants.API_TYPE.MCP) {
             const productionURL = metaData.endPoints?.productionURL || '';
             templateContent.swagger = JSON.stringify({ servers: [{ url: productionURL }] });
+            // Load MCP schema so loadAPIDefinitionRaw can serve it via SPEC_FORMAT_MAP field:'schema'
+            try {
+                const rawSchema = await apiDao.getAPIFileByType(constants.DOC_TYPES.SCHEMA_DEFINITION, orgID, apiID);
+                if (rawSchema?.API_FILE) {
+                    templateContent.schema = rawSchema.API_FILE.toString(constants.CHARSET_UTF8);
+                }
+            } catch (schemaErr) {
+                logger.warn('Could not load MCP schema definition for raw spec', { orgID, apiID, error: schemaErr.message });
+            }
         } else if (metaData.apiInfo.apiType === constants.API_TYPE.GRAPHQL) {
             apiDefinition = await apiDao.getAPIFile(constants.FILE_NAME.API_DEFINITION_GRAPHQL, constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
             templateContent.graphql = apiDefinition.API_FILE.toString(constants.CHARSET_UTF8);
