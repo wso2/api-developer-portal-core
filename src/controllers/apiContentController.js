@@ -391,7 +391,7 @@ const loadAPIContent = async (req, res) => {
                                 const schemaString = rawSchema.API_FILE.toString(constants.CHARSET_UTF8);
                                 const schemaFileName = String(rawSchema.FILE_NAME || '').toLowerCase();
                                 let parsed;
-                                if (schemaFileName.endsWith('.yaml')) {
+                                if (schemaFileName.endsWith('.yaml') || schemaFileName.endsWith('.yml')) {
                                     parsed = yaml.load(schemaString);
                                 } else {
                                     parsed = JSON.parse(schemaString);
@@ -1688,7 +1688,7 @@ const loadAPIDefinitionRaw = async (req, res) => {
             return res.status(200).send(typeof raw === 'string' ? raw : String(raw));
         }
 
-        let spec = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        let spec = typeof raw === 'string' ? parseApiDefinitionContent(raw) : raw;
 
         const endpoints = definitionResponse.metaData?.endPoints;
         const isAsyncAPI = apiType === constants.API_TYPE.WS || apiType === constants.API_TYPE.WEBSUB;
