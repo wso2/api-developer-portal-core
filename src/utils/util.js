@@ -829,6 +829,9 @@ function validateScripts(strContent) {
             '<script src="/technical-scripts/billing.js" defer></script>',
             "<script src='/technical-scripts/delete-confirmation-modal.js' defer></script>",
             "<script src='/technical-scripts/api-flow-detail.js' defer></script>",
+            "<script src='/technical-scripts/api-workflows.js' defer></script>",
+            "<script src='/technical-scripts/api-agent-prompt.js' defer></script>",
+            '<script src="/technical-scripts/home-discover.js" defer></script>',
             '<script src="https://cdn.jsdelivr.net/npm/@jentic/arazzo-ui@1.0.0-alpha.30/dist/arazzo-ui.js" integrity="sha256-OYzURPQLK+lup5rGo+IQmVbjWOjVgjURBWDDtMHIOaw=" crossorigin="anonymous"></script>',
             '<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js" integrity="sha256-Rdw90D3AegZwWiwpibjH9wkBPwS9U4bjJ51ORH8H69c=" crossorigin="anonymous"></script>',
             '<script src="https://cdn.jsdelivr.net/npm/marked@13.0.3/marked.min.js" integrity="sha256-Wt6n2O5BpwD8zBS7nVAxBPBHDMF6hK0+Fn0/UlHq4No=" crossorigin="anonymous"></script>',
@@ -843,6 +846,12 @@ function validateScripts(strContent) {
             "<script>\n                    (function() {\n                        var data = JSON.parse(document.getElementById('token-map-data').textContent || '[]');\n                        window.__tokenMeta = window.__tokenMeta || {};\n                        data.forEach(function(sub) {\n                            // store only non-sensitive metadata and masked token\n                            window.__tokenMeta[sub.subscriptionId] = {\n                                maskedToken: sub.maskedToken,\n                                customerName: sub.customerName,\n                                subscriptionPlanName: sub.subscriptionPlanName,\n                                status: sub.status\n                            };\n                        });\n                        // expose orgID for on-demand fetches\n                        window.__subscriptionOrgID = \"{{@root.orgID}}\";\n                    })();\n                </script>",
             // Existing-subs JSON data island (api-landing/partials/api-subscription-plans.hbs)
             "<script id=\"existing-subs-data\" type=\"application/json\">{{{json platformSubscriptions}}}</script>",
+            // API flows JSON data island (pages/api-flows/page.hbs)
+            "<script type=\"application/json\" id=\"apiFlowsDataContainer\">{{{json apiFlows}}}</script>",
+            // AI agent data island (pages/api-landing/page.hbs)
+            "<script type=\"application/json\" id=\"apiAgentData\">{\"baseUrl\":\"{{baseUrl}}\",\"apiHandle\":\"{{apiMetadata.apiHandle}}\"}</script>",
+            // Home discover data island (pages/home/page.hbs)
+            "<script type=\"application/json\" id=\"homeDiscoverData\">{\"baseUrl\":\"{{baseUrl}}\"}</script>",
             // Existing-subs bootstrap (api-landing/partials/api-subscription-plans.hbs)
             "<script>\n                (function() {\n                    window.__subscriptionOrgID = window.__subscriptionOrgID || \"{{@root.orgID}}\";\n                    var raw = document.getElementById('existing-subs-data').textContent || '[]';\n                    try {\n                        var parsed = JSON.parse(raw);\n                        window.existingPlatformSubscriptions = parsed.map(function(sub) {\n                            return { subscriptionId: sub.subscriptionId, subscriptionPlanName: sub.subscriptionPlanName, status: sub.status };\n                        });\n                    } catch (e) {\n                        window.existingPlatformSubscriptions = [];\n                    }\n                })();\n            </script>",
             // tokenMap + orgID bootstrap (api-subscriptions/partials/api-subscription-list.hbs
