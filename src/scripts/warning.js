@@ -103,6 +103,13 @@ function openWarningModal(param1, param2, param3, param4, param5, param6, param7
                 executeDeleteSubscription();
             }
         };
+    } else if (param1 === 'deleteApplication') {
+        modalTitle.innerText = 'Delete Application';
+        modalMessage.innerText = 'Are you sure you want to delete this application? This action cannot be undone and will revoke all associated access tokens and subscriptions.';
+        modalFunction.innerText = 'Delete';
+        modalFunction.onclick = function() {
+            deleteApplication();
+        };
     } else if (param1 === 'SwitchPlatformSubscriptionPlan') {
         modalTitle.innerText = 'Switch subscription plan?';
         modalMessage.innerText =
@@ -128,7 +135,7 @@ function openWarningModal(param1, param2, param3, param4, param5, param6, param7
 
 async function deleteApplication() {
     const modal = document.getElementById('warningModal');
-    const applicationId = modal.dataset.param1;
+    const applicationId = modal.dataset.param2;
     const messageOverlay = document.getElementById(`message-overlay-${applicationId}`);
     const trashButton = document.getElementById(`trash-btn-${applicationId}`);
 
