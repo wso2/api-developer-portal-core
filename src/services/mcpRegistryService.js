@@ -166,18 +166,23 @@ async function resolveOrgId(orgHandle) {
 /**
  * Builds the apiMetadata shape expected by apiDao.createAPIMetadata / updateAPIMetadata.
  */
-function buildApiMetadataPayload(name, version, description, remotes, title, publishedAt, updatedAt, proxyId) {
+function buildApiMetadataPayload(name, version, description, remotes, title, publishedAt, updatedAt, proxyId, orgHandle) {
     const normalizedRemotes = (Array.isArray(remotes) ? remotes : []).map(r => ({
         type: r.type || 'streamable-http',
         url: r.url || ''
     }));
     const primaryUrl = normalizedRemotes.length > 0 ? normalizedRemotes[0].url : '';
+    const apiHandle = name.includes('/')
+        ? name.slice(name.indexOf('/') + 1)
+        : (orgHandle && name.toLowerCase().startsWith(orgHandle.toLowerCase() + '-')
+            ? name.slice(orgHandle.length + 1)
+            : name);
     return {
         apiInfo: {
             referenceID: null,
             provider: 'WSO2',
             apiName: name,
-            apiHandle: name.replace('/', '-'),
+            apiHandle,
             apiTitle: title || null,
             apiDescription: description || `${name} MCP proxy`,
             apiVersion: version,
@@ -397,7 +402,7 @@ const publishServer = async (req, res) => {
             if (existing) {
                 existingApiId = existing.API_ID;
                 const existingPublishedAt = existing.METADATA_SEARCH?.apiInfo?.publishedAt || now;
-                const apiMetadataPayload = buildApiMetadataPayload(name, version, description, remotes, title, existingPublishedAt, now, proxyId);
+                const apiMetadataPayload = buildApiMetadataPayload(name, version, description, remotes, title, existingPublishedAt, now, proxyId, orgHandle);
                 await apiDao.updateAPIMetadata(orgId, existing.API_ID, apiMetadataPayload, t);
                 await apiDao.createAPILabelMapping(orgId, existing.API_ID, ['default'], t);
                 if (schemaBuffer) {
@@ -408,7 +413,7 @@ const publishServer = async (req, res) => {
                 }
                 row = await APIMetadata.findOne({ where: { API_ID: existing.API_ID }, transaction: t });
             } else {
-                const apiMetadataPayload = buildApiMetadataPayload(name, version, description, remotes, title, now, now, proxyId);
+                const apiMetadataPayload = buildApiMetadataPayload(name, version, description, remotes, title, now, now, proxyId, orgHandle);
                 const created_row = await apiDao.createAPIMetadata(orgId, apiMetadataPayload, t);
                 const apiId = created_row.dataValues.API_ID;
                 await apiDao.createAPILabelMapping(orgId, apiId, ['default'], t);
@@ -471,7 +476,7 @@ const updateVersion = async (req, res) => {
             updatedApiId = existing.API_ID;
             const existingPublishedAt = existing.METADATA_SEARCH?.apiInfo?.publishedAt || new Date().toISOString();
             const existingProxyId = proxyId || existing.METADATA_SEARCH?.apiInfo?.proxyId || null;
-            const apiMetadataPayload = buildApiMetadataPayload(existing.API_NAME, version, description, remotes, title, existingPublishedAt, new Date().toISOString(), existingProxyId);
+            const apiMetadataPayload = buildApiMetadataPayload(existing.API_NAME, version, description, remotes, title, existingPublishedAt, new Date().toISOString(), existingProxyId, orgHandle);
             await apiDao.updateAPIMetadata(orgId, existing.API_ID, apiMetadataPayload, t);
             await apiDao.createAPILabelMapping(orgId, existing.API_ID, ['default'], t);
             if (schemaBuffer) {
@@ -512,10 +517,7 @@ const deleteVersion = async (req, res) => {
         }
 
         await sequelize.transaction(async (t) => {
-            await APIMetadata.update(
-                { STATUS: 'DELETED' },
-                { where: { API_ID: existing.API_ID, ORG_ID: orgId }, transaction: t }
-            );
+            await apiDao.deleteAPIMetadata(orgId, existing.API_ID, t);
         });
         logger.info('MCP server deleted', { serverIdentifier, version, orgHandle });
         return res.status(200).json(new ServerResponseDTO(

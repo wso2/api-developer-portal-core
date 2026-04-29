@@ -22,10 +22,8 @@
           {{/unless}}
           {{/if}}
           {{#in apiMetadata.apiInfo.apiType values="REST,WS,GraphQL,MCP,WEBSUB"}}
-          {{#if apiMetadata.apiReferenceID}}
           <a type="button" class="common-btn-outlined"
             href="{{baseUrl}}/mcp/{{apiMetadata.apiHandle}}/docs/specification">Documentation</a>
-          {{/if}}
           {{else}}
           <a type="button" class="common-btn-outlined" href="{{{schemaUrl}}}" download>Download</a>
           {{/in}}
