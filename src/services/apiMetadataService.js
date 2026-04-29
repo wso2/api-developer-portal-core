@@ -72,8 +72,9 @@ const createAPIMetadata = async (req, res) => {
             apiMetadata = JSON.parse(req.body.apiMetadata);
             if (req.files?.apiDefinition?.[0]) {
                 const file = req.files.apiDefinition[0];
-                apiDefinitionFile = file.buffer;
-                apiFileName = file.originalname;
+                const preparedDefinition = prepareApiDefinitionForStorage(file.originalname, file.buffer);
+                apiDefinitionFile = preparedDefinition.apiDefinitionFile;
+                apiFileName = preparedDefinition.apiDefinitionFileName;
             }
         }
 
@@ -409,8 +410,9 @@ const updateAPIMetadata = async (req, res) => {
             apiMetadata = JSON.parse(req.body.apiMetadata);
             if (req.files?.apiDefinition?.[0]) {
                 const file = req.files.apiDefinition[0];
-                apiDefinitionFile = file.buffer;
-                apiFileName = file.originalname;
+                const preparedDefinition = prepareApiDefinitionForStorage(file.originalname, file.buffer);
+                apiDefinitionFile = preparedDefinition.apiDefinitionFile;
+                apiFileName = preparedDefinition.apiDefinitionFileName;
             }
         }
 
@@ -426,7 +428,7 @@ const updateAPIMetadata = async (req, res) => {
         if (orgId && apiId && Array.isArray(apiMetadata.apiInfo.labels) && (apiArtifactFile?.buffer || req.files?.api?.[0])) {
             existingAPI = await getMetadataFromDB(orgId, apiId);
         }
-        if (Array.isArray(apiMetadata.apiInfo.labels) && !apiMetadata.apiInfo.addedLabels) {
+        if (Array.isArray(apiMetadata.apiInfo.labels) && !apiMetadata.apiInfo.addedLabels && existingAPI !== undefined) {
             const desiredLabels = [...new Set(apiMetadata.apiInfo.labels.map(label => String(label)))];
             const currentLabels = new Set(existingAPI?.apiInfo?.labels || []);
             apiMetadata.apiInfo.addedLabels = desiredLabels.filter(label => !currentLabels.has(label));
@@ -1661,7 +1663,7 @@ async function extractApiContentFromUploadedZip(zipFile, orgId, apiId, mode = 'c
         throw new Sequelize.ValidationError("Missing required zip file");
     }
 
-    const zipFileName = zipFile.originalname;
+    const zipFileName = path.basename(String(zipFile.originalname || ''));
     if (!zipFileName?.toLowerCase().endsWith('.zip')) {
         throw new Sequelize.ValidationError('Invalid zip file. Expected a .zip file');
     }
@@ -1669,7 +1671,7 @@ async function extractApiContentFromUploadedZip(zipFile, orgId, apiId, mode = 'c
     const extractionKey = `${orgId || 'org'}-${apiId || 'api'}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     const tempBasePath = path.join('/tmp', 'api-content-upload', extractionKey);
     const extractPath = path.join(tempBasePath, 'extracted');
-    const tempZipPath = path.join(tempBasePath, zipFileName);
+    const tempZipPath = path.join(tempBasePath, `${extractionKey}.zip`);
 
     try {
         await fs.mkdir(extractPath, { recursive: true });
