@@ -82,7 +82,7 @@ const login = async (req, res, next) => {
     }
     if (!req.isAuthenticated()) {
         const fidp = req.query.fidp;
-        if (fidp && config.fidp[fidp]) {
+        if (config.identityProvider?.clientId && fidp && config.fidp[fidp]) {
             if (fidp == 'enterprise' && req.query.username) {
                 req.session.username = req.query.username;
                 await passport.authenticate('oauth2', { fidp: config.fidp[fidp], username: req.query.username })(req, res, next);
@@ -90,13 +90,16 @@ const login = async (req, res, next) => {
                 await passport.authenticate('oauth2', { fidp: config.fidp[fidp] })(req, res, next);
             }
             trackLoginTrigger({ orgName }, req);
-        } else if (fidp && fidp == 'default') {
+        } else if (config.identityProvider?.clientId && fidp && fidp == 'default') {
             await passport.authenticate('oauth2')(req, res, next);
-        } else { 
+        } else {
+            const localAuthEnabled = !config.identityProvider?.clientId;
             const templateContent = {
-                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName
+                baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + req.params.viewName,
+                localAuthEnabled,
+                loginError: req.query.error || null,
             };
-            const html = util.renderTemplate('../pages/login-page/page.hbs', 
+            const html = util.renderTemplate('../pages/login-page/page.hbs',
                 'src/pages/login-page/layout.hbs', templateContent, true);
             res.send(html);
             trackLoginTrigger({ orgName }, req);
@@ -107,6 +110,7 @@ const login = async (req, res, next) => {
 };
 
 const handleCallback = async (req, res, next) => {
+    if (!config.identityProvider?.clientId) return next();
     const rules = util.validateRequestParameters();
     const validationPromises = rules.map(validation => validation.run(req));
     Promise.all(validationPromises)
@@ -225,7 +229,24 @@ const handleLogOut = async (req, res) => {
             req.session.currentPathURI = currentPathURI;
             res.redirect(`${authJsonContent.logoutURL}?post_logout_redirect_uri=${authJsonContent.logoutRedirectURI}&id_token_hint=${idToken}`);
         });
+    } else if (req.user?.isLocalAuth) {
+        // Local-auth users have no IDP — destroy session and go to login
+        req.logout((err) => {
+            if (err) {
+                logger.error('Logout error (local-auth)', {
+                    userId: req.user?.username || 'unknown',
+                    orgName: req.params.orgName,
+                    error: err.message,
+                });
+            }
+            logUserAction('USER_LOGOUT', req, { orgName: req.params.orgName });
+            req.session.destroy(() => {
+                res.set('Cache-Control', 'no-store');
+                res.redirect(req.originalUrl.replace('/logout', '/login'));
+            });
+        });
     } else {
+        // Unauthenticated or session already gone — original behaviour
         res.redirect(req.originalUrl.replace('/logout', ''));
     }
 };
@@ -238,8 +259,8 @@ const handleLogOutLanding = async (req, res) => {
 
 const handleSilentSSO = async (req, res, next) => {
 
-    // Skip silent SSO redirect to IDP if disabled in config (advanced.disableSilentSSO)
-    if (config.advanced?.disableSilentSSO) return next();
+    // Skip if no IDP configured or silent SSO is disabled
+    if (!config.identityProvider?.clientId || config.advanced?.disableSilentSSO) return next();
 
     await req.session.save((err) => {
         req.session.returnTo = req.originalUrl;
@@ -317,6 +338,80 @@ const renderBillingPage = async (req, res) => {
     }
 };
 
+const handleLocalLogin = async (req, res) => {
+    const { username, password } = req.body;
+    const orgName = req.params.orgName;
+    const viewName = req.params.viewName;
+    const baseUrl = `/${orgName}${constants.ROUTE.VIEWS_PATH}${viewName}`;
+
+    if (config.identityProvider?.clientId) {
+        return res.status(404).send('Not found');
+    }
+    if (!username || !password) {
+        return res.redirect(`${baseUrl}/login?error=Username+and+password+are+required`);
+    }
+
+    const users = config.defaultAuth?.users || [];
+    const matchedUser = users.find(u => u.username === username && u.password === password);
+
+    if (!matchedUser) {
+        logger.warn('Config-auth login failed: invalid credentials', { username, orgName });
+        return res.redirect(`${baseUrl}/login?error=Invalid+username+or+password`);
+    }
+
+    const adminRole = config.adminRole || 'admin';
+    const superAdminRole = config.superAdminRole || 'superAdmin';
+    const roles = matchedUser.roles || [];
+
+    const returnTo = req.session.returnTo;
+    let view = viewName;
+    if (returnTo) {
+        const startIndex = returnTo.indexOf('/views/') + 7;
+        const endIndex = returnTo.indexOf('/', startIndex) !== -1
+            ? returnTo.indexOf('/', startIndex)
+            : returnTo.length;
+        view = returnTo.substring(startIndex, endIndex) || viewName;
+    }
+
+    const profile = {
+        firstName: matchedUser.firstName || username,
+        lastName: matchedUser.lastName || '',
+        email: matchedUser.email || username,
+        imageURL: 'https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/profile.svg',
+        view,
+        idToken: null,
+        [constants.ROLES.ORGANIZATION_CLAIM]: matchedUser.orgClaimName,
+        returnTo: returnTo || baseUrl,
+        accessToken: null,
+        refreshToken: null,
+        exchangeToken: null,
+        authorizedOrgs: [matchedUser.organizationIdentifier],
+        [constants.ROLES.ROLE_CLAIM]: roles,
+        [constants.ROLES.GROUP_CLAIM]: [],
+        isAdmin: roles.includes(adminRole) || roles.includes(superAdminRole),
+        isSuperAdmin: roles.includes(superAdminRole),
+        [constants.USER_ID]: username,
+        userOrg: matchedUser.organizationIdentifier,
+        isLocalAuth: true,
+    };
+
+    req.session.regenerate((err) => {
+        if (err) {
+            logger.error('Session regeneration failed (config-auth)', { error: err.message, stack: err.stack });
+            return res.redirect(`${baseUrl}/login?error=Login+failed%2C+please+try+again`);
+        }
+        req.logIn(profile, (loginErr) => {
+            if (loginErr) {
+                logger.error('Config-auth login session error', { error: loginErr.message, stack: loginErr.stack });
+                return res.redirect(`${baseUrl}/login?error=Login+failed%2C+please+try+again`);
+            }
+            res.set('Cache-Control', 'no-store');
+            const redirectTo = returnTo || baseUrl;
+            req.session.save(() => res.redirect(redirectTo));
+        });
+    });
+};
+
 module.exports = {
     login,
     handleCallback,
@@ -324,5 +419,6 @@ module.exports = {
     handleLogOut,
     handleLogOutLanding,
     handleSilentSSO,
-    renderBillingPage
+    renderBillingPage,
+    handleLocalLogin,
 };

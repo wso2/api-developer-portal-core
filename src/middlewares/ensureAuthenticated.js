@@ -42,6 +42,10 @@ function enforceSecuirty(scope) {
             if (!errors.isEmpty()) {
                 return res.status(400).json(util.getErrors(errors));
             }
+            // Config-auth users: authenticated with no token — allow through directly
+            if (req.isAuthenticated() && req.user && req.user.isLocalAuth) {
+                return next();
+            }
             const token = accessTokenPresent(req);
             if (token) {
                 //check user belongs to organization
@@ -148,6 +152,30 @@ const ensureAuthenticated = async (req, res, next) => {
         let role;
         logger.debug("Request authentication status", { isAuthenticated: req.isAuthenticated() });
         if (req.isAuthenticated()) {
+            // Config-auth: skip all token/exchange checks; roles already in session
+            if (req.user && req.user.isLocalAuth) {
+                req[constants.USER_ID] = req.user[constants.USER_ID];
+                if (config.authorizedPages.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
+                    if (req.user) {
+                        req.user[constants.ROLES.ADMIN] = adminRole;
+                        req.user[constants.ROLES.SUPER_ADMIN] = superAdminRole;
+                        req.user[constants.ROLES.SUBSCRIBER] = subscriberRole;
+                        if (orgDetails) {
+                            req.user[constants.ORG_ID] = orgDetails.ORG_ID;
+                            req.user[constants.ORG_IDENTIFIER] = orgDetails.ORGANIZATION_IDENTIFIER;
+                        }
+                    }
+                    if (!config.advanced.disabledRoleValidation) {
+                        role = req.user[constants.ROLES.ROLE_CLAIM];
+                        if (ensurePermission(req.originalUrl, role, req)) {
+                            return next();
+                        } else {
+                            return res.send("User unauthorized");
+                        }
+                    }
+                }
+                return next();
+            }
             const token = accessTokenPresent(req);
             if (token) {
                 const decodedAccessToken = jwt.decode(token);
@@ -254,6 +282,10 @@ function validateAuthentication(scope) {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json(util.getErrors(errors));
+        }
+        // Config-auth users have no JWT to validate — allow through
+        if (req.isAuthenticated() && req.user && req.user.isLocalAuth) {
+            return next();
         }
         let IDP, valid, scopes, orgId, response;
         if (req.params.orgName) {
@@ -399,7 +431,7 @@ const validateBasicAuth = async (basicHeader) => {
     let valid = false;
     const base64Decoded = Buffer.from(basicHeader, 'base64').toString('utf-8');
     const [username, password] = base64Decoded.split(':');
-    const users = config.defaultAuth.users;
+    const users = config.defaultAuth?.users || [];
     for (let user of users) {
         if (username === user.username && password === user.password) {
             valid = true;

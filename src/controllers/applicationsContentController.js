@@ -87,7 +87,7 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
 
     let applicationReference = "";
     let applicationKeyList;
-    if (applicationList.appMap) {
+    if (applicationList.appMap && config.controlPlane?.enabled) {
         applicationReference = applicationList.appMap[0].appRefID;
         try {
             applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
@@ -129,12 +129,14 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
             apiDTO.apiHandle = api.apiHandle;
 
             let apiDetails = null;
-            try {
-                apiDetails = await getAPIDetails(req, api.apiReferenceID);
-            } catch (apiError) {
-                logger.warn('Failed to fetch API details from CP', {
-                    apiReferenceID: api.apiReferenceID, error: apiError.message
-                });
+            if (config.controlPlane?.enabled) {
+                try {
+                    apiDetails = await getAPIDetails(req, api.apiReferenceID);
+                } catch (apiError) {
+                    logger.warn('Failed to fetch API details from CP', {
+                        apiReferenceID: api.apiReferenceID, error: apiError.message
+                    });
+                }
             }
             const projectIdEntry = apiDetails?.additionalProperties?.find(item => item.name === 'projectId');
             const projectId = projectIdEntry?.value;
@@ -158,13 +160,15 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
             }
             let productionApiKeys = [];
             let sandboxApiKeys = [];
-            try {
-                productionApiKeys = await getAPIKeys(req, api.apiReferenceID, applicationReference, 'PRODUCTION');
-                sandboxApiKeys = await getAPIKeys(req, api.apiReferenceID, applicationReference, 'SANDBOX');
-            } catch (keyError) {
-                logger.warn('Failed to fetch API keys from CP', {
-                    apiReferenceID: api.apiReferenceID, error: keyError.message
-                });
+            if (config.controlPlane?.enabled) {
+                try {
+                    productionApiKeys = await getAPIKeys(req, api.apiReferenceID, applicationReference, 'PRODUCTION');
+                    sandboxApiKeys = await getAPIKeys(req, api.apiReferenceID, applicationReference, 'SANDBOX');
+                } catch (keyError) {
+                    logger.warn('Failed to fetch API keys from CP', {
+                        apiReferenceID: api.apiReferenceID, error: keyError.message
+                    });
+                }
             }
             apiDTO.apiKeys = {
                 production: productionApiKeys,
@@ -187,7 +191,7 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
         api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
     }));
 
-    let kMmetaData = await getAPIMKeyManagers(req);
+    let kMmetaData = config.controlPlane?.enabled ? await getAPIMKeyManagers(req) : [];
 
     // Ensure kMmetaData is an array before filtering
     if (!Array.isArray(kMmetaData)) {
@@ -270,12 +274,18 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
     });
 
     let subscriptionScopes = [];
-    if (applicationReference) {
-        let cpApplication = await getAPIMApplication(req, applicationReference);
-        if (cpApplication && Array.isArray(cpApplication.subscriptionScopes)) {
-            for (const scope of cpApplication.subscriptionScopes) {
-                subscriptionScopes.push(scope.key);
+    if (applicationReference && config.controlPlane?.enabled) {
+        try {
+            const cpApplication = await getAPIMApplication(req, applicationReference);
+            if (cpApplication && Array.isArray(cpApplication.subscriptionScopes)) {
+                for (const scope of cpApplication.subscriptionScopes) {
+                    subscriptionScopes.push(scope.key);
+                }
             }
+        } catch (appError) {
+            logger.warn('Failed to fetch application from CP', {
+                applicationReference, error: appError.message
+            });
         }
     }
 
@@ -363,7 +373,7 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
 
     // Load platform APIs that don't require subscription (gatewayType=wso2/api-platform, tokenBasedSubscription=false)
     let noSubPlatformAPIs = [];
-    try {
+    if (config.controlPlane?.enabled) try {
         const noSubApis = await apiMetadata.getAPIMetadataByCondition({
             ORG_ID: orgID,
             GATEWAY_TYPE: 'wso2/api-platform',
