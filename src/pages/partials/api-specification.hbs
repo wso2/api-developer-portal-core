@@ -393,9 +393,11 @@
             const swaggerData = {{{swagger}}};
             let serverUrl = swaggerData.servers && swaggerData.servers.length > 0 ? swaggerData.servers[0].url : '';
 
-            // Add '/mcp' to the end of the URL if URL is available
             if (serverUrl) {
-                serverUrl = serverUrl + '/mcp';
+                serverUrl = serverUrl.replace(/\/$/, '');
+                if (!serverUrl.endsWith('/mcp')) {
+                    serverUrl = serverUrl + '/mcp';
+                }
             }
 
             const rootElement = document.getElementById('root');
