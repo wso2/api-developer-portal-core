@@ -362,9 +362,42 @@ const billingController = require('./controllers/billingController');
 app.post('/webhooks/stripe/:orgId', express.raw({ type: 'application/json' }), billingController.handleStripeWebhook);
 
 app.get('/robots.txt', (req, res) => {
+    const baseUrl = config.baseUrl || '';
     res.type('text/plain').send(
-        'User-agent: *\nAllow: /\n\n# AI agent guidance: /{orgName}/views/{viewName}/llms.txt\n'
+        'User-agent: *\nAllow: /\n\n' +
+        `# AI agent entry point: ${baseUrl}/llms.txt\n`
     );
+});
+
+// Inject /llms.txt discovery on root pages
+app.use('/', (req, res, next) => {
+    if (req.path !== '/') return next();
+    res.set('Link', '</llms.txt>; rel="describedby"; type="text/plain"');
+    const originalSend = res.send.bind(res);
+    res.send = function (body) {
+        if (typeof body === 'string' && body.includes('</head>')) {
+            body = body.replace('</head>',
+                `  <link rel="alternate" type="text/plain" href="/llms.txt">\n</head>`);
+        }
+        return originalSend(body);
+    };
+    next();
+});
+
+// Inject llms.txt discovery into portal view pages via HTTP Link header and <link> tag
+app.use('/:orgName/views/:viewName', (req, res, next) => {
+    const { orgName, viewName } = req.params;
+    const llmsUrl = `/${orgName}/views/${viewName}/llms.txt`;
+    res.set('Link', `<${llmsUrl}>; rel="describedby"; type="text/plain"`);
+    const originalSend = res.send.bind(res);
+    res.send = function (body) {
+        if (typeof body === 'string' && body.includes('</head>')) {
+            body = body.replace('</head>',
+                `  <link rel="alternate" type="text/plain" href="${llmsUrl}">\n</head>`);
+        }
+        return originalSend(body);
+    };
+    next();
 });
 
 app.get('/llms.txt', (req, res) => {
