@@ -21,6 +21,19 @@
     const preEl = document.getElementById('discoverPromptText');
     if (preEl) preEl.textContent = prompt;
 
+    const downloadBtn = document.getElementById('discoverBtnDownloadPrompt');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', function () {
+            const blob = new Blob([prompt], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'discover-prompt.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+    }
+
     const copyBtn = document.getElementById('discoverBtnCopyPrompt');
     if (copyBtn) {
         copyBtn.addEventListener('click', function () {

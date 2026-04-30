@@ -701,7 +701,7 @@ async function updateSubscription(orgID, applicationID, apiId, apiReferenceID, p
         const responseData = await response.json();
 
         // Always reset button state and close modal
-        const updatedButton = document.getElementById('subscribe-btn-' + apiId + "-" + policyName);
+        const updatedButton = document.getElementById('subscribe-btn-' + policyId);
         if (updatedButton) {
             resetSubscribeButtonState(updatedButton);
         }
@@ -710,26 +710,35 @@ async function updateSubscription(orgID, applicationID, apiId, apiReferenceID, p
 
         if (response.ok) {
 
-            // Show success notification
+            // Show success notification — api-card elements exist on the API listing page only
             const updatedPlanCard = document.getElementById('api-card-' + apiId + "-" + policyName);
-            updatedPlanCard.style.borderColor = 'var(--primary-main-color)';
+            if (updatedPlanCard) {
+                updatedPlanCard.style.borderColor = 'var(--primary-main-color)';
+            }
 
-            updatedButton.setAttribute('disabled', 'disabled');
-            updatedButton.classList.add('disabled');
-            updatedButton.style.setProperty('pointer-events', 'none', 'important');
-            updatedButton.textContent = 'Update';
+            if (updatedButton) {
+                updatedButton.setAttribute('disabled', 'disabled');
+                updatedButton.classList.add('disabled');
+                updatedButton.style.setProperty('pointer-events', 'none', 'important');
+                updatedButton.textContent = 'Updated';
+            }
 
             const apiCards = document.querySelectorAll(`[id^="api-card-${apiId}-"]`);
             apiCards.forEach(card => {
                 if (card.id !== `api-card-${apiId}-${policyName}`) {
                     card.style.borderColor = '';
                     const cardButton = card.querySelector('a[type="button"]');
-                    cardButton.style.pointerEvents = 'auto';
-                    cardButton.removeAttribute('disabled');
-                    cardButton.classList.remove('disabled');
+                    if (cardButton) {
+                        cardButton.style.pointerEvents = 'auto';
+                        cardButton.removeAttribute('disabled');
+                        cardButton.classList.remove('disabled');
+                    }
                 }
             });
-            document.getElementById('policy_' + subID).textContent = policyName;
+            const policyCell = document.getElementById('policy_' + subID);
+            if (policyCell) {
+                policyCell.textContent = policyName;
+            }
             showSubscriptionMessage(messageOverlay, 'Successfully updated API subscription', 'success');
         } else {
             // Handle API error

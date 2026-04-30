@@ -145,64 +145,74 @@
                                                         {{#unless @root.isReadOnlyMode}}onclick="handlePlanSubscription(this)"{{/unless}}
                                                         {{#if @root.isReadOnlyMode}}disabled aria-disabled="true"{{/if}}>Subscribe</button>
                                                 {{else}}
-                                                    {{!-- App-based subscription flow: show dropdown above a full-width Subscribe button --}}
-                                                    <div class="p-3 d-flex flex-column align-items-stretch">
-                                                        <div class="mb-2">
-                                                            <div class="custom-dropdown show" id="customDropdown-{{policyID}}" style="min-width: 100%; marginBottom: 30px">
-                                                                <input type="hidden" id="selectedAppId-{{policyID}}" value="" />
-                                                                <div class="custom-select-container" style="width: 100%; margin-bottom: 8px;">
-                                                                    <div class="select-selected" aria-expanded="false">
-                                                                        <span class="selected-text">Create an app</span>
-                                                                        <span class="select-arrow"></span>
-                                                                    </div>
-                                                                    <div class="select-items" role="listbox">
-                                                                        <div class="select-search-container">
-                                                                            <input type="text" class="select-search-input {{#if @root.isReadOnlyMode}}d-none{{/if}}" placeholder="Find or create an application..."
-                                                                                aria-label="Search applications">
+                                                    {{#if ../subID}}
+                                                        {{!-- Update mode: app already known, show Update button directly --}}
+                                                        <button id="subscribe-btn-{{policyID}}" type="button"
+                                                            class="common-btn-primary p-1 ps-2 pe-2 w-100 subscription-plan-subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                            data-external-price-id="{{pricingMetadata.external.priceId}}"
+                                                            data-is-paid="{{#if isPaid}}true{{else}}false{{/if}}"
+                                                            {{#unless @root.isReadOnlyMode}}onclick="showSubscribeButtonLoading(this); updateSubscription('{{@root.orgID}}', '{{../appID}}', '{{../apiID}}', '{{#if ../refID}}{{../refID}}{{else}}{{../apiID}}{{/if}}', '{{policyID}}', '{{policyName}}', '{{../selectedPlan}}', '{{../subID}}')"{{/unless}}
+                                                            {{#if @root.isReadOnlyMode}}disabled aria-disabled="true"{{/if}}>Update</button>
+                                                    {{else}}
+                                                        {{!-- App-based subscription flow: show dropdown above a full-width Subscribe button --}}
+                                                        <div class="p-3 d-flex flex-column align-items-stretch">
+                                                            <div class="mb-2">
+                                                                <div class="custom-dropdown show" id="customDropdown-{{policyID}}" style="min-width: 100%; marginBottom: 30px">
+                                                                    <input type="hidden" id="selectedAppId-{{policyID}}" value="" />
+                                                                    <div class="custom-select-container" style="width: 100%; margin-bottom: 8px;">
+                                                                        <div class="select-selected" aria-expanded="false">
+                                                                            <span class="selected-text">Create an app</span>
+                                                                            <span class="select-arrow"></span>
                                                                         </div>
-                                                                        <div class="select-items-container">
-                                                                            {{#each (filter ../applications "subscriptionStatus" "CANCELED" false)}}
-                                                                            <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}" data-app-name="{{name}}">
-                                                                                <div class="d-flex flex-column flex-grow-1">
-                                                                                    <span class="fw-semibold">{{name}}</span>
-                                                                                    {{#if subscriptionPolicy}}
-                                                                                    <small style="font-size: 11px; margin-top: 3px;">
-                                                                                        <span class="badge" style="background-color: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 10px; font-weight: 600; font-size: 10px;">
-                                                                                            {{subscriptionPolicy.policyName}}
-                                                                                        </span>
-                                                                                    </small>
+                                                                        <div class="select-items" role="listbox">
+                                                                            <div class="select-search-container">
+                                                                                <input type="text" class="select-search-input {{#if @root.isReadOnlyMode}}d-none{{/if}}" placeholder="Find or create an application..."
+                                                                                    aria-label="Search applications">
+                                                                            </div>
+                                                                            <div class="select-items-container">
+                                                                                {{#each (filter ../applications "subscriptionStatus" "CANCELED" false)}}
+                                                                                <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}" data-app-name="{{name}}">
+                                                                                    <div class="d-flex flex-column flex-grow-1">
+                                                                                        <span class="fw-semibold">{{name}}</span>
+                                                                                        {{#if subscriptionPolicy}}
+                                                                                        <small style="font-size: 11px; margin-top: 3px;">
+                                                                                            <span class="badge" style="background-color: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 10px; font-weight: 600; font-size: 10px;">
+                                                                                                {{subscriptionPolicy.policyName}}
+                                                                                            </span>
+                                                                                        </small>
+                                                                                        {{/if}}
+                                                                                    </div>
+                                                                                    {{#if subscribed}}
+                                                                                        {{#if (eq subscriptionStatus "ACTIVE")}}
+                                                                                        <span class="badge" style="background:#ecfdf5;color:#047857;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">Active</span>
+                                                                                        {{else if (eq subscriptionStatus "TRIALING")}}
+                                                                                        <span class="badge" style="background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">Trial</span>
+                                                                                        {{else if (eq subscriptionStatus "PAST_DUE")}}
+                                                                                        <span class="badge" style="background:#fef2f2;color:#b91c1c;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">Past due</span>
+                                                                                        {{else if (eq subscriptionStatus "CANCEL_SCHEDULED")}}
+                                                                                        <span class="badge" style="background:#fff7ed;color:#c2410c;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">Cancels soon</span>
+                                                                                        {{/if}}
                                                                                     {{/if}}
                                                                                 </div>
-                                                                                {{#if subscribed}}
-                                                                                    {{#if (eq subscriptionStatus "ACTIVE")}}
-                                                                                    <span class="badge" style="background:#ecfdf5;color:#047857;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">Active</span>
-                                                                                    {{else if (eq subscriptionStatus "TRIALING")}}
-                                                                                    <span class="badge" style="background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">Trial</span>
-                                                                                    {{else if (eq subscriptionStatus "PAST_DUE")}}
-                                                                                    <span class="badge" style="background:#fef2f2;color:#b91c1c;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">Past due</span>
-                                                                                    {{else if (eq subscriptionStatus "CANCEL_SCHEDULED")}}
-                                                                                    <span class="badge" style="background:#fff7ed;color:#c2410c;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0;">Cancels soon</span>
-                                                                                    {{/if}}
-                                                                                {{/if}}
+                                                                                {{/each}}
                                                                             </div>
-                                                                            {{/each}}
-                                                                        </div>
-                                                                        <div class="create-app-container" style="display: none;">
-                                                                            <div class="create-app-option" role="button">
-                                                                                Create application "<span class="search-term"></span>"
+                                                                            <div class="create-app-container" style="display: none;">
+                                                                                <div class="create-app-option" role="button">
+                                                                                    Create application "<span class="search-term"></span>"
+                                                                                </div>
                                                                             </div>
                                                                         </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
+                                                            <button id="subscribe-btn-{{policyID}}" type="button"
+                                                                class="common-btn-primary w-100 subscription-plan-subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                                data-external-price-id="{{pricingMetadata.external.priceId}}"
+                                                                data-is-paid="{{#if isPaid}}true{{else}}false{{/if}}"
+                                                                {{#unless @root.isReadOnlyMode}}onclick="showSubscribeButtonLoading(this); subscribe('{{@root.orgID}}', '', '{{../apiID}}', '{{#if ../apiReferenceID}}{{../apiReferenceID}}{{else}}{{../apiID}}{{/if}}', '{{policyID}}', '{{policyName}}', this)"{{/unless}}
+                                                                {{#if @root.isReadOnlyMode}}disabled aria-disabled="true"{{/if}}>Subscribe</button>
                                                         </div>
-                                                        <button id="subscribe-btn-{{policyID}}" type="button"
-                                                            class="common-btn-primary w-100 subscription-plan-subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
-                                                            data-external-price-id="{{pricingMetadata.external.priceId}}"
-                                                            data-is-paid="{{#if isPaid}}true{{else}}false{{/if}}"
-                                                            {{#unless @root.isReadOnlyMode}}onclick="showSubscribeButtonLoading(this); subscribe('{{@root.orgID}}', '', '{{../apiID}}', '{{#if ../apiReferenceID}}{{../apiReferenceID}}{{else}}{{../apiID}}{{/if}}', '{{policyID}}', '{{policyName}}', this)"{{/unless}}
-                                                            {{#if @root.isReadOnlyMode}}disabled aria-disabled="true"{{/if}}>Subscribe</button>
-                                                    </div>
+                                                    {{/if}}
                                                 {{/if}}
                                 </div>
                             </div>
