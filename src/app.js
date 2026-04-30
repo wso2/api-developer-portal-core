@@ -590,6 +590,7 @@ app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
 
 // MCP Server Registry (OpenAPI v0.1)
 app.use('/registry/:orgHandle', mcpRegistryRoute);
+app.use('/:orgHandle/registry', mcpRegistryRoute);
 
 if (config.mode === constants.DEV_MODE) {
     app.use(constants.ROUTE.STYLES, express.static(path.join(process.cwd(), filePrefix + 'styles')));
