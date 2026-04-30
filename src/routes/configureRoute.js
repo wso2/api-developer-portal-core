@@ -22,7 +22,7 @@ const requireAdmin = (req, res, next) => {
             ? '/' + req.params.orgName + '/views/' + viewName
             : '/' + req.params.orgName;
         const templateContent = {
-            errorMessage: "Access Denied.",
+            errorMessage: "Access Denied",
             baseUrl,
             devportalMode: constants.API_TYPE.DEFAULT,
             profile: req.user || null,
