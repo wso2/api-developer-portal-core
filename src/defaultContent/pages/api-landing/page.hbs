@@ -56,18 +56,22 @@
                     <div class="api-flow-prompt-toolbar">
                         <span class="small text-muted">Use this prompt to let your AI agent discover and call this API automatically</span>
                         <div class="prompt-modal-toolbar">
+                            <button type="button" class="btn-run-prompt" id="apiBtnRunClaude">
+                                <i class="bi bi-play-fill"></i> Run in Claude
+                            </button>
+                        </div>
+                    </div>
+                    <div class="api-flow-prompt-pre-wrapper">
+                        <div class="prompt-pre-actions">
                             <button type="button" class="prompt-tool-btn" id="apiBtnDownloadPrompt" title="Download as .txt">
                                 <i class="bi bi-download"></i>
                             </button>
                             <button type="button" class="prompt-tool-btn" id="apiBtnCopyPrompt" title="Copy prompt">
                                 <i class="bi bi-copy"></i>
                             </button>
-                            <button type="button" class="btn-run-prompt" id="apiBtnRunClaude">
-                                <i class="bi bi-play-fill"></i> Run in Claude
-                            </button>
                         </div>
+                        <pre id="apiAgentPromptText" class="api-flow-prompt-pre">Loading...</pre>
                     </div>
-                    <pre id="apiAgentPromptText" class="api-flow-prompt-pre">Loading...</pre>
                 </div>
             </div>
         </div>

@@ -73,18 +73,22 @@
                     <div class="api-flow-prompt-toolbar">
                         <span class="small text-muted">Use this prompt to let your AI agent execute the workflow—handling API calls, dependencies, and errors automatically</span>
                         <div class="prompt-modal-toolbar">
+                            <button type="button" class="btn-run-prompt" id="btnRunClaude">
+                                <i class="bi bi-play-fill"></i> Run in Claude
+                            </button>
+                        </div>
+                    </div>
+                    <div class="api-flow-prompt-pre-wrapper">
+                        <div class="prompt-pre-actions">
                             <button type="button" class="prompt-tool-btn" id="btnDownloadPrompt" title="Download as .txt">
                                 <i class="bi bi-download"></i>
                             </button>
                             <button type="button" class="prompt-tool-btn" id="btnCopyPrompt" title="Copy prompt">
                                 <i class="bi bi-copy"></i>
                             </button>
-                            <button type="button" class="btn-run-prompt" id="btnRunClaude">
-                                <i class="bi bi-play-fill"></i> Run in Claude
-                            </button>
                         </div>
+                        <pre id="modalAgentPromptText" class="api-flow-prompt-pre">{{flow.agentPrompt}}</pre>
                     </div>
-                    <pre id="modalAgentPromptText" class="api-flow-prompt-pre">{{flow.agentPrompt}}</pre>
                 </div>
             </div>
         </div>

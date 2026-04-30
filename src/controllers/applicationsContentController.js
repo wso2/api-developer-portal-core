@@ -108,13 +108,20 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
         subList = await Promise.all(filteredSubAPIs.map(async (sub) => {
             const api = new APIDTO(sub);
             let apiDTO = {};
-            apiDTO.apiInfo = {};
+            apiDTO.apiInfo = {
+                apiName: api.apiInfo.apiName,
+                apiVersion: api.apiInfo.apiVersion,
+                apiDescription: api.apiInfo.apiDescription,
+                apiType: api.apiInfo.apiType,
+                gatewayType: api.apiInfo.gatewayType || null,
+                tokenBasedSubscriptionEnabled: api.apiInfo.tokenBasedSubscriptionEnabled || false,
+                apiImageMetadata: api.apiInfo.apiImageMetadata
+            };
             apiDTO.name = api.apiInfo.apiName;
             apiDTO.apiID = api.apiID;
             apiDTO.version = api.apiInfo.apiVersion;
             apiDTO.apiType = api.apiInfo.apiType;
             apiDTO.gatewayType = api.apiInfo.gatewayType || null;
-            apiDTO.apiInfo.apiImageMetadata = api.apiInfo.apiImageMetadata;
             apiDTO.image = api.apiInfo.apiImageMetadata["api-icon"];
             apiDTO.subID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.SUB_ID;
             apiDTO.policyID = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues.POLICY_ID;
@@ -163,7 +170,7 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
                 production: productionApiKeys,
                 sandbox: sandboxApiKeys
             };
-            apiDTO.subscriptionPolicyDetails = api.subscriptionPolicies;
+            apiDTO.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
             apiDTO.scopes = (apiDetails?.scopes || []).map(scope => scope.key);
             return apiDTO
         }));

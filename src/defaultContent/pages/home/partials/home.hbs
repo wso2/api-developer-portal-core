@@ -157,15 +157,22 @@
                 <div class="api-flow-prompt-toolbar">
                     <span class="small text-muted">Use this prompt to let your AI agent explore and discover what's available in this portal</span>
                     <div class="prompt-modal-toolbar">
-                        <button type="button" class="prompt-tool-btn" id="discoverBtnCopyPrompt" title="Copy prompt">
-                            <i class="bi bi-copy"></i>
-                        </button>
                         <button type="button" class="btn-run-prompt" id="discoverBtnRunClaude">
                             <i class="bi bi-play-fill"></i> Run in Claude
                         </button>
                     </div>
                 </div>
-                <pre id="discoverPromptText" class="api-flow-prompt-pre"></pre>
+                <div class="api-flow-prompt-pre-wrapper">
+                    <div class="prompt-pre-actions">
+                        <button type="button" class="prompt-tool-btn" id="discoverBtnDownloadPrompt" title="Download as .txt">
+                            <i class="bi bi-download"></i>
+                        </button>
+                        <button type="button" class="prompt-tool-btn" id="discoverBtnCopyPrompt" title="Copy prompt">
+                            <i class="bi bi-copy"></i>
+                        </button>
+                    </div>
+                    <pre id="discoverPromptText" class="api-flow-prompt-pre"></pre>
+                </div>
             </div>
         </div>
     </div>

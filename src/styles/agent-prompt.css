@@ -205,6 +205,19 @@
     background: var(--secondary-bg-color, #f8f9fa);
 }
 
+.api-flow-prompt-pre-wrapper {
+    position: relative;
+}
+
+.prompt-pre-actions {
+    position: absolute;
+    top: 0.625rem;
+    right: 0.625rem;
+    display: flex;
+    gap: 0.4rem;
+    z-index: 1;
+}
+
 .api-flow-prompt-pre {
     margin: 0;
     padding: 1.25rem;
