@@ -355,7 +355,7 @@ const handleLocalLogin = async (req, res) => {
     const matchedUser = users.find(u => u.username === username && u.password === password);
 
     if (!matchedUser) {
-        logger.warn('Config-auth login failed: invalid credentials', { username, orgName });
+        logger.warn('Local-auth login failed: invalid credentials', { orgName });
         return res.redirect(`${baseUrl}/login?error=Invalid+username+or+password`);
     }
 

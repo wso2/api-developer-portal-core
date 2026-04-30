@@ -43,7 +43,7 @@ function enforceSecuirty(scope) {
                 return res.status(400).json(util.getErrors(errors));
             }
             // Config-auth users: authenticated with no token — allow through directly
-            if (req.isAuthenticated() && req.user && req.user.isLocalAuth) {
+            if (req.isAuthenticated() && req.user && req.user.isLocalAuth && !config.identityProvider?.clientId) {
                 return next();
             }
             const token = accessTokenPresent(req);
@@ -153,7 +153,7 @@ const ensureAuthenticated = async (req, res, next) => {
         logger.debug("Request authentication status", { isAuthenticated: req.isAuthenticated() });
         if (req.isAuthenticated()) {
             // Config-auth: skip all token/exchange checks; roles already in session
-            if (req.user && req.user.isLocalAuth) {
+            if (req.user && req.user.isLocalAuth && !config.identityProvider?.clientId) {
                 req[constants.USER_ID] = req.user[constants.USER_ID];
                 if (config.authorizedPages.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
                     if (req.user) {
@@ -170,7 +170,7 @@ const ensureAuthenticated = async (req, res, next) => {
                         if (ensurePermission(req.originalUrl, role, req)) {
                             return next();
                         } else {
-                            return res.send("User unauthorized");
+                            return res.status(403).send("User unauthorized");
                         }
                     }
                 }
@@ -284,7 +284,7 @@ function validateAuthentication(scope) {
             return res.status(400).json(util.getErrors(errors));
         }
         // Config-auth users have no JWT to validate — allow through
-        if (req.isAuthenticated() && req.user && req.user.isLocalAuth) {
+        if (req.isAuthenticated() && req.user && req.user.isLocalAuth && !config.identityProvider?.clientId) {
             return next();
         }
         let IDP, valid, scopes, orgId, response;
