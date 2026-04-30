@@ -57,8 +57,23 @@
       {
         "username": "admin",
         "password": "admin",
+        "firstName": "Admin",
+        "lastName": "User",
+        "email": "admin@example.com",
         "roles": [
           "admin"
+        ],
+        "orgClaimName": "ACME",
+        "organizationIdentifier": "ACME"
+      },
+      {
+        "username": "developer",
+        "password": "developer",
+        "firstName": "Developer",
+        "lastName": "User",
+        "email": "developer@example.com",
+        "roles": [
+          "Internal/subscriber"
         ],
         "orgClaimName": "ACME",
         "organizationIdentifier": "ACME"
