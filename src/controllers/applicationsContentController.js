@@ -87,7 +87,7 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
 
     let applicationReference = "";
     let applicationKeyList;
-    if (applicationList.appMap && config.controlPlane?.enabled) {
+    if (applicationList.appMap && config.controlPlane?.enabled !== false) {
         applicationReference = applicationList.appMap[0].appRefID;
         try {
             applicationKeyList = await getApplicationKeys(applicationList.appMap, req);
@@ -129,7 +129,7 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
             apiDTO.apiHandle = api.apiHandle;
 
             let apiDetails = null;
-            if (config.controlPlane?.enabled) {
+            if (config.controlPlane?.enabled !== false) {
                 try {
                     apiDetails = await getAPIDetails(req, api.apiReferenceID);
                 } catch (apiError) {
@@ -160,7 +160,7 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
             }
             let productionApiKeys = [];
             let sandboxApiKeys = [];
-            if (config.controlPlane?.enabled) {
+            if (config.controlPlane?.enabled !== false) {
                 try {
                     productionApiKeys = await getAPIKeys(req, api.apiReferenceID, applicationReference, 'PRODUCTION');
                     sandboxApiKeys = await getAPIKeys(req, api.apiReferenceID, applicationReference, 'SANDBOX');
@@ -191,7 +191,7 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
         api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
     }));
 
-    let kMmetaData = config.controlPlane?.enabled ? await getAPIMKeyManagers(req) : [];
+    let kMmetaData = config.controlPlane?.enabled !== false ? await getAPIMKeyManagers(req) : [];
 
     // Ensure kMmetaData is an array before filtering
     if (!Array.isArray(kMmetaData)) {
@@ -274,7 +274,7 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
     });
 
     let subscriptionScopes = [];
-    if (applicationReference && config.controlPlane?.enabled) {
+    if (applicationReference && config.controlPlane?.enabled !== false) {
         try {
             const cpApplication = await getAPIMApplication(req, applicationReference);
             if (cpApplication && Array.isArray(cpApplication.subscriptionScopes)) {
@@ -373,7 +373,7 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
 
     // Load platform APIs that don't require subscription (gatewayType=wso2/api-platform, tokenBasedSubscription=false)
     let noSubPlatformAPIs = [];
-    if (config.controlPlane?.enabled) try {
+    if (config.controlPlane?.enabled !== false) try {
         const noSubApis = await apiMetadata.getAPIMetadataByCondition({
             ORG_ID: orgID,
             GATEWAY_TYPE: 'wso2/api-platform',
