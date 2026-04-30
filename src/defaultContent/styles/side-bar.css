@@ -302,27 +302,6 @@
     display: block;
 }
 
-/* New badge — dot in collapsed state, pill in expanded state */
-#ai-settings {
-    position: relative;
-}
-
-#ai-settings::after {
-    content: '';
-    position: absolute;
-    top: 0.5rem;
-    left: 2.3rem;
-    width: 0.45rem;
-    height: 0.45rem;
-    background-color: var(--secondary-light-color);
-    border-radius: 50%;
-    transition: opacity 0.2s ease;
-}
-
-.sidebar:hover:not(.force-collapse) #ai-settings::after,
-.sidebar.expanded #ai-settings::after {
-    opacity: 0;
-}
 
 .nav-new-badge {
     opacity: 0;
