@@ -96,19 +96,17 @@
         <img src="/images/subscriptions-icon.svg" />
         <span class="nav-text">Subscriptions</span>
       </a>
-      {{#if showApiWorkflowsNav}}
-      {{#if profile.isAdmin}}
-      <div class="nav-section-divider"></div>
-      <span class="nav-section-label">Admin</span>
-      <a href="{{baseUrl}}/configure" class="nav-link" id="ai-settings">
-        <img src="/images/settings-icon.svg" />
-        <span class="nav-text">Settings</span>
-        <span class="nav-new-badge">New</span>
-      </a>
-      {{/if}}
-      {{/if}}
   </nav>
 
+  {{#if showApiWorkflowsNav}}
+  {{#if profile.isAdmin}}
+  <a href="{{baseUrl}}/configure" class="nav-link" id="ai-settings">
+    <img src="/images/settings-icon.svg" />
+    <span class="nav-text">Settings</span>
+  </a>
+  {{/if}}
+  {{/if}}
+  <div class="nav-section-divider"></div>
   <button class="collapse-btn" id="collapseBtn">
     <i class="bi bi-chevron-right"></i>
     <span class="collapse-text">Expand</span>
