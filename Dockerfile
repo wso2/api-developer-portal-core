@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     bash \
     coreutils \
     default-jre \
+    openssl \
     && rm -rf /var/lib/apt/lists/*
 
 # Verify the installed wget version
@@ -36,8 +37,13 @@ EXPOSE 8080
 # Create a non-root user with UID 10001 to satisfy Checkov CKV_CHOREO_1
 RUN groupadd -g 10001 appgroup && useradd -m -u 10001 -g appgroup -s /bin/bash appuser
 
+# Pre-create the certs directory owned by the non-root user so the
+# entrypoint script can write self-signed certs into the mounted volume.
+RUN mkdir -p /app/certs && chown -R 10001:10001 /app/certs
+
+RUN chmod +x /app/docker-entrypoint.sh
+
 # Explicitly switch to UID 10001 instead of using "appuser"
 USER 10001
 
-# Start the Node.js application
-CMD ["node", "src/app.js"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
