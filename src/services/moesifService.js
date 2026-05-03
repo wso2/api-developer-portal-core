@@ -20,7 +20,7 @@
 const { CustomError } = require("../utils/errors/customErrors");
 const logger = require("../config/logger");
 const { invokeApiRequest } = require("../utils/util");
-const config = require(process.cwd() + "/config.json");
+const { config } = require('../config/configLoader');
 
 const controlPlaneUrl = config.controlPlane?.url;
 

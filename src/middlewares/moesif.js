@@ -23,7 +23,7 @@
  */
 
 const moesif = require('moesif-nodejs');
-const config = require(process.cwd() + '/config.json');
+const { config } = require('../config/configLoader');
 
 /**
  * Default URI used when request object is not available.
