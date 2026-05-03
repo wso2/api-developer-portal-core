@@ -20,7 +20,7 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const billingController = require('../controllers/billingController');
 const registerPartials = require('../middlewares/registerPartials');
-const { validateAuthentication, enforceSecuirty } = require('../middlewares/ensureAuthenticated');
+const { validateAuthentication } = require('../middlewares/ensureAuthenticated');
 const { ensureBillingAuth } = require('../middlewares/billingAuth');
 const constants = require('../utils/constants');
 

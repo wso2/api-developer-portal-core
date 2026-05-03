@@ -47,6 +47,8 @@ function enforceSecuirty(scope) {
                 return next();
             }
             const token = accessTokenPresent(req);
+            const hasBasicAuth = !token && !config.identityProvider?.clientId &&
+                req.headers.authorization?.toLowerCase().startsWith('basic ');
             if (token) {
                 //check user belongs to organization
                 if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
@@ -64,6 +66,8 @@ function enforceSecuirty(scope) {
                 //set user ID
                 const decodedAccessToken = jwt.decode(token);
                 req[constants.USER_ID] = decodedAccessToken[constants.USER_ID];
+            } else if (hasBasicAuth) {
+                validateAuthentication(scope)(req, res, next);
             } else if (config.advanced.apiKey.enabled) {
                 // Communcation with API KEY
                 if (req.headers.organization) {
@@ -92,8 +96,9 @@ function accessTokenPresent(req) {
     if (req.user) {
         return req.user[constants.ACCESS_TOKEN];
     }
-    if (req.headers.authorization) {
-        return req.headers.authorization.split(' ')[1];
+    const auth = req.headers.authorization;
+    if (auth && auth.toLowerCase().startsWith('bearer ')) {
+        return auth.split(' ')[1];
     }
     return null;
 }
