@@ -304,10 +304,10 @@ function validateAuthentication(scope) {
                 //login from super IDP
                 IDP = new IdentityProviderDTO(response[0].dataValues);
             } else {
-                IDP = config.identityProvider;
+                IDP = config.identityProvider || {};
             }
         } else {
-            IDP = config.identityProvider;
+            IDP = config.identityProvider || {};
         }
 
         let accessToken, basicHeader;

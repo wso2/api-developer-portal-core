@@ -191,7 +191,14 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
         api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
     }));
 
-    let kMmetaData = config.controlPlane?.enabled !== false ? await getAPIMKeyManagers(req) : [];
+    let kMmetaData = [];
+    if (config.controlPlane?.enabled !== false) {
+        try {
+            kMmetaData = await getAPIMKeyManagers(req);
+        } catch (kmError) {
+            logger.warn('Failed to fetch key managers from CP', { error: kmError.message });
+        }
+    }
 
     // Ensure kMmetaData is an array before filtering
     if (!Array.isArray(kMmetaData)) {
