@@ -21,7 +21,7 @@ const apiMetadataDao = require('../dao/apiMetadata');
 const sequelize = require('../db/sequelize');
 const { UniqueConstraintError } = require('sequelize');
 const logger = require('../config/logger');
-const config = require(process.cwd() + '/config.json');
+const { config } = require('../config/configLoader');
 const constants = require('../utils/constants');
 const yaml = require('js-yaml');
 

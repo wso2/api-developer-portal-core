@@ -37,7 +37,7 @@ const sdkJobService = require('./services/sdkJobService');
 const customContent = require('./routes/customPageRoute');
 const subscriptionsContent = require('./routes/subscriptionsContentRoute');
 const mcpRegistryRoute = require('./routes/mcpRegistryRoute');
-const config = require(process.cwd() + '/config.json');
+const { config, secrets: secretConf } = require('./config/configLoader');
 const Handlebars = require('handlebars');
 const constants = require("./utils/constants");
 const designRoute = require('./routes/designModeRoute');
@@ -48,7 +48,6 @@ const util = require('./utils/util');
 
 const OAuth2Strategy = require('passport-oauth2');
 const jwt = require('jsonwebtoken');
-const secretConf = require(process.cwd() + '/secret.json');
 const { v4: uuidv4 } = require('uuid');
 
 const lock = new AsyncLock();
@@ -667,10 +666,15 @@ app.use( (err, req, res, next) => {
 });
 
 
+const seedDefaultData = require('./startup/seedDefaultData');
+
 const PORT = process.env.PORT || config.defaultPort;
 if (config.advanced.http) {
     http.createServer(app).listen(PORT, '0.0.0.0', () => {
         logStartupInfo();
+        if (config.seedDefaults) {
+            seedDefaultData().catch(err => logger.error('seedDefaultData failed', { error: err.message }));
+        }
     });
 
 } else {
@@ -691,6 +695,9 @@ if (config.advanced.http) {
             rejectUnauthorized: false
         }, app).listen(PORT, () => {
             logStartupInfo();
+            if (config.seedDefaults) {
+                seedDefaultData().catch(err => logger.error('seedDefaultData failed', { error: err.message }));
+            }
         });
 
     } catch (err) {

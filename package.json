@@ -28,6 +28,7 @@
   "dependencies": {
     "@openapitools/openapi-generator-cli": "2.21.3",
     "applicationinsights": "2.9.7",
+    "dotenv": "16.4.7",
     "archiver": "7.0.1",
     "basic-ftp": "5.2.0",
     "async-lock": "1.4.1",

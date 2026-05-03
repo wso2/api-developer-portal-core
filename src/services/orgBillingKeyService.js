@@ -17,7 +17,7 @@
  *
  */
 const BillingEngineKey = require("../models/billingEngineKey");
-const { decrypt } = require("../utils/cryptoUtil");
+const { decrypt, billingEnabled } = require("../utils/cryptoUtil");
 const adminDao = require("../dao/admin");
 
 /**
@@ -26,6 +26,9 @@ const adminDao = require("../dao/admin");
  * @returns {Promise<{secretKey: string, publishableKey: string, webhookSecret: string}>}
  */
 async function getDecryptedStripeKeysForOrg(orgId) {
+  if (!billingEnabled) {
+    throw new Error("Billing is not configured on this portal.");
+  }
   if (!orgId) throw new Error("orgId is required to fetch Stripe keys");
   const org = await adminDao.getOrganization(orgId);
   if (!org) throw new Error("Please contact your organization administrator.");
