@@ -20,8 +20,7 @@
  */
 
 const Redis = require('ioredis');
-const config = require(process.cwd() + '/config');
-const secret = require(process.cwd() + '/secret.json');
+const { config, secrets: secret } = require('../config/configLoader');
 const logger = require('../config/logger');
 const REDIS_CONSTANTS = require('../utils/constants').REDIS_CONSTANTS;
 

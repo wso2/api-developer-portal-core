@@ -23,7 +23,7 @@ const apiMetadataDao = require('../dao/apiMetadata');
 const apiFlowService = require('../services/apiFlowService');
 const { renderGivenTemplate, loadLayoutFromAPI } = require('../utils/util');
 const { getSessionCsrfToken } = require('../middlewares/csrfProtection');
-const config = require(process.cwd() + '/config.json');
+const { config } = require('../config/configLoader');
 const constants = require('../utils/constants');
 
 const loadViewSettingsPage = async (req, res) => {
