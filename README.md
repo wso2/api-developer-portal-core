@@ -7,19 +7,34 @@ cp sample_config.yaml config.yaml   # only needed once
 docker compose up
 ```
 
-Then open **http://localhost:3000/ACME/views/default**
+Then open **https://localhost:3000/ACME/views/default**
+
+> **Browser warning:** The portal uses a self-signed TLS certificate generated automatically on first start. Click **Advanced → Proceed** (Chrome) or **Accept the Risk** (Firefox) to continue.
 
 Default local users: `admin` / `admin` and `developer` / `developer`
 
 What happens automatically:
 - PostgreSQL starts and the DB schema is applied (`artifacts/docker-init/01_schema.sql`)
 - A default **ACME** org, view, labels, and subscription plans are seeded (`artifacts/docker-init/02_seed_default.sql`)
+- A self-signed TLS certificate is generated and stored in the `certs_data` Docker volume
 - The devportal image is built from source and connected to the DB
 - On first boot the app seeds the default theme assets into the database
 
+**Using your own TLS certificate:** Replace the `certs_data` volume with a bind-mount containing `server.crt` and `server.key`:
+```yaml
+# docker-compose.yml → devportal.volumes
+- ./my-certs:/app/certs:ro
+```
+
+**Switching back to plain HTTP:** Add to your `.env` file:
+```dotenv
+DP_ADVANCED_HTTP=true
+DP_BASEURL=http://localhost:3000
+```
+
 To stop and clean up:
 ```bash
-docker compose down -v   # -v also removes the postgres data volume
+docker compose down -v   # -v also removes the postgres data volume and certs volume
 ```
 
 ---

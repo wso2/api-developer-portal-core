@@ -355,7 +355,7 @@ app.use(session({
     resave: false,
     saveUninitialized: true,
     cookie: {
-        secure: false,
+        secure: !config.advanced.http,
         maxAge: 60 * 60 * 1000,
     },
 }));
@@ -683,21 +683,21 @@ if (config.advanced.http) {
 
 } else {
     try {
-        const certPath = path.join(process.cwd(), config.serverCerts.pathToCert);
-        const keyPath = path.join(process.cwd(), config.serverCerts.pathToPK);
-        const caPath = path.join(process.cwd(), config.serverCerts.pathToCA);
+        const certPath = path.resolve(config.serverCerts.pathToCert);
+        const keyPath = path.resolve(config.serverCerts.pathToPK);
 
         const serverCert = fs.readFileSync(certPath);
         const serverKey = fs.readFileSync(keyPath);
-        const caCert = fs.readFileSync(caPath);
 
-        https.createServer({
-            key: serverKey,
-            cert: serverCert,
-            ca: caCert,
-            requestCert: true,
-            rejectUnauthorized: false
-        }, app).listen(PORT, () => {
+        const tlsOptions = { key: serverKey, cert: serverCert };
+
+        // Include a CA bundle only when a separate CA file is configured
+        const caPath = config.serverCerts.pathToCA;
+        if (caPath && caPath !== config.serverCerts.pathToCert) {
+            tlsOptions.ca = fs.readFileSync(path.resolve(caPath));
+        }
+
+        https.createServer(tlsOptions, app).listen(PORT, () => {
             logStartupInfo();
             if (config.seedDefaults) {
                 seedDefaultData().catch(err => logger.error('seedDefaultData failed', { error: err.message }));
