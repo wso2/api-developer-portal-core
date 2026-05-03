@@ -351,7 +351,7 @@ app.use(session({
     resave: false,
     saveUninitialized: true,
     cookie: {
-        secure: false,
+        secure: !config.advanced.http,
         maxAge: 60 * 60 * 1000,
     },
 }));
@@ -679,20 +679,19 @@ if (config.advanced.http) {
 
 } else {
     try {
-        const certPath = path.join(process.cwd(), config.serverCerts.pathToCert);
-        const keyPath = path.join(process.cwd(), config.serverCerts.pathToPK);
-        const caPath = path.join(process.cwd(), config.serverCerts.pathToCA);
+        const certPath = path.resolve(config.serverCerts.pathToCert);
+        const keyPath = path.resolve(config.serverCerts.pathToPK);
 
         const serverCert = fs.readFileSync(certPath);
         const serverKey = fs.readFileSync(keyPath);
-        const caCert = fs.readFileSync(caPath);
+        const caCert = fs.readFileSync(path.resolve(config.serverCerts.pathToCA));
 
         https.createServer({
             key: serverKey,
             cert: serverCert,
             ca: caCert,
             requestCert: true,
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
         }, app).listen(PORT, () => {
             logStartupInfo();
             if (config.seedDefaults) {
