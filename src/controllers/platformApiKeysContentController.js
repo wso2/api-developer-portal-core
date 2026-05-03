@@ -17,7 +17,7 @@
  */
 /* eslint-disable no-undef */
 const { renderTemplateFromAPI, renderTemplate } = require('../utils/util');
-const config = require(process.cwd() + '/config.json');
+const { config } = require('../config/configLoader');
 const logger = require('../config/logger');
 const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');

@@ -17,7 +17,7 @@
  */
 /* eslint-disable no-undef */
 const { renderTemplate, renderTemplateFromAPI, renderGivenTemplate, loadLayoutFromAPI, loadMarkdown, isAiDisabledForPortal } = require('../utils/util');
-const config = require(process.cwd() + '/config.json');
+const { config } = require('../config/configLoader');
 const logger = require('../config/logger');
 const { logUserAction } = require('../middlewares/auditLogger');
 const fs = require('fs');
