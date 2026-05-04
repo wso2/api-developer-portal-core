@@ -15,12 +15,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-const { config } = require('../config/configLoader');
 const util = require('../utils/util');
 const logger = require('../config/logger');
 const yaml = require('js-yaml');
 
-const controlPlaneUrl = config.controlPlane.url;
 const PLATFORM_GATEWAY = 'wso2/api-platform';
 
 const securitySchemeHasApiKey = (securityScheme) =>
@@ -94,26 +92,9 @@ async function shouldShowPlatformApiKeysNav(req, metaData, existingApiDetail = n
         return securitySchemeHasApiKey(detail.securityScheme);
     }
 
-    if (config.controlPlane?.enabled === false || !refId) {
-        return false;
-    }
-
-    try {
-        detail = await util.invokeApiRequest(
-            req,
-            'GET',
-            `${controlPlaneUrl}/apis/${encodeURIComponent(refId)}`,
-            null,
-            null
-        );
-    } catch (e) {
-        logger.warn('shouldShowPlatformApiKeysNav: failed to load API from control plane', {
-            error: e.message,
-            refId
-        });
-        return false;
-    }
-    return securitySchemeHasApiKey(detail?.securityScheme);
+    // If no API definition or existing API detail is available, don't attempt
+    // to call the control plane; fall back to not showing the nav.
+    return false;
 }
 
 module.exports = {

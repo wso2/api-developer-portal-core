@@ -37,7 +37,6 @@ const { requireCsrfForMutatingApi } = require('../middlewares/csrfProtection');
 const constants = require('../utils/constants');
 const { config } = require('../config/configLoader');
 const platformSubscriptionService = require('../services/platformSubscriptionService');
-const platformApiKeyService = require('../services/platformApiKeyService');
 const apiKeyController = require('../controllers/apiKeyController');
 const apiFlowService = require('../services/apiFlowService');
 const webhookAdminController = require('../controllers/webhookAdminController');

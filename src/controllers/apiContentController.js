@@ -27,6 +27,7 @@ const util = require('../utils/util');
 const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
+const platformSubDao = require('../dao/platformSubscription');
 const apiMetadataService = require('../services/apiMetadataService');
 const { shouldShowPlatformApiKeysNav } = require('../services/platformApiKeysNavService');
 const adminService = require('../services/adminService');
@@ -121,24 +122,20 @@ const loadAPIs = async (req, res) => {
             }
 
             // Load platform subscriptions for platform APIs with subscription plans (single call for all)
-            if (req.user && config.controlPlane?.enabled !== false) {
+            if (req.user) {
                 try {
-                    const cpResponse = await util.invokeApiRequest(
-                        req, 'GET',
-                        `${controlPlaneUrl}/api-platform-subscriptions`
-                    );
-                    const cpSubs = cpResponse.list || cpResponse || [];
-                    const subscribedApiRefIds = new Set(cpSubs.map(sub => sub.apiId));
+                    const localSubs = await platformSubDao.listPlatformSubscriptions(orgID);
+                    const subscribedApiIds = new Set(localSubs.map(sub => sub.API_ID));
                     for (const metaData of metaDataList) {
                         const isPlatform = metaData.apiInfo?.gatewayType === 'wso2/api-platform';
                         const hasPlans = (metaData.subscriptionPolicies || []).length > 0;
-                        if (isPlatform && hasPlans && metaData.apiReferenceID) {
-                            metaData.hasPlatformSubscription = subscribedApiRefIds.has(metaData.apiReferenceID);
+                        if (isPlatform && hasPlans) {
+                            metaData.hasPlatformSubscription = subscribedApiIds.has(metaData.apiID);
                         }
                     }
-                } catch (cpError) {
+                } catch (err) {
                     logger.warn('Failed to load platform subscriptions for API listing', {
-                        error: cpError.message
+                        error: err.message
                     });
                 }
             }
@@ -444,16 +441,19 @@ const loadAPIContent = async (req, res) => {
             let platformSubscriptions = [];
             const isPlatformGateway = metaData.apiInfo?.gatewayType === 'wso2/api-platform';
             const hasPlatformPlans = (subscriptionPlans || []).length > 0;
-            if (req.user && isPlatformGateway && hasPlatformPlans && config.controlPlane?.enabled !== false) {
+            if (req.user && isPlatformGateway && hasPlatformPlans) {
                 try {
-                    const cpResponse = await util.invokeApiRequest(
-                        req, 'GET',
-                        `${controlPlaneUrl}/api-platform-subscriptions?apiId=${metaData.apiReferenceID}`
-                    );
-                    platformSubscriptions = cpResponse.list || cpResponse || [];
-                } catch (cpError) {
-                    logger.warn('Failed to load platform subscriptions from CP', {
-                        error: cpError.message, orgID, apiID
+                    const localSubs = await platformSubDao.listPlatformSubscriptions(orgID, { apiId: apiID });
+                    platformSubscriptions = (localSubs || []).map(sub => ({
+                        subscriptionId: sub.SUB_ID,
+                        subscriptionPlanName: sub.DP_SUBSCRIPTION_POLICY?.DISPLAY_NAME || sub.DP_SUBSCRIPTION_POLICY?.POLICY_NAME || '',
+                        status: sub.STATUS,
+                        subscriptionToken: sub.SUB_TOKEN,
+                        customerName: null
+                    }));
+                } catch (err) {
+                    logger.warn('Failed to load platform subscriptions', {
+                        error: err.message, orgID, apiID
                     });
                 }
             }
