@@ -22,12 +22,10 @@ const logger = require('../config/logger');
 const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
-const util = require('../utils/util');
 const apiMetadataService = require('../services/apiMetadataService');
+const apiKeyService = require('../services/apiKeyService');
 const { shouldShowPlatformApiKeysNav } = require('../services/platformApiKeysNavService');
 const { getSessionCsrfToken } = require('../middlewares/csrfProtection');
-
-const controlPlaneUrl = config.controlPlane.url;
 
 const loadAPIPlatformApiKeys = async (req, res) => {
     let html;
@@ -68,7 +66,21 @@ const loadAPIPlatformApiKeys = async (req, res) => {
             metaData = null;
         }
 
-        const showPlatformApiKeysNav = await shouldShowPlatformApiKeysNav(req, metaData, null);
+        let apiDefinitionForNav = null;
+        if (metaData?.apiInfo?.apiType !== constants.API_TYPE.GRAPHQL && metaData?.apiInfo?.apiType !== constants.API_TYPE.MCP) {
+            try {
+                const apiFile = await apiDao.getAPIDoc(constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
+                apiDefinitionForNav = apiFile?.API_FILE?.toString(constants.CHARSET_UTF8) || null;
+            } catch (definitionErr) {
+                logger.debug('Could not load API definition for platform API keys nav check', {
+                    orgID,
+                    apiID,
+                    error: definitionErr.message
+                });
+            }
+        }
+
+        const showPlatformApiKeysNav = await shouldShowPlatformApiKeysNav(req, metaData, null, apiDefinitionForNav);
         if (!showPlatformApiKeysNav) {
             const templateContent = {
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
@@ -81,31 +93,30 @@ const loadAPIPlatformApiKeys = async (req, res) => {
             return res.status(404).send(html);
         }
 
-        const apiRefId = metaData?.apiReferenceID || apiID;
-
         let platformApiKeys = [];
         let platformApiKeysCount = 0;
         let platformApiKeysLoadError = false;
-        if (config.controlPlane?.enabled !== false) {
-            try {
-                const cpResponse = await util.invokeApiRequest(
-                    req,
-                    'GET',
-                    `${controlPlaneUrl}/platform-api-keys?apiId=${encodeURIComponent(apiRefId)}`
-                );
-                platformApiKeys = cpResponse.items || [];
-                platformApiKeysCount = cpResponse.count != null ? cpResponse.count : platformApiKeys.length;
-            } catch (cpError) {
-                platformApiKeysLoadError = true;
-                logger.warn('Failed to load platform API keys from CP', {
-                    error: cpError.message,
-                    statusCode: cpError.response?.status,
-                    responseData: cpError.response?.data,
-                    orgID,
-                    apiHandle,
-                    apiRefId
-                });
-            }
+
+        try {
+            const keys = await apiKeyService.list(orgID, { apiId: apiID });
+            platformApiKeys = (keys || []).map((k) => ({
+                keyId: k.KEY_ID,
+                name: k.NAME,
+                status: String(k.STATUS || 'ACTIVE').toLowerCase(),
+                expiresAt: k.EXPIRES_AT,
+                createdAt: k.CREATED_AT,
+                revokedAt: k.REVOKED_AT || undefined,
+                apiId: k.API_ID,
+                maskedApiKey: '••••••••'
+            }));
+            platformApiKeysCount = platformApiKeys.length;
+        } catch (dbError) {
+            platformApiKeysLoadError = true;
+            logger.warn('Failed to load platform API keys', {
+                error: dbError.message,
+                orgID,
+                apiHandle
+            });
         }
 
         const profile = {
