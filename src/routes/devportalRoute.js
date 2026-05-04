@@ -39,6 +39,7 @@ const { config } = require('../config/configLoader');
 const platformSubscriptionService = require('../services/platformSubscriptionService');
 const platformApiKeyService = require('../services/platformApiKeyService');
 const apiFlowService = require('../services/apiFlowService');
+const webhookAdminController = require('../controllers/webhookAdminController');
 
 router.post('/organizations', enforceSecuirty(constants.SCOPES.ADMIN), adminService.createOrganization);
 router.get('/organizations', enforceSecuirty(constants.SCOPES.ADMIN), adminService.getOrganizations);
@@ -272,4 +273,10 @@ router.post('/login', devportalController.login);
 if (config.features?.importApplication?.enabled) {
     router.post('/organizations/:orgId/applications/import', enforceSecuirty(constants.SCOPES.ADMIN),multipartHandler.single('file'), devportalController.importApplications);
 }
+
+// Webhook event admin (admin-only)
+router.get('/organizations/:orgId/admin/events', enforceSecuirty(constants.SCOPES.ADMIN), webhookAdminController.listEvents);
+router.get('/organizations/:orgId/admin/events/:eventId', enforceSecuirty(constants.SCOPES.ADMIN), webhookAdminController.getEvent);
+router.post('/organizations/:orgId/admin/deliveries/:deliveryId/retry', enforceSecuirty(constants.SCOPES.ADMIN), webhookAdminController.retryDelivery);
+
 module.exports = router;
