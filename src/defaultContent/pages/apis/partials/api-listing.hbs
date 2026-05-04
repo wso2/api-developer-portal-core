@@ -118,9 +118,7 @@
               </div>
             </div>
             {{#if ../isAuthenticated}}
-            {{#if apiInfo.tokenBasedSubscriptionEnabled}}
-            <div class="subscription-flag fw-bold" style="display: {{#if hasPlatformSubscription}}block{{else}}none{{/if}};">Subscribed</div>
-            {{else if (eq apiInfo.gatewayType "wso2/api-platform")}}
+            {{#if (eq apiInfo.gatewayType "wso2/api-platform")}}
             <div class="subscription-flag fw-bold" style="display: {{#if hasPlatformSubscription}}block{{else}}none{{/if}};">Subscribed</div>
             {{else}}
             <div class="subscription-flag fw-bold" style="display: {{#if (some applications "subscribed")}}block{{else}}none{{/if}};">Subscribed</div>
@@ -163,8 +161,10 @@
             </div>
           </div>
           {{#if ../isAuthenticated}}
-          {{#if apiInfo.tokenBasedSubscriptionEnabled}}
+          {{#if (eq apiInfo.gatewayType "wso2/api-platform")}}
+            {{#if subscriptionPolicies.length}}
           <hr class="card-separator" />
+            {{/if}}
           {{else if subscriptionPolicies.length}}
           <hr class="card-separator" />
           {{/if}}
@@ -173,12 +173,7 @@
             <div id="btnSection" class="d-flex align-items-center gap-2 w-100">
               {{#if ../isAuthenticated}}
               <div id="subscriptionBox" class="subscription-container w-100">
-                {{#if apiInfo.tokenBasedSubscriptionEnabled}}
-                  {{> subscription-modal apiID=apiID apiInfo=apiInfo apiReferenceID=apiReferenceID}}
-                  <a type="button" class="common-btn-primary w-100 open-modal-btn {{#if @root.isReadOnlyMode}}is-readonly{{/if}}"
-                    {{#unless @root.isReadOnlyMode}}data-modal="planModal-{{apiID}}"{{/unless}}
-                    {{#if @root.isReadOnlyMode}}aria-disabled="true"{{/if}}>Subscribe</a>
-                {{else if (eq apiInfo.gatewayType "wso2/api-platform")}}
+                {{#if (eq apiInfo.gatewayType "wso2/api-platform")}}
                   {{#if subscriptionPolicies.length}}
                   {{> subscription-modal apiID=apiID apiInfo=apiInfo apiReferenceID=apiReferenceID}}
                   <a type="button" class="common-btn-primary w-100 open-modal-btn {{#if @root.isReadOnlyMode}}is-readonly{{/if}}"

@@ -48,11 +48,13 @@ const createPlatformGatewaySubscription = async (req, res) => {
         }
 
         const apiMetadata = apiMetadataResponse[0];
-        if (!apiMetadata.TOKEN_BASED_SUBSCRIPTION_ENABLED) {
+        const isPlatformGateway = apiMetadata.GATEWAY_TYPE === 'wso2/api-platform';
+        const hasPlans = (apiMetadata.DP_SUBSCRIPTION_POLICies || []).length > 0;
+        if (!isPlatformGateway || !hasPlans) {
             return res.status(400).json({
                 code: "400",
                 message: "Bad Request",
-                description: "This API does not support token-based subscriptions"
+                description: "This API does not support platform subscriptions"
             });
         }
 

@@ -199,7 +199,6 @@ function buildApiMetadataPayload(name, version, description, remotes, title, pub
             apiType: constants.API_TYPE.MCP,
             apiStatus: 'PUBLISHED',
             visibility: 'PUBLIC',
-            tokenBasedSubscriptionEnabled: false,
             gatewayType: null,
             remotes: normalizedRemotes,
             publishedAt: publishedAt || null,

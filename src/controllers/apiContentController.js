@@ -120,7 +120,7 @@ const loadAPIs = async (req, res) => {
                 metaData.applications = perApiAppList;
             }
 
-            // Load platform subscriptions for token-based APIs (single call for all)
+            // Load platform subscriptions for platform APIs with subscription plans (single call for all)
             if (req.user && config.controlPlane?.enabled !== false) {
                 try {
                     const cpResponse = await util.invokeApiRequest(
@@ -130,7 +130,9 @@ const loadAPIs = async (req, res) => {
                     const cpSubs = cpResponse.list || cpResponse || [];
                     const subscribedApiRefIds = new Set(cpSubs.map(sub => sub.apiId));
                     for (const metaData of metaDataList) {
-                        if (metaData.apiInfo?.tokenBasedSubscriptionEnabled && metaData.apiReferenceID && metaData.apiInfo?.gatewayType === 'wso2/api-platform') {
+                        const isPlatform = metaData.apiInfo?.gatewayType === 'wso2/api-platform';
+                        const hasPlans = (metaData.subscriptionPolicies || []).length > 0;
+                        if (isPlatform && hasPlans && metaData.apiReferenceID) {
                             metaData.hasPlatformSubscription = subscribedApiRefIds.has(metaData.apiReferenceID);
                         }
                     }
@@ -438,9 +440,11 @@ const loadAPIContent = async (req, res) => {
                 }
             }
 
-            // Load platform gateway subscriptions for token-based APIs
+            // Load platform gateway subscriptions for platform APIs with subscription plans
             let platformSubscriptions = [];
-            if (req.user && metaData.apiInfo?.tokenBasedSubscriptionEnabled && config.controlPlane?.enabled !== false) {
+            const isPlatformGateway = metaData.apiInfo?.gatewayType === 'wso2/api-platform';
+            const hasPlatformPlans = (subscriptionPlans || []).length > 0;
+            if (req.user && isPlatformGateway && hasPlatformPlans && config.controlPlane?.enabled !== false) {
                 try {
                     const cpResponse = await util.invokeApiRequest(
                         req, 'GET',

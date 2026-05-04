@@ -41,10 +41,7 @@ async function prepareSubscriptionModal(modalId) {
     const orgID = modal.dataset.orgId || window.__subscriptionOrgID;
     let apiRefId = modal.dataset.apiRefid || '';
     if (!apiRefId) apiRefId = apiId;
-    const rawTokenBased = modal.dataset.tokenBased;
-    const tokenBased = (typeof rawTokenBased !== 'undefined' && String(rawTokenBased).toLowerCase() === 'true')
-        || (typeof rawTokenBased !== 'undefined' && String(rawTokenBased).toLowerCase() === '1')
-        || (modal.dataset.gatewayType && String(modal.dataset.gatewayType).toLowerCase().indexOf('api-platform') !== -1);
+    const isPlatformGateway = modal.dataset.gatewayType && String(modal.dataset.gatewayType).toLowerCase().indexOf('api-platform') !== -1;
 
     const platformContainer = document.getElementById('platformContent-' + apiId);
     const plansBody = modal.querySelector('.subscription-plans-body');
@@ -57,7 +54,7 @@ async function prepareSubscriptionModal(modalId) {
     }
     window.__preserveTokenArea = false;
 
-    if (!tokenBased) {
+    if (!isPlatformGateway) {
         // ensure platform container hidden and app-based plans visible
         if (platformContainer) platformContainer.style.display = 'none';
         if (plansBody) plansBody.style.display = '';
