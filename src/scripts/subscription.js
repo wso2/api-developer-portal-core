@@ -345,9 +345,8 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
 
     if (!applicationID) {
       const modal = card ? card.closest('.subscription-plan-modal') : document.getElementById('planModal-' + apiId);
-      const isTokenBased = modal && modal.dataset.tokenBased === 'true';
       const isPlatformGateway = modal && modal.dataset.gatewayType === 'wso2/api-platform';
-      if (!isTokenBased && !isPlatformGateway) {
+      if (!isPlatformGateway) {
         showSubscriptionMessage(messageOverlay, "Please select an application.", "error");
         return;
       }
@@ -936,11 +935,9 @@ function handlePlanSubscription(buttonElement) {
     : (modalAppField ? modalAppField.value : '');
 
   if (!applicationID && !isPaid) {
-    // Token-based and platform flows don't use an app selector;
-    // app-based free plans require one.
-    const isTokenBased = modal && modal.dataset.tokenBased === 'true';
+    // Platform flows don't use an app selector; app-based free plans require one.
     const isPlatformGateway = modal && modal.dataset.gatewayType === 'wso2/api-platform';
-    if (!isTokenBased && !isPlatformGateway) {
+    if (!isPlatformGateway) {
       showAlert('Please select an application first.', 'error');
       return;
     }

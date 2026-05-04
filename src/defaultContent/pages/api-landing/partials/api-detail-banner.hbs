@@ -29,12 +29,12 @@
 
         <div class="api-details-btn">
           {{!-- Subscribe --}}
-          {{#if apiMetadata.apiInfo.tokenBasedSubscriptionEnabled}}
-            {{#unless platformSubscriptions.length}}
+          {{#if (eq apiMetadata.apiInfo.gatewayType "wso2/api-platform")}}
+            {{#if subscriptionPlans.length}}
+              {{#unless platformSubscriptions.length}}
           <a type="button" class="common-btn-primary" href="#subscriptionPlans">Subscribe</a>
-            {{/unless}}
-          {{else if (eq apiMetadata.apiInfo.gatewayType "wso2/api-platform")}}
-          {{!-- Platform API without token-based subscription: no subscribe button --}}
+              {{/unless}}
+            {{/if}}
           {{else}}
           <a type="button" class="common-btn-primary" href="#subscriptionPlans">Subscribe</a>
           {{/if}}
@@ -46,10 +46,8 @@
           {{/in}}
           {{!-- Subscriptions --}}
           {{#if (eq apiMetadata.apiInfo.gatewayType "wso2/api-platform")}}
-            {{#if apiMetadata.apiInfo.tokenBasedSubscriptionEnabled}}
-              {{#if subscriptionPlans.length}}
+            {{#if subscriptionPlans.length}}
           <a type="button" class="common-btn-outlined" href="{{baseUrl}}/api/{{apiMetadata.apiHandle}}/subscriptions">Subscriptions</a>
-              {{/if}}
             {{/if}}
           {{else}}
           <a type="button" class="common-btn-outlined" href="{{baseUrl}}/api/{{apiMetadata.apiHandle}}/subscriptions">Subscriptions</a>

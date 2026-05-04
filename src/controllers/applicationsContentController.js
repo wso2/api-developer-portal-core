@@ -114,7 +114,6 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
                 apiDescription: api.apiInfo.apiDescription,
                 apiType: api.apiInfo.apiType,
                 gatewayType: api.apiInfo.gatewayType || null,
-                tokenBasedSubscriptionEnabled: api.apiInfo.tokenBasedSubscriptionEnabled || false,
                 apiImageMetadata: api.apiInfo.apiImageMetadata
             };
             apiDTO.name = api.apiInfo.apiName;
@@ -378,18 +377,22 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
         }
     }
 
-    // Load platform APIs that don't require subscription (gatewayType=wso2/api-platform, tokenBasedSubscription=false)
+    // Load platform APIs that don't require subscription (gatewayType=wso2/api-platform, no subscription plans)
     let noSubPlatformAPIs = [];
     if (config.controlPlane?.enabled !== false) try {
         const noSubApis = await apiMetadata.getAPIMetadataByCondition({
             ORG_ID: orgID,
             GATEWAY_TYPE: 'wso2/api-platform',
-            TOKEN_BASED_SUBSCRIPTION_ENABLED: false,
             STATUS: constants.API_STATUS.PUBLISHED
         });
 
-        if (noSubApis.length > 0) {
-            noSubPlatformAPIs = await Promise.all(noSubApis.map(async (api) => {
+        const filteredNoSubApis = (noSubApis || []).filter(api => {
+            const policies = api.DP_SUBSCRIPTION_POLICies || [];
+            return policies.length === 0;
+        });
+
+        if (filteredNoSubApis.length > 0) {
+            noSubPlatformAPIs = await Promise.all(filteredNoSubApis.map(async (api) => {
                 const apiDTO = new APIDTO(api);
                 const refID = apiDTO.apiReferenceID;
 
