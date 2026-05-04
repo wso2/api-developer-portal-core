@@ -46,6 +46,10 @@ const SubscriptionPolicy = sequelize.define('DP_SUBSCRIPTION_POLICY', {
         type: DataTypes.STRING,
         allowNull: true
     },
+    REF_ID: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
     PRICING_MODEL: {
         type: DataTypes.STRING,
         allowNull: true
