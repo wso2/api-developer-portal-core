@@ -39,7 +39,7 @@ async function configurePassport(authJsonContent, claimNames) {
         tokenURL: authJsonContent.tokenURL,
         userInfoURL: authJsonContent.userInfoURL,
         clientID: authJsonContent.clientId,
-        callbackURL: authJsonContent.callbackURL,
+        callbackURL: authJsonContent.callbackURL || '/callback',
         scope: scope,
         pkce: true,
         state: true,
