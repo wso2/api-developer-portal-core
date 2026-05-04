@@ -1,6 +1,6 @@
 {{#if platformApiKeysLoadError}}
 <div class="alert alert-danger" role="alert">
-    <strong>Unable to load API keys.</strong> The control plane did not return the key list for this API. Refresh the page or try again later. Generate, regenerate, and revoke are disabled until the list loads successfully.
+    <strong>Unable to load API keys.</strong> Refresh the page or try again later. Generate, regenerate, and revoke are disabled until the list loads successfully.
 </div>
 {{else}}
 <div class="text-center text-muted py-5" id="no-platform-api-keys" style="{{#if platformApiKeys.length}}display:none;{{/if}}">
@@ -45,14 +45,14 @@
                     <div class="api-key-actions">
                         <button type="button"
                             class="common-btn-outlined btn-sm me-1 btn-regenerate-key {{#if @root.isReadOnlyMode}}disabled{{/if}}"
-                            data-key-id="{{this.name}}" data-key-name="{{this.name}}">
+                            data-key-id="{{this.keyId}}" data-key-name="{{this.name}}">
                             <span class="button-normal-state">
                                 <i class="bi bi-key me-1"></i> Regenerate
                             </span>
                         </button>
                         <button type="button"
                             class="common-btn-outlined btn-sm api-key-revoke btn-revoke-key {{#if @root.isReadOnlyMode}}disabled{{/if}}"
-                            data-key-id="{{this.name}}">
+                            data-key-id="{{this.keyId}}">
                             <span class="button-normal-state">
                                 <i class="bi bi-key me-1"></i> Revoke
                             </span>
