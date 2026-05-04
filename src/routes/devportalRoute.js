@@ -38,6 +38,7 @@ const constants = require('../utils/constants');
 const { config } = require('../config/configLoader');
 const platformSubscriptionService = require('../services/platformSubscriptionService');
 const platformApiKeyService = require('../services/platformApiKeyService');
+const apiKeyController = require('../controllers/apiKeyController');
 const apiFlowService = require('../services/apiFlowService');
 const webhookAdminController = require('../controllers/webhookAdminController');
 
@@ -156,15 +157,15 @@ router.put('/organizations/:orgId/api-platform-subscriptions/:subscriptionId',
 router.delete('/organizations/:orgId/api-platform-subscriptions/:subscriptionId',
     enforceSecuirty(constants.SCOPES.DEVELOPER), platformSubscriptionService.deletePlatformGatewaySubscription);
 
-// Platform API keys (CP /platform-api-keys; register /generate before /:apiKeyId)
+// API keys — devportal is source of truth; gateway notified via webhook event
 router.post('/organizations/:orgId/platform-api-keys/generate',
-    enforceSecuirty(constants.SCOPES.DEVELOPER), requireCsrfForMutatingApi, platformApiKeyService.generatePlatformApiKey);
+    enforceSecuirty(constants.SCOPES.DEVELOPER), requireCsrfForMutatingApi, apiKeyController.generateApiKey);
 router.get('/organizations/:orgId/platform-api-keys',
-    enforceSecuirty(constants.SCOPES.DEVELOPER), platformApiKeyService.listPlatformApiKeys);
+    enforceSecuirty(constants.SCOPES.DEVELOPER), apiKeyController.listApiKeys);
 router.post('/organizations/:orgId/platform-api-keys/:apiKeyId/regenerate',
-    enforceSecuirty(constants.SCOPES.DEVELOPER), requireCsrfForMutatingApi, platformApiKeyService.regeneratePlatformApiKey);
+    enforceSecuirty(constants.SCOPES.DEVELOPER), requireCsrfForMutatingApi, apiKeyController.regenerateApiKey);
 router.post('/organizations/:orgId/platform-api-keys/:apiKeyId/revoke',
-    enforceSecuirty(constants.SCOPES.DEVELOPER), requireCsrfForMutatingApi, platformApiKeyService.revokePlatformApiKey);
+    enforceSecuirty(constants.SCOPES.DEVELOPER), requireCsrfForMutatingApi, apiKeyController.revokeApiKey);
 
 //store API subscription
 router.post('/organizations/:orgId/subscriptions', enforceSecuirty(constants.SCOPES.DEVELOPER), adminService.createSubscription);
