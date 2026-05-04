@@ -296,6 +296,20 @@ const loadAPISubscriptions = async (req, res) => {
             isAdmin: req.user.isAdmin,
         };
 
+        let apiDefinitionForNav = null;
+        if (metaData?.apiInfo?.apiType !== constants.API_TYPE.GRAPHQL && metaData?.apiInfo?.apiType !== constants.API_TYPE.MCP) {
+            try {
+                const apiFile = await apiDao.getAPIDoc(constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
+                apiDefinitionForNav = apiFile?.API_FILE?.toString(constants.CHARSET_UTF8) || null;
+            } catch (definitionErr) {
+                logger.debug('Could not load API definition for platform API keys nav check', {
+                    orgID,
+                    apiID,
+                    error: definitionErr.message
+                });
+            }
+        }
+
         const templateContent = {
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
             profile: profile,
@@ -305,7 +319,7 @@ const loadAPISubscriptions = async (req, res) => {
             apiMetadata: metaData,
             apiHandle: apiHandle,
             isReadOnlyMode: config.readOnlyMode,
-            showPlatformApiKeysNav: await shouldShowPlatformApiKeysNav(req, metaData, null),
+            showPlatformApiKeysNav: await shouldShowPlatformApiKeysNav(req, metaData, null, apiDefinitionForNav),
         };
 
         html = await renderTemplateFromAPI(templateContent, orgID, orgName, 'pages/api-subscriptions', viewName);

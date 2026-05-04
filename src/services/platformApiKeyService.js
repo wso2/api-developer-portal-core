@@ -15,12 +15,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+const apiKeyService = require('../services/apiKeyService');
 const apiDao = require('../dao/apiMetadata');
-const util = require('../utils/util');
 const logger = require('../config/logger');
 const { config } = require('../config/configLoader');
 
-const controlPlaneUrl = config.controlPlane.url;
 const PLATFORM_GATEWAY = 'wso2/api-platform';
 
 const READ_ONLY_WRITE_RESPONSE = {
@@ -38,10 +37,14 @@ const rejectIfReadOnlyWrite = (res) => {
     return true;
 };
 
-/**
- * @param {unknown} raw
- * @returns {string|null} trimmed non-empty string, or null if invalid
- */
+function actor(req) {
+    return (req.user && req.user.email) || (req.user && req.user.sub) || 'unknown';
+}
+
+function errorStatus(err) {
+    return err.status || 500;
+}
+
 function parseRequiredString(raw) {
     if (typeof raw !== 'string' || !raw.trim()) {
         return null;
@@ -49,103 +52,29 @@ function parseRequiredString(raw) {
     return raw.trim();
 }
 
-/** Aligns with client `platform-api-keys-page.js` name validation */
-const KEY_NAME_PATTERN = /^[a-z0-9][a-z0-9_-]{0,127}$/;
-
-function parseAndValidateName(raw) {
-    if (typeof raw !== 'string') {
-        return null;
-    }
-    const n = raw.trim();
-    return KEY_NAME_PATTERN.test(n) ? n : null;
-}
-
-const MIN_EXPIRY_MS = Date.UTC(1970, 0, 1);
-const MAX_EXPIRY_MS = Date.UTC(2100, 11, 31, 23, 59, 59, 999);
-
-/** Datetime strings passed to Date.parse must end with Z or ±HH:MM (offset). */
-const EXPIRES_AT_HAS_TZ = /(?:Z|[+-]\d{2}:\d{2})$/;
-
-/**
- * Optional expiresAt: ISO-8601 string (with Z or offset) or finite number (ms or seconds).
- * @returns {{ ok: true, iso?: string } | { ok: false, description: string }}
- */
-function parseExpiresAtForCp(raw) {
-    if (raw === undefined || raw === null || raw === '') {
-        return { ok: true, iso: undefined };
-    }
-    let ms;
-    if (typeof raw === 'number' && Number.isFinite(raw)) {
-        ms = Math.abs(raw) < 1e12 ? Math.floor(raw * 1000) : Math.floor(raw);
-    } else if (typeof raw === 'string') {
-        const s = raw.trim();
-        if (!s) {
-            return { ok: true, iso: undefined };
-        }
-        const asNum = Number(s);
-        if (s !== '' && Number.isFinite(asNum) && String(asNum) === s) {
-            ms = asNum < 1e12 ? Math.floor(asNum * 1000) : Math.floor(asNum);
-        } else {
-            if (!EXPIRES_AT_HAS_TZ.test(s)) {
-                return { ok: false, description: 'expiresAt must include timezone (Z or +HH:MM)' };
-            }
-            ms = Date.parse(s);
-        }
-    } else {
-        return { ok: false, description: 'expiresAt must be a string, number, or omitted' };
-    }
-    if (Number.isNaN(ms)) {
-        return { ok: false, description: 'expiresAt is invalid' };
-    }
-    if (ms < MIN_EXPIRY_MS || ms > MAX_EXPIRY_MS) {
-        return { ok: false, description: 'expiresAt is out of allowed range' };
-    }
-    return { ok: true, iso: new Date(ms).toISOString() };
-}
-
-const resolvePlatformGatewayApi = async (orgID, apiId) => {
+async function ensurePlatformGatewayApi(orgID, apiId) {
     const apiMetadataResponse = await apiDao.getAPIMetadata(orgID, apiId);
     if (!apiMetadataResponse || apiMetadataResponse.length === 0) {
-        return {
-            error: {
-                status: 404,
-                body: { code: '404', message: 'Not Found', description: 'API not found' }
-            }
-        };
+        return { error: { status: 404, body: { code: '404', message: 'Not Found', description: 'API not found' } } };
     }
     const row = apiMetadataResponse[0];
-    const refId = row.REFERENCE_ID ?? row.dataValues?.REFERENCE_ID;
     const gatewayType = row.GATEWAY_TYPE ?? row.dataValues?.GATEWAY_TYPE;
-    if (!refId) {
-        return {
-            error: {
-                status: 400,
-                body: {
-                    code: '400',
-                    message: 'Bad Request',
-                    description: 'API is missing a control-plane reference ID'
-                }
-            }
-        };
-    }
     if (gatewayType !== PLATFORM_GATEWAY) {
         return {
             error: {
                 status: 400,
-                body: {
-                    code: '400',
-                    message: 'Bad Request',
-                    description: 'API is not a Platform Gateway API'
-                }
+                body: { code: '400', message: 'Bad Request', description: 'API is not a Platform Gateway API' }
             }
         };
     }
-    return { refId };
-};
+    return { ok: true };
+}
 
 const listPlatformApiKeys = async (req, res) => {
     const orgID = req.params.orgId;
     const apiId = parseRequiredString(req.query.apiId);
+    const subscriptionId = parseRequiredString(req.query.subscriptionId);
+    const status = parseRequiredString(req.query.status);
 
     if (!apiId) {
         return res.status(400).json({
@@ -156,24 +85,31 @@ const listPlatformApiKeys = async (req, res) => {
     }
 
     try {
-        const resolved = await resolvePlatformGatewayApi(orgID, apiId);
-        if (resolved.error) {
-            return res.status(resolved.error.status).json(resolved.error.body);
+        const ensure = await ensurePlatformGatewayApi(orgID, apiId);
+        if (ensure.error) {
+            return res.status(ensure.error.status).json(ensure.error.body);
         }
 
-        const cpResponse = await util.invokeApiRequest(
-            req,
-            'GET',
-            `${controlPlaneUrl}/platform-api-keys?apiId=${encodeURIComponent(resolved.refId)}`
-        );
-
-        return res.status(200).json(cpResponse);
+        const keys = await apiKeyService.list(orgID, {
+            apiId,
+            subscriptionId: subscriptionId || undefined,
+            status: status || undefined
+        });
+        return res.status(200).json(keys.map(k => ({
+            keyId: k.KEY_ID,
+            name: k.NAME,
+            status: k.STATUS,
+            expiresAt: k.EXPIRES_AT,
+            createdAt: k.CREATED_AT,
+            revokedAt: k.REVOKED_AT || undefined,
+            apiId: k.API_ID
+        })));
     } catch (error) {
         logger.error('Error listing platform API keys', {
             error: error.message,
             orgID
         });
-        util.handleError(res, error);
+        return res.status(errorStatus(error)).json({ code: String(errorStatus(error)), message: error.message });
     }
 };
 
@@ -182,63 +118,38 @@ const generatePlatformApiKey = async (req, res) => {
         return;
     }
     const orgID = req.params.orgId;
-    const { name, expiresAt } = req.body || {};
-    const apiId = parseRequiredString((req.body || {}).apiId);
+    const { apiId, name, expiresAt, subscriptionId } = req.body || {};
 
-    if (!apiId) {
+    if (!apiId || typeof apiId !== 'string' || !apiId.trim()) {
         return res.status(400).json({
             code: '400',
             message: 'Bad Request',
             description: 'apiId is required'
         });
     }
-    const normalizedName = parseAndValidateName(name);
-    if (!normalizedName) {
-        return res.status(400).json({
-            code: '400',
-            message: 'Bad Request',
-            description: 'name must match ^[a-z0-9][a-z0-9_-]{0,127}$'
-        });
-    }
-    const expiresParsed = parseExpiresAtForCp(expiresAt);
-    if (!expiresParsed.ok) {
-        return res.status(400).json({
-            code: '400',
-            message: 'Bad Request',
-            description: expiresParsed.description
-        });
-    }
 
     try {
-        const resolved = await resolvePlatformGatewayApi(orgID, apiId);
-        if (resolved.error) {
-            return res.status(resolved.error.status).json(resolved.error.body);
+        const ensure = await ensurePlatformGatewayApi(orgID, apiId.trim());
+        if (ensure.error) {
+            return res.status(ensure.error.status).json(ensure.error.body);
         }
 
-        const cpBody = {
-            apiId: resolved.refId,
-            name: normalizedName
-        };
-        if (expiresParsed.iso) {
-            cpBody.expiresAt = expiresParsed.iso;
-        }
-
-        const cpResponse = await util.invokeApiRequest(
-            req,
-            'POST',
-            `${controlPlaneUrl}/platform-api-keys/generate`,
-            { 'Content-Type': 'application/json' },
-            cpBody
-        );
-
-        return res.status(200).json(cpResponse);
+        const result = await apiKeyService.generate({
+            orgId: orgID,
+            apiId: apiId.trim(),
+            subscriptionId,
+            name,
+            expiresAt,
+            actor: actor(req)
+        });
+        return res.status(201).json(result);
     } catch (error) {
         logger.error('Error generating platform API key', {
             error: error.message,
             orgID,
             apiId
         });
-        util.handleError(res, error);
+        return res.status(errorStatus(error)).json({ code: String(errorStatus(error)), message: error.message });
     }
 };
 
@@ -248,63 +159,17 @@ const regeneratePlatformApiKey = async (req, res) => {
     }
     const orgID = req.params.orgId;
     const apiKeyId = req.params.apiKeyId;
-    const { name, expiresAt } = req.body || {};
-    const apiId = parseRequiredString((req.body || {}).apiId);
-
-    if (!apiId) {
-        return res.status(400).json({
-            code: '400',
-            message: 'Bad Request',
-            description: 'apiId is required'
-        });
-    }
-    const normalizedName = parseAndValidateName(name);
-    if (!normalizedName) {
-        return res.status(400).json({
-            code: '400',
-            message: 'Bad Request',
-            description: 'name must match ^[a-z0-9][a-z0-9_-]{0,127}$'
-        });
-    }
-    const expiresParsed = parseExpiresAtForCp(expiresAt);
-    if (!expiresParsed.ok) {
-        return res.status(400).json({
-            code: '400',
-            message: 'Bad Request',
-            description: expiresParsed.description
-        });
-    }
 
     try {
-        const resolved = await resolvePlatformGatewayApi(orgID, apiId);
-        if (resolved.error) {
-            return res.status(resolved.error.status).json(resolved.error.body);
-        }
-
-        const cpBody = {
-            apiId: resolved.refId,
-            name: normalizedName
-        };
-        if (expiresParsed.iso) {
-            cpBody.expiresAt = expiresParsed.iso;
-        }
-
-        const cpResponse = await util.invokeApiRequest(
-            req,
-            'POST',
-            `${controlPlaneUrl}/platform-api-keys/${encodeURIComponent(apiKeyId)}/regenerate`,
-            { 'Content-Type': 'application/json' },
-            cpBody
-        );
-
-        return res.status(200).json(cpResponse);
+        const result = await apiKeyService.regenerate({ orgId: orgID, keyId: apiKeyId, actor: actor(req) });
+        return res.status(200).json(result);
     } catch (error) {
         logger.error('Error regenerating platform API key', {
             error: error.message,
             orgID,
             apiKeyId
         });
-        util.handleError(res, error);
+        return res.status(errorStatus(error)).json({ code: String(errorStatus(error)), message: error.message });
     }
 };
 
@@ -314,38 +179,17 @@ const revokePlatformApiKey = async (req, res) => {
     }
     const orgID = req.params.orgId;
     const apiKeyId = req.params.apiKeyId;
-    const apiId = parseRequiredString(req.query.apiId);
-
-    if (!apiId) {
-        return res.status(400).json({
-            code: '400',
-            message: 'Bad Request',
-            description: 'apiId is required'
-        });
-    }
 
     try {
-        const resolved = await resolvePlatformGatewayApi(orgID, apiId);
-        if (resolved.error) {
-            return res.status(resolved.error.status).json(resolved.error.body);
-        }
-
-        await util.invokeApiRequest(
-            req,
-            'POST',
-            `${controlPlaneUrl}/platform-api-keys/${encodeURIComponent(apiKeyId)}/revoke?apiId=${encodeURIComponent(resolved.refId)}`,
-            {},
-            {}
-        );
-
-        return res.status(200).send();
+        await apiKeyService.revoke({ orgId: orgID, keyId: apiKeyId, actor: actor(req) });
+        return res.status(204).send();
     } catch (error) {
         logger.error('Error revoking platform API key', {
             error: error.message,
             orgID,
             apiKeyId
         });
-        util.handleError(res, error);
+        return res.status(errorStatus(error)).json({ code: String(errorStatus(error)), message: error.message });
     }
 };
 

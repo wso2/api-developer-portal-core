@@ -256,7 +256,7 @@ const loadAPIContent = async (req, res) => {
             subscriptionPlans: subscriptionPlans,
             baseUrl: baseURLDev + viewName,
             schemaUrl: `${orgName}/mock/${apiHandle}/${schemaFileName}`,
-            showPlatformApiKeysNav: await shouldShowPlatformApiKeysNav(req, metaData, null),
+            showPlatformApiKeysNav: await shouldShowPlatformApiKeysNav(req, metaData, null, null),
         }
         html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
         res.send(html);
@@ -471,6 +471,20 @@ const loadAPIContent = async (req, res) => {
             if (metaData.apiInfo.apiType === constants.API_TYPE.GRAPHQL) {
                 schemaFileName = constants.FILE_NAME.API_DEFINITION_GRAPHQL;
             }
+
+            let apiDefinitionForNav = null;
+            if (metaData.apiInfo?.apiType !== constants.API_TYPE.GRAPHQL && metaData.apiInfo?.apiType !== constants.API_TYPE.MCP) {
+                try {
+                    apiDefinitionForNav = await getApiDefinitionFileContent(orgID, apiID);
+                } catch (definitionErr) {
+                    logger.debug('Could not load API definition for platform API keys nav check', {
+                        orgID,
+                        apiID,
+                        error: definitionErr.message
+                    });
+                }
+            }
+
             templateContent = {
                 isAuthenticated: req.isAuthenticated(),
                 applications: appList,
@@ -491,7 +505,7 @@ const loadAPIContent = async (req, res) => {
                 isReadOnlyMode: config.readOnlyMode,
                 isFederatedAPI: isFederatedAPI,
             };
-            templateContent.showPlatformApiKeysNav = await shouldShowPlatformApiKeysNav(req, metaData, apiDetail);
+            templateContent.showPlatformApiKeysNav = await shouldShowPlatformApiKeysNav(req, metaData, apiDetail, apiDefinitionForNav);
             if (metaData.apiInfo.apiType == "MCP") {
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp-landing", viewName);
             } else {
@@ -587,7 +601,7 @@ const loadDocsPage = async (req, res) => {
             docTypes: docNames,
             devportalMode: devportalMode,
             apiType: apiMetadata.apiInfo?.apiType,
-            showPlatformApiKeysNav: await shouldShowPlatformApiKeysNav(req, metaForNav, null),
+            showPlatformApiKeysNav: await shouldShowPlatformApiKeysNav(req, metaForNav, null, null),
         }
         html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
     } else {
@@ -619,13 +633,27 @@ const loadDocsPage = async (req, res) => {
                 apiInfo: { gatewayType },
                 apiReferenceID: apiMetadata[0].dataValues.REFERENCE_ID,
             };
+
+            let apiDefinitionForNav = null;
+            if (apiType !== constants.API_TYPE.GRAPHQL && apiType !== constants.API_TYPE.MCP) {
+                try {
+                    apiDefinitionForNav = await getApiDefinitionFileContent(orgID, apiID);
+                } catch (definitionErr) {
+                    logger.debug('Could not load API definition for platform API keys nav check', {
+                        orgID,
+                        apiID,
+                        error: definitionErr.message
+                    });
+                }
+            }
+
             const templateContent = {
                 baseUrl: '/' + orgName + '/views/' + viewName + "/api/" + apiHandle,
                 docTypes: docNames,
                 apiType: apiType,
                 profile: req.isAuthenticated() ? profile : null,
                 devportalMode: devportalMode,
-                showPlatformApiKeysNav: await shouldShowPlatformApiKeysNav(req, metaForNav, null),
+                showPlatformApiKeysNav: await shouldShowPlatformApiKeysNav(req, metaForNav, null, apiDefinitionForNav),
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
         } catch (error) {
