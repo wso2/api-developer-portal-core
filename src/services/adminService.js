@@ -56,7 +56,7 @@ const createOrganization = async (req, res) => {
 
     const payload = req.body;
     payload.orgConfig = {
-        devportalMode: constants.API_TYPE.DEFAULT,
+        devportalMode: constants.DEVPORTAL_MODE.DEFAULT,
     };
 
     let organization = "";
