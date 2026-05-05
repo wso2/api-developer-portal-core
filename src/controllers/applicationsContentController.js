@@ -187,35 +187,26 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
         api.subscriptionPolicyDetails = await util.appendSubscriptionPlanDetails(orgID, api.subscriptionPolicies);
     }));
 
-    let kMmetaData = await getAPIMKeyManagers(req);
+    // Fetch prod and sandbox key managers in parallel; each falls back to [] independently
+    const [prodResult, sandboxResult] = await Promise.allSettled([
+        getAPIMKeyManagers(req, 'prod'),
+        getAPIMKeyManagers(req, 'sandbox')
+    ]);
+    const rawProdKeyManagers = prodResult.status === 'fulfilled' ? prodResult.value : [];
+    const rawSandboxKeyManagers = sandboxResult.status === 'fulfilled' ? sandboxResult.value : [];
 
-    // Ensure kMmetaData is an array before filtering
-    if (!Array.isArray(kMmetaData)) {
-        kMmetaData = [];
-    }
+    const prodKeyManagers = filterKeyManagers(rawProdKeyManagers, '_prod');
+    const sandboxKeyManagers = filterKeyManagers(rawSandboxKeyManagers, '_sandbox');
 
-    kMmetaData = kMmetaData.filter(keyManager => keyManager.enabled);
+    // Enrich all key managers with endpoints, grant types, and configuration
+    await Promise.all([
+        ...prodKeyManagers.map(enrichKeyManager),
+        ...sandboxKeyManagers.map(enrichKeyManager)
+    ]);
 
-    // TODO: Instead of using priority-based filtering, we should identify the key manager
-    // configured for the production environment from the Bijira console configuration.
-    // This temporary priority-based approach should be replaced with a proper configuration-based selection.
-    if (Array.isArray(kMmetaData) && kMmetaData.length > 1) {
-        kMmetaData = kMmetaData.filter(keyManager =>
-            keyManager.name.includes("_internal_key_manager_") ||
-            (!kMmetaData.some(km => km.name.includes("_internal_key_manager_")) && keyManager.name.includes("Resident Key Manager")) ||
-            (!kMmetaData.some(km => km.name.includes("_internal_key_manager_") || km.name.includes("Resident Key Manager")) && keyManager.name.includes("_appdev_sts_key_manager_") && keyManager.name.endsWith("_prod"))
-        );
-    }
-
-    for (const keyManager of kMmetaData) {
-        if (keyManager.name === 'Resident Key Manager') {
-            keyManager.tokenEndpoint = 'https://sts.choreo.dev/oauth2/token';
-            keyManager.authorizeEndpoint = 'https://sts.choreo.dev/oauth2/authorize';
-            keyManager.revokeEndpoint = 'https://sts.choreo.dev/oauth2/revoke';
-        }
-        keyManager.availableGrantTypes = await mapGrants(keyManager.availableGrantTypes);
-        keyManager.applicationConfiguration = await mapDefaultValues(keyManager.applicationConfiguration);
-    }
+    // Tag each key manager with its environment for template-side filtering
+    prodKeyManagers.forEach(km => { km.devPortalAppEnv = 'PROD'; });
+    sandboxKeyManagers.forEach(km => { km.devPortalAppEnv = 'SANDBOX'; });
 
     let productionKeys = [];
     let sandboxKeys = [];
@@ -245,29 +236,25 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
         return keyData;
     }) || [];
 
-    kMmetaData.forEach(keyManager => {
-        productionKeys.forEach(productionKey => {
-            if (productionKey.keyManager === keyManager.name) {
-                keyManager.productionKeys = productionKey;
-            }
+    // Match production keys to prod key managers; each prod KM only holds production applicationKeys
+    prodKeyManagers.forEach(km => {
+        productionKeys.forEach(pk => {
+            if (pk.keyManager === km.name) km.productionKeys = pk;
         });
-        sandboxKeys.forEach(sandboxKey => {
-            if (sandboxKey.keyManager === keyManager.name) {
-                keyManager.sandboxKeys = sandboxKey;
-            }
-        });
-        // Build applicationKeys per keyManager with single objects (not arrays)
-        keyManager.applicationKeys = [
-            {
-                keys: keyManager.productionKeys || {},
-                keyType: 'PRODUCTION'
-            },
-            {
-                keys: keyManager.sandboxKeys || {},
-                keyType: 'SANDBOX'
-            }
-        ];
+        km.applicationKeys = [{ keys: km.productionKeys || {}, keyType: constants.KEY_TYPE.PRODUCTION }];
     });
+
+    // Match sandbox keys to sandbox key managers; each sandbox KM only holds sandbox applicationKeys
+    sandboxKeyManagers.forEach(km => {
+        sandboxKeys.forEach(sk => {
+            if (sk.keyManager === km.name) km.sandboxKeys = sk;
+        });
+        km.applicationKeys = [{ keys: km.sandboxKeys || {}, keyType: constants.KEY_TYPE.SANDBOX }];
+    });
+
+    const kMmetaData = [...prodKeyManagers, ...sandboxKeyManagers];
+    const hasProdKeyManagers = prodKeyManagers.length > 0;
+    const hasSandboxKeyManagers = sandboxKeyManagers.length > 0;
 
     let subscriptionScopes = [];
     if (applicationReference) {
@@ -431,6 +418,8 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
         orgID,
         applicationList,
         keyManagersMetadata: kMmetaData,
+        hasProdKeyManagers,
+        hasSandboxKeyManagers,
         subAPIs: subList,
         subAPIsForApplicationKeys,
         platformSubscriptionsForApplicationKeys: [],
@@ -548,6 +537,8 @@ const loadApplication = async (req, res) => {
             templateContent = {
                 applicationMetadata: metaData,
                 keyManagersMetadata: kMmetaData,
+                hasProdKeyManagers: kMmetaData.some(km => km.devPortalAppEnv === 'PROD'),
+                hasSandboxKeyManagers: kMmetaData.some(km => km.devPortalAppEnv === 'SANDBOX'),
                 baseUrl: baseURLDev + viewName,
                 features: {
                     sdkGeneration: config.features?.sdkGeneration?.enabled || false
@@ -566,6 +557,8 @@ const loadApplication = async (req, res) => {
                     subscriptionCount: data.subAPIs.length
                 },
                 keyManagersMetadata: kMmetaData,
+                hasProdKeyManagers: data.hasProdKeyManagers,
+                hasSandboxKeyManagers: data.hasSandboxKeyManagers,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 subAPIs: data.subAPIs,
                 nonSubAPIs: data.nonSubAPIs,
@@ -644,6 +637,8 @@ const loadApplicationKeys = async (req, res) => {
             templateContent = {
                 applicationMetadata: metaData,
                 keyManagersMetadata: kMmetaData,
+                hasProdKeyManagers: kMmetaData.some(km => km.devPortalAppEnv === 'PROD'),
+                hasSandboxKeyManagers: kMmetaData.some(km => km.devPortalAppEnv === 'SANDBOX'),
                 baseUrl: baseURLDev + viewName,
                 productionKeys: [],
                 sandboxKeys: [],
@@ -672,6 +667,8 @@ const loadApplicationKeys = async (req, res) => {
                     subscriptionCount: data.subAPIs.length
                 },
                 keyManagersMetadata: kMmetaData,
+                hasProdKeyManagers: data.hasProdKeyManagers,
+                hasSandboxKeyManagers: data.hasSandboxKeyManagers,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
                 subAPIs: data.subAPIs,
                 nonSubAPIs: data.nonSubAPIs,
@@ -797,9 +794,44 @@ async function getAPIMApplication(req, applicationId) {
     return responseData;
 }
 
-async function getAPIMKeyManagers(req) {
-    const responseData = await invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers?devPortalAppEnv=prod', null, null);
-    return responseData.list;
+/**
+ * Selects the appropriate key manager from a list using a priority-based approach:
+ * 1. Internal key manager (highest priority)
+ * 2. Resident Key Manager
+ * 3. AppDev STS key manager matching the given environment suffix (e.g. '_prod' or '_sandbox')
+ */
+function filterKeyManagers(keyManagers, envSuffix) {
+    if (!Array.isArray(keyManagers) || keyManagers.length === 0) return [];
+
+    const enabled = keyManagers.filter(km => km.enabled);
+    if (enabled.length <= 1) return enabled;
+
+    const hasInternal = enabled.some(km => km.name.includes(constants.KEY_MANAGERS.INTERNAL_KEY_MANAGER));
+    const hasResident = enabled.some(km => km.name.includes(constants.KEY_MANAGERS.RESIDENT_KEY_MANAGER));
+
+    return enabled.filter(km =>
+        km.name.includes(constants.KEY_MANAGERS.INTERNAL_KEY_MANAGER) ||
+        (!hasInternal && km.name.includes(constants.KEY_MANAGERS.RESIDENT_KEY_MANAGER)) ||
+        (!hasInternal && !hasResident &&
+            km.name.includes(constants.KEY_MANAGERS.APP_DEV_STS_KEY_MANAGER) &&
+            km.name.endsWith(envSuffix))
+    );
+}
+
+async function enrichKeyManager(keyManager) {
+    if (keyManager.name === constants.KEY_MANAGERS.RESIDENT_KEY_MANAGER) {
+        const residentKMConfig = config.controlPlane?.residentKeyManager || {};
+        keyManager.tokenEndpoint = residentKMConfig.tokenEndpoint || 'https://sts.choreo.dev/oauth2/token';
+        keyManager.authorizeEndpoint = residentKMConfig.authorizeEndpoint || 'https://sts.choreo.dev/oauth2/authorize';
+        keyManager.revokeEndpoint = residentKMConfig.revokeEndpoint || 'https://sts.choreo.dev/oauth2/revoke';
+    }
+    keyManager.availableGrantTypes = await mapGrants(keyManager.availableGrantTypes);
+    keyManager.applicationConfiguration = await mapDefaultValues(keyManager.applicationConfiguration);
+}
+
+async function getAPIMKeyManagers(req, env) {
+    const responseData = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/key-managers?devPortalAppEnv=${env}`, null, null);
+    return Array.isArray(responseData.list) ? responseData.list : [];
 }
 
 async function getAPIDetails(req, apiId) {

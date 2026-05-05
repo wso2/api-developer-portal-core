@@ -1602,16 +1602,19 @@ const createAppKeyMappingOnBehalfOfUser = async (cpAppID, keymanager, clientId, 
 }
 
 const getAPIMKeyManagersBehalfOfUser = async (cpOrgId, patToken) => {
-
-    let headers = {
+    const headers = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${patToken}`
-    }
-    let url = `${controlPlaneGwUrl}/key-managers?devPortalAppEnv=prod`;
-    const keymanagersResponse = await util.apiRequest('GET', url, headers, null, cpOrgId);
-
-    return keymanagersResponse.data.list;
-}
+    };
+    const [prodResponse, sandboxResponse] = await Promise.all([
+        util.apiRequest('GET', `${controlPlaneGwUrl}/key-managers?devPortalAppEnv=prod`, headers, null, cpOrgId),
+        util.apiRequest('GET', `${controlPlaneGwUrl}/key-managers?devPortalAppEnv=sandbox`, headers, null, cpOrgId)
+    ]);
+    return [
+        ...(prodResponse.data.list || []),
+        ...(sandboxResponse.data.list || [])
+    ];
+};
 
 const createCPApplication = async (req, cpApplicationName) => {
     logger.info('Creating control plane application', {

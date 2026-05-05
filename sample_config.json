@@ -27,7 +27,12 @@
     "url": "https://sts.preview-dv.choreo.dev/api/am/devportal/v2",
     "graphqlURL": "https://app.preview-dv.choreo.dev/graphql",
     "disableCertValidation": true,
-    "pathToCertificate": "./resources/security/client-truststore.pem"
+    "pathToCertificate": "./resources/security/client-truststore.pem",
+    "residentKeyManager": {
+      "tokenEndpoint": "https://sts.choreo.dev/oauth2/token",
+      "authorizeEndpoint": "https://sts.choreo.dev/oauth2/authorize",
+      "revokeEndpoint": "https://sts.choreo.dev/oauth2/revoke"
+    }
   },
   "aiSDKService": {
     "url": "http://localhost:5001",
