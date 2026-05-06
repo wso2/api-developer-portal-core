@@ -1538,6 +1538,9 @@ const loadLlmsTxt = async (req, res) => {
 
         const md = await util.renderLlmsTxt(templateContent, orgID, viewName);
         res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
         res.send(md);
     } catch (error) {
         logger.error('Error generating llms.txt', { orgName, error: error.message, stack: error.stack });
@@ -1560,6 +1563,9 @@ const previewLlmsTxt = async (req, res) => {
 
         const md = await util.renderLlmsTxt(templateContent, orgID, viewName);
         res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
         res.send(md);
     } catch (error) {
         logger.error('Error previewing llms.txt', { orgName, error: error.message, stack: error.stack });
@@ -1602,6 +1608,9 @@ const loadAPIsMd = async (req, res) => {
         const md = await util.renderMarkdownTemplateFromAPI(templateContent, orgID, 'pages/apis', viewName);
 
         res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
         res.send(md);
     } catch (error) {
         logger.error('Error generating APIs markdown', {
@@ -1640,6 +1649,9 @@ const loadMCPsMd = async (req, res) => {
         const md = await util.renderMarkdownTemplateFromAPI(templateContent, orgID, 'pages/mcps', viewName);
 
         res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
         res.send(md);
     } catch (error) {
         logger.error('Error generating MCPs markdown', {
