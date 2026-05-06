@@ -109,18 +109,16 @@ const TopicViewer = (props: TopicViewerProps) => {
 
   useEffect(() => {
     const baseEndpoint = selectedEndpointType === 'production' ? apiEndpoint : sandboxEndpoint;
+    const normalizedBase = baseEndpoint.endsWith('/') ? baseEndpoint.slice(0, -1) : baseEndpoint;
     if (asyncType === APITypeEnum.WEBSUB) {
-      setEndpoint(`${baseEndpoint}/hub`);
-    } else if (topic !== '/*') {
-      const formattedTopic =
-        topic.startsWith('/') || baseEndpoint.endsWith('/')
-          ? topic === '/'
-            ? ''
-            : topic
-          : `/${topic}`;
-      setEndpoint(`${baseEndpoint}${formattedTopic}`);
+      setEndpoint(`${normalizedBase}/hub`);
+    } else if (topic === '/*') {
+      setEndpoint(`${normalizedBase}/`);
+    } else if (topic === '/' || topic === '') {
+      setEndpoint(normalizedBase);
     } else {
-      setEndpoint(baseEndpoint + '/');
+      const formattedTopic = topic.startsWith('/') ? topic : `/${topic}`;
+      setEndpoint(`${normalizedBase}${formattedTopic}`);
     }
     if (parameters != null) {
       setPathParams(
@@ -155,19 +153,10 @@ const TopicViewer = (props: TopicViewerProps) => {
         {
           message: `Sent: ${input}`,
           timestamp: new Date().toString(),
-          randomKey: messages.length,
+          randomKey: prev.length,
         },
       ]);
       setInput('');
-      socket.onmessage = (event) =>
-        setMessages((prev) => [
-          ...prev,
-          {
-            message: `Received: ${event.data}`,
-            timestamp: new Date().toString(),
-            randomKey: messages.length,
-          },
-        ]);
     }
   };
 
@@ -197,11 +186,21 @@ const TopicViewer = (props: TopicViewerProps) => {
         {
           message: `Connected to ${updatedEndpoint}`,
           timestamp: new Date().toString(),
-          randomKey: messages.length,
+          randomKey: prev.length,
         },
       ]);
       setConnectButtonText('Disconnect');
     };
+
+    ws.onmessage = (event) =>
+      setMessages((prev) => [
+        ...prev,
+        {
+          message: `Received: ${event.data}`,
+          timestamp: new Date().toString(),
+          randomKey: prev.length,
+        },
+      ]);
 
     ws.onerror = () => {
       setConnect(false);

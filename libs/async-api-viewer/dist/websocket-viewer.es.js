@@ -19053,16 +19053,19 @@ const _2 = "choreo-test-key", P2 = "choreo-oauth2-token", j2 = (t) => {
     return pe += " -H 'Content-Type: application/x-www-form-urlencoded'", pe += ` --data-urlencode 'hub.topic=${n}'`, pe += ` --data-urlencode 'hub.callback=${z}'`, pe += ` --data-urlencode 'hub.mode=${ce}'`, ce === "subscribe" && Q && Q.trim() && (pe += ` --data-urlencode 'hub.lease_seconds=${Q}'`), $ && $.trim() && F && F.trim() && (pe += ` -H '${$}: ${F}'`), pe;
   }
   pi(() => {
-    const ce = f === "production" ? a : r;
+    const ce = f === "production" ? a : r, pe = ce.endsWith("/") ? ce.slice(0, -1) : ce;
     if (u === xr.WEBSUB)
-      j(`${ce}/hub`);
-    else if (n !== "/*") {
-      const pe = n.startsWith("/") || ce.endsWith("/") ? n === "/" ? "" : n : `/${n}`;
-      j(`${ce}${pe}`);
-    } else
-      j(ce + "/");
+      j(`${pe}/hub`);
+    else if (n === "/*")
+      j(`${pe}/`);
+    else if (n === "/" || n === "")
+      j(pe);
+    else {
+      const X = n.startsWith("/") ? n : `/${n}`;
+      j(`${pe}${X}`);
+    }
     s != null && L(
-      Object.keys(s).reduce((pe, X) => (pe[X] = "", pe), {})
+      Object.keys(s).reduce((X, V) => (X[V] = "", X), {})
     );
   }, [a, r, f, n]);
   const be = (ce) => {
@@ -19078,16 +19081,9 @@ const _2 = "choreo-test-key", P2 = "choreo-oauth2-token", j2 = (t) => {
       {
         message: `Sent: ${y}`,
         timestamp: (/* @__PURE__ */ new Date()).toString(),
-        randomKey: g.length
+        randomKey: ce.length
       }
-    ]), w(""), p.onmessage = (ce) => m((pe) => [
-      ...pe,
-      {
-        message: `Received: ${ce.data}`,
-        timestamp: (/* @__PURE__ */ new Date()).toString(),
-        randomKey: g.length
-      }
-    ]));
+    ]), w(""));
   }, Ee = () => {
     A("Connecting...");
     let ce = k;
@@ -19102,10 +19098,17 @@ const _2 = "choreo-test-key", P2 = "choreo-oauth2-token", j2 = (t) => {
         {
           message: `Connected to ${ce}`,
           timestamp: (/* @__PURE__ */ new Date()).toString(),
-          randomKey: g.length
+          randomKey: V.length
         }
       ]), A("Disconnect");
-    }, X.onerror = () => {
+    }, X.onmessage = (V) => m((U) => [
+      ...U,
+      {
+        message: `Received: ${V.data}`,
+        timestamp: (/* @__PURE__ */ new Date()).toString(),
+        randomKey: U.length
+      }
+    ]), X.onerror = () => {
       O(!1), m((V) => [
         ...V,
         {
