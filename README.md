@@ -20,18 +20,6 @@ What happens automatically:
 - The devportal image is built from source and connected to the DB
 - On first boot the app seeds the default theme assets into the database
 
-**Using your own TLS certificate:** Replace the `certs_data` volume with a bind-mount containing `server.crt` and `server.key`:
-```yaml
-# docker-compose.yml → devportal.volumes
-- ./my-certs:/app/certs:ro
-```
-
-**Switching back to plain HTTP:** Add to your `.env` file:
-```dotenv
-DP_ADVANCED_HTTP=true
-DP_BASEURL=http://localhost:3000
-```
-
 To stop and clean up:
 ```bash
 docker compose down -v   # -v also removes the postgres data volume and certs volume
