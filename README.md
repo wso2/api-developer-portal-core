@@ -34,7 +34,7 @@ Use this for production, custom IdP configuration, or local development without 
 ### Prerequisites
 
 - **Node.js**: v22.0.0
-- **PostgreSQL**: 16 (local install or Docker — see [Database setup](#database-setup))
+- **PostgreSQL**: 16 (local install or Docker — see [Database setup](#4--database-setup))
 - **psql**: PostgreSQL client (required to run schema and seed scripts)
 
 ### 1 — Create config file
