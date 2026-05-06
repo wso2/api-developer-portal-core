@@ -16,6 +16,8 @@
  * under the License.
  */
 
+let _agentMdUrl = '';
+
 function buildAgentPrompt(mdUrl) {
     return `Please fetch the API details from the following URL:\n\n${mdUrl}\n\nOnce you've read it, provide a structured summary covering:\n- What this API does\n- Authentication mechanisms and how to obtain credentials\n- Available endpoints\n- Main resources and key fields in their responses\n\nThen ask me what I'd like to do with it, with a few sample options to choose from.`;
 }
@@ -46,7 +48,8 @@ function toggleApiRunDropdown(event) {
 }
 
 function runApiPromptInClaude() {
-    const text = document.getElementById('apiAgentPromptText').textContent;
+    const cacheBustedUrl = _agentMdUrl + '?request-id=' + Math.floor(Math.random() * 1e10);
+    const text = buildAgentPrompt(cacheBustedUrl);
     window.open('https://claude.ai/new?q=' + encodeURIComponent(text), '_blank');
     document.getElementById('apiRunDropdownMenu').classList.remove('show');
 }
@@ -89,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const data = JSON.parse(dataEl.textContent);
             const mdUrl = window.location.origin + data.baseUrl + '/api/' + data.apiHandle + '.md';
+            _agentMdUrl = mdUrl;
             apiName = data.apiHandle;
 
             const modalEl = document.getElementById('apiAgentPromptModal');

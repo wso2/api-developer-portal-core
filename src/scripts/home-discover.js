@@ -48,7 +48,9 @@
     const runBtn = document.getElementById('discoverBtnRunClaude');
     if (runBtn) {
         runBtn.addEventListener('click', function () {
-            window.open('https://claude.ai/new?q=' + encodeURIComponent(prompt), '_blank');
+            const cacheBustedUrl = llmsUrl + '?request-id=' + Math.floor(Math.random() * 1e10);
+            const runPrompt = lines.map(line => line === llmsUrl ? cacheBustedUrl : line).join('\n');
+            window.open('https://claude.ai/new?q=' + encodeURIComponent(runPrompt), '_blank');
         });
     }
 })();
