@@ -48,6 +48,10 @@ function toggleApiRunDropdown(event) {
 }
 
 function runApiPromptInClaude() {
+    if (!_agentMdUrl) {
+        document.getElementById('apiRunDropdownMenu')?.classList.remove('show');
+        return;
+    }
     const cacheBustedUrl = _agentMdUrl + '?request-id=' + Math.floor(Math.random() * 1e10);
     const text = buildAgentPrompt(cacheBustedUrl);
     window.open('https://claude.ai/new?q=' + encodeURIComponent(text), '_blank');
