@@ -99,10 +99,18 @@ async function deletePlatformSubscription(orgId, subId, transaction) {
     return count > 0;
 }
 
+async function getSubscriptionById(orgId, subId) {
+    return SubscriptionMapping.findOne({
+        where: { SUB_ID: subId, ORG_ID: orgId },
+        include: INCLUDE_API_AND_POLICY,
+    });
+}
+
 module.exports = {
     createPlatformSubscription,
     listPlatformSubscriptions,
     getPlatformSubscription,
+    getSubscriptionById,
     updatePlatformSubscriptionStatus,
     deletePlatformSubscription,
 };
