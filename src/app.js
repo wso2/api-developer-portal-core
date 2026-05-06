@@ -37,7 +37,7 @@ const sdkJobService = require('./services/sdkJobService');
 const customContent = require('./routes/customPageRoute');
 const subscriptionsContent = require('./routes/subscriptionsContentRoute');
 const mcpRegistryRoute = require('./routes/mcpRegistryRoute');
-const config = require(process.cwd() + '/config.json');
+const { config, secrets: secretConf } = require('./config/configLoader');
 const Handlebars = require('handlebars');
 const constants = require("./utils/constants");
 const designRoute = require('./routes/designModeRoute');
@@ -48,7 +48,6 @@ const util = require('./utils/util');
 
 const OAuth2Strategy = require('passport-oauth2');
 const jwt = require('jsonwebtoken');
-const secretConf = require(process.cwd() + '/secret.json');
 const { v4: uuidv4 } = require('uuid');
 
 const lock = new AsyncLock();
@@ -356,7 +355,7 @@ app.use(session({
     resave: false,
     saveUninitialized: true,
     cookie: {
-        secure: false,
+        secure: !config.advanced.http,
         maxAge: 60 * 60 * 1000,
     },
 }));
@@ -671,30 +670,37 @@ app.use( (err, req, res, next) => {
 });
 
 
+const seedDefaultData = require('./startup/seedDefaultData');
+
 const PORT = process.env.PORT || config.defaultPort;
 if (config.advanced.http) {
     http.createServer(app).listen(PORT, '0.0.0.0', () => {
         logStartupInfo();
+        if (config.seedDefaults) {
+            seedDefaultData().catch(err => logger.error('seedDefaultData failed', { error: err.message }));
+        }
     });
 
 } else {
     try {
-        const certPath = path.join(process.cwd(), config.serverCerts.pathToCert);
-        const keyPath = path.join(process.cwd(), config.serverCerts.pathToPK);
-        const caPath = path.join(process.cwd(), config.serverCerts.pathToCA);
+        const certPath = path.resolve(config.serverCerts.pathToCert);
+        const keyPath = path.resolve(config.serverCerts.pathToPK);
 
         const serverCert = fs.readFileSync(certPath);
         const serverKey = fs.readFileSync(keyPath);
-        const caCert = fs.readFileSync(caPath);
+        const caCert = fs.readFileSync(path.resolve(config.serverCerts.pathToCA));
 
         https.createServer({
             key: serverKey,
             cert: serverCert,
             ca: caCert,
             requestCert: true,
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
         }, app).listen(PORT, () => {
             logStartupInfo();
+            if (config.seedDefaults) {
+                seedDefaultData().catch(err => logger.error('seedDefaultData failed', { error: err.message }));
+            }
         });
 
     } catch (err) {

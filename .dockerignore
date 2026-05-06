@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+.npm
+
+# Runtime config — mount via docker-compose volumes, not baked into the image
+config.yaml
+config.json
+secret.json
+.env
+
+# Dev tooling
+.git
+.gitignore
+*.md
+logs/
+generated-sdks/

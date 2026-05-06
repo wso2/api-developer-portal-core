@@ -18,8 +18,8 @@
  */
 const minimatch = require('minimatch');
 const constants = require('../utils/constants');
-const config = require(process.cwd() + '/config.json');
-const secret = require(process.cwd() + '/secret.json');
+const { config } = require('../config/configLoader');
+const { secrets: secret } = require('../config/configLoader');
 const adminDao = require('../dao/admin');
 const { validationResult } = require('express-validator');
 const { jwtVerify, createRemoteJWKSet, importX509 } = require('jose');
