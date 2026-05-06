@@ -42,7 +42,13 @@ function enforceSecuirty(scope) {
             if (!errors.isEmpty()) {
                 return res.status(400).json(util.getErrors(errors));
             }
+            // Config-auth users: authenticated with no token — allow through directly
+            if (req.isAuthenticated() && req.user && req.user.isLocalAuth && !config.identityProvider?.clientId) {
+                return next();
+            }
             const token = accessTokenPresent(req);
+            const hasBasicAuth = !token && !config.identityProvider?.clientId &&
+                req.headers.authorization?.toLowerCase().startsWith('basic ');
             if (token) {
                 //check user belongs to organization
                 if (req.user && req.user[constants.ROLES.ORGANIZATION_CLAIM] !== req.user[constants.ORG_IDENTIFIER]) {
@@ -60,6 +66,8 @@ function enforceSecuirty(scope) {
                 //set user ID
                 const decodedAccessToken = jwt.decode(token);
                 req[constants.USER_ID] = decodedAccessToken[constants.USER_ID];
+            } else if (hasBasicAuth) {
+                validateAuthentication(scope)(req, res, next);
             } else if (config.advanced.apiKey.enabled) {
                 // Communcation with API KEY
                 if (req.headers.organization) {
@@ -88,8 +96,9 @@ function accessTokenPresent(req) {
     if (req.user) {
         return req.user[constants.ACCESS_TOKEN];
     }
-    if (req.headers.authorization) {
-        return req.headers.authorization.split(' ')[1];
+    const auth = req.headers.authorization;
+    if (auth && auth.toLowerCase().startsWith('bearer ')) {
+        return auth.split(' ')[1];
     }
     return null;
 }
@@ -148,6 +157,30 @@ const ensureAuthenticated = async (req, res, next) => {
         let role;
         logger.debug("Request authentication status", { isAuthenticated: req.isAuthenticated() });
         if (req.isAuthenticated()) {
+            // Config-auth: skip all token/exchange checks; roles already in session
+            if (req.user && req.user.isLocalAuth && !config.identityProvider?.clientId) {
+                req[constants.USER_ID] = req.user[constants.USER_ID];
+                if (config.authorizedPages.some(pattern => minimatch.minimatch(req.originalUrl, pattern))) {
+                    if (req.user) {
+                        req.user[constants.ROLES.ADMIN] = adminRole;
+                        req.user[constants.ROLES.SUPER_ADMIN] = superAdminRole;
+                        req.user[constants.ROLES.SUBSCRIBER] = subscriberRole;
+                        if (orgDetails) {
+                            req.user[constants.ORG_ID] = orgDetails.ORG_ID;
+                            req.user[constants.ORG_IDENTIFIER] = orgDetails.ORGANIZATION_IDENTIFIER;
+                        }
+                    }
+                    if (!config.advanced.disabledRoleValidation) {
+                        role = req.user[constants.ROLES.ROLE_CLAIM];
+                        if (ensurePermission(req.originalUrl, role, req)) {
+                            return next();
+                        } else {
+                            return res.status(403).send("User unauthorized");
+                        }
+                    }
+                }
+                return next();
+            }
             const token = accessTokenPresent(req);
             if (token) {
                 const decodedAccessToken = jwt.decode(token);
@@ -255,6 +288,10 @@ function validateAuthentication(scope) {
         if (!errors.isEmpty()) {
             return res.status(400).json(util.getErrors(errors));
         }
+        // Config-auth users have no JWT to validate — allow through
+        if (req.isAuthenticated() && req.user && req.user.isLocalAuth && !config.identityProvider?.clientId) {
+            return next();
+        }
         let IDP, valid, scopes, orgId, response;
         if (req.params.orgName) {
             orgId = await adminDao.getOrgId(req.params.orgName);
@@ -267,10 +304,10 @@ function validateAuthentication(scope) {
                 //login from super IDP
                 IDP = new IdentityProviderDTO(response[0].dataValues);
             } else {
-                IDP = config.identityProvider;
+                IDP = config.identityProvider || {};
             }
         } else {
-            IDP = config.identityProvider;
+            IDP = config.identityProvider || {};
         }
 
         let accessToken, basicHeader;
@@ -399,7 +436,7 @@ const validateBasicAuth = async (basicHeader) => {
     let valid = false;
     const base64Decoded = Buffer.from(basicHeader, 'base64').toString('utf-8');
     const [username, password] = base64Decoded.split(':');
-    const users = config.defaultAuth.users;
+    const users = config.defaultAuth?.users || [];
     for (let user of users) {
         if (username === user.username && password === user.password) {
             valid = true;

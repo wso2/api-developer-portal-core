@@ -926,7 +926,9 @@ async function loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags,
     if (req.user && req.user[constants.ROLES.GROUP_CLAIM]) {
         groups = req.user[constants.ROLES.GROUP_CLAIM];
     }
-    if (groups !== "") {
+    if (Array.isArray(groups)) {
+        groupList = groups;
+    } else if (groups !== "") {
         groupList = groups.split(" ");
     }
     let metaData = await apiMetadataService.getMetadataListFromDB(orgID, groupList, searchTerm, tags, null, null, viewName);

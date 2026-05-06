@@ -402,6 +402,7 @@ let claimNames = {
 };
 // configurePassport(config.identityProvider, claimNames);
 
+if (config.identityProvider?.clientId) {
 const strategy = new OAuth2Strategy({
     name: 'Asgardeo',
     issuer: config.identityProvider.issuer,
@@ -531,6 +532,7 @@ strategy.authorizationParams = function (options) {
 };
 
 passport.use(strategy);
+} // end if (config.identityProvider?.clientId)
 
 // Serialize user into the session
 passport.serializeUser((user, done) => {
@@ -553,7 +555,8 @@ passport.serializeUser((user, done) => {
         'isAdmin': user.isAdmin,
         'isSuperAdmin': user.isSuperAdmin,
         [constants.USER_ID]: user[constants.USER_ID],
-        'userOrg': user.userOrg
+        'userOrg': user.userOrg,
+        'isLocalAuth': user.isLocalAuth || false,
     };
     lock.acquire('serialize', (release) => {
         release(null, profile);
