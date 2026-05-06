@@ -48,10 +48,10 @@ function toggleApiRunDropdown(event) {
 }
 
 function runApiPromptInClaude() {
-    const cacheBustedUrl = _agentMdUrl + '?request-id=' + Math.floor(Math.random() * 1e10);
-    const text = buildAgentPrompt(cacheBustedUrl);
+    const text = _agentMdUrl
+        ? buildAgentPrompt(_agentMdUrl + '?request-id=' + Math.floor(Math.random() * 1e10))
+        : document.getElementById('apiAgentPromptText').textContent;
     window.open('https://claude.ai/new?q=' + encodeURIComponent(text), '_blank');
-    document.getElementById('apiRunDropdownMenu').classList.remove('show');
 }
 
 function runApiPromptInChatGPT() {
