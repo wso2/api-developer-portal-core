@@ -339,6 +339,10 @@ Handlebars.registerHelper('isCurrentPlan', function (policyName, platformSubscri
     return platformSubscriptions.some(sub => sub.subscriptionPlanName === policyName);
 });
 
+Handlebars.registerHelper('currentYear', function () {
+    return new Date().getFullYear();
+});
+
 // #endregion
 
 app.use(session({
