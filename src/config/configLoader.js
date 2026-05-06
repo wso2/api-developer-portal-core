@@ -50,15 +50,23 @@ function loadBaseConfig() {
  * At each level, keys are matched case-insensitively (so "dbsecret" matches "dbSecret").
  * If no matching key exists, the token itself is used as the new key name.
  */
+const BLOCKED_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
+
 function deepSet(obj, tokens, value) {
     if (!tokens.length || typeof obj !== 'object' || obj === null) return;
 
     const token = tokens[0];
     const rest = tokens.slice(1);
 
-    // Find an existing key whose lowercase form matches the token
-    const existingKey = Object.keys(obj).find(k => k.toLowerCase() === token);
+    if (BLOCKED_KEYS.has(token)) return;
+
+    // Find an existing own-property key whose lowercase form matches the token
+    const existingKey = Object.keys(obj).find(k =>
+        Object.prototype.hasOwnProperty.call(obj, k) && k.toLowerCase() === token
+    );
     const key = existingKey !== undefined ? existingKey : token;
+
+    if (BLOCKED_KEYS.has(key)) return;
 
     if (rest.length === 0) {
         obj[key] = coerceValue(value);
