@@ -21,7 +21,8 @@
 const fs = require('fs');
 const path = require('path');
 const logger = require('../config/logger');
-const { OrgContent } = require('../models/organization');
+const { Op } = require('sequelize');
+const { Organization, OrgContent } = require('../models/organization');
 const View = require('../models/views');
 
 // Must match the UUID seeded by artifacts/docker-init/02_seed_default.sql and org_data.sh
@@ -58,6 +59,16 @@ function collectFiles(dir, base) {
 
 async function seedDefaultData() {
     try {
+        const nonAcmeOrgCount = await Organization.count({
+            where: { ORG_ID: { [Op.ne]: ACME_ORG_ID } }
+        });
+        if (nonAcmeOrgCount > 0) {
+            logger.info('seedDefaultData: existing orgs found — skipping', {
+                operation: 'seedDefaultData'
+            });
+            return;
+        }
+
         // Find the default view for ACME org
         const view = await View.findOne({
             where: { ORG_ID: ACME_ORG_ID, NAME: DEFAULT_VIEW_NAME }
