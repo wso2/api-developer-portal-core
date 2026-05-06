@@ -20,6 +20,7 @@ const sequelize = require('../db/sequelize');
 const apiKeyDao = require('../dao/apiKey');
 const apiMetadataDao = require('../dao/apiMetadata');
 const { publish } = require('./webhooks/eventPublisher');
+const platformSubDao = require('../dao/platformSubscription');
 const logger = require('../config/logger');
 const { config } = require('../config/configLoader');
 
@@ -70,8 +71,37 @@ async function resolveApi(orgId, apiId) {
         return { error: { status: 404, message: 'API not found' } };
     }
     const row = rows[0];
-    const gatewayType = row.GATEWAY_TYPE || (row.dataValues && row.dataValues.GATEWAY_TYPE);
-    return { apiId: row.API_ID || (row.dataValues && row.dataValues.API_ID), gatewayType };
+    const dv = row.dataValues || row;
+    return {
+        apiId: dv.API_ID,
+        gatewayType: dv.GATEWAY_TYPE || null,
+        apiName: dv.API_NAME || null,
+        apiVersion: dv.API_VERSION || null,
+        apiRefId: dv.REFERENCE_ID || ''
+    };
+}
+
+async function resolveApiDirect(orgId, apiId) {
+    const rows = await apiMetadataDao.getAPIMetadataByCondition({ API_ID: apiId, ORG_ID: orgId });
+    if (!rows || rows.length === 0) return null;
+    const dv = rows[0].dataValues || rows[0];
+    return {
+        gatewayType: dv.GATEWAY_TYPE || null,
+        apiName: dv.API_NAME || null,
+        apiVersion: dv.API_VERSION || null,
+        apiRefId: dv.REFERENCE_ID || ''
+    };
+}
+
+async function resolveSubscription(orgId, subscriptionId) {
+    if (!subscriptionId) return null;
+    const sub = await platformSubDao.getSubscriptionById(orgId, subscriptionId);
+    if (!sub) return null;
+    const policy = sub.DP_SUBSCRIPTION_POLICY;
+    return {
+        ref_id: sub.SUB_TOKEN,
+        plan_name: policy ? (policy.DISPLAY_NAME || policy.POLICY_NAME || null) : null
+    };
 }
 
 /**
@@ -91,6 +121,7 @@ async function generate({ orgId, apiId, subscriptionId, name, expiresAt, actor }
     if (api.error) throw Object.assign(new Error(api.error.message), { status: api.error.status });
 
     const plaintext = generateSecret();
+    const subscription = await resolveSubscription(orgId, subscriptionId);
     let keyId;
 
     try {
@@ -103,8 +134,13 @@ async function generate({ orgId, apiId, subscriptionId, name, expiresAt, actor }
             keyId = key.KEY_ID;
 
             await publish('apikey.generated',
-                { key_id: keyId, api_id: api.apiId, name: normalizedName,
-                  expires_at: expiry.date ? expiry.date.toISOString() : null },
+                {
+                    key_id: keyId,
+                    name: normalizedName,
+                    expires_at: expiry.date ? expiry.date.toISOString() : null,
+                    api: { name: api.apiName, version: api.apiVersion, ref_id: api.apiRefId },
+                    ...(subscription && { subscription })
+                },
                 { transaction: t, orgId, gatewayType: api.gatewayType,
                   aggregateType: 'apikey', aggregateId: keyId, plaintextKey: plaintext }
             );
@@ -130,14 +166,21 @@ async function regenerate({ orgId, keyId, actor }) {
     if (!existing) throw Object.assign(new Error('API key not found'), { status: 404 });
     if (existing.STATUS === 'REVOKED') throw Object.assign(new Error('Cannot regenerate a revoked key'), { status: 409 });
 
-    const gatewayType = existing.DP_API_METADATA && existing.DP_API_METADATA.GATEWAY_TYPE;
+    const apiInfo = await resolveApiDirect(orgId, existing.API_ID);
+    const gatewayType = apiInfo ? apiInfo.gatewayType : null;
     const plaintext = generateSecret();
+    const subscription = await resolveSubscription(orgId, existing.SUBSCRIPTION_ID);
 
     try {
         await sequelize.transaction(async (t) => {
             await publish('apikey.regenerated',
-                { key_id: keyId, api_id: existing.API_ID,
-                  name: existing.NAME, expires_at: existing.EXPIRES_AT },
+                {
+                    key_id: keyId,
+                    name: existing.NAME,
+                    expires_at: existing.EXPIRES_AT,
+                    api: { name: apiInfo ? apiInfo.apiName : null, version: apiInfo ? apiInfo.apiVersion : null, ref_id: apiInfo ? apiInfo.apiRefId : '' },
+                    ...(subscription && { subscription })
+                },
                 { transaction: t, orgId, gatewayType,
                   aggregateType: 'apikey', aggregateId: keyId, plaintextKey: plaintext }
             );
@@ -160,14 +203,19 @@ async function revoke({ orgId, keyId, actor }) {
     const existing = await apiKeyDao.getKey(orgId, keyId);
     if (!existing) throw Object.assign(new Error('API key not found'), { status: 404 });
 
-    const gatewayType = existing.DP_API_METADATA && existing.DP_API_METADATA.GATEWAY_TYPE;
+    const revokeApiInfo = await resolveApiDirect(orgId, existing.API_ID);
+    const gatewayType = revokeApiInfo ? revokeApiInfo.gatewayType : null;
 
     await sequelize.transaction(async (t) => {
         const revoked = await apiKeyDao.revokeKey(orgId, keyId, t);
         if (!revoked) throw Object.assign(new Error('Key already revoked or not found'), { status: 409 });
 
         await publish('apikey.revoked',
-            { key_id: keyId, api_id: existing.API_ID },
+            {
+                key_id: keyId,
+                name: existing.NAME,
+                api: { name: revokeApiInfo ? revokeApiInfo.apiName : null, version: revokeApiInfo ? revokeApiInfo.apiVersion : null, ref_id: revokeApiInfo ? revokeApiInfo.apiRefId : '' }
+            },
             { transaction: t, orgId, gatewayType,
               aggregateType: 'apikey', aggregateId: keyId }
         );
