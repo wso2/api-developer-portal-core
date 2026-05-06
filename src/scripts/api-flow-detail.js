@@ -145,7 +145,8 @@ document.addEventListener('DOMContentLoaded', function() {
         btnRunClaude.addEventListener('click', function() {
             const promptEl = document.getElementById('modalAgentPromptText');
             if (!promptEl) return;
-            const prompt = promptEl.textContent;
+            const requestId = Math.floor(Math.random() * 1e10);
+            const prompt = promptEl.textContent.replace(/(https?:\/\/[^\s]+\.md)(?!\?)/g, '$1?request-id=' + requestId);
             window.open('https://claude.ai/new?q=' + encodeURIComponent(prompt), '_blank');
         });
     }
