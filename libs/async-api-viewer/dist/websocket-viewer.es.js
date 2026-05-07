@@ -1,6 +1,6 @@
 import * as b from "react";
 import ht, { isValidElement as $a, cloneElement as Ra, Children as Id, lazy as Ad, Suspense as fi, forwardRef as Rc, useContext as Md, useState as jt, createElement as Nd, useEffect as pi, useRef as Ld, useMemo as Tc } from "react";
-import * as Xt from "react-dom";
+import * as Ut from "react-dom";
 import ga from "react-dom";
 var va = typeof globalThis < "u" ? globalThis : typeof window < "u" ? window : typeof global < "u" ? global : typeof self < "u" ? self : {};
 function Tr(t) {
@@ -3269,7 +3269,7 @@ function Gm() {
 }
 function as() {
   var t = b.useCallback(function(e) {
-    var a = Xt.findDOMNode(e);
+    var a = Ut.findDOMNode(e);
     a != null && Um(a.ownerDocument);
   }, []);
   return {
@@ -4084,7 +4084,7 @@ var yg = {
 }, xg = /* @__PURE__ */ b.forwardRef(function(e, a) {
   var r = e.action, n = e.buttonRef, o = e.centerRipple, i = o === void 0 ? !1 : o, s = e.children, l = e.classes, u = e.className, c = e.component, d = c === void 0 ? "button" : c, p = e.disabled, h = p === void 0 ? !1 : p, g = e.disableRipple, m = g === void 0 ? !1 : g, y = e.disableTouchRipple, w = y === void 0 ? !1 : y, k = e.focusRipple, j = k === void 0 ? !1 : k, f = e.focusVisibleClassName, x = e.onBlur, E = e.onClick, L = e.onFocus, W = e.onFocusVisible, O = e.onKeyDown, P = e.onKeyUp, A = e.onMouseDown, v = e.onMouseLeave, C = e.onMouseUp, M = e.onTouchEnd, D = e.onTouchMove, $ = e.onTouchStart, H = e.onDragLeave, F = e.tabIndex, q = F === void 0 ? 0 : F, z = e.TouchRippleProps, Z = e.type, Q = Z === void 0 ? "button" : Z, ue = Ae(e, ["action", "buttonRef", "centerRipple", "children", "classes", "className", "component", "disabled", "disableRipple", "disableTouchRipple", "focusRipple", "focusVisibleClassName", "onBlur", "onClick", "onFocus", "onFocusVisible", "onKeyDown", "onKeyUp", "onMouseDown", "onMouseLeave", "onMouseUp", "onTouchEnd", "onTouchMove", "onTouchStart", "onDragLeave", "tabIndex", "TouchRippleProps", "type"]), de = b.useRef(null);
   function Se() {
-    return Xt.findDOMNode(de.current);
+    return Ut.findDOMNode(de.current);
   }
   var fe = b.useRef(null), ye = b.useState(!1), be = ye[0], we = ye[1];
   h && be && we(!1);
@@ -5168,7 +5168,7 @@ const Xn = et(Ng, {
   flip: !1
 })(Lg);
 function Dg(t) {
-  return t = typeof t == "function" ? t() : t, Xt.findDOMNode(t);
+  return t = typeof t == "function" ? t() : t, Ut.findDOMNode(t);
 }
 var Jo = typeof window < "u" ? b.useLayoutEffect : b.useEffect, cu = /* @__PURE__ */ b.forwardRef(function(e, a) {
   var r = e.children, n = e.container, o = e.disablePortal, i = o === void 0 ? !1 : o, s = e.onRendered, l = b.useState(null), u = l[0], c = l[1], d = St(/* @__PURE__ */ b.isValidElement(r) ? r.ref : null, a);
@@ -5183,7 +5183,7 @@ var Jo = typeof window < "u" ? b.useLayoutEffect : b.useEffect, cu = /* @__PURE_
     s && (u || i) && s();
   }, [s, u, i]), i ? /* @__PURE__ */ b.isValidElement(r) ? /* @__PURE__ */ b.cloneElement(r, {
     ref: d
-  }) : r : u && /* @__PURE__ */ Xt.createPortal(r, u);
+  }) : r : u && /* @__PURE__ */ Ut.createPortal(r, u);
 });
 function uu() {
   var t = document.createElement("div");
@@ -5306,7 +5306,7 @@ var Wg = /* @__PURE__ */ (function() {
 })();
 function Vg(t) {
   var e = t.children, a = t.disableAutoFocus, r = a === void 0 ? !1 : a, n = t.disableEnforceFocus, o = n === void 0 ? !1 : n, i = t.disableRestoreFocus, s = i === void 0 ? !1 : i, l = t.getDoc, u = t.isEnabled, c = t.open, d = b.useRef(), p = b.useRef(null), h = b.useRef(null), g = b.useRef(), m = b.useRef(null), y = b.useCallback(function(j) {
-    m.current = Xt.findDOMNode(j);
+    m.current = Ut.findDOMNode(j);
   }, []), w = St(e.ref, y), k = b.useRef();
   return b.useEffect(function() {
     k.current = c;
@@ -5372,7 +5372,7 @@ var Cl = {
   })) : null;
 });
 function Kg(t) {
-  return t = typeof t == "function" ? t() : t, Xt.findDOMNode(t);
+  return t = typeof t == "function" ? t() : t, Ut.findDOMNode(t);
 }
 function Ug(t) {
   return t.children ? t.children.props.hasOwnProperty("in") : !1;
@@ -6733,7 +6733,7 @@ var O0 = function(e) {
     i && $.current && $.current.focus();
   }, [i]);
   var H = b.Children.toArray(u), F = H.length && Ta(H[H.length - 1], ["ListItemSecondaryAction"]), q = b.useCallback(function(ue) {
-    $.current = Xt.findDOMNode(ue);
+    $.current = Ut.findDOMNode(ue);
   }, []), z = St(q, a), Z = Y({
     className: he(c.root, d, D.dense && c.dense, !L && c.gutters, O && c.divider, x && c.disabled, l && c.button, n !== "center" && c.alignItemsFlexStart, F && c.secondaryAction, v && c.selected),
     disabled: x
@@ -6861,7 +6861,7 @@ var A0 = {
   }, [Se]), ye = function(ke, je) {
     x && x(ke, je), fe();
   }, be = b.useCallback(function(ge) {
-    Z.current = Xt.findDOMNode(ge);
+    Z.current = Ut.findDOMNode(ge);
   }, []);
   b.useEffect(function() {
     O && fe();
@@ -6980,7 +6980,7 @@ var L0 = typeof window > "u" ? b.useEffect : b.useLayoutEffect, D0 = /* @__PURE_
     }
     g && g(P);
   }, x = b.useCallback(function(O) {
-    k.current = Xt.findDOMNode(O);
+    k.current = Ut.findDOMNode(O);
   }, []), E = St(x, a), L = -1;
   b.Children.forEach(l, function(O, P) {
     /* @__PURE__ */ b.isValidElement(O) && (O.props.disabled || (y === "selectedMenu" && O.props.selected || L === -1) && (L = P));
@@ -7036,7 +7036,7 @@ var L0 = typeof window > "u" ? b.useEffect : b.useLayoutEffect, D0 = /* @__PURE_
   var H = b.Children.map(o, function(F, q) {
     return q === $ ? /* @__PURE__ */ b.cloneElement(F, {
       ref: function(Z) {
-        v.current = Xt.findDOMNode(Z), Hr(F.ref, Z);
+        v.current = Ut.findDOMNode(Z), Hr(F.ref, Z);
       }
     }) : F;
   });
@@ -9541,7 +9541,7 @@ var cb = function(e) {
       Ce(rt);
     }, O);
   }, ie = St(fe, a), $e = St(V, ie), qe = b.useCallback(function(ot) {
-    Hr($e, Xt.findDOMNode(ot));
+    Hr($e, Ut.findDOMNode(ot));
   }, [$e]), Je = St(o.ref, qe);
   F === "" && (Ue = !1);
   var at = !Ue && !c, Ne = Y({
@@ -9687,7 +9687,7 @@ function db() {
       return le[T] = Ne && J === void 0 ? r : J, this;
     }
     Lt.prototype.clear = _r, Lt.prototype.delete = xo, Lt.prototype.get = qr, Lt.prototype.has = Co, Lt.prototype.set = So;
-    function qt(T) {
+    function Gt(T) {
       var J = -1, le = T ? T.length : 0;
       for (this.clear(); ++J < le; ) {
         var Ie = T[J];
@@ -9715,7 +9715,7 @@ function db() {
       var le = this.__data__, Ie = Be(le, T);
       return Ie < 0 ? le.push([T, J]) : le[Ie][1] = J, this;
     }
-    qt.prototype.clear = wo, qt.prototype.delete = Gr, qt.prototype.get = I, qt.prototype.has = N, qt.prototype.set = S;
+    Gt.prototype.clear = wo, Gt.prototype.delete = Gr, Gt.prototype.get = I, Gt.prototype.has = N, Gt.prototype.set = S;
     function R(T) {
       var J = -1, le = T ? T.length : 0;
       for (this.clear(); ++J < le; ) {
@@ -9726,7 +9726,7 @@ function db() {
     function _() {
       this.__data__ = {
         hash: new Lt(),
-        map: new ($e || qt)(),
+        map: new ($e || Gt)(),
         string: new Lt()
       };
     }
@@ -9744,10 +9744,10 @@ function db() {
     }
     R.prototype.clear = _, R.prototype.delete = G, R.prototype.get = re, R.prototype.has = ee, R.prototype.set = K;
     function se(T) {
-      this.__data__ = new qt(T);
+      this.__data__ = new Gt(T);
     }
     function Oe() {
-      this.__data__ = new qt();
+      this.__data__ = new Gt();
     }
     function Xe(T) {
       return this.__data__.delete(T);
@@ -9760,7 +9760,7 @@ function db() {
     }
     function Ge(T, J) {
       var le = this.__data__;
-      if (le instanceof qt) {
+      if (le instanceof Gt) {
         var Ie = le.__data__;
         if (!$e || Ie.length < a - 1)
           return Ie.push([T, J]), this;
@@ -9823,14 +9823,14 @@ function db() {
         Ms && (ma = $o, $o = T[ma]), yt(Bt, ma, _t($o, J, le, Ie, ma, T, ir));
       }), Bt;
     }
-    function Gt(T) {
+    function Yt(T) {
       return ha(T) ? Me(T) : {};
     }
     function Yr(T, J, le) {
       var Ie = J(T);
       return Eo(T) ? Ie : Ee(Ie, le(T));
     }
-    function Yt(T) {
+    function Xt(T) {
       return X.call(T);
     }
     function Xr(T) {
@@ -9908,7 +9908,7 @@ function db() {
       var le = je(T, J);
       return Xr(le) ? le : void 0;
     }
-    var Rs = De ? _e(De, Object) : Pd, jr = Yt;
+    var Rs = De ? _e(De, Object) : Pd, jr = Xt;
     (ie && jr(new ie(new ArrayBuffer(1))) != E || $e && jr(new $e()) != p || qe && jr(qe.resolve()) != m || Je && jr(new Je()) != w || at && jr(new at()) != f) && (jr = function(T) {
       var J = X.call(T), le = J == g ? T.constructor : void 0, Ie = le ? Ir(le) : void 0;
       if (Ie)
@@ -9931,7 +9931,7 @@ function db() {
       return J && typeof T[0] == "string" && pe.call(T, "index") && (le.index = T.index, le.input = T.input), le;
     }
     function xd(T) {
-      return typeof T.constructor == "function" && !Ts(T) ? Gt(xe(T)) : {};
+      return typeof T.constructor == "function" && !Ts(T) ? Yt(xe(T)) : {};
     }
     function Cd(T, J, le, Ie) {
       var Pt = T.constructor;
@@ -12754,12 +12754,12 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
         }, X = ["borderBottomWidth", "borderLeftWidth", "borderRightWidth", "borderTopWidth", "boxSizing", "fontFamily", "fontSize", "fontStyle", "fontWeight", "letterSpacing", "lineHeight", "paddingBottom", "paddingLeft", "paddingRight", "paddingTop", "tabSize", "textIndent", "textRendering", "textTransform", "width"], V = !!document.documentElement.currentStyle, U = function(I, N) {
           var S = I.cacheMeasurements, R = I.maxRows, _ = I.minRows, G = I.onChange, re = G === void 0 ? pe : G, ee = I.onHeightChange, K = ee === void 0 ? pe : ee, se = (function(Be, $t) {
             if (Be == null) return {};
-            var _t, Gt, Yr = {}, Yt = Object.keys(Be);
-            for (Gt = 0; Gt < Yt.length; Gt++) _t = Yt[Gt], $t.indexOf(_t) >= 0 || (Yr[_t] = Be[_t]);
+            var _t, Yt, Yr = {}, Xt = Object.keys(Be);
+            for (Yt = 0; Yt < Xt.length; Yt++) _t = Xt[Yt], $t.indexOf(_t) >= 0 || (Yr[_t] = Be[_t]);
             return Yr;
           })(I, ["cacheMeasurements", "maxRows", "minRows", "onChange", "onHeightChange"]), Oe, Xe = se.value !== void 0, nt = Object(j.useRef)(null), lt = tt(nt, N), Ge = Object(j.useRef)(0), ct = Object(j.useRef)(), yt = function() {
-            var Be = nt.current, $t = S && ct.current ? ct.current : (function(Yt) {
-              var Xr = window.getComputedStyle(Yt);
+            var Be = nt.current, $t = S && ct.current ? ct.current : (function(Xt) {
+              var Xr = window.getComputedStyle(Xt);
               if (Xr === null) return null;
               var pr, Tt = (pr = Xr, X.reduce((function(Pr, hr) {
                 return Pr[hr] = pr[hr], Pr;
@@ -12768,9 +12768,9 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
             })(Be);
             if ($t) {
               ct.current = $t;
-              var _t = (function(Yt, Xr, pr, Tt) {
+              var _t = (function(Xt, Xr, pr, Tt) {
                 pr === void 0 && (pr = 1), Tt === void 0 && (Tt = 1 / 0), ce || ((ce = document.createElement("textarea")).setAttribute("tab-index", "-1"), ce.setAttribute("aria-hidden", "true"), Ve(ce)), ce.parentNode === null && document.body.appendChild(ce);
-                var Zt = Yt.paddingSize, Pr = Yt.borderSize, hr = Yt.sizingStyle, da = hr.boxSizing;
+                var Zt = Xt.paddingSize, Pr = Xt.borderSize, hr = Xt.sizingStyle, da = hr.boxSizing;
                 Object.keys(hr).forEach((function(Zr) {
                   var mr = Zr;
                   ce.style[mr] = hr[mr];
@@ -12778,14 +12778,14 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
                 var Jr = (function(Zr, mr) {
                   var fa = Zr.scrollHeight;
                   return mr.sizingStyle.boxSizing === "border-box" ? fa + mr.borderSize : fa - mr.paddingSize;
-                })(ce, Yt);
+                })(ce, Xt);
                 ce.value = "x";
                 var On = ce.scrollHeight - Zt, _n = On * pr;
                 da === "border-box" && (_n = _n + Zt + Pr), Jr = Math.max(_n, Jr);
                 var Pn = On * Tt;
                 return da === "border-box" && (Pn = Pn + Zt + Pr), [Jr = Math.min(Pn, Jr), On];
-              })($t, Be.value || Be.placeholder || "x", _, R), Gt = _t[0], Yr = _t[1];
-              Ge.current !== Gt && (Ge.current = Gt, Be.style.setProperty("height", Gt + "px", "important"), K(Gt, { rowHeight: Yr }));
+              })($t, Be.value || Be.placeholder || "x", _, R), Yt = _t[0], Yr = _t[1];
+              Ge.current !== Yt && (Ge.current = Yt, Be.style.setProperty("height", Yt + "px", "important"), K(Yt, { rowHeight: Yr }));
             }
           };
           return Object(j.useLayoutEffect)(yt), Oe = We(yt), Object(j.useLayoutEffect)((function() {
@@ -13303,7 +13303,7 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
               fe.dispatch({ rjvId: re, name: "RESET" });
             } })))));
           } }]), S;
-        })(f.a.PureComponent), qt = (function(I) {
+        })(f.a.PureComponent), Gt = (function(I) {
           h(S, I);
           var N = k(S);
           function S() {
@@ -13372,7 +13372,7 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
             for (var _ in R) be.removeListener(_ + "-" + this.rjvId, R[_]);
           } }, { key: "render", value: function() {
             var R = this.state, _ = R.validationFailure, G = R.validationMessage, re = R.addKeyRequest, ee = R.theme, K = R.src, se = R.name, Oe = this.props, Xe = Oe.style, nt = Oe.defaultValue;
-            return f.a.createElement("div", { className: "react-json-view", style: l(l({}, $(ee, "app-container").style), Xe) }, f.a.createElement(wo, { message: G, active: _, theme: ee, rjvId: this.rjvId }), f.a.createElement(Co, Object.assign({}, this.props, { src: K, name: se, theme: ee, type: P(K), rjvId: this.rjvId })), f.a.createElement(qt, { active: re, theme: ee, rjvId: this.rjvId, defaultValue: nt }));
+            return f.a.createElement("div", { className: "react-json-view", style: l(l({}, $(ee, "app-container").style), Xe) }, f.a.createElement(wo, { message: G, active: _, theme: ee, rjvId: this.rjvId }), f.a.createElement(Co, Object.assign({}, this.props, { src: K, name: se, theme: ee, type: P(K), rjvId: this.rjvId })), f.a.createElement(Gt, { active: re, theme: ee, rjvId: this.rjvId, defaultValue: nt }));
           } }], [{ key: "getDerivedStateFromProps", value: function(R, _) {
             if (R.src !== _.prevSrc || R.name !== _.prevName || R.theme !== _.prevTheme) {
               var G = { src: R.src, name: R.name, theme: R.theme, validationMessage: R.validationMessage, prevSrc: R.src, prevName: R.name, prevTheme: R.theme };
@@ -14968,14 +14968,14 @@ function so(...t) {
 function Ht(t) {
   return typeof t != "number" ? t : `${t}px solid`;
 }
-function Ut(t, e) {
+function qt(t, e) {
   return kt({
     prop: t,
     themeKey: "borders",
     transform: e
   });
 }
-const Ey = Ut("border", Ht), ky = Ut("borderTop", Ht), $y = Ut("borderRight", Ht), Ry = Ut("borderBottom", Ht), Ty = Ut("borderLeft", Ht), Oy = Ut("borderColor"), _y = Ut("borderTopColor"), Py = Ut("borderRightColor"), jy = Ut("borderBottomColor"), Iy = Ut("borderLeftColor"), Ay = Ut("outline", Ht), My = Ut("outlineColor"), lo = (t) => {
+const Ey = qt("border", Ht), ky = qt("borderTop", Ht), $y = qt("borderRight", Ht), Ry = qt("borderBottom", Ht), Ty = qt("borderLeft", Ht), Oy = qt("borderColor"), _y = qt("borderTopColor"), Py = qt("borderRightColor"), jy = qt("borderBottomColor"), Iy = qt("borderLeftColor"), Ay = qt("outline", Ht), My = qt("outlineColor"), lo = (t) => {
   if (t.borderRadius !== void 0 && t.borderRadius !== null) {
     const e = la(t.theme, "shape.borderRadius", 4), a = (r) => ({
       borderRadius: ca(e, r)
@@ -19043,7 +19043,7 @@ function Nn(t) {
     }
   );
 }
-const _2 = "choreo-test-key", P2 = "choreo-oauth2-token", j2 = (t) => {
+const _2 = Ut.flushSync, P2 = "choreo-test-key", j2 = "choreo-oauth2-token", I2 = (t) => {
   const { token: e, apiEndpoint: a, sandboxEndpoint: r, topic: n, publish: o, subscribe: i, parameters: s, isDevportal: l, asyncType: u, payload: c } = t, d = gs(), [p, h] = jt(null), [g, m] = jt([]), [y, w] = jt(c || ""), [k, j] = jt(a), [f, x] = jt("production"), [E, L] = jt({}), [W, O] = jt(!1), [P, A] = jt("Connect"), [v, C] = jt(0), [M, D] = jt(e), [$, H] = jt("<your-header-here>"), [F, q] = jt("<your-header-value-here>"), [z, Z] = jt("http://example.com/callback"), [Q, ue] = jt("864000"), [de, Se] = jt("xxxxxxxxx"), fe = (ce, pe) => {
     C(pe);
   };
@@ -19090,7 +19090,7 @@ const _2 = "choreo-test-key", P2 = "choreo-oauth2-token", j2 = (t) => {
     for (const V in E)
       ce = ce.replace(`{${V}}`, E[V]);
     const pe = [];
-    l ? pe.push(P2) : pe.push(_2), M && M.trim() && pe.push(M);
+    l ? pe.push(j2) : pe.push(P2), M && M.trim() && pe.push(M);
     const X = new WebSocket(ce, pe);
     h(X), X.onopen = () => {
       O(!0), m((V) => [
@@ -19101,20 +19101,24 @@ const _2 = "choreo-test-key", P2 = "choreo-oauth2-token", j2 = (t) => {
           randomKey: V.length
         }
       ]), A("Disconnect");
-    }, X.onmessage = (V) => m((U) => [
-      ...U,
-      {
-        message: `Received: ${V.data}`,
-        timestamp: (/* @__PURE__ */ new Date()).toString(),
-        randomKey: U.length
-      }
-    ]), X.onerror = () => {
+    }, X.onmessage = (V) => {
+      _2(() => {
+        m((U) => [
+          ...U,
+          {
+            message: `Received: ${V.data}`,
+            timestamp: (/* @__PURE__ */ new Date()).toString(),
+            randomKey: U.length
+          }
+        ]);
+      });
+    }, X.onerror = () => {
       O(!1), m((V) => [
         ...V,
         {
           message: "Error while connecting to the server. Please check the endpoint and try again.",
           timestamp: (/* @__PURE__ */ new Date()).toString(),
-          randomKey: g.length
+          randomKey: V.length
         }
       ]), A("Connect");
     };
@@ -19704,7 +19708,7 @@ function ka(t) {
     })
   );
 }
-function M2(t) {
+function N2(t) {
   const {
     token: e = "",
     apiEndpoint: a = "",
@@ -19782,7 +19786,7 @@ function M2(t) {
       children: /* @__PURE__ */ B.jsx(Xn, { size: 25 })
     }
   ) : a ? /* @__PURE__ */ B.jsx(ve, { children: s.map(({ name: d, publish: p, subscribe: h, parameters: g }) => /* @__PURE__ */ B.jsx(
-    j2,
+    I2,
     {
       token: e,
       apiEndpoint: a,
@@ -19800,6 +19804,6 @@ function M2(t) {
   )) }) : /* @__PURE__ */ B.jsx(B.Fragment, {});
 }
 export {
-  M2 as WebSocketViewer,
-  M2 as default
+  N2 as WebSocketViewer,
+  N2 as default
 };
