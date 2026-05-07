@@ -1,0 +1,82 @@
+openapi: 3.0.1
+info:
+  title: Postman Echo API
+  version: 1.0.0
+  description: |
+    OpenAPI definition for the Postman Echo proxy. This describes the public
+    paths exposed under the gateway context `/postman-echo` and uses an API key
+    (header `X-API-Key`) as the security scheme.
+servers:
+  - url: /postman-echo
+security:
+  - ApiKeyHeader: []
+components:
+  securitySchemes:
+    ApiKeyHeader:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    EchoResponse:
+      type: object
+      description: Response returned by Postman Echo
+      additionalProperties: true
+
+paths:
+  /get:
+    get:
+      summary: Proxy GET to Postman Echo /get
+      description: Returns query parameters and headers sent to Postman Echo.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EchoResponse'
+
+  /post:
+    post:
+      summary: Proxy POST to Postman Echo /post
+      description: Echoes the posted JSON body.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EchoResponse'
+
+  /status/{code}:
+    get:
+      summary: Proxy status check
+      description: Returns the given HTTP status code from Postman Echo.
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Proxy response (status depends on `code` path param)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EchoResponse'
+
+# Notes:
+# - This OpenAPI uses a relative server `/postman-echo` to represent the
+#   gateway-mounted context; when deploying behind the gateway the base URL
+#   will be the gateway's host + this context.
+# - The gateway's `RestApi` resource should reference the upstream URL
+#   (https://postman-echo.com) and apply a global API key policy matching
+#   the `X-API-Key` header defined here.
