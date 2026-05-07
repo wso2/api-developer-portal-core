@@ -100,3 +100,6 @@ config*.yaml
 resources/default-layout
 resources/mock
 
+config.yaml
+.env
+
