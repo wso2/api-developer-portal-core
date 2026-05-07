@@ -140,7 +140,8 @@
                                             <button data-cyid="generateKey-PRODUCTION" id="generateKeyBtn-PRODUCTION"
                                                 class="common-btn-primary btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}} col-md-3"
                                                 style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
-                                                onclick="generateApplicationKey('keysview-{{../id}}-PRODUCTION', '{{../../applicationMetadata.id}}', 'PRODUCTION', '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-PRODUCTION', 'consumer-secret-{{../id}}-PRODUCTION')">
+                                                data-subscriptions="{{ json ../../subAPIs }}"
+                                                onclick="generateApplicationKey('keysview-{{../id}}-PRODUCTION', '{{../../applicationMetadata.id}}', 'PRODUCTION', '{{../name}}', '{{../../applicationMetadata/name}}', this.getAttribute('data-subscriptions'), '{{../../orgID}}', 'consumer-key-{{../id}}-PRODUCTION', 'consumer-secret-{{../id}}-PRODUCTION')">
                                                 <span class="button-normal-state">
                                                     <i class="bi bi-key me-1"></i> Generate Key
                                                 </span>
@@ -181,7 +182,8 @@
                                             style="display: none; gap: 8px;">
                                             <button class="btn btn-sm common-btn-primary save-btn"
                                                 id="generateKeyBtn-PRODUCTION"
-                                                onclick="generateApplicationKey('keysview-{{../id}}-PRODUCTION', '{{../../applicationMetadata.id}}', 'PRODUCTION', '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-PRODUCTION', 'consumer-secret-{{../id}}-PRODUCTION')"
+                                                data-subscriptions="{{ json ../../subAPIs }}"
+                                                onclick="generateApplicationKey('keysview-{{../id}}-PRODUCTION', '{{../../applicationMetadata.id}}', 'PRODUCTION', '{{../name}}', '{{../../applicationMetadata/name}}', this.getAttribute('data-subscriptions'), '{{../../orgID}}', 'consumer-key-{{../id}}-PRODUCTION', 'consumer-secret-{{../id}}-PRODUCTION')"
                                                 title="Save">
                                                 <span class="button-normal-state"><i class="bi bi-check"></i></span>
                                                 <span class="button-loading-state" style="display: none;">
@@ -706,7 +708,8 @@
                                                 <button data-cyid="generateKey-SANDBOX" id="generateKeyBtn-SANDBOX"
                                                     class="common-btn-primary btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}} col-md-3"
                                                     style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
-                                                    onclick="generateApplicationKey('keysview-{{../id}}-SANDBOX', '{{../../applicationMetadata.id}}', 'SANDBOX', '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-SANDBOX', 'consumer-secret-{{../id}}-SANDBOX')">
+                                                    data-subscriptions="{{ json ../../subAPIs }}"
+                                                    onclick="generateApplicationKey('keysview-{{../id}}-SANDBOX', '{{../../applicationMetadata.id}}', 'SANDBOX', '{{../name}}', '{{../../applicationMetadata/name}}', this.getAttribute('data-subscriptions'), '{{../../orgID}}', 'consumer-key-{{../id}}-SANDBOX', 'consumer-secret-{{../id}}-SANDBOX')">
                                                     <span class="button-normal-state">
                                                         <i class="bi bi-key me-1"></i> Generate Key
                                                     </span>
@@ -747,7 +750,8 @@
                                                 style="display: none; gap: 8px;">
                                                 <button class="btn btn-sm common-btn-primary save-btn"
                                                     id="generateKeyBtn-SANDBOX"
-                                                    onclick="generateApplicationKey('keysview-{{../id}}-SANDBOX', '{{../../applicationMetadata.id}}', 'SANDBOX', '{{../name}}', '{{../../applicationMetadata/name}}', '{{ json ../../subAPIs}}', '{{../../orgID}}', 'consumer-key-{{../id}}-SANDBOX', 'consumer-secret-{{../id}}-SANDBOX')"
+                                                    data-subscriptions="{{ json ../../subAPIs }}"
+                                                    onclick="generateApplicationKey('keysview-{{../id}}-SANDBOX', '{{../../applicationMetadata.id}}', 'SANDBOX', '{{../name}}', '{{../../applicationMetadata/name}}', this.getAttribute('data-subscriptions'), '{{../../orgID}}', 'consumer-key-{{../id}}-SANDBOX', 'consumer-secret-{{../id}}-SANDBOX')"
                                                     title="Save">
                                                     <span class="button-normal-state"><i class="bi bi-check"></i></span>
                                                     <span class="button-loading-state" style="display: none;">
