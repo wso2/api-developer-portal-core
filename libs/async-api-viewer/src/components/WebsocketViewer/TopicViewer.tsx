@@ -19,6 +19,9 @@ import React, {
   SetStateAction,
   useMemo,
 } from 'react';
+import * as ReactDOM from 'react-dom';
+// flushSync is in React 18 runtime but not in @types/react-dom@17
+const flushSync: (fn: () => void) => void = (ReactDOM as any).flushSync;
 import LogLine from '../../components/InfiniteLogsPanel/LogLine';
 import OutputConsole from './OutputConsole';
 import { PayloadEditor } from './PayloadEditor';
@@ -192,15 +195,18 @@ const TopicViewer = (props: TopicViewerProps) => {
       setConnectButtonText('Disconnect');
     };
 
-    ws.onmessage = (event) =>
-      setMessages((prev) => [
-        ...prev,
-        {
-          message: `Received: ${event.data}`,
-          timestamp: new Date().toString(),
-          randomKey: prev.length,
-        },
-      ]);
+    ws.onmessage = (event) => {
+      flushSync(() => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            message: `Received: ${event.data}`,
+            timestamp: new Date().toString(),
+            randomKey: prev.length,
+          },
+        ]);
+      });
+    };
 
     ws.onerror = () => {
       setConnect(false);
@@ -209,7 +215,7 @@ const TopicViewer = (props: TopicViewerProps) => {
         {
           message: `Error while connecting to the server. Please check the endpoint and try again.`,
           timestamp: new Date().toString(),
-          randomKey: messages.length,
+          randomKey: prev.length,
         },
       ]);
       setConnectButtonText('Connect');
