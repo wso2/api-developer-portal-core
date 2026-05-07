@@ -56,6 +56,10 @@ advanced:
     keyValue: "x-wso2-api-key"
   tokenExchanger:
     enabled: false
+  # Mount the OpenAPI-spec-driven /devportal router (request validation + fine-grained
+  # OAuth2 scope enforcement, dispatching by operationId to src/openapi/handlers).
+  # When false, the legacy src/routes/devportalRoute.js is mounted instead.
+  useOpenApiValidator: false
 
 # ─── TLS Certificates (only needed when advanced.http is false) ────────────────
 
