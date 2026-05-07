@@ -92,6 +92,36 @@ function operationResolver(handlersPath, route, apiDoc) {
     return handler;
 }
 
+/**
+ * Resolve the response-validation strategy from config.
+ *
+ *   advanced.openApiValidator.validateResponses:
+ *     - false        → off (default in production)
+ *     - true         → strict — validator throws 500 on response drift
+ *     - 'log-only'   → log drift via logger.warn but pass the response through
+ *     - (unset)      → on iff config.mode === 'development'
+ *
+ * Use 'log-only' to surface drift in staging/QA without breaking clients.
+ */
+function resolveValidateResponsesOpt() {
+    const cfg = config.advanced?.openApiValidator?.validateResponses;
+    if (cfg === true) return true;
+    if (cfg === false) return false;
+    if (cfg === 'log-only' || cfg === 'logOnly') {
+        return {
+            onError: (err, json, req) => {
+                logger.warn('OpenAPI response drift (log-only)', {
+                    error: err.message,
+                    url: req.originalUrl,
+                    method: req.method,
+                    errors: err.errors,
+                });
+            },
+        };
+    }
+    return config.mode === constants.DEV_MODE;
+}
+
 function build() {
     const router = express.Router();
 
@@ -103,10 +133,7 @@ function build() {
         OpenApiValidator.middleware({
             apiSpec: SPEC_PATH,
             validateRequests: { allowUnknownQueryParameters: false },
-            // Response validation is noisy in production where some legacy
-            // services emit slightly off-spec shapes. Turn on in development
-            // so drift surfaces during local work.
-            validateResponses: config.mode === constants.DEV_MODE,
+            validateResponses: resolveValidateResponsesOpt(),
             validateSecurity: {
                 handlers: { OAuth2Security, apiKeyAuth },
             },
