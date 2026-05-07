@@ -607,7 +607,13 @@ app.use((req, res, next) => {
 });
 
 //backend routes
-app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
+if (config.advanced?.useOpenApiValidator) {
+    logger.info('Mounting spec-driven /devportal router (advanced.useOpenApiValidator=true)');
+    const devportalApiRouter = require('./openapi/devportalApiRouter');
+    app.use(constants.ROUTE.DEV_PORTAL, devportalApiRouter);
+} else {
+    app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
+}
 
 // MCP Server Registry (OpenAPI v0.1)
 app.use('/registry/:orgHandle', mcpRegistryRoute);
