@@ -42,7 +42,7 @@
                         {{#each subAPIs}}
                         {{> api-key apiID=apiID keyType="PRODUCTION"}}
                         {{> api-key apiID=apiID keyType="SANDBOX"}}
-                        {{#in apiType values="REST, WS, WEBSUB"}}
+                        {{#in apiType values="REST, WS, WEBSUB, GRAPHQL"}}
                         <tr class="data-row" id="data-row-{{subID}}" data-index="{{@index}}">
                             {{#if ../features.sdkGeneration}}
                             <td class="app-td" style="width: 50px;">
@@ -78,7 +78,7 @@
                 </table>
             </div>
             {{#each subAPIs}}
-            {{#in apiType values="REST, WS, WEBSUB"}}
+            {{#in apiType values="REST, WS, WEBSUB, GRAPHQL"}}
             {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
             {{/in}}
             {{/each}}
