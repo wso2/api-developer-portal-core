@@ -1015,6 +1015,106 @@ paths:
         - OAuth2Security:
             - dp:app_import
             - dp:app_manage
+  /applications:
+    post:
+      tags:
+        - Applications
+      summary: Create an application for the authenticated user's organization
+      description: >-
+        Creates a Developer Portal application in the organization resolved from the authenticated user's
+        organization identifier. The request may be JSON, multipart form fields, or an application YAML
+        file in the `application` multipart field.
+      operationId: saveApplication
+      requestBody:
+        $ref: "#/components/requestBodies/ApplicationMultipartBody"
+      responses:
+        "201":
+          $ref: "#/components/responses/ApplicationResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - OAuth2Security:
+            - dp:app_write
+            - dp:app_manage
+  /applications/{applicationId}:
+    parameters:
+      - $ref: "#/components/parameters/ApplicationId"
+    put:
+      tags:
+        - Applications
+      summary: Update an application for the authenticated user
+      description: >-
+        Updates an application owned by the authenticated user in the organization resolved from the
+        authenticated user's organization identifier. The request may be JSON, multipart form fields, or
+        an application YAML file in the `application` multipart field.
+      operationId: updateApplication
+      requestBody:
+        $ref: "#/components/requestBodies/ApplicationMultipartBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ApplicationResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - OAuth2Security:
+            - dp:app_write
+            - dp:app_manage
+    delete:
+      tags:
+        - Applications
+      summary: Delete an application for the authenticated user
+      description: >-
+        Deletes an application owned by the authenticated user. If the application has billed Stripe
+        subscriptions, the service cancels them before deleting the local application. If a control-plane
+        application mapping exists, the corresponding control-plane application is deleted as well.
+      operationId: deleteApplication
+      responses:
+        "200":
+          $ref: "#/components/responses/TextMessageResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - OAuth2Security:
+            - dp:app_delete
+            - dp:app_manage
+  /applications/{applicationId}/reset-throttle-policy:
+    parameters:
+      - $ref: "#/components/parameters/ApplicationId"
+    post:
+      tags:
+        - Applications
+      summary: Reset application throttle policy
+      description: >-
+        Resets throttling policy state for a control-plane application. The request is proxied to the
+        control plane using the supplied user name.
+      operationId: resetThrottlingPolicy
+      requestBody:
+        $ref: "#/components/requestBodies/ResetThrottlePolicyBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/MessageResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - OAuth2Security:
+            - dp:app_write
+            - dp:app_manage
   /organizations/{orgId}/api-platform-subscriptions:
     parameters:
       - $ref: "#/components/parameters/OrgId"
@@ -3515,6 +3615,15 @@ components:
               summary: Application YAML upload
               value:
                 application: application.yaml
+    ResetThrottlePolicyBody:
+      required: true
+      description: User throttle policy reset payload.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ResetThrottlePolicyRequest"
+          example:
+            userName: alice@example.com
     ImportApplicationMultipartBody:
       required: true
       description: >-
@@ -5257,6 +5366,16 @@ components:
           type: string
           default: WEB
           example: WEB
+    ResetThrottlePolicyRequest:
+      type: object
+      required:
+        - userName
+      properties:
+        userName:
+          type: string
+          description: User name whose application throttle policy should be reset in the control plane.
+          example: alice@example.com
+      additionalProperties: false
     PlatformGatewaySubscriptionCreateRequest:
       type: object
       required:
@@ -5465,9 +5584,11 @@ components:
           type: array
           description: Optional list of API identifiers. Existing service logic synchronizes subscribed APIs for the application.
           items:
-            type: string
+            type: object
           example:
-            - api-7f4c2a6b
+            - apiName: Weather API
+              apiRefId: "214te6382jjq9274eg332190"
+              policyID: "24341d98-90f7-4530-95ef-0709609eea1a"
         tokenType:
           type: string
           enum:
