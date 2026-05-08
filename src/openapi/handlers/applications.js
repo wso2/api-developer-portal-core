@@ -20,4 +20,8 @@ module.exports = {
     getDevPortalApplications: adminService.getDevPortalApplications,
     deleteDevPortalApplication: adminService.deleteDevPortalApplication,
     importApplications: devportalController.importApplications,
+    saveApplication: devportalController.saveApplication,
+    updateApplication: devportalController.updateApplication,
+    deleteApplication: devportalController.deleteApplication,
+    resetThrottlingPolicy: devportalController.resetThrottlingPolicy,
 };
