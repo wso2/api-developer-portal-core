@@ -46,26 +46,24 @@ export const styles = {
   endpointsContainer: {
     display: 'flex',
     flexDirection: 'column' as const,
-    gap: '12px',
-    flexWrap: 'wrap' as const
+    gap: '8px',
   },
   endpointCard: {
-    flex: '1 1 300px',
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
-    padding: '14px 16px',
+    gap: '10px',
+    padding: '8px 12px',
     backgroundColor: 'white',
-    borderRadius: '8px',
+    borderRadius: '6px',
     border: '1px solid #e1e4e8',
     transition: 'all 0.2s',
     cursor: 'pointer',
     position: 'relative' as const
   },
   endpointIcon: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '8px',
+    width: '28px',
+    height: '28px',
+    borderRadius: '6px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -95,10 +93,12 @@ export const styles = {
     color: '#d73a49'
   },
   endpointUrl: {
-    fontSize: '14px',
+    fontSize: '13px',
     color: '#24292e',
     fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', monospace",
-    wordBreak: 'break-all' as const,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap' as const,
     lineHeight: '1.4'
   },
   copyIcon: {
