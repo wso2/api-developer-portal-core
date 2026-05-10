@@ -321,7 +321,7 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
                   title="Click to copy"
                 >
                   <div style={{ ...styles.endpointIcon, ...styles.endpointIconProduction }}>
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M10 2L2 7L10 12L18 7L10 2Z" fill="white"/>
                       <path d="M2 13L10 18L18 13" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       <path d="M2 10L10 15L18 10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -373,7 +373,7 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
                   title="Click to copy"
                 >
                   <div style={{ ...styles.endpointIcon, ...styles.endpointIconSandbox }}>
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M10 2L2 7L10 12L18 7L10 2Z" fill="white"/>
                       <path d="M2 13L10 18L18 13" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       <path d="M2 10L10 15L18 10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>

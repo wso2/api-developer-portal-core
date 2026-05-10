@@ -1,7 +1,57 @@
-import le, { useState as P, useMemo as de } from "react";
-var O = { exports: {} }, q = {};
-/**
- * @license React
+import de, { useState as B, useMemo as ce } from "react";
+var z = { exports: {} }, W = {};
+/*
+object-assign
+(c) Sindre Sorhus
+@license MIT
+*/
+var N, X;
+function pe() {
+  if (X) return N;
+  X = 1;
+  var x = Object.getOwnPropertySymbols, r = Object.prototype.hasOwnProperty, m = Object.prototype.propertyIsEnumerable;
+  function O(g) {
+    if (g == null)
+      throw new TypeError("Object.assign cannot be called with null or undefined");
+    return Object(g);
+  }
+  function a() {
+    try {
+      if (!Object.assign)
+        return !1;
+      var g = new String("abc");
+      if (g[5] = "de", Object.getOwnPropertyNames(g)[0] === "5")
+        return !1;
+      for (var b = {}, s = 0; s < 10; s++)
+        b["_" + String.fromCharCode(s)] = s;
+      var l = Object.getOwnPropertyNames(b).map(function(i) {
+        return b[i];
+      });
+      if (l.join("") !== "0123456789")
+        return !1;
+      var d = {};
+      return "abcdefghijklmnopqrst".split("").forEach(function(i) {
+        d[i] = i;
+      }), Object.keys(Object.assign({}, d)).join("") === "abcdefghijklmnopqrst";
+    } catch {
+      return !1;
+    }
+  }
+  return N = a() ? Object.assign : function(g, b) {
+    for (var s, l = O(g), d, i = 1; i < arguments.length; i++) {
+      s = Object(arguments[i]);
+      for (var h in s)
+        r.call(s, h) && (l[h] = s[h]);
+      if (x) {
+        d = x(s);
+        for (var u = 0; u < d.length; u++)
+          m.call(s, d[u]) && (l[d[u]] = s[d[u]]);
+      }
+    }
+    return l;
+  }, N;
+}
+/** @license React v17.0.2
  * react-jsx-runtime.production.min.js
  *
  * Copyright (c) Facebook, Inc. and its affiliates.
@@ -9,25 +59,30 @@ var O = { exports: {} }, q = {};
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-var G;
-function ae() {
-  if (G) return q;
-  G = 1;
-  var x = le, r = Symbol.for("react.element"), y = Symbol.for("react.fragment"), U = Object.prototype.hasOwnProperty, i = x.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner, $ = { key: !0, ref: !0, __self: !0, __source: !0 };
-  function R(b, a, j) {
-    var s, m = {}, v = null, f = null;
-    j !== void 0 && (v = "" + j), a.key !== void 0 && (v = "" + a.key), a.ref !== void 0 && (f = a.ref);
-    for (s in a) U.call(a, s) && !$.hasOwnProperty(s) && (m[s] = a[s]);
-    if (b && b.defaultProps) for (s in a = b.defaultProps, a) m[s] === void 0 && (m[s] = a[s]);
-    return { $$typeof: r, type: b, key: v, ref: f, props: m, _owner: i.current };
+var Y;
+function xe() {
+  if (Y) return W;
+  Y = 1, pe();
+  var x = de, r = 60103;
+  if (W.Fragment = 60107, typeof Symbol == "function" && Symbol.for) {
+    var m = Symbol.for;
+    r = m("react.element"), W.Fragment = m("react.fragment");
   }
-  return q.Fragment = y, q.jsx = R, q.jsxs = R, q;
+  var O = x.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner, a = Object.prototype.hasOwnProperty, g = { key: !0, ref: !0, __self: !0, __source: !0 };
+  function b(s, l, d) {
+    var i, h = {}, u = null, w = null;
+    d !== void 0 && (u = "" + d), l.key !== void 0 && (u = "" + l.key), l.ref !== void 0 && (w = l.ref);
+    for (i in l) a.call(l, i) && !g.hasOwnProperty(i) && (h[i] = l[i]);
+    if (s && s.defaultProps) for (i in l = s.defaultProps, l) h[i] === void 0 && (h[i] = l[i]);
+    return { $$typeof: r, type: s, key: u, ref: w, props: h, _owner: O.current };
+  }
+  return W.jsx = b, W.jsxs = b, W;
 }
-var X;
-function ce() {
-  return X || (X = 1, O.exports = ae()), O.exports;
+var ee;
+function he() {
+  return ee || (ee = 1, z.exports = xe()), z.exports;
 }
-var e = ce();
+var e = he();
 const t = {
   container: {
     padding: "24px",
@@ -63,26 +118,24 @@ const t = {
   endpointsContainer: {
     display: "flex",
     flexDirection: "column",
-    gap: "12px",
-    flexWrap: "wrap"
+    gap: "8px"
   },
   endpointCard: {
-    flex: "1 1 300px",
     display: "flex",
     alignItems: "center",
-    gap: "12px",
-    padding: "14px 16px",
+    gap: "10px",
+    padding: "8px 12px",
     backgroundColor: "white",
-    borderRadius: "8px",
+    borderRadius: "6px",
     border: "1px solid #e1e4e8",
     transition: "all 0.2s",
     cursor: "pointer",
     position: "relative"
   },
   endpointIcon: {
-    width: "40px",
-    height: "40px",
-    borderRadius: "8px",
+    width: "28px",
+    height: "28px",
+    borderRadius: "6px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -112,10 +165,12 @@ const t = {
     color: "#d73a49"
   },
   endpointUrl: {
-    fontSize: "14px",
+    fontSize: "13px",
     color: "#24292e",
     fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', monospace",
-    wordBreak: "break-all",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
     lineHeight: "1.4"
   },
   copyIcon: {
@@ -334,7 +389,7 @@ const t = {
     borderRadius: "12px",
     border: "1px solid #e1e4e8"
   }
-}, pe = (x) => ({
+}, ue = (x) => ({
   query: "#0066cc",
   mutation: "#d73a49",
   type: "#0066cc",
@@ -343,7 +398,7 @@ const t = {
   scalar: "#6a737d",
   union: "#d73a49",
   input: "#005cc5"
-})[x] || "#24292e", xe = (x) => ({
+})[x] || "#24292e", ye = (x) => ({
   query: "Q",
   mutation: "M",
   type: "T",
@@ -352,125 +407,125 @@ const t = {
   scalar: "S",
   union: "U",
   input: "IN"
-})[x] || "?", ue = ({ schema: x, apiMetadata: r }) => {
-  var N, F, A, Q;
-  const [y, U] = P(/* @__PURE__ */ new Set()), [i, $] = P(/* @__PURE__ */ new Set()), [R, b] = P(null), { operations: a, types: j } = de(() => {
+})[x] || "?", me = ({ schema: x, apiMetadata: r }) => {
+  var A, F, Q, V;
+  const [m, O] = B(/* @__PURE__ */ new Set()), [a, g] = B(/* @__PURE__ */ new Set()), [b, s] = B(null), { operations: l, types: d } = ce(() => {
     if (!x || typeof x != "string") return { operations: [], types: [] };
-    const n = [], o = [], h = x.split(`
-`), V = (k, u) => {
-      const l = [];
-      let w = !1, p = 0, g = "", T = [], I = !1;
-      for (let B = 0; B < h.length; B++) {
-        const W = h[B], d = W.trim();
-        if (!d) {
-          I || (g = "", T = []);
+    const n = [], o = [], j = x.split(`
+`), J = (k, v) => {
+      const c = [];
+      let S = !1, f = 0, C = "", R = [], q = !1;
+      for (let U = 0; U < j.length; U++) {
+        const E = j[U], p = E.trim();
+        if (!p) {
+          q || (C = "", R = []);
           continue;
         }
-        if (d === `type ${k}` || d.startsWith(`type ${k} `) || d.startsWith(`type ${k}{`)) {
-          w = !0, p = 0, g = "", T = [], I = !1, W.includes("{") && p++;
+        if (p === `type ${k}` || p.startsWith(`type ${k} `) || p.startsWith(`type ${k}{`)) {
+          S = !0, f = 0, C = "", R = [], q = !1, E.includes("{") && f++;
           continue;
         }
-        if (w) {
-          W.includes("{") && p++, W.includes("}") && p--;
-          const M = d.startsWith('"""') || d.startsWith("#");
-          if (M && p > 0) {
-            I = !0;
-            const C = d.replace(/^("""|#)/, "").replace(/"""$/, "").trim();
-            C && T.push(C), d.endsWith('"""') && d.startsWith('"""') && d.length > 3 && (I = !1);
+        if (S) {
+          E.includes("{") && f++, E.includes("}") && f--;
+          const _ = p.startsWith('"""') || p.startsWith("#");
+          if (_ && f > 0) {
+            q = !0;
+            const L = p.replace(/^("""|#)/, "").replace(/"""$/, "").trim();
+            L && R.push(L), p.endsWith('"""') && p.startsWith('"""') && p.length > 3 && (q = !1);
             continue;
           }
-          if (I && !M && p > 0 && (g = T.join(" ").trim(), I = !1), p > 0 && !M) {
-            const C = d.match(/^\s*(\w+)\s*(\([^)]*\))?\s*:\s*(.+?)(\s*\{|\s*$)/);
-            if (C) {
-              const te = C[1], J = C[2] || "";
-              let _ = C[3].trim();
-              _ = _.replace(/\s*\{.*$/, "").trim();
-              const z = [];
-              if (J) {
-                const oe = J.replace(/[()]/g, ""), re = Array.from(oe.matchAll(/(\w+)\s*:\s*([^,]+)/g));
-                for (const K of re) {
-                  const ie = K[1], Z = K[2].trim(), se = Z.includes("!");
-                  z.push({
-                    name: ie,
-                    type: Z.replace(/!/g, "").trim(),
-                    required: se
+          if (q && !_ && f > 0 && (C = R.join(" ").trim(), q = !1), f > 0 && !_) {
+            const L = p.match(/^\s*(\w+)\s*(\([^)]*\))?\s*:\s*(.+?)(\s*\{|\s*$)/);
+            if (L) {
+              const oe = L[1], K = L[2] || "";
+              let $ = L[3].trim();
+              $ = $.replace(/\s*\{.*$/, "").trim();
+              const M = [];
+              if (K) {
+                const ie = K.replace(/[()]/g, ""), se = Array.from(ie.matchAll(/(\w+)\s*:\s*([^,]+)/g));
+                for (const Z of se) {
+                  const le = Z[1], G = Z[2].trim(), ae = G.includes("!");
+                  M.push({
+                    name: le,
+                    type: G.replace(/!/g, "").trim(),
+                    required: ae
                   });
                 }
               }
-              const ne = g.trim() || void 0;
-              l.push({
-                name: te,
-                type: u,
-                description: ne,
-                parameters: z.length > 0 ? z : void 0,
-                returnType: _.replace(/[!,]/g, "").trim(),
-                content: W.trim()
-              }), g = "", T = [];
+              const re = C.trim() || void 0;
+              c.push({
+                name: oe,
+                type: v,
+                description: re,
+                parameters: M.length > 0 ? M : void 0,
+                returnType: $.replace(/[!,]/g, "").trim(),
+                content: E.trim()
+              }), C = "", R = [];
             } else
-              g && !d.startsWith("#") && !d.startsWith('"""') && (g = "", T = []);
+              C && !p.startsWith("#") && !p.startsWith('"""') && (C = "", R = []);
           }
-          if (p === 0 && d.includes("}")) {
-            w = !1;
+          if (f === 0 && p.includes("}")) {
+            S = !1;
             break;
           }
         }
       }
-      return l;
-    }, Y = V("Query", "query");
-    n.push(...Y);
-    const ee = V("Mutation", "mutation");
-    n.push(...ee);
-    let c = null, E = "", S = 0, H = !1, L = [];
-    for (let k = 0; k < h.length; k++) {
-      const u = h[k], l = u.trim();
-      if (l) {
-        if ((l.startsWith('"""') || l.startsWith("#")) && !H) {
-          E += l.replace(/^("""|#)/, "").replace(/"""$/, "").trim() + " ";
+      return c;
+    }, te = J("Query", "query");
+    n.push(...te);
+    const ne = J("Mutation", "mutation");
+    n.push(...ne);
+    let y = null, P = "", T = 0, H = !1, I = [];
+    for (let k = 0; k < j.length; k++) {
+      const v = j[k], c = v.trim();
+      if (c) {
+        if ((c.startsWith('"""') || c.startsWith("#")) && !H) {
+          P += c.replace(/^("""|#)/, "").replace(/"""$/, "").trim() + " ";
           continue;
         }
-        if (l.startsWith("type ") || l.startsWith("interface ") || l.startsWith("enum ") || l.startsWith("scalar ") || l.startsWith("union ") || l.startsWith("input ")) {
-          const w = l.match(/^(type|interface|enum|scalar|union|input)\s+(\w+)/);
-          if (w) {
-            const p = w[2];
-            if (p === "Query" || p === "Mutation" || p === "Subscription")
+        if (c.startsWith("type ") || c.startsWith("interface ") || c.startsWith("enum ") || c.startsWith("scalar ") || c.startsWith("union ") || c.startsWith("input ")) {
+          const S = c.match(/^(type|interface|enum|scalar|union|input)\s+(\w+)/);
+          if (S) {
+            const f = S[2];
+            if (f === "Query" || f === "Mutation" || f === "Subscription")
               continue;
-            c && (c.content = L.join(`
-`), o.push(c));
-            const g = w[1];
-            c = {
-              name: p,
-              kind: g,
-              description: E.trim() || void 0,
+            y && (y.content = I.join(`
+`), o.push(y));
+            const C = S[1];
+            y = {
+              name: f,
+              kind: C,
+              description: P.trim() || void 0,
               content: ""
-            }, L = [u], E = "", H = !0, S = 0, u.includes("{") && S++, u.includes("}") && S--;
+            }, I = [v], P = "", H = !0, T = 0, v.includes("{") && T++, v.includes("}") && T--;
           }
-        } else H && c ? (L.push(u), u.includes("{") && S++, u.includes("}") && S--, S === 0 && (u.includes("}") || c.kind === "scalar" || c.kind === "union") && (c.content = L.join(`
-`), o.push(c), c = null, L = [], H = !1)) : E = "";
+        } else H && y ? (I.push(v), v.includes("{") && T++, v.includes("}") && T--, T === 0 && (v.includes("}") || y.kind === "scalar" || y.kind === "union") && (y.content = I.join(`
+`), o.push(y), y = null, I = [], H = !1)) : P = "";
       }
     }
-    return c && (c.content = L.join(`
-`), o.push(c)), { operations: n, types: o };
-  }, [x]), s = a.filter((n) => n.type === "query"), m = a.filter((n) => n.type === "mutation"), v = (n) => {
-    const o = new Set(y);
-    o.has(n) ? o.delete(n) : o.add(n), U(o);
-  }, f = (n) => {
-    const o = new Set(i);
-    o.has(n) ? o.delete(n) : o.add(n), $(o);
+    return y && (y.content = I.join(`
+`), o.push(y)), { operations: n, types: o };
+  }, [x]), i = l.filter((n) => n.type === "query"), h = l.filter((n) => n.type === "mutation"), u = (n) => {
+    const o = new Set(m);
+    o.has(n) ? o.delete(n) : o.add(n), O(o);
+  }, w = (n) => {
+    const o = new Set(a);
+    o.has(n) ? o.delete(n) : o.add(n), g(o);
   }, D = async (n, o) => {
     if (o)
       try {
-        await navigator.clipboard.writeText(o), b(n), setTimeout(() => b(null), 2e3);
-      } catch (h) {
-        console.error("Failed to copy endpoint URL:", h);
+        await navigator.clipboard.writeText(o), s(n), setTimeout(() => s(null), 2e3);
+      } catch (j) {
+        console.error("Failed to copy endpoint URL:", j);
       }
   };
   return /* @__PURE__ */ e.jsx("div", { style: t.container, children: /* @__PURE__ */ e.jsxs("div", { style: t.contentWrapper, children: [
     /* @__PURE__ */ e.jsxs("div", { style: t.header, children: [
       /* @__PURE__ */ e.jsxs("h2", { style: t.title, children: [
-        ((N = r == null ? void 0 : r.apiInfo) == null ? void 0 : N.apiName) || "GraphQL Schema Documentation",
+        ((A = r == null ? void 0 : r.apiInfo) == null ? void 0 : A.apiName) || "GraphQL Schema Documentation",
         ((F = r == null ? void 0 : r.apiInfo) == null ? void 0 : F.apiVersion) && /* @__PURE__ */ e.jsx("span", { style: t.version, children: r.apiInfo.apiVersion })
       ] }),
-      r && (((A = r.endPoints) == null ? void 0 : A.productionURL) || ((Q = r.endPoints) == null ? void 0 : Q.sandboxURL)) && /* @__PURE__ */ e.jsxs("div", { style: t.endpointsContainer, children: [
+      r && (((Q = r.endPoints) == null ? void 0 : Q.productionURL) || ((V = r.endPoints) == null ? void 0 : V.sandboxURL)) && /* @__PURE__ */ e.jsxs("div", { style: t.endpointsContainer, children: [
         r.endPoints.productionURL && /* @__PURE__ */ e.jsxs(
           "div",
           {
@@ -494,7 +549,7 @@ const t = {
             },
             title: "Click to copy",
             children: [
-              /* @__PURE__ */ e.jsx("div", { style: { ...t.endpointIcon, ...t.endpointIconProduction }, children: /* @__PURE__ */ e.jsxs("svg", { width: "20", height: "20", viewBox: "0 0 20 20", fill: "none", xmlns: "http://www.w3.org/2000/svg", children: [
+              /* @__PURE__ */ e.jsx("div", { style: { ...t.endpointIcon, ...t.endpointIconProduction }, children: /* @__PURE__ */ e.jsxs("svg", { width: "14", height: "14", viewBox: "0 0 20 20", fill: "none", xmlns: "http://www.w3.org/2000/svg", children: [
                 /* @__PURE__ */ e.jsx("path", { d: "M10 2L2 7L10 12L18 7L10 2Z", fill: "white" }),
                 /* @__PURE__ */ e.jsx("path", { d: "M2 13L10 18L18 13", stroke: "white", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }),
                 /* @__PURE__ */ e.jsx("path", { d: "M2 10L10 15L18 10", stroke: "white", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" })
@@ -504,7 +559,7 @@ const t = {
                 /* @__PURE__ */ e.jsx("div", { style: t.endpointUrl, children: r.endPoints.productionURL })
               ] }),
               /* @__PURE__ */ e.jsxs("div", { style: { position: "relative", flexShrink: 0 }, children: [
-                R === "production" && /* @__PURE__ */ e.jsxs("div", { style: t.copiedTooltip, children: [
+                b === "production" && /* @__PURE__ */ e.jsxs("div", { style: t.copiedTooltip, children: [
                   "Copied!",
                   /* @__PURE__ */ e.jsx("div", { style: t.tooltipArrow })
                 ] }),
@@ -539,7 +594,7 @@ const t = {
             },
             title: "Click to copy",
             children: [
-              /* @__PURE__ */ e.jsx("div", { style: { ...t.endpointIcon, ...t.endpointIconSandbox }, children: /* @__PURE__ */ e.jsxs("svg", { width: "20", height: "20", viewBox: "0 0 20 20", fill: "none", xmlns: "http://www.w3.org/2000/svg", children: [
+              /* @__PURE__ */ e.jsx("div", { style: { ...t.endpointIcon, ...t.endpointIconSandbox }, children: /* @__PURE__ */ e.jsxs("svg", { width: "14", height: "14", viewBox: "0 0 20 20", fill: "none", xmlns: "http://www.w3.org/2000/svg", children: [
                 /* @__PURE__ */ e.jsx("path", { d: "M10 2L2 7L10 12L18 7L10 2Z", fill: "white" }),
                 /* @__PURE__ */ e.jsx("path", { d: "M2 13L10 18L18 13", stroke: "white", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }),
                 /* @__PURE__ */ e.jsx("path", { d: "M2 10L10 15L18 10", stroke: "white", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" })
@@ -549,7 +604,7 @@ const t = {
                 /* @__PURE__ */ e.jsx("div", { style: t.endpointUrl, children: r.endPoints.sandboxURL })
               ] }),
               /* @__PURE__ */ e.jsxs("div", { style: { position: "relative", flexShrink: 0 }, children: [
-                R === "sandbox" && /* @__PURE__ */ e.jsxs("div", { style: t.copiedTooltip, children: [
+                b === "sandbox" && /* @__PURE__ */ e.jsxs("div", { style: t.copiedTooltip, children: [
                   "Copied!",
                   /* @__PURE__ */ e.jsx("div", { style: t.tooltipArrow })
                 ] }),
@@ -570,15 +625,15 @@ const t = {
           {
             role: "button",
             tabIndex: 0,
-            "aria-expanded": i.has("queries"),
+            "aria-expanded": a.has("queries"),
             "aria-controls": "graphql-queries-content",
-            onClick: () => f("queries"),
+            onClick: () => w("queries"),
             onKeyDown: (n) => {
-              (n.key === "Enter" || n.key === " ") && (n.preventDefault(), f("queries"));
+              (n.key === "Enter" || n.key === " ") && (n.preventDefault(), w("queries"));
             },
             style: {
               ...t.sectionHeader,
-              borderBottom: i.has("queries") ? "1px solid #e1e4e8" : "none"
+              borderBottom: a.has("queries") ? "1px solid #e1e4e8" : "none"
             },
             children: [
               /* @__PURE__ */ e.jsxs("div", { style: t.sectionHeaderContent, children: [
@@ -586,25 +641,25 @@ const t = {
                 /* @__PURE__ */ e.jsxs("div", { children: [
                   /* @__PURE__ */ e.jsx("h3", { style: t.sectionTitle, children: "Queries" }),
                   /* @__PURE__ */ e.jsxs("div", { style: t.sectionSubtitle, children: [
-                    s.length,
+                    i.length,
                     " operation",
-                    s.length !== 1 ? "s" : ""
+                    i.length !== 1 ? "s" : ""
                   ] })
                 ] })
               ] }),
               /* @__PURE__ */ e.jsx("span", { style: {
                 ...t.sectionToggle,
-                transform: i.has("queries") ? "rotate(90deg)" : "rotate(0deg)"
+                transform: a.has("queries") ? "rotate(90deg)" : "rotate(0deg)"
               }, children: "›" })
             ]
           }
         ),
-        i.has("queries") && /* @__PURE__ */ e.jsx(
+        a.has("queries") && /* @__PURE__ */ e.jsx(
           "div",
           {
             id: "graphql-queries-content",
             style: t.sectionContent,
-            children: s.length === 0 ? /* @__PURE__ */ e.jsx("div", { style: t.emptyState, children: "No queries found" }) : s.map((n) => /* @__PURE__ */ e.jsxs(
+            children: i.length === 0 ? /* @__PURE__ */ e.jsx("div", { style: t.emptyState, children: "No queries found" }) : i.map((n) => /* @__PURE__ */ e.jsxs(
               "div",
               {
                 style: t.operationCard,
@@ -614,26 +669,26 @@ const t = {
                   /* @__PURE__ */ e.jsxs(
                     "div",
                     {
-                      onClick: () => v(`query-${n.name}`),
+                      onClick: () => u(`query-${n.name}`),
                       style: t.operationHeader,
                       children: [
                         /* @__PURE__ */ e.jsx("div", { style: { flex: 1 }, children: /* @__PURE__ */ e.jsx("div", { style: t.operationName, children: n.name }) }),
                         /* @__PURE__ */ e.jsx("span", { style: {
                           ...t.operationToggle,
-                          transform: y.has(`query-${n.name}`) ? "rotate(90deg)" : "rotate(0deg)"
+                          transform: m.has(`query-${n.name}`) ? "rotate(90deg)" : "rotate(0deg)"
                         }, children: "›" })
                       ]
                     }
                   ),
-                  y.has(`query-${n.name}`) && /* @__PURE__ */ e.jsxs("div", { style: t.operationDetails, children: [
+                  m.has(`query-${n.name}`) && /* @__PURE__ */ e.jsxs("div", { style: t.operationDetails, children: [
                     n.parameters && n.parameters.length > 0 && /* @__PURE__ */ e.jsxs("div", { style: { marginBottom: "16px" }, children: [
                       /* @__PURE__ */ e.jsx("h4", { style: t.parametersTitle, children: "Parameters" }),
-                      /* @__PURE__ */ e.jsx("div", { style: t.parametersList, children: n.parameters.map((o, h) => /* @__PURE__ */ e.jsxs("div", { style: t.parameterItem, children: [
+                      /* @__PURE__ */ e.jsx("div", { style: t.parametersList, children: n.parameters.map((o, j) => /* @__PURE__ */ e.jsxs("div", { style: t.parameterItem, children: [
                         /* @__PURE__ */ e.jsx("span", { style: t.parameterName, children: o.name }),
                         /* @__PURE__ */ e.jsx("span", { style: { color: "#6a737d" }, children: ":" }),
                         /* @__PURE__ */ e.jsx("span", { style: t.parameterType, children: o.type }),
                         o.required && /* @__PURE__ */ e.jsx("span", { style: t.parameterRequired, children: "(required)" })
-                      ] }, h)) })
+                      ] }, j)) })
                     ] }),
                     /* @__PURE__ */ e.jsxs("div", { children: [
                       /* @__PURE__ */ e.jsx("h4", { style: t.schemaTitle, children: "Schema Definition" }),
@@ -653,15 +708,15 @@ const t = {
           {
             role: "button",
             tabIndex: 0,
-            "aria-expanded": i.has("mutations"),
+            "aria-expanded": a.has("mutations"),
             "aria-controls": "graphql-mutations-content",
-            onClick: () => f("mutations"),
+            onClick: () => w("mutations"),
             onKeyDown: (n) => {
-              (n.key === "Enter" || n.key === " ") && (n.preventDefault(), f("mutations"));
+              (n.key === "Enter" || n.key === " ") && (n.preventDefault(), w("mutations"));
             },
             style: {
               ...t.sectionHeader,
-              borderBottom: i.has("mutations") ? "1px solid #e1e4e8" : "none"
+              borderBottom: a.has("mutations") ? "1px solid #e1e4e8" : "none"
             },
             children: [
               /* @__PURE__ */ e.jsxs("div", { style: t.sectionHeaderContent, children: [
@@ -669,25 +724,25 @@ const t = {
                 /* @__PURE__ */ e.jsxs("div", { children: [
                   /* @__PURE__ */ e.jsx("h3", { style: t.sectionTitle, children: "Mutations" }),
                   /* @__PURE__ */ e.jsxs("div", { style: t.sectionSubtitle, children: [
-                    m.length,
+                    h.length,
                     " operation",
-                    m.length !== 1 ? "s" : ""
+                    h.length !== 1 ? "s" : ""
                   ] })
                 ] })
               ] }),
               /* @__PURE__ */ e.jsx("span", { style: {
                 ...t.sectionToggle,
-                transform: i.has("mutations") ? "rotate(90deg)" : "rotate(0deg)"
+                transform: a.has("mutations") ? "rotate(90deg)" : "rotate(0deg)"
               }, children: "›" })
             ]
           }
         ),
-        i.has("mutations") && /* @__PURE__ */ e.jsx(
+        a.has("mutations") && /* @__PURE__ */ e.jsx(
           "div",
           {
             id: "graphql-mutations-content",
             style: t.sectionContent,
-            children: m.length === 0 ? /* @__PURE__ */ e.jsx("div", { style: t.emptyState, children: "No mutations found" }) : m.map((n) => /* @__PURE__ */ e.jsxs(
+            children: h.length === 0 ? /* @__PURE__ */ e.jsx("div", { style: t.emptyState, children: "No mutations found" }) : h.map((n) => /* @__PURE__ */ e.jsxs(
               "div",
               {
                 style: t.operationCard,
@@ -697,26 +752,26 @@ const t = {
                   /* @__PURE__ */ e.jsxs(
                     "div",
                     {
-                      onClick: () => v(`mutation-${n.name}`),
+                      onClick: () => u(`mutation-${n.name}`),
                       style: t.operationHeader,
                       children: [
                         /* @__PURE__ */ e.jsx("div", { style: { flex: 1 }, children: /* @__PURE__ */ e.jsx("div", { style: t.operationName, children: n.name }) }),
                         /* @__PURE__ */ e.jsx("span", { style: {
                           ...t.operationToggle,
-                          transform: y.has(`mutation-${n.name}`) ? "rotate(90deg)" : "rotate(0deg)"
+                          transform: m.has(`mutation-${n.name}`) ? "rotate(90deg)" : "rotate(0deg)"
                         }, children: "›" })
                       ]
                     }
                   ),
-                  y.has(`mutation-${n.name}`) && /* @__PURE__ */ e.jsxs("div", { style: t.operationDetails, children: [
+                  m.has(`mutation-${n.name}`) && /* @__PURE__ */ e.jsxs("div", { style: t.operationDetails, children: [
                     n.parameters && n.parameters.length > 0 && /* @__PURE__ */ e.jsxs("div", { style: { marginBottom: "16px" }, children: [
                       /* @__PURE__ */ e.jsx("h4", { style: t.parametersTitle, children: "Parameters" }),
-                      /* @__PURE__ */ e.jsx("div", { style: t.parametersList, children: n.parameters.map((o, h) => /* @__PURE__ */ e.jsxs("div", { style: t.parameterItem, children: [
+                      /* @__PURE__ */ e.jsx("div", { style: t.parametersList, children: n.parameters.map((o, j) => /* @__PURE__ */ e.jsxs("div", { style: t.parameterItem, children: [
                         /* @__PURE__ */ e.jsx("span", { style: t.parameterName, children: o.name }),
                         /* @__PURE__ */ e.jsx("span", { style: { color: "#6a737d" }, children: ":" }),
                         /* @__PURE__ */ e.jsx("span", { style: t.parameterType, children: o.type }),
                         o.required && /* @__PURE__ */ e.jsx("span", { style: t.parameterRequired, children: "(required)" })
-                      ] }, h)) })
+                      ] }, j)) })
                     ] }),
                     /* @__PURE__ */ e.jsxs("div", { children: [
                       /* @__PURE__ */ e.jsx("h4", { style: t.schemaTitle, children: "Schema Definition" }),
@@ -736,15 +791,15 @@ const t = {
           {
             role: "button",
             tabIndex: 0,
-            "aria-expanded": i.has("types"),
+            "aria-expanded": a.has("types"),
             "aria-controls": "graphql-types-content",
-            onClick: () => f("types"),
+            onClick: () => w("types"),
             onKeyDown: (n) => {
-              (n.key === "Enter" || n.key === " ") && (n.preventDefault(), f("types"));
+              (n.key === "Enter" || n.key === " ") && (n.preventDefault(), w("types"));
             },
             style: {
               ...t.sectionHeader,
-              borderBottom: i.has("types") ? "1px solid #e1e4e8" : "none"
+              borderBottom: a.has("types") ? "1px solid #e1e4e8" : "none"
             },
             children: [
               /* @__PURE__ */ e.jsxs("div", { style: t.sectionHeaderContent, children: [
@@ -752,25 +807,25 @@ const t = {
                 /* @__PURE__ */ e.jsxs("div", { children: [
                   /* @__PURE__ */ e.jsx("h3", { style: t.sectionTitle, children: "Types" }),
                   /* @__PURE__ */ e.jsxs("div", { style: t.sectionSubtitle, children: [
-                    j.length,
+                    d.length,
                     " type",
-                    j.length !== 1 ? "s" : ""
+                    d.length !== 1 ? "s" : ""
                   ] })
                 ] })
               ] }),
               /* @__PURE__ */ e.jsx("span", { style: {
                 ...t.sectionToggle,
-                transform: i.has("types") ? "rotate(90deg)" : "rotate(0deg)"
+                transform: a.has("types") ? "rotate(90deg)" : "rotate(0deg)"
               }, children: "›" })
             ]
           }
         ),
-        i.has("types") && /* @__PURE__ */ e.jsx(
+        a.has("types") && /* @__PURE__ */ e.jsx(
           "div",
           {
             id: "graphql-types-content",
             style: t.sectionContent,
-            children: j.length === 0 ? /* @__PURE__ */ e.jsx("div", { style: t.emptyState, children: "No types found" }) : j.map((n) => /* @__PURE__ */ e.jsxs(
+            children: d.length === 0 ? /* @__PURE__ */ e.jsx("div", { style: t.emptyState, children: "No types found" }) : d.map((n) => /* @__PURE__ */ e.jsxs(
               "div",
               {
                 style: t.typeCard,
@@ -780,13 +835,13 @@ const t = {
                   /* @__PURE__ */ e.jsxs(
                     "div",
                     {
-                      onClick: () => v(`type-${n.name}`),
+                      onClick: () => u(`type-${n.name}`),
                       style: t.typeHeader,
                       children: [
                         /* @__PURE__ */ e.jsx("div", { style: {
                           ...t.typeIcon,
-                          backgroundColor: pe(n.kind)
-                        }, children: xe(n.kind) }),
+                          backgroundColor: ue(n.kind)
+                        }, children: ye(n.kind) }),
                         /* @__PURE__ */ e.jsxs("div", { style: t.typeInfo, children: [
                           /* @__PURE__ */ e.jsx("div", { style: t.typeName, children: n.name }),
                           n.description && /* @__PURE__ */ e.jsx("div", { style: t.typeDescription, children: n.description }),
@@ -794,12 +849,12 @@ const t = {
                         ] }),
                         /* @__PURE__ */ e.jsx("span", { style: {
                           ...t.operationToggle,
-                          transform: y.has(`type-${n.name}`) ? "rotate(90deg)" : "rotate(0deg)"
+                          transform: m.has(`type-${n.name}`) ? "rotate(90deg)" : "rotate(0deg)"
                         }, children: "›" })
                       ]
                     }
                   ),
-                  y.has(`type-${n.name}`) && /* @__PURE__ */ e.jsx("div", { style: t.operationDetails, children: /* @__PURE__ */ e.jsx("pre", { style: t.schemaCode, children: n.content }) })
+                  m.has(`type-${n.name}`) && /* @__PURE__ */ e.jsx("div", { style: t.operationDetails, children: /* @__PURE__ */ e.jsx("pre", { style: t.schemaCode, children: n.content }) })
                 ]
               },
               `type-${n.name}`
@@ -811,6 +866,6 @@ const t = {
   ] }) });
 };
 export {
-  ue as GraphQLSchemaViewer,
-  ue as default
+  me as GraphQLSchemaViewer,
+  me as default
 };
