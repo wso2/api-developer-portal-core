@@ -267,6 +267,13 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
     setExpandedSections(newExpanded);
   };
 
+  const truncateUrl = (url: string, max: number = 95): string => {
+    if (!url || url.length <= max) return url;
+    const head = url.slice(0, Math.floor(max * 0.6));
+    const tail = url.slice(-Math.floor(max * 0.3));
+    return `${head}...${tail}`;
+  };
+
   const handleEndpointCopy = async (endpointType: 'production' | 'sandbox', url?: string) => {
     if (!url) {
       return;
@@ -331,8 +338,8 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
                     <div style={{ ...styles.endpointLabel, ...styles.endpointLabelProduction }}>
                       Endpoint
                     </div>
-                    <div style={styles.endpointUrl}>
-                      {apiMetadata.endPoints.productionURL}
+                    <div style={styles.endpointUrl} title={apiMetadata.endPoints.productionURL}>
+                      {truncateUrl(apiMetadata.endPoints.productionURL)}
                     </div>
                   </div>
                   <div style={{ position: 'relative', flexShrink: 0 }}>
@@ -383,8 +390,8 @@ export const GraphQLSchemaViewer: React.FC<GraphQLSchemaViewerProps> = ({ schema
                     <div style={{ ...styles.endpointLabel, ...styles.endpointLabelSandbox }}>
                       Sandbox
                     </div>
-                    <div style={styles.endpointUrl}>
-                      {apiMetadata.endPoints.sandboxURL}
+                    <div style={styles.endpointUrl} title={apiMetadata.endPoints.sandboxURL}>
+                      {truncateUrl(apiMetadata.endPoints.sandboxURL)}
                     </div>
                   </div>
                   <div style={{ position: 'relative', flexShrink: 0 }}>
