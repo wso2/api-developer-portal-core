@@ -135,6 +135,47 @@
   --primary-600: #2980B9 !important;
 }
 
+.graphql-auth-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.graphql-auth-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #d0d7de;
+  margin-bottom: 8px;
+}
+
+.graphql-auth-tab {
+  padding: 6px 16px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #57606a;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+
+.graphql-auth-tab:hover {
+  color: #1f2328;
+}
+
+.graphql-auth-tab.active {
+  color: #3498DB;
+  border-bottom-color: #3498DB;
+}
+
+.graphql-control select option:disabled {
+  color: #adb5bd;
+}
+
 @media (max-width: 640px) {
   .graphql-control input,
   .graphql-control select {
