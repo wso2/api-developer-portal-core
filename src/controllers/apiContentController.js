@@ -803,6 +803,23 @@ const loadDocument = async (req, res) => {
                 if (templateContent.isGraphQLTryout && definitionResponse.graphql) {
                     const schemaAsIntrospectionJSON = await convertSDLToIntrospection(definitionResponse.graphql);
                     templateContent.graphqlSchemaAsIntrospectionJSON = schemaAsIntrospectionJSON ? JSON.stringify(schemaAsIntrospectionJSON) : null;
+                    if (config.controlPlane?.enabled !== false && apiMetadata?.apiReferenceID) {
+                        try {
+                            const cpApiDetail = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + `/apis/${apiMetadata.apiReferenceID}`, null, null);
+                            templateContent.graphqlSecurityScheme = JSON.stringify(cpApiDetail.securityScheme || []);
+                            templateContent.graphqlApiKeyHeader = cpApiDetail.apiKeyHeader || 'apikey';
+                        } catch (error) {
+                            logger.warn("Error fetching GraphQL API security details from control plane", {
+                                orgName: orgName,
+                                error: error.message
+                            });
+                            templateContent.graphqlSecurityScheme = '[]';
+                            templateContent.graphqlApiKeyHeader = 'apikey';
+                        }
+                    } else {
+                        templateContent.graphqlSecurityScheme = '[]';
+                        templateContent.graphqlApiKeyHeader = config.advanced?.apiKey?.keyType || 'apikey';
+                    }
                 } else {
                     templateContent.graphql = definitionResponse.graphql ? JSON.stringify(definitionResponse.graphql) : '""';
                     templateContent.apiMetadataJSON = JSON.stringify(apiMetadata || {});

@@ -142,7 +142,7 @@
           <label for="graphql-endpoint-type">Environment</label>
           <select id="graphql-endpoint-type" aria-label="Endpoint type">
             <option value="production">Production</option>
-            <option value="sandbox">Sandbox</option>
+            {{#if apiMetadata.endPoints.sandboxURL}}<option value="sandbox">Sandbox</option>{{/if}}
           </select>
         </div>
         <div class="graphql-endpoint-input-wrapper">
@@ -151,10 +151,29 @@
           <div class="control-hint" id="graphql-endpoint-status"></div>
         </div>
       </div>
-      <div class="graphql-control">
-        <label for="graphql-token-input">Authorization Header</label>
-        <input id="graphql-token-input" type="text" placeholder="Bearer &lt;token&gt;" spellcheck="false" />
-        <div class="control-hint" id="graphql-token-status"></div>
+      <div class="graphql-control" id="graphql-auth-control">
+        <div class="graphql-auth-tabs" id="graphql-auth-tabs" style="display:none;">
+          <button type="button" class="graphql-auth-tab active" id="graphql-tab-oauth" data-tab="oauth">OAuth</button>
+          <button type="button" class="graphql-auth-tab" id="graphql-tab-apikey" data-tab="apikey">API Key</button>
+        </div>
+        <div id="graphql-auth-oauth" class="graphql-auth-panel">
+          <label for="graphql-token-input">Authorization Header</label>
+          <input id="graphql-token-input" type="text" placeholder="Bearer &lt;token&gt;" spellcheck="false" autocomplete="off" />
+          <div class="control-hint" id="graphql-token-status"></div>
+        </div>
+        <div id="graphql-auth-apikey" class="graphql-auth-panel" style="display:none;">
+          <div style="display:flex; gap:8px;">
+            <div style="display:flex; flex-direction:column; gap:4px; flex: 0 0 180px;">
+              <label for="graphql-apikey-header-input">Header Name</label>
+              <input id="graphql-apikey-header-input" type="text" placeholder="apikey" spellcheck="false" />
+            </div>
+            <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:0;">
+              <label for="graphql-apikey-input">API Key Value</label>
+              <input id="graphql-apikey-input" type="text" placeholder="Enter API key" spellcheck="false" autocomplete="off" />
+            </div>
+          </div>
+          <div class="control-hint" id="graphql-apikey-status"></div>
+        </div>
       </div>
     </div>
     <div id="root" style="flex: 1; min-height: 0;"></div>
@@ -168,17 +187,61 @@
     document.addEventListener('DOMContentLoaded', function () {
       const apiEndpoint = '{{ apiMetadata.endPoints.productionURL }}';
       const sandboxEndpoint = '{{ apiMetadata.endPoints.sandboxURL }}';
+      const securityScheme = {{{graphqlSecurityScheme}}};
+      const apiKeyHeader = '{{ graphqlApiKeyHeader }}';
       const rootElement = document.getElementById('root');
       rootElement.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: montserrat;">Loading GraphiQL...</div>';
-      
+
       const endpointInput = document.getElementById('graphql-endpoint-input');
       const endpointStatus = document.getElementById('graphql-endpoint-status');
       const endpointTypeSelect = document.getElementById('graphql-endpoint-type');
       const tokenInput = document.getElementById('graphql-token-input');
       const tokenStatus = document.getElementById('graphql-token-status');
+      const apikeyHeaderInput = document.getElementById('graphql-apikey-header-input');
+      const apikeyInput = document.getElementById('graphql-apikey-input');
+      const apikeyStatus = document.getElementById('graphql-apikey-status');
+      const authTabs = document.getElementById('graphql-auth-tabs');
+      const authOAuthPanel = document.getElementById('graphql-auth-oauth');
+      const authApiKeyPanel = document.getElementById('graphql-auth-apikey');
       let selectedEndpointType = 'production';
       let currentEndpoint = apiEndpoint || '';
       let authToken = '';
+      let apiKeyValue = '';
+      let activeApiKeyHeader = apiKeyHeader;
+      let activeAuthTab = 'oauth';
+
+      // Show auth tabs only when both oauth2 and api_key are enabled
+      const hasOAuth2 = securityScheme.includes('oauth2');
+      const hasApiKey = securityScheme.includes('api_key');
+      if (hasOAuth2 && hasApiKey) {
+        if (authTabs) authTabs.style.display = 'flex';
+      } else if (hasApiKey && !hasOAuth2) {
+        // Only API key
+        if (authOAuthPanel) authOAuthPanel.style.display = 'none';
+        if (authApiKeyPanel) authApiKeyPanel.style.display = '';
+        activeAuthTab = 'apikey';
+      }
+      // Default (only oauth2 or empty)
+
+      if (authTabs) {
+        authTabs.addEventListener('click', function (event) {
+          const tab = event.target.closest('.graphql-auth-tab');
+          if (!tab) return;
+          const target = tab.dataset.tab;
+          authTabs.querySelectorAll('.graphql-auth-tab').forEach(function (t) {
+            t.classList.remove('active');
+          });
+          tab.classList.add('active');
+          activeAuthTab = target;
+          if (target === 'oauth') {
+            if (authOAuthPanel) authOAuthPanel.style.display = '';
+            if (authApiKeyPanel) authApiKeyPanel.style.display = 'none';
+          } else {
+            if (authOAuthPanel) authOAuthPanel.style.display = 'none';
+            if (authApiKeyPanel) authApiKeyPanel.style.display = '';
+          }
+        });
+      }
 
       const getEndpointForType = (type) => {
         return type === 'sandbox' ? (sandboxEndpoint || '') : (apiEndpoint || '');
@@ -205,6 +268,14 @@
           ? 'Authorization header will be sent with each request'
           : 'Header not set';
         tokenStatus.style.color = authToken ? '#1f883d' : '#57606a';
+      };
+
+      const updateApiKeyStatus = () => {
+        if (!apikeyStatus) return;
+        apikeyStatus.textContent = apiKeyValue
+          ? 'API key will be sent with each request'
+          : 'API key not set';
+        apikeyStatus.style.color = apiKeyValue ? '#1f883d' : '#57606a';
       };
 
       if (endpointTypeSelect) {
@@ -235,8 +306,23 @@
         });
       }
 
+      if (apikeyHeaderInput) {
+        apikeyHeaderInput.value = apiKeyHeader;
+        apikeyHeaderInput.addEventListener('input', function (event) {
+          activeApiKeyHeader = (event.target.value || '').trim() || apiKeyHeader;
+        });
+      }
+
+      if (apikeyInput) {
+        apikeyInput.addEventListener('input', function (event) {
+          apiKeyValue = (event.target.value || '').trim();
+          updateApiKeyStatus();
+        });
+      }
+
       updateEndpointStatus();
       updateTokenStatus();
+      updateApiKeyStatus();
 
       const schemaScript = document.getElementById('graphql-schema-introspection-json');
       let schemaIntrospectionJSON = null;      
@@ -267,7 +353,9 @@
             'Accept': 'application/json',
           };
 
-          if (authToken) {
+          if (activeAuthTab === 'apikey' && apiKeyValue) {
+            headers[activeApiKeyHeader] = apiKeyValue;
+          } else if (activeAuthTab === 'oauth' && authToken) {
             headers['Authorization'] = authToken;
           }
 
