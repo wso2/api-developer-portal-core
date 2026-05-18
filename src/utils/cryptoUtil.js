@@ -19,28 +19,33 @@
 "use strict";
 
 const crypto = require("crypto");
-const secret = require(process.cwd() + "/secret.json");
+const logger = require('../config/logger');
+const { secrets: secret } = require('../config/configLoader');
 
 const ENCRYPTION_KEY = secret.billingKeyEncryptionKey;
-
-if (!ENCRYPTION_KEY) {
-  throw new Error(
-    "BILLING_KEY_ENCRYPTION_KEY secret is required for encryption operations",
-  );
-}
-
-if (!/^[0-9a-fA-F]{64}$/.test(ENCRYPTION_KEY)) {
-  throw new Error(
-    "billingKeyEncryptionKey must be a 64-character hex string (32 random bytes).",
-  );
-}
-const KEY_BUF = Buffer.from(ENCRYPTION_KEY, "hex");
 
 const GCM_IV_LENGTH = 12;
 const GCM_AUTH_TAG_LENGTH = 16;
 const GCM_ALGO = "aes-256-gcm";
 
+let KEY_BUF = null;
+let billingEnabled = false;
+
+if (!ENCRYPTION_KEY) {
+  logger.warn('Billing disabled: secrets.billingKeyEncryptionKey is not set. ' +
+    'Set it to a 64-character hex string to enable billing features.');
+} else if (!/^[0-9a-fA-F]{64}$/.test(ENCRYPTION_KEY)) {
+  logger.warn('Billing disabled: secrets.billingKeyEncryptionKey must be a ' +
+    '64-character hex string (32 random bytes).');
+} else {
+  KEY_BUF = Buffer.from(ENCRYPTION_KEY, "hex");
+  billingEnabled = true;
+}
+
 function encrypt(text) {
+  if (!billingEnabled) {
+    throw new Error("Billing is not configured (billingKeyEncryptionKey missing or invalid).");
+  }
   if (typeof text !== "string") {
     throw new TypeError("encrypt: text must be a string");
   }
@@ -56,6 +61,9 @@ function encrypt(text) {
 }
 
 function decrypt(payload) {
+  if (!billingEnabled) {
+    throw new Error("Billing is not configured (billingKeyEncryptionKey missing or invalid).");
+  }
   if (typeof payload !== "string") {
     throw new TypeError("decrypt: payload must be a string");
   }
@@ -84,4 +92,4 @@ function decrypt(payload) {
   return decrypted;
 }
 
-module.exports = { encrypt, decrypt };
+module.exports = { encrypt, decrypt, billingEnabled };

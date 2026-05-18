@@ -1,63 +1,88 @@
-## Prerequisites
+## Quick start (Docker Compose)
 
-- **Node.js**: v22.0.0
-- **PostgreSQL**: Install PostgreSQL or use Docker (see Database setup section)
-- **psql**: PostgreSQL client command-line tool (required to run the database scripts)
-
-## Required files
-
-The app expects a `config.json` and `secret.json` in the repo root.
-
-Create them from the samples:
+The fastest way to explore the portal:
 
 ```bash
-cp sample_config.json config.json
-cp sample_secret.json secret.json
+cp sample_config.yaml config.yaml   # only needed once
+docker compose up
 ```
 
-## Setup
+Then open **https://localhost:3000/ACME/views/default**
 
-### Configure `config.json`
+> **Browser warning:** The portal uses a self-signed TLS certificate generated automatically on first start. Click **Advanced → Proceed** (Chrome) or **Accept the Risk** (Firefox) to continue.
 
-To run the portal, it's easiest to use **HTTP** (no certificate files needed). Update these keys in `config.json`:
+Default local users: `admin` / `admin` and `developer` / `developer`
 
-```json
-{
-  "advanced": {
-    "http": true
-  },
-  "baseUrl": "http://localhost:3000",
-  "defaultPort": 3000
-}
+What happens automatically:
+- PostgreSQL starts and the DB schema is applied (`artifacts/docker-init/01_schema.sql`)
+- A default **ACME** org, view, labels, and subscription plans are seeded (`artifacts/docker-init/02_seed_default.sql`)
+- A self-signed TLS certificate is generated and stored in the `certs_data` Docker volume
+- The devportal image is built from source and connected to the DB
+- On first boot the app seeds the default theme assets into the database
+
+To stop and clean up:
+```bash
+docker compose down -v   # -v also removes the postgres data volume and certs volume
 ```
 
-### Configure Identity Provider (login)
+---
 
-The login flows depend on the Identity Provider settings in `config.json` under `identityProvider`. If these values are incorrect (or left as empty strings), the login flow will fail.
+## Manual setup (npm start)
 
-In the sample configs, the IdP endpoints often point to `https://localhost:9443/...` (a local Identity Server). If you don’t have an IdP running there, update the following keys to match your actual IdP:
+Use this for production, custom IdP configuration, or local development without Docker.
 
-- `identityProvider.issuer`
-- `identityProvider.authorizationURL`
-- `identityProvider.tokenURL`
-- `identityProvider.userInfoURL`
-- `identityProvider.jwksURL`
-- `identityProvider.clientId`
-- `identityProvider.callbackURL` (should match your app URL)
+### Prerequisites
 
-### Database setup
+- **Node.js**: v22.0.0
+- **PostgreSQL**: 16 (local install or Docker — see [Database setup](#4--database-setup))
+- **psql**: PostgreSQL client (required to run schema and seed scripts)
 
-#### 0) Create database
+### 1 — Create config file
 
-Create a database named `devportal`:
+```bash
+cp sample_config.yaml config.yaml
+```
+
+`config.yaml` is your local config file (not committed to git). See [Configuration reference](#configuration-reference) below for all available settings.
+
+### 2 — Configure HTTP mode (simplest)
+
+Open `config.yaml` and confirm these are set (they are the defaults in `sample_config.yaml`):
+
+```yaml
+advanced:
+  http: true
+baseUrl: "http://localhost:3000"
+defaultPort: 3000
+```
+
+### 3 — Configure the Identity Provider
+
+The portal's login flow requires a valid OAuth2/OIDC provider. Update the `identityProvider` block in `config.yaml` with your IdP details:
+
+```yaml
+identityProvider:
+  issuer: "https://<your-idp>/oauth2/token"
+  authorizationURL: "https://<your-idp>/oauth2/authorize"
+  tokenURL: "https://<your-idp>/oauth2/token"
+  userInfoURL: "https://<your-idp>/oauth2/userinfo"
+  jwksURL: "https://<your-idp>/oauth2/jwks"
+  clientId: "<your-client-id>"
+  callbackURL: "http://localhost:3000/<orgHandle>/callback"
+```
+
+For local exploration you can skip IdP setup by using the built-in local users instead (see [Local auth](#local-auth)).
+
+### 4 — Database setup
+
+#### Create the database
 
 ```bash
 createdb -h <HOST> -U <USER> devportal
 ```
 
-Or, run PostgreSQL using Docker and create the database:
+Or spin up PostgreSQL with Docker:
 
-(example)
 ```bash
 docker run --name devportal-postgres \
   -e POSTGRES_USER=postgres \
@@ -67,79 +92,56 @@ docker run --name devportal-postgres \
   -d postgres:16
 ```
 
-For the DB user, make sure it can connect to `devportal` and has privileges to create tables.
+#### Update DB config in `config.yaml`
 
-#### 1) Update DB config (`config.json` and `secret.json`)
+```yaml
+db:
+  host: "localhost"
+  port: 5432
+  database: "devportal"
+  username: "postgres"
+  dialect: "postgres"
 
-Update `config.json` with your postgres DB connection details:
-
-(example)
-```json
-{
-  "db": {
-    "username": "postgres",
-    "password": "postgres",
-    "database": "devportal",
-    "host": "localhost",
-    "port": 5432,
-    "dialect": "postgres"
-  }
-}
+secrets:
+  dbSecret: "postgres"   # DB password
 ```
 
-**Important:** You must also set the **DB password** in `secret.json` as `dbSecret` with the same value you use for Postgres. For example, if you used `POSTGRES_PASSWORD=postgres` in Docker, your `secret.json` should have:
+#### Apply the schema
 
-```json
-{
-  "dbSecret": "postgres",
-  ...
-}
-```
-
-#### 2) Create tables
-
-Run the schema script.
-
-Note: the schema script drops and recreates tables, so don’t run it against a DB you can’t reset.
+> ⚠️ This drops and recreates all tables — don't run against a database you can't reset.
 
 ```bash
 psql -h <HOST> -p <PORT> -U <USER> -d devportal -f artifacts/script.sql
 ```
-#### 3) Seed sample data (optional)
 
-Only run this section if you want sample content (ACME org + sample APIs) and the default theming assets.
-
-From the repo root:
-
-```bash
-./artifacts/org_data.sh
-./artifacts/api_data.sh
-./artifacts/theme_data.sh
-```
-
-If these scripts prompt for the DB password, you can also run them non-interactively by prefixing `PGPASSWORD`:
-
-```bash
-PGPASSWORD=<DB_PASSWORD> ./artifacts/<file.sh>
-```
-
-If you get a permission error (e.g. `permission denied`), run:
+#### Seed default org and theme (optional)
 
 ```bash
 chmod +x artifacts/*.sh
+./artifacts/org_data.sh        # ACME org + default view + org layout assets
+./artifacts/theme_data.sh      # Default theme/styling assets
 ```
 
-- `org_data.sh`: seeds a default org with handle **ACME**, creates a default view/label, and uploads the default org layout/assets into the DB.
-- `api_data.sh`: seeds sample APIs and uploads sample API content/assets into the DB.
-- `theme_data.sh`: uploads the default theme/styling assets into the DB (theming).
+Pass the DB password non-interactively:
+```bash
+PGPASSWORD=<DB_PASSWORD> ./artifacts/org_data.sh
+PGPASSWORD=<DB_PASSWORD> ./artifacts/theme_data.sh
+```
 
-To delete the seeded APIs:
+#### Add sample APIs (optional)
+
+The sample API artifacts are in `artifacts/default/apiContent/`. Load them with:
 
 ```bash
-./artifacts/delete_api_data.sh
+PGPASSWORD=<DB_PASSWORD> ./artifacts/api_data.sh
 ```
 
-### Install and run
+To remove the seeded APIs:
+```bash
+PGPASSWORD=<DB_PASSWORD> ./artifacts/delete_api_data.sh
+```
+
+### 5 — Install and run
 
 ```bash
 npm install
@@ -148,26 +150,92 @@ npm start
 
 ### Verify
 
-Open:
-- `http://localhost:3000/ACME/views/default`
+Open **http://localhost:3000/ACME/views/default**
 
+---
 
+## Configuration reference
 
+All settings live in `config.yaml`. Every setting can be overridden with a `DP_*` environment variable — see [Environment variable overrides](#environment-variable-overrides).
+
+The full list of settings with comments is in [`sample_config.yaml`](sample_config.yaml).
+
+### Secrets
+
+Sensitive values belong under the `secrets:` key in `config.yaml`, or injected as env vars:
+
+| Key | Env var | Description |
+|-----|---------|-------------|
+| `secrets.dbSecret` | `DP_SECRETS_DBSECRET` | Database password |
+| `secrets.apiKeySecret` | `DP_SECRETS_APIKEYSECRET` | API key secret |
+| `secrets.billingKeyEncryptionKey` | `DP_SECRETS_BILLINGKEYENCRYPTIONKEY` | 64-char hex key for billing encryption |
+| `secrets.redisSecret` | `DP_SECRETS_REDISSECRET` | Redis password |
+| `secrets.azureInsightsConnectionString` | `DP_SECRETS_AZUREINSIGHTSCONNECTIONSTRING` | Azure Application Insights |
+
+In production, inject secrets as env vars rather than storing them in the file.
+
+### Local auth
+
+For quick exploration without an IdP, the portal includes built-in local users. They are enabled by default in `sample_config.yaml`:
+
+```yaml
+defaultAuth:
+  users:
+    - username: "admin"
+      password: "admin"
+      roles: ["admin"]
+      orgClaimName: "ACME"
+      organizationIdentifier: "ACME"
+    - username: "developer"
+      password: "developer"
+      roles: ["Internal/subscriber"]
+      orgClaimName: "ACME"
+      organizationIdentifier: "ACME"
+```
+
+Remove or empty the `users` list in production.
+
+---
+
+## Environment variable overrides
+
+Every config key can be overridden with a `DP_*` environment variable. You can place these in a `.env` file at the project root.
+
+**Convention:**
+- Prefix: `DP_`
+- `_` separates nesting levels (one token = one config object level)
+- `__` represents a literal underscore within a key name
+- Tokens are matched case-insensitively against config keys
+
+**Examples:**
+
+| Env var | Config path |
+|---------|-------------|
+| `DP_DB_HOST` | `config.db.host` |
+| `DP_DB_PORT` | `config.db.port` |
+| `DP_SECRETS_DBSECRET` | `config.secrets.dbSecret` |
+| `DP_ADVANCED_HTTP` | `config.advanced.http` |
+| `DP_IDENTITYPROVIDER_CLIENTID` | `config.identityProvider.clientId` |
+| `DP_IDENTITYPROVIDER_ISSUER` | `config.identityProvider.issuer` |
+| `DP_BASEURL` | `config.baseUrl` |
+| `DP_DEFAULTPORT` | `config.defaultPort` |
+| `DP_SEEDDEFAULTS` | `config.seedDefaults` |
+| `DP_ADVANCED_DBSSLDIALECTOPTION` | `config.advanced.dbSslDialectOption` |
+
+`.env` example:
+```dotenv
+DP_DB_HOST=my-postgres-host
+DP_SECRETS_DBSECRET=my-secret-password
+DP_IDENTITYPROVIDER_CLIENTID=my-client-id
+```
+
+---
 
 ## Add a third-party API (Admin APIs)
 
-If you want to add real APIs (instead of the sample seed scripts), you can use the Devportal Admin APIs to:
+Use the Devportal Admin REST APIs to publish APIs without using seed scripts.
 
-- Configure a **provider** (control plane)
-- Create an **API** (metadata + API definition upload)
-- Upload **API landing page content** (templates/assets)
-
-These requests typically require:
-
-- `orgId` / `organizationID` / `apiID` (depending on the endpoint)
-- `Authorization: Bearer <access_token>`
-
-#### 1) Configure a provider (control plane)
+### 1 — Configure a provider (control plane)
 
 ```bash
 curl --location 'http://localhost:3000/devportal/organizations/{orgId}/provider' \
@@ -179,13 +247,10 @@ curl --location 'http://localhost:3000/devportal/organizations/{orgId}/provider'
   }'
 ```
 
-#### 2) Create an API (metadata + definition file)
-
-Notes:
+### 2 — Create an API (metadata + definition file)
 
 - `apiType` can be `REST`, `AsyncAPI`, `GraphQL`, or `SOAP`
-- `provider` should match the provider name configured above
-- This is a multipart request: JSON metadata + an API definition file upload
+- This is a multipart request: JSON metadata + an API definition file
 
 ```bash
 curl --location 'http://localhost:3000/devportal/organizations/{organizationID}/apis' \
@@ -204,7 +269,7 @@ curl --location 'http://localhost:3000/devportal/organizations/{organizationID}/
   --form 'apiDefinition=@"{path-to-apiDefinition.json}"'
 ```
 
-#### 3) Upload API landing page content (optional)
+### 3 — Upload API landing page content (optional)
 
 Create a zip with this structure:
 
@@ -230,10 +295,6 @@ curl --location --request POST 'http://localhost:3000/devportal/organizations/{o
   }"; type=application/json'
 ```
 
-#### Postman collection
+### Postman collection
 
-Use this Postman collection to test the Admin API requests:
-
-- [Devportal Postman collection](https://devportal-4432.postman.co/workspace/Devportal-Workspace~9221a728-2c4b-46ec-acc3-095b9debacbc/collection/5029047-61d763dc-d7b9-4436-9a2e-94585c806943?action=share&creator=5029047)
-
-
+[Devportal Postman collection](https://devportal-4432.postman.co/workspace/Devportal-Workspace~9221a728-2c4b-46ec-acc3-095b9debacbc/collection/5029047-61d763dc-d7b9-4436-9a2e-94585c806943?action=share&creator=5029047)

@@ -18,8 +18,7 @@
 
 const crypto = require("crypto");
 const logger = require("../config/logger");
-const config = require("../../config.json");
-const secret = require("../../secret.json");
+const { config, secrets: secret } = require('../config/configLoader');
 const adminDao = require("../dao/admin");
 
 function isApiKeyAuthenticated(req) {

@@ -17,7 +17,7 @@
  */
 /* eslint-disable no-undef */
 const { renderTemplate, renderGivenTemplate, loadLayoutFromAPI, invokeApiRequest } = require('../utils/util');
-const config = require(process.cwd() + '/config');
+const { config } = require('../config/configLoader');
 const logger = require('../config/logger');
 const { logUserAction } = require('../middlewares/auditLogger');
 const constants = require('../utils/constants');
