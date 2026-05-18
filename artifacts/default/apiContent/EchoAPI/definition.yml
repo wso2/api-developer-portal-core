@@ -1,0 +1,74 @@
+openapi: 3.0.1
+info:
+  title: Echo API
+  version: 1.0.0
+  description: |
+    OpenAPI definition for the echo proxy. This describes the public
+    paths exposed under the gateway context `/echo` and uses an API key
+    (header `X-API-Key`) as the security scheme.
+servers:
+  - url: /echo
+security:
+  - ApiKeyHeader: []
+components:
+  securitySchemes:
+    ApiKeyHeader:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    EchoResponse:
+      type: object
+      description: Response returned by the echo service
+      additionalProperties: true
+
+paths:
+  /get:
+    get:
+      summary: Proxy GET to the echo service /get
+      description: Returns query parameters and headers sent to the echo service.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EchoResponse'
+
+  /post:
+    post:
+      summary: Proxy POST to the echo service /post
+      description: Echoes the posted JSON body.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EchoResponse'
+
+  /status/{code}:
+    get:
+      summary: Proxy status check
+      description: Returns the given HTTP status code from the echo service.
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Proxy response (status depends on `code` path param)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EchoResponse'
