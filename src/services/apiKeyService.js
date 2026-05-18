@@ -120,7 +120,7 @@ async function generate({ orgId, apiId, subscriptionId, name, expiresAt, actor }
     const api = await resolveApi(orgId, apiId);
     if (api.error) throw Object.assign(new Error(api.error.message), { status: api.error.status });
 
-    const plaintext = generateSecret();
+    let plaintext = generateSecret();
     const subscription = await resolveSubscription(orgId, subscriptionId);
     let keyId;
 
@@ -146,8 +146,7 @@ async function generate({ orgId, apiId, subscriptionId, name, expiresAt, actor }
             );
         });
     } catch (err) {
-        // zeroize plaintext on failure before re-throwing
-        plaintext.replace(/./g, '0');
+        plaintext = '\0'.repeat(plaintext.length);
         throw err;
     }
 
@@ -168,7 +167,7 @@ async function regenerate({ orgId, keyId, actor }) {
 
     const apiInfo = await resolveApiDirect(orgId, existing.API_ID);
     const gatewayType = apiInfo ? apiInfo.gatewayType : null;
-    const plaintext = generateSecret();
+    let plaintext = generateSecret();
     const subscription = await resolveSubscription(orgId, existing.SUBSCRIPTION_ID);
 
     try {
@@ -186,7 +185,7 @@ async function regenerate({ orgId, keyId, actor }) {
             );
         });
     } catch (err) {
-        plaintext.replace(/./g, '0');
+        plaintext = '\0'.repeat(plaintext.length);
         throw err;
     }
 

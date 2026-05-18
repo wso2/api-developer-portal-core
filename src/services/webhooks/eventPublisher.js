@@ -72,6 +72,15 @@ async function publish(eventType, payload, opts) {
         payload
     }, transaction);
 
+    if (KEY_EVENT_TYPES.has(eventType) && !plaintextKey) {
+        logger.error('[eventPublisher] key event missing plaintextKey — rejecting', {
+            eventType, orgId, aggregateId
+        });
+        event.STATUS = 'REJECTED';
+        await event.save({ transaction });
+        return event.EVENT_ID;
+    }
+
     // For key events, encrypt the plaintext per subscriber and write delivery rows now
     // (inside the same TX) so the plaintext never leaves this call's stack.
     if (KEY_EVENT_TYPES.has(eventType) && plaintextKey) {

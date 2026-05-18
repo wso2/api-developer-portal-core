@@ -113,7 +113,26 @@ async function runBatch() {
             continue;
         }
 
-        const result = await post(delivery, event);
+        let result;
+        try {
+            result = await post(delivery, event);
+        } catch (postErr) {
+            const newAttemptCount = delivery.ATTEMPT_COUNT + 1;
+            const deadLetter = newAttemptCount >= getMaxAttempts();
+            const nextAt = deadLetter ? new Date() : nextAttemptAt(newAttemptCount - 1);
+            await eventDao.markFailed(delivery.DELIVERY_ID, {
+                httpStatus: 0,
+                error: postErr.message,
+                attemptCount: newAttemptCount,
+                nextAttemptAt: nextAt,
+                deadLetter
+            });
+            logger.error('[deliveryWorker] post threw unexpectedly', {
+                deliveryId: delivery.DELIVERY_ID, error: postErr.message
+            });
+            continue;
+        }
+
         const newAttemptCount = delivery.ATTEMPT_COUNT + 1;
 
         if (result.ok) {
@@ -124,7 +143,7 @@ async function runBatch() {
             });
         } else {
             const deadLetter = isNotRetryable(result.status) || newAttemptCount >= getMaxAttempts();
-            const nextAt = deadLetter ? new Date() : nextAttemptAt(newAttemptCount);
+            const nextAt = deadLetter ? new Date() : nextAttemptAt(newAttemptCount - 1);
 
             await eventDao.markFailed(delivery.DELIVERY_ID, {
                 httpStatus: result.status,

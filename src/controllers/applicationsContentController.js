@@ -422,7 +422,7 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
 
     // Load platform APIs that don't require subscription (gatewayType=wso2/api-platform, no subscription plans)
     let noSubPlatformAPIs = [];
-    if (config.controlPlane?.enabled !== false) try {
+    try {
         const noSubApis = await apiMetadata.getAPIMetadataByCondition({
             ORG_ID: orgID,
             GATEWAY_TYPE: 'wso2/api-platform',
