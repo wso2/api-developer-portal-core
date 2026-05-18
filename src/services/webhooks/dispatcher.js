@@ -49,6 +49,16 @@ async function runBatch() {
             logger.error('[dispatcher] failed to create deliveries for event', {
                 eventId: event.EVENT_ID, error: err.message
             });
+            try {
+                await DPEvent.update({ STATUS: 'PENDING' }, { where: { EVENT_ID: event.EVENT_ID } });
+                logger.info('[dispatcher] restored event eligibility after delivery creation failure', {
+                    eventId: event.EVENT_ID
+                });
+            } catch (restoreErr) {
+                logger.error('[dispatcher] failed to restore event eligibility', {
+                    eventId: event.EVENT_ID, error: restoreErr.message
+                });
+            }
         }
     }
 }

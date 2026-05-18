@@ -170,10 +170,20 @@ async function getEvent(eventId) {
 /**
  * Admin: reset a single delivery to PENDING so the worker retries immediately.
  */
-async function retryDelivery(deliveryId) {
+async function retryDelivery(deliveryId, orgId) {
     const [count] = await DPEventDelivery.update(
         { STATUS: 'PENDING', NEXT_ATTEMPT_AT: new Date(), LAST_ERROR: null },
-        { where: { DELIVERY_ID: deliveryId, STATUS: { [Op.in]: ['DEAD_LETTERED', 'FAILED', 'IN_FLIGHT'] } } }
+        {
+            where: {
+                DELIVERY_ID: deliveryId,
+                STATUS: { [Op.in]: ['DEAD_LETTERED', 'FAILED', 'IN_FLIGHT'] },
+                EVENT_ID: {
+                    [Op.in]: sequelize.literal(
+                        `(SELECT EVENT_ID FROM DP_EVENT WHERE ORG_ID = ${sequelize.escape(orgId)})`
+                    )
+                }
+            }
+        }
     );
     return count > 0;
 }

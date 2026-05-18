@@ -63,7 +63,7 @@ async function getEvent(req, res) {
  */
 async function retryDelivery(req, res) {
     try {
-        const ok = await eventDao.retryDelivery(req.params.deliveryId);
+        const ok = await eventDao.retryDelivery(req.params.deliveryId, req.params.orgId);
         if (!ok) return res.status(404).json({ message: 'Delivery not found or not in a retryable state' });
         res.json({ message: 'Delivery queued for retry' });
     } catch (err) {

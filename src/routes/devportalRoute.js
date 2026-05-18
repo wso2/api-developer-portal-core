@@ -277,6 +277,6 @@ if (config.features?.importApplication?.enabled) {
 // Webhook event admin (admin-only)
 router.get('/organizations/:orgId/admin/events', enforceSecuirty(constants.SCOPES.ADMIN), webhookAdminController.listEvents);
 router.get('/organizations/:orgId/admin/events/:eventId', enforceSecuirty(constants.SCOPES.ADMIN), webhookAdminController.getEvent);
-router.post('/organizations/:orgId/admin/deliveries/:deliveryId/retry', enforceSecuirty(constants.SCOPES.ADMIN), webhookAdminController.retryDelivery);
+router.post('/organizations/:orgId/admin/deliveries/:deliveryId/retry', enforceSecuirty(constants.SCOPES.ADMIN), requireCsrfForMutatingApi, webhookAdminController.retryDelivery);
 
 module.exports = router;
