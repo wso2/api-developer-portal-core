@@ -57,28 +57,28 @@ function deref(ref) {
     return cur;
 }
 
-function inlineRefs(node, seen = new Set()) {
-    if (Array.isArray(node)) return node.map(n => inlineRefs(n, seen));
-    if (!node || typeof node !== 'object') return node;
-    if (node.$ref) {
-        if (seen.has(node.$ref)) return {};
-        seen.add(node.$ref);
-        const out = inlineRefs(deref(node.$ref), seen);
-        seen.delete(node.$ref);
-        return out;
-    }
-    const out = {};
-    for (const [k, v] of Object.entries(node)) out[k] = inlineRefs(v, seen);
-    return out;
+function validationSchema(schema) {
+    // Keep $refs intact so AJV can validate recursive schemas instead of
+    // replacing cycle edges with permissive `{}` schemas.
+    return {
+        components: SPEC.components,
+        allOf: [schema],
+    };
 }
 
 // Match express-openapi-validator's AJV config (see node_modules/express-openapi-validator/dist/framework/ajv/options.js).
 // `nullable: true` makes OpenAPI 3.0 `nullable: true` declarations honored — without this, AJV rejects `null` for any typed field.
-const ajv = new Ajv({ allErrors: true, jsonPointers: true, nullable: true, useDefaults: true });
+const ajv = new Ajv({
+    allErrors: true,
+    jsonPointers: true,
+    nullable: true,
+    useDefaults: true,
+    logger: false,
+});
 
 function validate(schema, value) {
     try {
-        const v = ajv.compile(inlineRefs(schema));
+        const v = ajv.compile(validationSchema(schema));
         const ok = v(value);
         return { ok, errors: v.errors || [] };
     } catch (e) {

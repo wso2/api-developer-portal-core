@@ -79,6 +79,12 @@ function notImplementedHandler(operationId, tag) {
     };
 }
 
+function isMissingHandlerModule(err, modulePath) {
+    if (err.code !== 'MODULE_NOT_FOUND') return false;
+    const firstLine = String(err.message || '').split('\n')[0];
+    return firstLine === `Cannot find module '${modulePath}'`;
+}
+
 function operationResolver(handlersPath, route, apiDoc) {
     const pathKey = route.openApiRoute.substring(route.basePath.length);
     const schema = apiDoc.paths[pathKey][route.method.toLowerCase()];
@@ -91,7 +97,7 @@ function operationResolver(handlersPath, route, apiDoc) {
     try {
         mod = require(modulePath);
     } catch (err) {
-        if (err.code === 'MODULE_NOT_FOUND') {
+        if (isMissingHandlerModule(err, modulePath)) {
             return notImplementedHandler(operationId, tag);
         }
         throw err;
