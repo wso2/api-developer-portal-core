@@ -89,7 +89,7 @@ const createPlatformGatewaySubscription = async (req, res) => {
             });
         }
 
-        const plans = apiMetadata.SubscriptionPolicies || [];
+        const plans = apiMetadata.DP_SUBSCRIPTION_POLICies || [];
         if (plans.length === 0) {
             return res.status(400).json({
                 code: '400', message: 'Bad Request',
