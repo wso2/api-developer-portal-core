@@ -284,6 +284,9 @@ async function OAuth2Security(req /* , requiredScopes, schema */) {
  * authenticated it via API key (or any preauthorized non-OAuth mode, to
  * mirror legacy behaviour where API key endpoints also accepted basic/mTLS).
  */
+/*
+ * TODO: once the API key support introduces with scope support, change the method to check for scopes as well, and rename it to ApiKeySecurity for clarity.
+ */
 async function apiKeyAuth(req /* , scopes, schema */) {
     if (req.auth?.mode === 'apikey' || req.auth?.preauthorized) return true;
     const err = new Error('Authentication required');
