@@ -607,7 +607,7 @@ app.use((req, res, next) => {
 });
 
 //backend routes
-if (config.advanced?.useOpenApiValidator) {
+if (config.advanced?.openApiValidator?.enabled) {
     logger.info('Mounting spec-driven /devportal router (advanced.useOpenApiValidator=true)');
     const devportalApiRouter = require('./openapi/devportalApiRouter');
     app.use(constants.ROUTE.DEV_PORTAL, devportalApiRouter);
