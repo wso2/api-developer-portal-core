@@ -2638,7 +2638,7 @@ paths:
       summary: List webhook events
       description: >-
         Returns a paginated list of webhook events for the organization. Each event includes a
-        summary of its delivery rows. Admin scope required.
+        summary of its delivery rows. Requires dp:event_read scope.
       parameters:
         - name: status
           in: query
@@ -2671,7 +2671,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - OAuth2Security:
-            - dp:admin
+            - dp:event_read
   /organizations/{orgId}/events/{eventId}:
     parameters:
       - $ref: "#/components/parameters/OrgId"
@@ -2683,7 +2683,7 @@ paths:
       summary: Get a webhook event
       description: >-
         Returns a single webhook event with the full details of all its delivery rows.
-        Admin scope required.
+        Requires dp:event_read scope.
       responses:
         "200":
           $ref: "#/components/responses/WebhookEventResponse"
@@ -2695,7 +2695,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - OAuth2Security:
-            - dp:admin
+            - dp:event_read
   /organizations/{orgId}/deliveries/{deliveryId}/retry:
     parameters:
       - $ref: "#/components/parameters/OrgId"
@@ -2707,7 +2707,7 @@ paths:
       summary: Retry a failed webhook delivery
       description: >-
         Resets a `DEAD_LETTERED` or `FAILED` delivery back to `PENDING` so the delivery worker
-        retries it immediately. Admin scope required.
+        retries it immediately. Requires dp:delivery_manage scope.
       responses:
         "200":
           description: Delivery queued for retry.
@@ -2727,7 +2727,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - OAuth2Security:
-            - dp:admin
+            - dp:delivery_manage
 components:
   securitySchemes:
     OAuth2Security:
@@ -2820,6 +2820,8 @@ components:
             dp:api_flow_write: Create, update, or generate API flows.
             dp:api_flow_delete: Delete API flows.
             dp:api_flow_manage: Manage API flows.
+            dp:event_read: Read webhook events and delivery details.
+            dp:delivery_manage: Retry failed webhook deliveries.
             dp:utility_write: Create temporary utility files.
             dp:utility_manage: Manage utility operations.
     apiKeyAuth:
