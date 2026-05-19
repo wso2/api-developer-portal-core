@@ -21,10 +21,12 @@
  * Tag: SDK
  */
 const sdkJobService = require('../../services/sdkJobService');
+const { requireCsrfForMutatingApi } = require('../../middlewares/csrfProtection')
+const { compose } = require('./_compose');
 
 module.exports = {
-    generateSDK: sdkJobService.generateSDK,
+    generateSDK: compose(requireCsrfForMutatingApi, sdkJobService.generateSDK),
     streamSDKProgress: sdkJobService.streamSDKProgress,
-    cancelSDK: sdkJobService.cancelSDK,
+    cancelSDK: compose(requireCsrfForMutatingApi, sdkJobService.cancelSDK),
     downloadSDK: sdkJobService.downloadSDK,
 };
