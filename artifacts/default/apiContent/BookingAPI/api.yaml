@@ -2,26 +2,30 @@ apiVersion: devportal.api-platform.wso2.com/v1
 kind: RestApi
 
 metadata:
-  name: echo-api-v1.0
+  name: booking-api-v1.0
 
 spec:
   type: REST
-  displayName: Echo API
+  displayName: Booking API
   version: v1.0
-  description: Sample echo API. Requires API key authentication.
+  description: Sample hotel/event booking API. Requires API key authentication and a per-request subscription token. Choose a Gold, Silver, or Bronze plan when subscribing.
   provider: WSO2
   status: PUBLISHED
   gatewayType: wso2/api-platform
-  referenceID: echo-api-v1.0
+  referenceID: booking-api-v1.0
 
   tags:
-    - echo
+    - booking
     - api-key
+    - subscription-token
 
   labels:
     - default
 
-  subscriptionPolicies: []
+  subscriptionPolicies:
+    - Gold
+    - Silver
+    - Bronze
 
   visibility: PUBLIC
   visibleGroups: []
@@ -33,5 +37,5 @@ spec:
     technicalOwnerEmail: architecture@example.com
 
   endpoints:
-    sandboxUrl: http://localhost:8080/echo
-    productionUrl: http://localhost:8080/echo
+    sandboxUrl: http://localhost:8080/booking
+    productionUrl: http://localhost:8080/booking

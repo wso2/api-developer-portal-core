@@ -1,13 +1,13 @@
 openapi: 3.0.1
 info:
-  title: Echo API
+  title: Ping API
   version: 1.0.0
   description: |
-    OpenAPI definition for the echo proxy. This describes the public
-    paths exposed under the gateway context `/echo` and uses an API key
-    (header `X-API-Key`) as the security scheme.
+    HTTP echo/probe API secured with an API key (`X-API-Key` header).
+    Use this API to inspect requests, test connectivity, and probe status codes.
+    No subscription plans are required — just an API key.
 servers:
-  - url: /echo
+  - url: /ping
 security:
   - ApiKeyHeader: []
 components:
@@ -17,28 +17,28 @@ components:
       in: header
       name: X-API-Key
   schemas:
-    EchoResponse:
+    PingResponse:
       type: object
-      description: Response returned by the echo service
+      description: Response returned by the ping/echo service
       additionalProperties: true
 
 paths:
   /get:
     get:
-      summary: Proxy GET to the echo service /get
-      description: Returns query parameters and headers sent to the echo service.
+      summary: Echo a GET request
+      description: Returns the query parameters and headers sent with the request.
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EchoResponse'
+                $ref: '#/components/schemas/PingResponse'
 
   /post:
     post:
-      summary: Proxy POST to the echo service /post
-      description: Echoes the posted JSON body.
+      summary: Echo a POST request
+      description: Echoes the posted JSON body back in the response.
       requestBody:
         required: false
         content:
@@ -52,12 +52,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EchoResponse'
+                $ref: '#/components/schemas/PingResponse'
 
   /status/{code}:
     get:
-      summary: Proxy status check
-      description: Returns the given HTTP status code from the echo service.
+      summary: Return a specific HTTP status code
+      description: Returns the given HTTP status code — useful for testing error handling.
       parameters:
         - name: code
           in: path
@@ -67,8 +67,8 @@ paths:
             format: int32
       responses:
         '200':
-          description: Proxy response (status depends on `code` path param)
+          description: Proxy response (actual status depends on the `code` path parameter)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EchoResponse'
+                $ref: '#/components/schemas/PingResponse'
