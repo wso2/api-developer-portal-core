@@ -1,9 +1,20 @@
 /*
  * Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * See the License file for the specific language governing permissions and
- * limitations under the License.
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ *
  */
 
 /*
@@ -12,16 +23,10 @@
  *   authResolver  →  OpenAPI validator (calls OAuth2Security / apiKeyAuth)  →  handler
  *
  * `authResolver` runs once per /devportal request and resolves credentials in the
- * same order as the legacy `enforceSecuirty` (local → bearer → basic → api key →
- * mTLS). It populates `req.auth` with `{ mode, scopes, preauthorized, userId }`
- * but does NOT enforce scopes — that is the job of `OAuth2Security`, which the
- * validator invokes with the operation-declared scope list.
+ * order local → bearer → basic → api key → mTLS). It populates `req.auth` with 
+ * `{ mode, scopes, preauthorized, userId } but does NOT enforce scopes — that is the job of `OAuth2Security`, 
+ * which the validator invokes with the operation-declared scope list.
  *
- * The JWT/JWKS/cert/basic/api-key/mTLS helpers below are intentionally forked
- * from src/middlewares/ensureAuthenticated.js so the legacy path can stay
- * untouched while both code paths run side-by-side under the
- * `advanced.useOpenApiValidator` toggle. Once the legacy path is retired this
- * file becomes the single source of truth.
  */
 
 const axios = require('axios');
@@ -285,7 +290,8 @@ async function OAuth2Security(req /* , requiredScopes, schema */) {
  * mirror legacy behaviour where API key endpoints also accepted basic/mTLS).
  */
 /*
- * TODO: once the API key support introduces with scope support, change the method to check for scopes as well, and rename it to ApiKeySecurity for clarity.
+ * TODO: once the API key support introduces with scope support, change the method 
+ * to check for scopes as well, and rename it to ApiKeySecurity for clarity.
  */
 async function apiKeyAuth(req /* , scopes, schema */) {
     if (req.auth?.mode === 'apikey' || req.auth?.preauthorized) return true;
