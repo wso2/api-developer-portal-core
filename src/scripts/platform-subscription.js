@@ -39,17 +39,22 @@ async function subscribePlatformGateway(orgID, apiId, planName, applicationId) {
                 subscriptionPlanName: planName,
                 status: 'ACTIVE'
             });
-            const token = responseData.subscriptionToken;
             const modalId = 'planModal-' + apiId;
             const modalEl = document.getElementById(modalId);
-            if (modalEl && modalEl.style.display && modalEl.style.display !== 'none') {
-                try {
-                    showSubscriptionTokenInModal(apiId, token, planName);
-                } catch (e) {
+            const isTokenBased = modalEl && modalEl.dataset.hasSubscriptionToken === 'true';
+            if (isTokenBased) {
+                const token = responseData.subscriptionToken;
+                if (modalEl && modalEl.style.display && modalEl.style.display !== 'none') {
+                    try {
+                        showSubscriptionTokenInModal(apiId, token, planName);
+                    } catch (e) {
+                        await showSubscriptionTokenModal(token, planName);
+                    }
+                } else {
                     await showSubscriptionTokenModal(token, planName);
                 }
             } else {
-                await showSubscriptionTokenModal(token, planName);
+                await refreshLandingPageSubscriptions();
             }
         } else {
             await showAlert(`Failed to subscribe: ${responseData.description || 'Unknown error'}`, 'error');
@@ -227,10 +232,16 @@ async function refreshLandingPageSubscriptions() {
                     document.querySelector('#subscriptionPlans .container-fluid').prepend(existingSection);
                 }
             }
+            var modalEl = document.getElementById('planModal-' + apiId);
+            var isTokenBased = modalEl && modalEl.dataset.hasSubscriptionToken === 'true';
+
             existingSection.innerHTML = '<div class="container-header mb-4">Subscriptions</div>';
             var table = document.createElement('table');
             table.className = 'table';
-            table.innerHTML = '<thead><tr><th>Plan</th><th>Status</th><th>Subscription Token</th><th>Actions</th></tr></thead><tbody></tbody>';
+            var headerHtml = '<thead><tr><th>Plan</th><th>Status</th>';
+            if (isTokenBased) headerHtml += '<th>Subscription Token</th>';
+            headerHtml += '<th>Actions</th></tr></thead><tbody></tbody>';
+            table.innerHTML = headerHtml;
             var tbody = table.querySelector('tbody');
             existing.forEach(function(sub) {
                 var tr = document.createElement('tr');
@@ -248,32 +259,34 @@ async function refreshLandingPageSubscriptions() {
                 tdStatus.appendChild(badge);
                 tr.appendChild(tdStatus);
 
-                // Token cell
-                var tdToken = document.createElement('td');
-                var tokenDisplay = document.createElement('div');
-                tokenDisplay.className = 'token-display';
-                var code = document.createElement('code');
-                code.className = 'masked-token';
-                code.id = 'token-' + sub.subscriptionId;
-                code.dataset.revealed = 'false';
-                code.textContent = '****';
-                var revealBtn = document.createElement('button');
-                revealBtn.className = 'btn btn-sm btn-outline-secondary';
-                revealBtn.title = 'Reveal token';
-                revealBtn.innerHTML = '<i class="bi bi-eye"></i>';
-                revealBtn.dataset.subscriptionId = sub.subscriptionId;
-                revealBtn.addEventListener('click', function() { toggleTokenVisibility(this.dataset.subscriptionId); });
-                var copyBtn = document.createElement('button');
-                copyBtn.className = 'btn btn-sm btn-outline-secondary';
-                copyBtn.title = 'Copy token';
-                copyBtn.innerHTML = '<i class="bi bi-clipboard"></i>';
-                copyBtn.dataset.subscriptionId = sub.subscriptionId;
-                copyBtn.addEventListener('click', function() { copySubscriptionToken(this.dataset.subscriptionId); });
-                tokenDisplay.appendChild(code);
-                tokenDisplay.appendChild(revealBtn);
-                tokenDisplay.appendChild(copyBtn);
-                tdToken.appendChild(tokenDisplay);
-                tr.appendChild(tdToken);
+                // Token cell — only for token-based subscription APIs
+                if (isTokenBased) {
+                    var tdToken = document.createElement('td');
+                    var tokenDisplay = document.createElement('div');
+                    tokenDisplay.className = 'token-display';
+                    var code = document.createElement('code');
+                    code.className = 'masked-token';
+                    code.id = 'token-' + sub.subscriptionId;
+                    code.dataset.revealed = 'false';
+                    code.textContent = '****';
+                    var revealBtn = document.createElement('button');
+                    revealBtn.className = 'btn btn-sm btn-outline-secondary';
+                    revealBtn.title = 'Reveal token';
+                    revealBtn.innerHTML = '<i class="bi bi-eye"></i>';
+                    revealBtn.dataset.subscriptionId = sub.subscriptionId;
+                    revealBtn.addEventListener('click', function() { toggleTokenVisibility(this.dataset.subscriptionId); });
+                    var copyBtn = document.createElement('button');
+                    copyBtn.className = 'btn btn-sm btn-outline-secondary';
+                    copyBtn.title = 'Copy token';
+                    copyBtn.innerHTML = '<i class="bi bi-clipboard"></i>';
+                    copyBtn.dataset.subscriptionId = sub.subscriptionId;
+                    copyBtn.addEventListener('click', function() { copySubscriptionToken(this.dataset.subscriptionId); });
+                    tokenDisplay.appendChild(code);
+                    tokenDisplay.appendChild(revealBtn);
+                    tokenDisplay.appendChild(copyBtn);
+                    tdToken.appendChild(tokenDisplay);
+                    tr.appendChild(tdToken);
+                }
 
                 // Actions cell
                 var tdActions = document.createElement('td');

@@ -18,8 +18,37 @@
 const eventDao = require('../dao/event');
 const logger = require('../config/logger');
 
+function formatDelivery(d) {
+    return {
+        deliveryId: d.DELIVERY_ID,
+        subscriberId: d.SUBSCRIBER_ID,
+        targetUrl: d.TARGET_URL || null,
+        status: d.STATUS,
+        attemptCount: d.ATTEMPT_COUNT,
+        lastHttpStatus: d.LAST_HTTP_STATUS || null,
+        lastError: d.LAST_ERROR || null,
+        lastAttemptAt: d.LAST_ATTEMPT_AT || null,
+        deliveredAt: d.DELIVERED_AT || null,
+    };
+}
+
+function formatEvent(row) {
+    const deliveries = (row.DP_EVENT_DELIVERIES || []).map(formatDelivery);
+    return {
+        eventId: row.EVENT_ID,
+        eventType: row.EVENT_TYPE,
+        orgId: row.ORG_ID,
+        gatewayType: row.GATEWAY_TYPE || null,
+        aggregateType: row.AGGREGATE_TYPE,
+        aggregateId: row.AGGREGATE_ID,
+        status: row.STATUS,
+        occurredAt: row.OCCURRED_AT,
+        deliveries,
+    };
+}
+
 /**
- * GET /organizations/:orgId/admin/events
+ * GET /organizations/:orgId/events
  * Query params: status, limit, offset
  */
 async function listEvents(req, res) {
@@ -32,7 +61,7 @@ async function listEvents(req, res) {
             limit: Math.min(parseInt(limit, 10) || 50, 200),
             offset: parseInt(offset, 10) || 0
         });
-        res.json({ total: result.count, events: result.rows });
+        res.json({ total: result.count, events: result.rows.map(formatEvent) });
     } catch (err) {
         logger.error('[webhookAdmin] listEvents error', { error: err.message });
         res.status(500).json({ message: err.message });
@@ -40,7 +69,7 @@ async function listEvents(req, res) {
 }
 
 /**
- * GET /organizations/:orgId/admin/events/:eventId
+ * GET /organizations/:orgId/events/:eventId
  */
 async function getEvent(req, res) {
     try {
@@ -48,7 +77,7 @@ async function getEvent(req, res) {
         if (!event || event.ORG_ID !== req.params.orgId) {
             return res.status(404).json({ message: 'Event not found' });
         }
-        res.json(event);
+        res.json(formatEvent(event));
     } catch (err) {
         logger.error('[webhookAdmin] getEvent error', { error: err.message });
         res.status(500).json({ message: err.message });

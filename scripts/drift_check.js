@@ -212,6 +212,60 @@ const SAMPLES = [
     ['addBillingEngineKeys', 201, { message: 'Billing engine keys saved' }],
     ['updateBillingEngineKeys', 200, { message: 'Billing engine keys updated' }],
     ['deleteBillingEngineKeys', 200, { message: 'Billing engine keys deleted' }],
+
+    // Platform API Keys — apiKeyController (devportal source of truth, no CP lookup)
+    // generateApiKey res.status(201).json({ keyId, name, key, expiresAt, status })
+    ['generatePlatformApiKey', 201, {
+        keyId: 'key-12345', name: 'weather_prod_key',
+        key: 'ak_dGhpcyBpcyBub3QgYSByZWFsIGtleQ',
+        expiresAt: '2026-12-31T23:59:59.000Z', status: 'ACTIVE',
+    }],
+    // listApiKeys res.status(200).json(keys.map(k => ({ keyId, name, status, expiresAt, createdAt, revokedAt?, apiId })))
+    ['listPlatformApiKeys', 200, [{
+        keyId: 'key-12345', name: 'weather_prod_key', status: 'ACTIVE',
+        expiresAt: null, createdAt: '2026-05-07T08:30:00.000Z', apiId: 'api-7f4c2a6b',
+    }]],
+    // regenerateApiKey res.status(200).json({ keyId, name, key, expiresAt, status })
+    ['regeneratePlatformApiKey', 200, {
+        keyId: 'key-12345', name: 'weather_prod_key',
+        key: 'ak_bmV3a2V5Zm9yZGVtb25zdHJhdGlvbg',
+        expiresAt: null, status: 'ACTIVE',
+    }],
+
+    // Webhook Events — webhookAdminController maps Sequelize rows to camelCase DTOs
+    // listEvents res.json({ total, events: rows.map(formatEvent) })
+    // listEvents and getEvent both use formatEvent() — same shape with full delivery fields
+    ['listWebhookEvents', 200, {
+        total: 1,
+        events: [{
+            eventId: 'evt-abc123', eventType: 'apikey.generated',
+            orgId: 'org-default', gatewayType: 'default',
+            aggregateType: 'apikey', aggregateId: 'key-12345',
+            status: 'ALL_DELIVERED', occurredAt: '2026-05-07T08:30:00.000Z',
+            deliveries: [{
+                deliveryId: 'del-abc123', subscriberId: 'sub-1',
+                targetUrl: 'https://example.com/webhook',
+                status: 'DELIVERED', attemptCount: 1,
+                lastHttpStatus: 200, lastError: null,
+                lastAttemptAt: '2026-05-07T08:30:01.000Z', deliveredAt: '2026-05-07T08:30:01.000Z',
+            }],
+        }],
+    }],
+    ['getWebhookEvent', 200, {
+        eventId: 'evt-abc123', eventType: 'apikey.generated',
+        orgId: 'org-default', gatewayType: 'default',
+        aggregateType: 'apikey', aggregateId: 'key-12345',
+        status: 'ALL_DELIVERED', occurredAt: '2026-05-07T08:30:00.000Z',
+        deliveries: [{
+            deliveryId: 'del-abc123', subscriberId: 'sub-1',
+            targetUrl: 'https://example.com/webhook',
+            status: 'DELIVERED', attemptCount: 1,
+            lastHttpStatus: 200, lastError: null,
+            lastAttemptAt: '2026-05-07T08:30:01.000Z', deliveredAt: '2026-05-07T08:30:01.000Z',
+        }],
+    }],
+    // retryDelivery res.json({ message })
+    ['retryWebhookDelivery', 200, { message: 'Delivery queued for retry' }],
 ];
 
 const drifts = [];

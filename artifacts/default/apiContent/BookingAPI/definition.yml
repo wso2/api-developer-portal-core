@@ -20,6 +20,7 @@ components:
       name: X-API-Key
   parameters:
     SubscriptionTokenHeader:
+      x-header-type: subscription-token
       name: X-Subscription-Token
       in: header
       description: Subscription token issued after subscribing to a plan.
