@@ -1,6 +1,7 @@
 <div id="planModal-{{apiID}}" class="modal custom-modal subscription-plan-modal" tabindex="-1" role="dialog"
     style="display:none;"
-    data-org-id="{{@root.orgID}}" data-api-refid="{{#if apiInfo.apiReferenceID}}{{apiInfo.apiReferenceID}}{{else}}{{apiID}}{{/if}}" data-gateway-type="{{apiInfo.gatewayType}}">
+    data-org-id="{{@root.orgID}}" data-api-refid="{{#if apiInfo.apiReferenceID}}{{apiInfo.apiReferenceID}}{{else}}{{apiID}}{{/if}}" data-gateway-type="{{apiInfo.gatewayType}}"
+    data-has-subscription-token="{{@root.hasSubscriptionToken}}">
     <div class="modal-dialog modal-xl subscription-plan-modal-dialog" role="document">
         <div class="modal-content custom-modal-content">
             <div class="custom-modal-header">

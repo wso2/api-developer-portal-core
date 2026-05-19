@@ -14,21 +14,20 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
- *
  */
 
 /*
- * Tag: Platform API Keys
+ * Tag: Webhook Events
  *
- * Mutating ops are CSRF-protected (matches legacy devportalRoute.js).
+ * Admin-only endpoints for inspecting and retrying webhook event deliveries.
+ * retryWebhookDelivery is CSRF-protected as it mutates delivery state.
  */
-const apiKeyController = require('../../controllers/apiKeyController');
+const webhookAdminController = require('../../controllers/webhookAdminController');
 const { requireCsrfForMutatingApi } = require('../../middlewares/csrfProtection');
 const { compose } = require('./_compose');
 
 module.exports = {
-    generatePlatformApiKey: compose(requireCsrfForMutatingApi, apiKeyController.generateApiKey),
-    listPlatformApiKeys: apiKeyController.listApiKeys,
-    regeneratePlatformApiKey: compose(requireCsrfForMutatingApi, apiKeyController.regenerateApiKey),
-    revokePlatformApiKey: compose(requireCsrfForMutatingApi, apiKeyController.revokeApiKey),
+    listWebhookEvents: webhookAdminController.listEvents,
+    getWebhookEvent: webhookAdminController.getEvent,
+    retryWebhookDelivery: compose(requireCsrfForMutatingApi, webhookAdminController.retryDelivery),
 };

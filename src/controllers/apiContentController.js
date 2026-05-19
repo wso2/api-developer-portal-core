@@ -29,7 +29,7 @@ const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const platformSubDao = require('../dao/platformSubscription');
 const apiMetadataService = require('../services/apiMetadataService');
-const { shouldShowPlatformApiKeysNav } = require('../services/platformApiKeysNavService');
+const { shouldShowPlatformApiKeysNav, findSubscriptionTokenHeader } = require('../services/platformApiKeysNavService');
 const adminService = require('../services/adminService');
 const apiFlowService = require('../services/apiFlowService');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
@@ -506,6 +506,7 @@ const loadAPIContent = async (req, res) => {
                 isFederatedAPI: isFederatedAPI,
             };
             templateContent.showPlatformApiKeysNav = await shouldShowPlatformApiKeysNav(req, metaData, apiDetail, apiDefinitionForNav);
+            templateContent.hasSubscriptionToken = !!findSubscriptionTokenHeader(apiDefinitionForNav);
             if (metaData.apiInfo.apiType == "MCP") {
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp-landing", viewName);
             } else {

@@ -41,6 +41,7 @@ tags:
   - name: API Flows
   - name: Utilities
   - name: Authentication
+  - name: Webhook Events
 paths:
   /organizations:
     post:
@@ -1233,14 +1234,15 @@ paths:
       operationId: generatePlatformApiKey
       summary: Generate a platform API key
       description: >-
-        Generates an API key for a Platform Gateway API. The request uses the Developer Portal API ID,
-        which is validated and resolved to the control-plane API reference before the key is generated.
-        Key names must match `^[a-z0-9][a-z0-9_-]{0,127}$`, and `expiresAt` must include a timezone when
-        sent as an ISO-8601 string.
+        Generates an API key stored in the Developer Portal (devportal is source of truth). The
+        plaintext secret is returned once in the response and never persisted. A `apikey.generated`
+        webhook event is published so gateways can register the key. Key names must match
+        `^[a-z0-9][a-z0-9_-]{0,127}$`, and `expiresAt` must include a timezone when sent as an
+        ISO-8601 string.
       requestBody:
         $ref: "#/components/requestBodies/PlatformApiKeyBody"
       responses:
-        "200":
+        "201":
           $ref: "#/components/responses/PlatformApiKeyGenerateResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
@@ -1290,11 +1292,9 @@ paths:
       operationId: regeneratePlatformApiKey
       summary: Regenerate a platform API key
       description: >-
-        Regenerates the secret for an existing platform API key. The request body repeats the target
-        Developer Portal API ID so the service can verify that the API exists, has a control-plane
-        reference, and is a Platform Gateway API.
-      requestBody:
-        $ref: "#/components/requestBodies/PlatformApiKeyBody"
+        Regenerates the secret for an existing platform API key identified by `apiKeyId`. The old
+        secret is invalidated at connected gateways via an `apikey.regenerated` webhook event. The
+        new plaintext secret is returned once and never persisted.
       responses:
         "200":
           $ref: "#/components/responses/PlatformApiKeyGenerateResponse"
@@ -1320,13 +1320,11 @@ paths:
       operationId: revokePlatformApiKey
       summary: Revoke a platform API key
       description: >-
-        Revokes an existing platform API key for a Platform Gateway API. The Developer Portal API ID is
-        supplied as a query parameter so the service can resolve and pass the control-plane API reference.
-      parameters:
-        - $ref: "#/components/parameters/ApiIdQueryRequired"
+        Revokes an existing platform API key. An `apikey.revoked` webhook event is published so
+        connected gateways can immediately reject requests carrying the key.
       responses:
-        "200":
-          $ref: "#/components/responses/EmptyResponse"
+        "204":
+          description: API key revoked successfully.
         "400":
           $ref: "#/components/responses/BadRequest"
         "403":
@@ -2612,6 +2610,106 @@ paths:
       responses:
         default:
           $ref: "#/components/responses/DefaultResponse"
+  /organizations/{orgId}/events:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      tags:
+        - Webhook Events
+      operationId: listWebhookEvents
+      summary: List webhook events
+      description: >-
+        Returns a paginated list of webhook events for the organization. Each event includes a
+        summary of its delivery rows. Admin scope required.
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [PENDING, DISPATCHED, ALL_DELIVERED, FAILED]
+          description: Filter events by status.
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          $ref: "#/components/responses/WebhookEventListResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - OAuth2Security:
+            - dp:admin
+  /organizations/{orgId}/events/{eventId}:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/EventId"
+    get:
+      tags:
+        - Webhook Events
+      operationId: getWebhookEvent
+      summary: Get a webhook event
+      description: >-
+        Returns a single webhook event with the full details of all its delivery rows.
+        Admin scope required.
+      responses:
+        "200":
+          $ref: "#/components/responses/WebhookEventResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - OAuth2Security:
+            - dp:admin
+  /organizations/{orgId}/deliveries/{deliveryId}/retry:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/DeliveryId"
+    post:
+      tags:
+        - Webhook Events
+      operationId: retryWebhookDelivery
+      summary: Retry a failed webhook delivery
+      description: >-
+        Resets a `DEAD_LETTERED` or `FAILED` delivery back to `PENDING` so the delivery worker
+        retries it immediately. Admin scope required.
+      responses:
+        "200":
+          description: Delivery queued for retry.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Delivery queued for retry
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - OAuth2Security:
+            - dp:admin
 components:
   securitySchemes:
     OAuth2Security:
@@ -2770,6 +2868,20 @@ components:
       required: true
       schema:
         type: string
+    EventId:
+      name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Webhook event identifier.
+    DeliveryId:
+      name: deliveryId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Webhook delivery identifier.
     ApplicationId:
       name: applicationId
       in: path
@@ -4137,45 +4249,26 @@ components:
                 subscriptionPlanName: Gold
                 status: ACTIVE
     PlatformApiKeyGenerateResponse:
-      description: Generated or regenerated platform API key response returned by the control plane.
+      description: Generated or regenerated platform API key. The plaintext `key` is returned exactly once.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/PlatformApiKeyResponse"
           example:
-            id: key-12345
+            keyId: key-12345
             name: weather_prod_key
-            apiId: cp-api-12345
-            token: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.example
+            apiId: api-7f4c2a6b
+            key: ak_dGhpcyBpcyBub3QgYSByZWFsIGtleQ
             expiresAt: "2026-12-31T23:59:59Z"
             status: ACTIVE
     PlatformApiKeyListResponse:
-      description: List of platform API key metadata records returned by the control plane.
+      description: List of platform API key metadata records.
       content:
         application/json:
           schema:
-            oneOf:
-              - type: array
-                items:
-                  $ref: "#/components/schemas/PlatformApiKeyMetadataResponse"
-              - type: object
-                properties:
-                  count:
-                    type: integer
-                  list:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/PlatformApiKeyMetadataResponse"
-                additionalProperties: true
-          example:
-            count: 1
-            list:
-              - id: key-12345
-                name: weather_prod_key
-                apiId: cp-api-12345
-                expiresAt: "2026-12-31T23:59:59Z"
-                status: ACTIVE
-                createdTime: "2026-05-07T08:30:00Z"
+            type: array
+            items:
+              $ref: "#/components/schemas/PlatformApiKeyMetadataResponse"
     SubscriptionMessageResponse:
       description: Subscription mutation result.
       content:
@@ -4632,6 +4725,26 @@ components:
               - premium
             removedLabels:
               - internal
+    WebhookEventListResponse:
+      description: Paginated list of webhook events.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              total:
+                type: integer
+                description: Total number of events matching the query.
+              events:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WebhookEvent"
+    WebhookEventResponse:
+      description: Single webhook event with full delivery details.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/WebhookEvent"
   schemas:
     MessageResponse:
       type: object
@@ -5463,6 +5576,10 @@ components:
           type: string
           pattern: ^[a-z0-9][a-z0-9_-]{0,127}$
           example: weather_prod_key
+        subscriptionId:
+          type: string
+          description: Optional platform subscription ID to associate the key with.
+          example: sub-abc123
         expiresAt:
           oneOf:
             - type: string
@@ -5473,51 +5590,48 @@ components:
       additionalProperties: false
     PlatformApiKeyMetadataResponse:
       type: object
-      description: Platform API key metadata returned by list operations. Secret material is normally omitted.
+      description: Platform API key metadata returned by list operations. Secret material is omitted.
       properties:
-        id:
+        keyId:
           type: string
-          example: key-12345
-        apiKeyId:
-          type: string
-          description: Alternative key identifier used by some control-plane responses.
+          description: Developer Portal key identifier.
           example: key-12345
         name:
           type: string
           example: weather_prod_key
         apiId:
           type: string
-          description: Control-plane API reference ID.
-          example: cp-api-12345
+          description: Developer Portal API ID the key belongs to.
+          example: api-7f4c2a6b
+        status:
+          type: string
+          enum: [ACTIVE, REVOKED]
+          example: ACTIVE
         expiresAt:
           type: string
           format: date-time
           nullable: true
           example: "2026-12-31T23:59:59Z"
-        status:
-          type: string
-          example: ACTIVE
-        createdTime:
+        createdAt:
           type: string
           format: date-time
-        updatedTime:
+        revokedAt:
           type: string
           format: date-time
+          nullable: true
       additionalProperties: true
     PlatformApiKeyResponse:
       allOf:
         - $ref: "#/components/schemas/PlatformApiKeyMetadataResponse"
         - type: object
-          description: Platform API key response. The generated secret is returned only by generate/regenerate operations.
+          description: >-
+            Platform API key response returned by generate/regenerate. The plaintext secret is
+            returned exactly once and never persisted — store it securely.
           properties:
-            token:
+            key:
               type: string
-              description: Generated API key secret. Store this value securely because it may not be returned again.
-              example: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.example
-            apiKey:
-              type: string
-              description: Alternative generated secret field used by some control-plane responses.
-              example: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.example
+              description: One-time plaintext API key secret.
+              example: ak_dGhpcyBpcyBub3QgYSByZWFsIGtleQ
     SubscriptionRequest:
       type: object
       required:
@@ -6669,3 +6783,76 @@ components:
           type: string
           example: workflow.arazzo.yaml
           default: workflow.arazzo.yaml
+
+    WebhookEventDelivery:
+      type: object
+      description: A single webhook delivery attempt.
+      properties:
+        deliveryId:
+          type: string
+          example: del-abc123
+        subscriberId:
+          type: string
+          example: sub-xyz789
+        targetUrl:
+          type: string
+          nullable: true
+          example: https://example.com/webhook
+        status:
+          type: string
+          enum: [PENDING, IN_FLIGHT, DELIVERED, FAILED, DEAD_LETTERED]
+          example: DELIVERED
+        attemptCount:
+          type: integer
+          example: 1
+        lastHttpStatus:
+          type: integer
+          nullable: true
+          example: 200
+        lastError:
+          type: string
+          nullable: true
+        lastAttemptAt:
+          type: string
+          format: date-time
+          nullable: true
+        deliveredAt:
+          type: string
+          format: date-time
+          nullable: true
+      additionalProperties: false
+    WebhookEvent:
+      type: object
+      description: A webhook event with its delivery rows.
+      properties:
+        eventId:
+          type: string
+          example: evt-abc123
+        eventType:
+          type: string
+          example: apikey.generated
+        orgId:
+          type: string
+          example: org-default
+        gatewayType:
+          type: string
+          nullable: true
+          example: default
+        aggregateType:
+          type: string
+          example: apikey
+        aggregateId:
+          type: string
+          example: key-12345
+        status:
+          type: string
+          enum: [PENDING, DISPATCHED, ALL_DELIVERED, FAILED]
+          example: ALL_DELIVERED
+        occurredAt:
+          type: string
+          format: date-time
+        deliveries:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookEventDelivery"
+      additionalProperties: false

@@ -45,6 +45,23 @@ const parseApiDefinition = (definition) => {
     }
 };
 
+/**
+ * Returns the subscription token header name if the definition declares a parameter with
+ * x-header-type: subscription-token, otherwise null.
+ */
+const findSubscriptionTokenHeader = (apiDefinition) => {
+    const parsed = parseApiDefinition(apiDefinition);
+    if (!parsed || typeof parsed !== 'object') return null;
+    const components = parsed.components || {};
+    const params = components.parameters || {};
+    for (const param of Object.values(params)) {
+        if (param && param['x-header-type'] === 'subscription-token' && param.in === 'header') {
+            return param.name || null;
+        }
+    }
+    return null;
+};
+
 const apiDefinitionHasApiKeySecurity = (apiDefinition) => {
     if (!apiDefinition || typeof apiDefinition !== 'object') {
         return false;
@@ -99,6 +116,7 @@ async function shouldShowPlatformApiKeysNav(req, metaData, existingApiDetail = n
 
 module.exports = {
     shouldShowPlatformApiKeysNav,
+    findSubscriptionTokenHeader,
     securitySchemeHasApiKey,
     PLATFORM_GATEWAY
 };
