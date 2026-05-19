@@ -40,6 +40,16 @@ const adminDao = require('../../dao/admin');
 const IdentityProviderDTO = require('../../dto/identityProvider');
 const logger = require('../../config/logger');
 
+const DEFAULT_TOKEN_REFRESH_TIMEOUT_MS = 10000;
+
+function resolveTokenRefreshTimeoutMs() {
+    const timeout = Number(config.identityProvider?.tokenRefreshTimeoutMs);
+    if (Number.isFinite(timeout) && timeout > 0) {
+        return timeout;
+    }
+    return DEFAULT_TOKEN_REFRESH_TIMEOUT_MS;
+}
+
 function accessTokenPresent(req) {
     if (req.user && req.user[constants.ACCESS_TOKEN]) {
         return req.user[constants.ACCESS_TOKEN];
@@ -59,6 +69,7 @@ async function refreshAccessToken(refreshToken) {
     });
     const response = await axios.post(config.identityProvider.tokenURL, data, {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        timeout: resolveTokenRefreshTimeoutMs(),
     });
     return response.data;
 }

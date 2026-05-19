@@ -21,10 +21,12 @@
  * Tag: Providers
  */
 const adminService = require('../../services/adminService');
+const requireCsrfMutatingApi = require('../../middlewares/csrfProtection')
+const { compose } = require('./_compose');
 
 module.exports = {
-    createProvider: adminService.createProvider,
-    updateProvider: adminService.updateProvider,
+    createProvider: compose(requireCsrfMutatingApi, adminService.createProvider),
+    updateProvider: compose(requireCsrfMutatingApi, adminService.updateProvider),
     getProviders: adminService.getProviders,
-    deleteProvider: adminService.deleteProvider,
+    deleteProvider: compose(requireCsrfMutatingApi, adminService.deleteProvider),
 };

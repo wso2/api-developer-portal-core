@@ -92,6 +92,7 @@ identityProvider:
   logoutRedirectURI: "http://localhost:3000/ACME"
   certificate: ""
   jwksURL: "https://localhost:9443/oauth2/jwks"
+  tokenRefreshTimeoutMs: 10000
 
 # ─── Local / Default Auth ──────────────────────────────────────────────────────
 # Built-in local users for first-time exploration. Disable in production by

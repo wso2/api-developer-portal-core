@@ -21,11 +21,13 @@
  * Tag: Platform Subscriptions
  */
 const platformSubscriptionService = require('../../services/platformSubscriptionService');
+const requireCsrfMutatingApi = require('../../middlewares/csrfProtection')
+const { compose } = require('./_compose');
 
 module.exports = {
-    createPlatformGatewaySubscription: platformSubscriptionService.createPlatformGatewaySubscription,
+    createPlatformGatewaySubscription: compose(requireCsrfMutatingApi, platformSubscriptionService.createPlatformGatewaySubscription),
     listPlatformGatewaySubscriptions: platformSubscriptionService.listPlatformGatewaySubscriptions,
     getPlatformGatewaySubscription: platformSubscriptionService.getPlatformGatewaySubscription,
-    updatePlatformGatewaySubscription: platformSubscriptionService.updatePlatformGatewaySubscription,
-    deletePlatformGatewaySubscription: platformSubscriptionService.deletePlatformGatewaySubscription,
+    updatePlatformGatewaySubscription: compose(requireCsrfMutatingApi, platformSubscriptionService.updatePlatformGatewaySubscription),
+    deletePlatformGatewaySubscription: compose(requireCsrfMutatingApi, platformSubscriptionService.deletePlatformGatewaySubscription),
 };

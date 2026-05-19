@@ -27,6 +27,15 @@ const fs = require('fs').promises;
 const { requireCsrfForMutatingApi } = require('../../middlewares/csrfProtection');
 const { compose } = require('./_compose');
 
+function isSafeFileName(fileName) {
+    return Boolean(
+        fileName &&
+        fileName !== '.' &&
+        fileName !== '..' &&
+        path.basename(fileName) === fileName
+    );
+}
+
 async function createTempArazzoFileImpl(req, res, next) {
     const { content, filename } = req.body || {};
     if (!content || typeof content !== 'string') {
@@ -36,6 +45,9 @@ async function createTempArazzoFileImpl(req, res, next) {
         .replace(/[^a-zA-Z0-9._-]/g, '-')
         .replace(/\.\.+/g, '.')
         .substring(0, 120);
+    if (!isSafeFileName(safeName)) {
+        return res.status(400).json({ error: 'filename is invalid' });
+    }
     try {
         const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'arazzo-'));
         const tmpPath = path.join(tmpDir, safeName);
