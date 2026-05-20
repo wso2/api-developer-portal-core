@@ -56,6 +56,17 @@ advanced:
     keyValue: "x-wso2-api-key"
   tokenExchanger:
     enabled: false
+  # Mount the OpenAPI-spec-driven /devportal router (request validation + fine-grained
+  # OAuth2 scope enforcement, dispatching by operationId to src/openapi/handlers).
+  # When false, the legacy src/routes/devportalRoute.js is mounted instead.
+  openApiValidator:
+    enabled: true          # Set to false to disable the OpenAPI validator and use legacy routing
+    # Response validation strategy. Off by default in production.
+    #   false      — disabled
+    #   true       — strict; responses that don't match the spec become 500s
+    #   'log-only' — log drift via warn-level logs but send the response anyway
+    # When unset, enabled only if mode == "development".
+    validateResponses: false 
 
 # ─── TLS Certificates (only needed when advanced.http is false) ────────────────
 
@@ -81,6 +92,7 @@ identityProvider:
   logoutRedirectURI: "http://localhost:3000/ACME"
   certificate: ""
   jwksURL: "https://localhost:9443/oauth2/jwks"
+  tokenRefreshTimeoutMs: 10000
 
 # ─── Local / Default Auth ──────────────────────────────────────────────────────
 # Built-in local users for first-time exploration. Disable in production by
@@ -217,6 +229,44 @@ billing:
 # for every new organization.
 
 generateDefaultSubPolicies: true
+
+# ─────────────────────────────────────────────────────────
+# Outbound webhooks (gateway event delivery)
+# ─────────────────────────────────────────────────────────
+# When a user generates an API key, subscribes, etc., the devportal fires signed
+# HTTP POST events to every matching subscriber below.  Gateways implement their
+# own handler and never need a reverse connection into the devportal.
+#
+# Per-subscriber secrets / public keys can also be supplied via env vars:
+#   DP_WEBHOOK_SECRET_<ID_UPPERCASED>   — HMAC signing secret
+#   DP_WEBHOOK_PUBKEY_<ID_UPPERCASED>   — RSA public key (PEM) for key encryption
+# where the ID is the subscriber `id` with non-alphanumeric chars replaced by _.
+#
+webhooks:
+  subscribers: []
+  # Example subscriber:
+  #
+  # subscribers:
+  #   - id: my-gateway                         # stable identifier, used in DB + logs
+  #     gatewayType: "my-gateway-type"          # matches API.GATEWAY_TYPE; use "*" for all
+  #     url: "https://gateway.example.com/devportal/events"
+  #     secret: "change-me-32-chars-minimum"   # env: DP_WEBHOOK_SECRET_MY_GATEWAY
+  #     publicKey: |                            # RSA-2048+ PEM; encrypts apikey.* payloads
+  #       -----BEGIN PUBLIC KEY-----
+  #       ...
+  #       -----END PUBLIC KEY-----
+  #     events:                                 # allowlist — omit to receive all event types
+  #       - apikey.*
+  #       - subscription.*
+  #     timeoutMs: 5000
+
+  delivery:
+    maxAttempts: 8
+    # Retry delays in seconds: 1 min, 5 min, 15 min, 30 min, 1 h, 2 h, 4 h, 8 h
+    backoff: [60, 300, 900, 1800, 3600, 7200, 14400, 28800]
+    pollIntervalMs: 2000
+    batchSize: 50
+    signatureToleranceSec: 300
 
 # ─── Default Data Seeding ──────────────────────────────────────────────────────
 # When true, the app seeds default theme assets into the database on first boot

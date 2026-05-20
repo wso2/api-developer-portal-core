@@ -22,12 +22,11 @@ const logger = require('../config/logger');
 const constants = require('../utils/constants');
 const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
-const util = require('../utils/util');
+const platformSubDao = require('../dao/platformSubscription');
 const APIDTO = require('../dto/apiDTO');
 const apiMetadataService = require('../services/apiMetadataService');
 const { shouldShowPlatformApiKeysNav } = require('../services/platformApiKeysNavService');
 
-const controlPlaneUrl = config.controlPlane.url;
 
 const loadSubscriptions = async (req, res) => {
 
@@ -46,47 +45,27 @@ const loadSubscriptions = async (req, res) => {
         const userID = req.user.sub;
         const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.DEVPORTAL_MODE.DEFAULT;
 
-        // 1. Load TOKEN-BASED subscriptions from CP (all user subscriptions, no apiId filter)
+        // 1. Load TOKEN-BASED subscriptions from local DB (all user subscriptions, no apiId filter)
         let tokenBasedSubscriptions = [];
-        if (config.controlPlane?.enabled !== false) {
-            try {
-                const cpResponse = await util.invokeApiRequest(
-                    req, 'GET',
-                    `${controlPlaneUrl}/api-platform-subscriptions`
-                );
-                const cpSubs = cpResponse.list || cpResponse || [];
-
-                // Enrich with local API metadata for display
-                const allApis = await apiDao.getAPIMetadataByCondition({
-                    ORG_ID: orgID,
-                    STATUS: constants.API_STATUS.PUBLISHED
-                });
-                const apiByRefId = {};
-                for (const api of allApis) {
-                    apiByRefId[api.REFERENCE_ID] = api;
-                }
-
-                tokenBasedSubscriptions = cpSubs.map(sub => {
-                    const localApi = apiByRefId[sub.apiId] || {};
-                    return {
-                        id: sub.subscriptionId,
-                        type: 'TOKEN_BASED',
-                        apiName: localApi.API_NAME || sub.apiId,
-                        apiVersion: localApi.API_VERSION || '',
-                        apiHandle: localApi.API_HANDLE || '#',
-                        planName: sub.subscriptionPlanName || '',
-                        applicationName: sub.applicationName || null,
-                        applicationId: sub.applicationId || null,
-                        status: sub.status,
-                        subscriptionToken: sub.subscriptionToken,
-                        createdAt: sub.createdTime || null,
-                    };
-                });
-            } catch (cpError) {
-                logger.warn('Failed to load platform subscriptions from CP', {
-                    error: cpError.message, orgID
-                });
-            }
+        try {
+            const localSubs = await platformSubDao.listPlatformSubscriptions(orgID);
+            tokenBasedSubscriptions = localSubs.map(sub => ({
+                id: sub.SUB_ID,
+                type: 'TOKEN_BASED',
+                apiName: sub.DP_API_METADATA?.API_NAME || '',
+                apiVersion: sub.DP_API_METADATA?.API_VERSION || '',
+                apiHandle: sub.DP_API_METADATA?.API_HANDLE || '#',
+                planName: sub.DP_SUBSCRIPTION_POLICY?.POLICY_NAME || '',
+                applicationName: null,
+                applicationId: null,
+                status: sub.STATUS,
+                subscriptionToken: sub.SUB_TOKEN,
+                createdAt: null,
+            }));
+        } catch (err) {
+            logger.warn('Failed to load platform subscriptions', {
+                error: err.message, orgID
+            });
         }
 
         // 2. Load APP-BASED subscriptions
@@ -210,37 +189,28 @@ const loadAPISubscriptions = async (req, res) => {
         } else {
             metaData = null;
         }
-        const apiRefId = metaData?.apiReferenceID || apiID;
-
         // 1. Load TOKEN-BASED subscriptions filtered by this API
         let tokenBasedSubscriptions = [];
-        if (config.controlPlane?.enabled !== false) {
-            try {
-                const cpResponse = await util.invokeApiRequest(
-                    req, 'GET',
-                    `${controlPlaneUrl}/api-platform-subscriptions?apiId=${encodeURIComponent(apiRefId)}`
-                );
-                const cpSubs = cpResponse.list || cpResponse || [];
-
-                tokenBasedSubscriptions = cpSubs.map(sub => ({
-                    id: sub.subscriptionId,
-                    type: 'TOKEN_BASED',
-                    apiName: metaData?.apiInfo?.apiName || sub.apiId,
-                    apiVersion: metaData?.apiInfo?.apiVersion || '',
-                    apiHandle: apiHandle,
-                    apiRefId: apiRefId,
-                    planName: sub.subscriptionPlanName || '',
-                    applicationName: sub.applicationName || null,
-                    applicationId: sub.applicationId || null,
-                    status: sub.status,
-                    subscriptionToken: sub.subscriptionToken,
-                    createdAt: sub.createdTime || null,
-                }));
-            } catch (cpError) {
-                logger.warn('Failed to load platform subscriptions from CP for API', {
-                    error: cpError.message, orgID, apiHandle
-                });
-            }
+        try {
+            const localSubs = await platformSubDao.listPlatformSubscriptions(orgID, { apiId: apiID });
+            tokenBasedSubscriptions = localSubs.map(sub => ({
+                id: sub.SUB_ID,
+                type: 'TOKEN_BASED',
+                apiName: sub.DP_API_METADATA?.API_NAME || metaData?.apiInfo?.apiName || '',
+                apiVersion: sub.DP_API_METADATA?.API_VERSION || metaData?.apiInfo?.apiVersion || '',
+                apiHandle: sub.DP_API_METADATA?.API_HANDLE || apiHandle,
+                apiRefId: sub.API_ID,
+                planName: sub.DP_SUBSCRIPTION_POLICY?.POLICY_NAME || '',
+                applicationName: null,
+                applicationId: null,
+                status: sub.STATUS,
+                subscriptionToken: sub.SUB_TOKEN,
+                createdAt: null,
+            }));
+        } catch (err) {
+            logger.warn('Failed to load platform subscriptions for API', {
+                error: err.message, orgID, apiHandle
+            });
         }
 
         // 2. Load APP-BASED subscriptions filtered by this API
@@ -250,7 +220,7 @@ const loadAPISubscriptions = async (req, res) => {
             const subscribedAPIs = await adminDao.getSubscribedAPIs(orgID, app.APP_ID);
             for (const sub of subscribedAPIs) {
                 const api = new APIDTO(sub);
-                if (api.apiReferenceID !== apiRefId) {
+                if (api.apiID !== apiID) {
                     continue;
                 }
                 const subMapping = sub.dataValues.DP_APPLICATIONs[0].dataValues.DP_API_SUBSCRIPTION.dataValues;
@@ -296,6 +266,20 @@ const loadAPISubscriptions = async (req, res) => {
             isAdmin: req.user.isAdmin,
         };
 
+        let apiDefinitionForNav = null;
+        if (metaData?.apiInfo?.apiType !== constants.API_TYPE.GRAPHQL && metaData?.apiInfo?.apiType !== constants.API_TYPE.MCP) {
+            try {
+                const apiFile = await apiDao.getAPIDoc(constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
+                apiDefinitionForNav = apiFile?.API_FILE?.toString(constants.CHARSET_UTF8) || null;
+            } catch (definitionErr) {
+                logger.debug('Could not load API definition for platform API keys nav check', {
+                    orgID,
+                    apiID,
+                    error: definitionErr.message
+                });
+            }
+        }
+
         const templateContent = {
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
             profile: profile,
@@ -305,7 +289,7 @@ const loadAPISubscriptions = async (req, res) => {
             apiMetadata: metaData,
             apiHandle: apiHandle,
             isReadOnlyMode: config.readOnlyMode,
-            showPlatformApiKeysNav: await shouldShowPlatformApiKeysNav(req, metaData, null),
+            showPlatformApiKeysNav: await shouldShowPlatformApiKeysNav(req, metaData, null, apiDefinitionForNav),
         };
 
         html = await renderTemplateFromAPI(templateContent, orgID, orgName, 'pages/api-subscriptions', viewName);

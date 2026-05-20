@@ -1057,6 +1057,14 @@ const deleteAPIFile = async (req, res) => {
 };
 
 const addSubscriptionPolicies = async (req, res) => {
+    if (req.files?.subscriptionPolicy?.[0]) {
+        try {
+            const policies = parseSubscriptionPoliciesFromYamlFile(req.files.subscriptionPolicy[0].buffer);
+            req.body = policies.length === 1 ? policies[0] : policies;
+        } catch (error) {
+            return util.handleError(res, error);
+        }
+    }
     if (Array.isArray(req.body)) {
         await createSubscriptionPolicies(req, res);
     } else {
@@ -1065,6 +1073,14 @@ const addSubscriptionPolicies = async (req, res) => {
 }
 
 const putSubscriptionPolicies = async (req, res) => {
+    if (req.files?.subscriptionPolicy?.[0]) {
+        try {
+            const policies = parseSubscriptionPoliciesFromYamlFile(req.files.subscriptionPolicy[0].buffer);
+            req.body = policies.length === 1 ? policies[0] : policies;
+        } catch (error) {
+            return util.handleError(res, error);
+        }
+    }
     if (Array.isArray(req.body)) {
         await updateSubscriptionPolicies(req, res);
     } else {
@@ -1825,6 +1841,7 @@ function mapDevportalYamlToApiMetadata(parsedYaml) {
             visibleGroups: visibleGroups.length > 0 ? visibleGroups : null,
             tags: util.normalizeStringArray(spec.tags),
             labels: util.normalizeStringArray(spec.labels),
+            gatewayType: spec.gatewayType || null,
             owners: {
                 businessOwner: businessInformation.businessOwner,
                 businessOwnerEmail: businessInformation.businessOwnerEmail,
@@ -1866,6 +1883,55 @@ function parseApiMetadataFromYamlRequest(req) {
     }
 
     return parseApiMetadataFromYamlFile(apiFile.originalname, apiFile.buffer);
+}
+
+function mapYamlToSubscriptionPolicy(item) {
+    const { metadata = {}, spec = {} } = item;
+    return {
+        policyName: metadata.name,
+        displayName: spec.displayName,
+        billingPlan: spec.billingPlan || 'FREE',
+        description: spec.description,
+        refId: spec.refId,
+        type: spec.type,
+        requestCount: spec.requestCount,
+        eventCount: spec.eventCount,
+        pricingModel: spec.pricingModel,
+        currency: spec.currency,
+        billingPeriod: spec.billingPeriod,
+        flatAmount: spec.flatAmount,
+        unitAmount: spec.unitAmount,
+        externalProductId: spec.externalProductId,
+        externalPriceId: spec.externalPriceId,
+        pricingTiers: spec.pricingTiers,
+    };
+}
+
+function parseSubscriptionPoliciesFromYamlFile(fileBuffer) {
+    let parsed;
+    try {
+        parsed = yaml.load(fileBuffer.toString(constants.CHARSET_UTF8));
+    } catch (e) {
+        throw new Sequelize.ValidationError(`Invalid subscription policy YAML file: ${e.message}`);
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+        throw new Sequelize.ValidationError('Subscription policy YAML file is empty or invalid');
+    }
+
+    const kind = parsed.kind;
+    if (kind === 'SubscriptionPolicy') {
+        return [mapYamlToSubscriptionPolicy(parsed)];
+    } else if (kind === 'SubscriptionPolicyList') {
+        if (!Array.isArray(parsed.items) || parsed.items.length === 0) {
+            throw new Sequelize.ValidationError("SubscriptionPolicyList must have a non-empty 'items' array");
+        }
+        return parsed.items.map(mapYamlToSubscriptionPolicy);
+    } else {
+        throw new Sequelize.ValidationError(
+            `Unknown subscription policy YAML kind '${kind}'. Expected 'SubscriptionPolicy' or 'SubscriptionPolicyList'`
+        );
+    }
 }
 
 function prepareApiDefinitionForStorage(fileName, fileBuffer) {

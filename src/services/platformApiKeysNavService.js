@@ -15,30 +15,93 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-const { config } = require('../config/configLoader');
 const util = require('../utils/util');
 const logger = require('../config/logger');
+const yaml = require('js-yaml');
 
-const controlPlaneUrl = config.controlPlane.url;
 const PLATFORM_GATEWAY = 'wso2/api-platform';
 
 const securitySchemeHasApiKey = (securityScheme) =>
     Array.isArray(securityScheme) && securityScheme.includes('api_key');
 
+const parseApiDefinition = (definition) => {
+    if (!definition) {
+        return null;
+    }
+    if (typeof definition !== 'string') {
+        return definition;
+    }
+    try {
+        return JSON.parse(definition);
+    } catch (jsonError) {
+        try {
+            return yaml.load(definition);
+        } catch (yamlError) {
+            logger.warn('parseApiDefinition: failed to parse API definition', {
+                error: yamlError.message || jsonError.message
+            });
+            return null;
+        }
+    }
+};
+
 /**
- * API-level Platform API Keys nav: platform gateway and API Key security enabled on the API
- * (CP GET /apis/{id}.securityScheme includes api_key). When control plane is disabled, the link
- * is hidden unless existingApiDetail already includes securityScheme (no CP fetch is possible).
+ * Returns the subscription token header name if the definition declares a parameter with
+ * x-header-type: subscription-token, otherwise null.
+ */
+const findSubscriptionTokenHeader = (apiDefinition) => {
+    const parsed = parseApiDefinition(apiDefinition);
+    if (!parsed || typeof parsed !== 'object') return null;
+    const components = parsed.components || {};
+    const params = components.parameters || {};
+    for (const param of Object.values(params)) {
+        if (param && param['x-header-type'] === 'subscription-token' && param.in === 'header') {
+            return param.name || null;
+        }
+    }
+    return null;
+};
+
+const apiDefinitionHasApiKeySecurity = (apiDefinition) => {
+    if (!apiDefinition || typeof apiDefinition !== 'object') {
+        return false;
+    }
+
+    const securitySchemes = apiDefinition.components?.securitySchemes || apiDefinition.securityDefinitions;
+    if (securitySchemes && typeof securitySchemes === 'object') {
+        return Object.values(securitySchemes).some((scheme) => {
+            if (!scheme || typeof scheme !== 'object') {
+                return false;
+            }
+            const type = String(scheme.type || '').toLowerCase();
+            return type === 'apikey' || type === 'httpapikey' || type === 'http_api_key';
+        });
+    }
+
+    return false;
+};
+
+/**
+ * API-level Platform API Keys nav: platform gateway and API Key security enabled on the API.
+ * If an API definition is available, the decision is driven by its security schemes.
+ * Otherwise, it falls back to the control plane securityScheme field.
  *
  * @param {object} req - Express request (for invokeApiRequest auth)
  * @param {object} metaData - Metadata with apiInfo.gatewayType and apiReferenceID (APIM DTO shape)
  * @param {object|null} existingApiDetail - Optional CP GET /apis/:ref response to avoid a duplicate call
+ * @param {string|object|null} apiDefinition - Optional raw API definition to inspect for apiKey security
  * @returns {Promise<boolean>}
  */
-async function shouldShowPlatformApiKeysNav(req, metaData, existingApiDetail = null) {
+async function shouldShowPlatformApiKeysNav(req, metaData, existingApiDetail = null, apiDefinition = null) {
     if (!metaData?.apiInfo || metaData.apiInfo.gatewayType !== PLATFORM_GATEWAY) {
         return false;
     }
+
+    if (apiDefinition) {
+        const parsedDefinition = parseApiDefinition(apiDefinition);
+        return apiDefinitionHasApiKeySecurity(parsedDefinition);
+    }
+
     const refId = metaData.apiReferenceID;
     let detail = existingApiDetail;
 
@@ -46,30 +109,14 @@ async function shouldShowPlatformApiKeysNav(req, metaData, existingApiDetail = n
         return securitySchemeHasApiKey(detail.securityScheme);
     }
 
-    if (config.controlPlane?.enabled === false || !refId) {
-        return false;
-    }
-
-    try {
-        detail = await util.invokeApiRequest(
-            req,
-            'GET',
-            `${controlPlaneUrl}/apis/${encodeURIComponent(refId)}`,
-            null,
-            null
-        );
-    } catch (e) {
-        logger.warn('shouldShowPlatformApiKeysNav: failed to load API from control plane', {
-            error: e.message,
-            refId
-        });
-        return false;
-    }
-    return securitySchemeHasApiKey(detail?.securityScheme);
+    // If no API definition or existing API detail is available, don't attempt
+    // to call the control plane; fall back to not showing the nav.
+    return false;
 }
 
 module.exports = {
     shouldShowPlatformApiKeysNav,
+    findSubscriptionTokenHeader,
     securitySchemeHasApiKey,
     PLATFORM_GATEWAY
 };

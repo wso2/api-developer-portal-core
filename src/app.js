@@ -34,6 +34,8 @@ const orgContent = require('./routes/orgContentRoute');
 const apiContent = require('./routes/apiContentRoute');
 const applicationContent = require('./routes/applicationsContentRoute');
 const sdkJobService = require('./services/sdkJobService');
+const webhookDispatcher = require('./services/webhooks/dispatcher');
+const webhookDeliveryWorker = require('./services/webhooks/deliveryWorker');
 const customContent = require('./routes/customPageRoute');
 const subscriptionsContent = require('./routes/subscriptionsContentRoute');
 const mcpRegistryRoute = require('./routes/mcpRegistryRoute');
@@ -607,7 +609,13 @@ app.use((req, res, next) => {
 });
 
 //backend routes
-app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
+if (config.advanced?.openApiValidator?.enabled) {
+    logger.info('Mounting spec-driven /devportal router (advanced.useOpenApiValidator=true)');
+    const devportalApiRouter = require('./openapi/devportalApiRouter');
+    app.use(constants.ROUTE.DEV_PORTAL, devportalApiRouter);
+} else {
+    app.use(constants.ROUTE.DEV_PORTAL, devportalRoute);
+}
 
 // MCP Server Registry (OpenAPI v0.1)
 app.use('/registry/:orgHandle', mcpRegistryRoute);
@@ -729,9 +737,21 @@ const logStartupInfo = () => {
         sdkJobService.startSDKCleanupScheduler();
         logger.info('SDK cleanup scheduler started successfully');
     } catch (error) {
-        logger.warn('Could not start SDK cleanup scheduler', { 
-            error: error.message, 
-            stack: error.stack 
+        logger.warn('Could not start SDK cleanup scheduler', {
+            error: error.message,
+            stack: error.stack
+        });
+    }
+
+    // Start webhook outbox workers
+    try {
+        webhookDispatcher.start();
+        webhookDeliveryWorker.start();
+        logger.info('Webhook dispatcher and delivery worker started');
+    } catch (error) {
+        logger.warn('Could not start webhook workers', {
+            error: error.message,
+            stack: error.stack
         });
     }
 };
