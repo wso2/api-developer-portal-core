@@ -122,8 +122,8 @@ function operationResolver(handlersPath, route, apiDoc) {
  */
 function resolveValidateResponsesOpt() {
     const cfg = config.advanced?.openApiValidator?.openApiValidator?.validateResponses;
-    if (cfg === true) return true;
-    if (cfg === false) return false;
+    if (cfg === 'strict') return true;
+    if (cfg === 'off') return false;
     if (cfg === 'log-only' || cfg === 'logOnly') {
         return {
             onError: (err, json, req) => {

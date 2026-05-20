@@ -62,11 +62,11 @@ advanced:
   openApiValidator:
     enabled: true          # Set to false to disable the OpenAPI validator and use legacy routing
     # Response validation strategy. Off by default in production.
-    #   false      — disabled
-    #   true       — strict; responses that don't match the spec become 500s
+    #   off      — disabled
+    #   strict     — strict; responses that don't match the spec become 500s
     #   'log-only' — log drift via warn-level logs but send the response anyway
     # When unset, enabled only if mode == "development".
-    validateResponses: false 
+    validateResponses: off 
 
 # ─── TLS Certificates (only needed when advanced.http is false) ────────────────
 
