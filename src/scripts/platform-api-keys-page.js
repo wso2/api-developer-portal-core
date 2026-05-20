@@ -94,9 +94,9 @@
             }
         );
         const data = await response.json().catch(function () { return {}; });
-            if (!response.ok) {
-                const msg = data.description || data.message || response.statusText || 'Request failed';
-                throw new Error(msg);
+        if (!response.ok) {
+            const msg = data.description || data.message || response.statusText || 'Request failed';
+            throw new Error(msg);
         }
         return data;
     }
@@ -184,7 +184,7 @@
                 delete submitBtn.dataset.loading;
             }
         }
-            if (data && data.key) {
+        if (data && data.key) {
             showSecretModal(data.key, true);
         } else if (data) {
             window.location.reload();
