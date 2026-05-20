@@ -1,6 +1,7 @@
 <section class="section mt-0 mb-6" id="subscriptionPlans">
     <div class="container-fluid text-center">
-        {{#if apiMetadata.apiInfo.tokenBasedSubscriptionEnabled}}
+        {{#if (eq apiMetadata.apiInfo.gatewayType "wso2/api-platform")}}
+            {{#if subscriptionPlans.length}}
             <!-- ===== TOKEN-BASED SUBSCRIPTION UI ===== -->
 
             <!-- Existing platform subscriptions for this API -->
@@ -141,8 +142,9 @@
                     }
                 })();
             </script>
-        {{else if (eq apiMetadata.apiInfo.gatewayType "wso2/api-platform")}}
-            {{!-- Platform API without token-based subscription: no subscription needed --}}
+            {{else}}
+            {{!-- Platform API without subscription plans: no subscription needed --}}
+            {{/if}}
         {{else}}
             <!-- ===== STANDARD APP-BASED SUBSCRIPTION UI ===== -->
             {{#if subscriptionPlans.length}}

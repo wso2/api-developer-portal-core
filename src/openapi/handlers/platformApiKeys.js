@@ -22,13 +22,13 @@
  *
  * Mutating ops are CSRF-protected (matches legacy devportalRoute.js).
  */
-const platformApiKeyService = require('../../services/platformApiKeyService');
+const apiKeyController = require('../../controllers/apiKeyController');
 const { requireCsrfForMutatingApi } = require('../../middlewares/csrfProtection');
 const { compose } = require('./_compose');
 
 module.exports = {
-    generatePlatformApiKey: compose(requireCsrfForMutatingApi, platformApiKeyService.generatePlatformApiKey),
-    listPlatformApiKeys: platformApiKeyService.listPlatformApiKeys,
-    regeneratePlatformApiKey: compose(requireCsrfForMutatingApi, platformApiKeyService.regeneratePlatformApiKey),
-    revokePlatformApiKey: compose(requireCsrfForMutatingApi, platformApiKeyService.revokePlatformApiKey),
+    generatePlatformApiKey: compose(requireCsrfForMutatingApi, apiKeyController.generateApiKey),
+    listPlatformApiKeys: apiKeyController.listApiKeys,
+    regeneratePlatformApiKey: compose(requireCsrfForMutatingApi, apiKeyController.regenerateApiKey),
+    revokePlatformApiKey: compose(requireCsrfForMutatingApi, apiKeyController.revokeApiKey),
 };

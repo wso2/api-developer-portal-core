@@ -15,25 +15,60 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-const { CustomError } = require('../utils/errors/customErrors');
 const apiDao = require('../dao/apiMetadata');
+const platformSubDao = require('../dao/platformSubscription');
+const sequelize = require('../db/sequelize');
+const { publish: publishWebhookEvent } = require('./webhooks/eventPublisher');
 const util = require('../utils/util');
-const constants = require('../utils/constants');
 const logger = require('../config/logger');
-const { config } = require('../config/configLoader');
 
-const controlPlaneUrl = config.controlPlane.url;
+async function safePublish(eventType, payload, opts) {
+    try {
+        await publishWebhookEvent(eventType, payload, opts);
+    } catch (err) {
+        logger.warn('[platformSubscriptionService] webhook publish failed (non-fatal)', {
+            eventType, error: err.message,
+        });
+    }
+}
+
+function buildWebhookPayload(sub, apiMetadata, policy) {
+    return {
+        subscription: {
+            plan_ref_id: policy ? (policy.REF_ID || null) : null,
+            token: sub.SUB_TOKEN,
+            plan_name: policy ? (policy.DISPLAY_NAME || policy.POLICY_NAME || null) : null,
+            status: sub.STATUS,
+        },
+        api: {
+            name: apiMetadata ? apiMetadata.API_NAME : null,
+            version: apiMetadata ? apiMetadata.API_VERSION : null,
+            ref_id: apiMetadata ? (apiMetadata.REFERENCE_ID || '') : '',
+        },
+    };
+}
+
+function formatSubscriptionResponse(sub) {
+    const api = sub.DP_API_METADATA || {};
+    const policy = sub.DP_SUBSCRIPTION_POLICY || {};
+    return {
+        subscriptionId: sub.SUB_ID,
+        subscriptionToken: sub.SUB_TOKEN,
+        status: sub.STATUS,
+        gatewayType: api.GATEWAY_TYPE || null,
+        apiId: sub.API_ID,
+        subscriptionPlanName: policy.POLICY_NAME || null,
+        createdAt: sub.createdAt || null,
+    };
+}
 
 const createPlatformGatewaySubscription = async (req, res) => {
-
     const orgID = req.params.orgId;
-    const { apiId, subscriptionPlanName, applicationId } = req.body;
+    const { apiId, subscriptionPlanName } = req.body;
 
     if (!apiId) {
         return res.status(400).json({
-            code: "400",
-            message: "Bad Request",
-            description: "apiId is required"
+            code: '400', message: 'Bad Request', description: 'apiId is required',
         });
     }
 
@@ -41,160 +76,183 @@ const createPlatformGatewaySubscription = async (req, res) => {
         const apiMetadataResponse = await apiDao.getAPIMetadata(orgID, apiId);
         if (!apiMetadataResponse || apiMetadataResponse.length === 0) {
             return res.status(404).json({
-                code: "404",
-                message: "Not Found",
-                description: "API not found"
+                code: '404', message: 'Not Found', description: 'API not found',
             });
         }
 
         const apiMetadata = apiMetadataResponse[0];
-        if (!apiMetadata.TOKEN_BASED_SUBSCRIPTION_ENABLED) {
+
+        if (apiMetadata.GATEWAY_TYPE !== 'wso2/api-platform') {
             return res.status(400).json({
-                code: "400",
-                message: "Bad Request",
-                description: "This API does not support token-based subscriptions"
+                code: '400', message: 'Bad Request',
+                description: 'This API does not support platform subscriptions',
             });
         }
 
-        if (!apiMetadata.REFERENCE_ID) {
+        const plans = apiMetadata.DP_SUBSCRIPTION_POLICies || [];
+        if (plans.length === 0) {
             return res.status(400).json({
-                code: "400",
-                message: "Bad Request",
-                description: "API is missing a control-plane reference ID and cannot be subscribed to"
+                code: '400', message: 'Bad Request',
+                description: 'This API does not support platform subscriptions',
             });
         }
 
-        const cpBody = {
-            apiId: apiMetadata.REFERENCE_ID,
-        };
+        let policyId = null;
+        let matchedPlan = null;
         if (subscriptionPlanName) {
-            cpBody.subscriptionPlanName = subscriptionPlanName;
-        }
-        if (applicationId) {
-            cpBody.applicationId = applicationId;
+            matchedPlan = plans.find(
+                p => p.POLICY_NAME === subscriptionPlanName || p.DISPLAY_NAME === subscriptionPlanName
+            );
+            if (!matchedPlan) {
+                return res.status(400).json({
+                    code: '400', message: 'Bad Request',
+                    description: `Subscription plan '${subscriptionPlanName}' not found for this API`,
+                });
+            }
+            policyId = matchedPlan.POLICY_ID;
         }
 
-        const cpResponse = await util.invokeApiRequest(
-            req, 'POST',
-            `${controlPlaneUrl}/api-platform-subscriptions`,
-            null,
-            cpBody
-        );
+        let newSub;
+        await sequelize.transaction(async (t) => {
+            newSub = await platformSubDao.createPlatformSubscription(
+                orgID, apiId, policyId, t
+            );
+            await safePublish('subscription.created', buildWebhookPayload(newSub, apiMetadata, matchedPlan), {
+                transaction: t,
+                orgId: orgID,
+                gatewayType: apiMetadata.GATEWAY_TYPE,
+                aggregateType: 'subscription',
+                aggregateId: newSub.SUB_ID,
+            });
+        });
 
-        return res.status(201).json(cpResponse);
+        const created = await platformSubDao.getPlatformSubscription(orgID, newSub.SUB_ID);
+        return res.status(201).json(formatSubscriptionResponse(created));
     } catch (error) {
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(409).json({
+                code: '409', message: 'Conflict',
+                description: 'A platform subscription for this API already exists',
+            });
+        }
         logger.error('Error creating platform gateway subscription', {
-            error: error.message, orgID, apiId
+            error: error.message, orgID, apiId,
         });
         util.handleError(res, error);
     }
 };
 
 const listPlatformGatewaySubscriptions = async (req, res) => {
-
     const orgID = req.params.orgId;
     const apiId = req.query.apiId;
 
     try {
-        let queryString = '';
         if (apiId) {
             const apiMetadataResponse = await apiDao.getAPIMetadata(orgID, apiId);
             if (!apiMetadataResponse || apiMetadataResponse.length === 0) {
                 return res.status(404).json({
-                    code: "404",
-                    message: "Not Found",
-                    description: "API not found"
+                    code: '404', message: 'Not Found', description: 'API not found',
                 });
             }
-            if (!apiMetadataResponse[0].REFERENCE_ID) {
-                return res.status(400).json({
-                    code: "400",
-                    message: "Bad Request",
-                    description: "API is missing a control-plane reference ID"
-                });
-            }
-            queryString = `?apiId=${encodeURIComponent(apiMetadataResponse[0].REFERENCE_ID)}`;
         }
 
-        const cpResponse = await util.invokeApiRequest(
-            req, 'GET',
-            `${controlPlaneUrl}/api-platform-subscriptions${queryString}`
-        );
-
-        return res.status(200).json(cpResponse);
+        const subs = await platformSubDao.listPlatformSubscriptions(orgID, { apiId });
+        return res.status(200).json({ count: subs.length, list: subs.map(formatSubscriptionResponse) });
     } catch (error) {
         logger.error('Error listing platform gateway subscriptions', {
-            error: error.message, orgID
+            error: error.message, orgID,
         });
         util.handleError(res, error);
     }
 };
 
 const getPlatformGatewaySubscription = async (req, res) => {
-
+    const orgID = req.params.orgId;
     const subscriptionId = req.params.subscriptionId;
 
     try {
-        const cpResponse = await util.invokeApiRequest(
-            req, 'GET',
-            `${controlPlaneUrl}/api-platform-subscriptions/${encodeURIComponent(subscriptionId)}`
-        );
-
-        return res.status(200).json(cpResponse);
+        const sub = await platformSubDao.getPlatformSubscription(orgID, subscriptionId);
+        if (!sub) {
+            return res.status(404).json({
+                code: '404', message: 'Not Found', description: 'Subscription not found',
+            });
+        }
+        return res.status(200).json(formatSubscriptionResponse(sub));
     } catch (error) {
         logger.error('Error getting platform gateway subscription', {
-            error: error.message, subscriptionId
+            error: error.message, subscriptionId,
         });
         util.handleError(res, error);
     }
 };
 
 const updatePlatformGatewaySubscription = async (req, res) => {
-
+    const orgID = req.params.orgId;
     const subscriptionId = req.params.subscriptionId;
     const { status } = req.body;
 
     if (!status || !['ACTIVE', 'INACTIVE'].includes(status)) {
         return res.status(400).json({
-            code: "400",
-            message: "Bad Request",
-            description: "status must be 'ACTIVE' or 'INACTIVE'"
+            code: '400', message: 'Bad Request',
+            description: "status must be 'ACTIVE' or 'INACTIVE'",
         });
     }
 
     try {
-        const cpResponse = await util.invokeApiRequest(
-            req, 'PUT',
-            `${controlPlaneUrl}/api-platform-subscriptions/${encodeURIComponent(subscriptionId)}`,
-            null,
-            { status }
+        const updated = await platformSubDao.updatePlatformSubscriptionStatus(
+            orgID, subscriptionId, status
         );
-
-        return res.status(200).json(cpResponse);
+        if (!updated) {
+            return res.status(404).json({
+                code: '404', message: 'Not Found', description: 'Subscription not found',
+            });
+        }
+        const sub = await platformSubDao.getPlatformSubscription(orgID, subscriptionId);
+        return res.status(200).json(formatSubscriptionResponse(sub));
     } catch (error) {
         logger.error('Error updating platform gateway subscription', {
-            error: error.message, subscriptionId, status
+            error: error.message, subscriptionId, status,
         });
         util.handleError(res, error);
     }
 };
 
 const deletePlatformGatewaySubscription = async (req, res) => {
-
+    const orgID = req.params.orgId;
     const subscriptionId = req.params.subscriptionId;
 
     try {
-        const cpResponse = await util.invokeApiRequest(
-            req, 'DELETE',
-            `${controlPlaneUrl}/api-platform-subscriptions/${encodeURIComponent(subscriptionId)}`
-        );
+        const existing = await platformSubDao.getPlatformSubscription(orgID, subscriptionId);
+        if (!existing) {
+            return res.status(404).json({
+                code: '404', message: 'Not Found', description: 'Subscription not found',
+            });
+        }
 
-        return res.status(200).json({
-            message: "Subscription deleted successfully"
+        const apiMetadata = existing.DP_API_METADATA;
+        const policy = existing.DP_SUBSCRIPTION_POLICY;
+
+        await sequelize.transaction(async (t) => {
+            const deleted = await platformSubDao.deletePlatformSubscription(orgID, subscriptionId, t);
+            if (!deleted) throw Object.assign(new Error('Not found'), { statusCode: 404 });
+            await safePublish('subscription.deleted', buildWebhookPayload(existing, apiMetadata, policy), {
+                transaction: t,
+                orgId: orgID,
+                gatewayType: apiMetadata ? apiMetadata.GATEWAY_TYPE : null,
+                aggregateType: 'subscription',
+                aggregateId: subscriptionId,
+            });
         });
+
+        return res.status(200).json({ message: 'Subscription deleted successfully' });
     } catch (error) {
+        if (error.statusCode === 404) {
+            return res.status(404).json({
+                code: '404', message: 'Not Found', description: 'Subscription not found',
+            });
+        }
         logger.error('Error deleting platform gateway subscription', {
-            error: error.message, subscriptionId
+            error: error.message, subscriptionId,
         });
         util.handleError(res, error);
     }
@@ -205,5 +263,5 @@ module.exports = {
     listPlatformGatewaySubscriptions,
     getPlatformGatewaySubscription,
     updatePlatformGatewaySubscription,
-    deletePlatformGatewaySubscription
+    deletePlatformGatewaySubscription,
 };

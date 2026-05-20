@@ -57,7 +57,6 @@ const createAPIMetadata = async (orgID, apiMetadata, t) => {
             SANDBOX_URL: apiMetadata.endPoints.sandboxURL,
             PRODUCTION_URL: apiMetadata.endPoints.productionURL,
             METADATA_SEARCH: apiMetadata,
-            TOKEN_BASED_SUBSCRIPTION_ENABLED: apiMetadata.apiInfo.tokenBasedSubscriptionEnabled || false,
             GATEWAY_TYPE: apiMetadata.apiInfo.gatewayType || null,
             MONETIZATION_ENABLED: apiMetadata.monetizationInfo?.enabled || false,
             ORG_ID: orgID
@@ -1454,7 +1453,6 @@ const updateAPIMetadata = async (orgID, apiID, apiMetadata, t) => {
             SANDBOX_URL: apiMetadata.endPoints.sandboxURL,
             PRODUCTION_URL: apiMetadata.endPoints.productionURL,
             METADATA_SEARCH: apiMetadata,
-            TOKEN_BASED_SUBSCRIPTION_ENABLED: apiMetadata.apiInfo.tokenBasedSubscriptionEnabled || false,
             GATEWAY_TYPE: apiMetadata.apiInfo.gatewayType || null,
             MONETIZATION_ENABLED: apiMetadata.monetizationInfo?.enabled || false,
         }, {

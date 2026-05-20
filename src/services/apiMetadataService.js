@@ -1825,6 +1825,7 @@ function mapDevportalYamlToApiMetadata(parsedYaml) {
             visibleGroups: visibleGroups.length > 0 ? visibleGroups : null,
             tags: util.normalizeStringArray(spec.tags),
             labels: util.normalizeStringArray(spec.labels),
+            gatewayType: spec.gatewayType || null,
             owners: {
                 businessOwner: businessInformation.businessOwner,
                 businessOwnerEmail: businessInformation.businessOwnerEmail,

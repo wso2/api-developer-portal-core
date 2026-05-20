@@ -1,6 +1,7 @@
 <div id="planModal-{{apiID}}" class="modal custom-modal subscription-plan-modal" tabindex="-1" role="dialog"
     style="display:none;"
-    data-org-id="{{@root.orgID}}" data-api-refid="{{#if apiInfo.apiReferenceID}}{{apiInfo.apiReferenceID}}{{else}}{{apiID}}{{/if}}" data-token-based="{{apiInfo.tokenBasedSubscriptionEnabled}}" data-gateway-type="{{apiInfo.gatewayType}}">
+    data-org-id="{{@root.orgID}}" data-api-refid="{{#if apiInfo.apiReferenceID}}{{apiInfo.apiReferenceID}}{{else}}{{apiID}}{{/if}}" data-gateway-type="{{apiInfo.gatewayType}}"
+    data-has-subscription-token="{{@root.hasSubscriptionToken}}">
     <div class="modal-dialog modal-xl subscription-plan-modal-dialog" role="document">
         <div class="modal-content custom-modal-content">
             <div class="custom-modal-header">
@@ -36,7 +37,7 @@
                 <div id="platformContent-{{apiID}}" class="platform-subscription-content px-4" style="display:none;">
                     <!-- Platform subscription table and plans will be injected here dynamically -->
                 </div>
-                <div class="subscription-plans-body pb-4" {{#if apiInfo.tokenBasedSubscriptionEnabled}}style="display:none;"{{else if (eq apiInfo.gatewayType "wso2/api-platform")}}style="display:none;"{{/if}}>
+                <div class="subscription-plans-body pb-4" {{#if (eq apiInfo.gatewayType "wso2/api-platform")}}style="display:none;"{{/if}}>
                     <div class="subscription-plans-title small">Subscription Plans</div>
                     <p class="subscription-plans-subtitle">Please select the most suitable subscription plan from the
                         options
@@ -120,19 +121,7 @@
                                                 <span class="fw-bold d-inline" style="color: #0f172a; font-size: 25px;">{{requestCount}}<small class="text-muted d-inline" style="font-size: 11px;">&nbsp;req/min</small></span>
                                             </div>
                                         </div>
-                                                {{#if ../apiInfo.tokenBasedSubscriptionEnabled}}
-                                                    <button id="subscribe-btn-{{policyID}}" type="button"
-                                                        class="common-btn-primary p-1 ps-2 pe-2 w-100 subscription-plan-subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
-                                                        data-org-id="{{@root.orgID}}"
-                                                        data-api-id="{{#if apiID}}{{apiID}}{{else}}{{../apiID}}{{/if}}"
-                                                        data-policy-id="{{policyID}}"
-                                                        data-policy-name="{{policyName}}"
-                                                        data-display-name="{{displayName}}"
-                                                        data-external-price-id="{{pricingMetadata.external.priceId}}"
-                                                        data-is-paid="{{#if isPaid}}true{{else}}false{{/if}}"
-                                                        {{#unless @root.isReadOnlyMode}}onclick="handlePlanSubscription(this)"{{/unless}}
-                                                        {{#if @root.isReadOnlyMode}}disabled aria-disabled="true"{{/if}}>Subscribe</button>
-                                                {{else if (eq ../apiInfo.gatewayType "wso2/api-platform")}}
+                                                {{#if (eq ../apiInfo.gatewayType "wso2/api-platform")}}
                                                     <button id="subscribe-btn-{{policyID}}" type="button"
                                                         class="common-btn-primary p-1 ps-2 pe-2 w-100 subscription-plan-subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                         data-org-id="{{@root.orgID}}"

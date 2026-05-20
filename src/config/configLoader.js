@@ -119,6 +119,20 @@ function applyEnvOverrides(config) {
 const config = loadBaseConfig();
 applyEnvOverrides(config);
 
+// Webhook subscriber secrets/keys can be supplied via env vars:
+// DP_WEBHOOK_SECRET_<SUBSCRIBER_ID_UPPERCASED_UNDERSCORED>=<secret>
+// DP_WEBHOOK_PUBKEY_<SUBSCRIBER_ID_UPPERCASED_UNDERSCORED>=<pem>
+const webhookSubscribers = config.webhooks && config.webhooks.subscribers;
+if (Array.isArray(webhookSubscribers)) {
+    for (const sub of webhookSubscribers) {
+        if (!sub.id) continue;
+        const envKey = 'DP_WEBHOOK_SECRET_' + sub.id.toUpperCase().replace(/[^A-Z0-9]/g, '_');
+        if (process.env[envKey]) sub.secret = process.env[envKey];
+        const pubKeyEnv = 'DP_WEBHOOK_PUBKEY_' + sub.id.toUpperCase().replace(/[^A-Z0-9]/g, '_');
+        if (process.env[pubKeyEnv]) sub.publicKey = process.env[pubKeyEnv];
+    }
+}
+
 // Convenience: merge old secret.json (if present and no config.yaml) for backward compat
 if (!fs.existsSync(path.join(process.cwd(), 'config.yaml'))) {
     const secretPath = path.join(process.cwd(), 'secret.json');

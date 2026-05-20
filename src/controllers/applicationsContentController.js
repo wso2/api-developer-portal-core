@@ -25,13 +25,82 @@ const path = require('path');
 const fs = require('fs');
 const adminDao = require('../dao/admin');
 const apiMetadata = require('../dao/apiMetadata');
+const apiKeyDao = require('../dao/apiKey');
+const platformSubDao = require('../dao/platformSubscription');
 const util = require('../utils/util');
+const yaml = require('js-yaml');
 const filePrefix = config.pathToContent;
 const controlPlaneUrl = config.controlPlane.url;
 const { ApplicationDTO } = require('../dto/application');
 const APIDTO = require('../dto/apiDTO');
 const adminService = require('../services/adminService');
 const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
+
+const parseApiDefinition = (definition) => {
+    if (!definition) {
+        return null;
+    }
+    if (typeof definition !== 'string') {
+        return definition;
+    }
+    try {
+        return JSON.parse(definition);
+    } catch (jsonError) {
+        try {
+            return yaml.load(definition);
+        } catch (yamlError) {
+            logger.warn('Failed to parse API definition', {
+                error: yamlError.message || jsonError.message
+            });
+            return null;
+        }
+    }
+};
+
+const apiDefinitionHasApiKeySecurity = (apiDefinition) => {
+    if (!apiDefinition || typeof apiDefinition !== 'object') {
+        return false;
+    }
+
+    const securitySchemes = apiDefinition.components?.securitySchemes || apiDefinition.securityDefinitions;
+    if (securitySchemes && typeof securitySchemes === 'object') {
+        return Object.values(securitySchemes).some((scheme) => {
+            if (!scheme || typeof scheme !== 'object') {
+                return false;
+            }
+            const type = String(scheme.type || '').toLowerCase();
+            return type === 'apikey' || type === 'httpapikey' || type === 'http_api_key';
+        });
+    }
+
+    return false;
+};
+
+const loadApiDefinitionFromDb = async (orgID, apiID) => {
+    try {
+        const apiFile = await apiMetadata.getAPIDoc(constants.DOC_TYPES.API_DEFINITION, orgID, apiID);
+        const rawDefinition = apiFile?.API_FILE?.toString(constants.CHARSET_UTF8);
+        return parseApiDefinition(rawDefinition);
+    } catch (error) {
+        logger.warn('Failed to load API definition from DB', {
+            orgID,
+            apiID,
+            error: error.message
+        });
+        return null;
+    }
+};
+
+const buildPlatformApiKeyPayload = (keyRow) => {
+    if (!keyRow) {
+        return {};
+    }
+    return {
+        key: [{ id: keyRow.KEY_ID }],
+        name: keyRow.NAME,
+        scopes: []
+    };
+};
 
 const orgIDValue = async (orgName) => {
     const organization = await adminDao.getOrganization(orgName);
@@ -114,7 +183,6 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
                 apiDescription: api.apiInfo.apiDescription,
                 apiType: api.apiInfo.apiType,
                 gatewayType: api.apiInfo.gatewayType || null,
-                tokenBasedSubscriptionEnabled: api.apiInfo.tokenBasedSubscriptionEnabled || false,
                 apiImageMetadata: api.apiInfo.apiImageMetadata
             };
             apiDTO.name = api.apiInfo.apiName;
@@ -296,126 +364,97 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
         }
     }
 
-    // Load TOKEN-BASED (platform) subscriptions from CP
+    // Load TOKEN-BASED (platform) subscriptions from local DB
     let platformSubscriptions = [];
-    if (req.user && config.controlPlane?.enabled !== false) {
+    if (req.user) {
         try {
-            const cpResponse = await util.invokeApiRequest(
-                req, 'GET',
-                `${controlPlaneUrl}/api-platform-subscriptions`
-            );
-            const cpSubs = cpResponse.list || cpResponse || [];
+            const localSubs = await platformSubDao.listPlatformSubscriptions(orgID);
+            platformSubscriptions = await Promise.all(localSubs.map(async (sub) => {
+                const apiRefId = sub.DP_API_METADATA?.REFERENCE_ID;
+                const apiDefinition = await loadApiDefinitionFromDb(orgID, sub.API_ID);
+                const security = apiDefinitionHasApiKeySecurity(apiDefinition) ? ['api_key'] : [];
 
-            // Enrich with local API metadata
-            const allApis = await apiMetadata.getAPIMetadataByCondition({
-                ORG_ID: orgID,
-                STATUS: constants.API_STATUS.PUBLISHED
-            });
-            const apiByRefId = {};
-            for (const api of allApis) {
-                apiByRefId[api.REFERENCE_ID] = api;
-            }
-
-            platformSubscriptions = await Promise.all(cpSubs.map(async (sub) => {
-                const localApi = apiByRefId[sub.apiId] || {};
-
-                let apiDetails = null;
+                let productionApiKeys = {};
+                let sandboxApiKeys = {};
                 try {
-                    apiDetails = await getAPIDetails(req, sub.apiId);
-                } catch (apiError) {
-                    logger.warn('Failed to fetch platform subscription API details from CP', {
-                        apiId: sub.apiId, error: apiError.message
+                    const keys = await apiKeyDao.listKeys(orgID, {
+                        apiId: sub.API_ID,
+                        subscriptionId: sub.SUB_ID,
+                        status: 'ACTIVE'
+                    });
+                    productionApiKeys = buildPlatformApiKeyPayload(keys?.[0]);
+                } catch (keyError) {
+                    logger.warn('Failed to fetch platform subscription API keys from DB', {
+                        apiId: sub.API_ID, error: keyError.message
                     });
                 }
 
-                const projectIdEntry = apiDetails?.additionalProperties?.find(item => item.name === 'projectId');
-                const projectId = projectIdEntry?.value;
-
-                let security = apiDetails?.securityScheme || [];
-
-                let productionApiKeys = [];
-                let sandboxApiKeys = [];
-                if (applicationReference) {
-                    try {
-                        productionApiKeys = await getAPIKeys(req, sub.apiId, applicationReference, 'PRODUCTION');
-                        sandboxApiKeys = await getAPIKeys(req, sub.apiId, applicationReference, 'SANDBOX');
-                    } catch (keyError) {
-                        logger.warn('Failed to fetch platform subscription API keys from CP', {
-                            apiId: sub.apiId, error: keyError.message
-                        });
-                    }
-                }
-
                 return {
-                    id: sub.subscriptionId,
-                    subID: sub.subscriptionId,
-                    apiID: localApi.API_ID || '',
-                    name: localApi.API_NAME || sub.apiId,
-                    apiName: localApi.API_NAME || sub.apiId,
-                    version: localApi.API_VERSION || '',
-                    apiVersion: localApi.API_VERSION || '',
-                    apiHandle: localApi.API_HANDLE || '#',
-                    apiType: localApi.API_TYPE || 'REST',
-                    refID: sub.apiId,
-                    planName: sub.subscriptionPlanName || '',
-                    policyName: sub.subscriptionPlanName || '',
-                    status: sub.status,
-                    subscriptionToken: sub.subscriptionToken,
-                    security: security,
-                    projectId: projectId || '',
+                    id: sub.SUB_ID,
+                    subID: sub.SUB_ID,
+                    apiID: sub.API_ID,
+                    name: sub.DP_API_METADATA?.API_NAME || '',
+                    apiName: sub.DP_API_METADATA?.API_NAME || '',
+                    version: sub.DP_API_METADATA?.API_VERSION || '',
+                    apiVersion: sub.DP_API_METADATA?.API_VERSION || '',
+                    apiHandle: sub.DP_API_METADATA?.API_HANDLE || '#',
+                    apiType: sub.DP_API_METADATA?.API_TYPE || 'REST',
+                    refID: apiRefId || sub.API_ID,
+                    planName: sub.DP_SUBSCRIPTION_POLICY?.POLICY_NAME || '',
+                    policyName: sub.DP_SUBSCRIPTION_POLICY?.POLICY_NAME || '',
+                    status: sub.STATUS,
+                    subscriptionToken: sub.SUB_TOKEN,
+                    security,
                     apiKeys: {
                         production: productionApiKeys,
                         sandbox: sandboxApiKeys
                     },
-                    scopes: (apiDetails?.scopes || []).map(scope => scope.key),
+                    scopes: [],
                     isPlatformSubscription: true,
                 };
             }));
-        } catch (cpError) {
+        } catch (err) {
             logger.warn('Failed to load platform subscriptions for application overview', {
-                error: cpError.message
+                error: err.message
             });
         }
     }
 
-    // Load platform APIs that don't require subscription (gatewayType=wso2/api-platform, tokenBasedSubscription=false)
+    // Load platform APIs that don't require subscription (gatewayType=wso2/api-platform, no subscription plans)
     let noSubPlatformAPIs = [];
-    if (config.controlPlane?.enabled !== false) try {
+    try {
         const noSubApis = await apiMetadata.getAPIMetadataByCondition({
             ORG_ID: orgID,
             GATEWAY_TYPE: 'wso2/api-platform',
-            TOKEN_BASED_SUBSCRIPTION_ENABLED: false,
             STATUS: constants.API_STATUS.PUBLISHED
         });
 
-        if (noSubApis.length > 0) {
-            noSubPlatformAPIs = await Promise.all(noSubApis.map(async (api) => {
+        const filteredNoSubApis = (noSubApis || []).filter(api => {
+            const policies = api.DP_SUBSCRIPTION_POLICies || [];
+            return policies.length === 0;
+        });
+
+        if (filteredNoSubApis.length > 0) {
+            noSubPlatformAPIs = await Promise.all(filteredNoSubApis.map(async (api) => {
                 const apiDTO = new APIDTO(api);
                 const refID = apiDTO.apiReferenceID;
 
-                let apiDetails = null;
+                const apiDefinition = await loadApiDefinitionFromDb(orgID, apiDTO.apiID);
+                const security = apiDefinitionHasApiKeySecurity(apiDefinition) ? ['api_key'] : [];
+
+                let productionApiKeys = {};
+                let sandboxApiKeys = {};
                 try {
-                    apiDetails = await getAPIDetails(req, refID);
-                } catch (apiError) {
-                    logger.warn('Failed to fetch no-sub platform API details from CP', {
-                        apiReferenceID: refID, error: apiError.message
+                    const keys = await apiKeyDao.listKeys(orgID, {
+                        apiId: apiDTO.apiID,
+                        subscriptionId: null,
+                        status: 'ACTIVE'
                     });
-                }
-
-                const projectIdEntry = apiDetails?.additionalProperties?.find(item => item.name === 'projectId');
-                const projectId = projectIdEntry?.value;
-
-                let productionApiKeys = [];
-                let sandboxApiKeys = [];
-                if (applicationReference) {
-                    try {
-                        productionApiKeys = await getAPIKeys(req, refID, applicationReference, 'PRODUCTION');
-                        sandboxApiKeys = await getAPIKeys(req, refID, applicationReference, 'SANDBOX');
-                    } catch (keyError) {
-                        logger.warn('Failed to fetch no-sub platform API keys from CP', {
-                            apiReferenceID: refID, error: keyError.message
-                        });
-                    }
+                    productionApiKeys = buildPlatformApiKeyPayload(keys?.[0]);
+                } catch (keyError) {
+                    logger.warn('Failed to fetch no-sub platform API keys.', {
+                        apiReferenceID: refID, error: keyError.message
+                    });
                 }
 
                 return {
@@ -427,13 +466,12 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
                     apiType: apiDTO.apiInfo.apiType || 'REST',
                     refID: refID,
                     policyName: '',
-                    security: apiDetails?.securityScheme || [],
-                    projectId: projectId || '',
+                    security,
                     apiKeys: {
                         production: productionApiKeys,
                         sandbox: sandboxApiKeys
                     },
-                    scopes: (apiDetails?.scopes || []).map(scope => scope.key),
+                    scopes: [],
                     isNoSubPlatformAPI: true,
                 };
             }));

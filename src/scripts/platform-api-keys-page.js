@@ -184,8 +184,8 @@
                 delete submitBtn.dataset.loading;
             }
         }
-        if (data && data.value) {
-            showSecretModal(data.value, true);
+        if (data && data.key) {
+            showSecretModal(data.key, true);
         } else if (data) {
             window.location.reload();
         }
@@ -272,8 +272,8 @@
                 delete submitBtn.dataset.loading;
             }
         }
-        if (data && data.value) {
-            showSecretModal(data.value, true);
+        if (data && data.key) {
+            showSecretModal(data.key, true);
         } else if (data) {
             window.location.reload();
         }
