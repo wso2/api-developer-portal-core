@@ -33,7 +33,6 @@ const devportalRoute = require('./routes/devportalRoute');
 const orgContent = require('./routes/orgContentRoute');
 const apiContent = require('./routes/apiContentRoute');
 const applicationContent = require('./routes/applicationsContentRoute');
-const sdkJobService = require('./services/sdkJobService');
 const customContent = require('./routes/customPageRoute');
 const subscriptionsContent = require('./routes/subscriptionsContentRoute');
 const mcpRegistryRoute = require('./routes/mcpRegistryRoute');
@@ -730,16 +729,6 @@ const logStartupInfo = () => {
     const visitUrl = config.baseUrl + (config.mode === constants.DEV_MODE ? "/views/default" : "/<organization>/views/default");
     logger.info(`Visit ${visitUrl}`);
     
-    // Start SDK cleanup scheduler
-    try {
-        sdkJobService.startSDKCleanupScheduler();
-        logger.info('SDK cleanup scheduler started successfully');
-    } catch (error) {
-        logger.warn('Could not start SDK cleanup scheduler', { 
-            error: error.message, 
-            stack: error.stack 
-        });
-    }
 };
 
 // Handle Uncaught Exceptions
@@ -766,17 +755,6 @@ const gracefulShutdown = (signal) => {
         signal,
         message: `Received ${signal}. Gracefully shutting down...`
     });
-    
-    // Stop SDK cleanup scheduler
-    try {
-        sdkJobService.stopSDKCleanupScheduler();
-        logger.info('SDK cleanup scheduler stopped successfully');
-    } catch (error) {
-        logger.warn('Error stopping SDK cleanup scheduler', { 
-            error: error.message, 
-            stack: error.stack 
-        });
-    }
     
     logger.info('Application shutdown complete');
     process.exit(0);

@@ -565,10 +565,7 @@ const loadApplication = async (req, res) => {
             templateContent = {
                 applicationMetadata: metaData,
                 keyManagersMetadata: kMmetaData,
-                baseUrl: baseURLDev + viewName,
-                features: {
-                    sdkGeneration: config.features?.sdkGeneration?.enabled || false
-                }
+                baseUrl: baseURLDev + viewName
             }
             html = renderTemplate('../pages/application/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
         } else {
@@ -608,9 +605,6 @@ const loadApplication = async (req, res) => {
                 noSubPlatformAPIs: data.noSubPlatformAPIs,
                 profile: req.isAuthenticated() ? data.profile : null,
                 devportalMode: devportalMode,
-                features: {
-                    sdkGeneration: config.features?.sdkGeneration?.enabled || false
-                },
                 isReadOnlyMode: config.readOnlyMode
             }
             const templateResponse = await templateResponseValue('application');
@@ -631,9 +625,6 @@ const loadApplication = async (req, res) => {
         const templateContent = {
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
             devportalMode: devportalMode,
-            features: {
-                sdkGeneration: config.features?.sdkGeneration?.enabled || false
-            },
             profile: req.isAuthenticated() ? req.user : null,
         }
         if (Number(error?.statusCode) === 401) {
@@ -671,9 +662,6 @@ const loadApplicationKeys = async (req, res) => {
                 subAPIsForApplicationKeys: [],
                 platformSubscriptionsForApplicationKeys: [],
                 noSubPlatformAPIsForApplicationKeys: [],
-                features: {
-                    sdkGeneration: config.features?.sdkGeneration?.enabled || false
-                },
                 isReadOnlyMode: config.readOnlyMode
             }
             html = renderTemplate('../pages/manage-keys/page.hbs', filePrefix + 'layout/main.hbs', templateContent, true);
@@ -716,9 +704,6 @@ const loadApplicationKeys = async (req, res) => {
                 apiKeyEnabledAPICount: data.apiKeyEnabledAPICount,
                 profile: req.isAuthenticated() ? data.profile : null,
                 devportalMode: devportalMode,
-                features: {
-                    sdkGeneration: config.features?.sdkGeneration?.enabled || false
-                },
                 isReadOnlyMode: config.readOnlyMode
             }
             const templateResponse = await templateResponseValue('manage-keys');
@@ -739,9 +724,6 @@ const loadApplicationKeys = async (req, res) => {
         const templateContent = {
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
             devportalMode: devportalMode,
-            features: {
-                sdkGeneration: config.features?.sdkGeneration?.enabled || false
-            },
             profile: req.isAuthenticated() ? req.user : null,
         }
         if (Number(error?.statusCode) === 401) {

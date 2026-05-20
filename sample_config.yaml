@@ -169,44 +169,10 @@ controlPlane:
   disableCertValidation: true
   pathToCertificate: "./resources/security/client-truststore.pem"
 
-# ─── AI SDK Service ────────────────────────────────────────────────────────────
-
-aiSDKService:
-  url: "http://localhost:5001"
-  endpoints:
-    mergeSpecs: "/merge-openapi-specs"
-    generateApp: "/generate-application-code"
-
-# ─── Redis (optional session cache) ───────────────────────────────────────────
-
-redis:
-  enabled: false
-  host: "localhost"
-  port: 6379
-  db: 0
-  tls:
-    enabled: false
-    rejectUnauthorized: false
-  configs:
-    ttl: 600
-    maxFileSize: 52428800
-    maxReconnectAttempts: 3
-    sseConnectionTimeout: 120000
-    commandTimeout: 20000
-    connectionTimeout: 8000
-    pipelineTimeout: 30000
-    retryDelayOnFailover: 1000
-
 # ─── Provider URLs ─────────────────────────────────────────────────────────────
 
 providerURL:
   AWS: "https://aws.amazon.com"
-
-# ─── Features ──────────────────────────────────────────────────────────────────
-
-features:
-  sdkGeneration:
-    enabled: true
 
 # ─── Portal UI Config ──────────────────────────────────────────────────────────
 
@@ -245,7 +211,3 @@ secrets:
   apiKeySecret: ""                      # API key secret
   billingKeyEncryptionKey: ""           # 64-char hex key for AES-256-GCM billing encryption
   azureInsightsConnectionString: ""     # Azure Application Insights connection string
-  redisSecret: ""                       # Redis password
-  aiSDKService:
-    authHeaderName: ""
-    apiKey: ""

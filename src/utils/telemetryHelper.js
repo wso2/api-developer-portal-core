@@ -67,9 +67,7 @@ const MOESIF_EVENT_MAP = {
     'generate-credentials': { name: 'Application-Generated-Credentials' },
     'generate-key': { name: 'Application-Generated-Key' },
     'subscribe-api': { name: 'API-Subscribed' },
-    'unsubscribe-api': { name: 'API-Unsubscribed' },
-    'generate-sdk-start': { name: 'SDK-Generated-Start' },
-    'generate-sdk-end': { name: 'SDK-Generated-End' }
+    'unsubscribe-api': { name: 'API-Unsubscribed' }
 }
 
 /**

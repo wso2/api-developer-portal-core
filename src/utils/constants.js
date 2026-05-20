@@ -274,27 +274,6 @@ module.exports = {
         COMMON_ERROR_MESSAGE: "Oops! Something went wrong",
         COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE: "Requested page not found!"
     },
-    REDIS_CONSTANTS: {
-        SDK_PROGRESS_CHANNEL: 'sdk-progress',
-        KEY_PREFIX: 'sdkfiles:',
-        CONNECTION_STATES: {
-            CONNECTED: 'connected',
-            DISCONNECTED: 'disconnected',
-            CONNECTING: 'connecting',
-            OFFLINE: 'offline'
-        },
-        ERRORS: {
-            CONNECTION_CLOSED: 'Connection is closed',
-            COMMAND_TIMEOUT: 'Command timed out',
-            CONNECTION_LOST: 'Connection lost',
-            SOCKET_CLOSED: 'Socket closed unexpectedly',
-            PIPELINE_TIMEOUT: 'Redis pipeline timeout',
-            STORE_FAILED: 'Failed to store file in Redis',
-            FILE_NOT_EXIST: 'File does not exist',
-            FILE_NOT_FOUND: 'File not found',
-            MAX_ATTEMPTS_REACHED: 'Max reconnection attempts exceeded'
-        }
-    },
     ERROR_CODE: {
         400: "Bad Request",
         401: "Unauthenticated",

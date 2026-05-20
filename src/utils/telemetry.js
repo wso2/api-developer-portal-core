@@ -47,8 +47,6 @@ const EventNames = {
     GENERATE_KEY: 'generate-key',
     SUBSCRIBE_API: 'subscribe-api',
     UNSUBSCRIBE_API: 'unsubscribe-api',
-    GENERATE_SDK_START: 'generate-sdk-start',
-    GENERATE_SDK_END: 'generate-sdk-end',
     HOME_PAGE_VISIT: 'home-page-visit',
 };
 
@@ -248,42 +246,6 @@ function trackUnsubscribeApi({ orgId, appId, apiRefId, idpId }, req) {
 }
 
 /**
- * Tracks the initiation of SDK generation process.
- * Records when a user starts generating an SDK for an application.
- * 
- * @param {string} [orgName] - Organization name
- * @param {string} [appId] - Application identifier for which SDK is being generated
- * @param {string} [idpId] - Identity provider identifier
- * @param {Object} req - Express request object containing user session information
- */
-function trackSDKGenerationStart({ orgName, appId, idpId }, req) {
-    trackEventWithDefaults({
-        name: EventNames.GENERATE_SDK_START,
-        properties: {
-            orgName: orgName || NA,
-            appId: appId || NA,
-            idpId: idpId || NA,
-            timestamp: new Date().toISOString()
-        }
-    }, req);
-}
-
-/**
- * Tracks the completion of SDK generation process.
- * Records when SDK generation is successfully completed.
- * 
- * @param {Object} req - Express request object containing user session information
- */
-function trackSDKGenerationEnd(req) {
-    trackEventWithDefaults({
-        name: EventNames.GENERATE_SDK_END,
-        properties: {
-            timestamp: new Date().toISOString()
-        }
-    }, req);
-}
-
-/**
  * Tracks home page visit events.
  * Records when a user visits the developer portal home page.
  * 
@@ -325,10 +287,6 @@ module.exports = {
     trackSubscribeApi,
     /** @see trackUnsubscribeApi */
     trackUnsubscribeApi,
-    /** @see trackSDKGenerationStart */
-    trackSDKGenerationStart,
-    /** @see trackSDKGenerationEnd */
-    trackSDKGenerationEnd,
     /** @see trackHomePageVisit */
     trackHomePageVisit
 };

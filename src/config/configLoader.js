@@ -130,8 +130,6 @@ if (!fs.existsSync(path.join(process.cwd(), 'config.yaml'))) {
                 apiKeySecret: rawSecret.apiKeySecret || '',
                 billingKeyEncryptionKey: rawSecret.billingKeyEncryptionKey || '',
                 azureInsightsConnectionString: rawSecret.azureInsightsConnectionString || '',
-                redisSecret: rawSecret.redisSecret || '',
-                aiSDKService: rawSecret.aiSDKService || {},
             };
         } catch (_) {}
     }

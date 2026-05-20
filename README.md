@@ -169,7 +169,6 @@ Sensitive values belong under the `secrets:` key in `config.yaml`, or injected a
 | `secrets.dbSecret` | `DP_SECRETS_DBSECRET` | Database password |
 | `secrets.apiKeySecret` | `DP_SECRETS_APIKEYSECRET` | API key secret |
 | `secrets.billingKeyEncryptionKey` | `DP_SECRETS_BILLINGKEYENCRYPTIONKEY` | 64-char hex key for billing encryption |
-| `secrets.redisSecret` | `DP_SECRETS_REDISSECRET` | Redis password |
 | `secrets.azureInsightsConnectionString` | `DP_SECRETS_AZUREINSIGHTSCONNECTIONSTRING` | Azure Application Insights |
 
 In production, inject secrets as env vars rather than storing them in the file.

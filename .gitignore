@@ -3,8 +3,6 @@
 
 /dist
 
-/generated-sdks
-
 # logs
 /logs
 *.log
@@ -102,4 +100,3 @@ resources/mock
 
 config.yaml
 .env
-

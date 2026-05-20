@@ -4,16 +4,7 @@
         <div class="d-flex align-items-center justify-content-between mb-3">
             <div class="container-header">Subscribed API Proxies</div>
             <div class='action-buttons mt-0'>
-                {{#if features.sdkGeneration}}
-                    {{#if subAPIs}}
-                        <button class="common-btn-primary {{#if @root.isReadOnlyMode}}disabled{{/if}}" style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{else}}font-weight: 500;{{/if}}" type="button" onclick="redirectToSDKGeneration()" disabled>
-                            <span class="button-normal-state">
-                                <i class="bi bi-box-seam me-1"></i> Generate SDK
-                            </span>
-                        </button>
-                    {{/if}}
-                {{/if}}
-                <a class="common-btn-primary ms-2" type="button"
+                <a class="common-btn-primary" type="button"
                     href="{{baseUrl}}/apis?appID={{applicationMetadata.id}}&appName={{applicationMetadata.name}}">
                     <i class="fas fa-external-link-alt me-2"></i> Explore more
                 </a>
@@ -25,11 +16,6 @@
                 <table class="app-table" id="app-table-{{applicationMetadata.id}}">
                     <thead>
                         <tr>
-                            {{#if features.sdkGeneration}}
-                                <th class="app-th" style="width: 50px;">
-                                    <input type="checkbox" id="selectAllAPIs">
-                                </th>
-                            {{/if}}
                             <th class="app-th" style="width: 20%;">API Name</th>
                             <th class="app-th" style="width: 20%;">API Version</th>
                             {{!-- <th class="app-th">Type</th> --}}
@@ -44,14 +30,6 @@
                         {{> api-key apiID=apiID keyType="SANDBOX"}}
                         {{#in apiType values="REST, WS, WEBSUB, GRAPHQL"}}
                         <tr class="data-row" id="data-row-{{subID}}" data-index="{{@index}}">
-                            {{#if ../features.sdkGeneration}}
-                            <td class="app-td" style="width: 50px;">
-                                <input type="checkbox" class="api-checkbox" 
-                                    data-api-id="{{apiID}}" 
-                                    data-api-name="{{name}}" 
-                                    data-api-version="{{version}}">
-                            </td>
-                            {{/if}}
                             <td class="app-td" style="width: 20%;">
                                 <span onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
                                     class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
@@ -251,6 +229,3 @@
         </div>
      </div>    
 </section>
-
-<!-- Load API selection management script -->
-<script src="/technical-scripts/api-selection.js"></script>

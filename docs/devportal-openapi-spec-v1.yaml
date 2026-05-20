@@ -5,7 +5,7 @@ info:
   description: |
     Fine-grained Developer Portal API for managing organizations, identity providers, providers,
     API metadata and content, applications, subscriptions, application credentials, platform
-    gateway subscriptions, billing, invoices, usage, SDK generation, and API flows.
+    gateway subscriptions, billing, invoices, usage, and API flows.
 
     All paths are served under the `/devportal` base path. Operations declare the least-privilege
     OAuth2 scopes required for each resource action, and selected billing-related endpoints also
@@ -34,7 +34,6 @@ tags:
   - name: App Key Mapping
   - name: Views
   - name: Application Keys
-  - name: SDK
   - name: Billing
   - name: Usage
   - name: Invoices
@@ -1864,72 +1863,6 @@ paths:
         - OAuth2Security:
             - dp:app_key_write
             - dp:app_key_manage
-  /applications/{applicationId}/generate-sdk:
-    parameters:
-      - $ref: "#/components/parameters/ApplicationId"
-    post:
-      tags:
-        - SDK
-      operationId: generateSDK
-      requestBody:
-        $ref: "#/components/requestBodies/SDKGenerateBody"
-      responses:
-        default:
-          $ref: "#/components/responses/DefaultResponse"
-      security:
-        - OAuth2Security:
-            - dp:sdk_generate
-            - dp:sdk_manage
-  /applications/{applicationId}/sdk/job-progress/{jobId}:
-    parameters:
-      - $ref: "#/components/parameters/ApplicationId"
-      - $ref: "#/components/parameters/JobId"
-    get:
-      tags:
-        - SDK
-      operationId: streamSDKProgress
-      responses:
-        default:
-          description: Server-sent event stream or JSON response.
-          content:
-            text/event-stream:
-              schema:
-                type: string
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GenericObject"
-      security:
-        - OAuth2Security:
-            - dp:sdk_read
-            - dp:sdk_manage
-  /applications/{applicationId}/sdk/cancel/{jobId}:
-    parameters:
-      - $ref: "#/components/parameters/ApplicationId"
-      - $ref: "#/components/parameters/JobId"
-    post:
-      tags:
-        - SDK
-      operationId: cancelSDK
-      responses:
-        default:
-          $ref: "#/components/responses/DefaultResponse"
-      security:
-        - OAuth2Security:
-            - dp:sdk_cancel
-            - dp:sdk_manage
-  /sdk/download/{filename}:
-    parameters:
-      - $ref: "#/components/parameters/Filename"
-    get:
-      tags:
-        - SDK
-      operationId: downloadSDK
-      responses:
-        default:
-          $ref: "#/components/responses/BinaryOrJsonResponse"
-      security:
-        - OAuth2Security:
-            - dp:sdk:read
   /organizations/{orgId}/billing/usage-data:
     parameters:
       - $ref: "#/components/parameters/OrgId"
@@ -2683,10 +2616,6 @@ components:
             dp:app_key_write: Generate, update, regenerate, or clean up application keys.
             dp:app_key_revoke: Revoke application keys.
             dp:app_key_manage: Manage application keys.
-            dp:sdk_generate: Generate SDKs.
-            dp:sdk_read: Read SDK generation progress or download SDKs.
-            dp:sdk_cancel: Cancel SDK generation jobs.
-            dp:sdk_manage: Manage SDK generation.
             dp:billing_read: Read billing information, usage data, payment methods, and subscription billing status.
             dp:billing_write: >-
               Create checkout sessions, register checkout sessions, create billing portal sessions, or cancel paid
@@ -2785,18 +2714,6 @@ components:
         type: string
     ApiKeyID:
       name: apiKeyID
-      in: path
-      required: true
-      schema:
-        type: string
-    JobId:
-      name: jobId
-      in: path
-      required: true
-      schema:
-        type: string
-    Filename:
-      name: filename
       in: path
       required: true
       schema:
@@ -3393,12 +3310,6 @@ components:
           example:
             keyType: PRODUCTION
             keyManager: Resident Key Manager
-    SDKGenerateBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/SDKGenerateRequest"
     BillingEngineKeysBody:
       required: true
       description: Billing engine credentials to encrypt and store for the organization.
@@ -5985,24 +5896,6 @@ components:
           type: string
           example: weather.read
       additionalProperties: true
-    SDKGenerateRequest:
-      type: object
-      required:
-        - selectedAPIs
-        - sdkConfiguration
-        - orgName
-      properties:
-        selectedAPIs:
-          type: array
-          minItems: 1
-          items:
-            type: object
-            additionalProperties: true
-        sdkConfiguration:
-          type: object
-          additionalProperties: true
-        orgName:
-          type: string
     BillingEngineKeysRequest:
       type: object
       required:
