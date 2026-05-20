@@ -24,6 +24,7 @@ class SubscriptionPolicy {
         this.billingPlan = subscriptionPolicy.BILLING_PLAN;
         this.description = subscriptionPolicy.DESCRIPTION;
         this.requestCount = subscriptionPolicy.REQUEST_COUNT;
+        this.refId = subscriptionPolicy.REF_ID;
         this.orgID = subscriptionPolicy.ORG_ID;
         
         // Pricing fields

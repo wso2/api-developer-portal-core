@@ -88,9 +88,9 @@ router.put(
     apiMetadataService.updateAPIMetadata);
 router.delete('/organizations/:orgId/apis/:apiId', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.deleteAPIMetadata);
 
-router.post('/organizations/:orgId/subscription-policies', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.addSubscriptionPolicies);
+router.post('/organizations/:orgId/subscription-policies', enforceSecuirty(constants.SCOPES.DEVELOPER), multipartHandler.fields([{ name: 'subscriptionPolicy', maxCount: 1 }]), apiMetadataService.addSubscriptionPolicies);
 router.get('/organizations/:orgId/subscription-policies/:policyID', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.getSubscriptionPolicy);
-router.put('/organizations/:orgId/subscription-policies', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.putSubscriptionPolicies);
+router.put('/organizations/:orgId/subscription-policies', enforceSecuirty(constants.SCOPES.DEVELOPER), multipartHandler.fields([{ name: 'subscriptionPolicy', maxCount: 1 }]), apiMetadataService.putSubscriptionPolicies);
 router.delete('/organizations/:orgId/subscription-policies/:policyName', enforceSecuirty(constants.SCOPES.DEVELOPER), apiMetadataService.deleteSubscriptionPolicy);
 
 const apiZip = multer({ dest: '/tmp' });

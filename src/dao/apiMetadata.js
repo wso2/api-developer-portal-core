@@ -485,6 +485,7 @@ const buildSubscriptionPolicyRow = (orgID, policy) => {
     BILLING_PLAN: policy.billingPlan,
     DESCRIPTION: policy.description,
     REQUEST_COUNT: requestCount,
+    REF_ID: policy.refId ?? null,
 
     PRICING_MODEL: toUpper(policy.pricingModel) ?? null,
     CURRENCY: policy.currency ?? null,
