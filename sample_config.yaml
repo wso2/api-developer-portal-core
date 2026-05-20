@@ -56,6 +56,17 @@ advanced:
     keyValue: "x-wso2-api-key"
   tokenExchanger:
     enabled: false
+  # Mount the OpenAPI-spec-driven /devportal router (request validation + fine-grained
+  # OAuth2 scope enforcement, dispatching by operationId to src/openapi/handlers).
+  # When false, the legacy src/routes/devportalRoute.js is mounted instead.
+  openApiValidator:
+    enabled: true          # Set to false to disable the OpenAPI validator and use legacy routing
+    # Response validation strategy. Off by default in production.
+    #   off      — disabled
+    #   strict     — strict; responses that don't match the spec become 500s
+    #   'log-only' — log drift via warn-level logs but send the response anyway
+    # When unset, enabled only if mode == "development".
+    validateResponses: off 
 
 # ─── TLS Certificates (only needed when advanced.http is false) ────────────────
 
@@ -81,6 +92,7 @@ identityProvider:
   logoutRedirectURI: "http://localhost:3000/ACME"
   certificate: ""
   jwksURL: "https://localhost:9443/oauth2/jwks"
+  tokenRefreshTimeoutMs: 10000
 
 # ─── Local / Default Auth ──────────────────────────────────────────────────────
 # Built-in local users for first-time exploration. Disable in production by
