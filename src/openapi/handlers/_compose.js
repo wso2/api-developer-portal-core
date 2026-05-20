@@ -21,12 +21,9 @@
  * Tiny middleware-chain helper for OpenAPI operation handlers.
  *
  * Example:
- *   const platformApiKeyService = require('../../services/platformApiKeyService');
  *   const { requireCsrfForMutatingApi } = require('../../middlewares/csrfProtection');
- *   exports.generatePlatformApiKey = compose(
- *       requireCsrfForMutatingApi,
- *       platformApiKeyService.generatePlatformApiKey
- *   );
+ *   const apiKeyController = require('../../controllers/apiKeyController');
+ *   exports.generateApiKey = compose(requireCsrfForMutatingApi, apiKeyController.generateApiKey);
  */
 
 function compose(...fns) {
