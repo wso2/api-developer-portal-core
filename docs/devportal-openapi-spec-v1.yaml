@@ -3246,7 +3246,9 @@ components:
       description: >-
         Subscription policy payload. Send a single object for single create/upsert, or a non-empty array
         for bulk create/upsert. The service currently processes policies with `type` set to
-        `requestcount` or `eventcount`.
+        `requestcount` or `eventcount`. Alternatively, upload a YAML file in the `subscriptionPolicy`
+        multipart field; use `kind: SubscriptionPolicy` for a single policy or `kind: SubscriptionPolicyList`
+        with an `items` array for bulk operations.
       content:
         application/json:
           schema:
@@ -3256,6 +3258,25 @@ components:
                 minItems: 1
                 items:
                   $ref: "#/components/schemas/SubscriptionPolicyRequest"
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              subscriptionPolicy:
+                type: string
+                format: binary
+                description: >-
+                  Subscription policy YAML file. Use `kind: SubscriptionPolicy` for a single policy
+                  or `kind: SubscriptionPolicyList` (with an `items` array) for bulk operations.
+          examples:
+            singlePolicy:
+              summary: Single subscription policy YAML upload
+              value:
+                subscriptionPolicy: plan.yaml
+            policyList:
+              summary: Bulk subscription policy YAML upload
+              value:
+                subscriptionPolicy: plans.yaml
     LabelsBody:
       required: true
       description: Label array to create or upsert.
