@@ -1,3 +1,8 @@
+/* The token layer, imported so this sheet stands alone. Internal pages render
+   inside the organization's own stored layout, which predates the tokens.css
+   <link> and will never gain it - so the sheet has to carry its own tokens.
+   /technical-styles/ is never rewritten to a stored-asset URL. */
+@import "/technical-styles/tokens.css";
 .btn-prompt {
     background: linear-gradient(135deg, #6B4FE8, #E040D0);
     background-size: 200% 200%;
@@ -54,7 +59,7 @@
     justify-content: center;
     width: 42px;
     height: 42px;
-    background: var(--primary-main-color);
+    background: var(--primary);
     color: #fff;
     border: 2px solid transparent;
     border-radius: 9px;
@@ -225,8 +230,8 @@
     line-height: 1.7;
     white-space: pre-wrap;
     word-break: break-word;
-    background: var(--main-bg-color);
-    color: var(--main-text-color);
+    background: var(--surface);
+    color: var(--ink);
     border: none;
     border-radius: 0;
 }
@@ -247,14 +252,14 @@
     align-items: center;
     justify-content: center;
     font-size: 1rem;
-    color: var(--main-text-color);
+    color: var(--ink);
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .prompt-tool-btn:hover {
-    border-color: var(--primary-main-color);
-    color: var(--primary-main-color);
+    border-color: var(--primary);
+    color: var(--primary);
     background: var(--primary-lightest-color);
 }
 
@@ -288,7 +293,7 @@
     position: absolute;
     top: calc(100% + 6px);
     right: 0;
-    background: var(--main-bg-color);
+    background: var(--surface);
     border: 1px solid var(--bs-gray-200);
     border-radius: 0.5rem;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
@@ -309,12 +314,12 @@
     background: none;
     border: none;
     font-size: 0.875rem;
-    color: var(--main-text-color);
+    color: var(--ink);
     cursor: pointer;
     transition: background 0.15s ease;
 }
 
 .run-option:hover {
     background: var(--primary-lightest-color);
-    color: var(--primary-main-color);
+    color: var(--primary);
 }

@@ -1,3 +1,8 @@
+/* The token layer, imported so this sheet stands alone. Internal pages render
+   inside the organization's own stored layout, which predates the tokens.css
+   <link> and will never gain it - so the sheet has to carry its own tokens.
+   /technical-styles/ is never rewritten to a stored-asset URL. */
+@import "/technical-styles/tokens.css";
 /* SDK Drawer Styles */
 /* Body scroll lock when drawer is open */
 body.drawer-open {
@@ -39,7 +44,7 @@ body.drawer-open {
   right: 0;
   width: 480px;
   height: 100%;
-  background-color: var(--white-color);
+  background-color: var(--white);
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
   transform: translateX(100%);
   transition: transform 0.3s ease;
@@ -58,7 +63,7 @@ body.drawer-open {
 }
 
 .sdk-drawer-header h4 {
-  color: var(--primary-main-color);
+  color: var(--primary);
   font-weight: 600;
   font-size: 1.25rem;
 }
@@ -67,7 +72,7 @@ body.drawer-open {
   background: none;
   border: none;
   font-size: 1.2rem;
-  color: var(--main-text-color);
+  color: var(--ink);
   cursor: pointer;
   padding: 0.25rem;
   border-radius: 4px;
@@ -100,7 +105,7 @@ body.drawer-open {
 /* Form labels styling */
 .form-label {
   font-weight: 600;
-  color: var(--primary-main-color);
+  color: var(--primary);
 }
 
 /* Language Grid */
@@ -128,7 +133,7 @@ body.drawer-open {
     height: 16px;
     z-index: 2;
     margin: 0;
-    accent-color: var(--primary-main-color);
+    accent-color: var(--primary);
 }
 
 /* AI Mode card styling without download buttons */
@@ -141,7 +146,7 @@ body.drawer-open {
     padding-right: 2.5rem; /* Make room for radio button */
     border: 2px solid #e9ecef;
     border-radius: 8px;
-    background-color: var(--white-color);
+    background-color: var(--white);
     cursor: pointer;
     transition: all 0.2s ease;
     text-decoration: none;
@@ -164,14 +169,14 @@ body.drawer-open {
 /* The selected state now highlights the border and background */
 .language-option.selected .language-card,
 .language-option input:checked + .language-card {
-    border-color: var(--primary-main-color);
+    border-color: var(--primary);
     background-color: rgba(89, 82, 173, 0.08);
     box-shadow: 0 2px 8px rgba(89, 82, 173, 0.15);
 }
 
 
 .language-card:hover {
-    border-color: var(--primary-main-color);
+    border-color: var(--primary);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
@@ -222,7 +227,7 @@ body.drawer-open {
 /* Language name styling */
 .language-name {
   font-size: 0.875rem; 
-  color: var(--main-text-color);
+  color: var(--ink);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -262,7 +267,7 @@ body.drawer-open {
     transition: border-color 0.2s ease;
 }
 .prompt-input-area:focus-within {
-        border-color: var(--primary-main-color);
+        border-color: var(--primary);
         box-shadow: 0 0 0 0.25rem rgba(89, 82, 173, 0.25);
 }
 
@@ -273,7 +278,7 @@ body.drawer-open {
     padding: 0;
     margin-top: 0.5rem; /* Space between suggestion and textarea */
     resize: none; /* Or vertical if you prefer */
-    color: var(--main-text-color);
+    color: var(--ink);
 }
 
 .prompt-input-area > textarea.form-control:focus {
@@ -292,7 +297,7 @@ body.drawer-open {
 
 .prompt-input-area > textarea.form-control.typing::after {
     content: '|';
-    color: var(--primary-main-color);
+    color: var(--primary);
     animation: blinkCursor 1s infinite;
     position: absolute;
     right: 2px;
@@ -324,7 +329,7 @@ body.drawer-open {
 
 .suggestion-chip:hover {
     background-color: #dee2e6;
-    border-color: var(--primary-main-color);
+    border-color: var(--primary);
     transform: translateY(-1px) scale(1.02);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -349,9 +354,9 @@ body.drawer-open {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--success-color);
+    background-color: var(--success);
     border-radius: 50%;
-    color: var(--white-color);
+    color: var(--white);
     font-size: 1rem;
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     transition: all 0.2s ease;
@@ -359,7 +364,7 @@ body.drawer-open {
 }
 
 .suggestion-chip .suggestion-icon {
-    color: var(--white-color);
+    color: var(--white);
 }
 
 .suggestion-chip .btn-close {
@@ -413,13 +418,13 @@ body.drawer-open {
 .sdk-progress-title {
     font-weight: 600;
     font-size: 14px;
-    color: var(--primary-main-color);
+    color: var(--primary);
 }
 
 .sdk-progress-percentage {
     font-weight: 700;
     font-size: 16px;
-    color: var(--primary-main-color);
+    color: var(--primary);
 }
 
 .sdk-progress-container.error .sdk-progress-percentage {
@@ -441,7 +446,7 @@ body.drawer-open {
 
 .sdk-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--primary-main-color) 0%, rgba(89, 82, 173, 0.8) 100%);
+    background: linear-gradient(90deg, var(--primary) 0%, rgba(89, 82, 173, 0.8) 100%);
     border-radius: 4px;
     width: 0%;
     transition: width 0.4s ease;
@@ -458,16 +463,16 @@ body.drawer-open {
 }
 
 .sdk-progress-container.success .sdk-progress-title {
-    color: var(--success-color);
+    color: var(--success);
 }
 
 .sdk-progress-container.success .sdk-progress-percentage {
-    color: var(--success-color);
+    color: var(--success);
     font-weight: 600;
 }
 
 .sdk-progress-container.success .sdk-progress-status {
-    color: var(--success-color);
+    color: var(--success);
 }
 
 .sdk-progress-fill::after {

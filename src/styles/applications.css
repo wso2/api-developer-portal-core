@@ -1,6 +1,11 @@
+/* The token layer, imported so this sheet stands alone. Internal pages render
+   inside the organization's own stored layout, which predates the tokens.css
+   <link> and will never gain it - so the sheet has to carry its own tokens.
+   /technical-styles/ is never rewritten to a stored-asset URL. */
+@import "/technical-styles/tokens.css";
 .applicationspage-container .container-header {
   display: block;
-  color: var(--primary-main-color);
+  color: var(--primary);
   font-size: 1.5rem;
   font-weight: 600;
 }
@@ -34,18 +39,18 @@
   font-size: 1.5rem;
   line-height: 1.5rem;
   font-weight: 300;
-  color: var(--primary-main-color);
+  color: var(--primary);
   display: block;
 }
 
 .create-text {
   font-size: 1rem;
   font-weight: 500;
-  color: var(--primary-main-color);
+  color: var(--primary);
 }
 
 .application-name-link {
-  color: var(--main-text-color);
+  color: var(--ink);
   text-decoration: none;
   font-size: 1rem;
   font-weight: 500;
@@ -58,7 +63,7 @@
   border-radius: 4px;
   font-size: 10px;
   text-transform: lowercase;
-  background-color: var(--secondary-bg-color);
+  background-color: var(--surface-sunken);
   color: var(--secondary-text-color);
   border: 1px solid;
 }
@@ -68,8 +73,8 @@
 }
 
 .subscription-count-badge {
-  background-color: var(--main-bg-color);
-  color: var(--primary-main-color);
+  background-color: var(--surface);
+  color: var(--primary);
   border-radius: 0.25rem;
   font-size: 0.6875rem;
   margin-right: 0.5rem;
@@ -81,7 +86,7 @@
 .application-card {
   height: 11.25rem;
   padding: 1.5rem;
-  background: var(--main-bg-color);
+  background: var(--surface);
   position: relative;
 }
 
@@ -171,7 +176,7 @@
   flex-direction: column;
   flex-grow: 1;
 
-  color: var(--main-text-color);
+  color: var(--ink);
   text-decoration: none;
   font-size: 1rem;
   font-weight: 500;
@@ -192,23 +197,23 @@
 }
 
 .applicationlist-tags .badge-custom1 {
-  border: 0.0625rem solid var(--success-color);
-  background-color: var(--main-bg-color);
-  color: var(--success-color);
+  border: 0.0625rem solid var(--success);
+  background-color: var(--surface);
+  color: var(--success);
   margin: 0.125rem 0.3125rem 0.25rem 0;
 }
 
 .applicationlist-tags .badge-custom2 {
-  border: 0.0625rem solid var(--primary-main-color);
-  background-color: var(--main-bg-color);
-  color: var(--primary-main-color);
+  border: 0.0625rem solid var(--primary);
+  background-color: var(--surface);
+  color: var(--primary);
   margin: 0.125rem 0.3125rem 0.25rem 0;
 }
 
 .applicationlist-tags .badge-custom3 {
   border: 0.0625rem solid rgba(99, 99, 110, 0.25);
   background-color: transparent;
-  color: var(--main-text-color);
+  color: var(--ink);
   font-weight: 0;
   margin: 0.125rem 0.3125rem 0.25rem 0;
 }
@@ -216,13 +221,13 @@
 .application-card-meta p {
   display: flex;
   font-size: 0.75rem;
-  color: var(--main-text-color);
+  color: var(--ink);
   margin: 0.3125rem 0;
 }
 
 .application-card-meta i {
   margin-right: 0.5rem;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 .application-card-actions {
@@ -243,31 +248,31 @@
   border: none;
   padding: 0 0 0 0.75rem;
   background-color: transparent;
-  color: var(--main-text-color);
+  color: var(--ink);
   font-size: 1rem;
   cursor: pointer;
 }
 
 .application-btn-icon:hover {
-  color: var(--primary-main-color);
+  color: var(--primary);
 }
 
 /* Add specific styling for delete button */
 .application-btn-icon.delete-button {
-  color: var(--danger-color);
+  color: var(--danger);
 }
 
 .application-btn-icon.delete-button:hover {
-  color: var(--danger-color);
+  color: var(--danger);
   opacity: 0.8;
 }
 
 .application-btn-icon.edit-button {
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 .application-btn-icon.edit-button:hover {
-  color: var(--main-text-color);
+  color: var(--ink);
   opacity: 0.8;
 }
 
@@ -354,7 +359,7 @@
 .message-text {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--main-text-color);
+  color: var(--ink);
   margin: 0;
   line-height: 1.2;
   overflow: hidden;
@@ -373,7 +378,7 @@
   line-height: 1;
   opacity: 0.6;
   transition: opacity 0.2s;
-  color: var(--main-text-color);
+  color: var(--ink);
   background: transparent;
   border: none;
   display: flex;

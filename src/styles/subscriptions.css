@@ -1,3 +1,8 @@
+/* The token layer, imported so this sheet stands alone. Internal pages render
+   inside the organization's own stored layout, which predates the tokens.css
+   <link> and will never gain it - so the sheet has to carry its own tokens.
+   /technical-styles/ is never rewritten to a stored-asset URL. */
+@import "/technical-styles/tokens.css";
 /*
  * Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
@@ -20,7 +25,7 @@
 
 .subscriptions-container .container-header {
     display: block;
-    color: var(--primary-main-color);
+    color: var(--primary);
     font-size: 1.5rem;
     font-weight: 600;
 }
@@ -28,7 +33,7 @@
 /* ===== API Name Links ===== */
 
 #subscriptions-table td a {
-    color: var(--primary-main-color);
+    color: var(--primary);
     text-decoration: none;
     font-weight: 500;
 }
@@ -48,7 +53,7 @@
 .masked-token {
     font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
     font-size: 0.85rem;
-    background-color: var(--bs-light, #f8f9fa);
+    background-color: var(--bs-light, var(--surface-sunken));
     padding: 0.15rem 0.4rem;
     border-radius: 0.25rem;
     word-break: break-all;
@@ -73,7 +78,7 @@
     font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.025em;
-    color: var(--bs-secondary, #6c757d);
+    color: var(--bs-secondary, var(--text-muted));
     border-bottom-width: 2px;
 }
 
@@ -88,7 +93,7 @@
     font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.025em;
-    color: var(--bs-secondary, #6c757d);
+    color: var(--bs-secondary, var(--text-muted));
     border-bottom-width: 2px;
 }
 

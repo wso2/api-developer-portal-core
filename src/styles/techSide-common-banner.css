@@ -1,3 +1,8 @@
+/* The token layer, imported so this sheet stands alone. Internal pages render
+   inside the organization's own stored layout, which predates the tokens.css
+   <link> and will never gain it - so the sheet has to carry its own tokens.
+   /technical-styles/ is never rewritten to a stored-asset URL. */
+@import "/technical-styles/tokens.css";
 .techSide-banner-section {
   display: flex;
   justify-content: center;
@@ -40,7 +45,7 @@
 
 .techSide-banner-content h1,
 .techSide-banner-content span {
-  color: var(--primary-main-color);
+  color: var(--primary);
 }
 
 .techSide-banner-header {
@@ -63,7 +68,7 @@
 .techSide-banner-search-input {
   display: flex;
   align-items: center;
-  background-color: var(--main-bg-color);
+  background-color: var(--surface);
   padding: 0.625rem 1.25rem;
   border-radius: 1.5625rem;
   width: 100%;
@@ -79,10 +84,10 @@
   margin-left: 0.625rem;
   font-size: 1rem;
   background-color: transparent;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 #query::placeholder {
-  color: var(--main-text-color);
+  color: var(--ink);
   opacity: 0.8;
 }

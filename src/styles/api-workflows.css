@@ -1,3 +1,8 @@
+/* The token layer, imported so this sheet stands alone. Internal pages render
+   inside the organization's own stored layout, which predates the tokens.css
+   <link> and will never gain it - so the sheet has to carry its own tokens.
+   /technical-styles/ is never rewritten to a stored-asset URL. */
+@import "/technical-styles/tokens.css";
 /* ===== API Flows — Gallery Page ===== */
 
 .flows-section {
@@ -23,14 +28,14 @@
 }
 
 .flows-hero h1 {
-    color: var(--primary-main-color);
+    color: var(--primary);
     font-size: 2rem;
     font-weight: 600;
     margin: 0 0 0.5rem 0;
 }
 
 .flows-hero p {
-    color: var(--main-text-color);
+    color: var(--ink);
     font-weight: 300;
     margin: 0.5rem 0 0 0;
 }
@@ -39,8 +44,8 @@
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    background: var(--primary-main-color);
-    color: var(--light-text-color);
+    background: var(--primary);
+    color: var(--white);
     border: none;
     padding: 0.5rem 1rem;
     border-radius: 0.375rem;
@@ -55,7 +60,7 @@
 
 .btn-manage-workflows:hover {
     opacity: 0.85;
-    color: var(--light-text-color);
+    color: var(--white);
 }
 
 .flows-grid {
@@ -67,7 +72,7 @@
 }
 
 .flow-card {
-    background: var(--main-bg-color);
+    background: var(--surface);
     border: 1px solid var(--bs-gray-300);
     border-radius: 0.75rem;
     overflow: hidden;
@@ -80,7 +85,7 @@
 
 .flow-card:hover {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    border-color: var(--primary-main-color);
+    border-color: var(--primary);
     transform: translateY(-4px);
 }
 
@@ -91,7 +96,7 @@
 }
 
 .flow-card-title {
-    color: var(--primary-main-color);
+    color: var(--primary);
     font-size: 1.25rem;
     font-weight: 600;
     margin: 0;
@@ -106,7 +111,7 @@
 }
 
 .flow-description {
-    color: var(--main-text-color);
+    color: var(--ink);
     line-height: 1.6;
     margin: 0 0 1.5rem 0;
     font-size: 0.95rem;
@@ -124,7 +129,7 @@
 
 .flow-apis-label {
     display: block;
-    color: var(--main-text-color);
+    color: var(--ink);
     font-weight: 600;
     margin-bottom: 0.75rem;
     font-size: 0.8rem;
@@ -142,7 +147,7 @@
 .flow-api-chip {
     display: inline-block;
     background: var(--primary-lightest-color, #f0f0f8);
-    color: var(--primary-main-color);
+    color: var(--primary);
     padding: 0.2rem 0.575rem;
     border-radius: 0.375rem;
     font-size: 0.85rem;
@@ -154,13 +159,13 @@
 
 .flow-api-chip:hover {
     background: var(--primary-light-color, #e8e8f4);
-    border-color: var(--primary-main-color);
+    border-color: var(--primary);
 }
 
 .flow-api-chip--more {
     background: transparent;
     border-color: transparent;
-    color: var(--primary-main-color);
+    color: var(--primary);
     font-weight: 600;
     padding-left: 0.1rem;
 }
@@ -171,7 +176,7 @@
 }
 
 .flow-arrow {
-    color: var(--main-text-color);
+    color: var(--ink);
     font-size: 0.9rem;
     font-weight: 300;
     opacity: 0.6;
@@ -209,7 +214,7 @@
 }
 
 .flow-visibility-public {
-    background-color: var(--secondary-light-color);
+    background-color: var(--accent-light);
     color: var(--secondary-darkest-color);
 }
 
@@ -219,19 +224,19 @@
 }
 
 .flow-agent-visible {
-    background-color: var(--secondary-main-color);
+    background-color: var(--accent);
     color: var(--white-text-color);
 }
 
 .flow-agent-hidden {
-    background-color: color-mix(in srgb, var(--warning-color) 15%, white);
-    color: color-mix(in srgb, var(--warning-color) 80%, black);
+    background-color: color-mix(in srgb, var(--warning) 15%, white);
+    color: color-mix(in srgb, var(--warning) 80%, black);
 }
 
 .flows-empty {
     text-align: center;
     padding: 3rem 2rem;
-    background: var(--main-bg-color);
+    background: var(--surface);
     border: 1px dashed var(--bs-gray-300);
     border-radius: 0.75rem;
     width: 100%;
@@ -246,12 +251,12 @@
 
 .flows-empty h3 {
     font-size: 1.2rem;
-    color: var(--main-text-color);
+    color: var(--ink);
     margin: 0 0 0.5rem 0;
 }
 
 .flows-empty p {
-    color: var(--main-text-color);
+    color: var(--ink);
     margin: 0;
     font-size: 0.9rem;
 }
@@ -283,7 +288,7 @@
 }
 
 .prompt-modal-content {
-    background: var(--main-bg-color);
+    background: var(--surface);
     border-radius: 0.75rem;
     max-width: 700px;
     width: 100%;
@@ -311,7 +316,7 @@
 .prompt-modal-header h3 {
     margin: 0;
     font-size: 1.2rem;
-    color: var(--primary-main-color);
+    color: var(--primary);
 }
 
 .prompt-modal-close {
@@ -325,7 +330,7 @@
 }
 
 .prompt-modal-close:hover {
-    color: var(--main-text-color);
+    color: var(--ink);
 }
 
 .prompt-modal-body {
@@ -342,7 +347,7 @@
     padding: 1rem;
     font-size: 0.85rem;
     line-height: 1.5;
-    color: var(--main-text-color);
+    color: var(--ink);
     overflow-x: auto;
     margin: 0;
 }
@@ -351,7 +356,7 @@
     position: fixed;
     bottom: 1.25rem;
     right: 1.25rem;
-    background: var(--main-bg-color);
+    background: var(--surface);
     border-radius: 0.5rem;
     padding: 1rem 1.25rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -367,11 +372,11 @@
 }
 
 .notification-success {
-    border-left: 4px solid var(--success-color);
+    border-left: 4px solid var(--success);
 }
 
 .notification-error {
-    border-left: 4px solid var(--danger-color);
+    border-left: 4px solid var(--danger);
 }
 
 .notification-content {
@@ -383,11 +388,11 @@
 }
 
 .notification-success .notification-content {
-    color: var(--success-color);
+    color: var(--success);
 }
 
 .notification-error .notification-content {
-    color: var(--danger-color);
+    color: var(--danger);
 }
 
 /* ===== API Flow — Detail Page ===== */
@@ -422,14 +427,14 @@
 }
 
 .flow-detail-header h1 {
-    color: var(--primary-main-color);
+    color: var(--primary);
     font-size: 2rem;
     font-weight: 600;
     margin: 0 0 0.5rem 0;
 }
 
 .flow-detail-header p {
-    color: var(--main-text-color);
+    color: var(--ink);
     font-weight: 300;
     margin: 0.5rem 0 0 0;
 }
@@ -442,7 +447,7 @@
 
 .flow-detail-back {
     background: none;
-    color: var(--primary-main-color);
+    color: var(--primary);
     border: none;
     padding: 0;
     border-radius: 0;
@@ -458,7 +463,7 @@
 }
 
 .flow-detail-back:hover {
-    color: var(--primary-light-color);
+    color: var(--primary-light);
 }
 
 .flow-detail-content {
@@ -467,7 +472,7 @@
 }
 
 .arazzo-viewer-container {
-    background: var(--main-bg-color);
+    background: var(--surface);
     border: 1px solid var(--bs-gray-300);
     border-radius: 0.75rem;
     overflow: hidden;
@@ -555,7 +560,7 @@
     border: 1px solid var(--bs-gray-200, #e9ecef);
     border-radius: 0.75rem;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
-    color: var(--main-text-color);
+    color: var(--ink);
     font-size: 0.9375rem;
     line-height: 1.75;
 }
@@ -564,7 +569,7 @@
 .af-md-detail-container h2,
 .af-md-detail-container h3,
 .af-md-detail-container h4 {
-    color: var(--main-text-color);
+    color: var(--ink);
     font-weight: 600;
     margin-top: 1.75rem;
     margin-bottom: 0.5rem;
@@ -636,7 +641,7 @@
 }
 
 .af-md-detail-container blockquote {
-    border-left: 3px solid var(--primary-main-color);
+    border-left: 3px solid var(--primary);
     padding: 0.5rem 1rem;
     margin: 0 0 1rem;
     color: var(--bs-secondary, #6c757d);
@@ -651,7 +656,7 @@
 }
 
 .af-md-detail-container a {
-    color: var(--primary-main-color);
+    color: var(--primary);
 }
 
 .af-md-empty {
