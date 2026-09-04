@@ -29,13 +29,28 @@
 <main>
     {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav }}
     {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode showPlatformApiKeysNav=showPlatformApiKeysNav showApiWorkflowsNav=showApiWorkflowsNav }}
-    {{> api-detail-banner }}
-    {{#if loadDefault}}
-    {{> api-default}}
-    {{else}}
-    {{> api-content }}
-    {{/if}}
-    {{> api-subscription-plans}}
+    <div class="container-fluid">
+        {{> api-detail-banner }}
+    </div>
+
+    {{!-- Two-column body: content on the left, subscription rail on the right.
+         The rail is rendered whenever there is either a plan to offer or an existing
+         platform subscription to show - api-subscription-plans carries both, plus the
+         window.__subscriptionOrgID bootstrap that platform-subscription.js reads. --}}
+    <div class="aov-body">
+        <div class="aov-body-main">
+            {{#if loadDefault}}
+            {{> api-default}}
+            {{else}}
+            {{> api-content }}
+            {{/if}}
+        </div>
+        {{#if (or subscriptionPlans.length platformSubscriptions.length)}}
+        <div class="aov-body-sidebar">
+            {{> api-subscription-plans}}
+        </div>
+        {{/if}}
+    </div>
     {{> create-app }}
     {{> warning modalTitle="Confirm" modalMessage="" modalFunction="" }}
     {{> alert }}

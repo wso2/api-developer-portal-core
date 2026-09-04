@@ -128,6 +128,39 @@ test('a stored theme overrides only the seven customizable partials', () => {
     assert.ok(html.includes('id="sidebar"'), 'and our disk sidebar must render instead');
 });
 
+test('the landing rail appears only when it has something to show', () => {
+    // The two-column body puts subscription plans in a fixed-width rail. Gating that
+    // rail on subscriptionPlans alone would be wrong: api-subscription-plans also
+    // carries the existing-platform-subscriptions table and the
+    // window.__subscriptionOrgID bootstrap that platform-subscription.js reads. So the
+    // condition covers both, and an API with subscriptions but no offered plans still
+    // renders its rail.
+    const rail = (over) => renderAll('pages/api-landing', ctx.apiLanding(over)).includes('aov-body-sidebar');
+
+    assert.ok(rail({}), 'an API with plans should show the rail');
+    assert.ok(
+        rail({ subscriptionPlans: [], platformSubscriptions: [{ subscriptionId: 's1' }] }),
+        'an API with an existing subscription but no offered plans must still show the rail'
+    );
+    assert.ok(
+        !rail({ subscriptionPlans: [], platformSubscriptions: [] }),
+        'with neither, the rail should collapse rather than leave an empty column'
+    );
+
+    // And the cards themselves must survive the restructure. This shape - a third-party
+    // gateway with plans on offer - is the only one that reaches them.
+    const withCards = renderAll('pages/api-landing', ctx.apiLandingWithPlans());
+    assert.ok(withCards.includes('id="subscriptionCard-pol-1"'), 'plan cards lost their JS-bound id');
+    assert.ok(withCards.includes('aov-body-sidebar'), 'plan cards should render inside the rail');
+
+    for (const page of ['pages/api-landing', 'pages/mcp-landing']) {
+        assert.ok(
+            renderAll(page, ctx.apiLanding()).includes('aov-body'),
+            `${page} should use the two-column body`
+        );
+    }
+});
+
 test('internal pages render under both the disk layout and a stored one', () => {
     const context = { ...ctx.home(), applicationsMetadata: [] };
     assert.doesNotThrow(() => renderInternalPage('applications', context), 'applications failed under the disk layout');
