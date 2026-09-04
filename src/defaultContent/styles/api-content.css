@@ -1,3 +1,8 @@
+/* The token layer, imported so this sheet stands alone. An organization with a
+   stored theme reaches our stylesheets through its own frozen main.css, and its
+   layout predates the tokens.css <link> - without this import the vocabulary
+   below would resolve to nothing there. /technical-styles/ is never rewritten. */
+@import "/technical-styles/tokens.css";
 /* Modal-specific subscription plan card styles (only for subscription-plans.hbs) */
 .subscription-plans-body--modal .modal-plan-card {
   border: 1.5px solid #e2e8f0;
@@ -140,19 +145,19 @@
 .key-benefit-item h3 {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--primary-main-color);
+  color: var(--primary);
   margin-bottom: 0.625rem;
 }
 
 .key-benefit-item p {
   font-size: 0.875rem;
-  color: var(--main-text-color);
+  color: var(--ink);
   margin-bottom: 1.25rem;
   line-height: 1.5;
 }
 
 .key-benefit-link {
-  color: var(--primary-main-color);
+  color: var(--primary);
   font-size: 0.75rem;
   text-decoration: none;
   display: inline-block;
@@ -181,7 +186,7 @@
 
 .overview-title {
   font-size: 2.25rem;
-  color: var(--main-text-color);
+  color: var(--ink);
   margin-bottom: 1.25rem;
 }
 
@@ -190,7 +195,7 @@
 }
 
 .intro-text-des {
-  color: var(--primary-main-color);
+  color: var(--primary);
 }
 
 .api-content-text .intro-text,
@@ -204,7 +209,7 @@
 
 .section-title {
   font-size: 1rem;
-  color: var(--main-text-color);
+  color: var(--ink);
   margin-bottom: 1.25rem;
   font-weight: 600;
   margin-bottom: 0.625rem;
@@ -277,7 +282,7 @@
 }
 
 .faq-container {
-  border: 0.03125rem solid var(--secondary-main-color);
+  border: 0.03125rem solid var(--accent);
   padding: 2.5rem;
   overflow: hidden;
   border-radius: 1.5625rem;
@@ -294,12 +299,12 @@
 
 .faq-container p {
   font-size: 1rem;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 .faq-container a {
   font-size: 1rem;
-  color: var(--secondary-main-color);
+  color: var(--accent);
   text-decoration: none;
 }
 
@@ -316,7 +321,7 @@
 .faq-question {
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--main-text-color);
+  color: var(--ink);
   margin-bottom: 0.5rem;
 }
 
@@ -325,8 +330,8 @@
 }
 
 .faq-badge-custom1 {
-  border: 0.0625rem solid var(--main-text-color);
-  color: var(--main-text-color);
+  border: 0.0625rem solid var(--ink);
+  color: var(--ink);
   margin: 0px 0.3125rem 0.625rem 0;
   padding: 0.375rem 1.25rem;
   border-radius: 1.875rem;
@@ -336,7 +341,7 @@
 .faq-answer {
   font-size: 1rem;
   line-height: 1.6;
-  color: var(--main-text-color);
+  color: var(--ink);
   opacity: 0.7;
 }
 
@@ -425,9 +430,9 @@ hr {
 }
 
 .api-badge-custom1 {
-  border: 1px solid var(--secondary-main-color);
+  border: 1px solid var(--accent);
   background-color: transparent;
-  color: var(--secondary-main-color);
+  color: var(--accent);
   padding: 0.3rem 0.75rem;
   border-radius: 1.25rem;
   font-size: 0.875rem;
@@ -435,7 +440,7 @@ hr {
 
 .api-description {
   margin-bottom: 1rem;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 .api-tags {
@@ -446,9 +451,9 @@ hr {
 }
 
 .api-badge-custom2 {
-  border: 1px solid var(--main-text-color);
+  border: 1px solid var(--ink);
   background-color: transparent;
-  color: var(--main-text-color);
+  color: var(--ink);
   opacity: 0.7;
   padding: 0.3rem 1rem;
   border-radius: 1.25rem;
@@ -474,7 +479,7 @@ hr {
 .api-title h4 {
   font-size: 2.25rem;
   font-weight: 600;
-  color: var(--primary-main-color);
+  color: var(--primary);
   margin: 0;
   min-width: 0;
   overflow: hidden;
@@ -489,9 +494,9 @@ hr {
 }
 
 .api-badge-custom1 {
-  border: 1px solid var(--secondary-main-color);
+  border: 1px solid var(--accent);
   background-color: transparent;
-  color: var(--secondary-main-color);
+  color: var(--accent);
   padding: 0.3rem 0.75rem;
   border-radius: 1.25rem;
   font-size: 0.875rem;
@@ -499,7 +504,7 @@ hr {
 
 .api-description {
   margin-bottom: 1rem;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 .api-tags {
@@ -510,9 +515,9 @@ hr {
 }
 
 .api-badge-custom2 {
-  border: 1px solid var(--main-text-color);
+  border: 1px solid var(--ink);
   background-color: transparent;
-  color: var(--main-text-color);
+  color: var(--ink);
   opacity: 0.7;
   padding: 0.3rem 1rem;
   border-radius: 1.25rem;
@@ -545,7 +550,7 @@ hr {
 }
 
 .custom-plans-card {
-  border: 0.2px solid var(--secondary-main-color);
+  border: 0.2px solid var(--accent);
   transition: all 0.3s ease-in-out;
   max-width: 380px;
 }
@@ -557,18 +562,18 @@ hr {
 .custom-plans-card h5 {
   font-size: 1.3rem;
   font-weight: 500;
-  color: var(--primary-main-color);
+  color: var(--primary);
 }
 
 .custom-plans-card h4 {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--primary-main-color);
+  color: var(--primary);
 }
 
 .custom-plans-description {
   font-size: 1rem;
-  color: var(--main-text-color);
+  color: var(--ink);
   opacity: 0.7;
 }
 
@@ -600,13 +605,13 @@ hr {
 }
 
 .subscription-plans-card-title {
-  color: var(--primary-main-color);
+  color: var(--primary);
   font-size: 1.25rem;
   font-weight: 700;
 }
 
 .subscription-plans-request-count {
-  color: var(--primary-main-color);
+  color: var(--primary);
   font-weight: 600;
   padding-top: 1.5rem;
   font-size: clamp(1rem, 2vw, 2rem);
@@ -618,7 +623,7 @@ hr {
 }
 
 .subscription-plans-card-subtitle {
-  color: var(--main-text-color) !important;
+  color: var(--ink) !important;
   opacity: 0.7;
   font-size: 0.85rem !important;
   font-weight: 500;
@@ -804,7 +809,7 @@ hr {
 .subscription-card .message-text {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--main-text-color);
+  color: var(--ink);
   margin: 0;
   line-height: 1.2;
   overflow: hidden;
@@ -824,7 +829,7 @@ hr {
   line-height: 1;
   opacity: 0.6;
   transition: opacity 0.2s;
-  color: var(--main-text-color);
+  color: var(--ink);
   background: transparent;
   border: none;
   display: flex;
@@ -871,7 +876,7 @@ hr {
     padding: 10px 10px;
     border: 1px solid #dee2e6;
     border-radius: 4px;
-    background-color: var(--main-bg-color);
+    background-color: var(--surface);
     cursor: pointer;
     font-size: 0.875rem;
   }
@@ -898,7 +903,7 @@ hr {
     left: 0;
     right: 0;
     z-index: 999;
-    background-color: var(--main-bg-color);
+    background-color: var(--surface);
     border: 1px solid #dee2e6;
     border-radius: 0 0 4px 4px;
     max-height: 200px;
@@ -913,7 +918,7 @@ hr {
     border-bottom: 1px solid #dee2e6;
     position: sticky;
     top: 0;
-    background-color: var(--main-bg-color);
+    background-color: var(--surface);
     z-index: 2;
   }
 
@@ -927,7 +932,7 @@ hr {
 
   .select-search-input:focus {
     outline: none;
-    border-color: var(--primary-main-color);
+    border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(var(--primary-main-color-rgb), 0.25);
   }
 
@@ -944,7 +949,7 @@ hr {
     padding: 8px 10px;
     cursor: pointer;
     font-size: 0.75rem;
-    color: var(--primary-main-color);
+    color: var(--primary);
     font-weight: 500;
   }
 

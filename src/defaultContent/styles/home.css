@@ -1,3 +1,8 @@
+/* The token layer, imported so this sheet stands alone. An organization with a
+   stored theme reaches our stylesheets through its own frozen main.css, and its
+   layout predates the tokens.css <link> - without this import the vocabulary
+   below would resolve to nothing there. /technical-styles/ is never rewritten. */
+@import "/technical-styles/tokens.css";
 .hero-section {
   margin: 0 1rem 0 0;
 }
@@ -75,19 +80,19 @@
 .hero-title {
   font-size: 2.75rem;
   font-weight: 600;
-  color: var(--light-text-color);
+  color: var(--white);
   margin-bottom: 1.5rem;
   line-height: 1.2;
 }
 
 .hero-title .highlight {
-  color: var(--primary-main-color);
+  color: var(--primary);
   padding: 0;
 }
 
 .hero-description {
   font-size: 1rem;
-  color: var(--light-text-color);
+  color: var(--white);
   margin-bottom: 2rem;
   max-width: 600px;
 }
@@ -136,7 +141,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--main-bg-color);
+  background: var(--surface);
 }
 
 .advantage-card-image-container {
@@ -162,7 +167,7 @@
 
 .advantage-card h5 {
   font-size: 18px;
-  color: var(--primary-light-color);
+  color: var(--primary-light);
   font-weight: 600;
   margin-bottom: 1.5rem;
 }
@@ -175,7 +180,7 @@
 }
 
 .advantage-card ul li {
-  color: var(--main-text-color);
+  color: var(--ink);
   margin-bottom: 0.5rem;
   padding-left: 1rem;
   position: relative;
@@ -183,7 +188,7 @@
 
 .advantage-card ul li::before {
   content: "•";
-  color: var(--secondary-main-color);
+  color: var(--accent);
   position: absolute;
   left: 0;
   font-size: 1rem;

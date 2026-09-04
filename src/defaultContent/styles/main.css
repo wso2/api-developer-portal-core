@@ -1,3 +1,8 @@
+/* The token layer, imported so this sheet stands alone. An organization with a
+   stored theme reaches our stylesheets through its own frozen main.css, and its
+   layout predates the tokens.css <link> - without this import the vocabulary
+   below would resolve to nothing there. /technical-styles/ is never rewritten. */
+@import "/technical-styles/tokens.css";
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Quicksand:wght@300..700&display=swap");
 @import "/styles/home.css";
 @import "/styles/footer.css";
@@ -49,7 +54,7 @@ html {
   display: flex;
   flex-direction: column;
   font-family: var(--font-family-sans);
-  background-color: var(--main-bg-color);
+  background-color: var(--surface);
 }
 
 .main-container {
@@ -76,8 +81,8 @@ html {
 
 .common-btn-primary {
   display: inline-block;
-  background-color: var(--primary-main-color);
-  color: var(--light-text-color);
+  background-color: var(--primary);
+  color: var(--white);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   border: none;
@@ -91,8 +96,8 @@ html {
 }
 .common-btn-primary[disabled],
 .common-btn-primary.disabled {
-  background-color: var(--primary-main-color);
-  color: var(--light-text-color);
+  background-color: var(--primary);
+  color: var(--white);
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
@@ -101,8 +106,8 @@ html {
 
 .common-btn-light {
   display: inline-block;
-  background-color: var(--primary-light-color);
-  color: var(--light-text-color);
+  background-color: var(--primary-light);
+  color: var(--white);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   border: none;
@@ -115,23 +120,23 @@ html {
 }
 
 .common-btn-light:hover {
-  background-color: var(--primary-main-color);
-  color: var(--light-text-color);
+  background-color: var(--primary);
+  color: var(--white);
 }
 
 .common-btn-light:active {
-  background-color: var(--primary-main-color);
-  color: var(--light-text-color);
+  background-color: var(--primary);
+  color: var(--white);
 }
 
 .common-btn-primary:hover {
-  background-color: var(--primary-light-color);
-  color: var(--light-text-color);
+  background-color: var(--primary-light);
+  color: var(--white);
 }
 
 .common-btn-primary:active {
-  background-color: var(--primary-main-color);
-  color: var(--light-text-color);
+  background-color: var(--primary);
+  color: var(--white);
 }
 
 .common-btn-primary:focus {
@@ -139,22 +144,22 @@ html {
 }
 
 .common-btn-secondary {
-  background-color: var(--secondary-main-color);
+  background-color: var(--accent);
 }
 
 .common-btn-secondary:hover {
-  background-color: var(--secondary-light-color);
-  color: var(--light-text-color);
+  background-color: var(--accent-light);
+  color: var(--white);
 }
 
 .common-btn-secondary:active {
-  background-color: var(--secondary-main-color);
-  color: var(--light-text-color);
+  background-color: var(--accent);
+  color: var(--white);
 }
 .common-btn-white {
   display: inline-block;
-  background-color: var(--white-color);
-  color: var(--primary-main-color);
+  background-color: var(--white);
+  color: var(--primary);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   border: none;
@@ -166,11 +171,11 @@ html {
 }
 
 .common-btn-white:hover {
-  background-color: var(--secondary-light-color);
+  background-color: var(--accent-light);
 }
 
 .common-btn-white:active {
-  background-color: var(--primary-main-color);
+  background-color: var(--primary);
   transform: scale(0.98);
 }
 
@@ -180,7 +185,7 @@ html {
 
 .common-btn-link {
   display: inline-block;
-  color: var(--primary-main-color);
+  color: var(--primary);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   text-decoration: none;
@@ -191,12 +196,12 @@ html {
 }
 
 .common-btn-link:hover {
-  color: var(--primary-light-color);
+  color: var(--primary-light);
   text-decoration: none;
 }
 
 .common-btn-link:active {
-  color: var(--primary-main-color);
+  color: var(--primary);
 }
 
 .common-btn-link:focus {
@@ -206,10 +211,10 @@ html {
 .common-btn-outlined {
   display: inline-block;
   background-color: transparent;
-  color: var(--primary-main-color);
+  color: var(--primary);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
-  border: 0.0625rem solid var(--primary-main-color);
+  border: 0.0625rem solid var(--primary);
   border-radius: 0.5rem;
   text-decoration: none;
   cursor: pointer;
@@ -218,14 +223,14 @@ html {
 }
 
 .common-btn-outlined:hover {
-  background-color: var(--primary-light-color);
-  color: var(--light-text-color);
-  border-color: var(--primary-main-color);
+  background-color: var(--primary-light);
+  color: var(--white);
+  border-color: var(--primary);
 }
 
 .common-btn-outlined:active {
-  background-color: var(--primary-light-color);
-  color: var(--light-text-color);
+  background-color: var(--primary-light);
+  color: var(--white);
 }
 
 .common-btn-outlined:focus {
@@ -238,18 +243,18 @@ html {
 }
 
 .common-btn-danger {
-  background-color: var(--danger-color);
-  color: var(--light-text-color);
+  background-color: var(--danger);
+  color: var(--white);
 }
 
 .common-btn-danger:hover {
-  background-color: var(--danger-color);
-  color: var(--light-text-color);
+  background-color: var(--danger);
+  color: var(--white);
 }
 
 .common-btn-danger:active {
-  background-color: var(--danger-color);
-  color: var(--light-text-color);
+  background-color: var(--danger);
+  color: var(--white);
 }
 
 .common-btn-danger:focus {
@@ -260,7 +265,7 @@ html {
   text-transform: uppercase;
   font-size: 0.9375rem;
   font-weight: 400;
-  color: var(--main-text-color);
+  color: var(--ink);
   vertical-align: top;
 }
 
@@ -268,7 +273,7 @@ html {
   font-size: 1.875rem;
   margin-bottom: 3.5rem;
   font-weight: 600;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 /* common-badge */
@@ -293,26 +298,26 @@ html {
   height: 100%;
   border-radius: 0.75rem;
   padding: 20px;
-  background: var(--main-bg-color);
+  background: var(--surface);
 }
 
 /* common-md-file-style */
 .api-md-content {
   padding: 40px 130px;
-  background-color: var(--main-bg-color);
+  background-color: var(--surface);
   line-height: 1.8;
 }
 
 /* --Title-- */
 .api-md-content h1 {
   font-size: 30px;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 .api-md-content h3,
 h2 {
   font-size: 24px;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 /* --SubTitle-- */
@@ -320,7 +325,7 @@ h2 {
 h5,
 h6 {
   font-size: 20px;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 /* --Paragraph-- */
@@ -331,7 +336,7 @@ h6 {
 
 .api-md-content li {
   font-size: 15px;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 .api-md-content li::marker {
@@ -341,7 +346,7 @@ h6 {
 /* header styles */
 .container-header {
   display: block;
-  color: var(--primary-main-color);
+  color: var(--primary);
   font-size: 1.5rem;
   font-weight: 600;
 }
@@ -471,5 +476,5 @@ h6 {
 }
 
 .span-highlight {
-  color: var(--secondary-main-color);
+  color: var(--accent);
 }

@@ -128,6 +128,23 @@ test('a stored theme overrides only the seven customizable partials', () => {
     assert.ok(html.includes('id="sidebar"'), 'and our disk sidebar must render instead');
 });
 
+test('every SVG-recolour container still holds an image', () => {
+    // common.js guards the container but not its child:
+    //     if (apisImage) { fetch(document.querySelector("#apisImage img").src) ... }
+    // so a container kept without an <img> inside throws and kills every later handler
+    // in that file. Either keep the container with an image, or remove it entirely.
+    const html = renderAll('pages/home', ctx.home());
+    for (const id of ['apisImage', 'applicationsImage', 'launchImage', 'heroImage']) {
+        if (!html.includes(`id="${id}"`)) continue;   // removing it altogether is fine
+        const after = html.slice(html.indexOf(`id="${id}"`));
+        const block = after.slice(0, after.indexOf('</div>'));
+        assert.ok(
+            block.includes('<img'),
+            `#${id} is present but holds no <img> - common.js dereferences that child unguarded`
+        );
+    }
+});
+
 test('the landing rail appears only when it has something to show', () => {
     // The two-column body puts subscription plans in a fixed-width rail. Gating that
     // rail on subscriptionPlans alone would be wrong: api-subscription-plans also

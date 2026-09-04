@@ -48,7 +48,11 @@ test('every @import in the theme uses the absolute /styles/<name>.css form', () 
     const bad = [];
     for (const file of themeStyles()) {
         for (const m of read(file).matchAll(/@import\s+(?!url\()["']([^"']+)["']\s*;/g)) {
-            if (!/^\/styles\/[A-Za-z0-9._-]+\.css$/.test(m[1])) bad.push(`${rel(file)}: ${m[1]}`);
+            // Two legitimate forms: a sibling theme stylesheet, and the token layer,
+            // which every sheet imports so it resolves however it was reached.
+            const ok = /^\/styles\/[A-Za-z0-9._-]+\.css$/.test(m[1])
+                || m[1] === '/technical-styles/tokens.css';
+            if (!ok) bad.push(`${rel(file)}: ${m[1]}`);
         }
     }
     assert.deepStrictEqual(bad, [], `non-absolute @import found:\n  ${bad.join('\n  ')}`);
