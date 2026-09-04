@@ -133,6 +133,24 @@
     transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
+/* The chevron is an indicator, not decoration: it appears only for the section you are
+   actually inside, whose submenu links common.js has wired up. Everywhere else it would
+   promise an expansion that does not exist, so it is hidden. */
+.sidebar:hover:not(.force-collapse) .nav-link:not(.has-active-submenu) .sidebar-chevron,
+.sidebar.expanded .nav-link:not(.has-active-submenu) .sidebar-chevron {
+    opacity: 0;
+    visibility: hidden;
+    width: 0;
+    margin-left: 0;
+    overflow: hidden;
+}
+
+/* Points down while that section's submenu is open. common.js adds
+   .has-active-submenu when you are on a page belonging to the section. */
+.nav-link.has-active-submenu .sidebar-chevron {
+    transform: rotate(90deg);
+}
+
 .nav-text {
     margin: 0;
     white-space: nowrap;
