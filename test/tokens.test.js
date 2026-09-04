@@ -131,44 +131,36 @@ test('a stored layout does not deliver tokens.css - internal pages need the CSS 
     assert.strictEqual(imported.length, 0, 'src/styles has started importing tokens.css - update this test for P6');
 });
 
-test('no new undefined token creeps into any stylesheet', () => {
-    // A change-detector over the whole CSS tree. The pinned list is pre-existing and
-    // out of scope for the theming work; anything beyond it is ours and is a bug.
-    // Defined by stylesheets we do not ship: --bs-* by Bootstrap from the CDN,
-    // --tw-* by the Tailwind-derived Swagger overrides in async-tryout.css.
-    const EXTERNAL = /^--(bs|tw)-/;
+test('no new undefined token creeps in', () => {
+    // Checked in the THEME context specifically: a themable page links tokens.css,
+    // components.css and the theme's own stylesheets. It never loads
+    // /technical-styles/main.css, so a token defined only there is still undefined at
+    // runtime - which pooling both trees would hide.
+    //
+    // The pinned list is pre-existing and out of scope for the theming work. Anything
+    // beyond it is ours and is a bug.
+    const EXTERNAL = /^--(bs|tw)-/;   // Bootstrap from the CDN, Tailwind in the Swagger overrides
 
-    const KNOWN_UNDEFINED = [
-        '--border-colour-primary',
-        '--border-colour-secondary',
-        '--card-color',
-        '--dark-color',
-        '--font-colour-primary',
-        '--light-ash-color',
-        '--light-bg-color',
-        '--notselect-star-color',
-        '--primary-color',
-        '--primary-main-color-rgb',
-        '--secondary-color',
-        '--secondary-text-color',
-    ];
-
-    const sheets = [
-        ...walk(path.join(DEFAULT_CONTENT, 'styles'), '.css'),
-        ...walk(TECHNICAL_STYLES, '.css'),
-    ];
-    const defined = new Set();
-    for (const f of sheets) for (const t of definedIn(read(f))) defined.add(t);
-
-    const undefinedRefs = new Set();
-    for (const f of sheets) {
-        for (const t of referencedIn(read(f))) {
-            if (!defined.has(t) && !EXTERNAL.test(t)) undefinedRefs.add(t);
+    const collect = (files) => {
+        const defined = new Set();
+        const used = new Set();
+        for (const f of files) {
+            const css = read(f);
+            for (const t of definedIn(css)) defined.add(t);
+            for (const t of referencedIn(css)) used.add(t);
         }
-    }
+        return [...used].filter((t) => !defined.has(t) && !EXTERNAL.test(t)).sort();
+    };
+
+    const themeContext = [
+        ...walk(path.join(DEFAULT_CONTENT, 'styles'), '.css'),
+        TOKENS,
+        path.join(TECHNICAL_STYLES, 'components.css'),
+    ];
 
     assert.deepStrictEqual(
-        [...undefinedRefs].sort(), KNOWN_UNDEFINED,
-        'the set of undefined custom properties changed - a new one is a bug in this work'
+        collect(themeContext),
+        ['--light-ash-color', '--primary-color', '--primary-main-color-rgb', '--white-text-color'],
+        'the set of undefined custom properties on a themable page changed - a new one is a bug in this work'
     );
 });
