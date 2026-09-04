@@ -9,7 +9,7 @@
 }
 
 .navbar-logo {
-  height: 2.5rem;
+  height: 2rem;
 }
 
 .nav-link {
@@ -79,4 +79,28 @@
   #auth-section {
     flex-direction: column;
   }
+}
+
+/* The sign-in button. Deliberately its own rule rather than borrowing
+   .common-btn-primary: that is a rectangle with a drop shadow, and this is a flat
+   pill. It is on every page for every logged-out visitor. */
+.login-btn {
+  display: inline-flex;
+  align-items: center;
+  background: var(--primary);
+  color: var(--white);
+  border: 0.0625rem solid var(--primary);
+  border-radius: 1.25rem;
+  padding: 0.5625rem 1.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.login-btn:hover {
+  opacity: 0.88;
+  color: var(--white);
 }
