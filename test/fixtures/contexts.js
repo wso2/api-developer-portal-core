@@ -101,6 +101,28 @@ module.exports = {
         ...over,
     }),
 
+    // An API on a third-party gateway with plans on offer. This is the shape that
+    // actually reaches the subscription plan cards: the partial only renders them when
+    // the API is neither token-based-subscription nor on the platform gateway.
+    apiLandingWithPlans: (over = {}) => ({
+        ...base,
+        apiMetadata: { ...apiWithImage, apiInfo: { ...apiWithImage.apiInfo, gatewayType: 'aws' } },
+        applications: [],
+        provider: 'WSO2',
+        providerUrl: 'https://wso2.com',
+        subscriptionPlans: [
+            { policyID: 'pol-1', displayName: 'Gold', description: 'High volume', requestCount: 1000, timeUnit: 'min' },
+            { policyID: 'pol-2', displayName: 'Silver', requestCount: 100, timeUnit: 'min' },
+        ],
+        platformSubscriptions: [],
+        schemaUrl: `${BASE_URL}/api/orders-api/docs/specification`,
+        loadDefault: true,
+        resources: [{ target: '/orders', verb: 'GET' }],
+        scopes: [],
+        isFederatedAPI: false,
+        ...over,
+    }),
+
     docs: (over = {}) => ({
         ...base,
         docTypes: { HOWTO: [{ docName: 'getting-started', docId: 'doc-1' }] },

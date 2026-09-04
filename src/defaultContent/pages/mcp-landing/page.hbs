@@ -24,13 +24,26 @@
 <main>
     {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav }}
     {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode showPlatformApiKeysNav=showPlatformApiKeysNav showApiWorkflowsNav=showApiWorkflowsNav }}
-    {{> mcp-detail-banner }}
-    {{#if loadDefault}}
-    {{> mcp-default}}
-    {{else}}
-    {{> mcp-content }}
-    {{/if}}
-    {{> api-subscription-plans}}
+    <div class="container-fluid">
+        {{> mcp-detail-banner }}
+    </div>
+
+    {{!-- Same two-column body as the API landing page; the rail shows whenever there
+         is a plan or an existing platform subscription. --}}
+    <div class="aov-body">
+        <div class="aov-body-main">
+            {{#if loadDefault}}
+            {{> mcp-default}}
+            {{else}}
+            {{> mcp-content }}
+            {{/if}}
+        </div>
+        {{#if (or subscriptionPlans.length platformSubscriptions.length)}}
+        <div class="aov-body-sidebar">
+            {{> api-subscription-plans}}
+        </div>
+        {{/if}}
+    </div>
     {{> create-app }}
     {{> alert }}
 </main>
