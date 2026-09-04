@@ -67,18 +67,24 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.25rem;
 }
 
 .nav-link {
-    padding: 1rem;
     display: flex;
     align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 0.8125rem 0.9375rem;
+    border-radius: 0.625rem;
     text-decoration: none;
-    color: var(--primary-lightest-color);
-    border-radius: 0.5rem;
-    transition: background-color 0.2s;
-    margin: 0 0.5rem;
+    /* --on-dark rather than --primary-lightest-color: that seed is an 8-digit hex whose
+       alpha the console flattens on save, which would make the label opaque. */
+    color: var(--on-dark);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+    overflow: hidden;
 }
 
 /* Align to left when expanded or hovered (and not force-collapsed) */
@@ -92,7 +98,7 @@
     color: var(--white);
 }
 
-.nav-link:hover .nav-icon,
+.nav-link:hover .sidebar-icon,
 .nav-link:hover .submenu-icon {
     color: inherit;
 }
@@ -102,16 +108,29 @@
     color: var(--white);
 }
 
-.nav-link.active .nav-icon,
+.nav-link.active .sidebar-icon,
 .nav-link.active .submenu-icon {
     color: inherit;
 }
 
-.nav-link .nav-icon {
-    font-size: 1rem;
-    line-height: 1;
-    flex-shrink: 0;
+.sidebar-icon {
+    font-size: 1.125rem;
+    flex: none;
+    width: 1.125rem;
+    height: 1.125rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: inherit;
+}
+
+/* Expand indicator on the items that own a submenu. Carries .nav-text too, so it
+   hides with the labels when the rail is collapsed. */
+.sidebar-chevron {
+    font-size: 0.75rem;
+    margin-left: auto;
+    flex: none;
+    transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
 .nav-text {
@@ -122,9 +141,10 @@
     transition: opacity 0.2s ease, visibility 0.2s ease, margin 0.2s ease;
     overflow: hidden;
     width: 0; /* Take no space when hidden */
-    font-weight: normal; 
-    color: var(--white);
-    font-size: smaller;
+    font-weight: 500;
+    line-height: 1;
+    color: inherit;
+    font-size: 0.9375rem;
 }
 
 /* Show text only when hovered (and not force-collapsed) or expanded */
@@ -205,9 +225,10 @@
     transition: opacity 0.2s ease, visibility 0.2s ease;
     overflow: hidden;
     width: 0;
-    font-weight: normal; 
-    color: var(--white);
-    font-size: smaller;
+    font-weight: 500;
+    line-height: 1;
+    color: inherit;
+    font-size: 0.9375rem;
 }
 
 /* Show collapse button text when sidebar is hovered (and not force-collapsed) or expanded */
@@ -229,8 +250,9 @@
     flex-direction: column;
     background-color: var(--primary-dark);
     border-radius: 0 0 0.5rem 0.5rem;
-    padding: 0.25rem 0;
-    margin: -1rem 0.5rem 0 0.5rem;
+    gap: 0.125rem;
+    padding: 0.25rem 0.5rem 0.5rem;
+    margin: -0.25rem 0 0 0;
 }
 
 .submenu.show {
@@ -264,11 +286,13 @@
 }
 
 .submenu-icon {
-    font-size: 0.875rem;
-    line-height: 1;
-    width: 1.375rem;
-    flex-shrink: 0;
-    text-align: center;
+    font-size: 1.125rem;
+    flex: none;
+    width: 1.125rem;
+    height: 1.125rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: inherit;
 }
 

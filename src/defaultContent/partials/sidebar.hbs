@@ -1,13 +1,14 @@
 <div class="sidebar" id="sidebar">
   <nav class="nav">
     <a href="{{baseUrl}}/" class="nav-link" id="home">
-      <i class="bi bi-house nav-icon"></i>
+      <i class="bi bi-house sidebar-icon"></i>
       <span class="nav-text">Home</span>
     </a>
       {{#in devportalMode values="DEFAULT,APISONLY"}}
       <a href="{{baseUrl}}/apis" class="nav-link" id="apis">
-        <i class="bi bi-boxes nav-icon"></i>
+        <i class="bi bi-boxes sidebar-icon"></i>
         <span class="nav-text">APIs</span>
+        <i class="bi bi-chevron-right sidebar-chevron nav-text"></i>
       </a>
       <div class="submenu api-submenu" id="api-submenu">
         <a href="#" class="nav-link submenu-link fw-light" id="api-overview">
@@ -19,7 +20,7 @@
           <span class="nav-text">Documentation</span>
         </a>
         <a href="#" class="nav-link submenu-link fw-light" id="api-subscriptions">
-          <i class="bi bi-card-checklist submenu-icon"></i>
+          <i class="bi bi-receipt submenu-icon"></i>
           <span class="nav-text">Subscriptions</span>
         </a>
         {{#if showPlatformApiKeysNav}}
@@ -32,8 +33,9 @@
       {{/in}}
       {{#in devportalMode values="DEFAULT,MCPSERVERSONLY"}}
       <a href="{{baseUrl}}/mcps" class="nav-link" id="mcps">
-        <i class="bi bi-hdd-network nav-icon"></i>
+        <img src="/images/mcp-icon.svg" class="sidebar-icon" alt="" />
         <span class="nav-text">MCP Servers</span>
+        <i class="bi bi-chevron-right sidebar-chevron nav-text"></i>
       </a>
       <div class="submenu api-submenu" id="mcp-submenu">
         <a href="#" class="nav-link submenu-link fw-light" id="mcp-overview">
@@ -48,13 +50,14 @@
       {{/in}}
       {{#if showApiWorkflowsNav}}
       <a href="{{baseUrl}}/api-workflows" class="nav-link" id="api-workflows">
-        <i class="bi bi-diagram-3 nav-icon"></i>
+        <i class="bi bi-diagram-3 sidebar-icon"></i>
         <span class="nav-text">API Workflows</span>
       </a>
       {{/if}}
       <a href="{{baseUrl}}/applications" class="nav-link" id="applications">
-        <i class="bi bi-window-stack nav-icon"></i>
+        <img src="/images/applications-icon.svg" class="sidebar-icon" alt="" />
         <span class="nav-text">Applications</span>
+        <i class="bi bi-chevron-right sidebar-chevron nav-text"></i>
       </a>
       <div class="submenu applications-submenu" id="applications-submenu">
         <a href="#" class="nav-link submenu-link fw-light" id="applications-overview">
@@ -67,7 +70,7 @@
         </a>
       </div>
       <a href="{{baseUrl}}/subscriptions" class="nav-link" id="subscriptions">
-        <i class="bi bi-card-checklist nav-icon"></i>
+        <i class="bi bi-receipt sidebar-icon"></i>
         <span class="nav-text">Subscriptions</span>
       </a>
   </nav>
@@ -75,7 +78,7 @@
   {{#if showApiWorkflowsNav}}
   {{#if profile.isAdmin}}
   <a href="{{baseUrl}}/configure" class="nav-link" id="ai-settings">
-    <i class="bi bi-gear nav-icon"></i>
+    <i class="bi bi-gear sidebar-icon"></i>
     <span class="nav-text">Settings</span>
   </a>
   {{/if}}
