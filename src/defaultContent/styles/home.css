@@ -98,7 +98,7 @@
 }
 
 .hero {
-  background: var(--primary-gradient);
+  background: var(--hero-glow), var(--primary-gradient);
   background-size: cover;
   background-position: center;
   display: flex;

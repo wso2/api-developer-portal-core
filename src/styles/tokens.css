@@ -107,6 +107,13 @@
             color-mix(in srgb, var(--primary-dark) 72%, #000) 60%,
             color-mix(in srgb, var(--primary-dark) 58%, #000) 100%);
 
+    /* Depth for the home hero: two soft glows laid OVER the customer's own
+       --primary-gradient, never instead of it - the console's gradient picker writes
+       that token, and replacing it here would quietly disconnect the picker. */
+    --hero-glow:
+        radial-gradient(56.25rem 37.5rem at 12% 8%, color-mix(in srgb, var(--primary-light) 42%, transparent), transparent 60%),
+        radial-gradient(43.75rem 37.5rem at 95% 100%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 55%);
+
     --on-dark: color-mix(in srgb, var(--white) 74%, transparent);
     --on-dark-muted: color-mix(in srgb, var(--white) 52%, transparent);
     --on-dark-fill: color-mix(in srgb, var(--white) 6%, transparent);
@@ -169,6 +176,12 @@
         --info-surface: #e1eff7;
 
         --surface-dark: linear-gradient(160deg, #043556 0%, #03263e 60%, #021f32 100%);
+
+        /* Same glows without color-mix. A gradient list cannot fall back to a plain
+           colour, so this has to stay a gradient or the hero loses its background. */
+        --hero-glow:
+            radial-gradient(56.25rem 37.5rem at 12% 8%, rgba(43, 113, 159, 0.42), transparent 60%),
+            radial-gradient(43.75rem 37.5rem at 95% 100%, rgba(254, 140, 58, 0.22), transparent 55%);
 
         --on-dark: rgba(255, 255, 255, 0.74);
         --on-dark-muted: rgba(255, 255, 255, 0.52);
