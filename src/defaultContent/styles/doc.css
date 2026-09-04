@@ -6,6 +6,11 @@
 /* Content Area Styles */
 .doc-content {
     flex: 1;
+    min-width: 0;
+    border: 0.0625rem solid var(--border);
+    border-radius: 0.875rem;
+    padding: 1rem;
+    overflow-x: auto;
 }
 
 /* Documents Section */
@@ -17,7 +22,7 @@
 .documents-sidebar {
     padding: 1rem 2rem 1rem 0rem;
     flex-shrink: 0;
-    border-right: 1px solid #e0e2e9;
+    border-right: 0.0625rem solid var(--border);
 }
 
 .documents-sidebar .search-container {
@@ -30,7 +35,7 @@
 .documents-sidebar .search-input {
     display: flex;
     align-items: center;
-    background-color: #e0e2e9;
+    background-color: var(--border);
     padding: 0.625rem 1rem;
     border-radius: 5px;
     width: 100%;
@@ -61,9 +66,9 @@
 .doc-content-wrapper {
     width: 100%;
     overflow-x: auto;
-    border: 0.5px solid #e0e2e9;
+    border: 0.0625rem solid var(--border);
     border-radius: 16px;
-    box-shadow: 0px 2px 4px #0000000a;
+    box-shadow: 0 0.125rem 0.25rem color-mix(in srgb, var(--ink) 4%, transparent);
     display: flex;
 }
 
@@ -90,13 +95,23 @@
     display: flex;
     align-items: center;
     min-width: 200px;;
-    padding: 8px 12px;
-    gap: 12px;
-    background: var(--surface);
-    box-shadow: 0px 0px 0px 1px #e0e2e9, 0px 1px 1px #CBCEDB;
-    border-radius: 8px;
+    padding: 0.625rem 0.75rem;
+    gap: 0.6875rem;
+    background: transparent;
+    border: 0.0625rem solid var(--border);
+    border-radius: 0.5625rem;
+    font-size: 0.84375rem;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
     text-decoration: none;
-    color: var(--ink);
+    color: var(--text);
+}
+
+.doc-link:hover {
+    border-color: var(--border-strong);
+    color: var(--text-strong);
 }
 
 .doc-link:hover {
@@ -104,7 +119,10 @@
 }
 
 .doc-link.active {
-    background-color: var(--surface-sunken);
+    background-color: var(--primary-surface);
+    border-color: var(--primary-surface);
+    color: var(--primary);
+    font-weight: 600;
 }
 
 .doc-link i {
@@ -139,6 +157,6 @@
     .documents-sidebar {
         width: 100%;
         border-right: none;
-        border-bottom: 1px solid #e0e2e9;
+        border-bottom: 0.0625rem solid var(--border);
     }
 }
