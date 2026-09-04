@@ -144,7 +144,7 @@ body.drawer-open {
     justify-content: flex-start;
     padding: 1.25rem 1.5rem;
     padding-right: 2.5rem; /* Make room for radio button */
-    border: 2px solid #e9ecef;
+    border: 2px solid var(--border);
     border-radius: 8px;
     background-color: var(--white);
     cursor: pointer;
@@ -199,7 +199,7 @@ body.drawer-open {
   justify-content: center;
   border-radius: 6px;
   font-size: 1.1rem;
-  color: #6c757d;
+  color: var(--text-muted);
   flex-shrink: 0;
   transition: transform 0.2s ease;
 }
@@ -260,7 +260,7 @@ body.drawer-open {
 
 .prompt-input-area {
     position: relative;
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--border);
     border-radius: 8px;
     background-color: #fff;
     padding: 0.75rem;
@@ -287,7 +287,7 @@ body.drawer-open {
 }
 
 .prompt-input-area > textarea.form-control::placeholder {
-    color: #6c757d;
+    color: var(--text-muted);
 }
 
 /* Typing indicator styles */
@@ -316,8 +316,8 @@ body.drawer-open {
     align-items: center;
     gap: 0.75rem;
     padding: 0.35rem 0.5rem 0.35rem 0.5rem;
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
+    background-color: var(--surface-sunken);
+    border: 1px solid var(--border);
     border-radius: 6px;
     font-size: 0.75rem;
     color: #495057;
@@ -328,7 +328,7 @@ body.drawer-open {
 }
 
 .suggestion-chip:hover {
-    background-color: #dee2e6;
+    background-color: var(--border);
     border-color: var(--primary);
     transform: translateY(-1px) scale(1.02);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -387,15 +387,15 @@ body.drawer-open {
 
 .ai-disclaimer {
     font-size: 0.6rem;
-    color: #6c757d; /* A subtle gray color */
+    color: var(--text-muted); /* A subtle gray color */
     flex-grow: 1; /* Allow it to take up available space */
     text-align: left;
 }
 
 /* SDK Progress Bar Styles */
 .sdk-progress-container {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
+    background: var(--surface-sunken);
+    border: 1px solid var(--border);
     border-radius: 8px;
     padding: 20px;
     margin: 10px 0;
@@ -428,7 +428,7 @@ body.drawer-open {
 }
 
 .sdk-progress-container.error .sdk-progress-percentage {
-    color: #dc3545;
+    color: var(--danger);
 }
 
 .sdk-progress-bar-wrapper {
@@ -438,7 +438,7 @@ body.drawer-open {
 .sdk-progress-bar {
     width: 100%;
     height: 8px;
-    background-color: #e9ecef;
+    background-color: var(--border);
     border-radius: 4px;
     overflow: hidden;
     position: relative;
@@ -454,7 +454,7 @@ body.drawer-open {
 }
 
 .sdk-progress-container.error .sdk-progress-fill {
-    background: linear-gradient(90deg, #dc3545 0%, #c82333 100%);
+    background: linear-gradient(90deg, var(--danger) 0%, #c82333 100%);
 }
 
 /* Success state styles */
@@ -502,7 +502,7 @@ body.drawer-open {
 
 .sdk-progress-status {
     font-size: 13px;
-    color: #6c757d;
+    color: var(--text-muted);
     font-style: italic;
     text-align: center;
 }
@@ -564,17 +564,17 @@ body.drawer-open {
 
 .sdk-error-notification {
     box-shadow: 0 4px 20px rgba(220, 53, 69, 0.3);
-    border: 1px solid #dc3545;
+    border: 1px solid var(--danger);
 }
 
 .sdk-success-notification {
     box-shadow: 0 4px 20px rgba(25, 135, 84, 0.3);
-    border: 1px solid #198754;
+    border: 1px solid var(--success);
 }
 
 .sdk-warning-notification {
     box-shadow: 0 4px 20px rgba(255, 193, 7, 0.3);
-    border: 1px solid #ffc107;
+    border: 1px solid var(--warning);
 }
 
 .sdk-error-notification .fw-bold,

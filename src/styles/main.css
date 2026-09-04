@@ -8,27 +8,27 @@
 :root {
   --main-bg-color: #ffffff;
   /* primary colors */
-  --primary-main-color: #5952ad;
-  --primary-light-color: #f7f7ff;
+  --primary-main-color: #1A4C6D;
+  --primary-light-color: #2b719f;
   /* secondary colors */
-  --secondary-main-color: #5dc7b1;
-  --secondary-light-color: #eef3f2;
-  --secondary-dark-color: #49a18e;
-  --secondary-darkest-color: #357b6c;
+  --secondary-main-color: #FE8C3A;
+  --secondary-light-color: #FEAF76;
+  --secondary-dark-color: color-mix(in srgb, var(--secondary-main-color) 80%, #000);
+  --secondary-darkest-color: color-mix(in srgb, var(--secondary-main-color) 62%, #000);
   /* font colors */
   --white-text-color: #ffffff;
   --main-text-color: #40404b;
   /* other special colors */
   --success-color: #28a745;
-  --danger-color: #dc3545;
-  --warning-color: #ffc107;
+  --danger-color: #a40e26;
+  --warning-color: var(--warning);
   --white-color: #ffffff;
   --Black-color: #000000;
   /* Gradient */
-  --primary-gradient: linear-gradient(90deg, #eeeeff 0%, #ebfbf7 100%);
+  --primary-gradient: linear-gradient(135deg, #3d6b8a, #1c3b52);
   --dark-gradient: linear-gradient(to right, #50c9c3, #4a6fa1);
 
-  --font-family-sans: "Poppins", sans-serif;
+  --font-family-sans: "Montserrat", "Quicksand", "Noto Sans", "Poppins", sans-serif;
   --font-family-serif: "Sofia Sans", serif;
   --font-family-mono: "Roboto", monospace;
 }

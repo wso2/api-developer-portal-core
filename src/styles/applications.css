@@ -320,8 +320,8 @@
 
 .message-overlay.error {
   background-color: var(--main-bg-color, #ffffff);
-  border: 1px solid var(--danger-color, #dc3545);
-  border-left: 4px solid var(--danger-color, #dc3545);
+  border: 1px solid var(--danger-color, var(--danger));
+  border-left: 4px solid var(--danger-color, var(--danger));
 }
 
 .message-overlay.hidden {
@@ -353,7 +353,7 @@
 }
 
 .message-icon.error {
-  color: var(--danger-color, #dc3545);
+  color: var(--danger-color, var(--danger));
 }
 
 .message-text {

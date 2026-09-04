@@ -92,7 +92,7 @@
 .flow-card-header {
     padding: 1.5rem;
     border-bottom: 1px solid var(--bs-gray-200);
-    background: var(--secondary-bg-color, #f8f9fa);
+    background: var(--secondary-bg-color, var(--surface-sunken));
 }
 
 .flow-card-title {
@@ -187,7 +187,7 @@
 .flow-card-footer {
     padding: 0.875rem 1.5rem;
     border-top: 1px solid var(--bs-gray-200);
-    background: var(--secondary-bg-color, #f8f9fa);
+    background: var(--secondary-bg-color, var(--surface-sunken));
     display: flex;
     align-items: center;
     gap: 0.375rem;
@@ -324,7 +324,7 @@
     border: none;
     font-size: 1.4rem;
     cursor: pointer;
-    color: var(--bs-secondary, #6c757d);
+    color: var(--bs-secondary, var(--text-muted));
     transition: color 0.2s ease;
     padding: 0;
 }
@@ -341,7 +341,7 @@
 
 
 .prompt-text {
-    background: var(--secondary-bg-color, #f8f9fa);
+    background: var(--secondary-bg-color, var(--surface-sunken));
     border: 1px solid var(--bs-gray-300);
     border-radius: 0.25rem;
     padding: 1rem;
@@ -557,7 +557,7 @@
     margin: 1.5rem auto 3rem;
     padding: 3rem 3.5rem;
     background: var(--card-color, #fff);
-    border: 1px solid var(--bs-gray-200, #e9ecef);
+    border: 1px solid var(--bs-gray-200, var(--border));
     border-radius: 0.75rem;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
     color: var(--ink);
@@ -577,7 +577,7 @@
 }
 
 .af-md-detail-container h1 { font-size: 1.625rem; margin-top: 0; }
-.af-md-detail-container h2 { font-size: 1.25rem; padding-bottom: 0.375rem; border-bottom: 1px solid var(--bs-gray-200, #e9ecef); }
+.af-md-detail-container h2 { font-size: 1.25rem; padding-bottom: 0.375rem; border-bottom: 1px solid var(--bs-gray-200, var(--border)); }
 .af-md-detail-container h3 { font-size: 1.0625rem; }
 .af-md-detail-container h4 { font-size: 0.9375rem; }
 
@@ -594,15 +594,15 @@
 .af-md-detail-container code {
     font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
     font-size: 0.85em;
-    background: var(--bs-gray-100, #f8f9fa);
-    border: 1px solid var(--bs-gray-200, #e9ecef);
+    background: var(--bs-gray-100, var(--surface-sunken));
+    border: 1px solid var(--bs-gray-200, var(--border));
     border-radius: 0.25rem;
     padding: 0.1em 0.4em;
 }
 
 .af-md-detail-container pre {
-    background: var(--bs-gray-100, #f8f9fa);
-    border: 1px solid var(--bs-gray-200, #e9ecef);
+    background: var(--bs-gray-100, var(--surface-sunken));
+    border: 1px solid var(--bs-gray-200, var(--border));
     border-radius: 0.5rem;
     padding: 1rem 1.25rem;
     overflow-x: auto;
@@ -627,31 +627,31 @@
 .af-md-detail-container th,
 .af-md-detail-container td {
     padding: 0.5rem 0.875rem;
-    border: 1px solid var(--bs-gray-200, #e9ecef);
+    border: 1px solid var(--bs-gray-200, var(--border));
     text-align: left;
 }
 
 .af-md-detail-container th {
-    background: var(--bs-gray-100, #f8f9fa);
+    background: var(--bs-gray-100, var(--surface-sunken));
     font-weight: 600;
 }
 
 .af-md-detail-container tr:nth-child(even) td {
-    background: var(--secondary-bg-color, #f8f9fa);
+    background: var(--secondary-bg-color, var(--surface-sunken));
 }
 
 .af-md-detail-container blockquote {
     border-left: 3px solid var(--primary);
     padding: 0.5rem 1rem;
     margin: 0 0 1rem;
-    color: var(--bs-secondary, #6c757d);
+    color: var(--bs-secondary, var(--text-muted));
     background: rgba(var(--primary-main-color-rgb, 62, 80, 180), 0.04);
     border-radius: 0 0.375rem 0.375rem 0;
 }
 
 .af-md-detail-container hr {
     border: none;
-    border-top: 1px solid var(--bs-gray-200, #e9ecef);
+    border-top: 1px solid var(--bs-gray-200, var(--border));
     margin: 1.5rem 0;
 }
 
@@ -662,7 +662,7 @@
 .af-md-empty {
     padding: 3rem;
     text-align: center;
-    color: var(--bs-secondary, #6c757d);
+    color: var(--bs-secondary, var(--text-muted));
     font-style: italic;
 }
 
@@ -672,6 +672,6 @@
     font-size: 0.8125rem;
     line-height: 1.6;
     padding: 1.5rem;
-    background: var(--bs-gray-100, #f8f9fa);
+    background: var(--bs-gray-100, var(--surface-sunken));
     border-radius: 0.5rem;
 }
