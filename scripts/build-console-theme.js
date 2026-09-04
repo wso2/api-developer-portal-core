@@ -55,6 +55,13 @@ const PREVIEW = [
 /** Served at /technical-styles/ by the portal; the console needs them at the same path. */
 const TECHNICAL_FILES = ['tokens.css', 'components.css'];
 
+/**
+ * Images the console's own copies of the shipped templates reference. Without these the
+ * preview requests a file the console cannot serve, and the header renders with a broken
+ * logo. Kept separate from SHIPPED because these are binary and live under images/.
+ */
+const IMAGES = ['api-portal-logo.svg', 'api-portal-logo-white.svg'];
+
 function copy(from, to) {
     const next = fs.readFileSync(from);
     if (fs.existsSync(to) && fs.readFileSync(to).equals(next)) return false;
@@ -81,6 +88,13 @@ function main() {
                 console.log(`  ${label}  ${f}`);
                 changed += 1;
             }
+        }
+    }
+
+    for (const f of IMAGES) {
+        if (copy(path.join(SOURCE, 'images', f), path.join(target, 'images', f))) {
+            console.log(`  image    images/${f}`);
+            changed += 1;
         }
     }
 
