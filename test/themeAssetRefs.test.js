@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 
 const {
-    DEFAULT_CONTENT, themeTemplates, themeStyles, rel, read,
+    DEFAULT_CONTENT, themeTemplates, themeStyles, themeImages, rel, read,
 } = require('./helpers/themeFiles');
 
 const LAYOUT = path.join(DEFAULT_CONTENT, 'layout', 'main.hbs');
@@ -78,4 +78,18 @@ test('every local /images/ reference in the theme exists on disk', () => {
         }
     }
     assert.deepStrictEqual(missing, [], `reference to a missing image:\n  ${missing.join('\n  ')}`);
+});
+
+test('shipped image filenames are safe for the upload-time URL rewrite', () => {
+    // At upload time an image reference becomes a query string:
+    //     /images/x.svg  ->  ...layout?fileType=image&fileName=x.svg
+    // so a filename containing & (or ? or #) silently truncates fileName, the lookup
+    // misses, and a miss on that endpoint does not 404 - it hangs.
+    const unsafe = themeImages()
+        .map((f) => path.basename(f))
+        .filter((name) => /[&?#=]/.test(name));
+    assert.deepStrictEqual(
+        unsafe, [],
+        `image filename would break the rewritten asset URL:\n  ${unsafe.join('\n  ')}`
+    );
 });

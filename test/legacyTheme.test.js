@@ -66,6 +66,10 @@ test('anything the disk layout gains but a stored layout lacks is tracked', () =
         // this list once that lands.
         '/technical-styles/tokens.css',
         '/technical-styles/components.css',
+        // Cosmetic, and needs no remedy: an organization with a stored layout keeps the
+        // remote favicon URL baked into it. Listed so the divergence is acknowledged
+        // rather than discovered.
+        '/images/favicon.ico',
     ];
 
     const frozen = fs.readFileSync(path.join(__dirname, 'fixtures', 'org-themed', 'layout', 'main.hbs'), 'utf8');
