@@ -1,3 +1,8 @@
+/* The token layer, imported so this sheet stands alone. An organization with a
+   stored theme reaches our stylesheets through its own frozen main.css, and its
+   layout predates the tokens.css <link> - without this import the vocabulary
+   below would resolve to nothing there. /technical-styles/ is never rewritten. */
+@import "/technical-styles/tokens.css";
     .default-container {
       width: 100%;
       max-width: 1200px;
@@ -8,7 +13,7 @@
 
     /* Left side styles */
     .left-side {
-      color: var(--main-text-color);
+      color: var(--ink);
       margin-bottom: 2.5rem;
       text-align: center;
     }
@@ -53,7 +58,7 @@
     .default-form-input {
       width: 100%;
       padding: 0.75rem 1rem;
-      border: 0.5px solid rgb(from var(--primary-main-color) r g b / 10%);
+      border: 0.5px solid rgb(from var(--primary) r g b / 10%);
       border-radius: 0.375rem;
       font-size: 1rem;
       transition: border-color 0.2s, box-shadow 0.2s;
@@ -61,8 +66,8 @@
 
     .default-form-input:focus {
       outline: none;
-      border-color: var(--primary-dark-color);
-      box-shadow: 0 0.5rem 0.75rem rgba(from var(--primary-dark-color) r g b / 10%);
+      border-color: var(--primary-dark);
+      box-shadow: 0 0.5rem 0.75rem rgba(from var(--primary-dark) r g b / 10%);
     }
 
     .default-form-input::placeholder {

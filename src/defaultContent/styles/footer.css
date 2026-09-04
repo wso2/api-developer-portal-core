@@ -1,3 +1,8 @@
+/* The token layer, imported so this sheet stands alone. An organization with a
+   stored theme reaches our stylesheets through its own frozen main.css, and its
+   layout predates the tokens.css <link> - without this import the vocabulary
+   below would resolve to nothing there. /technical-styles/ is never rewritten. */
+@import "/technical-styles/tokens.css";
 .footer-section {
   padding: 1rem 0;
   display: flex;
