@@ -32,7 +32,7 @@
       </div>
       <div class="col-lg-6 col-md-12 apilist-hero-image">
         <img
-          src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/apisHeroImg.png"
+          src="/images/apisHeroImg.png"
           alt="Hero Image" class="img-fluid" />
       </div>
     </div>
@@ -40,7 +40,7 @@
   <div class="container-fluid apilist-container">
     <div class="search-container">
       <div class="search-input">
-        <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/search.svg"
+        <img src="/images/search.svg"
           alt="search" class="search-icon" />
         <input type="text" id="query" placeholder="Search APIs" autocomplete="off" />
       </div>
@@ -72,40 +72,9 @@
               <h5 class="api-card-title mb-0">{{apiInfo.apiName}}</h5>
               <div class="d-flex align-items-center gap-2">
                 <p class="mb-0 mt-1" style="font-size: 16px;">{{apiInfo.apiVersion}}</p>
-                <div class="type-badge badge-custom2" style="display: flex; flex-direction: row; align-items: center;">
-                  <div style="margin-right: 8px; display: flex;">
-                    {{#if (eq apiInfo.apiType "WS")}}
-                    <img
-                      src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/WebSocket.svg"
-                      style=" height: 16px; object-fit: contain;"
-                    />
-                    {{else if (eq apiInfo.apiType "GRAPHQL")}}
-                    <img
-                      src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/graphql.svg"
-                      style="height: 16px; object-fit: contain;"
-                     />
-                    {{else if (eq apiInfo.apiType "WEBSUB")}}
-                    <img
-                      src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/webhook.svg"
-                      style="height: 16px; object-fit: contain;"
-                     />
-                    {{else}}
-                    <img
-                      src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/REST.svg"
-                      style=" height: 16px; object-fit: contain;"
-                    />
-                    {{/if}}
-                  </div>
-                  {{#if (eq apiInfo.apiType "WS")}}
-                  <span>WebSocket</span>
-                  {{else if (eq apiInfo.apiType "WEBSUB")}}
-                  <span>WebSub</span>
-                  {{else}}
-                  <span>{{apiInfo.apiType}}</span>
-                  {{/if}}
-                </div>
-              </div>
-              <div class="api-card-chips mt-2">
+                <span class="dp-badge {{#if (eq apiInfo.apiType "WS")}}dp-badge--ws{{else if (eq apiInfo.apiType "GRAPHQL")}}dp-badge--graphql{{else if (eq apiInfo.apiType "SOAP")}}dp-badge--soap{{else}}dp-badge--rest{{/if}}">
+                  {{#if (eq apiInfo.apiType "WS")}}WebSocket{{else if (eq apiInfo.apiType "WEBSUB")}}Webhook{{else}}{{apiInfo.apiType}}{{/if}}
+                </span>
                 {{#if ../showApiWorkflowsNav}}
                 {{#unless (eq apiInfo.agentVisibility "HIDDEN")}}
                 <span class="api-agent-chip api-agent-chip--ready"
