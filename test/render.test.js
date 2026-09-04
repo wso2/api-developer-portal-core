@@ -7,6 +7,8 @@
  */
 const test = require('node:test');
 const assert = require('node:assert');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const { renderThemablePage, renderInternalPage } = require('./helpers/render');
 const ctx = require('./fixtures/contexts');
@@ -126,6 +128,42 @@ test('a stored theme overrides only the seven customizable partials', () => {
     assert.ok(html.includes('id="stored-home"'), 'the stored home should win - home is customizable');
     assert.ok(!html.includes('id="stored-sidebar"'), 'the stored sidebar must be ignored - sidebar is not customizable');
     assert.ok(html.includes('id="sidebar"'), 'and our disk sidebar must render instead');
+});
+
+test('the plan cards in the rail are stacked, not left on their three-up grid', () => {
+    // The partial's cards carry col-lg-4 col-md-6 col-12 because it was written as a
+    // full-width section. Inside the 22.5rem rail those columns still ask for a third
+    // of their container, which is about 7rem a card. components.css overrides them,
+    // and the two breakpoints have to agree or there is a band where the rail is narrow
+    // but the cards have gone back to the grid.
+    const html = renderAll('pages/api-landing', ctx.apiLandingWithPlans());
+    assert.ok(html.includes('aov-body-sidebar'), 'expected the rail to render');
+    assert.ok(/class="col-lg-4[^"]*"/.test(html), 'the partial still uses the three-up grid');
+
+    const components = fs.readFileSync(
+        path.join(__dirname, '..', 'src', 'styles', 'components.css'), 'utf8'
+    );
+    assert.match(
+        components, /\.aov-body-sidebar \.row > \[class\*="col-"\]/,
+        'components.css must override the grid inside the rail'
+    );
+
+    // Compare the two breakpoints that have to agree, not every media query in the file.
+    const widthOfBlockContaining = (needle) => {
+        for (const m of components.matchAll(/@media \(max-width: (\d+)px\)\s*\{([\s\S]*?)\n\}/g)) {
+            if (m[2].includes(needle)) return m[1];
+        }
+        return null;
+    };
+    const railAt = widthOfBlockContaining('.aov-body-sidebar { width: 100%');
+    const gridAt = widthOfBlockContaining('.aov-body-sidebar .row > [class*="col-"]');
+
+    assert.ok(railAt && gridAt, `expected both breakpoints, got rail=${railAt} grid=${gridAt}`);
+    assert.strictEqual(
+        gridAt, railAt,
+        `the rail collapses at ${railAt}px but its grid override switches off at ${gridAt}px, `
+        + 'leaving a band where the rail is narrow and the cards are back on the three-up grid'
+    );
 });
 
 test('every SVG-recolour container still holds an image', () => {

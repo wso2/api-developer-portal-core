@@ -4,6 +4,7 @@
    below would resolve to nothing there. /technical-styles/ is never rewritten. */
 @import "/technical-styles/tokens.css";
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Quicksand:wght@300..700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 @import "/styles/home.css";
 @import "/styles/footer.css";
 @import "/styles/header.css";
@@ -26,21 +27,21 @@
   --secondary-main-color: #FE8C3A;
   --secondary-light-color: #FEAF76;
   /* font colors */
-  --main-text-color: #40404b;
+  --main-text-color: #1a2433;
   --light-text-color: #ffffff;
   --dark-text-color: #000000;
   /* other special colors */
-  --success-color: #28a745;
-  --danger-color: #a40e26;
-  --warning-color: #ffc107;
+  --success-color: #2e7d32;
+  --danger-color: #c62828;
+  --warning-color: #e39a00;
   --white-color: #ffffff;
   --Black-color: #000000;
   --subscribed-color: #0c7838;
   /* Gradient */
   --primary-gradient: linear-gradient(135deg, #3d6b8a, #1c3b52);
 
-  --font-family-sans: "Montserrat", "Quicksand", "Noto Sans", "Poppins", sans-serif;
-  --font-family-mono: "Roboto", monospace;
+  --font-family-sans: Inter, "Montserrat", "Quicksand", "Noto Sans", "Poppins", system-ui, -apple-system, sans-serif;
+  --font-family-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
 
 html {
@@ -315,15 +316,15 @@ html {
 }
 
 .api-md-content h3,
-h2 {
+.api-md-content h2 {
   font-size: 24px;
   color: var(--ink);
 }
 
 /* --SubTitle-- */
 .api-md-content h4,
-h5,
-h6 {
+.api-md-content h5,
+.api-md-content h6 {
   font-size: 20px;
   color: var(--ink);
 }
