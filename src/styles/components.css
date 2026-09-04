@@ -774,3 +774,47 @@
   .aov-api-avatar { width: 3.75rem; height: 3.75rem; font-size: 1.25rem; }
   .aov-api-img { width: 3.75rem; height: 3.75rem; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Subscription plans inside the landing rail
+
+   The plans partial was written as a full-width three-up grid - its cards carry
+   col-lg-4 col-md-6 col-12. Dropped into the 22.5rem rail those columns still
+   ask for a third of their container, so each card collapses to roughly 7rem and
+   the price row, a 120px label column plus 38px of padding, has nothing left for
+   the value.
+
+   Stack the cards instead and give the price row its width back. Scoped with a
+   descendant selector on purpose: .plan-kpi-row is styled in api-content.css,
+   which an organization with a stored theme serves its own copy of, loaded after
+   this file - so these need to win on specificity rather than order.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.aov-body-sidebar .row > [class*="col-"] {
+    flex: 0 0 100%;
+    max-width: 100%;
+    width: 100%;
+}
+
+.aov-body-sidebar .container-fluid {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.aov-body-sidebar .plan-kpi-row {
+    grid-template-columns: 5rem minmax(0, 1fr);
+    column-gap: 0.75rem;
+    padding: 0.875rem 1rem;
+}
+
+/* Below the rail's own collapse breakpoint - 1024px, matching .aov-body above - the
+   sidebar is full width again and the original three-up grid is the right layout.
+   These two values must stay in step, or there is a band where the rail is still
+   narrow but the cards have gone back to asking for a third of it. */
+@media (max-width: 1024px) {
+    .aov-body-sidebar .row > [class*="col-"] {
+        flex: 0 0 auto;
+        max-width: none;
+        width: auto;
+    }
+}
