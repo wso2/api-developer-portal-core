@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>DevPortal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://getbootstrap.com/docs/5.3/assets/css/docs.css" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/technical-styles/layout.css" />
+    <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+    </script>
+    <script src='/technical-scripts/search.js' defer></script>
+    <script src='/technical-scripts/filter.js' defer></script>
+    <script src='/technical-scripts/common.js' defer></script>
+    <script src='/technical-scripts/delete-confirmation-modal.js' defer></script>
+    <script src='/technical-scripts/subscription.js' defer></script>
+</head>
+
+<body class="main-body">
+    <main class="main-container">
+        <div class="content-area">
+        <!--
+ * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
+ *
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+ -->
+<head>
+    <link rel="stylesheet" href="/technical-styles/agent-prompt.css">
+    <script type="application/json" id="homeDiscoverData">{"baseUrl":"/testorg/views/default"}</script>
+    <script src="/technical-scripts/home-discover.js" defer></script>
+</head>
+<main>
+    <header>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+      <nav class="navbar navbar-expand-lg custom-navbar fixed-top">
+        <div class="container-fluid">
+          <a class="navbar-brand d-flex align-items-center" href="/testorg/views/default">
+            <img src="/images/devportalLogo.png" alt="Logo" class="navbar-logo me-2" />
+          </a>
+          <div class="d-flex align-items-center me-2">
+            <div id="auth-section">
+              <a class="common-btn-primary login-btn" href="/testorg/views/default/login">Log In</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+    <div class="sidebar" id="sidebar">
+      <nav class="nav">
+        <a href="/testorg/views/default/" class="nav-link" id="home">
+          <img
+            src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/home-icon.svg"
+          />
+          <span class="nav-text">Home</span>
+        </a>
+          <a href="/testorg/views/default/apis" class="nav-link" id="apis">
+            <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/apis-icon.svg" />
+            <span class="nav-text">APIs</span>
+          </a>
+          <div class="submenu api-submenu" id="api-submenu">
+            <a href="#" class="nav-link submenu-link fw-light" id="api-overview">
+              <img
+                src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/MenuOverview.svg"
+                class="submenu-icon"
+              />
+              <span class="nav-text">Overview</span>
+            </a>
+            <a href="#" class="nav-link submenu-link fw-light" id="api-docs">
+              <img
+                src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/documentation.svg"
+                class="submenu-icon"
+              />
+              <span class="nav-text">Documentation</span>
+            </a>
+            <a href="#" class="nav-link submenu-link fw-light" id="api-subscriptions">
+              <img
+                src="/images/subscriptions-icon.svg"
+                class="submenu-icon"
+              />
+              <span class="nav-text">Subscriptions</span>
+            </a>
+          </div>
+          <a href="/testorg/views/default/mcps" class="nav-link" id="mcps">
+            <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/MCPMenu.svg" />
+            <span class="nav-text">MCP Servers</span>
+          </a>
+          <div class="submenu api-submenu" id="mcp-submenu">
+            <a href="#" class="nav-link submenu-link fw-light" id="mcp-overview">
+              <img
+                src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/MenuOverview.svg"
+                class="submenu-icon"
+              />
+              <span class="nav-text">Overview</span>
+            </a>
+            <a href="#" class="nav-link submenu-link fw-light" id="mcp-docs">
+              <img
+                src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/documentation.svg"
+                class="submenu-icon"
+              />
+              <span class="nav-text">Documentation</span>
+            </a>
+          </div>
+          <a href="/testorg/views/default/applications" class="nav-link" id="applications">
+            <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/applications-icon.svg" />
+            <span class="nav-text">Applications</span>
+          </a>
+          <div class="submenu applications-submenu" id="applications-submenu">
+            <a href="#" class="nav-link submenu-link fw-light" id="applications-overview">
+              <img
+                src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/MenuOverview.svg"
+                class="submenu-icon"
+              />
+              <span class="nav-text">Overview</span>
+            </a>
+            <a href="#" class="nav-link submenu-link fw-light" id="applications-keys">
+              <img
+                src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/manage-keys.svg"
+                class="submenu-icon"
+              />
+              <span class="nav-text">Manage Keys</span>
+            </a>
+          </div>
+          <a href="/testorg/views/default/subscriptions" class="nav-link" id="subscriptions">
+            <img src="/images/subscriptions-icon.svg" />
+            <span class="nav-text">Subscriptions</span>
+          </a>
+      </nav>
+    
+      <div class="nav-section-divider"></div>
+      <button class="collapse-btn" id="collapseBtn">
+        <i class="bi bi-chevron-right"></i>
+        <span class="collapse-text">Expand</span>
+      </button>
+    </div>
+    <section class="hero-section">
+        <div class="container-fluid">
+            <div class="hero-content hero">
+                <div class="row h-100">
+                    <!-- Left Content -->
+                    <div class="col-xl-9 col-lg-6 col-md-12 text-lg-start d-flex flex-column justify-content-center">
+                        <div class="hero-left-content">
+                            <h1 class="hero-title">
+                                <span class="span-highlight"> APIs, MCP Servers, & Workflows </span>
+                                - Ready for AI Agents and Developers
+                            </h1>
+                            <p class="hero-description">
+                                Discover, connect, and orchestrate APIs, MCP tools, and workflows to build applications, AI agents and automations.
+                                Browse our catalogs, subscribe and get going in minutes.
+                            </p>
+                            <div class="hero-buttons" role="group" aria-label="Hero actions">
+                                <a href="/testorg/views/default/apis" class="common-btn-primary common-btn-secondary">Browse our APIs →</a>
+                                <a href="/testorg/views/default/mcps" class="common-btn-primary common-btn-secondary">Browse our MCP Servers →</a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Right Content -->
+                    <div class="col-xl-3 col-lg-6 col-12 d-flex justify-content-end align-items-end">
+                        <div class="hero-image-container">
+                            <div id="heroImage" class="me-0">
+                                <img class="hero-banner-image d-none" src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/hero.svg">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="section">
+        <div class="container mw-100">
+            <div class="row justify-content-center g-5 pb-5">
+                <div class="col-12 col-sm-6 col-md-6 col-lg-4">
+                    <div class="card advantage-card">
+                        <div class="advantage-card-image-container">
+                            <div id="apisImage" class="w-50 mx-auto d-flex align-items-center justify-content-center p-3">
+                                <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/MCP&API.svg" class="d-none">
+                            </div>
+                        </div>
+                        <div class="advantage-card-body">
+                            <h5>Explore & Subscribe to our 
+                                 
+                                 
+                                 <span> APIs & MCP Servers </span>  
+                            </h5>
+                            <ul class="fw-light">
+                                <li>Sign up with us</li>
+                                <li>Choose an  
+                                 
+                                 <span> APIs & MCP Servers </span>  
+                                 and Try-it-out</li>
+                                <li>Create an application</li>
+                                <li>Subscribe the application to the  
+                                 
+                                 <span> APIs & MCP Servers </span>  to get going</li>
+                            </ul>
+                        </div>
+                        <div class="advantage-card-footer">
+                            <a href="#" class="common-btn-link px-2">How it works →</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-md-6 col-lg-4">
+                    <div class="card advantage-card">
+                        <div class="advantage-card-image-container">
+                            <div id="applicationsImage" class="w-50 mx-auto d-flex align-items-center justify-content-center p-3"><img class="d-none" src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/applications.svg"> </div>
+                        </div>
+                        <div class="advantage-card-body">
+                            <h5>Developing Applications</h5>
+                            <ul class="fw-light">
+                                <li>Generate application keys</li>
+                                <li>Utilise SDKs to generate application code</li>
+                                <li>Connect to the Sandbox endpoint for testing</li>
+                            </ul>
+                        </div>
+                        <div class="advantage-card-footer">
+                            <a href="#" class="common-btn-link px-2">How it works →</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-md-6 col-lg-4">
+                    <div class="card advantage-card">
+                        <div class="advantage-card-image-container">
+                            <div id="launchImage" class="w-50 mx-auto d-flex align-items-center justify-content-center p-3"><img class="d-none" src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/launch.svg"> </div>
+                        </div>
+                        <div class="advantage-card-body">
+                            <h5>Ready to Launch</h5>
+                            <ul class="fw-light">
+                                <li>Switch to the production endpoint</li>
+                                <li>Perform tests</li>
+                                <li>Launch!</li>
+                            </ul>
+                        </div>
+                        <div class="advantage-card-footer">
+                            <a href="#" class="common-btn-link px-2">How it works →</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+</main>
+
+        </div>
+    </main>
+    <footer class="footer-section">
+      <div class="footer-container">
+        <ul class="footer-links">
+          <li><a href="#">Terms of use</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Support</a></li>
+        </ul>
+        <div class="footer-icons">
+          <a href="#">© 2026, WSO2 LLC.</a>
+        </div>
+      </div>
+    </footer>
+
+    <div class='modal fade' id='deleteConfirmation' tabindex='-1' aria-hidden='true'>
+        <div class='modal-dialog'>
+            <div class='modal-content'>
+                <div class='modal-header'>
+                    <h5 class='modal-title'>Confirm</h5>
+                </div>
+                <div class='modal-body'>
+                    <p class='modal-message'></p>
+                </div>
+                <div class='modal-footer'>
+                    <button type='button' class='btn common-btn-link' data-bs-dismiss='modal'>
+                        Cancel
+                    </button>
+                    <button
+                        type='button'
+                        class='btn common-btn-primary common-btn-danger'
+                        data-bs-dismiss='modal'
+                        id='deleteConfirmationBtn'
+                        data-cyid="confirm"
+                    >
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="stripeCheckoutModal" class="modal hidden" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6);">
+        <div class="modal-content" style="background-color: #fefefe; margin: 40px auto; padding: 30px 20px 20px 20px; border: none; width: 90%; max-width: 600px; border-radius: 12px; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto;">
+            <button onclick="closeStripeCheckoutModal()" style="position: absolute; right: 15px; top: 15px; font-size: 24px; font-weight: bold; color: #999; background: none; border: none; cursor: pointer; z-index: 10; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f0f0f0'" onmouseout="this.style.backgroundColor='transparent'">&times;</button>
+            <h2 style="margin-top: 0; margin-bottom: 20px; padding-right: 40px; color: #333; font-size: 22px; font-weight: 600;">Add Payment Details</h2>
+            <div id="stripe-embedded-checkout" style="min-height: 400px;"></div>
+        </div>
+    </div>
+</body>
+
+</html>
