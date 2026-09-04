@@ -9,7 +9,9 @@
     "debug": "nodemon --inspect --ignore 'generated-sdks/**/*' src/app.js",
     "multi-tenant": "npm run build-css --watch & nodemon src/multi-tenant.js",
     "build-css": "node watcher.js",
-    "build": "pkg ."
+    "build": "pkg .",
+    "test": "node --test 'src/**/*.test.js' 'test/**/*.test.js'",
+    "lint": "eslint ."
   },
   "repository": {
     "type": "git",
@@ -21,6 +23,9 @@
   ],
   "author": "Divya Premanantha",
   "license": "ISC",
+  "engines": {
+    "node": ">=20"
+  },
   "bugs": {
     "url": "https://github.com/api-developer-portal-core/issues"
   },
@@ -83,7 +88,9 @@
     "handlebars": "4.7.9"
   },
   "applicationInsights": {
-    "excludeModules": ["basic-ftp"]
+    "excludeModules": [
+      "basic-ftp"
+    ]
   },
   "bin": {
     "app": "src/app.js"

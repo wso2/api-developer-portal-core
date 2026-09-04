@@ -1186,6 +1186,7 @@ module.exports = {
     validateRequestParameters,
     rejectExtraProperties,
     readFilesInDirectory,
+    validateScripts,
     appendAPIImageURL,
     appendSubscriptionPlanDetails,
     tokenExchanger,
