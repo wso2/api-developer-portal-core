@@ -65,6 +65,7 @@ test('anything the disk layout gains but a stored layout lacks is tracked', () =
         // src/styles sheet, which needs no template or layout change. Remove from
         // this list once that lands.
         '/technical-styles/tokens.css',
+        '/technical-styles/components.css',
     ];
 
     const frozen = fs.readFileSync(path.join(__dirname, 'fixtures', 'org-themed', 'layout', 'main.hbs'), 'utf8');
