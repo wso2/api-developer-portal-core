@@ -1,3 +1,8 @@
+/* The token layer, imported so this sheet stands alone. Internal pages render
+   inside the organization's own stored layout, which predates the tokens.css
+   <link> and will never gain it - so the sheet has to carry its own tokens.
+   /technical-styles/ is never rewritten to a stored-asset URL. */
+@import "/technical-styles/tokens.css";
 .subscription-list-section .common-header h2 {
   margin-bottom: 1rem;
 }
@@ -15,18 +20,18 @@ tbody td:nth-child(4) {
 }
 
 .table {
-  border: 2px solid #ffff;
+  border: 2px solid var(--white);
   border-radius: 5px;
 }
 
 .table tbody {
-  border: 2px solid #ffff;
+  border: 2px solid var(--white);
   font-size: small;
 }
 
 .table th {
-  background-color: var(--primary-light-color);
-  color: var(--primary-main-color);
+  background-color: var(--primary-light);
+  color: var(--primary);
   padding: 10px;
   text-align: left;
 }
@@ -39,7 +44,7 @@ tbody td:nth-child(4) {
 
 
 .table-primary {
-  --bs-table-bg: var(--primary-light-color);
+  --bs-table-bg: var(--primary-light);
 }
 
 .table-primary th {
@@ -52,14 +57,14 @@ tbody td:nth-child(4) {
 }
 
 .table-links {
-  color: var(--main-text-color);
+  color: var(--ink);
   text-decoration: none;
 }
 
 .plane-badge {
-  border: 0.0625rem solid var(--primary-main-color);
-  background-color: var(--primary-light-color);
-  color: var(--primary-main-color);
+  border: 0.0625rem solid var(--primary);
+  background-color: var(--primary-light);
+  color: var(--primary);
   margin: 0px 0.3125rem 0.625rem 0;
   border-radius: 1.875rem;
   font-size: 0.8rem;

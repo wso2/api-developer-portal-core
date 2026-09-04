@@ -1,6 +1,11 @@
+/* The token layer, imported so this sheet stands alone. Internal pages render
+   inside the organization's own stored layout, which predates the tokens.css
+   <link> and will never gain it - so the sheet has to carry its own tokens.
+   /technical-styles/ is never rewritten to a stored-asset URL. */
+@import "/technical-styles/tokens.css";
 .content {
   padding: 2rem;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 .sub-api-card {
@@ -16,13 +21,13 @@
 .policy-label {
   font-size: 0.9rem;
   margin: 0.625rem;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 .custom-plans-card h2 a {
   font-size: 1.2rem;
   font-weight: 600;
-  color: var(--primary-main-color);
+  color: var(--primary);
   margin-bottom: 0.5rem;
 }
 
@@ -47,7 +52,7 @@
 .app-th {
   text-align: left;
   padding: 16px 24px;
-  color: var(--main-text-color);
+  color: var(--ink);
   font-weight: 600;
   font-size: 14px;
   border-bottom: none;
@@ -57,7 +62,7 @@
 .app-td {
   padding: 12px 24px;
   border-bottom: none;
-  color: var(--main-text-color);
+  color: var(--ink);
   font-size: 14px;
   font-weight: 400;
   background-color: #f9f9f9;
@@ -93,11 +98,11 @@ thead tr th {
 }
 
 .action-buttons-container .delete-button {
-  color: var(--danger-color);
+  color: var(--danger);
 }
 
 .action-buttons-container .delete-button:hover {
-  color: var(--danger-color);
+  color: var(--danger);
   opacity: 0.8;
 }
 
@@ -105,7 +110,7 @@ thead tr th {
 .oauth2-keys-section {
   padding: 0.5rem 1rem;
   width: 320px;
-  border-left: 0.5px solid rgb(from var(--primary-main-color) r g b / 10%);
+  border-left: 0.5px solid rgb(from var(--primary) r g b / 10%);
   margin-left: 1rem;
   position: relative;
   align-self: stretch;
@@ -114,7 +119,7 @@ thead tr th {
 .oauth2-title {
   font-size: 13px;
   font-weight: 500;
-  color: var(--main-text-color);
+  color: var(--ink);
   letter-spacing: 0.5px;
 }
 
@@ -124,7 +129,7 @@ thead tr th {
 }
 
 .info-icon {
-  color: var(--primary-main-color);
+  color: var(--primary);
   cursor: pointer;
 }
 
@@ -167,7 +172,7 @@ thead tr th {
 .key-action-label {
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--main-text-color);
+  color: var(--ink);
   min-width: 75px;
 }
 
@@ -193,7 +198,7 @@ thead tr th {
 .api-key-actions .common-btn-outlined {
   box-sizing: border-box;
   border-width: 1px;
-  box-shadow: inset 0 0 0 1px var(--primary-main-color);
+  box-shadow: inset 0 0 0 1px var(--primary);
   border: none;
 }
 

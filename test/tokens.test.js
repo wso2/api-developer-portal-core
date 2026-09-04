@@ -110,25 +110,28 @@ test('every color-mix token has an @supports fallback, and the block comes last'
     );
 });
 
-test('a stored layout does not deliver tokens.css - internal pages need the CSS route', () => {
-    // Internal pages render inside the organization's own stored layout, which was
-    // frozen at upload time and will never gain the <link> we just added. This pins
-    // that gap so it is closed deliberately rather than assumed away: P6 delivers the
-    // token layer to those pages through an @import at the top of each src/styles
-    // sheet, which needs no template or layout change at all.
-    //
-    // When P6 lands, flip this to assert that every src/styles sheet imports tokens.css.
-    const themed = read(path.join(__dirname, 'snapshots', 'org-themed', 'internal-applications.html'));
-    const plain = read(path.join(__dirname, 'snapshots', 'org-plain', 'internal-applications.html'));
+test('every technical stylesheet carries its own token import', () => {
+    // Internal pages render inside the organization's stored layout - a snapshot frozen
+    // at upload time that will never gain the tokens.css <link> from the disk layout.
+    // So delivery cannot depend on the layout: each sheet imports the token layer
+    // itself, and then resolves however it was reached.
+    const sheets = walk(TECHNICAL_STYLES, '.css').filter((f) => !f.endsWith('tokens.css'));
+    const missing = sheets
+        .filter((f) => !read(f).includes('@import "/technical-styles/tokens.css"'))
+        .map(rel);
 
-    assert.ok(plain.includes('/technical-styles/tokens.css'),
-        'an organization with no stored layout should receive tokens.css from the disk layout');
-    assert.ok(!themed.includes('/technical-styles/tokens.css'),
-        'if a stored layout now carries tokens.css, the frozen-layout fixture is stale - regenerate it');
+    assert.ok(sheets.length > 0, 'expected to find technical stylesheets');
+    assert.deepStrictEqual(
+        missing, [],
+        'these sheets would resolve to nothing on an internal page under a stored layout:\n  '
+        + missing.join('\n  ')
+    );
 
-    const imported = walk(TECHNICAL_STYLES, '.css')
-        .filter((f) => read(f).includes('@import "/technical-styles/tokens.css"'));
-    assert.strictEqual(imported.length, 0, 'src/styles has started importing tokens.css - update this test for P6');
+    // tokens.css must not import itself - that is a resolution cycle.
+    assert.ok(
+        !read(TOKENS).includes('@import "/technical-styles/tokens.css"'),
+        'tokens.css imports itself'
+    );
 });
 
 test('no new undefined token creeps in', () => {
@@ -162,5 +165,27 @@ test('no new undefined token creeps in', () => {
         collect(themeContext),
         ['--light-ash-color', '--primary-color', '--primary-main-color-rgb', '--white-text-color'],
         'the set of undefined custom properties on a themable page changed - a new one is a bug in this work'
+    );
+
+    // And the technical context: a sheet under /technical-styles/ resolves against
+    // tokens.css plus the twenty legacy seeds the layout's main.css supplies - ours on
+    // an unthemed organization, the customer's own copy otherwise, same names either way.
+    const LEGACY_SEEDS = [
+        '--main-bg-color', '--secondary-bg-color', '--primary-main-color', '--primary-dark-color',
+        '--primary-light-color', '--primary-lightest-color', '--secondary-main-color',
+        '--secondary-light-color', '--main-text-color', '--light-text-color', '--dark-text-color',
+        '--success-color', '--danger-color', '--warning-color', '--white-color', '--Black-color',
+        '--subscribed-color', '--primary-gradient', '--font-family-sans', '--font-family-mono',
+    ];
+    const technical = collect(walk(TECHNICAL_STYLES, '.css')).filter((t) => !LEGACY_SEEDS.includes(t));
+
+    assert.deepStrictEqual(
+        technical,
+        [
+            '--border-colour-primary', '--border-colour-secondary', '--card-color', '--dark-color',
+            '--font-colour-primary', '--light-bg-color', '--notselect-star-color', '--primary-color',
+            '--primary-main-color-rgb', '--secondary-color', '--secondary-text-color',
+        ],
+        'the set of undefined custom properties on an internal page changed - a new one is a bug in this work'
     );
 });
