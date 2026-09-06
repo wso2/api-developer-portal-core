@@ -283,6 +283,26 @@ Handlebars.registerHelper('currentYear', function () {
     return new Date().getFullYear();
 });
 
+/* Names the artefact types this portal serves, for the home hero copy. Built here
+   rather than branched in the template because devportalMode x showApiWorkflowsNav
+   is six combinations and the string appears twice per page; upstream composes the
+   same label server-side from its enabled-artefact list. Joined as "A, B & C". */
+Handlebars.registerHelper('artifactTypesLabel', function (devportalMode, showApiWorkflowsNav) {
+    const labels = [];
+    if (devportalMode !== constants.DEVPORTAL_MODE.MCP_ONLY) {
+        labels.push('APIs');
+    }
+    if (devportalMode !== constants.DEVPORTAL_MODE.API_PROXIES) {
+        labels.push('MCP servers');
+    }
+    if (showApiWorkflowsNav === true) {
+        labels.push('workflows');
+    }
+    return labels.length > 1
+        ? labels.slice(0, -1).join(', ') + ' & ' + labels[labels.length - 1]
+        : (labels[0] || '');
+});
+
 }
 
 module.exports = { registerHelpers };

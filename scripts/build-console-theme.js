@@ -50,6 +50,13 @@ const PREVIEW = [
     'styles/default-home.css',
     'partials/footer.hbs',
     'partials/sidebar.hbs',
+    // The console preview renders the api-landing page too, from its own copies of
+    // these. Neither is customizable, so they are never uploaded - but left unsynced
+    // the preview shows the old banner while the real portal shows the ported one.
+    // The rest of the console's pages/api-landing/ tree is its own scaffolding
+    // (api-landing.hbs, faqBanner.hbs, subscription-plans.hbs) and stays untouched.
+    'pages/api-landing/partials/api-detail-banner.hbs',
+    'pages/api-landing/partials/api-default.hbs',
 ];
 
 /** Served at /technical-styles/ by the portal; the console needs them at the same path. */
@@ -60,7 +67,16 @@ const TECHNICAL_FILES = ['tokens.css', 'components.css'];
  * preview requests a file the console cannot serve, and the header renders with a broken
  * logo. Kept separate from SHIPPED because these are binary and live under images/.
  */
-const IMAGES = ['api-portal-logo.svg', 'api-portal-logo-white.svg'];
+const IMAGES = [
+    'api-portal-logo.svg',
+    'api-portal-logo-white.svg',
+    // Type badges in api-detail-banner.hbs and the sidebar's MCP item. A GraphQL, WS or
+    // MCP API renders a broken badge in the preview without these.
+    'graphql-icon.svg',
+    'websocket-icon.svg',
+    'mcp-icon.svg',
+    'applications-icon.svg',
+];
 
 function copy(from, to) {
     const next = fs.readFileSync(from);

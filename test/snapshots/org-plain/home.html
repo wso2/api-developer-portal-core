@@ -49,6 +49,7 @@
     <link rel="stylesheet" href="/technical-styles/agent-prompt.css">
     <script type="application/json" id="homeDiscoverData">{"baseUrl":"/testorg/views/default"}</script>
     <script src="/technical-scripts/home-discover.js" defer></script>
+    <script src="/technical-scripts/particles.js" defer></script>
 </head>
 <main>
     <header>
@@ -134,6 +135,8 @@
       </button>
     </div>
     <section class="hero" aria-label="Portal hero">
+      <div class="hero-particles" id="hero-particles" aria-hidden="true"></div>
+    
       <div class="hero-hero-body">
         <span class="hero-pill">
           <i class="bi bi-stars" aria-hidden="true"></i>
@@ -141,12 +144,12 @@
         </span>
     
         <h1 class="hero-headline">
-          <span class="hero-headline-accent">APIs &amp; MCP Servers</span><br>built for Developers.
-              </h1>
+          <span class="hero-headline-accent">APIs &amp; MCP servers</span><br>built for Developers.
+        </h1>
     
         <p class="hero-desc">
-          Discover, connect, and orchestrate APIs and MCP servers. Browse the catalog, subscribe, and get going in minutes.
-              </p>
+          Discover, connect, and orchestrate APIs &amp; MCP servers. Browse the catalog, subscribe, and get going in minutes.
+        </p>
     
         <div class="hero-ctas">
           <a href="/testorg/views/default/apis" class="hero-btn hero-btn--gradient">
@@ -159,6 +162,8 @@
       </div>
     </section>
     
+    
+    <script src='/technical-scripts/home-particles.js' defer></script>
 </main>
 
         </div>

@@ -37,8 +37,14 @@
   --white-color: #ffffff;
   --Black-color: #000000;
   --subscribed-color: #0c7838;
-  /* Gradient */
-  --primary-gradient: linear-gradient(135deg, #3d6b8a, #1c3b52);
+  /* Gradient. The home hero lays --hero-glow over this rather than replacing it, so the
+     console's gradient picker keeps driving the hero - which means this default is what
+     sets the hero's depth. The old #3d6b8a base sat within a few percent of
+     --primary-light (#2b719f), the colour particles.js draws its links and hover-grab
+     lines in, so the constellation was nearly invisible against it. This ramp is
+     upstream's: dark navy carried down toward black. Kept to one line - the console
+     parses this block line by line. */
+  --primary-gradient: linear-gradient(160deg, #043556 0%, #03263e 60%, #021f32 100%);
 
   --font-family-sans: Inter, "Montserrat", "Quicksand", "Noto Sans", "Poppins", system-ui, -apple-system, sans-serif;
   --font-family-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
@@ -61,15 +67,23 @@ html {
 .main-container {
   display: flex;
   flex: 1;
-  margin-top: 4rem;
+  /* Reserve exactly what the fixed bars occupy - the header renders 58px (0.5rem
+     padding around a 2rem logo that Bootstrap's .navbar-brand insets a further
+     0.3125rem), the footer a flat 3rem. Reserving 4rem for both left a strip of page
+     background below the header that, being the same white as the header itself, read
+     as part of it: 13px of white above the logo against 35px below. Content now starts
+     where each bar ends, and .content-area's own 1rem provides the breathing room.
+     The sidebar's top/height in side-bar.css encode the same two bar heights - change
+     one and both must follow. */
+  margin-top: 3.5rem;
   font-weight: 500;
-  margin-bottom: 4rem;
+  margin-bottom: 3rem;
   position: relative;
   overflow-x: hidden;
 }
 
 .content-area {
-  margin-left: 7.5rem;
+  margin-left: 7.625rem;
   width: 100%;
   margin-top: 1rem;
   margin-bottom: 1rem;

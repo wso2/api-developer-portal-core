@@ -139,34 +139,30 @@
       </button>
     </div>
     <div class="container-fluid">
-        <section class="api-banner-section">
-          <div class="container-fluid">
-            <div class="api-banner-content align-items-center">
-              <div class="col-12 col-md-7">
-                <div class="api-title">
-                  <span class="badge api-badge-custom1">Commerce</span>
-                  <h4>Orders API</h4>
-                  <div class="api-version-row">
-                    <p class="api-version">1.0.0</p>
-                  </div>
-                </div>
-                <p class="api-description">Create and track orders.</p>
-                <hr style="opacity: 0.3; margin: 8px 0; border: none; height: 1px; background-color: #ccc;">
-                <div class="api-tags">
-                </div>
-        
-        
-                <div class="api-details-btn">
-                  <a type="button" class="common-btn-outlined"
-                    href="/testorg/views/default/api/orders-api/docs/specification">Documentation</a>
-                </div>
-              </div>
-              <div class="col-12 col-md-5 api-banner-icon">
-                <div class="img-thumbnail api-image image-icon d-flex justify-content-center align-items-center">OR</div>
+        <div class="aov-hero">
+          <div class="aov-hero-top">
+            <div class="aov-hero-thumb">
+              <div class="aov-api-avatar">OR</div>
+            </div>
+            <div class="aov-hero-title-row">
+              <h1 class="aov-hero-name">Orders API</h1>
+              <div class="aov-hero-badges">
+                <span class="dp-badge dp-badge--version">1.0.0</span>
+                <span class="dp-badge
+                  dp-badge--rest">
+                  <i class="bi bi-braces"></i> REST        </span>
               </div>
             </div>
           </div>
-        </section>
+          <div class="aov-hero-body">
+            <p class="aov-hero-desc">Create and track orders.</p>
+            <div class="aov-hero-actions">
+              <a class="dp-btn dp-btn--outline" href="/testorg/views/default/api/orders-api/docs/specification">
+                <i class="bi bi-book"></i> Documentation
+              </a>
+            </div>
+          </div>
+        </div>
     </div>
 
     <div class="aov-body">
@@ -189,44 +185,57 @@
              * under the License.
              */
              -->
-            <section class="section mb-4">
-                <div class="container-fluid">
-                    <div class="defaultapi-section">
-                        <div class="container-header mb-4">Endpoints</div>
-                        <div class="defaultapi-endpoint-row col-12 col-xl-9">
-                            <div class="defaultapi-endpoint-content">
-                                <span class="defaultapi-development-label">Production Endpoint</span>
-                                <div class="defaultapi-endpoint-url-container d-flex">
-                                    <pre id="token_api_prod_url" class="defaultapi-endpoint-url token-text mb-0"></pre>
-                                    <a class="copy-button" aria-label="Copy token" type="button" onclick="copyToken('api_prod_url')">
-                                        <i class="bi bi-copy"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="defaultapi-endpoint-row col-12 col-xl-9">
-                            <div class="defaultapi-endpoint-content">
-                                <span class="defaultapi-development-label">Sandbox Endpoint</span>
-                                <div class="defaultapi-endpoint-url-container d-flex">
-                                    <pre id="token_api_dev_url" class="defaultapi-endpoint-url token-text mb-0"></pre>
-                                    <a class="copy-button" aria-label="Copy token" type="button" onclick="copyToken('api_dev_url')">
-                                        <i class="bi bi-copy"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="defaultapi-section">
-                        <div class="container-header mb-4">Scopes</div>
-                        <span> No scopes available </span>
-                    </div>
-                    <div class="defaultapi-section">
-                    <div class="container-header mb-4">Resources</div>
-                    <div class="defaultapi-resources col-12">
-                    </div>
-                    </div>
+            <div class="aov-section">
+              <div class="aov-section-header">
+                <h2 class="aov-section-title">Endpoints</h2>
+              </div>
+              <div class="aov-endpoint-card">
+                <div class="aov-endpoint-label-row">
+                  <span class="aov-endpoint-dot aov-endpoint-dot--prod"></span>
+                  <span class="aov-endpoint-label">Production</span>
                 </div>
-            </section>
+                <div class="aov-endpoint-url-row">
+                  <i class="bi bi-link-45deg" style="color:var(--text-muted);flex:none;"></i>
+                  <pre id="token_api_prod_url" class="aov-endpoint-url token-text"></pre>
+                  <button type="button" class="copy-btn" title="Copy URL" onclick="copyToken(this, 'api_prod_url')">
+                    <span class="copy-btn-icon"><i class="bi bi-copy"></i></span>
+                    <span class="copy-btn-check"><i class="bi bi-check"></i> Copied</span>
+                  </button>
+                </div>
+              </div>
+              <div class="aov-endpoint-card">
+                <div class="aov-endpoint-label-row">
+                  <span class="aov-endpoint-dot aov-endpoint-dot--sandbox"></span>
+                  <span class="aov-endpoint-label">Sandbox</span>
+                </div>
+                <div class="aov-endpoint-url-row">
+                  <i class="bi bi-link-45deg" style="color:var(--text-muted);flex:none;"></i>
+                  <pre id="token_api_dev_url" class="aov-endpoint-url token-text"></pre>
+                  <button type="button" class="copy-btn" title="Copy URL" onclick="copyToken(this, 'api_dev_url')">
+                    <span class="copy-btn-icon"><i class="bi bi-copy"></i></span>
+                    <span class="copy-btn-check"><i class="bi bi-check"></i> Copied</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div class="aov-section">
+              <div class="aov-section-header">
+                <h2 class="aov-section-title">Resources</h2>
+              </div>
+            </div>
+            
+            
+            
+            <div class="aov-section">
+              <div class="aov-section-header">
+                <h2 class="aov-section-title">Scopes</h2>
+              </div>
+              <div class="aov-scopes-empty">
+                <i class="bi bi-shield-slash" style="font-size:1.125rem;"></i>
+                <span>No scopes are defined for this API.</span>
+              </div>
+            </div>
         </div>
         <div class="aov-body-sidebar">
             <section class="section mt-0 mb-6" id="subscriptionPlans">

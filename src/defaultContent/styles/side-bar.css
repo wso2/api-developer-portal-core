@@ -12,19 +12,22 @@
 /* Sidebar base styles */
 .sidebar {
     position: fixed;
-    top: 5rem;
+    /* Sits under the header and above the footer, matching the space .main-container
+       reserves for each. The 3.5rem is 2px less than the header's rendered 58px, as
+       upstream's .layout-body does: the strip tucks behind the opaque fixed bar, and
+       the sidebar gets the full 802px column rather than 800px. */
+    top: 3.5rem;
     left: 0;
     z-index: 1000;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    height: calc(100vh - 8rem);
-    padding: 1rem 0;
+    height: calc(100vh - 6.5rem);
+    padding: 1rem 0.75rem;
     background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
-    width: 4.5rem;
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 0 0.5rem 0.5rem 0;
-    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
+    width: 4.625rem;
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.12);
     overflow: hidden;
 }
 
