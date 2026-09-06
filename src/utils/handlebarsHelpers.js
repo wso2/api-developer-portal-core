@@ -130,10 +130,15 @@ Handlebars.registerHelper('stripMdExtension', function (value) {
 
 Handlebars.registerHelper("some", function (array, key, options) {
     if (!Array.isArray(array)) {
-        return options.inverse(this);
+        /* Every call site is a subexpression - {{#if (some x "y")}} - and a subexpression
+           receives an options object with no `inverse`, so the old
+           `return options.inverse(this)` threw TypeError and turned a missing array into
+           an HTTP 500 for the whole page. Fall back to the block's else only when there
+           actually is a block. */
+        return (options && typeof options.inverse === 'function') ? options.inverse(this) : false;
     }
 
-    const someMatch = array.some(item => item[key]);
+    const someMatch = array.some(item => item && item[key]);
 
     return someMatch ? true : false;
 });
@@ -281,6 +286,24 @@ Handlebars.registerHelper('isCurrentPlan', function (policyName, platformSubscri
 
 Handlebars.registerHelper('currentYear', function () {
     return new Date().getFullYear();
+});
+
+/* Counts entries whose dotted path equals value - or, with include=false, does not.
+   apiContentController serves the same apiMetadata list to both pages/apis and
+   pages/mcp and each template filters by type in the markup, so apiMetadata.length is
+   the size of the two catalogues combined. Using it directly overstates a results
+   count, and leaves an organization holding only one of the two kinds rendering an
+   empty grid with no empty state, because the length is not zero. The existing
+   `filter` helper cannot serve here: it reads item[property] and apiType is nested. */
+Handlebars.registerHelper('countWhere', function (array, path, value, include) {
+    if (!Array.isArray(array)) {
+        return 0;
+    }
+    if (typeof include !== 'boolean') {
+        include = true;
+    }
+    const read = (obj) => String(path).split('.').reduce((acc, key) => (acc == null ? acc : acc[key]), obj);
+    return array.filter((item) => (read(item) === value) === include).length;
 });
 
 /* Names the artefact types this portal serves, for the home hero copy. Built here

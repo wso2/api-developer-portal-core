@@ -5,6 +5,15 @@
 @import "/technical-styles/tokens.css";
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
 @import "/technical-styles/header.css";
+
+/* Mirrors the rule of the same name in defaultContent/styles/api-listing.css. Internal
+   pages render under src/pages/layout/main.hbs, which links only this sheet - it does
+   not import api-listing.css - so the count beside a listing heading would otherwise be
+   unstyled there while looking correct on the themable pages. */
+.apilist-results-count {
+  color: var(--text-subtle);
+  font-weight: 500;
+}
 :root {
   --main-bg-color: #ffffff;
   /* primary colors */
@@ -17,11 +26,11 @@
   --secondary-darkest-color: color-mix(in srgb, var(--secondary-main-color) 62%, #000);
   /* font colors */
   --white-text-color: #ffffff;
-  --main-text-color: #40404b;
+  --main-text-color: #1a2433;
   /* other special colors */
-  --success-color: #28a745;
-  --danger-color: #a40e26;
-  --warning-color: var(--warning);
+  --success-color: #2e7d32;
+  --danger-color: #c62828;
+  --warning-color: #e39a00;
   --white-color: #ffffff;
   --Black-color: #000000;
   /* Gradient. Kept in step with the same seed in defaultContent/styles/main.css and with
@@ -30,9 +39,9 @@
   --primary-gradient: linear-gradient(160deg, #043556 0%, #03263e 60%, #021f32 100%);
   --dark-gradient: linear-gradient(to right, #50c9c3, #4a6fa1);
 
-  --font-family-sans: "Montserrat", "Quicksand", "Noto Sans", "Poppins", sans-serif;
+  --font-family-sans: Inter, "Montserrat", "Quicksand", "Noto Sans", "Poppins", system-ui, -apple-system, sans-serif;
   --font-family-serif: "Sofia Sans", serif;
-  --font-family-mono: "Roboto", monospace;
+  --font-family-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
 html,
 body {
@@ -220,16 +229,20 @@ footer {
   color: var(--ink);
 }
 
+/* Both selectors are qualified. The comma used to bind h2 - and h5/h6 below - as
+   unqualified global selectors, forcing every heading on every internal page to 24px or
+   20px. The same leak was fixed in defaultContent/styles/main.css; this copy, which is
+   the only stylesheet src/pages/layout/main.hbs links, was missed. */
 .api-md-content h3,
-h2 {
+.api-md-content h2 {
   font-size: 24px;
   color: var(--ink);
 }
 
 /* --SubTitle-- */
 .api-md-content h4,
-h5,
-h6 {
+.api-md-content h5,
+.api-md-content h6 {
   font-size: 20px;
   color: var(--ink);
 }
@@ -246,7 +259,7 @@ h6 {
 }
 
 .api-md-content li::marker {
-  color: var(--primary-color);
+  color: var(--primary);
 }
 
 .custom-modal {

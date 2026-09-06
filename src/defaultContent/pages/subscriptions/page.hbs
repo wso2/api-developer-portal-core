@@ -28,6 +28,7 @@
         <div class="container-fluid subscriptions-container">
             <div class="container-header mb-4">
                 <span>Subscriptions</span>
+                {{#if subscriptions.length}}<span class="apilist-results-count">{{subscriptions.length}}</span>{{/if}}
             </div>
             {{> subscription-list }}
         </div>

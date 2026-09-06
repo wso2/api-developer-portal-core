@@ -45,18 +45,26 @@
         <input type="text" id="query" placeholder="Search MCP Servers" autocomplete="off" />
       </div>
     </div>
-    <div class="row row-gap-4">
-      {{#if (eq apiMetadata.length 0)}}
-      <div class="ps-3" id="no-subscription">
-        <div class="api-info-box">
-          <div class="api-info-content">
-            <div class="api-info-title">
-              No MCP Servers available.
-            </div>
+    {{!-- Type-aware for the same reason as the API listing: this page is served the
+          combined API + MCP list and shows only MCP servers, so apiMetadata.length would
+          count both catalogues. --}}
+    {{#if (eq (countWhere apiMetadata "apiInfo.apiType" "MCP" true) 0)}}
+    <div class="ps-3" id="no-subscription">
+      <div class="api-info-box">
+        <div class="api-info-content">
+          <div class="api-info-title">
+            No MCP Servers available.
           </div>
         </div>
       </div>
-      {{/if}}
+    </div>
+    {{else}}
+    <div class="apilist-results-bar">
+      <h2 class="apilist-results-heading">MCP Servers <span class="apilist-results-count">{{countWhere apiMetadata "apiInfo.apiType" "MCP" true}}</span></h2>
+    </div>
+    {{/if}}
+
+    <div class="row row-gap-4">
       {{#apiMetadata}}
       {{#if (eq apiInfo.apiType "MCP")}}
       <div class="col-lg-4 col-md-6 col-sm-12" id="apiCard-{{apiID}}">
@@ -126,4 +134,9 @@
       {{/apiMetadata}}
     </div>
   </div>
+
+  {{!-- paginate.js targets ".apilist-container .row.row-gap-4", which this page has too -
+        its own comment covers "public card grids (/apis and /mcps)". Already allowlisted
+        for the API listing; it no-ops when the grid is empty. --}}
+  <script src='/technical-scripts/paginate.js' defer></script>
 </section>

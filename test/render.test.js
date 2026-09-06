@@ -71,19 +71,19 @@ test('an API with no image data still renders the listing', () => {
     assert.doesNotThrow(() => renderAll('pages/apis', context));
 });
 
-test('an authenticated listing renders an API on a non-platform gateway', { todo: 'live crash - see notes' }, () => {
-    // KNOWN BUG, pre-existing and outside theming scope.
+test('an authenticated listing renders an API on a non-platform gateway', () => {
+    // Was a live HTTP 500, fixed on two fronts and kept as a regression guard.
     //
-    // api-listing.hbs:126 is the {{else}} branch taken when a user is authenticated,
-    // the API is not token-based-subscription, and its gatewayType is not
-    // "wso2/api-platform". It calls {{#if (some applications "subscribed")}}, but
-    // inside {{#each apiMetadata}} the path `applications` resolves against the API
-    // item, and apiDTO never sets that field - so `some` receives undefined.
+    // This is the {{else}} branch taken when a user is authenticated, the API is not
+    // token-based-subscription, and its gatewayType is not "wso2/api-platform". It
+    // calls {{#if (some ... "subscribed")}} over the applications list.
     //
-    // As a subexpression `some` gets a non-block options object, so its
-    // `return options.inverse(this)` guard throws TypeError - HTTP 500 for the whole
-    // listing. Marked todo so it is visible without failing the build; flip to a
-    // normal test when the helper is guarded.
+    // The path is correct as written: apiContentController sets metaData.applications
+    // per API item (the list carrying the `subscribed` flag), which is what this reads.
+    // The fault was in `some` itself. It is only ever called as a subexpression, and it
+    // answered a non-array with `options.inverse(this)` - but a subexpression's options
+    // object has no inverse, so any API reaching the template without that field threw
+    // TypeError and took the whole listing down with it.
     const context = ctx.apis({
         apiMetadata: [ctx.apiOnForeignGateway],
         isAuthenticated: true,
@@ -228,4 +228,32 @@ test('internal pages render under both the disk layout and a stored one', () => 
         () => renderInternalPage('applications', context, { storedLayout: frozenLayout }),
         'applications failed under a stored layout'
     );
+});
+
+test('the DTO fills subscriptionPolicies from either DAO path', () => {
+    // The listing and the search reach APIDTO by different routes and name the same
+    // aggregate differently: getAllAPIMetadata returns Sequelize instances whose include
+    // is aliased DP_SUBSCRIPTION_POLICies, searchAPIMetadata is raw SQL aggregating
+    // JSON_AGG(...) AS "DP_API_SUBSCRIPTION_POLICY".
+    //
+    // Reading only the first left every search result without subscriptionPolicies, and
+    // apiContentController's signed-in enrichment loop then called .find on undefined -
+    // an HTTP 500 on the whole listing for any user subscribed to a match. Logged-out
+    // search was unaffected, which is what made it look intermittent.
+    const APIDTO = require('../src/dto/apiDTO');
+    const policy = { POLICY_ID: 'p1', POLICY_NAME: 'Gold', DISPLAY_NAME: 'Gold', DESCRIPTION: '', REQUEST_COUNT: 10 };
+    const base = { API_ID: 'a1', API_HANDLE: 'a-1', API_NAME: 'A', API_TYPE: 'REST' };
+
+    const viaListing = new APIDTO({ ...base, DP_SUBSCRIPTION_POLICies: [policy] });
+    const viaSearch = new APIDTO({ ...base, DP_API_SUBSCRIPTION_POLICY: [policy] });
+
+    for (const [label, dto] of [['listing', viaListing], ['search', viaSearch]]) {
+        assert.ok(Array.isArray(dto.subscriptionPolicies), `${label} path left subscriptionPolicies unset`);
+        assert.strictEqual(dto.subscriptionPolicies.length, 1, `${label} path lost the policy`);
+        assert.strictEqual(dto.subscriptionPolicies[0].policyID, 'p1', `${label} path mapped the policy wrong`);
+    }
+
+    // And an API genuinely carrying no policies must not gain a bogus empty array from
+    // the aggregate's '[]' default being mistaken for absence.
+    assert.doesNotThrow(() => new APIDTO(base));
 });

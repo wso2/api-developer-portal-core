@@ -151,107 +151,120 @@
      * under the License.
      */
      -->
-    
     <section class="apis-section">
       <div class="container-fluid">
         <div class="apilist-hero-container">
           <div class="apilist-hero-content">
-            <div class="apilist-hero-header">
-              <h1 class="apilist-hero-title">
-                Discover, Integrate, and Innovate with Scalable APIs
-              </h1>
-              <div class="apilist-hero-description">
-                Explore our extensive API catalog and discover how to integrate them seamlessly into your application.
-              </div>
-            </div>
+            <h1 class="apilist-hero-title">Discover, Integrate, and Innovate with Scalable APIs</h1>
+            <p class="apilist-hero-description">Explore our extensive API catalog and discover how to integrate them seamlessly into your application.</p>
           </div>
-          <div class="col-lg-6 col-md-12 apilist-hero-image">
-            <img
-              src="/images/apisHeroImg.png"
-              alt="Hero Image" class="img-fluid" />
+          <div class="apilist-hero-image">
+            <svg width="280" height="150" viewBox="0 0 320 190" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M82 62 H128" stroke="#a9c1e6" stroke-width="2" stroke-dasharray="3 7" stroke-linecap="round"/>
+              <path d="M192 128 H238" stroke="#a9c1e6" stroke-width="2" stroke-dasharray="3 7" stroke-linecap="round"/>
+              <path d="M160 96 V62 H128" stroke="#a9c1e6" stroke-width="2" stroke-dasharray="3 7" stroke-linecap="round"/>
+              <rect x="120" y="44" width="120" height="104" rx="16" fill="#dbe7f8" stroke="#9db8e0" stroke-width="2"/>
+              <rect x="138" y="66" width="84" height="11" rx="5.5" fill="var(--white)"/>
+              <rect x="138" y="90" width="66" height="8" rx="4" fill="#b6caea"/>
+              <rect x="138" y="108" width="78" height="8" rx="4" fill="#b6caea"/>
+              <rect x="138" y="126" width="50" height="8" rx="4" fill="#b6caea"/>
+              <circle cx="56" cy="62" r="27" fill="#c7d8f3" stroke="#8fa9d6" stroke-width="2"/>
+              <circle cx="56" cy="62" r="6" fill="#5b7fb9"/>
+              <circle cx="266" cy="128" r="27" fill="#5b7fb9"/>
+              <rect x="256" y="125" width="20" height="15" rx="3" fill="var(--white)"/>
+              <path d="M259 125 v-3.5 a7 7 0 0 1 14 0 V125" stroke="var(--white)" stroke-width="2.4" fill="none"/>
+            </svg>
           </div>
         </div>
       </div>
+    
       <div class="container-fluid apilist-container">
         <div class="search-container">
           <div class="search-input">
-            <img src="/images/search.svg"
-              alt="search" class="search-icon" />
+            <i class="bi bi-search search-icon"></i>
             <input type="text" id="query" placeholder="Search APIs" autocomplete="off" />
           </div>
         </div>
+    
+        <div class="apilist-results-bar">
+          <h2 class="apilist-results-heading">APIs <span class="apilist-results-count">2</span></h2>
+        </div>
+    
         <div class="row row-gap-4">
+    
           <div class="col-lg-4 col-md-6 col-sm-12" id="apiCard-api-0001">
-            <div class="card api-card d-flex flex-column">
-              <div class="api-card-header d-flex align-items-center gap-3 position-relative overflow-hidden"
-                data-href="/testorg/views/default/api/orders-api" style="cursor: pointer;">
-                      <div class="image-icon">OR</div>
-                <div class="flex-grow-1">
-                  <h5 class="api-card-title mb-0">Orders API</h5>
-                  <div class="d-flex align-items-center gap-2">
-                    <p class="mb-0 mt-1" style="font-size: 16px;">1.0.0</p>
-                    <span class="dp-badge dp-badge--rest">
-                      REST
-                    </span>
+            <div class="api-card d-flex flex-column">
+    
+    
+              <div class="api-card-top" data-href="/testorg/views/default/api/orders-api" style="cursor:pointer;">
+                <span class="api-icon
+                  api-icon--rest">OR</span>
+                <div class="api-card-meta">
+                  <h5 class="api-card-title">Orders API</h5>
+                  <div class="api-card-meta-row">
+                    <span class="api-version">1.0.0</span>
+                    <span class="dp-badge
+                      dp-badge--rest">
+                      <i class="bi bi-braces"></i> REST                </span>
                   </div>
                 </div>
               </div>
-              <div class="api-card-body flex-grow-1" data-href="/testorg/views/default/api/orders-api" style="cursor: pointer;">
-                <div class="truncate-text fw-light apilisting-api-description small mb-3">Create and track orders.</div>
-                
-                <div class="row">
-                  <div class="apilisting-tags">
-                  </div>
-                </div>
+    
+              <p class="api-card-desc clamp2" data-href="/testorg/views/default/api/orders-api" style="cursor:pointer;">Create and track orders.</p>
+    
+              <div class="api-card-tags">
               </div>
+    
               <div class="api-card-footer">
-                <div id="btnSection" class="d-flex align-items-center gap-2 w-100">
+                <div class="api-card-footer-left">
+                  <a href="/testorg/views/default/api/orders-api#subscriptionPlans" class="api-plans-link">
+                    <i class="bi bi-tag"></i> 1 plan
+                  </a>
                 </div>
-                
-                <div class="message-overlay hidden">
-                  <div class="message-content">
-                    <i class="bi message-icon"></i>
-                    <p class="message-text"></p>
-                  </div>
-                  <button type="button" class="close-message" aria-label="Close message">&times;</button>
+              </div>
+    
+              <div class="message-overlay hidden">
+                <div class="message-content">
+                  <i class="bi message-icon"></i>
+                  <p class="message-text"></p>
                 </div>
+                <button type="button" class="close-message" aria-label="Close message">&times;</button>
               </div>
             </div>
           </div>
           <div class="col-lg-4 col-md-6 col-sm-12" id="apiCard-api-0002">
-            <div class="card api-card d-flex flex-column">
-              <div class="api-card-header d-flex align-items-center gap-3 position-relative overflow-hidden"
-                data-href="/testorg/views/default/api/shipping-api" style="cursor: pointer;">
-                      <div class="image-icon">SH</div>
-                <div class="flex-grow-1">
-                  <h5 class="api-card-title mb-0">Shipping API</h5>
-                  <div class="d-flex align-items-center gap-2">
-                    <p class="mb-0 mt-1" style="font-size: 16px;">2.1.0</p>
-                    <span class="dp-badge dp-badge--graphql">
-                      GRAPHQL
-                    </span>
+            <div class="api-card d-flex flex-column">
+    
+    
+              <div class="api-card-top" data-href="/testorg/views/default/api/shipping-api" style="cursor:pointer;">
+                <span class="api-icon
+                  api-icon--graphql
+                  ">SH</span>
+                <div class="api-card-meta">
+                  <h5 class="api-card-title">Shipping API</h5>
+                  <div class="api-card-meta-row">
+                    <span class="api-version">2.1.0</span>
+                    <span class="dp-badge
+                      dp-badge--graphql
+                      ">
+                      <img src="/images/graphql-icon.svg" class="dp-badge-icon" alt="" /> GraphQL
+                                      </span>
                   </div>
                 </div>
               </div>
-              <div class="api-card-body flex-grow-1" data-href="/testorg/views/default/api/shipping-api" style="cursor: pointer;">
-                <div class="truncate-text fw-light apilisting-api-description small mb-3">Rates and labels.</div>
-                
-                <div class="row">
-                  <div class="apilisting-tags">
-                  </div>
-                </div>
+    
+              <p class="api-card-desc clamp2" data-href="/testorg/views/default/api/shipping-api" style="cursor:pointer;">Rates and labels.</p>
+    
+              <div class="api-card-tags">
               </div>
-              <div class="api-card-footer">
-                <div id="btnSection" class="d-flex align-items-center gap-2 w-100">
+    
+    
+              <div class="message-overlay hidden">
+                <div class="message-content">
+                  <i class="bi message-icon"></i>
+                  <p class="message-text"></p>
                 </div>
-                
-                <div class="message-overlay hidden">
-                  <div class="message-content">
-                    <i class="bi message-icon"></i>
-                    <p class="message-text"></p>
-                  </div>
-                  <button type="button" class="close-message" aria-label="Close message">&times;</button>
-                </div>
+                <button type="button" class="close-message" aria-label="Close message">&times;</button>
               </div>
             </div>
           </div>
@@ -298,6 +311,8 @@
           }, false);
         })();
       </script>
+    
+      <script src='/technical-scripts/paginate.js' defer></script>
     </section>
     <head>
       <link rel='stylesheet' href='/technical-styles/add-edit-application.css' />
