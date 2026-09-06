@@ -106,7 +106,7 @@ const loadAPIs = async (req, res) => {
                             });
                             const subscriptionData = activeSubs.length > 0 ? {
                                 policyId: activeSubs[0].POLICY_ID,
-                                policyName: metaData.subscriptionPolicies.find(p => p.policyID === activeSubs[0].POLICY_ID)?.policyName || 'Unknown'
+                                policyName: (metaData.subscriptionPolicies || []).find(p => p.policyID === activeSubs[0].POLICY_ID)?.policyName || 'Unknown'
                             } : null;
                             return {
                                 ...new ApplicationDTO(app),
@@ -426,7 +426,7 @@ const loadAPIContent = async (req, res) => {
                             const subscription = await adminDao.getAppApiSubscription(orgID, app.APP_ID, metaData.apiID);
                             const subscriptionData = subscription.length > 0 ? {
                                 policyId: subscription[0].POLICY_ID,
-                                policyName: metaData.subscriptionPolicies.find(p => p.policyID === subscription[0].POLICY_ID)?.policyName || 'Unknown'
+                                policyName: (metaData.subscriptionPolicies || []).find(p => p.policyID === subscription[0].POLICY_ID)?.policyName || 'Unknown'
                             } : null;
                             return {
                                 ...new ApplicationDTO(app),

@@ -63,13 +63,13 @@ function helperCalls(source) {
     return found;
 }
 
-// The 32 app.js used to register inline, plus artifactTypesLabel, added for the home
-// hero copy. Bump this deliberately when adding a helper - the count exists to catch
+// The 32 app.js used to register inline, plus artifactTypesLabel for the home hero copy and
+// countWhere for the type-aware listing counts. Bump this deliberately when adding a helper - the count exists to catch
 // one going missing in the extraction, not to forbid new ones.
 test('the helper module registers every helper app.js used to register inline', () => {
     const helpers = registeredHelpers();
     const custom = [...helpers].filter((h) => !BUILT_IN.has(h));
-    assert.strictEqual(custom.length, 33, `expected 33 custom helpers, got ${custom.length}: ${custom.sort().join(' ')}`);
+    assert.strictEqual(custom.length, 34, `expected 34 custom helpers, got ${custom.length}: ${custom.sort().join(' ')}`);
 });
 
 test('every helper called by a shipped template is registered', () => {
