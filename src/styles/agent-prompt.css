@@ -323,3 +323,158 @@
     background: var(--primary-lightest-color);
     color: var(--primary);
 }
+
+/* ── "Try with AI agent" modal ───────────────────────────────────
+   Ported verbatim from upstream's home.css. It lives here rather than in the theme's
+   home.css because this sheet is served from /technical-styles/, which is never rewritten
+   to a stored asset - an organization with its own frozen home.css would otherwise get
+   the markup with none of the styling.
+   ---------------------------------------------------------------- */
+/* ── Modal ───────────────────────────────────────────────────── */
+.hero-modal {
+  border: none;
+  border-radius: 0.875rem;
+  overflow: hidden;
+  box-shadow: 0 30px 80px color-mix(in srgb, var(--ink) 40%, transparent);
+}
+
+.hero-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.375rem 1.625rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.hero-modal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.hero-modal-icon {
+  width: 2.375rem;
+  height: 2.375rem;
+  flex: none;
+  border-radius: 0.625rem;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-size: 1rem;
+}
+
+.hero-modal-title {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--text-strong);
+}
+
+.hero-modal-close {
+  width: 2.125rem;
+  height: 2.125rem;
+  flex: none;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background .2s;
+}
+
+.hero-modal-close:hover { background: var(--surface-sunken); }
+
+.hero-modal-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 1.125rem 1.625rem;
+  background: var(--surface-sunken);
+  border-bottom: 1px solid var(--border);
+}
+
+.hero-modal-info-text {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  max-width: 27.5rem;
+}
+
+.hero-run-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5625rem;
+  background: var(--cta-gradient);
+  color: var(--white);
+  border: none;
+  border-radius: 1.25rem;
+  padding: 0.75rem 1.375rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent-dark) 22%, transparent);
+  transition: opacity .2s;
+  white-space: nowrap;
+}
+
+.hero-run-btn:hover { opacity: .9; }
+
+.hero-modal-body { padding: 1.5rem 1.625rem; }
+
+.hero-prompt-card {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 0.625rem;
+  background: var(--surface-sunken);
+  padding: 1.375rem;
+}
+
+.hero-prompt-actions {
+  position: absolute;
+  top: 0.875rem;
+  right: 0.875rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.hero-prompt-tool {
+  width: 2.125rem;
+  height: 2.125rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9375rem;
+  transition: background .2s, border-color .2s;
+}
+
+.hero-prompt-tool:hover { background: var(--surface-sunken); border-color: var(--border-strong); }
+
+.hero-prompt-pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--font-family-mono);
+  font-size: 0.84375rem;
+  line-height: 1.7;
+  color: var(--text);
+  max-width: 37.5rem;
+  padding-right: 5rem;  /* avoid overlap with action buttons */
+}

@@ -460,44 +460,58 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
             }
             
-            // Handle selection of application items
-            const selectableItems = dropdown.querySelectorAll(".select-item:not(.disabled)");
-            selectableItems.forEach(item => {
-                item.addEventListener("click", function(e) {
-                    e.stopPropagation();
-                    
-                    // Get application data
-                    const appId = this.getAttribute("data-value");
-                    const appName = this.getAttribute("data-app-name");
-                    
-                    // Update hidden input with selected app ID
-                    const hiddenField = dropdown.querySelector('input[type="hidden"]');
-                    if (hiddenField) {
-                        hiddenField.value = appId;
-                    }
-                    
-                    // Update the display text
-                    const selectedText = dropdown.querySelector(".selected-text");
-                    if (selectedText) {
-                        selectedText.textContent = appName;
-                        selectedText.classList.add("selected");
-                    }
-                    
-                    // Enable the Subscribe button by removing the disabled attribute
-                    const subscribeButton = card.querySelector(".common-btn-primary[disabled]");
-                    if (subscribeButton) {
-                        subscribeButton.removeAttribute("disabled");
-                    }
-                    
-                    // Close dropdown
-                    selectItems.classList.remove("show");
-                    
-                    // Update aria-expanded attribute
-                    const combobox = dropdown.querySelector("[role='combobox']");
-                    if (combobox) {
-                        combobox.setAttribute("aria-expanded", "false");
-                    }
-                });
+            /* Delegated, so `.disabled` is read at click time rather than at bind time.
+               The old form bound listeners to `.select-item:not(.disabled)` once on load:
+               an option disabled later - markSubscribedUI does exactly that after an
+               in-page subscribe - kept its listener and stayed selectable, and options
+               added later got none at all. */
+            dropdown.addEventListener("click", function(e) {
+                const item = e.target.closest(".select-item");
+                if (!item || !dropdown.contains(item)) return;
+                e.stopPropagation();
+                if (item.classList.contains("disabled")) return;
+
+                // Get application data
+                const appId = item.getAttribute("data-value");
+                const appName = item.getAttribute("data-app-name");
+                
+                // Update hidden input with selected app ID
+                const hiddenField = dropdown.querySelector('input[type="hidden"]');
+                if (hiddenField) {
+                    hiddenField.value = appId;
+                }
+                
+                // Update the display text
+                const selectedText = dropdown.querySelector(".selected-text");
+                if (selectedText) {
+                    selectedText.textContent = appName;
+                    selectedText.classList.add("selected");
+                }
+                
+                // Enable the Subscribe button by removing the disabled attribute
+                const subscribeButton = card.querySelector(".common-btn-primary[disabled]");
+                if (subscribeButton) {
+                    subscribeButton.removeAttribute("disabled");
+                }
+
+                /* An application already on this plan cannot subscribe to it twice - the
+                   row is keyed on (app, org, api, plan) - so the control becomes "View
+                   subscription" rather than a dead Subscribe button. The option stays
+                   selectable so the subscription is reachable from here. */
+                const container = dropdown.closest(".subscription-container");
+                if (container) {
+                    container.classList.toggle("subscription-container--selected-subscribed",
+                        item.dataset.subscribed === "true");
+                }
+                
+                // Close dropdown
+                selectItems.classList.remove("show");
+                
+                // Update aria-expanded attribute
+                const combobox = dropdown.querySelector("[role='combobox']");
+                if (combobox) {
+                    combobox.setAttribute("aria-expanded", "false");
+                }
             });
 
             // Function to create application directly via API
@@ -758,41 +772,52 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
             }
 
-            // Handle selection of application items
-            const selectableItems = dropdown.querySelectorAll(".select-item:not(.disabled)");
-            selectableItems.forEach(item => {
-                item.addEventListener("click", function(e) {
-                    e.stopPropagation();
-                    
-                    // Get application data
-                    const appId = this.getAttribute("data-value");
-                    const appName = this.getAttribute("data-app-name");
-                    
-                    // Update hidden input with selected app ID
-                    const hiddenInput = dropdown.querySelector("input[type='hidden']");
-                    if (hiddenInput) {
-                        hiddenInput.value = appId;
-                    }
-                    
-                    // Update the display text
-                    const selectedText = selectSelected.querySelector(".selected-text");
-                    if (selectedText) {
-                        selectedText.textContent = appName;
-                        selectedText.classList.add("selected");
-                    }
-                    
-                    // Enable the Subscribe button by removing the disabled attribute
-                    const subscribeButton = card.querySelector(".subscription-plan-subscribe-btn[disabled]") || card.querySelector(".common-btn-primary[disabled]");
-                    if (subscribeButton) {
-                        subscribeButton.removeAttribute("disabled");
-                    }
-                    
-                    // Close dropdown
-                    selectItems.classList.remove("show");
-                    
-                    // Update aria-expanded attribute
-                    selectSelected.setAttribute("aria-expanded", "false");
-                });
+            /* Delegated for the same reason as the landing dropdown above: `.disabled` has
+               to be read at click time, not captured at bind time. */
+            dropdown.addEventListener("click", function(e) {
+                const item = e.target.closest(".select-item");
+                if (!item || !dropdown.contains(item)) return;
+                e.stopPropagation();
+                if (item.classList.contains("disabled")) return;
+
+                // Get application data
+                const appId = item.getAttribute("data-value");
+                const appName = item.getAttribute("data-app-name");
+                
+                // Update hidden input with selected app ID
+                const hiddenInput = dropdown.querySelector("input[type='hidden']");
+                if (hiddenInput) {
+                    hiddenInput.value = appId;
+                }
+                
+                // Update the display text
+                const selectedText = selectSelected.querySelector(".selected-text");
+                if (selectedText) {
+                    selectedText.textContent = appName;
+                    selectedText.classList.add("selected");
+                }
+                
+                // Enable the Subscribe button by removing the disabled attribute
+                const subscribeButton = card.querySelector(".subscription-plan-subscribe-btn[disabled]") || card.querySelector(".common-btn-primary[disabled]");
+                if (subscribeButton) {
+                    subscribeButton.removeAttribute("disabled");
+                }
+
+                /* An application already on this plan cannot subscribe to it twice - the row
+                   is keyed on (app, org, api, plan) - so the control becomes "View
+                   subscription" rather than a dead Subscribe button. The option stays
+                   selectable so the existing subscription is reachable from here. */
+                const container = dropdown.closest(".subscription-container");
+                if (container) {
+                    container.classList.toggle("subscription-container--selected-subscribed",
+                        item.dataset.subscribed === "true");
+                }
+                
+                // Close dropdown
+                selectItems.classList.remove("show");
+                
+                // Update aria-expanded attribute
+                selectSelected.setAttribute("aria-expanded", "false");
             });
 
             // Function to create application directly via API

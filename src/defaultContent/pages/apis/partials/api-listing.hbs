@@ -79,18 +79,11 @@
       {{!-- MCP servers have their own listing; this grid is API proxies only. --}}
       {{#unless (eq apiInfo.apiType "MCP")}}
       <div class="col-lg-4 col-md-6 col-sm-12" id="apiCard-{{apiID}}">
-        {{!-- Subscribed state. A platform gateway and a token-based subscription both
-              report through hasPlatformSubscription; everything else reports through the
-              application list. The same split governs the ribbon and the footer button. --}}
-        <div class="api-card d-flex flex-column{{#if ../isAuthenticated}}{{#if (or apiInfo.tokenBasedSubscriptionEnabled (eq apiInfo.gatewayType "wso2/api-platform"))}}{{#if hasPlatformSubscription}} api-card--subscribed{{/if}}{{else}}{{#if (some applications "subscribed")}} api-card--subscribed{{/if}}{{/if}}{{/if}}">
-
-          {{#if ../isAuthenticated}}
-          {{#if (or apiInfo.tokenBasedSubscriptionEnabled (eq apiInfo.gatewayType "wso2/api-platform"))}}
-          {{#if hasPlatformSubscription}}<div class="api-card-ribbon-wrap"><div class="api-card-ribbon-label">Subscribed</div></div>{{/if}}
-          {{else}}
-          {{#if (some applications "subscribed")}}<div class="api-card-ribbon-wrap"><div class="api-card-ribbon-label">Subscribed</div></div>{{/if}}
-          {{/if}}
-          {{/if}}
+        {{!-- The catalogue card carries no subscribed state: an API here can hold a
+              subscription on one plan and still be worth subscribing on another, so a
+              ribbon over the whole card overstates it. Which plans are held is shown on
+              the API's own page, per plan card, where the distinction is real. --}}
+        <div class="api-card d-flex flex-column">
 
           <div class="api-card-top" data-href="{{../baseUrl}}/api/{{apiHandle}}" style="cursor:pointer;">
             {{#if apiInfo.apiImageMetadata.api-icon}}
@@ -141,64 +134,27 @@
             {{/apiInfo.tags}}
           </div>
 
-          {{!-- Footer shows whenever the API offers plans - the count is public
-                information, as upstream treats it. Only the subscribe control below is
-                gated on being signed in. --}}
-          {{#if subscriptionPolicies.length}}
+          {{!-- Footer renders when there is either a plan to link to or a token-based
+                subscription to offer - a token-based API can be subscribed to without
+                carrying its own policy list, which is why this is not gated on
+                subscriptionPolicies alone. --}}
+          {{#if (or subscriptionPolicies.length apiInfo.tokenBasedSubscriptionEnabled)}}
           <div class="api-card-footer">
             <div class="api-card-footer-left">
+              {{#if subscriptionPolicies.length}}
               <a href="{{../baseUrl}}/api/{{apiHandle}}#subscriptionPlans" class="api-plans-link">
                 <i class="bi bi-tag"></i> {{subscriptionPolicies.length}} {{conditionalIf (eq subscriptionPolicies.length 1) "plan" "plans"}}
               </a>
-            </div>
-            {{!-- The subscribe control sits as a direct child of the footer, the way
-                  upstream has it, so .api-card-footer's space-between puts it opposite the
-                  plans link. It used to be wrapped in .subscription-container, which the
-                  old full-width-button card styled `width: 100%` with negative vertical
-                  margins - inside a space-between row that stretched across the footer and
-                  threw the button out of alignment. No script references the wrapper.
-                  Each branch keeps its own modal partial: the modal carries the plan list
-                  and the application picker, so dropping it would break subscribing from
-                  the listing. It renders display:none, so it adds nothing to the row. --}}
-            {{#if ../isAuthenticated}}
-              {{#if apiInfo.tokenBasedSubscriptionEnabled}}
-                {{> subscription-modal apiID=apiID apiInfo=apiInfo apiReferenceID=apiReferenceID}}
-                {{#if hasPlatformSubscription}}
-                <a href="{{../baseUrl}}/api/{{apiHandle}}#subscriptionPlans" class="api-card-view-sub-btn">
-                  <i class="bi bi-check-circle"></i> View subscription
-                </a>
-                {{else}}
-                <a type="button" class="dp-btn dp-btn--primary open-modal-btn {{#if @root.isReadOnlyMode}}is-readonly{{/if}}"
-                  {{#unless @root.isReadOnlyMode}}data-modal="planModal-{{apiID}}"{{/unless}}
-                  {{#if @root.isReadOnlyMode}}aria-disabled="true"{{/if}}>Subscribe</a>
-                {{/if}}
-              {{else if (eq apiInfo.gatewayType "wso2/api-platform")}}
-                {{#if subscriptionPolicies.length}}
-                {{> subscription-modal apiID=apiID apiInfo=apiInfo apiReferenceID=apiReferenceID}}
-                {{#if hasPlatformSubscription}}
-                <a href="{{../baseUrl}}/api/{{apiHandle}}#subscriptionPlans" class="api-card-view-sub-btn">
-                  <i class="bi bi-check-circle"></i> View subscription
-                </a>
-                {{else}}
-                <a type="button" class="dp-btn dp-btn--primary open-modal-btn {{#if @root.isReadOnlyMode}}is-readonly{{/if}}"
-                  {{#unless @root.isReadOnlyMode}}data-modal="planModal-{{apiID}}"{{/unless}}
-                  {{#if @root.isReadOnlyMode}}aria-disabled="true"{{/if}}>Subscribe</a>
-                {{/if}}
-                {{/if}}
-              {{else}}
-                {{> subscription-plans apiInfo=apiInfo apiName=apiInfo.apiName}}
-                {{#if subscriptionPolicies.length}}
-                {{#if (some applications "subscribed")}}
-                <a href="{{../baseUrl}}/api/{{apiHandle}}#subscriptionPlans" class="api-card-view-sub-btn">
-                  <i class="bi bi-check-circle"></i> View subscription
-                </a>
-                {{else}}
-                <a type="button" class="dp-btn dp-btn--primary open-modal-btn {{#if @root.isReadOnlyMode}}is-readonly{{/if}}"
-                  {{#unless @root.isReadOnlyMode}}data-modal="planModal-{{apiID}}"{{/unless}}
-                  {{#if @root.isReadOnlyMode}}aria-disabled="true"{{/if}}>Subscribe</a>
-                {{/if}}
-                {{/if}}
               {{/if}}
+            </div>
+            {{!-- Subscribing happens on the API's own page, as upstream does it, rather
+                  than in a per-card modal. #subscriptionPlans is rendered by
+                  api-landing/page.hbs - a page template, so ours on every organization -
+                  and that rail carries the plan list, the application picker and the
+                  read-only guard. Dropping the modal here also drops one copy of it per
+                  card from the listing. --}}
+            {{#if ../isAuthenticated}}
+            <a href="{{../baseUrl}}/api/{{apiHandle}}#subscriptionPlans" class="dp-btn dp-btn--primary">Subscribe</a>
             {{/if}}
           </div>
           {{/if}}

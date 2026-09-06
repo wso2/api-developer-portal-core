@@ -667,6 +667,8 @@ hr {
   display: inline-block;
 }
 
+
+
 /* Tier toggle: summary label sits in col2 row1 of plan-kpi-row grid */
 .plan-kpi-valueTop:has(.plan-kpi-tier-details) {
   display: flex;
@@ -744,34 +746,45 @@ hr {
 
 
 /* Message Overlay for subscription cards */
+/* A toast in the bottom-right corner, matching where the global alert already appears,
+   rather than a panel stretched over the card's own subscribe control. Sized by its
+   content instead of by the card, so "Application "x" created successfully!" no longer
+   has to wrap inside a 300px column. Purely positional: showApiMessage still toggles
+   .hidden and the success/error classes on this same element. */
 .subscription-card .message-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: fixed;
+  top: auto;
+  left: auto;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  width: max-content;
+  max-width: min(30rem, calc(100vw - 2.5rem));
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: var(--main-bg-color, #ffffff);
-  padding: 0.625rem 0.75rem;
-  z-index: 10;
-  transition: all 0.3s ease;
-  border-radius: 0.5rem;
-  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.15);
+  gap: 0.625rem;
+  background-color: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border-strong);
+  padding: 0.75rem 0.9375rem;
+  z-index: 1090;
+  transition: opacity 0.3s ease;
+  border-radius: 0.375rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.12);
   margin: 0;
 }
 
 .subscription-card .message-overlay.success {
-  background-color: var(--main-bg-color, #ffffff);
-  border: 1px solid var(--success-color, #28a745);
-  border-left: 4px solid var(--success-color, #28a745);
+  background-color: var(--success-surface);
+  border-color: var(--border);
+  border-left-color: var(--success);
 }
 
 .subscription-card .message-overlay.error {
-  background-color: var(--main-bg-color, #ffffff);
-  border: 1px solid var(--danger-color, #dc3545);
-  border-left: 4px solid var(--danger-color, #dc3545);
+  background-color: var(--danger-surface);
+  border-color: var(--border);
+  border-left-color: var(--danger);
 }
 
 .subscription-card .message-overlay.hidden {
@@ -809,13 +822,16 @@ hr {
 .subscription-card .message-text {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--ink);
+  color: var(--text);
   margin: 0;
-  line-height: 1.2;
+  line-height: 1.35;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  /* Two lines was a hard truncation when this was a panel squeezed over the card's
+     button. As a toast it has room, so the clamp is only a guard against an unbounded
+     error string. */
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   max-width: 100%;
   text-align: left;
@@ -846,10 +862,19 @@ hr {
 
   /* Custom Dropdown styling for subscription plans */
   .subscription-container {
-    justify-content: center;
-    padding: 1px;
+    /* Upstream gives every child of a plan card the card's full content width. Ours capped
+       the picker and the button at 10rem each and centred them, so both sat narrower than
+       the panel above and started at a different x - and since 10rem + 1rem + 10rem
+       overflows the column, they silently wrapped onto two rows regardless. Stacking them
+       full width is what that wrap was already doing, done on purpose. */
+    /* Matches the 1rem .dp-btn--block puts above "View subscription". Without it the
+       picker butted straight against the price panel, so an unsubscribed card looked
+       tighter at the top of its controls than a subscribed one. */
+    margin-top: 1rem;
     display: flex;
-    gap: 1rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.625rem;
     width: 100%;
   }
 
@@ -860,13 +885,15 @@ hr {
 
   .custom-select-container {
     position: relative;
-    width: 10rem;
+    width: 100%;
   }
 
   .subscribe-btn {
-    flex: 1;
-    min-width: 7rem;
-    max-width: 10rem;
+    /* Width now comes from the card, which clears every label on its own. nowrap still
+       matters: showSubscribeButtonLoading() swaps "Subscribe" for "Subscribing..." on
+       click, and upstream's .dp-btn keeps that on one line whatever text lands in it. */
+    width: 100%;
+    white-space: nowrap;
   }
 
   .select-selected {
@@ -875,7 +902,9 @@ hr {
     align-items: center;
     padding: 10px 10px;
     border: 1px solid #dee2e6;
-    border-radius: 4px;
+    /* 0.75rem is what .search-input uses - the portal's other text input - so the picker
+       is not the one control on the page with a different corner. */
+    border-radius: 0.75rem;
     background-color: var(--surface);
     cursor: pointer;
     font-size: 0.875rem;
@@ -905,9 +934,10 @@ hr {
     z-index: 999;
     background-color: var(--surface);
     border: 1px solid #dee2e6;
-    border-radius: 0 0 4px 4px;
-    max-height: 200px;
-    overflow-y: auto;
+    border-radius: 0 0 0.75rem 0.75rem;
+    /* The list inside is the only scroller - see .select-items-container. This used to cap
+       at 200px and scroll too, so the menu held a 150px scroller inside a 200px scroller
+       and showed about four applications however many existed. */
     display: none;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   }
@@ -937,7 +967,9 @@ hr {
   }
 
   .select-items-container {
-    max-height: 150px;
+    /* Roughly seven applications before scrolling, with the search box above and the
+       create-application row below staying put rather than scrolling away with the list. */
+    max-height: 15rem;
     overflow-y: auto;
   }
 
@@ -1139,16 +1171,18 @@ hr {
 .plans-summary__sep{ color:#cbd5e1; font-weight:700; margin: 0 8px; }
 .plans-summary__name{ color:#0f172a; }
 
+
 /* KPI panel */
 .plan-kpis{
   width: 100%;
-  max-width: 440px;
-  margin: 16px auto 18px;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  background: #f8fafc;
+  /* Spans the card's content box, like every other child of an upstream plan card. The
+     440px cap and auto margins are gone with the centred card-body they were written for. */
+  margin: 0.875rem 0 0;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface-sunken);
   overflow: hidden;
-  text-align: left !important; /* overrides card-body text-center */
+  text-align: left !important; /* the modal still nests this inside a .text-center body */
   box-sizing: border-box;
 }
 
@@ -1161,21 +1195,38 @@ hr {
   grid-template-rows: auto 22px;
   column-gap: 14px;
   row-gap: 8px;
-  padding: 14px 22px 14px 16px; /* extra right padding avoids clipping */
+  /* The rail overrides this: .aov-body-sidebar .plan-kpi-row in components.css is more
+     specific and is what the API overview actually renders with. Kept in step so the
+     panel looks the same wherever it is not inside the rail. */
+  padding: 0.625rem 1rem;
   align-items: center;          /* label aligns with valueTop */
   box-sizing: border-box;
 }
 
+/* Row two of the grid is a reserved slot for the "Billed monthly" badge, held so values
+   line up across cards. When nothing in the panel carries a badge it is 22px of empty
+   space under every value - most of what made this panel look loose. Reserve it only
+   when it is actually used. */
+.plan-kpis:not(:has(.plan-kpi-badge)) .plan-kpi-row{
+  grid-template-rows: auto;
+  row-gap: 0;
+}
+
+.plan-kpis:not(:has(.plan-kpi-badge)) .plan-kpi-labelSub,
+.plan-kpis:not(:has(.plan-kpi-badge)) .plan-kpi-valueSub{
+  display: none;
+}
+
 .plan-kpi-divider{
   height: 1px;
-  background: #e2e8f0;
+  background: var(--border);
 }
 
 /* Label */
 .plan-kpi-label{
-  font-size: 16px;
-  font-weight: 500;
-  color: #0f172a;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text);
   line-height: 1.1;
 }
 
@@ -1212,24 +1263,24 @@ hr {
 
 /* Values */
 .plan-kpi-amount{
-  font-size: 20px;
-  font-weight: 800;
-  color: #0f172a;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary);
   line-height: 1.05;
   white-space: nowrap;
 }
 
 .plan-kpi-unit{
-  font-size: 16px;
-  font-weight: 600;
-  color: #64748b;
+  font-size: 0.78125rem;
+  font-weight: 500;
+  color: var(--text-muted);
   white-space: nowrap;
 }
 
 .plan-kpi-free{
-  font-size: 20px;
-  font-weight: 850;
-  color: #16a34a;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--success);
   line-height: 1.05;
   white-space: nowrap;
 }
@@ -1238,12 +1289,12 @@ hr {
 .plan-kpi-badge{
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
+  padding: 0.25rem 0.625rem;
   border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  background: #e0f2fe;
-  color: #0369a1;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  background: var(--info-surface);
+  color: var(--info);
   white-space: nowrap;
 }
 
@@ -1419,3 +1470,41 @@ hr {
   50%  { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
+
+/* ==============================
+   PLAN CARD (api-landing)
+   The card shell, ribbon and type scale come from the aov-plan-* rules in
+   /technical-styles/components.css, which is upstream's own vocabulary. What is left here
+   is the part of the card that is ours: the price/rate-limit panel, and the Subscribe
+   control, which keeps .common-btn-primary purely as a JS hook - subscription.js finds it
+   with card.querySelector('.common-btn-primary') in five places, and the same lookup
+   still serves the application page's modal - so its look is restated rather than swapped.
+   ============================== */
+.aov-plan-card .subscribe-btn.common-btn-primary {
+  /* .dp-btn--outline + .dp-btn--block restated: white ground, neutral hairline, primary
+     blue label, and the 1.25rem roundness the buttons across the top of the overview
+     carry. Upstream's plan card uses the outline rather than the filled CTA - three
+     gradient buttons stacked down a rail read as three competing calls to action. */
+  display: block;
+  border-radius: 1.25rem;
+  padding: 0.625rem;
+  font-size: 0.84375rem;
+  font-weight: 600;
+  background: var(--white);
+  border: 1px solid var(--border-strong);
+  color: var(--primary);
+  box-shadow: none;
+}
+
+.aov-plan-card .subscribe-btn.common-btn-primary:hover {
+  background: var(--surface-sunken);
+  color: var(--primary);
+  box-shadow: none;
+}
+
+/* The picker sits directly under the panel, so the button's own top margin would double
+   the gap the flex column already provides. */
+.aov-plan-card .subscription-container .subscribe-btn {
+  margin-top: 0;
+}
+

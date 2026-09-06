@@ -21,6 +21,8 @@
     border: 0;
 }
 
+/* Upstream's .alert-toast, on our Bootstrap-modal markup: a neutral surface with the
+   status carried by a left border and the icon, rather than a saturated pastel fill. */
 .custom-alert .modal-body {
     font-size: 14px;
     height: 100%;
@@ -28,27 +30,40 @@
     align-items: center;
     padding: 12px 15px;
     gap: 10px;
+    border-radius: 6px;
+    background-color: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--border-strong);
 }
 
 .custom-alert .modal-body.success {
-    background-color: #95d5b2;
-    color: #0a3622;
+    background-color: var(--success-surface);
+    border-left-color: var(--success);
 }
 
 .custom-alert .modal-body.error {
-    background-color: #ff8585;
-    color: #4f0000;
+    background-color: var(--danger-surface);
+    border-left-color: var(--danger);
 }
 
+/* The colour matters: without it the unqualified .alert-icon in layout.css, written for
+   the maintenance banner, painted this orange on every toast. */
 .custom-alert .alert-icon {
-    font-size: 0.875rem;
+    font-size: 1rem;
     width: auto;
     height: auto;
+    flex-shrink: 0;
+    color: var(--text-muted);
 }
+
+.custom-alert .modal-body.success .alert-icon { color: var(--success); }
+.custom-alert .modal-body.error .alert-icon { color: var(--danger); }
 
 .custom-alert .modal-message {
     margin: 0;
     font-weight: 500;
+    color: var(--text);
 }
 
 @keyframes fadeIn {

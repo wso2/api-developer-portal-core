@@ -1386,6 +1386,11 @@ const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
                 )
             )
             AND metadata."ORG_ID" = :orgID
+            -- getAllAPIMetadata, the no-query path, restricts to published APIs. This
+            -- query did not, so searching surfaced rows the listing hides - including
+            -- STATUS = 'DELETED' ones, which is how /mcps?query=mcp returned 9 against a
+            -- listing of 6. Anything not published must not be reachable by search either.
+            AND metadata."STATUS" = :status
         GROUP BY 
             metadata."API_ID"
         ORDER BY
@@ -1394,7 +1399,7 @@ const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
         const formattedGroups = `{${groups.map((g) => `"${g}"`).join(',')}}`;
 
         const results = await APIMetadata.sequelize.query(query, {
-            replacements: { searchTerm, orgID, groups: formattedGroups },
+            replacements: { searchTerm, orgID, groups: formattedGroups, status: constants.API_STATUS.PUBLISHED },
             type: Sequelize.QueryTypes.SELECT,
         });
         return results;

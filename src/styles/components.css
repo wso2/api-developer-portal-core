@@ -421,7 +421,10 @@
 .aov-plans-title { margin: 0 0 0.875rem; font-size: 1.0625rem; font-weight: 700; color: var(--text-strong); }
 .aov-plan-card {
   position: relative;
-  overflow: hidden;
+  /* Deliberately NOT overflow:hidden, which is what upstream has. Upstream's plan card
+     holds nothing but text and a button; ours holds the application picker, whose menu is
+     absolutely positioned and taller than the card, so clipping here cut the list off.
+     The ribbon clips itself instead - see .aov-plan-ribbon below. */
   border: 1.5px solid var(--border);
   border-radius: 0.875rem;
   padding: 1.125rem 1.25rem;
@@ -438,6 +441,10 @@
   top: 0; right: 0;
   width: 7.25rem; height: 7.25rem;
   pointer-events: none;
+  /* Clips the rotated label into a corner triangle, and rounds its outer corner back to
+     the card's radius - both of which the card's own overflow:hidden used to do. */
+  overflow: hidden;
+  border-top-right-radius: 0.875rem;
 }
 .aov-plan-card--subscribed .aov-plan-ribbon,
 .aov-plan-card--suspended  .aov-plan-ribbon { display: block; }
@@ -482,6 +489,33 @@
 .aov-plan-limit { margin-top: 0.875rem; display: flex; align-items: baseline; gap: 0.4375rem; }
 .aov-plan-count { font-size: 1.625rem; font-weight: 700; color: var(--primary); }
 .aov-plan-unit  { font-size: 0.78125rem; color: var(--text-muted); }
+.aov-plan-desc {
+  margin: 0.625rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  /* The plans section is still wrapped in a .text-center container, so this is the one
+     child of the card that would otherwise centre while the rest sits left. */
+  text-align: left;
+}
+
+/* The picker offers one of two buttons, chosen by which application is selected rather
+   than by the card's own state: an application already on this plan gets "View
+   subscription", anything else gets "Subscribe". A plan can carry more than one
+   application - DP_API_SUBSCRIPTION is unique on (APP_ID, ORG_ID, API_ID, POLICY_ID) - so
+   a held plan must still be able to take another one.
+   The !important is deliberate. This sheet is linked before the theme, so an equal
+   specificity rule over there wins on order alone, and a stored theme can carry anything;
+   showing both buttons at once is the failure being guarded against. */
+.plan-view-sub-btn { display: none !important; }
+.subscription-container--selected-subscribed .plan-view-sub-btn { display: flex !important; }
+.subscription-container--selected-subscribed .subscribe-btn { display: none !important; }
+
+/* Still used by the token-based branch, where one subscription per plan is the whole
+   model and the card's own state is the right signal. */
+.aov-plan-when-subscribed { display: none !important; }
+.aov-plan-card--subscribed .aov-plan-when-subscribed { display: flex !important; }
+.aov-plan-card--subscribed .aov-plan-when-unsubscribed { display: none !important; }
 
 .aov-plan-spinner {
   display: none;
@@ -804,7 +838,9 @@
 .aov-body-sidebar .plan-kpi-row {
     grid-template-columns: 5rem minmax(0, 1fr);
     column-gap: 0.75rem;
-    padding: 0.875rem 1rem;
+    /* This is the padding the plan card actually renders with - it out-specifies the
+       .plan-kpi-row in the theme sheet, so that one never applies inside the rail. */
+    padding: 0.625rem 1rem;
 }
 
 /* Below the rail's own collapse breakpoint - 1024px, matching .aov-body above - the

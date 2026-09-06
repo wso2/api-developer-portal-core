@@ -313,20 +313,15 @@ async function refreshLandingPageSubscriptions() {
 
         var planCards = document.querySelectorAll('#subscriptionPlans .subscription-card');
         planCards.forEach(function(card) {
-            var btn = card.querySelector('.subscription-plan-subscribe-btn, .subscribe-btn, .current-plan-btn');
+            var btn = card.querySelector('.subscription-plan-subscribe-btn, .subscribe-btn');
             if (!btn) return;
             var policyName = (btn.dataset.policyName || '').toLowerCase();
-            if (activePlanNames.indexOf(policyName) !== -1) {
-                btn.textContent = 'Current Plan';
-                btn.disabled = true;
-                btn.classList.add('disabled', 'current-plan-btn');
-                btn.removeAttribute('onclick');
-            } else {
-                btn.textContent = 'Subscribe';
-                btn.disabled = false;
-                btn.classList.remove('disabled', 'current-plan-btn');
-                btn.setAttribute('onclick', 'handlePlanSubscription(this)');
-            }
+            /* One class carries the whole subscribed state of a plan card - the ribbon, the
+               green tint, and which of the two controls is visible - so this only has to
+               match what the server would render. Rewriting the button's label here, as this
+               did before, would fight the template and could also strip the `disabled` that
+               read-only mode puts on the same element. */
+            card.classList.toggle('aov-plan-card--subscribed', activePlanNames.indexOf(policyName) !== -1);
         });
     } catch (e) {
         window.location.reload();
