@@ -209,6 +209,18 @@ Handlebars.registerHelper('contains', function (array, value) {
     return array && array.includes(value);
 });
 
+/* REQUEST_COUNT is a free-text column and three different spellings mean "no limit":
+   the string "Unlimited" (2,540 plans), "0" (1,114) and NULL (211). Upstream has a
+   numeric limitCount and tests for -1; ours has to accept all four, so the card renders
+   an infinity glyph rather than the literal "0 req/min". */
+Handlebars.registerHelper('isUnlimitedRate', function (requestCount) {
+    if (requestCount === null || requestCount === undefined || requestCount === '') {
+        return true;
+    }
+    const raw = String(requestCount).trim();
+    return raw === '0' || raw === '-1' || raw.toLowerCase() === 'unlimited';
+});
+
 Handlebars.registerHelper('let', function (name, value, options) {
     const data = Handlebars.createFrame(options.data);
     data[name] = value;

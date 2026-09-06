@@ -428,10 +428,16 @@ const loadAPIContent = async (req, res) => {
                                 policyId: subscription[0].POLICY_ID,
                                 policyName: (metaData.subscriptionPolicies || []).find(p => p.policyID === subscription[0].POLICY_ID)?.policyName || 'Unknown'
                             } : null;
+                            /* An application can hold more than one plan of the same API -
+                               DP_API_SUBSCRIPTION is unique on (APP_ID, ORG_ID, API_ID,
+                               POLICY_ID), so the plan is part of the key. Reading only
+                               subscription[0], as subscriptionPolicy does, leaves the second
+                               plan's card looking unsubscribed. */
                             return {
                                 ...new ApplicationDTO(app),
                                 subscribed: subscription.length > 0,
-                                subscriptionPolicy: subscriptionData
+                                subscriptionPolicy: subscriptionData,
+                                subscribedPolicyIds: subscription.map(s => s.POLICY_ID)
                             };
                         })
                     );
@@ -467,9 +473,14 @@ const loadAPIContent = async (req, res) => {
             if (metaData.apiInfo.apiType === constants.API_TYPE.GRAPHQL) {
                 schemaFileName = constants.FILE_NAME.API_DEFINITION_GRAPHQL;
             }
+            /* Every plan any of this user's applications holds on this API - what turns a
+               plan card green, independent of which application it was. */
+            const subscribedPlanIds = [...new Set(appList.flatMap((a) => a.subscribedPolicyIds || []))];
+
             templateContent = {
                 isAuthenticated: req.isAuthenticated(),
                 applications: appList,
+                subscribedPlanIds: subscribedPlanIds,
                 provider: metaData.provider,
                 providerUrl: providerUrl,
                 apiMetadata: metaData,

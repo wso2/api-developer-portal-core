@@ -6,7 +6,9 @@
             <!-- Existing platform subscriptions for this API -->
             {{#if platformSubscriptions.length}}
             <div class="existing-subscriptions mb-4">
-                <div class="container-header mb-4">Subscriptions</div>
+                <div class="aov-section-header">
+                    <h2 class="aov-section-title">Subscriptions</h2>
+                </div>
                 <table class="table">
                     <thead>
                         <tr>
@@ -77,30 +79,46 @@
 
             <!-- Subscribe to new plan (token-based, no mandatory app) -->
             {{#if subscriptionPlans.length}}
-            <div class="container-header mb-4">Subscription Plans</div>
+            <div class="aov-section-header">
+                <h2 class="aov-section-title">Subscription Plans</h2>
+            </div>
             {{/if}}
             <div class="row row-gap-4 justify-content-center align-items-start">
                 {{#each subscriptionPlans}}
                 <div class="col-lg-4 col-md-6 col-12" id="subscriptionCard-{{policyID}}">
-                    <div class="card dev-card subscription-card">
-                        <div class="card-body align-items-center text-center p-0">
-                            <span class="subscription-plans-card-title">{{displayName}}</span>
-                            <h1 class="subscription-plans-request-count">{{requestCount}}</h1>
-                            <p class="subscription-plans-card-subtitle pt-0">requests per minute</p>
+                    <div class="aov-plan-card subscription-card{{#if (isCurrentPlan policyName @root.platformSubscriptions)}} aov-plan-card--subscribed{{/if}}">
+                        <div class="aov-plan-ribbon" aria-hidden="true">
+                            <div class="aov-plan-ribbon-label api-ribbon-label">SUBSCRIBED</div>
+                        </div>
+                        <div class="aov-plan-body">
+                            <div class="aov-plan-card-head">
+                                <div class="aov-plan-name-row">
+                                    <span class="aov-plan-icon" style="background: var(--surface-sunken); color: var(--primary);">
+                                        <i class="bi bi-lightning-charge-fill"></i>
+                                    </span>
+                                    <span class="aov-plan-name">{{displayName}}</span>
+                                </div>
+                            </div>
+                            <div class="aov-plan-limit">
+                                {{#if (isUnlimitedRate requestCount)}}
+                                <span class="aov-plan-count" title="Unlimited">&infin;</span>
+                                {{else}}
+                                <span class="aov-plan-count">{{requestCount}}</span>
+                                {{/if}}
+                                <span class="aov-plan-unit">requests per minute</span>
+                            </div>
                         </div>
                         <div class="position-relative">
                             {{#if ../isAuthenticated}}
-                            {{#if (isCurrentPlan policyName @root.platformSubscriptions)}}
-                            <button type="button"
-                                class="common-btn-primary subscribe-btn w-100 disabled current-plan-btn"
-                                data-org-id="{{@root.orgID}}"
-                                data-api-id="{{../apiMetadata.apiID}}"
-                                data-policy-name="{{policyName}}"
-                                data-display-name="{{displayName}}"
-                                disabled>Current Plan</button>
-                            {{else}}
+                            {{!-- See the app-based branch below: both controls render and the
+                                  card's --subscribed modifier picks one, so the client-side
+                                  refresh only has to toggle that class. --}}
+                            <a class="dp-btn dp-btn--outline dp-btn--block aov-plan-when-subscribed"
+                                href="{{@root.baseUrl}}/api/{{../apiMetadata.apiHandle}}/subscriptions">
+                                <i class="bi bi-eye"></i> View subscription
+                            </a>
                             <button id="subscribe-btn-{{policyID}}" type="button"
-                                class="common-btn-primary subscribe-btn w-100 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                class="common-btn-primary subscribe-btn w-100 aov-plan-when-unsubscribed {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                 data-org-id="{{@root.orgID}}"
                                 data-api-id="{{../apiMetadata.apiID}}"
                                 data-policy-id="{{policyID}}"
@@ -108,7 +126,6 @@
                                 data-display-name="{{displayName}}"
                                 onclick="handlePlanSubscription(this)"
                                 >Subscribe</button>
-                            {{/if}}
                             {{else}}
                             <a type="button" class="common-btn-primary disabled w-100 subscription-plan-subscribe-btn"
                                 disabled>Subscribe</a>
@@ -146,16 +163,35 @@
         {{else}}
             <!-- ===== STANDARD APP-BASED SUBSCRIPTION UI ===== -->
             {{#if subscriptionPlans.length}}
-            <div class="container-header mb-4">Subscription Plans</div>
+            <div class="aov-section-header">
+                <h2 class="aov-section-title">Subscription Plans</h2>
+            </div>
             {{/if}}
             <div class="row row-gap-4 justify-content-center align-items-start">
                 {{#each subscriptionPlans}}
                 <div class="col-lg-4 col-md-6 col-12" id="subscriptionCard-{{policyID}}">
-                    <div class="card dev-card subscription-card">
-                        <div class="card-body align-items-center text-center p-4">
-                            <span class="subscription-plans-card-title d-block mb-3">{{displayName}}</span>
+                    {{!-- aov-plan-* is upstream's plan-card vocabulary. It already ships in
+                          /technical-styles/components.css - a sheet that is never rewritten to
+                          a stored asset, so it reaches every organization - but nothing used it
+                          until now, which is why this card kept its own hardcoded scale while
+                          the rest of the overview moved onto the tokens. subscription-card
+                          stays on the element: the message overlay and subscription.js both
+                          key off it. --}}
+                    <div class="aov-plan-card subscription-card{{#if (contains @root.subscribedPlanIds policyID)}} aov-plan-card--subscribed{{/if}}">
+                        <div class="aov-plan-ribbon" aria-hidden="true">
+                            <div class="aov-plan-ribbon-label api-ribbon-label">SUBSCRIBED</div>
+                        </div>
+                        <div class="aov-plan-body">
+                            <div class="aov-plan-card-head">
+                                <div class="aov-plan-name-row">
+                                    <span class="aov-plan-icon" style="background: var(--surface-sunken); color: var(--primary);">
+                                        <i class="bi bi-lightning-charge-fill"></i>
+                                    </span>
+                                    <span class="aov-plan-name">{{displayName}}</span>
+                                </div>
+                            </div>
                             {{#if description}}
-                            <p class="text-muted small mb-3" style="font-size: 12px; line-height: 1.5;">{{description}}</p>
+                            <p class="aov-plan-desc">{{description}}</p>
                             {{/if}}
                             <div class="plan-kpis">
 
@@ -242,8 +278,13 @@
                                 <div class="plan-kpi-row">
                                     <div class="plan-kpi-label">Rate limit</div>
                                     <div class="plan-kpi-valueTop">
+                                        {{#if (isUnlimitedRate requestCount)}}
+                                        <span class="plan-kpi-amount" title="Unlimited">&infin;</span>
+                                        <span class="plan-kpi-unit">req/min</span>
+                                        {{else}}
                                         <span class="plan-kpi-amount">{{requestCount}}</span>
                                         <span class="plan-kpi-unit">req/min</span>
+                                        {{/if}}
                                     </div>
                                     <div class="plan-kpi-labelSub"></div>
                                     <div class="plan-kpi-valueSub">
@@ -255,6 +296,12 @@
 
                         <div class="position-relative">
                             {{#if ../isAuthenticated}}
+                            {{!-- An active subscription replaces the subscribe control outright, as
+                                  upstream does - the ribbon and the tinted card already say the plan
+                                  is held. Both controls render and the card's --subscribed modifier
+                                  picks one, because subscribing here never reloads the page: the
+                                  success path calls markSubscribedUI, so a single class toggle
+                                  leaves the card in exactly the state a reload would show. --}}
                             <div id="subscriptionBox" class="subscription-container">
                                 <div class="custom-dropdown show" id="landing-customDropdown-{{policyID}}">
                                     <input type="hidden" id="landing-selectedAppId-{{policyID}}" value="" />
@@ -270,7 +317,13 @@
                                             </div>
                                             <div class="select-items-container">
                                                 {{#each ../applications}}
-                                                <div class="select-item {{#if subscribed}}disabled{{/if}}" role="button" data-value="{{id}}" data-app-name="{{name}}">
+                                                {{!-- Every application stays selectable. data-subscribed says whether this
+                                                      one already holds THIS plan - not the API as a whole, since
+                                                      DP_API_SUBSCRIPTION is unique on (APP_ID, ORG_ID, API_ID, POLICY_ID)
+                                                      and the same application on another plan is a legal row. Selecting a
+                                                      marked application turns the button below into "View subscription". --}}
+                                                <div class="select-item" role="button" data-value="{{id}}" data-app-name="{{name}}"
+                                                    data-subscribed="{{#if (contains subscribedPolicyIds ../policyID)}}true{{else}}false{{/if}}">
                                                     <div class="d-flex flex-column flex-grow-1">
                                                         <span class="fw-semibold">{{name}}</span>
                                                         {{#if subscriptionPolicy}}
@@ -281,7 +334,7 @@
                                                         </small>
                                                         {{/if}}
                                                     </div>
-                                                    {{#if subscribed}}
+                                                    {{#if (contains subscribedPolicyIds ../policyID)}}
                                                     <img src="/images/success-rounded.svg"
                                                         alt="Subscribed" class="subscription-icon" style="width: 18px; height: 18px; flex-shrink: 0;" />
                                                     {{/if}}
@@ -308,6 +361,13 @@
                                     onclick="handleLandingPlanSubscription('{{@root.orgID}}', '{{../apiMetadata.apiID}}', '{{../apiMetadata.apiReferenceID}}', '{{policyID}}', '{{policyName}}', this)"
                                 >
                                     Subscribe
+                                </a>
+                                {{!-- Shown in place of Subscribe when the selected application already
+                                      holds this plan. Both render; common.js flips one class on the
+                                      container, so no attribute surgery on the Subscribe handler. --}}
+                                <a class="dp-btn dp-btn--outline dp-btn--block plan-view-sub-btn"
+                                    href="{{@root.baseUrl}}/api/{{../apiMetadata.apiHandle}}/subscriptions">
+                                    <i class="bi bi-eye"></i> View subscription
                                 </a>
                             </div>
                             {{else}}
