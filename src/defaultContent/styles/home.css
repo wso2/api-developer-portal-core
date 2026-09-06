@@ -10,16 +10,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Fill the viewport, then bleed the insets the content column adds.
-       Upstream's own values are -2rem on both sides, which cancel its
-       .content-area padding. Ours is a different shape: 4rem is reserved top and
-       bottom by .main-container for the fixed header and footer, .content-area
-       then adds 1rem top and bottom and 2.25rem on the right, and the left is a
-       7.5rem margin clearing the fixed sidebar rather than padding - so there is
-       nothing to bleed on that edge. Copying upstream's numbers would misalign
-       both sides. */
-    min-height: calc(100vh - 8rem);
-    margin: -1rem -2.25rem -1rem 0;
+    /* Fill the column, then bleed every inset .content-area adds, so the panel meets
+       the sidebar and the window edge exactly as upstream's does. Upstream cancels a
+       symmetric 2rem padding; ours is asymmetric and has to be worked out per edge:
+       1rem top and bottom of margin, 2.25rem of right padding, and on the left a
+       7.625rem (122px) margin that clears a 74px sidebar - so 48px of it is gutter,
+       not clearance, and bleeds like the rest. Copying upstream's -2rem verbatim
+       would misalign both sides. */
+    /* A floor, not the target height: the hero flexes to fill whatever is actually
+       left (see .content-area below), so it cannot assume it owns the viewport. */
+    min-height: 26rem;
+    flex: 1 1 auto;
+    margin: -1rem -2.25rem -1rem -3rem;
     /* Layered over the customer's own gradient rather than upstream's
        --surface-dark, so the console's gradient picker keeps driving the hero. */
     background: var(--hero-glow), var(--primary-gradient);
@@ -30,6 +32,35 @@
     text-decoration: none;
 }
 
+/* Let the hero fill the height left over after anything stacked above it - the
+   maintenance banner, when it is configured on. With a fixed viewport-based height it
+   instead pushed its own bottom under the fixed footer, where nothing could scroll to
+   it. Scoped with :has() so only hero pages become flex columns. */
+.content-area:has(.hero) {
+    display: flex;
+    flex-direction: column;
+}
+
+.content-area:has(.hero) > main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* Particles canvas overlay */
+.hero-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.hero-particles > canvas {
+  position: absolute !important;
+  inset: 0;
+}
+
+/* Centered hero content */
 .hero-hero-body {
   position: relative;
   z-index: 2;
@@ -70,7 +101,9 @@
 
 .hero-headline-accent {
   font-weight: 600;
-  background: linear-gradient(90deg, var(--accent-light), var(--accent-dark));
+  /* --accent rather than --accent-light, for the reason given on --cta-gradient in
+     tokens.css: our light tint is genuinely light and made the headline read peach. */
+  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -139,7 +172,12 @@
 .discover-ai-btn {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, rgba(168,85,247,0.9), rgba(124,58,237,0.9), rgba(236,72,153,0.85));
+  /* The same purple ramp as .hero-btn--ai and .dp-badge--ai. This rule wins over
+     .hero-btn--ai on the home hero (same specificity, declared later), and the old
+     three-stop translucent version pulled a pink (#ec4899) into it that made the one
+     button disagree with every other AI affordance in the portal. Motion stays; only
+     the colour moves onto the shared ramp. */
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
   animation: discover-glow-pulse 3s ease-in-out infinite;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -169,4 +207,8 @@
 @keyframes discover-shimmer {
   0%   { transform: translateX(-120%) skewX(-15deg); }
   100% { transform: translateX(280%) skewX(-15deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-particles { display: none; }
 }

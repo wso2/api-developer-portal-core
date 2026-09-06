@@ -20,6 +20,15 @@
     <link rel="stylesheet" href="/technical-styles/agent-prompt.css">
     <script type="application/json" id="homeDiscoverData">{"baseUrl":"{{baseUrl}}"}</script>
     <script src="/technical-scripts/home-discover.js" defer></script>
+    {{!-- Drives the hero's constellation backdrop. Served from our own origin rather than
+          upstream's jsDelivr URL: that path is minified by jsDelivr on the fly ("Do NOT
+          use SRI with dynamically generated files", says the file's own banner), so its
+          bytes move whenever they bump Terser and the pinned hash stops matching. It had
+          already rotted - a cold fetch failed the integrity check and the browser refused
+          to run it, so anyone without it warm in cache (an incognito window, a first-time
+          visitor) silently lost the animation. Local and same-origin, there is nothing to
+          rot and no third-party fetch. --}}
+    <script src="/technical-scripts/particles.js" defer></script>
 </head>
 <main>
     {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav }}

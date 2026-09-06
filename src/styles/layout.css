@@ -17,3 +17,25 @@
     color: #f57c00;
     font-size: 1.25rem;
 }
+
+/* The home hero is a full-bleed panel that owns the whole column. With the banner in
+   flow above it the panel starts 62px down, leaving a white band between the header and
+   the hero; floating the banner over the panel instead lets it start at the top of the
+   column, as upstream's does.
+
+   Scoped with :has(.hero) - which only the home page carries - so every other page keeps
+   the banner in flow above its content, where there is no backdrop to float over. Both
+   rules live here rather than in main.css so they reach a themed organization together:
+   /technical-styles/ is never rewritten, and a stored main.css would carry neither. */
+.content-area:has(.hero) {
+    position: relative;
+}
+
+.content-area:has(.hero) .custom-bootstrap-alert {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    /* Above .hero-hero-body's z-index: 2, so the banner stays readable over the copy. */
+    z-index: 5;
+}

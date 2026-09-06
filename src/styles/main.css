@@ -24,8 +24,10 @@
   --warning-color: var(--warning);
   --white-color: #ffffff;
   --Black-color: #000000;
-  /* Gradient */
-  --primary-gradient: linear-gradient(135deg, #3d6b8a, #1c3b52);
+  /* Gradient. Kept in step with the same seed in defaultContent/styles/main.css and with
+     the console's defaultThemeVariables - a mismatch means Reset hands the customer a
+     different hero from the one they started with. */
+  --primary-gradient: linear-gradient(160deg, #043556 0%, #03263e 60%, #021f32 100%);
   --dark-gradient: linear-gradient(to right, #50c9c3, #4a6fa1);
 
   --font-family-sans: "Montserrat", "Quicksand", "Noto Sans", "Poppins", sans-serif;

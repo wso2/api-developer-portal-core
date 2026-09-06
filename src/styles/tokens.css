@@ -87,7 +87,13 @@
     --focus-ring: color-mix(in srgb, var(--primary) 40%, transparent);
 
     --accent-surface: color-mix(in srgb, var(--accent) 12%, var(--surface));
-    --cta-gradient: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent-light) 100%);
+    /* Runs to --accent, not --accent-light. Upstream's "accent-light" (#ff8636) is within
+       a few units of its accent (#fe8c3a) - it has no genuinely lighter tint, so its CTA
+       effectively runs accent-dark -> accent. Ours does have a real lighter tint
+       (#FEAF76, the --secondary-light-color seed a customer picks in the console), and
+       ending on it washed the button out to peach. Using --accent keeps the seed
+       semantically a light tint while matching upstream's ramp. */
+    --cta-gradient: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent) 100%);
 
     --success-surface: color-mix(in srgb, var(--success) 12%, var(--surface));
     --warning-surface: color-mix(in srgb, var(--warning) 14%, var(--surface));

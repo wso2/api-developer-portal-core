@@ -1,7 +1,10 @@
 {{!-- Hero. One section, edge to edge; the catalogue lives a click away.
-     devportalMode drives the wording: DEFAULT covers both artefact types,
-     APISONLY and MCPSERVERSONLY each name only their own. --}}
+     The artefact wording comes from the artifactTypesLabel helper, which composes it
+     from devportalMode and showApiWorkflowsNav - six combinations that would otherwise
+     need a branch each, twice over. --}}
 <section class="hero" aria-label="Portal hero">
+  <div class="hero-particles" id="hero-particles" aria-hidden="true"></div>
+
   <div class="hero-hero-body">
     <span class="hero-pill">
       <i class="bi bi-stars" aria-hidden="true"></i>
@@ -9,23 +12,11 @@
     </span>
 
     <h1 class="hero-headline">
-      {{#if (eq devportalMode "MCPSERVERSONLY")}}
-      <span class="hero-headline-accent">MCP Servers</span><br>built for Developers{{#if showApiWorkflowsNav}} and AI Agents{{/if}}.
-      {{else if (eq devportalMode "APISONLY")}}
-      <span class="hero-headline-accent">APIs</span><br>built for Developers{{#if showApiWorkflowsNav}} and AI Agents{{/if}}.
-      {{else}}
-      <span class="hero-headline-accent">APIs &amp; MCP Servers</span><br>built for Developers{{#if showApiWorkflowsNav}} and AI Agents{{/if}}.
-      {{/if}}
+      <span class="hero-headline-accent">{{artifactTypesLabel devportalMode showApiWorkflowsNav}}</span><br>built for Developers{{#if showApiWorkflowsNav}} and AI Agents{{/if}}.
     </h1>
 
     <p class="hero-desc">
-      {{#if (eq devportalMode "MCPSERVERSONLY")}}
-      Discover, connect, and orchestrate MCP servers. Browse the catalog, subscribe, and get going in minutes.
-      {{else if (eq devportalMode "APISONLY")}}
-      Discover, connect, and orchestrate APIs. Browse the catalog, subscribe, and get going in minutes.
-      {{else}}
-      Discover, connect, and orchestrate APIs and MCP servers. Browse the catalog, subscribe, and get going in minutes.
-      {{/if}}
+      Discover, connect, and orchestrate {{artifactTypesLabel devportalMode showApiWorkflowsNav}}. Browse the catalog, subscribe, and get going in minutes.
     </p>
 
     <div class="hero-ctas">
@@ -83,3 +74,5 @@
     </div>
 </div>
 {{/if}}
+
+<script src='/technical-scripts/home-particles.js' defer></script>
