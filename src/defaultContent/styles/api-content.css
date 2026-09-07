@@ -901,7 +901,7 @@ hr {
     justify-content: space-between;
     align-items: center;
     padding: 10px 10px;
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--border);
     /* 0.75rem is what .search-input uses - the portal's other text input - so the picker
        is not the one control on the page with a different corner. */
     border-radius: 0.75rem;
@@ -914,11 +914,11 @@ hr {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: #6c757d;
+    color: var(--text-muted);
   }
 
   .select-arrow {
-    border: solid #888;
+    border: solid var(--text-subtle);
     border-width: 0 2px 2px 0;
     display: inline-block;
     padding: 2px;
@@ -933,7 +933,7 @@ hr {
     right: 0;
     z-index: 999;
     background-color: var(--surface);
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--border);
     border-radius: 0 0 0.75rem 0.75rem;
     /* The list inside is the only scroller - see .select-items-container. This used to cap
        at 200px and scroll too, so the menu held a 150px scroller inside a 200px scroller
@@ -945,7 +945,7 @@ hr {
   /* Search container styling */
   .select-search-container {
     padding: 8px;
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 1px solid var(--border);
     position: sticky;
     top: 0;
     background-color: var(--surface);
@@ -955,9 +955,16 @@ hr {
   .select-search-input {
     width: 100%;
     padding: 6px 8px;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    font-size: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    /* 13px, matching the options below and the rest of the card's small text. This and
+       the options were 12px against the trigger's 14px, which made the menu read as a
+       size smaller than the control that opens it. The colour was the browser default
+       black rather than the text token. */
+    font-size: 0.8125rem;
+    font-family: inherit;
+    color: var(--text);
+    background-color: var(--surface);
   }
 
   .select-search-input:focus {
@@ -974,42 +981,43 @@ hr {
   }
 
   .create-app-container {
-    border-top: 1px solid #dee2e6;
+    border-top: 1px solid var(--border);
   }
 
   .create-app-option {
     padding: 8px 10px;
     cursor: pointer;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     color: var(--primary);
-    font-weight: 500;
+    font-weight: 600;
   }
 
   .create-app-option:hover {
-    background-color: #f8f9fa;
+    background-color: var(--surface-sunken);
   }
 
   .select-item {
     padding: 8px 10px;
     cursor: pointer;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
+    color: var(--text);
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
 
   .select-item:hover {
-    background-color: #f8f9fa;
+    background-color: var(--surface-sunken);
   }
 
   .select-item.disabled {
     opacity: 0.6;
     cursor: not-allowed;
-    background-color: #f0f0f0;
+    background-color: var(--surface-sunken);
   }
 
   .select-item.disabled:hover {
-    background-color: #f0f0f0;
+    background-color: var(--surface-sunken);
   }
 
   .select-items.show {

@@ -16,25 +16,30 @@
  * under the License.
  */
  -->
-<div class="container enterprise-login">
-    <div class="enterprise-login-form-group">
-        <input
-            type="email"
-            name="email"
-            id="enterprise-email"
-            class="enterprise-login-input"
-            placeholder="Enter email"
-            required
-        />
-    </div>
+{{!-- Second step of the federated flow, swapped in by signin.js. The ids are its
+      contract; the vocabulary is the shell's so the step does not look like a
+      different page. signin.js starts the Continue button disabled and enables it
+      once the address parses, which is what auth-continue-btn's two states are for. --}}
+<h2 class="auth-form-title">Sign in with Enterprise ID</h2>
+<p class="auth-form-sub">Enter your work email address and we will take you to your organization's identity provider.</p>
 
-    <div class="enterprise-login-form-group">
-        <button class="common-btn-primary w-100" id="login-enterprise">
-            Continue
-        </button>
+<div class="ln-enterprise-fields">
+  <div class="auth-field">
+    <label class="auth-field-label" for="enterprise-email">Work email</label>
+    <div class="auth-input-wrap">
+      <i class="bi bi-envelope auth-input-icon" aria-hidden="true"></i>
+      <input
+        type="email"
+        name="email"
+        id="enterprise-email"
+        class="auth-input"
+        placeholder="Enter email"
+        required
+        autocomplete="email"
+      />
     </div>
+  </div>
 
-    <div class="enterprise-login-form-group">
-        <a class="common-btn-outlined w-100" id="back-to-signin">Back</a>
-    </div>
+  <button type="button" class="auth-continue-btn" id="login-enterprise" disabled>Continue</button>
+  <a class="ln-back-btn" id="back-to-signin" role="button" tabindex="0">Back</a>
 </div>

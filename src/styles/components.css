@@ -279,6 +279,22 @@
   color: var(--text-muted);
 }
 
+/* Upstream's empty-state copy never links anywhere, so it has no rule for this. Ours
+   points at the place to go next, and an unstyled <a> in here renders as Bootstrap's
+   default blue with an underline - the one off-palette thing on an otherwise plain
+   panel. nowrap keeps the phrase from breaking across the line. */
+.dp-empty-desc a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.dp-empty-desc a:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
 .dp-empty-state .dp-create-btn {
   margin-top: 24px;
   padding: 12px 26px;
@@ -299,6 +315,15 @@
   color: var(--text-muted);
   margin-bottom: 1.25rem;
 }
+/* .dp-breadcrumb itself carries only a bottom margin, so each page has to supply the
+   space above it - upstream does that with an inline `padding: 1rem 1.5rem 0` on the
+   wrapping div. This is the same thing as a class, so the pages stay free of inline
+   style. Pages that already pad their own top (the docs column, the subscriptions
+   container) do not need it. */
+.dp-breadcrumb-bar {
+  padding-top: 1rem;
+}
+
 .dp-breadcrumb-item {
   color: var(--text-muted);
   text-decoration: none;
@@ -853,4 +878,305 @@
         max-width: none;
         width: auto;
     }
+}
+
+/* ── Error page (404 / 403 / 500) ────────────────────────────────
+   Ported from upstream's pages/error-page/page.hbs, which carries these rules in an
+   inline <style>. Kept here so both layouts that render the error page share one copy,
+   and on tokens rather than upstream's hardcoded hexes.
+   ---------------------------------------------------------------- */
+@keyframes ep-in {
+  from { opacity: 0; transform: translateY(0.75rem) scale(.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+.ep-full {
+  min-height: calc(100vh - 12rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 0;
+  text-align: center;
+}
+
+.ep-inner {
+  animation: ep-in .42s cubic-bezier(.4, 0, .2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ep-circle {
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface-sunken);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ep-circle i { font-size: 2.75rem; }
+
+.ep-circle--denied {
+  background: var(--danger-surface);
+  border-color: color-mix(in srgb, var(--danger) 30%, var(--surface));
+  color: var(--danger);
+}
+
+.ep-circle--broken {
+  background: var(--warning-surface);
+  border-color: color-mix(in srgb, var(--warning) 30%, var(--surface));
+  color: var(--warning);
+}
+
+.ep-code {
+  margin-top: 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.ep-code--denied { color: var(--danger); }
+.ep-code--broken { color: var(--warning); }
+
+.ep-title {
+  margin: 0.75rem 0 0;
+  font-size: 1.75rem;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--text-strong);
+  font-family: inherit;
+}
+
+.ep-desc {
+  margin: 0.875rem 0 0;
+  max-width: 28.75rem;
+  font-size: 0.90625rem;
+  line-height: 1.65;
+  color: var(--text-muted);
+}
+
+.ep-actions {
+  margin-top: 1.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8125rem;
+  flex-wrap: wrap;
+}
+
+.ep-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5625rem;
+  border-radius: 1.25rem;
+  padding: 0.75rem 1.5rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: opacity .15s, background .15s;
+}
+
+/* Upstream's blue, not the orange CTA gradient: recovering from an error is not the
+   same kind of call to action as subscribing. */
+.ep-btn--primary { background: var(--primary); color: var(--white); }
+.ep-btn--primary:hover { opacity: .9; color: var(--white); text-decoration: none; }
+
+.ep-btn--outline {
+  background: var(--white);
+  border: 1px solid var(--border-strong);
+  color: var(--primary);
+}
+
+.ep-btn--outline:hover {
+  background: var(--surface-sunken);
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.ep-note {
+  margin-top: 1.625rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--text-subtle);
+}
+
+/* ── MCP landing: accordions, JSON blocks, config panel ──────────
+   Ported from upstream's defaultContent/styles/mcp-landing.css, which has no counterpart
+   in this repo.
+
+   It lands in components.css rather than a new defaultContent/styles/mcp-landing.css
+   because the latter would have to be reached by an @import in main.css - and the 31
+   organizations with a stored theme serve their own frozen main.css, which will never
+   gain that line. Their MCP page would render mc-accordion markup with no rules at all.
+   components.css is <link>ed straight from layout/main.hbs, which is always ours, so it
+   reaches every organization.
+
+   The amber head palette is upstream's and is left as literals: it is a fixed accent for
+   tool disclosure, not anything derived from the organization's seeds, and upstream
+   hardcodes it while tokenising the rest of the block. */
+
+.mc-accordion {
+    border: 0.0625rem solid var(--border);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+}
+
+.mc-accordion:last-child { margin-bottom: 0; }
+
+.mc-accordion-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.625rem;
+    background: #fcefe0;
+    border-bottom: 0.0625rem solid transparent;
+    padding: 0.8125rem 1rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+    list-style: none;
+}
+
+.mc-accordion-head:hover { background: #f8e8d2; }
+.mc-accordion-head.open { border-bottom-color: #f3ddc4; }
+
+.mc-accordion-head-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5625rem;
+    font-family: var(--font-family-mono);
+    font-size: 0.84375rem;
+    font-weight: 700;
+    color: #7a4a12;
+}
+
+.mc-accordion-chevron {
+    color: #a87a44;
+    transition: transform 0.2s;
+    transform: rotate(180deg); /* closed by default - points down */
+}
+
+.mc-accordion-head.open .mc-accordion-chevron {
+    transform: rotate(0deg); /* open - points up */
+}
+
+.mc-accordion-body {
+    display: none;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+}
+
+.mc-accordion-head.open + .mc-accordion-body { display: flex; }
+
+.mc-accordion-desc {
+    margin: 0;
+    font-size: 0.84375rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+/* Upstream sets this colour inline on the "no description" paragraph; a modifier keeps
+   the style out of the template. */
+.mc-accordion-desc--empty { color: var(--text-subtle); }
+
+/* Resource meta rows (URI, MIME Type) */
+.mc-accordion-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    line-height: 1.9;
+}
+
+.mc-accordion-meta-key {
+    font-weight: 700;
+    color: var(--text-strong);
+    white-space: nowrap;
+}
+
+.mc-accordion-meta-val {
+    font-family: var(--font-family-mono);
+    font-size: 0.78125rem;
+    color: var(--text-muted);
+}
+
+/* JSON schema block inside an accordion */
+.mc-json-block {
+    background: var(--surface-sunken);
+    border: 0.0625rem solid var(--border);
+    border-radius: 0.5625rem;
+    padding: 0.875rem 1rem;
+    overflow-x: auto;
+}
+
+.mc-json-block pre {
+    margin: 0;
+    font-family: var(--font-family-mono);
+    font-size: 0.75rem;
+    line-height: 1.55;
+    white-space: pre;
+    overflow-x: auto;
+    max-height: 25rem;
+}
+
+/* Config panel in the right rail */
+.mc-config-panel {
+    position: sticky;
+    top: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.mc-config-title { margin-bottom: 0.875rem; }
+
+.mc-config-block {
+    position: relative;
+    border: 0.0625rem solid var(--border);
+    border-radius: 0.75rem;
+    background: var(--surface-sunken);
+    padding: 1rem;
+}
+
+.mc-config-copy {
+    position: absolute;
+    top: 0.625rem;
+    right: 0.625rem;
+}
+
+.mc-config-pre {
+    margin: 0;
+    font-family: var(--font-family-mono);
+    font-size: 0.75rem;
+    line-height: 1.55;
+    white-space: pre;
+    overflow-x: auto;
+}
+
+.mc-config-note {
+    margin: 0.75rem 0 0;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+/* Empty state and leading icon for the server-URL row, both inline styles upstream. */
+.aov-endpoint-empty {
+    font-size: 0.8125rem;
+    color: var(--text-subtle);
+}
+
+.aov-endpoint-icon {
+    color: var(--text-subtle);
+    flex: none;
 }

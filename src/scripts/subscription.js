@@ -916,10 +916,16 @@ function markSubscribedUI(card, applicationID, apiId) {
   if (btn) btn.setAttribute("disabled", "disabled");
 
   /* Subscribing on the API page never reloads, so the card has to reach the state a
-     reload would render: the ribbon, the green tint and the "View subscription" control
-     in place of the picker. All three hang off this one class. */
-  if (card.classList.contains("aov-plan-card")) {
-    card.classList.add("aov-plan-card--subscribed");
+     reload would render: the ribbon, the green tint and the "View subscription" control.
+     `card` is whatever getSubscriptionCard returned, and on this page that is the grid
+     column carrying id="subscriptionCard-<policy>" - the plan card is its child. Testing
+     `card` itself for the class, as this did, was therefore never true here, so the tint
+     and ribbon only appeared on the next page load. */
+  const planCard = card.classList.contains("aov-plan-card")
+    ? card
+    : card.querySelector(".aov-plan-card");
+  if (planCard) {
+    planCard.classList.add("aov-plan-card--subscribed");
   }
 }
 

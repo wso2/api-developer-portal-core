@@ -205,15 +205,15 @@ async function loadUsageData(signal) {
         <tr>
           <td><strong>${escapeHtml(sub.apiName)}</strong></td>
           <td>${escapeHtml(sub.applicationName)}</td>
-          <td><span class="badge bg-secondary">${escapeHtml(sub.planName)}</span></td>
+          <td><span class="badge-status badge-plan">${escapeHtml(sub.planName)}</span></td>
           <td>${formatNumber(sub.requests)}</td>
           <td>
             ${
               sub.pricingModel === "PER_UNIT" ||
               sub.pricingModel === "VOLUME_TIERS" ||
               sub.pricingModel === "GRADUATED_TIERS"
-                ? '<span class="badge bg-info">Metered</span>'
-                : '<span class="badge bg-success">Flat</span>'
+                ? '<span class="badge-status badge-metered">Metered</span>'
+                : '<span class="badge-status badge-flat">Flat</span>'
             }
           </td>
           <td><strong>${formatUsageCost(sub.cost, sub.currency || "USD")}</strong></td>
@@ -419,7 +419,7 @@ async function loadPaymentMethods(signal) {
               </div>
             </div>
             <div>
-              ${method.isDefault ? '<span class="badge bg-primary">Default</span>' : ""}
+              ${method.isDefault ? '<span class="badge-status badge-default">Default</span>' : ""}
             </div>
           </div>
         </div>
@@ -590,7 +590,7 @@ async function loadActiveSubscriptions(signal) {
           <tr>
             <td><strong>${escapeHtml(sub.apiName)}</strong></td>
             <td>${escapeHtml(sub.applicationName || "N/A")}</td>
-            <td><span class="badge bg-secondary">${escapeHtml(sub.planName)}</span></td>
+            <td><span class="badge-status badge-plan">${escapeHtml(sub.planName)}</span></td>
             <td>${escapeHtml(sub.billingCycle)}</td>
             <td><strong>${formatCurrency(sub.amount, sub.currency)}</strong></td>
             <td>${formatDate(sub.nextBillingDate)}</td>

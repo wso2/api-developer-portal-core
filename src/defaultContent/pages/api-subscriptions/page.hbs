@@ -26,6 +26,21 @@
     {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode showPlatformApiKeysNav=showPlatformApiKeysNav showApiWorkflowsNav=showApiWorkflowsNav }}
     <div class="content">
         <div class="container-fluid subscriptions-container">
+            {{!-- This page has no upstream counterpart, but it is a child of an API the
+                  same way the documentation page is, so it takes the same trail. --}}
+            <nav class="dp-breadcrumb">
+                {{#if (eq apiMetadata.apiInfo.apiType "MCP")}}
+                <a class="dp-breadcrumb-item" href="{{baseUrl}}/mcps">MCP Servers</a>
+                {{else}}
+                <a class="dp-breadcrumb-item" href="{{baseUrl}}/apis">APIs</a>
+                {{/if}}
+                {{#if apiMetadata.apiInfo.apiName}}
+                <i class="bi bi-chevron-right dp-breadcrumb-sep"></i>
+                <a class="dp-breadcrumb-item" href="{{baseUrl}}/{{artifactPath}}/{{apiHandle}}">{{or apiMetadata.apiInfo.apiTitle apiMetadata.apiInfo.apiName}}</a>
+                {{/if}}
+                <i class="bi bi-chevron-right dp-breadcrumb-sep"></i>
+                <span class="dp-breadcrumb-current">Subscriptions</span>
+            </nav>
             <div class="container-header mb-4">
                 <span>Subscriptions</span>
             </div>

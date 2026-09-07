@@ -377,45 +377,6 @@
    ────────────────────────────────────────────────────────────────────────────── */
 
 
-.apilist-hero-header {
-  max-width: 60rem;
-  margin: 0 auto;
-}
-
-
-.apilist-hero-header h1 {
-  font-size: 2rem;
-  font-weight: 600;
-  color: var(--ink);
-}
-
-
-.apilist-hero-header h1 span {
-  display: block;
-  color: var(--primary);
-  font-size: 2.5rem;
-}
-
-
-.apilist-hero-header .apilist-hero-title {
-  font-size: 2rem;
-  font-weight: 600;
-  color: var(--primary);
-}
-
-
-.apilist-hero-header .apilist-hero-title-highlight {
-  display: block;
-  color: var(--primary);
-  font-size: 2.5rem;
-}
-
-
-.apilist-hero-header .apilist-hero-description {
-  font-weight: 300;
-}
-
-
 #query::placeholder {
   color: var(--ink);
   opacity: 0.5;
@@ -930,22 +891,6 @@
 
 
 @media (max-width: 992px) {
-  .apilist-hero-header .apilist-hero-title {
-    font-size: 4vw;
-  }
-  
-  .apilist-hero-header .apilist-hero-title-highlight {
-    font-size: 5vw;
-  }
-
-  .apilist-hero-header .apilist-hero-description {
-    font-size: 2.5vw;
-  }
-
-  .apilist-hero-image {
-    display: none;
-  }
-
   .truncate-text {
     font-size: 1.75vw;
   }
@@ -1061,7 +1006,11 @@
 
 .api-agent-chip--ready {
   background: color-mix(in srgb, var(--success) 15%, white);
-  color: var(--white-text-color);
+  /* Was var(--white-text-color), which is defined nowhere in this tree - so the
+     declaration dropped and the label fell back to whatever it inherited. White would
+     have been unreadable anyway on a 15%-tinted background; this mirrors the
+     --hidden variant below, which mixes its own hue toward black. */
+  color: color-mix(in srgb, var(--success) 80%, black);
 }
 
 

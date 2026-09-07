@@ -72,7 +72,8 @@ html {
      0.3125rem), the footer a flat 3rem. Reserving 4rem for both left a strip of page
      background below the header that, being the same white as the header itself, read
      as part of it: 13px of white above the logo against 35px below. Content now starts
-     where each bar ends, and .content-area's own 1rem provides the breathing room.
+     where each bar ends; the breathing room below that is each page's own, as upstream
+     does it - .content-area adds none.
      The sidebar's top/height in side-bar.css encode the same two bar heights - change
      one and both must follow. */
   margin-top: 3.5rem;
@@ -85,7 +86,10 @@ html {
 .content-area {
   margin-left: 7.625rem;
   width: 100%;
-  margin-top: 1rem;
+  /* No top spacing, matching upstream's `padding: 0 2rem 1rem 2rem`. Each page brings its
+     own - the listing hero already carries the same 34px top padding upstream's does - so
+     the 1rem that used to sit here was added on top of it and pushed every themable page
+     16px further down than the on-prem portal. */
   margin-bottom: 1rem;
   padding-right: 2.25rem;
 }
@@ -492,4 +496,18 @@ html {
 
 .span-highlight {
   color: var(--accent);
+}
+/* ── Mobile drawer: reclaim the rail's column ────────────────────
+   Pairs with side-bar.css's 860px block, where the sidebar leaves the flow and becomes
+   an off-canvas drawer. It lives here rather than there because .content-area is
+   declared in this file, below the @import that pulls side-bar.css in - a media query
+   adds no specificity, so the same rule written over there would lose to the
+   margin-left below and the content would stay indented against an absent rail.
+   Guarded on the same toggle as side-bar.css so the two can never disagree. */
+@media (max-width: 860px) {
+  body:has(#sidebarToggle) .content-area {
+    margin-left: 0;
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
 }

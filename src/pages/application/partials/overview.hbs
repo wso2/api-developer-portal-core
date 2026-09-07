@@ -2,6 +2,15 @@
   <link rel='stylesheet' href='/technical-styles/overview.css' />
 </head>
 
+{{!-- Breadcrumb, matching upstream's application overview. --}}
+<nav class="dp-breadcrumb dp-breadcrumb-bar">
+  <a class="dp-breadcrumb-item" href="{{baseUrl}}/applications">Applications</a>
+  {{#if applicationMetadata.name}}
+  <i class="bi bi-chevron-right dp-breadcrumb-sep"></i>
+  <span class="dp-breadcrumb-current">{{applicationMetadata.name}}</span>
+  {{/if}}
+</nav>
+
 <section class="section mt-0 mb-6">
   <div class="container-fluid">
     <div class="app-overview-card d-flex justify-content-between align-items-start">

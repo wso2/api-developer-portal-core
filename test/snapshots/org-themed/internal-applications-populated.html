@@ -3,15 +3,13 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>API Portal &amp; MCP Hub</title>
+    <title>DevPortal</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://getbootstrap.com/docs/5.3/assets/css/docs.css" rel="stylesheet">
-    <link rel="stylesheet" href="/technical-styles/tokens.css">
-    <link rel="stylesheet" href="/technical-styles/components.css">
-    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/devportal/organizations/00000000-0000-0000-0000-000000000000/views/default/layout?fileType=style&fileName=main.css">
     <link rel="stylesheet" href="/technical-styles/layout.css" />
     <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'></script>
     <script src="https://js.stripe.com/v3/"></script>
@@ -27,30 +25,7 @@
 <body class="main-body">
     <main class="main-container">
         <div class="content-area">
-        <!--
- * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
- *
- * WSO2 LLC. licenses this file to you under the Apache License,
- * Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
- -->
-<head>
-  <script src='/technical-scripts/add-application-form.js' defer></script>
-  <script src='/technical-scripts/platform-subscription.js' defer></script>
-  <script src='/technical-scripts/subscription-modal.js' defer></script>
-</head>
-<main>
+        <main>
     <header>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
       <nav class="navbar navbar-expand-lg custom-navbar fixed-top">
@@ -138,184 +113,151 @@
         <span class="collapse-text">Expand</span>
       </button>
     </div>
-    <!--
-     * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
-     *
-     * WSO2 LLC. licenses this file to you under the Apache License,
-     * Version 2.0 (the "License"); you may not use this file except
-     * in compliance with the License.
-     * You may obtain a copy of the License at
-     *
-     * http://www.apache.org/licenses/LICENSE-2.0
-     *
-     * Unless required by applicable law or agreed to in writing,
-     * software distributed under the License is distributed on an
-     * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-     * KIND, either express or implied. See the License for the
-     * specific language governing permissions and limitations
-     * under the License.
-     */
-     -->
-    <section class="apis-section">
-      <div class="container-fluid">
-        <div class="apilist-hero-container">
-          <div class="apilist-hero-content">
-            <h1 class="apilist-hero-title">Discover, Integrate, and Innovate with Scalable APIs</h1>
-            <p class="apilist-hero-description">Explore our extensive API catalog and discover how to integrate them seamlessly into your application.</p>
-          </div>
-          <div class="apilist-hero-image">
-            <svg width="280" height="150" viewBox="0 0 320 190" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M82 62 H128" stroke="#a9c1e6" stroke-width="2" stroke-dasharray="3 7" stroke-linecap="round"/>
-              <path d="M192 128 H238" stroke="#a9c1e6" stroke-width="2" stroke-dasharray="3 7" stroke-linecap="round"/>
-              <path d="M160 96 V62 H128" stroke="#a9c1e6" stroke-width="2" stroke-dasharray="3 7" stroke-linecap="round"/>
-              <rect x="120" y="44" width="120" height="104" rx="16" fill="#dbe7f8" stroke="#9db8e0" stroke-width="2"/>
-              <rect x="138" y="66" width="84" height="11" rx="5.5" fill="var(--white)"/>
-              <rect x="138" y="90" width="66" height="8" rx="4" fill="#b6caea"/>
-              <rect x="138" y="108" width="78" height="8" rx="4" fill="#b6caea"/>
-              <rect x="138" y="126" width="50" height="8" rx="4" fill="#b6caea"/>
-              <circle cx="56" cy="62" r="27" fill="#c7d8f3" stroke="#8fa9d6" stroke-width="2"/>
-              <circle cx="56" cy="62" r="6" fill="#5b7fb9"/>
-              <circle cx="266" cy="128" r="27" fill="#5b7fb9"/>
-              <rect x="256" y="125" width="20" height="15" rx="3" fill="var(--white)"/>
-              <path d="M259 125 v-3.5 a7 7 0 0 1 14 0 V125" stroke="var(--white)" stroke-width="2.4" fill="none"/>
-            </svg>
-          </div>
-        </div>
-      </div>
+    <head>
+      <link rel='stylesheet' href='/technical-styles/applications.css' />
+      <script src='/technical-scripts/application-listing.js' defer></script>
+      <script src='/technical-scripts/add-application-form.js' defer></script>
+    </head>
     
-      <div class="container-fluid apilist-container">
-        <div class="search-container">
-          <div class="search-input">
-            <i class="bi bi-search search-icon"></i>
-            <input type="text" id="query" placeholder="Search APIs" autocomplete="off" />
+    <section class="apps-section">
+      <div class="apps-page-container" id="applicationsContainer">
+    
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Applications</h1>
+            <p class="page-desc">Applications hold the API keys and subscriptions you use to call APIs.</p>
           </div>
+          <button class="apps-create-btn" id="createButton" type="button"
+            onclick="toggleCreateCard()" >
+            <i class="bi bi-plus"></i> Create application
+          </button>
         </div>
     
-        <div class="apilist-results-bar">
-          <h2 class="apilist-results-heading">APIs <span class="apilist-results-count">2</span></h2>
-        </div>
     
-        <div class="row row-gap-4">
+        <div class="apps-grid">
     
-          <div class="col-lg-4 col-md-6 col-sm-12" id="apiCard-api-0001">
-            <div class="api-card d-flex flex-column">
+          <div class="d-none" id="createApplicationCardWrapper">
+            <div class="create-application-card card  d-none"
+              id="applicationCreateCard"
+              style=" cursor: pointer; "
+              onclick="showApplicationForm()">
+              <span class="plus-icon">+</span>
+              <span class="create-text">Create Application</span>
+            </div>
     
-              <div class="api-card-top" data-href="/testorg/views/default/api/orders-api" style="cursor:pointer;">
-                <span class="api-icon
-                  api-icon--rest">OR</span>
-                <div class="api-card-meta">
-                  <h5 class="api-card-title">Orders API</h5>
-                  <div class="api-card-meta-row">
-                    <span class="api-version">1.0.0</span>
-                    <span class="dp-badge
-                      dp-badge--rest">
-                      <i class="bi bi-braces"></i> REST                </span>
+            <div class="application-create-card card d-none" id="applicationCreateForm">
+              <div class="application-layout">
+                <div class="application-content">
+                  <form id='applicationForm' class='create-app-form'>
+                    <div class="app-form-group">
+                      <label for="applicationName">Application name <span class="app-required">*</span></label>
+                      <input type="text" id="applicationName" class="form-control" placeholder="e.g. My Mobile App"
+                        maxlength="100" autocomplete="off" required />
+                      <div id="nameError" class="error-msg text-danger mt-1 d-none">
+                        Application name cannot be empty.
+                      </div>
+                    </div>
+    
+                    <div class="app-form-group">
+                      <label for="applicationDescription">Description</label>
+                      <textarea id="applicationDescription" class="form-control" rows="3" maxlength="256"
+                        placeholder="What is this application for? (optional)" style="resize:vertical;"></textarea>
+                      <div class="app-form-hint">
+                        <span id="remainingCharacters">256</span> characters remaining
+                      </div>
+                      <div id="descriptionError" class="error-msg text-danger mt-1" style="display:none;">
+                        Description is too long.
+                      </div>
+                    </div>
+    
+                    <div class="application-card-footer">
+                      <button type='button' class='btn common-btn-outlined add-application-action-btn' id='cancelCreateButton'
+                        data-has-apps="true"
+                        onclick="event.stopPropagation(); hideApplicationForm(this);">
+                        Cancel
+                      </button>
+                      <button type='submit' class='btn common-btn-primary add-application-action-btn' id='createAppButton'>
+                        Create
+                      </button>
+                    </div>
+                  </form>
+                </div>
+                <div class="message-overlay hidden" id="message-overlay">
+                  <div class="message-content">
+                    <i class="bi message-icon"></i>
+                    <p class="message-text"></p>
                   </div>
+                  <button type="button" class="close-message" aria-label="Close message">&times;</button>
                 </div>
-              </div>
-    
-              <p class="api-card-desc clamp2" data-href="/testorg/views/default/api/orders-api" style="cursor:pointer;">Create and track orders.</p>
-    
-              <div class="api-card-tags">
-              </div>
-    
-              <div class="api-card-footer">
-                <div class="api-card-footer-left">
-                  <a href="/testorg/views/default/api/orders-api#subscriptionPlans" class="api-plans-link">
-                    <i class="bi bi-tag"></i> 1 plan
-                  </a>
-                </div>
-              </div>
-    
-              <div class="message-overlay hidden">
-                <div class="message-content">
-                  <i class="bi message-icon"></i>
-                  <p class="message-text"></p>
-                </div>
-                <button type="button" class="close-message" aria-label="Close message">&times;</button>
               </div>
             </div>
           </div>
-          <div class="col-lg-4 col-md-6 col-sm-12" id="apiCard-api-0002">
-            <div class="api-card d-flex flex-column">
     
-              <div class="api-card-top" data-href="/testorg/views/default/api/shipping-api" style="cursor:pointer;">
-                <span class="api-icon
-                  api-icon--graphql
-                  ">SH</span>
-                <div class="api-card-meta">
-                  <h5 class="api-card-title">Shipping API</h5>
-                  <div class="api-card-meta-row">
-                    <span class="api-version">2.1.0</span>
-                    <span class="dp-badge
-                      dp-badge--graphql
-                      ">
-                      <img src="/images/graphql-icon.svg" class="dp-badge-icon" alt="" /> GraphQL
-                                      </span>
-                  </div>
-                </div>
-              </div>
+          <div class="app-card" id="app-card-app-1" data-id="app-1" data-name="Mobile Client"
+            style="cursor:pointer;" onclick="window.location.href='/testorg/views/default/applications/app-1'">
     
-              <p class="api-card-desc clamp2" data-href="/testorg/views/default/api/shipping-api" style="cursor:pointer;">Rates and labels.</p>
-    
-              <div class="api-card-tags">
-              </div>
-    
-    
-              <div class="message-overlay hidden">
-                <div class="message-content">
-                  <i class="bi message-icon"></i>
-                  <p class="message-text"></p>
-                </div>
-                <button type="button" class="close-message" aria-label="Close message">&times;</button>
+            <div class="app-card-top">
+              <span class="app-avatar">MO</span>
+              <div class="app-card-meta">
+                <h3 class="app-card-name">Mobile Client</h3>
+                <span class="subscription-count-badge">Subscriptions: 2</span>
               </div>
             </div>
+    
+            <p class="app-card-desc">Ships the public mobile app.</p>
+    
+            <div class="app-card-footer">
+              <a href="/testorg/views/default/applications/app-1" class="application-name-link"
+                onclick="event.stopPropagation();">View details</a>
+              <button type="button" class="app-delete-btn "
+                title="Delete application" id="trash-btn-app-1"
+                onclick="event.stopPropagation(); openWarningModal('deleteApplication', 'app-1')">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+    
+            <div class="message-overlay hidden" id="message-overlay-app-1">
+              <div class="message-content">
+                <i class="bi message-icon"></i>
+                <p class="message-text"></p>
+              </div>
+              <button type="button" class="close-message" aria-label="Close message">&times;</button>
+            </div>
           </div>
+          <div class="app-card" id="app-card-app-2" data-id="app-2" data-name="internal-batch"
+            style="cursor:pointer;" onclick="window.location.href='/testorg/views/default/applications/app-2'">
+    
+            <div class="app-card-top">
+              <span class="app-avatar">IN</span>
+              <div class="app-card-meta">
+                <h3 class="app-card-name">internal-batch</h3>
+                <span class="subscription-count-badge">Subscriptions: 0</span>
+              </div>
+            </div>
+    
+            <p class="app-card-desc"></p>
+    
+            <div class="app-card-footer">
+              <a href="/testorg/views/default/applications/app-2" class="application-name-link"
+                onclick="event.stopPropagation();">View details</a>
+              <button type="button" class="app-delete-btn "
+                title="Delete application" id="trash-btn-app-2"
+                onclick="event.stopPropagation(); openWarningModal('deleteApplication', 'app-2')">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+    
+            <div class="message-overlay hidden" id="message-overlay-app-2">
+              <div class="message-content">
+                <i class="bi message-icon"></i>
+                <p class="message-text"></p>
+              </div>
+              <button type="button" class="close-message" aria-label="Close message">&times;</button>
+            </div>
+          </div>
+    
         </div>
       </div>
-      <script>
-        (function(){
-          function findClosest(el, selector){
-            while(el && el !== document){
-              if(el.matches && el.matches(selector)) return el;
-              el = el.parentNode;
-            }
-            return null;
-          }
-    
-          document.addEventListener('click', function(e){
-            var modalTrigger = findClosest(e.target, '[data-modal]');
-            if(modalTrigger){
-              e.preventDefault();
-              if(modalTrigger.classList.contains('is-readonly') || modalTrigger.getAttribute('aria-disabled') === 'true'){
-                return;
-              }
-              if(typeof loadModal === 'function'){
-                loadModal(modalTrigger.getAttribute('data-modal'));
-              } else {
-                var id = modalTrigger.getAttribute('data-modal');
-                var el = document.getElementById(id);
-                if(el) {
-                  el.style.display = 'flex';
-                  document.body.classList.add('modal-open');
-                  if(typeof prepareSubscriptionModal === 'function') {
-                    try { prepareSubscriptionModal(id); } catch(err) { /* noop */ }
-                  }
-                }
-              }
-              return;
-            }
-    
-            var nav = findClosest(e.target, '[data-href]');
-            if(nav){
-              var href = nav.getAttribute('data-href');
-              if(href){ window.location.href = href; }
-            }
-          }, false);
-        })();
-      </script>
-    
-      <script src='/technical-scripts/paginate.js' defer></script>
     </section>
     <head>
       <link rel='stylesheet' href='/technical-styles/add-edit-application.css' />
@@ -372,50 +314,6 @@
             </div>
         </div>
     </section>    <head>
-      <link rel='stylesheet' href='/technical-styles/warning.css' />
-      <script src="/technical-scripts/warning.js" defer></script> 
-      <script src='/technical-scripts/create-org.js' defer></script>
-    </head>
-    
-    <body>
-      <section>
-        <div
-          class='modal fade delete-alert'
-          id='warningModal'
-          tabindex='-1'
-          aria-hidden='true'
-        >
-          <div class='modal-dialog'>
-            <div class='modal-content'>
-              <div class='modal-header'>
-                <h5 class='modal-title' id="modalTitle">Confirm</h5>
-              </div>
-              <div class='modal-body'>
-                <p class='modal-message' id="modalMessage"></p>
-              </div>
-              <div class='modal-footer'>
-                <button
-                  type='button'
-                  class='btn common-btn-link'
-                  data-bs-dismiss='modal'
-                >
-                  Cancel
-                </button>
-                <button
-                  type='button'
-                  class='btn common-btn-primary common-btn-danger'
-                  data-bs-dismiss='modal'
-                  id="modalFunction"
-                  data-cyid="confirm"
-                >
-                  Confirm
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </body>    <head>
       <link rel="stylesheet" href="/technical-styles/alert.css" />
       <script src="/technical-scripts/alert.js" defer></script>
     </head>
@@ -439,8 +337,51 @@
         </div>
       </section>
     </body>
-</main>
-
+    <head>
+      <link rel='stylesheet' href='/technical-styles/warning.css' />
+      <script src="/technical-scripts/warning.js" defer></script> 
+      <script src='/technical-scripts/create-org.js' defer></script>
+    </head>
+    
+    <body>
+      <section>
+        <div
+          class='modal fade delete-alert'
+          id='warningModal'
+          tabindex='-1'
+          aria-hidden='true'
+        >
+          <div class='modal-dialog'>
+            <div class='modal-content'>
+              <div class='modal-header'>
+                <h5 class='modal-title' id="modalTitle">Delete Application</h5>
+              </div>
+              <div class='modal-body'>
+                <p class='modal-message' id="modalMessage">Are you sure you want to delete this application? This action cannot be undone and will revoke all associated access tokens and subscriptions.</p>
+              </div>
+              <div class='modal-footer'>
+                <button
+                  type='button'
+                  class='btn common-btn-link'
+                  data-bs-dismiss='modal'
+                >
+                  Cancel
+                </button>
+                <button
+                  type='button'
+                  class='btn common-btn-primary common-btn-danger'
+                  data-bs-dismiss='modal'
+                  id="modalFunction"
+                  data-cyid="confirm"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </body></main>
         </div>
     </main>
     <footer class="footer-section">

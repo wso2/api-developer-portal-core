@@ -295,19 +295,20 @@ const renderBillingPage = async (req, res) => {
             return res.status(404).send(html);
         }
         
+        /* The sidebar shows APIs and MCP Servers only for matching devportalMode values, and
+           config.devportalMode does not exist - it is per-organization, read from
+           ORG_CONFIG the way every other page reads it. Passing the undefined global here
+           is what made both nav items disappear on this page alone. */
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.DEVPORTAL_MODE.DEFAULT;
+
         const templateContent = {
-            profile: {
-                name: req.user?.name || req.user?.email || 'User',
-                email: req.user?.email || req[constants.USER_ID],
-                firstName: req.user?.firstName || req.user?.name || 'User',
-                lastName: req.user?.lastName || '',
-                imageURL: req.user?.imageURL || '/images/default-avatar.png',
-                organization: orgName,
-                orgId: orgId,
-                isAdmin: req.user?.isAdmin || false,
-            },
+            /* The same profile object every other page passes. This page used to build its
+               own with a literal 'User' fallback, which is why a name appeared here and
+               nowhere else - the difference was this fallback, not the page. */
+            profile: req.isAuthenticated() ? req.user : null,
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-            devportalMode: config.devportalMode,
+            devportalMode: devportalMode,
             orgId: orgId,
             orgIdentifier: orgName
         };

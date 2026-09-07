@@ -28,11 +28,64 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Container header matching applications page */
+/* ── Typography ──────────────────────────────────────────────────
+   Anchored on the API listing page's scale so the two read as one portal. What was here
+   before was mostly Bootstrap's defaults - 16-20px in near-black or pure black - against
+   a listing page that runs 13-18px on the text tokens.
+   ---------------------------------------------------------------- */
+
+/* Page title, matching .apilist-hero-title. */
 .container-fluid .container-header {
   color: var(--primary);
-  font-size: 1.5rem;
+  font-size: 1.625rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+/* Page subtitle, matching .apilist-hero-description. Bootstrap's .text-muted was giving
+   it 16px at rgba(33,37,41,.75), which is not a token. */
+.billing-page-subtitle,
+.container-fluid > p.text-muted {
+  font-size: 0.906rem;
+  font-weight: 400;
+  line-height: 1.55;
+  /* !important because Bootstrap's own .text-muted declares its colour that way, and an
+     important declaration wins over a plain one whatever the specificity. */
+  color: var(--text) !important;
+}
+
+/* Card headings, matching .apilist-results-heading. */
+.content-area .card-title,
+.content-area .card-header h5,
+.content-area .card-body > h5 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+/* Field labels, matching the plan card's .plan-kpi-label and the sign-in shell's
+   .auth-field-label. */
+.content-area .form-label {
+  font-size: 0.8125rem;
   font-weight: 600;
+  color: var(--text);
+}
+
+/* Table headers, matching .sub-table thead th on the subscriptions pages. These were
+   16px/700 in pure black. */
+.content-area table thead th {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.content-area table tbody td {
+  font-size: 0.8125rem;
+  color: var(--text);
 }
 
 /* Billing Tabs */
@@ -50,6 +103,9 @@ html {
 
 .billing-tabs .nav-link {
   color: var(--text-muted);
+  /* 14px, a step down from the page title. Bootstrap left these at 16px/600, the same
+     size as body copy, so the tab strip competed with the heading above it. */
+  font-size: 0.875rem;
   font-weight: 500;
   border: none;
   border-bottom: 3px solid transparent;
@@ -96,59 +152,71 @@ html {
 .stat-card {
   display: flex;
   align-items: center;
-  padding: 20px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease;
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  transition: border-color 0.2s ease;
   height: 100%;
   min-height: 100px;
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: var(--border-strong);
 }
 
+/* Own modifiers rather than Bootstrap's .bg-* utilities, which set background-color
+   with !important - the old rules only showed because a gradient paints background-image
+   and slipped past that. The tints match the semantic pairs used across the portal. */
 .stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 16px;
-  font-size: 24px;
-  color: white;
+  margin-right: 1rem;
+  font-size: 1.25rem;
+  flex: none;
 }
 
-.stat-icon.bg-primary { 
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-}
-
-.stat-icon.bg-success { 
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
-}
-
-.stat-icon.bg-warning { 
-  background: linear-gradient(135deg, var(--warning-surface) 0%, #fdcb6e 100%); 
-}
-
-.stat-icon.bg-info { 
-  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); 
-}
+.stat-icon--requests { background: var(--primary-surface); color: var(--primary); }
+.stat-icon--subscriptions { background: var(--info-surface); color: var(--info); }
+.stat-icon--cost { background: var(--success-surface); color: var(--success); }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 1.625rem;
   font-weight: 700;
-  color: #2c3e50;
+  color: var(--text-strong);
   margin: 0;
 }
 
 .stat-label {
-  font-size: 14px;
+  font-size: 0.8125rem;
   color: var(--text-muted);
   margin: 0;
+}
+
+/* Status pills the billing scripts emit. Previously Bootstrap's .bg-info / .bg-success /
+   .bg-primary, which are saturated utilities outside the portal's palette. */
+.badge-metered {
+  background-color: var(--info-surface);
+  color: var(--info);
+}
+
+.badge-flat {
+  background-color: var(--surface-sunken);
+  color: var(--text-muted);
+}
+
+.badge-default {
+  background-color: var(--primary-surface);
+  color: var(--primary);
+}
+
+.badge-plan {
+  background-color: var(--surface-sunken);
+  color: var(--text);
 }
 
 .badge-status {
@@ -174,16 +242,15 @@ html {
 }
 
 .payment-method-card {
-  border: 2px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-  transition: all 0.2s ease;
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  transition: border-color 0.2s ease;
 }
 
 .payment-method-card:hover {
-  border-color: var(--primary);
-  box-shadow: 0 2px 8px rgba(13, 110, 253, 0.1);
+  border-color: var(--border-strong);
 }
 
 .payment-method-card.default {
@@ -231,8 +298,9 @@ html {
   animation: highlightPulse 1.5s ease-in-out;
 }
 
+/* Was Bootstrap's blue; the portal's primary is a different blue entirely. */
 @keyframes highlightPulse {
-  0% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.4); }
-  50% { box-shadow: 0 0 0 15px rgba(13, 110, 253, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0); }
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 40%, transparent); }
+  50% { box-shadow: 0 0 0 15px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
 }

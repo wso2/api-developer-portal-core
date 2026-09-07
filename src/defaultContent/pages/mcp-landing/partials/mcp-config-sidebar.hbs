@@ -1,0 +1,51 @@
+{{!
+ * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
+ *
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+}}
+{{!-- The ready-to-paste client configuration, lifted out of mcp-default.hbs's old
+      col-lg-5 into the page's right rail, where upstream keeps it.
+
+      Two departures from upstream, both deliberate:
+      - the copy button reuses copyToken(this, id) rather than a bespoke copyMcpConfig.
+        copyToken already drives this exact .copy-btn markup elsewhere on the page and
+        reads #token_<id>, so naming the <pre> token_mcp_config needs no new script. The
+        old copyServerConfig relied on the button being the <pre>'s nextElementSibling,
+        which stops being true once the button is absolutely positioned inside the block.
+      - upstream nests its subscription plans inside this panel. Ours stay a sibling in
+        the rail so the MCP page shows the same plan card as the API page. --}}
+<div class="mc-config-panel">
+  <h2 class="aov-section-title mc-config-title">MCP Server Configuration</h2>
+  <div class="mc-config-block">
+    <button type="button" class="copy-btn mc-config-copy" title="Copy configuration"
+      onclick="copyToken(this, 'mcp_config')">
+      <span class="copy-btn-icon"><i class="bi bi-copy"></i></span>
+      <span class="copy-btn-check"><i class="bi bi-check"></i> Copied</span>
+    </button>
+    <pre id="token_mcp_config" class="mc-config-pre"><code class="language-json">{
+  "servers": {
+    "{{apiMetadata.apiInfo.apiName}}": {
+      "url": "{{resources.serverDetails.productionURL}}",
+      "type": "http",
+      "headers": {
+        "Authorization": "Bearer ${token}"
+      }
+    }
+  }
+}</code></pre>
+  </div>
+  <p class="mc-config-note">Generate a token using a subscribed application and replace the placeholder.</p>
+</div>

@@ -129,4 +129,33 @@ module.exports = {
         apiType: 'REST',
         ...over,
     }),
+
+    /* The workflow gallery. Two entries on purpose: one public and agent-visible, one
+       private and agent-hidden, so the card footer's three branches - public badge,
+       private badge, and the AI Ready badge being withheld - are all rendered. */
+    apiFlows: (over = {}) => ({
+        ...base,
+        profile: { ...profile, isAdmin: true },
+        showApiWorkflowsNav: true,
+        apiFlows: [
+            {
+                handle: 'order-to-cash',
+                name: 'Order to Cash',
+                description: 'Places an order and settles payment.',
+                visibility: 'PUBLIC',
+                agentVisibility: 'VISIBLE',
+                sourcesPreview: [{ name: 'Orders API' }, { name: 'Payments API' }],
+                sourcesMoreCount: 2,
+            },
+            {
+                handle: 'internal-recon',
+                name: 'Internal Reconciliation',
+                description: 'Nightly ledger reconciliation.',
+                visibility: 'PRIVATE',
+                agentVisibility: 'HIDDEN',
+                sourcesPreview: [],
+            },
+        ],
+        ...over,
+    }),
 };

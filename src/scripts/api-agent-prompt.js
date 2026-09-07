@@ -94,6 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dataEl) {
         try {
             const data = JSON.parse(dataEl.textContent);
+            /* MCP servers serve their markdown from /mcp/<handle>.md, APIs from
+               /api/<handle>.md - two separate routes. The segment comes from the page's
+               own apiAgentData; defaulting to 'api' keeps every existing caller that
+               omits it working unchanged. */
             const apiPath = data.apiPath || 'api';
             const mdUrl = window.location.origin + data.baseUrl + '/' + apiPath + '/' + data.apiHandle + '.md';
             _agentMdUrl = mdUrl;

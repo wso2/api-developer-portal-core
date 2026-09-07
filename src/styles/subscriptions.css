@@ -23,11 +23,22 @@
 
 /* ===== Subscriptions Page ===== */
 
+/* Both subscriptions pages are the plain kind - no hero panel to bring its own top
+   padding, the way the listing and landing pages do - so the page has to supply it. Since
+   .content-area stopped adding a blanket top margin (it does not have one upstream
+   either), without this the heading sits flush against the fixed header. */
+.subscriptions-container {
+    padding-top: 1.5rem;
+}
+
+/* Matches .apilist-hero-title, the equivalent page title on the listing pages. */
 .subscriptions-container .container-header {
     display: block;
     color: var(--primary);
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-size: 1.625rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
 }
 
 /* ===== Table (upstream's subscriptions vocabulary) =====
