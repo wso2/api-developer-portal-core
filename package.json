@@ -71,7 +71,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "redis": "4.6.0",
-    "sequelize": "6.37.3",
+    "sequelize": "6.37.8",
     "shelljs": "0.8.5",
     "stripe": "20.0.0",
     "unzipper": "0.12.3",
@@ -80,7 +80,8 @@
     "winston-daily-rotate-file": "5.0.0"
   },
   "overrides": {
-    "handlebars": "4.7.9"
+    "handlebars": "4.7.9",
+    "shell-quote": "1.10.0"
   },
   "applicationInsights": {
     "excludeModules": ["basic-ftp"]
