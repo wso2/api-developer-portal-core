@@ -91,7 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dataEl) {
         try {
             const data = JSON.parse(dataEl.textContent);
-            const mdUrl = window.location.origin + data.baseUrl + '/api/' + data.apiHandle + '.md';
+            const apiPath = data.apiPath || 'api';
+            const mdUrl = window.location.origin + data.baseUrl + '/' + apiPath + '/' + data.apiHandle + '.md';
             _agentMdUrl = mdUrl;
             apiName = data.apiHandle;
 
