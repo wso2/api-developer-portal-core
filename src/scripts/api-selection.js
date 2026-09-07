@@ -27,11 +27,29 @@
  * @param {HTMLElement} selectAllCheckbox - The select all checkbox element
  */
 function toggleAllAPISelection(selectAllCheckbox) {
-    const checkboxes = document.querySelectorAll('.api-checkbox');
-    checkboxes.forEach(checkbox => {
+    /* Scoped to the select-all's own table. There are two now - API proxies and MCP
+       servers - and a page-wide query would make either header checkbox tick the other
+       table's rows. */
+    const scope = selectAllCheckbox.closest('table') || document;
+    scope.querySelectorAll('.api-checkbox').forEach(checkbox => {
         checkbox.checked = selectAllCheckbox.checked;
     });
+    syncSelectAllStates();
     updateSDKButtonVisibility();
+}
+
+/**
+ * Brings every select-all checkbox in line with its own table: checked when all of that
+ * table's rows are, indeterminate when only some are.
+ */
+function syncSelectAllStates() {
+    document.querySelectorAll('.select-all-apis').forEach(selectAll => {
+        const scope = selectAll.closest('table') || document;
+        const total = scope.querySelectorAll('.api-checkbox').length;
+        const checked = scope.querySelectorAll('.api-checkbox:checked').length;
+        selectAll.checked = total > 0 && checked === total;
+        selectAll.indeterminate = checked > 0 && checked < total;
+    });
 }
 
 /**
@@ -39,15 +57,7 @@ function toggleAllAPISelection(selectAllCheckbox) {
  * Updates the select all checkbox state and SDK button visibility
  */
 function toggleAPISelection() {
-    const checkboxes = document.querySelectorAll('.api-checkbox');
-    const selectAllCheckbox = document.getElementById('selectAllAPIs');
-    
-    // Update "Select All" checkbox state
-    const checkedCount = document.querySelectorAll('.api-checkbox:checked').length;
-    if (selectAllCheckbox) {
-        selectAllCheckbox.checked = checkedCount === checkboxes.length;
-        selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
-    }
+    syncSelectAllStates();
     
     updateSDKButtonVisibility();
 }
@@ -110,13 +120,15 @@ function initializeAPISelection() {
         checkbox.addEventListener('change', toggleAPISelection);
     });
     
-    const selectAllCheckbox = document.getElementById('selectAllAPIs');
-    if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', function() {
+    /* By class, not by id: each table carries its own select-all (selectAllAPIs,
+       selectAllMCPs), and an id lookup would only ever wire the first. */
+    document.querySelectorAll('.select-all-apis').forEach(selectAll => {
+        selectAll.addEventListener('change', function () {
             toggleAllAPISelection(this);
         });
-    }
-    
+    });
+
+    syncSelectAllStates();
     console.log('SDK Generation feature is enabled - API selection initialized');
 }
 

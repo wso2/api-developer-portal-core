@@ -362,3 +362,123 @@
     height: auto;
     line-height: 1.5;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Manage Keys page chrome, ported from upstream's manage-keys.css.
+
+   Scope note: only the page shell is adopted - header, the card-style environment
+   selector, the context banners. Upstream also restructures the credentials themselves
+   around a manage-keys-km-card partial with {{#let}}; ours keeps its accordion machinery,
+   which is ~1,100 lines wired to oauth2-key-generation.js and api-key-generation.js. The
+   card selector below drives the same Bootstrap tabs by the same target ids, so nothing
+   in that machinery had to move.
+   ═══════════════════════════════════════════════════════════ */
+
+.keys-section {
+    /* Sandbox accent, derived from the theme rather than a hardcoded blue. */
+    --mk-sandbox: var(--info);
+}
+
+.keys-section .mk-header {
+    margin-bottom: 1.5rem;
+}
+
+.keys-section .mk-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+}
+
+.keys-section .mk-subtitle {
+    font-size: 0.9rem;
+    color: var(--text);
+    opacity: 0.7;
+    margin: 0;
+}
+
+.keys-section .mk-env-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.keys-section .mk-env-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.9rem 1.1rem;
+    border: 0.09375rem solid var(--border);
+    border-radius: 0.75rem;
+    background: var(--surface);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.keys-section .mk-env-card.active {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.125rem var(--focus-ring);
+}
+
+.keys-section .mk-env-card:focus {
+    outline: none;
+}
+
+.keys-section .mk-env-dot {
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.keys-section .mk-env-dot-prod { background: var(--accent); }
+.keys-section .mk-env-dot-sandbox { background: var(--mk-sandbox); }
+
+.keys-section .mk-env-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.keys-section .mk-env-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.keys-section .mk-env-desc {
+    font-size: 0.78rem;
+    color: var(--text);
+    opacity: 0.6;
+}
+
+.keys-section .mk-tab-content {
+    background: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+}
+
+.keys-section .mk-context-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.7rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    margin-bottom: 1.1rem;
+}
+
+.keys-section .mk-context-banner-prod {
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    color: var(--text);
+}
+
+.keys-section .mk-context-banner-sandbox {
+    background: color-mix(in srgb, var(--mk-sandbox) 10%, transparent);
+    color: var(--text);
+}
+
+.keys-section .mk-env-dot-prod-icon { color: var(--accent); font-size: 0.55rem; }
+.keys-section .mk-env-dot-sandbox-icon { color: var(--mk-sandbox); font-size: 0.55rem; }

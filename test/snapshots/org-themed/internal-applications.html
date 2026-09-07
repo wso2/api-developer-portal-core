@@ -133,126 +133,77 @@
           <span class="dp-empty-icon"><i class="bi bi-grid-3x3-gap-fill"></i></span>
           <h2 class="dp-empty-title">No applications yet</h2>
           <p class="dp-empty-desc">Create an application to generate API keys and subscribe to APIs. You can manage all your credentials in one place.</p>
+          <button type="button" class="apps-create-btn" id="createButtonEmpty"
+            >
+            <i class="bi bi-plus"></i> Create application
+          </button>
         </div>
     
         <div class="apps-grid">
-    
-          <div class="" id="createApplicationCardWrapper">
-            <div class="create-application-card card  "
-              id="applicationCreateCard"
-              style=" cursor: pointer; "
-              onclick="showApplicationForm()">
-              <span class="plus-icon">+</span>
-              <span class="create-text">Create Application</span>
-            </div>
-    
-            <div class="application-create-card card d-none" id="applicationCreateForm">
-              <div class="application-layout">
-                <div class="application-content">
-                  <form id='applicationForm' class='create-app-form'>
-                    <div class="app-form-group">
-                      <label for="applicationName">Application name <span class="app-required">*</span></label>
-                      <input type="text" id="applicationName" class="form-control" placeholder="e.g. My Mobile App"
-                        maxlength="100" autocomplete="off" required />
-                      <div id="nameError" class="error-msg text-danger mt-1 d-none">
-                        Application name cannot be empty.
-                      </div>
-                    </div>
-    
-                    <div class="app-form-group">
-                      <label for="applicationDescription">Description</label>
-                      <textarea id="applicationDescription" class="form-control" rows="3" maxlength="256"
-                        placeholder="What is this application for? (optional)" style="resize:vertical;"></textarea>
-                      <div class="app-form-hint">
-                        <span id="remainingCharacters">256</span> characters remaining
-                      </div>
-                      <div id="descriptionError" class="error-msg text-danger mt-1" style="display:none;">
-                        Description is too long.
-                      </div>
-                    </div>
-    
-                    <div class="application-card-footer">
-                      <button type='button' class='btn common-btn-outlined add-application-action-btn' id='cancelCreateButton'
-                        data-has-apps="false"
-                        onclick="event.stopPropagation(); hideApplicationForm(this);">
-                        Cancel
-                      </button>
-                      <button type='submit' class='btn common-btn-primary add-application-action-btn' id='createAppButton'>
-                        Create
-                      </button>
-                    </div>
-                  </form>
-                </div>
-                <div class="message-overlay hidden" id="message-overlay">
-                  <div class="message-content">
-                    <i class="bi message-icon"></i>
-                    <p class="message-text"></p>
-                  </div>
-                  <button type="button" class="close-message" aria-label="Close message">&times;</button>
-                </div>
-              </div>
-            </div>
-          </div>
     
     
         </div>
       </div>
     </section>
-    <head>
-      <link rel='stylesheet' href='/technical-styles/add-edit-application.css' />
-    </head>
     
-    <section>
-        <div id="createAppModal" class="modal custom-modal" tabindex="-1" role="dialog">
-            <div class="modal-dialog modal-xl" role="document">
-                <div class="modal-content custom-modal-content">
-                    <div class="custom-modal-header">
-                        <h2 class="custom-modal-title m-0">Create Application</h2>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
-                            onclick="closeModal('createAppModal')"></button>
-                    </div>
-                    <div class="custom-modal-body">
-                        <form id='applicationForm' class='create-app-form'>
-                            <!-- Application Name -->
-                            <div class='mb-3'>
-                                <label for='applicationName' class='form-label'>Application Name
-                                    <span class='text-danger'>*</span></label>
-                                <input type='text' id='applicationName' class='form-control'
-                                    placeholder='My Application' required />
-                                <div id='nameError' class='error-msg text-danger mt-1' style='display: none;'>
-                                    Application name cannot be empty.</div>
-                            </div>
-    
-                            <!-- Application Description -->
-                            <div class='mb-3'>
-                                <label for='applicationDescription' class='form-label'>Application
-                                    Description</label>
-                                <textarea id='applicationDescription' class='form-control' rows='4'
-                                    placeholder='Provide a brief description of the application'
-                                    maxlength='256'></textarea>
-                                <div class='form-text'>
-                                  <span id='remainingCharacters'>256</span> characters remaining
-                                </div>
-                                <div id='descriptionError' class='text-danger mt-1' style='display: none;'>
-                                    Description exceeds the character limit.</div>
-                            </div>
-    
-                            <!-- Buttons -->
-                            <div class='d-flex gap-3 mt-4'>
-                                <button type='button' class='common-btn-outlined' id="cancelButton"
-                                    onclick="closeModal('createAppModal')">
-                                    Cancel
-                                </button>
-                                <button type='submit' class='common-btn-primary' id='saveButton' disabled>
-                                    Save
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
+    <div class="app-modal-overlay" id="app-create-modal" role="dialog" aria-modal="true"
+      aria-labelledby="app-create-modal-title">
+      <div class="app-modal">
+        <div class="app-modal-head">
+          <div class="app-modal-head-left">
+            <span class="app-modal-icon"><i class="bi bi-grid-3x3-gap-fill"></i></span>
+            <h2 class="app-modal-title" id="app-create-modal-title">Create application</h2>
+          </div>
+          <button type="button" class="app-modal-close" id="app-create-close" aria-label="Close">
+            <i class="bi bi-x-lg"></i>
+          </button>
         </div>
-    </section>    <head>
+    
+        <form id="applicationForm" class="create-app-form">
+          <div class="app-modal-body">
+            <div class="app-form-group">
+              <label for="applicationName">Application name <span class="app-required">*</span></label>
+              <input type="text" id="applicationName" class="app-form-input" placeholder="e.g. My Mobile App"
+                maxlength="100" autocomplete="off" required />
+              <div id="nameError" class="error-msg text-danger mt-1 d-none">
+                Application name cannot be empty.
+              </div>
+            </div>
+    
+            <div class="app-form-group">
+              <label for="applicationDescription">Description</label>
+              <textarea id="applicationDescription" class="app-form-input" rows="3" maxlength="256"
+                placeholder="What is this application for? (optional)" style="resize:vertical;"></textarea>
+              <div class="app-form-hint">
+                <span id="remainingCharacters">256</span> characters remaining
+              </div>
+              <div id="descriptionError" class="error-msg text-danger mt-1" style="display:none;">
+                Description is too long.
+              </div>
+            </div>
+          </div>
+    
+          <div class="app-modal-footer">
+            <button type="button" class="app-btn-secondary" id="cancelCreateButton"
+              data-has-apps="false">
+              Cancel
+            </button>
+            <button type="submit" class="app-btn-primary" id="createAppButton" disabled>
+              Create
+            </button>
+          </div>
+        </form>
+    
+        <div class="message-overlay hidden" id="message-overlay">
+          <div class="message-content">
+            <i class="bi message-icon"></i>
+            <p class="message-text"></p>
+          </div>
+          <button type="button" class="close-message" aria-label="Close message">&times;</button>
+        </div>
+      </div>
+    </div>
+    <head>
       <link rel="stylesheet" href="/technical-styles/alert.css" />
       <script src="/technical-scripts/alert.js" defer></script>
     </head>

@@ -400,22 +400,38 @@
 .flow-detail-section {
     display: flex;
     justify-content: center;
-    margin: 0 1rem 0 0;
     align-items: center;
     flex-direction: column;
     width: 100%;
+    /* The shared content gutter: 0.75rem is what .container-fluid gives the listing,
+       subscriptions and applications pages, so every tab's content starts on the same
+       vertical. The old `margin: 0 1rem 0 0` indented the right edge only. */
+    padding: 1.5rem 0.75rem;
+}
+
+/* Sits above the banner, so it carries the gap rather than the section. */
+.flow-detail-breadcrumb {
+    width: 100%;
+    margin-bottom: 1rem;
 }
 
 .flow-detail-header {
     width: 100%;
-    max-width: 1300px;
-    padding: 2rem 3.5rem;
-    border-radius: 0.75rem;
-    background: var(--primary-lightest-color);
+    /* Was max-width: 1300px, a fixed pixel cap that left the banner narrower than the
+       content beneath it on any wide viewport. The section already bounds the width. */
+    padding: 2.125rem 2.5rem;
+    border-radius: 0.875rem;
+    /* Was var(--primary-lightest-color) - an 8-digit hex the console flattens on save, so
+       it could not follow a customised palette. This is the same gradient the API and MCP
+       listing heroes use, so all three banners now read as one family. */
+    background: linear-gradient(180deg,
+        color-mix(in srgb, var(--primary) 6%, var(--surface)) 0%,
+        color-mix(in srgb, var(--primary) 11%, var(--surface)) 100%);
     margin-bottom: 2rem;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    gap: 1.5rem;
 }
 
 .flow-detail-header-content {
@@ -426,17 +442,24 @@
     flex: 1;
 }
 
+/* Matched to .apilist-hero-title / .apilist-hero-description, the equivalent banner
+   headings on the listing pages - this was 2rem/600 against their 1.625rem/700, and the
+   description sat at weight 300 where theirs is 400. */
 .flow-detail-header h1 {
+    margin: 0;
     color: var(--primary);
-    font-size: 2rem;
-    font-weight: 600;
-    margin: 0 0 0.5rem 0;
+    font-size: 1.625rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
 }
 
 .flow-detail-header p {
-    color: var(--ink);
-    font-weight: 300;
-    margin: 0.5rem 0 0 0;
+    margin: 0.75rem 0 0;
+    color: var(--text);
+    font-size: 0.906rem;
+    font-weight: 400;
+    line-height: 1.55;
 }
 
 .flow-header-actions {

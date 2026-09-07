@@ -9,26 +9,34 @@
                     onclick="closeModal('planModal-{{apiID}}')"></button>
             </div>
             <div class="custom-modal-body">
-                <div class="api-banner-content py-4 px-5">
-                    <div class="d-flex align-items-center justify-content-between w-100">
-                        <div class="col-12 col-md-7">
-                            <div class="api-title pb-3">
-                                <h4>{{apiInfo.apiName}}</h4>
-                                <span class="mb-1"> {{apiInfo.apiVersion}}</span>
-                                <p class="api-description">{{apiInfo.apiDescription}}</p>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-5 text-md-right">
+                {{!-- The API identity strip, on the same aov-hero vocabulary the API and MCP
+                      landing banners use. It was api-banner-content with an img-thumbnail
+                      avatar - the pre-migration look, which is what made this popup read as
+                      a different generation of the UI from the page behind it. --}}
+                <div class="aov-hero subscription-modal-hero">
+                    <div class="aov-hero-top">
+                        <div class="aov-hero-thumb">
                             {{#if apiInfo.apiImageMetadata.api-icon}}
-                            <img class="img-thumbnail api-image-small" src="{{apiInfo.apiImageMetadata.api-icon}}"
-                                alt="API Image" />
+                            <img class="aov-api-img" src="{{apiInfo.apiImageMetadata.api-icon}}"
+                                alt="{{apiInfo.apiName}}" />
                             {{else}}
-                            <div
-                                class="img-thumbnail api-image-small image-icon d-flex justify-content-center align-items-center">
-                                {{firstTwoLetters apiInfo.apiName}}</div>
+                            <div class="aov-api-avatar">{{firstTwoLetters apiInfo.apiName}}</div>
                             {{/if}}
                         </div>
+                        <div class="aov-hero-title-row">
+                            <h1 class="aov-hero-name">{{apiInfo.apiName}}</h1>
+                            <div class="aov-hero-badges">
+                                {{#if apiInfo.apiVersion}}
+                                <span class="dp-badge dp-badge--version">{{apiInfo.apiVersion}}</span>
+                                {{/if}}
+                            </div>
+                        </div>
                     </div>
+                    {{#if apiInfo.apiDescription}}
+                    <div class="aov-hero-body">
+                        <p class="aov-hero-desc">{{apiInfo.apiDescription}}</p>
+                    </div>
+                    {{/if}}
                 </div>
                 <div id="subscriptionTokenArea-{{apiID}}" class="subscription-token-area px-4" style="display:none;">
                     <!-- Token result will be injected here for platform token-based subscriptions -->
@@ -46,80 +54,130 @@
                     <div class="row row-gap-4 pt-3">
                         {{#each subscriptionPolicyDetails}}
                         <div class="col-12 col-md-6 col-lg-4">
-                            <div id="subscriptionCard-{{policyID}}" class="card dev-card subscription-card">
-                                <div class="card-body align-items-center text-center p-0">
-                                    <span class="subscription-plans-card-title">{{displayName}}</span>
-                                        <div class="mb-3 w-100">
-                                            <div class="d-flex flex-column align-items-center gap-2" style="margin: 0 auto;">
-                                                <span class="text-muted d-block mb-0" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom:0 !important; min-height: 18px;">Price</span>
+                            {{!-- Same aov-plan-card the API overview's rail renders, so the plan
+                                  looks identical whether it is read there or edited here. The card
+                                  keeps id="subscriptionCard-<policyID>" and the subscription-card
+                                  class: subscription.js addresses both. --}}
+                            <div id="subscriptionCard-{{policyID}}" class="aov-plan-card subscription-card">
+                                <div class="aov-plan-ribbon" aria-hidden="true">
+                                    <div class="aov-plan-ribbon-label api-ribbon-label">SUBSCRIBED</div>
+                                </div>
+                                <div class="aov-plan-body">
+                                    <div class="aov-plan-card-head">
+                                        <div class="aov-plan-name-row">
+                                            <span class="aov-plan-icon" style="background: var(--surface-sunken); color: var(--primary);">
+                                                <i class="bi bi-lightning-charge-fill"></i>
+                                            </span>
+                                            <span class="aov-plan-name">{{displayName}}</span>
+                                        </div>
+                                    </div>
+                                    {{#if description}}
+                                    <p class="aov-plan-desc">{{description}}</p>
+                                    {{/if}}
+                                    <div class="plan-kpis">
+
+                                        <div class="plan-kpi-row">
+                                            <div class="plan-kpi-label">Price</div>
+                                            <div class="plan-kpi-valueTop">
                                                 {{#if pricingModel}}
                                                     {{#compare pricingModel "===" "FLAT"}}
                                                         {{#if flatAmount}}
-                                                        <span class="fw-bold d-inline" style="color: #0f172a; font-size: 22px;">{{currency}} {{formatPrice flatAmount}}<small class="text-muted d-inline" style="font-size: 10px;">/{{formatBillingPeriod billingPeriod}}</small></span>
+                                                            <span class="plan-kpi-amount">{{currency}} {{formatPrice flatAmount}}</span>
+                                                            <span class="plan-kpi-unit">/{{formatBillingPeriod billingPeriod}}</span>
                                                         {{else}}
-                                                        <span class="fw-bold d-inline" style="color: #16a34a; font-size: 22px;">Free</span>
+                                                            <span class="plan-kpi-free">Free</span>
                                                         {{/if}}
                                                     {{else}}
                                                         {{#if (eq pricingModel "VOLUME_TIERS")}}
-                                                        <div class="subscription-tier-wrapper mx-auto text-center" style="width: fit-content; min-width: 280px;">
-                                                            <details class="subscription-tier-details">
-                                                                <summary style="font-size: 12px; font-weight: 600; color: #0f172a; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: center; gap: 4px;"><span class="tier-chevron" style="font-size: 10px;">&#9654;</span> Tier-based pricing</summary>
-                                                                <table class="table table-sm mt-2 mb-0" style="font-size: 11px;">
-                                                                    <thead><tr><th style="color: #64748b; font-weight: 600; text-align: center; vertical-align: middle;">Total Request<br>Volume</th><th style="color: #64748b; font-weight: 600; text-align: center; vertical-align: middle;">Flat<br>Price</th><th style="color: #64748b; font-weight: 600; text-align: center; vertical-align: middle;">Price /<br>req</th></tr></thead>
-                                                                    <tbody>
-                                                                        {{#each pricingMetadata.tiers}}
-                                                                        <tr>
-                                                                            <td style="text-align: center; vertical-align: middle;">{{formatTierRange startUnit endUnit}}</td>
-                                                                            <td style="text-align: center; vertical-align: middle;">{{../currency}} {{formatPrice flatPrice}}</td>
-                                                                            <td style="text-align: center; vertical-align: middle;">{{../currency}} {{formatPrice unitPrice}}</td>
-                                                                        </tr>
-                                                                        {{/each}}
-                                                                    </tbody>
-                                                                </table>
+                                                            <details class="subscription-tier-details plan-kpi-tier-details">
+                                                                <summary><span class="tier-chevron">&#9654;</span> Tier-based pricing</summary>
                                                             </details>
-                                                        </div>
-                                                        {{#if billingPeriod}}
-                                                        <span class="badge d-inline-block mt-2 mb-1" style="background-color: #e0f2fe; color: #0369a1; font-size: 9px; padding: 3px 8px; border-radius: 10px;">Billed {{formatBillingPeriod billingPeriod}}</span>
-                                                        {{/if}}
                                                         {{else if (eq pricingModel "GRADUATED_TIERS")}}
-                                                        <div class="subscription-tier-wrapper mx-auto text-center" style="width: fit-content; min-width: 280px;">
-                                                            <details class="subscription-tier-details">
-                                                                <summary style="font-size: 12px; font-weight: 600; color: #0f172a; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: center; gap: 4px;"><span class="tier-chevron" style="font-size: 10px;">&#9654;</span> Tier-based pricing</summary>
-                                                                <table class="table table-sm mt-2 mb-0" style="font-size: 11px;">
-                                                                    <thead><tr><th style="color: #64748b; font-weight: 600; text-align: center; vertical-align: middle;">Request<br>Range</th><th style="color: #64748b; font-weight: 600; text-align: center; vertical-align: middle;">Flat<br>Price</th><th style="color: #64748b; font-weight: 600; text-align: center; vertical-align: middle;">Price /<br>req</th></tr></thead>
-                                                                    <tbody>
-                                                                        {{#each pricingMetadata.tiers}}
-                                                                        <tr>
-                                                                            <td style="text-align: center; vertical-align: middle;">{{formatTierRange startUnit endUnit}}</td>
-                                                                            <td style="text-align: center; vertical-align: middle;">{{../currency}} {{formatPrice flatPrice}}</td>
-                                                                            <td style="text-align: center; vertical-align: middle;">{{../currency}} {{formatPrice unitPrice}}</td>
-                                                                        </tr>
-                                                                        {{/each}}
-                                                                    </tbody>
-                                                                </table>
+                                                            <details class="subscription-tier-details plan-kpi-tier-details">
+                                                                <summary><span class="tier-chevron">&#9654;</span> Tier-based pricing</summary>
                                                             </details>
-                                                        </div>
-                                                        {{#if billingPeriod}}
-                                                        <span class="badge d-inline-block mt-2 mb-1" style="background-color: #e0f2fe; color: #0369a1; font-size: 9px; padding: 3px 8px; border-radius: 10px;">Billed {{formatBillingPeriod billingPeriod}}</span>
-                                                        {{/if}}
                                                         {{else}}
-                                                        {{#if unitAmount}}
-                                                        <span class="fw-bold d-inline" style="color: #0f172a; font-size: 22px;">{{currency}} {{formatPrice unitAmount}}<small class="text-muted d-inline" style="font-size: 10px;">/req</small></span>
-                                                        {{#if billingPeriod}}
-                                                        <span class="badge d-inline-block mt-2" style="background-color: #e0f2fe; color: #0369a1; font-size: 9px; padding: 3px 8px; border-radius: 10px;">Billed {{formatBillingPeriod billingPeriod}}</span>
-                                                        {{/if}}
-                                                        {{else}}
-                                                        <span class="fw-bold d-inline" style="color: #16a34a; font-size: 22px;">Free</span>
-                                                        {{/if}}
+                                                            {{#if unitAmount}}
+                                                                <span class="plan-kpi-amount">{{currency}} {{formatPrice unitAmount}}</span>
+                                                                <span class="plan-kpi-unit">/req</span>
+                                                            {{else}}
+                                                                <span class="plan-kpi-free">Free</span>
+                                                            {{/if}}
                                                         {{/if}}
                                                     {{/compare}}
                                                 {{else}}
-                                                    <span class="fw-bold d-inline" style="color: #16a34a; font-size: 22px;">Free</span>
+                                                    <span class="plan-kpi-free">Free</span>
                                                 {{/if}}
-                                                <span class="text-muted d-block mt-3 mb-0" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom:0 !important; min-height: 18px;">Rate Limit</span>
-                                                <span class="fw-bold d-inline" style="color: #0f172a; font-size: 25px;">{{requestCount}}<small class="text-muted d-inline" style="font-size: 11px;">&nbsp;req/min</small></span>
+                                            </div>
+                                            <div class="plan-kpi-labelSub"></div>
+                                            <div class="plan-kpi-valueSub">
+                                                {{#if billingPeriod}}
+                                                    <span class="plan-kpi-badge">Billed {{formatBillingPeriod billingPeriod}}</span>
+                                                {{else}}
+                                                    <span class="plan-kpi-badge-placeholder">&nbsp;</span>
+                                                {{/if}}
+                                            </div>
+                                            {{#if (eq pricingModel "VOLUME_TIERS")}}
+                                            <div class="plan-kpi-tier-table-row">
+                                                <table class="plan-kpi-tier-table">
+                                                    <thead><tr>
+                                                        <th>Total Request<br>Volume</th>
+                                                        <th>Price</th>
+                                                    </tr></thead>
+                                                    <tbody>
+                                                        {{#each pricingMetadata.tiers}}
+                                                        <tr>
+                                                            <td>{{formatTierRange startUnit endUnit}}</td>
+                                                            <td>{{../currency}} {{formatPrice flatPrice}} <span class="plan-kpi-tier-plus">+</span> {{../currency}} {{formatPrice unitPrice}}/req</td>
+                                                        </tr>
+                                                        {{/each}}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            {{else if (eq pricingModel "GRADUATED_TIERS")}}
+                                            <div class="plan-kpi-tier-table-row">
+                                                <table class="plan-kpi-tier-table">
+                                                    <thead><tr>
+                                                        <th>Request<br>Range</th>
+                                                        <th>Price</th>
+                                                    </tr></thead>
+                                                    <tbody>
+                                                        {{#each pricingMetadata.tiers}}
+                                                        <tr>
+                                                            <td>{{formatTierRange startUnit endUnit}}</td>
+                                                            <td>{{../currency}} {{formatPrice flatPrice}} <span class="plan-kpi-tier-plus">+</span> {{../currency}} {{formatPrice unitPrice}}/req</td>
+                                                        </tr>
+                                                        {{/each}}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            {{/if}}
+                                        </div>
+
+                                        <div class="plan-kpi-divider"></div>
+
+                                        <div class="plan-kpi-row">
+                                            <div class="plan-kpi-label">Rate limit</div>
+                                            <div class="plan-kpi-valueTop">
+                                                {{#if (isUnlimitedRate requestCount)}}
+                                                <span class="plan-kpi-amount" title="Unlimited">&infin;</span>
+                                                <span class="plan-kpi-unit">req/min</span>
+                                                {{else}}
+                                                <span class="plan-kpi-amount">{{requestCount}}</span>
+                                                <span class="plan-kpi-unit">req/min</span>
+                                                {{/if}}
+                                            </div>
+                                            <div class="plan-kpi-labelSub"></div>
+                                            <div class="plan-kpi-valueSub">
+                                                <span class="plan-kpi-badge-placeholder">&nbsp;</span>
                                             </div>
                                         </div>
+                                    </div>
+                                </div>
+                                {{!-- Subscribe controls, wrapped as the API overview's card wraps
+                                      them - the aov-plan-card expects body and actions as two
+                                      children. --}}
+                                <div class="position-relative">
                                                 {{#if ../apiInfo.tokenBasedSubscriptionEnabled}}
                                                     <button id="subscribe-btn-{{policyID}}" type="button"
                                                         class="common-btn-primary p-1 ps-2 pe-2 w-100 subscription-plan-subscribe-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"

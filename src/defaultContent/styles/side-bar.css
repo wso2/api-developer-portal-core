@@ -274,14 +274,17 @@
     display: flex;
 }
 
-#apis.has-active-submenu {
-    background-color: var(--primary-dark);
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    margin-bottom: 0;
-}
+/* A section parent whose submenu is open is a header for that submenu, not a selected
+   item: --primary-dark reads as the group's cap while the bright --primary-light stays
+   with whichever child is actually current. At (1,1,0) each of these outranks
+   `.nav-link.active` at (0,2,0), which common.js also puts on the parent.
 
-#mcps.has-active-submenu {
+   #applications was missing from this list, so Applications alone fell through to the
+   active highlight and rendered as if the parent and the submenu item were both
+   selected. The three sections behave identically now. */
+#apis.has-active-submenu,
+#mcps.has-active-submenu,
+#applications.has-active-submenu {
     background-color: var(--primary-dark);
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;

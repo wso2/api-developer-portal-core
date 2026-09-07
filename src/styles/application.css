@@ -60,6 +60,13 @@
   width: 100%;
   margin-left: calc(var(--bs-gutter-x, 1.5rem) * 0.5);
   margin-right: calc(var(--bs-gutter-x, 1.5rem) * 0.5);
+  /* Bootstrap's `.row > *` puts half a gutter of padding on every direct child of a row,
+     this container included. Inside a bordered box that reads as a 12px dead margin
+     between the border and the table on both sides - visible as the row highlight
+     stopping short of the frame on hover. .sub-tablewrap has no padding; neither should
+     this. The margins above already do the aligning. */
+  padding-left: 0;
+  padding-right: 0;
   border: 0.0625rem solid var(--border);
   border-radius: 0.75rem;
   overflow: hidden;

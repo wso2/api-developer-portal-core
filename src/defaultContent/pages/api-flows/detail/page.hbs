@@ -22,11 +22,13 @@
     {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav}}
 
     <div class="flow-detail-section">
-        {{!-- Back Button --}}
-        <a href="{{baseUrl}}/api-workflows" class="flow-detail-back">
-            <i class="bi bi-arrow-left"></i>
-            Back
-        </a>
+        {{!-- Breadcrumb, replacing the bespoke Back link - upstream's detail page carries
+              one, and so does every other detail page in the portal. --}}
+        <nav class="dp-breadcrumb flow-detail-breadcrumb">
+            <a class="dp-breadcrumb-item" href="{{baseUrl}}/api-workflows">API Workflows</a>
+            <i class="bi bi-chevron-right dp-breadcrumb-sep"></i>
+            <span class="dp-breadcrumb-current">{{flow.name}}</span>
+        </nav>
 
         {{!-- Header --}}
         <div class="flow-detail-header">
@@ -36,8 +38,12 @@
             </div>
             <div class="flow-header-actions">
                 {{#unless (eq flow.agentVisibility "HIDDEN")}}
-                <button class="common-btn-primary discover-ai-btn" id="openPromptBtn" data-bs-toggle="modal" data-bs-target="#agentPromptModal">
-                    <img src="/images/ai-stars-icon.svg" width="16" height="16" aria-hidden="true" alt="" style="margin-right:6px;vertical-align:middle;">Try with AI
+                {{!-- dp-btn--ai, the same treatment "Try with AI" gets on the API and MCP
+                      landing pages. It was common-btn-primary here, so the identical
+                      action rendered navy on this page and purple on the other two. --}}
+                <button type="button" class="dp-btn dp-btn--ai" id="openPromptBtn"
+                    data-bs-toggle="modal" data-bs-target="#agentPromptModal">
+                    <i class="bi bi-robot"></i> Try with AI
                 </button>
                 {{/unless}}
             </div>
@@ -60,36 +66,49 @@
     {{> alert}}
 
     {{!-- ── AGENT PROMPT MODAL ── --}}
+    {{!-- The hero-modal treatment the API and MCP landing pages use for the same action.
+          agent-prompt.css is already linked above, so this needs no new CSS.
+
+          Every id is unchanged - agentPromptModal, btnRunClaude, btnDownloadPrompt,
+          btnCopyPrompt, modalAgentPromptText - so api-flow-detail.js is untouched. The
+          copy button deliberately keeps a single <i> rather than the landing pages'
+          copy-btn-icon/copy-btn-check pair: that handler swaps the icon's className
+          directly (api-flow-detail.js:120), and the two-span markup would break it. --}}
     <div class="modal fade" id="agentPromptModal" tabindex="-1" aria-labelledby="agentPromptModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div>
-                        <h5 class="modal-title mb-0" id="agentPromptModalLabel">Agent Prompt</h5>
+        <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+            <div class="modal-content hero-modal">
+
+                <div class="hero-modal-header">
+                    <div class="hero-modal-title-row">
+                        <span class="hero-modal-icon"><i class="bi bi-stars" aria-hidden="true"></i></span>
+                        <h2 class="hero-modal-title" id="agentPromptModalLabel">Try with AI agent</h2>
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="hero-modal-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="bi bi-x-lg" aria-hidden="true"></i>
+                    </button>
                 </div>
-                <div class="modal-body p-0">
-                    <div class="api-flow-prompt-toolbar">
-                        <span class="small text-muted">Use this prompt to let your AI agent execute the workflow—handling API calls, dependencies, and errors automatically</span>
-                        <div class="prompt-modal-toolbar">
-                            <button type="button" class="btn-run-prompt" id="btnRunClaude">
-                                <i class="bi bi-play-fill"></i> Run in Claude
-                            </button>
-                        </div>
-                    </div>
-                    <div class="api-flow-prompt-pre-wrapper">
-                        <div class="prompt-pre-actions">
-                            <button type="button" class="prompt-tool-btn" id="btnDownloadPrompt" title="Download as .txt">
+
+                <div class="hero-modal-info">
+                    <p class="hero-modal-info-text">Use this prompt to let your AI agent execute the workflow &mdash; handling API calls, dependencies and errors automatically.</p>
+                    <button type="button" class="hero-run-btn" id="btnRunClaude">
+                        <i class="bi bi-play-fill" aria-hidden="true"></i> Run in Claude
+                    </button>
+                </div>
+
+                <div class="modal-body hero-modal-body">
+                    <div class="hero-prompt-card">
+                        <div class="hero-prompt-actions">
+                            <button type="button" class="hero-prompt-tool" id="btnDownloadPrompt" title="Download as .txt">
                                 <i class="bi bi-download"></i>
                             </button>
-                            <button type="button" class="prompt-tool-btn" id="btnCopyPrompt" title="Copy prompt">
+                            <button type="button" class="hero-prompt-tool" id="btnCopyPrompt" title="Copy prompt">
                                 <i class="bi bi-copy"></i>
                             </button>
                         </div>
-                        <pre id="modalAgentPromptText" class="api-flow-prompt-pre">{{flow.agentPrompt}}</pre>
+                        <pre id="modalAgentPromptText" class="hero-prompt-pre">{{flow.agentPrompt}}</pre>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>

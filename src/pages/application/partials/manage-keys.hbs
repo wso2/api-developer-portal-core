@@ -1,35 +1,80 @@
 <head>
     <link rel="stylesheet" href="/technical-styles/manage-keys.css" />
+    {{!-- For the application-identity block below: overview.css styles the card and its
+          inline-edit controls, edit-application-form.js drives them. --}}
+    <link rel="stylesheet" href="/technical-styles/overview.css" />
     <script src="/technical-scripts/oauth2-key-generation.js" defer></script>
     <script src="/technical-scripts/api-key-generation.js" defer></script>
+    <script src="/technical-scripts/edit-application-form.js" defer></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 </head>
 <main>
     {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav }}
     {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav }}
+    {{!-- Breadcrumb, matching the other application-scoped pages.
+
+          No container-fluid here, unlike the API and MCP landing pages. Their breadcrumb
+          bar sits at the content-area edge and needs the 0.75rem gutter to reach the
+          portal's 134px content line; this one already starts there, so the gutter pushed
+          the trail 12px past its own page title. --}}
+    <div class="dp-breadcrumb-bar dp-breadcrumb-bar--flush">
+        <nav class="dp-breadcrumb">
+            <a class="dp-breadcrumb-item" href="{{baseUrl}}/applications">Applications</a>
+            <i class="bi bi-chevron-right dp-breadcrumb-sep"></i>
+            <a class="dp-breadcrumb-item" href="{{baseUrl}}/applications/{{applicationMetadata.id}}">{{applicationMetadata.name}}</a>
+            <i class="bi bi-chevron-right dp-breadcrumb-sep"></i>
+            <span class="dp-breadcrumb-current">Manage Keys</span>
+        </nav>
+    </div>
     <section class="section keys-section">
-        <div>
-            <div class="container-header mb-4 d-sm-flex justify-content-between align-items-center">Manage Keys - {{applicationMetadata.name}}</div>
+        {{!-- Page chrome ported from upstream: a titled header with a subtitle, and the
+              environment chooser as two cards rather than a bare tab strip.
+
+              The credentials below are untouched. Upstream restructures them around a
+              manage-keys-km-card partial; ours are ~1,100 lines of accordion wired to
+              oauth2-key-generation.js and api-key-generation.js. These cards keep the
+              original ids and data-bs-target values, so Bootstrap drives the very same
+              tabs and none of that machinery had to move. --}}
+        {{!-- Upstream renders overview and manage-keys as two partials of one
+              /applications/<id> page, so its name and description stay editable while you
+              work on keys. Ours puts manage-keys on its own route, so the same block is
+              included here. hideKeysLink drops the "Manage Keys" button - this is that
+              page - and hideSubscriptionCount keeps the card to identity alone. --}}
+        {{> application-identity hideKeysLink=true hideSubscriptionCount=true }}
+
+        <div class="mk-header">
+            <h2 class="mk-title">Manage Keys</h2>
+            <p class="mk-subtitle">Generate and govern OAuth2 credentials for <strong>{{applicationMetadata.name}}</strong>. Each key manager issues its own consumer key &amp; secret.</p>
         </div>
 
         <div>
-        <ul class="nav nav-tabs key-btn-container" id="keysTab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="key-btn active" id="production-tab" data-bs-toggle="tab" data-bs-target="#production"
-                    type="button" role="tab" aria-controls="production" aria-selected="true">
-                    Production
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="key-btn" id="sandbox-tab" data-bs-toggle="tab" data-bs-target="#sandbox" type="button"
-                    role="tab" aria-controls="sandbox" aria-selected="false">
-                    Sandbox
-                </button>
-            </li>
-        </ul>
+        <div class="mk-env-selector" role="tablist">
+            <button class="mk-env-card active" id="production-tab" role="tab" type="button"
+                data-bs-toggle="tab" data-bs-target="#production"
+                aria-controls="production" aria-selected="true">
+                <span class="mk-env-dot mk-env-dot-prod"></span>
+                <span class="mk-env-text">
+                    <span class="mk-env-name">Production</span>
+                    <span class="mk-env-desc">Live traffic</span>
+                </span>
+            </button>
+            <button class="mk-env-card" id="sandbox-tab" role="tab" type="button"
+                data-bs-toggle="tab" data-bs-target="#sandbox"
+                aria-controls="sandbox" aria-selected="false">
+                <span class="mk-env-dot mk-env-dot-sandbox"></span>
+                <span class="mk-env-text">
+                    <span class="mk-env-name">Sandbox</span>
+                    <span class="mk-env-desc">Safe to test</span>
+                </span>
+            </button>
+        </div>
 
-        <div class="tab-content" id="keysTabContent">
+        <div class="tab-content mk-tab-content" id="keysTabContent">
             <div class="tab-pane fade show active" id="production" role="tabpanel" aria-labelledby="production-tab">
+                <div class="mk-context-banner mk-context-banner-prod">
+                    <i class="bi bi-circle-fill mk-env-dot-prod-icon"></i>
+                    <span>You are viewing <strong>Production</strong> credentials. Tokens issued here are valid in the live environment.</span>
+                </div>
                 <div class="accordion" id="productionAccordion">
                     <div class="accordion-item mb-3">
                         <h2 class="accordion-header" id="production-oauth2">
@@ -589,13 +634,11 @@
                 </div>
             </div>
             <div class="tab-pane fade" id="sandbox" role="tabpanel" aria-labelledby="sandbox-tab">
-                <div class="info-box mt-0">
-                    <div class="info-content">
-                        <div class="info-title">
-                            <i class="bi bi-info-circle-fill me-2"></i>
-                            These keys can be used only for the sandbox environment.
-                        </div>
-                    </div>
+                {{!-- Same banner treatment as the production pane, replacing the generic
+                      .info-box so both environments read as a matched pair. --}}
+                <div class="mk-context-banner mk-context-banner-sandbox">
+                    <i class="bi bi-circle-fill mk-env-dot-sandbox-icon"></i>
+                    <span>You are viewing <strong>Sandbox</strong> credentials. These keys can be used only for the sandbox environment.</span>
                 </div>
                 <div class="accordion" id="sandboxAccordion">
                         <div class="accordion-item mb-3">
