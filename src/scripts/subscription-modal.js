@@ -192,19 +192,48 @@ async function prepareSubscriptionModal(modalId) {
             plans.forEach(plan => {
                 const col = document.createElement('div');
                 col.className = 'col-xl-3 col-lg-4 col-md-6 col-12';
+                /* Same aov-plan-card the template renders for non-platform plans, so a
+                   platform plan injected here is indistinguishable from one rendered
+                   server-side. Previously this built the older card dev-card markup, which
+                   is why the modal could show two different plan cards side by side. */
+                const rawRate = plan.requestCount || plan.rate;
+                const unlimited = rawRate === '' || rawRate === null || rawRate === undefined ||
+                    String(rawRate) === '0' || String(rawRate) === '-1' ||
+                    String(rawRate).toLowerCase() === 'unlimited';
                 col.innerHTML = `
-                    <div class="card dev-card subscription-card">
-                        <div class="card-body align-items-center text-center p-0">
-                            <span class="subscription-plans-card-title">${escapeHtml(plan.displayName || plan.subscriptionPlanName || '')}</span>
-                            <h1 class="subscription-plans-request-count">${escapeHtml(String(plan.requestCount || plan.rate || ''))}</h1>
-                            <p class="subscription-plans-card-subtitle pt-0">requests per minute</p>
+                    <div class="aov-plan-card subscription-card">
+                        <div class="aov-plan-ribbon" aria-hidden="true">
+                            <div class="aov-plan-ribbon-label api-ribbon-label">SUBSCRIBED</div>
+                        </div>
+                        <div class="aov-plan-body">
+                            <div class="aov-plan-card-head">
+                                <div class="aov-plan-name-row">
+                                    <span class="aov-plan-icon" style="background: var(--surface-sunken); color: var(--primary);">
+                                        <i class="bi bi-lightning-charge-fill"></i>
+                                    </span>
+                                    <span class="aov-plan-name">${escapeHtml(plan.displayName || plan.subscriptionPlanName || '')}</span>
+                                </div>
+                            </div>
+                            <div class="plan-kpis">
+                                <div class="plan-kpi-row">
+                                    <div class="plan-kpi-label">Rate limit</div>
+                                    <div class="plan-kpi-valueTop">
+                                        ${unlimited
+                                            ? '<span class="plan-kpi-amount" title="Unlimited">&infin;</span>'
+                                            : `<span class="plan-kpi-amount">${escapeHtml(String(rawRate))}</span>`}
+                                        <span class="plan-kpi-unit">req/min</span>
+                                    </div>
+                                    <div class="plan-kpi-labelSub"></div>
+                                    <div class="plan-kpi-valueSub"><span class="plan-kpi-badge-placeholder">&nbsp;</span></div>
+                                </div>
+                            </div>
                         </div>
                         <div class="position-relative">
                             <div class="message-overlay hidden"><div class="message-content"><i class="bi message-icon"></i><p class="message-text"></p></div><button type="button" class="close-message" aria-label="Close">&times;</button></div>
                         </div>
                     </div>
                 `;
-                const card = col.querySelector('.card');
+                const card = col.querySelector('.aov-plan-card');
                 const btn = document.createElement('button');
                 btn.className = 'common-btn-primary subscribe-btn w-100';
                 btn.textContent = 'Subscribe';

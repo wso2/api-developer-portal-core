@@ -7,19 +7,15 @@
 {{!-- Ported to upstream's applications page: page-header with a title and description,
       a dp-empty state, and an apps-grid of app-cards.
 
-      The create flow is ours, not upstream's. Upstream opens a modal; we expand a card
-      into a form, driven by add-application-form.js. Every id that script reads is kept
-      exactly - applicationCreateCard, applicationCreateForm, createApplicationCardWrapper,
-      applicationForm, applicationName, applicationDescription, nameError,
-      descriptionError, remainingCharacters, createAppButton, cancelCreateButton,
-      createButton, message-overlay - so no JS changed.
+      The create flow is upstream's dialog carrying our form. add-application-form.js still
+      owns validation and the POST; only its show/hide functions changed, from expanding a
+      card in the grid to opening the modal at the foot of this file.
 
-      Three of those ids were missing from this template entirely: applicationDescription,
-      descriptionError and remainingCharacters. add-application-form.js dereferences all
-      three unguarded (`descriptionTextarea.addEventListener` at line 112, and
-      `descriptionError.style` inside validateForm), so its DOMContentLoaded handler threw
-      on every visit and the form-submit guard below it never registered. Rendering the
-      description field - which upstream's create form has too - is what fixes that. --}}
+      Three ids this template never rendered - applicationDescription, descriptionError and
+      remainingCharacters - are now present. add-application-form.js dereferences all three
+      unguarded (`descriptionTextarea.addEventListener`, and `descriptionError.style` inside
+      validateForm), so its DOMContentLoaded handler threw on every visit and the
+      form-submit guard below it never registered. --}}
 <section class="apps-section">
   <div class="apps-page-container" id="applicationsContainer">
 
@@ -30,82 +26,27 @@
       </div>
       {{#if applicationsMetadata.length}}
       <button class="apps-create-btn" id="createButton" type="button"
-        onclick="toggleCreateCard()" {{#if @root.isReadOnlyMode}}disabled{{/if}}>
+        {{#if @root.isReadOnlyMode}}disabled{{/if}}>
         <i class="bi bi-plus"></i> Create application
       </button>
       {{/if}}
     </div>
 
-    {{!-- Empty state. The create card below is revealed in its place when there are no
-          applications, so this button only has to open the form. --}}
+    {{!-- Empty state. Carries its own create button now that the grid no longer holds a
+          plus-card to click. --}}
     {{#unless applicationsMetadata.length}}
     <div class="dp-empty">
       <span class="dp-empty-icon"><i class="bi bi-grid-3x3-gap-fill"></i></span>
       <h2 class="dp-empty-title">No applications yet</h2>
       <p class="dp-empty-desc">Create an application to generate API keys and subscribe to APIs. You can manage all your credentials in one place.</p>
+      <button type="button" class="apps-create-btn" id="createButtonEmpty"
+        {{#if @root.isReadOnlyMode}}disabled{{/if}}>
+        <i class="bi bi-plus"></i> Create application
+      </button>
     </div>
     {{/unless}}
 
     <div class="apps-grid">
-
-      {{!-- Create application card. Hidden once applications exist - the header button
-            reveals it then. --}}
-      <div class="{{#if applicationsMetadata.length}}d-none{{/if}}" id="createApplicationCardWrapper">
-        <div class="create-application-card card {{#if @root.isReadOnlyMode}}disabled{{/if}} {{#if applicationsMetadata.length}}d-none{{/if}}"
-          id="applicationCreateCard"
-          style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{else}} cursor: pointer; {{/if}}"
-          onclick="showApplicationForm()">
-          <span class="plus-icon">+</span>
-          <span class="create-text">Create Application</span>
-        </div>
-
-        <div class="application-create-card card d-none" id="applicationCreateForm">
-          <div class="application-layout">
-            <div class="application-content">
-              <form id='applicationForm' class='create-app-form'>
-                <div class="app-form-group">
-                  <label for="applicationName">Application name <span class="app-required">*</span></label>
-                  <input type="text" id="applicationName" class="form-control" placeholder="e.g. My Mobile App"
-                    maxlength="100" autocomplete="off" required />
-                  <div id="nameError" class="error-msg text-danger mt-1 d-none">
-                    Application name cannot be empty.
-                  </div>
-                </div>
-
-                <div class="app-form-group">
-                  <label for="applicationDescription">Description</label>
-                  <textarea id="applicationDescription" class="form-control" rows="3" maxlength="256"
-                    placeholder="What is this application for? (optional)" style="resize:vertical;"></textarea>
-                  <div class="app-form-hint">
-                    <span id="remainingCharacters">256</span> characters remaining
-                  </div>
-                  <div id="descriptionError" class="error-msg text-danger mt-1" style="display:none;">
-                    Description is too long.
-                  </div>
-                </div>
-
-                <div class="application-card-footer">
-                  <button type='button' class='btn common-btn-outlined add-application-action-btn' id='cancelCreateButton'
-                    data-has-apps="{{#if applicationsMetadata.length}}true{{else}}false{{/if}}"
-                    onclick="event.stopPropagation(); hideApplicationForm(this);">
-                    Cancel
-                  </button>
-                  <button type='submit' class='btn common-btn-primary add-application-action-btn' id='createAppButton'>
-                    Create
-                  </button>
-                </div>
-              </form>
-            </div>
-            <div class="message-overlay hidden" id="message-overlay">
-              <div class="message-content">
-                <i class="bi message-icon"></i>
-                <p class="message-text"></p>
-              </div>
-              <button type="button" class="close-message" aria-label="Close message">&times;</button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {{!-- Application cards --}}
       {{#applicationsMetadata}}
@@ -122,9 +63,10 @@
 
         <p class="app-card-desc">{{description}}</p>
 
+        {{!-- Footer carries the delete button alone, as upstream's does. The whole card is
+              already a link to the application, so a "View details" action beside it was
+              a second route to the same place. --}}
         <div class="app-card-footer">
-          <a href="{{../baseUrl}}/applications/{{id}}" class="application-name-link"
-            onclick="event.stopPropagation();">View details</a>
           <button type="button" class="app-delete-btn {{#if @root.isReadOnlyMode}}disabled{{/if}}"
             title="Delete application" id="trash-btn-{{id}}"
             onclick="event.stopPropagation(); openWarningModal('deleteApplication', '{{id}}')">
@@ -145,3 +87,67 @@
     </div>
   </div>
 </section>
+
+{{!-- ── Create application modal ──
+      Upstream's dialog shell, carrying our form. Every id add-application-form.js reads
+      is preserved - applicationForm, applicationName, applicationDescription, nameError,
+      descriptionError, remainingCharacters, createAppButton, cancelCreateButton and
+      message-overlay - so the validation and the POST are untouched; only the
+      show/hide functions changed, from toggling a card to opening this. --}}
+<div class="app-modal-overlay" id="app-create-modal" role="dialog" aria-modal="true"
+  aria-labelledby="app-create-modal-title">
+  <div class="app-modal">
+    <div class="app-modal-head">
+      <div class="app-modal-head-left">
+        <span class="app-modal-icon"><i class="bi bi-grid-3x3-gap-fill"></i></span>
+        <h2 class="app-modal-title" id="app-create-modal-title">Create application</h2>
+      </div>
+      <button type="button" class="app-modal-close" id="app-create-close" aria-label="Close">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <form id="applicationForm" class="create-app-form">
+      <div class="app-modal-body">
+        <div class="app-form-group">
+          <label for="applicationName">Application name <span class="app-required">*</span></label>
+          <input type="text" id="applicationName" class="app-form-input" placeholder="e.g. My Mobile App"
+            maxlength="100" autocomplete="off" required />
+          <div id="nameError" class="error-msg text-danger mt-1 d-none">
+            Application name cannot be empty.
+          </div>
+        </div>
+
+        <div class="app-form-group">
+          <label for="applicationDescription">Description</label>
+          <textarea id="applicationDescription" class="app-form-input" rows="3" maxlength="256"
+            placeholder="What is this application for? (optional)" style="resize:vertical;"></textarea>
+          <div class="app-form-hint">
+            <span id="remainingCharacters">256</span> characters remaining
+          </div>
+          <div id="descriptionError" class="error-msg text-danger mt-1" style="display:none;">
+            Description is too long.
+          </div>
+        </div>
+      </div>
+
+      <div class="app-modal-footer">
+        <button type="button" class="app-btn-secondary" id="cancelCreateButton"
+          data-has-apps="{{#if applicationsMetadata.length}}true{{else}}false{{/if}}">
+          Cancel
+        </button>
+        <button type="submit" class="app-btn-primary" id="createAppButton" disabled>
+          Create
+        </button>
+      </div>
+    </form>
+
+    <div class="message-overlay hidden" id="message-overlay">
+      <div class="message-content">
+        <i class="bi message-icon"></i>
+        <p class="message-text"></p>
+      </div>
+      <button type="button" class="close-message" aria-label="Close message">&times;</button>
+    </div>
+  </div>
+</div>

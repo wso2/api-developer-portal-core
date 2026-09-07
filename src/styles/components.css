@@ -365,8 +365,18 @@
   color: var(--text-muted);
 }
 
+/* Page content gutter.
+
+   Every page's content has to begin on the same vertical, and the portal's de-facto
+   standard is Bootstrap's .container-fluid gutter - 0.75rem inside .content-area - which
+   is what the API and MCP listings and the subscriptions page all inherit. This rule had
+   no horizontal padding at all, so a page built on it started 12px further left than any
+   of them. Top spacing matches the subscriptions page for the same reason.
+
+   The listing heroes stay flush with the top of .content-area on purpose: the hero is a
+   card and carries its own interior padding, as upstream's does. */
 .page-container {
-  padding: 1rem 0;
+  padding: 1.5rem 0.75rem;
 }
 
 /* ── Error box (inline validation/not-found message) ─────── */
@@ -1179,4 +1189,46 @@
 .aov-endpoint-icon {
     color: var(--text-subtle);
     flex: none;
+}
+
+/* The API identity strip inside the subscription modal reuses .aov-hero, but a dialog is
+   not a page: it needs no rounded card of its own inside the already-rounded modal, and
+   the modal supplies the horizontal padding. */
+.subscription-modal-hero {
+  border-radius: 0;
+  margin-bottom: 0;
+}
+
+/* Subscribe/Update control inside the modal's plan card.
+
+   On the API overview's rail the same control sits below an application picker, which
+   supplies the breathing room. In the modal the token-based branch renders the button on
+   its own, directly under the KPI block, so with no rule it sat flush against it - a 0px
+   gap where the rail has 69px. 0.875rem mirrors .plan-kpis' own margin-top, so the block
+   is spaced the same above and below.
+
+   Scoped to a direct child so the app-based branch, which wraps its dropdown and button
+   in a p-3 container of its own, is left alone. */
+.subscription-plan-modal .aov-plan-card > .position-relative > .subscription-plan-subscribe-btn {
+  margin-top: 0.875rem;
+}
+
+/* A breadcrumb takes over the job of spacing the page from the header, so the section it
+   introduces must not also apply its own top margin.
+
+   defaultContent/styles/main.css gives every `.section` a 3.5rem top margin - correct when
+   the section was the first thing on the page, but once a breadcrumb sits above it that
+   56px lands between the trail and the title instead. The breadcrumb's own 1.25rem
+   margin-bottom is the gap that belongs there.
+
+   At (0,2,0) this outranks the bare `.section` rule wherever the theme's main.css loads. */
+.dp-breadcrumb-bar + .section {
+  margin-top: 0;
+}
+
+/* Where a page's layout already supplies the top gap, the bar must not add a second one.
+   manage-keys renders inside the internal layout's `main.container-fluid.py-3`, whose 1rem
+   top padding put its trail 32px down against every other page's 16px. */
+.dp-breadcrumb-bar--flush {
+  padding-top: 0;
 }

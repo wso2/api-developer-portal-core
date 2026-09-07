@@ -416,7 +416,11 @@
 }
 
 .apps-page-container {
-  padding: 28px 36px 40px;
+  /* Upstream's 28px 36px 40px assumes its own page shell. Ours sits inside .content-area,
+     where 36px put this page's content 24px to the right of every other tab's. Horizontal
+     padding is the shared 0.75rem gutter and the top matches the other pages; the deeper
+     bottom padding is kept so the last row of cards is not flush against the footer. */
+  padding: 1.5rem 0.75rem 2.5rem;
 }
 
 .apps-create-btn {
@@ -590,3 +594,171 @@
 .app-card {
   position: relative;
 }
+
+/* ── Create-application modal ────────────────────────────────────
+   Ported from upstream's applications.css. Previously skipped, because our create flow
+   expanded a card in the grid rather than opening a dialog; now that the form is a modal
+   the block is live.
+
+   One departure: upstream toggles the overlay with an inline style="display:none" that
+   its script flips to flex. A .show class does the same without inline styles, which
+   keeps the toggle in CSS where the animation already lives. */
+.app-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+}
+
+.app-modal-overlay.show {
+  display: flex;
+  animation: app-fade-in 0.18s ease;
+}
+
+@keyframes app-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.app-modal {
+  width: 30rem;
+  max-width: calc(100vw - 2rem);
+  background: var(--white);
+  border-radius: 1rem;
+  padding: 1.75rem 1.875rem 1.5rem;
+  box-shadow: 0 24px 60px color-mix(in srgb, var(--ink) 34%, transparent);
+  animation: app-modal-pop 0.28s ease;
+}
+
+@keyframes app-modal-pop {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+
+.app-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.375rem;
+}
+
+.app-modal-head-left {
+  display: flex;
+  align-items: center;
+  gap: 0.8125rem;
+}
+
+.app-modal-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  border-radius: 0.6875rem;
+  background: var(--primary-surface);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.app-modal-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.app-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  background: none;
+  border-radius: 0.4375rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.12s, color 0.12s;
+}
+
+.app-modal-close:hover { background: var(--border); color: var(--text-strong); }
+
+.app-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.app-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.app-form-input {
+  width: 100%;
+  border: 0.0625rem solid var(--border-strong);
+  border-radius: 0.5rem;
+  padding: 0.6875rem 0.8125rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: var(--text-strong);
+  background: var(--white);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.app-form-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.1875rem color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.app-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--cta-gradient);
+  color: var(--white);
+  border: none;
+  border-radius: 1.25rem;
+  padding: 0.625rem 1.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.app-btn-primary:hover { opacity: 0.9; }
+.app-btn-primary:disabled { opacity: 0.5; cursor: default; pointer-events: none; }
+
+.app-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  background: var(--white);
+  border: 0.0625rem solid var(--border-strong);
+  color: var(--primary);
+  border-radius: 1.25rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.app-btn-secondary:hover { background: var(--primary-surface); }
+.app-btn-secondary:disabled { opacity: 0.5; cursor: default; pointer-events: none; }
+
+/* The message overlay is absolutely positioned; inside the dialog it needs its own
+   containing block, and it sits across the dialog's foot rather than a card's. */
+.app-modal { position: relative; }
+
+/* Stops the page scrolling behind an open dialog. */
+body.app-modal-open { overflow: hidden; }

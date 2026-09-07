@@ -25,10 +25,15 @@
     {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav }}
     {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav }}
     <div class="content">
+        {{!-- Upstream's page-header shell, replacing the bare container-header. The count
+              badge beside the title is gone: upstream shows none, and the table already
+              says how many there are. --}}
         <div class="container-fluid subscriptions-container">
-            <div class="container-header mb-4">
-                <span>Subscriptions</span>
-                {{#if subscriptions.length}}<span class="apilist-results-count">{{subscriptions.length}}</span>{{/if}}
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Subscriptions</h1>
+                    <p class="page-desc">APIs and MCP servers your applications are subscribed to.</p>
+                </div>
             </div>
             {{> subscription-list }}
         </div>

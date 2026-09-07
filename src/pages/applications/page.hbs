@@ -2,8 +2,15 @@
     {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav }}
     {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav }}
     {{!-- {{> applications-hero-banner}} --}}
+    {{!-- create-app is deliberately not included here. applications-listing now carries
+          its own create dialog, and the two share six element ids (applicationForm,
+          applicationName, applicationDescription, nameError, descriptionError,
+          remainingCharacters) - a collision that predates this page's rewrite, since the
+          old inline create card shared them too. Nothing on this page opened create-app
+          anyway: it is driven by closeModal(), which lives in subscription.js and is not
+          loaded here, so its Cancel and close buttons threw. It stays on the four pages
+          that do load subscription.js. --}}
     {{> applications-listing }}
-    {{> create-app }}
     {{> alert }}
     {{> warning modalTitle="Delete Application" modalMessage="Are you sure you want to delete this application? This action cannot be undone and will revoke all associated access tokens and subscriptions." modalFunction="deleteApplication()" }}
 </main>
