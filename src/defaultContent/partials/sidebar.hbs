@@ -1,3 +1,7 @@
+{{!-- Dismisses the mobile drawer. Inert above 860px and until common.js unhides it.
+      This partial is not customizable, so every organization gets it - but the drawer
+      itself only engages where header.hbs supplies #sidebarToggle. --}}
+<div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
 <div class="sidebar" id="sidebar">
   <nav class="nav">
     <a href="{{baseUrl}}/" class="nav-link" id="home">

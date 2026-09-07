@@ -26,6 +26,7 @@ const PAGES = [
     ['apis', 'pages/apis', ctx.apis],
     ['api-landing', 'pages/api-landing', ctx.apiLanding],
     ['docs', 'pages/docs', ctx.docs],
+    ['api-flows', 'pages/api-flows', ctx.apiFlows],
 ];
 
 for (const [name, pagePath, build] of PAGES) {
@@ -45,6 +46,15 @@ for (const [name, pagePath, build] of PAGES) {
 
 const INTERNAL = [
     ['applications', 'applications', { applicationsMetadata: [] }],
+    /* The empty fixture above only ever exercises the empty state - the create button,
+       the card grid and every .app-card inside it are all behind
+       {{#if applicationsMetadata.length}} and were never rendered by a test. */
+    ['applications-populated', 'applications', {
+        applicationsMetadata: [
+            { id: 'app-1', name: 'Mobile Client', description: 'Ships the public mobile app.', subscriptionCount: 2 },
+            { id: 'app-2', name: 'internal-batch', description: '', subscriptionCount: 0 },
+        ],
+    }],
 ];
 
 for (const [name, pageRelPath, extra] of INTERNAL) {

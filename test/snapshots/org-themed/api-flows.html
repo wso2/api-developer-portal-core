@@ -28,29 +28,17 @@
     <main class="main-container">
         <div class="content-area">
         <!--
- * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
+ * Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
- * WSO2 LLC. licenses this file to you under the Apache License,
- * Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
+ * API Flows Gallery
  -->
 <head>
     <link rel="stylesheet" href="/technical-styles/agent-prompt.css">
-    <script type="application/json" id="homeDiscoverData">{"baseUrl":"/testorg/views/default"}</script>
-    <script src="/technical-scripts/home-discover.js" defer></script>
-    <script src="/technical-scripts/particles.js" defer></script>
+    <link rel="stylesheet" href="/technical-styles/api-workflows.css">
+    <script type="application/json" id="apiFlowsDataContainer">[{"handle":"order-to-cash","name":"Order to Cash","description":"Places an order and settles payment.","visibility":"PUBLIC","agentVisibility":"VISIBLE","sourcesPreview":[{"name":"Orders API"},{"name":"Payments API"}],"sourcesMoreCount":2},{"handle":"internal-recon","name":"Internal Reconciliation","description":"Nightly ledger reconciliation.","visibility":"PRIVATE","agentVisibility":"HIDDEN","sourcesPreview":[]}]</script>
+    <script src='/technical-scripts/api-workflows.js' defer></script>
 </head>
+
 <main>
     <header>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -60,9 +48,33 @@
             <img src="/devportal/organizations/00000000-0000-0000-0000-000000000000/views/default/layout?fileType=image&fileName=devportalLogo.png" alt="Logo" class="navbar-logo me-2">
           </a>
           <div class="d-flex align-items-center me-2">
-            <div id="auth-section">
-              <a class="common-btn-primary login-btn" href="/testorg/views/default/login">Log In</a>
-            </div>
+            <a class="dropdown-toggle profile-link d-flex align-items-center p-1 fw-light" href="#" id="navbarDropdown"
+              role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <img src="/images/profile.svg" alt="Profile" class="profile-icon me-2">
+              <span>Ada</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end profile-options" aria-labelledby="navbarDropdown">
+              <li class="dropdown-item">
+                <div class="userprofile-info d-flex align-items-center">
+                  <img src="/images/profile.svg" class="profile-icon me-2">
+                  <div>
+                    <span class="user-name d-block">Ada Lovelace</span>
+                    <span class="user-email text-muted">ada@example.com</span>
+                  </div>
+                </div>
+              </li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li class="dropdown-item">
+                <i class="fas fa-credit-card me-2"></i>
+                <a href="/testorg/views/default/billing" class="profile-dropdown-link">Billing</a>
+              </li>
+              <li class="dropdown-item">
+                <i class="fas fa-sign-out-alt me-2"></i>
+                <a href="/testorg/views/default/logout" class="profile-dropdown-link">Log Out</a>
+              </li>
+            </ul>
           </div>
         </div>
       </nav>
@@ -108,6 +120,10 @@
               <span class="nav-text">Documentation</span>
             </a>
           </div>
+          <a href="/testorg/views/default/api-workflows" class="nav-link" id="api-workflows">
+            <i class="bi bi-diagram-3 sidebar-icon"></i>
+            <span class="nav-text">API Workflows</span>
+          </a>
           <a href="/testorg/views/default/applications" class="nav-link" id="applications">
             <img src="/images/applications-icon.svg" class="sidebar-icon" alt="" />
             <span class="nav-text">Applications</span>
@@ -129,21 +145,114 @@
           </a>
       </nav>
     
+      <a href="/testorg/views/default/configure" class="nav-link" id="ai-settings">
+        <i class="bi bi-gear sidebar-icon"></i>
+        <span class="nav-text">Settings</span>
+      </a>
       <div class="nav-section-divider"></div>
       <button class="collapse-btn" id="collapseBtn">
         <i class="bi bi-chevron-right"></i>
         <span class="collapse-text">Expand</span>
       </button>
     </div>
-    <div class="hero-section">
-      <div class="container-fluid">
-        <h1 class="hero-title">Welcome to the testorg developer portal</h1>
-        <p class="hero-description">Browse the APIs we publish and subscribe an application to get started.</p>
-        <div class="hero-buttons">
-          <a href="/testorg/views/default/apis" class="common-btn-primary common-btn-secondary">Browse our APIs &rarr;</a>
+
+    <div class="page-container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">API Workflows</h1>
+                <p class="page-desc">Pre-configured workflows let your AI agents reference these best practices to use your APIs correctly, every time &mdash; no hallucination, no manual setup.</p>
+            </div>
+            <a href="/testorg/views/default/configure" class="btn-manage-workflows">
+                <i class="bi bi-pencil-square"></i> Manage Workflows
+            </a>
         </div>
-      </div>
+
+        <div class="wf-grid">
+            <div class="wf-card" onclick="window.location.href='/testorg/views/default/api-workflows/order-to-cash';">
+                <div class="wf-card-head">
+                    <h3 class="wf-card-name">Order to Cash</h3>
+                </div>
+                <div class="wf-card-body">
+                    <p class="wf-card-desc">Places an order and settles payment.</p>
+                    <div class="wf-powered-label">Powered by</div>
+                    <div class="wf-api-pills">
+                        <span class="wf-api-pill" title="Orders API">Orders API</span>
+                        <span class="wf-api-pill" title="Payments API">Payments API</span>
+                        <span class="wf-api-pill">+2 more</span>
+                    </div>
+                </div>
+                <div class="wf-card-footer">
+                    <span class="wf-badge wf-badge--visibility" title="Visible to all visitors">
+                        <i class="bi bi-globe"></i> Public
+                    </span>
+                    <span class="dp-badge dp-badge--ai" title="AI agents can discover and use this workflow">
+                        <i class="bi bi-robot"></i> AI Ready
+                    </span>
+                </div>
+            </div>
+            <div class="wf-card" onclick="window.location.href='/testorg/views/default/api-workflows/internal-recon';">
+                <div class="wf-card-head">
+                    <h3 class="wf-card-name">Internal Reconciliation</h3>
+                </div>
+                <div class="wf-card-body">
+                    <p class="wf-card-desc">Nightly ledger reconciliation.</p>
+                </div>
+                <div class="wf-card-footer">
+                    <span class="wf-badge wf-badge--private" title="Only logged-in users can view this workflow">
+                        <i class="bi bi-lock-fill"></i> Private
+                    </span>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <div id="promptModal" class="prompt-modal">
+        <div class="prompt-modal-content">
+            <div class="prompt-modal-header">
+                <h3 id="promptFlowName"></h3>
+                <div class="prompt-modal-toolbar">
+                    <button class="prompt-tool-btn" id="btnDownloadPrompt" title="Download as .txt">
+                        <i class="bi bi-download"></i>
+                    </button>
+                    <button class="prompt-tool-btn" id="btnCopyPrompt" title="Copy prompt">
+                        <i class="bi bi-copy"></i>
+                    </button>
+                    <button class="btn-run-prompt" id="btnRunClaude">
+                        <i class="bi bi-play-fill"></i> Run in Claude
+                    </button>
+                    <button class="prompt-modal-close" id="promptModalClose" title="Close">&times;</button>
+                </div>
+            </div>
+            <div class="prompt-modal-body">
+                <pre class="prompt-text" id="promptText"></pre>
+            </div>
+        </div>
+    </div>
+
+    <head>
+      <link rel="stylesheet" href="/technical-styles/alert.css" />
+      <script src="/technical-scripts/alert.js" defer></script>
+    </head>
+    
+    <body>
+      <section>
+        <div
+          class="modal fade custom-alert"
+          id="alertModal"
+          tabindex="-1"
+          aria-hidden="true"
+        >
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-body">
+                <i class="alert-icon bi"></i>
+                <p class="modal-message"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </body>
 </main>
 
         </div>

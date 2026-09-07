@@ -30,6 +30,10 @@
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
       <nav class="navbar navbar-expand-lg custom-navbar fixed-top">
         <div class="container-fluid">
+          <button class="sidebar-toggle" id="sidebarToggle" type="button"
+            aria-label="Open navigation menu" aria-controls="sidebar" aria-expanded="false">
+            <i class="bi bi-list"></i>
+          </button>
           <a class="navbar-brand d-flex align-items-center" href="/testorg/views/default">
             <img src="/images/api-portal-logo.svg" alt="Logo" class="navbar-logo me-2" />
           </a>
@@ -41,6 +45,7 @@
         </div>
       </nav>
     </header>
+    <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
     <div class="sidebar" id="sidebar">
       <nav class="nav">
         <a href="/testorg/views/default/" class="nav-link" id="home">
@@ -114,60 +119,74 @@
       <script src='/technical-scripts/add-application-form.js' defer></script>
     </head>
     
-    <section class="section mt-0 mb-6">
-      <div class="container-fluid applicationspage-container" id="applicationsContainer">
-        <div class="container-header mb-4 d-sm-flex justify-content-between align-items-center">
-          <span>Applications</span>
-          
+    <section class="apps-section">
+      <div class="apps-page-container" id="applicationsContainer">
     
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Applications</h1>
+            <p class="page-desc">Applications hold the API keys and subscriptions you use to call APIs.</p>
+          </div>
         </div>
     
-        <div class="row row-gap-4">
+        <div class="dp-empty">
+          <span class="dp-empty-icon"><i class="bi bi-grid-3x3-gap-fill"></i></span>
+          <h2 class="dp-empty-title">No applications yet</h2>
+          <p class="dp-empty-desc">Create an application to generate API keys and subscribe to APIs. You can manage all your credentials in one place.</p>
+        </div>
     
-          <!-- Create application Card -->
-          <div class="col-12 col-md-6 col-lg-4 col-xl-3 " id="createApplicationCardWrapper">
-            <div class="create-application-card card  " id="applicationCreateCard" style=" cursor: pointer; "
+        <div class="apps-grid">
+    
+          <div class="" id="createApplicationCardWrapper">
+            <div class="create-application-card card  "
+              id="applicationCreateCard"
+              style=" cursor: pointer; "
               onclick="showApplicationForm()">
               <span class="plus-icon">+</span>
               <span class="create-text">Create Application</span>
             </div>
     
-            <div class="application-create-card card d-none" style=" cursor: pointer;"
-              id="applicationCreateForm">
+            <div class="application-create-card card d-none" id="applicationCreateForm">
               <div class="application-layout">
                 <div class="application-content">
                   <form id='applicationForm' class='create-app-form'>
-                    <div class="d-flex">
-                      <div class="application-icon-container">
-                        <img
-                          src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/application.svg"
-                          alt="Application icon" />
-                      </div>
-                      <div class="flex-grow-1 application-card-body">
-                        <!-- Application Name -->
-                        <div class="w-100">
-                          <input type="text" id="applicationName" class="form-control" placeholder="Name" required />
-                        </div>
-                        <div id="nameError" class="error-msg text-danger mt-1 d-none">
-                          Application name cannot be empty.
-                        </div>
+                    <div class="app-form-group">
+                      <label for="applicationName">Application name <span class="app-required">*</span></label>
+                      <input type="text" id="applicationName" class="form-control" placeholder="e.g. My Mobile App"
+                        maxlength="100" autocomplete="off" required />
+                      <div id="nameError" class="error-msg text-danger mt-1 d-none">
+                        Application name cannot be empty.
                       </div>
                     </div>
+    
+                    <div class="app-form-group">
+                      <label for="applicationDescription">Description</label>
+                      <textarea id="applicationDescription" class="form-control" rows="3" maxlength="256"
+                        placeholder="What is this application for? (optional)" style="resize:vertical;"></textarea>
+                      <div class="app-form-hint">
+                        <span id="remainingCharacters">256</span> characters remaining
+                      </div>
+                      <div id="descriptionError" class="error-msg text-danger mt-1" style="display:none;">
+                        Description is too long.
+                      </div>
+                    </div>
+    
                     <div class="application-card-footer">
-                        <button type='button' class='btn common-btn-outlined add-application-action-btn' id='cancelCreateButton' 
-                          data-has-apps="false" onclick="event.stopPropagation(); hideApplicationForm(this);">
-                            Cancel
-                          </button>
-                        <button type='submit' class='btn common-btn-primary add-application-action-btn' id='createAppButton'>
-                          Create  
-                        </button>
+                      <button type='button' class='btn common-btn-outlined add-application-action-btn' id='cancelCreateButton'
+                        data-has-apps="false"
+                        onclick="event.stopPropagation(); hideApplicationForm(this);">
+                        Cancel
+                      </button>
+                      <button type='submit' class='btn common-btn-primary add-application-action-btn' id='createAppButton'>
+                        Create
+                      </button>
                     </div>
                   </form>
-              </div>
-               <div class="message-overlay hidden" id="message-overlay">
-                  <div class="message-content" >
-                      <i class="bi message-icon"></i>
-                      <p class="message-text"></p>
+                </div>
+                <div class="message-overlay hidden" id="message-overlay">
+                  <div class="message-content">
+                    <i class="bi message-icon"></i>
+                    <p class="message-text"></p>
                   </div>
                   <button type="button" class="close-message" aria-label="Close message">&times;</button>
                 </div>
@@ -176,10 +195,10 @@
           </div>
     
     
-          <!-- Application Cards -->
         </div>
       </div>
-    </section>    <head>
+    </section>
+    <head>
       <link rel='stylesheet' href='/technical-styles/add-edit-application.css' />
     </head>
     

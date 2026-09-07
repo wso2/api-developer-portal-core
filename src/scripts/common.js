@@ -1,3 +1,15 @@
+/* Which of the two controls a plan card shows depends on the selected application, so it
+   has to be applied everywhere the selection changes - the click handler and the default
+   selection made on load. Keeping it in one function is what stops those two drifting:
+   the load path previously set the label and the hidden field but not this, so arriving
+   on a card whose subscribed application was preselected showed "Subscribe". */
+function syncSubscribeControl(dropdown, item) {
+    const container = dropdown && dropdown.closest(".subscription-container");
+    if (!container || !item) return;
+    container.classList.toggle("subscription-container--selected-subscribed",
+        item.dataset.subscribed === "true");
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     const sidebar = document.getElementById('sidebar');
     const collapseBtn = document.getElementById('collapseBtn');
@@ -48,8 +60,105 @@ document.addEventListener("DOMContentLoaded", function () {
             collapseBtn.querySelector('i').classList.add('bi-chevron-left');
         }
     });
-    
-    
+
+    /* ── Mobile drawer ──
+       Below 860px the sidebar is off-canvas (see side-bar.css) and this is the only way
+       to reach it. Every line is a no-op above that breakpoint, where the toggle and
+       backdrop are display:none and never receive events - and a no-op entirely for an
+       organization serving its own header, which has no #sidebarToggle. Ported from
+       upstream's common.js. */
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+
+    if (sidebar && sidebarToggle && sidebarBackdrop) {
+        sidebarBackdrop.hidden = false; // inert via CSS until the breakpoint applies
+
+        /* Mirrors side-bar.css's own 860px so the two cannot disagree. */
+        const mobileQuery = window.matchMedia('(max-width: 860px)');
+        const isOpen = () => sidebar.classList.contains('mobile-open');
+
+        /* A closed drawer is only moved off-screen by a transform, so without this it
+           stays in the tab order and the accessibility tree - a dozen focusable links a
+           keyboard user could tab into invisibly and a screen reader would announce.
+           Above the breakpoint the sidebar is ordinary visible layout and neither
+           attribute may apply, which is why this re-runs on breakpoint change too. */
+        const syncDrawerHiddenState = () => {
+            const hidden = mobileQuery.matches && !isOpen();
+            sidebar.toggleAttribute('inert', hidden);
+            sidebar.setAttribute('aria-hidden', hidden ? 'true' : 'false');
+        };
+
+        const openDrawer = () => {
+            sidebar.classList.add('mobile-open');
+            sidebarBackdrop.classList.add('visible');
+            sidebarToggle.setAttribute('aria-expanded', 'true');
+            document.body.classList.add('drawer-open');
+            // Before any caller focuses into it - focus() is a no-op on an inert subtree.
+            syncDrawerHiddenState();
+        };
+
+        const closeDrawer = () => {
+            /* Move focus out before the subtree goes inert, or it lands on <body> and the
+               user loses their place. The toggle is where they came from. */
+            if (sidebar.contains(document.activeElement)) {
+                sidebarToggle.focus();
+            }
+            sidebar.classList.remove('mobile-open');
+            sidebarBackdrop.classList.remove('visible');
+            sidebarToggle.setAttribute('aria-expanded', 'false');
+            document.body.classList.remove('drawer-open');
+            syncDrawerHiddenState();
+        };
+
+        sidebarToggle.addEventListener('click', () => {
+            if (isOpen()) {
+                closeDrawer();
+            } else {
+                openDrawer();
+                sidebar.querySelector('.nav-link')?.focus();
+            }
+        });
+
+        sidebarBackdrop.addEventListener('click', closeDrawer);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isOpen()) {
+                closeDrawer();
+                sidebarToggle.focus();
+            }
+        });
+
+        /* Picking a destination should dismiss the drawer. Submenu parents are '#'-href
+           and only expand a section, so they stay put. */
+        sidebar.addEventListener('click', (e) => {
+            const link = e.target.closest('a.nav-link');
+            if (!link || !isOpen()) return;
+            const href = link.getAttribute('href');
+            if (!href || href === '#') return;
+            closeDrawer();
+        });
+
+        /* Rotating to landscape or resizing past the breakpoint must not leave the drawer
+           flagged open, nor the sidebar inert once it is desktop layout again. matchMedia
+           rather than resize: it fires exactly on the crossing, including orientation
+           changes, which do not always emit resize. */
+        const syncToBreakpoint = () => {
+            if (!mobileQuery.matches && isOpen()) {
+                closeDrawer(); // already re-syncs the hidden state
+            } else {
+                syncDrawerHiddenState();
+            }
+        };
+        if (mobileQuery.addEventListener) {
+            mobileQuery.addEventListener('change', syncToBreakpoint);
+        } else if (mobileQuery.addListener) {
+            mobileQuery.addListener(syncToBreakpoint); // Safari < 14
+        }
+
+        // Initial state: inert below the breakpoint (the drawer starts closed), never above.
+        syncDrawerHiddenState();
+    }
+
     // Function to show loading state on subscription button
     window.showSubscribeButtonLoading = function(button) {
         if (button) {
@@ -223,23 +332,32 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Set active documentation link based on current path
     const setActiveDocLink = () => {
+        /* Compare path AND query. The Tryout entry differs from the API Definition entry
+           only by ?tryout=true, and this matched on pathname alone - so no tryout link
+           could ever match, and because the loop clears `active` from every link first,
+           "API Definition" stayed highlighted on the Tryout page.
+           Resolving through URL() also replaces the old endsWith() matching, which could
+           mark the wrong entry whenever one href was a suffix of another. */
         const currentPath = window.location.pathname;
+        const current = currentPath + window.location.search;
         const docLinks = document.querySelectorAll('.doc-link');
 
         // Check if we're on a docs page
         if (currentPath.includes('/docs/')) {
-            docLinks.forEach(link => {
+            const matched = [...docLinks].filter((link) => {
                 const href = link.getAttribute('href');
-                // Remove active class first
-                link.classList.remove('active');
-
-                // Add active class if the href matches the current path
-                if (href === currentPath ||
-                    (href && currentPath.endsWith(href)) ||
-                    (href && currentPath === href)) {
-                    link.classList.add('active');
-                }
+                if (!href) return false;
+                const resolved = new URL(href, window.location.origin);
+                return resolved.pathname + resolved.search === current;
             });
+
+            /* Only take over when a match was actually found. The template also marks the
+               current entry server-side, and clearing unconditionally - as this did - threw
+               that away whenever the comparison failed, leaving nothing highlighted. */
+            if (matched.length) {
+                docLinks.forEach((link) => link.classList.remove('active'));
+                matched.forEach((link) => link.classList.add('active'));
+            }
         }
     };
 
@@ -494,15 +612,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     subscribeButton.removeAttribute("disabled");
                 }
 
-                /* An application already on this plan cannot subscribe to it twice - the
-                   row is keyed on (app, org, api, plan) - so the control becomes "View
-                   subscription" rather than a dead Subscribe button. The option stays
-                   selectable so the subscription is reachable from here. */
-                const container = dropdown.closest(".subscription-container");
-                if (container) {
-                    container.classList.toggle("subscription-container--selected-subscribed",
-                        item.dataset.subscribed === "true");
-                }
+                syncSubscribeControl(dropdown, item);
                 
                 // Close dropdown
                 selectItems.classList.remove("show");
@@ -686,10 +796,16 @@ document.addEventListener("DOMContentLoaded", function () {
             const selectItemsContainer = dropdown.querySelector(".select-items-container");
             const createAppOption = dropdown.querySelector(".create-app-option");
 
-            // Select first non-subscribed app by default
-            const selectFirstAvailableApp = () => {
-                // Select the first available app
-                const firstAvailableApp = dropdown.querySelector(".select-item:not(.disabled)");
+            /* Open on the subscription if there is one. A plan that is already held should
+               show the application holding it and offer "View subscription"; only a plan
+               with no subscription opens on "Subscribe". Where several applications hold
+               the plan, the first in dropdown order wins.
+               (The original selector here was :not(.disabled), which stopped selecting
+               anything meaningful once subscribed options became selectable and carried
+               data-subscribed instead.) */
+            const selectDefaultApp = () => {
+                const firstAvailableApp = dropdown.querySelector('.select-item[data-subscribed="true"]')
+                    || dropdown.querySelector(".select-item");
                 if (firstAvailableApp) {
                     appId = firstAvailableApp.getAttribute("data-value");
                     const appName = firstAvailableApp.getAttribute("data-app-name");
@@ -707,16 +823,19 @@ document.addEventListener("DOMContentLoaded", function () {
                         selectedText.classList.add("selected");
                     }
                     
-                    // Check if this app is already subscribed (disabled)
                     const subscribeButton = card.querySelector(".subscription-plan-subscribe-btn[disabled]") || card.querySelector(".common-btn-primary[disabled]");
                     if (subscribeButton) {
                         subscribeButton.removeAttribute("disabled");
                     }
+
+                    // Sets "View subscription" when the preselected application holds the
+                    // plan, "Subscribe" when it does not.
+                    syncSubscribeControl(dropdown, firstAvailableApp);
                 }
             };
             
             // Call this function when the page loads
-            selectFirstAvailableApp();
+            selectDefaultApp();
 
             // Toggle dropdown when clicking on the selected item
             selectSelected.addEventListener("click", function (e) {
@@ -807,11 +926,7 @@ document.addEventListener("DOMContentLoaded", function () {
                    is keyed on (app, org, api, plan) - so the control becomes "View
                    subscription" rather than a dead Subscribe button. The option stays
                    selectable so the existing subscription is reachable from here. */
-                const container = dropdown.closest(".subscription-container");
-                if (container) {
-                    container.classList.toggle("subscription-container--selected-subscribed",
-                        item.dataset.subscribed === "true");
-                }
+                syncSubscribeControl(dropdown, item);
                 
                 // Close dropdown
                 selectItems.classList.remove("show");

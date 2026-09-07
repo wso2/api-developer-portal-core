@@ -42,3 +42,44 @@
     /* Above .hero-hero-body's z-index: 2, so the banner stays readable over the copy. */
     z-index: 5;
 }
+
+/* ── Sidebar link colour, ahead of side-bar.css ──────────────────
+   side-bar.css reaches the page as the ninth @import inside main.css, so the browser
+   cannot even discover it until main.css has been fetched and parsed. On a slow
+   navigation that leaves a window where the rail is painted before it lands - and an
+   <a href> with no author colour falls back to the user agent's link blue, which against
+   the dark rail reads as a dark blue flash.
+
+   Set on the container and inherited, deliberately: `.sidebar a` is specificity (0,1,1),
+   which is below side-bar.css's `.nav-link:hover` and `.nav-link.active` at (0,2,0), so
+   those still win once that sheet arrives. Nothing here duplicates a state colour, so
+   there is nothing to keep in step. This sheet is a <link>, so it is there at first paint.
+   ---------------------------------------------------------------- */
+.sidebar {
+    color: var(--on-dark);
+}
+
+.sidebar a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* ── Sidebar focus colour ────────────────────────────────────────
+   The rail is <nav class="nav">, so Bootstrap's nav block applies, and it carries
+   `.nav-link:focus, .nav-link:hover { color: var(--bs-nav-link-hover-color) }` -
+   which resolves to #0a58ca, a dark blue. side-bar.css answers the :hover half and
+   .active, but never :focus. Clicking a link leaves focus on it, so once the pointer
+   moves away the hover rule stops matching and Bootstrap's is the only one left: the
+   label turns blue for as long as the next page takes to arrive.
+
+   Retargeting Bootstrap's own custom property rather than adding a `.nav-link:focus`
+   rule, because a rule would tie at (0,2,0) with `.nav-link.active` and, loading after
+   it, would strip the white off the current page's entry. A property is read at use
+   time, so side-bar.css's :hover and .active still win on their own terms and only the
+   focus-alone case changes - back to the resting colour, which is what "unchanged while
+   it loads" means. --on-dark is the same value side-bar.css gives `.nav-link`.
+   ---------------------------------------------------------------- */
+.sidebar .nav {
+    --bs-nav-link-color: var(--on-dark);
+    --bs-nav-link-hover-color: var(--on-dark);
+}

@@ -20,6 +20,27 @@
     {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav }}
     {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode showPlatformApiKeysNav=showPlatformApiKeysNav showApiWorkflowsNav=showApiWorkflowsNav }}
     <div class="doc-content me-4">
+        {{!-- Breadcrumb and title, as upstream's documentation page has. dp-breadcrumb and
+              the page-header pair already ship in /technical-styles/components.css; this
+              page simply never used them. --}}
+        <nav class="dp-breadcrumb">
+            {{#if (eq apiType "MCP")}}
+            <a class="dp-breadcrumb-item" href="{{baseUrl}}/mcps">MCP Servers</a>
+            {{else}}
+            <a class="dp-breadcrumb-item" href="{{baseUrl}}/apis">APIs</a>
+            {{/if}}
+            {{!-- Guarded: without it a context missing apiName renders a bare chevron and
+                  an empty link, which is how the render fixtures come through. --}}
+            {{#if apiName}}
+            <i class="bi bi-chevron-right dp-breadcrumb-sep"></i>
+            <a class="dp-breadcrumb-item" href="{{baseDocUrl}}">{{apiName}}</a>
+            {{/if}}
+            <i class="bi bi-chevron-right dp-breadcrumb-sep"></i>
+            <span class="dp-breadcrumb-current">Documentation</span>
+        </nav>
+        <div class="page-header">
+            <h1 class="page-title">Documentation</h1>
+        </div>
         <div class="documents">
             <aside class="documents-sidebar">
                 {{#docTypes}}
@@ -29,7 +50,7 @@
                         Specification
                     </div>
                     <div class="doc-links">
-                        <a href="{{../baseDocUrl}}/docs/specification" class="doc-link">
+                        <a href="{{../baseDocUrl}}/docs/specification" class="doc-link{{#if @root.isSpecPage}}{{#unless @root.isTryoutPage}} active{{/unless}}{{/if}}">
                             <i class="bi bi-code"></i>
                             <div class="doc-title">
                                 {{#if (eq ../apiType "MCP")}}
@@ -42,7 +63,7 @@
                     </div>
                     {{#if (eq ../apiType "WS")}}
                     <div class="doc-links">
-                        <a href="{{../baseDocUrl}}/docs/specification?tryout=true" class="doc-link">
+                        <a href="{{../baseDocUrl}}/docs/specification?tryout=true" class="doc-link{{#if @root.isTryoutPage}} active{{/if}}">
                             <i class="bi bi-code"></i>
                             <div class="doc-title">
                                 Tryout
@@ -52,7 +73,7 @@
                     {{/if}}
                     {{#if (eq ../apiType "WEBSUB")}}
                     <div class="doc-links">
-                        <a href="{{../baseDocUrl}}/docs/specification?tryout=true" class="doc-link">
+                        <a href="{{../baseDocUrl}}/docs/specification?tryout=true" class="doc-link{{#if @root.isTryoutPage}} active{{/if}}">
                             <i class="bi bi-code"></i>
                             <div class="doc-title">
                                 Tryout
@@ -62,7 +83,7 @@
                     {{/if}}
                     {{#if (eq ../apiType "GRAPHQL")}}
                     <div class="doc-links">
-                        <a href="{{../baseDocUrl}}/docs/specification?tryout=true" class="doc-link">
+                        <a href="{{../baseDocUrl}}/docs/specification?tryout=true" class="doc-link{{#if @root.isTryoutPage}} active{{/if}}">
                             <i class="bi bi-code"></i>
                             <div class="doc-title">
                                 Tryout
@@ -78,7 +99,8 @@
                     </div>
                     <div class="doc-links">
                         {{#names}}
-                        <a href="{{../../baseDocUrl}}/docs/{{../type}}/{{stripMdExtension this}}" class="doc-link">
+                        <a href="{{../../baseDocUrl}}/docs/{{../type}}/{{stripMdExtension this}}"
+                            class="doc-link{{#if (and (eq @root.currentDocType ../type) (eq @root.currentDocName (stripMdExtension this)))}} active{{/if}}">
                             <i class="bi bi-file-text"></i>
                             <div class="doc-title">
                                 {{beforeSeparator this "."}}

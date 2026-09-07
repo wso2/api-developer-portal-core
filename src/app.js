@@ -200,7 +200,14 @@ const strategy = new OAuth2Strategy({
     }
     const decodedJWT = jwt.decode(params.id_token);
     const decodedAccessToken = jwt.decode(accessToken);
-    const firstName = decodedJWT['given_name'] || decodedJWT['nickname'];
+    /* Not every identity provider returns a given name. The email IdP sends given_name or
+       nickname, so the header showed "ashera"; the enterprise IdP sends neither, and the
+       header renders profile.firstName beside the avatar - so it fell back to an empty
+       span and the user saw only an icon. The local part of the address is a better last
+       resort than showing nothing, and it keeps every provider consistent. */
+    const emailClaim = decodedJWT['email'] || req.session.username || '';
+    const nameFromEmail = emailClaim.includes('@') ? emailClaim.split('@')[0] : emailClaim;
+    const firstName = decodedJWT['given_name'] || decodedJWT['nickname'] || nameFromEmail;
     const lastName = decodedJWT['family_name'];
     const organizationID = decodedJWT[claimNames[constants.ROLES.ORGANIZATION_CLAIM]] ? decodedJWT[config.orgIDClaim] : '';
     const roles = decodedJWT[claimNames[constants.ROLES.ROLE_CLAIM]] ? decodedJWT[config.roleClaim] : '';

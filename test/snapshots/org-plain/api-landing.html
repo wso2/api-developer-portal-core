@@ -60,6 +60,10 @@
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
       <nav class="navbar navbar-expand-lg custom-navbar fixed-top">
         <div class="container-fluid">
+          <button class="sidebar-toggle" id="sidebarToggle" type="button"
+            aria-label="Open navigation menu" aria-controls="sidebar" aria-expanded="false">
+            <i class="bi bi-list"></i>
+          </button>
           <a class="navbar-brand d-flex align-items-center" href="/testorg/views/default">
             <img src="/images/api-portal-logo.svg" alt="Logo" class="navbar-logo me-2" />
           </a>
@@ -71,6 +75,7 @@
         </div>
       </nav>
     </header>
+    <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
     <div class="sidebar" id="sidebar">
       <nav class="nav">
         <a href="/testorg/views/default/" class="nav-link" id="home">
@@ -137,6 +142,13 @@
         <i class="bi bi-chevron-right"></i>
         <span class="collapse-text">Expand</span>
       </button>
+    </div>
+    <div class="container-fluid dp-breadcrumb-bar">
+        <nav class="dp-breadcrumb">
+            <a class="dp-breadcrumb-item" href="/testorg/views/default/apis">APIs</a>
+            <i class="bi bi-chevron-right dp-breadcrumb-sep"></i>
+            <span class="dp-breadcrumb-current">Orders API</span>
+        </nav>
     </div>
     <div class="container-fluid">
         <div class="aov-hero">

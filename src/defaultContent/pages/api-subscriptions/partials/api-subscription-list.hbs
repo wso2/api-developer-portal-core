@@ -6,7 +6,7 @@
         <i class="bi bi-inbox"></i>
     </span>
     <h2 class="dp-empty-title">No subscriptions yet</h2>
-    <p class="dp-empty-desc">Nothing is subscribed to this API yet. Pick a plan on the <a href="{{baseUrl}}/api/{{@root.apiHandle}}#subscriptionPlans">API overview</a> to get started.</p>
+    <p class="dp-empty-desc">Nothing is subscribed to this {{#if @root.isMCP}}MCP server{{else}}API{{/if}} yet. Pick a plan on the <a href="{{baseUrl}}/{{@root.artifactPath}}/{{@root.apiHandle}}#subscriptionPlans">overview</a> to get started.</p>
 </div>
 {{#if subscriptions.length}}
 <div class="sub-scroll table-responsive">

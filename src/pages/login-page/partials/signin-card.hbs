@@ -17,76 +17,105 @@
  */
  -->
 {{#if localAuthEnabled}}
-<div class="container">
-    <h2 class="fw-bold">Sign in to continue</h2>
+{{!-- Local credentials. This branch is upstream's sign-in form: the on-prem portal has
+      only this mode, so the markup matches it element for element. --}}
+<h2 class="auth-form-title">Sign in to continue</h2>
+<p class="auth-form-sub">Enter your credentials to access the API Portal &amp; MCP Hub.</p>
 
-    {{#if loginError}}
-    <div class="alert alert-danger" role="alert" style="margin-bottom: 12px; font-size: 14px; color: #842029; background-color: #f8d7da; border: 1px solid #f5c2c7; border-radius: 4px; padding: 8px 12px;">
-        {{loginError}}
+{{#if loginError}}
+<div class="ln-error-banner" role="alert">
+  <i class="bi bi-exclamation-circle-fill"></i>
+  {{loginError}}
+</div>
+{{/if}}
+
+<form id="local-login-form" method="POST" action="{{baseUrl}}/login" data-base-url="{{baseUrl}}">
+  <div class="ln-fields">
+
+    <div class="auth-field">
+      <label class="auth-field-label" for="username">Username</label>
+      <div class="auth-input-wrap">
+        <i class="bi bi-person auth-input-icon" aria-hidden="true"></i>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          class="auth-input"
+          placeholder="Enter username"
+          required
+          autocomplete="username"
+        >
+      </div>
     </div>
-    {{/if}}
 
-    <form id="local-login-form" method="POST" data-base-url="{{baseUrl}}">
-        <div class="mb-3" style="text-align: left; margin-bottom: 16px;">
-            <label for="username" class="form-label" style="font-size: 14px; display: block; margin-bottom: 4px;">Username</label>
-            <input
-                type="text"
-                class="form-control"
-                id="username"
-                name="username"
-                placeholder="Enter username"
-                required
-                autocomplete="username"
-                style="width: 100%; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px;"
-            />
-        </div>
-        <div class="mb-3" style="text-align: left; margin-bottom: 16px;">
-            <label for="password" class="form-label" style="font-size: 14px; display: block; margin-bottom: 4px;">Password</label>
-            <input
-                type="password"
-                class="form-control"
-                id="password"
-                name="password"
-                placeholder="Enter password"
-                required
-                autocomplete="current-password"
-                style="width: 100%; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px;"
-            />
-        </div>
-        <button type="submit" class="btn w-100" style="background-color: #0d6efd; color: white; border: none; padding: 10px; border-radius: 4px; font-size: 14px; cursor: pointer; width: 100%; margin-top: 4px;">
-            Sign In
+    <div class="auth-field">
+      <label class="auth-field-label" for="password">Password</label>
+      <div class="auth-input-wrap">
+        <i class="bi bi-lock auth-input-icon" aria-hidden="true"></i>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          class="auth-input ln-pw-input"
+          placeholder="Enter password"
+          required
+          autocomplete="current-password"
+        >
+        <button type="button" class="ln-pw-toggle" id="ln-pw-toggle" aria-label="Toggle password visibility" tabindex="-1">
+          <i class="bi bi-eye" id="ln-pw-icon"></i>
         </button>
-    </form>
-</div>
+      </div>
+    </div>
+
+    <button type="submit" class="ln-signin-btn auth-continue-btn auth-continue-btn--active">Sign in</button>
+
+  </div>
+</form>
+
+<script>
+  (function () {
+    var toggle = document.getElementById('ln-pw-toggle');
+    var input  = document.getElementById('password');
+    var icon   = document.getElementById('ln-pw-icon');
+    if (!toggle) return;
+    toggle.addEventListener('click', function () {
+      var show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      icon.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+    });
+  })();
+</script>
 {{else}}
-<div class="container">
-    <h2 class="fw-bold">Sign in to continue</h2>
-    <button class="btn" id="login-google">
-        <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/Google.svg" alt="Google" width="20">
-        Continue with Google
-    </button>
-    <button class="btn" id="login-github">
-        <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/Github.svg" alt="GitHub" width="20">
-        Continue with GitHub
-    </button>
-    <button class="btn" id="login-microsoft">
-        <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/Microsoft.svg" alt="Microsoft" width="20">
-        Continue with Microsoft
-    </button>
-    <a class="btn" id="show-enterprise">
-        <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/Enterprise.svg" alt="Enterprise" width="20">
-        Sign in with Enterprise ID
-    </a>
+{{!-- Federated sign-in. No upstream counterpart - the on-prem portal authenticates
+      against local credentials only - so the providers keep their own buttons, built from
+      the shell's vocabulary so both modes read as the same page. The element ids are the
+      contract with signin.js and must not change. --}}
+<h2 class="auth-form-title">Sign in to continue</h2>
+<p class="auth-form-sub">Choose how you would like to access the API Portal &amp; MCP Hub.</p>
 
-    <div class="or-divider">OR</div>
-
-    <button class="btn" id="login-email">
-        <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/Email.svg" alt="Email" width="20">
-        Sign in with Email
-    </button>
-
-    {{!-- <div class="signup">
-        Don't have an account? <a>Sign Up</a>
-    </div> --}}
+<div class="ln-idp-list">
+  <button type="button" class="ln-idp-btn" id="login-google">
+    <img class="ln-idp-icon" src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/Google.svg" alt="" aria-hidden="true">
+    Continue with Google
+  </button>
+  <button type="button" class="ln-idp-btn" id="login-github">
+    <img class="ln-idp-icon" src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/Github.svg" alt="" aria-hidden="true">
+    Continue with GitHub
+  </button>
+  <button type="button" class="ln-idp-btn" id="login-microsoft">
+    <img class="ln-idp-icon" src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/Microsoft.svg" alt="" aria-hidden="true">
+    Continue with Microsoft
+  </button>
+  <a class="ln-idp-btn" id="show-enterprise" role="button" tabindex="0">
+    <img class="ln-idp-icon" src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/Enterprise.svg" alt="" aria-hidden="true">
+    Sign in with Enterprise ID
+  </a>
 </div>
+
+<div class="ln-or">OR</div>
+
+<button type="button" class="ln-idp-btn" id="login-email">
+  <img class="ln-idp-icon" src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/Email.svg" alt="" aria-hidden="true">
+  Sign in with Email
+</button>
 {{/if}}

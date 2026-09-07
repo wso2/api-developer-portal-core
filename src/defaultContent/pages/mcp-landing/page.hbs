@@ -20,10 +20,25 @@
 <head>
   <script src='/technical-scripts/add-application-form.js' defer></script>
   <script src="/technical-scripts/oauth2-key-generation.js" defer></script>
+  {{!-- Drives the "Try with AI" button in the banner. artifactPath is what tells the
+        shared script to read /mcp/<handle>.md rather than the /api/ route it assumes
+        for everything else. --}}
+  <script src='/technical-scripts/api-agent-prompt.js' defer></script>
+  <link rel="stylesheet" href="/technical-styles/agent-prompt.css">
+  <script type="application/json" id="apiAgentData">{"baseUrl":"{{baseUrl}}","apiHandle":"{{apiMetadata.apiHandle}}","artifactPath":"mcp"}</script>
 </head>
 <main>
     {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav }}
     {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode showPlatformApiKeysNav=showPlatformApiKeysNav showApiWorkflowsNav=showApiWorkflowsNav }}
+    {{!-- Breadcrumb, as upstream's detail pages carry. dp-breadcrumb already ships in
+          /technical-styles/components.css and was unused until now. --}}
+    <div class="container-fluid dp-breadcrumb-bar">
+        <nav class="dp-breadcrumb">
+            <a class="dp-breadcrumb-item" href="{{baseUrl}}/mcps">MCP Servers</a>
+            <i class="bi bi-chevron-right dp-breadcrumb-sep"></i>
+            <span class="dp-breadcrumb-current">{{or apiMetadata.apiInfo.apiTitle apiMetadata.apiInfo.apiName}}</span>
+        </nav>
+    </div>
     <div class="container-fluid">
         {{> mcp-detail-banner }}
     </div>
@@ -38,12 +53,67 @@
             {{> mcp-content }}
             {{/if}}
         </div>
-        {{#if (or subscriptionPlans.length platformSubscriptions.length)}}
+        {{!-- The rail carries the client configuration as well as the plans, as upstream's
+             does. It therefore renders whenever there is a server URL to show, not only
+             when a plan exists - an MCP server with no plan still needs its config. --}}
+        {{#if (or resources.serverDetails.productionURL subscriptionPlans.length platformSubscriptions.length)}}
         <div class="aov-body-sidebar">
+            {{#if resources.serverDetails.productionURL}}
+            {{> mcp-config-sidebar}}
+            {{/if}}
+            {{#if (or subscriptionPlans.length platformSubscriptions.length)}}
             {{> api-subscription-plans}}
+            {{/if}}
         </div>
         {{/if}}
     </div>
     {{> create-app }}
     {{> alert }}
+
+    {{!-- ── AGENT PROMPT MODAL ──
+          Same modal the API landing page carries, gated on the same two conditions as
+          the button that opens it. --}}
+    {{#if showApiWorkflowsNav}}
+    {{#unless (eq apiMetadata.apiInfo.agentVisibility "HIDDEN")}}
+    <div class="modal fade" id="apiAgentPromptModal" tabindex="-1" aria-labelledby="apiAgentPromptModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+            <div class="modal-content hero-modal">
+
+                <div class="hero-modal-header">
+                    <div class="hero-modal-title-row">
+                        <span class="hero-modal-icon"><i class="bi bi-stars" aria-hidden="true"></i></span>
+                        <h2 class="hero-modal-title" id="apiAgentPromptModalLabel">Try with AI agent</h2>
+                    </div>
+                    <button type="button" class="hero-modal-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="bi bi-x-lg" aria-hidden="true"></i>
+                    </button>
+                </div>
+
+                <div class="hero-modal-info">
+                    <p class="hero-modal-info-text">Use this prompt to let your AI agent discover and call this MCP server automatically.</p>
+                    <button type="button" class="hero-run-btn" id="apiBtnRunClaude">
+                        <i class="bi bi-play-fill" aria-hidden="true"></i> Run in Claude
+                    </button>
+                </div>
+
+                <div class="modal-body hero-modal-body">
+                    <div class="hero-prompt-card">
+                        <div class="hero-prompt-actions">
+                            <button type="button" class="hero-prompt-tool" id="apiBtnDownloadPrompt" title="Download as .txt">
+                                <i class="bi bi-download"></i>
+                            </button>
+                            <button type="button" class="hero-prompt-tool copy-btn" id="apiBtnCopyPrompt" title="Copy prompt">
+                                <span class="copy-btn-icon"><i class="bi bi-copy"></i></span>
+                                <span class="copy-btn-check"><i class="bi bi-check"></i> Copied</span>
+                            </button>
+                        </div>
+                        <pre class="hero-prompt-pre" id="apiAgentPromptText">Loading...</pre>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    {{/unless}}
+    {{/if}}
 </main>
