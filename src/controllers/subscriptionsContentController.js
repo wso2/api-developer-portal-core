@@ -304,6 +304,11 @@ const loadAPISubscriptions = async (req, res) => {
             subscriptions: allSubscriptions,
             apiMetadata: metaData,
             apiHandle: apiHandle,
+            /* Which overview to link back to. Derived from the artifact's own type rather
+               than from the route the visitor arrived on, so a link built here is right
+               even if the other path is used. */
+            artifactPath: metaData?.apiInfo?.apiType === constants.API_TYPE.MCP ? 'mcp' : 'api',
+            isMCP: metaData?.apiInfo?.apiType === constants.API_TYPE.MCP,
             isReadOnlyMode: config.readOnlyMode,
             showPlatformApiKeysNav: await shouldShowPlatformApiKeysNav(req, metaData, null),
         };

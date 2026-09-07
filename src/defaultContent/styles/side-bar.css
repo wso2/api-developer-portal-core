@@ -1,3 +1,8 @@
+/* The token layer, imported so this sheet stands alone. An organization with a
+   stored theme reaches our stylesheets through its own frozen main.css, and its
+   layout predates the tokens.css <link> - without this import the vocabulary
+   below would resolve to nothing there. /technical-styles/ is never rewritten. */
+@import "/technical-styles/tokens.css";
 * {
     margin: 0;
     padding: 0;
@@ -7,19 +12,22 @@
 /* Sidebar base styles */
 .sidebar {
     position: fixed;
-    top: 5rem;
+    /* Sits under the header and above the footer, matching the space .main-container
+       reserves for each. The 3.5rem is 2px less than the header's rendered 58px, as
+       upstream's .layout-body does: the strip tucks behind the opaque fixed bar, and
+       the sidebar gets the full 802px column rather than 800px. */
+    top: 3.5rem;
     left: 0;
     z-index: 1000;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    height: calc(100vh - 8rem);
-    padding: 1rem 0;
-    background-color: var(--primary-main-color);
-    width: 4.5rem;
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 0 0.5rem 0.5rem 0;
-    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
+    height: calc(100vh - 6.5rem);
+    padding: 1rem 0.75rem;
+    background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+    width: 4.625rem;
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.12);
     overflow: hidden;
 }
 
@@ -62,18 +70,24 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.25rem;
 }
 
 .nav-link {
-    padding: 1rem;
     display: flex;
     align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 0.8125rem 0.9375rem;
+    border-radius: 0.625rem;
     text-decoration: none;
-    color: var(--primary-lightest-color);
-    border-radius: 0.5rem;
-    transition: background-color 0.2s;
-    margin: 0 0.5rem;
+    /* --on-dark rather than --primary-lightest-color: that seed is an 8-digit hex whose
+       alpha the console flattens on save, which would make the label opaque. */
+    color: var(--on-dark);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+    overflow: hidden;
 }
 
 /* Align to left when expanded or hovered (and not force-collapsed) */
@@ -83,29 +97,61 @@
 }
 
 .nav-link:hover {
-    background-color: var(--primary-light-color);
-    color: var(--light-text-color);
+    background-color: var(--primary-light);
+    color: var(--white);
 }
 
-.nav-link:hover img,
-.nav-link:hover svg {
-    filter: brightness(0) invert(1);
+.nav-link:hover .sidebar-icon,
+.nav-link:hover .submenu-icon {
+    color: inherit;
 }
 
 .nav-link.active {
-    background-color: var(--primary-light-color);
-    color: var(--light-text-color);
+    background-color: var(--primary-light);
+    color: var(--white);
 }
 
-.nav-link.active img,
-.nav-link.active svg {
-    filter: brightness(0) invert(1);
+.nav-link.active .sidebar-icon,
+.nav-link.active .submenu-icon {
+    color: inherit;
 }
 
-.nav-link svg {
-    width: 1rem;
-    height: 1rem;
-    flex-shrink: 0;
+.sidebar-icon {
+    font-size: 1.125rem;
+    flex: none;
+    width: 1.125rem;
+    height: 1.125rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+}
+
+/* Expand indicator on the items that own a submenu. Carries .nav-text too, so it
+   hides with the labels when the rail is collapsed. */
+.sidebar-chevron {
+    font-size: 0.75rem;
+    margin-left: auto;
+    flex: none;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* The chevron is an indicator, not decoration: it appears only for the section you are
+   actually inside, whose submenu links common.js has wired up. Everywhere else it would
+   promise an expansion that does not exist, so it is hidden. */
+.sidebar:hover:not(.force-collapse) .nav-link:not(.has-active-submenu) .sidebar-chevron,
+.sidebar.expanded .nav-link:not(.has-active-submenu) .sidebar-chevron {
+    opacity: 0;
+    visibility: hidden;
+    width: 0;
+    margin-left: 0;
+    overflow: hidden;
+}
+
+/* Points down while that section's submenu is open. common.js adds
+   .has-active-submenu when you are on a page belonging to the section. */
+.nav-link.has-active-submenu .sidebar-chevron {
+    transform: rotate(90deg);
 }
 
 .nav-text {
@@ -116,9 +162,10 @@
     transition: opacity 0.2s ease, visibility 0.2s ease, margin 0.2s ease;
     overflow: hidden;
     width: 0; /* Take no space when hidden */
-    font-weight: normal; 
-    color: var(--light-text-color);
-    font-size: smaller;
+    font-weight: 500;
+    line-height: 1;
+    color: inherit;
+    font-size: 0.9375rem;
 }
 
 /* Show text only when hovered (and not force-collapsed) or expanded */
@@ -139,17 +186,11 @@
     display: none;
 }
 
-.api-icon {
-    width: 1.25rem;
-    height: 1.25rem;
-    border: 0.125rem solid currentColor;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.625rem;
-    flex-shrink: 0;
-}
+/* An unqualified `.api-icon` used to sit here describing a 1.25rem circular glyph. No
+   element in the sidebar - or anywhere else - ever carried the class, but side-bar.css
+   imports after api-listing.css, so it silently won over the listing's own .api-icon and
+   shrank every card's initials avatar from 3rem to 1.25rem. Removed rather than
+   qualified: it had no markup to qualify it against. */
 
 /* Adjust collapse button alignment */
 .collapse-btn {
@@ -178,7 +219,7 @@
 }
 
 .collapse-btn:hover {
-    color: var(--light-text-color);
+    color: var(--white);
 }
 
 .collapse-btn svg {
@@ -199,9 +240,10 @@
     transition: opacity 0.2s ease, visibility 0.2s ease;
     overflow: hidden;
     width: 0;
-    font-weight: normal; 
-    color: var(--light-text-color);
-    font-size: smaller;
+    font-weight: 500;
+    line-height: 1;
+    color: inherit;
+    font-size: 0.9375rem;
 }
 
 /* Show collapse button text when sidebar is hovered (and not force-collapsed) or expanded */
@@ -221,10 +263,11 @@
 .submenu {
     display: none;
     flex-direction: column;
-    background-color: var(--primary-dark-color);
+    background-color: var(--primary-dark);
     border-radius: 0 0 0.5rem 0.5rem;
-    padding: 0.25rem 0;
-    margin: -1rem 0.5rem 0 0.5rem;
+    gap: 0.125rem;
+    padding: 0.25rem 0.5rem 0.5rem;
+    margin: -0.25rem 0 0 0;
 }
 
 .submenu.show {
@@ -232,14 +275,14 @@
 }
 
 #apis.has-active-submenu {
-    background-color: var(--primary-dark-color);
+    background-color: var(--primary-dark);
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
     margin-bottom: 0;
 }
 
 #mcps.has-active-submenu {
-    background-color: var(--primary-dark-color);
+    background-color: var(--primary-dark);
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
     margin-bottom: 0;
@@ -253,14 +296,19 @@
 }
 
 .submenu-link.active {
-    background-color: var(--primary-light-color);
+    background-color: var(--primary-light);
     border-radius: 0;
 }
 
 .submenu-icon {
-    width: 1.375rem;
-    height: 1rem;
-    flex-shrink: 0;
+    font-size: 1.125rem;
+    flex: none;
+    width: 1.125rem;
+    height: 1.125rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
 }
 
 .sidebar.collapsed .submenu {
@@ -312,7 +360,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    background-color: var(--secondary-light-color);
+    background-color: var(--accent-light);
     color: #fff;
     border-radius: 999px;
     padding: 0;
@@ -329,4 +377,129 @@
     width: auto;
     padding: 0.2rem 0.45rem;
     margin-left: 0.5rem;
+}
+
+/* ── Mobile drawer ───────────────────────────────────────────────
+   Ported from upstream's side-bar.css. Below 860px the rail becomes an off-canvas
+   drawer opened by the header's hamburger.
+
+   Why every rule is guarded on :has(#sidebarToggle):
+   the toggle ships in header.hbs, which is one of the seven CUSTOMIZABLE_FILES - the
+   31 organizations with a stored theme serve their own header and will never have it.
+   sidebar.hbs is not customizable, so they do get everything here. Ungated, that pairs
+   an off-canvas sidebar with no way to open it: mobile navigation would disappear
+   entirely for exactly the organizations we are contractually required not to break.
+   The guard keeps them on today's icon rail and gives the drawer to the ~2,923 that
+   render from disk. Where :has is unsupported the selector simply never matches, which
+   lands on the same safe side.
+   ---------------------------------------------------------------- */
+
+/* Desktop: both inert. The toggle is redundant while the rail is always on screen. */
+.sidebar-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-right: 0.5rem;
+    padding: 0;
+    border: none;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--text-strong);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.sidebar-backdrop {
+    display: none;
+}
+
+@media (max-width: 860px) {
+    body:has(#sidebarToggle) .sidebar-toggle {
+        display: inline-flex;
+    }
+
+    /* Full height here, unlike the desktop rail which is inset below the header and
+       above the footer - a drawer slides over both. */
+    body:has(#sidebarToggle) .sidebar {
+        top: 0;
+        bottom: 0;
+        height: 100%;
+        transform: translateX(-100%);
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        /* Above Bootstrap's .fixed-top navbar (1030) and the backdrop (1040). */
+        z-index: 1045;
+        overflow-y: auto;
+        box-shadow: 2px 0 16px rgba(0, 0, 0, 0.28);
+    }
+
+    body:has(#sidebarToggle) .sidebar.mobile-open {
+        transform: translateX(0);
+    }
+
+    /* Touch has no hover, so the width and label rules keyed on :hover or .expanded can
+       never fire - which is why the rail is icon-only and unlabelled on a phone today.
+       An open drawer is always the full, labelled form. max-width keeps it off the right
+       edge on narrow devices. */
+    body:has(#sidebarToggle) .sidebar,
+    body:has(#sidebarToggle) .sidebar:hover:not(.force-collapse),
+    body:has(#sidebarToggle) .sidebar.force-collapse:hover,
+    body:has(#sidebarToggle) .sidebar.expanded {
+        width: 16.5rem;
+        max-width: 84vw;
+    }
+
+    body:has(#sidebarToggle) .sidebar .nav-link {
+        justify-content: flex-start;
+    }
+
+    body:has(#sidebarToggle) .sidebar .nav-text,
+    body:has(#sidebarToggle) .sidebar .collapse-text {
+        margin-left: 0.875rem;
+        opacity: 1;
+        visibility: visible;
+        width: auto;
+    }
+
+    /* Pinning a drawer open has no meaning - it is dismissed, not collapsed. */
+    body:has(#sidebarToggle) .collapse-btn,
+    body:has(#sidebarToggle) .nav-section-divider {
+        display: none;
+    }
+
+    body:has(#sidebarToggle) .sidebar-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
+        z-index: 1040;
+    }
+
+    body:has(#sidebarToggle) .sidebar-backdrop.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* Scroll lock on .main-container, not <body>: main.css sets .main-body{overflow:auto}
+       and the container is what scrolls, so a body-level lock would read as working while
+       the content kept moving behind the open drawer.
+       Inside the media query on purpose - as an inline style it would survive a resize
+       past the breakpoint if cleanup never ran, leaving the desktop page unscrollable
+       with no drawer in sight. Scoped here it lapses on its own above 860px. */
+    body.drawer-open:has(#sidebarToggle) .main-container {
+        overflow: hidden;
+    }
+}
+
+/* Reduced motion: the drawer without the slide. */
+@media (max-width: 860px) and (prefers-reduced-motion: reduce) {
+    body:has(#sidebarToggle) .sidebar,
+    body:has(#sidebarToggle) .sidebar-backdrop {
+        transition: none;
+    }
 }

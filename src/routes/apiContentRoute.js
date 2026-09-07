@@ -88,7 +88,11 @@ router.get('/:orgName/views/:viewName/mcp/:apiHandle', (req, res, next) => {
     next();
 }, registerPartials, ensureAuthenticated, util.enforcePortalMode, apiController.loadAPIContent);
 
-router.get('/:orgName/views/:viewName/api/:apiHandle/subscriptions', (req, res, next) => {
+/* api|mcp on one route: loadAPISubscriptions resolves everything from :apiHandle and
+   never branches on the artifact type, so an MCP server needs no controller of its own -
+   only this path. Without it /mcp/<handle>/subscriptions 404s, which is where the MCP
+   overview's Subscriptions button was pointing. */
+router.get('/:orgName/views/:viewName/:apiType(api|mcp)/:apiHandle/subscriptions', (req, res, next) => {
     if (req.params.orgName === 'favicon.ico') {
         return res.status(404).send('Not Found');
     }

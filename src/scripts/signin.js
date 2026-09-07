@@ -93,8 +93,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const email = emailInput.value.trim();
         const isValid = validateEmail(email);
 
+        /* auth-continue-btn carries both states in CSS - grey and not-allowed by
+           default, gradient once --active is on - so this toggles the class rather
+           than painting an inline opacity over it. */
         continueBtn.disabled = !isValid;
-        continueBtn.style.opacity = isValid ? '1' : '0.5';
+        continueBtn.classList.toggle('auth-continue-btn--active', isValid);
     });
 
     function validateEmail(email) {

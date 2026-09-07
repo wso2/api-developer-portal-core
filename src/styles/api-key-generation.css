@@ -1,8 +1,13 @@
+/* The token layer, imported so this sheet stands alone. Internal pages render
+   inside the organization's own stored layout, which predates the tokens.css
+   <link> and will never gain it - so the sheet has to carry its own tokens.
+   /technical-styles/ is never rewritten to a stored-asset URL. */
+@import "/technical-styles/tokens.css";
 .form-card {
   display: flex;
   flex-direction: column;
   border-radius: 0.75rem;
-  background-color: var(--white-color);
+  background-color: var(--white);
   padding: 1.25rem;
   height: 100%;
   box-shadow: 0.25rem 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
@@ -20,14 +25,14 @@
 
 .form-label {
   font-size: 0.875rem;
-  color: var(--main-text-color);
+  color: var(--ink);
   margin: 0.3125rem 0;
 }
 
 .form-control,
 .form-select {
   font-size: 0.875rem;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 .error-msg {

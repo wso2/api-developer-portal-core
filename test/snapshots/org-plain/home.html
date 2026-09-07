@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>API Portal &amp; MCP Hub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://getbootstrap.com/docs/5.3/assets/css/docs.css" rel="stylesheet">
+    <link rel="stylesheet" href="/technical-styles/tokens.css">
+    <link rel="stylesheet" href="/technical-styles/components.css">
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/technical-styles/layout.css" />
+    <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+    </script>
+    <script src='/technical-scripts/search.js' defer></script>
+    <script src='/technical-scripts/filter.js' defer></script>
+    <script src='/technical-scripts/common.js' defer></script>
+    <script src='/technical-scripts/delete-confirmation-modal.js' defer></script>
+    <script src='/technical-scripts/subscription.js' defer></script>
+</head>
+
+<body class="main-body">
+    <main class="main-container">
+        <div class="content-area">
+        <!--
+ * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
+ *
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+ -->
+<head>
+    <link rel="stylesheet" href="/technical-styles/agent-prompt.css">
+    <script type="application/json" id="homeDiscoverData">{"baseUrl":"/testorg/views/default"}</script>
+    <script src="/technical-scripts/home-discover.js" defer></script>
+    <script src="/technical-scripts/particles.js" defer></script>
+</head>
+<main>
+    <header>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+      <nav class="navbar navbar-expand-lg custom-navbar fixed-top">
+        <div class="container-fluid">
+          <button class="sidebar-toggle" id="sidebarToggle" type="button"
+            aria-label="Open navigation menu" aria-controls="sidebar" aria-expanded="false">
+            <i class="bi bi-list"></i>
+          </button>
+          <a class="navbar-brand d-flex align-items-center" href="/testorg/views/default">
+            <img src="/images/api-portal-logo.svg" alt="Logo" class="navbar-logo me-2" />
+          </a>
+          <div class="d-flex align-items-center me-2">
+            <div id="auth-section">
+              <a class="login-btn" href="/testorg/views/default/login">Log In</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+    <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+    <div class="sidebar" id="sidebar">
+      <nav class="nav">
+        <a href="/testorg/views/default/" class="nav-link" id="home">
+          <i class="bi bi-house sidebar-icon"></i>
+          <span class="nav-text">Home</span>
+        </a>
+          <a href="/testorg/views/default/apis" class="nav-link" id="apis">
+            <i class="bi bi-boxes sidebar-icon"></i>
+            <span class="nav-text">APIs</span>
+            <i class="bi bi-chevron-right sidebar-chevron nav-text"></i>
+          </a>
+          <div class="submenu api-submenu" id="api-submenu">
+            <a href="#" class="nav-link submenu-link fw-light" id="api-overview">
+              <i class="bi bi-grid submenu-icon"></i>
+              <span class="nav-text">Overview</span>
+            </a>
+            <a href="#" class="nav-link submenu-link fw-light" id="api-docs">
+              <i class="bi bi-file-text submenu-icon"></i>
+              <span class="nav-text">Documentation</span>
+            </a>
+            <a href="#" class="nav-link submenu-link fw-light" id="api-subscriptions">
+              <i class="bi bi-receipt submenu-icon"></i>
+              <span class="nav-text">Subscriptions</span>
+            </a>
+          </div>
+          <a href="/testorg/views/default/mcps" class="nav-link" id="mcps">
+            <img src="/images/mcp-icon.svg" class="sidebar-icon" alt="" />
+            <span class="nav-text">MCP Servers</span>
+            <i class="bi bi-chevron-right sidebar-chevron nav-text"></i>
+          </a>
+          <div class="submenu api-submenu" id="mcp-submenu">
+            <a href="#" class="nav-link submenu-link fw-light" id="mcp-overview">
+              <i class="bi bi-grid submenu-icon"></i>
+              <span class="nav-text">Overview</span>
+            </a>
+            <a href="#" class="nav-link submenu-link fw-light" id="mcp-docs">
+              <i class="bi bi-file-text submenu-icon"></i>
+              <span class="nav-text">Documentation</span>
+            </a>
+          </div>
+          <a href="/testorg/views/default/applications" class="nav-link" id="applications">
+            <img src="/images/applications-icon.svg" class="sidebar-icon" alt="" />
+            <span class="nav-text">Applications</span>
+            <i class="bi bi-chevron-right sidebar-chevron nav-text"></i>
+          </a>
+          <div class="submenu applications-submenu" id="applications-submenu">
+            <a href="#" class="nav-link submenu-link fw-light" id="applications-overview">
+              <i class="bi bi-grid submenu-icon"></i>
+              <span class="nav-text">Overview</span>
+            </a>
+            <a href="#" class="nav-link submenu-link fw-light" id="applications-keys">
+              <i class="bi bi-key submenu-icon"></i>
+              <span class="nav-text">Manage Keys</span>
+            </a>
+          </div>
+          <a href="/testorg/views/default/subscriptions" class="nav-link" id="subscriptions">
+            <i class="bi bi-receipt sidebar-icon"></i>
+            <span class="nav-text">Subscriptions</span>
+          </a>
+      </nav>
+    
+      <div class="nav-section-divider"></div>
+      <button class="collapse-btn" id="collapseBtn">
+        <i class="bi bi-chevron-right"></i>
+        <span class="collapse-text">Expand</span>
+      </button>
+    </div>
+    <section class="hero" aria-label="Portal hero">
+      <div class="hero-particles" id="hero-particles" aria-hidden="true"></div>
+    
+      <div class="hero-hero-body">
+        <span class="hero-pill">
+          <i class="bi bi-stars" aria-hidden="true"></i>
+          Ready for developers
+        </span>
+    
+        <h1 class="hero-headline">
+          <span class="hero-headline-accent">APIs &amp; MCP servers</span><br>built for Developers.
+        </h1>
+    
+        <p class="hero-desc">
+          Discover, connect, and orchestrate APIs &amp; MCP servers. Browse the catalog, subscribe, and get going in minutes.
+        </p>
+    
+        <div class="hero-ctas">
+          <a href="/testorg/views/default/apis" class="hero-btn hero-btn--gradient">
+            Browse our APIs <i class="bi bi-arrow-right" aria-hidden="true"></i>
+          </a>
+          <a href="/testorg/views/default/mcps" class="hero-btn hero-btn--gradient">
+            Browse our MCP servers <i class="bi bi-arrow-right" aria-hidden="true"></i>
+          </a>
+        </div>
+      </div>
+    </section>
+    
+    
+    <script src='/technical-scripts/home-particles.js' defer></script>
+</main>
+
+        </div>
+    </main>
+    <footer class="footer-section">
+      <div class="footer-container">
+        <ul class="footer-links">
+          <li><a href="#">Terms of use</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Support</a></li>
+        </ul>
+        <div class="footer-icons">
+          <a href="#">© 2026, WSO2 LLC.</a>
+        </div>
+      </div>
+    </footer>
+
+    <div class='modal fade' id='deleteConfirmation' tabindex='-1' aria-hidden='true'>
+        <div class='modal-dialog'>
+            <div class='modal-content'>
+                <div class='modal-header'>
+                    <h5 class='modal-title'>Confirm</h5>
+                </div>
+                <div class='modal-body'>
+                    <p class='modal-message'></p>
+                </div>
+                <div class='modal-footer'>
+                    <button type='button' class='btn common-btn-link' data-bs-dismiss='modal'>
+                        Cancel
+                    </button>
+                    <button
+                        type='button'
+                        class='btn common-btn-primary common-btn-danger'
+                        data-bs-dismiss='modal'
+                        id='deleteConfirmationBtn'
+                        data-cyid="confirm"
+                    >
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="stripeCheckoutModal" class="modal hidden" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6);">
+        <div class="modal-content" style="background-color: #fefefe; margin: 40px auto; padding: 30px 20px 20px 20px; border: none; width: 90%; max-width: 600px; border-radius: 12px; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto;">
+            <button onclick="closeStripeCheckoutModal()" style="position: absolute; right: 15px; top: 15px; font-size: 24px; font-weight: bold; color: #999; background: none; border: none; cursor: pointer; z-index: 10; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f0f0f0'" onmouseout="this.style.backgroundColor='transparent'">&times;</button>
+            <h2 style="margin-top: 0; margin-bottom: 20px; padding-right: 40px; color: #333; font-size: 22px; font-weight: 600;">Add Payment Details</h2>
+            <div id="stripe-embedded-checkout" style="min-height: 400px;"></div>
+        </div>
+    </div>
+</body>
+
+</html>

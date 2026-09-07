@@ -1092,8 +1092,18 @@ function showAdvanced(configId) {
 }
 
 
-async function copyToken(tokenId) {
-    // Copy access token
+/*
+ * Accepts either form:
+ *   copyToken(id)        - the applications, keys and API-key pages
+ *   copyToken(this, id)  - the API-landing endpoint cards
+ * The second drives the button's own inline "Copied" state (.copy-btn--copied, already
+ * in components.css) instead of the global alert. Detecting the element rather than
+ * changing the signature keeps the existing call sites working.
+ */
+async function copyToken(btnOrTokenId, maybeTokenId) {
+    const btn = (btnOrTokenId && typeof btnOrTokenId === 'object') ? btnOrTokenId : null;
+    const tokenId = btn ? maybeTokenId : btnOrTokenId;
+
     const tokenElement = document.getElementById('token_' + tokenId);
     if (!tokenElement) {
         return;
@@ -1104,7 +1114,15 @@ async function copyToken(tokenId) {
     try {
         // Copy to clipboard
         await navigator.clipboard.writeText(tokenText);
-        await showAlert('Copied to clipboard!');
+        if (btn) {
+            btn.classList.add('copy-btn--copied');
+            if (btn._copyTimer) {
+                clearTimeout(btn._copyTimer);
+            }
+            btn._copyTimer = setTimeout(() => btn.classList.remove('copy-btn--copied'), 1600);
+        } else {
+            await showAlert('Copied to clipboard!');
+        }
     } catch (err) {
         console.error('Could not copy text:', err);
         await showAlert('Failed to copy', true);

@@ -1,6 +1,11 @@
+/* The token layer, imported so this sheet stands alone. Internal pages render
+   inside the organization's own stored layout, which predates the tokens.css
+   <link> and will never gain it - so the sheet has to carry its own tokens.
+   /technical-styles/ is never rewritten to a stored-asset URL. */
+@import "/technical-styles/tokens.css";
 .content {
   padding: 2rem;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 .sub-api-card {
@@ -16,13 +21,13 @@
 .policy-label {
   font-size: 0.9rem;
   margin: 0.625rem;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 .custom-plans-card h2 a {
   font-size: 1.2rem;
   font-weight: 600;
-  color: var(--primary-main-color);
+  color: var(--primary);
   margin-bottom: 0.5rem;
 }
 
@@ -30,60 +35,87 @@
   width: 25%;
 }
 
+/* ── Application view tables ─────────────────────────────────────
+   Matched to the subscriptions listing's .sub-table: one bordered, rounded container
+   with a tinted header row and hairline separators, instead of the previous detached
+   rows floating on an 8px border-spacing gap.
+
+   The class names stay - .app-table, .app-th, .app-td and .data-row are what apis.hbs
+   and the key partials render, and several scripts query .data-row by id.
+
+   The two page-scoped copies of this block in manage-keys.css (.keys-section .app-table)
+   and platform-api-keys.css (.platform-api-keys-page .app-table) are untouched: both are
+   (0,2,0) and keep winning over these (0,1,0) rules on their own pages.
+   ---------------------------------------------------------------- */
 .app-table-container {
-  margin: 0 auto;
-  background-color: transparent;
-  border-radius: 0;
-  box-shadow: none;
-  overflow: visible;
+  /* Every one of these sits as a bare child of a Bootstrap .row, with no .col wrapper.
+     A .row is display:flex with negative horizontal margins that a .col is expected to
+     cancel with its own padding - so without one this box both shrink-wraps to its
+     content (default flex: 0 1 auto) and hangs half a gutter past the content edge on
+     each side. That was invisible while the container had no border; the moment it got
+     one, the table stopped lining up with everything else on the page.
+     flex-basis makes it span the row, and the margins put the border back on the same
+     vertical as sibling content. */
+  flex: 1 1 100%;
+  width: 100%;
+  margin-left: calc(var(--bs-gutter-x, 1.5rem) * 0.5);
+  margin-right: calc(var(--bs-gutter-x, 1.5rem) * 0.5);
+  border: 0.0625rem solid var(--border);
+  border-radius: 0.75rem;
+  overflow: hidden;
 }
 
 .app-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 8px;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+.app-table thead tr {
+  background: var(--surface-sunken);
+  border-bottom: 0.0625rem solid var(--border);
 }
 
 .app-th {
   text-align: left;
-  padding: 16px 24px;
-  color: var(--main-text-color);
+  padding: 0.875rem 1.125rem;
+  font-size: 0.6875rem;
   font-weight: 600;
-  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
   border-bottom: none;
   background-color: transparent;
+}
+
+.app-table tbody tr {
+  border-bottom: 0.0625rem solid var(--border);
+  transition: background 0.12s;
+}
+
+.app-table tbody tr:last-child {
+  border-bottom: none;
 }
 
 .app-td {
-  padding: 12px 24px;
-  border-bottom: none;
-  color: var(--main-text-color);
-  font-size: 14px;
+  padding: 1.125rem;
+  vertical-align: middle;
+  line-height: 1.3;
+  color: var(--text);
+  font-size: 0.875rem;
   font-weight: 400;
-  background-color: #f9f9f9;
-}
-
-.app-th:first-child,
-.app-td:first-child {
-  padding-left: 2.75rem;
-}
-
-.data-row td:first-child {
-  border-top-left-radius: 8px;
-  border-bottom-left-radius: 8px;
-}
-
-.data-row td:last-child {
-  border-top-right-radius: 8px;
-  border-bottom-right-radius: 8px;
-}
-
-.data-row:hover td {
-  background-color: #f2f2f2;
-}
-
-thead tr th {
+  border-bottom: none;
   background-color: transparent;
+}
+
+/* The action column's header carried an inline padding-right: 2.25rem that its cells did
+   not, so the "Action" label and the buttons under it ended on different verticals. The
+   inline style is gone from apis.hbs; both now take the uniform 1.125rem below, and
+   .action-buttons-container's flex-end lines the buttons up with the label. */
+.data-row:hover {
+  background-color: var(--surface-sunken);
 }
 
 .action-buttons-container {
@@ -93,11 +125,11 @@ thead tr th {
 }
 
 .action-buttons-container .delete-button {
-  color: var(--danger-color);
+  color: var(--danger);
 }
 
 .action-buttons-container .delete-button:hover {
-  color: var(--danger-color);
+  color: var(--danger);
   opacity: 0.8;
 }
 
@@ -105,7 +137,7 @@ thead tr th {
 .oauth2-keys-section {
   padding: 0.5rem 1rem;
   width: 320px;
-  border-left: 0.5px solid rgb(from var(--primary-main-color) r g b / 10%);
+  border-left: 0.5px solid rgb(from var(--primary) r g b / 10%);
   margin-left: 1rem;
   position: relative;
   align-self: stretch;
@@ -114,7 +146,7 @@ thead tr th {
 .oauth2-title {
   font-size: 13px;
   font-weight: 500;
-  color: var(--main-text-color);
+  color: var(--ink);
   letter-spacing: 0.5px;
 }
 
@@ -124,7 +156,7 @@ thead tr th {
 }
 
 .info-icon {
-  color: var(--primary-main-color);
+  color: var(--primary);
   cursor: pointer;
 }
 
@@ -167,7 +199,7 @@ thead tr th {
 .key-action-label {
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--main-text-color);
+  color: var(--ink);
   min-width: 75px;
 }
 
@@ -193,7 +225,7 @@ thead tr th {
 .api-key-actions .common-btn-outlined {
   box-sizing: border-box;
   border-width: 1px;
-  box-shadow: inset 0 0 0 1px var(--primary-main-color);
+  box-shadow: inset 0 0 0 1px var(--primary);
   border: none;
 }
 
@@ -203,8 +235,8 @@ thead tr th {
 }
 
 .api-key-actions .api-key-revoke {
-  box-shadow: inset 0 0 0 1px #dc3545;
-  color: #dc3545;
+  box-shadow: inset 0 0 0 1px var(--danger);
+  color: var(--danger);
 }
 
 .api-key-actions .api-key-revoke:hover {

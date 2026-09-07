@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>DevPortal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://getbootstrap.com/docs/5.3/assets/css/docs.css" rel="stylesheet">
+    <link rel="stylesheet" href="/devportal/organizations/00000000-0000-0000-0000-000000000000/views/default/layout?fileType=style&fileName=main.css">
+    <link rel="stylesheet" href="/technical-styles/layout.css" />
+    <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+    </script>
+    <script src='/technical-scripts/search.js' defer></script>
+    <script src='/technical-scripts/filter.js' defer></script>
+    <script src='/technical-scripts/common.js' defer></script>
+    <script src='/technical-scripts/delete-confirmation-modal.js' defer></script>
+    <script src='/technical-scripts/subscription.js' defer></script>
+</head>
+
+<body class="main-body">
+    <main class="main-container">
+        <div class="content-area">
+        <main>
+    <header>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+      <nav class="navbar navbar-expand-lg custom-navbar fixed-top">
+        <div class="container-fluid">
+          <button class="sidebar-toggle" id="sidebarToggle" type="button"
+            aria-label="Open navigation menu" aria-controls="sidebar" aria-expanded="false">
+            <i class="bi bi-list"></i>
+          </button>
+          <a class="navbar-brand d-flex align-items-center" href="/testorg/views/default">
+            <img src="/images/api-portal-logo.svg" alt="Logo" class="navbar-logo me-2" />
+          </a>
+          <div class="d-flex align-items-center me-2">
+            <div id="auth-section">
+              <a class="login-btn" href="/testorg/views/default/login">Log In</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+    <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+    <div class="sidebar" id="sidebar">
+      <nav class="nav">
+        <a href="/testorg/views/default/" class="nav-link" id="home">
+          <i class="bi bi-house sidebar-icon"></i>
+          <span class="nav-text">Home</span>
+        </a>
+          <a href="/testorg/views/default/apis" class="nav-link" id="apis">
+            <i class="bi bi-boxes sidebar-icon"></i>
+            <span class="nav-text">APIs</span>
+            <i class="bi bi-chevron-right sidebar-chevron nav-text"></i>
+          </a>
+          <div class="submenu api-submenu" id="api-submenu">
+            <a href="#" class="nav-link submenu-link fw-light" id="api-overview">
+              <i class="bi bi-grid submenu-icon"></i>
+              <span class="nav-text">Overview</span>
+            </a>
+            <a href="#" class="nav-link submenu-link fw-light" id="api-docs">
+              <i class="bi bi-file-text submenu-icon"></i>
+              <span class="nav-text">Documentation</span>
+            </a>
+            <a href="#" class="nav-link submenu-link fw-light" id="api-subscriptions">
+              <i class="bi bi-receipt submenu-icon"></i>
+              <span class="nav-text">Subscriptions</span>
+            </a>
+          </div>
+          <a href="/testorg/views/default/mcps" class="nav-link" id="mcps">
+            <img src="/images/mcp-icon.svg" class="sidebar-icon" alt="" />
+            <span class="nav-text">MCP Servers</span>
+            <i class="bi bi-chevron-right sidebar-chevron nav-text"></i>
+          </a>
+          <div class="submenu api-submenu" id="mcp-submenu">
+            <a href="#" class="nav-link submenu-link fw-light" id="mcp-overview">
+              <i class="bi bi-grid submenu-icon"></i>
+              <span class="nav-text">Overview</span>
+            </a>
+            <a href="#" class="nav-link submenu-link fw-light" id="mcp-docs">
+              <i class="bi bi-file-text submenu-icon"></i>
+              <span class="nav-text">Documentation</span>
+            </a>
+          </div>
+          <a href="/testorg/views/default/applications" class="nav-link" id="applications">
+            <img src="/images/applications-icon.svg" class="sidebar-icon" alt="" />
+            <span class="nav-text">Applications</span>
+            <i class="bi bi-chevron-right sidebar-chevron nav-text"></i>
+          </a>
+          <div class="submenu applications-submenu" id="applications-submenu">
+            <a href="#" class="nav-link submenu-link fw-light" id="applications-overview">
+              <i class="bi bi-grid submenu-icon"></i>
+              <span class="nav-text">Overview</span>
+            </a>
+            <a href="#" class="nav-link submenu-link fw-light" id="applications-keys">
+              <i class="bi bi-key submenu-icon"></i>
+              <span class="nav-text">Manage Keys</span>
+            </a>
+          </div>
+          <a href="/testorg/views/default/subscriptions" class="nav-link" id="subscriptions">
+            <i class="bi bi-receipt sidebar-icon"></i>
+            <span class="nav-text">Subscriptions</span>
+          </a>
+      </nav>
+    
+      <div class="nav-section-divider"></div>
+      <button class="collapse-btn" id="collapseBtn">
+        <i class="bi bi-chevron-right"></i>
+        <span class="collapse-text">Expand</span>
+      </button>
+    </div>
+    <head>
+      <link rel='stylesheet' href='/technical-styles/applications.css' />
+      <script src='/technical-scripts/application-listing.js' defer></script>
+      <script src='/technical-scripts/add-application-form.js' defer></script>
+    </head>
+    
+    <section class="apps-section">
+      <div class="apps-page-container" id="applicationsContainer">
+    
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Applications</h1>
+            <p class="page-desc">Applications hold the API keys and subscriptions you use to call APIs.</p>
+          </div>
+        </div>
+    
+        <div class="dp-empty">
+          <span class="dp-empty-icon"><i class="bi bi-grid-3x3-gap-fill"></i></span>
+          <h2 class="dp-empty-title">No applications yet</h2>
+          <p class="dp-empty-desc">Create an application to generate API keys and subscribe to APIs. You can manage all your credentials in one place.</p>
+        </div>
+    
+        <div class="apps-grid">
+    
+          <div class="" id="createApplicationCardWrapper">
+            <div class="create-application-card card  "
+              id="applicationCreateCard"
+              style=" cursor: pointer; "
+              onclick="showApplicationForm()">
+              <span class="plus-icon">+</span>
+              <span class="create-text">Create Application</span>
+            </div>
+    
+            <div class="application-create-card card d-none" id="applicationCreateForm">
+              <div class="application-layout">
+                <div class="application-content">
+                  <form id='applicationForm' class='create-app-form'>
+                    <div class="app-form-group">
+                      <label for="applicationName">Application name <span class="app-required">*</span></label>
+                      <input type="text" id="applicationName" class="form-control" placeholder="e.g. My Mobile App"
+                        maxlength="100" autocomplete="off" required />
+                      <div id="nameError" class="error-msg text-danger mt-1 d-none">
+                        Application name cannot be empty.
+                      </div>
+                    </div>
+    
+                    <div class="app-form-group">
+                      <label for="applicationDescription">Description</label>
+                      <textarea id="applicationDescription" class="form-control" rows="3" maxlength="256"
+                        placeholder="What is this application for? (optional)" style="resize:vertical;"></textarea>
+                      <div class="app-form-hint">
+                        <span id="remainingCharacters">256</span> characters remaining
+                      </div>
+                      <div id="descriptionError" class="error-msg text-danger mt-1" style="display:none;">
+                        Description is too long.
+                      </div>
+                    </div>
+    
+                    <div class="application-card-footer">
+                      <button type='button' class='btn common-btn-outlined add-application-action-btn' id='cancelCreateButton'
+                        data-has-apps="false"
+                        onclick="event.stopPropagation(); hideApplicationForm(this);">
+                        Cancel
+                      </button>
+                      <button type='submit' class='btn common-btn-primary add-application-action-btn' id='createAppButton'>
+                        Create
+                      </button>
+                    </div>
+                  </form>
+                </div>
+                <div class="message-overlay hidden" id="message-overlay">
+                  <div class="message-content">
+                    <i class="bi message-icon"></i>
+                    <p class="message-text"></p>
+                  </div>
+                  <button type="button" class="close-message" aria-label="Close message">&times;</button>
+                </div>
+              </div>
+            </div>
+          </div>
+    
+    
+        </div>
+      </div>
+    </section>
+    <head>
+      <link rel='stylesheet' href='/technical-styles/add-edit-application.css' />
+    </head>
+    
+    <section>
+        <div id="createAppModal" class="modal custom-modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content custom-modal-content">
+                    <div class="custom-modal-header">
+                        <h2 class="custom-modal-title m-0">Create Application</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                            onclick="closeModal('createAppModal')"></button>
+                    </div>
+                    <div class="custom-modal-body">
+                        <form id='applicationForm' class='create-app-form'>
+                            <!-- Application Name -->
+                            <div class='mb-3'>
+                                <label for='applicationName' class='form-label'>Application Name
+                                    <span class='text-danger'>*</span></label>
+                                <input type='text' id='applicationName' class='form-control'
+                                    placeholder='My Application' required />
+                                <div id='nameError' class='error-msg text-danger mt-1' style='display: none;'>
+                                    Application name cannot be empty.</div>
+                            </div>
+    
+                            <!-- Application Description -->
+                            <div class='mb-3'>
+                                <label for='applicationDescription' class='form-label'>Application
+                                    Description</label>
+                                <textarea id='applicationDescription' class='form-control' rows='4'
+                                    placeholder='Provide a brief description of the application'
+                                    maxlength='256'></textarea>
+                                <div class='form-text'>
+                                  <span id='remainingCharacters'>256</span> characters remaining
+                                </div>
+                                <div id='descriptionError' class='text-danger mt-1' style='display: none;'>
+                                    Description exceeds the character limit.</div>
+                            </div>
+    
+                            <!-- Buttons -->
+                            <div class='d-flex gap-3 mt-4'>
+                                <button type='button' class='common-btn-outlined' id="cancelButton"
+                                    onclick="closeModal('createAppModal')">
+                                    Cancel
+                                </button>
+                                <button type='submit' class='common-btn-primary' id='saveButton' disabled>
+                                    Save
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>    <head>
+      <link rel="stylesheet" href="/technical-styles/alert.css" />
+      <script src="/technical-scripts/alert.js" defer></script>
+    </head>
+    
+    <body>
+      <section>
+        <div
+          class="modal fade custom-alert"
+          id="alertModal"
+          tabindex="-1"
+          aria-hidden="true"
+        >
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-body">
+                <i class="alert-icon bi"></i>
+                <p class="modal-message"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </body>
+    <head>
+      <link rel='stylesheet' href='/technical-styles/warning.css' />
+      <script src="/technical-scripts/warning.js" defer></script> 
+      <script src='/technical-scripts/create-org.js' defer></script>
+    </head>
+    
+    <body>
+      <section>
+        <div
+          class='modal fade delete-alert'
+          id='warningModal'
+          tabindex='-1'
+          aria-hidden='true'
+        >
+          <div class='modal-dialog'>
+            <div class='modal-content'>
+              <div class='modal-header'>
+                <h5 class='modal-title' id="modalTitle">Delete Application</h5>
+              </div>
+              <div class='modal-body'>
+                <p class='modal-message' id="modalMessage">Are you sure you want to delete this application? This action cannot be undone and will revoke all associated access tokens and subscriptions.</p>
+              </div>
+              <div class='modal-footer'>
+                <button
+                  type='button'
+                  class='btn common-btn-link'
+                  data-bs-dismiss='modal'
+                >
+                  Cancel
+                </button>
+                <button
+                  type='button'
+                  class='btn common-btn-primary common-btn-danger'
+                  data-bs-dismiss='modal'
+                  id="modalFunction"
+                  data-cyid="confirm"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </body></main>
+        </div>
+    </main>
+    <footer class="footer-section">
+      <div class="footer-container">
+        <ul class="footer-links">
+          <li><a href="#">Terms of use</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Support</a></li>
+        </ul>
+        <div class="footer-icons">
+          <a href="#">© 2026, WSO2 LLC.</a>
+        </div>
+      </div>
+    </footer>
+
+    <div class='modal fade' id='deleteConfirmation' tabindex='-1' aria-hidden='true'>
+        <div class='modal-dialog'>
+            <div class='modal-content'>
+                <div class='modal-header'>
+                    <h5 class='modal-title'>Confirm</h5>
+                </div>
+                <div class='modal-body'>
+                    <p class='modal-message'></p>
+                </div>
+                <div class='modal-footer'>
+                    <button type='button' class='btn common-btn-link' data-bs-dismiss='modal'>
+                        Cancel
+                    </button>
+                    <button
+                        type='button'
+                        class='btn common-btn-primary common-btn-danger'
+                        data-bs-dismiss='modal'
+                        id='deleteConfirmationBtn'
+                        data-cyid="confirm"
+                    >
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="stripeCheckoutModal" class="modal hidden" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6);">
+        <div class="modal-content" style="background-color: #fefefe; margin: 40px auto; padding: 30px 20px 20px 20px; border: none; width: 90%; max-width: 600px; border-radius: 12px; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto;">
+            <button onclick="closeStripeCheckoutModal()" style="position: absolute; right: 15px; top: 15px; font-size: 24px; font-weight: bold; color: #999; background: none; border: none; cursor: pointer; z-index: 10; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f0f0f0'" onmouseout="this.style.backgroundColor='transparent'">&times;</button>
+            <h2 style="margin-top: 0; margin-bottom: 20px; padding-right: 40px; color: #333; font-size: 22px; font-weight: 600;">Add Payment Details</h2>
+            <div id="stripe-embedded-checkout" style="min-height: 400px;"></div>
+        </div>
+    </div>
+</body>
+
+</html>

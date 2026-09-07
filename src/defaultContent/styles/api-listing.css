@@ -1,77 +1,72 @@
+/* The token layer, imported so this sheet stands alone. An organization with a
+   stored theme reaches our stylesheets through its own frozen main.css, and its
+   layout predates the tokens.css <link> - without this import the vocabulary
+   below would resolve to nothing there. /technical-styles/ is never rewritten. */
+@import "/technical-styles/tokens.css";
+
+/* ── Layout ─────────────────────────────────────────────── */
+
 .apis-section {
   display: flex;
   justify-content: center;
-  margin: 0 1rem 0 0;
   align-items: center;
   flex-direction: column;
 }
+
+/* ── Hero ────────────────────────────────────────────────── */
 
 .apilist-hero-container {
   width: 100%;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  padding: 1.5rem 3.5rem;
-  border-radius: 0.75rem;
-  background: var(--primary-lightest-color);
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2.125rem 2.5rem;
+  border-radius: 0.875rem;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 6%, var(--surface)) 0%, color-mix(in srgb, var(--primary) 11%, var(--surface)) 100%);
+  overflow: hidden;
 }
 
 .apilist-hero-content {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
+  max-width: 38.75rem;
+}
+
+.apilist-hero-title {
+  margin: 0;
+  font-size: 1.625rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--primary);
+  letter-spacing: -0.01em;
+}
+
+.apilist-hero-description {
+  margin: 0.75rem 0 0;
+  font-size: 0.906rem;
+  line-height: 1.55;
+  color: var(--text);
+  font-weight: 400;
 }
 
 .apilist-hero-image {
-  max-width: 80%;
-  height: auto;
+  flex: none;
   display: flex;
-  justify-content: flex-end;
   align-items: center;
 }
 
-.apilist-hero-content h1,
-.apilist-hero-content span {
-  color: var(--primary-main-color);
+/* ── Container ───────────────────────────────────────────── */
+
+.apilist-container {
+  margin-top: 1.25rem;
+  margin-bottom: 1.25rem;
 }
 
-.apilist-hero-header {
-  max-width: 60rem;
-  margin: 0 auto;
-}
-
-.apilist-hero-header h1 {
-  font-size: 2rem;
-  font-weight: 600;
-  color: var(--main-text-color);
-}
-
-.apilist-hero-header h1 span {
-  display: block;
-  color: var(--primary-main-color);
-  font-size: 2.5rem;
-}
-
-.apilist-hero-header .apilist-hero-title {
-  font-size: 2rem;
-  font-weight: 600;
-  color: var(--primary-main-color);
-}
-
-.apilist-hero-header .apilist-hero-title-highlight {
-  display: block;
-  color: var(--primary-main-color);
-  font-size: 2.5rem;
-}
-
-.apilist-hero-header .apilist-hero-description {
-  font-weight: 300;
-}
+/* ── Search ──────────────────────────────────────────────── */
 
 .search-container {
   display: flex;
-  margin-bottom: 2rem;
+  margin-bottom: 1.625rem;
   justify-content: center;
   width: 100%;
 }
@@ -79,53 +74,331 @@
 .search-input {
   display: flex;
   align-items: center;
-  background-color: var(--secondary-bg-color);
-  padding: 0.625rem 1rem;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  padding: 0.8125rem 1.125rem;
   border-radius: 0.75rem;
   width: 100%;
+  gap: 0.625rem;
+  color: var(--text-subtle);
 }
 
 .search-icon {
-  width: 1rem;
-  height: 1rem;
-  opacity: 0.5;
+  font-size: 1.125rem;
+  flex: none;
+  opacity: 0.7;
 }
 
 .search-input input {
   border: none;
   outline: none;
   width: 100%;
-  margin-left: 1rem;
-  font-size: 14px;
-  font-weight: 300;
-  background-color: transparent;
-  color: var(--main-text-color);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  background: transparent;
+  color: var(--text);
 }
 
 #query::placeholder {
-  color: var(--main-text-color);
+  color: var(--text-subtle);
+}
+
+/* ── Results bar ─────────────────────────────────────────── */
+
+.apilist-results-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.125rem;
+}
+
+.apilist-results-heading {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.apilist-results-count {
+  color: var(--text-subtle);
+  font-weight: 500;
+}
+
+/* ── API Card ────────────────────────────────────────────── */
+
+.api-card {
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  padding: 1.375rem;
+  background: var(--surface);
+  height: 100%;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  position: relative;
+}
+
+.api-card:hover {
+  box-shadow: 0 0.75rem 1.75rem color-mix(in srgb, var(--ink) 10%, transparent);
+  border-color: var(--border-strong);
+}
+
+/* Top: icon + meta */
+.api-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+}
+
+.api-card-img {
+  width: 3rem;
+  height: 3rem;
+  flex: none;
+  border-radius: 0.75rem;
+  object-fit: cover;
+}
+
+/* Initials icon */
+.api-icon {
+  width: 3rem;
+  height: 3rem;
+  flex: none;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.api-icon--rest    { background: #e6f2fb; color: #0277bd; }
+.api-icon--graphql { background: #fce4ef; color: #d6336c; }
+.api-icon--soap    { background: #ece9fb; color: #6741d9; }
+.api-icon--ws      { background: #fff1e6; color: #e65100; }
+.api-icon--mcp     { background: #e0f5f2; color: #0d9488; }
+
+.api-card-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.api-card-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.api-card-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5625rem;
+  margin-top: 0.375rem;
+}
+
+.api-card-meta-row .dp-badge {
+  margin-top: -0.5rem;
+}
+
+.api-version {
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: var(--font-family-mono);
+  color: var(--text-muted);
+}
+
+/* Description */
+.api-card-desc {
+  margin: 1rem 0 0;
+  font-size: 0.844rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.clamp2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Tags */
+.api-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4375rem;
+  margin-top: 0.875rem;
+}
+
+/* Footer */
+.api-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.125rem;
+  padding-top: 1.125rem;
+  border-top: 1px solid var(--border);
+  position: relative;
+}
+
+.api-card-footer-left {
+  display: flex;
+  align-items: center;
+}
+
+.api-plans-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.api-plans-link:hover {
+  text-decoration: underline;
+  color: var(--primary);
+}
+
+.api-public-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--text-muted);
+  font-size: 0.781rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.api-public-dot {
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 50%;
+  background: var(--success);
+  flex: none;
+}
+
+
+/* ── Message overlay (inside cards) ─────────────────────── */
+
+.api-card .message-overlay {
+  border-radius: 0.875rem;
+  margin: 1rem;
+}
+
+/* ── Empty state ─────────────────────────────────────────── */
+
+.apilist-empty {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  background: var(--info-surface);
+  border: 1px solid color-mix(in srgb, var(--info) 22%, var(--surface));
+  border-radius: 0.75rem;
+  padding: 1.125rem 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.apilist-empty-icon {
+  flex: none;
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: 0.5625rem;
+  background: color-mix(in srgb, var(--info) 18%, var(--surface));
+  color: var(--info);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.apilist-empty-body { flex: 1; min-width: 0; }
+
+.apilist-empty-title {
+  font-size: 0.906rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text-strong);
+}
+
+.apilist-empty-desc {
+  margin: 0.3125rem 0 0;
+  font-size: 0.844rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+/* ── AI Agent chip ───────────────────────────────────────── */
+
+.api-card-chips {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+
+/* ── Responsive ──────────────────────────────────────────── */
+
+@media (max-width: 992px) {
+  .apilist-hero-image { display: none; }
+  .apilist-hero-title { font-size: 4vw; }
+  .apilist-hero-description { font-size: 2.5vw; }
+}
+
+@media (max-width: 768px) {
+  .apilist-hero-container { padding: 1.5rem 1.25rem; }
+  .apilist-hero-title { font-size: 1.25rem; }
+}
+
+@media (max-width: 576px) {
+  .api-card-img { display: none; }
+  .api-card-title { font-size: 3vw; }
+}
+
+
+/* ──────────────────────────────────────────────────────────────────────────────
+   Everything below is ours, not upstream's, and is kept deliberately.
+
+   The nested .api-card { } block carries the subscription, dropdown and message
+   machinery the listing depends on and has no upstream counterpart. The filter
+   panel, star rating and .api-info-* blocks are likewise ours alone.
+
+   .api-card-header, .api-card-body, .image-icon, .truncate-text, .apilisting-*,
+   .badge-custom*, .card-separator and .api-agent-chip* still dress the MCP
+   listing, which has not been ported to the vocabulary above yet - removing them
+   would break that page. The duplicate global `hr` rule that used to sit here was
+   dropped: api-content.css defines one too and, importing later, overrode it
+   entirely.
+   ────────────────────────────────────────────────────────────────────────────── */
+
+
+#query::placeholder {
+  color: var(--ink);
   opacity: 0.5;
 }
 
-.apilist-container {
-  margin-top: 2rem;
-  margin-bottom: 1.25rem;
-}
 
 .api-filterlist {
-  color: var(--main-text-color);
+  color: var(--ink);
   margin-top: 0.9375rem;
 }
+
 
 .api-filter-content {
   margin-bottom: 0.625rem;
   padding-left: 0.625rem;
-  background-color: var(--primary-light-color);
+  background-color: var(--primary-light);
   padding: 1.25rem;
   border-radius: 0.75rem;
   box-shadow: 0 0.125rem 0.125rem rgba(0, 0, 0, 0.05);
   min-height: 9.375rem;
 }
+
 
 .filter-header {
   margin-bottom: 0.625rem;
@@ -134,83 +407,70 @@
   justify-content: space-between;
 }
 
+
+/* The comma bound `a` as an unqualified global selector, so this sheet - which
+   main.css @imports on every page - set the font-size of every anchor in the portal.
+   Same defect as the h2/h5/h6 leak in main.css. In practice only the header's profile
+   link had no more specific rule to win, so it rendered at 14px where upstream, which
+   has no global anchor rule at all, leaves it at its natural 16px. */
 .filter-header h6,
-a {
+.filter-header a {
   font-size: 0.875rem;
 }
+
 
 .filter-header h6 {
   font-weight: 600;
 }
 
+
 .filter-header-clear {
-  color: var(--primary-main-color);
+  color: var(--primary);
   text-decoration: none;
   cursor: pointer;
 }
 
+
 .bi-chevron-down {
   font-size: 1rem;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
+
 .form-check-input:checked {
-  background-color: var(--primary-main-color);
-  border-color: var(--primary-main-color);
+  background-color: var(--primary);
+  border-color: var(--primary);
 }
+
 
 .filter-sub {
   font-size: 0.875rem;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
+
 
 .form-check-input {
   border-color: var(--light-ash-color);
 }
 
-hr {
-  margin-top: 0;
-  margin-bottom: 0.625rem;
-  border-color: var(--main-text-color);
-  opacity: 0.7;
-}
 
 .form-check-input {
   accent-color: var(--primary-color);
 }
 
+
 .form-check-label {
   font-size: 0.875rem;
-  color: var(--main-text-color);
+  color: var(--ink);
   margin-left: 0.3125rem;
 }
 
-.api-card {
-  text-align: left;
-  border-radius: 0.75rem;
-  height: 100%;
-  background: var(--main-bg-color);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.api-card:hover {
-  /* transform: translateY(-0.3125rem); */ /* Note: Adding the tranform will break the modal */
-  box-shadow: 0px 0.5rem 1.25rem rgba(0, 0, 0, 0.15);
-}
-
-.api-card-img {
-  width: 3.75rem;
-  height: 3.75rem;
-  box-sizing: border-box;
-  border-radius: 0.5rem;
-  object-fit: cover;
-}
 
 .image-icon {
   width: 60px;
   height: 60px;
   background-color: var(--primary-main-color, #1A4C6D); /* Fallback color */
-  color: var(--light-text-color);
+  color: var(--white);
   font-size: 30px;
   font-family: Arial, sans-serif;
   display: flex;
@@ -220,6 +480,7 @@ hr {
   text-transform: uppercase;
 }
 
+
 .api-card-header {
   padding: 20px;
   border-top-right-radius: 0.75rem;
@@ -227,14 +488,11 @@ hr {
   background-color: var(--primary-lightest-color);
 }
 
+
 .api-card-body {
   padding: 1.25rem;
 }
 
-.api-card-footer {
-  position: relative;
-  padding: 1.25rem;
-}
 
 .truncate-text {
   display: -webkit-box;
@@ -247,23 +505,6 @@ hr {
   text-overflow: ellipsis;
 }
 
-.api-card-title {
-  font-size: 1rem;
-  color: var(--main-text-color);
-  margin: 0;
-  font-weight: 600;
-  white-space: nowrap; 
-  overflow: hidden; 
-  text-overflow: ellipsis;
-  max-width: 95%; 
-}
-
-.api-card p {
-  font-size: 0.75rem;
-  color: var(--main-text-color);
-  margin: 0;
-  line-height: 1.5;
-}
 
 .apilisting-tags {
   display: flex;
@@ -271,21 +512,24 @@ hr {
   align-items: flex-start;
 }
 
+
 .badge-custom1 {
-  border: 1px solid var(--main-text-color);
+  border: 1px solid var(--ink);
   opacity: 0.7;
-  background-color: var(--main-bg-color);
-  color: var(--main-text-color);
+  background-color: var(--surface);
+  color: var(--ink);
   margin: 0.125rem 0.3125rem 1.25rem 0;
 }
+
 
 .badge-custom2 {
   border: 1px solid rgba(99, 99, 110, 0.25);
   background-color: transparent;
-  color: var(--main-text-color);
+  color: var(--ink);
   font-weight: 0;
   margin: 0.3125rem 0.3125rem 0 0;
 }
+
 
 .dropdown {
   display: flex;
@@ -294,28 +538,33 @@ hr {
   margin-bottom: 0.1875rem;
 }
 
+
 .star-rating {
   display: inline-block;
   margin: 0.3125rem 0;
 }
 
+
 .star {
   font-size: 0.9375rem;
-  color: var(--secondary-main-color);
+  color: var(--accent);
   cursor: pointer;
   transition: color 0.3s ease-in-out;
 }
 
+
 .star:hover,
 .star.selected {
-  color: var(--secondary-main-color);
+  color: var(--accent);
 }
+
 
 .star:hover,
 .star.noselected {
-  color: var(--main-text-color);
+  color: var(--ink);
   opacity: 0.7;
 }
+
 
 .api-card {
   .card-separator {
@@ -334,7 +583,7 @@ hr {
 
   .subscription-box-label {
     font-size: 0.75rem;
-    color: var(--main-text-color);
+    color: var(--ink);
     display: block;
     align-self: center;
   }
@@ -359,7 +608,7 @@ hr {
     padding: 10px 10px;
     border: 1px solid #dee2e6;
     border-radius: 4px;
-    background-color: var(--main-bg-color);
+    background-color: var(--surface);
     cursor: pointer;
     font-size: 0.875rem;
   }
@@ -372,7 +621,7 @@ hr {
   }
   
   .selected-text.selected {
-    color: var(--main-text-color);
+    color: var(--ink);
     font-weight: 500;
   }
 
@@ -392,7 +641,7 @@ hr {
     left: 0;
     right: 0;
     z-index: 999;
-    background-color: var(--main-bg-color);
+    background-color: var(--surface);
     border: 1px solid #dee2e6;
     border-radius: 0 0 4px 4px;
     max-height: 200px;
@@ -406,7 +655,7 @@ hr {
     border-bottom: 1px solid #dee2e6;
     position: sticky;
     top: 0;
-    background-color: var(--main-bg-color);
+    background-color: var(--surface);
     z-index: 2;
   }
   
@@ -420,7 +669,7 @@ hr {
   }
   
   .select-search-input:focus {
-    border-color: var(--primary-main-color);
+    border-color: var(--primary);
   }
   
   .select-items-container {
@@ -456,7 +705,7 @@ hr {
     cursor: pointer;
     font-size: 0.7rem;
     border-top: 1px solid #dee2e6;
-    color: var(--primary-main-color);
+    color: var(--primary);
     font-weight: 500;
   }
 
@@ -481,7 +730,7 @@ hr {
   }
   
   .create-app-option {
-    color: var(--primary-main-color);
+    color: var(--primary);
     cursor: pointer;
     padding: 8px 10px;
     font-weight: 500;
@@ -510,7 +759,7 @@ hr {
     right: -2.5rem;
     background-color: var(--subscribed-color);
     font-size: 0.75rem;
-    color: var(--light-text-color);
+    color: var(--white);
     text-align: center;
     width: 10rem;
     padding: 0.125rem 0;
@@ -583,7 +832,7 @@ hr {
   .message-text {
     font-size: 0.8125rem;
     font-weight: 500;
-    color: var(--main-text-color);
+    color: var(--ink);
     margin: 0;
     line-height: 1.2;
     overflow: hidden;
@@ -602,7 +851,7 @@ hr {
     line-height: 1;
     opacity: 0.6;
     transition: opacity 0.2s;
-    color: var(--main-text-color);
+    color: var(--ink);
     background: transparent;
     border: none;
     display: flex;
@@ -615,9 +864,10 @@ hr {
   }
 }
 
+
 .api-info-box {
   background-color: var(--primary-lightest-color);
-  border-left: 4px solid var(--primary-light-color);
+  border-left: 4px solid var(--primary-light);
   padding: 1rem;
   margin-bottom: 1rem;
   margin-top: 1rem;
@@ -627,9 +877,11 @@ hr {
   align-items: flex-start;
 }
 
+
 .api-info-content {
   flex: 1;
 }
+
 
 .api-info-title {
   font-size: 0.9rem;
@@ -637,27 +889,13 @@ hr {
   color: #333;
 }
 
+
 @media (max-width: 992px) {
-  .apilist-hero-header .apilist-hero-title {
-    font-size: 4vw;
-  }
-  
-  .apilist-hero-header .apilist-hero-title-highlight {
-    font-size: 5vw;
-  }
-
-  .apilist-hero-header .apilist-hero-description {
-    font-size: 2.5vw;
-  }
-
-  .apilist-hero-image {
-    display: none;
-  }
-
   .truncate-text {
     font-size: 1.75vw;
   }
 }
+
 
 @media (max-width: 576px) {
   .api-card-img {
@@ -681,24 +919,28 @@ hr {
   }
 }
 
+
 .plans-summary-card{
   padding:10px 12px;
   border:1px solid #e2e8f0;
   border-radius:12px;
   background:#f8fafc;
 }
+
 .plans-summary-card__row{
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:12px;
 }
+
 .plans-summary-card__left{
   display:flex;
   align-items:center;
   gap:10px;
   min-width:0;
 }
+
 .plans-summary-card__label{
   display:inline-flex;
   align-items:center;
@@ -708,7 +950,9 @@ hr {
   color:#475569;
   white-space:nowrap;
 }
+
 .plans-summary-card__count{ color:#64748b; font-weight:800; }
+
 
 .plans-summary-card__pill{
   font-size:11px;
@@ -719,11 +963,13 @@ hr {
   background:#fff;
   color:#334155;
 }
+
 .plans-summary-card__pill--free{
   border-color:#bbf7d0;
   background:#ecfdf5;
   color:#047857;
 }
+
 
 .plans-summary-card__link{
   font-size:12px;
@@ -732,16 +978,9 @@ hr {
   text-decoration:none;
   white-space:nowrap;
 }
+
 .plans-summary-card__link:hover{ text-decoration:underline; }
 
-/* ── AI Agent Status Chip ────────────────────────────────── */
-
-.api-card-chips {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
 
 .api-agent-chip {
   display: inline-flex;
@@ -759,16 +998,23 @@ hr {
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
+
 .api-agent-chip:hover {
   transform: translateY(-1px);
 }
 
+
 .api-agent-chip--ready {
-  background: color-mix(in srgb, var(--success-color) 15%, white);
-  color: var(--white-text-color);
+  background: color-mix(in srgb, var(--success) 15%, white);
+  /* Was var(--white-text-color), which is defined nowhere in this tree - so the
+     declaration dropped and the label fell back to whatever it inherited. White would
+     have been unreadable anyway on a 15%-tinted background; this mirrors the
+     --hidden variant below, which mixes its own hue toward black. */
+  color: color-mix(in srgb, var(--success) 80%, black);
 }
 
+
 .api-agent-chip--hidden {
-  background-color: color-mix(in srgb, var(--warning-color) 15%, white);
-  color: color-mix(in srgb, var(--warning-color) 80%, black);
+  background-color: color-mix(in srgb, var(--warning) 15%, white);
+  color: color-mix(in srgb, var(--warning) 80%, black);
 }

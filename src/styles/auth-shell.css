@@ -1,0 +1,470 @@
+/* The token layer, imported so this sheet stands alone. Internal pages render
+   inside the organization's own stored layout, which predates the tokens.css
+   <link> and will never gain it - so the sheet has to carry its own tokens.
+   /technical-styles/ is never rewritten to a stored-asset URL. */
+@import "/technical-styles/tokens.css";
+/* Inter, and a literal stack behind the token. tokens.css deliberately does not define
+   --font-family-sans - it is a seed in the theme's own :root - and this page does not
+   link the theme, so without the fallback every rule below resolves to the browser's
+   default serif. Upstream avoids this only because its login layout still links main.css. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+/*
+ * Auth entry shell - the sign-in page. Ported from the on-prem portal's
+ * defaultContent/styles/auth-shell.css and login.css, merged into one sheet.
+ *
+ * WHY IT LIVES IN src/styles/ RATHER THAN THE THEME
+ * -------------------------------------------------
+ * Upstream ships this as themable content. Ours cannot: the login page is an internal
+ * page that renders before any organization is resolved, so a /styles/ link would be
+ * rewritten to a stored-asset lookup for a themed organization and miss - and a miss on
+ * that endpoint hangs rather than 404s.
+ *
+ * The bare `body` and `*` rules below are page-scoped in practice: login-page/layout.hbs
+ * is the only template that links this sheet, and it is a standalone document rather than
+ * the portal layout.
+ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-family-sans, Inter, "Noto Sans", system-ui, -apple-system, sans-serif);
+  -webkit-font-smoothing: antialiased;
+  background: var(--ink-deep);
+}
+
+/* ── Root layout ────────────────────────────────────────────── */
+.auth-root {
+  min-height: 100vh;
+  display: flex;
+}
+
+/* ── Left: brand panel ──────────────────────────────────────── */
+.auth-brand {
+  flex: 1.05;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 3.5rem 4rem;
+  background: var(--surface-dark);
+}
+
+.auth-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 2;
+}
+
+.auth-logo-svg {
+  height: 2.25rem;
+  width: auto;
+  display: block;
+  opacity: .95;
+}
+
+.auth-brand-body {
+  margin-top: auto;
+  position: relative;
+  z-index: 2;
+  max-width: 33.75rem;
+}
+
+.auth-tenant-pill {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--on-dark-pill);
+  background: var(--on-dark-pill-bg);
+  border: 1px solid var(--on-dark-pill-border);
+  padding: 0.4375rem 0.8125rem;
+  border-radius: 1.25rem;
+}
+
+.auth-headline {
+  margin: 1.375rem 0 0;
+  font-size: 2.75rem;
+  font-weight: 300;
+  line-height: 1.14;
+  letter-spacing: -0.015em;
+  color: var(--white);
+  text-wrap: balance;
+}
+
+.auth-desc {
+  margin: 1.125rem 0 0;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--on-dark);
+  max-width: 28.75rem;
+}
+
+.auth-foot-desktop {
+  margin-top: auto;
+  padding-top: 3rem;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 1.375rem;
+  font-size: 0.8125rem;
+  line-height: 1;
+  color: var(--on-dark-muted);
+}
+
+.auth-foot-desktop a {
+  color: var(--on-dark-muted);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.auth-foot-desktop a:hover { color: var(--on-dark); }
+
+/* ── Right: form panel ──────────────────────────────────────── */
+.auth-form {
+  flex: .95;
+  min-width: 0;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+}
+
+.auth-form-inner {
+  width: 25.25rem;
+  max-width: 100%;
+}
+
+.auth-form-title {
+  margin: 0;
+  font-size: 1.875rem;
+  font-weight: 300;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--text-strong);
+}
+
+.auth-form-sub {
+  margin: 0.625rem 0 0;
+  font-size: 0.90625rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* ── Field ──────────────────────────────────────────────────── */
+.auth-field {
+  margin-top: 0;
+}
+
+.auth-field-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.auth-input-wrap {
+  position: relative;
+}
+
+.auth-input-icon {
+  position: absolute;
+  left: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-subtle);
+  font-size: 1rem;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.auth-input {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--border-radius);
+  padding: 0.8125rem 0.875rem 0.8125rem 2.625rem;
+  font-family: inherit;
+  font-size: 0.90625rem;
+  line-height: 1;
+  color: var(--text-strong);
+  background: var(--surface);
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+.auth-input::placeholder { color: var(--text-subtle); }
+
+.auth-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* ── Continue / submit button ───────────────────────────────── */
+.auth-continue-btn {
+  display: block;
+  width: 100%;
+  padding: 0.875rem;
+  border: none;
+  border-radius: 1.25rem;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--white);
+  cursor: not-allowed;
+  background: var(--border-strong);
+  opacity: .7;
+  transition: background .2s, opacity .2s, box-shadow .2s;
+}
+
+.auth-continue-btn--active {
+  background: var(--cta-gradient);
+  opacity: 1;
+  cursor: pointer;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.auth-continue-btn--active:hover { opacity: .9; }
+
+.auth-continue-btn:disabled {
+  background: var(--border-strong);
+  opacity: .7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ── Mobile footer ──────────────────────────────────────────── */
+.auth-foot-mobile {
+  display: none;
+  justify-content: center;
+  gap: 1.375rem;
+  padding: 1.375rem 1.5rem;
+  background: var(--surface);
+  font-size: 0.8125rem;
+  line-height: 1;
+  color: var(--text-subtle);
+}
+
+.auth-foot-mobile a {
+  color: var(--text-subtle);
+  text-decoration: none;
+}
+
+/* ── Brand panel feature list ───────────────────────────────── */
+.ln-features {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+  margin-top: 2.375rem;
+}
+
+.ln-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ln-feature-icon {
+  flex: none;
+  width: 2.625rem;
+  height: 2.625rem;
+  border-radius: 0.6875rem;
+  background: var(--on-dark-fill);
+  border: 1px solid var(--on-dark-fill-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-light);
+  font-size: 1.0625rem;
+}
+
+.ln-feature-text {
+  font-size: 0.96875rem;
+  line-height: 1.45;
+  color: var(--white);
+}
+
+.ln-form-inner {
+  width: 24.5rem;
+}
+
+.ln-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+  margin-top: 2.125rem;
+}
+
+.ln-pw-input { padding-right: 2.75rem; }
+
+.ln-pw-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  color: var(--text-subtle);
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+.ln-pw-toggle:hover { color: var(--text); }
+
+.ln-signin-btn {
+  margin-top: 0.25rem;
+}
+
+.ln-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5625rem;
+  margin-top: 1.125rem;
+  padding: 0.6875rem 0.875rem;
+  background: var(--danger-surface);
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, var(--surface));
+  border-radius: var(--border-radius);
+  font-size: 0.84375rem;
+  line-height: 1.45;
+  color: var(--danger);
+}
+
+.ln-error-banner i { flex: none; font-size: 0.9375rem; }
+
+/* ── Identity-provider buttons ──────────────────────────────────
+   No upstream counterpart: the on-prem portal signs in against local credentials only,
+   while this one offers Google, GitHub, Microsoft, Enterprise and Email. Built from the
+   same metrics as .auth-input and .auth-continue-btn so the two sign-in modes look like
+   one page.
+   ---------------------------------------------------------------- */
+.ln-idp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 2.125rem;
+}
+
+.ln-idp-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.8125rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 1.25rem;
+  background: var(--surface);
+  color: var(--text-strong);
+  font-family: inherit;
+  font-size: 0.90625rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background .2s, border-color .2s;
+}
+
+.ln-idp-btn:hover {
+  background: var(--surface-sunken);
+  border-color: var(--primary);
+  color: var(--text-strong);
+  text-decoration: none;
+}
+
+.ln-idp-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+}
+
+/* Rule-and-label divider between the federated providers and email sign-in. */
+.ln-or {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  color: var(--text-subtle);
+}
+
+.ln-or::before,
+.ln-or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── Enterprise sign-in step ────────────────────────────────── */
+.ln-enterprise-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 2.125rem;
+}
+
+.ln-back-btn {
+  display: block;
+  width: 100%;
+  padding: 0.875rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 1.25rem;
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background .2s;
+}
+
+.ln-back-btn:hover { background: var(--surface-sunken); color: var(--text); text-decoration: none; }
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .auth-root { flex-direction: column; }
+
+  .auth-brand {
+    flex: none;
+    padding: 2.5rem 2rem;
+    gap: 1.375rem;
+  }
+
+  .auth-brand-body { margin-top: 0; }
+
+  .auth-headline { font-size: 1.875rem; }
+
+  .auth-foot-desktop { display: none; }
+
+  .auth-form {
+    flex: none;
+    padding: 2.5rem 1.5rem;
+  }
+
+  .auth-foot-mobile { display: flex; }
+}
+
+@media (max-width: 480px) {
+  .auth-brand { padding: 1.875rem 1.375rem; }
+  .auth-headline { font-size: 1.5625rem; }
+  .auth-desc { font-size: 0.90625rem; }
+  .auth-form { padding: 1.875rem 1.125rem; }
+}

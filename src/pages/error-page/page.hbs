@@ -1,8 +1,52 @@
-<section class="d-flex flex-column justify-content-center align-items-center vh-100 text-center">
+<section>
     {{> header profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav }}
     {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode showApiWorkflowsNav=showApiWorkflowsNav }}
-    <div>
-        <img src="/images/Ooops.svg" alt="Oops" class="img-fluid mb-3" />
-        <h4>{{errorMessage}}</h4>
+    <div class="ep-full">
+        <div class="ep-inner">
+
+            {{!-- errorType is optional. Most of the thirty-odd call sites predate it and
+                  pass only errorMessage, so the last branch stays the default and keeps
+                  showing whatever message they set. --}}
+            {{#if (eq errorType '404')}}
+            <div class="ep-circle">
+                <i class="bi bi-compass"></i>
+            </div>
+            <div class="ep-code">Error 404</div>
+            <h1 class="ep-title">Page not found</h1>
+            <p class="ep-desc">The page you're looking for doesn't exist or may have been moved. Check the address, or jump back to a place you know.</p>
+            <div class="ep-actions">
+                <a href="{{baseUrl}}" class="ep-btn ep-btn--primary"><i class="bi bi-house"></i> Go to home</a>
+                <button type="button" onclick="history.back()" class="ep-btn ep-btn--outline"><i class="bi bi-arrow-left"></i> Go back</button>
+            </div>
+
+            {{else if (eq errorType '403')}}
+            <div class="ep-circle ep-circle--denied">
+                <i class="bi bi-shield-x"></i>
+            </div>
+            <div class="ep-code ep-code--denied">Error 403</div>
+            <h1 class="ep-title">Access denied</h1>
+            <p class="ep-desc">You don't have permission to view this page.</p>
+            <div class="ep-actions">
+                <button type="button" onclick="history.back()" class="ep-btn ep-btn--primary"><i class="bi bi-arrow-left"></i> Go back</button>
+            </div>
+            <p class="ep-note">Need access? Contact your organization admin.</p>
+
+            {{else}}
+            <div class="ep-circle ep-circle--broken">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <div class="ep-code ep-code--broken">Error 500</div>
+            {{!-- The existing call sites pass a specific message - "Failed to load API" and
+                  the like. Keep it as the heading rather than replacing every one of them
+                  with upstream's generic wording. --}}
+            <h1 class="ep-title">{{#if errorMessage}}{{errorMessage}}{{else}}Oops! Something went wrong{{/if}}</h1>
+            <p class="ep-desc">Something went wrong on our end. Try again in a moment.</p>
+            <div class="ep-actions">
+                <button type="button" onclick="location.reload()" class="ep-btn ep-btn--primary"><i class="bi bi-arrow-clockwise"></i> Try again</button>
+                <a href="{{baseUrl}}" class="ep-btn ep-btn--outline"><i class="bi bi-house"></i> Go to home</a>
+            </div>
+            {{/if}}
+
+        </div>
     </div>
 </section>

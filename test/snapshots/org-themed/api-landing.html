@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>API Portal &amp; MCP Hub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://getbootstrap.com/docs/5.3/assets/css/docs.css" rel="stylesheet">
+    <link rel="stylesheet" href="/technical-styles/tokens.css">
+    <link rel="stylesheet" href="/technical-styles/components.css">
+    <link rel="stylesheet" href="/devportal/organizations/00000000-0000-0000-0000-000000000000/views/default/layout?fileType=style&fileName=main.css">
+    <link rel="stylesheet" href="/technical-styles/layout.css" />
+    <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+    </script>
+    <script src='/technical-scripts/search.js' defer></script>
+    <script src='/technical-scripts/filter.js' defer></script>
+    <script src='/technical-scripts/common.js' defer></script>
+    <script src='/technical-scripts/delete-confirmation-modal.js' defer></script>
+    <script src='/technical-scripts/subscription.js' defer></script>
+</head>
+
+<body class="main-body">
+    <main class="main-container">
+        <div class="content-area">
+        <!--
+ * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
+ *
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+ -->
+
+<head>
+  <script src='/technical-scripts/add-application-form.js' defer></script>
+  <script src="/technical-scripts/oauth2-key-generation.js" defer></script>
+  <script src='/technical-scripts/platform-subscription.js' defer></script>
+  <script src='/technical-scripts/subscription-modal.js' defer></script>
+  <script src='/technical-scripts/api-agent-prompt.js' defer></script>
+  <link rel="stylesheet" href="/technical-styles/agent-prompt.css">
+  <script type="application/json" id="apiAgentData">{"baseUrl":"/testorg/views/default","apiHandle":"orders-api"}</script>
+</head>
+<main>
+    <header>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+      <nav class="navbar navbar-expand-lg custom-navbar fixed-top">
+        <div class="container-fluid">
+          <a class="navbar-brand d-flex align-items-center" href="/testorg/views/default">
+            <img src="/devportal/organizations/00000000-0000-0000-0000-000000000000/views/default/layout?fileType=image&fileName=devportalLogo.png" alt="Logo" class="navbar-logo me-2">
+          </a>
+          <div class="d-flex align-items-center me-2">
+            <div id="auth-section">
+              <a class="common-btn-primary login-btn" href="/testorg/views/default/login">Log In</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+    <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+    <div class="sidebar" id="sidebar">
+      <nav class="nav">
+        <a href="/testorg/views/default/" class="nav-link" id="home">
+          <i class="bi bi-house sidebar-icon"></i>
+          <span class="nav-text">Home</span>
+        </a>
+          <a href="/testorg/views/default/apis" class="nav-link" id="apis">
+            <i class="bi bi-boxes sidebar-icon"></i>
+            <span class="nav-text">APIs</span>
+            <i class="bi bi-chevron-right sidebar-chevron nav-text"></i>
+          </a>
+          <div class="submenu api-submenu" id="api-submenu">
+            <a href="#" class="nav-link submenu-link fw-light" id="api-overview">
+              <i class="bi bi-grid submenu-icon"></i>
+              <span class="nav-text">Overview</span>
+            </a>
+            <a href="#" class="nav-link submenu-link fw-light" id="api-docs">
+              <i class="bi bi-file-text submenu-icon"></i>
+              <span class="nav-text">Documentation</span>
+            </a>
+            <a href="#" class="nav-link submenu-link fw-light" id="api-subscriptions">
+              <i class="bi bi-receipt submenu-icon"></i>
+              <span class="nav-text">Subscriptions</span>
+            </a>
+          </div>
+          <a href="/testorg/views/default/mcps" class="nav-link" id="mcps">
+            <img src="/images/mcp-icon.svg" class="sidebar-icon" alt="" />
+            <span class="nav-text">MCP Servers</span>
+            <i class="bi bi-chevron-right sidebar-chevron nav-text"></i>
+          </a>
+          <div class="submenu api-submenu" id="mcp-submenu">
+            <a href="#" class="nav-link submenu-link fw-light" id="mcp-overview">
+              <i class="bi bi-grid submenu-icon"></i>
+              <span class="nav-text">Overview</span>
+            </a>
+            <a href="#" class="nav-link submenu-link fw-light" id="mcp-docs">
+              <i class="bi bi-file-text submenu-icon"></i>
+              <span class="nav-text">Documentation</span>
+            </a>
+          </div>
+          <a href="/testorg/views/default/applications" class="nav-link" id="applications">
+            <img src="/images/applications-icon.svg" class="sidebar-icon" alt="" />
+            <span class="nav-text">Applications</span>
+            <i class="bi bi-chevron-right sidebar-chevron nav-text"></i>
+          </a>
+          <div class="submenu applications-submenu" id="applications-submenu">
+            <a href="#" class="nav-link submenu-link fw-light" id="applications-overview">
+              <i class="bi bi-grid submenu-icon"></i>
+              <span class="nav-text">Overview</span>
+            </a>
+            <a href="#" class="nav-link submenu-link fw-light" id="applications-keys">
+              <i class="bi bi-key submenu-icon"></i>
+              <span class="nav-text">Manage Keys</span>
+            </a>
+          </div>
+          <a href="/testorg/views/default/subscriptions" class="nav-link" id="subscriptions">
+            <i class="bi bi-receipt sidebar-icon"></i>
+            <span class="nav-text">Subscriptions</span>
+          </a>
+      </nav>
+    
+      <div class="nav-section-divider"></div>
+      <button class="collapse-btn" id="collapseBtn">
+        <i class="bi bi-chevron-right"></i>
+        <span class="collapse-text">Expand</span>
+      </button>
+    </div>
+    <div class="container-fluid dp-breadcrumb-bar">
+        <nav class="dp-breadcrumb">
+            <a class="dp-breadcrumb-item" href="/testorg/views/default/apis">APIs</a>
+            <i class="bi bi-chevron-right dp-breadcrumb-sep"></i>
+            <span class="dp-breadcrumb-current">Orders API</span>
+        </nav>
+    </div>
+    <div class="container-fluid">
+        <div class="aov-hero">
+          <div class="aov-hero-top">
+            <div class="aov-hero-thumb">
+              <div class="aov-api-avatar">OR</div>
+            </div>
+            <div class="aov-hero-title-row">
+              <h1 class="aov-hero-name">Orders API</h1>
+              <div class="aov-hero-badges">
+                <span class="dp-badge dp-badge--version">1.0.0</span>
+                <span class="dp-badge
+                  dp-badge--rest">
+                  <i class="bi bi-braces"></i> REST        </span>
+              </div>
+            </div>
+          </div>
+          <div class="aov-hero-body">
+            <p class="aov-hero-desc">Create and track orders.</p>
+            <div class="aov-hero-actions">
+              <a class="dp-btn dp-btn--outline" href="/testorg/views/default/api/orders-api/docs/specification">
+                <i class="bi bi-book"></i> Documentation
+              </a>
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <div class="aov-body">
+        <div class="aov-body-main">
+            <!--
+             * Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
+             *
+             * WSO2 LLC. licenses this file to you under the Apache License,
+             * Version 2.0 (the "License"); you may not use this file except
+             * in compliance with the License.
+             * You may obtain a copy of the License at
+             *
+             * http://www.apache.org/licenses/LICENSE-2.0
+             *
+             * Unless required by applicable law or agreed to in writing,
+             * software distributed under the License is distributed on an
+             * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+             * KIND, either express or implied. See the License for the
+             * specific language governing permissions and limitations
+             * under the License.
+             */
+             -->
+            <div class="aov-section">
+              <div class="aov-section-header">
+                <h2 class="aov-section-title">Endpoints</h2>
+              </div>
+              <div class="aov-endpoint-card">
+                <div class="aov-endpoint-label-row">
+                  <span class="aov-endpoint-dot aov-endpoint-dot--prod"></span>
+                  <span class="aov-endpoint-label">Production</span>
+                </div>
+                <div class="aov-endpoint-url-row">
+                  <i class="bi bi-link-45deg" style="color:var(--text-muted);flex:none;"></i>
+                  <pre id="token_api_prod_url" class="aov-endpoint-url token-text"></pre>
+                  <button type="button" class="copy-btn" title="Copy URL" onclick="copyToken(this, 'api_prod_url')">
+                    <span class="copy-btn-icon"><i class="bi bi-copy"></i></span>
+                    <span class="copy-btn-check"><i class="bi bi-check"></i> Copied</span>
+                  </button>
+                </div>
+              </div>
+              <div class="aov-endpoint-card">
+                <div class="aov-endpoint-label-row">
+                  <span class="aov-endpoint-dot aov-endpoint-dot--sandbox"></span>
+                  <span class="aov-endpoint-label">Sandbox</span>
+                </div>
+                <div class="aov-endpoint-url-row">
+                  <i class="bi bi-link-45deg" style="color:var(--text-muted);flex:none;"></i>
+                  <pre id="token_api_dev_url" class="aov-endpoint-url token-text"></pre>
+                  <button type="button" class="copy-btn" title="Copy URL" onclick="copyToken(this, 'api_dev_url')">
+                    <span class="copy-btn-icon"><i class="bi bi-copy"></i></span>
+                    <span class="copy-btn-check"><i class="bi bi-check"></i> Copied</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div class="aov-section">
+              <div class="aov-section-header">
+                <h2 class="aov-section-title">Resources</h2>
+              </div>
+            </div>
+            
+            
+            
+            <div class="aov-section">
+              <div class="aov-section-header">
+                <h2 class="aov-section-title">Scopes</h2>
+              </div>
+              <div class="aov-scopes-empty">
+                <i class="bi bi-shield-slash" style="font-size:1.125rem;"></i>
+                <span>No scopes are defined for this API.</span>
+              </div>
+            </div>
+        </div>
+        <div class="aov-body-sidebar">
+            <section class="section mt-0 mb-6" id="subscriptionPlans">
+                <div class="container-fluid text-center">
+                </div>
+            </section>
+        </div>
+    </div>
+    <head>
+      <link rel='stylesheet' href='/technical-styles/add-edit-application.css' />
+    </head>
+    
+    <section>
+        <div id="createAppModal" class="modal custom-modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content custom-modal-content">
+                    <div class="custom-modal-header">
+                        <h2 class="custom-modal-title m-0">Create Application</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                            onclick="closeModal('createAppModal')"></button>
+                    </div>
+                    <div class="custom-modal-body">
+                        <form id='applicationForm' class='create-app-form'>
+                            <!-- Application Name -->
+                            <div class='mb-3'>
+                                <label for='applicationName' class='form-label'>Application Name
+                                    <span class='text-danger'>*</span></label>
+                                <input type='text' id='applicationName' class='form-control'
+                                    placeholder='My Application' required />
+                                <div id='nameError' class='error-msg text-danger mt-1' style='display: none;'>
+                                    Application name cannot be empty.</div>
+                            </div>
+    
+                            <!-- Application Description -->
+                            <div class='mb-3'>
+                                <label for='applicationDescription' class='form-label'>Application
+                                    Description</label>
+                                <textarea id='applicationDescription' class='form-control' rows='4'
+                                    placeholder='Provide a brief description of the application'
+                                    maxlength='256'></textarea>
+                                <div class='form-text'>
+                                  <span id='remainingCharacters'>256</span> characters remaining
+                                </div>
+                                <div id='descriptionError' class='text-danger mt-1' style='display: none;'>
+                                    Description exceeds the character limit.</div>
+                            </div>
+    
+                            <!-- Buttons -->
+                            <div class='d-flex gap-3 mt-4'>
+                                <button type='button' class='common-btn-outlined' id="cancelButton"
+                                    onclick="closeModal('createAppModal')">
+                                    Cancel
+                                </button>
+                                <button type='submit' class='common-btn-primary' id='saveButton' disabled>
+                                    Save
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>    <head>
+      <link rel='stylesheet' href='/technical-styles/warning.css' />
+      <script src="/technical-scripts/warning.js" defer></script> 
+      <script src='/technical-scripts/create-org.js' defer></script>
+    </head>
+    
+    <body>
+      <section>
+        <div
+          class='modal fade delete-alert'
+          id='warningModal'
+          tabindex='-1'
+          aria-hidden='true'
+        >
+          <div class='modal-dialog'>
+            <div class='modal-content'>
+              <div class='modal-header'>
+                <h5 class='modal-title' id="modalTitle">Confirm</h5>
+              </div>
+              <div class='modal-body'>
+                <p class='modal-message' id="modalMessage"></p>
+              </div>
+              <div class='modal-footer'>
+                <button
+                  type='button'
+                  class='btn common-btn-link'
+                  data-bs-dismiss='modal'
+                >
+                  Cancel
+                </button>
+                <button
+                  type='button'
+                  class='btn common-btn-primary common-btn-danger'
+                  data-bs-dismiss='modal'
+                  id="modalFunction"
+                  data-cyid="confirm"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </body>    <head>
+      <link rel="stylesheet" href="/technical-styles/alert.css" />
+      <script src="/technical-scripts/alert.js" defer></script>
+    </head>
+    
+    <body>
+      <section>
+        <div
+          class="modal fade custom-alert"
+          id="alertModal"
+          tabindex="-1"
+          aria-hidden="true"
+        >
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-body">
+                <i class="alert-icon bi"></i>
+                <p class="modal-message"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </body>
+
+</main>
+
+        </div>
+    </main>
+    <footer class="footer-section">
+      <div class="footer-container">
+        <ul class="footer-links">
+          <li><a href="#">Terms of use</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Support</a></li>
+        </ul>
+        <div class="footer-icons">
+          <a href="#">© 2026, WSO2 LLC.</a>
+        </div>
+      </div>
+    </footer>
+
+    <div class='modal fade' id='deleteConfirmation' tabindex='-1' aria-hidden='true'>
+        <div class='modal-dialog'>
+            <div class='modal-content'>
+                <div class='modal-header'>
+                    <h5 class='modal-title'>Confirm</h5>
+                </div>
+                <div class='modal-body'>
+                    <p class='modal-message'></p>
+                </div>
+                <div class='modal-footer'>
+                    <button type='button' class='btn common-btn-link' data-bs-dismiss='modal'>
+                        Cancel
+                    </button>
+                    <button
+                        type='button'
+                        class='btn common-btn-primary common-btn-danger'
+                        data-bs-dismiss='modal'
+                        id='deleteConfirmationBtn'
+                        data-cyid="confirm"
+                    >
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="stripeCheckoutModal" class="modal hidden" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6);">
+        <div class="modal-content" style="background-color: #fefefe; margin: 40px auto; padding: 30px 20px 20px 20px; border: none; width: 90%; max-width: 600px; border-radius: 12px; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto;">
+            <button onclick="closeStripeCheckoutModal()" style="position: absolute; right: 15px; top: 15px; font-size: 24px; font-weight: bold; color: #999; background: none; border: none; cursor: pointer; z-index: 10; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f0f0f0'" onmouseout="this.style.backgroundColor='transparent'">&times;</button>
+            <h2 style="margin-top: 0; margin-bottom: 20px; padding-right: 40px; color: #333; font-size: 22px; font-weight: 600;">Add Payment Details</h2>
+            <div id="stripe-embedded-checkout" style="min-height: 400px;"></div>
+        </div>
+    </div>
+</body>
+
+</html>

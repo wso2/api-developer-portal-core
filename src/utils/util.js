@@ -841,6 +841,7 @@ function validateScripts(strContent) {
             "<script src='/technical-scripts/platform-subscription.js' defer></script>",
             "<script src='/technical-scripts/subscription-modal.js' defer></script>",
             "<script src='/technical-scripts/subscriptions-page.js' defer></script>",
+            "<script src='/technical-scripts/paginate.js' defer></script>",
             "<script src='/technical-scripts/platform-api-keys-page.js' defer></script>",
             '<script src="/technical-scripts/oauth2-key-generation.js" defer></script>',
             '<script src="/technical-scripts/api-key-generation.js" defer></script>',
@@ -850,6 +851,8 @@ function validateScripts(strContent) {
             "<script src='/technical-scripts/api-workflows.js' defer></script>",
             "<script src='/technical-scripts/api-agent-prompt.js' defer></script>",
             '<script src="/technical-scripts/home-discover.js" defer></script>',
+            "<script src='/technical-scripts/home-particles.js' defer></script>",
+            '<script src="/technical-scripts/particles.js" defer></script>',
             '<script src="https://cdn.jsdelivr.net/npm/@jentic/arazzo-ui@1.0.0-alpha.30/dist/arazzo-ui.js" integrity="sha256-OYzURPQLK+lup5rGo+IQmVbjWOjVgjURBWDDtMHIOaw=" crossorigin="anonymous"></script>',
             '<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js" integrity="sha256-Rdw90D3AegZwWiwpibjH9wkBPwS9U4bjJ51ORH8H69c=" crossorigin="anonymous"></script>',
             '<script src="https://cdn.jsdelivr.net/npm/marked@13.0.3/marked.min.js" integrity="sha256-Wt6n2O5BpwD8zBS7nVAxBPBHDMF6hK0+Fn0/UlHq4No=" crossorigin="anonymous"></script>',
@@ -868,6 +871,9 @@ function validateScripts(strContent) {
             "<script type=\"application/json\" id=\"apiFlowsDataContainer\">{{{json apiFlows}}}</script>",
             // AI agent data island (pages/api-landing/page.hbs)
             "<script type=\"application/json\" id=\"apiAgentData\">{\"baseUrl\":\"{{baseUrl}}\",\"apiHandle\":\"{{apiMetadata.apiHandle}}\"}</script>",
+            // AI agent data island (pages/mcp-landing/page.hbs) - carries artifactPath so
+            // the shared script reads /mcp/<handle>.md rather than the /api/ default
+            "<script type=\"application/json\" id=\"apiAgentData\">{\"baseUrl\":\"{{baseUrl}}\",\"apiHandle\":\"{{apiMetadata.apiHandle}}\",\"artifactPath\":\"mcp\"}</script>",
             // Home discover data island (pages/home/page.hbs)
             "<script type=\"application/json\" id=\"homeDiscoverData\">{\"baseUrl\":\"{{baseUrl}}\"}</script>",
             // Existing-subs bootstrap (api-landing/partials/api-subscription-plans.hbs)
@@ -1186,6 +1192,7 @@ module.exports = {
     validateRequestParameters,
     rejectExtraProperties,
     readFilesInDirectory,
+    validateScripts,
     appendAPIImageURL,
     appendSubscriptionPlanDetails,
     tokenExchanger,

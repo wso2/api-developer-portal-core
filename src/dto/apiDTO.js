@@ -32,8 +32,16 @@ class APIDTO {
             enabled: api.MONETIZATION_ENABLED || false
         };
         
-        if (api.DP_SUBSCRIPTION_POLICies) {
-            this.subscriptionPolicies = api.DP_SUBSCRIPTION_POLICies.map(policy => new APISubscriptionPolicy(policy));
+        /* Two DAO paths feed this DTO and they name the same data differently:
+           getAllAPIMetadata returns Sequelize instances whose include is aliased
+           DP_SUBSCRIPTION_POLICies, while searchAPIMetadata is raw SQL aggregating
+           JSON_AGG(...) AS "DP_API_SUBSCRIPTION_POLICY". Reading only the first left
+           every search result without subscriptionPolicies, so the listing's enrichment
+           loop hit `.find` on undefined and 500'd the page for any signed-in user who
+           was subscribed to a match. */
+        const policies = api.DP_SUBSCRIPTION_POLICies || api.DP_API_SUBSCRIPTION_POLICY;
+        if (Array.isArray(policies)) {
+            this.subscriptionPolicies = policies.map(policy => new APISubscriptionPolicy(policy));
         }
         if (api.DP_APPLICATIONs) {
             this.policyID = api.DP_APPLICATIONs[0].DP_API_SUBSCRIPTION.dataValues.POLICY_ID;

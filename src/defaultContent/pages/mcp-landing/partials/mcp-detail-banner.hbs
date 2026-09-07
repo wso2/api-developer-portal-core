@@ -1,41 +1,94 @@
-<section class="api-banner-section">
-  <div class="container-fluid">
-    <div class="api-banner-content align-items-center ">
-      <div class="col-12 col-md-7">
-        <div class="api-title">
-          <span class="badge api-badge-custom1">{{apiMetadata.apiInfo.apiCategory}}</span>
-          <h4>{{or apiMetadata.apiInfo.apiTitle apiMetadata.apiInfo.apiName}}</h4>
-          <p class="api-version"> {{apiMetadata.apiInfo.apiVersion}}</p>
-        </div>
-        <p class="api-description">{{apiMetadata.apiInfo.apiDescription}}</p>
-        <div class="api-tags">
-          {{#apiMetadata.apiInfo.tags}}
-          <span class="badge api-badge-custom2">{{this}}</span>
-          {{/apiMetadata.apiInfo.tags}}
-        </div>
-        <div class="api-details-btn">
-          {{#if apiMetadata.apiReferenceID}}
-          <a type="button" class="common-btn-primary" href="#subscriptionPlans">Subscribe</a>
-          {{else}}
-          {{#unless (eq apiMetadata.apiInfo.apiType "MCP")}}
-          <a type="button" class="common-btn-primary" href="#subscriptionPlans">Subscribe</a>
-          {{/unless}}
-          {{/if}}
-          {{#in apiMetadata.apiInfo.apiType values="REST,WS,GraphQL,MCP,WEBSUB"}}
-          <a type="button" class="common-btn-outlined"
-            href="{{baseUrl}}/mcp/{{apiMetadata.apiHandle}}/docs/specification">Documentation</a>
-          {{else}}
-          <a type="button" class="common-btn-outlined" href="{{{schemaUrl}}}" download>Download</a>
-          {{/in}}
-        </div>
-      </div>
-      <div class="col-12 col-md-5 text-md-right api-banner-icon">
-        {{#if apiMetadata.apiInfo.apiImageMetadata.api-icon}}
-        <img class="img-thumbnail api-image" src="{{apiMetadata.apiInfo.apiImageMetadata.api-icon}}" alt="API Image" />
-        {{else}}
-        <div class="img-thumbnail api-image image-icon d-flex justify-content-center align-items-center">{{firstTwoLetters (or apiMetadata.apiInfo.apiTitle apiMetadata.apiInfo.apiName)}}</div>
+{{!--
+      Ported onto the same aov-hero vocabulary as api-detail-banner.hbs, which had already
+      been moved off the old .api-banner-section / .common-btn-* / .img-thumbnail markup.
+      This partial had been left behind on it, so the MCP server page still rendered the
+      circle-and-rectangles banner while the API page rendered upstream's card hero.
+
+      Every class here is already in components.css - this needs no new CSS.
+
+      Differences from the API banner, all of them deliberate: the type badge is always
+      MCP so it is written out rather than branched; links go to /mcp/ rather than /api/;
+      and there is no Download branch, because an MCP server always has a specification
+      route and never a downloadable schema.
+--}}
+<div class="aov-hero">
+  <div class="aov-hero-top">
+    <div class="aov-hero-thumb">
+      {{#if apiMetadata.apiInfo.apiImageMetadata.api-icon}}
+      <img class="aov-api-img" src="{{apiMetadata.apiInfo.apiImageMetadata.api-icon}}" alt="{{or apiMetadata.apiInfo.apiTitle apiMetadata.apiInfo.apiName}}" />
+      {{else}}
+      <div class="aov-api-avatar">{{firstTwoLetters (or apiMetadata.apiInfo.apiTitle apiMetadata.apiInfo.apiName)}}</div>
+      {{/if}}
+    </div>
+    <div class="aov-hero-title-row">
+      <h1 class="aov-hero-name">{{or apiMetadata.apiInfo.apiTitle apiMetadata.apiInfo.apiName}}</h1>
+      <div class="aov-hero-badges">
+        {{#if apiMetadata.apiInfo.apiVersion}}
+        <span class="dp-badge dp-badge--version">{{apiMetadata.apiInfo.apiVersion}}</span>
+        {{/if}}
+        <span class="dp-badge dp-badge--mcp">
+          <img src="/images/mcp-icon.svg" class="dp-badge-icon" alt="" /> MCP
+        </span>
+        {{#if showApiWorkflowsNav}}
+        {{#unless (eq apiMetadata.apiInfo.agentVisibility "HIDDEN")}}
+        <span class="dp-badge dp-badge--ai" title="AI agents can discover and use this MCP server">
+          <i class="bi bi-robot"></i> AI Ready
+        </span>
+        {{/unless}}
+        {{/if}}
+        {{#if (eq apiMetadata.apiInfo.apiStatus "DEPRECATED")}}
+        <span class="dp-badge dp-badge--deprecated"><i class="bi bi-exclamation-circle"></i> Deprecated</span>
         {{/if}}
       </div>
     </div>
   </div>
-</section>
+  <div class="aov-hero-body">
+    {{#if apiMetadata.apiInfo.apiDescription}}
+    <p class="aov-hero-desc">{{apiMetadata.apiInfo.apiDescription}}</p>
+    {{/if}}
+    {{#if apiMetadata.apiInfo.tags}}
+    <div class="dp-tags">
+      {{#apiMetadata.apiInfo.tags}}
+      <span class="dp-tag dp-tag--white">{{this}}</span>
+      {{/apiMetadata.apiInfo.tags}}
+    </div>
+    {{/if}}
+    <div class="aov-hero-actions">
+      {{!-- Subscribe. Gated on a plan actually existing and on there being nothing
+            subscribed yet, matching upstream - the old markup offered it unconditionally
+            for non-MCP types and never for MCP, which is the wrong way round here. --}}
+      {{#if subscriptionPlans.length}}
+        {{#unless platformSubscriptions.length}}
+      <a class="dp-btn dp-btn--primary" href="#subscriptionPlans">
+        <i class="bi bi-bookmark-plus"></i> Subscribe
+      </a>
+        {{/unless}}
+      {{/if}}
+      <a class="dp-btn dp-btn--outline" href="{{baseUrl}}/mcp/{{apiMetadata.apiHandle}}/docs/specification">
+        <i class="bi bi-book"></i> Documentation
+      </a>
+      {{!-- Only where subscribing is possible at all. A server with no plan can never
+            have a subscription, so the link would always land on an empty page - which is
+            what it did on every plan-less MCP server. Gated on the plans rather than on
+            subscribedPlanIds because that one is per-user: an MCP server subscribed to by
+            somebody else would otherwise lose the link for everyone but them. --}}
+      {{#if subscriptionPlans.length}}
+      <a class="dp-btn dp-btn--outline" href="{{baseUrl}}/mcp/{{apiMetadata.apiHandle}}/subscriptions">
+        <i class="bi bi-card-checklist"></i> Subscriptions
+      </a>
+      {{/if}}
+      {{#if showApiWorkflowsNav}}
+      {{#unless (eq apiMetadata.apiInfo.agentVisibility "HIDDEN")}}
+      <button type="button" class="dp-btn dp-btn--ai" data-bs-toggle="modal" data-bs-target="#apiAgentPromptModal">
+        <i class="bi bi-robot"></i> Try with AI
+      </button>
+      {{/unless}}
+      {{/if}}
+      {{#if showPlatformApiKeysNav}}
+      <a class="dp-btn dp-btn--outline" href="{{baseUrl}}/mcp/{{apiMetadata.apiHandle}}/api-keys">
+        <i class="bi bi-key"></i> API Keys
+      </a>
+      {{/if}}
+    </div>
+  </div>
+</div>

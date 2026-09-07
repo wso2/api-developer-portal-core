@@ -900,12 +900,33 @@ function markSubscribedUI(card, applicationID, apiId) {
         subscriptionIcon = tempDiv.firstElementChild;
         appOption.appendChild(subscriptionIcon);
       }
-      appOption.classList.add("disabled");
+      /* The option stays selectable - it is the way back to the subscription. Marking it
+         is what turns the control below into "View subscription"; disabling it, as this
+         did before, just made the application unreachable. */
+      appOption.dataset.subscribed = "true";
+      const container = appOption.closest(".subscription-container");
+      const selectedId = container && container.querySelector('input[type="hidden"]');
+      if (container && selectedId && selectedId.value === applicationID) {
+        container.classList.add("subscription-container--selected-subscribed");
+      }
     }
   });
 
   const btn = card.querySelector(".common-btn-primary");
   if (btn) btn.setAttribute("disabled", "disabled");
+
+  /* Subscribing on the API page never reloads, so the card has to reach the state a
+     reload would render: the ribbon, the green tint and the "View subscription" control.
+     `card` is whatever getSubscriptionCard returned, and on this page that is the grid
+     column carrying id="subscriptionCard-<policy>" - the plan card is its child. Testing
+     `card` itself for the class, as this did, was therefore never true here, so the tint
+     and ribbon only appeared on the next page load. */
+  const planCard = card.classList.contains("aov-plan-card")
+    ? card
+    : card.querySelector(".aov-plan-card");
+  if (planCard) {
+    planCard.classList.add("aov-plan-card--subscribed");
+  }
 }
 
 /**

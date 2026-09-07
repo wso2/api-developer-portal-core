@@ -99,3 +99,8 @@ secret*.json
 resources/default-layout
 resources/mock
 
+
+# theming work: local-only verification against the dev DB dump.
+# Nothing derived from that dump is ever committed - see the fixture policy.
+/scripts/local/
+/test/.local/
