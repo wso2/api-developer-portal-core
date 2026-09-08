@@ -330,34 +330,9 @@ input[type="checkbox"]:checked {
   margin-left: 1rem;
 }
 
-/* API Key Warning - Scoped styles for prominent copy message */
-.api-key-warning {
-  background-color: color-mix(in srgb, var(--warning) 15%, white);
-  border-left: 6px solid var(--warning);
-  /* border: 1px solid var(--warning); */
-  border-radius: 0 0.5rem 0.5rem 0;
-  /* padding: 1.25rem; */
-  animation: highlightPulse 0.6s ease-out;
-}
-
-.api-key-warning .info-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--ink);
-  margin-bottom: 0.5rem;
-}
-
-.api-key-warning .info-text {
-  color: var(--ink);
-  line-height: 1.4;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.api-key-warning .info-icon {
-  color: color-mix(in srgb, var(--warning) 90%, black);
-  font-size: 1.75rem;
-}
+/* .api-key-warning lived here - a 6px left bar with the icon floated right and a pulse
+   animation, the one callout of its kind in the portal. The dialog uses
+   .dp-note--warning now, the same amber callout the /api-keys secret dialog shows. */
 
 /* Subtle pulse animation on initial load */
 @keyframes highlightPulse {

@@ -1,164 +1,172 @@
-<section class="section mt-5 mb-6">
+{{!-- app-subscriptions-section carries the bottom spacing. The mb-6 that was here is
+      not a real Bootstrap utility - the default scale stops at 5 - so the token-based
+      table, which is the last thing on the page, sat against the footer.
+
+      Three things changed across all three sections here:
+
+      - The tables are the sub-table family, so this page, /subscriptions, /api-keys and
+        manage-keys all render one table instead of two idioms a click apart.
+      - Each section is gated on its own count. Both the proxy and the MCP table used to
+        render on {{#if subAPIs}} - the same list - while their rows were filtered by
+        apiType, so an application with only REST subscriptions drew a headers-only MCP
+        table (and an app with only MCP subscriptions drew an empty proxy table). The
+        empty case is an icon-and-text empty state now, as everywhere else in the portal.
+      - The edit icon links to the API's own subscription section rather than opening a
+        second plan dialog here. That page is where plan choice already lives, with the
+        one-app-one-plan rules and the switch-plan flow; the popup was a parallel
+        implementation of the same decision. The token-based section below already
+        pointed its action at #subscriptionPlans, so this makes all three consistent. --}}
+<section class="section mt-5 app-subscriptions-section">
     <div class="container-fluid">
         {{#in devportalMode values="DEFAULT,APISONLY"}}
         <div class="d-flex align-items-center justify-content-between mb-3">
             <div class="container-header">Subscribed API Proxies</div>
             <div class='action-buttons mt-0'>
                 {{#if features.sdkGeneration}}
-                    {{#if subAPIs}}
-                        <button class="common-btn-primary {{#if @root.isReadOnlyMode}}disabled{{/if}}" style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{else}}font-weight: 500;{{/if}}" type="button" onclick="redirectToSDKGeneration()" disabled>
+                    {{#if otherAPICount}}
+                        <button class="dp-btn dp-btn--outline {{#if @root.isReadOnlyMode}}disabled{{/if}}" style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}" type="button" onclick="redirectToSDKGeneration()" disabled>
                             <span class="button-normal-state">
                                 <i class="bi bi-box-seam me-1"></i> Generate SDK
                             </span>
                         </button>
                     {{/if}}
                 {{/if}}
-                <a class="common-btn-primary ms-2" type="button"
+                <a class="dp-btn dp-btn--outline ms-2" type="button"
                     href="{{baseUrl}}/apis?appID={{applicationMetadata.id}}&appName={{applicationMetadata.name}}">
-                    <i class="fas fa-external-link-alt me-2"></i> Explore more
+                    <i class="bi bi-box-arrow-up-right"></i> Explore more
                 </a>
             </div>
         </div>
         <div class="row row-gap-4" style="margin-bottom: 64px;">
-            {{#if subAPIs}}
-            <div class="app-table-container" id="app-table-container">
-                <table class="app-table" id="app-table-{{applicationMetadata.id}}">
-                    <thead>
-                        <tr>
-                            {{#if features.sdkGeneration}}
-                                <th class="app-th" style="width: 50px;">
+            {{#if otherAPICount}}
+            <div class="sub-tablewrap" id="app-table-container">
+                <div class="sub-scroll table-responsive">
+                    <table class="sub-table" id="app-table-{{applicationMetadata.id}}">
+                        <thead>
+                            <tr>
+                                {{#if features.sdkGeneration}}
+                                <th style="width: 50px;">
                                     <input type="checkbox" class="select-all-apis" id="selectAllAPIs"
                                         aria-label="Select all API proxies">
                                 </th>
-                            {{/if}}
-                            <th class="app-th" style="width: 20%;">API Name</th>
-                            <th class="app-th" style="width: 20%;">API Version</th>
-                            {{!-- <th class="app-th">Type</th> --}}
-                            <th class="app-th" style="width: 20%;">Subscription Plan</th>
-                            <th class="app-th action-column" style="width: 30%; text-align: right;">Action
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {{#each subAPIs}}
-                        {{> api-key apiID=apiID keyType="PRODUCTION"}}
-                        {{> api-key apiID=apiID keyType="SANDBOX"}}
-                        {{#in apiType values="REST, WS, WEBSUB, GRAPHQL"}}
-                        <tr class="data-row" id="data-row-{{subID}}" data-index="{{@index}}">
-                            {{#if ../features.sdkGeneration}}
-                            <td class="app-td" style="width: 50px;">
-                                <input type="checkbox" class="api-checkbox" 
-                                    data-api-id="{{apiID}}" 
-                                    data-api-name="{{name}}" 
-                                    data-api-version="{{version}}">
-                            </td>
-                            {{/if}}
-                            <td class="app-td" style="width: 20%;">
-                                <span onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
-                                    class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
-                            </td>
-                            <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'" class="app-td" style="width: 20%; cursor: pointer;">{{version}}</td>
-                            {{!-- <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'" class="app-td" style="cursor: pointer;">{{apiType}}</td> --}}
-                            <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'" id="policy_{{subID}}" class="app-td" style="width: 20%; cursor: pointer;">{{policyName}}</td>
-                            <td class="app-td action-column" style="width: 30%;">
-                                <div class="action-buttons-container">
-                                    {{> warning }}
-                                    <button type="button" class="btn application-btn-icon {{#if @root.isReadOnlyMode}}disabled border-0{{/if}}" onclick="loadModal('planModal-{{apiID}}')">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button type="button" class="btn application-btn-icon delete-button {{#if @root.isReadOnlyMode}}disabled border-0{{/if}}"
-                                        onclick="openWarningModal('Unsubscribe', '{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        {{/in}}
-                        {{/each}}
-                    </tbody>
-                </table>
+                                {{/if}}
+                                <th style="width: 20%;">API Name</th>
+                                <th style="width: 20%;">API Version</th>
+                                <th style="width: 20%;">Subscription Plan</th>
+                                <th class="action-column" style="width: 30%; text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each subAPIs}}
+                            {{> api-key apiID=apiID keyType="PRODUCTION"}}
+                            {{> api-key apiID=apiID keyType="SANDBOX"}}
+                            {{#in apiType values="REST, WS, WEBSUB, GRAPHQL"}}
+                            <tr class="data-row" id="data-row-{{subID}}" data-index="{{@index}}">
+                                {{#if ../features.sdkGeneration}}
+                                <td style="width: 50px;">
+                                    <input type="checkbox" class="api-checkbox"
+                                        data-api-id="{{apiID}}"
+                                        data-api-name="{{name}}"
+                                        data-api-version="{{version}}">
+                                </td>
+                                {{/if}}
+                                <td style="width: 20%;">
+                                    <span onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
+                                        class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
+                                </td>
+                                <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'" style="width: 20%; cursor: pointer;">{{version}}</td>
+                                <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'" id="policy_{{subID}}" style="width: 20%; cursor: pointer;">{{policyName}}</td>
+                                <td class="action-column" style="width: 30%;">
+                                    <div class="action-buttons-container">
+                                        {{> warning }}
+                                        <a class="dp-btn-icon" href="{{@root.baseUrl}}/api/{{apiHandle}}#subscriptionPlans"
+                                            title="Change subscription plan">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button type="button" class="dp-btn-icon delete-button {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                            onclick="openWarningModal('Unsubscribe', '{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {{/in}}
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            {{#each subAPIs}}
-            {{#in apiType values="REST, WS, WEBSUB, GRAPHQL"}}
-            {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
-            {{/in}}
-            {{/each}}
             {{/if}}
-            <div class="ps-3" id="no-subscription" style="{{#if subAPIs.length}}display:none{{/if}}">
-                <div class="info-box">
-                    <div class="info-content">
-                        <div class="info-title">
-                            No subscriptions available for this application. Please subscribe to an API.
-                        </div>
-                    </div>
+            {{!-- subscription.js unhides this by id after the last row is unsubscribed, so it
+                  is rendered either way rather than only in an {{else}} branch. --}}
+            <div id="no-subscription" class="w-100" style="{{#if otherAPICount}}display:none{{/if}}">
+                <div class="dp-empty dp-empty--inset">
+                    <span class="dp-empty-icon"><i class="bi bi-plug"></i></span>
+                    <h2 class="dp-empty-title">No API subscriptions</h2>
+                    <p class="dp-empty-desc">This application is not subscribed to any API proxy yet. Browse <a href="{{baseUrl}}/apis?appID={{applicationMetadata.id}}&appName={{applicationMetadata.name}}">APIs</a> to subscribe one.</p>
                 </div>
             </div>
         </div>
         {{/in}}
         {{#in devportalMode values="DEFAULT,MCPSERVERSONLY"}}
-                <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="d-flex align-items-center justify-content-between mb-3">
             <div class="container-header">Subscribed MCP Servers</div>
             <div class='action-buttons mt-0'>
-                <a class="common-btn-primary" type="button"
+                <a class="dp-btn dp-btn--outline" type="button"
                     href="{{baseUrl}}/mcps?appID={{applicationMetadata.id}}&appName={{applicationMetadata.name}}">
-                    <i class="fas fa-external-link-alt me-2"></i> Explore more
+                    <i class="bi bi-box-arrow-up-right"></i> Explore more
                 </a>
             </div>
         </div>
-        <div class="row row-gap-4">
-            <div class="app-table-container" id="app-table-container-mcp">
-                {{#if subAPIs}}
-                <table class="app-table" id="app-table-mcp-{{applicationMetadata.id}}">
-                    <thead>
-                        <tr>
-                            <th class="app-th" style="width: 25%;">API Name</th>
-                            <th class="app-th" style="width: 25%;">API Version</th>
-                            <th class="app-th" style="width: 25%;">Subscription Plan</th>
-                            <th class="app-th action-column" style="width: 30%; text-align: right;">Action
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody id="subscribed-api-body">
-                        {{#each subAPIs}}
-                        {{#if (eq apiType "MCP")}}
-                        <tr class="data-row" data-index="{{@index}}" id="data-row-{{subID}}">
-                            <td class="app-td" style="width: 25%;">
-                                <span onclick="window.location.href='{{@root.baseUrl}}/mcp/{{apiHandle}}'"
-                                    class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
-                            </td>
-                            <td class="app-td" style="width: 25%;">{{version}}</td>
-                            <td id="policy_{{subID}}" class="app-td" style="width: 25%;">{{policyName}}</td>
-                            <td class="app-td action-column" style="width: 30%;">
-                                <div class="action-buttons-container">
-                                    {{> warning }}
-                                    <button type="button" class="btn application-btn-icon {{#if @root.isReadOnlyMode}}disabled border-0{{/if}}" onclick="loadModal('planModal-{{apiID}}')">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button type="button" class="btn application-btn-icon delete-button {{#if @root.isReadOnlyMode}}disabled border-0{{/if}}"
-                                        onclick="openWarningModal('Unsubscribe', '{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        {{/if}}
-                        {{/each}}
-                    </tbody>
-                </table>
-                {{#each subAPIs}}
-                {{#if (eq apiType "MCP")}}
-                {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
-                {{/if}}
-                {{/each}}
-                {{/if}}
+        <div class="row row-gap-4" style="margin-bottom: 64px;">
+            {{#if mcpAPICount}}
+            <div class="sub-tablewrap" id="app-table-container-mcp">
+                <div class="sub-scroll table-responsive">
+                    <table class="sub-table" id="app-table-mcp-{{applicationMetadata.id}}">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%;">MCP Server</th>
+                                <th style="width: 25%;">Version</th>
+                                <th style="width: 25%;">Subscription Plan</th>
+                                <th class="action-column" style="width: 30%; text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subscribed-api-body">
+                            {{#each subAPIs}}
+                            {{#if (eq apiType "MCP")}}
+                            <tr class="data-row" data-index="{{@index}}" id="data-row-{{subID}}">
+                                <td style="width: 25%;">
+                                    <span onclick="window.location.href='{{@root.baseUrl}}/mcp/{{apiHandle}}'"
+                                        class="text-truncate d-block" style="cursor: pointer;">{{name}}</span>
+                                </td>
+                                <td style="width: 25%;">{{version}}</td>
+                                <td id="policy_{{subID}}" style="width: 25%;">{{policyName}}</td>
+                                <td class="action-column" style="width: 30%;">
+                                    <div class="action-buttons-container">
+                                        {{> warning }}
+                                        <a class="dp-btn-icon" href="{{@root.baseUrl}}/mcp/{{apiHandle}}#subscriptionPlans"
+                                            title="Change subscription plan">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button type="button" class="dp-btn-icon delete-button {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                            onclick="openWarningModal('Unsubscribe', '{{../orgID}}', '{{../applicationMetadata.id}}', '{{refID}}', '{{subID}}')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {{/if}}
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div class="ps-3" id="no-subscription-mcp" style="{{#if mcpAPICount}}display:none{{/if}}">
-                <div class="info-box">
-                    <div class="info-content">
-                        <div class="info-title">
-                            No subscriptions available for this application. Please subscribe to an MCP Servers.
-                        </div>
-                    </div>
+            {{/if}}
+            <div id="no-subscription-mcp" class="w-100" style="{{#if mcpAPICount}}display:none{{/if}}">
+                <div class="dp-empty dp-empty--inset">
+                    <span class="dp-empty-icon"><img src="/images/mcp-icon.svg" alt="" width="30" height="30" /></span>
+                    <h2 class="dp-empty-title">No MCP server subscriptions</h2>
+                    <p class="dp-empty-desc">This application is not subscribed to any MCP server yet. Browse <a href="{{baseUrl}}/mcps?appID={{applicationMetadata.id}}&appName={{applicationMetadata.name}}">MCP servers</a> to subscribe one.</p>
                 </div>
             </div>
         </div>
@@ -168,9 +176,9 @@
         <div class="d-flex align-items-center justify-content-between mb-3 mt-5">
             <div class="container-header">Token-Based API Subscriptions</div>
             <div class='action-buttons mt-0'>
-                <a class="common-btn-primary" type="button"
+                <a class="dp-btn dp-btn--outline" type="button"
                     href="{{baseUrl}}/apis">
-                    <i class="fas fa-external-link-alt me-2"></i> Explore more
+                    <i class="bi bi-box-arrow-up-right"></i> Explore more
                 </a>
             </div>
         </div>
@@ -192,65 +200,71 @@
                     window.__subscriptionOrgID = "{{@root.orgID}}";
                 })();
             </script>
-            <div class="app-table-container" id="app-table-container-platform">
-                <table class="app-table" id="app-table-platform">
-                    <thead>
-                        <tr>
-                            <th class="app-th" style="width: 15%;">API Name</th>
-                            <th class="app-th" style="width: 10%;">API Version</th>
-                            <th class="app-th" style="width: 15%;">Subscription Plan</th>
-                            <th class="app-th" style="width: 10%;">Status</th>
-                            <th class="app-th" style="width: 20%;">Subscription Token</th>
-                            <th class="app-th action-column" style="width: 30%; text-align: right;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {{#each platformSubscriptions}}
-                        <tr class="data-row">
-                            <td class="app-td" style="width: 15%;">
-                                <span onclick="window.location.href='{{@root.baseUrl}}/api/{{this.apiHandle}}'" class="text-truncate d-block" style="cursor: pointer;">{{this.apiName}}</span>
-                            </td>
-                            <td class="app-td" style="width: 10%;">{{this.apiVersion}}</td>
-                            <td class="app-td" style="width: 15%;">{{this.planName}}</td>
-                            <td class="app-td" style="width: 10%;">
-                                <span class="badge {{#if (eq this.status 'ACTIVE')}}bg-success{{else}}bg-secondary{{/if}}">{{this.status}}</span>
-                            </td>
-                            <td class="app-td" style="width: 20%;">
-                                <div class="token-display d-flex align-items-center gap-1">
-                                    <code class="masked-token" id="token-{{this.id}}" data-revealed="false">****</code>
-                                    <button class="btn btn-sm btn-link p-0" onclick="toggleTokenVisibility('{{this.id}}')" title="Reveal">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-link p-0" onclick="copySubscriptionToken('{{this.id}}')" title="Copy">
-                                        <i class="bi bi-clipboard"></i>
-                                    </button>
-                                </div>
-                            </td>
-                            <td class="app-td action-column" style="width: 30%;">
-                                <div class="action-buttons-container">
-                                    <a href="{{@root.baseUrl}}/api/{{this.apiHandle}}#subscriptionPlans" class="btn application-btn-icon" title="Manage">
-                                        <i class="bi bi-gear"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        {{/each}}
-                    </tbody>
-                </table>
+            <div class="sub-tablewrap" id="app-table-container-platform">
+                <div class="sub-scroll table-responsive">
+                    <table class="sub-table" id="app-table-platform">
+                        <thead>
+                            <tr>
+                                <th style="width: 15%;">API Name</th>
+                                <th style="width: 10%;">API Version</th>
+                                <th style="width: 15%;">Subscription Plan</th>
+                                <th style="width: 10%;">Status</th>
+                                <th style="width: 20%;">Subscription Token</th>
+                                <th class="action-column" style="width: 30%; text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each platformSubscriptions}}
+                            <tr class="data-row">
+                                <td style="width: 15%;">
+                                    <span onclick="window.location.href='{{@root.baseUrl}}/api/{{this.apiHandle}}'" class="text-truncate d-block" style="cursor: pointer;">{{this.apiName}}</span>
+                                </td>
+                                <td style="width: 10%;">{{this.apiVersion}}</td>
+                                <td style="width: 15%;">{{this.planName}}</td>
+                                <td style="width: 10%;">
+                                    {{!-- The portal's status pill, as /subscriptions, /api-keys and the
+                                          API overview all use. This was the last Bootstrap badge left:
+                                          a hard green rectangle with white caps, against the soft-green
+                                          dotted pill everywhere else. --}}
+                                    <span class="sub-status-pill {{#if (eq this.status 'ACTIVE')}}sub-status-pill--active{{else}}sub-status-pill--inactive{{/if}}">
+                                        <span class="sub-status-dot"></span>{{this.status}}
+                                    </span>
+                                </td>
+                                <td style="width: 20%;">
+                                    <div class="token-display d-flex align-items-center gap-1">
+                                        <code class="masked-token" id="token-{{this.id}}" data-revealed="false">****</code>
+                                        <button class="dp-btn-icon" onclick="toggleTokenVisibility('{{this.id}}')" title="Reveal">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <button class="dp-btn-icon" onclick="copySubscriptionToken('{{this.id}}')" title="Copy">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td class="action-column" style="width: 30%;">
+                                    <div class="action-buttons-container">
+                                        <a href="{{@root.baseUrl}}/api/{{this.apiHandle}}#subscriptionPlans" class="dp-btn-icon" title="Manage">
+                                            <i class="bi bi-gear"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
             </div>
             {{else}}
-            <div class="ps-3" id="no-platform-subscription">
-                <div class="info-box">
-                    <div class="info-content">
-                        <div class="info-title">
-                            No token-based subscriptions found. Browse APIs to subscribe.
-                        </div>
-                    </div>
+            <div id="no-platform-subscription" class="w-100">
+                <div class="dp-empty dp-empty--inset">
+                    <span class="dp-empty-icon"><i class="bi bi-key"></i></span>
+                    <h2 class="dp-empty-title">No token-based subscriptions</h2>
+                    <p class="dp-empty-desc">Token-based subscriptions appear here once this application subscribes to a self-hosted API plan. Browse <a href="{{baseUrl}}/apis">APIs</a> to get started.</p>
                 </div>
             </div>
             {{/if}}
         </div>
-     </div>    
+     </div>
 </section>
 
 <!-- Load API selection management script -->

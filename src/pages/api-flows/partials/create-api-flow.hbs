@@ -26,20 +26,23 @@
                 <span id="editingFlowStatusBadge" class="api-flow-status-badge d-none ms-1"></span>
             </strong>
         </div>
-        <div class="af-stepper">
-            <div class="af-stepper-step is-active" data-step="1" role="button" tabindex="0" aria-current="step">
-                <span class="af-stepper-dot">1</span>
-                <span>Basic info</span>
+        {{!-- Upstream's stepper. The role/tabindex/aria attributes are ours and stay: a
+              completed step is clickable here (api-flows.js keeps them in step with
+              cfg-step--done), which upstream's markup leaves to its own Back button. --}}
+        <div class="cfg-stepper">
+            <div class="cfg-step cfg-step--active" data-step="1" role="button" tabindex="0" aria-current="step">
+                <span class="cfg-step-circle">1</span>
+                <span class="cfg-step-label">Basic info</span>
             </div>
-            <div class="af-stepper-line"></div>
-            <div class="af-stepper-step" data-step="2" role="button" tabindex="-1" aria-disabled="true">
-                <span class="af-stepper-dot">2</span>
-                <span>API workflow</span>
+            <div class="cfg-step-connector"></div>
+            <div class="cfg-step" data-step="2" role="button" tabindex="-1" aria-disabled="true">
+                <span class="cfg-step-circle">2</span>
+                <span class="cfg-step-label">API workflow</span>
             </div>
-            <div class="af-stepper-line"></div>
-            <div class="af-stepper-step" data-step="3" role="button" tabindex="-1" aria-disabled="true">
-                <span class="af-stepper-dot">3</span>
-                <span>Agent prompt</span>
+            <div class="cfg-step-connector"></div>
+            <div class="cfg-step" data-step="3" role="button" tabindex="-1" aria-disabled="true">
+                <span class="cfg-step-circle">3</span>
+                <span class="cfg-step-label">Agent prompt</span>
             </div>
         </div>
     </div>
@@ -563,14 +566,18 @@
             <span id="afFooterStepLabel">Step 1 of 3</span>
         </div>
         <div class="af-wizard-footer-right">
-            <button type="button" class="common-btn-outlined" id="cancelApiFlowBtn2">Cancel</button>
-            <button type="button" class="common-btn-primary" id="afContinueBtn">Next</button>
+            {{!-- Upstream's footer buttons: Cancel is text-only so the gradient Next /
+                  Publish is the only filled control in the row. .af-save-main and
+                  .af-save-toggle only square the group's inner corners, so they work
+                  against cfg-btn-primary exactly as they did against the old class. --}}
+            <button type="button" class="cfg-btn-ghost" id="cancelApiFlowBtn2">Cancel</button>
+            <button type="button" class="cfg-btn-primary" id="afContinueBtn">Next</button>
             <div class="btn-group d-none" id="saveApiFlowGroup">
-                <button type="button" class="common-btn-primary af-save-main" id="saveApiFlowBtn"
+                <button type="button" class="cfg-btn-primary af-save-main" id="saveApiFlowBtn"
                     data-status="PUBLISHED">
                     <i class="bi bi-send me-1"></i> Publish Flow
                 </button>
-                <button type="button" class="common-btn-primary af-save-toggle dropdown-toggle dropdown-toggle-split"
+                <button type="button" class="cfg-btn-primary af-save-toggle dropdown-toggle dropdown-toggle-split"
                     data-bs-toggle="dropdown" aria-expanded="false">
                     <span class="visually-hidden">More save options</span>
                 </button>

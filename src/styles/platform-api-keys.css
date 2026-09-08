@@ -137,3 +137,212 @@
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
 }
+
+/* ── Upstream api-keys look over the Bootstrap modal shell ────────
+   The three dialogs on this page are opened through bootstrap.Modal
+   (platform-api-keys-page.js calls getOrCreateInstance().show()), so the shell keeps its
+   Bootstrap classes and behaviour and takes upstream's appearance on top. Every value
+   below is upstream's own from api-keys-page.css; the only departures are noted.
+
+   These rules sit at (0,2,0) so they outrank Bootstrap's single-class .modal-content etc.
+   regardless of stylesheet order. */
+.modal-content.ak-modal {
+  border: none;
+  border-radius: 1rem;
+  box-shadow: 0 24px 60px color-mix(in srgb, var(--ink) 34%, transparent);
+  overflow: hidden;
+}
+
+.modal-header.ak-modal-head {
+  padding: 1.375rem 1.625rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-title.ak-modal-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-strong);
+  line-height: 1.3;
+}
+
+.ak-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  background: none;
+  border-radius: 0.4375rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.12s, color 0.12s;
+}
+
+.ak-modal-close:hover { background: var(--border); color: var(--text-strong); }
+
+.modal-body.ak-modal-body {
+  padding: 1.5rem 1.625rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.modal-footer.ak-modal-footer {
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1.125rem 1.625rem;
+  border-top: 1px solid var(--border);
+}
+
+/* Bootstrap gives .modal-footer > * a 0.25rem margin, which fights the flex gap. */
+.modal-footer.ak-modal-footer > * { margin: 0; }
+
+/* ── Popup form controls ─────────────────────────────────────── */
+.ak-form-label {
+  display: block;
+  font-size: 0.84375rem;
+  font-weight: 600;
+  color: var(--text-strong);
+  margin-bottom: 0.5rem;
+}
+
+.ak-form-hint {
+  margin-top: 0.4375rem;
+  font-size: 0.75rem;
+  color: var(--text-subtle);
+  line-height: 1.4;
+}
+
+.ak-form-input {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.5rem;
+  padding: 0.6875rem 0.8125rem;
+  font-size: 0.875rem;
+  font-family: var(--font-family-mono);
+  color: var(--text-strong);
+  background: var(--white);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+}
+
+/* Upstream hardcodes rgba(31,111,235,.14) here; --focus-ring is the token equivalent and
+   follows an organization's palette instead of pinning Bootstrap blue. */
+.ak-form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--focus-ring); }
+.ak-form-input--date { font-family: inherit; }
+
+.ak-inline-code {
+  font-family: var(--font-family-mono);
+  font-size: 0.78125rem;
+  /* <code> defaults to magenta in every browser, which belongs to no palette here. */
+  color: var(--text-muted);
+  background: var(--surface-sunken);
+  border-radius: 0.25rem;
+  padding: 0.0625rem 0.3125rem;
+}
+
+/* ── Table ───────────────────────────────────────────────────────
+   The masked key rendered in the browser default <code> magenta, the one colour on the
+   page belonging to no palette. */
+.masked-api-key {
+  font-family: var(--font-family-mono);
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  background: none;
+  padding: 0;
+}
+
+.api-key-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* No dp-btn--danger variant exists; Revoke needs the danger colour without a fill. */
+/* Bootstrap's .btn-close carried `margin: -.5rem -.5rem -.5rem auto`, and that auto is
+   what pushed the close control to the far edge; ak-modal-close has to restore it. */
+.ak-modal-close { margin-left: auto; }
+
+/* Upstream's overlay is blurred (.ak-overlay). Bootstrap's backdrop is a flat dim, so the
+   blur is added here - scoped through :has so no other page's modals are affected. */
+body:has(.platform-api-keys-page) .modal-backdrop.show {
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0.45;
+}
+
+/* ── Generated-key block ─────────────────────────────────────────
+   Upstream's .ak-key-field / .ak-warning-amber, with its hardcoded pink tints
+   (#faf7fb / #ead6e2 / #c2185b) swapped for tokens so an organization's palette applies.
+
+   The padding-right is load-bearing: the copy control is absolutely positioned inside
+   this box, and the reserved gutter is what stops a long key running underneath it. A
+   Bootstrap .input-group was used here before, where the 100%-width input left no room
+   and the button wrapped to a second line. */
+.ak-secret-key-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.ak-secret-key-label > .bi { color: var(--text-muted); }
+
+.ak-key-field {
+  position: relative;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: 0.6875rem;
+  padding: 0.9375rem 3.5rem 0.9375rem 1rem;
+}
+
+.ak-key-field .ak-key-code {
+  display: block;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-family-mono);
+  font-size: 0.84375rem;
+  font-weight: 600;
+  color: var(--text-strong);
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.ak-copy-btn--abs {
+  position: absolute;
+  top: 0.6875rem;
+  right: 0.6875rem;
+}
+
+/* Amber callout, replacing the bare `small text-warning` line. */
+.ak-warning-amber {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6875rem;
+  margin-top: 1rem;
+  background: var(--warning-surface);
+  border: 1px solid color-mix(in srgb, var(--warning) 30%, var(--surface));
+  border-radius: 0.6875rem;
+  padding: 0.8125rem 0.9375rem;
+}
+
+.ak-warning-amber > .bi {
+  flex: none;
+  margin-top: 0.0625rem;
+  font-size: 1.0625rem;
+  color: var(--warning);
+}
+
+.ak-warning-amber span {
+  font-size: 0.84375rem;
+  line-height: 1.5;
+  color: var(--text-strong);
+}

@@ -241,40 +241,11 @@
   cursor: default !important;
 }
 
-.application-btn-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  padding: 0 0 0 0.75rem;
-  background-color: transparent;
-  color: var(--ink);
-  font-size: 1rem;
-  cursor: pointer;
-}
+/* .application-btn-icon lived here, in the listing page's sheet, while the only markup
+   that used it was the application detail page - which links application.css, not this
+   one, so those row icons rendered as bare Bootstrap buttons. They are .dp-btn-icon from
+   components.css now, which every page loads. */
 
-.application-btn-icon:hover {
-  color: var(--primary);
-}
-
-/* Add specific styling for delete button */
-.application-btn-icon.delete-button {
-  color: var(--danger);
-}
-
-.application-btn-icon.delete-button:hover {
-  color: var(--danger);
-  opacity: 0.8;
-}
-
-.application-btn-icon.edit-button {
-  color: var(--ink);
-}
-
-.application-btn-icon.edit-button:hover {
-  color: var(--ink);
-  opacity: 0.8;
-}
 
 .truncate-text {
   display: -webkit-box;

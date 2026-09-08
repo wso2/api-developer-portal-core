@@ -26,6 +26,7 @@ const util = require('../utils/util');
 const APIDTO = require('../dto/apiDTO');
 const apiMetadataService = require('../services/apiMetadataService');
 const { shouldShowPlatformApiKeysNav } = require('../services/platformApiKeysNavService');
+const { shouldShowMcpSubscriptionsNav } = require('../services/mcpSubscriptionsNavService');
 
 const controlPlaneUrl = config.controlPlane.url;
 
@@ -311,6 +312,10 @@ const loadAPISubscriptions = async (req, res) => {
             isMCP: metaData?.apiInfo?.apiType === constants.API_TYPE.MCP,
             isReadOnlyMode: config.readOnlyMode,
             showPlatformApiKeysNav: await shouldShowPlatformApiKeysNav(req, metaData, null),
+            /* This is the page the MCP accordion's Subscriptions item leads to, so the flag
+               has to be set here too - otherwise the item disappears from the rail on
+               arrival and there is nothing for common.js to mark active. */
+            showMcpSubscriptionsNav: shouldShowMcpSubscriptionsNav(metaData),
         };
 
         html = await renderTemplateFromAPI(templateContent, orgID, orgName, 'pages/api-subscriptions', viewName);

@@ -16,6 +16,27 @@
  * under the License.
  */
 
+/* The button currently reading "Subscribing...". showSubscribeButtonLoading disables it
+   and rewrites its label, and nothing here used to hand it back: a failed subscribe, or a
+   plan switch whose delete step failed, left the card showing a dead "Subscribing..."
+   until the page was reloaded. Every exit from the two flows below goes through
+   clearPlatformSubscribeLoading now. */
+let platformSubscribeLoadingBtn = null;
+
+function setPlatformSubscribeLoading(btnElement) {
+    platformSubscribeLoadingBtn = btnElement || null;
+    if (btnElement && typeof showSubscribeButtonLoading === 'function') {
+        showSubscribeButtonLoading(btnElement);
+    }
+}
+
+function clearPlatformSubscribeLoading() {
+    if (platformSubscribeLoadingBtn && typeof window.resetSubscribeButtonState === 'function') {
+        window.resetSubscribeButtonState(platformSubscribeLoadingBtn);
+    }
+    platformSubscribeLoadingBtn = null;
+}
+
 async function subscribePlatformGateway(orgID, apiId, planName, applicationId) {
     try {
         const body = { apiId, subscriptionPlanName: planName };
@@ -51,11 +72,21 @@ async function subscribePlatformGateway(orgID, apiId, planName, applicationId) {
             } else {
                 await showSubscriptionTokenModal(token, planName);
             }
+            /* The token dialog has to be dismissed before anything can reload, so the
+               card reaches the subscribed state the way a reload would render it: the
+               ribbon, the tint and "View subscription" all hang off this one class. */
+            const subscribedCard = platformSubscribeLoadingBtn
+                && platformSubscribeLoadingBtn.closest('.aov-plan-card');
+            if (subscribedCard) {
+                subscribedCard.classList.add('aov-plan-card--subscribed');
+            }
         } else {
             await showAlert(`Failed to subscribe: ${responseData.description || 'Unknown error'}`, 'error');
         }
     } catch (error) {
         await showAlert(`Error while subscribing: ${error.message}`, 'error');
+    } finally {
+        clearPlatformSubscribeLoading();
     }
 }
 
@@ -77,7 +108,7 @@ async function handlePlanSubscription(btnElement) {
     const existingSubs = window.existingPlatformSubscriptions || [];
 
     if (existingSubs.length === 0) {
-        showSubscribeButtonLoading(btnElement);
+        setPlatformSubscribeLoading(btnElement);
         await subscribePlatformGateway(orgID, apiId, planName);
         return;
     }
@@ -154,9 +185,7 @@ async function runPendingPlatformPlanSwitch(orgID, apiId, planName, displayName,
     const btnElement = window.__pendingPlanSwitchBtn;
     window.__pendingPlanSwitchBtn = null;
 
-    if (btnElement && typeof showSubscribeButtonLoading === 'function') {
-        showSubscribeButtonLoading(btnElement);
-    }
+    setPlatformSubscribeLoading(btnElement);
 
     try {
         const deleteResponse = await fetch(`/devportal/organizations/${encodeURIComponent(orgID)}/api-platform-subscriptions/${encodeURIComponent(subscriptionId)}`, {
@@ -173,6 +202,8 @@ async function runPendingPlatformPlanSwitch(orgID, apiId, planName, displayName,
         await subscribePlatformGateway(orgID, apiId, planName);
     } catch (error) {
         await showAlert(`Error during plan change: ${error.message}`, 'error');
+    } finally {
+        clearPlatformSubscribeLoading();
     }
 }
 
@@ -189,6 +220,34 @@ function refreshPlatformModalOrReload(orgID) {
         return;
     }
     window.location.reload();
+}
+
+/* Builders for refreshLandingPageSubscriptions, kept beside it so the markup it produces
+   stays visibly the same shape as api-subscription-plans.hbs. */
+function buildSubRow(label, valueNode, extraClass) {
+    var row = document.createElement('div');
+    row.className = 'aov-sub-row' + (extraClass ? ' ' + extraClass : '');
+    var labelEl = document.createElement('span');
+    labelEl.className = 'aov-sub-label';
+    labelEl.textContent = label;
+    var valueEl = document.createElement('span');
+    valueEl.className = 'aov-sub-value';
+    valueEl.appendChild(valueNode);
+    row.appendChild(labelEl);
+    row.appendChild(valueEl);
+    return row;
+}
+
+function buildSubIconBtn(icon, title, subscriptionId, handler) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'dp-btn-icon';
+    btn.title = title;
+    btn.setAttribute('aria-label', title);
+    btn.innerHTML = '<i class="bi ' + icon + '"></i>';
+    btn.dataset.subscriptionId = subscriptionId;
+    btn.addEventListener('click', function() { handler(this.dataset.subscriptionId); });
+    return btn;
 }
 
 async function refreshLandingPageSubscriptions() {
@@ -220,95 +279,103 @@ async function refreshLandingPageSubscriptions() {
             if (!existingSection) {
                 existingSection = document.createElement('div');
                 existingSection.className = 'existing-subscriptions mb-4';
-                var plansHeader = document.querySelector('#subscriptionPlans .container-header');
+                var plansHeader = document.querySelector('#subscriptionPlans .aov-section-header');
                 if (plansHeader) {
                     plansHeader.parentNode.insertBefore(existingSection, plansHeader);
                 } else {
                     document.querySelector('#subscriptionPlans .container-fluid').prepend(existingSection);
                 }
             }
-            existingSection.innerHTML = '<div class="container-header mb-4">Subscriptions</div>';
-            var table = document.createElement('table');
-            table.className = 'table';
-            table.innerHTML = '<thead><tr><th>Plan</th><th>Status</th><th>Subscription Token</th><th>Actions</th></tr></thead><tbody></tbody>';
-            var tbody = table.querySelector('tbody');
+            /* Must emit exactly what api-subscription-plans.hbs renders. This runs after
+               every mutation - activate/deactivate, unsubscribe, subscribe, plan switch -
+               so any drift from the template shows up as the panel reverting to an older
+               design the moment a button is pressed. It previously rebuilt the retired
+               four-column table with Bootstrap badges and btn-outline-* buttons. */
+            existingSection.innerHTML =
+                '<div class="aov-section-header"><h2 class="aov-section-title">Subscriptions</h2></div>';
+
+            var list = document.createElement('div');
+            list.className = 'aov-sub-list';
+
             existing.forEach(function(sub) {
-                var tr = document.createElement('tr');
+                var isActive = sub.status === 'ACTIVE';
 
-                // Plan name cell
-                var tdPlan = document.createElement('td');
-                tdPlan.textContent = sub.subscriptionPlanName || '';
-                tr.appendChild(tdPlan);
+                var card = document.createElement('div');
+                card.className = 'aov-plan-card aov-sub-card';
 
-                // Status cell
-                var tdStatus = document.createElement('td');
-                var badge = document.createElement('span');
-                badge.className = 'badge ' + (sub.status === 'ACTIVE' ? 'bg-success' : 'bg-secondary');
-                badge.textContent = sub.status || '';
-                tdStatus.appendChild(badge);
-                tr.appendChild(tdStatus);
+                card.appendChild(buildSubRow('Plan', document.createTextNode(sub.subscriptionPlanName || '')));
 
-                // Token cell
-                var tdToken = document.createElement('td');
-                var tokenDisplay = document.createElement('div');
-                tokenDisplay.className = 'token-display';
+                var pill = document.createElement('span');
+                pill.className = 'sub-status-pill ' + (isActive ? 'sub-status-pill--active' : 'sub-status-pill--inactive');
+                var dot = document.createElement('span');
+                dot.className = 'sub-status-dot';
+                pill.appendChild(dot);
+                pill.appendChild(document.createTextNode(sub.status || ''));
+                card.appendChild(buildSubRow('Status', pill));
+
                 var code = document.createElement('code');
                 code.className = 'masked-token';
                 code.id = 'token-' + sub.subscriptionId;
                 code.dataset.revealed = 'false';
                 code.textContent = '****';
-                var revealBtn = document.createElement('button');
-                revealBtn.className = 'btn btn-sm btn-outline-secondary';
-                revealBtn.title = 'Reveal token';
-                revealBtn.innerHTML = '<i class="bi bi-eye"></i>';
-                revealBtn.dataset.subscriptionId = sub.subscriptionId;
-                revealBtn.addEventListener('click', function() { toggleTokenVisibility(this.dataset.subscriptionId); });
-                var copyBtn = document.createElement('button');
-                copyBtn.className = 'btn btn-sm btn-outline-secondary';
-                copyBtn.title = 'Copy token';
-                copyBtn.innerHTML = '<i class="bi bi-clipboard"></i>';
-                copyBtn.dataset.subscriptionId = sub.subscriptionId;
-                copyBtn.addEventListener('click', function() { copySubscriptionToken(this.dataset.subscriptionId); });
-                tokenDisplay.appendChild(code);
-                tokenDisplay.appendChild(revealBtn);
-                tokenDisplay.appendChild(copyBtn);
-                tdToken.appendChild(tokenDisplay);
-                tr.appendChild(tdToken);
 
-                // Actions cell
-                var tdActions = document.createElement('td');
-                var newStatus = sub.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+                var tokenRow = buildSubRow('Subscription token', code, 'aov-sub-row--token');
+                var tokenValue = tokenRow.querySelector('.aov-sub-value');
+                tokenValue.appendChild(buildSubIconBtn('bi-eye', 'Reveal token', sub.subscriptionId, function(id) {
+                    toggleTokenVisibility(id);
+                }));
+                tokenValue.appendChild(buildSubIconBtn('bi-clipboard', 'Copy token', sub.subscriptionId, function(id) {
+                    copySubscriptionToken(id);
+                }));
+                card.appendChild(tokenRow);
+
+                var actions = document.createElement('div');
+                actions.className = 'aov-sub-actions';
+
                 var toggleBtn = document.createElement('button');
-                toggleBtn.className = 'btn btn-sm btn-outline-warning';
-                toggleBtn.innerHTML = sub.status === 'ACTIVE' ? '<i class="bi bi-pause-circle"></i>' : '<i class="bi bi-play-circle"></i>';
+                toggleBtn.type = 'button';
+                toggleBtn.className = 'dp-btn dp-btn--outline';
+                toggleBtn.title = isActive ? 'Deactivate' : 'Activate';
+                toggleBtn.innerHTML = isActive
+                    ? '<i class="bi bi-pause-circle"></i> Deactivate'
+                    : '<i class="bi bi-play-circle"></i> Activate';
                 toggleBtn.dataset.orgId = orgID;
                 toggleBtn.dataset.subscriptionId = sub.subscriptionId;
-                toggleBtn.dataset.newStatus = newStatus;
+                toggleBtn.dataset.newStatus = isActive ? 'INACTIVE' : 'ACTIVE';
                 toggleBtn.addEventListener('click', function() {
                     togglePlatformSubscriptionStatus(this.dataset.orgId, this.dataset.subscriptionId, this.dataset.newStatus);
                 });
+                actions.appendChild(toggleBtn);
+
                 var deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn btn-sm btn-outline-danger';
-                deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'dp-btn dp-btn--danger';
+                deleteBtn.title = 'Delete';
+                deleteBtn.innerHTML = '<i class="bi bi-trash"></i> Unsubscribe';
                 deleteBtn.dataset.orgId = orgID;
                 deleteBtn.dataset.subscriptionId = sub.subscriptionId;
                 deleteBtn.addEventListener('click', function() {
                     confirmDeletePlatformSubscription(this.dataset.orgId, this.dataset.subscriptionId);
                 });
-                tdActions.appendChild(toggleBtn);
-                tdActions.appendChild(deleteBtn);
-                tr.appendChild(tdActions);
+                actions.appendChild(deleteBtn);
 
-                tbody.appendChild(tr);
+                card.appendChild(actions);
+                list.appendChild(card);
             });
-            existingSection.appendChild(table);
+
+            existingSection.appendChild(list);
         } else if (existingSection) {
             existingSection.remove();
         }
 
-        // Update plan card buttons: mark current plan or reset to Subscribe
-        var activePlanNames = existing
-            .filter(function(s) { return s.status === 'ACTIVE'; })
+        /* Any status, not only ACTIVE. This has to agree with what the server renders,
+           and the isCurrentPlan helper marks a plan subscribed on the plan name alone -
+           so a page load showed "View subscription" for a deactivated subscription while
+           this refresh flipped the same card back to "Subscribe". The subscription still
+           exists either way: it can be reactivated from the card above, and this gateway
+           allows only one per API, so offering Subscribe here led to a switch-plan
+           confirmation for the plan the user already holds. */
+        var subscribedPlanNames = existing
             .map(function(s) { return (s.subscriptionPlanName || '').toLowerCase(); });
 
         var planCards = document.querySelectorAll('#subscriptionPlans .subscription-card');
@@ -321,7 +388,7 @@ async function refreshLandingPageSubscriptions() {
                match what the server would render. Rewriting the button's label here, as this
                did before, would fight the template and could also strip the `disabled` that
                read-only mode puts on the same element. */
-            card.classList.toggle('aov-plan-card--subscribed', activePlanNames.indexOf(policyName) !== -1);
+            card.classList.toggle('aov-plan-card--subscribed', subscribedPlanNames.indexOf(policyName) !== -1);
         });
     } catch (e) {
         window.location.reload();
@@ -412,24 +479,26 @@ function showSubscriptionTokenModal(token, planName) {
 
         const safeToken = document.createElement('code');
         safeToken.textContent = token;
-        safeToken.className = 'flex-grow-1 p-2 bg-light border rounded';
-        safeToken.style.wordBreak = 'break-all';
+        safeToken.className = 'dp-modal-value';
 
         overlay.innerHTML = `
             <div class="modal-dialog" role="document">
-                <div class="modal-content custom-modal-content">
-                    <div class="custom-modal-header">
-                        <h2 class="custom-modal-title m-0">Subscription Created</h2>
-                        <button type="button" class="btn-close" id="closeTokenModal"></button>
+                <div class="modal-content dp-modal">
+                    <div class="modal-header dp-modal-head">
+                        <h2 class="modal-title dp-modal-title">Subscription created</h2>
+                        <button type="button" class="dp-modal-close" id="closeTokenModal" aria-label="Close"><i class="bi bi-x-lg"></i></button>
                     </div>
-                    <div class="custom-modal-body">
-                        <p>Your subscription to the <strong id="planNameDisplay"></strong> plan has been created successfully.</p>
-                        <p class="mb-2"><strong>Subscription Token:</strong></p>
+                    <div class="modal-body dp-modal-body">
+                        <p class="mb-3">Your subscription to the <strong id="planNameDisplay"></strong> plan is active.</p>
+                        <p class="aov-sub-label mb-2">Subscription token</p>
                         <div class="d-flex align-items-center gap-2 mb-3" id="tokenContainer"></div>
-                        <div class="alert alert-warning mb-0">
-                            <i class="bi bi-exclamation-triangle"></i>
-                            Use this token as the <code>Subscription-Key</code> header when invoking the API.
-                        </div>
+                        <p class="dp-modal-note">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <span>Copy this token now - send it as the <code class="dp-modal-code">Subscription-Key</code> header when calling the API.</span>
+                        </p>
+                    </div>
+                    <div class="modal-footer dp-modal-footer">
+                        <button type="button" class="dp-btn dp-btn--primary" id="doneTokenModal">Done</button>
                     </div>
                 </div>
             </div>
@@ -443,7 +512,7 @@ function showSubscriptionTokenModal(token, planName) {
         tokenContainer.appendChild(safeToken);
 
         const copyBtn = document.createElement('button');
-        copyBtn.className = 'btn btn-sm btn-outline-secondary';
+        copyBtn.className = 'copy-btn';
         copyBtn.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
         copyBtn.addEventListener('click', () => {
             // copy raw token string directly (token is available in this scope)
@@ -463,7 +532,8 @@ function showSubscriptionTokenModal(token, planName) {
         });
         tokenContainer.appendChild(copyBtn);
 
-        overlay.querySelector('#closeTokenModal').addEventListener('click', () => {
+        /* Done and the header close do the same thing, so they share one handler. */
+        overlay.querySelectorAll('#closeTokenModal, #doneTokenModal').forEach((el) => el.addEventListener('click', () => {
             overlay.remove();
             if (window.__platformSubscriptionChanged) {
                 window.__platformSubscriptionChanged = false;
@@ -474,7 +544,7 @@ function showSubscriptionTokenModal(token, planName) {
                 }
             }
             resolve();
-        });
+        }));
     });
 }
 
@@ -486,7 +556,7 @@ function showSubscriptionTokenInModal(apiId, token, planName) {
 
     area.innerHTML = '';
     const wrapper = document.createElement('div');
-    wrapper.className = 'p-3 mb-3 border rounded bg-light';
+    wrapper.className = 'dp-modal-value-wrap mb-3';
 
     const title = document.createElement('div');
     title.innerHTML = `<strong>Subscription Created</strong> — ${escapeHtml(planName)}`;
@@ -499,7 +569,7 @@ function showSubscriptionTokenInModal(apiId, token, planName) {
     code.className = 'p-2 bg-white border rounded flex-grow-1';
 
     const copyBtn = document.createElement('button');
-    copyBtn.className = 'btn btn-sm btn-outline-secondary';
+    copyBtn.className = 'copy-btn';
     copyBtn.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
     copyBtn.addEventListener('click', function() {
         navigator.clipboard.writeText(token).then(() => showAlert('Subscription token copied to clipboard!', 'success'))
@@ -512,7 +582,7 @@ function showSubscriptionTokenInModal(apiId, token, planName) {
     wrapper.appendChild(tokenBlock);
 
     const info = document.createElement('div');
-    info.className = 'alert alert-warning mt-2 mb-0';
+    info.className = 'dp-modal-note mt-2';
     info.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Use this token as the <code>Subscription-Key</code> header when invoking the API.';
     wrapper.appendChild(info);
 

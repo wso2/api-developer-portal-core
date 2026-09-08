@@ -313,12 +313,39 @@ const renderBillingPage = async (req, res) => {
             orgIdentifier: orgName
         };
 
-        const html = util.renderTemplate(
-            '../pages/billing/page.hbs',
-            './src/defaultContent/layout/main.hbs',
-            templateContent,
-            true
-        );
+        /* Themed like every other organization-scoped page, rather than through
+           renderTemplate's technical path.
+
+           renderTemplate reads the layout straight off disk and never touches the
+           /styles/ links inside it, so an organization that had uploaded a theme got the
+           default stylesheet on this page alone - its palette, fonts and header applied
+           everywhere except billing. The two branches below are the contract the API
+           flows, docs and listing pages all use:
+
+             - the organization uploaded its own layout/main.hbs, so render against that,
+               repointing /styles/ at the asset endpoint when it also uploaded styles;
+             - no custom layout, so renderTemplateFromAPI applies the same style rewrite
+               over the default layout.
+
+           billing.css stays under /technical-styles/ (see page.hbs) exactly as
+           manage-keys.css does: it is page structure, and every colour in it resolves
+           through tokens.css, so it picks up the organization's palette from the themed
+           main.css without being themable itself. */
+        const dbLayout = await util.loadLayoutFromAPI(orgId, viewName);
+        let html;
+        if (dbLayout) {
+            const templatePath = path.join(process.cwd(), 'src/defaultContent/pages/billing/page.hbs');
+            const templateResponse = fs.readFileSync(templatePath, constants.CHARSET_UTF8);
+            const styleContent = await adminDao.getOrgContent({
+                orgId: orgId, fileType: 'style', viewName: viewName, fileName: 'main.css'
+            });
+            const themedLayout = styleContent
+                ? dbLayout.replace(/\/styles\//g, `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=`)
+                : dbLayout;
+            html = await renderGivenTemplate(templateResponse, themedLayout, templateContent);
+        } else {
+            html = await util.renderTemplateFromAPI(templateContent, orgId, orgName, 'pages/billing', viewName);
+        }
         res.send(html);
     } catch (error) {
         logger.error('Error rendering billing page', { 

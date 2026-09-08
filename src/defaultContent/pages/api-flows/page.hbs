@@ -29,7 +29,10 @@
                 <p class="page-desc">Pre-configured workflows let your AI agents reference these best practices to use your APIs correctly, every time &mdash; no hallucination, no manual setup.</p>
             </div>
             {{#if profile.isAdmin}}
-            <a href="{{baseUrl}}/configure" class="btn-manage-workflows">
+            {{!-- #apiflows, not bare /configure: api-flows.js reads the hash on load
+                  (syncTabFromHash) and anything other than #apiflows falls through to
+                  the LLM Instructions tab, so this button landed on the wrong one. --}}
+            <a href="{{baseUrl}}/configure#apiflows" class="dp-btn dp-btn--primary">
                 <i class="bi bi-pencil-square"></i> Manage Workflows
             </a>
             {{/if}}

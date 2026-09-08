@@ -1,5 +1,9 @@
 <head>
     <link rel="stylesheet" href="/technical-styles/manage-keys.css" />
+    {{!-- The sub-table family below comes from here. The page links it itself rather than
+          leaning on the two page.hbs files that include this partial, so the table cannot
+          render unstyled depending on which of them rendered it. --}}
+    <link rel="stylesheet" href="/technical-styles/subscriptions.css" />
     {{!-- For the application-identity block below: overview.css styles the card and its
           inline-edit controls, edit-application-form.js drives them. --}}
     <link rel="stylesheet" href="/technical-styles/overview.css" />
@@ -138,18 +142,18 @@
                                         style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
                                         <div class="key-action-row">
                                             <div class="key-action-buttons-row col-md-7 d-flex w-100">
-                                                <button id="viewKeyBtn-PRODUCTION" class="common-btn-outlined btn-sm flex-grow-1"
+                                                <button id="viewKeyBtn-PRODUCTION" class="dp-btn dp-btn--outline flex-grow-1"
                                                     onclick="loadKeysViewModal('PRODUCTION')">
                                                     <i class="bi bi-eye"></i> View
                                                 </button>
                                                 <button id="modifyKeyBtn-PRODUCTION"
-                                                    class="common-btn-outlined btn-sm flex-grow-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                    class="dp-btn dp-btn--outline flex-grow-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                     style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
                                                     onclick="loadKeysModifyModal('PRODUCTION')">
                                                     <i class="bi bi-pencil-square"></i> Modify
                                                 </button>
                                                 <button id="tokenKeyBtn-PRODUCTION"
-                                                    class="common-btn-outlined btn-sm flex-grow-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                    class="dp-btn dp-btn--outline flex-grow-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                     data-app-id="{{@root.applicationMetadata.id}}"
                                                     style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
                                                     onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-PRODUCTION', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}', '{{json @root.subscriptionScopes}}', 'PRODUCTION')">
@@ -163,7 +167,7 @@
                                                     </span>
                                                 </button>
                                                 <button id="tokenInstructionsBtn-PRODUCTION"
-                                                    class="common-btn-outlined btn-sm flex-grow-1"
+                                                    class="dp-btn dp-btn--outline flex-grow-1"
                                                     onclick="loadKeysInstructionsModal('PRODUCTION')">
                                                     <i class="bi bi-info-circle"></i> Instructions
                                                 </button>
@@ -172,18 +176,13 @@
                                     </div>
                                     <div id="generateKeyContainer-PRODUCTION" class="{{#unless keys.consumerKey}}d-flex{{/unless}}"
                                         style="{{#if keys.consumerKey}}display: none;{{/if}}">
-                                        <div class="d-flex align-items-left flex-column">
-                                            <div class="info-box mt-0">
-                                                <div class="info-content">
-                                                    <div class="info-title">
-                                                        Application keys have not been generated yet. Click the button
-                                                        below to create
-                                                        credentials
-                                                        that will be shared across all APIs. </div>
-                                                </div>
+                                        <div class="d-flex flex-column align-items-start gap-3">
+                                            <div class="dp-note mt-0">
+                                                <i class="bi bi-info-circle"></i>
+                                                <span>Application keys have not been generated yet. Click the button below to create credentials that will be shared across all APIs.</span>
                                             </div>
                                             <button data-cyid="generateKey-PRODUCTION" id="generateKeyBtn-PRODUCTION"
-                                                class="common-btn-primary btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}} col-md-3"
+                                                class="dp-btn dp-btn--primary {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                 style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
                                                 data-subscriptions="{{ json ../../subAPIs }}"
                                                 onclick="generateApplicationKey('keysview-{{../id}}-PRODUCTION', '{{../../applicationMetadata.id}}', 'PRODUCTION', '{{../name}}', '{{../../applicationMetadata/name}}', this.getAttribute('data-subscriptions'), '{{../../orgID}}', 'consumer-key-{{../id}}-PRODUCTION', 'consumer-secret-{{../id}}-PRODUCTION')">
@@ -213,7 +212,7 @@
                                         style="{{#if keys.consumerKey}}display: none;{{/if}}">
                                         <div class="d-flex align-items-center">
                                             <button
-                                                class="btn btn-sm common-btn-link p-0 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                class="dp-btn dp-btn--outline dp-btn--compact {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                 id="addClientID-PRODUCTION" title="Add Client ID">
                                                 <i class="bi bi-plus"></i> Add Client ID
                                             </button>
@@ -225,7 +224,7 @@
                                         </div>
                                         <div class="edit-actions ms-0" id="clientIDEditActions-PRODUCTION"
                                             style="display: none; gap: 8px;">
-                                            <button class="btn btn-sm common-btn-primary save-btn"
+                                            <button class="dp-btn dp-btn--primary dp-btn--compact save-btn"
                                                 id="generateKeyBtn-PRODUCTION"
                                                 data-subscriptions="{{ json ../../subAPIs }}"
                                                 onclick="generateApplicationKey('keysview-{{../id}}-PRODUCTION', '{{../../applicationMetadata.id}}', 'PRODUCTION', '{{../name}}', '{{../../applicationMetadata/name}}', this.getAttribute('data-subscriptions'), '{{../../orgID}}', 'consumer-key-{{../id}}-PRODUCTION', 'consumer-secret-{{../id}}-PRODUCTION')"
@@ -235,7 +234,7 @@
                                                     <span class="spinner-border spinner-border-sm" role="status"></span>
                                                 </span>
                                             </button>
-                                            <button class="btn btn-sm common-btn-outlined cancel-btn"
+                                            <button class="dp-btn dp-btn--outline dp-btn--compact cancel-btn"
                                                 id="cancelClientIDBtn-PRODUCTION" title="Cancel"><i
                                                     class="bi bi-x"></i></button>
                                         </div>
@@ -287,12 +286,12 @@
                                         style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
                                         <div class="key-action-row">
                                             <div class="key-action-buttons-row col-md-7">
-                                                <button id="viewKeyBtn-PRODUCTION" class="common-btn-outlined btn-sm"
+                                                <button id="viewKeyBtn-PRODUCTION" class="dp-btn dp-btn--outline"
                                                     onclick="loadKeysViewModal('PRODUCTION')">
                                                     <i class="bi bi-eye"></i> View
                                                 </button>
                                                 <button id="tokenInstructionsBtn-PRODUCTION"
-                                                    class="common-btn-outlined btn-sm"
+                                                    class="dp-btn dp-btn--outline"
                                                     onclick="loadKeysInstructionsModal('PRODUCTION')">
                                                     <i class="bi bi-info-circle"></i> Instructions
                                                 </button>
@@ -309,12 +308,9 @@
                                 {{/each}}
                                 {{else}}
                                 <div style="margin-left: 1rem;">
-                                    <div class="info-box">
-                                        <div class="info-content">
-                                            <div class="info-title">
-                                                Key generation is currently unavailable. Please contact the organization administrator.
-                                            </div>
-                                        </div>
+                                    <div class="dp-note">
+                                        <i class="bi bi-info-circle"></i>
+                                        <span>Key generation is currently unavailable. Please contact the organization administrator.</span>
                                     </div>
                                 </div>
                                 {{/if}}
@@ -336,15 +332,21 @@
                                 <div class="accordion-body p-0">
                                     <div class="accordion-body-content">
                                         {{#if apiKeyEnabledAPICount}}
-                                        <div class="app-table-container my-3" id="app-table-container-PRODUCTION">
-                                            <table class="app-table" id="app-table-{{applicationMetadata.id}}-PRODUCTION">
+                                        {{!-- The sub-table family, so this table, /subscriptions and /api-keys
+                                              render as one table. The app-table it replaced was repainted by
+                                              manage-keys.css with a tinted header band, which made this the only
+                                              blue-headed table in the portal. Wrap outside, scroll inside, so the
+                                              border stays put while wide content moves. --}}
+                                        <div class="sub-tablewrap my-3" id="app-table-container-PRODUCTION">
+                                            <div class="sub-scroll table-responsive">
+                                            <table class="sub-table" id="app-table-{{applicationMetadata.id}}-PRODUCTION">
                                                 <thead>
                                                     <tr>
-                                                        <th class="app-th">API Name</th>
-                                                        <th class="app-th">API Version</th>
-                                                        <th class="app-th" style="display: none;">Policy</th>
-                                                        <th class="app-th" style="width: 20%;">API Key Name</th>
-                                                        <th class="app-th">
+                                                        <th>API Name</th>
+                                                        <th>API Version</th>
+                                                        <th style="display: none;">Policy</th>
+                                                        <th style="width: 20%;">API Key Name</th>
+                                                        <th>
                                                             {{#if isApiKey}}
                                                             Key Actions
                                                             {{/if}}
@@ -361,19 +363,19 @@
                                                     subID=subID}}
                                                     <tr class="data-row" id="data-row-{{subID}}"
                                                         data-index="{{@index}}">
-                                                        <td class="app-td" style="width: 20%;">
+                                                        <td style="width: 20%;">
                                                             <span
                                                                 onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
                                                                 class="text-truncate d-block"
                                                                 style="cursor: pointer;">{{name}}</span>
                                                         </td>
                                                         <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
-                                                            class="app-td" style="width: 20%; cursor: pointer;">
+                                                            style="width: 20%; cursor: pointer;">
                                                             {{version}}
                                                         </td>
-                                                        <td id="policy_{{subID}}" class="app-td"
+                                                        <td id="policy_{{subID}}"
                                                             style="width: 0%; display: none;">{{policyName}}</td>
-                                                        <td class="app-td" style="width: 20%;"
+                                                        <td style="width: 20%;"
                                                             id="apiKeyNameCell-{{subID}}-PRODUCTION">
                                                             {{#if apiKeys.production.name}}
                                                             {{apiKeys.production.name}}
@@ -381,11 +383,11 @@
                                                             <span class="text-muted">-</span>
                                                             {{/if}}
                                                         </td>
-                                                        <td class="app-td" style="width: 20%;">
+                                                        <td style="width: 20%;">
                                                             {{#if (contains security 'api_key')}}
                                                             <div class="api-key-actions">
                                                                 <button
-                                                                    class="common-btn-outlined btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                                    class="dp-btn dp-btn--outline {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                                     id="regenerateKeyBtn-{{subID}}-PRODUCTION"
                                                                     data-scopes="{{json apiKeys.production.scopes}}"
                                                                     data-api-key-id="{{apiKeys.production.key.[0].id}}"
@@ -403,7 +405,7 @@
                                                                     </span>
                                                                 </button>
                                                                 <button
-                                                                    class="common-btn-outlined btn-sm api-key-revoke {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                                    class="dp-btn dp-btn--danger api-key-revoke {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                                     data-api-key-id="{{apiKeys.production.key.[0].id}}"
                                                                     onclick="openWarningModal('revoke', this.dataset.apiKeyId, '{{subID}}', '{{../applicationMetadata.id}}', '{{refID}}', 'PRODUCTION')"
                                                                     id="revokeKeyBtn-{{subID}}-PRODUCTION"
@@ -420,7 +422,7 @@
                                                                     </span>
                                                                 </button>
                                                                 <button
-                                                                    class="common-btn-outlined btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                                    class="dp-btn dp-btn--outline {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                                     id="generateKeyBtn-{{subID}}-PRODUCTION"
                                                                     style="{{#if apiKeys.production.key}}display: none;{{else}}display: inline-flex;{{/if}}"
                                                                     data-app-ref-id=""
@@ -449,19 +451,19 @@
                                                     {{> api-key apiID=apiID keyType="PRODUCTION"}}
                                                     <tr class="data-row" id="data-row-{{subID}}"
                                                         data-index="{{@index}}">
-                                                        <td class="app-td" style="width: 20%;">
+                                                        <td style="width: 20%;">
                                                             <span
                                                                 onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
                                                                 class="text-truncate d-block"
                                                                 style="cursor: pointer;">{{name}}</span>
                                                         </td>
                                                         <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
-                                                            class="app-td" style="width: 20%; cursor: pointer;">
+                                                            style="width: 20%; cursor: pointer;">
                                                             {{version}}
                                                         </td>
-                                                        <td id="policy_{{subID}}" class="app-td"
+                                                        <td id="policy_{{subID}}"
                                                             style="width: 0%; display: none;">{{policyName}}</td>
-                                                        <td class="app-td" style="width: 20%;"
+                                                        <td style="width: 20%;"
                                                             id="apiKeyNameCell-{{subID}}-PRODUCTION">
                                                             {{#if apiKeys.production.name}}
                                                             {{apiKeys.production.name}}
@@ -469,10 +471,10 @@
                                                             <span class="text-muted">-</span>
                                                             {{/if}}
                                                         </td>
-                                                        <td class="app-td" style="width: 20%;">
+                                                        <td style="width: 20%;">
                                                             <div class="api-key-actions">
                                                                 <button
-                                                                    class="common-btn-outlined btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                                    class="dp-btn dp-btn--outline {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                                     id="regenerateKeyBtn-{{subID}}-PRODUCTION"
                                                                     data-scopes="{{json apiKeys.production.scopes}}"
                                                                     data-api-key-id="{{apiKeys.production.key.[0].id}}"
@@ -490,7 +492,7 @@
                                                                     </span>
                                                                 </button>
                                                                 <button
-                                                                    class="common-btn-outlined btn-sm api-key-revoke {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                                    class="dp-btn dp-btn--danger api-key-revoke {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                                     data-api-key-id="{{apiKeys.production.key.[0].id}}"
                                                                     onclick="openWarningModal('revoke', this.dataset.apiKeyId, '{{subID}}', '{{../applicationMetadata.id}}', '{{refID}}', 'PRODUCTION')"
                                                                     id="revokeKeyBtn-{{subID}}-PRODUCTION"
@@ -507,7 +509,7 @@
                                                                     </span>
                                                                 </button>
                                                                 <button
-                                                                    class="common-btn-outlined btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                                    class="dp-btn dp-btn--outline {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                                     id="generateKeyBtn-{{subID}}-PRODUCTION"
                                                                     style="{{#if apiKeys.production.key}}display: none;{{else}}display: inline-flex;{{/if}}"
                                                                     data-app-ref-id=""
@@ -534,19 +536,19 @@
                                                     {{> api-key apiID=apiID keyType="PRODUCTION"}}
                                                     <tr class="data-row" id="data-row-{{subID}}"
                                                         data-index="{{@index}}">
-                                                        <td class="app-td" style="width: 20%;">
+                                                        <td style="width: 20%;">
                                                             <span
                                                                 onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
                                                                 class="text-truncate d-block"
                                                                 style="cursor: pointer;">{{name}}</span>
                                                         </td>
                                                         <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
-                                                            class="app-td" style="width: 20%; cursor: pointer;">
+                                                            style="width: 20%; cursor: pointer;">
                                                             {{version}}
                                                         </td>
-                                                        <td id="policy_{{subID}}" class="app-td"
+                                                        <td id="policy_{{subID}}"
                                                             style="width: 0%; display: none;">{{policyName}}</td>
-                                                        <td class="app-td" style="width: 20%;"
+                                                        <td style="width: 20%;"
                                                             id="apiKeyNameCell-{{subID}}-PRODUCTION">
                                                             {{#if apiKeys.production.name}}
                                                             {{apiKeys.production.name}}
@@ -554,10 +556,10 @@
                                                             <span class="text-muted">-</span>
                                                             {{/if}}
                                                         </td>
-                                                        <td class="app-td" style="width: 20%;">
+                                                        <td style="width: 20%;">
                                                             <div class="api-key-actions">
                                                                 <button
-                                                                    class="common-btn-outlined btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                                    class="dp-btn dp-btn--outline {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                                     id="regenerateKeyBtn-{{subID}}-PRODUCTION"
                                                                     data-scopes="{{json apiKeys.production.scopes}}"
                                                                     data-api-key-id="{{apiKeys.production.key.[0].id}}"
@@ -575,7 +577,7 @@
                                                                     </span>
                                                                 </button>
                                                                 <button
-                                                                    class="common-btn-outlined btn-sm api-key-revoke {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                                    class="dp-btn dp-btn--danger api-key-revoke {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                                     data-api-key-id="{{apiKeys.production.key.[0].id}}"
                                                                     onclick="openWarningModal('revoke', this.dataset.apiKeyId, '{{subID}}', '{{../applicationMetadata.id}}', '{{refID}}', 'PRODUCTION')"
                                                                     id="revokeKeyBtn-{{subID}}-PRODUCTION"
@@ -592,7 +594,7 @@
                                                                     </span>
                                                                 </button>
                                                                 <button
-                                                                    class="common-btn-outlined btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                                    class="dp-btn dp-btn--outline {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                                     id="generateKeyBtn-{{subID}}-PRODUCTION"
                                                                     style="{{#if apiKeys.production.key}}display: none;{{else}}display: inline-flex;{{/if}}"
                                                                     data-app-ref-id=""
@@ -616,15 +618,18 @@
                                                     {{/each}}
                                                 </tbody>
                                             </table>
+                                            </div>
                                         </div>
                                         {{/if}}
-                                        <div class="ps-3" id="no-api-key-apis-PRODUCTION" style="{{#if apiKeyEnabledAPICount}}display: none;{{/if}}">
-                                            <div class="info-box">
-                                                <div class="info-content">
-                                                    <div class="info-title">
-                                                        No API Key enabled APIs are subscribed to this application. Subscribe to an API that supports API Key authentication to generate keys.
-                                                    </div>
-                                                </div>
+                                        {{!-- An empty section reads as an empty state, not as a note under a table
+                                              header: when no subscribed API supports API keys there is no table at all
+                                              above this. --inset is the in-panel size of the same block the
+                                              applications and subscriptions pages use. --}}
+                                        <div id="no-api-key-apis-PRODUCTION" style="{{#if apiKeyEnabledAPICount}}display: none;{{/if}}">
+                                            <div class="dp-empty dp-empty--inset">
+                                                <span class="dp-empty-icon"><i class="bi bi-key"></i></span>
+                                                <h2 class="dp-empty-title">No API key enabled APIs</h2>
+                                                <p class="dp-empty-desc">None of this application's subscriptions use API key authentication. Subscribe to an API that supports it to generate a key here.</p>
                                             </div>
                                         </div>
                                     </div>
@@ -635,7 +640,7 @@
             </div>
             <div class="tab-pane fade" id="sandbox" role="tabpanel" aria-labelledby="sandbox-tab">
                 {{!-- Same banner treatment as the production pane, replacing the generic
-                      .info-box so both environments read as a matched pair. --}}
+                      note so both environments read as a matched pair. --}}
                 <div class="mk-context-banner mk-context-banner-sandbox">
                     <i class="bi bi-circle-fill mk-env-dot-sandbox-icon"></i>
                     <span>You are viewing <strong>Sandbox</strong> credentials. These keys can be used only for the sandbox environment.</span>
@@ -703,19 +708,19 @@
                                             style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
                                             <div class="key-action-row">
                                                 <div class="key-action-buttons-row col-md-7 d-flex w-100">
-                                                    <button id="viewKeyBtn-SANDBOX" class="common-btn-outlined btn-sm flex-grow-1"
+                                                    <button id="viewKeyBtn-SANDBOX" class="dp-btn dp-btn--outline flex-grow-1"
                                                         onclick="loadKeysViewModal('SANDBOX')">
                                                         <i class="bi bi-eye"></i> View
                                                     </button>
                                         
-                                                    <button id="modifyKeyBtn-SANDBOX" class="common-btn-outlined btn-sm flex-grow-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                    <button id="modifyKeyBtn-SANDBOX" class="dp-btn dp-btn--outline flex-grow-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                         style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
                                                         onclick="loadKeysModifyModal('SANDBOX')">
                                                         <i class="bi bi-pencil-square"></i> Modify
                                                     </button>
                                         
                                                     <button id="tokenKeyBtn-SANDBOX"
-                                                        class="common-btn-outlined btn-sm flex-grow-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                        class="dp-btn dp-btn--outline flex-grow-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                         data-app-id="{{@root.applicationMetadata.id}}"
                                                         style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
                                                         onclick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-SANDBOX', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{../../applicationMetadata/name}}', '{{keys.consumerSecret}}', '{{json @root.subscriptionScopes}}', 'SANDBOX')">
@@ -728,7 +733,7 @@
                                                         </span>
                                                     </button>
                                         
-                                                    <button id="tokenInstructionsBtn-SANDBOX" class="common-btn-outlined btn-sm flex-grow-1"
+                                                    <button id="tokenInstructionsBtn-SANDBOX" class="dp-btn dp-btn--outline flex-grow-1"
                                                         onclick="loadKeysInstructionsModal('SANDBOX')">
                                                         <i class="bi bi-info-circle"></i> Instructions
                                                     </button>
@@ -737,19 +742,13 @@
                                         </div>
                                         <div id="generateKeyContainer-SANDBOX" class="{{#unless keys.consumerKey}}d-flex{{/unless}}"
                                             style="{{#if keys.consumerKey}}display: none;{{/if}}">
-                                            <div class="d-flex align-items-left flex-column">
-                                                <div class="info-box mt-0">
-                                                    <div class="info-content">
-                                                        <div class="info-title">
-                                                            Application keys have not been generated yet. Click the
-                                                            button
-                                                            below to create credentials that will be shared across all
-                                                            APIs.
-                                                        </div>
-                                                    </div>
+                                            <div class="d-flex flex-column align-items-start gap-3">
+                                                <div class="dp-note mt-0">
+                                                    <i class="bi bi-info-circle"></i>
+                                                    <span>Application keys have not been generated yet. Click the button below to create credentials that will be shared across all APIs.</span>
                                                 </div>
                                                 <button data-cyid="generateKey-SANDBOX" id="generateKeyBtn-SANDBOX"
-                                                    class="common-btn-primary btn-sm {{#if @root.isReadOnlyMode}}disabled{{/if}} col-md-3"
+                                                    class="dp-btn dp-btn--primary {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                     style="{{#if @root.isReadOnlyMode}}pointer-events: none; opacity: 0.5;{{/if}}"
                                                     data-subscriptions="{{ json ../../subAPIs }}"
                                                     onclick="generateApplicationKey('keysview-{{../id}}-SANDBOX', '{{../../applicationMetadata.id}}', 'SANDBOX', '{{../name}}', '{{../../applicationMetadata/name}}', this.getAttribute('data-subscriptions'), '{{../../orgID}}', 'consumer-key-{{../id}}-SANDBOX', 'consumer-secret-{{../id}}-SANDBOX')">
@@ -779,7 +778,7 @@
                                             style="{{#if keys.consumerKey}}display: none;{{/if}}">
                                             <div class="d-flex align-items-center">
                                                 <button
-                                                    class="btn btn-sm common-btn-link p-0 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                    class="dp-btn dp-btn--outline dp-btn--compact {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                     id="addClientID-SANDBOX" title="Add Client ID">
                                                     <i class="bi bi-plus"></i> Add Client ID
                                                 </button>
@@ -791,7 +790,7 @@
                                             </div>
                                             <div class="edit-actions ms-0" id="clientIDEditActions-SANDBOX"
                                                 style="display: none; gap: 8px;">
-                                                <button class="btn btn-sm common-btn-primary save-btn"
+                                                <button class="dp-btn dp-btn--primary dp-btn--compact save-btn"
                                                     id="generateKeyBtn-SANDBOX"
                                                     data-subscriptions="{{ json ../../subAPIs }}"
                                                     onclick="generateApplicationKey('keysview-{{../id}}-SANDBOX', '{{../../applicationMetadata.id}}', 'SANDBOX', '{{../name}}', '{{../../applicationMetadata/name}}', this.getAttribute('data-subscriptions'), '{{../../orgID}}', 'consumer-key-{{../id}}-SANDBOX', 'consumer-secret-{{../id}}-SANDBOX')"
@@ -802,7 +801,7 @@
                                                             role="status"></span>
                                                     </span>
                                                 </button>
-                                                <button class="btn btn-sm common-btn-outlined cancel-btn"
+                                                <button class="dp-btn dp-btn--outline dp-btn--compact cancel-btn"
                                                     id="cancelClientIDBtn-SANDBOX" title="Cancel"><i
                                                         class="bi bi-x"></i></button>
                                             </div>
@@ -854,12 +853,12 @@
                                             style="{{#unless keys.consumerKey}}display: none;{{/unless}}">
                                             <div class="key-action-row">
                                                 <div class="key-action-buttons-row col-md-7">
-                                                    <button id="viewKeyBtn-SANDBOX" class="common-btn-outlined btn-sm"
+                                                    <button id="viewKeyBtn-SANDBOX" class="dp-btn dp-btn--outline"
                                                         onclick="loadKeysViewModal('SANDBOX')">
                                                         <i class="bi bi-eye"></i> View
                                                     </button>
                                                     <button id="tokenInstructionsBtn-SANDBOX"
-                                                        class="common-btn-outlined btn-sm"
+                                                        class="dp-btn dp-btn--outline"
                                                         onclick="loadKeysInstructionsModal('SANDBOX')">
                                                         <i class="bi bi-info-circle"></i> Instructions
                                                     </button>
@@ -876,12 +875,9 @@
                                     {{/each}}
                                     {{else}}
                                     <div style="margin-left: 1rem;">
-                                        <div class="info-box">
-                                            <div class="info-content">
-                                                <div class="info-title">
-                                                    Key generation is currently unavailable. Please contact the organization administrator.
-                                                </div>
-                                            </div>
+                                        <div class="dp-note">
+                                            <i class="bi bi-info-circle"></i>
+                                            <span>Key generation is currently unavailable. Please contact the organization administrator.</span>
                                         </div>
                                     </div>
                                     {{/if}}
@@ -903,15 +899,21 @@
                             <div class="accordion-body p-0">
                                 <div class="accordion-body-content">
                                     {{#if apiKeyEnabledAPICount}}
-                                    <div class="app-table-container my-3" id="app-table-container-SANDBOX">
-                                        <table class="app-table" id="app-table-{{applicationMetadata.id}}-SANDBOX">
+                                    {{!-- The sub-table family, so this table, /subscriptions and /api-keys
+                                          render as one table. The app-table it replaced was repainted by
+                                          manage-keys.css with a tinted header band, which made this the only
+                                          blue-headed table in the portal. Wrap outside, scroll inside, so the
+                                          border stays put while wide content moves. --}}
+                                    <div class="sub-tablewrap my-3" id="app-table-container-SANDBOX">
+                                        <div class="sub-scroll table-responsive">
+                                        <table class="sub-table" id="app-table-{{applicationMetadata.id}}-SANDBOX">
                                             <thead>
                                                 <tr>
-                                                    <th class="app-th">API Name</th>
-                                                    <th class="app-th">API Version</th>
-                                                    <th class="app-th" style="display: none;">Policy</th>
-                                                    <th class="app-th" style="width: 20%;">API Key Name</th>
-                                                    <th class="app-th">
+                                                    <th>API Name</th>
+                                                    <th>API Version</th>
+                                                    <th style="display: none;">Policy</th>
+                                                    <th style="width: 20%;">API Key Name</th>
+                                                    <th>
                                                         {{#if isApiKey}}
                                                         Key Actions
                                                         {{/if}}
@@ -926,18 +928,18 @@
                                                 {{> update-plan subscriptionPolicyDetails=subscriptionPolicyDetails
                                                 selectedPlan=policyName appID=../applicationMetadata.id subID=subID}}
                                                 <tr class="data-row" id="data-row-{{subID}}" data-index="{{@index}}">
-                                                    <td class="app-td" style="width: 20%;">
+                                                    <td style="width: 20%;">
                                                         <span
                                                             onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
                                                             class="text-truncate d-block"
                                                             style="cursor: pointer;">{{name}}</span>
                                                     </td>
                                                     <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
-                                                        class="app-td" style="width: 20%; cursor: pointer;">{{version}}
+                                                        style="width: 20%; cursor: pointer;">{{version}}
                                                     </td>
-                                                    <td id="policy_{{subID}}" class="app-td"
+                                                    <td id="policy_{{subID}}"
                                                         style="width: 0%; display: none;">{{policyName}}</td>
-                                                    <td class="app-td" style="width: 20%;"
+                                                    <td style="width: 20%;"
                                                         id="apiKeyNameCell-{{subID}}-SANDBOX">
                                                         {{#if apiKeys.sandbox.name}}
                                                         {{apiKeys.sandbox.name}}
@@ -945,11 +947,11 @@
                                                         <span class="text-muted">-</span>
                                                         {{/if}}
                                                     </td>
-                                                    <td class="app-td" style="width: 20%;">
+                                                    <td style="width: 20%;">
                                                         {{#if (contains security 'api_key')}}
                                                         <div class="api-key-actions">
                                                             <button
-                                                                class="common-btn-outlined btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                                class="dp-btn dp-btn--outline {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                                 id="regenerateKeyBtn-{{subID}}-SANDBOX"
                                                                 data-scopes="{{json apiKeys.sandbox.scopes}}"
                                                                 data-api-key-id="{{apiKeys.sandbox.key.[0].id}}"
@@ -966,7 +968,7 @@
                                                                 </span>
                                                             </button>
                                                             <button
-                                                                class="common-btn-outlined btn-sm api-key-revoke {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                                class="dp-btn dp-btn--danger api-key-revoke {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                                 data-api-key-id="{{apiKeys.sandbox.key.[0].id}}"
                                                                 onclick="openWarningModal('revoke', this.dataset.apiKeyId, '{{subID}}', '{{../applicationMetadata.id}}', '{{refID}}', 'SANDBOX')"
                                                                 id="revokeKeyBtn-{{subID}}-SANDBOX"
@@ -982,7 +984,7 @@
                                                                 </span>
                                                             </button>
                                                             <button
-                                                                class="common-btn-outlined btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                                class="dp-btn dp-btn--outline {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                                 id="generateKeyBtn-{{subID}}-SANDBOX"
                                                                 style="{{#if apiKeys.sandbox.key}}display: none;{{else}}display: inline-flex;{{/if}}"
                                                                 data-app-ref-id=""
@@ -1010,19 +1012,19 @@
                                                 {{> api-key apiID=apiID keyType="SANDBOX"}}
                                                 <tr class="data-row" id="data-row-{{subID}}"
                                                     data-index="{{@index}}">
-                                                    <td class="app-td" style="width: 20%;">
+                                                    <td style="width: 20%;">
                                                         <span
                                                             onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
                                                             class="text-truncate d-block"
                                                             style="cursor: pointer;">{{name}}</span>
                                                     </td>
                                                     <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
-                                                        class="app-td" style="width: 20%; cursor: pointer;">
+                                                        style="width: 20%; cursor: pointer;">
                                                         {{version}}
                                                     </td>
-                                                    <td id="policy_{{subID}}" class="app-td"
+                                                    <td id="policy_{{subID}}"
                                                         style="width: 0%; display: none;">{{policyName}}</td>
-                                                    <td class="app-td" style="width: 20%;"
+                                                    <td style="width: 20%;"
                                                         id="apiKeyNameCell-{{subID}}-SANDBOX">
                                                         {{#if apiKeys.sandbox.name}}
                                                         {{apiKeys.sandbox.name}}
@@ -1030,10 +1032,10 @@
                                                         <span class="text-muted">-</span>
                                                         {{/if}}
                                                     </td>
-                                                    <td class="app-td" style="width: 20%;">
+                                                    <td style="width: 20%;">
                                                         <div class="api-key-actions">
                                                             <button
-                                                                class="common-btn-outlined btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                                class="dp-btn dp-btn--outline {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                                 id="regenerateKeyBtn-{{subID}}-SANDBOX"
                                                                 data-scopes="{{json apiKeys.sandbox.scopes}}"
                                                                 data-api-key-id="{{apiKeys.sandbox.key.[0].id}}"
@@ -1050,7 +1052,7 @@
                                                                 </span>
                                                             </button>
                                                             <button
-                                                                class="common-btn-outlined btn-sm api-key-revoke {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                                class="dp-btn dp-btn--danger api-key-revoke {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                                 data-api-key-id="{{apiKeys.sandbox.key.[0].id}}"
                                                                 onclick="openWarningModal('revoke', this.dataset.apiKeyId, '{{subID}}', '{{../applicationMetadata.id}}', '{{refID}}', 'SANDBOX')"
                                                                 id="revokeKeyBtn-{{subID}}-SANDBOX"
@@ -1066,7 +1068,7 @@
                                                                 </span>
                                                             </button>
                                                             <button
-                                                                class="common-btn-outlined btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                                class="dp-btn dp-btn--outline {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                                 id="generateKeyBtn-{{subID}}-SANDBOX"
                                                                 style="{{#if apiKeys.sandbox.key}}display: none;{{else}}display: inline-flex;{{/if}}"
                                                                 data-app-ref-id=""
@@ -1092,19 +1094,19 @@
                                                 {{> api-key apiID=apiID keyType="SANDBOX"}}
                                                 <tr class="data-row" id="data-row-{{subID}}"
                                                     data-index="{{@index}}">
-                                                    <td class="app-td" style="width: 20%;">
+                                                    <td style="width: 20%;">
                                                         <span
                                                             onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
                                                             class="text-truncate d-block"
                                                             style="cursor: pointer;">{{name}}</span>
                                                     </td>
                                                     <td onclick="window.location.href='{{@root.baseUrl}}/api/{{apiHandle}}'"
-                                                        class="app-td" style="width: 20%; cursor: pointer;">
+                                                        style="width: 20%; cursor: pointer;">
                                                         {{version}}
                                                     </td>
-                                                    <td id="policy_{{subID}}" class="app-td"
+                                                    <td id="policy_{{subID}}"
                                                         style="width: 0%; display: none;">{{policyName}}</td>
-                                                    <td class="app-td" style="width: 20%;"
+                                                    <td style="width: 20%;"
                                                         id="apiKeyNameCell-{{subID}}-SANDBOX">
                                                         {{#if apiKeys.sandbox.name}}
                                                         {{apiKeys.sandbox.name}}
@@ -1112,10 +1114,10 @@
                                                         <span class="text-muted">-</span>
                                                         {{/if}}
                                                     </td>
-                                                    <td class="app-td" style="width: 20%;">
+                                                    <td style="width: 20%;">
                                                         <div class="api-key-actions">
                                                             <button
-                                                                class="common-btn-outlined btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                                class="dp-btn dp-btn--outline {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                                 id="regenerateKeyBtn-{{subID}}-SANDBOX"
                                                                 data-scopes="{{json apiKeys.sandbox.scopes}}"
                                                                 data-api-key-id="{{apiKeys.sandbox.key.[0].id}}"
@@ -1132,7 +1134,7 @@
                                                                 </span>
                                                             </button>
                                                             <button
-                                                                class="common-btn-outlined btn-sm api-key-revoke {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                                class="dp-btn dp-btn--danger api-key-revoke {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                                 data-api-key-id="{{apiKeys.sandbox.key.[0].id}}"
                                                                 onclick="openWarningModal('revoke', this.dataset.apiKeyId, '{{subID}}', '{{../applicationMetadata.id}}', '{{refID}}', 'SANDBOX')"
                                                                 id="revokeKeyBtn-{{subID}}-SANDBOX"
@@ -1148,7 +1150,7 @@
                                                                 </span>
                                                             </button>
                                                             <button
-                                                                class="common-btn-outlined btn-sm me-1 {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                                                                class="dp-btn dp-btn--outline {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                                                                 id="generateKeyBtn-{{subID}}-SANDBOX"
                                                                 style="{{#if apiKeys.sandbox.key}}display: none;{{else}}display: inline-flex;{{/if}}"
                                                                 data-app-ref-id=""
@@ -1171,15 +1173,18 @@
                                                 {{/each}}
                                             </tbody>
                                         </table>
+                                        </div>
                                     </div>
                                     {{/if}}
-                                    <div class="ps-3" id="no-api-key-apis-SANDBOX" style="{{#if apiKeyEnabledAPICount}}display: none;{{/if}}">
-                                        <div class="info-box">
-                                            <div class="info-content">
-                                                <div class="info-title">
-                                                    No API Key enabled APIs are subscribed to this application. Subscribe to an API that supports API Key authentication to generate keys.
-                                                </div>
-                                            </div>
+                                    {{!-- An empty section reads as an empty state, not as a note under a table
+                                          header: when no subscribed API supports API keys there is no table at all
+                                          above this. --inset is the in-panel size of the same block the
+                                          applications and subscriptions pages use. --}}
+                                    <div id="no-api-key-apis-SANDBOX" style="{{#if apiKeyEnabledAPICount}}display: none;{{/if}}">
+                                        <div class="dp-empty dp-empty--inset">
+                                            <span class="dp-empty-icon"><i class="bi bi-key"></i></span>
+                                            <h2 class="dp-empty-title">No API key enabled APIs</h2>
+                                            <p class="dp-empty-desc">None of this application's subscriptions use API key authentication. Subscribe to an API that supports it to generate a key here.</p>
                                         </div>
                                     </div>
                                 </div>

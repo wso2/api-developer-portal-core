@@ -1,0 +1,473 @@
+/*
+ * The settings shell for the view-level configure page, taken from upstream's settings
+ * section (its src/styles/settings-layout.css) so the two read as one product.
+ *
+ * WHY A SEPARATE SHEET
+ * --------------------
+ * Upstream's settings page is one shell with eleven panels; ours is the two panels a
+ * view actually owns - LLM Instructions and API Workflows - reached from /configure.
+ * The shell those panels sit in (page padding, back link, heading, vertical rail,
+ * heading block, primary action) is the part that has to match, so it lives here under
+ * upstream's own class names rather than being restated in api-flows.css. Porting the
+ * remaining panels later means copying more rules into this file, not renaming the
+ * markup again.
+ *
+ * These are verbatim copies. Resist "improving" a value: the point is that a heading or
+ * a button rendered here is pixel-identical to the same element upstream. Every token
+ * referenced below already ships in tokens.css, and the sans stack the text inherits is
+ * the same one upstream sets on body, so nothing here restates a font-family.
+ *
+ * One thing deliberately NOT copied: upstream's `.cfg-panel { display: none }` base.
+ * api-flows.js switches panes with `style.display = isActive ? '' : 'none'`, and against
+ * that base an empty string would resolve back to none and hide the active pane. The
+ * panes stay plain divs; only the chrome around them is upstream's.
+ */
+
+/* The token layer, imported so this sheet stands alone. /configure renders inside the
+   organization's stored layout, which predates the tokens.css <link> and will never
+   gain it - so the vocabulary below has to arrive with the sheet. */
+@import "/technical-styles/tokens.css";
+
+/* ── Page shell ─────────────────────────────────────────────────────
+   Upstream pads the page itself instead of centring a fixed-width container, so the
+   rail sits against the sidebar and the content column takes the rest of the width. */
+.cfg-page {
+  padding: 24px 36px 40px;
+}
+
+.cfg-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.844rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.cfg-back-link:hover {
+  color: var(--text-strong);
+  text-decoration: none;
+}
+
+.cfg-heading {
+  margin: 14px 0 22px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.cfg-layout {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.cfg-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Vertical rail ──────────────────────────────────────────────────
+   285 = 252 nav items + 32 padding + 1 border (border-box). The divider lives on the
+   rail rather than on .cfg-content so it ends with the last item instead of running
+   the full height of the panel. */
+.cfg-nav {
+  width: 285px;
+  flex: none;
+  padding-right: 32px;
+  border-right: 1px solid var(--border);
+}
+
+.cfg-nav-section {
+  font-size: 0.688rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: var(--text-subtle);
+  padding: 0 12px;
+  text-transform: uppercase;
+}
+
+.cfg-nav-section + .cfg-nav-items { margin-top: 10px; }
+
+.cfg-nav-items {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 22px;
+}
+
+.cfg-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 0.844rem;
+  font-weight: 500;
+  color: var(--text);
+  background: transparent;
+  transition: background-color 0.15s;
+  white-space: nowrap;
+}
+
+.cfg-nav-item i { font-size: 1rem; flex: none; }
+
+.cfg-nav-item:hover {
+  background: var(--surface-sunken);
+  color: var(--text-strong);
+  text-decoration: none;
+}
+
+.cfg-nav-item.active {
+  background: var(--primary-surface);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────
+   Below 900px the rail becomes one horizontally-scrollable strip rather than wrapping
+   into a ragged grid, and the divider moves to the top of the content column. Upstream
+   also hides the group headings here, since they cannot sit inline in a single row. */
+@media (max-width: 900px) {
+  .cfg-layout { flex-direction: column; gap: 0; }
+
+  .cfg-nav {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;               /* swiped, not dragged — Firefox */
+    margin-bottom: 16px;
+    padding-right: 0;
+    padding-bottom: 4px;
+    border-right: none;
+  }
+  .cfg-nav::-webkit-scrollbar { display: none; }
+
+  .cfg-nav-section { display: none; }
+  .cfg-nav-items {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    flex: none;
+    gap: 4px;
+    margin-bottom: 0;
+  }
+  /* Without this the items shrink to fit rather than overflowing, which is what makes
+     the strip scroll instead of squashing the labels. */
+  .cfg-nav-item { flex: none; }
+
+  .cfg-content { border-top: 1px solid var(--border); padding-top: 20px; }
+}
+
+/* ── Panel heading block ────────────────────────────────────────────
+   A title and its description on the left, the panel's primary action on the right.
+   flex-start keeps the button aligned to the title rather than centred against a
+   description that may wrap to two lines. */
+.cfg-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.cfg-panel-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.cfg-panel-desc {
+  margin: 6px 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* ── Primary panel action ───────────────────────────────────────────
+   The gradient pill upstream uses for a panel's one create action. Close to
+   .dp-btn--primary in components.css but not the same: this one is a shade smaller and
+   `flex: none` so a flex header cannot squeeze it. Both exist upstream, each in its own
+   place, so both exist here - use whichever upstream uses at that spot. */
+.cfg-btn-primary {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--cta-gradient);
+  color: var(--white);
+  border: none;
+  border-radius: 20px;
+  padding: 11px 20px;
+  font-size: 0.844rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+
+.cfg-btn-primary:hover {
+  opacity: 0.9;
+  color: var(--white);
+  text-decoration: none;
+}
+
+.cfg-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ── Quiet action ───────────────────────────────────────────────────
+   Cancel and Back in the wizard footer. Text only, so the eye goes to the gradient
+   Next/Publish beside them rather than to three competing buttons. */
+.cfg-btn-ghost {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 11px 4px;
+}
+
+.cfg-btn-ghost:hover { color: var(--text-strong); }
+
+/* ── Wizard stepper ─────────────────────────────────────────────────
+   Progress reads by colour: grey ahead, --primary on the step you are on, --success
+   behind you. Deliberately not --accent - that gradient belongs to the one primary
+   action on screen, and a stepper spending it on "you are here" competes with the
+   Publish button for the same meaning.
+
+   No background, border or padding of its own: the circles have to line up with the
+   .af-step-badge of the panel below them, and both sit on .af-wizard-header's and
+   .af-pane-left's shared 1.5rem inset. Wrapping the row in a card pushes the first
+   circle inwards by its own padding and the two numbering columns stop agreeing. */
+.cfg-stepper {
+  display: flex;
+  align-items: center;
+  margin-top: 22px;
+  margin-bottom: 0;
+}
+
+.cfg-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: default;
+}
+
+.cfg-step-circle {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.781rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: background 0.2s, color 0.2s;
+}
+
+.cfg-step--active .cfg-step-circle { background: var(--primary); color: var(--white); }
+.cfg-step--done   .cfg-step-circle { background: var(--success); color: var(--white); }
+.cfg-step--done { cursor: pointer; }
+
+.cfg-step-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-subtle);
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.cfg-step--active .cfg-step-label { color: var(--primary); }
+.cfg-step--done   .cfg-step-label { color: var(--text-strong); }
+
+.cfg-step-connector {
+  flex: 1;
+  height: 2px;
+  min-width: 24px;
+  background: var(--border);
+  margin: 0 14px;
+  transition: background 0.2s;
+}
+
+.cfg-step-connector--done { background: var(--success); }
+
+
+/* ── Settings table (upstream's cfg-table) ───────────────────────
+   Copied verbatim from upstream's settings-layout.css. Every value is already
+   token-based there, so nothing needed adapting. Used by the API Workflows panel, which
+   listed workflows as a card grid while upstream lists them as rows - the same data, but
+   the grid gave four cards the weight of a dashboard and did not scale past a handful. */
+.cfg-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.cfg-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.cfg-table thead tr { background: var(--surface-sunken); }
+.cfg-table th {
+  text-align: left;
+  padding: 12px 18px;
+  font-size: 0.719rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.cfg-table tbody tr { border-top: 1px solid var(--border); }
+.cfg-table tbody tr:hover { background: var(--surface-sunken); }
+.cfg-table td { padding: 13px 18px; }
+.cfg-th-check,
+.cfg-td-check {
+  width: 44px;
+  padding-left: 18px !important;
+  padding-right: 6px !important;
+}
+.cfg-api-cell {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.cfg-api-avatar {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.cfg-cell-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+.cfg-cell-context {
+  font-family: var(--font-family-mono);
+  font-size: 0.6875rem;
+  color: var(--text-subtle);
+  margin-top: 3px;
+}
+.cfg-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 20px;
+  padding: 5px 11px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.cfg-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: none;
+}
+.cfg-status-published {
+  background: var(--success-surface);
+  color: var(--success);
+}
+.cfg-status-published .cfg-status-dot { background: var(--success); }
+.cfg-status-draft {
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+}
+.cfg-status-draft .cfg-status-dot { background: var(--text-muted); }
+.cfg-cell-actions { text-align: center; }
+.cfg-action-btn {
+  background: none;
+  border: none;
+  color: var(--text-subtle);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+.cfg-status-deprecated {
+  background: var(--warning-surface);
+  color: var(--warning);
+}
+.cfg-status-deprecated .cfg-status-dot { background: var(--warning); }
+.cfg-form-input--error {
+  border-color: var(--danger) !important;
+}
+.cfg-name-chip {
+  display: inline-block;
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  border-radius: 6px;
+  padding: 3px 9px;
+  font-family: var(--font-family-mono);
+  font-size: 0.8125rem;
+}
+.cfg-cell-actions { position: relative; text-align: center; }
+.cfg-dropdown {
+  position: absolute;
+  top: calc(100% - 6px);
+  right: 8px;
+  z-index: 50;
+  width: 148px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(20, 40, 70, 0.16);
+  padding: 6px;
+  flex-direction: column;
+  display: none;
+}
+.cfg-action-btn:hover { color: var(--text-strong); background: var(--surface-sunken); }
+.cfg-action-btn:disabled { opacity: 0.4; cursor: default; pointer-events: none; }
+.cfg-empty-row {
+  text-align: center;
+  color: var(--text-subtle);
+  font-size: 0.875rem;
+  padding: 28px 18px !important;
+}
+.cfg-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  background: none;
+  border-radius: 7px;
+  font-size: 0.844rem;
+  font-weight: 500;
+  color: var(--text-strong);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+.cfg-dropdown-item:hover:not(:disabled) { background: var(--surface-sunken); }
+.cfg-dropdown-item--danger { color: var(--danger); }
+.cfg-dropdown-item--danger:hover:not(:disabled) { background: var(--danger-surface); }
+.cfg-dropdown-item:disabled { opacity: 0.45; cursor: default; pointer-events: none; }
+.cfg-dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 5px 6px;
+}

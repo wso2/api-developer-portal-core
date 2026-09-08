@@ -40,36 +40,48 @@
 </section>
 
 {{#if showApiWorkflowsNav}}
+{{!-- The hero-modal treatment every other AI prompt dialog in the portal uses.
+      agent-prompt.css is already linked by home/page.hbs, so this needs no new CSS.
+
+      Ids are home-discover.js's contract and are unchanged: discoverAiModal,
+      discoverBtnRunClaude, discoverBtnDownloadPrompt, discoverBtnCopyPrompt and
+      discoverPromptText. The copy button keeps a single <i> because that handler swaps the
+      icon's own class (home-discover.js:41), which the copy-btn span pair would break. --}}
 <div class="modal fade" id="discoverAiModal" tabindex="-1" aria-labelledby="discoverAiModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="d-flex align-items-center gap-2">
-                    <h5 class="modal-title mb-0" id="discoverAiModalLabel">Discover with AI Agents</h5>
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content hero-modal">
+
+            <div class="hero-modal-header">
+                <div class="hero-modal-title-row">
+                    <span class="hero-modal-icon"><i class="bi bi-stars" aria-hidden="true"></i></span>
+                    <h2 class="hero-modal-title" id="discoverAiModalLabel">Discover with AI agents</h2>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="hero-modal-close" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
             </div>
-            <div class="modal-body p-0">
-                <div class="api-flow-prompt-toolbar">
-                    <span class="small text-muted">Use this prompt to let your AI agent explore and discover what's available in this portal</span>
-                    <div class="prompt-modal-toolbar">
-                        <button type="button" class="btn-run-prompt" id="discoverBtnRunClaude">
-                            <i class="bi bi-play-fill"></i> Run in Claude
-                        </button>
-                    </div>
-                </div>
-                <div class="api-flow-prompt-pre-wrapper">
-                    <div class="prompt-pre-actions">
-                        <button type="button" class="prompt-tool-btn" id="discoverBtnDownloadPrompt" title="Download as .txt">
+
+            <div class="hero-modal-info">
+                <p class="hero-modal-info-text">Use this prompt to let your AI agent explore and discover what's available in this portal.</p>
+                <button type="button" class="hero-run-btn" id="discoverBtnRunClaude">
+                    <i class="bi bi-play-fill" aria-hidden="true"></i> Run in Claude
+                </button>
+            </div>
+
+            <div class="modal-body hero-modal-body">
+                <div class="hero-prompt-card">
+                    <div class="hero-prompt-actions">
+                        <button type="button" class="hero-prompt-tool" id="discoverBtnDownloadPrompt" title="Download as .txt">
                             <i class="bi bi-download"></i>
                         </button>
-                        <button type="button" class="prompt-tool-btn" id="discoverBtnCopyPrompt" title="Copy prompt">
+                        <button type="button" class="hero-prompt-tool" id="discoverBtnCopyPrompt" title="Copy prompt">
                             <i class="bi bi-copy"></i>
                         </button>
                     </div>
-                    <pre id="discoverPromptText" class="api-flow-prompt-pre"></pre>
+                    <pre id="discoverPromptText" class="hero-prompt-pre"></pre>
                 </div>
             </div>
+
         </div>
     </div>
 </div>

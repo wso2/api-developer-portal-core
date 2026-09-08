@@ -148,6 +148,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+    /* Shown after the reload that follows a successful create. alert.js is loaded by the
+       alert partial, which this page renders, and both scripts are deferred - so showAlert
+       is defined by the time this runs. Guarded anyway: the partial is not on every page
+       that loads this script. */
+    const createdParam = new URLSearchParams(window.location.search).get('created');
+    if (createdParam === 'success') {
+        if (typeof showAlert === 'function') {
+            showAlert('Application created successfully!', 'success');
+        }
+        const cleanUrl = new URL(window.location.href);
+        cleanUrl.searchParams.delete('created');
+        window.history.replaceState({}, document.title, cleanUrl.toString());
+    }
+
     // Initialize the character count and form validation on page load
     const remaining = Math.max(
         0,
@@ -185,17 +199,21 @@ applicationForm.addEventListener('submit', async (e) => {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        const responseData = await response.json();
-        const messageOverlay = document.getElementById('message-overlay');
-        if (messageOverlay && typeof window.showAppMessage === 'function') {
-            window.showAppMessage(
-                messageOverlay,
-                responseData.message || 'Application created successfully!',
-                'success',
-            );
-        }
-        saveButton.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i>Created`;
-        window.location.reload();
+        await response.json();
+
+        /* The dialog says nothing on success. What stood here painted the in-dialog
+           .message-overlay - absolute, left:0/right:0, bottom:0.3rem, so a white slab
+           across the footer directly over the Create button - and flipped the button to
+           "Created", both of which were then thrown away by the reload on the next line.
+           All the user saw was a flash beside the button.
+
+           The new application has to come from the server, so the reload stays; the
+           confirmation is carried across it in the query string and shown by the portal's
+           own bottom-right alert, the same way the subscribe flow does it. */
+        closeCreateModal();
+        const reloadUrl = new URL(window.location.href);
+        reloadUrl.searchParams.set('created', 'success');
+        window.location.assign(reloadUrl.toString());
     } catch (error) {
         resetButtonState(saveButton);
         console.error('Error saving application:', error);

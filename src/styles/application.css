@@ -36,87 +36,13 @@
 }
 
 /* ── Application view tables ─────────────────────────────────────
-   Matched to the subscriptions listing's .sub-table: one bordered, rounded container
-   with a tinted header row and hairline separators, instead of the previous detached
-   rows floating on an 8px border-spacing gap.
+   The table block that stood here is gone: apis.hbs and manage-keys.hbs render the
+   .sub-table family now (subscriptions.css), which is where these values were copied
+   from in the first place. The portal has one table again instead of two that had
+   drifted apart - a tinted header band on one, a sunken one on the other.
 
-   The class names stay - .app-table, .app-th, .app-td and .data-row are what apis.hbs
-   and the key partials render, and several scripts query .data-row by id.
-
-   The two page-scoped copies of this block in manage-keys.css (.keys-section .app-table)
-   and platform-api-keys.css (.platform-api-keys-page .app-table) are untouched: both are
-   (0,2,0) and keep winning over these (0,1,0) rules on their own pages.
+   .data-row stays: several scripts query it by id, and its hover rule is below.
    ---------------------------------------------------------------- */
-.app-table-container {
-  /* Every one of these sits as a bare child of a Bootstrap .row, with no .col wrapper.
-     A .row is display:flex with negative horizontal margins that a .col is expected to
-     cancel with its own padding - so without one this box both shrink-wraps to its
-     content (default flex: 0 1 auto) and hangs half a gutter past the content edge on
-     each side. That was invisible while the container had no border; the moment it got
-     one, the table stopped lining up with everything else on the page.
-     flex-basis makes it span the row, and the margins put the border back on the same
-     vertical as sibling content. */
-  flex: 1 1 100%;
-  width: 100%;
-  margin-left: calc(var(--bs-gutter-x, 1.5rem) * 0.5);
-  margin-right: calc(var(--bs-gutter-x, 1.5rem) * 0.5);
-  /* Bootstrap's `.row > *` puts half a gutter of padding on every direct child of a row,
-     this container included. Inside a bordered box that reads as a 12px dead margin
-     between the border and the table on both sides - visible as the row highlight
-     stopping short of the frame on hover. .sub-tablewrap has no padding; neither should
-     this. The margins above already do the aligning. */
-  padding-left: 0;
-  padding-right: 0;
-  border: 0.0625rem solid var(--border);
-  border-radius: 0.75rem;
-  overflow: hidden;
-}
-
-.app-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-  color: var(--text);
-}
-
-.app-table thead tr {
-  background: var(--surface-sunken);
-  border-bottom: 0.0625rem solid var(--border);
-}
-
-.app-th {
-  text-align: left;
-  padding: 0.875rem 1.125rem;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  white-space: nowrap;
-  border-bottom: none;
-  background-color: transparent;
-}
-
-.app-table tbody tr {
-  border-bottom: 0.0625rem solid var(--border);
-  transition: background 0.12s;
-}
-
-.app-table tbody tr:last-child {
-  border-bottom: none;
-}
-
-.app-td {
-  padding: 1.125rem;
-  vertical-align: middle;
-  line-height: 1.3;
-  color: var(--text);
-  font-size: 0.875rem;
-  font-weight: 400;
-  border-bottom: none;
-  background-color: transparent;
-}
-
 /* The action column's header carried an inline padding-right: 2.25rem that its cells did
    not, so the "Action" label and the buttons under it ended on different verticals. The
    inline style is gone from apis.hbs; both now take the uniform 1.125rem below, and
@@ -219,39 +145,15 @@
   width: 7rem;
 }
 
-.oauth2-keys-section .btn-sm,
-.api-key-actions .btn-sm {
-  padding: 0.5rem 0.75rem;
-  font-size: 0.75rem;
-  border-radius: 0.25rem;
-  white-space: nowrap;
-  line-height: 1.2;
-}
-
-.oauth2-keys-section .common-btn-outlined,
-.api-key-actions .common-btn-outlined {
-  box-sizing: border-box;
-  border-width: 1px;
-  box-shadow: inset 0 0 0 1px var(--primary);
-  border: none;
-}
-
-.oauth2-keys-section .btn-sm .bi,
-.api-key-actions .btn-sm .bi {
-  vertical-align: middle;
-}
-
-.api-key-actions .api-key-revoke {
-  box-shadow: inset 0 0 0 1px var(--danger);
-  color: var(--danger);
-}
-
-.api-key-actions .api-key-revoke:hover {
-  background-color: rgba(220, 53, 69, 0.1);
-}
-
 .oauth2-keys-section .button-loading-state .spinner-border {
   width: 0.8rem;
   height: 0.8rem;
   border-width: 0.15em;
+}
+
+/* The application overview ends on the token-based subscriptions table. Bootstrap's spacer
+   scale stops at 5, so the mb-6 this section carried resolved to nothing and the last table
+   row met the footer directly. */
+.app-subscriptions-section {
+  padding-bottom: 4rem;
 }

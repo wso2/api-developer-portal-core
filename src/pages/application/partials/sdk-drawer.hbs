@@ -7,7 +7,7 @@
         <div class="sdk-drawer-header">
             <div class="d-flex align-items-center justify-content-between">
                 <h4 class="mb-0">Generate SDK</h4>
-                <button class="btn-close" onclick="closeSdkDrawer()" aria-label="Close">
+                <button class="dp-modal-close" onclick="closeSdkDrawer()" aria-label="Close">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
@@ -61,7 +61,7 @@
                             <div class="suggestion-chip" data-prompt="Generate a sample application by integrating given APIs">
                                 <i class="bi bi-play-fill suggestion-play-button"></i>
                                 <span class="suggestion-text">Generate a sample application by integrating given APIs</span>
-                                <button type="button" class="btn-close" aria-label="Close">×</button>
+                                <button type="button" class="dp-modal-close" aria-label="Close"><i class="bi bi-x-lg"></i></button>
                             </div>
                         </div>
 
@@ -74,7 +74,7 @@
                             Use AI Chat mindfully as AI can make mistakes.
                         </div>
                         <div class="ai-generate-section">
-                            <button class="common-btn-primary" id="aiGenerateBtn">
+                            <button class="dp-btn dp-btn--primary" id="aiGenerateBtn">
                                 <i class="bi bi-arrow-right"></i>
                             </button>
                         </div>
@@ -88,7 +88,7 @@
 <!-- SDK Generation Cancel Confirmation Modal -->
 <div class="modal custom-modal" id="sdkCancelConfirmModal" style="display: none;">
     <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content custom-modal-content">
+        <div class="modal-content custom-modal-content dp-modal">
             <div class="custom-modal-body">
                 <h4 class="confirmation-title">Are you sure you want to cancel the SDK Generation?</h4>
                 <p class="confirmation-text">
@@ -96,10 +96,10 @@
                 </p>
                 
                 <div class="button-container">
-                    <button class="common-btn-outlined" type="button" onclick="closeSdkCancelConfirmModal()">
+                    <button class="dp-btn dp-btn--outline" type="button" onclick="closeSdkCancelConfirmModal()">
                         Cancel
                     </button>
-                    <button class="common-btn-primary btn-danger" type="button" onclick="confirmSdkCancellation()">
+                    <button class="dp-btn dp-btn--primary dp-btn--danger-solid" type="button" onclick="confirmSdkCancellation()">
                         Yes
                     </button>
                 </div>
@@ -111,7 +111,7 @@
 <!-- SDK Generation Description Required Modal -->
 <div class="modal custom-modal" id="sdkDescriptionRequiredModal" style="display: none;">
     <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content custom-modal-content">
+        <div class="modal-content custom-modal-content dp-modal">
             <div class="custom-modal-body">
                 <h4 class="confirmation-title">Description Required</h4>
                 <p class="confirmation-text">
@@ -120,7 +120,7 @@
                 </p>
 
                 <div class="button-container">
-                    <button class="common-btn-primary" type="button" onclick="closeSdkDescriptionRequiredModal()">
+                    <button class="dp-btn dp-btn--primary" type="button" onclick="closeSdkDescriptionRequiredModal()">
                         OK
                     </button>
                 </div>

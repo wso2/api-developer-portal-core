@@ -15,100 +15,109 @@
     {{!-- ── LIST VIEW ── --}}
     <div id="apiFlowList">
         <!-- Header -->
-        <div class="api-flows-header mb-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="p-1">
-                    <div class="container-header mb-4 d-sm-flex justify-content-between align-items-center">
-                        <span>API Workflows</span>
-                    </div>
-                    <p class="text-muted mb-2"> Encode your real-world API use cases as guided workflows — so AI agents
-                        know exactly how your
-                        APIs work together, in the right order, for the right purpose. No guesswork, no hallucinations.</p>
-                </div>
-                {{#if apiFlows.length}}
-                <button type="button" class="common-btn-primary text-nowrap flex-shrink-0" id="createApiFlowBtn">
-                    <i class="bi bi-plus-circle me-1"></i> Create
-                </button>
-                {{/if}}
+        {{!-- Upstream's settings panel heading, so this tab and LLM Instructions share one
+              type scale and one primary action. The create button keeps its id - it is
+              api-flows.js's contract - and stays behind the length check, because an empty
+              list already offers the same action in its own empty state below. --}}
+        <div class="cfg-panel-header">
+            <div>
+                <h2 class="cfg-panel-title">API Workflows</h2>
+                <p class="cfg-panel-desc">Encode your real-world API use cases as guided workflows, so AI agents know
+                    exactly how your APIs work together, in the right order, for the right purpose. No guesswork, no
+                    hallucinations.</p>
             </div>
+            {{!-- Always shown, as upstream's is. It used to be hidden when the list was
+                  empty because the card grid's empty state carried its own CTA; the table's
+                  empty row points at this button instead, so hiding it would leave no way
+                  to create the first workflow. --}}
+            <button type="button" class="cfg-btn-primary" id="createApiFlowBtn">
+                <i class="bi bi-plus"></i> Add workflow
+            </button>
         </div>
 
-        {{#if apiFlows.length}}
-        <!-- Flows Grid -->
-        <div class="api-flows-grid">
-            {{#each apiFlows}}
-            <div class="api-flow-card">
-                <div class="api-flow-card-header">
-                    <div class="api-flow-card-meta-row">
-                        <span class="api-flow-status-dot api-flow-status-dot--{{lowercase this.status}}"></span>
-                        <span class="api-flow-status-label">{{this.status}}</span>
-                        <span class="api-flow-card-sep">·</span>
-                        <span class="api-flow-content-type-badge api-flow-content-type--{{lowercase this.contentType}}">{{this.contentType}}</span>
-                    </div>
-                    <div class="api-flow-card-actions api-flow-card-actions--hover">
-                        {{#unless (eq this.agentVisibility "HIDDEN")}}
-                        <button type="button"
-                            class="api-flow-action-btn api-flow-view-prompt-btn"
-                            title="View agent prompt"
-                            data-api-flow-id="{{this.apiFlowId}}">
-                            <i class="bi bi-robot"></i>
-                        </button>
-                        {{/unless}}
-                        <button type="button" class="api-flow-action-btn api-flow-edit-btn"
-                            title="Edit"
-                            data-api-flow-id="{{this.apiFlowId}}">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button type="button" class="api-flow-action-btn api-flow-action-btn--danger api-flow-delete-btn"
-                            title="Delete"
-                            data-api-flow-id="{{this.apiFlowId}}">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="api-flow-card-body">
-                    <h5 class="api-flow-card-title">{{this.name}}</h5>
-                    <p class="api-flow-card-description" title="{{this.description}}">
-                        {{this.description}}
-                    </p>
-                </div>
-                <div class="api-flow-card-footer">
-                    <div class="api-flow-card-visibility-badges">
-                        {{#if (eq this.visibility "PRIVATE")}}
-                        <span class="api-flow-visibility-badge api-flow-visibility-private"
-                            title="Only logged-in users can view this workflow">
-                            <i class="bi bi-lock-fill"></i> Private
-                        </span>
-                        {{else}}
-                        <span class="api-flow-visibility-badge api-flow-visibility-public"
-                            title="Visible to all visitors">
-                            <i class="bi bi-globe"></i> Public
-                        </span>
-                        {{/if}}
-                        {{#unless (eq this.agentVisibility "HIDDEN")}}
-                        <span class="api-flow-visibility-badge api-flow-agent-visible"
-                            title="AI agents can discover and use this workflow">
-                            <span class="agent-live-dot"></span>
-                            <i class="bi bi-robot"></i> AI Ready
-                        </span>
-                        {{/unless}}
-                    </div>
-                </div>
-            </div>
-            {{/each}}
+        {{!-- Upstream's cfg-table, replacing the card grid. Same data and the same
+              endpoints - the handler hooks are unchanged (api-flow-view-prompt-btn,
+              api-flow-edit-btn, api-flow-delete-btn, each carrying data-api-flow-id), so
+              api-flows.js needed no change beyond the dropdown toggle. The row actions
+              live in a kebab menu as upstream has them, which is what lets a row stay one
+              line however many actions it grows. --}}
+        <div class="cfg-table-wrap">
+            <table class="cfg-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Type</th>
+                        <th>Visibility</th>
+                        <th style="width:52px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each apiFlows}}
+                    <tr>
+                        <td>
+                            <div class="cfg-api-cell">
+                                <span class="cfg-api-avatar cfg-api-avatar--workflow">{{firstTwoLetters this.name}}</span>
+                                <div>
+                                    <div class="cfg-cell-name">{{this.name}}</div>
+                                    {{#if this.description}}
+                                    <div class="cfg-cell-context" title="{{this.description}}">{{this.description}}</div>
+                                    {{/if}}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {{#if (eq this.status "PUBLISHED")}}
+                            <span class="cfg-status-badge cfg-status-published"><span class="cfg-status-dot"></span>Published</span>
+                            {{else if (eq this.status "DEPRECATED")}}
+                            <span class="cfg-status-badge cfg-status-deprecated"><span class="cfg-status-dot"></span>Deprecated</span>
+                            {{else}}
+                            <span class="cfg-status-badge cfg-status-draft"><span class="cfg-status-dot"></span>Draft</span>
+                            {{/if}}
+                        </td>
+                        <td><span class="cfg-name-chip">{{this.contentType}}</span></td>
+                        <td>
+                            {{!-- Ours, not upstream's: the portal/agent visibility pair the card
+                                  footer showed. Dropping them would lose information the table
+                                  is otherwise carrying no worse than the cards did. --}}
+                            <span class="api-flow-visibility-badge {{#if (eq this.visibility "PRIVATE")}}api-flow-visibility-private{{else}}api-flow-visibility-public{{/if}}"
+                                title="{{#if (eq this.visibility "PRIVATE")}}Only logged-in users can view this workflow{{else}}Visible to all visitors{{/if}}">
+                                {{#if (eq this.visibility "PRIVATE")}}<i class="bi bi-lock-fill"></i> Private{{else}}<i class="bi bi-globe"></i> Public{{/if}}
+                            </span>
+                            {{#unless (eq this.agentVisibility "HIDDEN")}}
+                            <span class="api-flow-visibility-badge api-flow-agent-visible"
+                                title="AI agents can discover and use this workflow">
+                                <span class="agent-live-dot"></span><i class="bi bi-robot"></i> AI Ready
+                            </span>
+                            {{/unless}}
+                        </td>
+                        <td class="cfg-cell-actions">
+                            <button class="cfg-action-btn cfg-menu-trigger" type="button" aria-label="Workflow actions">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <div class="cfg-dropdown">
+                                {{#unless (eq this.agentVisibility "HIDDEN")}}
+                                <button class="cfg-dropdown-item api-flow-view-prompt-btn" type="button" data-api-flow-id="{{this.apiFlowId}}">
+                                    <i class="bi bi-robot"></i> View agent prompt
+                                </button>
+                                {{/unless}}
+                                <button class="cfg-dropdown-item api-flow-edit-btn" type="button" data-api-flow-id="{{this.apiFlowId}}">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </button>
+                                <div class="cfg-dropdown-divider"></div>
+                                <button class="cfg-dropdown-item cfg-dropdown-item--danger api-flow-delete-btn" type="button" data-api-flow-id="{{this.apiFlowId}}">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {{/each}}
+                    {{#unless apiFlows.length}}
+                    <tr><td colspan="5" class="cfg-empty-row">No API Workflows yet. Click <strong>Add workflow</strong> to get started.</td></tr>
+                    {{/unless}}
+                </tbody>
+            </table>
         </div>
-        {{else}}
-        <div class="api-flow-empty-state">
-            <div class="api-flow-empty-state-content">
-                <i class="bi bi-diagram-3"></i>
-                <p class="mt-3 mb-1 fw-semibold">No API Workflows yet</p>
-                <p class="text-muted small mt-1">Create your first flow to define a multi-step API sequence.</p>
-                <button type="button" class="common-btn-primary mt-3" id="createApiFlowBtnEmpty">
-                    <i class="bi bi-plus-circle me-1"></i> Create Your First Workflow
-                </button>
-            </div>
-        </div>
-        {{/if}}
     </div>
 
     {{!-- ── CREATE / EDIT PANEL ── --}}
@@ -139,33 +148,51 @@
 </div>
 
 {{!-- ── AGENT PROMPT MODAL ── --}}
+{{!-- The hero-modal treatment every other agent-prompt dialog uses - api-landing and
+      mcp-landing's "Try with AI", and the home page's Discover dialog - so the one reached
+      from a workflow's bot icon stops looking like a different product.
+
+      Ids are api-flows.js's contract and unchanged: agentPromptModal, agentPromptFlowName,
+      downloadPromptBtn, copyPromptBtn, runInClaudeBtn, agentPromptContent. The copy button
+      keeps a single <i>: the handler swaps that icon's own class (api-flows.js:1600), which
+      the copy-btn span pair used elsewhere would break. --}}
 <div class="modal fade" id="agentPromptModal" tabindex="-1" aria-labelledby="agentPromptModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div>
-                    <h5 class="modal-title mb-0" id="agentPromptModalLabel">Agent Prompt</h5>
-                    <small class="text-muted" id="agentPromptFlowName"></small>
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content hero-modal">
+
+            <div class="hero-modal-header">
+                <div class="hero-modal-title-row">
+                    <span class="hero-modal-icon"><i class="bi bi-stars" aria-hidden="true"></i></span>
+                    <h2 class="hero-modal-title" id="agentPromptModalLabel">Try with AI agent</h2>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="hero-modal-close" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
             </div>
-            <div class="modal-body p-0">
-                <div class="api-flow-prompt-toolbar">
-                    <span class="small text-muted">Use this prompt to let your AI agent execute the workflow—handling API calls, dependencies, and errors automatically</span>
-                    <div class="prompt-modal-toolbar">
-                        <button type="button" class="prompt-tool-btn" id="downloadPromptBtn" title="Download as .txt">
+
+            <div class="hero-modal-info">
+                <p class="hero-modal-info-text">Use this prompt to let your AI agent run
+                    <strong id="agentPromptFlowName"></strong> &mdash; handling the API calls,
+                    dependencies and errors automatically.</p>
+                <button type="button" class="hero-run-btn" id="runInClaudeBtn">
+                    <i class="bi bi-play-fill" aria-hidden="true"></i> Run in Claude
+                </button>
+            </div>
+
+            <div class="modal-body hero-modal-body">
+                <div class="hero-prompt-card">
+                    <div class="hero-prompt-actions">
+                        <button type="button" class="hero-prompt-tool" id="downloadPromptBtn" title="Download as .txt">
                             <i class="bi bi-download"></i>
                         </button>
-                        <button type="button" class="prompt-tool-btn" id="copyPromptBtn" title="Copy prompt">
+                        <button type="button" class="hero-prompt-tool" id="copyPromptBtn" title="Copy prompt">
                             <i class="bi bi-copy"></i>
                         </button>
-                        <button type="button" class="btn-run-prompt" id="runInClaudeBtn">
-                            <i class="bi bi-play-fill"></i> Run in Claude
-                        </button>
                     </div>
+                    <pre id="agentPromptContent" class="hero-prompt-pre"></pre>
                 </div>
-                <pre id="agentPromptContent" class="api-flow-prompt-pre"></pre>
             </div>
+
         </div>
     </div>
 </div>

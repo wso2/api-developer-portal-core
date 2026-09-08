@@ -26,12 +26,20 @@
     {{> sidebar profile=profile baseUrl=baseUrl devportalMode=devportalMode showPlatformApiKeysNav=showPlatformApiKeysNav showApiWorkflowsNav=showApiWorkflowsNav }}
     <div class="content">
         <div class="container-fluid subscriptions-container platform-api-keys-page">
-            <div class="container-header mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
-                <span>API Keys</span>
+            {{!-- Upstream's page header: .page-title with a description beside a gradient
+                  dp-btn, in place of .container-header's 1.5rem/600 --primary span and the
+                  flat navy common-btn-primary. All three classes already ship in
+                  components.css - this page was the only one still on the old pairing. --}}
+            <div class="page-header mb-4 d-flex flex-wrap align-items-start justify-content-between gap-3">
+                <div>
+                    <h1 class="page-title">API Keys</h1>
+                    <p class="page-desc">API keys authenticate requests to this API. Generate a key, then send it as the
+                        <code class="ak-inline-code">apikey</code> header.</p>
+                </div>
                 {{#unless isReadOnlyMode}}
                 {{#unless platformApiKeysLoadError}}
-                <button type="button" class="common-btn-primary btn-sm" id="btn-open-generate-api-key" data-bs-toggle="modal" data-bs-target="#generatePlatformApiKeyModal">
-                    Generate API Key
+                <button type="button" class="dp-btn dp-btn--primary" id="btn-open-generate-api-key" data-bs-toggle="modal" data-bs-target="#generatePlatformApiKeyModal">
+                    <i class="bi bi-plus"></i> Generate API key
                 </button>
                 {{/unless}}
                 {{/unless}}
@@ -47,4 +55,8 @@
         </div>
     </div>
     {{> alert }}
+    {{!-- Revoking is irreversible, so it asks first. This page rendered only the
+          alert partial, so the shared confirm dialog was not on the page and the
+          revoke handler fell back to a native confirm(). --}}
+    {{> warning modalTitle="Confirm" modalMessage="" modalFunction="" }}
 </main>

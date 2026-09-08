@@ -2,12 +2,12 @@
 {{#if enabled}}
 {{#each applicationKeys}}
 <div class="modal custom-modal" id='keysViewModal-{{keyType}}'>
-    <div class="modal-dialog modal-xl" role="document" id="keysViewModal-{{keyType}}-Body" style="{{#unless keys.consumerSecret}} width: 550px; {{/unless}}">
-        <div class="modal-content custom-modal-content">
-            <div class="custom-modal-header">
-                <h2 class="custom-modal-title m-0">Credentials ({{keyType}})</h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" data-cyid="keysViewModal-{{keyType}}-close" aria-label="Close"
-                    onclick="closeModal('keysViewModal-{{keyType}}')"></button>
+    <div class="modal-dialog dp-modal-dialog" role="document" id="keysViewModal-{{keyType}}-Body" style="{{#unless keys.consumerSecret}} width: 550px; {{/unless}}">
+        <div class="modal-content custom-modal-content dp-modal">
+            <div class="custom-modal-header dp-modal-head">
+                <h2 class="custom-modal-title dp-modal-title m-0">Credentials ({{keyType}})</h2>
+                <button type="button" class="dp-modal-close" data-bs-dismiss="modal" data-cyid="keysViewModal-{{keyType}}-close" aria-label="Close"
+                    onclick="closeModal('keysViewModal-{{keyType}}')"><i class="bi bi-x-lg"></i></button>
             </div>
             <div class="custom-modal-body">
                 <div style="margin-bottom: 20px;">

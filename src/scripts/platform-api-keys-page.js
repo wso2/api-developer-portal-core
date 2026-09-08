@@ -49,7 +49,20 @@
         return d.toISOString();
     }
 
+    function legacyCopy(text) {
+        const area = document.createElement('textarea');
+        area.value = text;
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        document.body.removeChild(area);
+    }
+
     function showSecretModal(value, reloadOnClose) {
+        /* A <code> block rather than a readonly <input>, matching upstream, so the key
+           wraps inside the field instead of scrolling in a one-line box. */
         const input = document.getElementById('platform-api-key-secret-value');
         const modalEl = document.getElementById('showPlatformApiKeySecretModal');
         if (!input || !modalEl || typeof bootstrap === 'undefined') {
@@ -61,7 +74,7 @@
             }
             return;
         }
-        input.value = value;
+        input.textContent = value;
         if (reloadOnClose) {
             const onHidden = function () {
                 modalEl.removeEventListener('hidden.bs.modal', onHidden);
@@ -74,10 +87,23 @@
         const copyBtn = document.getElementById('btn-copy-platform-api-key-secret');
         if (copyBtn) {
             copyBtn.onclick = function () {
-                input.select();
-                document.execCommand('copy');
-                if (typeof showAlert === 'function') {
-                    showAlert('Copied to clipboard', 'success');
+                /* input.select() only works on a form control; the value is now text
+                   content, so copy it directly and fall back to a detached textarea
+                   where the async clipboard API is unavailable. */
+                const secret = input.textContent || '';
+                const done = function () {
+                    if (typeof showAlert === 'function') {
+                        showAlert('Copied to clipboard', 'success');
+                    }
+                };
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(secret).then(done).catch(function () {
+                        legacyCopy(secret);
+                        done();
+                    });
+                } else {
+                    legacyCopy(secret);
+                    done();
                 }
             };
         }
@@ -288,25 +314,38 @@
             if (!keyId) {
                 return;
             }
-            if (!confirm('Revoke this API key? Clients using it will fail immediately.')) {
+
+            /* Ask through the shared confirm dialog rather than a native confirm(), which
+               is unstyled, unthemed, and phrased by the browser. openWarningModal comes
+               from the warning partial page.hbs renders; if it is somehow absent the
+               revoke is refused rather than run unconfirmed. */
+            if (typeof openWarningModal !== 'function') {
+                if (typeof showAlert === 'function') {
+                    await showAlert('Confirmation dialog unavailable. Refresh the page and try again.', 'error');
+                }
                 return;
             }
-            btn.dataset.loading = 'true';
-            btn.disabled = true;
-            try {
-                await postRevoke(keyId);
-                if (typeof showAlert === 'function') {
-                    await showAlert('API key revoked.', 'success');
+
+            window.__pendingApiKeyRevoke = async function () {
+                btn.dataset.loading = 'true';
+                btn.disabled = true;
+                try {
+                    await postRevoke(keyId);
+                    if (typeof showAlert === 'function') {
+                        await showAlert('API key revoked.', 'success');
+                    }
+                    window.location.reload();
+                } catch (e) {
+                    if (typeof showAlert === 'function') {
+                        await showAlert(e.message || 'Failed to revoke API key', 'error');
+                    }
+                } finally {
+                    btn.disabled = false;
+                    delete btn.dataset.loading;
                 }
-                window.location.reload();
-            } catch (e) {
-                if (typeof showAlert === 'function') {
-                    await showAlert(e.message || 'Failed to revoke API key', 'error');
-                }
-            } finally {
-                btn.disabled = false;
-                delete btn.dataset.loading;
-            }
+            };
+
+            openWarningModal('RevokePlatformApiKey', keyId, '', '', '', '', '');
         });
     });
 })();

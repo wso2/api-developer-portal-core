@@ -1,10 +1,10 @@
 <div class="modal custom-modal" id="apiKeyModal-{{subID}}-{{keyType}}">
-    <div class="modal-dialog modal-xl d-flex justify-content-center align-items-center" role="document">
-        <div class="modal-content custom-modal-content">
-            <div class="custom-modal-header">
-                <h2 class="custom-modal-title m-0">API Key</h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
-                    onclick="closeModal('apiKeyModal-{{subID}}-{{keyType}}')"></button>
+    <div class="modal-dialog dp-modal-dialog" role="document">
+        <div class="modal-content custom-modal-content dp-modal">
+            <div class="custom-modal-header dp-modal-head">
+                <h2 class="custom-modal-title dp-modal-title m-0">API Key</h2>
+                <button type="button" class="dp-modal-close" data-bs-dismiss="modal" aria-label="Close"
+                    onclick="closeModal('apiKeyModal-{{subID}}-{{keyType}}')"><i class="bi bi-x-lg"></i></button>
             </div>
             <div class="custom-modal-body">
                 <div class="container">
@@ -13,16 +13,14 @@
                             <div class="info-title pb-2" id="scopeTitle-{{subID}}-{{keyType}}">Scopes for the API Key</div>
                             <div class="input-scopes" id="scopeContainer-{{subID}}-{{keyType}}" data-scopes="">
                             </div>
-                            <div class="info-box api-key-warning d-flex mb-4" id="apiKeyInfo-{{subID}}-{{keyType}}">
-                                <div class="info-content">
-                                    <div class="info-title"> Important: Copy the API Key Now</div>
-                                    <p class="info-text">
-                                        Please copy this generated API Key immediately. It will not be shown again.
-                                    </p>
-                                </div>
-                                <div class="info-icon">
-                                    <i class="bi bi-exclamation-triangle-fill"></i>
-                                </div>
+                            {{!-- The amber callout the /api-keys secret dialog uses, with its wording.
+                                  What stood here was .api-key-warning: a 6px left bar, a bold title on
+                                  its own line and the triangle floated to the far right, plus a pulse
+                                  animation - none of which appears anywhere else in the portal.
+                                  api-key-generation.js toggles this by id, so the id stays. --}}
+                            <div class="dp-note dp-note--warning mb-4" id="apiKeyInfo-{{subID}}-{{keyType}}">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                <span>Copy this key now. For your security, the full value is shown only once and cannot be retrieved after closing.</span>
                             </div>
                             <div id="apiKeyCard-{{subID}}-{{keyType}}" class="token-card">
                                 <pre id="token_apiKeyText-{{subID}}-{{keyType}}" class="token-text"></pre>
@@ -32,7 +30,7 @@
                                 </button>
                             </div>
                             <div class="d-flex justify-content-end mt-4 mb-3">
-                                <button class="common-btn-outlined" type="button"
+                                <button class="dp-btn dp-btn--primary" type="button"
                                     onClick="closeModal('apiKeyModal-{{subID}}-{{keyType}}')">
                                     Done
                                 </button>

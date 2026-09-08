@@ -9,16 +9,14 @@
                 <div class="aov-section-header">
                     <h2 class="aov-section-title">Subscriptions</h2>
                 </div>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Plan</th>
-                            <th>Status</th>
-                            <th>Subscription Token</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                {{!-- Label-left / value-right rows rather than a table. This gateway holds one
+                      token-based subscription per API and switching plans replaces it, so the
+                      four columns were carrying a handful of key/value pairs about a single
+                      row that never grows - which is how upstream presents the same data in
+                      its manage-subscription panel. Styled in the aov- plan-card idiom (see
+                      .aov-sub-* in components.css) so this panel and the Subscription Plans
+                      cards below it read as one column. --}}
+                <div class="aov-sub-list">
                         {{#each platformSubscriptions}}
                 {{#if @first}}
                 <script id="token-map-data" type="application/json">{{{jsonSafePlatformSubscriptions ../platformSubscriptions}}}</script>
@@ -40,40 +38,50 @@
                     })();
                 </script>
                 {{/if}}
-                        <tr>
-                            <td>{{this.subscriptionPlanName}}</td>
-                            <td>
-                                <span class="badge {{#if (eq this.status 'ACTIVE')}}bg-success{{else}}bg-secondary{{/if}}">
-                                    {{this.status}}
+                        <div class="aov-plan-card aov-sub-card">
+                            <div class="aov-sub-row">
+                                <span class="aov-sub-label">Plan</span>
+                                <span class="aov-sub-value">{{this.subscriptionPlanName}}</span>
+                            </div>
+                            <div class="aov-sub-row">
+                                <span class="aov-sub-label">Status</span>
+                                <span class="aov-sub-value">
+                                    {{!-- The page's own status pill, not a Bootstrap badge - same
+                                          component the subscription list uses. --}}
+                                    <span class="sub-status-pill {{#if (eq this.status 'ACTIVE')}}sub-status-pill--active{{else}}sub-status-pill--inactive{{/if}}">
+                                        <span class="sub-status-dot"></span>{{this.status}}
+                                    </span>
                                 </span>
-                            </td>
-                            <td>
-                                <div class="token-display">
+                            </div>
+                            <div class="aov-sub-row aov-sub-row--token">
+                                <span class="aov-sub-label">Subscription token</span>
+                                <span class="aov-sub-value">
+                                    {{!-- Ids and handlers unchanged: platform-subscription.js reads
+                                          token-<subscriptionId> and fetches the real value on reveal. --}}
                                     <code class="masked-token" id="token-{{this.subscriptionId}}" data-revealed="false">****</code>
-                                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleTokenVisibility('{{this.subscriptionId}}')" title="Reveal token">
+                                    <button type="button" class="dp-btn-icon" onclick="toggleTokenVisibility('{{this.subscriptionId}}')" title="Reveal token" aria-label="Reveal token">
                                         <i class="bi bi-eye"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-secondary" onclick="copySubscriptionToken('{{this.subscriptionId}}')" title="Copy token">
+                                    <button type="button" class="dp-btn-icon" onclick="copySubscriptionToken('{{this.subscriptionId}}')" title="Copy token" aria-label="Copy token">
                                         <i class="bi bi-clipboard"></i>
                                     </button>
-                                </div>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-warning {{#if @root.isReadOnlyMode}}disabled{{/if}}" title="{{#if (eq this.status 'ACTIVE')}}Deactivate{{else}}Activate{{/if}}"
+                                </span>
+                            </div>
+                            <div class="aov-sub-actions">
+                                <button type="button" class="dp-btn dp-btn--outline {{#if @root.isReadOnlyMode}}disabled{{/if}}" title="{{#if (eq this.status 'ACTIVE')}}Deactivate{{else}}Activate{{/if}}"
                                     {{#unless @root.isReadOnlyMode}}onclick="togglePlatformSubscriptionStatus('{{@root.orgID}}', '{{this.subscriptionId}}', '{{#if (eq this.status "ACTIVE")}}INACTIVE{{else}}ACTIVE{{/if}}')"{{/unless}}
                                     {{#if @root.isReadOnlyMode}}disabled{{/if}}>
-                                    {{#if (eq this.status 'ACTIVE')}}<i class="bi bi-pause-circle"></i>{{else}}<i class="bi bi-play-circle"></i>{{/if}}
+                                    {{#if (eq this.status 'ACTIVE')}}<i class="bi bi-pause-circle"></i> Deactivate{{else}}<i class="bi bi-play-circle"></i> Activate{{/if}}
                                 </button>
-                                <button class="btn btn-sm btn-outline-danger {{#if @root.isReadOnlyMode}}disabled{{/if}}" title="Delete"
+                                <button type="button" class="dp-btn dp-btn--danger {{#if @root.isReadOnlyMode}}disabled{{/if}}" title="Delete"
                                     {{#unless @root.isReadOnlyMode}}onclick="confirmDeletePlatformSubscription('{{@root.orgID}}', '{{this.subscriptionId}}')"{{/unless}}
                                     {{#if @root.isReadOnlyMode}}disabled{{/if}}>
-                                    <i class="bi bi-trash"></i>
+                                    <i class="bi bi-trash"></i> Unsubscribe
                                 </button>
-                            </td>
-                        </tr>
+                            </div>
+                        </div>
                         {{/each}}
-                    </tbody>
-                </table>
+                </div>
             </div>
             {{/if}}
 
@@ -317,28 +325,51 @@
                                             </div>
                                             <div class="select-items-container">
                                                 {{#each ../applications}}
-                                                {{!-- Every application stays selectable. data-subscribed says whether this
-                                                      one already holds THIS plan - not the API as a whole, since
-                                                      DP_API_SUBSCRIPTION is unique on (APP_ID, ORG_ID, API_ID, POLICY_ID)
-                                                      and the same application on another plan is a legal row. Selecting a
-                                                      marked application turns the button below into "View subscription". --}}
+                                                {{!-- An application holds at most one plan per API, so each row is in one of
+                                                      three states:
+
+                                                      - it holds THIS plan: selectable and marked, which is what turns the
+                                                        button below into "View subscription";
+                                                      - it holds ANOTHER plan of this API: disabled, with the plan it is on
+                                                        named underneath. Moving it means changing that subscription's plan,
+                                                        not taking a second one, so this card offers no way in;
+                                                      - it holds nothing here: selectable, the normal subscribe path.
+
+                                                      The delegated handler in common.js reads .disabled at click time, so the
+                                                      class is the whole enforcement client-side. DP_API_SUBSCRIPTION is keyed
+                                                      on (APP_ID, ORG_ID, API_ID, POLICY_ID) and would accept a second row,
+                                                      which is why adminService.createSubscription rejects it server-side
+                                                      too. --}}
+                                                {{#if (contains subscribedPolicyIds ../policyID)}}
                                                 <div class="select-item" role="button" data-value="{{id}}" data-app-name="{{name}}"
-                                                    data-subscribed="{{#if (contains subscribedPolicyIds ../policyID)}}true{{else}}false{{/if}}">
+                                                    data-subscribed="true">
                                                     <div class="d-flex flex-column flex-grow-1">
                                                         <span class="fw-semibold">{{name}}</span>
-                                                        {{#if subscriptionPolicy}}
-                                                        <small style="font-size: 11px; margin-top: 3px;">
-                                                            <span class="badge" style="background-color: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 10px; font-weight: 600; font-size: 10px;">
-                                                                {{subscriptionPolicy.policyName}}
-                                                            </span>
-                                                        </small>
-                                                        {{/if}}
                                                     </div>
-                                                    {{#if (contains subscribedPolicyIds ../policyID)}}
                                                     <img src="/images/success-rounded.svg"
                                                         alt="Subscribed" class="subscription-icon" style="width: 18px; height: 18px; flex-shrink: 0;" />
-                                                    {{/if}}
                                                 </div>
+                                                {{else if subscribed}}
+                                                <div class="select-item disabled" role="button" aria-disabled="true"
+                                                    data-value="{{id}}" data-app-name="{{name}}" data-subscribed="false"
+                                                    title="{{name}} is already subscribed to this API on the {{subscriptionPolicy.policyName}} plan. Change that subscription's plan, or use a different application.">
+                                                    <div class="d-flex flex-column flex-grow-1">
+                                                        <span class="fw-semibold">{{name}}</span>
+                                                        <small style="font-size: 11px; margin-top: 3px;">
+                                                            <span class="badge" style="background-color: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 10px; font-weight: 600; font-size: 10px;">
+                                                                On {{subscriptionPolicy.policyName}}
+                                                            </span>
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                                {{else}}
+                                                <div class="select-item" role="button" data-value="{{id}}" data-app-name="{{name}}"
+                                                    data-subscribed="false">
+                                                    <div class="d-flex flex-column flex-grow-1">
+                                                        <span class="fw-semibold">{{name}}</span>
+                                                    </div>
+                                                </div>
+                                                {{/if}}
                                                 {{/each}}
                                             </div>
                                             <div class="create-app-container" style="display: none;">

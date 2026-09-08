@@ -2,10 +2,10 @@
     style="display:none;"
     data-org-id="{{@root.orgID}}" data-api-refid="{{#if apiInfo.apiReferenceID}}{{apiInfo.apiReferenceID}}{{else}}{{apiID}}{{/if}}" data-token-based="{{apiInfo.tokenBasedSubscriptionEnabled}}" data-gateway-type="{{apiInfo.gatewayType}}">
     <div class="modal-dialog modal-xl subscription-plan-modal-dialog" role="document">
-        <div class="modal-content custom-modal-content">
+        <div class="modal-content dp-modal">
             <div class="custom-modal-header">
                 <h2 class="custom-modal-title m-0">{{#if modalTitle}}{{modalTitle}}{{else}}Choose Your Subscription Plan{{/if}}</h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                <button type="button" class="dp-modal-close" data-bs-dismiss="modal" aria-label="Close"
                     onclick="closeModal('planModal-{{apiID}}')"></button>
             </div>
             <div class="custom-modal-body">
@@ -279,7 +279,7 @@
                     </div>
                 </div>
                 <div class="d-flex justify-content-end mb-3" id="applicationKeyUpdateButtonContainer">
-                    <button class="common-btn-outlined pr-3 me-3" type="button"
+                    <button class="dp-btn dp-btn--outline me-3" type="button"
                         onclick="closeModal('planModal-{{apiID}}')">Cancel</button>
                 </div>
             </div>

@@ -338,6 +338,38 @@ Handlebars.registerHelper('artifactTypesLabel', function (devportalMode, showApi
         : (labels[0] || '');
 });
 
+
+/**
+ * The MCP client configuration block shown on the MCP landing page, pretty-printed.
+ *
+ * Built here rather than written as literal lines inside the <pre> because Handlebars
+ * prepends a standalone partial call's own indentation to every line of that partial's
+ * output. mcp-config-sidebar is included 12 spaces deep, so each JSON line arrived with
+ * 12 extra spaces which <pre> then preserved - the block rendered correctly nested in the
+ * source and ragged in the browser. An interpolated value is not re-indented, so
+ * returning the whole block as one string keeps the formatting the source shows.
+ *
+ * SafeString because the URL and name are already escaped by escapeExpression; without it
+ * the surrounding {{{ }}} would be the only thing standing between a name and the page.
+ */
+Handlebars.registerHelper('mcpServerConfig', function (apiName, productionURL) {
+    const name = Handlebars.escapeExpression(apiName == null ? '' : String(apiName));
+    const url = Handlebars.escapeExpression(productionURL == null ? '' : String(productionURL));
+    const config = {
+        servers: {
+            [name]: {
+                url: url,
+                type: 'http',
+                headers: {
+                    // Placeholder the note below the block tells the user to replace.
+                    Authorization: 'Bearer ${token}',
+                },
+            },
+        },
+    };
+    return new Handlebars.SafeString(JSON.stringify(config, null, 2));
+});
+
 }
 
 module.exports = { registerHelpers };

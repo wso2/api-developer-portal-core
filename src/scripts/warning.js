@@ -64,6 +64,20 @@ function openWarningModal(param1, param2, param3, param4, param5, param6, param7
                 revokeAPIKey(sanitizedParam2, sanitizedParam3, sanitizedParam4, sanitizedParam5, sanitizedParam6);
             }
         };
+    } else if (param1 === 'RevokePlatformApiKey') {
+        modalTitle.innerText = 'Revoke API key?';
+        modalMessage.innerText = 'Clients using "' + sanitizedParam2
+            + '" will start failing immediately. This cannot be undone.';
+        modalFunction.innerText = 'Revoke';
+        modalFunction.onclick = function() {
+            /* The page stores the action to run so this dialog stays generic - the same
+               arrangement SwitchPlatformSubscriptionPlan uses. */
+            if (typeof window.__pendingApiKeyRevoke === 'function') {
+                const run = window.__pendingApiKeyRevoke;
+                window.__pendingApiKeyRevoke = null;
+                run();
+            }
+        };
     } else if (param1 === 'Unsubscribe') {
         modalTitle.innerText = "Do you really want to remove the subscription?";
         modalMessage.innerText = "This will remove the subscription entry stored in the devportal.";

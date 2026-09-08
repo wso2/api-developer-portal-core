@@ -35,17 +35,12 @@
       <span class="copy-btn-icon"><i class="bi bi-copy"></i></span>
       <span class="copy-btn-check"><i class="bi bi-check"></i> Copied</span>
     </button>
-    <pre id="token_mcp_config" class="mc-config-pre"><code class="language-json">{
-  "servers": {
-    "{{apiMetadata.apiInfo.apiName}}": {
-      "url": "{{resources.serverDetails.productionURL}}",
-      "type": "http",
-      "headers": {
-        "Authorization": "Bearer ${token}"
-      }
-    }
-  }
-}</code></pre>
+    {{!-- One line on purpose. Handlebars prepends this partial's own call indentation
+          (12 spaces, page.hbs) to every template line, and <pre> preserves it - written
+          out as literal JSON lines here, the block rendered ragged in the browser however
+          neatly it was nested in the source. An interpolated value is not re-indented, so
+          the helper returns the whole block already formatted. --}}
+    <pre id="token_mcp_config" class="mc-config-pre"><code class="language-json">{{{mcpServerConfig apiMetadata.apiInfo.apiName resources.serverDetails.productionURL}}}</code></pre>
   </div>
   <p class="mc-config-note">Generate a token using a subscribed application and replace the placeholder.</p>
 </div>

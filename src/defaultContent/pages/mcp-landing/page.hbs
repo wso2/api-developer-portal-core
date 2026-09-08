@@ -59,7 +59,12 @@
         {{#if (or resources.serverDetails.productionURL subscriptionPlans.length platformSubscriptions.length)}}
         <div class="aov-body-sidebar">
             {{#if resources.serverDetails.productionURL}}
-            {{> mcp-config-sidebar}}
+{{!-- Flush left on purpose. Handlebars prepends a standalone partial call's own
+      indentation to every line of that partial's RENDERED output, interpolated values
+      included, and mcp-config-sidebar ends in a <pre> holding the client config - so
+      12 spaces of indentation here became 12 stray spaces on every JSON line in the
+      browser. Re-indenting this line silently ruins that block again. --}}
+{{> mcp-config-sidebar}}
             {{/if}}
             {{#if (or subscriptionPlans.length platformSubscriptions.length)}}
             {{> api-subscription-plans}}

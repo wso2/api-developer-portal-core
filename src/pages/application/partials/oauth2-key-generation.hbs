@@ -10,7 +10,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <p>Subscriptions: {{applicationMetadata.subscriptionCount}}</p>
                 <div class='action-buttons'>
-                <button class='btn btn-sm' title='Edit' onclick="window.location.href='{{../baseUrl}}/applications/{{applicationId}}/edit'">
+                <button class='dp-btn-icon' title='Edit' onclick="window.location.href='{{../baseUrl}}/applications/{{applicationId}}/edit'">
                     <i class='bi bi-pencil-square'></i>
                 </button>
                 </div>
@@ -42,7 +42,7 @@
             {{#let "keys" (conditionalIf ../isProduction productionKeys sandboxKeys)}}
                 {{#if (eq keys.consumerKey null)}}
                     <p class="mb-4 pt-4">You have partially-created keys. Please click `Clean Up` button and regenerate keys.</p>
-                    <button class='btn btn-primary custom-save-btn' type="button"
+                    <button class='dp-btn dp-btn--primary custom-save-btn' type="button"
                         onClick="cleanUp('{{../../applicationMetadata.applicationId}}', '{{keys.keyMappingId}}')">CleanUp</button>
                 {{else}}
                     <div class='container'>
@@ -80,7 +80,7 @@
                                 <div class="d-flex mb-4">
                                     {{#if (contains keys.supportedGrantTypes 'client_credentials')}}
                                     <div>
-                                        <button class='common-btn-primary me-3'
+                                        <button class='dp-btn dp-btn--primary me-3'
                                             id='apiKeyGenerateButton-{{#if ../../isProduction}}PRODUCTION{{else}}SANDBOX{{/if}}'
                                             name='http-values' type='button'
                                             onClick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', '{{../../applicationMetadata.applicationId}}', '{{keys.keyMappingId}}', '{{../name}}', '{{keys.clientName}}', '{{json ../../subAPIs}}', '{{#if ../../isProduction}}PRODUCTION{{else}}SANDBOX{{/if}}')">
@@ -90,7 +90,7 @@
                                     {{else}}
                                     <div class="d-flex flex-column">
                                         <div class="d-flex mb-2">
-                                            <button class='common-btn-primary me-3'
+                                            <button class='dp-btn dp-btn--primary me-3'
                                                     id='curl-{{#if ../../isProduction}}PRODUCTION{{else}}SANDBOX{{/if}}'
                                                     name='http-values' type='button'
                                                     onClick="generateCurl('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}')">
@@ -101,7 +101,7 @@
                                     </div>
                                     {{/if}}
                                     <div class="mb-4 ms-auto">
-                                        <button class='common-btn-outlined '
+                                        <button class='dp-btn dp-btn--outline '
                                             id='apiKeyRevokeButton-{{../id}}-{{#if ../../isProduction}}PRODUCTION{{else}}SANDBOX{{/if}}'
                                             name='http-values' type='button'
                                             onClick="openDeleteModal('{{../../applicationMetadata.applicationId}}', '{{keys.keyMappingId}}')">
@@ -251,7 +251,7 @@
                                 {{/let}}
                                 {{#if keys.consumerKey}}
                                 <div class="d-flex gap-3">
-                                    <button class="common-btn-primary" id="applicationKeyUpdateButton-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}" name="http-values" type="button"
+                                    <button class="dp-btn dp-btn--primary" id="applicationKeyUpdateButton-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}" name="http-values" type="button"
                                         onClick="updateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}production{{else}}sandbox{{/if}}', 
                                         '{{../../applicationMetadata.applicationId}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', 
                                         '{{keys.keyMappingId}}', '{{keys.clientName}}')">
@@ -260,7 +260,7 @@
                                 </div>
                                 {{else}}
                                 <div class="d-flex gap-3">
-                                    <button class="common-btn-primary" id="applicationKeyGenerateButton" name="http-values" type="button"
+                                    <button class="dp-btn dp-btn--primary" id="applicationKeyGenerateButton" name="http-values" type="button"
                                         onClick="generateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{#if ../../isProduction}}PRODUCTION{{else}}SANDBOX{{/if}}', 
                                         '{{../../applicationMetadata.applicationId}}', {{#if ../../isProduction}}'PRODUCTION'{{else}}'SANDBOX'{{/if}}, '{{../name}}', 
                                         '{{keys.clientName}}')">

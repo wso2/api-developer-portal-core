@@ -897,12 +897,42 @@ const createSubscription = async (req, res) => {
                 sharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, true);
                 nonSharedApp = await adminDao.getApplicationKeyMapping(orgID, req.body.applicationID, false);
 
+                /* One application holds at most one plan per API. DP_API_SUBSCRIPTION is
+                   keyed on (APP_ID, ORG_ID, API_ID, POLICY_ID), so the table would happily
+                   take a second row on a different plan - the rule has to be enforced here.
+                   The plan cards already disable an application that is spoken for, so
+                   reaching this means a stale page or a direct call; either way the answer
+                   is to change the existing subscription's plan, not to add another.
+
+                   Cancelled subscriptions do not count, matching what the plan cards show. */
+                const apiSubscriptions = await adminDao.getAppApiSubscription(
+                    orgID,
+                    req.body.applicationID,
+                    req.body.apiId,
+                );
+                const conflicting = (apiSubscriptions || []).find((s) => {
+                    const ps = s.PAYMENT_STATUS;
+                    const live = !ps || ps === 'ACTIVE';
+                    return live && s.POLICY_ID !== req.body.policyId;
+                });
+                if (conflicting) {
+                    logger.warn('Rejected a second plan for an application already subscribed to this API', {
+                        orgId: orgID,
+                        appId: req.body.applicationID,
+                        apiId: req.body.apiId,
+                        requestedPolicyId: req.body.policyId,
+                        existingPolicyId: conflicting.POLICY_ID,
+                    });
+                    return res.status(409).json({
+                        code: 409,
+                        message: 'Application already subscribed to this API',
+                        description: 'This application already holds another plan of this API. '
+                            + 'Change that subscription\'s plan, or use a different application.',
+                    });
+                }
+
                 const billingMetadata = await (async () => {
-                    const subscription = await adminDao.getAppApiSubscription(
-                        orgID,
-                        req.body.applicationID,
-                        req.body.apiId,
-                    );
+                    const subscription = apiSubscriptions;
                     return subscription?.length > 0 &&
                         (subscription[0].BILLING_CUSTOMER_ID ||
                             subscription[0].BILLING_SUBSCRIPTION_ID)

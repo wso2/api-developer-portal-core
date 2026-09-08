@@ -93,17 +93,21 @@
         <i class="bi bi-card-checklist"></i> Subscriptions
       </a>
       {{/if}}
+      {{!-- API Keys sits with Subscriptions, before Try with AI: both are the outlined
+            "manage my access to this API" pair, and separating them with the AI-gradient
+            button broke that grouping. Only the self-hosted api-platform gateway renders
+            it at all (showPlatformApiKeysNav), so this is the order that scenario sees. --}}
+      {{#if showPlatformApiKeysNav}}
+      <a class="dp-btn dp-btn--outline" href="{{baseUrl}}/api/{{apiMetadata.apiHandle}}/api-keys">
+        <i class="bi bi-key"></i> API Keys
+      </a>
+      {{/if}}
       {{#if showApiWorkflowsNav}}
       {{#unless (eq apiMetadata.apiInfo.agentVisibility "HIDDEN")}}
       <button type="button" class="dp-btn dp-btn--ai" data-bs-toggle="modal" data-bs-target="#apiAgentPromptModal">
         <i class="bi bi-robot"></i> Try with AI
       </button>
       {{/unless}}
-      {{/if}}
-      {{#if showPlatformApiKeysNav}}
-      <a class="dp-btn dp-btn--outline" href="{{baseUrl}}/api/{{apiMetadata.apiHandle}}/api-keys">
-        <i class="bi bi-key"></i> API Keys
-      </a>
       {{/if}}
     </div>
   </div>

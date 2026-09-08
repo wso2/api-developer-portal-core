@@ -106,8 +106,13 @@ test('every rendered page carries the ids common.js dereferences unguarded', () 
 });
 
 test('the API listing keeps the selectors the subscribe flow drives', () => {
+    // The button class this used to name is not one of them: with a listing context the
+    // subscription modal's plan loop renders nothing at all, so neither the old
+    // common-btn-primary nor a dp-btn replacement appears - swapping one for the other
+    // just moved the assertion onto the create-app dialog's Save button, which the
+    // subscribe flow never touches. What the flow does dereference is below.
     const html = renderAll('pages/apis', ctx.apis());
-    for (const selector of ['common-btn-primary', 'message-overlay', 'id="query"', 'apiCard-']) {
+    for (const selector of ['message-overlay', 'id="query"', 'apiCard-']) {
         assert.ok(html.includes(selector), `the API listing lost ${selector}`);
     }
 });
@@ -227,6 +232,115 @@ test('internal pages render under both the disk layout and a stored one', () => 
     assert.doesNotThrow(
         () => renderInternalPage('applications', context, { storedLayout: frozenLayout }),
         'applications failed under a stored layout'
+    );
+});
+
+test('the application pages render one table idiom and no legacy button classes', () => {
+    // Both pages were the last holders of .app-table (a tinted header band) and of
+    // .common-btn-* (square, fill-on-hover). Everything else in the portal renders
+    // .sub-table and .dp-btn, so a user moving between /subscriptions, /api-keys and
+    // these two saw the same table drawn two different ways.
+    //
+    // One exception, by request: the Subscribe buttons in the plan cards and the plan
+    // dialog keep common-btn-primary. That dialog is included by both pages, so the
+    // sweep below skips any line carrying a subscribe-btn class.
+    for (const [page, context] of [['application', ctx.application()], ['manage-keys', ctx.manageKeys()]]) {
+        const html = renderInternalPage(page, context);
+        assert.ok(html.includes('class="sub-table"'), `${page} should render the shared table`);
+        assert.ok(!/class="app-table|class="app-th|class="app-td/.test(html), `${page} still renders app-table`);
+        const legacyButtons = html.split('\n')
+            .filter((line) => line.includes('common-btn') && !line.includes('subscribe-btn'));
+        assert.deepStrictEqual(
+            legacyButtons, [],
+            `${page} still renders a common-btn button:\n  ${legacyButtons[0]?.trim()}`
+        );
+        assert.ok(!html.includes('class="btn-close"'), `${page} still renders a Bootstrap btn-close`);
+    }
+});
+
+test('the application page sends plan changes to the API, not to a second dialog', () => {
+    // The edit icon used to open its own plan dialog here, a parallel implementation of
+    // the choice the API's own subscription section already makes - with the
+    // one-app-one-plan rules and the switch-plan flow the dialog never had.
+    const html = renderInternalPage('application', ctx.application());
+    assert.ok(!html.includes("loadModal('planModal-"), 'the plan dialog should no longer be wired up here');
+    assert.ok(html.includes('/api/orders-api#subscriptionPlans'), 'the proxy row should link to the API section');
+    assert.ok(html.includes('/mcp/orders-mcp#subscriptionPlans'), 'the MCP row should link to the MCP section');
+});
+
+test('an application section with nothing in it renders an empty state, not an empty table', () => {
+    // Both tables were gated on subAPIs - the same list for both - while their rows were
+    // filtered by apiType. An application subscribed only to REST APIs therefore drew a
+    // headers-only MCP table, and one subscribed only to MCP servers drew an empty proxy
+    // table. Each is gated on its own count now.
+    const empty = renderInternalPage('application', ctx.applicationEmpty());
+    assert.ok(!empty.includes('class="sub-table"'), 'no table should render with nothing subscribed');
+    for (const title of ['No API subscriptions', 'No MCP server subscriptions', 'No token-based subscriptions']) {
+        assert.ok(empty.includes(title), `expected the ${title} empty state`);
+    }
+
+    // REST-only: the proxy table renders, the MCP section shows its empty state.
+    const restOnly = renderInternalPage('application', ctx.application({
+        subAPIs: [ctx.application().subAPIs[0]], otherAPICount: 1, mcpAPICount: 0,
+    }));
+    assert.ok(restOnly.includes('id="app-table-app-1"'), 'the proxy table should still render');
+    assert.ok(!restOnly.includes('id="app-table-mcp-app-1"'), 'the MCP table should not render at all');
+    assert.ok(restOnly.includes('No MCP server subscriptions'), 'the MCP section should show its empty state');
+});
+
+test('the revoke buttons across the portal share one danger style', () => {
+    // .ak-btn-danger, .aov-sub-danger and .api-key-actions .api-key-revoke were three
+    // aliases of the same declaration on three pages. .dp-btn--danger is the one copy.
+    const manageKeys = renderInternalPage('manage-keys', ctx.manageKeys());
+    assert.ok(manageKeys.includes('dp-btn dp-btn--danger api-key-revoke'), 'revoke should carry the shared danger style');
+    const landing = renderAll('pages/api-landing', ctx.apiLandingWithPlans());
+    assert.ok(!landing.includes('aov-sub-danger'), 'the landing page should no longer use the alias');
+});
+
+test('a deactivated token-based subscription keeps its plan card subscribed', () => {
+    // Deactivating does not remove the subscription - it can be reactivated from the card
+    // above, and the self-hosted gateway allows only one subscription per API. So the plan
+    // card keeps pointing at it rather than offering Subscribe, which would open a
+    // switch-plan confirmation for the plan the user already holds. The isCurrentPlan
+    // helper matches on plan name with no status filter, and the two client-side refreshes
+    // (refreshLandingPageSubscriptions, prepareSubscriptionModal) now agree with it.
+    const html = renderAll('pages/api-landing', ctx.apiLandingPlatformInactiveSub());
+    const goldCard = html.slice(html.indexOf('id="subscriptionCard-pol-1"'));
+    const silverCard = goldCard.slice(goldCard.indexOf('id="subscriptionCard-pol-2"'));
+
+    assert.ok(
+        goldCard.slice(0, goldCard.indexOf('id="subscriptionCard-pol-2"')).includes('aov-plan-card--subscribed'),
+        'the deactivated plan should still render as subscribed'
+    );
+    assert.ok(!silverCard.includes('aov-plan-card--subscribed'), 'the other plan should not');
+    assert.ok(html.includes('View subscription'), 'expected the View subscription control to render');
+});
+
+test('no template has a collapsed line', () => {
+    /* A guard for one specific accident. A class-rename pass over these partials used a
+       regex for a whole markup block - `<div class="info-box">…</div>` with a non-greedy
+       body - and in the key dialogs those boxes hold a title, a <p> AND a floated icon
+       sibling, so the body ran past the box and swallowed the rest of the dialog, leaving
+       the token field and the footer buttons inside a <span> on one 1,700-character line.
+       It still compiled and its <div>s still balanced, so nothing else caught it; the
+       line length is what gives it away. The longest legitimate line in these templates
+       is about 370 characters. */
+    const LIMIT = 600;
+    const { walk, rel, read, REPO_ROOT, themeTemplates } = require('./helpers/themeFiles');
+    const templates = [...themeTemplates(), ...walk(path.join(REPO_ROOT, 'src', 'pages'), '.hbs')];
+    // Vector data does not count: an inline SVG path is legitimately over a thousand
+    // characters, and create-api-flow.hbs carries one at exactly that length.
+    const measure = (line) => line.replace(/\sd="[^"]*"/g, ' d=""').length;
+    const offenders = [];
+    for (const file of templates) {
+        read(file).split('\n').forEach((line, i) => {
+            if (measure(line) > LIMIT) offenders.push(`${rel(file)}:${i + 1} (${measure(line)} chars)`);
+        });
+    }
+    assert.deepStrictEqual(
+        offenders, [],
+        'these lines are long enough to be a collapsed block rather than markup:\n  '
+        + offenders.join('\n  ')
     );
 });
 
