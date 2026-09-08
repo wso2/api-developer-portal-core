@@ -50,6 +50,18 @@
           <i class="bi bi-file-text submenu-icon"></i>
           <span class="nav-text">Documentation</span>
         </a>
+        {{!-- Last in the accordion, matching the order the API submenu uses. Gated where
+              the API one is not: an MCP server only shows this when it actually has a
+              subscription plan, which is also what keeps it off deployments that do not
+              sell subscriptions. /mcp/<handle>/subscriptions already exists - it is where
+              the MCP overview's own Subscribe button goes - so this only adds the way in
+              from the rail. common.js fills the href, as it does for every item here. --}}
+        {{#if showMcpSubscriptionsNav}}
+        <a href="#" class="nav-link submenu-link fw-light" id="mcp-subscriptions">
+          <i class="bi bi-receipt submenu-icon"></i>
+          <span class="nav-text">Subscriptions</span>
+        </a>
+        {{/if}}
       </div>
       {{/in}}
       {{#if showApiWorkflowsNav}}

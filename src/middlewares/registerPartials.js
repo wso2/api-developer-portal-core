@@ -137,6 +137,11 @@ const registerAllPartialsFromFile = async (baseURL, req, filePrefix) => {
   await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "mcp", "partials"), req);
   await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "mcp-landing", "partials"), req);
   await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "subscriptions", "partials"), req);
+  /* Explicit, like every entry above, because the URL-derived block at the end of this
+     function cannot reach it: in production mode filePrefix is './src/defaultContent' with
+     no trailing slash, so its `filePrefix + "pages"` concatenation resolves to
+     'src/defaultContentpages/...' and the existsSync guard is never satisfied. */
+  await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "billing", "partials"), req);
   if (fs.existsSync(path.join(process.cwd(), filePrefix, "pages", "api-subscriptions", "partials"))) {
     await registerPartialsFromFile(baseURL, path.join(process.cwd(), filePrefix, "pages", "api-subscriptions", "partials"), req);
   }

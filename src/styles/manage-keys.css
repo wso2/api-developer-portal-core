@@ -6,77 +6,7 @@
 /* Improved Manage Keys Page Styles - All scoped to .keys-section */
 
 /* Page header positioning - bring it up for better visual appeal */
-.keys-section .container-header {
-    margin-top: -2rem;
-    margin-bottom: 1.5rem;
-}
-
-.keys-section .key-btn-container {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    border-bottom: none;
-    margin-bottom: 0;
-  }
-
-  .keys-section .key-btn-container .nav-item {
-    flex: 1;
-  }
-
-  .keys-section .key-btn {
-    width: 100%;
-    padding: 14px 0;
-    text-align: center;
-    font-weight: 500;
-    background: var(--surface-sunken);
-    border: 1px solid var(--bs-gray-200);
-    border-bottom: none;
-    color: var(--ink);
-    border-radius: 0;
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
-    position: relative;
-    transition: all 0.2s ease;
-    opacity: 0.7;
-  }
-
-  .keys-section .key-btn:hover {
-    background: var(--surface);
-    opacity: 0.9;
-  }
-
-  .keys-section .key-btn:focus {
-    outline: 0.1px solid var(--primary-lightest-color);
-    outline-offset: 0.1px;
-  }
-
-  .keys-section .key-btn.active {
-    background: var(--surface);
-    z-index: 3;
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
-    border: 1px solid var(--bs-gray-200);
-    border-bottom: none;
-    color: var(--primary);
-    font-weight: 600;
-    opacity: 1;
-    box-shadow:
-      -4px -4px 8px var(--bs-gray-200),
-       4px -4px 8px var(--bs-gray-200);
-  }
-
-  .keys-section #keysTabContent {
-    background: var(--surface);
-    padding: 24px;
-    border: 1px solid var(--bs-gray-200);
-    border-radius: 0 0 12px 12px;
-    box-shadow:
-      -4px 0 8px var(--bs-gray-200),
-       4px 0 8px var(--bs-gray-200),
-       0 4px 8px var(--bs-gray-200);
-  }
-
-.keys-section .key-action-buttons-row {
+            .keys-section .key-action-buttons-row {
     gap: 8px;
 }
 
@@ -95,7 +25,7 @@
 }
 
 .keys-section .accordion-button:hover {
-    background-color: var(--primary-lightest-color);
+    background-color: var(--surface-sunken);
 }
 
 .keys-section #sandbox-oauth2.accordion-header,
@@ -108,7 +38,7 @@
 .keys-section .accordion-header {
     background-color: var(--surface);
     color: var(--ink);
-    border: 1px solid var(--bs-gray-300);
+    border: 1px solid var(--border);
     border-radius: var(--bs-accordion-border-radius);
     padding: 0;
 }
@@ -150,82 +80,19 @@
 }
 
 /* Table Styling in Accordion */
-.keys-section .app-table {
-    border-collapse: separate;
-    border-spacing: 0;
-}
-
-.keys-section .app-table-container {
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid var(--bs-gray-300);
-    background: var(--surface-sunken);
-}
-
 /* Table header styling */
-.keys-section .app-table thead {
-    background-color: var(--primary-lightest-color);
-}
-
-.keys-section .app-table thead tr {
-    background-color: var(--primary-lightest-color);
-}
-
-.keys-section .app-table .app-th {
-    background-color: var(--primary-lightest-color);
-    font-weight: 600;
-    color: var(--ink);
-    padding: 0.75rem 1rem;
-}
-
 /* Primary action buttons - scoped to keys section */
-.keys-section .common-btn-primary.btn-sm {
-    background-color: var(--primary);
-    color: var(--white);
-    border: none;
-}
-
-.keys-section .common-btn-primary.btn-sm:hover {
-    background-color: var(--primary-light);
-}
-
 /* Main Generate Key button styling - make it more compact and visually appealing */
-.keys-section button[id^="generateKeyBtn-"][data-cyid^="generateKey-"] {
-    background-color: var(--primary) !important;
-    color: var(--white) !important;
-    border: none !important;
-    border-radius: 0.5rem !important;
-    padding: 0.75rem 1.5rem !important;
-    font-weight: 500 !important;
-    transition: all 0.3s ease !important;
-    width: auto !important;
-    max-width: fit-content !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 0.5rem !important;
-}
-
-.keys-section button[id^="generateKeyBtn-"][data-cyid^="generateKey-"]:hover {
-    background-color: var(--primary-light) !important;
-    transform: translateY(-1px) !important;
-}
-
-.keys-section button[id^="generateKeyBtn-"][data-cyid^="generateKey-"]:active {
-    transform: translateY(0) !important;
-}
-
-.keys-section button[id^="generateKeyBtn-"][data-cyid^="generateKey-"] i {
-    font-size: 1rem;
-}
-
 /* API Key Name Modal - already specific enough, but add scoping for consistency */
 .api-key-name-modal-dialog {
     max-width: 480px;
     width: 100%;
 }
 
+/* No padding on the content box: .dp-modal-head and the body each carry their own, and
+   padding here indented the header's divider from both edges of the dialog. */
 .api-key-name-modal .custom-modal-content {
-    padding: 1.5rem 1.75rem;
+    padding: 0;
 }
 
 .api-key-name-modal .custom-modal-title {
@@ -241,7 +108,7 @@
 
 .api-key-name-modal .form-control {
     border-radius: var(--bs-border-radius);
-    border: 1px solid var(--bs-gray-300);
+    border: 1px solid var(--border);
     padding: 0.675rem;
     margin-top: 1rem;
 }
@@ -269,22 +136,7 @@
     transform: none !important;
 }
 
-.keys-section .app-th:first-child,
-.keys-section .app-td:first-child {
-  padding-left: 1rem;
-}
-
 /* Align table cells properly */
-.keys-section .app-td {
-  vertical-align: middle;
-  padding: 0.75rem 0.5rem;
-}
-
-.keys-section .app-th {
-  vertical-align: middle;
-  padding: 0.75rem 1rem;
-}
-
 /* Form inputs - Better focus states - SCOPED to keys section only */
 .keys-section .form-control:focus {
     border-color: var(--primary-light);
@@ -319,21 +171,17 @@
 
 /* Improved spacing and visual hierarchy */
 .keys-section .accordion-item {
-    border: 1px solid var(--bs-gray-300);
+    border: 1px solid var(--border);
     border-radius: 8px;
     overflow: hidden;
     transition: border-color 0.2s ease;
 }
 
 .keys-section .accordion-item:hover {
-    border-color: var(--bs-gray-400);
+    border-color: var(--border-strong);
 }
 
 /* Table row hover effect */
-.keys-section .app-table tbody tr:hover {
-    background-color: var(--surface-sunken);
-}
-
 /* Better button spacing and alignment in action rows */
 .keys-section .api-key-actions {
     display: flex;
@@ -342,27 +190,20 @@
     align-items: center;
 }
 
-/* Standardize API key action button sizes and alignment */
-.keys-section .api-key-actions button {
-    min-width: 130px;
-    /* padding: 0.425rem 1rem !important; */
-    /* font-size: 0.875rem; */
-    text-align: center;
+/* The OAuth2 action row lays four buttons out with flex-grow-1, and .dp-btn is
+   inline-flex - its content would sit left in the stretched box without this. */
+.keys-section .key-action-buttons-row .dp-btn {
     justify-content: center;
-    white-space: nowrap;
-    font-weight: 500;
 }
 
-.keys-section .api-key-actions button i {
-    margin-right: 0.25rem;
+/* The client-id save/cancel pair sits inline with the field it edits. */
+.keys-section .edit-actions {
+    display: flex;
+    align-items: center;
 }
 
+/* Standardize API key action button sizes and alignment */
 /* Ensure consistent button heights */
-.keys-section .api-key-actions .common-btn-outlined {
-    height: auto;
-    line-height: 1.5;
-}
-
 /* ═══════════════════════════════════════════════════════════
    Manage Keys page chrome, ported from upstream's manage-keys.css.
 

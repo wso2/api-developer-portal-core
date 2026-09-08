@@ -91,6 +91,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
+  /* Normalises the label whatever case the source data uses: the platform API keys report
+     "active" while subscriptions report "ACTIVE", and the two rendered differently side by
+     side across pages. */
+  text-transform: lowercase;
   border-radius: 0.875rem;
   padding: 0.3125rem 0.6875rem;
   font-size: 0.71875rem;
@@ -151,10 +155,30 @@
 .dp-btn--outline { background: var(--white); border: 1px solid var(--border-strong); color: var(--primary); }
 .dp-btn--outline:hover { background: var(--surface-sunken); color: var(--primary); text-decoration: none; }
 
+/* Outline-danger, for destructive row actions - Revoke, Unsubscribe, Delete. It was
+   written three times over as page-scoped aliases (.ak-btn-danger, .aov-sub-danger and
+   .api-key-actions .api-key-revoke), all with the same values; this is the one copy they
+   now all point at, so a Revoke button reads the same on every page that has one. */
+.dp-btn--danger {
+  background: var(--white);
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, var(--surface));
+  color: var(--danger);
+}
+.dp-btn--danger:hover {
+  background: color-mix(in srgb, var(--danger) 8%, var(--surface));
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
 .dp-btn--ai { background: linear-gradient(135deg, #7c3aed, #a855f7); color: var(--white); border: none; }
 .dp-btn--ai:hover { opacity: 0.9; color: var(--white); text-decoration: none; }
 
 .dp-btn--lg { padding: 0.8125rem 1.75rem; font-size: 0.90625rem; }
+
+/* For the small inline pairs - a save/cancel next to a field, an icon-only control in an
+   edit row. The full pill is 0.6875rem/1.375rem, which around a single icon reads as a
+   slab. */
+.dp-btn--compact { padding: 0.4375rem 0.8125rem; font-size: 0.8125rem; }
 
 .dp-btn--block {
   display: flex;
@@ -233,6 +257,47 @@
 .copy-btn--copied .copy-btn-icon { display: none; }
 .copy-btn--copied .copy-btn-check { display: inline-flex; }
 
+/* ── Inline note ─────────────────────────────────────────────────
+   The neutral counterpart to .info-box, which paints itself with
+   --primary-lightest-color and a 4px --primary-light left bar - a tinted slab that
+   upstream has nowhere. Upstream states this kind of aside as quiet text in a sunken
+   panel, which is what this is. Icon optional; --warning gives the amber variant. */
+.dp-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.625rem;
+  background: var(--surface-sunken);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.dp-note > i:first-child {
+  flex: none;
+  margin-top: 0.0625rem;
+  font-size: 0.9375rem;
+  color: var(--text-subtle);
+}
+
+.dp-note--warning {
+  border-color: color-mix(in srgb, var(--warning) 35%, var(--surface));
+  background: var(--warning-surface);
+  color: var(--text);
+}
+
+.dp-note--warning > i:first-child { color: var(--warning); }
+
+.dp-note--danger {
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--surface));
+  background: var(--danger-surface);
+  color: var(--text);
+}
+
+.dp-note--danger > i:first-child { color: var(--danger); }
+
 /* ── Empty state (centred, full-section) ─────────────────────── */
 .dp-empty {
   display: flex;
@@ -250,6 +315,22 @@
   justify-content: center;
   text-align: center;
   padding: 60px 0 80px;
+}
+
+.dp-empty--inset {
+  padding: 2rem 0 2.25rem;
+}
+
+.dp-empty--inset .dp-empty-icon {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 0.875rem;
+  font-size: 1.25rem;
+}
+
+.dp-empty--inset .dp-empty-title {
+  margin-top: 1rem;
+  font-size: 1rem;
 }
 
 .dp-empty-icon {
@@ -1142,9 +1223,12 @@
 }
 
 /* Config panel in the right rail */
+/* Deliberately not sticky. Pinning this panel at top: 1.25rem left the subscription
+   plan cards that follow it in the rail scrolling up over it, and with z-index: auto the
+   later-in-DOM cards won, so the configuration block was painted through. It shares the
+   rail with those cards rather than sitting above them, so the whole column scrolls with
+   the page instead. */
 .mc-config-panel {
-    position: sticky;
-    top: 1.25rem;
     margin-bottom: 1.5rem;
 }
 
@@ -1231,4 +1315,269 @@
    top padding put its trail 32px down against every other page's 16px. */
 .dp-breadcrumb-bar--flush {
   padding-top: 0;
+}
+
+/* ── Dropdown menu (Bootstrap active state) ──────────────────────
+   Bootstrap ships --bs-dropdown-link-active-bg: #0d6efd, its own brand blue, and every
+   .dropdown-item picks it up on :active and on the keyboard .active item. Nothing in the
+   portal set it, so pressing an item - Billing in the profile menu, Save as Draft in the
+   workflow wizard - flashed that blue over a navy-and-orange page.
+
+   Set the variables rather than restating .dropdown-item:active: Bootstrap's own rule
+   reads them, so hover (header.css) and press stay in one place and no !important is
+   needed. --surface-sunken sits a step below the hover fill, which is what a press should
+   read as, and keeping the text at --ink avoids Bootstrap's white-on-white pairing. */
+.dropdown-menu {
+  --bs-dropdown-link-active-bg: var(--surface-sunken);
+  --bs-dropdown-link-active-color: var(--ink);
+}
+
+/* ── Subscription detail rows (label left, value right) ───────────
+   For the self-hosted / api-platform gateway, where an API carries one token-based
+   subscription rather than a list of application subscriptions. A four-column table was
+   the wrong shape for it: the data is a handful of key/value pairs about a single
+   subscription, and switching plans replaces that subscription rather than adding to it,
+   so the "rows" never grow. Upstream renders the same pairs as label-left/value-right in
+   its manage-subscription panel; this is that layout in the aov- plan-card idiom of the
+   page it sits on, so the Subscriptions panel and the Subscription Plans cards below it
+   read as one column of cards. */
+.aov-sub-card {
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+
+.aov-sub-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6875rem 0;
+}
+
+/* Separators between pairs only - no leading or trailing rule inside the card. */
+.aov-sub-row + .aov-sub-row,
+.aov-sub-actions {
+  border-top: 1px solid var(--border);
+}
+
+.aov-sub-label {
+  flex: none;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.aov-sub-value {
+  min-width: 0;
+  text-align: right;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* The token is long and monospaced, so it gets the row to itself and wraps rather than
+   pushing the reveal and copy controls out of the card. */
+.aov-sub-row--token {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+  /* The landing page wraps this in .container-fluid.text-center. A row/space-between row
+     is unaffected, but once this one stacks the label inherits that centring. */
+  text-align: left;
+}
+
+.aov-sub-row--token .aov-sub-value {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  text-align: left;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: 0.5625rem;
+  padding: 0.5625rem 0.75rem;
+}
+
+.aov-sub-row--token .masked-token {
+  /* <code> defaults to magenta; the field is already tinted, so the text takes --text. */
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  max-width: none;
+  background: none;
+  padding: 0;
+  white-space: normal;
+  word-break: break-all;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.aov-sub-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  /* Matches a row's own 0.6875rem, so the gap below the buttons equals the gap above
+     "Plan" at the top of the card (card 0.375rem + first row 0.6875rem). Without it the
+     buttons sat on the card's 0.375rem alone and crowded the bottom border. */
+  padding-bottom: 0.6875rem;
+  margin-top: 0.375rem;
+}
+
+/* ── Dialog skin (shared) ─────────────────────────────────────────
+   Upstream's dialog look, applied to a Bootstrap modal by adding .dp-modal to
+   .modal-content. Opt-in rather than a blanket restyle of .modal-content, so a dialog
+   takes it when its markup is updated instead of every modal shifting at once.
+   Every value is upstream's from api-keys-page.css (.ak-modal and friends).
+
+   Selectors are (0,2,0) so they outrank Bootstrap's single-class defaults whatever the
+   stylesheet order. platform-api-keys.css carries the same rules under .ak-modal for the
+   api-keys dialogs; these are the shared copy for everything else. */
+/* Dialog widths. Every dialog on the manage-keys page carried Bootstrap's .modal-xl -
+   1140px on a wide screen - for a token, a pair of credentials or a single name field, so
+   the content sat in a band across the middle of a very wide sheet. Upstream sizes a
+   value or a short form at around 40rem and keeps the wider one for its long forms. */
+.modal-dialog.dp-modal-dialog { max-width: 40rem; }
+.modal-dialog.dp-modal-dialog--lg { max-width: 52rem; }
+
+.modal-content.dp-modal {
+  border: none;
+  border-radius: 1rem;
+  box-shadow: 0 24px 60px color-mix(in srgb, var(--ink) 34%, transparent);
+  overflow: hidden;
+}
+
+.modal-header.dp-modal-head,
+.custom-modal-header.dp-modal-head {
+  padding: 1.375rem 1.625rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-title.dp-modal-title,
+.custom-modal-title.dp-modal-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-strong);
+  line-height: 1.3;
+}
+
+.dp-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  margin-left: auto;
+  border: none;
+  background: none;
+  border-radius: 0.4375rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.12s, color 0.12s;
+}
+
+.dp-modal-close:hover { background: var(--border); color: var(--text-strong); }
+
+.modal-body.dp-modal-body {
+  padding: 1.5rem 1.625rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.modal-footer.dp-modal-footer {
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1.125rem 1.625rem;
+  border-top: 1px solid var(--border);
+}
+
+/* Bootstrap puts a 0.25rem margin on every footer child, which fights the flex gap. */
+.modal-footer.dp-modal-footer > * { margin: 0; }
+
+/* A dialog that warns before a destructive step leads with the icon upstream uses. */
+.dp-modal-warn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: none;
+  margin-right: 0.75rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--warning) 16%, var(--surface));
+  color: var(--warning);
+  font-size: 1rem;
+}
+
+/* Inline code inside a dialog body: <code> is magenta by default in every browser. */
+.dp-modal-code {
+  font-family: var(--font-family-mono);
+  font-size: 0.78125rem;
+  color: var(--text-muted);
+  background: var(--surface-sunken);
+  border-radius: 0.25rem;
+  padding: 0.0625rem 0.3125rem;
+}
+
+/* Callout inside a dialog, replacing Bootstrap's .alert.alert-warning. */
+.dp-modal-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  border-radius: 0.625rem;
+  padding: 0.75rem 0.875rem;
+  background: color-mix(in srgb, var(--warning) 10%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--warning) 30%, var(--surface));
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--text-strong);
+}
+
+.dp-modal-note > .bi { color: var(--warning); flex: none; margin-top: 0.125rem; }
+
+/* A read-only value the user is meant to copy (a token, a secret). */
+.dp-modal-value {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-family-mono);
+  font-size: 0.8125rem;
+  color: var(--text-strong);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  word-break: break-all;
+}
+
+/* The confirm button of a destructive dialog: filled, danger-coloured. The gradient of
+   dp-btn--primary reads as "go ahead", which is wrong on Delete or Unsubscribe. */
+.dp-btn--danger-solid {
+  background: var(--danger);
+  color: var(--white);
+  border: none;
+}
+
+.dp-btn--danger-solid:hover { opacity: 0.9; color: var(--white); background: var(--danger); }
+
+/* Container for a copyable value plus its copy control inside a dialog. Replaces the
+   Bootstrap `p-3 border rounded bg-light` utility stack. */
+.dp-modal-value-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.625rem;
+  padding: 0.75rem;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+}
+
+/* <code> is magenta by default in every browser; the masked token is a value, not code
+   being quoted. Scoped to table cells so the api-landing token field keeps its own rule. */
+td .masked-token {
+  color: var(--text-muted);
+  background: none;
+  padding: 0;
 }

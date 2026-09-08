@@ -76,7 +76,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const listSection = document.getElementById('apiFlowList');
     const formSection = document.getElementById('apiFlowForm');
     const createBtn = document.getElementById('createApiFlowBtn');
-    const createBtnEmpty = document.getElementById('createApiFlowBtnEmpty');
 
     function showForm() {
         listSection.style.display = 'none';
@@ -101,7 +100,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     createBtn?.addEventListener('click', handleCreateClick);
-    createBtnEmpty?.addEventListener('click', handleCreateClick);
 
     document.getElementById('cancelApiFlowBtn')?.addEventListener('click', showList);
     document.getElementById('cancelApiFlowBtn2')?.addEventListener('click', showList);
@@ -1972,8 +1970,35 @@ function initWizard() {
     document.getElementById('afContinueBtn')?.addEventListener('click', () => {
         if (validateWizardStep(currentStep)) goToStep(currentStep + 1);
     });
+    /* Kebab menus in the workflow table. Delegated on document so rows re-rendered later
+       are covered, and one open menu at a time: any trigger closes the others first, and a
+       click anywhere outside a menu closes all of them. Ported from upstream's
+       settings-apis.js, which drives the same cfg-dropdown markup. */
+    document.addEventListener('click', function (e) {
+        const trigger = e.target.closest('.cfg-menu-trigger');
+        if (trigger) {
+            e.stopPropagation();
+            const dropdown = trigger.parentElement.querySelector('.cfg-dropdown');
+            const wasOpen = dropdown && dropdown.style.display === 'flex';
+            document.querySelectorAll('.cfg-dropdown').forEach(function (d) { d.style.display = 'none'; });
+            if (dropdown && !wasOpen) dropdown.style.display = 'flex';
+            return;
+        }
+        if (!e.target.closest('.cfg-dropdown')) {
+            document.querySelectorAll('.cfg-dropdown').forEach(function (d) { d.style.display = 'none'; });
+        }
+    });
+
+    /* An action inside a menu closes it - the menu should not sit open over the dialog or
+       the form the action just opened. */
+    document.addEventListener('click', function (e) {
+        if (e.target.closest('.cfg-dropdown-item')) {
+            document.querySelectorAll('.cfg-dropdown').forEach(function (d) { d.style.display = 'none'; });
+        }
+    });
+
     // Clicking or keyboard-activating a complete stepper step navigates back
-    document.querySelectorAll('.af-stepper-step').forEach(el => {
+    document.querySelectorAll('.af-wizard .cfg-step').forEach(el => {
         el.addEventListener('click', () => {
             const s = parseInt(el.dataset.step);
             if (s < currentStep) goToStep(s);
@@ -2047,25 +2072,27 @@ function updateWizardUI() {
         document.getElementById(`afStep${i}`)?.classList.toggle('d-none', i !== currentStep);
         document.getElementById(`afRight${i}`)?.classList.toggle('d-none', i !== currentStep);
     }
-    // Stepper dots + ARIA state
-    document.querySelectorAll('.af-stepper-step').forEach(el => {
+    // Stepper circles + ARIA state. cfg-step--done is green, cfg-step--active is blue and
+    // a step ahead of the current one carries neither, so it stays grey.
+    document.querySelectorAll('.af-wizard .cfg-step').forEach(el => {
         const s = parseInt(el.dataset.step);
-        el.classList.toggle('is-active', s === currentStep);
-        el.classList.toggle('is-complete', s < currentStep);
-        if (s > currentStep) {
-            el.classList.remove('is-active', 'is-complete');
-        }
+        el.classList.remove('cfg-step--active', 'cfg-step--done');
         const isComplete = s < currentStep;
         const isCurrent = s === currentStep;
+        if (isComplete) el.classList.add('cfg-step--done');
+        else if (isCurrent) el.classList.add('cfg-step--active');
         el.setAttribute('aria-current', isCurrent ? 'step' : 'false');
         el.setAttribute('aria-disabled', isComplete ? 'false' : 'true');
         el.setAttribute('tabindex', isComplete ? '0' : '-1');
-        const dot = el.querySelector('.af-stepper-dot');
-        if (dot) dot.innerHTML = s < currentStep ? '<i class="bi bi-check2"></i>' : String(s);
+        const circ = el.querySelector('.cfg-step-circle');
+        if (circ) {
+            if (isComplete) circ.innerHTML = '<i class="bi bi-check" style="font-size:.75rem;line-height:1;"></i>';
+            else circ.textContent = String(s);
+        }
     });
-    // Stepper lines
-    document.querySelectorAll('.af-stepper-line').forEach((line, idx) => {
-        line.classList.toggle('is-complete', idx + 1 < currentStep);
+    // Stepper connectors
+    document.querySelectorAll('.af-wizard .cfg-step-connector').forEach((line, idx) => {
+        line.classList.toggle('cfg-step-connector--done', idx + 1 < currentStep);
     });
     // Footer
     const label = document.getElementById('afFooterStepLabel');
@@ -2290,7 +2317,12 @@ function initLlmsConfig() {
     const saveBtn = document.getElementById('saveLlmsConfigBtn');
     if (saveBtn) saveBtn.addEventListener('click', saveLlmsConfig);
 
-    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+    // Scoped to this panel's own help icons. Unscoped, it also picked up the create-workflow
+    // form's .af-field-status spans, which ship data-bs-title="" and are filled in later by
+    // the field-validation code above. Bootstrap normalizes an empty data attribute to null,
+    // so constructing a Tooltip over one throws a type error - and that exception aborted
+    // initLlmsConfig before the line below, leaving the llms.txt preview permanently empty.
+    document.querySelectorAll('#llmsTabContent [data-bs-toggle="tooltip"]').forEach(el => {
         new bootstrap.Tooltip(el);
     });
 

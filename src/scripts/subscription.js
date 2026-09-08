@@ -380,9 +380,24 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
       resetUi();
 
       if (response.ok) {
-        showSubscriptionMessage(messageOverlay, "Successfully subscribed", "success");
         closeModal('planModal-' + apiId);
+        /* Patch the card, then reload.
+
+           The reload is what makes the one-plan-per-application rule hold: the server
+           render is the only place that knows every plan this application now holds, so
+           after it the other plan cards disable this application by themselves and no
+           client-side bookkeeping has to agree with the database. The paid flow already
+           ends in a page load for the same reason, and the startup handler at the top of
+           this file was written for both - "if redirected after payment or free flow" -
+           it re-shows the success message from ?subscription=success and strips the param.
+
+           markSubscribedUI still runs first so the card is correct in the moment before
+           navigation commits, and if navigation is ever blocked the UI is not left stale. */
         markSubscribedUI(card, applicationID, apiId);
+        const reloadUrl = new URL(window.location.href);
+        reloadUrl.searchParams.set('subscription', 'success');
+        window.location.href = reloadUrl.toString();
+        return;
       } else {
         console.error("Failed to create subscription:", responseData);
         const errMsg = responseData.message || responseData.description || responseData.error || "Subscription failed. Please try again.";
@@ -801,6 +816,23 @@ function addAPISubscription(selectElement) {
 
 }
 
+/**
+ * Swaps a table out for its empty state once the last row has gone.
+ *
+ * The proxy and MCP tables are each gated on their own count now, so either can be
+ * absent - an application subscribed only to MCP servers renders no proxy table, and
+ * reading .rows off it threw. It also takes the .sub-tablewrap with it rather than just
+ * the <table>, which would otherwise leave its border behind as an empty frame above
+ * the empty state.
+ */
+function collapseEmptyTable(tableId, emptyStateId) {
+    const table = document.getElementById(tableId);
+    if (!table || table.rows.length > 1) return;
+    (table.closest('.sub-tablewrap') || table).remove();
+    const emptyState = document.getElementById(emptyStateId);
+    if (emptyState) emptyState.style.display = 'block';
+}
+
 async function removeSubscription(orgID, appID, apiRefID, subID) {
 
     try {
@@ -813,16 +845,8 @@ async function removeSubscription(orgID, appID, apiRefID, subID) {
         if (response.ok) {
             await showAlert(`Unsubscribed successfully!`, 'success');
             document.getElementById(`data-row-${subID}`)?.remove();
-            const rowCount = document.getElementById(`app-table-${appID}`).rows.length;
-            if (rowCount === 1) {
-                document.getElementById(`app-table-${appID}`).remove();
-                document.getElementById('no-subscription').style.display = 'block';
-            }
-            const mcpTable = document.getElementById(`app-table-mcp-${appID}`);
-            if (mcpTable && mcpTable.rows.length === 1) {
-                mcpTable.remove();
-                document.getElementById('no-subscription-mcp').style.display = 'block';
-            }
+            collapseEmptyTable(`app-table-${appID}`, 'no-subscription');
+            collapseEmptyTable(`app-table-mcp-${appID}`, 'no-subscription-mcp');
         } else {
             const responseData = await response.json();
             console.error('Failed to unsubscribe:', responseData);
@@ -886,9 +910,15 @@ function markSubscribedUI(card, applicationID, apiId) {
     ? apiContainer.querySelectorAll('.custom-dropdown')
     : card.querySelectorAll('.custom-dropdown');
 
+  /* An application holds at most one plan per API, so the plan just subscribed and the
+     other plans of the same API need opposite treatment. Without the else branch the
+     application stayed selectable on its sibling cards until the next page load, and
+     picking it there produced a 409 from adminService.createSubscription. */
   allDropdowns.forEach(function(dropdown) {
     const appOption = dropdown.querySelector('.select-item[data-value="' + applicationID + '"]');
-    if (appOption) {
+    if (!appOption) return;
+
+    if (card.contains(dropdown)) {
       let subscriptionIcon = appOption.querySelector(".subscription-icon");
       if (subscriptionIcon) {
         subscriptionIcon.style.display = "inline-block";
@@ -900,15 +930,35 @@ function markSubscribedUI(card, applicationID, apiId) {
         subscriptionIcon = tempDiv.firstElementChild;
         appOption.appendChild(subscriptionIcon);
       }
-      /* The option stays selectable - it is the way back to the subscription. Marking it
-         is what turns the control below into "View subscription"; disabling it, as this
-         did before, just made the application unreachable. */
+      /* The option stays selectable on its own plan - it is the way back to the
+         subscription. Marking it is what turns the control below into "View
+         subscription"; disabling it, as this did before, just made the application
+         unreachable. */
       appOption.dataset.subscribed = "true";
       const container = appOption.closest(".subscription-container");
       const selectedId = container && container.querySelector('input[type="hidden"]');
       if (container && selectedId && selectedId.value === applicationID) {
         container.classList.add("subscription-container--selected-subscribed");
       }
+      return;
+    }
+
+    // Another plan of this API: the application is now spoken for.
+    appOption.classList.add("disabled");
+    appOption.setAttribute("aria-disabled", "true");
+    appOption.dataset.subscribed = "false";
+
+    /* Clear it where it was the pending choice, so that card cannot submit a selection
+       the server would now refuse. Reached when an application is picked on one plan and
+       then subscribed on another before this card is touched again. */
+    const siblingHidden = dropdown.querySelector('input[type="hidden"]');
+    if (siblingHidden && siblingHidden.value === applicationID) {
+      siblingHidden.value = "";
+      const label = dropdown.querySelector(".selected-text");
+      if (label) label.textContent = "Create an app";
+      const siblingCard = dropdown.closest(".subscription-card") || dropdown.closest(".aov-plan-card");
+      const siblingBtn = siblingCard && siblingCard.querySelector(".subscribe-btn");
+      if (siblingBtn) siblingBtn.setAttribute("disabled", "disabled");
     }
   });
 

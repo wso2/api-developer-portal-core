@@ -1286,10 +1286,14 @@ hr {
 }
 
 .plan-kpi-free{
-  font-size: 1.25rem;
+  /* The card's own scale: .aov-plan-name is 0.9375rem/700 and .plan-kpi-label opposite it
+     is 0.8125rem/600, so "Free" at 1.25rem read louder than the plan's own name - a word
+     carries far more weight at that size than the right-aligned numeral .plan-kpi-amount
+     was sized for. Colour and weight are unchanged. */
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--success);
-  line-height: 1.05;
+  line-height: 1.1;
   white-space: nowrap;
 }
 

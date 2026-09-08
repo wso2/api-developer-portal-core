@@ -308,9 +308,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (mcpOverviewLink) mcpOverviewLink.href = `${basePath}/mcp/${apiId}`;
                 const mcpDocsLink = document.getElementById('mcp-docs');
                 if (mcpDocsLink) mcpDocsLink.href = `${basePath}/mcp/${apiId}/docs/specification`;
+                /* Only rendered for an MCP server that has a subscription plan, so the
+                   lookup is allowed to miss - same optional treatment as api-platform-keys. */
+                const mcpSubscriptionsLink = document.getElementById('mcp-subscriptions');
+                if (mcpSubscriptionsLink) mcpSubscriptionsLink.href = `${basePath}/mcp/${apiId}/subscriptions`;
 
                 // Set active submenu item
-                if (currentPath.includes('/docs')) {
+                if (currentPath.includes('/subscriptions')) {
+                    document.getElementById('mcp-subscriptions')?.classList.add('active');
+                } else if (currentPath.includes('/docs')) {
                     document.getElementById('mcp-docs')?.classList.add('active');
                 } else {
                     document.getElementById('mcp-overview')?.classList.add('active');

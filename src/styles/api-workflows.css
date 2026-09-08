@@ -40,29 +40,6 @@
     margin: 0.5rem 0 0 0;
 }
 
-.btn-manage-workflows {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: var(--primary);
-    color: var(--white);
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    text-decoration: none;
-    white-space: nowrap;
-    flex-shrink: 0;
-    margin-top: 0.25rem;
-    transition: opacity 0.2s ease;
-}
-
-.btn-manage-workflows:hover {
-    opacity: 0.85;
-    color: var(--white);
-}
-
 .flows-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
