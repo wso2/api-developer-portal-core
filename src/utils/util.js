@@ -905,11 +905,16 @@ function validateScripts(strContent) {
             "<script id=\"existing-subs-data\" type=\"application/json\">{{{json platformSubscriptions}}}</script>",
             // API flows JSON data island (pages/api-flows/page.hbs)
             "<script type=\"application/json\" id=\"apiFlowsDataContainer\">{{{json apiFlows}}}</script>",
-            // AI agent data island (pages/api-landing/page.hbs)
-            "<script type=\"application/json\" id=\"apiAgentData\">{\"baseUrl\":\"{{baseUrl}}\",\"apiHandle\":\"{{apiMetadata.apiHandle}}\"}</script>",
-            // AI agent data island (pages/mcp-landing/page.hbs) - carries artifactPath so
-            // the shared script reads /mcp/<handle>.md rather than the /api/ default
-            "<script type=\"application/json\" id=\"apiAgentData\">{\"baseUrl\":\"{{baseUrl}}\",\"apiHandle\":\"{{apiMetadata.apiHandle}}\",\"artifactPath\":\"mcp\"}</script>",
+            /* AI agent data islands. These are exact-string matches, so they have to track
+               the pages byte for byte: main added the apiPath key to both pages (the
+               shared script reads data.apiPath to choose /api/ or /mcp/ for the markdown
+               route), which put both templates outside this list until these entries were
+               updated - and a template that is not on it is a 400 from the theme upload
+               endpoint, so a customer editing the default theme could not re-upload it. */
+            // pages/api-landing/page.hbs
+            "<script type=\"application/json\" id=\"apiAgentData\">{\"baseUrl\":\"{{baseUrl}}\",\"apiHandle\":\"{{apiMetadata.apiHandle}}\",\"apiPath\":\"api\"}</script>",
+            // pages/mcp-landing/page.hbs
+            "<script type=\"application/json\" id=\"apiAgentData\">{\"baseUrl\":\"{{baseUrl}}\",\"apiHandle\":\"{{apiMetadata.apiHandle}}\",\"apiPath\":\"mcp\"}</script>",
             // Home discover data island (pages/home/page.hbs)
             "<script type=\"application/json\" id=\"homeDiscoverData\">{\"baseUrl\":\"{{baseUrl}}\"}</script>",
             // Existing-subs bootstrap (api-landing/partials/api-subscription-plans.hbs)
