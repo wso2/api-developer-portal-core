@@ -69,7 +69,7 @@ const getOrgContent = async (req, res) => {
             if (asset) {
                 const contentType = asset ? retrieveContentType(asset.FILE_NAME, asset.FILE_TYPE) : "";
                 return util.sendAsset(res, asset.FILE_NAME, contentType,
-                    Buffer.isBuffer(asset.FILE_CONTENT) ? asset.FILE_CONTENT : constants.CHARSET_UTF8);
+                    Buffer.isBuffer(asset.FILE_CONTENT) ? asset.FILE_CONTENT : String(asset.FILE_CONTENT ?? ''));
             }
         } else if (req.params.fileType) {
             const assets = await adminService.getOrgContent(req.params.orgId, req.params.name, req.params.fileType);

@@ -980,9 +980,10 @@ const getAPIFile = async (req, res) => {
                 contentType = util.retrieveContentType(apiFileName, constants.IMAGE);
             }
             if (apiFileResponse) {
-                // Send file content as text
+                // Binary assets are sent as-is; when the stored file is a link,
+                // `apiFile` holds the decoded URL text and is sent as text.
                 return util.sendAsset(res, apiFileName, contentType,
-                    Buffer.isBuffer(apiFile) ? apiFile : constants.CHARSET_UTF8);
+                    Buffer.isBuffer(apiFile) ? apiFile : String(apiFile ?? ''));
             } else {
                 res.status(404).send("API File not found");
             }

@@ -82,6 +82,16 @@ const MARKDOWN_SANITIZE_OPTIONS = {
     }
 };
 
+// A same-document fragment reference such as `#icon`. Anything carrying a scheme,
+// a path or whitespace is rejected, so `javascript:`, `data:` and cross-document
+// references can never reach a rendered `<use>`.
+const FRAGMENT_REFERENCE = /^#[A-Za-z0-9_][A-Za-z0-9_.:-]*$/;
+
+function isFragmentReference(value) {
+
+    return typeof value === 'string' && FRAGMENT_REFERENCE.test(value);
+}
+
 // SVG assets are served from the portal origin with `image/svg+xml`, which the
 // browser treats as an active document when navigated to directly. Strip every
 // scripting vector before such a file is handed to a client.
@@ -105,7 +115,11 @@ const SVG_SANITIZE_OPTIONS = {
             'marker-start', 'marker-mid', 'preserveAspectRatio', 'text-anchor', 'font-size',
             'font-family', 'font-weight', 'dx', 'dy', 'dominant-baseline', 'opacity',
             'stdDeviation', 'result', 'in', 'in2', 'mode', 'type', 'values', 'opacity'
-        ]
+        ],
+        // `<use href="#icon">` is the standard sprite pattern, so `use` keeps its
+        // reference attributes. `transformTags` below narrows them to same-document
+        // fragments, which rules out external documents and `javascript:` URIs.
+        use: ['href', 'xlink:href']
     },
     // `script`, `foreignObject`, `animate`, `set`, `handler`, `a` (javascript: href)
     // and `style` are all absent from allowedTags above.
@@ -113,6 +127,16 @@ const SVG_SANITIZE_OPTIONS = {
     disallowedTagsMode: 'discard',
     allowedSchemes: ['http', 'https'],
     allowedSchemesAppliedToAttributes: ['href', 'xlink:href', 'src'],
+    transformTags: {
+        use: (tagName, attribs) => {
+            for (const attribute of ['href', 'xlink:href']) {
+                if (!isFragmentReference(attribs[attribute])) {
+                    delete attribs[attribute];
+                }
+            }
+            return { tagName, attribs };
+        }
+    },
     parser: {
         lowerCaseTags: false,
         lowerCaseAttributeNames: false
