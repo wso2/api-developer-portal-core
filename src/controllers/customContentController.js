@@ -18,7 +18,7 @@
 /* eslint-disable no-undef */
 const { renderTemplate, renderTemplateFromAPI, loadMarkdown } = require('../utils/util');
 const config = require(process.cwd() + '/config.json');
-const markdown = require('marked');
+const { renderMarkdown } = require('../utils/sanitizer');
 const fs = require('fs');
 const path = require('path');
 const adminDao = require('../dao/admin');
@@ -89,7 +89,7 @@ const loadCustomContent = async (req, res) => {
             if (markDownFiles.length > 0) {
                 markDownFiles.forEach((item) => {
                     const tempKey = item.FILE_NAME.split('.md')[0];
-                    content[tempKey] = markdown.parse(item.FILE_CONTENT.toString(constants.CHARSET_UTF8));
+                    content[tempKey] = renderMarkdown(item.FILE_CONTENT.toString(constants.CHARSET_UTF8));
                 });
             }
             content[constants.BASE_URL_NAME] = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;

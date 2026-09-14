@@ -18,7 +18,7 @@
 /* eslint-disable no-undef */
 const path = require('path');
 const fs = require('fs');
-const marked = require('marked');
+const { renderMarkdown, sanitizeSVG } = require('./sanitizer');
 const Handlebars = require('handlebars');
 const logger = require('../config/logger');
 const { CustomError } = require('../utils/errors/customErrors');
@@ -42,7 +42,7 @@ async function loadMarkdown(filename, dirName) {
     const filePath = path.join(process.cwd(), dirName, filename);
     if (fs.existsSync(filePath)) {
         const fileContent = fs.readFileSync(filePath, constants.CHARSET_UTF8);
-        return marked.parse(fileContent);
+        return renderMarkdown(fileContent);
     } else {
         return null;
     }
@@ -368,12 +368,48 @@ const retrieveContentType = (fileName, fileType) => {
     return constants.MIME_TYPES.TEXT;
 };
 
+/**
+ * Send a stored asset (image, style, spec, ...) to the client.
+ *
+ * SVG files are active documents when navigated to directly, so any SVG served
+ * from the portal origin is sanitized first. `nosniff` is always set so a file
+ * whose content does not match its declared type cannot be re-interpreted as
+ * HTML by the browser.
+ *
+ * @param {object} res express response
+ * @param {string} fileName name of the stored file
+ * @param {string} contentType resolved content type
+ * @param {Buffer|string} content file content
+ */
+const sendAsset = (res, fileName, contentType, content) => {
+
+    const extension = path.extname(fileName || '').toLowerCase();
+    let payload = content;
+    let resolvedContentType = contentType;
+
+    if (extension === constants.FILE_EXTENSIONS.SVG || contentType === constants.MIME_TYPES.SVG) {
+        payload = Buffer.from(sanitizeSVG(content), constants.CHARSET_UTF8);
+        resolvedContentType = constants.MIME_TYPES.SVG;
+        // Belt and braces: even a sanitized SVG is rendered with scripting off.
+        res.set('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; sandbox");
+    }
+    res.set(constants.MIME_TYPES.CONYEMT_TYPE, resolvedContentType);
+    res.set('X-Content-Type-Options', 'nosniff');
+    return res.status(200).send(payload);
+};
+
 const getAPIFileContent = (directory) => {
     let files = [];
     const filenames = fs.readdirSync(directory);
     filenames.forEach((filename) => {
         if (!(filename === '.DS_Store')) {
             let fileContent = fs.readFileSync(path.join(directory, filename), 'utf8');
+            // API landing content is compiled and injected into the portal page, so
+            // it is held to the same script allow-list as uploaded themes.
+            const extension = path.extname(filename).toLowerCase();
+            if (extension === constants.FILE_EXTENSIONS.HBS || extension === constants.FILE_EXTENSIONS.HTML) {
+                validateScripts(fileContent);
+            }
             files.push({ fileName: filename, content: fileContent, type: constants.DOC_TYPES.API_LANDING });
         }
     });
@@ -1172,6 +1208,7 @@ module.exports = {
     renderGivenTemplate,
     handleError,
     retrieveContentType,
+    sendAsset,
     getAPIFileContent,
     getAPIImages,
     getAPIDocLinks,
@@ -1186,6 +1223,7 @@ module.exports = {
     validateRequestParameters,
     rejectExtraProperties,
     readFilesInDirectory,
+    validateScripts,
     appendAPIImageURL,
     appendSubscriptionPlanDetails,
     tokenExchanger,

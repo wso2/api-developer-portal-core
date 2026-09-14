@@ -59,6 +59,24 @@ const filePrefix = config.pathToContent;
 
 const SERVER_ID = uuidv4();
 
+// Baseline security response headers.
+//
+// `object-src`/`base-uri`/`frame-ancestors` are set unconditionally: they block
+// plugin-based script execution, <base> hijacking and clickjacking without
+// affecting the portal's own inline scripts. A stricter, deployment specific
+// policy can be supplied through `portalConfigs.contentSecurityPolicy` in
+// config.json once the inline scripts of a deployment's custom content have
+// been accounted for.
+const DEFAULT_CSP = "object-src 'none'; base-uri 'self'; frame-ancestors 'self'";
+
+app.use((req, res, next) => {
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.set('X-Frame-Options', 'SAMEORIGIN');
+    res.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.set('Content-Security-Policy', config.portalConfigs?.contentSecurityPolicy || DEFAULT_CSP);
+    next();
+});
+
 logger.info(`Starting server with ID: ${SERVER_ID}`);
 
 //PostgreSQL connection pool for session store

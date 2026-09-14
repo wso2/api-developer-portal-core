@@ -979,11 +979,11 @@ const getAPIFile = async (req, res) => {
             } else {
                 contentType = util.retrieveContentType(apiFileName, constants.IMAGE);
             }
-            res.set(constants.MIME_TYPES.CONYEMT_TYPE, contentType);
-
             if (apiFileResponse) {
-                // Send file content as text
-                return res.status(200).send(Buffer.isBuffer(apiFile) ? apiFile : constants.CHARSET_UTF8);
+                // Binary assets are sent as-is; when the stored file is a link,
+                // `apiFile` holds the decoded URL text and is sent as text.
+                return util.sendAsset(res, apiFileName, contentType,
+                    Buffer.isBuffer(apiFile) ? apiFile : String(apiFile ?? ''));
             } else {
                 res.status(404).send("API File not found");
             }
@@ -1624,6 +1624,11 @@ const collectWebContentFiles = async (webPath) => {
         const fileExtension = path.extname(file.name).toLowerCase();
         if (util.isTextFile(fileExtension)) {
             const content = await fs.readFile(filePath, constants.CHARSET_UTF8);
+            // Templates here are compiled into the API landing page; apply the same
+            // script allow-list that uploaded themes go through.
+            if (fileExtension === constants.FILE_EXTENSIONS.HBS || fileExtension === constants.FILE_EXTENSIONS.HTML) {
+                util.validateScripts(content);
+            }
             contentFiles.push({ fileName: file.name, content: content, type: constants.DOC_TYPES.API_LANDING });
         } else if (util.isImageFile(fileExtension)) {
             const content = await fs.readFile(filePath);

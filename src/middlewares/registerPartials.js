@@ -20,7 +20,7 @@ const path = require('path');
 const fs = require('fs');
 const exphbs = require('express-handlebars');
 const config = require(process.cwd() + '/config.json');
-const markdown = require('marked');
+const { renderMarkdown } = require('../utils/sanitizer');
 const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const constants = require('../utils/constants');
@@ -183,7 +183,7 @@ async function registerAPILandingContent(req, orgID, partialObject) {
   //fetch markdown content for API if exists
   const markdownResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_MD_CONTENT_FILE_NAME, constants.DOC_TYPES.API_LANDING, orgID, apiID);
   const markdownContent = markdownResponse !== null ? markdownResponse.API_FILE.toString("utf8") : "";
-  const markdownHtml = markdownContent ? markdown.parse(markdownContent) : "";
+  const markdownHtml = markdownContent ? renderMarkdown(markdownContent) : "";
 
   let metaData = await apiMetadataService.getMetadataFromDB(orgID, apiID);
   if (metaData !== "") {
@@ -219,7 +219,7 @@ async function registerDocsPageContent(req, orgID, partialObject) {
   const docContentResponse = await apiDao.getAPIDocByName(constants.DOC_TYPES.DOC_ID + docType, docName + ".md", orgID, apiID);
   if (docContentResponse !== null) {
     const markdownContent = docContentResponse.API_FILE.toString("utf8");
-    markdownHtml = markdownContent ? markdown.parse(markdownContent) : "";
+    markdownHtml = markdownContent ? renderMarkdown(markdownContent) : "";
     partialObject[constants.FILE_NAME.API_DOC_PARTIAL_NAME] = hbs.handlebars.partials[constants.FILE_NAME.API_DOC_PARTIAL_NAME];
   }
   const apiMetadata = await apiDao.getAPIMetadata(orgID, apiID);
