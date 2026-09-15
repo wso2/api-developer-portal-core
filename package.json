@@ -59,7 +59,6 @@
     "node": "22.0.0",
     "node-fetch": "^2.7.0",
     "nodemon": "3.1.4",
-    "npm": "11.19.1",
     "passport": "0.7.0",
     "passport-custom": "1.1.1",
     "passport-local": "1.0.0",
