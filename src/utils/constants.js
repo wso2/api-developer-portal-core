@@ -119,6 +119,10 @@ module.exports = {
         RESIDENT_KEY_MANAGER: 'Resident Key Manager',
         APP_DEV_STS_KEY_MANAGER: '_appdev_sts_key_manager_',
     },
+    DEV_PORTAL_APP_ENV: {
+        PROD: 'prod',
+        SANDBOX: 'sandbox',
+    },
     TOKEN_TYPES: {
         API_KEY: 'API_KEY',
         OAUTH: 'OAUTH',

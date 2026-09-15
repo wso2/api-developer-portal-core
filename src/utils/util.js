@@ -1197,6 +1197,37 @@ async function isAiDisabledForPortal(orgID, viewName) {
     }
 }
 
+// Resident key manager OAuth endpoints, overridable per org via residentKMEndpointOverrides.
+const DEFAULT_RESIDENT_KM_ENDPOINTS = {
+    tokenEndpoint: 'https://sts.choreo.dev/oauth2/token',
+    authorizeEndpoint: 'https://sts.choreo.dev/oauth2/authorize',
+    revokeEndpoint: 'https://sts.choreo.dev/oauth2/revoke'
+};
+
+// Override per org, optionally per `prod` / `sandbox`; flat fields apply to both.
+function resolveResidentKMEndpointOverride(cpOrgID, devPortalAppEnv) {
+    const orgOverrides = cpOrgID ? config.residentKMEndpointOverrides?.[cpOrgID] : null;
+    if (!orgOverrides) {
+        return null;
+    }
+    // Environment-specific fields take precedence over flat ones.
+    const envOverrides = (devPortalAppEnv && orgOverrides[devPortalAppEnv]) || {};
+    const resolved = {};
+    for (const key of Object.keys(DEFAULT_RESIDENT_KM_ENDPOINTS)) {
+        const value = envOverrides[key] || orgOverrides[key];
+        if (value) {
+            resolved[key] = value;
+        }
+    }
+    return Object.keys(resolved).length > 0 ? resolved : null;
+}
+
+
+function getResidentKMEndpoints(cpOrgID, devPortalAppEnv) {
+    const overrides = resolveResidentKMEndpointOverride(cpOrgID, devPortalAppEnv);
+    return { ...DEFAULT_RESIDENT_KM_ENDPOINTS, ...(overrides || {}) };
+}
+
 module.exports = {
     loadMarkdown,
     renderTemplate,
@@ -1236,5 +1267,7 @@ module.exports = {
     isAiDisabledForPortal,
     isImageFile,
     normalizeStringArray,
-    resolveApiType
+    resolveApiType,
+    getResidentKMEndpoints,
+    resolveResidentKMEndpointOverride
 }

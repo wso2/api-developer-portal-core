@@ -133,6 +133,20 @@
     "showMaintenanceBanner": true,
     "maintenanceBannerText": "This portal is under maintenance today from 10 PM to 12 AM."
   },
+  "residentKMEndpointOverrides": {
+    "<control-plane-organization-id>": {
+      "prod": {
+        "tokenEndpoint": "https://<production-custom-domain>/oauth2/token",
+        "authorizeEndpoint": "https://<production-custom-domain>/oauth2/authorize",
+        "revokeEndpoint": "https://<production-custom-domain>/oauth2/revoke"
+      },
+      "sandbox": {
+        "tokenEndpoint": "https://<sandbox-custom-domain>/oauth2/token",
+        "authorizeEndpoint": "https://<sandbox-custom-domain>/oauth2/authorize",
+        "revokeEndpoint": "https://<sandbox-custom-domain>/oauth2/revoke"
+      }
+    }
+  },
   "telemetry": true,
   "generateDefaultSubPolicies": false,
   "fidp": {

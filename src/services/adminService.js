@@ -1439,7 +1439,21 @@ async function generateOAuthKey(req, cpAppID, tokenDetails) {
                     cpAppID
                 });
                 const response = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications/${cpAppID}/keys`, {});
-                return response.list[0];
+                // Prefer the key for the requested type; fall back to the first key as before.
+                const keys = response.list || [];
+                const sameText = (a, b) => typeof a === 'string' && typeof b === 'string'
+                    && a.toLowerCase() === b.toLowerCase();
+                const existingKey =
+                    keys.find(key => sameText(key.keyType, tokenDetails.keyType)
+                        && (!tokenDetails.keyManager || sameText(key.keyManager, tokenDetails.keyManager)))
+                    ?? keys.find(key => sameText(key.keyType, tokenDetails.keyType));
+                if (!existingKey) {
+                    logger.warn('Existing OAuth key not found for the requested key type, returning the first key', {
+                        cpAppID, keyType: tokenDetails.keyType, keyManager: tokenDetails.keyManager
+                    });
+                    return keys[0];
+                }
+                return existingKey;
             } else {
                 throw error;
             }
@@ -1602,16 +1616,28 @@ const createAppKeyMappingOnBehalfOfUser = async (cpAppID, keymanager, clientId, 
     }
 }
 
+// Union of both environments, used only to validate a key manager name.
 const getAPIMKeyManagersBehalfOfUser = async (cpOrgId, patToken) => {
 
-    let headers = {
+    const headers = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${patToken}`
     }
-    let url = `${controlPlaneGwUrl}/key-managers?devPortalAppEnv=prod`;
-    const keymanagersResponse = await util.apiRequest('GET', url, headers, null, cpOrgId);
-
-    return keymanagersResponse.data.list;
+    const requestFor = (devPortalAppEnv) => util.apiRequest(
+        'GET', `${controlPlaneGwUrl}/key-managers?devPortalAppEnv=${devPortalAppEnv}`, headers, null, cpOrgId
+    );
+    const [prodResponse, sandboxResponse] = await Promise.allSettled([
+        requestFor(constants.DEV_PORTAL_APP_ENV.PROD),
+        requestFor(constants.DEV_PORTAL_APP_ENV.SANDBOX)
+    ]);
+    if (prodResponse.status === 'rejected' && sandboxResponse.status === 'rejected') {
+        throw prodResponse.reason;
+    }
+    const keyManagers = [
+        ...(prodResponse.value?.data?.list || []),
+        ...(sandboxResponse.value?.data?.list || [])
+    ];
+    return [...new Map(keyManagers.map(keyManager => [keyManager.name, keyManager])).values()];
 }
 
 const createCPApplication = async (req, cpApplicationName) => {
