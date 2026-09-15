@@ -226,18 +226,10 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
 
     const cpOrgID = req.cpOrgID ?? (await adminDao.getOrganization(orgName))?.ORGANIZATION_IDENTIFIER;
 
-    // Per-environment endpoints keep the control plane values with the override on top; otherwise defaults plus override.
+    // Resident defaults apply unless the control plane returned per-environment URLs; the org override then applies on top.
     const enrichKeyManager = async (keyManager, devPortalAppEnv) => {
-        if (keyManager.name === constants.KEY_MANAGERS.RESIDENT_KEY_MANAGER) {
-            if (residentEndpointsPerEnvironment) {
-                Object.assign(keyManager, util.resolveResidentKMEndpointOverride(cpOrgID, devPortalAppEnv) || {});
-            } else {
-                const residentKMEndpoints = util.getResidentKMEndpoints(cpOrgID, devPortalAppEnv);
-                keyManager.tokenEndpoint = residentKMEndpoints.tokenEndpoint;
-                keyManager.authorizeEndpoint = residentKMEndpoints.authorizeEndpoint;
-                keyManager.revokeEndpoint = residentKMEndpoints.revokeEndpoint;
-            }
-        }
+        Object.assign(keyManager,
+            util.getKMEndpointOverrides(keyManager, cpOrgID, devPortalAppEnv, !residentEndpointsPerEnvironment));
         keyManager.availableGrantTypes = await mapGrants(keyManager.availableGrantTypes);
         keyManager.applicationConfiguration = await mapDefaultValues(keyManager.applicationConfiguration);
     };

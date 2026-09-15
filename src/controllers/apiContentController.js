@@ -1423,10 +1423,8 @@ const loadAPIContentMd = async (req, res) => {
                     }
                 }
                 if (kmList.length > 0) {
-                    const km = kmList[0];
-                    if (km.name === 'Resident Key Manager') {
-                        tokenEndpoint = util.getResidentKMEndpoints(orgDetails.ORGANIZATION_IDENTIFIER, constants.DEV_PORTAL_APP_ENV.PROD).tokenEndpoint;
-                    } else if (km.tokenEndpoint) {
+                    const km = { ...kmList[0], ...util.getKMEndpointOverrides(kmList[0], orgDetails.ORGANIZATION_IDENTIFIER, constants.DEV_PORTAL_APP_ENV.PROD) };
+                    if (km.tokenEndpoint) {
                         tokenEndpoint = km.tokenEndpoint;
                     }
                 }
@@ -1771,8 +1769,8 @@ const loadAPIDefinitionRaw = async (req, res) => {
                         }
                     }
                     if (kmList.length > 0) {
-                        const km = kmList[0];
-                        tokenEndpoint = km.name === 'Resident Key Manager' ? util.getResidentKMEndpoints(req.cpOrgID, constants.DEV_PORTAL_APP_ENV.PROD).tokenEndpoint : (km.tokenEndpoint || null);
+                        const km = { ...kmList[0], ...util.getKMEndpointOverrides(kmList[0], req.cpOrgID, constants.DEV_PORTAL_APP_ENV.PROD) };
+                        tokenEndpoint = km.tokenEndpoint || null;
                     }
                 } catch (kmErr) {
                     logger.warn('Failed to fetch key managers for raw spec', { orgName, apiHandle, error: kmErr.message });

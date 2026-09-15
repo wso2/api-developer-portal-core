@@ -133,7 +133,7 @@
     "showMaintenanceBanner": true,
     "maintenanceBannerText": "This portal is under maintenance today from 10 PM to 12 AM."
   },
-  "residentKMEndpointOverrides": {
+  "kmEndpointOverrides": {
     "<control-plane-organization-id>": {
       "prod": {
         "tokenEndpoint": "https://<production-custom-domain>/oauth2/token",

@@ -1197,20 +1197,19 @@ async function isAiDisabledForPortal(orgID, viewName) {
     }
 }
 
-// Resident key manager OAuth endpoints, overridable per org via residentKMEndpointOverrides.
+// Default OAuth endpoints for the resident key manager.
 const DEFAULT_RESIDENT_KM_ENDPOINTS = {
     tokenEndpoint: 'https://sts.choreo.dev/oauth2/token',
     authorizeEndpoint: 'https://sts.choreo.dev/oauth2/authorize',
     revokeEndpoint: 'https://sts.choreo.dev/oauth2/revoke'
 };
 
-// Override per org, optionally per `prod` / `sandbox`; flat fields apply to both.
-function resolveResidentKMEndpointOverride(cpOrgID, devPortalAppEnv) {
-    const orgOverrides = cpOrgID ? config.residentKMEndpointOverrides?.[cpOrgID] : null;
+// Endpoint fields set in kmEndpointOverrides for an org; a `prod` / `sandbox` block layers on top of flat fields.
+function getConfiguredKMEndpointOverrides(cpOrgID, devPortalAppEnv) {
+    const orgOverrides = cpOrgID ? config.kmEndpointOverrides?.[cpOrgID] : null;
     if (!orgOverrides) {
-        return null;
+        return {};
     }
-    // Environment-specific fields take precedence over flat ones.
     const envOverrides = (devPortalAppEnv && orgOverrides[devPortalAppEnv]) || {};
     const resolved = {};
     for (const key of Object.keys(DEFAULT_RESIDENT_KM_ENDPOINTS)) {
@@ -1219,13 +1218,16 @@ function resolveResidentKMEndpointOverride(cpOrgID, devPortalAppEnv) {
             resolved[key] = value;
         }
     }
-    return Object.keys(resolved).length > 0 ? resolved : null;
+    return resolved;
 }
 
-
-function getResidentKMEndpoints(cpOrgID, devPortalAppEnv) {
-    const overrides = resolveResidentKMEndpointOverride(cpOrgID, devPortalAppEnv);
-    return { ...DEFAULT_RESIDENT_KM_ENDPOINTS, ...(overrides || {}) };
+// Endpoint fields to apply to a key manager: resident defaults when requested, then the org's configured override.
+function getKMEndpointOverrides(keyManager, cpOrgID, devPortalAppEnv, useResidentDefaults = true) {
+    const endpoints = {};
+    if (useResidentDefaults && keyManager?.name === constants.KEY_MANAGERS.RESIDENT_KEY_MANAGER) {
+        Object.assign(endpoints, DEFAULT_RESIDENT_KM_ENDPOINTS);
+    }
+    return Object.assign(endpoints, getConfiguredKMEndpointOverrides(cpOrgID, devPortalAppEnv));
 }
 
 module.exports = {
@@ -1268,6 +1270,5 @@ module.exports = {
     isImageFile,
     normalizeStringArray,
     resolveApiType,
-    getResidentKMEndpoints,
-    resolveResidentKMEndpointOverride
+    getKMEndpointOverrides
 }
