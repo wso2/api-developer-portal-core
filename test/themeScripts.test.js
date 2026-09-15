@@ -8,7 +8,12 @@
 const test = require('node:test');
 const assert = require('node:assert');
 
-const util = require('../src/utils/util');
+/* scriptValidation rather than util: util.js requires dao/admin, which reaches
+   db/sequelize and `require(process.cwd() + '/config.json')` at import time. That file is
+   gitignored, so requiring util here failed on a fresh checkout - which is what broke this
+   suite on CI while it passed on any machine with a local config.json. The function is the
+   same one util re-exports, so this still covers what the upload endpoint runs. */
+const util = require('../src/utils/scriptValidation');
 const { themeTemplates, acmeTemplates, rel, read } = require('./helpers/themeFiles');
 
 function assertAccepted(files, label) {
