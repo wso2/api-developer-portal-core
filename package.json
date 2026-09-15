@@ -10,7 +10,7 @@
     "multi-tenant": "npm run build-css --watch & nodemon src/multi-tenant.js",
     "build-css": "node watcher.js",
     "build": "pkg .",
-    "test": "node --test 'src/**/*.test.js' 'test/**/*.test.js'",
+    "test": "node --test test/*.test.js",
     "lint": "eslint ."
   },
   "repository": {

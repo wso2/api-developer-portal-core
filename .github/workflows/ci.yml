@@ -30,5 +30,12 @@ jobs:
 
       # No database and no network: the theme suites read committed files and stub
       # the stored-file layer. Nothing here touches the development data dump.
+      #
+      # The script globs test/*.test.js and lets the shell expand it, because the two
+      # versions in this matrix disagree about what an argument to `node --test` is:
+      # node 20 reads arguments as paths, so a quoted '**' pattern is a file that does
+      # not exist, while node 22 reads them as globs, so a bare directory is a module
+      # that cannot be loaded. A shell-expanded list of files is what both accept.
+      # A test added outside test/ has to be added to the script by hand.
       - name: Test
         run: npm test
