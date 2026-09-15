@@ -7,6 +7,12 @@ module.exports = [
             'node_modules/**',
             'generated-sdks/**',
             'libs/**',
+            // Vendored third party, like libs/** above: particles.js v2.0.0 (Vincent
+            // Garreau, MIT), served verbatim from /technical-scripts. Linting it reports
+            // on code we do not own and must not edit - a function declaration inside a
+            // case block trips no-case-declarations as an error, which failed CI - and
+            // the file has to stay byte-identical to upstream so it can be re-vendored.
+            'src/scripts/particles.js',
             'dist/**',
             'build/**',
             'src/defaultContent/**',
