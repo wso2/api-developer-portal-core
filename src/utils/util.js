@@ -1221,10 +1221,10 @@ function getConfiguredKMEndpointOverrides(cpOrgID, devPortalAppEnv) {
     return resolved;
 }
 
-// Endpoint fields to apply to a key manager: resident defaults when requested, then the org's configured override.
-function getKMEndpointOverrides(keyManager, cpOrgID, devPortalAppEnv, useResidentDefaults = true) {
+// Endpoint fields to apply to a key manager: resident defaults, then the org's configured override.
+function getKMEndpointOverrides(keyManager, cpOrgID, devPortalAppEnv) {
     const endpoints = {};
-    if (useResidentDefaults && keyManager?.name === constants.KEY_MANAGERS.RESIDENT_KEY_MANAGER) {
+    if (keyManager?.name === constants.KEY_MANAGERS.RESIDENT_KEY_MANAGER) {
         Object.assign(endpoints, DEFAULT_RESIDENT_KM_ENDPOINTS);
     }
     return Object.assign(endpoints, getConfiguredKMEndpointOverrides(cpOrgID, devPortalAppEnv));
