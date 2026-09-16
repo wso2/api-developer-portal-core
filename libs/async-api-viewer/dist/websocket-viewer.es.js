@@ -19044,7 +19044,9 @@ function Nn(t) {
   );
 }
 const _2 = Ut.flushSync, P2 = "choreo-test-key", j2 = "choreo-oauth2-token", I2 = (t) => {
-  const { token: e, apiEndpoint: a, sandboxEndpoint: r, topic: n, publish: o, subscribe: i, parameters: s, isDevportal: l, asyncType: u, payload: c } = t, d = gs(), [p, h] = jt(null), [g, m] = jt([]), [y, w] = jt(c || ""), [k, j] = jt(a), [f, x] = jt("production"), [E, L] = jt({}), [W, O] = jt(!1), [P, A] = jt("Connect"), [v, C] = jt(0), [M, D] = jt(e), [$, H] = jt("<your-header-here>"), [F, q] = jt("<your-header-value-here>"), [z, Z] = jt("http://example.com/callback"), [Q, ue] = jt("864000"), [de, Se] = jt("xxxxxxxxx"), fe = (ce, pe) => {
+  const { token: e, apiEndpoint: a, sandboxEndpoint: r, topic: n, publish: o, subscribe: i, parameters: s, isDevportal: l, asyncType: u, payload: c } = t, d = gs(), [p, h] = jt(null), [g, m] = jt([]), [y, w] = jt(c || ""), [k, j] = jt(a || r), [f, x] = jt(
+    a ? "production" : "sandbox"
+  ), [E, L] = jt({}), [W, O] = jt(!1), [P, A] = jt("Connect"), [v, C] = jt(0), [M, D] = jt(e), [$, H] = jt("<your-header-here>"), [F, q] = jt("<your-header-value-here>"), [z, Z] = jt("http://example.com/callback"), [Q, ue] = jt("864000"), [de, Se] = jt("xxxxxxxxx"), fe = (ce, pe) => {
     C(pe);
   };
   function ye() {
@@ -19072,6 +19074,10 @@ const _2 = Ut.flushSync, P2 = "choreo-test-key", j2 = "choreo-oauth2-token", I2 
     const pe = ce.target.value;
     if (pe === "sandbox" && (!r || r === "")) {
       x("production");
+      return;
+    }
+    if (pe === "production" && (!a || a === "")) {
+      x("sandbox");
       return;
     }
     x(pe);
@@ -19237,7 +19243,7 @@ const _2 = Ut.flushSync, P2 = "choreo-test-key", j2 = "choreo-oauth2-token", I2 
                       boxShadow: "0 1px 3px rgba(0, 0, 0, 0.08)"
                     },
                     children: [
-                      /* @__PURE__ */ B.jsx(xa, { value: "production", children: "Production" }),
+                      /* @__PURE__ */ B.jsx(xa, { value: "production", disabled: !a || a === "", children: "Production" }),
                       /* @__PURE__ */ B.jsx(xa, { value: "sandbox", disabled: !r || r === "", children: "Sandbox" })
                     ]
                   }
@@ -19527,7 +19533,7 @@ const _2 = Ut.flushSync, P2 = "choreo-test-key", j2 = "choreo-oauth2-token", I2 
                       boxShadow: "0 1px 3px rgba(0, 0, 0, 0.08)"
                     },
                     children: [
-                      /* @__PURE__ */ B.jsx(xa, { value: "production", children: "Production" }),
+                      /* @__PURE__ */ B.jsx(xa, { value: "production", disabled: !a || a === "", children: "Production" }),
                       /* @__PURE__ */ B.jsx(xa, { value: "sandbox", disabled: !r || r === "", children: "Sandbox" })
                     ]
                   }
@@ -19743,19 +19749,19 @@ function N2(t) {
   }, [n]);
   const u = Tc(() => {
     var d, p;
-    if (n && Object.keys(n).length > 0 && a) {
+    if (n && Object.keys(n).length > 0 && (a || r)) {
       let h = Vl(n);
       return (d = h.asyncapi) != null && d.startsWith("2") ? h = {
         ...h,
         servers: {
-          default: { url: a, protocol: "ws" },
-          sandbox: { url: r, protocol: "ws" }
+          ...a ? { default: { url: a, protocol: "ws" } } : {},
+          ...r ? { sandbox: { url: r, protocol: "ws" } } : {}
         }
       } : (p = h.asyncapi) != null && p.startsWith("3") && (h = {
         ...h,
         servers: {
-          default: { url: a, protocol: "ws" },
-          sandbox: { url: r, protocol: "ws" }
+          ...a ? { default: { url: a, protocol: "ws" } } : {},
+          ...r ? { sandbox: { url: r, protocol: "ws" } } : {}
         }
       }), h != null && h.channels && l(ka(h)), h;
     } else {
@@ -19785,7 +19791,7 @@ function N2(t) {
       padding: 8,
       children: /* @__PURE__ */ B.jsx(Xn, { size: 25 })
     }
-  ) : a ? /* @__PURE__ */ B.jsx(ve, { children: s.map(({ name: d, publish: p, subscribe: h, parameters: g }) => /* @__PURE__ */ B.jsx(
+  ) : a || r ? /* @__PURE__ */ B.jsx(ve, { children: s.map(({ name: d, publish: p, subscribe: h, parameters: g }) => /* @__PURE__ */ B.jsx(
     I2,
     {
       token: e,
