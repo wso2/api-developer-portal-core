@@ -1197,6 +1197,39 @@ async function isAiDisabledForPortal(orgID, viewName) {
     }
 }
 
+// Default OAuth endpoints for the resident key manager.
+const DEFAULT_RESIDENT_KM_ENDPOINTS = {
+    tokenEndpoint: 'https://sts.choreo.dev/oauth2/token',
+    authorizeEndpoint: 'https://sts.choreo.dev/oauth2/authorize',
+    revokeEndpoint: 'https://sts.choreo.dev/oauth2/revoke'
+};
+
+// Endpoint fields set in kmEndpointOverrides for an org; a `prod` / `sandbox` block layers on top of flat fields.
+function getConfiguredKMEndpointOverrides(cpOrgID, devPortalAppEnv) {
+    const orgOverrides = cpOrgID ? config.kmEndpointOverrides?.[cpOrgID] : null;
+    if (!orgOverrides) {
+        return {};
+    }
+    const envOverrides = (devPortalAppEnv && orgOverrides[devPortalAppEnv]) || {};
+    const resolved = {};
+    for (const key of Object.keys(DEFAULT_RESIDENT_KM_ENDPOINTS)) {
+        const value = envOverrides[key] || orgOverrides[key];
+        if (value) {
+            resolved[key] = value;
+        }
+    }
+    return resolved;
+}
+
+// Endpoint fields to apply to a key manager: resident defaults when requested, then the org's configured override.
+function getKMEndpointOverrides(keyManager, cpOrgID, devPortalAppEnv, useResidentDefaults = true) {
+    const endpoints = {};
+    if (useResidentDefaults && keyManager?.name === constants.KEY_MANAGERS.RESIDENT_KEY_MANAGER) {
+        Object.assign(endpoints, DEFAULT_RESIDENT_KM_ENDPOINTS);
+    }
+    return Object.assign(endpoints, getConfiguredKMEndpointOverrides(cpOrgID, devPortalAppEnv));
+}
+
 module.exports = {
     loadMarkdown,
     renderTemplate,
@@ -1236,5 +1269,6 @@ module.exports = {
     isAiDisabledForPortal,
     isImageFile,
     normalizeStringArray,
-    resolveApiType
+    resolveApiType,
+    getKMEndpointOverrides
 }

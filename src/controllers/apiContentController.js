@@ -1406,21 +1406,25 @@ const loadAPIContentMd = async (req, res) => {
         let tokenEndpoint = null;
         if (config.controlPlane?.enabled !== false) {
             try {
-                const kmResponse = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers?devPortalAppEnv=prod', null, null);
+                const kmResponse = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/key-managers?devPortalAppEnv=${constants.DEV_PORTAL_APP_ENV.PROD}`, null, null);
                 let kmList = (kmResponse?.list || []).filter(km => km.enabled);
                 if (kmList.length > 1) {
                     const filtered = kmList.filter(km =>
                         km.name.includes("_internal_key_manager_") ||
                         (!kmList.some(k => k.name.includes("_internal_key_manager_")) && km.name.includes("Resident Key Manager")) ||
-                        (!kmList.some(k => k.name.includes("_internal_key_manager_") || k.name.includes("Resident Key Manager")) && km.name.includes("_appdev_sts_key_manager_") && km.name.endsWith("_prod"))
+                        (!kmList.some(k => k.name.includes("_internal_key_manager_") || k.name.includes("Resident Key Manager")) && km.name.includes("_appdev_sts_key_manager_"))
                     );
-                    if (filtered.length > 0) kmList = filtered;
+                    if (filtered.length > 0) {
+                        // Prefer the production AppDev STS when both come back.
+                        kmList = [
+                            ...filtered.filter(k => k.name.endsWith('_prod')),
+                            ...filtered.filter(k => !k.name.endsWith('_prod'))
+                        ];
+                    }
                 }
                 if (kmList.length > 0) {
-                    const km = kmList[0];
-                    if (km.name === 'Resident Key Manager') {
-                        tokenEndpoint = 'https://sts.choreo.dev/oauth2/token';
-                    } else if (km.tokenEndpoint) {
+                    const km = { ...kmList[0], ...util.getKMEndpointOverrides(kmList[0], orgDetails.ORGANIZATION_IDENTIFIER, constants.DEV_PORTAL_APP_ENV.PROD) };
+                    if (km.tokenEndpoint) {
                         tokenEndpoint = km.tokenEndpoint;
                     }
                 }
@@ -1748,19 +1752,25 @@ const loadAPIDefinitionRaw = async (req, res) => {
 
             if (config.controlPlane?.enabled !== false) {
                 try {
-                    const kmResponse = await util.invokeApiRequest(req, 'GET', controlPlaneUrl + '/key-managers?devPortalAppEnv=prod', null, null);
+                    const kmResponse = await util.invokeApiRequest(req, 'GET', `${controlPlaneUrl}/key-managers?devPortalAppEnv=${constants.DEV_PORTAL_APP_ENV.PROD}`, null, null);
                     let kmList = (kmResponse?.list || []).filter(km => km.enabled);
                     if (kmList.length > 1) {
                         const filtered = kmList.filter(km =>
                             km.name.includes("_internal_key_manager_") ||
                             (!kmList.some(k => k.name.includes("_internal_key_manager_")) && km.name.includes("Resident Key Manager")) ||
-                            (!kmList.some(k => k.name.includes("_internal_key_manager_") || k.name.includes("Resident Key Manager")) && km.name.includes("_appdev_sts_key_manager_") && km.name.endsWith("_prod"))
+                            (!kmList.some(k => k.name.includes("_internal_key_manager_") || k.name.includes("Resident Key Manager")) && km.name.includes("_appdev_sts_key_manager_"))
                         );
-                        if (filtered.length > 0) kmList = filtered;
+                        if (filtered.length > 0) {
+                            // Prefer the production AppDev STS when both come back.
+                            kmList = [
+                                ...filtered.filter(k => k.name.endsWith('_prod')),
+                                ...filtered.filter(k => !k.name.endsWith('_prod'))
+                            ];
+                        }
                     }
                     if (kmList.length > 0) {
-                        const km = kmList[0];
-                        tokenEndpoint = km.name === 'Resident Key Manager' ? 'https://sts.choreo.dev/oauth2/token' : (km.tokenEndpoint || null);
+                        const km = { ...kmList[0], ...util.getKMEndpointOverrides(kmList[0], req.cpOrgID, constants.DEV_PORTAL_APP_ENV.PROD) };
+                        tokenEndpoint = km.tokenEndpoint || null;
                     }
                 } catch (kmErr) {
                     logger.warn('Failed to fetch key managers for raw spec', { orgName, apiHandle, error: kmErr.message });
