@@ -141,7 +141,7 @@
         <div class="graphql-endpoint-type-wrapper">
           <label for="graphql-endpoint-type">Environment</label>
           <select id="graphql-endpoint-type" aria-label="Endpoint type">
-            <option value="production">Production</option>
+            {{#if apiMetadata.endPoints.productionURL}}<option value="production">Production</option>{{/if}}
             {{#if apiMetadata.endPoints.sandboxURL}}<option value="sandbox">Sandbox</option>{{/if}}
           </select>
         </div>
@@ -203,8 +203,10 @@
       const authTabs = document.getElementById('graphql-auth-tabs');
       const authOAuthPanel = document.getElementById('graphql-auth-oauth');
       const authApiKeyPanel = document.getElementById('graphql-auth-apikey');
-      let selectedEndpointType = 'production';
-      let currentEndpoint = apiEndpoint || '';
+      // An API deployed only to a non-critical environment has a sandbox URL and no
+      // production URL, so default to whichever environment actually has an endpoint.
+      let selectedEndpointType = (!apiEndpoint && sandboxEndpoint) ? 'sandbox' : 'production';
+      let currentEndpoint = (selectedEndpointType === 'sandbox' ? sandboxEndpoint : apiEndpoint) || '';
       let authToken = '';
       let apiKeyValue = '';
       let activeApiKeyHeader = apiKeyHeader;
@@ -290,8 +292,12 @@
         });
       }
 
+      if (endpointTypeSelect) {
+        endpointTypeSelect.value = selectedEndpointType;
+      }
+
       if (endpointInput) {
-        endpointInput.value = apiEndpoint || '';
+        endpointInput.value = currentEndpoint;
         endpointInput.addEventListener('input', function (event) {
           const value = (event.target.value || '').trim();
           currentEndpoint = value || getEndpointForType(selectedEndpointType) || '';

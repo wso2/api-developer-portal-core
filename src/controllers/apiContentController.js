@@ -1285,11 +1285,14 @@ function correctAsyncAPISpec(spec, endpoints, cpApiDetail, tokenEndpoint) {
 
 function replaceEndpointParamsAsyncAPI(apiDefinition, prodEndpoint, sandboxEndpoint) {
     if (apiDefinition?.asyncapi && apiDefinition.asyncapi.startsWith('2.')) {
+        // Replace the uploaded document's servers outright rather than merging into
+        // them, so a stale backend host from the spec is never advertised.
+        apiDefinition.servers = {};
         if (prodEndpoint.trim().length !== 0) {
-            apiDefinition.servers = {"production": {
+            apiDefinition.servers["production"] = {
                 url: prodEndpoint,
                 protocol: prodEndpoint.startsWith('ws') ? 'ws' : 'wss'
-            }};
+            };
         }
         if (sandboxEndpoint.trim().length !== 0) {
             apiDefinition.servers["sandbox"] = {
