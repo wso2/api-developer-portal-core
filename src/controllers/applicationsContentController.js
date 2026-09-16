@@ -218,18 +218,11 @@ const loadApplicationData = async (req, orgName, applicationId, viewName) => {
     const prodKeyManagers = filterKeyManagers(rawProdKeyManagers, constants.DEV_PORTAL_APP_ENV.PROD);
     const sandboxKeyManagers = filterKeyManagers(rawSandboxKeyManagers, constants.DEV_PORTAL_APP_ENV.SANDBOX);
 
-    // Resident endpoints count as per-environment only when both lists have one and they differ.
-    const prodResident = prodKeyManagers.find(km => km.name === constants.KEY_MANAGERS.RESIDENT_KEY_MANAGER);
-    const sandboxResident = sandboxKeyManagers.find(km => km.name === constants.KEY_MANAGERS.RESIDENT_KEY_MANAGER);
-    const residentEndpointsPerEnvironment = !!prodResident && !!sandboxResident
-        && prodResident.tokenEndpoint !== sandboxResident.tokenEndpoint;
-
     const cpOrgID = req.cpOrgID ?? (await adminDao.getOrganization(orgName))?.ORGANIZATION_IDENTIFIER;
 
-    // Resident defaults apply unless the control plane returned per-environment URLs; the org override then applies on top.
+    // Resident key manager gets the default endpoints; the org override then applies on top.
     const enrichKeyManager = async (keyManager, devPortalAppEnv) => {
-        Object.assign(keyManager,
-            util.getKMEndpointOverrides(keyManager, cpOrgID, devPortalAppEnv, !residentEndpointsPerEnvironment));
+        Object.assign(keyManager, util.getKMEndpointOverrides(keyManager, cpOrgID, devPortalAppEnv));
         keyManager.availableGrantTypes = await mapGrants(keyManager.availableGrantTypes);
         keyManager.applicationConfiguration = await mapDefaultValues(keyManager.applicationConfiguration);
     };
