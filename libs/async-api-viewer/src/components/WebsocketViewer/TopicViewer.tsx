@@ -71,8 +71,11 @@ const TopicViewer = (props: TopicViewerProps) => {
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [messages, setMessages] = useState<Record<string, any>[]>([]);
   const [input, setInput] = useState(payload || '');
-  const [endpoint, setEndpoint] = useState<string>(apiEndpoint);
-  const [selectedEndpointType, setSelectedEndpointType] = useState<string>('production');
+  // Default to the sandbox endpoint when the API has no production endpoint.
+  const [endpoint, setEndpoint] = useState<string>(apiEndpoint || sandboxEndpoint);
+  const [selectedEndpointType, setSelectedEndpointType] = useState<string>(
+    apiEndpoint ? 'production' : 'sandbox'
+  );
   const [pathParams, setPathParams] = useState<{ [key: string]: string }>({});
   const [connect, setConnect] = useState(false);
   const [connectButtonText, setConnectButtonText] = useState('Connect');
@@ -136,9 +139,13 @@ const TopicViewer = (props: TopicViewerProps) => {
   const handleEndpointTypeChange = (event: any) => {
     const newValue = event.target.value as 'production' | 'sandbox';
     
-    // Prevent switching to sandbox if sandboxEndpoint is not available
+    // Prevent switching to an endpoint type that is not available
     if (newValue === 'sandbox' && (!sandboxEndpoint || sandboxEndpoint === '')) {
       setSelectedEndpointType('production');
+      return;
+    }
+    if (newValue === 'production' && (!apiEndpoint || apiEndpoint === '')) {
+      setSelectedEndpointType('sandbox');
       return;
     }
     
@@ -378,7 +385,7 @@ const TopicViewer = (props: TopicViewerProps) => {
                           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
                         }}
                       >
-                        <MenuItem value="production">Production</MenuItem>
+                        <MenuItem value="production" disabled={!apiEndpoint || apiEndpoint === ''}>Production</MenuItem>
                         <MenuItem value="sandbox" disabled={!sandboxEndpoint || sandboxEndpoint === ''}>Sandbox</MenuItem>
                       </Select>
                     </FormControl>
@@ -654,7 +661,7 @@ const TopicViewer = (props: TopicViewerProps) => {
                           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
                         }}
                       >
-                        <MenuItem value="production">Production</MenuItem>
+                        <MenuItem value="production" disabled={!apiEndpoint || apiEndpoint === ''}>Production</MenuItem>
                         <MenuItem value="sandbox" disabled={!sandboxEndpoint || sandboxEndpoint === ''}>Sandbox</MenuItem>
                       </Select>
                     </FormControl>

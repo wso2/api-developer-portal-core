@@ -130,22 +130,22 @@ function WebSocketViewer(props: WebSocketViewerProps) {
   }, [asyncapi]);
 
   const newAsyncapiObj = useMemo(() => {
-    if (asyncapi && Object.keys(asyncapi).length > 0 && apiEndpoint) {
+    if (asyncapi && Object.keys(asyncapi).length > 0 && (apiEndpoint || sandboxEndpoint)) {
       let newAsyncapi = cloneDeep(asyncapi);
       if (newAsyncapi.asyncapi?.startsWith('2')) {
         newAsyncapi = {
           ...newAsyncapi,
           servers: {
-            default: { url: apiEndpoint, protocol: 'ws' },
-            sandbox: { url: sandboxEndpoint, protocol: 'ws' },
+            ...(apiEndpoint ? { default: { url: apiEndpoint, protocol: 'ws' } } : {}),
+            ...(sandboxEndpoint ? { sandbox: { url: sandboxEndpoint, protocol: 'ws' } } : {}),
           },
         };
       } else if (newAsyncapi.asyncapi?.startsWith('3')) {
         newAsyncapi = {
           ...newAsyncapi,
           servers: {
-            default: { url: apiEndpoint, protocol: 'ws' },
-            sandbox: { url: sandboxEndpoint, protocol: 'ws' },
+            ...(apiEndpoint ? { default: { url: apiEndpoint, protocol: 'ws' } } : {}),
+            ...(sandboxEndpoint ? { sandbox: { url: sandboxEndpoint, protocol: 'ws' } } : {}),
           },
         };
       }
@@ -192,7 +192,7 @@ function WebSocketViewer(props: WebSocketViewerProps) {
     );
   }
 
-  if (apiEndpoint) {
+  if (apiEndpoint || sandboxEndpoint) {
     return (
       <Box>
         {allTopics.map(({ name, publish, subscribe, parameters }: Channel) => (
