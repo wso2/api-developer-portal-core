@@ -17,6 +17,10 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
 # Verify the installed wget version
 RUN wget --version
 
+# The npm bundled with the base image ships tar 6.x, which the image scan flags as
+# critical. Upgrading npm replaces its bundled tar with a fixed version.
+RUN npm install -g npm@11.19.1 && npm --version
+
 # Set the working directory inside the container
 WORKDIR /app
 
