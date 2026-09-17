@@ -3,6 +3,13 @@
    <link> and will never gain it - so the sheet has to carry its own tokens.
    /technical-styles/ is never rewritten to a stored-asset URL. */
 @import "/technical-styles/tokens.css";
+/* The component layer, imported for the same reason as the tokens above: a stored
+   layout links neither, so any page that renders inside one gets the shared vocabulary -
+   dp-btn, dp-modal, dp-note, sub-status-pill, dp-empty - only if the sheet it does load
+   brings it along. Without this, every one of those classes is undefined on an
+   organization with a stored theme, and buttons and dialogs render unstyled.
+   No cascade risk: components.css and the themable main.css share no selector. */
+@import "/technical-styles/components.css";
 /* ===== API Flows — Gallery Page ===== */
 
 .flows-section {

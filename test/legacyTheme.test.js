@@ -61,9 +61,11 @@ test('anything the disk layout gains but a stored layout lacks is tracked', () =
     // This is not a "must not diverge" rule - divergence is expected and deliberate.
     // It is a ledger: every divergence must be a known one with a delivery plan.
     const KNOWN_LAYOUT_ONLY = [
-        // Delivered to internal pages in P6 by an @import at the top of each
-        // src/styles sheet, which needs no template or layout change. Remove from
-        // this list once that lands.
+        // Both are delivered to internal pages by an @import at the top of every
+        // technical sheet a template links, so a stored layout needs no change - see
+        // 'every technical stylesheet a template links carries the component layer'
+        // below. They stay on this ledger because they really are absent from a stored
+        // layout; the import is how they arrive anyway.
         '/technical-styles/tokens.css',
         '/technical-styles/components.css',
         // Cosmetic, and needs no remedy: an organization with a stored layout keeps the
@@ -89,6 +91,42 @@ test('anything the disk layout gains but a stored layout lacks is tracked', () =
         'the disk layout links something a stored layout does not have, and it is not on the ledger.\n'
         + 'Internal pages on every organization with a stored theme will not receive it.\n'
         + 'Either deliver it through an @import in src/styles/, or add it here with a plan.'
+    );
+});
+
+test('every technical stylesheet a template links carries the component layer', () => {
+    /* A stored layout links none of our stylesheets - only the organization's own
+       main.css - so whatever sheet a page links is the only CSS that arrives. If that
+       sheet does not bring components.css with it, every dp-btn, dp-modal, dp-note,
+       sub-status-pill and dp-empty in the page is an undefined class. The Delete
+       Application dialog's buttons and the LLM Instructions Publish button rendered
+       unstyled on every themed organization for exactly this reason.
+
+       Entry points are computed from the templates rather than listed, so a new page
+       that links a new sheet is covered without touching this test. */
+    const linked = new Set();
+    for (const dir of ['pages', 'defaultContent']) {
+        for (const file of walk(path.join(__dirname, '..', 'src', dir), '.hbs')) {
+            for (const m of fs.readFileSync(file, 'utf8').matchAll(/technical-styles\/([a-z0-9-]+\.css)/g)) {
+                linked.add(m[1]);
+            }
+        }
+    }
+    // tokens.css is the variable layer and imports nothing; components.css is the layer
+    // itself, and would be importing itself.
+    const entryPoints = [...linked]
+        .filter((f) => !['tokens.css', 'components.css'].includes(f))
+        .filter((f) => fs.existsSync(path.join(__dirname, '..', 'src', 'styles', f)))
+        .sort();
+    assert.ok(entryPoints.length > 10, `expected to find the technical sheets, got ${entryPoints.length}`);
+
+    const missing = entryPoints.filter((name) => !fs
+        .readFileSync(path.join(__dirname, '..', 'src', 'styles', name), 'utf8')
+        .includes('@import "/technical-styles/components.css"'));
+    assert.deepStrictEqual(
+        missing, [],
+        'these sheets can be the only CSS a themed organization loads, and none of them\n'
+        + 'delivers the shared component vocabulary:\n  ' + missing.join('\n  ')
     );
 });
 
