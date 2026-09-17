@@ -132,7 +132,11 @@
    into a ragged grid, and the divider moves to the top of the content column. Upstream
    also hides the group headings here, since they cannot sit inline in a single row. */
 @media (max-width: 900px) {
-  .cfg-layout { flex-direction: column; gap: 0; }
+  .cfg-layout { flex-direction: column;
+    /* Reset with the direction: the base rule aligns a ROW's items to its top, and
+       that same value in a COLUMN sizes each child to its own content instead of the
+       container - which pushes wide content past the right edge. */
+align-items: stretch; gap: 0; }
 
   .cfg-nav {
     width: 100%;

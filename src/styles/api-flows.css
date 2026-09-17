@@ -2105,7 +2105,11 @@
 
 /* Responsive: stack panes on small screens */
 @media (max-width: 900px) {
-    .af-wizard-body { flex-direction:column; overflow:visible; }
+    .af-wizard-body { flex-direction:column;
+    /* Reset with the direction: the base rule aligns a ROW's items to its top, and
+       that same value in a COLUMN sizes each child to its own content instead of the
+       container - which pushes wide content past the right edge. */
+align-items: stretch; overflow:visible; }
     .af-pane-left { flex:none; border-right:none; border-bottom:1px solid var(--bs-gray-200); overflow:visible; }
     .af-pane-right { flex:none; overflow:visible; }
 }

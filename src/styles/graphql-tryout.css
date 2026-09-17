@@ -189,6 +189,10 @@
 
   .graphql-control.graphql-control-row {
     flex-direction: column;
+    /* Reset with the direction: the base rule aligns a ROW's items to its top, and
+       that same value in a COLUMN sizes each child to its own content instead of the
+       container - which pushes wide content past the right edge. */
+    align-items: stretch;
     max-height: none;
   }
 

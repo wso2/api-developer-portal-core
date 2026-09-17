@@ -697,7 +697,10 @@
 
 .wf-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(22.5rem, 1fr));
+  /* min() so the track can go below 22.5rem when the container is narrower than that -
+     a bare minmax(22.5rem, 1fr) keeps a 360px track in a 289px column and the card
+     overflows. */
+  grid-template-columns: repeat(auto-fill, minmax(min(22.5rem, 100%), 1fr));
   gap: 1.25rem;
   margin-top: 1.5rem;
 }

@@ -138,9 +138,15 @@ test('a stored theme overrides only the seven customizable partials', () => {
 test('the plan cards in the rail are stacked, not left on their three-up grid', () => {
     // The partial's cards carry col-lg-4 col-md-6 col-12 because it was written as a
     // full-width section. Inside the 22.5rem rail those columns still ask for a third
-    // of their container, which is about 7rem a card. components.css overrides them,
-    // and the two breakpoints have to agree or there is a band where the rail is narrow
-    // but the cards have gone back to the grid.
+    // of their container, which is about 7rem a card, so components.css overrides them -
+    // but only while the rail is a rail.
+    //
+    // The override is scoped to a min-width block rather than applied everywhere and
+    // undone below. Undoing it was the bug: `width: auto` does not hand sizing back to
+    // Bootstrap, it defeats it, so every plan card shrink-wrapped to 299px from 360px up
+    // to 1024px - wider than its container on a phone, and stranded in 819px of space at
+    // the top of the range. The two breakpoints still have to meet exactly: the override
+    // starts one pixel above the width at which the rail collapses.
     const html = renderAll('pages/api-landing', ctx.apiLandingWithPlans());
     assert.ok(html.includes('aov-body-sidebar'), 'expected the rail to render');
     assert.ok(/class="col-lg-4[^"]*"/.test(html), 'the partial still uses the three-up grid');
@@ -153,21 +159,22 @@ test('the plan cards in the rail are stacked, not left on their three-up grid', 
         'components.css must override the grid inside the rail'
     );
 
-    // Compare the two breakpoints that have to agree, not every media query in the file.
-    const widthOfBlockContaining = (needle) => {
-        for (const m of components.matchAll(/@media \(max-width: (\d+)px\)\s*\{([\s\S]*?)\n\}/g)) {
-            if (m[2].includes(needle)) return m[1];
+    // Compare the two breakpoints that have to meet, not every media query in the file.
+    const widthOfBlockContaining = (kind, needle) => {
+        const re = new RegExp(`@media \\(${kind}-width: (\\d+)px\\)\\s*\\{([\\s\\S]*?)\\n\\}`, 'g');
+        for (const m of components.matchAll(re)) {
+            if (m[2].includes(needle)) return Number(m[1]);
         }
         return null;
     };
-    const railAt = widthOfBlockContaining('.aov-body-sidebar { width: 100%');
-    const gridAt = widthOfBlockContaining('.aov-body-sidebar .row > [class*="col-"]');
+    const railAt = widthOfBlockContaining('max', '.aov-body-sidebar { width: 100%');
+    const gridAt = widthOfBlockContaining('min', '.aov-body-sidebar .row > [class*="col-"]');
 
     assert.ok(railAt && gridAt, `expected both breakpoints, got rail=${railAt} grid=${gridAt}`);
     assert.strictEqual(
-        gridAt, railAt,
-        `the rail collapses at ${railAt}px but its grid override switches off at ${gridAt}px, `
-        + 'leaving a band where the rail is narrow and the cards are back on the three-up grid'
+        gridAt, railAt + 1,
+        `the rail collapses at or below ${railAt}px but the grid override starts at ${gridAt}px - `
+        + `these must be adjacent, or there is a band where one applies without the other`
     );
 });
 
