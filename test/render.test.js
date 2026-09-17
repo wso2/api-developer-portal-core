@@ -351,6 +351,59 @@ test('no template has a collapsed line', () => {
     );
 });
 
+test('a plan card separates its subscribed banner from the selected application', () => {
+    /* Cloud gateway: several applications may hold the same plan, so the card carries two
+       independent states.
+
+         banner  - aov-plan-card--subscribed, from subscribedPlanIds: ANY application
+         control - Subscribe vs View subscription, from the SELECTED application
+
+       Both controls are rendered and common.js's syncSubscribeControl picks one by
+       flipping .subscription-container--selected-subscribed, so the card must ship both
+       and mark each application row with whether it holds THIS plan. */
+    const html = renderAll('pages/api-landing', ctx.apiLandingMultiApp());
+    const cardOf = (policyId) => {
+        const start = html.indexOf(`id="subscriptionCard-${policyId}"`);
+        assert.ok(start > -1, `no card for ${policyId}`);
+        const next = html.indexOf('id="subscriptionCard-', start + 1);
+        return html.slice(start, next === -1 ? undefined : next);
+    };
+    const itemOf = (card, appId) => {
+        const m = card.match(new RegExp(`<div[^>]*data-value="${appId}"[^>]*>`));
+        assert.ok(m, `no application row for ${appId}`);
+        return m[0];
+    };
+
+    const unlimited = cardOf('pol-1');           // App A holds it; App B is on Silver
+    assert.match(unlimited, /aov-plan-card--subscribed/, 'App A holds this plan, so the banner shows');
+    assert.match(unlimited, /class="[^"]*subscribe-btn/, 'the Subscribe control must render');
+    assert.match(unlimited, /plan-view-sub-btn/, 'the View subscription control must render too');
+
+    assert.match(itemOf(unlimited, 'app-a'), /data-subscribed="true"/, 'App A holds this plan');
+    assert.doesNotMatch(itemOf(unlimited, 'app-a'), /select-item[^"]*disabled/, 'and stays selectable - it is the way back');
+    assert.match(itemOf(unlimited, 'app-b'), /data-subscribed="false"/, 'App B is on another plan of this API');
+    assert.match(itemOf(unlimited, 'app-b'), /select-item disabled/, 'so it is not offered here');
+    for (const free of ['app-c', 'app-d']) {
+        assert.match(itemOf(unlimited, free), /data-subscribed="false"/, `${free} holds nothing`);
+        assert.doesNotMatch(itemOf(unlimited, free), /select-item disabled/, `${free} must stay selectable`);
+    }
+
+    // The banner is per plan, not per API: Silver has its own holder, App B.
+    assert.match(cardOf('pol-2'), /aov-plan-card--subscribed/);
+    assert.match(itemOf(cardOf('pol-2'), 'app-b'), /data-subscribed="true"/);
+    assert.match(itemOf(cardOf('pol-2'), 'app-a'), /select-item disabled/);
+});
+
+test('the self-hosted plan card stays card-level, with no application dropdown', () => {
+    // A token-based (wso2/api-platform) subscription is not bound to an application, so
+    // this branch must keep deciding its control from the plan alone - no data-subscribed,
+    // no application rows - and must not pick up the app-based machinery by accident.
+    const html = renderAll('pages/api-landing', ctx.apiLandingPlatformInactiveSub());
+    assert.match(html, /aov-plan-when-subscribed/, 'the token branch swaps on the card state');
+    assert.doesNotMatch(html, /data-subscribed=/, 'no per-application state on a self-hosted plan');
+    assert.doesNotMatch(html, /plan-view-sub-btn/, 'and not the app-based control pair');
+});
+
 test('the DTO fills subscriptionPolicies from either DAO path', () => {
     // The listing and the search reach APIDTO by different routes and name the same
     // aggregate differently: getAllAPIMetadata returns Sequelize instances whose include

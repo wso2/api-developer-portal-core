@@ -256,6 +256,95 @@ module.exports = {
         ...over,
     }),
 
+    /* The cloud-gateway plan cards with every application state on one page, which is
+       what the two card states have to be told apart by:
+
+         appA holds THIS plan (Unlimited)      -> selectable, marked, "View subscription"
+         appB holds ANOTHER plan of this API   -> disabled, "On Silver"
+         appC holds nothing                    -> selectable, "Subscribe"
+
+       subscribedPlanIds is the union across applications, so the Unlimited card shows its
+       SUBSCRIBED ribbon because appA holds it - independently of which application is
+       selected in the dropdown. Shapes copied from apiContentController: `subscribed` is
+       API-level, `subscribedPolicyIds` says which plans, `subscriptionPolicy` is
+       {policyId, policyName} of the first live one. */
+    apiLandingMultiApp: (over = {}) => ({
+        ...base,
+        profile,
+        isAuthenticated: true,
+        apiMetadata: { ...apiWithImage, apiInfo: { ...apiWithImage.apiInfo, gatewayType: 'wso2/choreo-connect' } },
+        provider: 'WSO2',
+        providerUrl: 'https://wso2.com',
+        subscriptionPlans: [
+            { policyID: 'pol-1', policyName: 'Unlimited', displayName: 'Unlimited', requestCount: -1, timeUnit: 'min' },
+            { policyID: 'pol-2', policyName: 'Silver', displayName: 'Silver', requestCount: 100, timeUnit: 'min' },
+        ],
+        applications: [
+            {
+                id: 'app-a', name: 'App A', subscribed: true,
+                subscribedPolicyIds: ['pol-1'],
+                subscriptionPolicy: { policyId: 'pol-1', policyName: 'Unlimited' },
+            },
+            {
+                id: 'app-b', name: 'App B', subscribed: true,
+                subscribedPolicyIds: ['pol-2'],
+                subscriptionPolicy: { policyId: 'pol-2', policyName: 'Silver' },
+            },
+            { id: 'app-c', name: 'App C', subscribed: false, subscribedPolicyIds: [], subscriptionPolicy: null },
+            /* A second free application, so the flow after one subscribe can be checked:
+               subscribing App C to a plan must not stop App D subscribing to the same one. */
+            { id: 'app-d', name: 'App D', subscribed: false, subscribedPolicyIds: [], subscriptionPolicy: null },
+        ],
+        subscribedPlanIds: ['pol-1', 'pol-2'],
+        platformSubscriptions: [],
+        schemaUrl: `${BASE_URL}/api/orders-api/docs/specification`,
+        resources: [],
+        scopes: [],
+        ...over,
+    }),
+
+    /* An API landing page with the content a real API actually has - endpoints, resource
+       rows and scopes. The plan fixtures above carry none of it, which is why a phone-width
+       sweep over them came back clean while a real API page did not: the resource row is
+       the widest fixed thing on the page. */
+    apiLandingFullContent: (over = {}) => ({
+        ...base,
+        profile,
+        isAuthenticated: true,
+        apiMetadata: {
+            ...apiWithImage,
+            apiInfo: {
+                ...apiWithImage.apiInfo,
+                apiName: 'Reading List API',
+                apiDescription: 'Create, track and share reading lists across devices, with per-user shelves and progress.',
+                gatewayType: 'wso2/choreo-connect',
+                tags: ['books', 'reading', 'catalogue', 'recommendations'],
+            },
+        },
+        applications: [{ id: 'app-1', name: 'Test Application', subscribed: false, subscribedPolicyIds: [], subscriptionPolicy: null }],
+        subscriptionPlans: [
+            { policyID: 'pol-1', policyName: 'Unlimited', displayName: 'Unlimited', requestCount: -1, timeUnit: 'min' },
+        ],
+        subscribedPlanIds: [],
+        platformSubscriptions: [],
+        loadDefault: true,
+        resources: {
+            serverDetails: {
+                productionURL: 'https://e1a2b3c4-5d6e-7f89-0a1b-2c3d4e5f6a7b-prod.e1-eu-north-azure.bijiraapis.dev/reading-list/v1.0',
+                sandboxURL: 'https://e1a2b3c4-5d6e-7f89-0a1b-2c3d4e5f6a7b-dev.e1-eu-north-azure.bijiraapis.dev/reading-list/v1.0',
+            },
+            endpoints: [
+                { path: '/reading-lists/{listId}/items/{itemId}', methods: [
+                    { method: 'get', summary: 'Retrieve a single item from a reading list' },
+                    { method: 'delete', summary: 'Remove an item from a reading list' }] },
+                { path: '/reading-lists', methods: [{ method: 'post', summary: 'Create a reading list' }] },
+            ],
+        },
+        scopes: [{ key: 'reading_list:read' }, { key: 'reading_list:write' }, { key: 'reading_list:admin' }],
+        schemaUrl: `${BASE_URL}/api/reading-list-api/docs/specification`,
+        ...over,
+    }),
+
     docs: (over = {}) => ({
         ...base,
         docTypes: { HOWTO: [{ docName: 'getting-started', docId: 'doc-1' }] },
