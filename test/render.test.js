@@ -138,9 +138,15 @@ test('a stored theme overrides only the seven customizable partials', () => {
 test('the plan cards in the rail are stacked, not left on their three-up grid', () => {
     // The partial's cards carry col-lg-4 col-md-6 col-12 because it was written as a
     // full-width section. Inside the 22.5rem rail those columns still ask for a third
-    // of their container, which is about 7rem a card. components.css overrides them,
-    // and the two breakpoints have to agree or there is a band where the rail is narrow
-    // but the cards have gone back to the grid.
+    // of their container, which is about 7rem a card, so components.css overrides them -
+    // but only while the rail is a rail.
+    //
+    // The override is scoped to a min-width block rather than applied everywhere and
+    // undone below. Undoing it was the bug: `width: auto` does not hand sizing back to
+    // Bootstrap, it defeats it, so every plan card shrink-wrapped to 299px from 360px up
+    // to 1024px - wider than its container on a phone, and stranded in 819px of space at
+    // the top of the range. The two breakpoints still have to meet exactly: the override
+    // starts one pixel above the width at which the rail collapses.
     const html = renderAll('pages/api-landing', ctx.apiLandingWithPlans());
     assert.ok(html.includes('aov-body-sidebar'), 'expected the rail to render');
     assert.ok(/class="col-lg-4[^"]*"/.test(html), 'the partial still uses the three-up grid');
@@ -153,21 +159,22 @@ test('the plan cards in the rail are stacked, not left on their three-up grid', 
         'components.css must override the grid inside the rail'
     );
 
-    // Compare the two breakpoints that have to agree, not every media query in the file.
-    const widthOfBlockContaining = (needle) => {
-        for (const m of components.matchAll(/@media \(max-width: (\d+)px\)\s*\{([\s\S]*?)\n\}/g)) {
-            if (m[2].includes(needle)) return m[1];
+    // Compare the two breakpoints that have to meet, not every media query in the file.
+    const widthOfBlockContaining = (kind, needle) => {
+        const re = new RegExp(`@media \\(${kind}-width: (\\d+)px\\)\\s*\\{([\\s\\S]*?)\\n\\}`, 'g');
+        for (const m of components.matchAll(re)) {
+            if (m[2].includes(needle)) return Number(m[1]);
         }
         return null;
     };
-    const railAt = widthOfBlockContaining('.aov-body-sidebar { width: 100%');
-    const gridAt = widthOfBlockContaining('.aov-body-sidebar .row > [class*="col-"]');
+    const railAt = widthOfBlockContaining('max', '.aov-body-sidebar { width: 100%');
+    const gridAt = widthOfBlockContaining('min', '.aov-body-sidebar .row > [class*="col-"]');
 
     assert.ok(railAt && gridAt, `expected both breakpoints, got rail=${railAt} grid=${gridAt}`);
     assert.strictEqual(
-        gridAt, railAt,
-        `the rail collapses at ${railAt}px but its grid override switches off at ${gridAt}px, `
-        + 'leaving a band where the rail is narrow and the cards are back on the three-up grid'
+        gridAt, railAt + 1,
+        `the rail collapses at or below ${railAt}px but the grid override starts at ${gridAt}px - `
+        + `these must be adjacent, or there is a band where one applies without the other`
     );
 });
 
@@ -342,6 +349,59 @@ test('no template has a collapsed line', () => {
         'these lines are long enough to be a collapsed block rather than markup:\n  '
         + offenders.join('\n  ')
     );
+});
+
+test('a plan card separates its subscribed banner from the selected application', () => {
+    /* Cloud gateway: several applications may hold the same plan, so the card carries two
+       independent states.
+
+         banner  - aov-plan-card--subscribed, from subscribedPlanIds: ANY application
+         control - Subscribe vs View subscription, from the SELECTED application
+
+       Both controls are rendered and common.js's syncSubscribeControl picks one by
+       flipping .subscription-container--selected-subscribed, so the card must ship both
+       and mark each application row with whether it holds THIS plan. */
+    const html = renderAll('pages/api-landing', ctx.apiLandingMultiApp());
+    const cardOf = (policyId) => {
+        const start = html.indexOf(`id="subscriptionCard-${policyId}"`);
+        assert.ok(start > -1, `no card for ${policyId}`);
+        const next = html.indexOf('id="subscriptionCard-', start + 1);
+        return html.slice(start, next === -1 ? undefined : next);
+    };
+    const itemOf = (card, appId) => {
+        const m = card.match(new RegExp(`<div[^>]*data-value="${appId}"[^>]*>`));
+        assert.ok(m, `no application row for ${appId}`);
+        return m[0];
+    };
+
+    const unlimited = cardOf('pol-1');           // App A holds it; App B is on Silver
+    assert.match(unlimited, /aov-plan-card--subscribed/, 'App A holds this plan, so the banner shows');
+    assert.match(unlimited, /class="[^"]*subscribe-btn/, 'the Subscribe control must render');
+    assert.match(unlimited, /plan-view-sub-btn/, 'the View subscription control must render too');
+
+    assert.match(itemOf(unlimited, 'app-a'), /data-subscribed="true"/, 'App A holds this plan');
+    assert.doesNotMatch(itemOf(unlimited, 'app-a'), /select-item[^"]*disabled/, 'and stays selectable - it is the way back');
+    assert.match(itemOf(unlimited, 'app-b'), /data-subscribed="false"/, 'App B is on another plan of this API');
+    assert.match(itemOf(unlimited, 'app-b'), /select-item disabled/, 'so it is not offered here');
+    for (const free of ['app-c', 'app-d']) {
+        assert.match(itemOf(unlimited, free), /data-subscribed="false"/, `${free} holds nothing`);
+        assert.doesNotMatch(itemOf(unlimited, free), /select-item disabled/, `${free} must stay selectable`);
+    }
+
+    // The banner is per plan, not per API: Silver has its own holder, App B.
+    assert.match(cardOf('pol-2'), /aov-plan-card--subscribed/);
+    assert.match(itemOf(cardOf('pol-2'), 'app-b'), /data-subscribed="true"/);
+    assert.match(itemOf(cardOf('pol-2'), 'app-a'), /select-item disabled/);
+});
+
+test('the self-hosted plan card stays card-level, with no application dropdown', () => {
+    // A token-based (wso2/api-platform) subscription is not bound to an application, so
+    // this branch must keep deciding its control from the plan alone - no data-subscribed,
+    // no application rows - and must not pick up the app-based machinery by accident.
+    const html = renderAll('pages/api-landing', ctx.apiLandingPlatformInactiveSub());
+    assert.match(html, /aov-plan-when-subscribed/, 'the token branch swaps on the card state');
+    assert.doesNotMatch(html, /data-subscribed=/, 'no per-application state on a self-hosted plan');
+    assert.doesNotMatch(html, /plan-view-sub-btn/, 'and not the app-based control pair');
 });
 
 test('the DTO fills subscriptionPolicies from either DAO path', () => {

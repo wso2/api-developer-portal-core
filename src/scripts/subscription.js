@@ -962,8 +962,14 @@ function markSubscribedUI(card, applicationID, apiId) {
     }
   });
 
-  const btn = card.querySelector(".common-btn-primary");
-  if (btn) btn.setAttribute("disabled", "disabled");
+  /* The card's Subscribe control is NOT disabled here. Which of the two controls shows is
+     decided by the selected application (syncSubscribeControl toggles
+     .subscription-container--selected-subscribed), and a plan may be held by several
+     applications - so after one subscribes, Subscribe has to stay usable for the next one.
+     Disabling it here only appeared harmless because the landing card's control is an <a>,
+     where the attribute is inert, and because the next selection change happened to strip
+     it again; on the <button> the plan dialog renders it blocked the second subscribe
+     outright until a reload. */
 
   /* Subscribing on the API page never reloads, so the card has to reach the state a
      reload would render: the ribbon, the green tint and the "View subscription" control.

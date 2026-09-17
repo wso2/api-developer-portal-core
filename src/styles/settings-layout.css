@@ -27,6 +27,13 @@
    organization's stored layout, which predates the tokens.css <link> and will never
    gain it - so the vocabulary below has to arrive with the sheet. */
 @import "/technical-styles/tokens.css";
+/* The component layer, imported for the same reason as the tokens above: a stored
+   layout links neither, so any page that renders inside one gets the shared vocabulary -
+   dp-btn, dp-modal, dp-note, sub-status-pill, dp-empty - only if the sheet it does load
+   brings it along. Without this, every one of those classes is undefined on an
+   organization with a stored theme, and buttons and dialogs render unstyled.
+   No cascade risk: components.css and the themable main.css share no selector. */
+@import "/technical-styles/components.css";
 
 /* ── Page shell ─────────────────────────────────────────────────────
    Upstream pads the page itself instead of centring a fixed-width container, so the
@@ -132,7 +139,11 @@
    into a ragged grid, and the divider moves to the top of the content column. Upstream
    also hides the group headings here, since they cannot sit inline in a single row. */
 @media (max-width: 900px) {
-  .cfg-layout { flex-direction: column; gap: 0; }
+  .cfg-layout { flex-direction: column;
+    /* Reset with the direction: the base rule aligns a ROW's items to its top, and
+       that same value in a COLUMN sizes each child to its own content instead of the
+       container - which pushes wide content past the right edge. */
+align-items: stretch; gap: 0; }
 
   .cfg-nav {
     width: 100%;

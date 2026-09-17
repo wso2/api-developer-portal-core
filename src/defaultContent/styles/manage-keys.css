@@ -245,6 +245,12 @@
     margin-bottom: 1rem;
 }
 
+/* Below this the two cards are about 130px each, which is not enough for the name and
+   its "Live traffic" / "Safe to test" line side by side. */
+@media (max-width: 30rem) {
+    .keys-section .mk-env-selector { grid-template-columns: 1fr; }
+}
+
 .keys-section .mk-env-card {
     display: flex;
     align-items: center;

@@ -476,6 +476,24 @@
 .dp-error-box--visible { display: flex; }
 .dp-error-box i { font-size: 0.875rem; flex: none; margin-top: 0.1em; }
 
+/* ── Page shell ────────────────────────────────────────────────
+   .content-area is a flex item of .main-container and carries `margin-left: 7.625rem`
+   (clearing the 74px sidebar) alongside `width: 100%`. Those two together ask for more
+   than the row has, so it has to shrink - but a flex item's automatic minimum size is its
+   min-content, which on a page with real content is larger than the space left. The item
+   therefore stopped shrinking early and hung past the right edge of the window: measured
+   at +107px on a 900px viewport and still +52px at 1440px, clipped by the ancestor, which
+   is the right-hand side of the page going missing.
+
+   min-width: 0 lifts that automatic minimum so it shrinks to the space actually available.
+   Anything inside that genuinely cannot shrink already has its own overflow-x wrapper
+   (.sub-scroll and friends) and scrolls there instead of pushing the page out.
+
+   This lives here rather than beside the rule in the themable main.css because an
+   organization with a stored theme serves its own frozen copy of that sheet and would
+   never receive the fix; components.css reaches every page. */
+.content-area { min-width: 0; }
+
 /* ── Overview two-column body layout (shared: API + MCP) ──────── */
 .aov-body {
   display: flex;
@@ -671,7 +689,15 @@
 .aov-existing-subs-title { font-size: 0.875rem; font-weight: 600; color: var(--text-strong); margin-bottom: 0.625rem; }
 
 @media (max-width: 1024px) {
-  .aov-body { flex-direction: column; }
+  /* align-items has to be reset with the direction. The base rule sets flex-start to
+     align the two columns to the top of a ROW; in a COLUMN that same value is a cross-axis
+     rule meaning "size each child to its own content instead of the container width".
+     .aov-body-main then took its max-content width - 912px on an API with a long endpoint
+     URL, inside a 313px parent - and an ancestor clipped it, so the right-hand side of the
+     page was simply cut off on every phone and tablet. An API with no endpoints or
+     resources has a small max-content and looked fine, which is what made this easy to
+     miss. */
+  .aov-body { flex-direction: column; align-items: stretch; }
   .aov-body-sidebar { width: 100%; }
 }
 /* Design mode: nav/action buttons whose routes aren't served in this mode are
@@ -853,7 +879,11 @@
 .aov-method-badge--PUT    { background: var(--warning-surface); color: var(--warning); }
 .aov-method-badge--PATCH  { background: #e6f9f4; color: #00695c; }
 .aov-resource-path {
-  flex: none;
+  /* Shrinkable, not fixed: with flex:none the row could not go below
+     badge + path + padding, which overflowed a 320px screen. max-width stays as the cap
+     on a wide row; min-width:0 lets the ellipsis do its job on a narrow one. */
+  flex: 0 1 auto;
+  min-width: 0;
   max-width: 13.75rem;
   font-family: var(--font-family-mono);
   font-size: 0.84375rem;
@@ -923,6 +953,13 @@
   .aov-hero-name { font-size: 1.375rem; }
   .aov-api-avatar { width: 3.75rem; height: 3.75rem; font-size: 1.25rem; }
   .aov-api-img { width: 3.75rem; height: 3.75rem; }
+  /* 2rem/2.125rem is a third of a 360px screen spent on padding. The type and the
+     avatar already step down here; the box they sit in has to as well. */
+  .aov-hero { padding: 1.375rem 1.25rem; gap: 1rem; }
+  .aov-body { padding: 1.25rem 0.75rem 2rem; gap: 1.25rem; }
+  /* Full-width actions: wrapped pills of three different widths read as a ragged
+     column on a phone, and each is below the comfortable touch target. */
+  .aov-hero-actions .dp-btn { flex: 1 1 100%; justify-content: center; }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -940,10 +977,22 @@
    this file - so these need to win on specificity rather than order.
    ══════════════════════════════════════════════════════════════════════════ */
 
-.aov-body-sidebar .row > [class*="col-"] {
-    flex: 0 0 100%;
-    max-width: 100%;
-    width: 100%;
+/* Only while the rail is actually a rail. Below 1025px .aov-body is a column and the
+   sidebar is full width, so Bootstrap's own col-lg-4 / col-md-6 / col-12 are the right
+   sizing and this must not apply.
+
+   It used to apply always and be undone below 1024px with `width: auto`, which does not
+   hand sizing back to Bootstrap - it defeats it: a flex item with width:auto shrink-wraps
+   its content, so every plan card froze at 299px from 360px all the way to 1024px. At
+   360px that was wider than its own 281px container; at 1024px it was a 275px card
+   stranded in 819px of space. Scoping the rule instead of reverting it leaves the grid
+   classes untouched. */
+@media (min-width: 1025px) {
+    .aov-body-sidebar .row > [class*="col-"] {
+        flex: 0 0 100%;
+        max-width: 100%;
+        width: 100%;
+    }
 }
 
 .aov-body-sidebar .container-fluid {
@@ -957,18 +1006,6 @@
     /* This is the padding the plan card actually renders with - it out-specifies the
        .plan-kpi-row in the theme sheet, so that one never applies inside the rail. */
     padding: 0.625rem 1rem;
-}
-
-/* Below the rail's own collapse breakpoint - 1024px, matching .aov-body above - the
-   sidebar is full width again and the original three-up grid is the right layout.
-   These two values must stay in step, or there is a band where the rail is still
-   narrow but the cards have gone back to asking for a third of it. */
-@media (max-width: 1024px) {
-    .aov-body-sidebar .row > [class*="col-"] {
-        flex: 0 0 auto;
-        max-width: none;
-        width: auto;
-    }
 }
 
 /* ── Error page (404 / 403 / 500) ────────────────────────────────

@@ -158,8 +158,22 @@
     .hero-desc { font-size: 1rem; }
 }
 
+/* The bleed above cancels .content-area's desktop insets. At 860px main.css swaps those
+   for a symmetric 1rem (`body:has(#sidebarToggle) .content-area`), so the bleed has to
+   change with them - same breakpoint and same selector scope, or the two drift apart.
+
+   Left was the visible failure: -3rem against a 1rem padding put the panel 32px off the
+   left edge at every width below 860px, clipped by the ancestor's overflow, so the
+   headline sat off-centre and a strip of the hero was simply gone. Right was patched at
+   45rem, which left 720-860px over-bleeding by 20px. */
+@media (max-width: 860px) {
+    body:has(#sidebarToggle) .hero {
+        margin-left: -1rem;
+        margin-right: -1rem;
+    }
+}
+
 @media (max-width: 45rem) {
-    .hero { margin-right: -1rem; }
     .hero-headline { font-size: 2rem; }
     .hero-ctas { flex-direction: column; width: 100%; }
     .hero-btn { justify-content: center; }
